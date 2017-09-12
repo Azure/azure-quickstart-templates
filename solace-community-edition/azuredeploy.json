@@ -22,7 +22,7 @@
     },
     "securityGroupName": {
       "type": "string",
-      "defaultValue": "vmrsecurity",
+      "defaultValue": "vmr-security",
       "metadata": {
         "description": "Security group defined to support VMR default message vpn ports"
       }
@@ -37,10 +37,9 @@
       "type": "string",
       "defaultValue": "7.2",
       "metadata": {
-        "description": "The Centos version for deploying the Docker containers. This will pick a fully patched image of this given Centos version. Allowed values: 7.1, 7.2, 7.3"
+        "description": "The Centos version for deploying the Docker containers. This will pick a fully patched image of this given Centos version. Allowed values: 7.2, 7.3"
       },
       "allowedValues": [
-        "7.1",
         "7.2",
         "7.3"
       ]
@@ -49,7 +48,7 @@
       "type": "string",
       "defaultValue": "Standard_D2_v2",
       "metadata": {
-        "description": "The size of the VM, requires 2 cores and 4GB of memory. Allowed values: DS2_V2, F2S"
+        "description": "The size of the VM. Requires at lest 2 cores and 4GB of memory. Allowed values: DS2_V2, F2S"
       },
       "allowedValues": [
         "Standard_D2_v2",
@@ -61,46 +60,82 @@
         "metadata": {
             "description": "The URI location of the Solace VMR Docker container tarball"
         }
+    },
+    "deploymentModel": {
+      "type": "string",
+      "metadata": {
+          "description": "Deploy three node ha cluster or single node"
+      },
+      "allowedValues": [
+        "HighAvailability",
+        "SingleNode"
+      ]
     }
   },
   "variables": {
+    "availabilitySetName": "SolaceHACluster",
+    "platformFaultDomainCount": "3",
+    "platformUpdateDomainCount": "3",
     "imagePublisher": "OpenLogic",
     "imageOffer": "Centos",
     "OSDiskName": "osdiskfordockersimple",
     "nicName": "myVMNicD",
-    "extensionName": "DockerExtension",
-    "addressPrefix": "10.0.0.0/16",
-    "subnetName": "Subnet",
-    "subnetPrefix": "10.0.0.0/24",
-    "storageAccountType": "Standard_LRS",
+    "scriptUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/solace-community-edition/",
+    "sharedTemplatename": "shared-resources.json",
+    "solaceInstallScriptName": "deploy_vmr.sh",
     "publicIPAddressName": "myPublicIPD",
     "publicIPAddressType": "Dynamic",
     "vmStorageAccountVHDsName": "vhds",
     "vmStorageAccountContainersName": "containers",
     "vmName": "SolaceVMR",
+    "addressPrefix": "10.0.0.0/16",
+    "subnetPrefix": "10.0.0.0/24",
+    "nodeAddressPrefix": "10.0.0.10",
+    "storageAccountType": "Standard_LRS",
+    "subnetName": "Subnet",
     "virtualNetworkName": "MyVNETD",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
-    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]"
+    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
+    "deploymentModelHighAvailability": {
+      "numberOfNodes": 3
+    },
+    "deploymentModelSingleNode": { "numberOfNodes": 1 },
+    "numberOfInstances": "[variables(concat('deploymentModel', parameters('deploymentModel'))).numberOfNodes]"
   },
   "resources": [
     {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[parameters('storageAccountName')]",
-      "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-01-01",
+      "type": "Microsoft.Resources/deployments",
+      "name": "SolaceSecurity.Template",
       "properties": {
-        "accountType": "[variables('storageAccountType')]"
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('scriptUrl'), variables('sharedTemplatename'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "securityGroupName": {
+            "value": "[parameters('securityGroupName')]"
+          },
+          "subnetPrefix": {
+            "value": "[variables('subnetPrefix')]"
+          }
+        }
       }
     },
     {
       "apiVersion": "2016-03-30",
       "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[variables('publicIPAddressName')]",
+      "name": "[concat(variables('publicIPAddressName'), copyindex())]",
       "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "interfaceLoop",
+        "count": "[variables('numberOfInstances')]"
+      },
       "properties": {
         "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
         "dnsSettings": {
-          "domainNameLabel": "[parameters('dnsNameForPublicIP')]"
+          "domainNameLabel": "[concat(parameters('dnsNameForPublicIP'), copyindex())]"
         }
       }
     },
@@ -110,28 +145,30 @@
       "name": "[variables('virtualNetworkName')]",
       "location": "[resourceGroup().location]",
       "properties": {
-        "addressSpace": {
-          "addressPrefixes": [
-            "[variables('addressPrefix')]"
+          "addressSpace": {
+          "addressPrefixes": [ "[variables('addressPrefix')]" ]
+          },
+          "subnets": [
+              {
+                  "name": "[variables('subnetName')]",
+                  "properties": {
+                      "addressPrefix": "[variables('subnetPrefix')]"
+                  }
+              }
           ]
-        },
-        "subnets": [
-          {
-            "name": "[variables('subnetName')]",
-            "properties": {
-              "addressPrefix": "[variables('subnetPrefix')]"
-            }
-          }
-        ]
-      }
+        } 
     },
     {
       "apiVersion": "2016-03-30",
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[variables('nicName')]",
+      "name": "[concat(variables('nicName'), copyindex())]",
       "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "nicLoop",
+        "count": "[variables('numberOfInstances')]"
+      },
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'), copyindex())]",
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
       ],
       "properties": {
@@ -139,9 +176,10 @@
           {
             "name": "ipconfig1",
             "properties": {
-              "privateIPAllocationMethod": "Dynamic",
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[concat(variables('nodeAddressPrefix'), copyindex())]",
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(variables('publicIPAddressName'), copyindex()))]"
               },
               "subnet": {
                 "id": "[variables('subnetRef')]"
@@ -152,134 +190,46 @@
       }
     },
     {
-      "name": "[parameters('securityGroupName')]",
-      "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2016-03-30",
+      "name": "[parameters('storageAccountName')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2016-01-01",
+      "sku": {
+        "name": "[variables('storageAccountType')]"
+      },
+      "kind": "Storage",
+      "location": "[resourceGroup().location]",
+      "properties": {}
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[variables('availabilitySetName')]",
       "location": "[resourceGroup().location]",
       "properties": {
-          "securityRules": [
-              {
-                  "name": "ssh",
-                  "properties": {
-                      "priority": 100,
-                      "sourceAddressPrefix": "*",
-                      "protocol": "Tcp",
-                      "destinationPortRange": "22",
-                      "access": "Allow",
-                      "direction": "Inbound",
-                      "sourcePortRange": "*",
-                      "destinationAddressPrefix": "*"
-                  }
-              },
-              {
-                  "name": "web",
-                  "properties": {
-                      "priority": 101,
-                      "sourceAddressPrefix": "*",
-                      "protocol": "Tcp",
-                      "destinationPortRange": "80",
-                      "access": "Allow",
-                      "direction": "Inbound",
-                      "sourcePortRange": "*",
-                      "destinationAddressPrefix": "*"
-                  }
-              },
-              {
-                  "name": "mqtt",
-                  "properties": {
-                      "priority": 102,
-                      "sourceAddressPrefix": "*",
-                      "protocol": "Tcp",
-                      "destinationPortRange": "1883",
-                      "access": "Allow",
-                      "direction": "Inbound",
-                      "sourcePortRange": "*",
-                      "destinationAddressPrefix": "*"
-                  }
-              },
-              {
-                  "name": "mqtt_ws",
-                  "properties": {
-                      "priority": 103,
-                      "sourceAddressPrefix": "*",
-                      "protocol": "Tcp",
-                      "destinationPortRange": "8000",
-                      "access": "Allow",
-                      "direction": "Inbound",
-                      "sourcePortRange": "*",
-                      "destinationAddressPrefix": "*"
-                  }
-              },
-              {
-                  "name": "semp",
-                  "properties": {
-                      "priority": 104,
-                      "sourceAddressPrefix": "*",
-                      "protocol": "Tcp",
-                      "destinationPortRange": "8080",
-                      "access": "Allow",
-                      "direction": "Inbound",
-                      "sourcePortRange": "*",
-                      "destinationAddressPrefix": "*"
-                  }
-              },
-              {
-                  "name": "rest",
-                  "properties": {
-                      "priority": 105,
-                      "sourceAddressPrefix": "*",
-                      "protocol": "Tcp",
-                      "destinationPortRange": "9000",
-                      "access": "Allow",
-                      "direction": "Inbound",
-                      "sourcePortRange": "*",
-                      "destinationAddressPrefix": "*"
-                  }
-              },
-              {
-                  "name": "smf_compressed",
-                  "properties": {
-                      "priority": 106,
-                      "sourceAddressPrefix": "*",
-                      "protocol": "Tcp",
-                      "destinationPortRange": "55003",
-                      "access": "Allow",
-                      "direction": "Inbound",
-                      "sourcePortRange": "*",
-                      "destinationAddressPrefix": "*"
-                  }
-              },
-              {
-                  "name": "smf",
-                  "properties": {
-                      "priority": 107,
-                      "sourceAddressPrefix": "*",
-                      "protocol": "Tcp",
-                      "destinationPortRange": "55555",
-                      "access": "Allow",
-                      "direction": "Inbound",
-                      "sourcePortRange": "*",
-                      "destinationAddressPrefix": "*"
-                  }
-              }             
-          ]
-       }
+          "platformFaultDomainCount": "[variables('platformFaultDomainCount')]",
+          "platformUpdateDomainCount": "[variables('platformUpdateDomainCount')]"
+      }
     },
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[variables('vmName')]",
+      "name": "[concat(variables('vmName'), copyindex())]",
       "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "virtualMachineLoop",
+        "count": "[variables('numberOfInstances')]"
+      },
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+        "[concat('Microsoft.Network/networkInterfaces/', concat(variables('nicName'), copyindex()))]",
+        "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
       ],
       "properties": {
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
-          "computerName": "[variables('vmName')]",
+          "computerName": "[concat(variables('vmName'), copyindex())]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]"
         },
@@ -293,7 +243,7 @@
           "osDisk": {
             "name": "osdisk1",
             "vhd": {
-              "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountVHDsName'),'/',variables('OSDiskName'),'.vhd')]"
+              "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountVHDsName'),'/',variables('OSDiskName'),copyindex(),'.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -302,7 +252,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'), copyindex()))]"
             }
           ]
         }
@@ -310,11 +260,15 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('vmName'), '/DockerExtension')]",
+      "name": "[concat(variables('vmName'), copyindex(), '/DockerExtension')]",
       "apiVersion": "2016-03-30",
       "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "DockerLoop",
+        "count": "[variables('numberOfInstances')]"
+      },
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), copyindex())]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
@@ -327,10 +281,14 @@
     {
       "apiVersion": "2016-03-30",
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('vmName'), '/configureVMRContainer')]",
+      "name": "[concat(variables('vmName'), copyindex(), '/configureVMRContainer')]",
       "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "SolaceLoop",
+        "count": "[variables('numberOfInstances')]"
+      },
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), '/extensions/DockerExtension')]"
+        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), copyindex(), '/extensions/DockerExtension')]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
@@ -338,11 +296,13 @@
         "typeHandlerVersion": "2.0",
         "autoUpgradeMinorVersion": true,
         "settings": {
-          "fileUris": [ 
-            "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/solace-community-edition/scripts/deploy_vmr.sh"
+          "fileUris": [
+            "[parameters('solaceVMR_URI')]",
+            "[concat(variables('scriptUrl'), 'scripts/', variables('solaceInstallScriptName'))]",
+            "[concat(variables('scriptUrl'), 'scripts/semp_query.sh')]"
           ],
-          "commandToExecute": "[concat('bash ./deploy_vmr.sh -c 0 -n 1 -p ', parameters('adminPassword'), ' -u ', parameters('solaceVMR_URI'))]"
-        }
+          "commandToExecute": "[concat('bash ', variables('solaceInstallScriptName'), ' -c ', copyindex(), ' -i ', variables('nodeAddressPrefix'), ' -n ', variables('numberOfInstances'), ' -p ', parameters('adminPassword'))]"   
+        } 
       }
     }
   ]

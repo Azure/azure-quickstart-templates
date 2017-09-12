@@ -4,15 +4,15 @@ OPTIND=1         # Reset in case getopts has been used previously in the shell.
 
 # Initialize our own variables:
 current_index=""
-ip_prefix="10.0.0.10"
+ip_prefix=""
 number_of_instances=""
 password="admin"
-solace_url=""
 DEBUG="-vvvv"
+is_primary="false"
 
 verbose=0
 
-while getopts "c:i:n:p:u:" opt; do
+while getopts "c:i:n:p:" opt; do
     case "$opt" in
     c)  current_index=$OPTARG
         ;;
@@ -21,9 +21,7 @@ while getopts "c:i:n:p:u:" opt; do
     n)  number_of_instances=$OPTARG
         ;;
     p)  password=$OPTARG
-        ;;
-    u)  solace_url=$OPTARG
-        ;;
+        ;;        
     esac
 done
 
@@ -32,20 +30,24 @@ shift $((OPTIND-1))
 
 verbose=1
 echo "`date` current_index=$current_index ,ip_prefix=$ip_prefix ,number_of_instances=$number_of_instances, \
-       solace_url=${solace_url} ,Leftovers: $@"
+       ,Leftovers: $@"
 
 
-#Install the logical volume manager
+#Install the logical volume manager and jq for json parsing
 yum -y install lvm2
-
-
-echo "`date` INFO: walk redirect to get underlying URL"
-#-------------------------------------------------------------
-wget -O /tmp/redirect.html  ${solace_url}
-REAL_LINK=`egrep -o "https://[a-zA-Z0-9\.\/\_\?\=]*" /tmp/redirect.html`
+yum -y install epel-release
+yum -y install jq
+#Load the VMR
+REAL_LINK=
+for filename in ./*; do
+    echo "File = ${filename}"
+    count=`grep -c "https://products.solace.com" ${filename}`
+    if [ "1" = ${count} ]; then
+      REAL_LINK=`egrep -o "https://[a-zA-Z0-9\.\/\_\?\=]*" ${filename}`
+    fi    
+done
 
 echo "`date` INFO: check to make sure we have a complete load"
-#-------------------------------------------------------------
 wget -O /tmp/solosEval.info -nv  https://products.solace.com/download/VMR_DOCKER_EVAL_MD5
 IFS=' ' read -ra SOLOSEVAL_INFO <<< `cat /tmp/solosEval.info`
 MD5_SUM_EVAL=${SOLOSEVAL_INFO[0]}
@@ -59,7 +61,6 @@ SolOS_COMM_LOAD=${SOLOSCOMM_INFO[1]}
 echo "`date` INFO: Reference comm md5sum is: ${MD5_SUM_COMM}"
 
 echo "`date` INFO: try 3 times to download from URL provided and validate it is Evaluation and Community edition VRM"
-#-------------------------------------------------------------
 LOOP_COUNT=0
 SolOS_LOAD=solos.tar.gz
 isEval=0
@@ -84,19 +85,17 @@ while [ $LOOP_COUNT -lt 3 ]; do
 done
 
 if [ ${LOOP_COUNT} == 3 ]; then
-  echo "`date` ERROR: Failed to download SolOS exiting"
+  echo "`date` ERROR: Failed to download SolOS exiting" | tee /dev/stderr
   exit 1
 fi
 
 echo "`date` INFO: If there is a requiremewnt for 3 node cluster and not Evalution edition exit"
-#-----------------------------------------------------------------
 if [ ${isEval} == 0 ] && [ ${number_of_instances} == 3 ]; then
-  echo "`date` ERROR: Trying to build HA cluster with communitoy edition SolOS, this is not supported"
+  echo "`date` ERROR: Trying to build HA cluster with community edition SolOS, this is not supported" | tee /dev/stderr
   exit 1
 fi
 
 echo "`date` INFO: Setting up SolOS Docker image"
-#---------------------------------------------------
 #Create new volumes that the VMR container can use to consume and store data.
 docker volume create --name=jail
 docker volume create --name=var
@@ -123,7 +122,7 @@ else
    echo "`date` INFO: Memory size is ${MEM_SIZE}"
 fi
 
-if [ ${number_of_instances} > 1 ]; then
+if [ ${number_of_instances} -gt 1 ]; then
   echo "`date` INFO: Configuring HA tuple"
   case ${current_index} in  
     0 )
@@ -141,6 +140,7 @@ if [ ${number_of_instances} > 1 ]; then
       --env redundancy_group_node_monitor_nodetype=monitoring \
       --env redundancy_group_node_monitor_connectvia=${ip_prefix}2 \
       --env configsync_enable=yes"
+      is_primary="true"
         ;; 
     1 ) 
       redundancy_config="\
@@ -199,7 +199,7 @@ EOF
 #Make the file executable
 chmod +x /root/docker-create
 
-#Launch the VMR
+echo "`date` INFO: Creating the Solace VMR container"
 /root/docker-create
 
 #Construct systemd for VMR
@@ -216,7 +216,40 @@ tee /etc/systemd/system/solace-docker-vmr.service <<-EOF
   WantedBy=default.target 
 EOF
 
-#Start the solace service and enable it at system start up.
+echo "`date` INFO: Start the Solace VMR container"
 systemctl daemon-reload 
 systemctl enable solace-docker-vmr 
 systemctl start solace-docker-vmr
+
+
+loop_guard=30
+pause=10
+count=0
+if [ "${is_primary}" = "true" ]; then
+  while [ ${count} -lt ${loop_guard} ]; do 
+    online_results=`./semp_query.sh -n admin -p ${password} -u http://localhost:8080/SEMP \
+         -q "<rpc semp-version='soltr/8_5VMR'><show><redundancy><group/></redundancy></show></rpc>" \
+         -c '/rpc-reply/rpc/show/redundancy/group-node/status[text()="Online"]'`
+
+    online_count=`echo ${online_results} | jq '.countSearchResult' -`
+
+    run_time=$((${count} * ${pause}))
+    if [ ${online_count} -eq 3 ]; then
+        echo "`date` INFO: Redundancy is up after ${run_time} seconds"
+        break
+    fi
+    ((count++))
+    echo "`date` INFO: Waited ${run_time} seconds, Redundancy not yet up"
+    sleep ${pause}
+  done
+
+  if [ ${count} -eq ${loop_guard} ]; then
+    echo "`date` ERROR: Solace redundancy group never came up" | tee /dev/stderr
+    exit 1 
+  fi
+
+ ./semp_query.sh -n admin -p ${password} -u http://localhost:8080/SEMP \
+         -q "<rpc semp-version='soltr/8_5VMR'><admin><config-sync><assert-master><router/></assert-master></config-sync></admin></rpc>"
+ ./semp_query.sh -n admin -p ${password} -u http://localhost:8080/SEMP \
+         -q "<rpc semp-version='soltr/8_5VMR'><admin><config-sync><assert-master><vpn-name>default</vpn-name></assert-master></config-sync></admin></rpc>"
+fi
