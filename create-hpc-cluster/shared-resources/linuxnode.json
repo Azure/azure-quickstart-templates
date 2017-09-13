@@ -8,6 +8,18 @@
         "description": "The API version"
       }
     },
+    "nicName": {
+      "type": "string",
+      "metadata": {
+        "description": "The network interface name for the VM"
+      }
+    },
+    "subnetId": {
+      "type": "string",
+      "metadata": {
+        "description": "The Id of the subnet in which the node is created"
+      }
+    },
     "vmName": {
       "type": "string",
       "metadata": {
@@ -27,10 +39,10 @@
         "description": "The storage account type for the disks of the VM"
       }
     },
-    "nicName": {
-      "type": "string",
+    "imageReference": {
+      "type": "object",
       "metadata": {
-        "description": "The network interface name"
+        "description": "The image reference"
       }
     },
     "adminUsername": {
@@ -51,32 +63,84 @@
         "description": "The availability set name"
       }
     },
+    "customData": {
+      "type": "string",
+      "defaultValue": "[base64('None')]",
+      "metadata": {
+        "description": "The custom data in base64 format"
+      }
+    },
+    "installRDMADriver": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Not used for Linux node"
+      }
+    },
     "enableAutomaticUpdates": {
       "type": "bool",
       "defaultValue": false,
       "metadata": {
-        "description": "Specify whether the VM is enabled for automatic updates"
+        "description": "Not used for Linux nodes"
+      }
+    },    
+    "clusterName": {
+      "type": "string",
+      "metadata": {
+        "description": "The HPC cluster name"
+      }
+    },
+    "domainName": {
+      "type": "string",
+      "metadata": {
+        "description": "The fully qualified domain name (FQDN) for the domain forest in which the cluster is created, for example 'hpc.local'."
       }
     },
     "scriptBaseUri": {
       "type": "string",
+      "defaultValue": "",
       "metadata": {
-        "description": "The base URI of the script"
+        "description": "The base URI of the script, not used for Linux node."
       }
     },
-    "privateDomainName": {
+    "computeNodePostConfigScript": {
       "type": "string",
+      "defaultValue": "",
       "metadata": {
-        "description": "The fully qualified domain name (FQDN) for the private domain forest which will be created by this template, for example 'hpc.local'."
+        "description": "Not used for Linux node."
       }
     }
   },
+  "variables":{
+  },
   "resources": [
+    {
+      "apiVersion": "[parameters('apiVersion')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[parameters('nicName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "IPConfig",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[parameters('subnetId')]"
+              }
+            }
+          }
+        ]
+      }
+    },
     {
       "apiVersion": "2016-04-30-preview",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
       "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', parameters('nicName'))]"
+      ],
       "properties": {
         "availabilitySet": {
           "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySetName'))]"
@@ -88,17 +152,13 @@
           "computerName": "[parameters('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]",
-          "windowsConfiguration": {
-            "enableAutomaticUpdates": "[parameters('enableAutomaticUpdates')]"
+          "customData": "[parameters('customData')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": "false"
           }
         },
         "storageProfile": {
-          "imageReference": {
-            "publisher": "MicrosoftWindowsServerHPCPack",
-            "offer": "WindowsServerHPCPack",
-            "sku": "2012R2",
-            "version": "latest"
-          },
+          "imageReference": "[parameters('imageReference')]",
           "osDisk": {
             "name": "[concat(parameters('vmName'), '-osdisk')]",
             "caching": "ReadOnly",
@@ -106,19 +166,7 @@
             "managedDisk": {
               "storageAccountType": "[parameters('storageAccountType')]"
             }
-          },
-          "dataDisks": [
-            {
-              "name": "[concat(parameters('vmName'), '-datadisk')]",
-              "caching": "None",
-              "createOption": "Empty",
-              "diskSizeGB": 500,
-              "managedDisk": {
-                "storageAccountType": "[parameters('storageAccountType')]"
-              },
-              "lun": 0
-            }
-          ]
+          }
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -131,49 +179,19 @@
       "resources": [
         {
           "type": "Microsoft.Compute/virtualMachines/extensions",
-          "name": "[concat(parameters('vmName'),'/installRDMADriver')]",
+          "name": "[concat(parameters('vmName'), '/installHPCNodeAgent')]",
           "apiVersion": "[parameters('apiVersion')]",
           "location": "[resourceGroup().location]",
           "dependsOn": [
             "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
           ],
           "properties": {
-            "publisher": "Microsoft.HpcCompute",
-            "type": "HpcVmDrivers",
-            "typeHandlerVersion": "1.1"
-          }
-        },
-        {
-          "type": "Microsoft.Compute/virtualMachines/extensions",
-          "name": "[concat(parameters('vmName'),'/promoteDomainController')]",
-          "apiVersion": "[parameters('apiVersion')]",
-          "location": "[resourceGroup().location]",
-          "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]",
-            "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'),'/extensions/installRDMADriver')]"
-          ],
-          "properties": {
-            "publisher": "Microsoft.Powershell",
-            "type": "DSC",
-            "typeHandlerVersion": "2.26",
+            "publisher": "Microsoft.HpcPack",
+            "type": "LinuxNodeAgent",
+            "typeHandlerVersion": "1.6",
             "autoUpgradeMinorVersion": true,
-            "settings": {
-              "configuration": {
-                "url": "[concat(parameters('scriptBaseUri'),'/CreateADPDC.ps1.zip')]",
-                "script": "CreateADPDC.ps1",
-                "function": "CreateADPDC"
-              },
-              "configurationArguments": {
-                "DomainName": "[parameters('privateDomainName')]"
-              }
-            },
             "protectedSettings": {
-              "configurationArguments": {
-                "AdminCreds": {
-                  "UserName": "[parameters('adminUsername')]",
-                  "Password": "[parameters('adminPassword')]"
-                }
-              }
+              "ClusterName": "[concat(parameters('clusterName'), '.', parameters('domainName'))]"
             }
           }
         }
