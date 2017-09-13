@@ -1,4 +1,4 @@
-# Deploy A Windows VMSS with MSI
+# Deploy A Linux VMSS with MSI
 
 This template shows how to use Managed Service Idenity with VM Scale Sets and how to access azure resources from within VMs in the Scale Set, in particular it shows how to:
 
@@ -13,7 +13,7 @@ In order to make sure that the MSI is created and given permissions before the s
 
 The default configuration will deploy a scaleset with 2 DS1_V2 VMs.
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fsimongdavies%2Fazuremsi%2Fmaster%2Flinuxvmssmsi%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vmss-msi-linux%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 

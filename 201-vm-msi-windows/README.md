@@ -11,6 +11,6 @@ This template creates a new Windows VM with a MSI and deploys the MSI extension 
 
 The script depends on PowerShell 5.0 or above as it uses PowerShell Package Management to install the Azure AD modules, it therefore requires either Windows Server 2016, or if not using Windows Server 2016 for WMF5 or above to be installed on the VM or for the Package Managment Modules targeted for PowerShell 3 or 4 to be installed. Alternatively the script could be updated to install Azure PowerShell using a different mechamism.
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fsimongdavies%2Fazuremsi%2Fmaster%2Fwindowsmsi%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vm-msi-windows%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
