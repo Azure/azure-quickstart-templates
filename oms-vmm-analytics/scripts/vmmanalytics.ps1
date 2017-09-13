@@ -76,7 +76,7 @@ foreach ($server in $vmmServers)
                 EndTime = $job.EndTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ");
                 Duration = ($job.EndTime-$job.StartTime).TotalSeconds;     
                 Progress = $job.Progress.ToString();
-                Status = $job.Status;
+                Status = $job.Status.ToString();
                 ErrorInfo = $job.ErrorInfo.ToString();
                 Problem = $job.ErrorInfo.Problem;
                 CloudProblem = $job.ErrorInfo.CloudProblem;
