@@ -8,18 +8,6 @@
         "description": "The API version"
       }
     },
-    "nicName": {
-      "type": "string",
-      "metadata": {
-        "description": "The network interface name for the VM"
-      }
-    },
-    "subnetId": {
-      "type": "string",
-      "metadata": {
-        "description": "The Id of the subnet in which the node is created"
-      }
-    },
     "vmName": {
       "type": "string",
       "metadata": {
@@ -39,10 +27,10 @@
         "description": "The storage account type for the disks of the VM"
       }
     },
-    "imageReference": {
-      "type": "object",
+    "nicName": {
+      "type": "string",
       "metadata": {
-        "description": "The image reference"
+        "description": "The network interface name"
       }
     },
     "adminUsername": {
@@ -59,15 +47,9 @@
     },
     "availabilitySetName": {
       "type": "string",
+      "defaultValue": "",
       "metadata": {
-        "description": "The availability set name"
-      }
-    },
-    "customData": {
-      "type": "string",
-      "defaultValue": "[base64('None')]",
-      "metadata": {
-        "description": "The custom data in base64 format"
+        "description": "The availability set name to join if specified"
       }
     },
     "enableAutomaticUpdates": {
@@ -77,16 +59,11 @@
         "description": "Specify whether the VM is enabled for automatic updates"
       }
     },
-    "clusterName": {
-      "type": "string",
+    "installRDMADriver": {
+      "type": "bool",
+      "defaultValue": false,
       "metadata": {
-        "description": "The HPC cluster name"
-      }
-    },
-    "privateDomainName": {
-      "type": "string",
-      "metadata": {
-        "description": "The fully qualified domain name (FQDN) for the private domain forest which will be created by this template, for example 'hpc.local'."
+        "description": "Specify whether to install RDMA driver"
       }
     },
     "scriptBaseUri": {
@@ -95,48 +72,35 @@
         "description": "The base URI of the script"
       }
     },
-    "computeNodePostConfigScript": {
+    "newOrExistingDomainForest": {
       "type": "string",
       "defaultValue": "",
+      "allowedValues": [ "new", "existing" ],
       "metadata": {
-        "description": "Optional URL of a public available PowerShell script you want to run on the compute nodes after they are configured. You can also specify arguments for the script, for example 'http://www.consto.com/mypostscript.ps1 -Arg1 arg1 -Arg2 arg2'."
-      }    
+        "description": "Specify whether to promote the head node as DC or join the head node to an existing domain forest"
+      }
+    },
+    "domainName": {
+      "type": "string",
+      "metadata": {
+        "description": "The fully qualified domain name (FQDN) for the domain forest in which the head node will join, for example 'hpc.local'."
+      }
     }
   },
   "variables": {
+    "availabilitySet": {
+      "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySetName'))]"
+    },
+    "dscScriptName": "[if(equals(parameters('newOrExistingDomainForest'), 'new'), 'CreateADPDC', 'JoinADDomain')]"
   },
   "resources": [
-    {
-      "apiVersion": "[parameters('apiVersion')]",
-      "type": "Microsoft.Network/networkInterfaces",
-      "name": "[parameters('nicName')]",
-      "location": "[resourceGroup().location]",
-      "properties": {
-        "ipConfigurations": [
-          {
-            "name": "IPConfig",
-            "properties": {
-              "privateIPAllocationMethod": "Dynamic",
-              "subnet": {
-                "id": "[parameters('subnetId')]"
-              }
-            }
-          }
-        ]
-      }
-    },
     {
       "apiVersion": "2016-04-30-preview",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
       "location": "[resourceGroup().location]",
-      "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', parameters('nicName'))]"
-      ],
       "properties": {
-        "availabilitySet": {
-          "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySetName'))]"
-        },
+        "availabilitySet": "[if(empty(parameters('availabilitySetName')), json('null'), variables('availabilitySet'))]",
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
         },
@@ -144,13 +108,17 @@
           "computerName": "[parameters('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]",
-          "customData": "[parameters('customData')]",
           "windowsConfiguration": {
             "enableAutomaticUpdates": "[parameters('enableAutomaticUpdates')]"
           }
         },
         "storageProfile": {
-          "imageReference": "[parameters('imageReference')]",
+          "imageReference": {
+            "publisher": "MicrosoftWindowsServerHPCPack",
+            "offer": "WindowsServerHPCPack",
+            "sku": "2012R2",
+            "version": "latest"
+          },
           "osDisk": {
             "name": "[concat(parameters('vmName'), '-osdisk')]",
             "caching": "ReadOnly",
@@ -158,7 +126,19 @@
             "managedDisk": {
               "storageAccountType": "[parameters('storageAccountType')]"
             }
-          }
+          },
+          "dataDisks": [
+            {
+              "name": "[concat(parameters('vmName'), '-datadisk')]",
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": 500,
+              "managedDisk": {
+                "storageAccountType": "[parameters('storageAccountType')]"
+              },
+              "lun": 0
+            }
+          ]
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -170,9 +150,10 @@
       },
       "resources": [
         {
-          "apiVersion": "[parameters('apiVersion')]",
+          "condition": "[parameters('installRDMADriver')]",
           "type": "Microsoft.Compute/virtualMachines/extensions",
           "name": "[concat(parameters('vmName'), '/installRDMADriver')]",
+          "apiVersion": "[parameters('apiVersion')]",
           "location": "[resourceGroup().location]",
           "dependsOn": [
             "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
@@ -185,13 +166,13 @@
           }
         },
         {
-          "apiVersion": "[parameters('apiVersion')]",
           "type": "Microsoft.Compute/virtualMachines/extensions",
-          "name": "[concat(parameters('vmName'), '/configureComputeNode')]",
+          "name": "[concat(parameters('vmName'),'/', variables('dscScriptName'))]",
+          "apiVersion": "[parameters('apiVersion')]",
           "location": "[resourceGroup().location]",
           "dependsOn": [
             "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]",
-            "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'), '/extensions/installRDMADriver')]"
+            "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'),'/extensions/installRDMADriver')]"
           ],
           "properties": {
             "publisher": "Microsoft.Powershell",
@@ -200,13 +181,12 @@
             "autoUpgradeMinorVersion": true,
             "settings": {
               "configuration": {
-                "url": "[concat(parameters('scriptBaseUri'),'/ConfigComputeNode.ps1.zip')]",
-                "script": "ConfigComputeNode.ps1",
-                "function": "ConfigComputeNode"
+                "url": "[concat(parameters('scriptBaseUri'),'/', variables('dscScriptName'), '.ps1.zip')]",
+                "script": "[concat(variables('dscScriptName'),'.ps1')]",
+                "function": "[variables('dscScriptName')]"
               },
               "configurationArguments": {
-                "DomainName": "[parameters('privateDomainName')]",
-                "PostConfigScript": "[parameters('computeNodePostConfigScript')]"
+                "DomainName": "[parameters('domainName')]"
               }
             },
             "protectedSettings": {
