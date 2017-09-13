@@ -64,7 +64,7 @@ foreach ($server in $vmmServers)
         $lastRunTimestamp_r = $args[1]
         $currentTimestamp_r = $args[2]
 
-        $jobsData = Get-SCJob -All | where {$_.Status -ne 'Running' -and $_.EndTime -gt $lastRunTimestamp_r -and $_.EndTime -le $currentTimestamp_r}
+        $jobsData = Get-SCJob -All -VMMServer $server_r | where {$_.Status -ne 'Running' -and $_.EndTime -gt $lastRunTimestamp_r -and $_.EndTime -le $currentTimestamp_r}
       
         $vmmJobsDataForOMS = @();
         foreach ($job in $jobsData) {
@@ -77,7 +77,7 @@ foreach ($server in $vmmServers)
                 Duration = ($job.EndTime-$job.StartTime).TotalSeconds;     
                 Progress = $job.Progress.ToString();
                 Status = $job.Status;
-                ErrorInfo = $job.ErrorInfo;
+                ErrorInfo = $job.ErrorInfo.ToString();
                 Problem = $job.ErrorInfo.Problem;
                 CloudProblem = $job.ErrorInfo.CloudProblem;
                 RecommendedAction = $job.ErrorInfo.RecommendedAction;
@@ -85,7 +85,7 @@ foreach ($server in $vmmServers)
                 TargetObjectID = $job.TargetObjectID;
                 TargetObjectType = $job.TargetObjectType;
                 ID = $job.ID.ToString();
-                ServerConnection = $job.ServerConnection;
+                ServerConnection = $job.ServerConnection.ToString();
                 IsRestartable = $job.IsRestartable
                 IsCompleted = $job.IsCompleted
                 VMMServer = $server_r;
