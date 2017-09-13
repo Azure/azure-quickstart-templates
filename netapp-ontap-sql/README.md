@@ -47,7 +47,7 @@ This template will deploy:
 -	One Windows Server 2012 R2 VM.
 -	One SQL Server 2014 SP2 Enterprise on Windows Server 2012 R2 VM.
 -	One NetApp ONTAP Cloud VM
-<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/netapp-ontap-sql/images/netapp-architecture.png"/>
+<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/netapp-ontap-sql/Images/netapp-architecture.png"/>
 
 ## Licenses and Costs 
 
@@ -57,7 +57,7 @@ This NetApp ONTAP Cloud is the PAYGO model and doesn't require the user to licen
 
 Azure Subscription with specified payment method (NetApp ONTAP cloud is a market place product and requires payment method to be specified in Azure Subscription)
 
-You also need to create an Azure AD Application with required permissions in your Azure subscription before deploying this template. Please see [deployment guide]( https://github.com/Azure/azure-quickstart-templates/master/netapp-ontap-sql/Images/NetApp-ONTAP-Cloud-on-Azure.pdf) for more details.
+You also need to create an Azure AD Application with required permissions in your Azure subscription before deploying this template. Please see [deployment guide]( https://github.com/Azure/azure-quickstart-templates/blob/master/netapp-ontap-sql/Images/NetApp-ONTAP-Cloud-on-Azure.pdf) for more details.
 
 ## Deployment Steps  
 
@@ -71,7 +71,7 @@ Build your NetApp ONTAP environment on Azure in a few simple steps:
 
 ## Deployment Guide
 
-For the detailed steps of deployment please refer the deployment guide from  [here]( https://github.com/Azure/azure-quickstart-templates/master/netapp-ontap-sql/Images/NetApp-ONTAP-Cloud-on-Azure.pdf)
+For the detailed steps of deployment please refer the deployment guide from  [here]( https://github.com/Azure/azure-quickstart-templates/blob/master/netapp-ontap-sql/Images/NetApp-ONTAP-Cloud-on-Azure.pdf)
 
 ## Deployment Time  
 
