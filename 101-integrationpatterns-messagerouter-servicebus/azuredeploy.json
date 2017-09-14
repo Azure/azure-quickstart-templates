@@ -1,199 +1,197 @@
-{  
-    "$schema":"https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-    "contentVersion":"1.0.0.0",
-    "parameters":{  
-       "MessageRouterServiceBusNamespacePrefix":{  
-          "defaultValue":"MessageRouterServiceBus",
-          "type":"string",
-          "metadata":{  
-             "description":"The prefix of the name for the Service Bus namespace, will be appended with a unique string."
-          }
-       },
-       "IncomingDeliveryRequestsTopicName":{  
-          "defaultValue":"incomingdeliveryrequests",
-          "type":"string",
-          "metadata":{  
-             "description":"The name for the Service Bus Topic."
-          }
-       }
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "IncomingDeliveryRequestsTopicName": {
+            "defaultValue": "incomingdeliveryrequests",
+            "metadata": {
+                "description": "The name for the Service Bus Topic."
+            },
+            "type": "string"
+        },
+        "MessageRouterServiceBusNamespacePrefix": {
+            "defaultValue": "MessageRouterServiceBus",
+            "metadata": {
+                "description": "The prefix of the name for the Service Bus namespace, will be appended with a unique string."
+            },
+            "type": "string"
+        }
     },
-    "variables":{  
-        "serviceBusNamespaceName": "[concat(parameters('MessageRouterServiceBusNamespacePrefix'), '-', uniquestring(resourceGroup().id))]" 
+    "variables": {
+        "serviceBusNamespaceName": "[concat(parameters('MessageRouterServiceBusNamespacePrefix'), '-', uniquestring(resourceGroup().id))]"
     },
-    "resources":[  
-       {  
-          "type":"Microsoft.ServiceBus/namespaces",
-          "sku":{  
-             "name":"Standard",
-             "tier":"Standard",
-             "capacity":1
-          },
-          "kind":"Messaging",
-          "name":"[variables('serviceBusNamespaceName')]",
-          "apiVersion":"2015-08-01",
-          "location":"[resourceGroup().location]",
-          "dependsOn":[  
- 
-          ]
-       },
-       {  
-          "type":"Microsoft.ServiceBus/namespaces/topics",
-          "name":"[concat(variables('serviceBusNamespaceName'), '/', parameters('IncomingDeliveryRequestsTopicName'))]",
-          "apiVersion":"2015-08-01",
-          "location":"[resourceGroup().location]",
-          "properties":{  
-             "defaultMessageTimeToLive":"14.00:00:00",
-             "maxSizeInMegabytes":1024,
-             "requiresDuplicateDetection":false,
-             "enableBatchedOperations":false,
-             "sizeInBytes":0,
-             "filteringMessagesBeforePublishing":false,
-             "isAnonymousAccessible":false,
-             "supportOrdering":false,
-             "enablePartitioning":true,
-             "isExpress":false,
-             "enableSubscriptionPartitioning":false,
-             "enableExpress":false
-          },
-          "dependsOn":[  
-             "[resourceId('Microsoft.ServiceBus/namespaces', variables('serviceBusNamespaceName'))]"
-          ]
-       },
-       {  
-          "type":"Microsoft.ServiceBus/namespaces/topics/subscriptions",
-          "name":"[concat(variables('serviceBusNamespaceName'), '/', parameters('IncomingDeliveryRequestsTopicName'), '/HighPriority')]",
-          "apiVersion":"2015-08-01",
-          "location":"[resourceGroup().location]",
-          "properties":{  
-             "lockDuration":"00:00:30",
-             "requiresSession":false,
-             "defaultMessageTimeToLive":"14.00:00:00",
-             "deadLetteringOnMessageExpiration":true,
-             "deadLetteringOnFilterEvaluationExceptions":false,
-             "maxDeliveryCount":10,
-             "enableBatchedOperations":false
-          },
-          "resources":[  
-             {  
-                "type":"Rules",
-                "name":"HighPriority",
-                "apiVersion":"2015-08-01",
-                "properties":{
-                   "filter":{  
-                      "sqlExpression":"Priority='High'"
-                   }
-                },
-                "dependsOn":[  
-                   "[resourceId('Microsoft.ServiceBus/namespaces/topics/subscriptions', variables('serviceBusNamespaceName'), parameters('IncomingDeliveryRequestsTopicName'), 'HighPriority')]"
-                ]
-             }
-          ],
-          "dependsOn":[  
-             "[resourceId('Microsoft.ServiceBus/namespaces', variables('serviceBusNamespaceName'))]",
-             "[resourceId('Microsoft.ServiceBus/namespaces/topics', variables('serviceBusNamespaceName'), parameters('IncomingDeliveryRequestsTopicName'))]"
-          ]
-       },
-       {  
-          "type":"Microsoft.ServiceBus/namespaces/topics/subscriptions",
-          "name":"[concat(variables('serviceBusNamespaceName'), '/', parameters('IncomingDeliveryRequestsTopicName'), '/Log')]",
-          "apiVersion":"2015-08-01",
-          "location":"[resourceGroup().location]",
-          "properties":{  
-             "lockDuration":"00:00:30",
-             "requiresSession":false,
-             "defaultMessageTimeToLive":"14.00:00:00",
-             "deadLetteringOnMessageExpiration":true,
-             "deadLetteringOnFilterEvaluationExceptions":false,
-             "maxDeliveryCount":10,
-             "enableBatchedOperations":false
-          },
-          "resources":[  
-             {  
-                "type":"Rules",
-                "name":"LogAll",
-                "apiVersion":"2015-08-01",
-                "properties":{
-                   "filter":{  
-                      "sqlExpression":"1=1"
-                   }
-                },
-                "dependsOn":[  
-                   "[resourceId('Microsoft.ServiceBus/namespaces/topics/subscriptions', variables('serviceBusNamespaceName'), parameters('IncomingDeliveryRequestsTopicName'), 'Log')]"
-                ]
-             }
-          ],
-          "dependsOn":[  
-             "[resourceId('Microsoft.ServiceBus/namespaces', variables('serviceBusNamespaceName'))]",
-             "[resourceId('Microsoft.ServiceBus/namespaces/topics', variables('serviceBusNamespaceName'), parameters('IncomingDeliveryRequestsTopicName'))]"
-          ]
-       },
-       {  
-          "type":"Microsoft.ServiceBus/namespaces/topics/subscriptions",
-          "name":"[concat(variables('serviceBusNamespaceName'), '/', parameters('IncomingDeliveryRequestsTopicName'), '/LowPriority')]",
-          "apiVersion":"2015-08-01",
-          "location":"[resourceGroup().location]",
-          "properties":{  
-             "lockDuration":"00:00:30",
-             "requiresSession":false,
-             "defaultMessageTimeToLive":"14.00:00:00",
-             "deadLetteringOnMessageExpiration":true,
-             "deadLetteringOnFilterEvaluationExceptions":false,
-             "maxDeliveryCount":10,
-             "enableBatchedOperations":false
-          },
-          "resources":[  
-             {  
-                "type":"Rules",
-                "name":"LowPriority",
-                "apiVersion":"2015-08-01",
-                "properties":{
-                   "filter":{  
-                      "sqlExpression":"Priority='Low'"
-                   }
-                },
-                "dependsOn":[  
-                   "[resourceId('Microsoft.ServiceBus/namespaces/topics/subscriptions', variables('serviceBusNamespaceName'), parameters('IncomingDeliveryRequestsTopicName'), 'LowPriority')]"
-                ]
-             }
-          ],
-          "dependsOn":[  
-             "[resourceId('Microsoft.ServiceBus/namespaces', variables('serviceBusNamespaceName'))]",
-             "[resourceId('Microsoft.ServiceBus/namespaces/topics', variables('serviceBusNamespaceName'), parameters('IncomingDeliveryRequestsTopicName'))]"
-          ]
-       },
-       {  
-          "type":"Microsoft.ServiceBus/namespaces/topics/subscriptions",
-          "name":"[concat(variables('serviceBusNamespaceName'), '/', parameters('IncomingDeliveryRequestsTopicName'), '/NormalPriority')]",
-          "apiVersion":"2015-08-01",
-          "location":"[resourceGroup().location]",
-          "properties":{  
-             "lockDuration":"00:00:30",
-             "requiresSession":false,
-             "defaultMessageTimeToLive":"14.00:00:00",
-             "deadLetteringOnMessageExpiration":true,
-             "deadLetteringOnFilterEvaluationExceptions":false,
-             "maxDeliveryCount":10,
-             "enableBatchedOperations":false
-          },
-          "resources":[  
-             {  
-                "type":"Rules",
-                "name":"NormalPriority",
-                "apiVersion":"2015-08-01",
-                "properties":{
-                   "filter":{  
-                      "sqlExpression":"Priority='Normal'"
-                   }
-                },
-                "dependsOn":[  
-                   "[resourceId('Microsoft.ServiceBus/namespaces/topics/subscriptions', variables('serviceBusNamespaceName'), parameters('IncomingDeliveryRequestsTopicName'), 'NormalPriority')]"
-                ]
-             }
-          ],
-          "dependsOn":[  
-             "[resourceId('Microsoft.ServiceBus/namespaces', variables('serviceBusNamespaceName'))]",
-             "[resourceId('Microsoft.ServiceBus/namespaces/topics', variables('serviceBusNamespaceName'), parameters('IncomingDeliveryRequestsTopicName'))]"
-          ]
-       }
+    "resources": [
+        {
+            "apiVersion": "2015-08-01",
+            "dependsOn": [],
+            "kind": "Messaging",
+            "location": "[resourceGroup().location]",
+            "name": "[variables('serviceBusNamespaceName')]",
+            "sku": {
+                "capacity": 1,
+                "name": "Standard",
+                "tier": "Standard"
+            },
+            "type": "Microsoft.ServiceBus/namespaces"
+        },
+        {
+            "apiVersion": "2015-08-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces', variables('serviceBusNamespaceName'))]"
+            ],
+            "location": "[resourceGroup().location]",
+            "name": "[concat(variables('serviceBusNamespaceName'), '/', parameters('IncomingDeliveryRequestsTopicName'))]",
+            "properties": {
+                "defaultMessageTimeToLive": "14.00:00:00",
+                "enableBatchedOperations": false,
+                "enableExpress": false,
+                "enablePartitioning": true,
+                "enableSubscriptionPartitioning": false,
+                "filteringMessagesBeforePublishing": false,
+                "isAnonymousAccessible": false,
+                "isExpress": false,
+                "maxSizeInMegabytes": 1024,
+                "requiresDuplicateDetection": false,
+                "sizeInBytes": 0,
+                "supportOrdering": false
+            },
+            "type": "Microsoft.ServiceBus/namespaces/topics"
+        },
+        {
+            "apiVersion": "2015-08-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces', variables('serviceBusNamespaceName'))]",
+                "[resourceId('Microsoft.ServiceBus/namespaces/topics', variables('serviceBusNamespaceName'), parameters('IncomingDeliveryRequestsTopicName'))]"
+            ],
+            "location": "[resourceGroup().location]",
+            "name": "[concat(variables('serviceBusNamespaceName'), '/', parameters('IncomingDeliveryRequestsTopicName'), '/HighPriority')]",
+            "properties": {
+                "deadLetteringOnFilterEvaluationExceptions": false,
+                "deadLetteringOnMessageExpiration": true,
+                "defaultMessageTimeToLive": "14.00:00:00",
+                "enableBatchedOperations": false,
+                "lockDuration": "00:00:30",
+                "maxDeliveryCount": 10,
+                "requiresSession": false
+            },
+            "resources": [
+                {
+                    "apiVersion": "2015-08-01",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.ServiceBus/namespaces/topics/subscriptions', variables('serviceBusNamespaceName'), parameters('IncomingDeliveryRequestsTopicName'), 'HighPriority')]"
+                    ],
+                    "name": "HighPriority",
+                    "properties": {
+                        "filter": {
+                            "sqlExpression": "Priority='High'"
+                        }
+                    },
+                    "type": "Rules"
+                }
+            ],
+            "type": "Microsoft.ServiceBus/namespaces/topics/subscriptions"
+        },
+        {
+            "apiVersion": "2015-08-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces', variables('serviceBusNamespaceName'))]",
+                "[resourceId('Microsoft.ServiceBus/namespaces/topics', variables('serviceBusNamespaceName'), parameters('IncomingDeliveryRequestsTopicName'))]"
+            ],
+            "location": "[resourceGroup().location]",
+            "name": "[concat(variables('serviceBusNamespaceName'), '/', parameters('IncomingDeliveryRequestsTopicName'), '/Log')]",
+            "properties": {
+                "deadLetteringOnFilterEvaluationExceptions": false,
+                "deadLetteringOnMessageExpiration": true,
+                "defaultMessageTimeToLive": "14.00:00:00",
+                "enableBatchedOperations": false,
+                "lockDuration": "00:00:30",
+                "maxDeliveryCount": 10,
+                "requiresSession": false
+            },
+            "resources": [
+                {
+                    "apiVersion": "2015-08-01",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.ServiceBus/namespaces/topics/subscriptions', variables('serviceBusNamespaceName'), parameters('IncomingDeliveryRequestsTopicName'), 'Log')]"
+                    ],
+                    "name": "LogAll",
+                    "properties": {
+                        "filter": {
+                            "sqlExpression": "1=1"
+                        }
+                    },
+                    "type": "Rules"
+                }
+            ],
+            "type": "Microsoft.ServiceBus/namespaces/topics/subscriptions"
+        },
+        {
+            "apiVersion": "2015-08-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces', variables('serviceBusNamespaceName'))]",
+                "[resourceId('Microsoft.ServiceBus/namespaces/topics', variables('serviceBusNamespaceName'), parameters('IncomingDeliveryRequestsTopicName'))]"
+            ],
+            "location": "[resourceGroup().location]",
+            "name": "[concat(variables('serviceBusNamespaceName'), '/', parameters('IncomingDeliveryRequestsTopicName'), '/LowPriority')]",
+            "properties": {
+                "deadLetteringOnFilterEvaluationExceptions": false,
+                "deadLetteringOnMessageExpiration": true,
+                "defaultMessageTimeToLive": "14.00:00:00",
+                "enableBatchedOperations": false,
+                "lockDuration": "00:00:30",
+                "maxDeliveryCount": 10,
+                "requiresSession": false
+            },
+            "resources": [
+                {
+                    "apiVersion": "2015-08-01",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.ServiceBus/namespaces/topics/subscriptions', variables('serviceBusNamespaceName'), parameters('IncomingDeliveryRequestsTopicName'), 'LowPriority')]"
+                    ],
+                    "name": "LowPriority",
+                    "properties": {
+                        "filter": {
+                            "sqlExpression": "Priority='Low'"
+                        }
+                    },
+                    "type": "Rules"
+                }
+            ],
+            "type": "Microsoft.ServiceBus/namespaces/topics/subscriptions"
+        },
+        {
+            "apiVersion": "2015-08-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces', variables('serviceBusNamespaceName'))]",
+                "[resourceId('Microsoft.ServiceBus/namespaces/topics', variables('serviceBusNamespaceName'), parameters('IncomingDeliveryRequestsTopicName'))]"
+            ],
+            "location": "[resourceGroup().location]",
+            "name": "[concat(variables('serviceBusNamespaceName'), '/', parameters('IncomingDeliveryRequestsTopicName'), '/NormalPriority')]",
+            "properties": {
+                "deadLetteringOnFilterEvaluationExceptions": false,
+                "deadLetteringOnMessageExpiration": true,
+                "defaultMessageTimeToLive": "14.00:00:00",
+                "enableBatchedOperations": false,
+                "lockDuration": "00:00:30",
+                "maxDeliveryCount": 10,
+                "requiresSession": false
+            },
+            "resources": [
+                {
+                    "apiVersion": "2015-08-01",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.ServiceBus/namespaces/topics/subscriptions', variables('serviceBusNamespaceName'), parameters('IncomingDeliveryRequestsTopicName'), 'NormalPriority')]"
+                    ],
+                    "name": "NormalPriority",
+                    "properties": {
+                        "filter": {
+                            "sqlExpression": "Priority='Normal'"
+                        }
+                    },
+                    "type": "Rules"
+                }
+            ],
+            "type": "Microsoft.ServiceBus/namespaces/topics/subscriptions"
+        }
     ]
- }
+}
