@@ -9,7 +9,7 @@
 
 ## Creating a custom ARM template
 
-If you are wanting to create a custom ARM template for your cluster, then you have to choices.
+There are several options when building out a service fabric cluster based on an ARM template.
 
 1. You can acquire this sample template make changes to it. 
 2. Log into the azure portal and use the service fabric portal pages to generate the template for you to customize.
