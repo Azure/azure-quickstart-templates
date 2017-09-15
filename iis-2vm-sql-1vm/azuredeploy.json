@@ -1,7 +1,21 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-  "contentVersion": "1.0.0.0",
+  "contentVersion": "1.0.0.0",  
   "parameters": {
+    "_artifactsLocation": {
+        "type": "string",
+        "metadata": {
+            "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+        },
+        "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/iis-2vm-sql-1vm/"
+    },
+      "_artifactsLocationSasToken": {
+          "type": "securestring",
+          "metadata": {
+              "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+          },
+          "defaultValue": ""
+      },
     "envPrefixName": {
       "type": "string",
       "metadata": {
@@ -102,7 +116,7 @@
     "sqlPublicIP": "[concat(parameters('envPrefixName'), 'SqlPip')]",
     "sqlPublicIPRef": "[resourceId('Microsoft.Network/publicIPAddresses', variables('sqlPublicIP'))]",
     "sqlImagePublisher": "MicrosoftSQLServer",
-    "sqlImageOffer": "SQL2014-WS2012R2",
+    "sqlImageOffer": "SQL2014SP2-WS2012R2",
     "sqlImageSku": "Standard",
     "webSrvName": "[concat(parameters('envPrefixName'), 'webSrv')]",
     "webSrvVMSize": "[parameters('webSrvVMSize')]",
@@ -121,7 +135,7 @@
     "lbPoolID": "[concat(variables('webLbId'),'/backendAddressPools/BackendPool1')]",
     "lbProbeID": "[concat(variables('webLbId'),'/probes/tcpProbe')]",
     "vmExtensionName": "dscExtension",
-    "modulesUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/iis-2vm-sql-1vm/scripts/WebServerConfig.ps1.zip",
+    "modulesUrl": "[concat(parameters('_artifactsLocation'), 'scripts/WebServerConfig.ps1.zip', parameters('_artifactsLocationSasToken'))]",
     "configurationFunction": "WebServerConfig.ps1\\WebServerConfig"
   },
   "resources": [
@@ -361,7 +375,7 @@
           "osDisk": {
             "name": "SQL-Svr-DBOSDisk",
             "vhd": {
-              "uri": "[concat('http://', variables('storageName'), '.blob.core.windows.net/', variables('vhdContainer'), '/', variables('sqlSrvDBOsDiskName'), '.vhd')]"
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageName')), variables('apiVersion')).primaryEndpoints.blob, variables('vhdContainer'), '/',variables('sqlSrvDBOsDiskName'), '.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -570,7 +584,7 @@
           "osDisk": {
             "name": "WebSvrOSDisk",
             "vhd": {
-              "uri": "[concat('http://', variables('storageName'), '.blob.core.windows.net/', variables('vhdContainer'), '/', variables('webSrvOSDiks'), copyindex(), '.vhd')]"
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageName')), variables('apiVersion')).primaryEndpoints.blob, variables('vhdContainer'), '/',variables('webSrvOSDiks'), copyindex(), '.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
