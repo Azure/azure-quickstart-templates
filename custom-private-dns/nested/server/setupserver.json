@@ -1,0 +1,64 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vmList": {
+            "type": "string",
+			"minLength": 1,
+            "metadata": {
+                "description": "List of virtual machines to be configured.  If using multiple VMs, make their names comma separate, e.g. VM01,VM02,VM03."
+            }
+        },
+        "dnsZone": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the forward dnsZone to configure for updates"
+            }
+        },
+        "vnetName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the vnet for which to create the reverse DNS zone"
+            }
+        },
+		"relativeDownloadFolder": {
+			"type": "string", 
+			"metadata": { 
+				"description": "This is the relative location of the folder the script will be downloaded to by the plugin.  This is dictated by the plugin here: https://docs.microsoft.com/en-us/azure/virtual-machines/virtual-machines-windows-extensions-customscript" 
+			}
+		},
+		"assetLocation": { 
+			"type": "string", 
+			"metadata": { 
+				"description": "The location of resources such as templates and scripts that the script is dependent" 
+			}
+		} 
+    },
+    "variables": {
+        "vmListArray" : "[split(replace(parameters('vmList'),' ',''),',')]",
+		"vnetID": "[resourceId('Microsoft.Network/virtualNetworks/', parameters('vnetName'))]"
+    },
+    "resources": [
+            {
+            "comments": "DNS server setup - assumes AD has already been setup",
+            "apiVersion": "2016-08-30",
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(variables('vmListArray')[copyIndex()],'/SetupDnsServer')]",
+            "location": "[resourcegroup().location]",
+            "copy": {
+                "name": "setupDNSCopy",
+                "count": "[length(variables('vmListArray'))]"
+            },
+            "properties": {
+                "publisher": "Microsoft.Compute",
+                "type": "CustomScriptExtension",
+                "typeHandlerVersion": "1.8",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "fileUris": ["[concat(parameters('assetLocation'), '/setupserver.ps1')]"],
+                    "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', parameters('relativeDownloadFolder'), '/setupserver.ps1', ' ', parameters('dnsZone'), ' ', reference(variables('vnetID'), '2016-12-01').addressSpace.addressPrefixes[0])]"
+                }
+            }
+        }
+    ]
+}

@@ -50,39 +50,69 @@ EOF
 variables() {
   cat <<-EOF
 # variables start
-$(cert_variable blobstore_ca_cert     certs/blobstore-certs/server-ca.crt)
-$(cert_variable blobstore_tls_cert certs/blobstore-certs/server.crt)
-$(cert_variable blobstore_private_key  certs/blobstore-certs/server.key)
+$(cert_variable blobstore_ca_cert     certs/blobstore-certs/server-ca.crt)		
+$(cert_variable blobstore_tls_cert certs/blobstore-certs/blobstore-server.crt)		
+$(cert_variable blobstore_private_key  certs/blobstore-certs/blobstore-server.key)		
 
 $(cert_variable consul_ca_cert     certs/consul-certs/server-ca.crt)
-$(cert_variable consul_agent_cert  certs/consul-certs/agent.crt)
-$(cert_variable consul_agent_key   certs/consul-certs/agent.key)
-$(cert_variable consul_server_cert certs/consul-certs/server.crt)
-$(cert_variable consul_server_key  certs/consul-certs/server.key)
+$(cert_variable consul_agent_cert  certs/consul-certs/consul-agent.crt)
+$(cert_variable consul_agent_key   certs/consul-certs/consul-agent.key)
+$(cert_variable consul_server_cert certs/consul-certs/consul-server.crt)
+$(cert_variable consul_server_key  certs/consul-certs/consul-server.key)
 
 $(cert_variable jwt_verification_key certs/uaa-jwt-certs/jwt_verification_key)
 $(cert_variable jwt_signing_key      certs/uaa-jwt-certs/jwt_signing_key)
-$(cert_variable uaa_server_cert      certs/uaa-certs/server.crt)
-$(cert_variable uaa_server_key       certs/uaa-certs/server.key)
+$(cert_variable uaa_server_cert      certs/uaa-certs/uaa-server.crt)
+$(cert_variable uaa_server_key       certs/uaa-certs/uaa-server.key)
 
 $(cert_variable hm9000_ca_cert     certs/hm9000-certs/server-ca.crt)
-$(cert_variable hm9000_client_cert certs/hm9000-certs/agent.crt)
-$(cert_variable hm9000_client_key  certs/hm9000-certs/agent.key)
-$(cert_variable hm9000_server_cert certs/hm9000-certs/server.crt)
-$(cert_variable hm9000_server_key  certs/hm9000-certs/server.key)
+$(cert_variable hm9000_client_cert certs/hm9000-certs/hm9000-agent.crt)
+$(cert_variable hm9000_client_key  certs/hm9000-certs/hm9000-agent.key)
+$(cert_variable hm9000_server_cert certs/hm9000-certs/hm9000-server.crt)
+$(cert_variable hm9000_server_key  certs/hm9000-certs/hm9000-server.key)
+
+$(cert_variable etcd_ca_cert     certs/etcd-certs/server-ca.crt)
+$(cert_variable etcd_client_cert certs/etcd-certs/etcd-agent.crt)
+$(cert_variable etcd_client_key  certs/etcd-certs/etcd-agent.key)
+$(cert_variable etcd_server_cert certs/etcd-certs/etcd-server.crt)
+$(cert_variable etcd_server_key  certs/etcd-certs/etcd-server.key)
+
+$(cert_variable etcd_peer_ca_cert  certs/etcd_peer-certs/server-ca.crt)
+$(cert_variable etcd_peer_cert     certs/etcd_peer-certs/etcd_peer-server.crt)
+$(cert_variable etcd_peer_key      certs/etcd_peer-certs/etcd_peer-server.key)
+
+$(cert_variable loggregator_ca_cert     certs/loggregator-certs/server-ca.crt)
+$(cert_variable doppler_cert            certs/loggregator-certs/doppler-server.crt)
+$(cert_variable doppler_key             certs/loggregator-certs/doppler-server.key)
+$(cert_variable trafficcontroller_cert  certs/loggregator-certs/trafficcontroller-server.crt)
+$(cert_variable trafficcontroller_key   certs/loggregator-certs/trafficcontroller-server.key)
+$(cert_variable metron_cert             certs/loggregator-certs/metron-server.crt)
+$(cert_variable metron_key              certs/loggregator-certs/metron-server.key)
 
 $(cert_variable ha_proxy_ssl_pem certs/haproxy-certs/ha-proxy-ssl-pem)
 
 $(cert_variable diego_ca certs/diego-certs/server-ca.crt)
 
-$(cert_variable bbs_client_cert certs/diego-certs/agent.crt)
-$(cert_variable bbs_client_key  certs/diego-certs/agent.key)
-$(cert_variable bbs_server_cert certs/diego-certs/server.crt)
-$(cert_variable bbs_server_key  certs/diego-certs/server.key)
+$(cert_variable bbs_client_cert certs/diego-certs/bbs-agent.crt)
+$(cert_variable bbs_client_key  certs/diego-certs/bbs-agent.key)
+$(cert_variable bbs_server_cert certs/diego-certs/bbs-server.crt)
+$(cert_variable bbs_server_key  certs/diego-certs/bbs-server.key)
+
+$(cert_variable rep_client_cert certs/diego-certs/rep-agent.crt)
+$(cert_variable rep_client_key  certs/diego-certs/rep-agent.key)
+$(cert_variable rep_server_cert certs/diego-certs/rep-server.crt)
+$(cert_variable rep_server_key  certs/diego-certs/rep-server.key)
+
+$(cert_variable auctioneer_client_cert certs/diego-certs/auctioneer-agent.crt)
+$(cert_variable auctioneer_client_key  certs/diego-certs/auctioneer-agent.key)
+$(cert_variable auctioneer_server_cert certs/diego-certs/auctioneer-server.crt)
+$(cert_variable auctioneer_server_key  certs/diego-certs/auctioneer-server.key)
 
 $(cert_variable ssh_proxy_host_key       certs/ssh-proxy-certs/ssh-proxy-host-key.pem)
 $(variable      host_key_fingerprint certs/ssh-proxy-certs/ssh-proxy-host-key-fingerprint)
 
+$(cert_variable saml_key   certs/saml-certs/server-ca.key)
+$(cert_variable saml_cert  certs/saml-certs/server-ca.crt)
 # variables end
 
 EOF
@@ -93,11 +123,26 @@ random_secret() {
 }
 
 certstrap_generate_certs() {
+  depot_path=""
+  ca_cn=""
+  component_name=""
+  server_cn=""
+  domain_with_argument=""
+  agent_cn=""
+  agent_cert_name=""
   while [[ $# -gt 1 ]]; do
     key="$1"
     case $key in
       --depot_path)
       depot_path="$2"
+      shift
+      ;;
+      --ca_cn)
+      ca_cn="$2"
+      shift
+      ;;
+      --component_name)
+      component_name="$2"
       shift
       ;;
       --server_cn)
@@ -123,24 +168,30 @@ certstrap_generate_certs() {
   mkdir -p ${depot_path}
 
   # CA to generate client certs
-  certstrap --depot-path ${depot_path} init --passphrase '' --common-name cert-authority
-  mv -f ${depot_path}/cert-authority.crt ${depot_path}/server-ca.crt
-  mv -f ${depot_path}/cert-authority.key ${depot_path}/server-ca.key
+  if [ -f ${depot_path}/server-ca.crt ]; then
+    echo "CA existed on ${depot_path}, will not create CA"
+  else
+    certstrap --depot-path ${depot_path} init --passphrase '' --common-name ${ca_cn}
+    mv -f ${depot_path}/${ca_cn}.crt ${depot_path}/server-ca.crt
+    mv -f ${depot_path}/${ca_cn}.key ${depot_path}/server-ca.key
+  fi
 
   # Server cert
-  certstrap --depot-path ${depot_path} request-cert --passphrase '' --common-name "${server_cn}" ${domain_with_argument}
-  certstrap --depot-path ${depot_path} sign $server_cn --CA server-ca
-  mv -f ${depot_path}/${server_cn}.key ${depot_path}/server.key
-  mv -f ${depot_path}/${server_cn}.csr ${depot_path}/server.csr
-  mv -f ${depot_path}/${server_cn}.crt ${depot_path}/server.crt
+  if [ -n "${server_cn}" ]; then
+    certstrap --depot-path ${depot_path} request-cert --passphrase '' --common-name "${server_cn}" ${domain_with_argument}
+    certstrap --depot-path ${depot_path} sign $server_cn --CA server-ca
+    mv -f ${depot_path}/${server_cn}.key ${depot_path}/${component_name}-server.key
+    mv -f ${depot_path}/${server_cn}.csr ${depot_path}/${component_name}-server.csr
+    mv -f ${depot_path}/${server_cn}.crt ${depot_path}/${component_name}-server.crt
+  fi
 
   # Agent cert
   if [ -n "${agent_cn}" ]; then
     certstrap --depot-path ${depot_path} request-cert --passphrase '' --common-name "${agent_cn}"
     certstrap --depot-path ${depot_path} sign ${agent_cert_name} --CA server-ca
-    mv -f ${depot_path}/${agent_cert_name}.key ${depot_path}/agent.key
-    mv -f ${depot_path}/${agent_cert_name}.csr ${depot_path}/agent.csr
-    mv -f ${depot_path}/${agent_cert_name}.crt ${depot_path}/agent.crt
+    mv -f ${depot_path}/${agent_cert_name}.key ${depot_path}/${component_name}-agent.key
+    mv -f ${depot_path}/${agent_cert_name}.csr ${depot_path}/${component_name}-agent.csr
+    mv -f ${depot_path}/${agent_cert_name}.crt ${depot_path}/${component_name}-agent.crt
   fi
 }
 
@@ -174,11 +225,19 @@ popd
 # generate certs
 mkdir -p certs
 pushd certs
-  certstrap_generate_certs --depot_path "consul-certs" --server_cn "server.dc1.cf.internal" --agent_cn "consul agent"
-  certstrap_generate_certs --depot_path "hm9000-certs" --server_cn "listener-hm9000.service.cf.internal" --domain '*.listener-hm9000.service.cf.internal,listener-hm9000.service.cf.internal' --agent_cn "hm9000_client"
-  certstrap_generate_certs --depot_path "diego-certs" --server_cn "bbs.service.cf.internal" --domain '*.bbs.service.cf.internal,bbs.service.cf.internal' --agent_cn "bbs client"
-  certstrap_generate_certs --depot_path "uaa-certs" --server_cn "uaa.service.cf.internal"
-  certstrap_generate_certs --depot_path "blobstore-certs" --server_cn "blobstore.service.cf.internal"
+  certstrap_generate_certs --depot_path "consul-certs" --ca_cn "consulCA" --component_name "consul" --server_cn "server.dc1.cf.internal" --agent_cn "consul agent"
+  certstrap_generate_certs --depot_path "hm9000-certs" --ca_cn "hm9000CA" --component_name "hm9000" --server_cn "listener-hm9000.service.cf.internal" --domain '*.listener-hm9000.service.cf.internal,listener-hm9000.service.cf.internal' --agent_cn "hm9000_client"
+  certstrap_generate_certs --depot_path "etcd-certs" --ca_cn "etcdCA" --component_name "etcd" --server_cn "cf-etcd.service.cf.internal" --domain '*.cf-etcd.service.cf.internal,cf-etcd.service.cf.internal' --agent_cn "clientName"
+  certstrap_generate_certs --depot_path "etcd_peer-certs" --ca_cn "peerCA" --component_name "etcd_peer" --server_cn "cf-etcd.service.cf.internal" --domain '*.cf-etcd.service.cf.internal,cf-etcd.service.cf.internal'
+  certstrap_generate_certs --depot_path "loggregator-certs" --ca_cn "loggregatorCA" --component_name "doppler" --server_cn "doppler"
+  certstrap_generate_certs --depot_path "loggregator-certs" --ca_cn "loggregatorCA" --component_name "trafficcontroller" --server_cn "trafficcontroller"
+  certstrap_generate_certs --depot_path "loggregator-certs" --ca_cn "loggregatorCA" --component_name "metron" --server_cn "metron"
+  certstrap_generate_certs --depot_path "diego-certs" --ca_cn "diegoCA" --component_name "bbs" --server_cn "bbs.service.cf.internal" --domain '*.bbs.service.cf.internal,bbs.service.cf.internal' --agent_cn "bbs client"
+  certstrap_generate_certs --depot_path "diego-certs" --ca_cn "diegoCA" --component_name "rep" --server_cn "cell.service.cf.internal" --domain '*.cell.service.cf.internal,cell.service.cf.internal' --agent_cn "rep client"
+  certstrap_generate_certs --depot_path "diego-certs" --ca_cn "diegoCA" --component_name "auctioneer" --server_cn "auctioneer.service.cf.internal" --domain 'auctioneer.service.cf.internal' --agent_cn "auctioneer client"
+  certstrap_generate_certs --depot_path "uaa-certs" --ca_cn "cert-authority" --component_name "uaa" --server_cn "uaa.service.cf.internal"
+  certstrap_generate_certs --depot_path "blobstore-certs" --ca_cn "cert-authority" --component_name "blobstore" --server_cn "blobstore.service.cf.internal"
+  certstrap_generate_certs --depot_path "saml-certs" --ca_cn "uaa_login_saml" --component_name "saml"
 
   echo -e "=== GENERATING JWT KEY ==="
   cert_path="uaa-jwt-certs"
@@ -229,19 +288,45 @@ replace_certs_list="REPLACE_WITH_BLOBSTORE_CA_CERT \
                     REPLACE_WITH_HOST_KEY_FINGERPRINT \
                     REPLACE_WITH_UAA_SERVER_CERT \
                     REPLACE_WITH_UAA_SERVER_KEY \
+                    REPLACE_WITH_ETCD_CA_CERT \
+                    REPLACE_WITH_ETCD_SERVER_CERT \
+                    REPLACE_WITH_ETCD_SERVER_KEY \
+                    REPLACE_WITH_ETCD_CLIENT_CERT \
+                    REPLACE_WITH_ETCD_CLIENT_KEY \
+                    REPLACE_WITH_ETCD_PEER_CA_CERT \
+                    REPLACE_WITH_ETCD_PEER_CERT \
+                    REPLACE_WITH_ETCD_PEER_KEY \
+                    REPLACE_WITH_LOGGREGATOR_CA_CERT \
+                    REPLACE_WITH_DOPPLER_CERT \
+                    REPLACE_WITH_DOPPLER_KEY \
+                    REPLACE_WITH_TRAFFICCONTROLLER_CERT \
+                    REPLACE_WITH_TRAFFICCONTROLLER_KEY \
+                    REPLACE_WITH_METRON_CERT \
+                    REPLACE_WITH_METRON_KEY \
 
                     REPLACE_WITH_DIEGO_CA \
                     REPLACE_WITH_BBS_CLIENT_CERT \
                     REPLACE_WITH_BBS_CLIENT_KEY \
                     REPLACE_WITH_BBS_SERVER_CERT \
                     REPLACE_WITH_BBS_SERVER_KEY \
-                    REPLACE_WITH_SSH_PROXY_HOST_KEY"
+                    REPLACE_WITH_REP_CLIENT_CERT \
+                    REPLACE_WITH_REP_CLIENT_KEY \
+                    REPLACE_WITH_REP_SERVER_CERT \
+                    REPLACE_WITH_REP_SERVER_KEY \
+                    REPLACE_WITH_AUCTIONEER_CLIENT_CERT \
+                    REPLACE_WITH_AUCTIONEER_CLIENT_KEY \
+                    REPLACE_WITH_AUCTIONEER_SERVER_CERT \
+                    REPLACE_WITH_AUCTIONEER_SERVER_KEY \
+                    REPLACE_WITH_SSH_PROXY_HOST_KEY \
+                    REPLACE_WITH_SAML_KEY \
+                    REPLACE_WITH_SAML_CERT"
 
 for cert_name in ${replace_certs_list}; do
   cert_variable=$(echo ${cert_name:13} | tr '[A-Z]' '[a-z]')
   replace_variable ${multiple_template_temp} ${cert_name} ${cert_variable}
 done
 
+# Replace cf secrets
 replace_secrets_list="REPLACE_WITH_STAGING_UPLOAD_PASSWORD \
                       REPLACE_WITH_BULK_API_PASSWORD \
                       REPLACE_WITH_DB_ENCRYPTION_KEY \
@@ -276,6 +361,14 @@ done
 
 cp ${single_template_temp} ${SINGLE_TEMPLATE}
 cp ${multiple_template_temp} ${MULTIPLE_TEMPLATE}
+
+# replace bosh certs
+echo -e "=== GENERATING DIRECTOR CERT AND KEY ==="
+openssl req -nodes -new -newkey rsa:2048 -out director.csr -keyout director.key -subj '/O=Bosh/CN=*'
+openssl x509 -req -days 3650 -in director.csr -signkey director.key -out director.crt
+ruby -r yaml -e 'data = YAML::load(STDIN.read); data["jobs"][0]["properties"]["director"]["ssl"] = {"cert" => File.read("director.crt").strip, "key" => File.read("director.key").strip}; puts data.to_yaml' \
+  < "${BOSH_TEMPLATE}" > "${BOSH_TEMPLATE}.tmp"
+mv "${BOSH_TEMPLATE}.tmp" "${BOSH_TEMPLATE}"
 
 # Replace bosh secrets
 replace_bosh_secrets_list="REPLACE_WITH_NATS_PASSWORD \

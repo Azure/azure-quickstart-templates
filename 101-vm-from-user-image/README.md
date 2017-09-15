@@ -7,9 +7,9 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-> Prerequisite - The Storage Account with the User Image VHD should already exist
+> Prerequisite - The generalized image VHD should exist, as well as a Storage Account for boot diagnostics
 
-This template allows you to create a Virtual Machines from a User image. This template also deploys a Virtual Network, Public IP addresses and a Network Interface.
+This template allows you to create a Virtual Machine from an unmanaged User image vhd. This template also deploys a Virtual Network, Public IP addresses and a Network Interface.
 
 If you are looking to accomplish the above scenario through PowerShell instead of a template, you can use a PowerShell script like below
 

@@ -1,7 +1,8 @@
 ﻿#Requires -Version 3.0
 #Requires -Module AzureRM.Resources
 #Requires -Module Azure.Storage
-#Requires -Module AzureRM.Storage
+#Requires -Module @{ModuleName="AzureRm.Profile";ModuleVersion="3.0"}
+
 
 Param(
     [string] [Parameter(Mandatory=$true)] $ArtifactStagingDirectory,
@@ -13,28 +14,29 @@ Param(
     [string] $TemplateFile = $ArtifactStagingDirectory + '\azuredeploy.json',
     [string] $TemplateParametersFile = $ArtifactStagingDirectory + '.\azuredeploy.parameters.json',
     [string] $DSCSourceFolder = $ArtifactStagingDirectory + '.\DSC',
-    [switch] $ValidateOnly
-#    [string] $DebugOptions = "None"
+    [switch] $ValidateOnly,
+    [string] $DebugOptions = "None"
 )
-
-Import-Module Azure -ErrorAction SilentlyContinue
 
 try {
     [Microsoft.Azure.Common.Authentication.AzureSession]::ClientFactory.AddUserAgent("VSAzureTools-$UI$($host.name)".replace(" ","_"), "AzureRMSamples")
 } catch { }
 
+$ErrorActionPreference = 'Stop'
 Set-StrictMode -Version 3
 
-$OptionalParameters = New-Object -TypeName Hashtable
-<#
-$v = (Get-Module -Name AzureRM.Resources).Version
-If ($v.Major -eq 1 -and $v.Minor -eq 2){
-    Write-Warning "DeploymentDebugLogLevel is not available in this version of Azure PowerShell"
+function Format-ValidationOutput {
+    param ($ValidationOutput, [int] $Depth = 0)
+    Set-StrictMode -Off
+    return @($ValidationOutput | Where-Object { $_ -ne $null } | ForEach-Object { @('  ' * $Depth + ': ' + $_.Message) + @(Format-ValidationOutput @($_.Details) ($Depth + 1)) })
 }
-else{
+
+$OptionalParameters = New-Object -TypeName Hashtable
+
+if (!$ValidateOnly) {
     $OptionalParameters.Add('DeploymentDebugLogLevel', $DebugOptions)
 }
-#>
+
 $TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $TemplateFile))
 $TemplateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $TemplateParametersFile))
 
@@ -43,83 +45,55 @@ if ($UploadArtifacts) {
     $ArtifactStagingDirectory = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $ArtifactStagingDirectory))
     $DSCSourceFolder = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $DSCSourceFolder))
 
-    Set-Variable ArtifactsLocationName '_artifactsLocation' -Option ReadOnly -Force
-    Set-Variable ArtifactsLocationSasTokenName '_artifactsLocationSasToken' -Option ReadOnly -Force
-	Set-Variable ArtifactsLocationResourceIdName '_artifactsLocationResourceId' -Option ReadOnly -Force
-
-    $TemplateFileContent = Get-Content $TemplateFile -Raw | ConvertFrom-Json
-    $TemplateParametersFileContent = Get-Content $TemplateParametersFile -Raw | ConvertFrom-Json
-    #$TemplateParametersFileContent = $TemplateFileContent | Get-Member -Type NoteProperty | Where-Object {$_.Name -eq "parameters"}
-    if (Get-Member -InputObject $TemplateParametersFileContent -Name parameters) {
-        $TemplateParameters= $TemplateParametersFileContent.parameters
+    # Parse the parameter file and update the values of artifacts location and artifacts location SAS token if they are present
+    $JsonParameters = Get-Content $TemplateParametersFile -Raw | ConvertFrom-Json
+    if (($JsonParameters | Get-Member -Type NoteProperty 'parameters') -ne $null) {
+        $JsonParameters = $JsonParameters.parameters
     }
-    else {
-        $TemplateParameters = $TemplateParametersFileContent
+    $ArtifactsLocationName = '_artifactsLocation'
+    $ArtifactsLocationSasTokenName = '_artifactsLocationSasToken'
+    $OptionalParameters[$ArtifactsLocationName] = $JsonParameters | Select-Object -Expand $ArtifactsLocationName -ErrorAction Ignore | Select-Object -Expand 'value' -ErrorAction Ignore
+    $OptionalParameters[$ArtifactsLocationSasTokenName] = $JsonParameters | Select-Object -Expand $ArtifactsLocationSasTokenName -ErrorAction Ignore | Select-Object -Expand 'value' -ErrorAction Ignore
+
+    # Create DSC configuration archive
+    if (Test-Path $DSCSourceFolder) {
+        $DSCSourceFilePaths = @(Get-ChildItem $DSCSourceFolder -File -Filter '*.ps1' | ForEach-Object -Process {$_.FullName})
+        foreach ($DSCSourceFilePath in $DSCSourceFilePaths) {
+            $DSCArchiveFilePath = $DSCSourceFilePath.Substring(0, $DSCSourceFilePath.Length - 4) + '.zip'
+            Publish-AzureRmVMDscConfiguration $DSCSourceFilePath -OutputArchivePath $DSCArchiveFilePath -Force -Verbose
+        }
     }
 
     # Create a storage account name if none was provided
-    if($StorageAccountName -eq "") {
-        $subscriptionId = ((Get-AzureRmContext).Subscription.SubscriptionId).Replace('-', '').substring(0, 19)
-        $StorageAccountName = "stage$subscriptionId"
+    if ($StorageAccountName -eq '') {
+        $StorageAccountName = 'stage' + ((Get-AzureRmContext).Subscription.Id).Replace('-', '').substring(0, 19)
     }
 
     $StorageAccount = (Get-AzureRmStorageAccount | Where-Object{$_.StorageAccountName -eq $StorageAccountName})
 
     # Create the storage account if it doesn't already exist
-    if($StorageAccount -eq $null){
-        $StorageResourceGroupName = "ARM_Deploy_Staging"
+    if ($StorageAccount -eq $null) {
+        $StorageResourceGroupName = 'ARM_Deploy_Staging'
         New-AzureRmResourceGroup -Location "$ResourceGroupLocation" -Name $StorageResourceGroupName -Force
         $StorageAccount = New-AzureRmStorageAccount -StorageAccountName $StorageAccountName -Type 'Standard_LRS' -ResourceGroupName $StorageResourceGroupName -Location "$ResourceGroupLocation"
     }
 
-    $StorageAccountContext = $storageAccount.Context
-    
-    if (Get-Member -InputObject $TemplateFileContent.parameters -Name _artifactsLocation) {
-        if (Get-Member -InputObject $TemplateParameters -Name _artifactsLocation) {
-            $OptionalParameters.Add($ArtifactsLocationName, $TemplateParameters._artifactsLocation.value)
-        }                
-        else {
-            $OptionalParameters.Add($ArtifactsLocationName, $StorageAccountContext.BlobEndPoint + $StorageContainerName)
-        }
-    }
-
-    if (Get-Member -InputObject $TemplateFileContent.parameters -Name _artifactsLocationResourceId) {
-        if (Get-Member -InputObject $TemplateParameters -Name _artifactsLocationResourceId) {
-            $OptionalParameters.Add($artifactsLocationResourceIdName, $TemplateParameters._artifactsLocationResourceId.value)
-        }
-        else {
-            $OptionalParameters.Add($artifactsLocationResourceIdName, $storageAccount.Id)
-        }
-    }
-    
-    # Create DSC configuration archive
-    if (Test-Path $DSCSourceFolder) {
-        $DSCFiles = Get-ChildItem $DSCSourceFolder -File -Filter "*.ps1" | ForEach-Object -Process {$_.FullName}
-        foreach ($DSCFile in $DSCFiles) {
-            $DSCZipFile = $DSCFile.Replace(".ps1",".zip")
-            Publish-AzureVMDscConfiguration -ConfigurationPath $DSCFile -ConfigurationArchivePath $DSCZipFile -Force
-        }
+    # Generate the value for artifacts location if it is not provided in the parameter file
+    if ($OptionalParameters[$ArtifactsLocationName] -eq $null) {
+        $OptionalParameters[$ArtifactsLocationName] = $StorageAccount.Context.BlobEndPoint + $StorageContainerName
     }
 
     # Copy files from the local storage staging location to the storage account container
-    New-AzureStorageContainer -Name $StorageContainerName -Context $StorageAccountContext -Permission Container -ErrorAction SilentlyContinue *>&1
-    
+    New-AzureStorageContainer -Name $StorageContainerName -Context $StorageAccount.Context -ErrorAction SilentlyContinue *>&1
+
     $ArtifactFilePaths = Get-ChildItem $ArtifactStagingDirectory -Recurse -File | ForEach-Object -Process {$_.FullName}
     foreach ($SourcePath in $ArtifactFilePaths) {
-        $BlobName = $SourcePath.Substring($ArtifactStagingDirectory.length + 1)
-        Set-AzureStorageBlobContent -File $SourcePath -Blob $BlobName -Container $StorageContainerName -Context $StorageAccountContext -Force
+       Set-AzureStorageBlobContent -File $SourcePath -Blob $SourcePath.Substring($ArtifactStagingDirectory.length + 1) -Container $StorageContainerName -Context $StorageAccount.Context -Force
     }
-
-    # Generate the value for artifacts location SAS token if it is not provided in the parameter file
-    if (Get-Member -InputObject $TemplateFileContent.parameters -Name _artifactsLocationSasToken) {
-        if (Get-Member -InputObject $TemplateParameters -Name _artifactsLocationSasToken) {
-            $OptionalParameters.Add($ArtifactsLocationSasTokenName, $TemplateParameters._artifactsLocationSasToken.value)
-        }
-        else {
-            $ArtifactsLocationSasToken = New-AzureStorageContainerSASToken -Container $StorageContainerName -Context $StorageAccountContext -Permission r -ExpiryTime (Get-Date).AddHours(4)
-            $ArtifactsLocationSasToken = ConvertTo-SecureString $ArtifactsLocationSasToken -AsPlainText -Force
-            $OptionalParameters.Add($ArtifactsLocationSasTokenName, $ArtifactsLocationSasToken)
-        }  
+    # Generate a 4 hour SAS token for the artifacts location if one was not provided in the parameters file
+    if ($OptionalParameters[$ArtifactsLocationSasTokenName] -eq $null) {
+        $OptionalParameters[$ArtifactsLocationSasTokenName] = ConvertTo-SecureString -AsPlainText -Force `
+            (New-AzureStorageContainerSASToken -Container $StorageContainerName -Context $StorageAccount.Context -Permission r -ExpiryTime (Get-Date).AddHours(4))
     }
 }
 
@@ -127,11 +101,16 @@ if ($UploadArtifacts) {
 New-AzureRmResourceGroup -Name $ResourceGroupName -Location $ResourceGroupLocation -Verbose -Force -ErrorAction Stop 
 
 if ($ValidateOnly) {
-    Test-AzureRmResourceGroupDeployment -ResourceGroupName $ResourceGroupName `
-                                        -TemplateFile $TemplateFile `
-                                        -TemplateParameterFile $TemplateParametersFile `
-                                        @OptionalParameters `
-                                        -Verbose
+    $ErrorMessages = Format-ValidationOutput (Test-AzureRmResourceGroupDeployment -ResourceGroupName $ResourceGroupName `
+                                                                                  -TemplateFile $TemplateFile `
+                                                                                  -TemplateParameterFile $TemplateParametersFile `
+                                                                                  @OptionalParameters)
+    if ($ErrorMessages) {
+        Write-Output '', 'Validation returned the following errors:', @($ErrorMessages), '', 'Template is invalid.'
+    }
+    else {
+        Write-Output '', 'Template is valid.'
+    }
 }
 else {
     New-AzureRmResourceGroupDeployment -Name ((Get-ChildItem $TemplateFile).BaseName + '-' + ((Get-Date).ToUniversalTime()).ToString('MMdd-HHmm')) `
@@ -139,5 +118,9 @@ else {
                                        -TemplateFile $TemplateFile `
                                        -TemplateParameterFile $TemplateParametersFile `
                                        @OptionalParameters `
-                                       -Force -Verbose 
+                                       -Force -Verbose `
+                                       -ErrorVariable ErrorMessages
+    if ($ErrorMessages) {
+        Write-Output '', 'Template deployment returned the following errors:', @(@($ErrorMessages) | ForEach-Object { $_.Exception.Message.TrimEnd("`r`n") })
+    }
 }

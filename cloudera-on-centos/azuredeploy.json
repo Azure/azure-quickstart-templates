@@ -2,7 +2,7 @@
   "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
   "contentVersion": "1.0.0.1",
   "parameters": {
-    "adminUserName": {
+    "adminUsername": {
       "type": "string",
       "defaultValue": "azureuser",
       "metadata": {
@@ -28,10 +28,10 @@
         "description": "password for the Cloudera Manager (A mix of upper and lower-case characters, digits and symbols)"
       }
     },
-    "storageAccountPrefix": {
+    "storageAccountSuffix": {
       "type": "string",
       "metadata": {
-        "description": "Unique namespace for the Storage Account where the VM disks will be placed (alphahumeric characters only)"
+        "description": "A label between 3 and 11 alphanumeric characters, inclusive. The final Storage Account name will be [13 random characters][suffix]. Only new storage accounts are supported."
       }
     },
     "dnsNamePrefix": {
@@ -137,7 +137,16 @@
       "defaultValue": "Standard_DS14",
       "metadata": {
         "description": "The size of the VMs deployed in the cluster (defaults to Standard_DS14)"
-      }
+      },
+      "allowedValues": ["Standard_DS14", "Standard_DS13", "Standard_DS14_V2", "Standard_DS13_V2"]
+    },
+    "vmImage": {
+      "type": "string",
+      "defaultValue": "ClouderaCentOS6_7",
+      "metadata": {
+        "description": "The OS VM Image (defaults to ClouderaCentOS6_7)"
+      },
+      "allowedValues": ["ClouderaCentOS6_7", "ClouderaCentOS6_8"]
     },
     "company": {
       "type": "string",
@@ -226,20 +235,21 @@
     "installCDH":"True",
     "addressPrefix":"[parameters('addressPrefix')]",
     "subnetPrefix":"[parameters('subnetPrefix')]",
-    "scriptsUri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/cloudera-on-centos",
+    "scriptsUriDescription": "For Command Line Deployment, scriptsUri must point to an Azure-accessible location like: https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/cloudera-on-centos",
+    "scriptsUri": "[uri(deployment().properties.templateLink.uri, '.')]",
     "share-resourcesUri": "[concat(variables('scriptsUri'), '/shared-resources-', parameters('vnetNewOrExisting'), '-vnet.json')]",
-    "data-nodeUri":"[concat(variables('scriptsUri'), '/data-node-', toLower(subString(parameters('vmSize'), 9, 4)), '.json')]",
+    "data-nodeUri":"[concat(variables('scriptsUri'), '/data-node-', toLower(subString(parameters('vmSize'), 0, 13)), '.json')]",
     "sa": "[parameters('masterNodeIPAddress')]",
     "ipOctet01": "[concat(split(variables('sa'), '.')[0], '.', split(variables('sa'), '.')[1], '.')]",
     "ipOctet2": "[int(split(variables('sa'), '.')[2])]",
     "ipOctet3": "[int(split(variables('sa'), '.')[3])]",
     "datanodeIpOctet3":"[add(int(split(variables('sa'), '.')[3]), parameters('dataNodeIPOffSetFromMaster'))]",
     "masterStorageAccount": {
-      "prefix": "[parameters('storageAccountPrefix')]",
+      "prefix": "[parameters('storageAccountSuffix')]",
       "type": "[parameters('masterStorageAccountType')]"
     },
     "workerStorageAccount": {
-      "prefix": "[parameters('storageAccountPrefix')]",
+      "prefix": "[parameters('storageAccountSuffix')]",
       "type": "[parameters('workerStorageAccountType')]"
     },
     "clusterTshirtSizeEval": {
@@ -253,9 +263,47 @@
       "highAvailability": "true"
     },
     "clusterSpec": "[variables(concat('clusterTshirtSize', parameters('tshirtSize')))]",
+    "vmImageInfo": {
+      "ClouderaCentOS6_7": {
+        "plan": {
+          "name": "cloudera-centos-6",
+          "publisher": "cloudera",
+          "product": "cloudera-centos-6"
+        },
+        "imageReference": {
+          "publisher": "cloudera",
+          "offer": "cloudera-centos-6",
+          "sku": "cloudera-centos-6",
+          "version": "latest"
+          }
+      },
+      "ClouderaCentOS6_8": {
+        "plan": {
+          "name": "6_8",
+          "publisher": "cloudera",
+          "product": "cloudera-centos-os"
+        },
+        "imageReference": {
+          "publisher": "cloudera",
+          "offer": "cloudera-centos-os",
+          "sku": "6_8",
+          "version": "latest"
+        }
+      },
+      "ClouderaCentOS6_7Germany": {
+        "plan": null,
+        "imageReference": {
+          "publisher": "cloudera",
+          "offer": "cloudera-centos-os",
+          "sku": "6_7",
+          "version": "latest"
+        }
+      }
+    },
     "vmSpec": {
       "vmSize": "[parameters('vmSize')]",
-      "adminUserName": "[parameters('adminUserName')]",
+      "imageInfo": "[variables('vmImageInfo')[parameters('vmImage')]]",
+      "adminUsername": "[parameters('adminUsername')]",
       "adminPassword": "[parameters('adminPassword')]",
       "masterNodeASName": "[concat(parameters('dnsNamePrefix'), '-mnAS')]",
       "dataNodeASName": "[concat(parameters('dnsNamePrefix'), '-dnAS')]"
@@ -365,6 +413,9 @@
         "parameters": {
           "vnetID":{
             "value":"[variables('VNetId')]"
+          },
+          "templateAPIVersion":{
+            "value":"[variables('templateAPIVersion')]"
           },
           "resourceAPIVersion":{
             "value":"[variables('resourceAPIVersion')]"

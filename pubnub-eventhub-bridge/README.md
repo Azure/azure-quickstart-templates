@@ -73,7 +73,7 @@ The Egress Event Hub should serve as an "Output" from Azure Cloud services of yo
 
 5. For *Location*, select West US.
 
-	**NOTE:** Some Azure services rely on all participating Azure components being located in the same region.  The way this template is currently coded, it's required to use West US for all location variables is mandatory.  If this is showstopping for you, please fork the repo, and edit any hardcoded "West US" values in the template to the locations you desire, and then be sure the form values match when deploying.
+	**NOTE:** Some Azure services rely on all participating Azure components being located in the same region.  The way this template is currently coded, it's required to use West US for all location variables.  If this is showstopping for you, please fork the repo, and edit any hardcoded "West US" values in the template to the locations you desire, and then be sure the form values match when deploying.
 	
 6. For the *Event Hub Namespace*, create a unique Namespace.  It's suggested to replace the "pn-" prefix with your own unique prefix, such as your company name, and add a "-suffix" at the end, where the suffix is also unique.  
 	
@@ -83,13 +83,13 @@ The Egress Event Hub should serve as an "Output" from Azure Cloud services of yo
 
 8. For the *Azure Datacenter Location*, enter westus.
 
-	**NOTE:** Some Azure services rely on all participating Azure components being located in the same region.  The way this template is currently coded, it's required to use West US for all location variables is mandatory.  If this is showstopping for you, please fork the repo, and edit any hardcoded "West US" values in the template to the locations you desire, and then be sure the form values match when deploying.
+	**NOTE:** Some Azure services rely on all participating Azure components being located in the same region.  The way this template is currently coded, it's required to use West US for all location variables.  If this is showstopping for you, please fork the repo, and edit any hardcoded "West US" values in the template to the locations you desire, and then be sure the form values match when deploying.
 	
 9. For the *PubNub Ingress Channel*, enter a channel name that the PubNub Subscriber should listen on.  If you wish for the subscriber to listen on multiple channels, enter a CSV list of channels, with no spaces.
 
 10. For the *PubNub Egress Channel*, enter a channel name that the PubNub Publisher should publish back out on.
 
-11. For the *PubNub Announce Channel*, enter a channel name that the PubNub Deployment script will alert on when the deployment has completed.  If you don't intend on using this, just set this value to all caps, case-sensitive *DISABLED*.  See below for more information on using the Provisioning Listener and the Announce channel.
+11. For the *PubNub Announce Channel*, enter a channel name that the PubNub Deployment script will alert on when the deployment has completed.  If you don't intend on using this, just set this value to lowercase, case-sensitive *disabled*.  See below for more information on using the Provisioning Listener and the Announce channel.
 
 12. For the *PubNub Publish Key*, enter the PubNub Publish API Key that the PubNub component should publish against.
 
@@ -97,7 +97,7 @@ The Egress Event Hub should serve as an "Output" from Azure Cloud services of yo
 
 14. For the *Azure Service Plan*, enter USWestBasic.
 
-	**NOTE:** Some Azure services rely on all participating Azure components being located in the same region.  The way this template is currently coded, it's required to use West US for all location variables is mandatory.  If this is showstopping for you, please fork the repo, and edit any hardcoded "West US" values in the template to the locations you desire, and then be sure the form values match when deploying.
+	**NOTE:** Some Azure services rely on all participating Azure components being located in the same region.  The way this template is currently coded, it's required to use West US for all location variables.  If this is showstopping for you, please fork the repo, and edit any hardcoded "West US" values in the template to the locations you desire, and then be sure the form values match when deploying.
 	
 15. For the *Azure Ingress Event Hub Name*, enter the name you wish to give the Ingress (Input) Event Hub.  You can accept the default, as the Event Hub name needs only to be unique within a unique Event Hub Namespace.
 
@@ -110,6 +110,16 @@ The Egress Event Hub should serve as an "Output" from Azure Cloud services of yo
 19. Check the *I agree to the terms and conditions stated above* checkbox.
 
 20. Click *Purchase*.
+
+## Throughput Limits
+The ARM template and use case discussed in this tutorial serve to provide a “general purpose” PubNub <-> Azure bridging architecture.
+The ARM template defines a **Basic 1: Small** service plan, with a
+**1 Throughput Unit** Event Hub configuration.
+
+Its an economical setup that is great to explore Azure and PubNub with, but definitely not a one-size-fits all for production.
+**The default configuration should be able to handle one Megabyte per second OR one thousand messages per second**, however, there are many factors which may increase or decrease these default limits based on your specific traffic patterns, Azure service plan, use case, and overall system complexity.
+
+For this reason, if you plan to implement this bridge for an enterprise / production environment, please contact us at support@pubnub.com so we may review your particular use case and assist with any fine tuning necessary on the PubNub and/or Microsoft side.  With proper architectural review, the PubNub and Microsoft components can be scaled to handle and process as much load as your use case demands.
 
 ## Troubleshooting
 
@@ -232,7 +242,7 @@ Although Azure may state the deployment has completed, there may be a delay in t
 
 
 ### Location
-Some Azure services rely on all participating Azure components being located in the same region.  The way this template is currently coded, it's required to use West US for all location variables is mandatory.  If this is showstopping for you, please fork the repo, and edit any hardcoded "West US" values in the template to the locations you desire, and then be sure the form values match when deploying.
+Some Azure services rely on all participating Azure components being located in the same region.  The way this template is currently coded, it's required to use West US for all location variables.  If this is showstopping for you, please fork the repo, and edit any hardcoded "West US" values in the template to the locations you desire, and then be sure the form values match when deploying.
 
 If you have trouble figuring this out for a project, please contact us at support@pubnub.com, we'd be happy to assist.
 

@@ -12,7 +12,8 @@
       "type": "string",
       "allowedValues": [
         "Basic",
-        "Standard"
+        "Standard",
+        "Premium"
       ],
       "defaultValue": "Standard",
       "metadata": {
@@ -24,7 +25,11 @@
       "defaultValue": "C",
       "metadata": {
         "description": "The family for the sku."
-      }
+      },
+      "allowedValues": [
+        "C",
+        "P"
+      ]
     },
     "redisCacheCapacity": {
       "type": "int",
@@ -42,27 +47,25 @@
         "description": "The size of the new Azure Redis Cache instance. "
       }
     },
-    "existingDiagnosticsStorageAccountName": {
-      "type": "string",
-      "metadata": {
-        "description": "Existing storage account for diagnostics."
-      }
-    },
     "enableNonSslPort": {
       "type": "bool",
+      "defaultValue": false,
       "metadata": {
         "description": "A boolean value that indicates whether to allow access via non-SSL ports."
       }
     },
-    "diagnosticsStatus": {
-      "type": "string",
-      "defaultValue": "ON",
-      "allowedValues": [
-        "ON",
-        "OFF"
-      ],
+    "diagnosticsEnabled": {
+      "type": "bool",
+      "defaultValue": false,
       "metadata": {
-        "description": "A value that indicates whether diagnostices is enabled. Use ON or OFF."
+        "description": "A value that indicates whether diagnostics should be saved to the specified storage account."
+      }
+    },
+    "existingDiagnosticsStorageAccountId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Existing storage account for diagnostics."
       }
     }
   },
@@ -82,16 +85,26 @@
       },
       "resources": [
         {
-          "apiVersion": "2015-07-01",
+          "apiVersion": "2017-05-01-preview",
           "type": "Microsoft.Cache/redis/providers/diagnosticsettings",
-          "name": "[concat(parameters('redisCacheName'), '/Microsoft.Insights/service')]",
+          "name": "[concat(parameters('redisCacheName'), '/Microsoft.Insights/', parameters('redisCacheName'))]",
           "location": "[resourceGroup().location]",
           "dependsOn": [
             "[concat('Microsoft.Cache/Redis/', parameters('redisCacheName'))]"
           ],
           "properties": {
-            "status": "[parameters('diagnosticsStatus')]",
-            "storageAccountName": "[parameters('existingDiagnosticsStorageAccountName')]"
+            "storageAccountId": "[parameters('existingDiagnosticsStorageAccountId')]",
+            "logs": [],
+            "metrics": [
+              {
+                "timeGrain": "AllMetrics",
+                "enabled": "[parameters('diagnosticsEnabled')]",
+                "retentionPolicy": {
+                  "days": 90,
+                  "enabled": "[parameters('diagnosticsEnabled')]"
+                }
+              }
+            ]
           }
         }
       ]

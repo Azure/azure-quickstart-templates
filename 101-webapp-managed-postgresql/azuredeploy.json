@@ -1,0 +1,181 @@
+{  
+   "$schema":"http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+   "contentVersion":"1.0.0.0",
+   "parameters":{  
+      "siteName":{  
+         "type":"string",
+         "metadata":{  
+            "description":"Name of azure web app"
+         }
+      },
+      "administratorLogin":{  
+         "type":"string",
+         "minLength":1,
+         "metadata":{  
+            "description":"Database administrator login name"
+         }
+      },
+      "administratorLoginPassword":{  
+         "type":"securestring",
+         "minLength":8,
+         "maxLength":128,
+         "metadata":{  
+            "description":"Database administrator password"
+         }
+      },
+      "databaseDTU":{  
+         "type":"int",
+         "allowedValues":[  
+            50,
+            100
+         ],
+         "defaultValue":50,
+         "metadata":{  
+            "description":"Azure database for PostgreSQL pricing tier"
+         }
+      },
+      "databaseSkuName":{  
+         "type":"string",
+         "allowedValues":[  
+            "PostgreSQLB100",
+            "PostgreSQLB50"
+         ],
+         "defaultValue":"PostgreSQLB100",
+         "metadata":{  
+            "description":"Azure database for PostgreSQL sku name : PostgreSQLB100 (Basic 100 DTU tier) and PostgreSQLB50 (Basic 50 DTU tier)"
+         }
+      },
+      "databaseSkuSizeMB":{  
+         "type":"int",
+         "allowedValues":[  
+            102400,
+            51200
+         ],
+         "defaultValue":51200,
+         "metadata":{  
+            "description":"Azure database for PostgreSQL Sku Size "
+         }
+      },
+      "databaseSkuTier":{  
+         "type":"string",
+         "allowedValues":[  
+            "Basic"
+         ],
+         "defaultValue":"Basic",
+         "metadata":{  
+            "description":"Azure database for PostgreSQL pricing tier"
+         }
+      },
+      "postgresqlVersion":{  
+         "type":"string",
+         "allowedValues":[  
+            "9.5",
+            "9.6"
+         ],
+         "defaultValue":"9.6",
+         "metadata":{  
+            "description":"PostgreSQL version"
+         }
+      }
+   },
+   "variables":{  
+      "databaseName":"[concat(parameters('siteName'), 'database')]",
+      "serverName":"[concat(parameters('siteName'), 'pgserver')]",
+      "hostingPlanName":"[concat(parameters('siteName'), 'serviceplan')]"
+   },
+   "resources":[  
+      {  
+         "apiVersion":"2016-09-01",
+         "name":"[variables('hostingPlanName')]",
+         "type":"Microsoft.Web/serverfarms",
+         "location":"[resourceGroup().location]",
+         "properties":{  
+            "name":"[variables('hostingPlanName')]",
+            "workerSize":"1",
+            "hostingEnvironment":"",
+            "numberOfWorkers":0
+         },
+         "sku":{  
+            "Tier":"Standard",
+            "Name":"S1"
+         }
+      },
+      {  
+         "apiVersion":"2016-03-01",
+         "name":"[parameters('siteName')]",
+         "type":"Microsoft.Web/sites",
+         "location":"[resourceGroup().location]",
+         "dependsOn":[  
+            "[concat('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
+         ],
+         "properties":{  
+            "name":"[parameters('siteName')]",
+            "serverFarmId":"[variables('hostingPlanName')]",
+            "hostingEnvironment":""
+         },
+         "resources":[  
+            {  
+               "apiVersion":"2015-04-01",
+               "name":"connectionstrings",
+               "type":"config",
+               "dependsOn":[  
+                  "[concat('Microsoft.Web/sites/', parameters('siteName'))]"
+               ],
+               "properties":{  
+                  "defaultConnection":{  
+                     "value":"[concat('Database=', variables('databaseName'), ';Server=', variables('serverName'), '.postgres.database.azure.com;User Id=', parameters('administratorLogin'),'@', variables('serverName'),';Password=', parameters('administratorLoginPassword'))]",
+                     "type":"PostgreSQL"
+                  }
+               }
+            }
+         ]
+      },
+      {  
+         "apiVersion":"2016-02-01-privatepreview",
+         "kind":"",
+         "location":"[resourceGroup().location]",
+         "name":"[variables('serverName')]",
+         "properties":{  
+            "version":"[parameters('postgresqlVersion')]",
+            "administratorLogin":"[parameters('administratorLogin')]",
+            "administratorLoginPassword":"[parameters('administratorLoginPassword')]",
+            "storageMB":"[parameters('databaseSkuSizeMB')]"
+         },
+         "sku":{  
+            "name":"[parameters('databaseSkuName')]",
+            "tier":"[parameters('databaseSkuTier')]",
+            "capacity":"[parameters('databaseDTU')]",
+            "size":"[parameters('databaseSkuSizeMB')]",
+            "family":"SkuFamily"
+         },
+         "type":"Microsoft.DBforPostgreSQL/servers",
+         "resources":[  
+            {  
+               "type":"firewallrules",
+               "apiVersion":"2016-02-01-privatepreview",
+               "dependsOn":[  
+                  "[concat('Microsoft.DBforPostgreSQL/servers/', variables('serverName'))]"
+               ],
+               "location":"[resourceGroup().location]",
+               "name":"[concat(variables('serverName'),'firewall')]",
+               "properties":{  
+                  "startIpAddress":"0.0.0.0",
+                  "endIpAddress":"255.255.255.255"
+               }
+            },
+            {  
+               "name":"[variables('databaseName')]",
+               "type":"databases",
+               "apiVersion":"2016-02-01-privatepreview",
+               "properties":{  
+                  "charset":"utf8",
+                  "collation":"English_United States.1252"
+               },
+               "dependsOn":[  
+                  "[concat('Microsoft.DBforPostgreSQL/servers/', variables('serverName'))]"
+               ]
+            }
+         ]
+      }
+   ]
+}
