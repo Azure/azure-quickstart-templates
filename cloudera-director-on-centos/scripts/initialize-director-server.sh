@@ -19,7 +19,7 @@
 # - MySQL server
 #
 
-LOG_FILE=/var/log/azure-template_initialize-server.log
+LOG_FILE="/var/log/cloudera-azure-initialize.log"
 
 ADMIN_USER=$1
 INTERNAL_FQDN_SUFFIX=$2
@@ -34,6 +34,9 @@ FIRSTNAME=$9
 LASTNAME=${10}
 JOBROLE=${11}
 JOBFUNCTION=${12}
+
+DIR_USER=${13}
+DIR_PASSWORD=${14}
 
 SLEEP_INTERVAL=10
 
@@ -98,13 +101,12 @@ log "Installing basic tools ... Successful"
 log "Installing Cloudera Director Server, Client, Plugins and dependencies ..."
 
 sudo wget -t 5 http://archive.cloudera.com/director/redhat/6/x86_64/director/cloudera-director.repo -O /etc/yum.repos.d/cloudera-director.repo >> ${LOG_FILE}
-sudo sed -i 's/baseurl=http:\/\/archive.cloudera.com\/director\/redhat\/6\/x86_64\/director\/2\//baseurl=http:\/\/archive.cloudera.com\/director\/redhat\/6\/x86_64\/director\/2.1\//g' /etc/yum.repos.d/cloudera-director.repo
 
 # install with retry
 n=0
 until [ ${n} -ge 5 ]
 do
-    sudo yum install -y bind bind-utils python-pip oracle-j2sdk* cloudera-director-server-2.1.* cloudera-director-client-2.1.* >> ${LOG_FILE} 2>&1 && break
+    sudo yum install -y bind bind-utils python-pip oracle-j2sdk* cloudera-director-server-2.* cloudera-director-client-2.* >> ${LOG_FILE} 2>&1 && break
     n=$((n+1))
     sleep ${SLEEP_INTERVAL}
 done
@@ -114,12 +116,6 @@ if [ ${n} -ge 5 ]; then
 fi
 
 log "Installing Cloudera Director Server, Client, Plugins and dependencies ... Successful"
-
-log "Updating director plugin conf"
-cp ./azure-plugin.conf /var/lib/cloudera-director-plugins/azure-provider-1.0.1/etc
-chmod 644 /var/lib/cloudera-director-plugins/azure-provider-1.0.1/etc/azure-plugin.conf
-cp ./images.conf /var/lib/cloudera-director-plugins/azure-provider-1.0.1/etc
-chmod 644 /var/lib/cloudera-director-plugins/azure-provider-1.0.1/etc/images.conf
 
 log "Starting cloudera-director-server ..."
 
@@ -134,20 +130,29 @@ if [ $n -ge 5 ]; then log "pip install error, exiting..." & exit 1; fi
 
 sudo service cloudera-director-server start
 
-# Check the status of the Director server, wait 5 minutes
-n=300
+counter=0
 while ! (exec 6<>/dev/tcp/"${HOST_IP}"/7189)
 do
-    log 'Waiting for director-server to start ...'
-    n=$((n-SLEEP_INTERVAL))
+    # wait 30 iterations of $SLEEP_INTERVAL for cloudera-director-server to start (5 minutes)
+    if [ $counter -ge 30 ]
+    then
+      log "cloudera-director-server failed to start within $((counter*SLEEP_INTERVAL)) seconds. Exiting."
+      exit 1
+    fi
+    counter=$((counter+1))
+
+    log 'Waiting for cloudera-director-server to start ...'
     sleep ${SLEEP_INTERVAL}
 done
 
-if [ ${n} -le 0 ]; then
-  log "Starting cloudera-director-server ... Failed" & exit 1;
-fi
-
 log "Starting cloudera-director-server ... Successful"
+
+log "Securing cloudera-director-server ..."
+python director_user_passwd.py "${DIR_USER}" "${DIR_PASSWORD}"
+status=$?
+if [ ${status} -ne 0 ]; then
+  log "Securing cloudera-director-server ... Failed" & exit status;
+fi
 
 #
 # Disable iptables so API calls to Director server works.
