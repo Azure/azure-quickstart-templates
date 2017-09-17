@@ -1,0 +1,180 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "cloudServiceName": {
+      "type": "String",
+      "metadata": {
+        "description": "Name of the Cloud Service."
+      },
+      "minLength": 1,
+      "maxLength": 10
+    },
+    "regionName": {
+      "type": "String",
+      "defaultValue": "EastUS",
+      "metadata": {
+        "description": "Region of the Cloud Service."
+      }
+    },
+    "minimumCapacity": {
+      "type": "Int",
+      "defaultValue": 2,
+      "metadata": {
+        "description": "The minimum capacity.  Autoscale engine will ensure the instance count is at least this value."
+      }
+    },
+    "maximumCapacity": {
+      "type": "Int",
+      "defaultValue": 5,
+      "metadata": {
+        "description": "The maximum capacity.  Autoscale engine will ensure the instance count is not greater than this value."
+      }
+    },
+    "defaultCapacity": {
+      "type": "Int",
+      "defaultValue": 5,
+      "metadata": {
+        "description": "The default capacity.  Autoscale engine will preventively set the instance count to be this value if it can not find any metric data."
+      }
+    },
+    "metricName": {
+      "type": "String",
+      "defaultValue": "Percentage CPU",
+      "metadata": {
+        "description": "The metric name."
+      }
+    },
+    "metricThresholdToScaleOut": {
+      "type": "Int",
+      "defaultValue": 60,
+      "metadata": {
+        "description": "The metric upper threshold.  If the metric value is above this threshold then autoscale engine will initiate scale out action."
+      }
+    },
+    "metricThresholdToScaleIn": {
+      "type": "Int",
+      "defaultValue": 20,
+      "metadata": {
+        "description": "The metric lower threshold.  If the metric value is below this threshold then autoscale engine will initiate scale in action."
+      }
+    },
+    "changePercentScaleOut": {
+      "type": "Int",
+      "defaultValue": 20,
+      "metadata": {
+        "description": "The percentage to increase the instance count when autoscale engine is initiating scale out action."
+      }
+    },
+    "changePercentScaleIn": {
+      "type": "Int",
+      "defaultValue": 10,
+      "metadata": {
+        "description": "The percentage to decrease the instance count when autoscale engine is initiating scale in action."
+      }
+    },
+    "autoscaleEnabled": {
+      "type": "Bool",
+      "metadata": {
+        "description": "A boolean to indicate whether the autoscale policy is enabled or disabled."
+      }
+    }
+  },
+  "variables": {
+    "settingName": "[concat(toLower(variables('cloudServiceGeneratedName')), '-WorkerRole1-setting')]",
+    "targetResourceId": "[resourceId('Microsoft.ClassicCompute/domainNames/slots/roles', variables('cloudServiceGeneratedName'), 'Production', 'WorkerRole1')]",
+    "cloudServiceGeneratedName": "[substring(concat(parameters('cloudServiceName'), uniqueString(resourceGroup().id)), 0, 15)]",
+    "slotName": "[concat(variables('cloudServiceGeneratedName'), '/Production')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.ClassicCompute/domainNames",
+      "name": "[variables('cloudServiceGeneratedName')]",
+      "apiVersion": "2015-06-01",
+      "location": "[parameters('regionName')]"
+    },
+    {
+      "type": "Microsoft.ClassicCompute/domainNames/slots",
+      "name": "[variables('slotName')]",
+      "apiVersion": "2015-06-01",
+      "dependsOn": [
+        "[concat('Microsoft.ClassicCompute/domainNames/', variables('cloudServiceGeneratedName'))]"
+      ],
+      "properties": {
+        "deploymentLabel": "[variables('cloudServiceGeneratedName')]",
+        "packageLink": {
+          "Uri": "https://samplecloudservice1234.blob.core.windows.net/packages/SampleCloudService.cspkg"
+        },
+        "configurationLink": {
+          "Uri": "https://samplecloudservice1234.blob.core.windows.net/packages/ServiceConfiguration.Cloud.cscfg"
+        },
+        "deploymentOptions": "startDeployment"
+      }
+    },
+    {
+      "type": "Microsoft.Insights/autoscalesettings",
+      "name": "[variables('settingName')]",
+      "apiVersion": "2014-04-01",
+      "location": "[parameters('regionName')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.ClassicCompute/domainNames/slots', variables('cloudServiceGeneratedName'), 'Production')]"
+      ],
+      "properties": {
+        "profiles": [
+          {
+            "name": "DefaultAutoscaleProfile",
+            "capacity": {
+              "minimum": "[parameters('minimumCapacity')]",
+              "maximum": "[parameters('maximumCapacity')]",
+              "default": "[parameters('defaultCapacity')]"
+            },
+            "rules": [
+              {
+                "metricTrigger": {
+                  "metricName": "[parameters('metricName')]",
+                  "metricNamespace": "",
+                  "metricResourceUri": "[variables('targetResourceId')]",
+                  "timeGrain": "PT5M",
+                  "statistic": "Average",
+                  "timeWindow": "PT10M",
+                  "timeAggregation": "Average",
+                  "operator": "GreaterThan",
+                  "threshold": "[parameters('metricThresholdToScaleOut')]"
+                },
+                "scaleAction": {
+                  "direction": "Increase",
+                  "type": "PercentChangeCount",
+                  "value": "[parameters('changePercentScaleOut')]",
+                  "cooldown": "PT10M"
+                }
+              },
+              {
+                "metricTrigger": {
+                  "metricName": "[parameters('metricName')]",
+                  "metricNamespace": "",
+                  "metricResourceUri": "[variables('targetResourceId')]",
+                  "timeGrain": "PT5M",
+                  "statistic": "Average",
+                  "timeWindow": "PT10M",
+                  "timeAggregation": "Average",
+                  "operator": "LessThan",
+                  "threshold": "[parameters('metricThresholdToScaleIn')]"
+                },
+                "scaleAction": {
+                  "direction": "Decrease",
+                  "type": "PercentChangeCount",
+                  "value": "[parameters('changePercentScaleIn')]",
+                  "cooldown": "PT10M"
+                }
+              }
+            ]
+          }
+        ],
+        "enabled": "[parameters('autoscaleEnabled')]",
+        "targetResourceUri": "[variables('targetResourceId')]"
+      }
+    }
+  ],
+  "outputs": {
+  }
+}
