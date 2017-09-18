@@ -93,3 +93,4 @@ EOF
 # start Artifactory
 service artifactory start
 service nginx start
+nginx -s reload
