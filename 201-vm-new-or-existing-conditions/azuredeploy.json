@@ -9,27 +9,54 @@
         "description": "Location to for the resources."
       }
     },
+    "vmName": {
+      "type": "string",
+      "defaultValue": "linux-vm",
+      "metadata": {
+        "description": "Name for the Virtual Machine."
+      }
+    },
     "adminUsername": {
       "type": "string",
       "metadata": {
         "description": "User name for the Virtual Machine."
       }
     },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "password",
+      "allowedValues": [
+        "password",
+        "sshPublicKey"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine."
+      }
+    },
     "adminPassword": {
       "type": "securestring",
+      "defaultValue": "",
       "metadata": {
         "description": "Password for the Virtual Machine."
       }
     },
-    "vmName": {
-      "type": "string",
+    "sshPublicKey": {
+      "type": "securestring",
+      "defaultValue": "",
       "metadata": {
-        "description": "Name for the Virtual Machine."
+        "description": "ssh key for the Virtual Machine."
       }
     },
-    "provisionStorage": {
-      "type": "bool",
-      "defaultValue": true,
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_A2_v2",
+      "metadata": {
+        "description": "Size for the Virtual Machine."
+      }
+    },
+    "storageNewOrExisting": {
+      "type": "string",
+      "defaultValue": "new",
       "metadata": {
         "description": "Determines whether or not a new storage account should be provisioned."
       }
@@ -55,9 +82,9 @@
         "description": "Name of the resource group for the existing storage account"
       }
     },
-    "provisionVirtualNetwork": {
-      "type": "bool",
-      "defaultValue": true,
+    "virtualNetworkNewOrExisting": {
+      "type": "string",
+      "defaultValue": "new",
       "metadata": {
         "description": "Determines whether or not a new virtual network should be provisioned."
       }
@@ -69,11 +96,25 @@
         "description": "Name of the virtual network"
       }
     },
+    "addressPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/16",
+      "metadata": {
+        "description": "Address prefix of the virtual network"
+      }
+    },
     "subnetName": {
       "type": "string",
-      "defaultValue": "Subnet-1",
+      "defaultValue": "default",
       "metadata": {
         "description": "Name of the subnet"
+      }
+    },
+    "subnetPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/24",
+      "metadata": {
+        "description": "Subnet prefix of the virtual network"
       }
     },
     "virtualNetworkResourceGroupName": {
@@ -83,9 +124,9 @@
         "description": "Name of the resource group for the existing virtual network"
       }
     },
-    "provisionPublicIp": {
-      "type": "bool",
-      "defaultValue": true,
+    "publicIpNewOrExisting": {
+      "type": "string",
+      "defaultValue": "new",
       "metadata": {
         "description": "Determines whether or not a new public ip should be provisioned."
       }
@@ -95,6 +136,13 @@
       "defaultValue": "PublicIp",
       "metadata": {
         "description": "Name of the public ip address"
+      }
+    },
+    "publicIpDns": {
+      "type": "string",
+      "defaultValue": "[concat('linux-vm-', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "DNS of the public ip address for the VM"
       }
     },
     "publicIpResourceGroupName": {
@@ -107,12 +155,30 @@
   },
   "variables": {
     "nicName": "[concat(parameters('vmName'), '-nic')]",
-    "addressPrefix": "10.0.0.0/16",
-    "subnetPrefix": "10.0.0.0/24"
+    "passwordAuth": {
+      "computerName": "[parameters('vmName')]",
+      "adminUsername": "[parameters('adminUsername')]",
+      "adminPassword": "[parameters('adminPassword')]"
+    },
+    "sshAuth": {
+      "computerName": "[parameters('vmName')]",
+      "adminUsername": "[parameters('adminUsername')]",
+      "linuxConfiguration": {
+        "disablePasswordAuthentication": true,
+        "ssh": {
+          "publicKeys": [
+            {
+              "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+              "keyData": "[parameters('sshPublicKey')]"
+            }
+          ]
+        }
+      }
+    }
   },
   "resources": [
     {
-      "condition": "[equals(parameters('provisionStorage'), bool('true'))]",
+      "condition": "[equals(parameters('storageNewOrExisting'), 'new')]",
       "type": "Microsoft.Storage/storageAccounts",
       "apiVersion": "2017-06-01",
       "name": "[parameters('storageAccountName')]",
@@ -123,17 +189,20 @@
       }
     },
     {
-      "condition": "[equals(parameters('provisionPublicIp'), bool('true'))]",
+      "condition": "[equals(parameters('publicIpNewOrExisting'), 'new')]",
       "type": "Microsoft.Network/publicIPAddresses",
       "apiVersion": "2017-09-01",
       "name": "[parameters('publicIpName')]",
       "location": "[parameters('location')]",
       "properties": {
-        "publicIPAllocationMethod": "Dynamic"
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('publicIpDns')]"
+        }
       }
     },
     {
-      "condition": "[equals(parameters('provisionVirtualNetwork'), bool('true'))]",
+      "condition": "[equals(parameters('virtualNetworkNewOrExisting'), 'new')]",
       "type": "Microsoft.Network/virtualNetworks",
       "apiVersion": "2017-09-01",
       "name": "[parameters('virtualNetworkName')]",
@@ -141,14 +210,14 @@
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
-            "[variables('addressPrefix')]"
+            "[parameters('addressPrefix')]"
           ]
         },
         "subnets": [
           {
             "name": "[parameters('subnetName')]",
             "properties": {
-              "addressPrefix": "[variables('subnetPrefix')]"
+              "addressPrefix": "[parameters('subnetPrefix')]"
             }
           }
         ]
@@ -191,13 +260,9 @@
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "Standard_DS2_v2"
+          "vmSize": "[parameters('vmSize')]"
         },
-        "osProfile": {
-          "computerName": "[parameters('vmName')]",
-          "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
-        },
+        "osProfile": "[if(equals(parameters('authenticationType'), 'password'), variables('passwordAuth'), variables('sshAuth'))]",
         "storageProfile": {
           "imageReference": {
             "publisher": "Canonical",
