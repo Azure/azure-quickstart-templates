@@ -1,8 +1,11 @@
 #!/bin/bash
 
-dbhost=$1
-otherargs=$2
-echo "DB Host = $dbhost" >> /tmp/dbhost.log 2>&1
+db_url=$1
+db_name=$2
+db_user=$3
+db_password=$4
+
+echo "DB Host = $db_url and $db_name and $db_user and $db_password">> /tmp/dbhost.log 2>&1
 
 export DEBIAN_FRONTEND=noninteractive
 
@@ -91,6 +94,14 @@ server {
     proxy_set_header    X-Forwarded-For   \$proxy_add_x_forwarded_for;
   }
 }
+EOF
+
+cat <<EOF >/var/opt/jfrog/artifactory/etc/db.properties1
+  type=mysql
+  driver=com.mysql.jdbc.Driver
+  url=jdbc:mysql://${db_url}/${db_name}??characterEncoding=UTF-8&elideSetAutoCommits=true
+  username=${db_user}
+  password=${db_password}
 EOF
 
 # start Artifactory
