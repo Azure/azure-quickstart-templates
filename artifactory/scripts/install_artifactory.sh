@@ -6,7 +6,6 @@ db_user=$3
 db_password=$4
 
 echo "DB Host = $db_url and $db_name and $db_user and $db_password">> /tmp/dbhost.log 2>&1
-
 export DEBIAN_FRONTEND=noninteractive
 
 # install the LAMP stack
