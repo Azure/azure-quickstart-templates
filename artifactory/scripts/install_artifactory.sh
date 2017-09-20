@@ -3,7 +3,6 @@
 dbhost=$1
 otherargs=$2
 echo "DB Host = $dbhost" >> /tmp/dbhost.log 2>&1
-echo "Other args = $otherargs" >> /tmp/dbhost.log 2>&1
 
 export DEBIAN_FRONTEND=noninteractive
 
