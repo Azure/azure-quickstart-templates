@@ -97,13 +97,15 @@ server {
 }
 EOF
 
-cat <<EOF >/var/opt/jfrog/artifactory/etc/db.properties1
+cat <<EOF >/var/opt/jfrog/artifactory/etc/db.properties
   type=mysql
   driver=com.microsoft.sqlserver.jdbc.SQLServerDriver
   url=${db_url};databaseName=${db_name};sendStringParametersAsUnicode=false;applicationName=Artifactory Binary Repository
   username=${db_user}
   password=${db_password}
 EOF
+
+chown artifactory:artifactory -R /var/opt/jfrog/artifactory/*  && chown artifactory:artifactory -R /var/opt/jfrog/artifactory/etc/security
 
 # start Artifactory
 service artifactory start
