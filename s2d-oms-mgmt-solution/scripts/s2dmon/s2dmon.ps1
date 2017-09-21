@@ -1002,13 +1002,37 @@ if ($Service) {                 # Run the service
           {
             #region Initalization
             # Get the Key
-            $key = Get-Content $KeyFileFullName
+            Try
+            {
+                $key = Get-Content $KeyFileFullName
+            }
+            Catch
+            {
+                Write-Error -Message "Failed to get conent from $($KeyFileFullName)."
+            }
+            
 
             # Get Workspace ID
-            $OMSWorkspaceIDFromFile = Get-Content $workspaceIdFileFullName
+            Try
+            {
+                $OMSWorkspaceIDFromFile = Get-Content $workspaceIdFileFullName
+            }
+            Catch
+            {
+                Write-Error -Message "Failed to get conent from $($workspaceIdFileFullName)."
+            }
+            
 
             # Get Workspace Key
-            $OMSWorkspaceKeyFromFile  = Get-Content $credFileFullName | ConvertTo-SecureString -Key $key
+            Try
+            {
+                $OMSWorkspaceKeyFromFile  = Get-Content $credFileFullName | ConvertTo-SecureString -Key $key
+            }
+            Catch
+            {
+                Write-Error -Message "Failed to get conent from $($credFileFullName)."
+            }
+            
 
             # Construct Workspace ID and Key into credentials
             $OMSCredsFromFiles = New-Object -TypeName System.Management.Automation.PSCredential `
@@ -1024,151 +1048,28 @@ if ($Service) {                 # Run the service
             # Get Server and Cluster names
             $domainfqdn = (Get-WMIObject Win32_ComputerSystem | Select-Object -ExpandProperty domain)
             $ServerName = ($env:computername + "." + $domainfqdn).ToUpper()
-            $ClusterName = ((gwmi -class "MSCluster_Cluster" -namespace "root\mscluster" | select -ExpandProperty Name) + "." + $domainfqdn).ToUpper()
-            #endregion
-          
-            #region Get and Send S2D Node Data to OMS
-            $NowTime = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ss.fffZ')
-            $s2dNodes = Get-StorageNode
-            $nodescount = $s2dNodes.GetEnumerator() | Group-Object nAME | ? { $_.Count -gt 1 }
-            if($nodescount)
+            Try
             {
-                $s2dNodes = $s2dNodes | select -Skip 1
+                $ClusterName = ((gwmi -class "MSCluster_Cluster" -namespace "root\mscluster" | select -ExpandProperty Name) + "." + $domainfqdn).ToUpper()
             }
-            $table  = @()
-            foreach ($s2dNode in $s2dNodes)
+            Catch
             {
-                
-                $s2dreport = $s2dNode | Get-StorageHealthReport -Count 1
-                
-                foreach ($s2drecord in $s2dreport.itemValue.records)
-                {
-                  if ($s2drecord.Units -eq 0)
-                  {
-                      $UnitType = "Bytes"
-                  }
-                  if ($s2drecord.Units -eq 1)
-                  {
-                      $UnitType = "BytesPerSecond"
-                  }
-                  if ($s2drecord.Units -eq 2)
-                  {
-                      $UnitType = "CountPerSecond"
-                  }
-                  if ($s2drecord.Units -eq 3)
-                  {
-                      $UnitType = "Seconds"
-                  }
-                  if ($s2drecord.Units -eq 4)
-                  {
-                      $UnitType = "Percentage"
-                  }
-
-                  $MetricValueName = $s2drecord.Name + "Value"
-
-                  $sx = New-Object PSObject -Property @{
-                    
-                    Timestamp = $NowTime
-                    MetricLevel = "Node";
-                    MetricName = $s2drecord.Name;
-                    $MetricValueName = $s2drecord.Value;
-                    UnitType = $UnitType;
-                    ServerName = $s2dNode.Name.ToUpper();
-                    ClusterName = $ClusterName
-                  } 
-                  $table+=$sx 
-                }
-
-                           
-            }
-
-            if($table)
-            {
-                # Convert to JSON
-                $jsonTable = $table | ConvertTo-Json -Depth 5
-
-                #Send to OMS
-                Send-OMSAPIIngestionFile -customerId $OMSCredsFromFiles.UserName `
-                                         -sharedKey $OMSCredsFromFiles.GetNetworkCredential().password `
-                                         -body $jsonTable `
-                                         -logType $logType `
-                                         -TimeStampField $Timestampfield
-
-            }
-            #endregion
-                      
-            #region Get and Send S2D cluster Data to OMS
-            $s2dreport = Get-StorageSubSystem Cluster*  | Get-StorageHealthReport
-            $NowTime = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ss.fffZ')
-            $table  = @()
-            foreach ($s2drecord in $s2dreport.itemValue.records)
-            {
-              
-              if ($s2drecord.Units -eq 0)
-              {
-                  $UnitType = "Bytes"
-              }
-              if ($s2drecord.Units -eq 1)
-              {
-                  $UnitType = "BytesPerSecond"
-              }
-              if ($s2drecord.Units -eq 2)
-              {
-                  $UnitType = "CountPerSecond"
-              }
-              if ($s2drecord.Units -eq 3)
-              {
-                  $UnitType = "Seconds"
-              }
-              if ($s2drecord.Units -eq 4)
-              {
-                  $UnitType = "Percentage"
-              }
-              
-              $MetricValueName = $s2drecord.Name + "Value"
-              $sx = New-Object PSObject -Property @{
-                
-                Timestamp = $NowTime
-                MetricLevel = "Cluster";
-                MetricName = $s2drecord.Name;
-                $MetricValueName = $s2drecord.Value;
-                UnitType = $UnitType;
-                ClusterName = $ClusterName
-              } 
-              $table  += $sx 
+                Write-Error -Message "Failed to get cluster name from WMI root\mscluster."
             }
             
-            if($table)
+            #endregion
+            
+            if($ClusterName)
             {
-                # Convert to JSON
-                $jsonTable = $table | ConvertTo-Json -Depth 5
-
-                #Send to OMS
-                Send-OMSAPIIngestionFile -customerId $OMSCredsFromFiles.UserName `
-                                         -sharedKey $OMSCredsFromFiles.GetNetworkCredential().password `
-                                         -body $jsonTable `
-                                         -logType $logType `
-                                         -TimeStampField $Timestampfield
-
-            }
-            #endregion  
-
-            #region Get and Send S2D Volume Data to OMS
-            $volumes = Get-Volume | where {$_.FileSystem -eq "CSVFS" }
-            $table  = @()
-            $NowTime = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ss.fffZ')
-            if($volumes)
-            {
-                foreach ($volume in $volumes)
+                #region Get and Send S2D cluster Data to OMS
+                $s2dreport = Get-StorageSubSystem Cluster*  | Get-StorageHealthReport
+                if($s2dreport)
                 {
-                  $VolumeLabel = $volume.FileSystemLabel
-                  $FileSystemType = $volume.FileSystemType
-                  $OperationalStatus = $volume.OperationalStatus
-                  $HealthStatus = $volume.HealthStatus
-
-                  $s2dreport = Get-Volume -FileSystemLabel $VolumeLabel | Get-StorageHealthReport -Count 1
-                  foreach ($s2drecord in $s2dreport.itemValue.records)
-                  {
+                    $NowTime = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ss.fffZ')
+                    $table  = @()
+                    foreach ($s2drecord in $s2dreport.itemValue.records)
+                    {
+                      
                       if ($s2drecord.Units -eq 0)
                       {
                           $UnitType = "Bytes"
@@ -1189,201 +1090,249 @@ if ($Service) {                 # Run the service
                       {
                           $UnitType = "Percentage"
                       }
-
-                      $MetricValueName = $s2drecord.Name + "Value"
-
+                      
                       $sx = New-Object PSObject -Property @{
-                    
-                       Timestamp = $NowTime
-                       MetricLevel = "Volume";
-                       VolumeLabel = $VolumeLabel;
-                       FileSystemType = $FileSystemType;
-                       OperationalStatus = $OperationalStatus;
-                       HealthStatus = $HealthStatus;
-                       MetricName = $s2drecord.Name;
-                       $MetricValueName = $s2drecord.Value;
-                       UnitType = $UnitType;
-                       ClusterName = $ClusterName
-                  } 
-                  $table  += $sx 
-                  }
-                
-                }
-
-                if($table)
-                {
-                    # Convert to JSON
-                    $jsonTable = $table | ConvertTo-Json -Depth 5
-
-                    #Send to OMS
-                    Send-OMSAPIIngestionFile -customerId $OMSCredsFromFiles.UserName `
-                                             -sharedKey $OMSCredsFromFiles.GetNetworkCredential().password `
-                                             -body $jsonTable `
-                                             -logType $logType `
-                                             -TimeStampField $Timestampfield
-
-                }
-            }
-            
-            #endregion
-
-            #region Get and Send S2D Cluster Faults to OMS
-            $s2dFaults = Get-StorageSubSystem Cluster* | Debug-StorageSubSystem
-            $table  = @()
-            $NowTime = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ss.fffZ')
-            
-            If ($s2dFaults)
-            {
-                foreach ($s2dFault in $s2dFaults)
-                {
-                    if ($s2dFault.PerceivedSeverity -eq "Unknown" )
-                    {
-                        $SeverityNumber = 0
-                    }
-                    if ($s2dFault.PerceivedSeverity -eq "Information")
-                    {
-                        $SeverityNumber = 2
-                    }
-                    if ($s2dFault.PerceivedSeverity -eq "Degraded/Warning")
-                    {
-                        $SeverityNumber = 3
-                    }
-                    if ($s2dFault.PerceivedSeverity -eq "Minor")
-                    {
-                        $SeverityNumber = 4
-                    }
-                    if ($s2dFault.PerceivedSeverity -eq "Major")
-                    {
-                        $SeverityNumber = 5
-                    }
-                    if ($s2dFault.PerceivedSeverity -eq "Critical")
-                    {
-                        $SeverityNumber = 6
-                    }
-                    if ($s2dFault.PerceivedSeverity -eq "Fatal/NonRecoverable")
-                    {
-                        $SeverityNumber = 7
-                    }
-
-                    $reason=""
-                    foreach ($faultreason in $s2dFault.Reason)
-                    {
-                        $reason +=$faultreason
-                        $reason += " | "
-                    }
-
-                    $sx = New-Object PSObject -Property @{
-                    
-                        Timestamp = $NowTime;
-                        SecondTimeStamp = $NowTime;
-                        Severity = $s2dFault.PerceivedSeverity;
-                        SeverityNumber = $SeverityNumber;
-                        FaultLevel = "Cluster";
-                        FaultId = $s2dFault.FaultId;
-                        FaultingObjectDescription = $s2dFault.FaultingObjectDescription;
-                        FaultingObjectLocation = $s2dFault.FaultingObjectLocation;
-                        FaultingObjectType = $s2dFault.FaultingObjectType;
-                        FaultingObjectUniqueId = $s2dFault.FaultingObjectUniqueId;
-                        FaultType = $s2dFault.FaultType;
-                        Reason = $s2dFault.Reason;
-                        RecommendedActions = $reason;
+                        
+                        Timestamp = $NowTime
+                        MetricLevel = "Cluster";
+                        MetricName = $s2drecord.Name;
+                        MetricValue = $s2drecord.Value;
+                        UnitType = $UnitType;
                         ClusterName = $ClusterName
-                  } 
-                  $table  += $sx 
-                
-                }
-            }
-
-            if($table)
-            {
-                # Convert to JSON
-                $jsonTable = $table | ConvertTo-Json -Depth 5
-
-                #Send to OMS
-                Send-OMSAPIIngestionFile -customerId $OMSCredsFromFiles.UserName `
-                                         -sharedKey $OMSCredsFromFiles.GetNetworkCredential().password `
-                                         -body $jsonTable `
-                                         -logType $logType `
-                                         -TimeStampField $Timestampfield
-
-            }
-            
-            #endregion
-
-            #region Get and Send S2D Volume Faults to OMS
-            $volumes = Get-Volume | where {$_.FileSystem -eq "CSVFS" }
-            $table  = @()
-            $NowTime = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ss.fffZ')
-            if ($volumes)
-            {
-                foreach ($volume in $volumes)
-                {
-                    $VolumeLabel = $volume.FileSystemLabel
-                    $FileSystemType = $volume.FileSystemType
-
-                    $s2dFaults = Get-Volume -FileSystemLabel $VolumeLabel | Debug-Volume
-                    if($s2dFaults)
-                    {
-                        foreach ($s2dFault in $s2dFaults)
-                        {
-                            if ($s2dFault.PerceivedSeverity -eq "Unknown" )
-                            {
-                                $SeverityNumber = 0
-                            }
-                            if ($s2dFault.PerceivedSeverity -eq "Information")
-                            {
-                                $SeverityNumber = 2
-                            }
-                            if ($s2dFault.PerceivedSeverity -eq "Degraded/Warning")
-                            {
-                                $SeverityNumber = 3
-                            }
-                            if ($s2dFault.PerceivedSeverity -eq "Minor")
-                            {
-                                $SeverityNumber = 4
-                            }
-                            if ($s2dFault.PerceivedSeverity -eq "Major")
-                            {
-                                $SeverityNumber = 5
-                            }
-                            if ($s2dFault.PerceivedSeverity -eq "Critical")
-                            {
-                                $SeverityNumber = 6
-                            }
-                            if ($s2dFault.PerceivedSeverity -eq "Fatal/NonRecoverable")
-                            {
-                                $SeverityNumber = 7
-                            }
-
-                            $reason=""
-                            foreach ($faultreason in $s2dFault.Reason)
-                            {
-                                $reason +=$faultreason
-                                $reason += " | "
-                            }
-                            
-                            $sx = New-Object PSObject -Property @{
-                        
-                                Timestamp = $NowTime;
-                                SecondTimeStamp = $NowTime;
-                                Severity = $s2dFault.PerceivedSeverity;
-                                SeverityNumber = $SeverityNumber;
-                                FaultId = $s2dFault.FaultId;
-                                FaultLevel = "Volume";
-                                VolumeLabel = $VolumeLabel;
-                                FaultingObjectDescription = $s2dFault.FaultingObjectDescription;
-                                FaultingObjectLocation = $s2dFault.FaultingObjectLocation;
-                                FaultingObjectType = $s2dFault.FaultingObjectType;
-                                FaultingObjectUniqueId = $s2dFault.FaultingObjectUniqueId;
-                                FaultType = $s2dFault.FaultType;
-                                Reason = $s2dFault.Reason;
-                                RecommendedActions = $reason;
-                                ClusterName = $ClusterName
-                            } 
-                            $table  += $sx 
-                        }
+                      } 
+                      $table  += $sx 
                     }
                     
+                    if($table)
+                    {
+                        # Convert to JSON
+                        $jsonTable = $table | ConvertTo-Json -Depth 5
+
+                        #Send to OMS
+                        Send-OMSAPIIngestionFile -customerId $OMSCredsFromFiles.UserName `
+                                                 -sharedKey $OMSCredsFromFiles.GetNetworkCredential().password `
+                                                 -body $jsonTable `
+                                                 -logType $logType `
+                                                 -TimeStampField $Timestampfield
+
+                    }
+                }
+                
+                #endregion  
+
+                #region Get and Send S2D Node Data to OMS
+                $NowTime = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ss.fffZ')
+                $s2dNodes = Get-StorageNode
+                if($s2dNodes)
+                {
+                    $nodescount = $s2dNodes.GetEnumerator() | Group-Object Name | ? { $_.Count -gt 1 }
+                    if($nodescount)
+                    {
+                        $s2dNodes = $s2dNodes | select -Skip 1
+                    }
+                    $table  = @()
+                    foreach ($s2dNode in $s2dNodes)
+                    {
+                        
+                        $s2dreport = $s2dNode | Get-StorageHealthReport -Count 1
+                        If($s2dreport)
+                        {
+                            foreach ($s2drecord in $s2dreport.itemValue.records)
+                            {
+                              if ($s2drecord.Units -eq 0)
+                              {
+                                  $UnitType = "Bytes"
+                              }
+                              if ($s2drecord.Units -eq 1)
+                              {
+                                  $UnitType = "BytesPerSecond"
+                              }
+                              if ($s2drecord.Units -eq 2)
+                              {
+                                  $UnitType = "CountPerSecond"
+                              }
+                              if ($s2drecord.Units -eq 3)
+                              {
+                                  $UnitType = "Seconds"
+                              }
+                              if ($s2drecord.Units -eq 4)
+                              {
+                                  $UnitType = "Percentage"
+                              }
+
+                              $sx = New-Object PSObject -Property @{
+                                
+                                Timestamp = $NowTime
+                                MetricLevel = "Node";
+                                MetricName = $s2drecord.Name;
+                                MetricValue = $s2drecord.Value;
+                                UnitType = $UnitType;
+                                ServerName = $s2dNode.Name.ToUpper();
+                                ClusterName = $ClusterName
+                              } 
+                              $table+=$sx 
+                            }
+                        }
+                                   
+                    }
+
+                    if($table)
+                    {
+                        # Convert to JSON
+                        $jsonTable = $table | ConvertTo-Json -Depth 5
+
+                        #Send to OMS
+                        Send-OMSAPIIngestionFile -customerId $OMSCredsFromFiles.UserName `
+                                                 -sharedKey $OMSCredsFromFiles.GetNetworkCredential().password `
+                                                 -body $jsonTable `
+                                                 -logType $logType `
+                                                 -TimeStampField $Timestampfield
+
+                    }
+                }
+                #endregion
+                      
+                #region Get and Send S2D Volume Data to OMS
+                $volumes = Get-Volume | where {$_.FileSystem -eq "CSVFS" }
+                $table  = @()
+                $NowTime = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ss.fffZ')
+                if($volumes)
+                {
+                    foreach ($volume in $volumes)
+                    {
+                      $VolumeLabel = $volume.FileSystemLabel
+                      $FileSystemType = $volume.FileSystemType
+                      $OperationalStatus = $volume.OperationalStatus
+                      $HealthStatus = $volume.HealthStatus
+
+                      $s2dreport = Get-Volume -FileSystemLabel $VolumeLabel | Get-StorageHealthReport -Count 1
+                      if($s2dreport)
+                      {
+                        foreach ($s2drecord in $s2dreport.itemValue.records)
+                        {
+                            if ($s2drecord.Units -eq 0)
+                            {
+                                $UnitType = "Bytes"
+                            }
+                            if ($s2drecord.Units -eq 1)
+                            {
+                                $UnitType = "BytesPerSecond"
+                            }
+                            if ($s2drecord.Units -eq 2)
+                            {
+                                $UnitType = "CountPerSecond"
+                            }
+                            if ($s2drecord.Units -eq 3)
+                            {
+                                $UnitType = "Seconds"
+                            }
+                            if ($s2drecord.Units -eq 4)
+                            {
+                                $UnitType = "Percentage"
+                            }
+
+                            $sx = New-Object PSObject -Property @{
+                          
+                             Timestamp = $NowTime
+                             MetricLevel = "Volume";
+                             VolumeLabel = $VolumeLabel;
+                             FileSystemType = $FileSystemType;
+                             OperationalStatus = $OperationalStatus;
+                             HealthStatus = $HealthStatus;
+                             MetricName = $s2drecord.Name;
+                             MetricValue = $s2drecord.Value;
+                             UnitType = $UnitType;
+                             ClusterName = $ClusterName
+                            } 
+                        $table  += $sx 
+                        }
+                      }
+                      
+                    
+                    }
+
+                    if($table)
+                    {
+                        # Convert to JSON
+                        $jsonTable = $table | ConvertTo-Json -Depth 5
+
+                        #Send to OMS
+                        Send-OMSAPIIngestionFile -customerId $OMSCredsFromFiles.UserName `
+                                                 -sharedKey $OMSCredsFromFiles.GetNetworkCredential().password `
+                                                 -body $jsonTable `
+                                                 -logType $logType `
+                                                 -TimeStampField $Timestampfield
+
+                    }
+                }
+                
+                #endregion
+
+                #region Get and Send S2D Cluster Faults to OMS
+                $s2dFaults = Get-StorageSubSystem Cluster* | Debug-StorageSubSystem
+                $table  = @()
+                $NowTime = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ss.fffZ')
+                
+                If ($s2dFaults)
+                {
+                    foreach ($s2dFault in $s2dFaults)
+                    {
+                        if ($s2dFault.PerceivedSeverity -eq "Unknown" )
+                        {
+                            $SeverityNumber = 0
+                        }
+                        if ($s2dFault.PerceivedSeverity -eq "Information")
+                        {
+                            $SeverityNumber = 2
+                        }
+                        if ($s2dFault.PerceivedSeverity -eq "Degraded/Warning")
+                        {
+                            $SeverityNumber = 3
+                        }
+                        if ($s2dFault.PerceivedSeverity -eq "Minor")
+                        {
+                            $SeverityNumber = 4
+                        }
+                        if ($s2dFault.PerceivedSeverity -eq "Major")
+                        {
+                            $SeverityNumber = 5
+                        }
+                        if ($s2dFault.PerceivedSeverity -eq "Critical")
+                        {
+                            $SeverityNumber = 6
+                        }
+                        if ($s2dFault.PerceivedSeverity -eq "Fatal/NonRecoverable")
+                        {
+                            $SeverityNumber = 7
+                        }
+
+                        $action=""
+                        foreach ($recommendedAction in $s2dFault.RecommendedActions)
+                        {
+                            $action +=$recommendedAction
+                            $action += " | "
+                        }
+
+                        $sx = New-Object PSObject -Property @{
+                        
+                            Timestamp = $NowTime;
+                            SecondTimeStamp = $NowTime;
+                            Severity = $s2dFault.PerceivedSeverity;
+                            SeverityNumber = $SeverityNumber;
+                            FaultLevel = "Cluster";
+                            FaultId = $s2dFault.FaultId;
+                            FaultingObjectDescription = $s2dFault.FaultingObjectDescription;
+                            FaultingObjectLocation = $s2dFault.FaultingObjectLocation;
+                            FaultingObjectType = $s2dFault.FaultingObjectType;
+                            FaultingObjectUniqueId = $s2dFault.FaultingObjectUniqueId;
+                            FaultType = $s2dFault.FaultType;
+                            Reason = $s2dFault.Reason;
+                            RecommendedActions = $action;
+                            ClusterName = $ClusterName
+                      } 
+                      $table  += $sx 
+                    
+                    }
                 }
 
                 if($table)
@@ -1397,104 +1346,195 @@ if ($Service) {                 # Run the service
                                              -body $jsonTable `
                                              -logType $logType `
                                              -TimeStampField $Timestampfield
+
                 }
-                
-            }
-            
-            #endregion
+                #endregion
 
-            #region Get and Send S2D Share Faults to OMS
-            $shares = Get-FileShare | where {$_.ContinuouslyAvailable -eq $true}
-            $table  = @()
-            $NowTime = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ss.fffZ')
-            if($shares)
-            {
-                foreach ($share in $shares)
+                #region Get and Send S2D Volume Faults to OMS
+                $volumes = Get-Volume | where {$_.FileSystem -eq "CSVFS" }
+                $table  = @()
+                $NowTime = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ss.fffZ')
+                if ($volumes)
                 {
-                    $shareName = $share.Name
-
-                    $s2dFaults = Get-FileShare -Name $share.Name | Debug-FileShare
-                    if($s2dFaults)
+                    foreach ($volume in $volumes)
                     {
-                        foreach ($s2dFault in $s2dFaults)
-                        {
-                            if ($s2dFault.PerceivedSeverity -eq "Unknown" )
-                            {
-                                $SeverityNumber = 0
-                            }
-                            if ($s2dFault.PerceivedSeverity -eq "Information")
-                            {
-                                $SeverityNumber = 2
-                            }
-                            if ($s2dFault.PerceivedSeverity -eq "Degraded/Warning")
-                            {
-                                $SeverityNumber = 3
-                            }
-                            if ($s2dFault.PerceivedSeverity -eq "Minor")
-                            {
-                                $SeverityNumber = 4
-                            }
-                            if ($s2dFault.PerceivedSeverity -eq "Major")
-                            {
-                                $SeverityNumber = 5
-                            }
-                            if ($s2dFault.PerceivedSeverity -eq "Critical")
-                            {
-                                $SeverityNumber = 6
-                            }
-                            if ($s2dFault.PerceivedSeverity -eq "Fatal/NonRecoverable")
-                            {
-                                $SeverityNumber = 7
-                            }
+                        $VolumeLabel = $volume.FileSystemLabel
+                        $FileSystemType = $volume.FileSystemType
 
-                            $reason=""
-                            foreach ($faultreason in $s2dFault.Reason)
+                        $s2dFaults = Get-Volume -FileSystemLabel $VolumeLabel | Debug-Volume
+                        if($s2dFaults)
+                        {
+                            foreach ($s2dFault in $s2dFaults)
                             {
-                                $reason +=$faultreason
-                                $reason += " | "
-                            }
+                                if ($s2dFault.PerceivedSeverity -eq "Unknown" )
+                                {
+                                    $SeverityNumber = 0
+                                }
+                                if ($s2dFault.PerceivedSeverity -eq "Information")
+                                {
+                                    $SeverityNumber = 2
+                                }
+                                if ($s2dFault.PerceivedSeverity -eq "Degraded/Warning")
+                                {
+                                    $SeverityNumber = 3
+                                }
+                                if ($s2dFault.PerceivedSeverity -eq "Minor")
+                                {
+                                    $SeverityNumber = 4
+                                }
+                                if ($s2dFault.PerceivedSeverity -eq "Major")
+                                {
+                                    $SeverityNumber = 5
+                                }
+                                if ($s2dFault.PerceivedSeverity -eq "Critical")
+                                {
+                                    $SeverityNumber = 6
+                                }
+                                if ($s2dFault.PerceivedSeverity -eq "Fatal/NonRecoverable")
+                                {
+                                    $SeverityNumber = 7
+                                }
+
+                                $action=""
+                                foreach ($recommendedAction in $s2dFault.RecommendedActions)
+                                {
+                                    $action +=$recommendedAction
+                                    $action += " | "
+                                }
+                                
+                                $sx = New-Object PSObject -Property @{
                             
-                            $sx = New-Object PSObject -Property @{
-                        
-                                Timestamp = $NowTime;
-                                SecondTimeStamp = $NowTime;
-                                Severity = $s2dFault.PerceivedSeverity;
-                                SeverityNumber = $SeverityNumber;
-                                FaultId = $s2dFault.FaultId;
-                                FaultLevel = "Share";
-                                ShareName = $shareName;
-                                FaultingObjectDescription = $s2dFault.FaultingObjectDescription;
-                                FaultingObjectLocation = $s2dFault.FaultingObjectLocation;
-                                FaultingObjectType = $s2dFault.FaultingObjectType;
-                                FaultingObjectUniqueId = $s2dFault.FaultingObjectUniqueId;
-                                FaultType = $s2dFault.FaultType;
-                                Reason = $s2dFault.Reason;
-                                RecommendedActions = $reason;
-                                ClusterName = $ClusterName
-                            } 
-                            $table  += $sx 
+                                    Timestamp = $NowTime;
+                                    SecondTimeStamp = $NowTime;
+                                    Severity = $s2dFault.PerceivedSeverity;
+                                    SeverityNumber = $SeverityNumber;
+                                    FaultId = $s2dFault.FaultId;
+                                    FaultLevel = "Volume";
+                                    VolumeLabel = $VolumeLabel;
+                                    FaultingObjectDescription = $s2dFault.FaultingObjectDescription;
+                                    FaultingObjectLocation = $s2dFault.FaultingObjectLocation;
+                                    FaultingObjectType = $s2dFault.FaultingObjectType;
+                                    FaultingObjectUniqueId = $s2dFault.FaultingObjectUniqueId;
+                                    FaultType = $s2dFault.FaultType;
+                                    Reason = $s2dFault.Reason;
+                                    RecommendedActions = $action;
+                                    ClusterName = $ClusterName
+                                } 
+                                $table  += $sx 
+                            }
                         }
+                        
+                    }
+
+                    if($table)
+                    {
+                        # Convert to JSON
+                        $jsonTable = $table | ConvertTo-Json -Depth 5
+
+                        #Send to OMS
+                        Send-OMSAPIIngestionFile -customerId $OMSCredsFromFiles.UserName `
+                                                 -sharedKey $OMSCredsFromFiles.GetNetworkCredential().password `
+                                                 -body $jsonTable `
+                                                 -logType $logType `
+                                                 -TimeStampField $Timestampfield
                     }
                     
                 }
+                #endregion
 
-                if($table)
+                #region Get and Send S2D Share Faults to OMS
+                $shares = Get-FileShare | where {$_.ContinuouslyAvailable -eq $true}
+                $table  = @()
+                $NowTime = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ss.fffZ')
+                if($shares)
                 {
-                    # Convert to JSON
-                    $jsonTable = $table | ConvertTo-Json -Depth 5
+                    foreach ($share in $shares)
+                    {
+                        $shareName = $share.Name
 
-                    #Send to OMS
-                    Send-OMSAPIIngestionFile -customerId $OMSCredsFromFiles.UserName `
-                                             -sharedKey $OMSCredsFromFiles.GetNetworkCredential().password `
-                                             -body $jsonTable `
-                                             -logType $logType `
-                                             -TimeStampField $Timestampfield
+                        $s2dFaults = Get-FileShare -Name $share.Name | Debug-FileShare
+                        if($s2dFaults)
+                        {
+                            foreach ($s2dFault in $s2dFaults)
+                            {
+                                if ($s2dFault.PerceivedSeverity -eq "Unknown" )
+                                {
+                                    $SeverityNumber = 0
+                                }
+                                if ($s2dFault.PerceivedSeverity -eq "Information")
+                                {
+                                    $SeverityNumber = 2
+                                }
+                                if ($s2dFault.PerceivedSeverity -eq "Degraded/Warning")
+                                {
+                                    $SeverityNumber = 3
+                                }
+                                if ($s2dFault.PerceivedSeverity -eq "Minor")
+                                {
+                                    $SeverityNumber = 4
+                                }
+                                if ($s2dFault.PerceivedSeverity -eq "Major")
+                                {
+                                    $SeverityNumber = 5
+                                }
+                                if ($s2dFault.PerceivedSeverity -eq "Critical")
+                                {
+                                    $SeverityNumber = 6
+                                }
+                                if ($s2dFault.PerceivedSeverity -eq "Fatal/NonRecoverable")
+                                {
+                                    $SeverityNumber = 7
+                                }
 
+                                $action=""
+                                foreach ($recommendedAction in $s2dFault.RecommendedActions)
+                                {
+                                    $action +=$recommendedAction
+                                    $action += " | "
+                                }
+                                
+                                $sx = New-Object PSObject -Property @{
+                            
+                                    Timestamp = $NowTime;
+                                    SecondTimeStamp = $NowTime;
+                                    Severity = $s2dFault.PerceivedSeverity;
+                                    SeverityNumber = $SeverityNumber;
+                                    FaultId = $s2dFault.FaultId;
+                                    FaultLevel = "Share";
+                                    ShareName = $shareName;
+                                    FaultingObjectDescription = $s2dFault.FaultingObjectDescription;
+                                    FaultingObjectLocation = $s2dFault.FaultingObjectLocation;
+                                    FaultingObjectType = $s2dFault.FaultingObjectType;
+                                    FaultingObjectUniqueId = $s2dFault.FaultingObjectUniqueId;
+                                    FaultType = $s2dFault.FaultType;
+                                    Reason = $s2dFault.Reason;
+                                    RecommendedActions = $action;
+                                    ClusterName = $ClusterName
+                                } 
+                                $table  += $sx 
+                            }
+                        }
+                        
+                    }
+
+                    if($table)
+                    {
+                        # Convert to JSON
+                        $jsonTable = $table | ConvertTo-Json -Depth 5
+
+                        #Send to OMS
+                        Send-OMSAPIIngestionFile -customerId $OMSCredsFromFiles.UserName `
+                                                 -sharedKey $OMSCredsFromFiles.GetNetworkCredential().password `
+                                                 -body $jsonTable `
+                                                 -logType $logType `
+                                                 -TimeStampField $Timestampfield
+
+                    }
+                    
                 }
-                
+                #endregion
             }
             
-            #endregion
           }
            
         }
