@@ -102,6 +102,9 @@ function Add-FirewallException
 #                                              Configure WinRM                                                                  #
 #################################################################################################################################
 
+# Handle the case for the public network category to cause a failure to enable WinRM properly
+Enable-PSRemoting -SkipNetworkProfileCheck -Force
+
 $winrmHttpsPort=5986
 
 # The default MaxEnvelopeSizekb on Windows Server is 500 Kb which is very less. It needs to be at 8192 Kb. The small envelop size if not changed
