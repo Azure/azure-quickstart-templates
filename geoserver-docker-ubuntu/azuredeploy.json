@@ -1,0 +1,257 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminUsername": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Username for the Virtual Machine."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the Virtual Machine."
+      }
+    },
+    "dnsNameForPublicIP": {
+      "type": "string",
+      "metadata": {
+        "description": "DNS prefix used by the public IP"
+      }
+    },
+
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_DS2_v2",
+      "metadata": {
+        "description": "VM size"
+      }
+    }
+  },
+  "variables": {
+    "ubuntuOSVersion": "16.04-LTS",
+    "imagePublisher": "Canonical",
+    "imageOffer": "UbuntuServer",
+    "OSDiskName": "osdisk",
+    "nicName": "nic",
+    "addressPrefix": "10.0.0.0/16",
+    "subnetName": "Subnet",
+    "subnetPrefix": "10.0.0.0/24",
+    "vhdStorageType": "Standard_LRS",
+    "publicIPAddressType": "Dynamic",
+    "vmName": "GeoServerVM",
+    "GeoServerIP": "GeoServerIP",
+    "virtualNetworkName": "GeoServerVNET",
+    "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
+    "subnetRef": "[concat(variables('vnetId'), '/subnets/', variables('subnetName'))]",
+    "dockerImage": "winsent/geoserver"
+  },
+  "resources": [
+    {
+      "apiVersion": "2016-03-30",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "tags": {
+        "displayName": "GeoServerIP"
+      },
+      "name": "GeoServerIP",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('dnsNameForPublicIP')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2016-03-30",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "tags": {
+        "displayName": "[variables('virtualNetworkName')]"
+      },
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2016-03-30",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicName')]",
+      "tags": {
+        "displayName": "NetworkInterface"
+      },
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('GeoServerIP'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('GeoServerIP'))]"
+              },
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2016-04-30-preview",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('vmName')]",
+      "tags": {
+        "displayName": "VirtualMachine"
+      },
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[variables('ubuntuOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "osdisk1",
+            "osType": "Linux",
+            "caching": "ReadWrite",
+            "managedDisk": {
+
+              "storageAccountType": "Premium_LRS"
+            },
+            "createOption": "FromImage"
+          },
+          "dataDisks": [
+            {
+              "lun": 1,
+              "name": "geoserverdata",
+              "diskSizeGB": "1023",
+              "caching": "readwrite",
+              "managedDisk": {
+                "storageAccountType": "Premium_LRS"
+              },
+              "createOption": "Empty"
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "name": "CustomScript",
+          "type": "extensions",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2016-03-30",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
+          ],
+          "tags": {
+            "displayName": "CustomScript"
+          },
+          "properties": {
+            "publisher": "Microsoft.Azure.Extensions",
+            "type": "CustomScript",
+            "typeHandlerVersion": "2.0",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": [
+                "https://raw.githubusercontent.com/marrobi/azure-quickstart-templates/geoserver-docker-ubuntu/geoserver-docker-ubuntu/scripts/autopart.sh"
+              ],
+              "commandToExecute": "[concat('bash autopart.sh')]"
+            }
+          }
+        },
+        {
+          "type": "extensions",
+          "name": "DockerExtension",
+          "tags": {
+            "displayName": "DockerExtension"
+          },
+          "apiVersion": "2016-03-30",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines/', variables('vmName'))]",
+            "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('vmName'), 'CustomScript')]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Azure.Extensions",
+            "type": "DockerExtension",
+            "typeHandlerVersion": "1.2",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "compose": {
+                "geoserver": {
+                  "image": "[variables('dockerImage')]",
+                  "ports": [ "8080:8080" ],
+                  "volumes": [
+                    "/media/data1:/geoserver_data"
+                  ],
+                  "environment": [
+                    "GEOSERVER_DATA_DIR"
+
+                  ]
+                }
+              },
+              "installonly": "false"
+            },
+            "protectedSettings": {
+              "environment": {
+
+                "GEOSERVER_DATA_DIR": "/geoserver_data"
+
+
+              }
+            }
+          }
+        }
+      ]
+    }
+
+  ],
+  "outputs": {
+    "GeoServerURL": {
+      "value": "[concat('http://',reference(resourceId('Microsoft.Network/publicIPAddresses','GeoServerIP')).dnsSettings.fqdn,':8080/geoserver/')]",
+      "type": "string"
+    }
+
+  }
+}
