@@ -1,0 +1,220 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"clusterName": {
+			"type": "string",
+			"metadata": {
+				"description": "The name of the HDInsight cluster to create."
+			}
+		},
+		"clusterVersion": {
+			"type": "string",
+            "defaultValue": "3.5",
+			"allowedValues": [
+                "3.4",
+			    "3.5",
+			    "3.6"
+            ],
+			"metadata": {
+				"description": "The type of the HDInsight cluster to create."
+			}
+		},
+        "location": {
+            "type": "string",
+            "defaultValue": "East US 2",
+            "allowedValues": [
+                "East US 2",
+                "Central US",
+                "North Europe"
+            ],
+            "metadata": {
+                "description": "The location of the Data Lake Store account. Data Lake Store is only supported in certain locations."
+            }
+        },
+		"clusterLoginUserName": {
+			"type": "string",
+			"metadata": {
+				"description": "These credentials can be used to submit jobs to the cluster and to log into cluster dashboards."
+			}
+		},
+		"clusterLoginPassword": {
+			"type": "securestring",
+			"metadata": {
+				"description": "The password must be at least 10 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter."
+			}
+		},
+		"sshUserName": {
+			"type": "string",
+			"metadata": {
+				"description": "These credentials can be used to remotely access the cluster."
+			}
+		},
+		"sshPassword": {
+			"type": "securestring",
+			"metadata": {
+				"description": "The password must be at least 10 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter."
+			}
+		},
+		"defaultStorageAccountName": {
+			"type": "string",
+			"metadata": {
+				"description": "The name of the Azure storage account to be created and be used as the cluster's primary storage."
+			}
+		},
+		"linkedDataLakeStoreAccountName": {
+			"type": "string",
+			"metadata": {
+				"description": "The name of the Azure Data Lake Store account to be created and connected to the cluster."
+			}
+		},
+		"aadTenantId": {
+			"type": "string",
+			"metadata": {
+				"description": "The tenant ID (guid) of the Azure Active Directory (AAD) tenant where the service principal resides."
+			}
+		},
+		"servicePrincipalApplicationId": {
+			"type": "string",
+			"metadata": {
+				"description": "The AAD application ID (guid) of the service principal that represents the HDInsight cluster. The service principal will be given permissions on the root folder of the Data Lake Store account."
+			}
+		},
+		"servicePrincipalObjectId": {
+			"type": "string",
+			"metadata": {
+				"description": "The AAD object ID (guid) of the service principal that represents the HDInsight cluster. The service principal will be given permissions on the root folder of the Data Lake Store account."
+			}
+		},
+		"servicePrincipalCertificateContents": {
+			"type": "securestring",
+			"metadata": {
+				"description": "The base-64-encoded contents of the PFX certificate file that can be used to authenticate as the service principal that represents the HDInsight cluster."
+			}
+		},
+		"servicePrincipalCertificatePassword": {
+			"type": "securestring",
+			"metadata": {
+				"description": "The password securing the PFX certificate file that can be used to authenticate as the service principal that represents the HDInsight cluster."
+			}
+		},
+		"clusterWorkerNodeCount": {
+			"type": "int",
+			"defaultValue": 4,
+			"metadata": {
+				"description": "The number of nodes in the HDInsight cluster."
+			}
+		}
+	},
+	"variables": {
+	},
+	"resources": [
+    	{
+    		"type": "Microsoft.Storage/storageAccounts",
+    		"name": "[parameters('defaultStorageAccountName')]",
+    		"location": "[parameters('location')]",
+    		"apiVersion": "2016-01-01",
+    		"dependsOn": [],
+    		"tags": {
+    			
+    		},
+    		"properties": {
+    			"accountType": "Standard_LRS"
+    		}
+    	},
+        {
+    		"type": "Microsoft.DataLakeStore/accounts",
+    		"name": "[parameters('linkedDataLakeStoreAccountName')]",
+    		"location": "[parameters('location')]",
+    		"apiVersion": "2016-11-01",
+    		"dependsOn": [],
+    		"tags": {},
+    		"properties": {
+    			"initialUser": "[parameters('servicePrincipalObjectId')]"
+    		}
+    	},
+
+    	{
+    		"type": "Microsoft.HDInsight/clusters",
+    		"name": "[parameters('clusterName')]",
+    		"location": "[parameters('location')]",
+    		"apiVersion": "2015-03-01-preview",
+    		"dependsOn": [
+                "[concat('Microsoft.DataLakeStore/accounts/',parameters('linkedDataLakeStoreAccountName'))]",
+    		    "[concat('Microsoft.Storage/storageAccounts/',parameters('defaultStorageAccountName'))]"
+            ],
+    		"tags": {},
+    		"properties": {
+    			"clusterVersion": "[parameters('clusterVersion')]",
+    			"osType": "Linux",
+    			"clusterDefinition": {
+    				"kind": "hadoop",
+    				"configurations": {
+    					"gateway": {
+    						"restAuthCredential.isEnabled": true,
+    						"restAuthCredential.username": "[parameters('clusterLoginUserName')]",
+    						"restAuthCredential.password": "[parameters('clusterLoginPassword')]"
+    					},
+    					"clusterIdentity": {
+    						"clusterIdentity.applicationId": "[parameters('servicePrincipalApplicationId')]",
+    						"clusterIdentity.certificate": "[parameters('servicePrincipalCertificateContents')]",
+    						"clusterIdentity.certificatePassword": "[parameters('servicePrincipalCertificatePassword')]",
+    						"clusterIdentity.aadTenantId": "[concat('https://login.windows.net/',parameters('aadTenantId'))]",
+    						"clusterIdentity.resourceUri": "https://management.core.windows.net/"
+    					}
+    				}
+    			},
+    			"storageProfile": {
+    				"storageaccounts": [{
+    					"name": "[concat(parameters('defaultStorageAccountName'),'.blob.core.windows.net')]",
+    					"isDefault": true,
+    					"container": "[parameters('clusterName')]",
+    					"key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('defaultStorageAccountName')), variables('defaultApiVersion')).key1]"
+    				}]
+    			},
+    			"computeProfile": {
+    				"roles": [{
+    					"name": "headnode",
+    					"targetInstanceCount": "2",
+    					"hardwareProfile": {
+    						"vmSize": "Standard_D3"
+    					},
+    					"osProfile": {
+    						"linuxOperatingSystemProfile": {
+    							"username": "[parameters('sshUserName')]",
+    							"password": "[parameters('sshPassword')]"
+    						}
+    					}
+    				},
+    				{
+    					"name": "workernode",
+    					"targetInstanceCount": "[parameters('clusterWorkerNodeCount')]",
+    					"hardwareProfile": {
+    						"vmSize": "Standard_D3"
+    					},
+    					"osProfile": {
+    						"linuxOperatingSystemProfile": {
+    							"username": "[parameters('sshUserName')]",
+    							"password": "[parameters('sshPassword')]"
+    						}
+    					}
+    				}]
+    			}
+    		}
+    	}
+    ],
+	"outputs": {
+		"storageAccount": {
+			"type": "object",
+			"value": "[reference(resourceId('Microsoft.Storage/storageAccounts',parameters('defaultStorageAccountName')))]"
+		},
+		"adlStoreAccount": {
+			"type": "object",
+			"value": "[reference(resourceId('Microsoft.DataLakeStore/accounts',parameters('linkedDataLakeStoreAccountName')))]"
+		},
+		"cluster": {
+			"type": "object",
+			"value": "[reference(resourceId('Microsoft.HDInsight/clusters',parameters('clusterName')))]"
+		}
+	}
+}
