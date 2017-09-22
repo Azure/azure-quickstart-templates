@@ -1,0 +1,251 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "adminUsername": {
+            "type": "string",
+            "metadata": {
+                "description": "Username to access virtual Machines"
+            }
+        },
+        "adminPassword": {
+            "type": "securestring",
+            "minLength": 12,
+            "metadata": {
+                "description": "Password to access virtual Machines"
+            }
+        }
+    },
+    "variables": {
+        "storageAccountName": "[concat(uniqueString(resourceGroup().id),'storage')]",
+        "vmNSGName": "ExistingNsg",
+        "ipAddressName": "ExistingPip",
+        "virtualNetworkName": "ExistingVNet",
+        "vmNicName": "ExistingNic",
+        "vmName": "ExistingWinVm"
+    },
+    "resources": [{
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[variables('storageAccountName')]",
+            "apiVersion": "2016-01-01",
+            "location": "[resourceGroup().location]",
+            "comments": "Storage account used to store VM disks",
+            "tags": {
+                "displayName": "Storage Account"
+            },
+            "sku": {
+                "name": "Standard_LRS"
+            },
+            "kind": "Storage",
+            "properties": {
+
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[variables('vmNSGName')]",
+            "apiVersion": "2016-03-30",
+            "location": "[resourceGroup().location]",
+            "comments": "NSG for the VM subnet.",
+            "tags": {
+                "displayName": "VM NSG"
+            },
+            "properties": {
+                "securityRules": [
+
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[variables('ipAddressName')]",
+            "apiVersion": "2016-03-30",
+            "location": "[resourceGroup().location]",
+            "comments": " Public IP used by the Jump VM",
+            "tags": {
+                "displayName": "VM Public IP"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Static",
+                "idleTimeoutInMinutes": 4
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[variables('virtualNetworkName')]",
+            "apiVersion": "2016-03-30",
+            "location": "[resourceGroup().location]",
+            "comments": "Virtual network for overall solution",
+            "tags": {
+                "displayName": "Virtual Network"
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkSecurityGroups/', variables('vmNSGName'))]"
+            ],
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "10.0.0.0/16"
+                    ]
+                },
+                "subnets": [{
+                    "name": "default",
+                    "properties": {
+                        "addressPrefix": "10.0.1.0/24",
+                        "networkSecurityGroup": {
+                            "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('vmNSGName'))]"
+                        }
+                    }
+                }]
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[variables('vmNicName')]",
+            "apiVersion": "2016-03-30",
+            "location": "[resourceGroup().location]",
+            "comments": "NIC for the VM",
+            "tags": {
+                "displayName": "VM NIC"
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [{
+                    "name": "ipconfig1",
+                    "properties": {
+                        "privateIPAllocationMethod": "Dynamic",
+                        "publicIPAddress": {
+                            "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('ipAddressName'))]"
+                        },
+                        "subnet": {
+                            "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'),'default')]"
+                        }
+                    }
+                }]
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[variables('vmName')]",
+            "apiVersion": "2015-06-15",
+            "location": "[resourceGroup().location]",
+            "comments": "Windows VM",
+            "tags": {
+                "displayName": "Virtual Machine"
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+                "[concat('Microsoft.Network/networkInterfaces/', variables('vmNicName'))]"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "Standard_DS1_v2"
+                },
+                "osProfile": {
+                    "computerName": "windowsvm",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]",
+                    "windowsConfiguration": {
+                        "provisionVmAgent": "true"
+                    }
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "MicrosoftSQLServer",
+                        "offer": "SQL2014SP2-WS2012R2",
+                        "sku": "Enterprise",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "[variables('vmName')]",
+                        "vhd": {
+                            "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')),'2016-01-01').primaryEndpoints.blob,'vhds/', variables('vmName'),'-','vmOSDisk','.vhd')]"
+                        },
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage"
+                    },
+                    "dataDisks": [{
+                        "name": "[concat(variables('vmName'), '-disk-1')]",
+                        "createOption": "Empty",
+                        "lun": 0,
+                        "diskSizeGB": 1023,
+                        "caching": "ReadOnly",
+                        "vhd": {
+                            "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')),'2016-01-01').primaryEndpoints.blob,'vhds/', variables('vmName'),'-','vmDataDisk','.vhd')]"
+                        }
+                    }]
+                },
+                "networkProfile": {
+                    "networkInterfaces": [{
+                        "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmNicName'))]"
+                    }]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": "true",
+                        "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))).primaryEndpoints.blob]"
+                    }
+                }
+            }
+        },
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(variables('vmName'), '/SqlIaasExtension')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+            ],
+            "properties": {
+                "type": "SqlIaaSAgent",
+                "publisher": "Microsoft.SqlServer.Management",
+                "typeHandlerVersion": "1.2",
+                "autoUpgradeMinorVersion": "true",
+                "settings": {
+                    "AutoTelemetrySettings": {
+                        "Region": "[resourceGroup().location]"
+                    },
+                    "AutoPatchingSettings": {
+                        "PatchCategory": "WindowsMandatoryUpdates",
+                        "Enable": true,
+                        "DayOfWeek": "Sunday",
+                        "MaintenanceWindowStartingHour": "2",
+                        "MaintenanceWindowDuration": "60"
+                    },
+                    "KeyVaultCredentialSettings": {
+                        "Enable": false,
+                        "CredentialName": ""
+                    },
+                    "ServerConfigurationsManagementSettings": {
+                        "SQLConnectivityUpdateSettings": {
+                            "ConnectivityType": "Private",
+                            "Port": "1433"
+                        },
+                        "SQLWorkloadTypeUpdateSettings": {
+                            "SQLWorkloadType": "GENERAL"
+                        },
+                        "SQLStorageUpdateSettings": {
+                            "DiskCount": "1",
+                            "NumberOfColumns": "1",
+                            "StartingDeviceID": "2",
+                            "DiskConfigurationType": "NEW"
+                        },
+                        "AdditionalFeaturesServerConfigurations": {
+                            "IsRServicesEnabled": "false"
+                        }
+                    }
+                },
+                "protectedSettings": {}
+            }
+        }
+    ],
+    "outputs": {
+        "existingVirtualMachineName": {
+            "type": "string",
+            "value": "[variables('vmName')]"
+        }
+
+    }
+}
