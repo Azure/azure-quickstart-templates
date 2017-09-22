@@ -25,7 +25,7 @@
     code form of the Sample Code, provided that You agree: (i) to not use Our name, logo, or trademarks to market Your software
     product in which the Sample Code is embedded; (ii) to include a valid copyright notice on Your software product in which the
     Sample Code is embedded; and (iii) to indemnify, hold harmless, and defend Us and Our suppliers from and against any claims
-    or lawsuits, including attorneys’ fees, that arise or result from the use or distribution of the Sample Code.
+    or lawsuits, including attorneysâ€™ fees, that arise or result from the use or distribution of the Sample Code.
     Please note: None of the conditions outlined in the disclaimer above will supersede the terms and conditions contained
     within the Premier Customer Services Description.
 #>
@@ -169,7 +169,7 @@ try
 
 	# Downloading and installing AzCopt
 	$url = "http://aka.ms/downloadazcopy" 
-	$localPath = Join-Path $currentScriptFolder "MicrosoftAzureStorageToosl.msi" 
+	$localPath = Join-Path $currentScriptFolder "MicrosoftAzureStorageTools.msi" 
 
 	"Downloading AzCopy from $url" | Out-File "c:\$scriptName.txt" -Append
 
