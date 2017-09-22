@@ -1,0 +1,94 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "apiVersion": {
+      "type": "string",
+      "metadata": {
+        "description": "The API version"
+      }
+    },
+    "nicName": {
+      "type": "string",
+      "metadata": {
+        "description": "The network interface name for the VM"
+      }
+    },
+    "subnetId": {
+      "type": "string",
+      "metadata": {
+        "description": "The Id of the subnet in which the node is created"
+      }
+    },
+    "privateIPAllocationMethod": {
+      "type": "string",
+      "allowedValues": [
+        "Static",
+        "Dynamic"
+      ],
+      "metadata": {
+        "description": "The private IP address allocation method"
+      }
+    },
+    "privateIPAddress": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The private IP address, not used if 'privateIPAllocationMethod' is 'Dynamic'"
+      }
+    },
+    "publicIPAddressRGName": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource group for the public IP address resource"
+      }
+    },
+    "publicIPAddressName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the public IP address resource"
+      }
+    },
+    "publicIPDNSNameLabel": {
+      "type": "string",
+      "defaultVaule": "",
+      "metadata": {
+        "description": "The DNS name label of the public IP address, not used since this template use an existing public IP address"
+      }
+    }
+  },
+  "variables": {
+    "publicIpId": "[parameters('publicIPAddressRGName'), resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddressName'))]"
+  },
+  "resources": [
+    {
+      "apiVersion": "[parameters('apiVersion')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[parameters('nicName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "IPConfig",
+            "properties": {
+              "privateIPAllocationMethod": "[parameters('privateIPAllocationMethod')]",
+              "privateIPAddress": "[parameters('privateIPAddress')]",
+              "publicIPAddress": {
+                "id": "[variables('publicIpId')]"
+              },
+              "subnet": {
+                "id": "[parameters('subnetId')]"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "outputs": {
+    "publicFQDN": {
+      "value": "[reference(variables('publicIpId'), parameters('apiVersion')).dnsSettings.fqdn]",
+      "type": "string"
+    }
+  }
+}

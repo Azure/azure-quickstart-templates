@@ -32,10 +32,17 @@
         "description": "The VM role size"
       }
     },
-    "sourceImageVhdUri": {
+    "storageAccountType": {
       "type": "string",
+      "allowedValues": [ "Standard_LRS", "Premium_LRS" ],
       "metadata": {
-        "description": "The Uri of the source image VHD"
+        "description": "The storage account type for the disks of the VM"
+      }
+    },
+    "imageReference": {
+      "type": "object",
+      "metadata": {
+        "description": "The image reference"
       }
     },
     "adminUsername": {
@@ -58,14 +65,23 @@
     },
     "customData": {
       "type": "string",
+      "defaultValue": "[base64('None')]",
       "metadata": {
         "description": "The custom data in base64 format"
       }
     },
-    "scriptBaseUri": {
-      "type": "string",
+    "enableAutomaticUpdates": {
+      "type": "bool",
+      "defaultValue": false,
       "metadata": {
-        "description": "The base URI of the script"
+        "description": "Specify whether the VM is enabled for automatic updates"
+      }
+    },
+    "installRDMADriver": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Specify whether to install RDMA driver"
       }
     },
     "clusterName": {
@@ -74,21 +90,27 @@
         "description": "The HPC cluster name"
       }
     },
-    "privateDomainName": {
+    "domainName": {
       "type": "string",
       "metadata": {
-        "description": "The fully qualified domain name (FQDN) for the private domain forest which will be created by this template, for example 'hpc.local'."
+        "description": "The fully qualified domain name (FQDN) for the domain forest in which the compute node will join, for example 'hpc.local'."
+      }
+    },
+    "scriptBaseUri": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI of the script"
       }
     },
     "computeNodePostConfigScript": {
       "type": "string",
+      "defaultValue": "",
       "metadata": {
         "description": "Optional URL of a public available PowerShell script you want to run on the compute nodes after they are configured. You can also specify arguments for the script, for example 'http://www.consto.com/mypostscript.ps1 -Arg1 arg1 -Arg2 arg2'."
-      }    
+      }
     }
   },
-  "variables":{
-    "osDiskUri": "[uri(parameters('sourceImageVhdUri'), concat(toLower(parameters('vmName')), '-', uniqueString(parameters('subnetId'), toLower(parameters('vmName'))), '.vhd'))]"
+  "variables": {
   },
   "resources": [
     {
@@ -111,7 +133,7 @@
       }
     },
     {
-      "apiVersion": "[parameters('apiVersion')]",
+      "apiVersion": "2016-04-30-preview",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
       "location": "[resourceGroup().location]",
@@ -129,19 +151,19 @@
           "computerName": "[parameters('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]",
-          "customData": "[parameters('customData')]"
+          "customData": "[parameters('customData')]",
+          "windowsConfiguration": {
+            "enableAutomaticUpdates": "[parameters('enableAutomaticUpdates')]"
+          }
         },
         "storageProfile": {
+          "imageReference": "[parameters('imageReference')]",
           "osDisk": {
-            "name": "[parameters('vmName')]",
-            "osType": "windows",
+            "name": "[concat(parameters('vmName'), '-osdisk')]",
             "caching": "ReadOnly",
-            "image": {
-              "uri": "[parameters('sourceImageVhdUri')]"
-            },
             "createOption": "FromImage",
-            "vhd": {
-              "uri": "[variables('osDiskUri')]"
+            "managedDisk": {
+              "storageAccountType": "[parameters('storageAccountType')]"
             }
           }
         },
@@ -155,6 +177,7 @@
       },
       "resources": [
         {
+          "condition": "[parameters('installRDMADriver')]",
           "type": "Microsoft.Compute/virtualMachines/extensions",
           "name": "[concat(parameters('vmName'), '/installRDMADriver')]",
           "apiVersion": "[parameters('apiVersion')]",
@@ -181,7 +204,7 @@
           "properties": {
             "publisher": "Microsoft.Powershell",
             "type": "DSC",
-            "typeHandlerVersion": "2.19",
+            "typeHandlerVersion": "2.26",
             "autoUpgradeMinorVersion": true,
             "settings": {
               "configuration": {
@@ -190,7 +213,7 @@
                 "function": "ConfigComputeNode"
               },
               "configurationArguments": {
-                "DomainName": "[parameters('privateDomainName')]",
+                "DomainName": "[parameters('domainName')]",
                 "PostConfigScript": "[parameters('computeNodePostConfigScript')]"
               }
             },
