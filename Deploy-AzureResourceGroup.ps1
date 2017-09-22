@@ -65,9 +65,8 @@ if ($UploadArtifacts) {
     }
 
     # Create a storage account name if none was provided
-    if($StorageAccountName -eq "") {
-        $subscriptionId = ((Get-AzureRmContext).Subscription.Id).Replace('-', '').substring(0, 19)
-        $StorageAccountName = "stage$subscriptionId"
+    if ($StorageAccountName -eq '') {
+        $StorageAccountName = 'stage' + ((Get-AzureRmContext).Subscription.Id).Replace('-', '').substring(0, 19)
     }
 
     $StorageAccount = (Get-AzureRmStorageAccount | Where-Object{$_.StorageAccountName -eq $StorageAccountName})
@@ -89,10 +88,8 @@ if ($UploadArtifacts) {
 
     $ArtifactFilePaths = Get-ChildItem $ArtifactStagingDirectory -Recurse -File | ForEach-Object -Process {$_.FullName}
     foreach ($SourcePath in $ArtifactFilePaths) {
-        Set-AzureStorageBlobContent -File $SourcePath -Blob $SourcePath.Substring($ArtifactStagingDirectory.length + 1) `
-            -Container $StorageContainerName -Context $StorageAccount.Context -Force
+       Set-AzureStorageBlobContent -File $SourcePath -Blob $SourcePath.Substring($ArtifactStagingDirectory.length + 1) -Container $StorageContainerName -Context $StorageAccount.Context -Force
     }
-
     # Generate a 4 hour SAS token for the artifacts location if one was not provided in the parameters file
     if ($OptionalParameters[$ArtifactsLocationSasTokenName] -eq $null) {
         $OptionalParameters[$ArtifactsLocationSasTokenName] = ConvertTo-SecureString -AsPlainText -Force `
@@ -104,11 +101,16 @@ if ($UploadArtifacts) {
 New-AzureRmResourceGroup -Name $ResourceGroupName -Location $ResourceGroupLocation -Verbose -Force -ErrorAction Stop 
 
 if ($ValidateOnly) {
-    Test-AzureRmResourceGroupDeployment -ResourceGroupName $ResourceGroupName `
-                                        -TemplateFile $TemplateFile `
-                                        -TemplateParameterFile $TemplateParametersFile `
-                                        @OptionalParameters `
-                                        -Verbose
+    $ErrorMessages = Format-ValidationOutput (Test-AzureRmResourceGroupDeployment -ResourceGroupName $ResourceGroupName `
+                                                                                  -TemplateFile $TemplateFile `
+                                                                                  -TemplateParameterFile $TemplateParametersFile `
+                                                                                  @OptionalParameters)
+    if ($ErrorMessages) {
+        Write-Output '', 'Validation returned the following errors:', @($ErrorMessages), '', 'Template is invalid.'
+    }
+    else {
+        Write-Output '', 'Template is valid.'
+    }
 }
 else {
     New-AzureRmResourceGroupDeployment -Name ((Get-ChildItem $TemplateFile).BaseName + '-' + ((Get-Date).ToUniversalTime()).ToString('MMdd-HHmm')) `
@@ -116,5 +118,9 @@ else {
                                        -TemplateFile $TemplateFile `
                                        -TemplateParameterFile $TemplateParametersFile `
                                        @OptionalParameters `
-                                       -Force -Verbose 
+                                       -Force -Verbose `
+                                       -ErrorVariable ErrorMessages
+    if ($ErrorMessages) {
+        Write-Output '', 'Template deployment returned the following errors:', @(@($ErrorMessages) | ForEach-Object { $_.Exception.Message.TrimEnd("`r`n") })
+    }
 }
