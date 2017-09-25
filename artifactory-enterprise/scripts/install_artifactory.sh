@@ -101,25 +101,25 @@ server {
 }
 EOF
 
-cat <<EOF >/var/opt/jfrog/artifactory/etc/db.properties
-type=mssql
-driver=com.microsoft.sqlserver.jdbc.SQLServerDriver
-url=${db_url};databaseName=${db_name};sendStringParametersAsUnicode=false;applicationName=Artifactory Binary Repository
-username=${db_user}
-password=${db_password}
-EOF
+#cat <<EOF >/var/opt/jfrog/artifactory/etc/db.properties
+#type=mssql
+#driver=com.microsoft.sqlserver.jdbc.SQLServerDriver
+#url=${db_url};databaseName=${db_name};sendStringParametersAsUnicode=false;applicationName=Artifactory Binary Repository
+#username=${db_user}
+#password=${db_password}
+#EOF
 
-cat <<EOF >/var/opt/jfrog/artifactory/etc/binarystore.xml
-<config version="1">
-    <chain template="azure-blob-storage"/>
-    <provider id="azure-blob-storage" type="azure-blob-storage">
-        <accountName>${storage_acct}</accountName>
-        <accountKey>${storage_acct_key}</accountKey>
-        <endpoint>https://${storage_acct}.blob.core.windows.net/</endpoint>
-        <containerName>${storage_container}</containerName>
-    </provider>
-</config>
-EOF
+#cat <<EOF >/var/opt/jfrog/artifactory/etc/binarystore.xml
+#<config version="1">
+#    <chain template="azure-blob-storage"/>
+#    <provider id="azure-blob-storage" type="azure-blob-storage">
+#        <accountName>${storage_acct}</accountName>
+#        <accountKey>${storage_acct_key}</accountKey>
+#        <endpoint>https://${storage_acct}.blob.core.windows.net/</endpoint>
+#        <containerName>${storage_container}</containerName>
+#    </provider>
+#</config>
+#EOF
 
 chown artifactory:artifactory -R /var/opt/jfrog/artifactory/*  && chown artifactory:artifactory -R /var/opt/jfrog/artifactory/etc/security
 
