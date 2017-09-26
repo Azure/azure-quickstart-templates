@@ -2,13 +2,27 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vm-linux-dynamic-data-disks/"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    },
     "dnsLabelPrefix": {
       "type": "string",
       "metadata": {
         "description": "Unique public dns prefix where the  node will be exposed"
       }
     },
-    "adminUserName": {
+    "adminUsername": {
       "type": "string",
       "defaultValue": "azureuser",
       "metadata": {
@@ -192,35 +206,16 @@
       }
     },
     "numDataDisks": {
-      "type": "string",
+      "type": "int",
       "defaultValue": "4",
-      "allowedValues": [
-        "0",
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7",
-        "8",
-        "9",
-        "10",
-        "11",
-        "12",
-        "13",
-        "14",
-        "15",
-        "16"
-      ],
+      "minValue": 0,
+      "maxValue": 64,
       "metadata": {
         "description": "This parameter allows the user to select the number of disks wanted"
       }
     }
   },
   "variables": {
-    "armApiVersion": "2015-06-15",
-    "artifactsLocation": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vm-linux-dynamic-data-disks/",
     "avSetName": "avSet",
     "diskCaching": "ReadWrite",
     "networkSettings": {
@@ -245,16 +240,16 @@
     "vmStorageAccountContainerName": "vhd",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('networkSettings').virtualNetworkName)]",
     "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('networkSettings').subnet.dse.name)]",
-    "installationCLI": "[concat('bash azuredeploy.sh ', parameters('masterVMName'), ' ', parameters('mountFolder'), ' ', parameters('numDataDisks'), ' ', parameters('dockerVer'), ' ', parameters('dockerComposeVer'), ' ', parameters('adminUserName'), ' ', parameters('imageSku'), ' ', parameters('dockerMachineVer'))]",
+    "installationCLI": "[concat('bash azuredeploy.sh ', parameters('masterVMName'), ' ', parameters('mountFolder'), ' ', parameters('numDataDisks'), ' ', parameters('dockerVer'), ' ', parameters('dockerComposeVer'), ' ', parameters('adminUsername'), ' ', parameters('imageSku'), ' ', parameters('dockerMachineVer'))]",
     "storageAccountType": "[parameters('storageType')]",
-    "sshKeyPath": "[concat('/home/',parameters('adminUserName'),'/.ssh/authorized_keys')]"
+    "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]"
   },
 
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('newStorageAccountName')]",
-      "apiVersion": "[variables('armApiVersion')]",
+      "apiVersion": "2015-06-15",
       "location": "[resourceGroup().location]",
       "properties": {
         "accountType": "[variables('storageAccountType')]"
@@ -263,12 +258,12 @@
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('avSetName')]",
-      "apiVersion": "[variables('armApiVersion')]",
+      "apiVersion": "2017-03-30",
       "location": "[resourceGroup().location]",
-      "properties": { }
+      "properties": {}
     },
     {
-      "apiVersion": "[variables('armApiVersion')]",
+      "apiVersion": "2017-03-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('networkSettings').virtualNetworkName]",
       "location": "[resourceGroup().location]",
@@ -290,7 +285,7 @@
     },
     {
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "[variables('armApiVersion')]",
+      "apiVersion": "2017-03-01",
       "name": "[variables('publicIPAddressName')]",
       "location": "[resourceGroup().location]",
       "properties": {
@@ -301,7 +296,7 @@
       }
     },
     {
-      "apiVersion": "[variables('armApiVersion')]",
+      "apiVersion": "2017-03-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
       "location": "[resourceGroup().location]",
@@ -328,15 +323,14 @@
       }
     },
     {
-      "apiVersion": "[variables('armApiVersion')]",
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('masterVMName')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]",
-        "[concat('Microsoft.Compute/availabilitySets/', variables('avSetName'))]",
-        "[concat('Microsoft.Resources/deployments/', 'diskSelection')]"
+        "[concat('Microsoft.Compute/availabilitySets/', variables('avSetName'))]"
       ],
       "properties": {
         "availabilitySet": {
@@ -346,10 +340,10 @@
           "vmSize": "[parameters('nodeSize')]"
         },
         "osProfile": {
-          "computername": "[parameters('masterVMName')]",
+          "computerName": "[parameters('masterVMName')]",
           "adminUsername": "[parameters('adminUsername')]",
           "linuxConfiguration": {
-            "disablePasswordAuthentication": "true",
+            "disablePasswordAuthentication": true,
             "ssh": {
               "publicKeys": [
                 {
@@ -361,7 +355,6 @@
           }
         },
         "storageProfile": {
-          "dataDisks": "[reference('diskSelection').outputs.dataDiskArray.value]",
           "imageReference": {
             "publisher": "[parameters('imagePublisher')]",
             "offer": "[parameters('imageOffer')]",
@@ -369,13 +362,27 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),parameters('masterVMName'),'.vhd')]"
-            },
+            "name": "[variables('OSDiskName')]",
+            "vhd": { "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName')), '2015-06-15').primaryEndpoints.blob, variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]" },
             "caching": "ReadWrite",
             "createOption": "FromImage"
-          }
+          },
+          "copy": [
+            {
+              "name": "dataDisks",
+              "count": "[parameters('numDataDisks')]",
+              "input": {
+                "caching": "[variables('diskCaching')]",
+                "diskSizeGB": "[parameters('dataDiskSize')]",
+                "lun": "[copyIndex('dataDisks')]",
+                "name": "[concat(parameters('masterVMName'),'-datadisk',copyIndex('dataDisks'))]",
+                "vhd": {
+                  "uri": "[uri(reference(concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName')), '2015-06-15').primaryEndpoints.blob, concat('/',variables('vmStorageAccountContainerName'),'/',parameters('masterVMName'),'-datadisk',copyIndex('dataDisks'),'.vhd'))]"
+                },
+                "createOption": "Empty"
+              }
+            }
+          ]
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -387,7 +394,7 @@
       }
     },
     {
-      "apiVersion": "[variables('armApiVersion')]",
+      "apiVersion": "2016-03-30",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('masterVMName'), '/Installation')]",
       "location": "[resourceGroup().location]",
@@ -401,41 +408,9 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[concat(variables('artifactsLocation'), 'azuredeploy.sh')]"
+            "[concat(uri(parameters('_artifactsLocation'), 'azuredeploy.sh'), parameters('_artifactsLocationSasToken'))]"
           ],
           "commandToExecute": "[variables('installationCLI')]"
-        }
-      }
-    },
-    {
-      "apiVersion": "2015-01-01",
-      "name": "diskSelection",
-      "type": "Microsoft.Resources/deployments",
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[concat(variables('artifactsLocation'), 'diskSelection', '.json')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "numDataDisks": {
-            "value": "[parameters('numDataDisks')]"
-          },
-          "diskStorageAccountName": {
-            "value": "[variables('newStorageAccountName')]"
-          },
-          "diskCaching": {
-            "value": "[variables('diskCaching')]"
-          },
-          "diskSizeGB": {
-            "value": "[parameters('dataDiskSize')]"
-          },
-          "vmStAccountContainerName": {
-            "value": "[variables('vmStorageAccountContainerName')]"
-          },
-          "masterName": {
-            "value": "[parameters('masterVMName')]"
-          }
         }
       }
     }
