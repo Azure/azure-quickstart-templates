@@ -45,7 +45,7 @@ The fields that you need to fill out are:
 4. Admin Username - Username for the virtual Machine.
 5. Admin Password - Password for the virtual Machine.
 6. Security Group Name – New or existing security group, VMR default ports will be made publically available.
-7. DNS Name – Public DNS name for the virtual machine.
+7. DNS Label – Used for the public DNS name for the virtual machine.
 8. CentOS version – Use Centos 7.2 or CentOS 7.3
 9. VM Size – Use Standard_D2_V2 or Standard_F2s
 10. Solace VMR URI – The URI link from the registration email received during Step 1. of the install process.
