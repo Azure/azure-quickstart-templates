@@ -1,0 +1,337 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Username for the Virtual Machine."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the Virtual Machine."
+      }
+    },
+    "windowsOSVersion": {
+      "type": "string",
+      "defaultValue": "2016-Datacenter",
+      "allowedValues": [
+        "2016-Datacenter-with-Containers",
+        "2016-Datacenter"
+      ],
+      "metadata": {
+        "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version."
+      }
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "The Location For the resources"
+      },
+      "defaultValue": "[resourceGroup().location]"
+    },
+    "vmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "The size of the VM to create"
+      },
+      "defaultValue": "Standard_DS1_V2"
+    },
+    "instanceCount": {
+      "type": "int",
+      "metadata": {
+        "description": "Number of VM instances (100 or less)."
+      },
+      "minValue": 1,
+      "maxValue": 100,
+      "defaultValue": 2
+    },
+    "overProvision": {
+      "type": "bool",
+      "metadata": {
+        "description": "Over Provision VMSS Instances"
+      },
+      "defaultValue": false
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vmss-msi-windows"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation."
+      },
+      "defaultValue": ""
+    }
+  },
+  "variables": {
+    "vmssPrefix": "vmss",
+    "storageAccountName": "[concat(variables('vmssPrefix'),uniquestring(resourceGroup().id,deployment().name))]",
+    "nicName": "[concat('nic',uniquestring(resourceGroup().id,deployment().name))]",
+    "networkSecurityGroupName": "[concat('nsg',uniquestring(resourceGroup().id,deployment().name))]",
+    "addressPrefix": "10.0.0.0/16",
+    "subnetName": "Subnet",
+    "subnetPrefix": "10.0.0.0/24",
+    "vmssName": "[concat(variables('vmssPrefix'),uniquestring(resourceGroup().id,deployment().name))]",
+    "virtualNetworkName": "[concat('vnet',uniquestring(resourceGroup().id,deployment().name))]",
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
+    "containerName": "msi",
+    "createVMSSUrl": "[concat(parameters('_artifactsLocation'), '/nestedtemplates/createVMSS.json', parameters('_artifactsLocationSasToken'))]",
+    "createRBACUrl": "[concat(parameters('_artifactsLocation'), '/nestedtemplates/setUpRBAC.json', parameters('_artifactsLocationSasToken'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('storageAccountName')]",
+      "apiVersion": "2016-12-01",
+      "location": "[parameters('Location')]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "Storage",
+      "properties": {}
+    },
+    {
+      "apiVersion": "2016-09-01",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[parameters('Location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[variables('networkSecurityGroupName')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2016-09-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-rdp",
+            "properties": {
+              "priority": 1000,
+              "sourceAddressPrefix": "*",
+              "protocol": "TCP",
+              "destinationPortRange": "3389",
+              "access": "Allow",
+              "direction": "Inbound",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "creatingVMSS",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2016-09-01",
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroupName'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('createVMSSUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "windowsOSVersion": {
+            "value": "[parameters('windowsOSVersion')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "vmSize": {
+            "value": "[parameters('vmSize')]"
+          },
+          "overProvision": {
+            "value": "[parameters('overProvision')]"
+          },
+          "vmssName": {
+            "value": "[variables('vmssName')]"
+          },
+          "vmssPrefix": {
+            "value": "[variables('vmssPrefix')]"
+          },
+          "nicName": {
+            "value": "[variables('nicName')]"
+          },
+          "subnetRef": {
+            "value": "[variables('subnetRef')]"
+          },
+          "networkSecurityGroupName": {
+            "value": "[variables('networkSecurityGroupName')]"
+          },
+          "storageAccountUri": {
+            "value": "[reference(resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))).primaryEndpoints.blob]"
+          }
+        }
+      }
+    },
+    {
+      "name": "creatingRBAC",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2016-09-01",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/creatingVMSS"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('createRBACUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "principalId": {
+            "value": "[reference('Microsoft.Resources/deployments/creatingVMSS', '2016-09-01').outputs.principalId.value]"
+          },
+          "storageAccountName": {
+            "value": "[variables('storageAccountName')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachineScaleSets",
+      "name": "[variables('vmssName')]",
+      "location": "[parameters('Location')]",
+      "apiVersion": "2017-03-30",
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "Microsoft.Resources/deployments/creatingRBAC"
+      ],
+      "sku": {
+        "name": "[parameters('vmSize')]",
+        "tier": "Standard",
+        "capacity": "[parameters('instanceCount')]"
+      },
+      "identity": {
+        "type": "systemAssigned"
+      },
+      "properties": {
+        "upgradePolicy": {
+          "mode": "Manual"
+        },
+        "overprovision": "[Parameters('overProvision')]",
+        "virtualMachineProfile": {
+          "storageProfile": {
+            "osDisk": {
+              "caching": "ReadOnly",
+              "createOption": "FromImage"
+            },
+            "imageReference": {
+              "publisher": "MicrosoftWindowsServer",
+              "offer": "WindowsServer",
+              "sku": "[parameters('windowsOSVersion')]",
+              "version": "latest"
+            }
+          },
+          "osProfile": {
+            "computerNamePrefix": "[variables('vmssPrefix')]",
+            "adminUsername": "[parameters('adminUsername')]",
+            "adminPassword": "[parameters('adminPassword')]"
+          },
+          "networkProfile": {
+            "networkInterfaceConfigurations": [
+              {
+                "name": "[variables('nicName')]",
+                "properties": {
+                  "primary": true,
+                  "ipConfigurations": [
+                    {
+                      "name": "ipconfig1",
+                      "properties": {
+                        "subnet": {
+                          "id": "[variables('subnetRef')]"
+                        },
+                        "publicIPAddressconfiguration": {
+                          "name": "publicip",
+                          "properties": {
+                            "idleTimeoutInMinutes": 15,
+                            "dnsSettings": {
+                              "domainNameLabel": "[variables('vmssName')]"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+                  }
+                }
+              }
+            ]
+          },
+          "diagnosticsProfile": {
+            "bootDiagnostics": {
+              "enabled": "true",
+              "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))).primaryEndpoints.blob]"
+            }
+          },
+          "extensionProfile": {
+            "extensions": [
+              {
+                "name": "MSIWindowsExtension",
+                "properties": {
+                  "publisher": "Microsoft.ManagedIdentity",
+                  "type": "ManagedIdentityExtensionForWindows",
+                  "typeHandlerVersion": "1.0",
+                  "autoUpgradeMinorVersion": true,
+                  "settings": {
+                    "port": 50342
+                  },
+                  "protectedSettings": {}
+                }
+              },
+              {
+                "name": "CustomScriptExtension",
+                "properties": {
+                  "publisher": "Microsoft.Compute",
+                  "type": "CustomScriptExtension",
+                  "typeHandlerVersion": "1.8",
+                  "autoUpgradeMinorVersion": true,
+                  "settings": {
+                    "fileUris": [
+                      "[concat(parameters('_artifactsLocation'), '/scripts/writeblob.ps1', parameters('_artifactsLocationSasToken'))]"
+                    ],
+                    "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File  .\\writeblob.ps1  -SubscriptionId ',subscription().subscriptionId,' -TenantId ',subscription().tenantId,' -ResourceGroupName ',resourceGroup().Name,' -StorageAccountName ',variables('storageAccountName'),' -ContainerName ',variables('containerName'),' -Verbose')]"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
