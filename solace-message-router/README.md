@@ -7,11 +7,11 @@ How to Deploy a VMR
 
 VMRs can either be deployed as a 3 node HA cluster or a single node.  For simple test enviroments that need to validate application functionality, a simple single instance will suffice.
 
-![alt text](https://raw.githubusercontent.com/SolaceLabs/solace-azure-quickstart-template/master/images/single-vmr.png "Single Node Deployment")
+![alt text](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/solace-message-router/images/single-vmr.png "Single Node Deployment")
 
 But, in production or any enviroment where message loss can not be tolerated then a HA cluster is required.
 
-![alt text](https://raw.githubusercontent.com/SolaceLabs/solace-azure-quickstart-template/master/images/ha-cluster.png "HA Cluster Deployment")
+![alt text](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/solace-message-router/images/ha-cluster.png "HA Cluster Deployment")
 
 
 This is a 2 step process:
@@ -21,20 +21,20 @@ This is a 2 step process:
 | COMMUNITY EDITION FOR SINGLE NODE | EVALUTAION EDITION FOR HA CLUSTER
 | --- | --- |
 <a href="http://dev.solace.com/downloads/download_vmr-ce-docker" target="_blank">
-    <img src="https://raw.githubusercontent.com/SolaceLabs/solace-azure-quickstart-template/master/images/register.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/solace-message-router/images/register.png"/>
 </a> 
 
 <a href="http://dev.solace.com/downloads/download-vmr-evaluation-edition-docker/" target="_blank">
-    <img src="https://raw.githubusercontent.com/SolaceLabs/solace-azure-quickstart-template/master/images/register.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/solace-message-router/images/register.png"/>
 </a>
 
 
 * Hit the "Deploy to Azure" button and in the deployment template add in the link to the VMR provided by Solace. 
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FSolaceLabs%2Fsolace-azure-quickstart-template%2Fmaster%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fsolace-message-router%2Fmaster%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FSolaceLabs%2Fsolace-azure-quickstart-template%2Fmaster%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fsolace-message-router%2Fmaster%2Fazuredeploy.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
@@ -45,7 +45,7 @@ The fields that you need to fill out are:
 4. Admin Username - Username for the virtual Machine.
 5. Admin Password - Password for the virtual Machine.
 6. Security Group Name – New or existing security group, VMR default ports will be made publically available.
-7. DNS Name – Public DNS name for the virtual machine.
+7. DNS Label – Used for the public DNS name for the virtual machine.
 8. CentOS version – Use Centos 7.2 or CentOS 7.3
 9. VM Size – Use Standard_D2_V2 or Standard_F2s
 10. Solace VMR URI – The URI link from the registration email received during Step 1. of the install process.
@@ -57,13 +57,13 @@ Once the deployment has started you can view its progress under the Resource gro
 
 In this example the resource group is testvmr3, the Microsoft.Template template is in progress.  You can see the VMs have started, SolaceVMR0,1,2; the Docker extensions have been installed and the VMR configurations are taking place.  Once the VMRs are configured, the Primary VMR validates the cluster and will signal the deployment complete. After this point you can access the VMRs.
 
-![alt text](https://raw.githubusercontent.com/SolaceLabs/solace-azure-quickstart-template/master/images/deployment.png "deployment progress")
+![alt text](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/solace-message-router/images/deployment.png "deployment progress")
 
 # Gaining admin access to the VMR
 
 For persons used to working with Solace message router console access, this is still available with the Azure instance.  The [connect] button to the upper left displays this information: Use the "Admin Username" and "Admin Password" provided.
 
-![alt text](https://raw.githubusercontent.com/SolaceLabs/solace-azure-quickstart-template/master/images/remote_access.png "console with SolOS cli")
+![alt text](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/solace-message-router/images/remote_access.png "console with SolOS cli")
 
 Once you have access to the base OS command line you can access the SolOS CLI with the following command:
 ```
@@ -74,13 +74,13 @@ It would be advised to change the SolOS cli admin user password as per these [in
 
 For persons who are unfamiliar with the Solace mesage router, or would prefer an administration application, the SolAdmin management application is available.  For more information on SolAdmin see the [SolAdmin page](http://dev.solace.com/tech/soladmin/).  To get SolAdmin, visit the Solace [download page](http://dev.solace.com/downloads/) and select OS version desired.  Management IP will be the External IP associated with your Azure instance and the port will be 8080 by default.
 
-![alt text](https://raw.githubusercontent.com/SolaceLabs/solace-azure-quickstart-template/master/images/azure-soladmin.png "soladmin connection to gce")
+![alt text](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/solace-message-router/images/azure-soladmin.png "soladmin connection to gce")
 
 # Testing data access to the VMR
 
 To test data traffic though the newly created VMR instance, visit the Solace developer portal and and select your preferred programming language to [send and receive messages](http://dev.solace.com/get-started/send-receive-messages/). Under each language there is a Publish/Subscribe tutorial that will help you get started.
 
-![alt text](https://raw.githubusercontent.com/SolaceLabs/solace-azure-quickstart-template/master/images/solace_tutorial.png "getting started publish/subscribe")
+![alt text](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/solace-message-router/images/solace_tutorial.png "getting started publish/subscribe")
 
 # Troubelshouting VMR startup
 
@@ -90,9 +90,6 @@ All startup logs are located here: /var/lib/waagent/custom-script/download/0/ an
 
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.
 
-## Authors
-
-See the list of [contributors](https://github.com/SolaceLabs/solace-azure-quickstart-template/graphs/contributors) who participated in this project.
 
 ## License
 
