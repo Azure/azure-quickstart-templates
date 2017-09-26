@@ -150,14 +150,84 @@
     "apiVersion": "2015-06-15",
     "imageReference": "[variables('osType')]",
     "dbTemplate": "azureDBDeploy.json",
+    "nsgName": "myNsg",
     "dbTemplateLocation": "[concat(parameters('_artifactsLocation'), 'nested', '/', variables('dbTemplate'))]"
   },
   "resources": [
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "ssh",
+            "properties": {
+              "protocol": "Tcp",
+              "direction": "Inbound",
+              "destinationAddressPrefix": "*",
+              "description": "Allow SSH",
+              "destinationPortRange": 22,
+              "priority": 200,
+              "access": "Allow",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*"
+            }
+          },
+          {
+            "name": "sshPort22",
+            "properties": {
+              "protocol": "Tcp",
+              "direction": "Inbound",
+              "destinationAddressPrefix": "*",
+              "description": "Allow SSH",
+              "destinationPortRange": 2222,
+              "priority": 201,
+              "access": "Allow",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*"
+            }
+          },
+          {
+            "name": "httpPort80",
+            "properties": {
+              "protocol": "Tcp",
+              "direction": "Inbound",
+              "destinationAddressPrefix": "*",
+              "description": "HTTP Port 80",
+              "destinationPortRange": 80,
+              "priority": 202,
+              "access": "[variables('allowMasterHttp')[variables('oauthEnabled')]]",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*"
+            }
+          },
+          {
+            "name": "httpsPort443",
+            "properties": {
+              "protocol": "Tcp",
+              "direction": "Inbound",
+              "destinationAddressPrefix": "*",
+              "description": "HTTPS Port 443",
+              "destinationPortRange": 443,
+              "priority": 203,
+              "access": "[variables('allowMasterHttp')[variables('oauthEnabled')]]",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*"
+            }
+          }
+        ]
+      },
+      "name": "[variables('nsgName')]",
+      "apiVersion": "2016-03-30"
+    },
     {
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[resourceGroup().location]",
       "apiVersion": "2016-03-30",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]"
+      ],
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -168,7 +238,10 @@
           {
             "name": "[variables('subnetName')]",
             "properties": {
-              "addressPrefix": "[variables('subnetPrefix')]"
+              "addressPrefix": "[variables('subnetPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+              }
             }
           }
         ]
