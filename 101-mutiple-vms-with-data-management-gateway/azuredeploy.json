@@ -1,0 +1,215 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "existingDataFactoryName": {
+      "type":"string",
+      "metadata": {
+        "description": "your existing data factory name"
+      }
+    },
+    "existingDataFactoryResourceGroup": {
+      "type":"string",
+      "metadata": {
+        "description": "your existing data factory resource group"
+      }
+    },
+    "GatewayName": {
+      "type": "string",
+      "metadata": {
+        "description": "Gateway name must be unique in subscription"
+      }
+    },
+    "GatewayNodeCount":{
+      "type": "int",
+      "maxValue": 4,
+      "minValue": 1,
+      "metadata": {
+        "description": "the node count is between 1 and 4."
+      }
+    },
+    "adminUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "User name for the virtual machine"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the virtual machine"
+      }
+    },
+    "existingVirtualNetworkName":{
+      "type": "string",
+      "metadata": {
+        "description": "your existing vnet name"
+      }
+    },
+    "existingVnetLocation":
+    {
+      "type": "string",
+      "metadata": {
+        "description": "your virtual machine will be create in the same datacenter with VNET"
+      }
+    },
+    "existingVnetResourceGroupName":{
+      "type": "string",
+      "metadata": {
+        "description": "Name of the existing VNET resource group"
+      }
+    },
+    "existingSubnetInYourVnet": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the subnet in the virtual network you want to use"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-mutiple-vms-with-data-management-gateway/"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    }
+  },
+  "variables": {
+    "delimiters": [ "-", "_" ],
+    "prefix": "[split(parameters('GatewayName'), variables('delimiters'))[0]]", 
+    "gatewayId": "[resourceId(parameters('existingDataFactoryResourceGroup'), 'Microsoft.DataFactory/dataFactories/gateways', parameters('existingDataFactoryName'), parameters('GatewayName'))]",
+    "storageAccountName": "[take(concat(toLower(variables('prefix')), uniquestring(resourceGroup().id, parameters('GatewayName'))), 24)]",   
+    "networkSecurityGroupName": "[concat(parameters('GatewayName'), 'nsg')]",
+    "vmTemplateLink": "[concat(parameters('_artifactsLocation'), 'nested/VMtemplate.json',parameters('_artifactsLocationSasToken'))]",
+    "subnetId": "[resourceId(parameters('existingVnetResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('existingVirtualNetworkName'), parameters('existingSubnetInYourVnet'))]",
+    "scriptURL": "[concat(parameters('_artifactsLocation'), 'scripts/gatewayInstall.ps1',parameters('_artifactsLocationSasToken'))]"
+  },
+  "resources": [    
+    {
+      "apiVersion": "2017-05-10",
+      "name": "nestedTemplate",
+      "type": "Microsoft.Resources/deployments",
+      "resourceGroup": "[parameters('existingDataFactoryResourceGroup')]",
+      "properties": {
+          "mode": "Incremental",
+          "template": {
+              "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+              "contentVersion": "1.0.0.0",
+              "parameters": {},
+              "variables": {},
+              "resources": [
+                  {
+                    "type": "Microsoft.DataFactory/dataFactories/gateways",
+                    "apiVersion": "2015-10-01",
+                    "name": "[concat(parameters('existingDataFactoryName'), '/', parameters('GatewayName'))]",
+                    "properties": {
+                      "multiNodeSupportEnabled": true,
+                      "description": "my gateway"
+                    }
+                  }
+              ]
+          },
+          "parameters": {}
+      }
+    },
+    {
+      "name": "[variables('networkSecurityGroupName')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2016-09-01",
+      "location": "[parameters('existingVnetLocation')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-rdp",
+            "properties": {
+                "priority": 1000,
+                "sourceAddressPrefix": "*",
+                "protocol": "TCP",
+                "destinationPortRange": "3389",
+                "access": "Allow",
+                "direction": "Inbound",
+                "sourcePortRange": "*",
+                "destinationAddressPrefix": "*"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('storageAccountName')]",
+      "apiVersion": "2016-01-01",
+      "location": "[parameters('existingVnetLocation')]",
+      "dependsOn": [
+        "[resourceId(parameters('existingDataFactoryResourceGroup'), 'Microsoft.Resources/deployments', 'nestedTemplate')]"
+      ],
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "Storage",
+      "properties": {}
+    },
+    {
+      "apiVersion": "2015-01-01",
+      "name": "[concat('VMtemplate-', copyIndex())]",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "[resourceId(parameters('existingDataFactoryResourceGroup'), 'Microsoft.Resources/deployments', 'nestedTemplate')]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+      ],
+      "copy": { 
+        "name": "vmcopy", 
+        "count": "[parameters('GatewayNodeCount')]" 
+      },
+      "properties": {
+        "mode": "incremental",
+        "templateLink": {
+          "uri": "[variables('vmTemplateLink')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "gatewayId":
+          {
+            "value": "[variables('gatewayId')]"
+          },
+          "virtualMachineName": {
+            "value": "[take(concat('vm',copyIndex(),'-', variables('prefix')), 15)]"
+          },
+          "adminUserName": {
+            "value": "[parameters('adminUserName')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "existingVnetLocation":
+          {
+            "value": "[parameters('existingVnetLocation')]"
+          },
+          "subnetId":
+          {
+            "value":"[variables('subnetId')]"
+          },
+          "nsgId":
+          {
+            "value":"[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+          },
+          "storageAccountName":
+          {
+            "value": "[variables('storageAccountName')]"
+          },
+          "scriptUrl":
+          {
+            "value": "[variables('scriptURL')]"
+          }
+        }
+      }
+    }
+  ]
+}
