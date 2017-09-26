@@ -1,0 +1,219 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "siteName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of azure web app"
+      }
+    },
+    "servicePlanTier": {
+      "type": "string",
+      "allowedValues": [
+        "Basic",
+        "Standard"
+      ],
+      "defaultValue": "Basic",
+      "metadata": {
+        "description": "Tier for Service Plan"
+      }
+    },
+    "servicePlanSku": {
+      "type": "string",
+      "allowedValues": [
+        "B1",
+        "B2",
+        "B3",
+        "S1",
+        "S2",
+        "S3"
+      ],
+      "defaultValue": "B2",
+      "metadata": {
+        "description": "Size for Service Plan"
+      }
+    },
+    "administratorLogin": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Database administrator login name"
+      }
+    },
+    "administratorLoginPassword": {
+      "type": "securestring",
+      "minLength": 8,
+      "maxLength": 128,
+      "metadata": {
+        "description": "Database administrator password"
+      }
+    },
+    "databaseDTU": {
+      "type": "int",
+      "allowedValues": [
+        50,
+        100
+      ],
+      "defaultValue": 100,
+      "metadata": {
+        "description": "Azure database for PostgreSQL pricing tier"
+      }
+    },
+    "databaseSkuName": {
+      "type": "string",
+      "allowedValues": [
+        "PostgreSQLB100",
+        "PostgreSQLB50"
+      ],
+      "defaultValue": "PostgreSQLB100",
+      "metadata": {
+        "description": "Azure database for PostgreSQL sku name : PostgreSQLB100 (Basic 100 DTU tier) and PostgreSQLB50 (Basic 50 DTU tier)"
+      }
+    },
+    "databaseSkuSizeMB": {
+      "type": "int",
+      "allowedValues": [
+        102400,
+        51200
+      ],
+      "defaultValue": 51200,
+      "metadata": {
+        "description": "Azure database for PostgreSQL Sku Size "
+      }
+    },
+    "databaseSkuTier": {
+      "type": "string",
+      "allowedValues": [
+        "Basic"
+      ],
+      "defaultValue": "Basic",
+      "metadata": {
+        "description": "Azure database for PostgreSQL pricing tier"
+      }
+    },
+    "postgresqlVersion": {
+      "type": "string",
+      "allowedValues": [
+        "9.5",
+        "9.6"
+      ],
+      "defaultValue": "9.6",
+      "metadata": {
+        "description": "PostgreSQL version"
+      }
+    }
+  },
+  "variables": {
+    "databaseName": "[concat(parameters('siteName'), 'database')]",
+    "serverName": "[concat(parameters('siteName'), 'pgserver')]",
+    "jdbcSonarUserName": "[concat(parameters('administratorLogin'),'@',variables('serverName'))]",
+    "hostingPlanName": "[concat(parameters('siteName'), 'serviceplan')]"
+
+  },
+  "resources": [
+    {
+      "comments":"This is the Linux web app with the Sonarquebe Docker image",
+      "type": "Microsoft.Web/sites",
+      "name": "[parameters('siteName')]",     
+      "apiVersion": "2016-03-01",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[variables('hostingPlanName')]",
+        "[variables('databaseName')]"
+      ],
+       "properties": {
+        "siteConfig": {
+          "linuxFxVersion": "DOCKER|SONARQUBE"
+        },
+        "name": "[parameters('siteName')]",
+        "serverFarmId": "[variables('hostingPlanName')]",
+        "hostingEnvironment": ""
+      },
+      "resources": [
+        {
+          "name": "appsettings",
+          "type": "config",
+          "apiVersion": "2015-08-01",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites', parameters('siteName'))]"
+          ],
+          "tags": {
+            "displayName": "SonarappSettings"
+          },
+          "comments": "This are the generated settings for the Sonar jdbc connectionstring",
+          "properties": {
+            "SONARQUBE_JDBC_URL": "[concat('jdbc:postgresql://', reference(resourceId('Microsoft.DBforPostgreSQL/servers',variables('serverName'))).fullyQualifiedDomainName ,':5432/',variables('databaseName'),'?user=', variables('jdbcSonarUserName'), '&password=',parameters('administratorLoginPassword'), '&ssl=true')]",
+            "SONARQUBE_JDBC_USERNAME": "[variables('jdbcSonarUserName')]",
+            "SONARQUBE_JDBC_PASSWORD": "[parameters('administratorLoginPassword')]"
+          }
+        }
+      ]
+    },
+    {
+      "apiVersion": "2016-09-01",
+      "name": "[variables('hostingPlanName')]",
+      "type": "Microsoft.Web/serverfarms",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "name": "[variables('hostingPlanName')]",
+        "workerSizeId": "1",
+        "reserved": true,
+        "numberOfWorkers": "1",
+        "hostingEnvironment": ""
+      },
+      "sku": {
+        "Tier": "[parameters('servicePlanTier')]",
+        "Name": "[parameters('servicePlanSku')]"
+      },
+      "kind": "linux"
+    },
+    {
+      "apiVersion": "2017-04-30-preview",
+      "kind": "",
+      "location": "[resourceGroup().location]",
+      "name": "[variables('serverName')]",
+      "properties": {
+        "version": "[parameters('postgresqlVersion')]",
+        "administratorLogin": "[parameters('administratorLogin')]",
+        "administratorLoginPassword": "[parameters('administratorLoginPassword')]",
+        "storageMB": "[parameters('databaseSkuSizeMB')]"
+      },
+      "sku": {
+        "name": "[parameters('databaseSkuName')]",
+        "tier": "[parameters('databaseSkuTier')]",
+        "capacity": "[parameters('databaseDTU')]",
+        "size": "[parameters('databaseSkuSizeMB')]",
+        "family": "SkuFamily"
+      },
+      "type": "Microsoft.DBforPostgreSQL/servers",
+      "resources": [
+        {
+          "type": "firewallrules",
+          "apiVersion": "2017-04-30-preview",
+          "dependsOn": [
+            "[concat('Microsoft.DBforPostgreSQL/servers/', variables('serverName'))]"
+          ],
+          "location": "[resourceGroup().location]",
+          "name": "[concat(variables('serverName'),'firewall')]",
+          "properties": {
+            "startIpAddress": "0.0.0.0",
+            "endIpAddress": "255.255.255.255"
+          }
+        },
+        {
+          "name": "[variables('databaseName')]",
+          "type": "databases",
+          "apiVersion": "2017-04-30-preview",
+          "properties": {
+            "charset": "utf8",
+            "collation": "English_United States.1252"
+          },
+          "dependsOn": [
+            "[concat('Microsoft.DBforPostgreSQL/servers/', variables('serverName'))]"
+          ]
+        }
+      ]
+    }
+  ]
+}

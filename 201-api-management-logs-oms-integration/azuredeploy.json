@@ -1,0 +1,114 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"apiManagementPublisherEmail": {
+			"type": "string",
+			"minLength": 1,
+			"metadata": {
+				"description": "The email address of the owner of the service"
+			}
+		},
+		"apiManagementPublisherName": {
+			"type": "string",
+			"minLength": 1,
+			"metadata": {
+				"description": "The name of the owner of the service"
+			}
+		},
+		"apiManagementSku": {
+			"type": "string",
+			"allowedValues": [
+				"Developer",
+				"Standard",
+				"Premium"
+			],
+			"defaultValue": "Developer",
+			"metadata": {
+				"description": "The pricing tiers of this API Management service"
+			}
+		},
+		"apiManagementSkuCount": {
+			"type": "int",
+			"defaultValue": 1,
+			"metadata": {
+				"description": "The instance size of this API Management service."
+			}
+		},
+		"workspaceRegion": {
+			"type": "string",
+			"defaultValue": "East US",
+			"allowedValues": [
+				"Southeast Asia",
+				"Australia Southeast",
+				"West Europe",
+				"East US"
+			],
+			"metadata": {
+				"description": "Specify the region for your OMS workspace"
+			}
+		},
+		"omsSku": {
+			"type": "string",
+			"defaultValue": "free",
+			"allowedValues": [
+				"free",
+				"standalone",
+				"pernode"
+			],
+			"metadata": {
+				"description": "Select the SKU for your workspace"
+			}
+		}
+	},
+	"variables": {
+		"apiManagementServiceName": "[concat('apiservice', uniqueString(resourceGroup().id))]",
+		"omsWorkspaceName": "[concat('omsworkspace', uniqueString(resourceGroup().id))]"
+	},
+	"resources": [
+		{
+			"apiVersion": "2017-03-01",
+			"name": "[variables('apiManagementServiceName')]",
+			"type": "Microsoft.ApiManagement/service",
+			"location": "[resourceGroup().location]",
+			"tags": {},
+			"sku": {
+				"name": "[parameters('apiManagementSku')]",
+				"capacity": "[parameters('apiManagementSkuCount')]"
+			},
+			"properties": {
+				"publisherEmail": "[parameters('apiManagementPublisherEmail')]",
+				"publisherName": "[parameters('apiManagementPublisherName')]"
+			}
+		},
+		{
+			"name": "[variables('omsWorkspaceName')]",
+			"type": "Microsoft.OperationalInsights/workspaces",
+			"apiVersion": "2015-11-01-preview",
+			"location": "[parameters('workspaceRegion')]",
+			"properties": {
+				"sku": {
+					"name": "[parameters('omsSku')]"
+				}
+			}
+		},
+		{
+			"name": "[concat(variables('apiManagementServiceName'), '/', 'Microsoft.Insights/service')]",
+			"type": "Microsoft.ApiManagement/service/providers/diagnosticSettings",
+			"apiVersion": "2015-07-01",
+			"dependsOn": [
+				"[concat('Microsoft.ApiManagement/service/', variables('apiManagementServiceName'))]",
+				"[concat('Microsoft.OperationalInsights/workspaces/', variables('omsWorkspaceName'))]"
+			],
+			"properties": {
+				"workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('omsWorkspaceName'))]",
+				"logs": [
+					{
+						"category": "GatewayLogs",
+						"enabled": true
+					}
+				]
+			}
+		}
+	]
+}
