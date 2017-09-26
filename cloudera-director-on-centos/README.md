@@ -97,9 +97,9 @@ The template expects the following parameters:
 | clientId | AAD client ID | |
 | clientSecret | AAD client secret| |
 | directorSize | The size of the VM for Director server | Standard_DS12_v2 |
-| masterType | Master instance template VM size | Standard_DS14 |
-| workerType | Worker instance template VM size | Standard_DS14 |
-| edgeType | Edge instance template VM size | Standard_DS14 |
+| masterType | Master instance template VM size | Standard_DS14_v2 |
+| workerType | Worker instance template VM size | Standard_DS14_v2 |
+| edgeType | Edge instance template VM size | Standard_DS14_v2 |
 | directorEnvironmentName | Environment name use by Cloudera Director | Director_Azure_Deployment |
 | dnsNamePrefix | Unique DNS name prefix where the director VM will be exposed | |
 | dnsNameSuffix | Unique DNS suffix where the VMs will be exposed | |

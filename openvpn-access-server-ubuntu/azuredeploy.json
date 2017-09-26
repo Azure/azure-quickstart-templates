@@ -26,28 +26,19 @@
         "description": "DNS Name for the publicly accessible node. Must be lowercase. It should match with the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ or it will raise an error."
       }
     },
-	"vmSize": {
+    "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_A1",
-      "allowedValues": [
-	    "Standard_A1",
-		"Standard_A2",
-		"Standard_A3",
-        "Standard_D1",
-        "Standard_D3",
-		"Standard_D4"
-      ],
+      "defaultValue": "Basic_A0",
       "metadata": {
         "description": "The size of the virtual machines used when provisioning"
       }
     },
     "ubuntuOSVersion": {
       "type": "string",
-      "defaultValue": "14.04.2-LTS",
+      "defaultValue": "16.04.0-LTS",
       "allowedValues": [
-        "12.04.5-LTS",
-        "14.04.2-LTS",
-        "15.10"
+        "16.04.0-LTS",
+        "17.04"
       ],
       "metadata": {
         "description": "The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version. Allowed values: 12.04.5-LTS, 14.04.2-LTS, 15.10."
@@ -57,34 +48,21 @@
   "variables": {
     "imagePublisher": "Canonical",
     "imageOffer": "UbuntuServer",
-    "OSDiskName": "osdiskforlinuxsimple",
-    "nicName": "myVMNic",
+    "nicName": "OpenVPN-NIC",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
     "subnetPrefix": "10.0.0.0/24",
-	"storageAccountName": "[concat(uniquestring(resourceGroup().id), 'standardsa')]",
-	"apiVersion": "2015-06-15",
     "storageAccountType": "Standard_LRS",
-    "publicIPAddressName": "myPublicIP",
-    "publicIPAddressType": "Dynamic",
-    "vmStorageAccountContainerName": "vhds",
-    "vmName": "MyubuntuVM",
-    "virtualNetworkName": "MyVNET",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
-    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]"
+    "publicIPAddressName": "OpenVPN-PublicIP",
+    "publicIPAddressType": "Static",
+    "vmName": "OpenVPN-VM",
+    "virtualNetworkName": "OpenVPN-VNET",
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets',variables('virtualNetworkName'),variables('subnetName'))]",
+    "networkSecurityGroupName": "OpenVPN-NSG"
   },
   "resources": [
     {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('storageAccountName')]",
-      "apiVersion": "[variables('apiVersion')]",
-      "location": "[resourceGroup().location]",
-      "properties": {
-        "accountType": "[variables('storageAccountType')]"
-      }
-    },
-    {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
       "location": "[resourceGroup().location]",
@@ -96,7 +74,69 @@
       }
     },
     {
-      "apiVersion": "[variables('apiVersion')]",
+        "name": "[variables('networkSecurityGroupName')]",
+        "type": "Microsoft.Network/networkSecurityGroups",
+        "apiVersion": "2015-06-15",
+        "location": "[resourceGroup().location]",
+        "properties": {
+            "securityRules": [
+                {
+                    "name": "OpenVPN_WebServer",
+                    "properties": {
+                        "priority": 1200,
+                        "sourceAddressPrefix": "*",
+                        "protocol": "TCP",
+                        "destinationPortRange": "943",
+                        "access": "Allow",
+                        "direction": "Inbound",
+                        "sourcePortRange": "*",
+                        "destinationAddressPrefix": "*"
+                    }
+                },
+                {
+                    "name": "OpenVPN443",
+                    "properties": {
+                        "priority": 1100,
+                        "sourceAddressPrefix": "*",
+                        "protocol": "TCP",
+                        "destinationPortRange": "443",
+                        "access": "Allow",
+                        "direction": "Inbound",
+                        "sourcePortRange": "*",
+                        "destinationAddressPrefix": "*"
+                    }
+                },
+                {
+                    "name": "OpenVPN1194",
+                    "properties": {
+                        "priority": 1300,
+                        "sourceAddressPrefix": "*",
+                        "protocol": "UDP",
+                        "destinationPortRange": "1194",
+                        "access": "Allow",
+                        "direction": "Inbound",
+                        "sourcePortRange": "*",
+                        "destinationAddressPrefix": "*"
+                    }
+                },
+                {
+                    "name": "default-allow-ssh",
+                    "properties": {
+                        "priority": 1000,
+                        "sourceAddressPrefix": "*",
+                        "protocol": "TCP",
+                        "destinationPortRange": "22",
+                        "access": "Allow",
+                        "direction": "Inbound",
+                        "sourcePortRange": "*",
+                        "destinationAddressPrefix": "*"
+                    }
+                }
+            ]
+        }
+    },
+    {
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[resourceGroup().location]",
@@ -117,13 +157,14 @@
       }
     },
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroupName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -139,16 +180,18 @@
               }
             }
           }
-        ]
+        ],
+        "networkSecurityGroup": {
+            "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+        }
       }
     },
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
       ],
       "properties": {
@@ -167,13 +210,11 @@
             "sku": "[parameters('ubuntuOSVersion')]",
             "version": "latest"
           },
-          "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
-            },
-            "caching": "ReadWrite",
-            "createOption": "FromImage"
+        "osDisk": {
+            "createOption": "fromImage",
+            "managedDisk": {
+                "storageAccountType": "[variables('storageAccountType')]"
+            }
           }
         },
         "networkProfile": {
@@ -188,7 +229,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmName'),'/newuserscript')]",
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2015-06-15",
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"

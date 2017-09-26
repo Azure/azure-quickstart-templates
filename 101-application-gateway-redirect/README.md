@@ -14,13 +14,14 @@ This template illustrates different redirect scenarios Application Gateway suppo
 3. Redirect requests under a given path.
 
 This functionality can be configured using RedirectConfiguration.
-| Property              | Mandatory | Description  |
-| ----------------------|:---------:|:-------------|
-| RedirectType          | Y         | Supported http redirection types - Permanent, Temporary, Found, SeeOther |
-| TargetListener        | N         | Reference to a listener to redirect the request to. |
-| TargetUrl             | N         | A Url to redirect to. Cannot be used when TargetListener is specified.|
-| IncludePath           | N         | True/False.|
-| IncludeQueryString    | N         | True/False |
+
+| Property | Mandatory | Description |
+|---|---|---|
+| RedirectType | Y | Supported http redirection types - Permanent, Temporary, Found, SeeOther |
+| TargetListener | N | Reference to a listener to redirect the request to. |
+| TargetUrl | N | A Url to redirect to. Cannot be used when TargetListener is specified.|
+| IncludePath | N | True/False.|
+| IncludeQueryString | N | True/False |
 
 ### Sample Redirect Configuration
 ```
