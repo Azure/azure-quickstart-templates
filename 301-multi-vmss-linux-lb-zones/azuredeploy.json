@@ -1,0 +1,338 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"location": {
+			"type": "string",
+			"allowedValues": [
+				"westeurope",
+				"eastus2"
+			],
+			"defaultValue": "westeurope",
+			"metadata": {
+				"description": "Location for the VM, only certain regions support zones during preview."
+			}
+		},
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Username for the Virtual Machine."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the Virtual Machine."
+      }
+    },
+		"dnsName": {
+			"type": "string",
+			"metadata": {
+				"description": "String used as a base for naming resources. Must be 3-61 characters in length and globally unique across Azure. A hash is prepended to this string for some resources and resource-specific information is appended."
+			},
+			"minLength": 3,
+			"maxLength": 61
+		},
+		"numberOfVms": {
+			"type": "int",
+			"defaultValue": 3,
+			"metadata": {
+				"description": "The number of VMs to deploy in each VMSS."
+			}
+		}
+	},
+	"variables": {
+		"virtualNetworkName": "[concat(parameters('dnsName'), '-vnet')]",
+		"subnetName": "Subnet-1",
+    "networkSecurityGroupName": "allowRemoting",
+		"publicIPAddressName": "lbPublicIp",
+		"publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]",
+		"frontEndIPConfigID": "[concat(variables('lbID'), '/frontendIPConfigurations/loadBalancerFrontEnd')]",
+		"lbName": "[concat('lb-', parameters('dnsName'))]",
+		"lbID": "[resourceId('Microsoft.Network/loadBalancers', variables('lbName'))]",
+		"lbBE": "lbBE",
+		"lbNAT": "lbNAT",
+		"myZones": [
+			"1",
+			"2",
+			"3"
+		],
+		"linuxImage": {
+			"publisher": "Canonical",
+			"offer": "UbuntuServer",
+			"sku": "16.04.0-LTS",
+			"version": "latest"
+		}
+	},
+	"resources": [
+		{
+			"type": "Microsoft.Network/virtualNetworks",
+			"apiVersion": "2017-08-01",
+			"name": "[variables('virtualNetworkName')]",
+			"location": "[parameters('location')]",
+			"properties": {
+				"addressSpace": {
+					"addressPrefixes": [
+						"10.0.0.0/16"
+					]
+				},
+				"subnets": [
+					{
+						"name": "[variables('subnetName')]",
+						"properties": {
+							"addressPrefix": "10.0.0.0/24"
+						}
+					}
+				]
+			}
+		},
+		{
+			"type": "Microsoft.Network/networkSecurityGroups",
+			"apiVersion": "2016-03-30",
+			"name": "[variables('networkSecurityGroupName')]",
+			"location": "[parameters('location')]",
+			"properties": {
+				"securityRules": [
+					{
+						"name": "remoteConnection",
+						"properties": {
+							"description": "Allow SSH traffic",
+							"protocol": "Tcp",
+							"sourcePortRange": "*",
+							"destinationPortRange": "22",
+							"sourceAddressPrefix": "*",
+							"destinationAddressPrefix": "*",
+							"access": "Allow",
+							"priority": 101,
+							"direction": "Inbound"
+						}
+					},
+					{
+						"name": "webTraffic",
+						"properties": {
+							"description": "Allow web traffic",
+							"protocol": "Tcp",
+							"sourcePortRange": "80",
+							"destinationPortRange": "80",
+							"sourceAddressPrefix": "*",
+							"destinationAddressPrefix": "*",
+							"access": "Allow",
+							"priority": 100,
+							"direction": "Inbound"
+						}
+					}
+				]
+			}
+		},
+		{
+			"type": "Microsoft.Network/publicIPAddresses",
+			"apiVersion": "2017-08-01",
+			"name": "[variables('publicIPAddressName')]",
+			"location": "[parameters('location')]",
+			"sku": {
+				"name": "Standard"
+			},
+			"properties": {
+				"publicIPAllocationMethod": "Static",
+				"dnsSettings": {
+					"domainNameLabel": "[parameters('dnsName')]"
+				}
+			}
+		},
+		{
+			"type": "Microsoft.Network/loadBalancers",
+			"apiVersion": "2017-08-01",
+			"name": "[variables('lbName')]",
+			"location": "[parameters('location')]",
+			"sku": {
+				"name": "Standard"
+			},
+			"dependsOn": [
+				"[variables('publicIPAddressName')]"
+			],
+			"properties": {
+				"frontendIPConfigurations": [
+					{
+						"name": "LoadBalancerFrontEnd",
+						"properties": {
+							"publicIPAddress": {
+								"id": "[variables('publicIPAddressID')]"
+							}
+						}
+					}
+				],
+				"backendAddressPools": [
+					{
+						"name": "[variables('lbBE')]"
+					}
+				],
+				"loadbalancingRules": [
+					{
+						"name": "lbrule1",
+						"properties": {
+							"frontendIPConfiguration": {
+								"id": "[variables('frontendIPConfigID')]"
+							},
+							"backendaddressPool": {
+								"id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('lbName'), variables('lbBE'))]"
+							},
+							"protocol": "tcp",
+							"frontendPort": 80,
+							"backendPort": 80,
+							"probe": {
+								"id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('lbName')), '/probes/tcpProbe')]"
+							}
+						}
+					}
+				],
+				"probes": [
+					{
+						"name": "tcpProbe",
+						"properties": {
+							"protocol": "tcp",
+							"port": 80,
+							"intervalInSeconds": "5",
+							"numberOfProbes": "2"
+						}
+					}
+				],
+				"inboundNatPools": [
+					{
+						"name": "[concat(variables('lbNAT'), '1')]",
+						"properties": {
+							"frontendIPConfiguration": {
+								"id": "[variables('frontEndIPConfigID')]"
+							},
+							"protocol": "tcp",
+							"frontendPortRangeStart": 50100,
+							"frontendPortRangeEnd": 50199,
+							"backendPort": 22
+						}
+					},
+					{
+						"name": "[concat(variables('lbNAT'), '2')]",
+						"properties": {
+							"frontendIPConfiguration": {
+								"id": "[variables('frontEndIPConfigID')]"
+							},
+							"protocol": "tcp",
+							"frontendPortRangeStart": 50200,
+							"frontendPortRangeEnd": 50299,
+							"backendPort": 22
+						}
+					},
+					{
+						"name": "[concat(variables('lbNAT'), '3')]",
+						"properties": {
+							"frontendIPConfiguration": {
+								"id": "[variables('frontEndIPConfigID')]"
+							},
+							"protocol": "tcp",
+							"frontendPortRangeStart": 50300,
+							"frontendPortRangeEnd": 50399,
+							"backendPort": 22
+						}
+					}
+				]
+			}
+		},
+		{
+			"type": "Microsoft.Compute/virtualMachineScaleSets",
+			"apiVersion": "2017-03-30",
+			"name": "[concat('myScaleset','-zone', variables('myZones')[copyindex()])]",
+			"location": "[parameters('location')]",
+			"zones": [
+				"[variables('myZones')[copyindex()]]"
+			],
+			"copy": {
+				"name": "VMSScount",
+				"count": "[length(variables('myZones'))]"
+			},
+			"dependsOn": [
+				"[variables('virtualNetworkName')]",
+				"[variables('lbName')]",
+				"[variables('networkSecurityGroupName')]"
+			],
+			"sku": {
+				"name": "Standard_A2_v2",
+				"capacity": "[parameters('numberOfVms')]"
+			},
+			"properties": {
+				"singlePlacementGroup": true,
+				"upgradePolicy": {
+					"mode": "Manual"
+				},
+				"virtualMachineProfile": {
+					"storageProfile": {
+						"osDisk": {
+							"createOption": "FromImage"
+						},
+						"imageReference": "[variables('linuxImage')]",
+						"dataDisks": [
+							{
+								"lun": 1,
+								"createOption": "Empty",
+								"diskSizeGB": 50
+							}
+						]
+					},
+					"osProfile": {
+						"computerNamePrefix": "vm",
+						"adminUsername": "[parameters('adminUsername')]",
+						"adminPassword": "[parameters('adminPassword')]",
+						"customData": "[base64(variables('myZones')[copyindex()])]"
+					},
+					"networkProfile": {
+						"networkInterfaceConfigurations": [
+							{
+								"name": "myNic",
+								"properties": {
+									"networkSecurityGroup": {
+										"id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+									},
+									"primary": true,
+									"ipConfigurations": [
+										{
+											"name": "myIpConfig",
+											"properties": {
+												"subnet": {
+													"id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
+												},
+												"loadBalancerBackendAddressPools": [
+													{
+														"id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('lbName'), variables('lbBE'))]"
+													}
+												],
+												"loadBalancerInboundNatPools": [
+													{
+														"id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatPools', variables('lbName'), concat(variables('lbNAT'), copyindex(1)))]"
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						]
+					},
+					"extensionProfile": {
+						"extensions": [
+							{
+								"name": "apacheInstall",
+								"properties": {
+									"publisher": "Microsoft.Azure.Extensions",
+									"type": "CustomScript",
+									"typeHandlerVersion": "2.0",
+									"autoUpgradeMinorVersion": true,
+									"settings": {
+										"commandToExecute": "sudo apt-get -y update && sudo apt-get install -y apache2 && echo \\<center\\>\\<h1\\>My Demo App\\</h1\\>\\<br/\\>\\</center\\> > /var/www/html/demo.html  && echo \\<center\\>\\<h1\\> >> /var/www/html/demo.html && sudo /usr/bin/curl http://169.254.169.254/metadata/v1/instanceinfo  | awk -F '\"' '{print $4;}' >> /var/www/html/demo.html && echo \\</h1\\>\\<br/\\>\\</center\\> >> /var/www/html/demo.html && echo \\<center\\>\\<h1\\> >> /var/www/html/demo.html && sudo /sbin/ifconfig eth0  | grep 'inet addr' | awk '{print $2}' >> /var/www/html/demo.html && echo \\</h1\\>\\<br/\\>\\</center\\> >> /var/www/html/demo.html &&  sudo apachectl restart"
+									}
+								}
+							}
+						]
+					}
+				}
+			}
+		}
+	]
+}

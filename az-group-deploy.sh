@@ -55,7 +55,7 @@ then
     if [[ -z $storageAccountName ]]
     then    
 
-        subscriptionId=$( azure account show --json | jq -r '.[0].id' )
+        subscriptionId=$( az account show -o json | jq -r '.id' )
         subscriptionId="${subscriptionId//-/}" 
         subscriptionId="${subscriptionId:0:19}"
         artifactsStorageAccountName="stage$subscriptionId"
@@ -97,7 +97,10 @@ then
         relFilePath=${filepath:$artifactsStagingDirectoryLen}
         echo "Uploading file $relFilePath..."
         az storage blob upload -f $filepath --container $artifactsStorageContainerName -n $relFilePath --account-name "$artifactsStorageAccountName" --account-key "$artifactsStorageAccountKey" --verbose
-    done 
+    done
+
+    templateUri=$blobEndpoint$artifactsStorageContainerName/$(basename $templateFile)?$sasToken
+
 fi
 
 az group create -n "$resourceGroupName" -l "$location"
@@ -107,7 +110,17 @@ parameterJson=$( echo "$parameterJson" | jq -c '.' )
 
 if [[ $validateOnly ]]
 then
-    az group deployment validate -g "$resourceGroupName" --template-file $templateFile --parameters "$parameterJson" --verbose
+    if [[ $uploadArtifacts ]]
+    then
+        az group deployment validate -g "$resourceGroupName" --template-uri $templateUri --parameters "$parameterJson" --verbose
+    else
+        az group deployment validate -g "$resourceGroupName" --template-file $templateFile --parameters "$parameterJson" --verbose
+    fi
 else
-    az group deployment create -g "$resourceGroupName" -n AzureRMSamples --template-file $templateFile --parameters "$parameterJson" --verbose
+    if [[ $uploadArtifacts ]]
+    then
+        az group deployment create -g "$resourceGroupName" -n AzureRMSamples --template-uri $templateUri --parameters "$parameterJson" --verbose
+    else
+        az group deployment create -g "$resourceGroupName" -n AzureRMSamples --template-file $templateFile --parameters "$parameterJson" --verbose
+    fi
 fi
