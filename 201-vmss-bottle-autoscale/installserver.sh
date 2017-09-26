@@ -16,7 +16,7 @@ printf 'ExecReload=/bin/kill -HUP $MAINPID\nKillMode=process\nRestart=on-failure
 printf '[Install]\nWantedBy=multi-user.target\nAlias=workserver.service' >> /etc/systemd/system/workserver.service
 chmod +x /etc/systemd/system/workserver.service
 
-systemctl start workserver
+service workserver start
 
 
 
