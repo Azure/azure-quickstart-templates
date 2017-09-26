@@ -66,7 +66,7 @@ fi
 # Base path for data disk mount points
 DATA_BASE="/datadisks"
 # Mount options for data disk
-MOUNT_OPTIONS="noatime,nodiratime,nodev,noexec,nosuid"
+MOUNT_OPTIONS="noatime,nodiratime,nodev,noexec,nosuid,nofail"
 
 while getopts b:sho: optname; do
     log "Option $optname set with value ${OPTARG}"
@@ -281,7 +281,7 @@ create_striped_volume()
 
     MDDEVICE=$(get_next_md_device)    
 	sudo udevadm control --stop-exec-queue
-	mdadm --create ${MDDEVICE} --level 0 --raid-devices ${#PARTITIONS[@]} ${PARTITIONS[*]}
+	mdadm --create ${MDDEVICE} --level 0 -c 64 --raid-devices ${#PARTITIONS[@]} ${PARTITIONS[*]}
 	sudo udevadm control --start-exec-queue
 	
 	MOUNTPOINT=$(get_next_mountpoint)

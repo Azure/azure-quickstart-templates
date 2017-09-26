@@ -1,0 +1,165 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmSku": {
+      "type": "string",
+      "defaultValue": "Standard_F2",
+      "metadata": {
+        "description": "Size of VMs in the VM Scale Set."
+      }
+    },
+    "vmssName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the VM Scale Set."
+      },
+      "maxLength": 61
+    },
+    "instanceCount": {
+      "type": "int",
+      "metadata": {
+        "description": "Initial number of VM instances (100 or less)."
+      },
+      "defaultValue": 2,
+      "maxValue": 100
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Admin username on all VMs."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Admin password on all VMs."
+      }
+    },
+    "upgradePolicy": {
+      "type": "string",
+      "defaultValue": "Manual",
+      "allowedValues": [
+        "Manual",
+        "Automatic"
+      ],
+      "metadata": {
+        "description": "The upgrade policy for the VM Scale Set, either Manual of Automatic."
+      }
+    },
+    "existingVirtualNetworkResourceGroup": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Resource Group which contains the existing Virtual Network that this VM Scale Set will be connected to."
+      }
+    },
+    "existingVirtualNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the existing Virtual Network that this VM Scale Set will be connected to."
+      }
+    },
+    "existingVirtualNetworkSubnet": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the existing subnet that this VM Scale Set will be connected to."
+      }
+    },
+    "existingManagedImageResourceGroup": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Resource Group containing the Image that instances of the VM Scale Set will be created from. Images can be created by capturing Azure VMs."
+      }
+    },
+    "existingManagedImageName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Image that instances of the VM Scale Set will be created from. Images can be created by capturing Azure VMs."
+      }
+    },
+    "existingAppGatewayResourceGroup": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Resource Group which contains the existing Application Gateway that will load-balance the instances of this VM Scale Set."
+      }
+    },
+    "existingAppGatewayName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the existing Application Gateway that will load-balance the instances of this VM Scale Set."
+      }
+    },
+    "existingAppGatewayBackendPoolName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Backend Pool in the existing Application Gateway that will load-balance the instances of this VM Scale Set."
+      },
+      "defaultValue": "appGatewayBackendPool"
+    }
+  },
+  "variables": {
+    "vmssName": "[toLower(substring(parameters('vmssName'), 0, 9))]",
+    "vnetId": "[resourceId(parameters('existingVirtualNetworkResourceGroup'), 'Microsoft.Network/virtualNetworks', parameters('existingVirtualNetworkName'))]",
+    "subnetId": "[concat(variables('vnetId'), '/subnets/', parameters('existingVirtualNetworkSubnet'))]",
+    "appGwId": "[resourceId(parameters('existingAppGatewayResourceGroup'), 'Microsoft.Network/applicationGateways', parameters('existingAppGatewayName'))]",
+    "appGwBePoolId": "[concat(variables('appGwId'), '/backendAddressPools/', parameters('existingAppGatewayBackendPoolName'))]",
+    "managedImageId": "[resourceId(parameters('existingManagedImageResourceGroup'), 'Microsoft.Compute/images', parameters('existingManagedImageName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/virtualMachineScaleSets",
+      "name": "[variables('vmssName')]",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-04-30-preview",
+      "sku": {
+        "name": "[parameters('vmSku')]",
+        "tier": "Standard",
+        "capacity": "[parameters('instanceCount')]"
+      },
+      "properties": {
+        "overprovision": true,
+	    	"singlePlacementGroup": false,
+        "upgradePolicy": {
+          "mode": "[parameters('upgradePolicy')]"
+        },
+        "virtualMachineProfile": {
+          "storageProfile": {
+            "imageReference": {
+              "id": "[variables('managedImageId')]"
+            }
+          },
+          "osProfile": {
+            "computerNamePrefix": "[variables('vmssName')]",
+			      "adminUsername": "[parameters('adminUsername')]",
+            "adminPassword": "[parameters('adminPassword')]"
+          },
+          "networkProfile": {
+            "networkInterfaceConfigurations": [
+              {
+                "name": "nic",
+                "properties": {
+                  "primary": true,
+                  "ipConfigurations": [
+                    {
+                      "name": "ipconfig",
+                      "properties": {
+                        "subnet": {
+                          "id": "[variables('subnetId')]"
+                        },
+                        "ApplicationGatewayBackendAddressPools": [
+                          {
+                            "id": "[variables('appGwBePoolId')]"
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

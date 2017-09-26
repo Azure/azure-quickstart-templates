@@ -15,6 +15,8 @@ To deploy the required Azure VNET and Active Directory infrastructure, if not al
 
 ## Notes
 
++       This template is designed for lab or testing use only
++	This template requires domain administrator privaledges
 +	The default settings for storage are to deploy using **premium storage**.  The SQL VMs use two P30 disks each (for data and log).  These sizes can be changed by changing the relevant variables. In addition there is a P10 Disk used for each VM OS Disk.
 
 + 	The default settings for compute require that you have at least 9 cores of free quota to deploy.
