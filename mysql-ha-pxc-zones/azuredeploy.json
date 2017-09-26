@@ -1,0 +1,331 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "allowedValues": [
+        "westeurope",
+        "eastus2"
+      ],
+      "defaultValue": "westeurope",
+      "metadata": {
+        "description": "Location for the VM, only certain regions support zones during preview."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "user name to ssh to the VMs"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "password to ssh to the VMs"
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "pxcvnet",
+      "metadata": {
+        "description": "Virtual network name for the cluster"
+      }
+    },
+    "dbSubnetName": {
+      "type": "string",
+      "defaultValue": "dbsubnet",
+      "metadata": {
+        "description": "subnet name for the MySQL nodes"
+      }
+    },
+    "vnetAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/16",
+      "metadata": {
+        "description": "IP address in CIDR for virtual network"
+      }
+    },
+    "dbSubnetAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.1.0/24",
+      "metadata": {
+        "description": "IP address in CIDR for db subnet"
+      }
+    },
+    "vmIPs": {
+      "type": "array",
+      "defaultValue": [
+        "10.0.1.4",
+        "10.0.1.5",
+        "10.0.1.6"
+      ],
+      "maxLength": 3,
+      "metadata": {
+        "description": "IP Addresses for the 3 VMs"
+      }
+    },
+    "vmNamePrefix": {
+      "type": "string",
+      "defaultValue": "pxcnd",
+      "metadata": {
+        "description": "host name prefix for the VMs"
+      }
+    },
+    "imagePublisher": {
+      "type": "string",
+      "defaultValue": "OpenLogic",
+      "allowedValues": [
+        "OpenLogic",
+        "Canonical"
+      ],
+      "metadata": {
+        "description": "publisher for the VM OS image"
+      }
+    },
+    "imageOffer": {
+      "type": "string",
+      "defaultValue": "CentOS",
+      "allowedValues": [
+        "CentOS",
+        "UbuntuServer"
+      ],
+      "metadata": {
+        "description": "VM OS name"
+      }
+    },
+    "imageSKU": {
+      "type": "string",
+      "defaultValue": "6.5",
+      "allowedValues": [
+        "6.5",
+        "12.04.5-LTS",
+        "14.04.5-LTS",
+        "15.10",
+        "16.04.0-LTS"
+      ],
+      "metadata": {
+        "description": "VM OS version"
+      }
+    },
+    "customScriptCommandToExecute": {
+      "type": "string",
+      "defaultValue": "bash azurepxc.sh",
+      "metadata": {
+        "description": "bash script command line"
+      }
+    },
+    "storageAccountType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Premium_LRS"
+      ],
+      "metadata": {
+        "description": "Storage account type for the data disks"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "Linked Templates base url"
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/mysql-ha-pxc-zones"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    }
+  },
+  "variables": {
+    "customScriptFilePath": "[concat(parameters('_artifactsLocation'),'/azurepxc.sh', parameters('_artifactsLocationSasToken'))]",
+    "mysqlConfigFilePath": "[concat(parameters('_artifactsLocation'),'/my.cnf.template', parameters('_artifactsLocationSasToken'))]",
+    "dbSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', parameters('virtualNetworkName'), parameters('dbSubnetName'))]",
+    "publicIpAddressName": "pip",
+    "pxcClusterAddress": "[concat(parameters('vmIPs')[0], ',', parameters('vmIPs')[1], ',', parameters('vmIPs')[2])]",
+    "customScriptCommandCommon": "[concat(parameters('customScriptCommandToExecute'), ' ', variables('pxcClusterAddress'), ' ')]",
+    "customScriptParam": [
+      "[concat(parameters('vmIPs')[0], ' bootstrap-pxc ', variables('mysqlConfigFilePath'))]",
+      "[concat(parameters('vmIPs')[1], ' start ', variables('mysqlConfigFilePath'))]",
+      "[concat(parameters('vmIPs')[1], ' start ', variables('mysqlConfigFilePath'))]"
+    ]
+  },
+  "resources": [
+    {
+      "apiVersion": "2017-08-01",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[parameters('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('vnetAddressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('dbSubnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('dbSubnetAddressPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2017-08-01",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(variables('publicIPAddressName'), copyIndex())]",
+      "location": "[parameters('location')]",
+      "zones": [
+        "[copyIndex(1)]"
+      ],
+      "copy": {
+        "name": "pipLoop",
+        "count": 3
+      },
+      "sku": {
+        "name": "Basic"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic"
+      }
+    },
+    {
+      "apiVersion": "2017-08-01",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat('nic-', copyIndex(1))]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[parameters('virtualNetworkName')]",
+        "pipLoop"
+      ],
+      "copy": {
+        "name": "nicLoop",
+        "count": 3
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[parameters('vmIPs')[copyIndex()]]",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIPAddressName'), copyIndex()))]"
+              },
+              "subnet": {
+                "id": "[variables('dbSubnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Compute/disks",
+      "name": "[concat('disk-', copyIndex(1))]",
+      "apiVersion": "2017-03-30",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('storageAccountType')]"
+      },
+      "zones": [
+        "[add(div(copyIndex(), 2), 1)]"
+      ],
+      "copy": {
+        "name": "diskLoop",
+        "count": 6
+      },
+      "properties": {
+        "creationData": {
+          "createOption": "Empty"
+        },
+        "diskSizeGB": 64
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2017-03-30",
+      "name": "[concat(parameters('vmNamePrefix'), '-', copyIndex(1))]",
+      "location": "[parameters('location')]",
+      "zones": [
+        "[copyIndex(1)]"
+      ],
+      "copy": {
+        "name": "vmLoop",
+        "count": 3
+      },
+      "dependsOn": [
+        "nicLoop"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "Standard_A1_v2"
+        },
+        "osProfile": {
+          "computerName": "[concat(parameters('vmNamePrefix'), '-', copyIndex(1))]",
+          "adminUsername": "[parameters('adminUserName')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[parameters('imagePublisher')]",
+            "offer": "[parameters('imageOffer')]",
+            "sku": "[parameters('imageSKU')]",
+            "version": "latest"
+          },
+          "copy": [
+            {
+              "name": "dataDisks",
+              "count": 2,
+              "input": {
+                "lun": "[copyIndex('dataDisks')]",
+                "createOption": "attach",
+                "managedDisk": {
+                  "id": "[resourceId('Microsoft.Compute/disks', concat('disk-', add(mul(copyIndex(), 2), add(copyIndex('dataDisks'), 1))))]"
+                }
+              }
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkinterfaces', concat('nic-', copyIndex(1)))]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "type": "extensions",
+          "name": "mySQLConfig",
+          "apiVersion": "2017-03-30",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[concat(parameters('vmNamePrefix'), '-', copyIndex(1))]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Azure.Extensions",
+            "type": "CustomScript",
+            "typeHandlerVersion": "2.0",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": [
+                "[variables('customScriptFilePath')]"
+              ]
+            },
+            "protectedSettings": {
+              "commandToExecute": "[concat(variables('customScriptCommandCommon'), variables('customScriptParam')[copyIndex()])]"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
