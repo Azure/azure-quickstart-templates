@@ -1,0 +1,94 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "adminEmailAddress": {
+            "type": "string"
+        },
+        "adminPassword": {
+            "type": "securestring"
+        },
+        "OTCPassword": {
+            "type": "securestring"
+        },
+        "dataNsgName": {
+            "type": "string"
+        },
+        "vNetId": {
+            "type": "string"
+        },
+        "cidr": {
+            "type": "string"
+        },
+        "dataSubnetName": {
+            "type": "string"
+        },
+        "OnCommandCloudManagerVmName": {
+            "type": "string"
+        },
+        "azureADApplicationID": {
+            "type": "string"
+        },
+        "azureADApplicationSecret": {
+            "type": "string"
+        },
+        "netappOntapCloudLicense": {
+            "type": "object"
+        },
+        "netappOntapVersion": {
+            "type": "string"
+        },
+        "_artifactsLocation": {
+            "type": "string"
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring"
+        },
+        "NetAppTags": {
+            "type": "object"
+        },
+        "quickstartTags": {
+            "type": "object"
+        }
+    },
+    "variables": {
+        "subscriptionId": "[subscription().subscriptionId]",
+        "azureADTenantID": "[subscription().tenantId]",
+        "subnetID": "[concat(parameters('vnetID'),'/subnets/',parameters('dataSubnetName'))]",
+        "encodedadminPassword": "[base64(parameters('adminPassword'))]",
+        "encodedOTCPassword": "[base64(parameters('OTCPassword'))]",
+        "nsgID": "[resourceId('Microsoft.Network/networkSecurityGroups',parameters('dataNSGName'))]",
+        "netappOntapCloudLicenseType": "[parameters('netappOntapCloudLicense').licenseType]",
+        "netappOntapCloudInstanceType": "[parameters('netappOntapCloudLicense').instanceType]",
+        "netappOntapCloudStorageType": "[parameters('netappOntapCloudLicense').storageType]",
+        "otcName": "[concat('netappotc',uniqueString(resourceGroup().id))]",
+        "deploymentRegion": "[resourceGroup().location]",
+        "quickstartNameTagValue": "[parameters('quickstartTags').name]",
+        "quickstartProviderTagValue": "[parameters('NetAppTags').provider]",
+        "deployOTCScriptName": "deploy-netapp-otc.sh",
+        "customScriptCommand": "su -c'sh ",
+        "scriptClose": "'"
+    },
+    "resources": [{
+        "type": "Microsoft.Compute/virtualMachines/extensions",
+        "name": "[concat(parameters('OnCommandCloudManagerVmName'),'/','deployOntapCloud')]",
+        "apiVersion": "2015-06-15",
+        "location": "[resourceGroup().location]",
+        "tags": {
+            "quickstartName": "[parameters('quickstartTags').name]",
+            "provider": "[parameters('NetAppTags').provider]"
+        },
+        "properties": {
+            "publisher": "Microsoft.Azure.Extensions",
+            "type": "CustomScript",
+            "typeHandlerVersion": "2.0",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+                "fileUris": [
+                    "[concat(parameters('_artifactsLocation'),'/scripts/',variables('deployOTCScriptName'),parameters('_artifactsLocationSasToken'))]"
+                ],
+                "commandToExecute": "[concat(variables('customScriptCommand'),' ',variables('deployOTCScriptName'),' ',variables('deploymentRegion'),' ',variables('otcName'),' ',parameters('adminEmailAddress'),' ',variables('encodedadminPassword'),' ',variables('encodedOTCPassword'),' ',variables('subscriptionId'),' ',variables('azureADTenantID'),' ',parameters('azureADApplicationID'),' ',parameters('azureADApplicationSecret'),' ',parameters('vnetID'),' ',parameters('cidr'),' ',variables('subnetID'),' ',variables('nsgID'),' ',variables('netappOntapCloudLicenseType'),' ',variables('netappOntapCloudInstanceType'),' ',variables('netappOntapCloudStorageType'),' ',variables('quickstartNameTagValue'),' ',variables('quickstartProviderTagValue'),' ',parameters('netappOntapVersion'),' ',variables('scriptClose'))]"
+            }
+        }
+    }]
+}
