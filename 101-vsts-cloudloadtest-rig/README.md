@@ -13,7 +13,8 @@ Using this template, you can create your own load test rig on Azure IaaS virtual
     "VSTSPersonalAccessToken": "<get pat token for VSTS account>",
     "AgentCount": "<number of VMs you want to provision>",
     "AdminUsername": "<admin user name>",
-    "AdminPassword": "<admin user password>" 
+    "AdminPassword": "<admin user password>",
+    "AgentGroupName": "<agent group name defaults to resource groupname>"   
 }
 ```
 

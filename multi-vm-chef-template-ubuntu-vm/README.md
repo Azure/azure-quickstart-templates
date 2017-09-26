@@ -1,8 +1,6 @@
 # Deploy a specified number of Ubuntu VMs configured with Chef Client
 
-![http://azuredeploy.net/deploybutton.png](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmulti-vm-chef-template-ubuntu-vm%2Fazuredeploy.json)
-
-![http://armviz.io/visualizebutton.png](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmulti-vm-chef-template-ubuntu-vm%2Fazuredeploy.json)
+[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmulti-vm-chef-template-ubuntu-vm%2Fazuredeploy.json) [![Visualize](http://armviz.io/visualizebutton.png)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmulti-vm-chef-template-ubuntu-vm%2Fazuredeploy.json)
 
 ## Description
 

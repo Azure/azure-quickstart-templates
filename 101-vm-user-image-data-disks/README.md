@@ -7,7 +7,7 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-Prerequisite - The VHD images to be used for OS and data disks must be in an Azure Resource Manager storage account.
+Prerequisite - The VHDs to be used for OS and data disks must be stored as page blob in an Azure Resource Manager storage account.
 
-This template allows you to create a Virtual Machines from user specified images for OS and Data disks. The disks used for your VM will be based on copies of the images you specify in the template parameters. This template also deploys a Virtual Network, Public IP addresses and a Network Interface in a user specified resource group.
+This template allows you to create virtual machines from the specified VHDs for OS and data disks. The disks used for your VM will be based on copies of the VHDs you specify in the template parameters. This template first creates a managed image using the specified OS and data VHDs. Then, it creates a VM using the managed image. This template also deploys a Virtual Network, Public IP addresses and a Network Interface in a user specified resource group.
 
