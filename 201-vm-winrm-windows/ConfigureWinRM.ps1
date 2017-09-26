@@ -83,7 +83,9 @@ function Configure-WinRMHttpsListener
         $thumbprint = Create-Certificate -hostname $HostName
     }
 
-    $response = cmd.exe /c .\winrmconf.cmd $hostname $thumbprint
+    $WinrmCreate= "winrm create --% winrm/config/Listener?Address=*+Transport=HTTPS @{Hostname=`"$hostName`";CertificateThumbprint=`"$thumbPrint`"}"
+    invoke-expression $WinrmCreate
+    winrm set winrm/config/service/auth '@{Basic="true"}'
 }
 
 function Add-FirewallException
