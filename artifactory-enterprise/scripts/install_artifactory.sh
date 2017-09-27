@@ -101,13 +101,13 @@ server {
 }
 EOF
 
-#cat <<EOF >/var/opt/jfrog/artifactory/etc/db.properties
-#type=mssql
-#driver=com.microsoft.sqlserver.jdbc.SQLServerDriver
-#url=${db_url};databaseName=${db_name};sendStringParametersAsUnicode=false;applicationName=Artifactory Binary Repository
-#username=${db_user}
-#password=${db_password}
-#EOF
+cat <<EOF >/var/opt/jfrog/artifactory/etc/db.properties
+type=mssql
+driver=com.microsoft.sqlserver.jdbc.SQLServerDriver
+url=${db_url};databaseName=${db_name};sendStringParametersAsUnicode=false;applicationName=Artifactory Binary Repository
+username=${db_user}
+password=${db_password}
+EOF
 
 #cat <<EOF >/var/opt/jfrog/artifactory/etc/binarystore.xml
 #<config version="1">
