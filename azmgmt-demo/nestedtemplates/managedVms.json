@@ -1,0 +1,408 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "instanceCount": {
+            "type": "int",
+            "defaultValue": 2,
+            "maxValue": 10,
+            "metadata": {
+                "description": "Specify the number of VMs to create"
+            }
+        },
+        "automationAccountName": {
+            "type": "string",
+            "metadata": {
+                "description": "Azure Automation account name"
+            }
+        },
+        "vmNamePrefix": {
+            "type": "string",
+            "defaultValue": "VM",
+            "metadata": {
+                "description": "Assing a prefix for the VMs you will create"
+            }
+        },
+        "platform": {
+            "type": "string",
+            "defaultValue": "WinSrv",
+            "allowedValues": [
+                "WinSrv",
+                "Linux"
+            ],
+            "metadata": {
+                "description": "Select the OS type to deploy"
+            }
+        },
+        "username": {
+            "type": "string",
+            "defaultValue": "azureadmin",
+            "metadata": {
+                "description": "User name for the OS."
+            }
+        },
+        "pwdOrSsh": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Provide pwd if WinSrv, SSH if Linux."
+            }
+        },
+        "omsResourceGroup": {
+            "type": "string",
+            "metadata": {
+                "description": "Specify name of Resource Group containing the mgmt services"
+            }
+        },
+        "omsWorkspaceName": {
+            "type": "string",
+            "metadata": {
+                "description": "Specify the name of your OMS workspace"
+            }
+        },
+        "omsRecoveryVaultName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of Recovery Vault"
+            }
+        },
+        "omsRecoveryVaultRegion": {
+            "type": "string",
+            "metadata": {
+                "description": "Recovery Vault region"
+            }
+        }
+    },
+    "variables": {
+        "availabilitySetName": "vmAvSet",
+        "vNetName": "managedVnet",
+        "vNetAddressPrefix": "192.168.0.0/16",
+        "subnetName": "subnet01",
+        "subnetAddressPrefix": "192.168.0.0/24",
+        "vNetId": "[resourceId('Microsoft.Network/virtualNetworks', variables('vNetName'))]",
+        "subnetRef": "[concat(variables('vNetId'),'/subnets/', variables('subnetName'))]",
+        "windowsOffer": "WindowsServer",
+        "windowsSku": "2016-Datacenter",
+        "windowsPublisher": "MicrosoftWindowsServer",
+        "linuxOffer": "UbuntuServer",
+        "linuxSku": "12.04.5-LTS",
+        "linuxPublisher": "Canonical",
+        "windowsMgmtType": "MicrosoftMonitoringAgent",
+        "windowsMgmtVersion": "1.0",
+        "linuxMgmtType": "OmsAgentForLinux",
+        "linuxMgmtVersion": "1.4",
+        "modulesUrl": "[uri(deployment().properties.templateLink.uri, 'scripts/UpdateLCMforAAPull.zip')]",
+        "configurationFunction": "UpdateLCMforAAPull.ps1\\ConfigureLCMforAAPull",
+        "configurationMode": "ApplyAndMonitor",
+        "configurationModeFrequencyMins": 15,
+        "refreshFrequencyMins": 30,
+        "rebootNodeIfNeeded": true,
+        "actionAfterReboot": "ContinueConfiguration",
+        "allowModuleOverwrite": true,
+        "configName": "OMSSERVICE.localhost"
+    },
+    "resources": [
+        {
+            "apiVersion": "2017-06-01",
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[variables('storageAccountName')]",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Standard_LRS"
+            },
+            "kind": "Storage",
+            "properties": {}
+        },       
+        {
+            "apiVersion": "2017-04-01",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[concat(parameters('vmNamePrefix'), 'IP', copyIndex())]",
+            "location": "[resourceGroup().location]",
+            "copy": {
+                "name": "[concat(parameters('vmNamePrefix'), 'IP')]",
+                "count": "[parameters('instancecount')]"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic",
+                "dnsSettings": {
+                    "domainNameLabel": "[toLower(concat(parameters('vmNamePrefix'), 'VM', copyIndex()))]"
+                }
+            }
+        },
+        {
+            "apiVersion": "2017-04-01",
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[variables('vNetName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('vNetAddressPrefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('subnetName')]",
+                        "properties": {
+                            "addressPrefix": "[variables('subnetAddressPrefix')]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2017-04-01",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[concat(parameters('vmNamePrefix'), 'nic', copyIndex())]",
+            "location": "[resourceGroup().location]",
+            "copy": {
+                "name": "[concat(parameters('vmNamePrefix'), 'nic')]",
+                "count": "[parameters('instanceCount')]"
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Network/publicIPAddresses/', parameters('vmNamePrefix'), 'IP', copyIndex())]",
+                "[concat('Microsoft.Network/virtualNetworks/', variables('vNetName'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('vmNamePrefix'), 'IP', copyIndex()))]"
+                            },
+                            "subnet": {
+                                "id": "[variables('subnetRef')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Compute/availabilitySets",
+            "apiVersion": "2017-03-30",
+            "name": "[variables('availabilitySetName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "platformFaultDomainCount": 2,
+                "platformUpdateDomainCount": 3
+            },
+            "sku": {
+                "name": "Aligned"
+            }
+        },
+        {
+            "apiVersion": "2017-03-30",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[concat(parameters('vmNamePrefix'), parameters('platform'), copyIndex())]",
+            "location": "[resourceGroup().location]",
+            "copy": {
+                "name": "[concat(parameters('vmNamePrefix'))]",
+                "count": "[parameters('instanceCount')]"
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkinterfaces/', parameters('vmNamePrefix'), 'nic', copyIndex())]",
+                "[resourceId('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
+            ],
+            "properties": {
+                "availabilitySet": {
+                    "id": "[resourceId('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
+                },
+                "hardwareprofile": {
+                    "vmsize": "Standard_DS1_v2"
+                },
+                "osProfile": {
+                    "computerName": "[concat(parameters('vmNamePrefix'), parameters('platform'), copyIndex())]",
+                    "adminusername": "[parameters('username')]",
+                    "adminpassword": "[parameters('pwdOrSsh')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[if(equals(parameters('platform'), 'WinSrv'), variables('windowsPublisher'), variables('linuxPublisher'))]",
+                        "offer": "[if(equals(parameters('platform'), 'WinSrv'), variables('windowsOffer'), variables('linuxOffer'))]",
+                        "version": "latest",
+                        "sku": "[if(equals(parameters('platform'), 'WinSrv'), variables('windowsSku'), variables('linuxSku'))]"
+                    },
+                    "osdisk": {
+                        "name": "[concat(parameters('platform'), '-osDisk', copyIndex())]",
+                        "createOption": "FromImage",
+                        "managedDisk": {
+                            "storageAccountType": "Standard_LRS"
+                        },
+                        "caching": "ReadWrite"
+                    }
+                },
+                "networkprofile": {
+                    "networkinterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkinterfaces', concat(parameters('vmNamePrefix'),'nic', copyIndex()))]"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "apiVersion": "2017-03-30",
+            "name": "[concat(parameters('vmNamePrefix'), parameters('platform'), copyIndex(), '/OMS')]",
+            "location": "[resourceGroup().location]",
+            "copy": {
+                "name": "[concat(parameters('vmNamePrefix'), parameters('platform'), 'OMS')]",
+                "count": "[parameters('instanceCount')]"
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('vmNamePrefix'), parameters('platform'), copyIndex())]"
+            ],
+            "properties": {
+                "publisher": "Microsoft.EnterpriseCloud.Monitoring",
+                "type": "[if(equals(parameters('platform'), 'WinSrv'), variables('windowsMgmtType'), variables('linuxMgmtType'))]",
+                "typeHandlerVersion": "[if(equals(parameters('platform'), 'WinSrv'), variables('windowsMgmtVersion'), variables('linuxMgmtVersion'))]",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "workspaceId": "[reference(resourceId(parameters('omsResourceGroup'), 'Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName')), '2015-11-01-preview').customerId]",
+                    "azureResourceId": "[resourceId('Microsoft.Compute/virtualMachines/', concat(parameters('vmNamePrefix'), parameters('platform'), copyIndex()))]"
+                },
+                "protectedSettings": {
+                    "workspaceKey": "[listKeys(resourceId(parameters('omsResourceGroup'),'Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName')), '2015-11-01-preview').primarySharedKey]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(parameters('vmNamePrefix'), parameters('platform'), copyIndex(), '/ServiceMap')]",
+            "apiVersion": "2017-03-30",
+            "location": "[resourceGroup().location]",
+            "copy": {
+                "name": "[concat(parameters('vmNamePrefix'), parameters('platform'), 'ServiceMap')]",
+                "count": "[parameters('instanceCount')]"
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('vmNamePrefix'), parameters('platform'), copyIndex(), '/extensions/', '/OMS')]"
+            ],
+            "properties": {
+                "publisher": "Microsoft.Azure.Monitoring.DependencyAgent",
+                "type": "[if(equals(parameters('platform'), 'WinSrv'), 'DependencyAgentWindows', 'DependencyAgentLinux')]",
+                "typeHandlerVersion": "9.1",
+                "autoUpgradeMinorVersion": true
+            }
+        },
+        {
+            "condition": "[equals(parameters('platform'), 'WinSrv')]",
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(parameters('vmNamePrefix'), parameters('platform'), copyIndex(), '/DSC')]",
+            "apiVersion": "2017-03-30",
+            "location": "[resourceGroup().location]",
+            "copy": {
+                "name": "[concat(parameters('vmNamePrefix'), parameters('platform'), 'DSC')]",
+                "count": "[parameters('instanceCount')]"
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('vmNamePrefix'), parameters('platform'), copyIndex())]"
+            ],
+            "properties": {
+                "publisher": "Microsoft.Powershell",
+                "type": "DSC",
+                "typeHandlerVersion": "2.19",
+                "autoUpgradeMinorVersion": true,
+                "protectedSettings": {
+                    "Items": {
+                        "registrationKeyPrivate": "[listKeys(resourceId(parameters('omsResourceGroup'), 'Microsoft.Automation/automationAccounts/', parameters('automationAccountName')), '2015-01-01-preview').Keys[0].value]"
+                    }
+                },
+                "settings": {
+                    "ModulesUrl": "[variables('modulesUrl')]",
+                    "SasToken": "",
+                    "ConfigurationFunction": "[variables('configurationFunction')]",
+                    "Properties": [
+                        {
+                            "Name": "RegistrationKey",
+                            "Value": {
+                                "UserName": "PLACEHOLDER_DONOTUSE",
+                                "Password": "PrivateSettingsRef:registrationKeyPrivate"
+                            },
+                            "TypeName": "System.Management.Automation.PSCredential"
+                        },
+                        {
+                            "Name": "RegistrationUrl",
+                            "Value": "[reference(resourceId(parameters('omsResourceGroup'), 'Microsoft.Automation/automationAccounts/', parameters('automationAccountName')), '2015-01-01-preview').registrationUrl]",
+                            "TypeName": "System.String"
+                        },
+                        {
+                            "Name": "NodeConfigurationName",
+                            "Value": "[variables('configName')]",
+                            "TypeName": "System.String"
+                        },
+                        {
+                            "Name": "ConfigurationMode",
+                            "Value": "[variables('configurationMode')]",
+                            "TypeName": "System.String"
+                        },
+                        {
+                            "Name": "ConfigurationModeFrequencyMins",
+                            "Value": "[variables('configurationModeFrequencyMins')]",
+                            "TypeName": "System.Int32"
+                        },
+                        {
+                            "Name": "RefreshFrequencyMins",
+                            "Value": "[variables('refreshFrequencyMins')]",
+                            "TypeName": "System.Int32"
+                        },
+                        {
+                            "Name": "RebootNodeIfNeeded",
+                            "Value": "[variables('rebootNodeIfNeeded')]",
+                            "TypeName": "System.Boolean"
+                        },
+                        {
+                            "Name": "ActionAfterReboot",
+                            "Value": "[variables('actionAfterReboot')]",
+                            "TypeName": "System.String"
+                        },
+                        {
+                            "Name": "AllowModuleOverwrite",
+                            "Value": "[variables('allowModuleOverwrite')]",
+                            "TypeName": "System.Boolean"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "apiVersion": "2017-05-10",
+            "type": "Microsoft.Resources/deployments",
+            "resourceGroup": "[parameters('omsResourceGroup')]",
+            "name": "enableBackup",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('vmNamePrefix'), parameters('platform'), '0', '/extensions/', 'OMS')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[uri(deployment().properties.templateLink.uri, 'managedVmsBackup.json')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "instanceCount": {
+                        "value": "[parameters('instanceCount')]"
+                    },
+                    "vmNamePrefix": {
+                        "value": "[parameters('vmNamePrefix')]"
+                    },
+                    "vmRgName": {
+                        "value": "[resourceGroup().name]"
+                    },
+                    "omsRecoveryVaultName": {
+                        "value": "[parameters('omsRecoveryVaultName')]"
+                    },
+                    "omsRecoveryVaultRegion": {
+                        "value": "[parameters('omsRecoveryVaultRegion')]"
+                    },
+                    "platform": {
+                        "value": "[parameters('platform')]"
+                    }
+                }
+            }
+        }
+    ],
+    "outputs": {}
+}
