@@ -1,0 +1,130 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "omsWorkspaceName": {
+            "type": "string",
+            "metadata": {
+                "description": "Assign a name for the Log Analytics Workspace Name"
+            }
+        },
+        "omsWorkspaceRegion": {
+            "type": "string",
+            "defaultValue": "West Europe",
+            "allowedValues": [
+                "Australia Southeast",
+                "East US",
+                "Japan East",
+                "Southeast Asia",
+                "UK South",
+                "West Central US",
+                "West Europe"
+            ],
+            "metadata": {
+                "description": "Specify the region for your Workspace"
+            }
+        },
+        "_artifactsLocation": {
+            "type": "string",
+            "defaultValue": "https://raw.githubusercontent.com/Azure/oms-log-analytics-firehose-nozzle/omsview/docs/omsview",
+            "metadata": {
+                "description": "The base URI where artifacts required by this template are located"
+            }
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "defaultValue": "",
+            "metadata": {
+                "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated"
+            }
+        }
+    },
+    "variables": {
+        "omsviews": {
+            "templates": [
+                "[concat(parameters('_artifactsLocation'), '/Cloud%20Foundry.omsview', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CF%20KPI%20-%20Diego%20Metrics.omsview', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CF%20KPI%20-%20Doppler%20Server%20Metrics.omsview', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CF%20KPI%20-%20Gorouter%20Metrics.omsview', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CF%20KPI%20-%20System%20Metrics.omsview', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CF%20-%20Apps.omsview', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CF%20-%20BBS.omsview', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CF%20-%20Cell%20Capacity.omsview', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CF%20-%20Cloud%20Controller.omsview', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CF%20-%20Component%20Metrics.omsview', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CF%20-%20Diego%20Auctions.omsview', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CF%20-%20Diego%20Health.omsview', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CF%20-%20Doppler%20Server.omsview', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CF%20-%20Etcd%20Operations.omsview', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CF%20-%20Etcd.omsview', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CF%20-%20Garden%20Linux.omsview', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CF%20-%20Gorouter.omsview', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CF%20-%20LRPs%20and%20Tasks.omsview', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CF%20-%20Metron%20Agent.omsview', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CF%20-%20Nozzle%20Status.omsview', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CF%20-%20Route%20Emitter.omsview', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CF%20-%20UAA.omsview', parameters('_artifactsLocationSasToken'))]"
+            ]
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2016-02-01",
+            "name": "[concat('omsviews', copyIndex())]",
+            "copy": {
+                "name": "viewCopy",
+                "count": "[length(variables('omsviews').templates)]",
+                "mode": "serial",
+                "batchSize": 1
+            },
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                "uri": "[variables('omsviews').templates[copyIndex()]]",
+                "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('omsWorkspaceRegion')]"
+                    },
+                    "resourcegroup": {
+                        "value": "[resourceGroup().name]"
+                    },
+                    "subscriptionId": {
+                        "value": "[subscription().subscriptionId]"
+                    },
+                    "workspace": {
+                        "value": "[parameters('omsWorkspaceName')]"
+                    },
+                    "workspaceapiversion": {
+                        "value": "2015-11-01-preview"
+                    }
+                }
+            }
+        },
+        {
+            "apiVersion": "2015-11-01-preview",
+            "type": "Microsoft.OperationsManagement/solutions",
+            "name": "[concat(parameters('omsWorkspaceName'), '[CloudFoundry]')]",
+            "location": "[parameters('omsWorkspaceRegion')]",
+            "dependsOn": [
+                "viewCopy"
+                ],
+            "properties": {
+                "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('omsWorkspaceName'))]",
+                "containedResources": [
+                    "[resourceId('Microsoft.OperationalInsights/workspaces/views/', parameters('omsWorkspaceName'), 'Cloud Foundry')]"
+                ]
+            },
+            "plan": {
+                "name": "[concat('cloudfoundrysolution', '[' ,parameters('omsWorkspaceName'), ']')]",
+                "product": "cloudfoundrysolution",
+                "promotionCode": "",
+                "publisher": "Microsoft",
+                "version": "1.0"
+            }
+        }
+    ],
+    "outputs": {}
+}
