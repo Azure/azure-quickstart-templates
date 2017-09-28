@@ -140,7 +140,7 @@ hostname=$(hostname -i)
 sed -i -e "s/art1/art-$(date +%s$RANDOM)/" /var/opt/jfrog/artifactory/etc/ha-node.properties
 sed -i -e "s/127.0.0.1/$hostname/" /var/opt/jfrog/artifactory/etc/ha-node.properties
 sed -i -e "s/172.25.0.3/$hostname/" /var/opt/jfrog/artifactory/etc/ha-node.properties
-chown artifactory:artifactory -R /var/opt/jfrog/artifactory/*  && chown artifactory:artifactory -R /var/opt/jfrog/artifactory/etc/security
+chown artifactory:artifactory -R /var/opt/jfrog/artifactory/*  && chown artifactory:artifactory -R /var/opt/jfrog/artifactory/etc/security && chown artifactory:artifactory -R /var/opt/jfrog/artifactory/etc/*
 
 # start Artifactory
 sleep $((RANDOM % 60))
