@@ -1,0 +1,128 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "omsRecoveryVaultName": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Assign a name for the ASR Recovery Vault"
+            }
+        },
+        "omsRecoveryVaultRegion": {
+            "type": "string",
+            "metadata": {
+                "description": "Specify the region for your Recovery Vault"
+            }
+        }
+    },
+    "variables": {
+        "recoveryStorageAccountName": "[toLower(concat('asr', uniqueString(resourceGroup().id)))]",
+        "recoveryStorageType": "Standard_LRS"
+    },
+    "resources": [
+        {
+            "apiVersion": "2016-06-01",
+            "location": "[parameters('omsRecoveryVaultRegion')]",
+            "name": "[parameters('omsRecoveryVaultName')]",
+            "type": "Microsoft.RecoveryServices/vaults",
+            "comments": "ASR Recovery Vault for OMS",
+            "sku": {
+                "name": "RS0",
+                "tier": "Standard"
+            },
+            "properties": {},
+            "resources": [
+                {
+                    "apiVersion": "2016-06-01",
+                    "name": "HyperVPrimarySite",
+                    "type": "replicationFabrics",
+                    "id": "[resourceId('Microsoft.RecoveryServices/vaults/replicationFabrics', parameters('omsRecoveryVaultName'), 'HyperVPrimarySite')]",
+                    "dependsOn": [
+                        "[concat('Microsoft.RecoveryServices/vaults/', parameters('omsRecoveryVaultName'))]"
+                    ],
+                    "properties": {
+                        "friendlyName": "PrimarySite",
+                        "fabricType": "HyperVSite"
+                    }
+                },
+                {
+                    "apiVersion": "2016-06-01",
+                    "name": "DefaultVMwarePolicy",
+                    "type": "replicationPolicies",
+                    "id": "[resourceId('Microsoft.RecoveryServices/vaults/replicationPolicies', parameters('omsRecoveryVaultName'), 'DefaultVMwarePolicy')]",
+                    "dependsOn": [
+                        "[concat('Microsoft.RecoveryServices/vaults/', parameters('omsRecoveryVaultName'))]"
+                    ],
+                    "properties": {
+                        "subscriptionid": "[subscription().subscriptionId]",
+                        "friendlyName": "DefaultVMwarePolicy",
+                        "providerSpecificInput": {
+                            "instanceType": "InMageAzureV2",
+                            "crashConsistentFrequencyInMinutes": 5,
+                            "recoveryPointThresholdInMinutes": 15,
+                            "recoveryPointHistory": 1440,
+                            "appConsistentFrequencyInMinutes": 60,
+                            "multiVmSyncStatus": "Enable"
+                        }
+                    }
+                },
+                {
+                    "apiVersion": "2016-06-01",
+                    "name": "DefaultVMwarePolicy-failback",
+                    "type": "replicationPolicies",
+                    "id": "[resourceId('Microsoft.RecoveryServices/vaults/replicationPolicies', parameters('omsRecoveryVaultName'), 'DefaultVMwarePolicy-failback')]",
+                    "dependsOn": [
+                        "[concat('Microsoft.RecoveryServices/vaults/', parameters('omsRecoveryVaultName'))]",
+                        "[concat('Microsoft.RecoveryServices/vaults/', parameters('omsRecoveryVaultName'), '/replicationPolicies/DefaultVMwarePolicy')]"
+                    ],
+                    "properties": {
+                        "subscriptionid": "[subscription().subscriptionId]",
+                        "friendlyName": "DefaultVMwarePolicy-failback",
+                        "providerSpecificInput": {
+                            "instanceType": "InMage",
+                            "recoveryPointThresholdInMinutes": 15,
+                            "recoveryPointHistory": 1440,
+                            "appConsistentFrequencyInMinutes": 60,
+                            "multiVmSyncStatus": "Enable"
+                        }
+                    }
+                },
+                {
+                    "apiVersion": "2016-06-01",
+                    "name": "DefaultHyperVPolicy",
+                    "type": "replicationPolicies",
+                    "id": "[resourceId('Microsoft.RecoveryServices/vaults/replicationPolicies', parameters('omsRecoveryVaultName'), 'DefaultHyperVPolicy')]",
+                    "dependsOn": [
+                        "[concat('Microsoft.RecoveryServices/vaults/', parameters('omsRecoveryVaultName'))]"
+                    ],
+                    "properties": {
+                        "subscriptionId": "[subscription().subscriptionId]",
+                        "friendlyName": "DefaultHyperVPolicy",
+                        "providerSpecificInput": {
+                            "instanceType": "HyperVReplicaAzure",
+                            "recoveryPointHistoryDurationInHours": 2,
+                            "applicationConsistentSnapshotFrequencyInHours": 0,
+                            "replicationInterval": 900,
+                            "onlineReplicationStartTime": "",
+                            "activeStorageAccountId": "[reference(resourceId('Microsoft.Storage/storageAccounts/',variables('recoveryStorageAccountName')))]",
+                            "encryption": "Disable"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[variables('recoveryStorageAccountName')]",
+            "apiVersion": "2016-01-01",
+            "location": "[parameters('omsRecoveryVaultRegion')]",
+            "sku": {
+                "name": "[variables('recoveryStorageType')]"
+            },
+            "kind": "Storage",
+            "properties": {}
+        }
+    ],
+    "outputs": {}
+}
