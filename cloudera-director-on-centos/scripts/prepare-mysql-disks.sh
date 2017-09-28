@@ -27,7 +27,7 @@ mountDriveForMySQL()
   mkdir $dirname
   mount -o noatime,barrier=1 -t ext4 $drivename $dirname
   UUID=`sudo lsblk -no UUID $drivename`
-  echo "UUID=$UUID   $dirname    ext4   defaults,noatime,barrier=0 0 1" | sudo tee -a /etc/fstab
+  echo "UUID=$UUID   $dirname    ext4   defaults,noatime,discard,barrier=0 0 1" | sudo tee -a /etc/fstab
 }
 
 prepare_unmounted_volumes()
@@ -102,7 +102,7 @@ prepare_disk()
 
     # Set up the blkid for device entry in /etc/fstab
 
-    echo "UUID=${blockid} $mount $FS defaults,noatime 0 0" >> /etc/fstab
+    echo "UUID=${blockid} $mount $FS defaults,noatime,discard,barrier=0 0 0" >> /etc/fstab
     mount ${mount}
 
   fi

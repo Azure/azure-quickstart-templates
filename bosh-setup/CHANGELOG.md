@@ -1,3 +1,52 @@
+# v2.8.0 (2017-8-11)
+
+- Upgrade Azure CPI version to v26. Please see new features in [bosh-azure-cpi-release v26](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v26)
+- Correct the range of CloudFoundry subnet.
+
+# v2.7.0 (2017-7-10)
+
+- Upgrade Azure CPI version to v25. Please see new features in [bosh-azure-cpi-release v25](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v25)
+- Support the deployment in AzureStackTP3.
+
+# v2.6.1 (2017-6-2)
+
+- Upgrade bosh to v262
+- Upgrade bosh stemcell to v3421.3
+- Add ssl cert & key for the director job
+- Add `user_add` job to add a cpidebug user to the bosh director
+
+# v2.6.0 (2017-5-15)
+
+- Upgrade Azure CPI version to v24. Please see new features in [bosh-azure-cpi-release v24](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v24)
+- Upgrade bosh stemcell to v3363.22
+- Change the account type of the default storage account to `Standard_LRS`.
+
+# v2.5.0 (2017-3-20)
+
+- Support AzureGermanCloud
+- Upgrade Azure CPI version to v22. Please see new features in [bosh-azure-cpi-release v22](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v22)
+
+# v2.4.4 (2017-02-10)
+
+- On AzureChinaCloud, set PowerDNS server on BOSH VM as DNS server. For *.{cf-ip}.xip.io, PowerDNS server will respond without querying Azure DNS. For the real domains and *.{other-ip-other-than-cf-ip}.xip.io, PowerDNS server will go to Azure DNS at the first time, and cache the resolving result.
+
+# v2.4.3 (2017-02-08)
+
+- Use Azure blob storage as blobstore by default
+- Upgrade bosh to v260.5
+- Upgrade cf-cli to v6.23.1
+
+# v2.4.2 (2017-01-10)
+
+- Upgrade cf-release to v250
+- Upgrade bosh stemcell to v3312.12
+- Fix issue https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/issues/235
+
+# v2.4.0 (2016-12-21)
+
+- Upgrade Azure CPI version to v20. Please see new features in [bosh-azure-cpi-release v20](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v20)
+- Use Azure DNS instead of CNNIC DNS for AzureChinaCloud
+
 # v2.3.0 (2016-11-22)
 
 - Upgrade cf-release to v244 for template of multiple-vm-cf.yml, keep cf-release v238 as a stable version for single-vm-cf.yml.

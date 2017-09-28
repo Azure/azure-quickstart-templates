@@ -21,7 +21,7 @@ How to connect to a Target Azure VM post WinRM configuration
 Use the below script to connect to an azure vm post winrm configuration. Assign the exact fqdn of your azure vm to $hostname.
 The script pops up a credential window, provide the credentials of azure vm.
 
-	$hostName=<fqdn-of-vm>  #example: "mywindowsvm.westus.cloudapp.azure.com"
+	$hostName=<fqdn-of-vm>  #example: "myvm.westus.cloudapp.azure.com"
 	$winrmPort = '40003'
 
 	# Get the credentials of the machine

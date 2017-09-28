@@ -9,8 +9,10 @@ rethinkdb --bind all --daemon
 
 sudo apt-get -y install make
 sudo apt-get -y install g++ python3-dev libffi-dev
-
 sudo apt-get -y install python3-setuptools
+
+export LANG="en_US.UTF-8"
+
 sudo easy_install3 pip
 sudo pip3 install --upgrade pip wheel setuptools
 

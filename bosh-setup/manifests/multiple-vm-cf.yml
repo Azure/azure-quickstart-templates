@@ -60,37 +60,6 @@ jobs:
 - default_networks:
   - name: cf1
   instances: 1
-  name: ha_proxy_z1
-  networks:
-  - name: reserved
-    static_ips:
-    - REPLACE_WITH_CLOUD_FOUNDRY_PUBLIC_IP
-  - default:
-    - dns
-    - gateway
-    name: cf1
-    static_ips:
-    - 10.0.16.4
-  properties:
-    ha_proxy:
-      ssl_pem: REPLACE_WITH_HA_PROXY_SSL_PEM
-    metron_agent:
-      zone: z1
-    router:
-      servers:
-      - 10.0.16.9
-  resource_pool: router_z1
-  templates:
-  - name: consul_agent
-    release: cf
-  - name: haproxy
-    release: cf
-  - name: metron_agent
-    release: cf
-  update: {}
-- default_networks:
-  - name: cf1
-  instances: 1
   name: nats_z1
   networks:
   - name: cf1
@@ -152,9 +121,9 @@ jobs:
             name: cf-etcd
     etcd: &id001
       advertise_urls_dns_suffix: cf-etcd.service.cf.internal
-      ca_cert: ''
-      client_cert: ''
-      client_key: ''
+      ca_cert: REPLACE_WITH_ETCD_CA_CERT
+      client_cert: REPLACE_WITH_ETCD_CLIENT_CERT
+      client_key: REPLACE_WITH_ETCD_CLIENT_KEY
       cluster:
       - instances: 1
         name: etcd_z1
@@ -162,13 +131,13 @@ jobs:
         name: etcd_z2
       machines:
       - 10.0.16.12
-      peer_ca_cert: ''
-      peer_cert: ''
-      peer_key: ''
-      peer_require_ssl: false
-      require_ssl: false
-      server_cert: ''
-      server_key: ''
+      peer_ca_cert: REPLACE_WITH_ETCD_PEER_CA_CERT
+      peer_cert: REPLACE_WITH_ETCD_PEER_CERT
+      peer_key: REPLACE_WITH_ETCD_PEER_KEY
+      peer_require_ssl: true
+      require_ssl: true
+      server_cert: REPLACE_WITH_ETCD_SERVER_CERT
+      server_key: REPLACE_WITH_ETCD_SERVER_KEY
     metron_agent:
       zone: z1
   resource_pool: small_z1
@@ -271,7 +240,7 @@ jobs:
   update: {}
 - default_networks:
   - name: cf1
-  instances: 1
+  instances: 0
   name: blobstore_z1
   networks:
   - name: cf1
@@ -432,8 +401,7 @@ jobs:
     nfs_server:
       address: null
       allow_from_entries:
-      - 10.0.16.0/24
-      - 10.0.16.0/24
+      - 10.0.16.0/20
       share: null
     route_registrar:
       routes:
@@ -466,6 +434,8 @@ jobs:
     release: cf
   - name: staticfile-buildpack
     release: cf
+  - name: dotnet-core-buildpack
+    release: cf
   - name: cloud_controller_ng
     release: cf
   - name: metron_agent
@@ -492,8 +462,7 @@ jobs:
     nfs_server:
       address: null
       allow_from_entries:
-      - 10.0.16.0/24
-      - 10.0.16.0/24
+      - 10.0.16.0/20
       share: null
     route_registrar:
       routes:
@@ -525,6 +494,8 @@ jobs:
   - name: python-buildpack
     release: cf
   - name: staticfile-buildpack
+    release: cf
+  - name: dotnet-core-buildpack
     release: cf
   - name: cloud_controller_ng
     release: cf
@@ -567,8 +538,7 @@ jobs:
     nfs_server:
       address: null
       allow_from_entries:
-      - 10.0.16.0/24
-      - 10.0.16.0/24
+      - 10.0.16.0/20
       share: null
   resource_pool: small_z1
   templates:
@@ -592,8 +562,7 @@ jobs:
     nfs_server:
       address: null
       allow_from_entries:
-      - 10.0.16.0/24
-      - 10.0.16.0/24
+      - 10.0.16.0/20
       share: null
   resource_pool: small_z2
   templates:
@@ -785,6 +754,13 @@ jobs:
   networks:
   - name: cf1
   properties:
+    consul:
+      agent:
+        services:
+          doppler:
+            name: doppler
+            tags:
+            - z1
     doppler:
       zone: z1
     metron_agent:
@@ -807,6 +783,13 @@ jobs:
   networks:
   - name: cf1
   properties:
+    consul:
+      agent:
+        services:
+          doppler:
+            name: doppler
+            tags:
+            - z2
     doppler:
       zone: z2
     metron_agent:
@@ -857,7 +840,9 @@ jobs:
     release: cf
   - name: route_registrar
     release: cf
-  update: {}
+  update:
+    max_in_flight: 1
+    serial: true
 - default_networks:
   - name: cf2
   instances: 0
@@ -893,7 +878,9 @@ jobs:
     release: cf
   - name: route_registrar
     release: cf
-  update: {}
+  update:
+    max_in_flight: 1
+    serial: true
 - default_networks:
   - name: cf1
   instances: 1
@@ -944,6 +931,37 @@ jobs:
 - default_networks:
   - name: cf1
   instances: 1
+  name: ha_proxy_z1
+  networks:
+  - name: reserved
+    static_ips:
+    - REPLACE_WITH_CLOUD_FOUNDRY_PUBLIC_IP
+  - default:
+    - dns
+    - gateway
+    name: cf1
+    static_ips:
+    - 10.0.16.4
+  properties:
+    ha_proxy:
+      ssl_pem: REPLACE_WITH_HA_PROXY_SSL_PEM
+    metron_agent:
+      zone: z1
+    router:
+      servers:
+      - 10.0.16.9
+  resource_pool: router_z1
+  templates:
+  - name: consul_agent
+    release: cf
+  - name: haproxy
+    release: cf
+  - name: metron_agent
+    release: cf
+  update: {}
+- default_networks:
+  - name: cf1
+  instances: 1
   lifecycle: errand
   name: acceptance_tests
   networks:
@@ -965,7 +983,8 @@ jobs:
       java_buildpack_name: java_buildpack
       nodes: 1
       skip_diego_unsupported_tests: true
-      skip_regex: lucid64
+      # test case "transparently proxies both reserved characters and unsafe characters" has a problem in cf-v244, the case pass with latest test code. So skip it.
+      skip_regex: lucid64|unsafe
       skip_ssl_validation: true
       system_domain: REPLACE_WITH_SYSTEM_DOMAIN
   resource_pool: small_errand
@@ -993,10 +1012,11 @@ jobs:
       include_operator: true
       include_security_groups: false
       include_services: true
-      java_buildpack_name: java_buildpack_offline
+      java_buildpack_name: java_offline_buildpack
       nodes: 1
       skip_diego_unsupported_tests: true
-      skip_regex: lucid64
+      # test case "Buildpacks java it makes the app reachable via its bound route" does not use java_buildpack_offline, so it fails in AzureChinaCloud. Skip it.
+      skip_regex: lucid64|unsafe|Buildpacks\sjava
       skip_ssl_validation: true
       system_domain: REPLACE_WITH_SYSTEM_DOMAIN
   resource_pool: small_errand
@@ -1129,7 +1149,7 @@ jobs:
   - name: rep
     release: diego
   - name: garden
-    release: garden-linux
+    release: garden-runc
   - name: cflinuxfs2-rootfs-setup
     release: cflinuxfs2-rootfs
   - name: metron_agent
@@ -1243,7 +1263,7 @@ jobs:
   - name: rep
     release: diego
   - name: garden
-    release: garden-linux
+    release: garden-runc
   - name: cflinuxfs2-rootfs-setup
     release: cflinuxfs2-rootfs
   - name: metron_agent
@@ -1357,7 +1377,7 @@ jobs:
   - name: rep
     release: diego
   - name: garden
-    release: garden-linux
+    release: garden-runc
   - name: cflinuxfs2-rootfs-setup
     release: cflinuxfs2-rootfs
   - name: metron_agent
@@ -1456,7 +1476,7 @@ jobs:
   - name: file_server
     release: diego
   - name: garden
-    release: garden-linux
+    release: garden-runc
   - name: nsync
     release: cf
   - name: cflinuxfs2-rootfs-setup
@@ -1503,7 +1523,7 @@ jobs:
   - name: file_server
     release: diego
   - name: garden
-    release: garden-linux
+    release: garden-runc
   - name: nsync
     release: cf
   - name: cflinuxfs2-rootfs-setup
@@ -1550,7 +1570,7 @@ jobs:
   - name: file_server
     release: diego
   - name: garden
-    release: garden-linux
+    release: garden-runc
   - name: nsync
     release: cf
   - name: cflinuxfs2-rootfs-setup
@@ -1587,7 +1607,7 @@ networks:
     dns:
     - REPLACE_WITH_DNS
     gateway: 10.0.16.1
-    range: 10.0.16.0/24
+    range: 10.0.16.0/20
     reserved:
     - 10.0.16.2 - 10.0.16.3
     static:
@@ -1602,7 +1622,7 @@ networks:
     dns:
     - REPLACE_WITH_DNS
     gateway: 10.0.16.1
-    range: 10.0.16.0/24
+    range: 10.0.16.0/20
     reserved:
     - 10.0.16.2 - 10.0.16.3
     static:
@@ -1657,18 +1677,6 @@ properties:
   app_ssh:
     host_key_fingerprint: REPLACE_WITH_HOST_KEY_FINGERPRINT
     oauth_client_id: ssh-proxy
-  blobstore:
-    admin_users:
-    - password: REPLACE_WITH_BLOBSTORE_PASSWORD
-      username: blobstore
-    port: 8080
-    secure_link:
-      secret: REPLACE_WITH_BLOBSTORE_SECRET
-    tls:
-      ca_cert: REPLACE_WITH_BLOBSTORE_CA_CERT
-      cert: REPLACE_WITH_BLOBSTORE_TLS_CERT
-      port: 4443
-      private_key: REPLACE_WITH_BLOBSTORE_PRIVATE_KEY
   capi:
     cc_uploader:
       dropsonde_port: null
@@ -1719,7 +1727,6 @@ properties:
         basic_auth_username: internal_user
       dropsonde_port: null
       log_level: debug
-      traffic_controller_url: wss://doppler.REPLACE_WITH_SYSTEM_DOMAIN:443
   cc:
     allow_app_ssh_access: true
     allowed_cors_domains: []
@@ -1733,18 +1740,16 @@ properties:
     broker_client_max_async_poll_duration_minutes: null
     broker_client_timeout_seconds: 70
     buildpacks:
-      blobstore_type: webdav
-      buildpack_directory_key: REPLACE_WITH_SYSTEM_DOMAIN-cc-buildpacks
+      blobstore_type: fog
+      buildpack_directory_key: cc-buildpacks
       cdn: null
       fog_aws_storage_options: null
-      fog_connection: null
-      webdav_config:
+      fog_connection: &fog_connection
         blobstore_timeout: 5
-        ca_cert: REPLACE_WITH_BLOBSTORE_CA_CERT
-        password: REPLACE_WITH_BLOBSTORE_PASSWORD
-        private_endpoint: https://blobstore.service.cf.internal:4443
-        public_endpoint: http://blobstore.REPLACE_WITH_SYSTEM_DOMAIN
-        username: blobstore
+        provider: AzureRM
+        environment: 'REPLACE_WITH_ENVIRONMENT'
+        azure_storage_account_name: 'REPLACE_WITH_DEFAULT_STORAGE_ACCOUNT_NAME'
+        azure_storage_access_key: 'REPLACE_WITH_DEFAULT_STORAGE_ACCESS_KEY'
     bulk_api_password: REPLACE_WITH_BULK_API_PASSWORD
     client_max_body_size: 15M
     db_encryption_key: REPLACE_WITH_DB_ENCRYPTION_KEY
@@ -1752,11 +1757,12 @@ properties:
     dea_use_https: false
     default_app_disk_in_mb: 1024
     default_app_memory: 1024
+    default_app_ssh_access: null
     default_buildpacks:
     - name: staticfile_buildpack
       package: staticfile-buildpack
     - name: java_buildpack
-      package: buildpack_java
+      package: java-buildpack
     - name: ruby_buildpack
       package: ruby-buildpack
     - name: nodejs_buildpack
@@ -1769,6 +1775,8 @@ properties:
       package: php-buildpack
     - name: binary_buildpack
       package: binary-buildpack
+    - name: dotnet_core_buildpack
+      package: dotnet-core-buildpack
     default_health_check_timeout: 60
     default_quota_definition: default
     default_running_security_groups:
@@ -1779,22 +1787,23 @@ properties:
     - dns
     default_to_diego_backend: true
     development_mode: false
+    diego:
+      bbs:
+        url: null
+      insecure_docker_registry_list: null
+      temporary_local_apps: null
+      temporary_local_staging: null
+      temporary_local_tasks: null
+      use_privileged_containers_for_staging: null
     directories: null
     disable_custom_buildpacks: false
     droplets:
-      blobstore_type: webdav
+      blobstore_type: fog
       cdn: null
-      droplet_directory_key: REPLACE_WITH_SYSTEM_DOMAIN-cc-droplets
+      droplet_directory_key: cc-droplets
       fog_aws_storage_options: null
-      fog_connection: null
       max_staged_droplets_stored: null
-      webdav_config:
-        blobstore_timeout: 5
-        ca_cert: REPLACE_WITH_BLOBSTORE_CA_CERT
-        password: REPLACE_WITH_BLOBSTORE_PASSWORD
-        private_endpoint: https://blobstore.service.cf.internal:4443
-        public_endpoint: http://blobstore.REPLACE_WITH_SYSTEM_DOMAIN
-        username: blobstore
+      fog_connection: *fog_connection
     external_host: api
     external_port: 9022
     external_protocol: null
@@ -1802,9 +1811,9 @@ properties:
     - name: staticfile_buildpack
       package: staticfile-buildpack
     - name: java_buildpack
-      package: buildpack_java
-    - name: java_buildpack_offline
-      package: buildpack_java_offline
+      package: java-buildpack
+    - name: java_offline_buildpack
+      package: java-offline-buildpack
     - name: ruby_buildpack
       package: ruby-buildpack
     - name: nodejs_buildpack
@@ -1817,6 +1826,8 @@ properties:
       package: php-buildpack
     - name: binary_buildpack
       package: binary-buildpack
+    - name: dotnet_core_buildpack
+      package: dotnet-core-buildpack
     internal_api_password: REPLACE_WITH_BULK_API_PASSWORD
     internal_api_user: internal_user
     jobs:
@@ -1844,6 +1855,10 @@ properties:
     min_cli_version: null
     min_recommended_cli_version: null
     minimum_candidate_stagers: null
+    mutual_tls:
+      ca_cert: null
+      private_key: null
+      public_cert: null
     newrelic:
       capture_params: false
       developer_mode: false
@@ -1854,20 +1869,13 @@ properties:
         enabled: true
         record_sql: obfuscated
     packages:
-      app_package_directory_key: REPLACE_WITH_SYSTEM_DOMAIN-cc-packages
-      blobstore_type: webdav
+      app_package_directory_key: cc-packages
+      blobstore_type: fog
       cdn: null
       fog_aws_storage_options: null
-      fog_connection: null
+      fog_connection: *fog_connection
       max_package_size: 1073741824
       max_valid_packages_stored: null
-      webdav_config:
-        blobstore_timeout: 5
-        ca_cert: REPLACE_WITH_BLOBSTORE_CA_CERT
-        password: REPLACE_WITH_BLOBSTORE_PASSWORD
-        private_endpoint: https://blobstore.service.cf.internal:4443
-        public_endpoint: http://blobstore.REPLACE_WITH_SYSTEM_DOMAIN
-        username: blobstore
     quota_definitions:
       default:
         memory_limit: 10240
@@ -1875,20 +1883,14 @@ properties:
         total_routes: 1000
         total_service_keys: 1000
         total_services: 100
+    rate_limiter: null
     reserved_private_domains: null
     resource_pool:
-      blobstore_type: webdav
+      blobstore_type: fog
       cdn: null
       fog_aws_storage_options: null
-      fog_connection: null
-      resource_directory_key: REPLACE_WITH_SYSTEM_DOMAIN-cc-resources
-      webdav_config:
-        blobstore_timeout: 5
-        ca_cert: REPLACE_WITH_BLOBSTORE_CA_CERT
-        password: REPLACE_WITH_BLOBSTORE_PASSWORD
-        private_endpoint: https://blobstore.service.cf.internal:4443
-        public_endpoint: http://blobstore.REPLACE_WITH_SYSTEM_DOMAIN
-        username: blobstore
+      fog_connection: *fog_connection
+      resource_directory_key: cc-resources
     security_event_logging:
       enabled: null
     security_group_definitions:
@@ -1922,7 +1924,7 @@ properties:
     - name: staticfile_buildpack
       package: staticfile-buildpack
     - name: java_buildpack
-      package: buildpack_java
+      package: java-buildpack
     - name: ruby_buildpack
       package: ruby-buildpack
     - name: nodejs_buildpack
@@ -1935,6 +1937,8 @@ properties:
       package: php-buildpack
     - name: binary_buildpack
       package: binary-buildpack
+    - name: dotnet_core_buildpack
+      package: dotnet-core-buildpack
     system_hostnames: null
     thresholds:
       api:
@@ -1945,16 +1949,10 @@ properties:
         alert_if_above_mb: null
         restart_if_above_mb: null
         restart_if_consistently_above_mb: null
+    tls_port: null
     user_buildpacks: []
     users_can_select_backend: true
     volume_services_enabled: null
-    webdav_config:
-      blobstore_timeout: 5
-      ca_cert: REPLACE_WITH_BLOBSTORE_CA_CERT
-      password: REPLACE_WITH_BLOBSTORE_PASSWORD
-      private_endpoint: https://blobstore.service.cf.internal:4443
-      public_endpoint: http://blobstore.REPLACE_WITH_SYSTEM_DOMAIN
-      username: blobstore
   ccdb:
     address: 10.0.16.8
     databases:
@@ -1966,8 +1964,6 @@ properties:
     - name: ccadmin
       password: REPLACE_WITH_CCDB_PASSWORD
       tag: admin
-  cf_etcd:
-    advertise_urls_dns_suffix: cf-etcd.service.cf.internal
   cflinuxfs2-rootfs:
     trusted_certs: null
   cni-flannel: null
@@ -2041,7 +2037,7 @@ properties:
     server_key: null
     staging_bandwidth_limit: null
     staging_disk_inode_limit: 200000
-    staging_disk_limit_mb: 6144
+    staging_disk_limit_mb: 4096
     staging_memory_limit_mb: 1024
   description: null
   diego:
@@ -2054,14 +2050,28 @@ properties:
         client_session_cache_size: null
         max_idle_conns_per_host: null
         require_ssl: true
+      ca_cert: REPLACE_WITH_DIEGO_CA
       cell_state_timeout: null
       dropsonde_port: null
       log_level: debug
+      rep:
+        ca_cert: REPLACE_WITH_DIEGO_CA
+        client_cert: REPLACE_WITH_REP_CLIENT_CERT
+        client_key: REPLACE_WITH_REP_CLIENT_KEY
+        client_session_cache_size: null
+        require_tls: null
+      server_cert: REPLACE_WITH_AUCTIONEER_SERVER_CERT
+      server_key: REPLACE_WITH_AUCTIONEER_SERVER_KEY
       starting_container_weight: null
     bbs:
       active_key_label: bbs_key_a
       auctioneer:
+        api_location: null
         api_url: null
+        ca_cert: REPLACE_WITH_DIEGO_CA
+        client_cert: REPLACE_WITH_AUCTIONEER_CLIENT_CERT
+        client_key: REPLACE_WITH_AUCTIONEER_CLIENT_KEY
+        require_tls: null
       ca_cert: REPLACE_WITH_DIEGO_CA
       convergence:
         expire_completed_task_duration_in_seconds: null
@@ -2082,14 +2092,25 @@ properties:
         max_idle_conns_per_host: null
         require_ssl: true
       log_level: debug
+      rep:
+        ca_cert: REPLACE_WITH_DIEGO_CA
+        client_cert: REPLACE_WITH_REP_CLIENT_CERT
+        client_key: REPLACE_WITH_REP_CLIENT_KEY
+        client_session_cache_size: null
+        require_tls: null
       require_ssl: true
       server_cert: REPLACE_WITH_BBS_SERVER_CERT
       server_key: REPLACE_WITH_BBS_SERVER_KEY
       sql:
         ca_cert: null
-        db_connection_string: postgres://diego:REPLACE_WITH_DIEGODB_PASSWORD@10.0.16.8:5524/diego
+        db_connection_string: null
         db_driver: postgres
-        max_open_connections: 500
+        db_host: 10.0.16.8
+        db_password: REPLACE_WITH_DIEGODB_PASSWORD
+        db_port: 5524
+        db_schema: diego
+        db_username: diego
+        max_open_connections: null
         require_ssl: null
     cfdot:
       bbs:
@@ -2132,11 +2153,17 @@ properties:
         client_session_cache_size: null
         max_idle_conns_per_host: null
         require_ssl: true
+      ca_cert: REPLACE_WITH_DIEGO_CA
       dropsonde_port: null
+      enable_legacy_api_endpoints: null
       evacuation_timeout_in_seconds: null
+      listen_addr_admin: null
       log_level: debug
       preloaded_rootfses:
       - cflinuxfs2:/var/vcap/packages/cflinuxfs2/rootfs
+      require_tls: true
+      server_cert: REPLACE_WITH_REP_SERVER_CERT
+      server_key: REPLACE_WITH_REP_SERVER_KEY
       trusted_certs: null
     route_emitter:
       bbs:
@@ -2178,8 +2205,8 @@ properties:
     blacklisted_syslog_ranges: null
     debug: false
     etcd:
-      client_cert: ''
-      client_key: ''
+      client_cert: REPLACE_WITH_ETCD_CLIENT_CERT
+      client_key: REPLACE_WITH_ETCD_CLIENT_KEY
     maxRetainedLogMessages: 100
     message_drain_buffer_size: null
     outgoing_port: 8081
@@ -2198,11 +2225,11 @@ properties:
   etcd: {}
   etcd_metrics_server:
     etcd:
-      ca_cert: ''
-      client_cert: ''
-      client_key: ''
+      ca_cert: REPLACE_WITH_ETCD_CA_CERT
+      client_cert: REPLACE_WITH_ETCD_CLIENT_CERT
+      client_key: REPLACE_WITH_ETCD_CLIENT_KEY
       dns_suffix: cf-etcd.service.cf.internal
-      require_ssl: false
+      require_ssl: true
   garden:
     allow_host_access: null
     allow_networks: null
@@ -2231,12 +2258,12 @@ properties:
     client_cert: REPLACE_WITH_HM9000_CLIENT_CERT
     client_key: REPLACE_WITH_HM9000_CLIENT_KEY
     etcd:
-      ca_cert: ''
-      client_cert: ''
-      client_key: ''
+      ca_cert: REPLACE_WITH_ETCD_CA_CERT
+      client_cert: REPLACE_WITH_ETCD_CLIENT_CERT
+      client_key: REPLACE_WITH_ETCD_CLIENT_KEY
       machines:
       - cf-etcd.service.cf.internal
-      require_ssl: false
+      require_ssl: true
     port: 5155
     server_cert: REPLACE_WITH_HM9000_SERVER_CERT
     server_key: REPLACE_WITH_HM9000_SERVER_KEY
@@ -2244,14 +2271,27 @@ properties:
   logger_endpoint:
     port: 4443
   loggregator:
+    blacklisted_syslog_ranges: null
+    debug: false
     dropsonde_incoming_port: null
     etcd:
-      ca_cert: ''
+      ca_cert: REPLACE_WITH_ETCD_CA_CERT
       machines:
       - cf-etcd.service.cf.internal
-      require_ssl: false
+      require_ssl: true
+    maxRetainedLogMessages: 100
+    outgoing_dropsonde_port: 8081
     tls:
-      ca_cert: null
+      ca_cert: REPLACE_WITH_LOGGREGATOR_CA_CERT
+      doppler:
+        cert: REPLACE_WITH_DOPPLER_CERT
+        key: REPLACE_WITH_DOPPLER_KEY
+      metron:
+        cert: REPLACE_WITH_METRON_CERT
+        key: REPLACE_WITH_METRON_KEY
+      trafficcontroller:
+        cert: REPLACE_WITH_TRAFFICCONTROLLER_CERT
+        key: REPLACE_WITH_TRAFFICCONTROLLER_KEY
   loggregator_endpoint:
     shared_secret: REPLACE_WITH_LOGGREGATOR_ENDPOINT_SHARED_SECRET
   login:
@@ -2272,7 +2312,10 @@ properties:
       url: null
     protocol: null
     restricted_ips_regex: null
-    saml: null
+    saml:
+      serviceProviderKey: REPLACE_WITH_SAML_KEY
+      serviceProviderKeyPassword: ''
+      serviceProviderCertificate: REPLACE_WITH_SAML_CERT
     self_service_links_enabled: null
     smtp:
       host: null
@@ -2284,8 +2327,8 @@ properties:
     deployment: multiple-vm-azure
     dropsonde_incoming_port: null
     etcd:
-      client_cert: ''
-      client_key: ''
+      client_cert: REPLACE_WITH_ETCD_CLIENT_CERT
+      client_key: REPLACE_WITH_ETCD_CLIENT_KEY
     preferred_protocol: null
     protocols: null
     tls:
@@ -2303,15 +2346,17 @@ properties:
     prof_port: 0
     trace: false
     user: nats
+  netman:
+    disable: null
   nfs_server:
     address: null
     allow_from_entries:
-    - 10.0.16.0/24
-    - 10.0.16.0/24
+    - 10.0.16.0/20
     share: null
   policy-server: null
   request_timeout_in_seconds: 900
   router:
+    balancing_algorithm: null
     cipher_suites: null
     debug_address: null
     drain_wait: null
@@ -2319,6 +2364,7 @@ properties:
     enable_proxy: null
     enable_ssl: null
     extra_headers_to_log: null
+    force_forwarded_proto_https: null
     healthcheck_user_agent: null
     load_balancer_healthy_threshold: null
     logging_level: null
@@ -2349,15 +2395,15 @@ properties:
   syslog_daemon_config: null
   syslog_drain_binder:
     etcd:
-      client_cert: ''
-      client_key: ''
+      client_cert: REPLACE_WITH_ETCD_CLIENT_CERT
+      client_key: REPLACE_WITH_ETCD_CLIENT_KEY
   system_domain: REPLACE_WITH_SYSTEM_DOMAIN
   system_domain_organization: REPLACE_WITH_SYSTEM_DOMAIN_ORGANIZATION
   traffic_controller:
     disable_access_control: null
     etcd:
-      client_cert: ''
-      client_key: ''
+      client_cert: REPLACE_WITH_ETCD_CLIENT_CERT
+      client_key: REPLACE_WITH_ETCD_CLIENT_KEY
     security_event_logging:
       enabled: false
     zone: null
@@ -2388,7 +2434,7 @@ properties:
         authorities: uaa.none
         authorized-grant-types: password,refresh_token
         override: true
-        refresh-token-validity: 2592000
+        refresh-token-validity: 604800
         scope: cloud_controller.read,cloud_controller.write,openid,password.write,cloud_controller.admin,cloud_controller.admin_read_only,scim.read,scim.write,doppler.firehose,uaa.user,routing.router_groups.read,routing.router_groups.write
       cloud_controller_username_lookup:
         authorities: scim.userids
@@ -2461,11 +2507,28 @@ properties:
         name: admin
         password: REPLACE_WITH_PASSWORD
     ssl:
-      port: -1
+      port: 8443
     sslCertificate: REPLACE_WITH_UAA_SERVER_CERT
     sslPrivateKey: REPLACE_WITH_UAA_SERVER_KEY
     url: https://uaa.REPLACE_WITH_SYSTEM_DOMAIN
-    user: null
+    user:
+      authorities:
+      - openid
+      - scim.me
+      - cloud_controller.read
+      - cloud_controller.write
+      - cloud_controller_service_permissions.read
+      - password.write
+      - uaa.user
+      - approvals.me
+      - oauth.approvals
+      - notification_preferences.read
+      - notification_preferences.write
+      - profile
+      - roles
+      - user_attributes
+      - cloud_controller.user
+      - actuator.read
     zones:
       internal:
         hostnames:
@@ -2487,7 +2550,7 @@ releases:
   version: latest
 - name: cflinuxfs2-rootfs
   version: latest
-- name: garden-linux
+- name: garden-runc
   version: latest
 - name: cf
   version: latest

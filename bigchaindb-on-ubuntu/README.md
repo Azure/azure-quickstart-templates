@@ -7,16 +7,25 @@
 <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template provisions a virtual machine running Ubuntu 14.04.4 LTS, plus various other Azure resources. (See the `azuredeploy.json` file for details.) It then runs the script `scripts/init.sh`, which:
+This template deploys a virtual machine on Azure runnnig Ubuntu 14.04 and RethinkDB. It also installs the latest BigchainDB Server (but doesn't configure or run it).
 
-1. Installs RethinkDB and runs it (with a default RethinkDB configuration file).
-2. Installs BigchainDB dependencies and BigchainDB itself (i.e. the latest version on PyPI).
 
-That script does _not_ configure or run BigchainDB. To do that, first SSH in to the virtual machine. (You can find its hostname and IP address online in the Microsoft Azure Management Portal at https://portal.azure.com).
+## Detailed Instructions
 
-On the virtual machine, generate a default configuration file (in `~/.bigchaindb`) by doing:
+The BigchainDB Server docs have [detailed instructions about how to use this template](https://docs.bigchaindb.com/projects/server/en/master/appendices/azure-quickstart-template.html).
+
+
+## Short Instuctions
+
+Once the virtual machine (and other resources) are provisioned and the `init.sh` script is done running, SSH in to the virtual machine. (You can find its hostname and IP address online in the Microsoft Azure Management Portal at https://portal.azure.com).
+
+On the virtual machine, generate a configuration file (in `~/.bigchaindb`) by doing:
 ```text
-bigchaindb -y configure
+bigchaindb configure
+```
+It will ask you several questions. You can press `Enter` (or `Return`) to accept the default for all of them *except for one*. When it asks **API Server bind? (default \`localhost:9984\`):**, you should answer:
+```text
+API Server bind? (default `localhost:9984`): 0.0.0.0:9984
 ```
 
 To run BigchainDB, do:
@@ -25,7 +34,3 @@ bigchaindb start
 ```
 
 `Tags: scalable, blockchain, database`
-
-## Documentation
-
-Documentation for BigchainDB is at https://bigchaindb.readthedocs.io/en/latest/index.html

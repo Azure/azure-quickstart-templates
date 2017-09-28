@@ -1,0 +1,309 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "storageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Unique DNS Label for the Storage Account where the Virtual Machine's disks will be placed."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Username for the Virtual Machine."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the Virtual Machine."
+      }
+    },
+    "securityGroupName": {
+      "type": "string",
+      "defaultValue": "vmr-security",
+      "metadata": {
+        "description": "Security group defined to support VMR default message vpn ports"
+      }
+    },
+    "dnsLabelForPublicIP": {
+      "type": "string",
+      "metadata": {
+        "description": "Unique DNS Label for the Public IP used to access the Virtual Machine."
+      }
+    },
+    "centOSVersion": {
+      "type": "string",
+      "defaultValue": "7.2",
+      "metadata": {
+        "description": "The Centos version for deploying the Docker containers. This will pick a fully patched image of this given Centos version. Allowed values: 7.2, 7.3"
+      },
+      "allowedValues": [
+        "7.2",
+        "7.3"
+      ]
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2_v2",
+      "metadata": {
+        "description": "The size of the VM. Requires at lest 2 cores and 4GB of memory. Allowed values: DS2_V2, F2S"
+      },
+      "allowedValues": [
+        "Standard_D2_v2",
+        "Standard_F2s"
+      ]
+    },
+    "solaceVMR_URI": {
+        "type": "string",
+        "metadata": {
+            "description": "The URI location of the Solace VMR Docker container tarball"
+        }
+    },
+    "deploymentModel": {
+      "type": "string",
+      "metadata": {
+          "description": "Deploy three node ha cluster or single node"
+      },
+      "allowedValues": [
+        "HighAvailability",
+        "SingleNode"
+      ]
+    }
+  },
+  "variables": {
+    "availabilitySetName": "SolaceHACluster",
+    "platformFaultDomainCount": "3",
+    "platformUpdateDomainCount": "3",
+    "imagePublisher": "OpenLogic",
+    "imageOffer": "Centos",
+    "OSDiskName": "osdiskfordockersimple",
+    "nicName": "myVMNicD",
+    "scriptUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/solace-message-router/",
+    "sharedTemplatename": "shared-resources.json",
+    "solaceInstallScriptName": "deploy_vmr.sh",
+    "publicIPAddressName": "myPublicIPD",
+    "publicIPAddressType": "Dynamic",
+    "vmStorageAccountVHDsName": "vhds",
+    "vmStorageAccountContainersName": "containers",
+    "vmName": "SolaceVMR",
+    "addressPrefix": "10.0.0.0/16",
+    "subnetPrefix": "10.0.0.0/24",
+    "nodeAddressPrefix": "10.0.0.10",
+    "storageAccountType": "Standard_LRS",
+    "subnetName": "Subnet",
+    "virtualNetworkName": "MyVNETD",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
+    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
+    "deploymentModelHighAvailability": {
+      "numberOfNodes": 3
+    },
+    "deploymentModelSingleNode": { "numberOfNodes": 1 },
+    "numberOfInstances": "[variables(concat('deploymentModel', parameters('deploymentModel'))).numberOfNodes]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-01-01",
+      "type": "Microsoft.Resources/deployments",
+      "name": "SolaceSecurity.Template",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('scriptUrl'), variables('sharedTemplatename'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "securityGroupName": {
+            "value": "[parameters('securityGroupName')]"
+          },
+          "subnetPrefix": {
+            "value": "[variables('subnetPrefix')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2016-03-30",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(variables('publicIPAddressName'), copyindex())]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "interfaceLoop",
+        "count": "[variables('numberOfInstances')]"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[concat(parameters('dnsLabelForPublicIP'), copyindex())]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2016-03-30",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+          "addressSpace": {
+          "addressPrefixes": [ "[variables('addressPrefix')]" ]
+          },
+          "subnets": [
+              {
+                  "name": "[variables('subnetName')]",
+                  "properties": {
+                      "addressPrefix": "[variables('subnetPrefix')]"
+                  }
+              }
+          ]
+        } 
+    },
+    {
+      "apiVersion": "2016-03-30",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('nicName'), copyindex())]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "nicLoop",
+        "count": "[variables('numberOfInstances')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'), copyindex())]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[concat(variables('nodeAddressPrefix'), copyindex())]",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(variables('publicIPAddressName'), copyindex()))]"
+              },
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[parameters('storageAccountName')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2016-01-01",
+      "sku": {
+        "name": "[variables('storageAccountType')]"
+      },
+      "kind": "Storage",
+      "location": "[resourceGroup().location]",
+      "properties": {}
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[variables('availabilitySetName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+          "platformFaultDomainCount": "[variables('platformFaultDomainCount')]",
+          "platformUpdateDomainCount": "[variables('platformUpdateDomainCount')]"
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(variables('vmName'), copyindex())]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "virtualMachineLoop",
+        "count": "[variables('numberOfInstances')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', concat(variables('nicName'), copyindex()))]",
+        "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[concat(variables('vmName'), copyindex())]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[parameters('centOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "osdisk1",
+            "vhd": {
+              "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountVHDsName'),'/',variables('OSDiskName'),copyindex(),'.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'), copyindex()))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('vmName'), copyindex(), '/DockerExtension')]",
+      "apiVersion": "2016-03-30",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "DockerLoop",
+        "count": "[variables('numberOfInstances')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), copyindex())]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "DockerExtension",
+        "typeHandlerVersion": "1.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": { }
+      }
+    },
+    {
+      "apiVersion": "2016-03-30",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('vmName'), copyindex(), '/configureVMRContainer')]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "SolaceLoop",
+        "count": "[variables('numberOfInstances')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), copyindex(), '/extensions/DockerExtension')]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[parameters('solaceVMR_URI')]",
+            "[concat(variables('scriptUrl'), 'scripts/', variables('solaceInstallScriptName'))]",
+            "[concat(variables('scriptUrl'), 'scripts/semp_query.sh')]"
+          ],
+          "commandToExecute": "[concat('bash ', variables('solaceInstallScriptName'), ' -c ', copyindex(), ' -i ', variables('nodeAddressPrefix'), ' -n ', variables('numberOfInstances'), ' -p ', parameters('adminPassword'))]"   
+        } 
+      }
+    }
+  ]
+}
