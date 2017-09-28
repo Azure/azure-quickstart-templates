@@ -1,3 +1,3 @@
 # Blank Template
 
-This is an empty template, with the schema reference and top-level properties defined.
+This is an empty template and parameters file with the schema reference and top-level properties defined.
