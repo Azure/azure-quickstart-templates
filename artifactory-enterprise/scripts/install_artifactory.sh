@@ -13,6 +13,7 @@ echo "DB Host = $db_url and $db_name and $db_user and $db_password">> /tmp/dbhos
 export DEBIAN_FRONTEND=noninteractive
 
 # install the LAMP stack
+apt-get update
 apt-get -y install wget curl>> /tmp/yum-install.log 2>&1
 
 # install Java 8
@@ -101,25 +102,25 @@ server {
 }
 EOF
 
-#cat <<EOF >/var/opt/jfrog/artifactory/etc/db.properties
-#type=mssql
-#driver=com.microsoft.sqlserver.jdbc.SQLServerDriver
-#url=${db_url};databaseName=${db_name};sendStringParametersAsUnicode=false;applicationName=Artifactory Binary Repository
-#username=${db_user}
-#password=${db_password}
-#EOF
+cat <<EOF >/var/opt/jfrog/artifactory/etc/db1.properties
+type=mssql
+driver=com.microsoft.sqlserver.jdbc.SQLServerDriver
+url=${db_url};databaseName=${db_name};sendStringParametersAsUnicode=false;applicationName=Artifactory Binary Repository
+username=${db_user}
+password=${db_password}
+EOF
 
-#cat <<EOF >/var/opt/jfrog/artifactory/etc/binarystore.xml
-#<config version="1">
-#    <chain template="azure-blob-storage"/>
-#    <provider id="azure-blob-storage" type="azure-blob-storage">
-#        <accountName>${storage_acct}</accountName>
-#        <accountKey>${storage_acct_key}</accountKey>
-#        <endpoint>https://${storage_acct}.blob.core.windows.net/</endpoint>
-#        <containerName>${storage_container}</containerName>
-#    </provider>
-#</config>
-#EOF
+cat <<EOF >/var/opt/jfrog/artifactory/etc/binarystore1.xml
+<config version="1">
+    <chain template="azure-blob-storage"/>
+    <provider id="azure-blob-storage" type="azure-blob-storage">
+        <accountName>${storage_acct}</accountName>
+        <accountKey>${storage_acct_key}</accountKey>
+        <endpoint>https://${storage_acct}.blob.core.windows.net/</endpoint>
+        <containerName>${storage_container}</containerName>
+    </provider>
+</config>
+EOF
 
 chown artifactory:artifactory -R /var/opt/jfrog/artifactory/*  && chown artifactory:artifactory -R /var/opt/jfrog/artifactory/etc/security
 
