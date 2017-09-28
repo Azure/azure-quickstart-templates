@@ -1,22 +1,11 @@
 # Copy data from one folder to another folder in an Azure Blob Storage
-Please do the following steps before deploying the template: 
+This template creates a data factory of version 2 with a pipeline that copies data from one folder to another in an Azure Blob Storage. 
 
-1. Complete the prerequisites mentioned in [prerequisites](https://docs.microsoft.com/azure/data-factory/quickstart-create-data-factory-powershell#prerequisites) article.
-2. Update values for the following parameters in **azuredeploy.parameters.json** file. 
-	1. dataFactoryName
-	2. dataFactoryLocation
-	3. storageAccountName
-	3. storageAccountKey
+Here are a few important points about the template: 
 
-3. If you followed the prerequisites mentioned above, you do not need to change values for these parameters. Otherwise, update values for these parameters. 
+- The prerequisites for this template are mentioned in the [Quickstart: Create a data factory by using Azure PowerShell](https://docs.microsoft.com/azure/data-factory/quickstart-create-data-factory-powershell#prerequisites) article.
+- Note that currently data factories of version 2 can only be created in **East US** and **East US 2** regions. 
 
-	1. blobContainer.  
-	2. inputBlobFolder
-	3. inputBlobName
-	4. outputBlobFolder
-	5. outputBlobName
-
-Note that currently data factories of version 2 can only be created in **East US** and **East US 2** regions. 
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-data-factory-v2-blob-to-blob-copy%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
@@ -25,15 +14,34 @@ Note that currently data factories of version 2 can only be created in **East US
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-When you deploy this Azure Resource Template, a data factory is created with the following entities: 
+When you deploy this Azure Resource Manager template, a data factory of version 2 is created with the following entities: 
 
 - Azure Storage linked service
 - Azure Blob datasets (input and output)
 - Pipeline with a copy activity
 
-The copy activity in the pipeline copies data from one folder to another folder in the same Azure Blob Storage. After you deploy the template, to run the pipeline and see the data being copied from source to destination, run the following PowerShell command (specify your data factory name and resource group name):
+## To get the name of the data factory
+1. Click the **Deployment succeeded** message.
+2. Click **Go to resource group**.
+3. Search for **ADFTutorialResourceGroup0927&lt;unique string&gt;**
 
-```powershell
-$runId = Invoke-AzureRmDataFactoryV2Pipeline -DataFactoryName <your data factory name> -ResourceGroupName <resource group name> -PipelineName "ArmtemplateSampleCopyPipeline" 
-```
+The following sections provide steps for running and monitoring the pipeline. For more information, see [Quickstart: Create a data factory by using Azure PowerShell](https://docs.microsoft.com/azure/data-factory/quickstart-create-data-factory-powershell).
+
+## Run and monitor the pipeline
+After you deploy the template, to run and monitor the pipeline, do the following steps: 
+
+1. Download [runmonitor.ps1](https://github.com/Azure/azure-quickstart-templates/tree/master/101-data-factory-v2-blob-to-blob-copy/scripts) to a folder on your machine.
+2. Launch Azure PowerShell.
+3.  Run the following command to log in to Azure. 
+
+	```powershell
+	Login-AzureRmAccount
+	```
+4. Switch to the folder where you copied the script file. 
+5. Run the following command to log in to Azure after specifying the names of your Azure resource group and the data factory. 
+
+	```powershell
+	.\runmonitor.ps1 -resourceGroupName "<name of your resource group>" -DataFactoryName "<name of your data factory>"
+	```
+
 
