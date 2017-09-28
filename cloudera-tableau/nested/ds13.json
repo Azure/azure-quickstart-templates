@@ -2,7 +2,7 @@
   "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
   "contentVersion": "1.0.0.1",
   "parameters": {
-    "adminUserName": {
+    "adminUsername": {
       "type": "string",
       "defaultValue": "azureuser",
       "metadata": {
@@ -61,8 +61,8 @@
         "description": "The name of the virtual network provisioned for the deployment"
       }
     },
-    "vnetNewOrExisting" : {
-      "type" : "string",
+    "vnetNewOrExisting": {
+      "type": "string",
       "defaultValue": "new",
       "allowedValues": [
         "new",
@@ -218,22 +218,31 @@
         "Security / Compliance",
         "Storage"
       ]
+    },
+    "clouderaTags": {
+      "type": "object"
+    },
+    "tableauTags": {
+      "type": "object"
+    },
+    "quickstartTags": {
+      "type": "object"
     }
   },
   "variables": {
-    "templateAPIVersion":"2015-11-01",
-    "resourceAPIVersion":"2015-06-15",
-    "installCDH":"True",
-    "addressPrefix":"[parameters('addressPrefix')]",
-    "subnetPrefix":"[parameters('subnetPrefix')]",
+    "templateAPIVersion": "2015-11-01",
+    "resourceAPIVersion": "2015-06-15",
+    "installCDH": "True",
+    "addressPrefix": "[parameters('addressPrefix')]",
+    "subnetPrefix": "[parameters('subnetPrefix')]",
     "scriptsUri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/cloudera-on-centos",
     "share-resourcesUri": "[concat(variables('scriptsUri'), '/nested/shared-resources-', parameters('vnetNewOrExisting'), '-vnet.json')]",
-    "data-nodeUri":"[concat(variables('scriptsUri'), '/nested/data-node-', toLower(subString(parameters('vmSize'), 9, 4)), '.json')]",
+    "data-nodeUri": "[concat(variables('scriptsUri'), '/nested/data-node-', toLower(subString(parameters('vmSize'), 9, 4)), '.json')]",
     "sa": "[parameters('masterNodeIPAddress')]",
     "ipOctet01": "[concat(split(variables('sa'), '.')[0], '.', split(variables('sa'), '.')[1], '.')]",
     "ipOctet2": "[int(split(variables('sa'), '.')[2])]",
     "ipOctet3": "[int(split(variables('sa'), '.')[3])]",
-    "datanodeIpOctet3":"[add(int(split(variables('sa'), '.')[3]), parameters('dataNodeIPOffSetFromMaster'))]",
+    "datanodeIpOctet3": "[add(int(split(variables('sa'), '.')[3]), parameters('dataNodeIPOffSetFromMaster'))]",
     "masterStorageAccount": {
       "prefix": "[parameters('storageAccountPrefix')]",
       "type": "[parameters('masterStorageAccountType')]"
@@ -255,7 +264,7 @@
     "clusterSpec": "[variables(concat('clusterTshirtSize', parameters('tshirtSize')))]",
     "vmSpec": {
       "vmSize": "[parameters('vmSize')]",
-      "adminUserName": "[parameters('adminUserName')]",
+      "adminUsername": "[parameters('adminUsername')]",
       "adminPassword": "[parameters('adminPassword')]",
       "masterNodeASName": "[concat(parameters('dnsNamePrefix'), '-mnAS')]",
       "dataNodeASName": "[concat(parameters('dnsNamePrefix'), '-dnAS')]"
@@ -266,23 +275,23 @@
       "ipOctet01": "[variables('ipOctet01')]",
       "ipOctet2": "[variables('ipOctet2')]",
       "ipOctet3": "[variables('ipOctet3')]",
-      "datanodeIpOctet3":"[variables('datanodeIpOctet3')]",
-      "masterIP":"[variables('sa')]",
-      "workerIP":"[concat(variables('ipOctet01'), add(variables('ipOctet2'), div(variables('datanodeIpOctet3'), 255)), '.', mod(variables('datanodeIpOctet3'), 255))]",
+      "datanodeIpOctet3": "[variables('datanodeIpOctet3')]",
+      "masterIP": "[variables('sa')]",
+      "workerIP": "[concat(variables('ipOctet01'), add(variables('ipOctet2'), div(variables('datanodeIpOctet3'), 255)), '.', mod(variables('datanodeIpOctet3'), 255))]",
       "virtualNetworkName": "[parameters('virtualNetworkName')]",
-      "virtualNetworkRGName":"[parameters('virtualNetworkRGName')]",
+      "virtualNetworkRGName": "[parameters('virtualNetworkRGName')]",
       "vnetNewOrExisting": "[parameters('vnetNewOrExisting')]",
       "virtualNetworkSubnetName": "[parameters('subnetName')]"
     },
-    "newVNetId":"[resourceId(concat('Microsoft.Network','/','virtualNetworks'),parameters('virtualNetworkName'))]",
-    "existingVNetId":"[resourceId(parameters('virtualNetworkRGName'),concat('Microsoft.Network','/','virtualNetworks'),parameters('virtualNetworkName'))]",
+    "newVNetId": "[resourceId(concat('Microsoft.Network','/','virtualNetworks'),parameters('virtualNetworkName'))]",
+    "existingVNetId": "[resourceId(parameters('virtualNetworkRGName'),concat('Microsoft.Network','/','virtualNetworks'),parameters('virtualNetworkName'))]",
     "VNetId": "[variables(concat(parameters('vnetNewOrExisting'),'VNetId'))]"
   },
   "resources": [
     {
       "name": "shared-resources",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "[variables('templateAPIVersion')]",
+      "apiVersion": "2015-11-01",
       "comments": "Utilizes the shared resources configurations.  Uses the DS13 servers sizes for the deployment",
       "properties": {
         "mode": "Incremental",
@@ -291,8 +300,8 @@
           "contentVersion": "1.0.0.1"
         },
         "parameters": {
-          "resourceAPIVersion":{
-            "value":"[variables('resourceAPIVersion')]"
+          "resourceAPIVersion": {
+            "value": "[variables('resourceAPIVersion')]"
           },
           "networkSpec": {
             "value": "[variables('networkSpec')]"
@@ -302,6 +311,15 @@
           },
           "dataNodeASName": {
             "value": "[variables('vmSpec').dataNodeASName]"
+          },
+          "clouderaTags": {
+            "value": "[parameters('clouderaTags')]"
+          },
+          "tableauTags": {
+            "value": "[parameters('tableauTags')]"
+          },
+          "quickstartTags": {
+            "value": "[parameters('quickstartTags')]"
           }
         }
       }
@@ -309,7 +327,7 @@
     {
       "name": "master-node",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "[variables('templateAPIVersion')]",
+      "apiVersion": "2015-11-01",
       "comments": "Cloudera Master Node resource",
       "dependsOn": [
         "Microsoft.Resources/deployments/shared-resources"
@@ -321,11 +339,11 @@
           "contentVersion": "1.0.0.1"
         },
         "parameters": {
-          "vnetID":{
-            "value":"[variables('VNetId')]"
+          "vnetID": {
+            "value": "[variables('VNetId')]"
           },
-          "resourceAPIVersion":{
-            "value":"[variables('resourceAPIVersion')]"
+          "resourceAPIVersion": {
+            "value": "[variables('resourceAPIVersion')]"
           },
           "dnsNamePrefix": {
             "value": "[parameters('dnsNamePrefix')]"
@@ -347,6 +365,15 @@
           },
           "clusterSpec": {
             "value": "[variables('clusterSpec')]"
+          },
+          "clouderaTags": {
+            "value": "[parameters('clouderaTags')]"
+          },
+          "tableauTags": {
+            "value": "[parameters('tableauTags')]"
+          },
+          "quickstartTags": {
+            "value": "[parameters('quickstartTags')]"
           }
         }
       }
@@ -354,7 +381,7 @@
     {
       "name": "data-node",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "[variables('templateAPIVersion')]",
+      "apiVersion": "2015-11-01",
       "comments": "Cloudera Data Node resource",
       "dependsOn": [
         "Microsoft.Resources/deployments/shared-resources"
@@ -366,11 +393,11 @@
           "contentVersion": "1.0.0.1"
         },
         "parameters": {
-          "vnetID":{
-            "value":"[variables('VNetId')]"
+          "vnetID": {
+            "value": "[variables('VNetId')]"
           },
-          "resourceAPIVersion":{
-            "value":"[variables('resourceAPIVersion')]"
+          "resourceAPIVersion": {
+            "value": "[variables('resourceAPIVersion')]"
           },
           "dnsNamePrefix": {
             "value": "[parameters('dnsNamePrefix')]"
@@ -392,6 +419,15 @@
           },
           "clusterSpec": {
             "value": "[variables('clusterSpec')]"
+          },
+          "clouderaTags": {
+            "value": "[parameters('clouderaTags')]"
+          },
+          "tableauTags": {
+            "value": "[parameters('tableauTags')]"
+          },
+          "quickstartTags": {
+            "value": "[parameters('quickstartTags')]"
           }
         }
       }
@@ -399,7 +435,7 @@
     {
       "name": "setup-cloudera",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "[variables('templateAPIVersion')]",
+      "apiVersion": "2015-11-01",
       "comments": "Resources that setup the Cloudera cluster",
       "dependsOn": [
         "Microsoft.Resources/deployments/data-node",
@@ -412,8 +448,8 @@
           "contentVersion": "1.0.0.1"
         },
         "parameters": {
-          "resourceAPIVersion":{
-            "value":"[variables('resourceAPIVersion')]"
+          "resourceAPIVersion": {
+            "value": "[variables('resourceAPIVersion')]"
           },
           "dnsNamePrefix": {
             "value": "[parameters('dnsNamePrefix')]"
@@ -462,6 +498,15 @@
           },
           "installCDH": {
             "value": "[variables('installCDH')]"
+          },
+          "clouderaTags": {
+            "value": "[parameters('clouderaTags')]"
+          },
+          "tableauTags": {
+            "value": "[parameters('tableauTags')]"
+          },
+          "quickstartTags": {
+            "value": "[parameters('quickstartTags')]"
           }
         }
       }
