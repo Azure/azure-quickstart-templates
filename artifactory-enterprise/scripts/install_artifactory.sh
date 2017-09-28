@@ -134,11 +134,12 @@ EOF
 wget -P /var/opt/jfrog/artifactory/access/etc/keys/ https://raw.githubusercontent.com/JFrogDev/artifactory-docker-examples/master/files/access/etc/keys/root.crt
 wget -P /var/opt/jfrog/artifactory/access/etc/keys/ https://raw.githubusercontent.com/JFrogDev/artifactory-docker-examples/master/files/access/etc/keys/private.key
 wget -P /var/opt/jfrog/artifactory/etc/security/ https://raw.githubusercontent.com/JFrogDev/artifactory-docker-examples/master/files/security/communication.key
-wget -P /var/opt/jfrog/artifactory/etc/security/artifactory.key https://raw.githubusercontent.com/JFrogDev/artifactory-docker-examples/master/files/security/communication.key
+cp -f /var/opt/jfrog/artifactory/etc/security/communication.key /var/opt/jfrog/artifactory/etc/security/artifactory.key
 
+hostname=$(hostname -i)
 sed -i -e "s/art1/art-$(date +%s$RANDOM)/" /var/opt/jfrog/artifactory/etc/ha-node.properties
-sed -i -e "s/127.0.0.1/$(curl http://169.254.169.254/latest/meta-data/public-ipv4)/" /var/opt/jfrog/artifactory/etc/ha-node.properties
-sed -i -e "s/172.25.0.3/$(curl http://169.254.169.254/latest/meta-data/local-ipv4)/" /var/opt/jfrog/artifactory/etc/ha-node.properties
+sed -i -e "s/127.0.0.1/$hostname/" /var/opt/jfrog/artifactory/etc/ha-node.properties
+sed -i -e "s/172.25.0.3/$hostname/" /var/opt/jfrog/artifactory/etc/ha-node.properties
 chown artifactory:artifactory -R /var/opt/jfrog/artifactory/*  && chown artifactory:artifactory -R /var/opt/jfrog/artifactory/etc/security
 
 # start Artifactory
