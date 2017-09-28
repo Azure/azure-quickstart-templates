@@ -27,46 +27,21 @@ When you deploy this Azure Resource Manager template, a data factory of version 
 
 The following sections provide steps for running and monitoring the pipeline. For more information, see [Quickstart: Create a data factory by using Azure PowerShell](https://docs.microsoft.com/azure/data-factory/quickstart-create-data-factory-powershell).
 
-## Run the pipeline
-The copy activity in the pipeline copies data from one folder to another folder in the same Azure Blob Storage. After you deploy the template, to run the pipeline and see the data being copied from source to destination, run the following PowerShell command (specify your data factory name and resource group name):
+## Run and monitor the pipeline
+After you deploy the template, to run and monitor the pipeline, do the following steps: 
 
-```powershell
-$runId = Invoke-AzureRmDataFactoryV2Pipeline -DataFactoryName <your data factory name> -ResourceGroupName <resource group name> -PipelineName "ArmtemplateSampleCopyPipeline" 
-```
+1. Download [runmonitor.ps1](https://github.com/Azure/azure-quickstart-templates/tree/master/101-data-factory-v2-blob-to-blob-copy/scripts) to a folder on your machine.
+2. Launch Azure PowerShell.
+3.  Run the following command to log in to Azure. 
 
-## Monitor the pipeline,
+	```powershell
+	Login-AzureRmAccount
+	```
+4. Switch to the folder where you copied the script file. 
+5. Run the following command to log in to Azure after specifying the names of your Azure resource group and the data factory. 
 
-1. Run the following script to continuously check the pipeline run status until it finishes copying the data. Replace `<Resource group name>` with the name of your resource group. Replace `<Data factory name>` with the name of your data factory.  
+	```powershell
+	.\runmonitor.ps1 -resourceGroupName "<name of your resource group>" -DataFactoryName "<name of your data factory>"
+	```
 
-    ```powershell
-    while ($True) {
-        $run = Get-AzureRmDataFactoryV2PipelineRun -ResourceGroupName <Resource group name> -DataFactoryName <Data factory name> -PipelineRunId $runId
 
-        if ($run) {
-            if ($run.Status -ne 'InProgress') {
-                Write-Host "Pipeline run finished. The status is: " $run.Status -foregroundcolor "Yellow"
-                $run
-                break
-            }
-            Write-Host  "Pipeline is running...status: InProgress" -foregroundcolor "Yellow"
-        }
-
-        Start-Sleep -Seconds 30
-    }
-    ```
-2. Run the following script to retrieve copy activity run details, for example, size of the data read/written. Replace `<Data factory name>` with the name of your data factory. Replace `<Resource group name>` with the name of your resource group. 
-
-    ```powershell
-    Write-Host "Activity run details:" -foregroundcolor "Yellow"
-    $result = Get-AzureRmDataFactoryV2ActivityRun -DataFactoryName <Data factory name> -ResourceGroupName <Resource group name> -PipelineRunId $runId -RunStartedAfter (Get-Date).AddMinutes(-30) -RunStartedBefore (Get-Date).AddMinutes(30)
-    $result
-    
-    Write-Host "Activity 'Output' section:" -foregroundcolor "Yellow"
-    $result.Output -join "`r`n"
-    
-    Write-Host "\nActivity 'Error' section:" -foregroundcolor "Yellow"
-    $result.Error -join "`r`n"
-    ```
-3. Confirm that the file is copied to the destination folder.  
-
- 
