@@ -37,17 +37,3 @@ The copy activity in the pipeline copies data from one folder to another folder 
 $runId = Invoke-AzureRmDataFactoryV2Pipeline -DataFactoryName <your data factory name> -ResourceGroupName <resource group name> -PipelineName "ArmtemplateSampleCopyPipeline" 
 ```
 
-## Deploying sample
-You can deploy this sample directly through the Azure Portal or by using the scripts supplied in the root of the repository.
-
-To deploy a sample using the Azure Portal, click the **Deploy to Azure** button at the top of the article. 
-
-To deploy the sample via the command line (using [Azure PowerShell or the Azure CLI](https://azure.microsoft.com/en-us/downloads/)) you can use the scripts.
-
-Simply execute the script and pass in the folder name of the sample.  For example:
-
-```PowerShell
-.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactStagingDirectory 101-data-factory-v2-blob-to-blob-copy
-```
-```bash
-azure-group-deploy.sh -a 101-data-factory-v2-blob-to-blob-copy -l eastus
