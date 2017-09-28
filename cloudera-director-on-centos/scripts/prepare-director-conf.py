@@ -31,11 +31,9 @@ from optparse import OptionParser
 # logging starts
 format = "%(asctime)s: %(message)s"
 datefmt ='%a %b %d %H:%M:%S %Z %Y'
-logFileName = '/var/log/azure-template_initialize-server.log'
+logFileName = '/var/log/cloudera-azure-initialize.log'
 logging.basicConfig(format=format, datefmt=datefmt, filename=logFileName, level=logging.INFO)
 
-DIRUSERNAME = 'admin'
-DIRPASSWORD = 'admin'
 DEFAULT_BASE_DIR = "/home"
 DEFAULT_BASE_CONF_NAME = "azure.simple.conf"
 DEFAULT_CONF_NAME = "azure.simple.expanded.conf"
@@ -86,6 +84,8 @@ def parse_options():
     parser.add_option('--masterType', dest='masterType', type="string", help='Set masterType')
     parser.add_option('--workerType', dest='workerType', type="string", help='Set workerType')
     parser.add_option('--edgeType', dest='edgeType', type="string", help='Set edgeType')
+    parser.add_option('--dirUsername', dest='dirUsername', type="string", help='Set dirUsername')
+    parser.add_option('--dirPassword', dest='dirPassword', type="string", help='Set dirPassword')
 
     (options, args) = parser.parse_args()
 
@@ -148,6 +148,9 @@ def prepareAndImportConf(options):
     workerType = options.workerType.upper()
     edgeType = options.edgeType.upper()
 
+    dirUsername = options.dirUsername
+    dirPassword = options.dirPassword
+
     logging.info('Assigning parameters ... Successful')
 
     logging.info('Modifying config ...')
@@ -204,8 +207,8 @@ def prepareAndImportConf(options):
 
     logging.info('Importing config to Cloudera Director server ...')
 
-    command = "python setup-default.py --admin-username %s --admin-password %s %s" % (
-        DIRUSERNAME, DIRPASSWORD, confLocation)
+    command = "python setup-default.py --admin-username '%s' --admin-password '%s' '%s'" % (
+        dirUsername, dirPassword, confLocation)
     execAndLog(command)
 
     logging.info('Importing config to Cloudera Director server ... Successful')

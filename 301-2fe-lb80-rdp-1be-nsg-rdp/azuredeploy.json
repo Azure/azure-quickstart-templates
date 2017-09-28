@@ -1,4 +1,4 @@
-﻿{
+{
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
@@ -27,7 +27,7 @@
     "subnetName": "Subnet",
     "numberOfInstances": 2,
     "availabilitySetName": "myavlset",
-    "vmName" : "vm",
+    "vmName": "vm",
     "nicsql": "[concat(variables('vmName'),'sql')]",
     "newStorageAccountName": "[concat('st', uniqueString(resourceGroup().id))]",
     "subnet-id": "[concat(resourceId('Microsoft.Network/virtualNetworks','VNET'),'/subnets/',variables('subnetName'))]",
@@ -37,11 +37,11 @@
     "SQLimagePublisher": "MicrosoftSQLServer",
     "SQLimageOffer": "SQL2014SP1-WS2012R2",
     "SQLimageSku": "Web",
-    "ApiVersion":  "2015-06-15"
+    "ApiVersion": "2015-06-15"
   },
   "resources": [
     {
-      "apiVersion": "[variables('ApiVersion')]",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "publicIp",
       "location": "[resourceGroup().location]",
@@ -53,7 +53,7 @@
       }
     },
     {
-      "apiVersion": "[variables('ApiVersion')]",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "vmsqlIp",
       "location": "[resourceGroup().location]",
@@ -61,19 +61,19 @@
         "publicIPAllocationMethod": "Dynamic"
       }
     },
-
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('availabilitySetName')]",
-      "apiVersion": "[variables('ApiVersion')]",
+      "apiVersion": "2016-04-30-preview",
       "location": "[resourceGroup().location]",
       "properties": {
-        "platformFaultDomainCount": 2
+        "platformFaultDomainCount": "2",
+        "platformUpdateDomainCount": "2",
+        "managed": "true"
       }
     },
-
     {
-      "apiVersion": "[variables('ApiVersion')]",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('newStorageAccountName')]",
       "location": "[resourceGroup().location]",
@@ -81,9 +81,8 @@
         "accountType": "Standard_LRS"
       }
     },
-
     {
-      "apiVersion": "[variables('ApiVersion')]",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "VNET",
       "location": "[resourceGroup().location]",
@@ -103,9 +102,8 @@
         ]
       }
     },
-
     {
-      "apiVersion": "[variables('ApiVersion')]",
+      "apiVersion": "2015-06-15",
       "name": "loadBalancer",
       "type": "Microsoft.Network/loadBalancers",
       "location": "[resourceGroup().location]",
@@ -170,7 +168,6 @@
               "frontendPort": 80,
               "backendPort": 80,
               "idleTimeoutInMinutes": 15
-
             },
             "name": "lbrule"
           }
@@ -188,9 +185,8 @@
         ]
       }
     },
-
     {
-      "apiVersion": "[variables('ApiVersion')]",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "vmsql",
       "location": "[resourceGroup().location]",
@@ -213,9 +209,8 @@
         ]
       }
     },
-
     {
-      "apiVersion": "[variables('ApiVersion')]",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('vmName'),copyindex())]",
       "copy": {
@@ -252,7 +247,7 @@
       }
     },
     {
-      "apiVersion": "[variables('ApiVersion')]",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicsql')]",
       "location": "[resourceGroup().location]",
@@ -269,7 +264,9 @@
             "name": "ipconfig1",
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
-              "publicIPAddress": {"id": "[resourceId('Microsoft.Network/publicIPAddresses', 'vmsqlIp')]"},
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'vmsqlIp')]"
+              },
               "subnet": {
                 "id": "[variables('subnet-id')]"
               }
@@ -278,9 +275,8 @@
         ]
       }
     },
-
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2016-04-30-preview",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('vmName'), copyindex())]",
       "copy": {
@@ -302,7 +298,7 @@
         },
         "osProfile": {
           "computerName": "[concat(variables('vmName'), copyindex())]",
-          "adminUsername": "[parameters('adminUserName')]",
+          "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]"
         },
         "storageProfile": {
@@ -313,11 +309,6 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/vhds/',variables('vmName'), copyindex(),'-osdisk.vhd')]"
-            },
-            "caching": "ReadWrite",
             "createOption": "FromImage"
           }
         },
@@ -337,7 +328,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2016-04-30-preview",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "vmsql",
       "location": "[resourceGroup().location]",
@@ -351,7 +342,7 @@
         },
         "osProfile": {
           "computerName": "[concat(variables('vmName'), 'sql')]",
-          "adminUsername": "[parameters('adminUserName')]",
+          "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]"
         },
         "storageProfile": {
@@ -362,11 +353,6 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "vmsql",
-            "vhd": {
-              "uri": "[concat('https://',variables('newStorageAccountName'),'.blob.core.windows.net/vhds/',variables('vmName'), 'sql','.vhd')]"
-            },
-            "caching": "ReadWrite",
             "createOption": "FromImage"
           }
         },

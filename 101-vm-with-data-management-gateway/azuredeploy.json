@@ -1,0 +1,265 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "existingDataFactoryName": {
+      "type":"string",
+      "metadata": {
+        "description": "your existing data factory name"
+      }
+    },
+    "GatewayName": {
+      "type": "string",
+      "metadata": {
+        "description": "Gateway name must be unique in subscription"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "User name for the virtual machine"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the virtual machine"
+      }
+    },
+    "existingVirtualNetworkName":{
+      "type": "string",
+      "metadata": {
+        "description": "your existing vnet name"
+      }
+    },
+    "existingVnetLocation":
+    {
+      "type": "string",
+      "metadata": {
+        "description": "your virtual machine will be create in the same datacenter with VNET"
+      }
+    },
+    "existingVnetResourceGroupName":{
+      "type": "string",
+      "metadata": {
+        "description": "Name of the existing VNET resource group"
+      }
+    },
+    "existingSubnetInYourVnet": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the subnet in the virtual network you want to use"
+      }
+    },
+    "enableToSetDataStorePasswordsFromInternet": {
+      "type": "string",
+      "allowedValues": ["yes", "no"],
+      "defaultValue": "yes",
+      "metadata": {
+        "description": "If you choose yes, we will create a dns name label for your machine and open one inbound port for our service to access your machine and set data store passwords."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-vm-with-data-management-gateway/"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    }
+  },
+  "variables": {
+    "delimiters": [ "-", "_" ],
+    "prefix": "[split(parameters('gatewayName'), variables('delimiters'))[0]]",
+    "virtualMachineName" : "[take(concat('vm-', variables('prefix')), 15)]",
+    "nsglink": "[concat(parameters('_artifactsLocation'), 'nested/', parameters('enableToSetDataStorePasswordsFromInternet'),'IncomingRemote.json',parameters('_artifactsLocationSasToken'))]",
+    "nsgTemplateName": "[concat(variables('virtualMachineName'), 'NSGTemplate')]",    
+    "storageAccountName": "[take(concat(toLower(variables('prefix')), uniquestring(resourceGroup().id, variables('virtualMachineName'))), 24)]",
+    "nicName": "[concat(variables('virtualMachineName'), 'Nic')]",
+    "publicIPAddressName": "[concat(variables('virtualMachineName'), '-ip')]",
+    "networkSecurityGroupName": "[concat(variables('virtualMachineName'), 'nsg')]",
+    "scriptURL": "[concat(parameters('_artifactsLocation'), 'scripts/gatewayInstall.ps1',parameters('_artifactsLocationSasToken'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.DataFactory/dataFactories/gateways",
+      "apiVersion": "2015-10-01",
+      "name": "[concat(parameters('existingDataFactoryName'), '/', parameters('GatewayName'))]",
+      "properties": {
+        "description": "my gateway"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('storageAccountName')]",
+      "apiVersion": "2016-01-01",
+      "location": "[parameters('existingVnetLocation')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.DataFactory/dataFactories/gateways', parameters('existingDataFactoryName'), parameters('GatewayName'))]"
+      ],
+      "tags": {
+            "vmname": "[variables('virtualMachineName')]"
+      },
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "Storage",
+      "properties": {}
+    },
+    {
+      "apiVersion": "2016-03-30",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicName')]",
+      "location": "[parameters('existingVnetLocation')]",
+      "tags": {
+            "vmname": "[variables('virtualMachineName')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments/', variables('nsgTemplateName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+              },
+              "subnet": {
+                "id": "[resourceId(parameters('existingVnetResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('existingVirtualNetworkName'), parameters('existingSubnetInYourVnet'))]"
+              }
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+            "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('virtualMachineName')]",
+      "location": "[parameters('existingVnetLocation')]",
+      "tags": {
+            "vmname": "[variables('virtualMachineName')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+      ],
+      "properties": {
+	      "hardwareProfile": {
+          "vmSize": "Standard_A3"
+        },
+        "osProfile": {
+          "computerName": "[variables('virtualMachineName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "MicrosoftWindowsServer",            
+            "offer": "WindowsServer",
+            "sku": "2016-Datacenter",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))).primaryEndpoints.blob, 'vhds/osdisk.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          },
+          "dataDisks": [
+            {
+              "name": "datadisk1",
+              "diskSizeGB": "100",
+              "lun": 0,
+              "vhd": {
+                "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))).primaryEndpoints.blob, 'vhds/datadisk1.vhd')]"
+              },
+              "createOption": "Empty"
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": "true",
+            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))).primaryEndpoints.blob]"
+          }
+        }
+      },
+      "resources": [
+        {
+          "type": "extensions",
+          "name": "[concat(variables('virtualMachineName'),'installGW')]",
+          "apiVersion": "2015-06-15",
+          "location": "[parameters('existingVnetLocation')]",
+          "tags": {
+                "vmname": "[variables('virtualMachineName')]"
+          },
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines/',variables('virtualMachineName'))]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Compute",
+            "type": "CustomScriptExtension",
+            "typeHandlerVersion": "1.7",
+            "autoUpgradeMinorVersion":true,
+            "settings": {
+              "fileUris": [ "[variables('scriptURL')]"]
+            },
+            "protectedSettings": {
+              "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File gatewayInstall.ps1 ', listAuthKeys(resourceId('Microsoft.DataFactory/dataFactories/gateways', parameters('existingDataFactoryName'), parameters('GatewayName')), '2015-10-01').key1, ' ', reference(variables('nsgTemplateName')).outputs.hostname.Value, ' ', parameters('enableToSetDataStorePasswordsFromInternet'))]"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "apiVersion": "2015-01-01",
+      "name": "[variables('nsgTemplateName')]",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "[resourceId('Microsoft.DataFactory/dataFactories/gateways', parameters('existingDataFactoryName'), parameters('GatewayName'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('nsglink')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vmName": {
+            "value": "[variables('virtualMachineName')]"
+          },
+          "networkSecurityGroupName": {
+            "value": "[variables('networkSecurityGroupName')]"
+          },
+          "publicIPAddressName":{
+            "value": "[variables('publicIPAddressName')]"
+          },
+          "existingVnetLocation":{
+            "value": "[parameters('existingVnetLocation')]"
+          }
+        }
+      }
+    }
+  ]
+}

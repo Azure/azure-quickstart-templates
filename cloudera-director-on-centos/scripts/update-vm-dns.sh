@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-LOG_FILE=/var/log/azure-template_initialize-server.log
+LOG_FILE="/var/log/cloudera-azure-initialize.log"
 
 log() {
   echo "$(date): $*" >> "${LOG_FILE}"

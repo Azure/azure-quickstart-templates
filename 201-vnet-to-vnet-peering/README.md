@@ -8,8 +8,3 @@
 </a>
 
 This template creates two VNETs in the same location, each containing a single subnet, and creates connections between them using vNet Peering.
-
-As vNet Peering is currently in Public Preview, you will need to run the following AzureRM PowerShell commands against your subscription before using this template:
-
-Register-AzureRmProviderFeature -FeatureName AllowVnetPeering -ProviderNamespace Microsoft.Network
-Register-AzureRmResourceProvider -ProviderNamespace Microsoft.Network

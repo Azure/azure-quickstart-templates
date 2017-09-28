@@ -97,9 +97,9 @@ The template expects the following parameters:
 | clientId | AAD client ID | |
 | clientSecret | AAD client secret| |
 | directorSize | The size of the VM for Director server | Standard_DS12_v2 |
-| masterType | Master instance template VM size | Standard_DS14 |
-| workerType | Worker instance template VM size | Standard_DS14 |
-| edgeType | Edge instance template VM size | Standard_DS14 |
+| masterType | Master instance template VM size | Standard_DS14_v2 |
+| workerType | Worker instance template VM size | Standard_DS14_v2 |
+| edgeType | Edge instance template VM size | Standard_DS14_v2 |
 | directorEnvironmentName | Environment name use by Cloudera Director | Director_Azure_Deployment |
 | dnsNamePrefix | Unique DNS name prefix where the director VM will be exposed | |
 | dnsNameSuffix | Unique DNS suffix where the VMs will be exposed | |
@@ -126,4 +126,98 @@ Please follow the [Cloudera Director documentation](http://www.cloudera.com/docu
 
 ## Notes
 
-- Scripts logs can be found at `/var/log/azure-template_initialize-server.log`.
+- Scripts logs can be found at `/var/log/cloudera-azure-initialize.log`.
+
+## How to access Cloudera Director deployed by this template
+
+By default the Network Security Groups in this offering only allow public IP access to port 22 (SSH).
+
+There are two ways to access services like Cloudera Director (port 7189):
+1. Use a SOCKS proxy (preferred)
+1. Add inbound rules to the Network Security Group to allow access to ports.
+
+The two solutions are detailed below.
+
+### SOCKS Proxy
+
+A SOCKS proxy changes your browser to do lookups directly from your Microsoft Azure network and allows you to connect to services using private IP addresses and internal FQDNs.
+
+This approach will do the following:
+* Set up a single SSH tunnel to one of the hosts on the network and create a SOCKS proxy on that host.
+* Change the browser configuration to do all lookups via that SOCKS proxy host.
+
+#### Network Prerequisites
+
+The following are prerequisites for connecting to your cluster using a SOCKS proxy:
+* The host that you proxy to must be reachable from the public internet (or the network that you’re connecting from).
+* The host that you proxy to must be on the same network as the Cloudera services you’re connecting to. For example, with this Cloudera Director offering, tunnel to the Cloudera Director host.
+
+#### Find the Public IP of the correct host
+
+For the Cloudera Director offering only the Cloudera Director VM created, use its public IP.
+
+#### Start the SOCKS Proxy
+
+##### On Linux
+
+To start a SOCKS5 proxy over SSH run the following command and input the VM password at the prompt:
+```
+ssh -CND 1080 username@publicIP_of_VM
+```
+Or, if you’re using SSH keys:
+```
+ssh -i your-key-file.pem -CND 1080 username@publicIP_of_VM
+```
+The parameters are as follows:
+
+* `i your-key-file.pem` specifies the path to the private key
+* `C` sets up compression
+* `N` suppresses any command execution once established
+* `D` sets up the SOCKS proxy on a port
+* `1080` is the port to set the SOCKS proxy locally
+
+##### On Windows
+
+[Follow the instructions here](https://blogs.msdn.microsoft.com/pliu/2017/01/17/ssh-tunnel-to-endpoints-in-azure-vnet-from-windows/).
+
+#### Configure Your Browser to Use the Proxy
+
+##### On Google Chrome
+
+By default, Google Chrome uses system-wide proxy settings on a per-profile basis. To get around that we will launch Chrome via the command line and specify the following:
+* The SOCKS proxy port to use (this must be the same value used above)
+* The profile to use (this example will create a new profile)
+
+This will create a new profile and launch a new instance of Chrome that won’t interfere with your current running instance of Chrome.
+
+**Linux**
+
+```
+/usr/bin/google-chrome \
+--user-data-dir="$HOME/chrome-with-proxy" \
+--proxy-server="socks5://localhost:1080"
+```
+
+**Mac OS X**
+
+```
+"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+--user-data-dir="$HOME/chrome-with-proxy" \
+--proxy-server="socks5://localhost:1080"
+```
+
+**Microsoft Windows**
+
+```
+"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe" ^
+--user-data-dir="%USERPROFILE%\chrome-with-proxy" ^
+--proxy-server="socks5://localhost:1080"
+```
+
+Now in this Chrome session you can connect to any other host on the Virtual Network using the private IP address or internal FQDN. For example, if you proxy to the Cloudera Director server, you can connect to Cloudera Director at `localhost:7189`.
+
+### Network Security Group
+
+Warning: this method is **NOT** recommended for anything besides a PoC. If not carefully locked down the data in the cluster will be accessible to hackers and malicious entities.
+
+On [portal.azure.com](https://portal.azure.com) find the Network Security Group(s) and add inbound rules for the various services. You may have to create this rules in multiple Network Security Groups. [Here's Cloudera documentation for more information on ports used by Cloudera Manager, CDH components, managed services, and third-party components](http://www.cloudera.com/documentation/enterprise/latest/topics/cm_ig_ports.html).

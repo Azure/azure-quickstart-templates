@@ -4,7 +4,7 @@
   "parameters": {
     "vmSku": {
       "type": "string",
-      "defaultValue": "Standard_D1",
+      "defaultValue": "Standard_D1_v2",
       "metadata": {
         "description": "Size of VMs in the VM Scale Set."
       }
@@ -38,25 +38,6 @@
   },
   "variables": {
     "location": "[resourceGroup().location]",
-    "storageAccountType": "Standard_LRS",
-    "saCount": 5,
-    "newStorageAccountSuffix": "[concat(parameters('vmssName'), 'sa')]",
-    "uniqueStringArray": [
-      "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '0')))]",
-      "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '1')))]",
-      "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '2')))]",
-      "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '3')))]",
-      "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '4')))]"
-    ],
-    "vhdContainerName": "[concat(parameters('vmssName'), 'vhd')]",
-    "vhdContainerArray": [
-      "[concat('https://', variables('uniqueStringArray')[0], variables('newStorageAccountSuffix'), '.blob.core.windows.net/', variables('vhdContainerName'))]",
-      "[concat('https://', variables('uniqueStringArray')[1], variables('newStorageAccountSuffix'), '.blob.core.windows.net/', variables('vhdContainerName'))]",
-      "[concat('https://', variables('uniqueStringArray')[2], variables('newStorageAccountSuffix'), '.blob.core.windows.net/', variables('vhdContainerName'))]",
-      "[concat('https://', variables('uniqueStringArray')[3], variables('newStorageAccountSuffix'), '.blob.core.windows.net/', variables('vhdContainerName'))]",
-      "[concat('https://', variables('uniqueStringArray')[4], variables('newStorageAccountSuffix'), '.blob.core.windows.net/', variables('vhdContainerName'))]"
-    ],
-    "osDiskName": "[concat(parameters('vmssName'), 'osdisk')]",
     "addressPrefix": "10.0.0.0/16",
     "subnetPrefix": "10.0.0.0/24",
     "virtualNetworkName": "[concat(parameters('vmssName'), 'vnet')]",
@@ -76,13 +57,12 @@
     "osType": {
       "publisher": "Canonical",
       "offer": "UbuntuServer",
-      "sku": "16.04.0-LTS",
+      "sku": "16.04-LTS",
       "version": "latest"
     },
     "imageReference": "[variables('osType')]",
-    "computeApiVersion": "2016-03-30",
-    "networkApiVersion": "2016-06-01",
-    "storageApiVersion": "2016-01-01",
+    "computeApiVersion": "2017-03-30",
+    "networkApiVersion": "2017-04-01",
     "insightsApiVersion": "2015-04-01"
   },
   "resources": [
@@ -90,7 +70,7 @@
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[variables('location')]",
-      "apiVersion": "[variables('networkApiVersion')]",
+      "apiVersion": "2017-04-01",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -108,25 +88,10 @@
       }
     },
     {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[concat(variables('uniqueStringArray')[copyIndex()], variables('newStorageAccountSuffix'))]",
-      "location": "[variables('location')]",
-      "apiVersion": "[variables('storageApiVersion')]",
-      "copy": {
-        "name": "storageLoop",
-        "count": "[variables('saCount')]"
-      },
-      "properties": {},
-      "kind": "Storage",
-      "sku": {
-        "name": "[variables('storageAccountType')]"
-      }
-    },
-    {
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
       "location": "[variables('location')]",
-      "apiVersion": "[variables('networkApiVersion')]",
+      "apiVersion": "2017-04-01",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
@@ -138,7 +103,7 @@
       "type": "Microsoft.Network/loadBalancers",
       "name": "[variables('loadBalancerName')]",
       "location": "[variables('location')]",
-      "apiVersion": "[variables('networkApiVersion')]",
+      "apiVersion": "2017-04-01",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
       ],
@@ -190,9 +155,8 @@
       "type": "Microsoft.Compute/virtualMachineScaleSets",
       "name": "[parameters('vmssName')]",
       "location": "[variables('location')]",
-      "apiVersion": "[variables('computeApiVersion')]",
+      "apiVersion": "2017-03-30",
       "dependsOn": [
-        "storageLoop",
         "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]",
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
       ],
@@ -209,10 +173,8 @@
         "virtualMachineProfile": {
           "storageProfile": {
             "osDisk": {
-              "vhdContainers": "[take(variables('vhdContainerArray'), variables('saCount'))]",
-              "name": "[variables('osDiskName')]",
-              "caching": "ReadOnly",
-              "createOption": "FromImage"
+              "createOption": "FromImage",
+              "caching": "ReadWrite"
             },
             "imageReference": "[variables('imageReference')]"
           },
@@ -279,7 +241,7 @@
     },
     {
       "type": "Microsoft.Insights/autoscaleSettings",
-      "apiVersion": "[variables('insightsApiVersion')]",
+      "apiVersion": "2015-04-01",
       "name": "autoscalehost",
       "location": "[variables('location')]",
       "dependsOn": [
@@ -308,7 +270,7 @@
                   "timeWindow": "PT5M",
                   "timeAggregation": "Average",
                   "operator": "GreaterThan",
-                  "threshold": 60.0
+                  "threshold": 60
                 },
                 "scaleAction": {
                   "direction": "Increase",
@@ -327,7 +289,7 @@
                   "timeWindow": "PT5M",
                   "timeAggregation": "Average",
                   "operator": "LessThan",
-                  "threshold": 30.0
+                  "threshold": 30
                 },
                 "scaleAction": {
                   "direction": "Decrease",

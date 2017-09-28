@@ -28,13 +28,18 @@
     },
     "userInfo": {
       "type": "object"
+    },
+    "clusterParameters": {
+      "type": "object"
     }
   },
   "variables": {
+    "singleQuote": "'",
     "vmName": "[parameters('dnsNamePrefix')]",
     "nicName": "[concat(variables('vmName'), '-nic')]",
     "publicIPAddressName": "[concat(variables('vmName'), '-publicIP')]",
     "storageAccountName": "[concat(parameters('storageAccount').prefix, 'dir')]",
+    "storageAccountContainerName": "vhds",
     "dirSecurityGroupName": "[concat(parameters('dnsNamePrefix'), '-dir-sg')]",
     "masterAsName":"asmaster",
     "workerAsName":"asworker",
@@ -104,20 +109,6 @@
               "destinationAddressPrefix": "*",
               "access": "Allow",
               "priority": 100,
-              "direction": "Inbound"
-            }
-          },
-          {
-            "name": "Director.Web.UI",
-            "properties": {
-              "description": "Allows Director.Web.UI traffic",
-              "protocol": "Tcp",
-              "sourcePortRange": "*",
-              "destinationPortRange": "7189",
-              "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 110,
               "direction": "Inbound"
             }
           }
@@ -211,7 +202,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://', variables('storageAccountName'), '.blob.core.windows.net/vhds/', variables('vmName'), '.vhd')]"
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2016-01-01').primaryEndpoints.blob, variables('storageAccountContainerName'), '/', variables('vmName'),'.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -222,7 +213,7 @@
               "diskSizeGB": "128",
               "lun": 0,
               "vhd": {
-                "Uri": "[concat('http://', variables('storageAccountName'), '.blob.core.windows.net/vhds0/', variables('vmName'), '-datadisk0.vhd')]"
+                "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2016-01-01').primaryEndpoints.blob, variables('storageAccountContainerName'), '/', variables('vmName'),'-datadisk0.vhd')]"
               },
               "caching": "ReadWrite",
               "createOption": "Empty"
@@ -247,8 +238,8 @@
         "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
       ],
       "properties": {
-        "publisher": "Microsoft.OSTCExtensions",
-        "type": "CustomScriptForLinux",
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
         "typeHandlerVersion": "[parameters('version').typeHandlerVersion]",
         "autoUpgradeMinorVersion": true,
         "settings": {
@@ -259,15 +250,11 @@
             "[concat(parameters('scriptsUri'), '/scripts/prepare-mysql-disks.sh')]",
             "[concat(parameters('scriptsUri'), '/scripts/initialize-mysql-server.sh')]",
             "[concat(parameters('scriptsUri'), '/scripts/marketing.py')]",
-            "[concat(parameters('scriptsUri'), '/scripts/azure-plugin.conf')]",
-            "[concat(parameters('scriptsUri'), '/scripts/images.conf')]"
+            "[concat(parameters('scriptsUri'), '/scripts/director_user_passwd.py')]"
           ]
         },
         "protectedSettings":{
-          "commandToExecute": "[concat('sh initialize-director-server.sh \"', parameters('vmSpec').adminUsername, '\" \"', parameters('dnsNameSuffix'), '\" \"', parameters('networkSpec').directorServerIPAddress, '\" \"', parameters('vmSpec').dbUsername, '\" \"', parameters('vmSpec').dbPassword, '\" \"', parameters('userInfo').company, '\" \"', parameters('userInfo').emailAddress, '\" \"', parameters('userInfo').businessPhone, '\" \"', parameters('userInfo').firstName, '\" \"', parameters('userInfo').lastName, '\" \"', parameters('userInfo').jobRole, '\" \"', parameters('userInfo').jobFunction, '\"')]",
-          "Items": {
-            "dbPassword": "[parameters('vmSpec').dbPassword]"
-          }
+          "commandToExecute": "[concat('sh initialize-director-server.sh ', variables('singleQuote'), parameters('vmSpec').adminUsername, variables('singleQuote'), ' ', variables('singleQuote'), parameters('dnsNameSuffix'), variables('singleQuote'), ' ', variables('singleQuote'), parameters('networkSpec').directorServerIPAddress, variables('singleQuote'), ' ', variables('singleQuote'), parameters('vmSpec').dbUsername, variables('singleQuote'), ' ', variables('singleQuote'), parameters('vmSpec').dbPassword, variables('singleQuote'), ' ', variables('singleQuote'), parameters('userInfo').company, variables('singleQuote'), ' ', variables('singleQuote'), parameters('userInfo').emailAddress, variables('singleQuote'), ' ', variables('singleQuote'), parameters('userInfo').businessPhone, variables('singleQuote'), ' ', variables('singleQuote'), parameters('userInfo').firstName, variables('singleQuote'), ' ', variables('singleQuote'), parameters('userInfo').lastName, variables('singleQuote'), ' ', variables('singleQuote'), parameters('userInfo').jobRole, variables('singleQuote'), ' ', variables('singleQuote'), parameters('userInfo').jobFunction, variables('singleQuote'), ' ', variables('singleQuote'), parameters('clusterParameters').dirUsername, variables('singleQuote'), ' ', variables('singleQuote'), parameters('clusterParameters').dirPassword, variables('singleQuote'))]"
         }
       }
     }
