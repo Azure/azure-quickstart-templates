@@ -1,0 +1,885 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "SafewalkVHDImageURL": {
+            "type": "string",
+            "metadata": {
+                "description": "Set to the URL of the Safewalk VHD image you have uploaded earlier."
+            }
+        },
+        "SafewalkGatewayVHDImageURL": {
+            "type": "string",
+            "metadata": {
+                "description": "Set to the URL of the Safewalk Gateway VHD image you have uploaded earlier."
+            }
+        },
+        "createVnet": {
+            "type": "bool",
+            "defaultValue": true,
+            "metadata": {
+                "description": "Set to true if you would like to create a new VNet for this deployment. Set to false if you would like to use an existing VNet you already have."
+            }
+        },
+        "VnetName": {
+            "type": "string",
+            "defaultValue": "SafewalkVirtualNet",
+            "metadata": {
+                "description": "A name for the VNet that will be used (either new or existing)."
+            }
+        },
+        "subnetLANName": {
+            "type": "string",
+            "defaultValue": "SafewalkSubNet",
+            "metadata": {
+                "description": "A name for a subnet (either new or existing) that will be used to serve the Safewalk server."
+            }
+        },
+        "subnetDMZName": {
+            "type": "string",
+            "defaultValue": "SafewalkSubNet-DMZ",
+            "metadata": {
+                "description": "A name for (either new or existing) Internet facing subnet that will be used to serve the Safewalk Gateway."
+            }
+        },
+        "vNetResourceGroup": {
+            "type": "string",
+            "defaultValue": "None",
+            "metadata": {
+                "description": "If Create Vnet was set to false provide here the name of the Resource group where the provided Subnet Name exist. This parameter will be ignored if Create Vnet was set to true."
+            }
+        },
+        "VnetAddressSpace": {
+            "type": "string",
+            "defaultValue": "10.1.0.0/16",
+            "metadata": {
+                "description": "The address space of the specified VNet (either new or existing)."
+            }
+        },
+        "subnetLANAddressSpace": {
+            "type": "string",
+            "defaultValue": "10.1.1.0/24",
+            "metadata": {
+                "description": "The address space of the specified LAN subnet (either new or existing)."
+            }
+        },
+        "subnetDMZAddressSpace": {
+            "type": "string",
+            "defaultValue": "10.1.2.0/24",
+            "metadata": {
+                "description": "The address space of the specified DMZ subnet (either new or existing)."
+            }
+        },
+        "gatewaySubnetAddressSpace": {
+            "type": "string",
+            "defaultValue": "10.1.0.0/24",
+            "metadata": {
+                "description": "Address Space of the DMZ subnet in the Vnet (either new or existing)"
+            }
+        },
+        "SafewalkGatewayIP": {
+            "type": "string",
+            "defaultValue": "10.1.2.4",
+            "metadata": {
+                "description": "Set to the address that will be assigned to the Safewalk Gateway within the DMZ subnet (e.g. 10.1.2.4)."
+            }
+        },
+        "clusterEnabled": {
+            "type": "bool",
+            "defaultValue": true,
+            "metadata": {
+                "description": "When set to true, a cluster with two multimaster Safewalk server nodes will be created and the deployment procedure will take care of configuring the multimaster topology between the two Safewalk server nodes. To install a single Safewalk node set this parameter to false."
+            }
+        },
+        "FirstSafewalkServerIP": {
+            "type": "string",
+            "defaultValue": "10.1.1.5",
+            "metadata": {
+                "description": "Set to the address that will be assigned to the first Safewalk Server within the LAN subnet (e.g. 10.1.1.5)."
+            }
+        },
+        "SecondSafewalkServerIP": {
+            "type": "string",
+            "defaultValue": "10.1.1.6",
+            "metadata": {
+                "description": "Set to the address that will be assigned to the second Safewalk Server within the LAN subnet (e.g. 10.1.1.6). If Cluster Enabled was set to false (i.e. no clustering) this field is ignored."
+            }
+        },
+        "vmPrefix": {
+            "type": "string",
+            "defaultValue": "safewalk",
+            "metadata": {
+                "description": "Safewalk VMs prefix"
+            }
+        },
+        "vmUsername": {
+            "type": "string",
+            "defaultValue": "swadmin",			
+            "metadata": {
+                "description": "A username for a privileged user that will be created inside the Safewalk servers and Safewalk Gateway operating system."
+            }
+        },		
+        "vmPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The password for the corresponding privileged user account for the Safewalk servers and Safewalk Gateway operating system."
+            }
+        },
+		"SafewalkServerVmSize": {
+            "type": "string",
+            "defaultValue": "Standard_A1",
+            "metadata": {
+                "description": "The azure VM size that will be used for the Safewalk server. The same size will be assigned to all the Safewalk servers that will participate in the cluster."
+            }
+        },
+        "SafewalkGatewayVmSize": {
+            "type": "string",
+            "defaultValue": "Standard_A1",
+            "metadata": {
+                "description": "The azure VM size that will be used for the Safewalk Gateway."
+            }
+        },
+        "SafewalkServerRootPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The password to set for the root account of the Safewalk server. The same root password will be set to all the Safewalk servers that will participate in the cluster."
+            }
+        },
+        "SafewalkServerAdminPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The password to set for the Safewalk server admin account."
+            }
+        },
+        "SafewalkGatewayRootPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The password to set for the root account of the Safewalk Gateway."
+            }
+        }
+    },
+    "variables": {
+        "vnetIDfalse": "[resourceId(parameters('vNetResourceGroup'), 'Microsoft.Network/virtualNetworks', parameters('VnetName'))]",
+        "vnetIDtrue": "[resourceId('Microsoft.Network/virtualNetworks', parameters('VnetName'))]",
+        "vnetID": "[variables(concat('vnetID', parameters('createVnet')))]",
+        "subnetRef": "[concat(variables('vnetID'), '/subnets/', parameters('subnetLANName'))]",
+        "subnetDMZRef": "[concat(variables('vnetID'), '/subnets/', parameters('subnetDMZName'))]",
+        "sizeOfDiskInGBSafewalk" :  "127",
+	    "sizeOfDiskInGBGateway" :  "20",
+        "location": "[resourceGroup().location]",
+        "gatewayPublicIPName": "[concat(parameters('vmPrefix'), '-gateway-public-IP')]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Compute/images",
+            "name": "[concat(parameters('vmPrefix'),'-server-osImage')]",
+            "apiVersion": "2016-04-30-preview",
+            "location": "[variables('location')]",
+            "properties": {
+                "storageProfile": {
+                    "osDisk": {
+                        "osType": "Linux",
+                        "osState": "Generalized",
+                        "blobUri": "[parameters('SafewalkVHDImageURL')]",
+                        "caching": "ReadWrite",
+                        "storageAccountType": "Standard_LRS",
+                        "diskSizeGB": "[variables('sizeOfDiskInGBSafewalk')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/images",
+            "name": "[concat(parameters('vmPrefix'),'-gateway-osImage')]",
+            "apiVersion": "2016-04-30-preview",
+            "location": "[variables('location')]",
+            "properties": {
+                "storageProfile": {
+                    "osDisk": {
+                        "osType": "Linux",
+                        "osState": "Generalized",
+                        "blobUri": "[parameters('SafewalkGatewayVHDImageURL')]",
+                        "caching": "ReadWrite",
+                        "storageAccountType": "Standard_LRS",
+                        "diskSizeGB": "[variables('sizeOfDiskInGBGateway')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[concat(parameters('vmPrefix'), '-DMZ-NSG')]",
+            "apiVersion": "2017-04-01",
+            "location": "[variables('location')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "SSH",
+                        "properties": {
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "[parameters('subnetLANAddressSpace')]",
+                            "destinationAddressPrefix": "[parameters('SafewalkGatewayIP')]",
+                            "access": "Allow",
+                            "priority": 500,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "NTP_Inbound",
+                        "properties": {
+                            "protocol": "UDP",
+                            "sourcePortRange": "123",
+                            "destinationPortRange": "123",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "[parameters('SafewalkGatewayIP')]",
+                            "access": "Allow",
+                            "priority": 600,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "HTTPS",
+                        "properties": {
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "443",
+                            "sourceAddressPrefix": "Internet",
+                            "destinationAddressPrefix": "[parameters('SafewalkGatewayIP')]",
+                            "access": "Allow",
+                            "priority": 700,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "RADIUS_Inbound",
+                        "properties": {
+                            "protocol": "UDP",
+                            "sourcePortRange": "1812",
+                            "destinationPortRange": "1812",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "[parameters('SafewalkGatewayIP')]",
+                            "access": "Allow",
+                            "priority": 800,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "SNMP_Inbound",
+                        "properties": {
+                            "protocol": "UDP",
+                            "sourcePortRange": "161",
+                            "destinationPortRange": "161",
+                            "sourceAddressPrefix": "[parameters('subnetLANAddressSpace')]",
+                            "destinationAddressPrefix": "[parameters('SafewalkGatewayIP')]",
+                            "access": "Allow",
+                            "priority": 900,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "NTP_Outbound",
+                        "properties": {
+                            "protocol": "UDP",
+                            "sourcePortRange": "123",
+                            "destinationPortRange": "123",
+                            "sourceAddressPrefix": "[parameters('SafewalkGatewayIP')]",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 400,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "8445_authapi_Outbound",
+                        "properties": {
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "8445",
+                            "sourceAddressPrefix": "[parameters('SafewalkGatewayIP')]",
+                            "destinationAddressPrefix": "[parameters('subnetLANAddressSpace')]",
+                            "access": "Allow",
+                            "priority": 500,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "8446_regapi_Outbound",
+                        "properties": {
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "8446",
+                            "sourceAddressPrefix": "[parameters('SafewalkGatewayIP')]",
+                            "destinationAddressPrefix": "[parameters('subnetLANAddressSpace')]",
+                            "access": "Allow",
+                            "priority": 510,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "9445_userportal_Outbound",
+                        "properties": {
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "9445",
+                            "sourceAddressPrefix": "[parameters('SafewalkGatewayIP')]",
+                            "destinationAddressPrefix": "[parameters('subnetLANAddressSpace')]",
+                            "access": "Allow",
+                            "priority": 520,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "RADIUS_Outbound",
+                        "properties": {
+                            "protocol": "UDP",
+                            "sourcePortRange": "1812",
+                            "destinationPortRange": "1812",
+                            "sourceAddressPrefix": "[parameters('SafewalkGatewayIP')]",
+                            "destinationAddressPrefix": "[parameters('subnetLANAddressSpace')]",
+                            "access": "Allow",
+                            "priority": 600,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "Deny_Outbound",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "[parameters('SafewalkGatewayIP')]",
+                            "destinationAddressPrefix": "[parameters('subnetLANAddressSpace')]",
+                            "access": "Deny",
+                            "priority": 1000,
+                            "direction": "Outbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[concat(parameters('vmPrefix'), '-LAN-NSG')]",
+            "apiVersion": "2017-04-01",
+            "location": "[variables('location')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "ssh",
+                        "properties": {
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "[parameters('subnetLANAddressSpace')]",
+                            "destinationAddressPrefix": "[parameters('subnetLANAddressSpace')]",
+                            "access": "Allow",
+                            "priority": 400,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "NTP_Inbound",
+                        "properties": {
+                            "protocol": "UDP",
+                            "sourcePortRange": "123",
+                            "destinationPortRange": "123",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "[parameters('subnetLANAddressSpace')]",
+                            "access": "Allow",
+                            "priority": 500,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "PSQL_Inbound",
+                        "properties": {
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "5432",
+                            "sourceAddressPrefix": "[parameters('subnetLANAddressSpace')]",
+                            "destinationAddressPrefix": "[parameters('subnetLANAddressSpace')]",
+                            "access": "Allow",
+                            "priority": 600,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "https",
+                        "properties": {
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "443",
+                            "sourceAddressPrefix": "[parameters('subnetLANAddressSpace')]",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 700,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "8443_Inbound",
+                        "properties": {
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "8443",
+                            "sourceAddressPrefix": "[parameters('subnetLANAddressSpace')]",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 710,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "8445_Inbound",
+                        "properties": {
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "8445",
+                            "sourceAddressPrefix": "[parameters('SafewalkGatewayIP')]",
+                            "destinationAddressPrefix": "[parameters('subnetLANAddressSpace')]",
+                            "access": "Allow",
+                            "priority": 720,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "8446_Inbound",
+                        "properties": {
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "8446",
+                            "sourceAddressPrefix": "[parameters('SafewalkGatewayIP')]",
+                            "destinationAddressPrefix": "[parameters('subnetLANAddressSpace')]",
+                            "access": "Allow",
+                            "priority": 730,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "9445_Inbound",
+                        "properties": {
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "9445",
+                            "sourceAddressPrefix": "[parameters('SafewalkGatewayIP')]",
+                            "destinationAddressPrefix": "[parameters('subnetLANAddressSpace')]",
+                            "access": "Allow",
+                            "priority": 740,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "RADIUS_Inbound",
+                        "properties": {
+                            "protocol": "UDP",
+                            "sourcePortRange": "1812",
+                            "destinationPortRange": "1812",
+                            "sourceAddressPrefix": "[parameters('SafewalkGatewayIP')]",
+                            "destinationAddressPrefix": "[parameters('subnetLANAddressSpace')]",
+                            "access": "Allow",
+                            "priority": 800,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "SNMP_Inbound",
+                        "properties": {
+                            "protocol": "UDP",
+                            "sourcePortRange": "161",
+                            "destinationPortRange": "161",
+                            "sourceAddressPrefix": "[parameters('subnetLANAddressSpace')]",
+                            "destinationAddressPrefix": "[parameters('subnetLANAddressSpace')]",
+                            "access": "Allow",
+                            "priority": 900,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "Deny_Internet_Inbound",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "Internet",
+                            "destinationAddressPrefix": "[parameters('subnetLANAddressSpace')]",
+                            "access": "Deny",
+                            "priority": 1000,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "condition": "[parameters('createVnet')]",
+            "apiVersion": "2017-04-01",
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[parameters('VnetName')]",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[concat(parameters('vmPrefix'), '-LAN-NSG')]",
+                "[concat(parameters('vmPrefix'), '-DMZ-NSG')]"
+            ],
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[parameters('VnetAddressSpace')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[parameters('subnetLANName')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('subnetLANAddressSpace')]",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(parameters('vmPrefix'), '-LAN-NSG'))]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "[parameters('subnetDMZName')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('subnetDMZAddressSpace')]",
+                            "privateAccessServices": [],
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(parameters('vmPrefix'), '-DMZ-NSG'))]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "GatewaySubnet",
+                        "properties": {
+                            "addressPrefix": "[parameters('gatewaySubnetAddressSpace')]",
+                            "privateAccessServices": []
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2017-04-01",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[concat(parameters('vmPrefix'), '-gateway-NIC')]",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[variables('gatewayPublicIPName')]",
+                "[parameters('VnetName')]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Static",
+                            "privateIPAddress": "[parameters('SafewalkGatewayIP')]",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('vmPrefix'), '-gateway-public-IP'))]"
+                            },
+                            "subnet": {
+                                "id": "[variables('subnetDMZRef')]"
+                            }
+                        }
+                    }
+                ],
+                "enableIPForwarding": true
+            }
+        },
+        {
+            "apiVersion": "2017-04-01",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[concat(parameters('vmPrefix'), '-server-1-NIC')]",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[parameters('VnetName')]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Static",
+                            "privateIPAddress": "[parameters('FirstSafewalkServerIP')]",
+                            "subnet": {
+                                "id": "[variables('subnetRef')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "condition": "[parameters('clusterEnabled')]",
+            "apiVersion": "2017-04-01",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[concat(parameters('vmPrefix'), '-server-2-NIC')]",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[parameters('VnetName')]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig2",
+                        "properties": {
+                            "privateIPAllocationMethod": "Static",
+                            "privateIPAddress": "[parameters('SecondSafewalkServerIP')]",
+                            "subnet": {
+                                "id": "[variables('subnetRef')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2017-04-01",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[variables('gatewayPublicIPName')]",
+            "location": "[variables('location')]",
+            "properties": {
+                "publicIPAllocationMethod": "Static"
+            }
+        },
+        {
+            "apiVersion": "2017-03-30",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[concat(parameters('vmPrefix'), '-gateway')]",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkInterfaces/', parameters('vmPrefix'), '-gateway-NIC')]",
+                "[concat('Microsoft.Compute/images/', parameters('vmPrefix'), '-gateway-osImage')]",
+                "[concat('Microsoft.Compute/availabilitySets/', parameters('vmPrefix'), '-gateway-AvailabilitySet')]"
+            ],
+            "properties": {
+                "osProfile": {
+                    "computerName": "[concat(parameters('vmPrefix'), '-gateway')]",
+                    "adminUsername": "[parameters('vmUsername')]",
+                    "adminPassword": "[parameters('vmPassword')]"
+                },
+                "hardwareProfile": {
+                    "vmSize": "[parameters('SafewalkGatewayVmSize')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "id": "[resourceId('Microsoft.Compute/images', concat(parameters('vmPrefix'), '-gateway-osImage'))]"
+                    },
+                    "osDisk": {
+                        "name": "[concat(parameters('vmPrefix'), '-gateway-os-vhd')]",
+                        "createOption": "FromImage"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('vmPrefix'), '-gateway-NIC'))]"
+                        }
+                    ]
+                },
+                "availabilitySet": {
+                    "id": "[resourceId('Microsoft.Compute/availabilitySets', concat(parameters('vmPrefix'), '-gateway-AvailabilitySet'))]"
+                }
+            },
+            "resources":[
+                {
+                    "type": "Microsoft.Compute/virtualMachines/extensions",
+                    "name": "[concat(parameters('vmPrefix'), '-gateway/installcustomscript')]",
+                    "apiVersion": "2017-03-30",
+                    "location": "[variables('location')]",
+                    "dependsOn": [
+                        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmPrefix'), '-server-1')]",
+                        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmPrefix'), '-server-2')]",
+                        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmPrefix'), '-gateway')]"
+                    ],
+                    "properties": {
+                        "publisher": "Microsoft.Azure.Extensions",
+                        "type": "CustomScript",
+                        "typeHandlerVersion": "2.0",
+                        "autoUpgradeMinorVersion": true,
+                        "settings": {
+                            "fileUris": [
+                                "https://raw.githubusercontent.com/altipeak/safewalk-azure/master/commands/configure_gateway_custom_script.sh",
+                                "https://raw.githubusercontent.com/altipeak/safewalk-azure/master/commands/set_root_password.sh",
+                                "https://raw.githubusercontent.com/altipeak/safewalk-azure/master/commands/gateway_whitelist_safewalk_server.sh",
+                                "https://raw.githubusercontent.com/altipeak/safewalk-azure/master/commands/gateway_upgrade.sh",
+                                "https://raw.githubusercontent.com/altipeak/safewalk-azure/master/commands/setup_snmp.sh"
+                            ],
+                            "commandToExecute": "[concat('sh configure_gateway_custom_script.sh ', parameters('SafewalkGatewayRootPassword'),' ', parameters('FirstSafewalkServerIP'),' ', parameters('SecondSafewalkServerIP'),' ' ,parameters('clusterEnabled'))]"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "apiVersion": "2017-03-30",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[concat(parameters('vmPrefix'), '-server-1')]",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkInterfaces/', parameters('vmPrefix'), '-server-1-NIC')]",
+                "[concat('Microsoft.Compute/images/', parameters('vmPrefix'), '-server-osImage')]",
+                "[concat('Microsoft.Compute/availabilitySets/', parameters('vmPrefix'), '-AvailabilitySet')]"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('SafewalkServerVmSize')]"
+                },
+                "osProfile": {
+                    "computerName": "[concat(parameters('vmPrefix'), '-server-1')]",
+                    "adminUsername": "[parameters('vmUsername')]",
+                    "adminPassword": "[parameters('vmPassword')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "id": "[resourceId('Microsoft.Compute/images', concat(parameters('vmPrefix'), '-server-osImage'))]"
+                    },
+                    "osDisk": {
+                        "name": "[concat(parameters('vmPrefix'), '-server-os-1-vhd')]",
+                        "createOption": "FromImage"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('vmPrefix'), '-server-1-NIC'))]"
+                        }
+                    ]
+                },
+                "availabilitySet": {
+                    "id": "[resourceId('Microsoft.Compute/availabilitySets', concat(parameters('vmPrefix'), '-AvailabilitySet'))]"
+                }
+            }
+        },
+        {
+            "condition": "[parameters('clusterEnabled')]",
+            "apiVersion": "2017-03-30",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[concat(parameters('vmPrefix'), '-server-2')]",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkInterfaces/', parameters('vmPrefix'), '-server-2-NIC')]",
+                "[concat('Microsoft.Compute/images/', parameters('vmPrefix'), '-server-osImage')]",
+                "[concat('Microsoft.Compute/availabilitySets/', parameters('vmPrefix'), '-AvailabilitySet')]"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('SafewalkServerVmSize')]"
+                },
+                "osProfile": {
+                    "computerName": "[concat(parameters('vmPrefix'), '-server-2')]",
+                    "adminUsername": "[parameters('vmUsername')]",
+                    "adminPassword": "[parameters('vmPassword')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "id": "[resourceId('Microsoft.Compute/images', concat(parameters('vmPrefix'), '-server-osImage'))]"
+                    },
+                    "osDisk": {
+                        "name": "[concat(parameters('vmPrefix'), '-server-os-2-vhd')]",
+                        "createOption": "FromImage"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('vmPrefix'), '-server-2-NIC'))]"
+                        }
+                    ]
+                },
+                "availabilitySet": {
+                    "id": "[resourceId('Microsoft.Compute/availabilitySets', concat(parameters('vmPrefix'), '-AvailabilitySet'))]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(parameters('vmPrefix'), '-server-1/installcustomscript')]",
+            "apiVersion": "2017-03-30",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('vmPrefix'), '-server-1')]",
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('vmPrefix'), '-server-2')]",
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('vmPrefix'), '-gateway')]"
+            ],
+            "properties": {
+                "publisher": "Microsoft.Azure.Extensions",
+                "type": "CustomScript",
+                "typeHandlerVersion": "2.0",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "fileUris": [
+                        "https://raw.githubusercontent.com/altipeak/safewalk-azure/master/commands/configure_safewalk_custom_script_master.sh",
+                        "https://raw.githubusercontent.com/altipeak/safewalk-azure/master/commands/set_root_password.sh",
+                        "https://raw.githubusercontent.com/altipeak/safewalk-azure/master/commands/safewalk_create_gateway.sh",
+                        "https://raw.githubusercontent.com/altipeak/safewalk-azure/master/commands/safewalk_bdr_create.sh",
+                        "https://raw.githubusercontent.com/altipeak/safewalk-azure/master/commands/safewalk_make_partitions.sh",
+                        "https://raw.githubusercontent.com/altipeak/safewalk-azure/master/commands/safewalk_renew_secrets.sh",
+                        "https://raw.githubusercontent.com/altipeak/safewalk-azure/master/commands/safewalk_upgrade.sh",
+                        "https://raw.githubusercontent.com/altipeak/safewalk-azure/master/commands/safewalk_iptables.sh",
+                        "https://raw.githubusercontent.com/altipeak/safewalk-azure/master/commands/setup_snmp.sh"
+                    ],
+                    "commandToExecute": "[concat('sh configure_safewalk_custom_script_master.sh ', parameters('SafewalkServerRootPassword'), ' ', parameters('SafewalkGatewayIP'), ' ', reference(concat('Microsoft.Network/publicIPAddresses/', variables('gatewayPublicIPName')), '2017-04-01').ipAddress, ' ', parameters('SafewalkGatewayRootPassword'), ' ', parameters('FirstSafewalkServerIP'), ' ', parameters('SecondSafewalkServerIP'), ' ', parameters('clusterEnabled'), ' ', parameters('SafewalkServerAdminPassword'))]"
+                }
+            }
+        },
+        {
+            "condition": "[parameters('clusterEnabled')]",
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(parameters('vmPrefix'), '-server-2/installcustomscript')]",
+            "apiVersion": "2017-03-30",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('vmPrefix'), '-server-2')]",
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('vmPrefix'), '-gateway')]",
+                "[resourceId('Microsoft.Compute/virtualMachines/extensions', concat(parameters('vmPrefix'), '-server-1'), 'installcustomscript')]"
+            ],
+            "properties": {
+                "publisher": "Microsoft.Azure.Extensions",
+                "type": "CustomScript",
+                "typeHandlerVersion": "2.0",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "fileUris": [
+                        "https://raw.githubusercontent.com/altipeak/safewalk-azure/master/commands/configure_safewalk_custom_script_slave.sh",
+                        "https://raw.githubusercontent.com/altipeak/safewalk-azure/master/commands/set_root_password.sh",                        
+                        "https://raw.githubusercontent.com/altipeak/safewalk-azure/master/commands/safewalk_create_gateway.sh",
+                        "https://raw.githubusercontent.com/altipeak/safewalk-azure/master/commands/safewalk_bdr_join.sh",
+                        "https://raw.githubusercontent.com/altipeak/safewalk-azure/master/commands/safewalk_make_partitions.sh",
+                        "https://raw.githubusercontent.com/altipeak/safewalk-azure/master/commands/safewalk_renew_secrets.sh",
+                        "https://raw.githubusercontent.com/altipeak/safewalk-azure/master/commands/safewalk_upgrade.sh",
+                        "https://raw.githubusercontent.com/altipeak/safewalk-azure/master/commands/safewalk_iptables.sh",
+                        "https://raw.githubusercontent.com/altipeak/safewalk-azure/master/commands/setup_snmp.sh"
+                    ],
+                    "commandToExecute": "[concat('sh configure_safewalk_custom_script_slave.sh ', parameters('SafewalkServerRootPassword'), ' ', parameters('SafewalkGatewayIP'), ' ', reference(concat('Microsoft.Network/publicIPAddresses/', variables('gatewayPublicIPName')), '2017-04-01').ipAddress, ' ', parameters('SafewalkGatewayRootPassword'), ' ', parameters('FirstSafewalkServerIP'), ' ', parameters('SecondSafewalkServerIP'))]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/availabilitySets",
+            "name": "[concat(parameters('vmPrefix'), '-AvailabilitySet')]",
+            "apiVersion": "2016-04-30-preview",
+            "location": "[variables('location')]",
+            "sku": {
+                "name": "Aligned"
+            },
+            "properties": {
+                "platformUpdateDomainCount": 5,
+                "platformFaultDomainCount": 3
+            }
+        },
+        {
+            "type": "Microsoft.Compute/availabilitySets",
+            "name": "[concat(parameters('vmPrefix'), '-gateway-AvailabilitySet')]",
+            "apiVersion": "2016-04-30-preview",
+            "location": "[variables('location')]",
+            "sku": {
+                "name": "Aligned"
+            },
+            "properties": {
+                "platformUpdateDomainCount": 5,
+                "platformFaultDomainCount": 3
+            }
+        }
+    ]
+}
