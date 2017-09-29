@@ -143,7 +143,7 @@ sed -i -e "s/172.25.0.3/$hostname/" /var/opt/jfrog/artifactory/etc/ha-node.prope
 chown artifactory:artifactory -R /var/opt/jfrog/artifactory/*  && chown artifactory:artifactory -R /var/opt/jfrog/artifactory/etc/security && chown artifactory:artifactory -R /var/opt/jfrog/artifactory/etc/*
 
 # start Artifactory
-sleep $((RANDOM % 60))
+sleep $((RANDOM % 120))
 service artifactory start
 service nginx start
 nginx -s reload
