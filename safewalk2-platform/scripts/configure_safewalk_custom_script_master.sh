@@ -27,11 +27,16 @@ bash $my_dir/safewalk_iptables.sh
 
 bash $my_dir/safewalk_upgrade.sh
 
+bash $safewalk_dir/bin/safewalk_set_admin_password.sh $ADMIN_PASSWORD
+
+
 if [ "$CLUSTER_ENABLED" = "True" ]; then
     SAFEWALK_HOSTS=$SAFEWALK_IP_1,$SAFEWALK_IP_2
 else
     SAFEWALK_HOSTS=$SAFEWALK_IP_1
 fi
+
+bash $my_dir/safewalk_create_gateway.sh --gateway-name "My Gateway" --gateway-password $GATEWAY_ROOT_PASSWORD --gateway-public-host $GATEWAY_PUBLIC_IP --gateway-ssh-host $GATEWAY_IP --safewalk-host $SAFEWALK_HOSTS
 
 if [ "$CLUSTER_ENABLED" = "True" ]; then
     bash safewalk_bdr_create.sh $SAFEWALK_IP_1 $SAFEWALK_IP_2
@@ -40,9 +45,5 @@ else
     #bash safewalk_bdr_create.sh $SAFEWALK_IP_1
 fi
 
-echo "IS CLUSTER ENABLED: $CLUSTER_ENABLED - $SAFEWALK_HOSTS"
-bash $my_dir/safewalk_create_gateway.sh --gateway-name "My Gateway" --gateway-password $GATEWAY_ROOT_PASSWORD --gateway-public-host $GATEWAY_PUBLIC_IP --gateway-ssh-host $GATEWAY_IP --safewalk-host $SAFEWALK_HOSTS
 
-bash $safewalk_dir/bin/safewalk_set_admin_password.sh $ADMIN_PASSWORD
 
-bash $my_dir/safewalk_organization_identity.sh $SAFEWALK_IP_1
