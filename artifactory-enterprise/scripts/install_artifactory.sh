@@ -107,7 +107,7 @@ artifactory.ha.data.dir=/var/opt/jfrog/artifactory/data
 context.url=http://127.0.0.1:8081/artifactory
 membership.port=10001
 hazelcast.interface=172.25.0.3
-primary=true
+primary=false
 EOF
 
 cat <<EOF >/var/opt/jfrog/artifactory/etc/db.properties
