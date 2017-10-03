@@ -38,15 +38,8 @@ The Gateway VM will be created at the DMZ subnet. It's the the Safewalk frontend
 ## Prerequisites
 
 To get use this Safewalk2 platform you'll need to upload the VM's VHD images to yout storage account.
-You can do it using AzCopy storage tool. <a href="http://aka.ms/downloadazcopy" target="_blank">Download and install the latest version of AzCopy</a>
-
-Please replace {dest_container_url} with your information and provide the storage account access {key2}.
-
-```PowerShell
-AzCopy /Source:https://safewalkvhd.blob.core.windows.net/images /Dest:{dest_container_url} /SourceKey:fkncsm84fINJHbcoeFmLYORj/h0dzM1kxB4iF/pOnuCLfvLqTRJGkK2oixACn1vZAT046TLyVIpBWfLgS2ddnA== /DestKey:{key2} /S
-```
-
 Please contact us at order@altipeak.com in order to buy licenses to get Safewalk ready to use.
+Plase follow the guide at next topic.
 
 
 ### Uploading the Safewalk Server and Safewalk Gateway VHD images
@@ -69,12 +62,15 @@ Azure new blob storage account
 
 In the Resource group that will be used to deploy Safewalk choose the blob Storage account and add a container to upload the VHD images into.
 
-Azure new storage account container
+You can use the storage tool AzCopy to get a copy of the custom VHD images in your container. <a href="http://aka.ms/downloadazcopy" target="_blank">Download and install the latest version of AzCopy</a>
 
-Select the new container and click the Upload button to upload the VHD images of the Safewalk Server and Safewalk Gateway.
+Please replace {dest_container_url} with your information and provide the storage account access {key2}.
 
-After the upload of the images is complete, you should see it listed under the container.
+```PowerShell
+AzCopy /Source:https://safewalkvhd.blob.core.windows.net/images /Dest:{dest_container_url} /SourceKey:fkncsm84fINJHbcoeFmLYORj/h0dzM1kxB4iF/pOnuCLfvLqTRJGkK2oixACn1vZAT046TLyVIpBWfLgS2ddnA== /DestKey:{key2} /S
+```
 
+After copy is finished, please refresh your container and find the copied VHD files.
 Selecting one of the images will open the blob properties and show you a URL that points to the image that was uploaded.
 
 ## Deployment steps
