@@ -1,5 +1,5 @@
 #!/bin/bash -e
-while getopts "a:l:g:s:f:e:uv" opt; do
+while getopts "a:l:g:s:f:e:uvd" opt; do
     case $opt in
         a)
             artifactsStagingDirectory=$OPTARG #the folder or sample to deploy
@@ -25,6 +25,9 @@ while getopts "a:l:g:s:f:e:uv" opt; do
         v)
             validateOnly='true'
         ;;
+        d)
+            devMode='true'
+        ;;
     esac
 done
     
@@ -34,9 +37,15 @@ if [[ -z $templateFile ]]
 then
     templateFile="$artifactsStagingDirectory/azuredeploy.json"
 fi
-if [[ -z $parametersFile ]]
+
+if [[ $devMode ]]
 then
-    parametersFile="$artifactsStagingDirectory/azuredeploy.parameters.json"
+    parametersFile="$artifactsStagingDirectory/azuredeploy.parameters.dev.json"
+else
+    if [[ -z $parametersFile ]]
+    then
+        parametersFile="$artifactsStagingDirectory/azuredeploy.parameters.json"
+    fi
 fi
 
 templateName="$( basename "${templateFile%.*}" )"

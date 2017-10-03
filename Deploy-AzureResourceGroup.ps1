@@ -15,7 +15,8 @@ Param(
     [string] $TemplateParametersFile = $ArtifactStagingDirectory + '.\azuredeploy.parameters.json',
     [string] $DSCSourceFolder = $ArtifactStagingDirectory + '.\DSC',
     [switch] $ValidateOnly,
-    [string] $DebugOptions = "None"
+    [string] $DebugOptions = "None",
+    [switch] $Dev
 )
 
 try {
@@ -34,6 +35,9 @@ function Format-ValidationOutput {
 $OptionalParameters = New-Object -TypeName Hashtable
 $TemplateArgs = New-Object -TypeName Hashtable
 
+if ($Dev) {
+    $TemplateParametersFile.Replace('azuredeploy.parameters.json', 'azuredeploy.parameters.dev.json')
+}
 
 if (!$ValidateOnly) {
     $OptionalParameters.Add('DeploymentDebugLogLevel', $DebugOptions)
