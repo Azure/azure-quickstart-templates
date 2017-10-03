@@ -89,7 +89,7 @@ if [ ${LOOP_COUNT} == 3 ]; then
   exit 1
 fi
 
-echo "`date` INFO: If there is a requiremewnt for 3 node cluster and not Evalution edition exit"
+echo "`date` INFO: Check if there is a requirement for 3 node cluster and not Evalution edition exit"
 if [ ${isEval} == 0 ] && [ ${number_of_instances} == 3 ]; then
   echo "`date` ERROR: Trying to build HA cluster with community edition SolOS, this is not supported" | tee /dev/stderr
   exit 1
@@ -225,19 +225,65 @@ systemctl start solace-docker-vmr
 loop_guard=30
 pause=10
 count=0
+mate_active_check=""
+echo "`date` INFO: Wait for Primary to be 'Local Active' or 'Mate Active'"
 if [ "${is_primary}" = "true" ]; then
   while [ ${count} -lt ${loop_guard} ]; do 
     online_results=`./semp_query.sh -n admin -p ${password} -u http://localhost:8080/SEMP \
-         -q "<rpc semp-version='soltr/8_5VMR'><show><redundancy><group/></redundancy></show></rpc>" \
-         -c '/rpc-reply/rpc/show/redundancy/group-node/status[text()="Online"]'`
+         -q "<rpc semp-version='soltr/8_5VMR'><show><redundancy><detail/></redundancy></show></rpc>" \
+         -v "/rpc-reply/rpc/show/redundancy/virtual-routers/primary/status/activity[text()]"`
 
-    online_count=`echo ${online_results} | jq '.countSearchResult' -`
+    local_activity=`echo ${online_results} | jq '.valueSearchResult' -`
+    echo "`date` INFO: Local activity state is: ${local_activity}"
 
     run_time=$((${count} * ${pause}))
-    if [ ${online_count} -eq 3 ]; then
-        echo "`date` INFO: Redundancy is up after ${run_time} seconds"
+    case "${local_activity}" in
+      "\"Local Active\"")
+        echo "`date` INFO: Redundancy is up locally, Primary Active, after ${run_time} seconds"
+        mate_active_check="Standby"
         break
-    fi
+        ;;
+      "\"Mate Active\"")
+        echo "`date` INFO: Redundancy is up locally, Backup Active, after ${run_time} seconds"
+        mate_active_check="Active"
+        break
+        ;;
+    esac
+    ((count++))
+    echo "`date` INFO: Waited ${run_time} seconds, Redundancy not yet up"
+    sleep ${pause}
+  done
+
+  if [ ${count} -eq ${loop_guard} ]; then
+    echo "`date` ERROR: Solace redundancy group never came up" | tee /dev/stderr
+    exit 1 
+  fi
+
+  loop_guard=30
+  pause=10
+  count=0
+  echo "`date` INFO: Wait for Backup to be 'Active' or 'Standby'"
+  while [ ${count} -lt ${loop_guard} ]; do 
+    online_results=`./semp_query.sh -n admin -p ${password} -u http://localhost:8080/SEMP \
+         -q "<rpc semp-version='soltr/8_5VMR'><show><redundancy><detail/></redundancy></show></rpc>" \
+         -v "/rpc-reply/rpc/show/redundancy/virtual-routers/primary/status/detail/priority-reported-by-mate/summary[text()]"`
+
+    mate_activity=`echo ${online_results} | jq '.valueSearchResult' -`
+    echo "`date` INFO: Mate activity state is: ${mate_activity}"
+
+    run_time=$((${count} * ${pause}))
+    case "${mate_activity}" in
+      "\"Active\"")
+        echo "`date` INFO: Redundancy is up end-to-end, Backup Active, after ${run_time} seconds"
+        mate_active_check="Standby"
+        break
+        ;;
+      "\"Standby\"")
+        echo "`date` INFO: Redundancy is up end-to-end, Primary Active, after ${run_time} seconds"
+        mate_active_check="Active"
+        break
+        ;;
+    esac
     ((count++))
     echo "`date` INFO: Waited ${run_time} seconds, Redundancy not yet up"
     sleep ${pause}
