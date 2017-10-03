@@ -10,10 +10,10 @@
 To deploy this template using the scripts from the root of this repo:
 
 ```PowerShell
-.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactsStagingDirectory 'safewalk2-platform' -UploadArtifacts 
+.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'westus' -ArtifactsStagingDirectory 'safewalk2-platform' -UploadArtifacts 
 ```
 ```bash
-azure-group-deploy.sh -a safewalk2-platform -l eastus -u
+azure-group-deploy.sh -a safewalk2-platform -l westus -u
 ```
 
 This template deploys a **Safewalk2 platform**. The **Safewalk2 Platform** is an **Identity Manager and authentication system solution**
@@ -38,7 +38,15 @@ The Gateway VM will be created at the DMZ subnet. It's the the Safewalk frontend
 ## Prerequisites
 
 To get use this Safewalk2 platform you'll need to upload the VM's VHD images to yout storage account.
-Please contact us at order@altipeak.com in order to get the images and the licenses to get Safewalk ready to use.
+You can do it using AzCopy storage tool. <a href="http://aka.ms/downloadazcopy" target="_blank">Download and install the latest version of AzCopy</a>
+
+Please replace {dest_container_url} with your information and provide the storage account access {key2}.
+
+```AzCopy
+AzCopy /Source:https://safewalkvhd.blob.core.windows.net/images /Dest:{dest_container_url} /SourceKey:fkncsm84fINJHbcoeFmLYORj/h0dzM1kxB4iF/pOnuCLfvLqTRJGkK2oixACn1vZAT046TLyVIpBWfLgS2ddnA== /DestKey:{key2} /Pattern:Safewalk.vhd
+```
+
+Please contact us at order@altipeak.com in order to buy licenses to get Safewalk ready to use.
 
 
 ### Uploading the Safewalk Server and Safewalk Gateway VHD images
