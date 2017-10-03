@@ -42,8 +42,8 @@ You can do it using AzCopy storage tool. <a href="http://aka.ms/downloadazcopy" 
 
 Please replace {dest_container_url} with your information and provide the storage account access {key2}.
 
-```AzCopy
-AzCopy /Source:https://safewalkvhd.blob.core.windows.net/images /Dest:{dest_container_url} /SourceKey:fkncsm84fINJHbcoeFmLYORj/h0dzM1kxB4iF/pOnuCLfvLqTRJGkK2oixACn1vZAT046TLyVIpBWfLgS2ddnA== /DestKey:{key2} /Pattern:Safewalk.vhd
+```PowerShell
+AzCopy /Source:https://safewalkvhd.blob.core.windows.net/images /Dest:{dest_container_url} /SourceKey:fkncsm84fINJHbcoeFmLYORj/h0dzM1kxB4iF/pOnuCLfvLqTRJGkK2oixACn1vZAT046TLyVIpBWfLgS2ddnA== /DestKey:{key2} /S
 ```
 
 Please contact us at order@altipeak.com in order to buy licenses to get Safewalk ready to use.
