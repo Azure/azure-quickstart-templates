@@ -67,11 +67,16 @@ You can use the storage tool AzCopy to get a copy of the custom VHD images in yo
 Please replace {dest_container_url} with your information and provide the storage account access {key2}.
 
 ```PowerShell
-AzCopy /Source:https://safewalkvhd.blob.core.windows.net/images /Dest:{dest_container_url} /SourceKey:fkncsm84fINJHbcoeFmLYORj/h0dzM1kxB4iF/pOnuCLfvLqTRJGkK2oixACn1vZAT046TLyVIpBWfLgS2ddnA== /DestKey:{key2} /S
+AzCopy /Source:https://safewalk2.blob.core.windows.net/images /Dest:{dest} /SourceKey:i4dCa1J6O1TriXgGFrS2V5N/Zjw6GU9JR8dckydWHWaodLWDmHoDFQA0lrEuDLfKZgE0owpwTPThXMrmYLIGtQ== /DestKey:{key2} /S
 ```
 
 After copy is finished, please refresh your container and find the copied VHD files.
 Selecting one of the images will open the blob properties and show you a URL that points to the image that was uploaded.
+
+A different option is to download the images to your local drive from:
+<a href="https://safewalk2.blob.core.windows.net/images/Safewalk.vhd">Safewalk VHD image</a>
+<a href="https://safewalk2.blob.core.windows.net/images/Gateway2.vhd">Gateway VHD image</a>
+and Upload it manually as a Page Blob into your storage account container.
 
 ## Deployment steps
 
