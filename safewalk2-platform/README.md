@@ -35,19 +35,18 @@ The virtual network will consists on three subnets:
 * Gateway Subnet -
 
 #### Safewalk server VM
+The Safewalk server VM is installed inside the LAN subnet. It's recommended to access it using a VPN. If cluster is enabled, 2 VMs will be created in the same Availability Set (different physical machines).
 
-The Safewalk server VM is installed inside the LAN subnet. It's recommended to access it using a VPN. If cluster is enabled, 2 VMs will be created in the same availability set (differnt physical machines).
-
-#### Super-Admin Console ####
+#### * Super-Admin Console ####
 A web based interface that provides access to the general configuration of the system, like LDAP/AD connectivity to users or groups, import of new licenses, creating RADIUS clients and more. The main idea of this interface is to provide access for the highest authority to perform tasks that are not needed on a day to day basis and require a relatively high level of knowledge with the system and the organization architecture.
 
-#### Management Console ####
+#### * Management Console ####
 A web based interface that provides access to manage users, their authentication settings, view transactions and more. The main idea of this interface is to provide access for helpdesk personnel or system administrators to perform tasks that are needed frequently but has no system-wide impact.
 
-#### Self-Service Portal ####
+#### * Self-Service Portal ####
 A web based interface that provides access to end users to register their authentication device.
 
-#### RADIUS Server ####
+#### * RADIUS Server ####
 Remote Authentication Dial In User Service (RADIUS) is a networking protocol that provides centralized Authentication, Authorization, and Accounting (AAA) management for users that connect and use a network service. The Remote Access Server, the Virtual Private Network server, the Network switch with port-based authentication, and the Network Access Server (NAS), are all gateways that control access to the network, and all have a RADIUS client component that communicates with the RADIUS server. RADIUS is often the backend of choice for 802.1X authentication as well (see http://en.wikipedia.org/wiki/RADIUS for more details).
 
 #### Safewalk Gateway VM
