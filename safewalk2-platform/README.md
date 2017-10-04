@@ -26,20 +26,18 @@ Safewalk platform is an Identity Management solution with focus on (2FA) Strong 
 
 The following resources are deployed as part of the solution
 
-#### Safewalk server instance
+#### Safewalk server VM
 
 The Safewalk server VM is installed inside the LAN subnet. It's recommended to access it using a VPN. If cluster is enabled, 2 VMs will be created in the same availability set (differnt physical machines).
 
-#### Safewalk Gateway
+#### Safewalk Gateway VM
 
 The Gateway VM will be created at the DMZ subnet. It's the the Safewalk frontend for the final user.
 
 
 ## Prerequisites
 
-To get use this Safewalk2 platform you'll need to upload the VM's VHD images to yout storage account.
-Please contact us at order@altipeak.com in order to buy licenses to get Safewalk ready to use.
-Plase follow the guide at next topic.
+To get use this Safewalk2 platform you'll need to copy or upload the VM's VHD images to your storage account.
 
 
 ### Uploading the Safewalk Server and Safewalk Gateway VHD images
@@ -71,7 +69,6 @@ AzCopy /Source:https://safewalk2.blob.core.windows.net/images /Dest:{dest_url} /
 ```
 
 After copy is finished, please refresh your container and find the copied VHD files.
-Selecting one of the images will open the blob properties and show you a URL that points to the image that was uploaded.
 
 A different option is to download the images to your local drive from:
 <a href="https://safewalk2.blob.core.windows.net/images/Safewalk.vhd">Safewalk VHD image</a>
@@ -82,9 +79,12 @@ and Upload it manually as a Page Blob into your storage account container.
 
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
 
+### Template parameters
+Complete it ...
+
 ## Usage
 
-#### Connect
+### Connect
 
 Make a Point-to-Site VPN using the GatewaySubnet of the LAP subnet to get access to the Safewalk servers.
 
@@ -93,3 +93,6 @@ Safewalk servers will be accesible using this url: https://[safewalk_ip]:8443
 Safewalk servers are accesible from SSH using the specified credentials.
 
 The Gateway SSH is only accesible from the Safewalk nodes. Only web services are accesible from the Internet.
+
+### Software Licenses
+Please contact us at order@altipeak.com in order to buy licenses to get Safewalk ready to use.
