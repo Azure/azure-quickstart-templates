@@ -64,10 +64,10 @@ In the Resource group that will be used to deploy Safewalk choose the blob Stora
 
 You can use the storage tool AzCopy to get a copy of the custom VHD images in your container. <a href="http://aka.ms/downloadazcopy" target="_blank">Download and install the latest version of AzCopy</a>
 
-Please replace {dest_container_url} with your information and provide the storage account access {key2}.
+Please replace {dest_url} with your information and provide the storage account access {dest_key2}.
 
 ```PowerShell
-AzCopy /Source:https://safewalk2.blob.core.windows.net/images /Dest:{dest} /SourceKey:i4dCa1J6O1TriXgGFrS2V5N/Zjw6GU9JR8dckydWHWaodLWDmHoDFQA0lrEuDLfKZgE0owpwTPThXMrmYLIGtQ== /DestKey:{key2} /S
+AzCopy /Source:https://safewalk2.blob.core.windows.net/images /Dest:{dest_url} /SourceKey:i4dCa1J6O1TriXgGFrS2V5N/Zjw6GU9JR8dckydWHWaodLWDmHoDFQA0lrEuDLfKZgE0owpwTPThXMrmYLIGtQ== /DestKey:{dest_key2} /S
 ```
 
 After copy is finished, please refresh your container and find the copied VHD files.
