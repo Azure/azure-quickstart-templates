@@ -30,9 +30,9 @@ The following resources are deployed as part of the solution
 
 ### Virtual Network Layout
 The virtual network will consists on three subnets:
-* DMZ subnet -
-* LAN subnet -
-* Gateway Subnet -
+* DMZ subnet - Subnetwork accesible from the Internet using a Public static IP. It contains the Gateway VM and is regulated with the DMZ Network Security Group.
+* LAN subnet - This subnetwork only has an internal access and only allowed ports are accesible from the Gateway.
+* Gateway Subnet - This subnetwork is the default Azure one used to create virtual network connections like vNet <-> vNet connections or Point <-> Site VPN connections.
 
 #### Safewalk server VM
 The Safewalk server VM is installed inside the LAN subnet. It's recommended to access it using a VPN. If cluster is enabled, 2 VMs will be created in the same Availability Set (different physical machines).
