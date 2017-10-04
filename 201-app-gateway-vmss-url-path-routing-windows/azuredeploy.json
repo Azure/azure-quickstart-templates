@@ -1,0 +1,217 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.1.0.0",
+  "parameters": {
+    "Public DNS Prefix": {
+      "defaultValue": null,
+      "type": "string",
+      "metadata": {
+        "description": "DNS prefix for public IP fronting VM Scale Set directly (NAT RDP)"
+      }
+    },
+    "RDP Rule": {
+      "defaultValue": "Deny",
+      "type": "string",
+      "allowedValues": [
+        "Allow",
+        "Deny"
+      ],
+      "metadata": {
+        "description": "Is RDP to VMs allowed (or blocked)?"
+      }
+    },
+    "Cookie Based Affinity": {
+      "type": "string",
+      "allowedValues": [
+        "Enabled",
+        "Disabled"
+      ],
+      "defaultValue": "Disabled",
+      "metadata": {
+        "description": "App Gateway cookie based affinity"
+      }
+    },
+    "VNET Name": {
+      "defaultValue": "VNet",
+      "type": "string",
+      "metadata": {
+        "description": "Name for the VNET"
+      }
+    },
+    "VNET IP Prefix": {
+      "defaultValue": "10.0.0",
+      "type": "string",
+      "metadata": {
+        "description": "Prefix for the 256 IP addresses in the VNET"
+      }
+    },
+    "VM Admin Name": {
+      "defaultValue": "vmssadmin",
+      "type": "string",
+      "metadata": {
+        "description": "Admin user name on the VM Scale sets"
+      }
+    },
+    "VM Admin Password": {
+      "minLength": 10,
+      "type": "securestring",
+      "metadata": {
+        "description": "Admin password the VM Scale sets"
+      }
+    },
+    "Instance Count": {
+      "defaultValue": 2,
+      "type": "int",
+      "metadata": {
+        "description": "Number of instances in each scale set"
+      }
+    },
+    "VM Size": {
+      "defaultValue": "Standard_DS2_v2",
+      "type": "string",
+      "allowedValues": [
+        "Standard_DS1_v2",
+        "Standard_DS2_v2",
+        "Standard_DS3_v2",
+        "Standard_DS4_v2",
+        "Standard_DS5_v2"
+      ],
+      "metadata": {
+        "description": "SKU of the VMs."
+      }
+    }
+  },
+  "variables": {
+    "Content Root URL": "https://raw.githubusercontent.com/vplauzon/azure-quickstart-templates/master/201-app-gateway-vmss-url-path-routing-windows/",
+    "Template Network URL": "[concat(variables('Content Root URL'), 'nested/network.json')]",
+    "Template App Gateway URL": "[concat(variables('Content Root URL'), 'nested/app-gateway.json')]",
+    "Template VMSS URL": "[concat(variables('Content Root URL'), 'nested/vmss.json')]",
+    "Dsc Url": "[concat(variables('Content Root URL'), 'scripts/TargetConfiguration.ps1.zip')]",
+    "App Gateway Backend Pool ID Prefix": "[concat(resourceId('Microsoft.Network/applicationGateways', 'AppGateway'), '/backendAddressPools/')]"
+  },
+  "resources": [
+    {
+      "name": "Network",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('Template Network URL')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "VNet Name": { "value": "[parameters('VNET Name')]" },
+          "IP Prefix": { "value": "[parameters('VNET IP Prefix')]" },
+          "RDP Rule": { "value": "[parameters('RDP Rule')]" }
+        }
+      }
+    },
+    {
+      "name": "AppGateway",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'Network')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('Template App Gateway URL')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "VNet Name": { "value": "[parameters('VNET Name')]" },
+          "Subnet Name": { "value": "appGateway" },
+          "AppGateway Size": { "value": "Standard_Medium" },
+          "AppGateway Instance Count": { "value": 2 },
+          "Cookie Based Affinity": { "value": "[parameters('Cookie Based Affinity')]" }
+        }
+      }
+    },
+    {
+      "name": "App-A",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'AppGateway')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('Template VMSS URL')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "App Name": { "value": "A" },
+          "VNet Name": { "value": "VNet" },
+          "Subnet Name": { "value": "app-A" },
+          "Dsc Url": { "value": "[variables('Dsc Url')]" },
+          "App Gateway Backend Pool ID": { "value": "[concat(variables('App Gateway Backend Pool ID Prefix'), 'app-a-Pool')]" },
+          "Scale Set Name": { "value": "App-A" },
+          "Domain Name Label": { "value": "[concat(parameters('Public DNS Prefix'), 'a')]" },
+          "VM Admin Name": { "value": "[parameters('VM Admin Name')]" },
+          "VM Admin Password": { "value": "[parameters('VM Admin Password')]" },
+          "Instance Count": { "value": "[parameters('Instance Count')]" },
+          "VM Size": { "value": "[parameters('VM Size')]" }
+        }
+      }
+    },
+    {
+      "name": "App-B",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'AppGateway')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('Template VMSS URL')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "App Name": { "value": "B" },
+          "VNet Name": { "value": "VNet" },
+          "Subnet Name": { "value": "app-B" },
+          "Dsc Url": { "value": "[variables('Dsc Url')]" },
+          "App Gateway Backend Pool ID": { "value": "[concat(variables('App Gateway Backend Pool ID Prefix'), 'app-b-Pool')]" },
+          "Scale Set Name": { "value": "App-B" },
+          "Domain Name Label": { "value": "[concat(parameters('Public DNS Prefix'), 'b')]" },
+          "VM Admin Name": { "value": "[parameters('VM Admin Name')]" },
+          "VM Admin Password": { "value": "[parameters('VM Admin Password')]" },
+          "Instance Count": { "value": "[parameters('Instance Count')]" },
+          "VM Size": { "value": "[parameters('VM Size')]" }
+        }
+      }
+    },
+    {
+      "name": "App-C",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'AppGateway')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('Template VMSS URL')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "App Name": { "value": "C" },
+          "VNet Name": { "value": "VNet" },
+          "Subnet Name": { "value": "app-C" },
+          "Dsc Url": { "value": "[variables('Dsc Url')]" },
+          "App Gateway Backend Pool ID": { "value": "[concat(variables('App Gateway Backend Pool ID Prefix'), 'app-c-Pool')]" },
+          "Scale Set Name": { "value": "App-C" },
+          "Domain Name Label": { "value": "[concat(parameters('Public DNS Prefix'), 'c')]" },
+          "VM Admin Name": { "value": "[parameters('VM Admin Name')]" },
+          "VM Admin Password": { "value": "[parameters('VM Admin Password')]" },
+          "Instance Count": { "value": "[parameters('Instance Count')]" },
+          "VM Size": { "value": "[parameters('VM Size')]" }
+        }
+      }
+    }
+  ]
+}

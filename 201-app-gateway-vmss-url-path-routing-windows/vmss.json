@@ -1,0 +1,245 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "App Name": {
+      "defaultValue": null,
+      "type": "string"
+    },
+    "VNet Name": {
+      "type": "string"
+    },
+    "Subnet Name": {
+      "type": "string"
+    },
+    "Dsc Url": {
+      "type": "string"
+    },
+    "App Gateway Backend Pool ID": {
+      "defaultValue": "null",
+      "type": "string"
+    },
+    "Scale Set Name": {
+      "defaultValue": "MyVmss",
+      "type": "string"
+    },
+    "Domain Name Label": {
+      "defaultValue": null,
+      "type": "string"
+    },
+    "VM Admin Name": {
+      "defaultValue": "admin",
+      "type": "string"
+    },
+    "VM Admin Password": {
+      "defaultValue": null,
+      "type": "securestring"
+    },
+    "Instance Count": {
+      "defaultValue": 2,
+      "type": "int"
+    },
+    "VM Size": {
+      "defaultValue": "Standard_DS2_v2",
+      "type": "string",
+      "allowedValues": [
+        "Standard_DS1_v2",
+        "Standard_DS2_v2",
+        "Standard_DS3_v2",
+        "Standard_DS4_v2",
+        "Standard_DS5_v2"
+      ],
+      "metadata": {
+        "description": "SKU of the VM."
+      }
+    }
+  },
+  "variables": {
+    "IP Name": "[concat(parameters('Scale Set Name'), '-IP')]",
+    "LB Name": "[concat(parameters('Scale Set Name'), '-LB')]",
+    "NAT Pool Name": "mainNatPool",
+    "Backend Pool Name": "mainBackendPool",
+    "NIC Prefix": "[concat(parameters('Scale Set Name'), '-Nic')]",
+    "Image Reference": {
+      "publisher": "MicrosoftWindowsServer",
+      "offer": "WindowsServer",
+      "sku": "2012-R2-Datacenter",
+      "version": "latest"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('IP Name')]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [],
+      "tags": {
+        "displayName": "Public IP"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "idleTimeoutInMinutes": 4,
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('Domain Name Label')]"
+        }
+      }
+    },
+    {
+      "name": "[variables('LB Name')]",
+      "type": "Microsoft.Network/loadBalancers",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('IP Name'))]"
+      ],
+      "tags": {
+        "displayName": "Load Balancer"
+      },
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "LoadBalancerFrontEnd",
+            "comments": "Front end of LB:  the IP address",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses/', variables('IP Name'))]"
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "[variables('Backend Pool Name')]"
+          }
+        ],
+        "loadBalancingRules": [],
+        "probes": [
+          {
+            "name": "TCP-Probe",
+            "properties": {
+              "protocol": "Tcp",
+              "port": 80,
+              "intervalInSeconds": 5,
+              "numberOfProbes": 2
+            }
+          }
+        ],
+        "inboundNatPools": [
+          {
+            "name": "[variables('NAT Pool Name')]",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('LB Name')), '/frontendIPConfigurations/LoadBalancerFrontEnd')]"
+              },
+              "protocol": "tcp",
+              "frontendPortRangeStart": 5000,
+              "frontendPortRangeEnd": 5200,
+              "backendPort": 3389
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachineScaleSets",
+      "name": "[parameters('Scale Set Name')]",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-04-30-preview",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/loadBalancers', variables('LB Name'))]"
+      ],
+      "tags": {
+        "displayName": "Scale Set"
+      },
+      "sku": {
+        "name": "[parameters('VM Size')]",
+        "tier": "Standard",
+        "capacity": "[parameters('Instance Count')]"
+      },
+      "properties": {
+        "overprovision": "false",
+        "upgradePolicy": {
+          "mode": "Manual"
+        },
+        "virtualMachineProfile": {
+          "storageProfile": {
+            "osDisk": {
+              "createOption": "FromImage",
+              "managedDisk": {
+                "storageAccountType": "Premium_LRS"
+              }
+            },
+            "imageReference": "[variables('Image Reference')]"
+          },
+          "osProfile": {
+            "computerNamePrefix": "[parameters('Scale Set Name')]",
+            "adminUsername": "[parameters('VM Admin Name')]",
+            "adminPassword": "[parameters('VM Admin Password')]"
+          },
+          "networkProfile": {
+            "networkInterfaceConfigurations": [
+              {
+                "name": "[variables('NIC Prefix')]",
+                "properties": {
+                  "primary": "true",
+                  "ipConfigurations": [
+                    {
+                      "name": "ipConfig",
+                      "properties": {
+                        "subnet": {
+                          "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('VNet Name')), '/subnets/', parameters('Subnet Name'))]"
+                        },
+                        "loadBalancerBackendAddressPools": [
+                          {
+                            "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('LB Name')), '/backendAddressPools/', variables('Backend Pool Name'))]"
+                          }
+                        ],
+                        "loadBalancerInboundNatPools": [
+                          {
+                            "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('LB Name')), '/inboundNatPools/', variables('NAT Pool Name'))]"
+                          }
+                        ],
+                        "applicationGatewayBackendAddressPools": [
+                          {
+                            "id": "[parameters('App Gateway Backend Pool ID')]"
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "extensionProfile": {
+            "extensions": [
+              {
+                "name": "VM-DSC",
+                "properties": {
+                  "publisher": "Microsoft.Powershell",
+                  "type": "DSC",
+                  "typeHandlerVersion": "2.20",
+                  "autoUpgradeMinorVersion": true,
+                  "settings": {
+                    "configuration": {
+                      "url": "[parameters('Dsc Url')]",
+                      "script": "TargetConfiguration.ps1",
+                      "function": "CookieApp"
+                    },
+                    "configurationArguments": {
+                      "content": "[concat('App-', parameters('App Name'))]",
+                      "sub": "[parameters('App Name')]"
+                    }
+                  },
+                  "protectedSettings": {
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
