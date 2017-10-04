@@ -2,80 +2,10 @@
     "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "omsRecoveryVaultName": {
+        "azMgmtPrefix": {
             "type": "string",
             "metadata": {
-                "description": "Assign a name for the ASR Recovery Vault"
-            }
-        },
-        "omsRecoveryVaultRegion": {
-            "type": "string",
-            "defaultValue": "West Europe",
-            "allowedValues": [
-                "West US",
-                "East US",
-                "North Europe",
-                "West Europe",
-                "Brazil South",
-                "East Asia",
-                "Southeast Asia",
-                "North Central US",
-                "South Central US",
-                "Japan East",
-                "Japan West",
-                "Australia East",
-                "Australia Southeast",
-                "Central US",
-                "East US 2",
-                "Central India",
-                "South India"
-            ],
-            "metadata": {
-                "description": "Specify the region for your Recovery Vault"
-            }
-        },
-        "omsWorkspaceName": {
-            "type": "string",
-            "metadata": {
-                "description": "Assign a name for the Log Analytic Workspace Name"
-            }
-        },
-        "omsWorkspaceRegion": {
-            "type": "string",
-            "defaultValue": "West Europe",
-            "allowedValues": [
-                "East US",
-                "West Europe",
-                "Southeast Asia",
-                "Australia Southeast"
-            ],
-            "metadata": {
-                "description": "Specify the region for your Workspace"
-            }
-        },
-        "omsAutomationAccountName": {
-            "type": "string",
-            "metadata": {
-                "description": "Assign a name for the Automation account"
-            }
-        },
-        "omsAutomationRegion": {
-            "type": "string",
-            "defaultValue": "West Europe",
-            "allowedValues": [
-                "Japan East",
-                "East US 2",
-                "West Europe",
-                "Southeast Asia",
-                "South Central US",
-                "North Europe",
-                "Canada Central",
-                "Australia Southeast",
-                "Central India",
-                "Japan East"
-            ],
-            "metadata": {
-                "description": "Specify the region for your Automation account"
+                "description": "Provide a prefix for the Azure mgmt. services that will be created"
             }
         },
         "instanceCount": {
@@ -86,50 +16,42 @@
                 "description": "Specify the number of VMs to create"
             }
         },
-        "vmNameSuffix": {
+        "vmNamePrefix": {
             "type": "string",
             "defaultValue": "az1demo",
             "metadata": {
-                "description": "Assing a suffix for the VMs you will create"
+                "description": "Assing a prefix for the VMs you will create"
             }
         },
         "platform": {
             "type": "string",
-            "defaultValue": "Windows",
+            "defaultValue": "WinSrv",
             "allowedValues": [
-                "Windows",
+                "WinSrv",
                 "Linux"
             ],
             "metadata": {
-                "description": "Select the OS type to deploy"
+                "description": "Select the OS type to deploy."
             }
-        },
-        "vmSize": {
-            "type": "string",
-            "defaultValue": "Standard_D1",
-            "allowedValues": [
-                "Standard_A1",
-                "Standard_A2",
-                "Standard_A3",
-                "Standard_A4",
-                "Standard_A5",
-                "Standard_A6",
-                "Standard_D1",
-                "Standard_D2",
-                "Standard_D3_v2",
-                "Standard_D4_v2",
-                "Standard_D5_v2"
-            ]
         },
         "username": {
             "type": "string",
-            "defaultValue": "azureadmin"
+            "defaultValue": "azureadmin",
+            "metadata": {
+                "description": "Assign a username to the VMs. Default will be 'azureadmin'."
+            }
         },
-        "pwd": {
-            "type": "securestring"
+        "pwdOrSsh": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Specify pwd if platform is WinSrv, or ssh if Linux."
+            }
         },
         "vmResourceGroup": {
-            "type": "string"
+            "type": "string",
+            "metadata": {
+                "description": "Specify the name of an existing Resource Group where the VMs will be deployed."
+            }
         }
     },
     "variables": {
@@ -143,10 +65,70 @@
             "mgmtDashboards": "[uri(deployment().properties.templateLink.uri, 'nestedtemplates/mgmtDashboards.json')]"
         },
         "resourceNames": {
-            "omsWorkspace": "[concat(parameters('omsWorkspaceName'), uniquestring(resourceGroup().name, '-oms'))]",
-            "azureAutomation": "[concat(parameters('omsAutomationAccountName'), uniquestring(resourceGroup().name, '-auto'))]",
-            "azureRecoveryServices": "[concat(parameters('omsRecoveryVaultName'), uniquestring(resourceGroup().name, '-recovery'))]"
-        }
+            "omsWorkspace": "[concat(parameters('azMgmtPrefix'), uniquestring(resourceGroup().name, '-oms'))]",
+            "azureAutomation": "[concat(parameters('azMgmtPrefix'), uniquestring(resourceGroup().name, '-auto'))]",
+            "azureRecoveryServices": "[concat(parameters('azMgmtPrefix'), uniquestring(resourceGroup().name, '-recovery'))]"
+        },
+        "azMgmtLocationMap": {
+            "eastasia": "southeastasia",
+            "southeastasia": "southeastasia",
+            "centralus": "westcentralus",
+            "eastus": "eastus",
+            "eastus2": "eastus",
+            "westus": "westcentralus",
+            "northcentralus": "westcentralus",
+            "southcentralus": "westcentralus",
+            "northeurope": "westeurope",
+            "westeurope": "westeurope",
+            "japanwest": "southeastasia",
+            "japaneast": "southeastasia",
+            "brazilsouth": "eastus",
+            "australiaeast": "australiasoutheast",
+            "australiasoutheast": "australiasoutheast",
+            "southindia": "southeastasia",
+            "centralindia": "southeastasia",
+            "westindia": "southeastasia",
+            "canadacentral": "eastus",
+            "canadaeast": "eastus",
+            "uksouth": "westeurope",
+            "ukwest": "westeurope",
+            "westcentralus": "westcentralus",
+            "westus2": "westcentralus",
+            "koreacentral": "southeastasia",
+            "koreasouth": "southeastasia",
+            "eastus2euap": "eastus"
+        },
+        "azMgmtLocation": "[variables('azMgmtLocationMap')[resourceGroup().location]]",
+        "azAutoLocationMap": {
+            "eastasia": "southeastasia",
+            "southeastasia": "southeastasia",
+            "centralus": "westcentralus",
+            "eastus": "eastus2",
+            "eastus2": "eastus2",
+            "westus": "westcentralus",
+            "northcentralus": "westcentralus",
+            "southcentralus": "southcentralus",
+            "northeurope": "westeurope",
+            "westeurope": "westeurope",
+            "japanwest": "southeastasia",
+            "japaneast": "southeastasia",
+            "brazilsouth": "eastus2",
+            "australiaeast": "australiasoutheast",
+            "australiasoutheast": "australiasoutheast",
+            "southindia": "southeastasia",
+            "centralindia": "southeastasia",
+            "westindia": "southeastasia",
+            "canadacentral": "eastus2",
+            "canadaeast": "eastus2",
+            "uksouth": "westeurope",
+            "ukwest": "westeurope",
+            "westcentralus": "westcentralus",
+            "westus2": "westcentralus",
+            "koreacentral": "southeastasia",
+            "koreasouth": "southeastasia",
+            "eastus2euap": "eastus2"
+        },
+        "azAutoLocation": "[variables('azAutoLocationMap')[resourceGroup().location]]"               
     },
     "resources": [
         {
@@ -165,7 +147,7 @@
                         "value": "[variables('resourceNames').omsWorkspace]"
                     },
                     "omsWorkspaceRegion": {
-                        "value": "[parameters('omsWorkspaceRegion')]"
+                        "value": "[variables('azMgmtLocation')]"
                     }
                 }
             }
@@ -186,7 +168,7 @@
                         "value": "[variables('resourceNames').azureRecoveryServices]"
                     },
                     "omsRecoveryVaultRegion": {
-                        "value": "[parameters('omsRecoveryVaultRegion')]"
+                        "value": "[variables('azMgmtLocation')]"
                     }
                 }
             }
@@ -210,7 +192,7 @@
                         "value": "[variables('resourceNames').azureAutomation]"
                     },
                     "omsAutomationRegion": {
-                        "value": "[parameters('omsAutomationRegion')]"
+                        "value": "[variables('azAutoLocation')]"
                     },
                     "omsRecoveryVaultName": {
                         "value": "[variables('resourceNames').azureRecoveryServices]"
@@ -239,7 +221,7 @@
                 "value": "[variables('resourceNames').azureAutomation]"
               },
               "automationRegion": {
-                "value": "[parameters('omsAutomationRegion')]"
+                "value": "[variables('azAutoLocation')]"
               }
             }
           }          
@@ -262,7 +244,7 @@
                 "value": "[variables('resourceNames').azureAutomation]"
               },
               "omsAutomationRegion": {
-                "value": "[parameters('omsAutomationRegion')]"
+                "value": "[variables('azAutoLocation')]"
               },
               "omsWorkspaceName": {
                 "value": "[variables('resourceNames').omsWorkspace]"
@@ -277,7 +259,8 @@
             "resourceGroup": "[parameters('vmResourceGroup')]",
             "dependsOn": [
               "omsWorkspace",
-              "omsRecoveryServices"
+              "omsRecoveryServices",
+              "dscConfigs"
             ],
             "properties": {
                 "mode": "Incremental",
@@ -289,32 +272,32 @@
                     "instanceCount": {
                         "value": "[parameters('instanceCount')]"
                     },
-                    "vmNameSuffix": {
-                        "value": "[parameters('vmNameSuffix')]"
+                    "vmNamePrefix": {
+                        "value": "[parameters('vmNamePrefix')]"
                     },
                     "platform": {
                         "value": "[parameters('platform')]"
                     },
-                    "vmSize": {
-                        "value": "[parameters('vmSize')]"
-                    },
                     "userName": {
                         "value": "[parameters('userName')]"
                     },
-                    "pwd": {
-                        "value": "[parameters('pwd')]"
+                    "pwdOrSsh": {
+                        "value": "[parameters('pwdOrSsh')]"
                     },
                     "omsRecoveryVaultName": {
                         "value": "[variables('resourceNames').azureRecoveryServices]"
                     },
                     "omsRecoveryVaultRegion": {
-                        "value": "[parameters('omsRecoveryVaultRegion')]"
+                        "value": "[variables('azMgmtLocation')]"
                     },
                     "omsResourceGroup": {
                         "value": "[resourceGroup().name]"
                     },
                     "omsWorkspaceName": {
                         "value": "[variables('resourceNames').omsWorkspace]"
+                    },
+                    "automationAccountName": {
+                        "value": "[variables('resourceNames').azureAutomation]"
                     }
                 }
             }

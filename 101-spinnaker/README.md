@@ -20,8 +20,8 @@ Once the VM has been deployed, note down the DNS Name generated in the Azure por
 
 ## C. Configure Spinnaker
 In Azure, Spinnaker can target a Kubernetes cluster or VM Scale Sets.
-- To target a Kubernetes cluster, follow instructions [here](https://aka.ms/azspinkubecreate) to deploy a Kubernetes cluster and [here](http://www.spinnaker.io/v1.0/docs/target-deployment-configuration#section-kubernetes) to configure Spinnaker.
-- To target VM Scale Sets, follow instructions [here](http://www.spinnaker.io/v1.0/docs/target-deployment-configuration#section-azure) to configure Spinnaker.
+- To target a Kubernetes cluster, follow instructions [here](https://aka.ms/azspinkubecreate) to deploy a Kubernetes cluster and [here](https://www.spinnaker.io/setup/providers/kubernetes/) to configure Spinnaker.
+- To target VM Scale Sets, follow instructions [here](https://www.spinnaker.io/setup/providers/azure/) to configure Spinnaker.
 
 ## D. Setup SSH port forwarding
 Once you have configured Spinnaker, you need to setup port forwarding to view the Spinnaker UI on your local machine. If you do not know the full DNS name of your instance, go to the Portal and find it in the deployment outputs here: `Resource Groups > {Resource Group Name} > Deployments > {Deployment Name, usually 'Microsoft.Template'} > Outputs`
