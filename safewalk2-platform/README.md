@@ -55,7 +55,7 @@ The Gateway VM will be created at the DMZ subnet.
 
 The main components of the Safewalk Gateway consists of:
 
-##### SSO (SAML IdP v2) #####
+##### * SSO (SAML IdP v2) #####
 Provides Single Sign-On (SSO) and integration with third party web-based applications over the SAML v2 standard protocol.
 
 Single Single sign-on (SSO) is provided across all the SAML applications that are integrated with the same Safewalk Gateway.
@@ -67,7 +67,7 @@ Benefits of using single sign-on include:
 * Reducing time spent re-entering passwords for the same identity
 * Reducing IT costs due to lower number of IT help desk calls about passwords
 
-General SAML authentication flow:
+**General SAML authentication flow:**
 1. User generates a code (be it its static password, One-Time-Password from a mobile app/email/sms or from
 a physical device);
 2. User browses to the the application (that is enabled as a SAML SP);
@@ -78,13 +78,13 @@ is prompted to enter its credentials;
 6. Assuming that the credentials have been verified successfully (i.e. Access-Accept) the user is granted access
 to the application;
 
-##### Registration-Gateway #####
+##### * Registration-Gateway #####
 For facilitating the over-the-air registration method of mobile applications.
 
-##### Safewalk server authentication api #####
+##### * Safewalk server authentication api #####
 A proxy to the Safewalk server authentication api for external applications that do not support standard authentication protocols.
 
-General authentication flow:
+**General authentication flow:**
 1. User generates a code (be it its static password, One-Time-Password from a mobile app/email/sms or from
 a physical device);
 2. User browses to the address of the organization NAS (that is equipped with a RADIUS client), where he is
@@ -108,7 +108,7 @@ The first thing you will need to do before you can deploy Safewalk using the ARM
 
 Login into the Azure portal (https://portal.azure.com)
 
-Create or select a blob storage account on the **same region** where you plan to deploy the Safewalk2 framework. It's recommended that the VHD Images live in a separate resource group in case you need to delete/move the system components.
+Create or select a blob storage account on the **same region** where you plan to deploy the Safewalk2 framework. It's recommended that the VHD Images live in a separate resource group in case you need to delete/move the system components and keep the images for future deployments.
 Then add a container to copy/upload the VHD images into.
 
 You can use the storage tool AzCopy to get a copy of the custom VHD images in your container. <a href="http://aka.ms/downloadazcopy" target="_blank">Download and install the latest version of AzCopy</a>
@@ -223,30 +223,43 @@ Second Safewalk Server and Safewalk Gateway) and execute the following procedure
 by following the instructions below:
 * Connect to the appliance using SSH
 * Open the file /etc/ntp.conf
->> vi /etc/ntp.conf
+```bash
+vi /etc/ntp.conf
+```
 Add the following line for each NTP server you would like to add:
 >> server <NTP_SERVER_ADDRESS>
 For example:
->> # ntp servers
->> server 0.pool.ntp.org
->> server 1.pool.ntp.org
->> server 2.pool.ntp.org
->> server 3.pool.ntp.org
+
+```
+# ntp servers
+server 0.pool.ntp.org
+server 1.pool.ntp.org
+server 2.pool.ntp.org
+server 3.pool.ntp.org
+```
 
 * Restart the NTP service by executing the following command:
->> service ntp restart
+```bash
+service ntp restart
+```
 
 **Set your geographical area** (defaults to ETC/UTC):
 * Connect to the appliance using SSH and execute the following command:
->> dpkg-reconfigure tzdata
+```bash
+dpkg-reconfigure tzdata
+```
 Follow the guidelines of the command.
 * Execute the following command so that the management console will read the updated timezone:
->> service apache2 restart
+```bash
+service apache2 restart
+```
 
 **Update the system with the latest security updates**
 * Make sure you have Internet connection from the server.
 * Connect to the appliance using SSH and execute the following command:
->> install-security-updates
+```bash
+install-security-updates
+```
 
 #### Initial configuration on the superadmin console ####
 
