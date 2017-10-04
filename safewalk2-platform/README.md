@@ -10,10 +10,10 @@
 To deploy this template using the scripts from the root of this repo:
 
 ```PowerShell
-.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'westus' -ArtifactsStagingDirectory 'safewalk2-platform' -UploadArtifacts 
+.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'centralus' -ArtifactsStagingDirectory 'safewalk2-platform' -UploadArtifacts 
 ```
 ```bash
-azure-group-deploy.sh -a safewalk2-platform -l westus -u
+azure-group-deploy.sh -a safewalk2-platform -l centralus -u
 ```
 
 This template deploys a **Safewalk2 platform**. The **Safewalk2 Platform** is an **Identity Manager and authentication system solution**
@@ -42,23 +42,12 @@ To get use this Safewalk2 platform you'll need to copy or upload the VM's VHD im
 
 ### Uploading the Safewalk Server and Safewalk Gateway VHD images
 
-The first thing you will need to do before you can deploy Safewalk using the ARM template is to upload the Safewalk Server and Safewalk Gateway VHD images to your Azure subscription by following the steps below:
-
-Download the Safewalk Server and Safewalk Gateway VHD images to your local machine.
+The first thing you will need to do before you can deploy Safewalk using the ARM template is to copy or upload the Safewalk Server and Safewalk Gateway VHD images to your Azure subscription by following the steps below:
 
 Login into the Azure portal (https://portal.azure.com)
 
-If you plan to deploy Safewalk into an existing Resource group select the resource group you would like to use.
-
-If you would like to create a new Resource group for the Safewalk deployment select + New on the portal and type resource group in the search box that appears. Now create the new resource group according to your preferences.
-
-Azure new resource group
-
-In the Resource group that will be used to deploy Safewalk you can choose to use an existing blob storage account that is attached to the Resource group or create a new blob Storage account (by selecting the + Add button on the Resource group Overview page and typing Storage account in the search box that appears)
-
-Azure new blob storage account
-
-In the Resource group that will be used to deploy Safewalk choose the blob Storage account and add a container to upload the VHD images into.
+Create or select a blob storage account on the **same region** where you plan to deploy the Safewalk2 framework. It's recommended that the VHD Images live in a separate resource group in case you need to delete/move the system components.
+Then add a container to copy/upload the VHD images into.
 
 You can use the storage tool AzCopy to get a copy of the custom VHD images in your container. <a href="http://aka.ms/downloadazcopy" target="_blank">Download and install the latest version of AzCopy</a>
 
@@ -79,8 +68,13 @@ and Upload it manually as a Page Blob into your storage account container.
 
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
 
-### Template parameters
-Complete it ...
+### Template form
+
+If you plan to deploy Safewalk into an existing Resource group select the resource group you would like to use.
+
+If you would like to create a new Resource group for the Safewalk deployment select + New on the portal and type resource group in the search box that appears. Now create the new resource group according to your preferences.
+
+
 
 ## Usage
 
