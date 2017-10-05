@@ -1,4 +1,4 @@
-# Safewalk2 platform
+# Safewalk IAM solution
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Faltipeak%2Fazure-quickstart-templates%2Fsafewalk2-platform-beta-local%2Fsafewalk2-platform%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
@@ -16,13 +16,13 @@ To deploy this template using the scripts from the root of this repo:
 azure-group-deploy.sh -a safewalk2-platform -l centralus -u
 ```
 
-This template deploys a **Safewalk2 platform**. The **Safewalk2 Platform** is an **Identity Manager and authentication system solution**
+This template deploys the **Safewalk platform** in your Azure subscription.
 
-`Tags: Safewalk , Altipeak, Authentication, 2Factor, TOTP, OATH2, Identity, Strong, Secure`
+`Tags: Safewalk , Altipeak, Authentication, 2Factor, TOTP, OATH2, Identity, Strong, Secure, IAM`
 
 ## Solution overview and deployed resources
 
-Safewalk platform is an Identity Management solution with focus on (2FA) Strong authentication
+**Safewalk** is an ** Identity and Access Management (IAM) solution** with focus on (2FA) Strong authentication.
 
 This document includes a general overview and quick installation instructions for a single topology that is the most commonly used. For more advanced configuration, administration and maintenance of the system as well as known issues and troubleshooting please refer to the full user manual.
 
@@ -30,23 +30,23 @@ The following resources are deployed as part of the solution
 
 ### Virtual Network Layout
 The virtual network will consists on three subnets:
-* DMZ subnet - Subnetwork accesible from the Internet using a Public static IP. It contains the Gateway VM and is regulated with the DMZ Network Security Group.
-* LAN subnet - This subnetwork only has an internal access and only allowed ports are accesible from the Gateway.
-* Gateway Subnet - This subnetwork is the default Azure one used to create virtual network connections like vNet <-> vNet connections or Point <-> Site VPN connections.
+* DMZ subnet - This subnet is accesible from the Internet using a Public static IP. It contains the Gateway VM which is regulated with the DMZ Network Security Group.
+* LAN subnet - This subnet only allows internal access and only permitted ports are accesible from the DMZ subnet.
+* Gateway Subnet - This subnet is a well known predefined Azure one and can be used to create virtual network connections like **vNet<->vNet** or **Point<->Site** VPN connections.
 
 #### Safewalk server VM
 The Safewalk server VM is installed inside the LAN subnet. It's recommended to access it using a VPN. If cluster is enabled, 2 VMs will be created in the same Availability Set (different physical machines).
 
-#### * Super-Admin Console ####
+####* Super-Admin Console
 A web based interface that provides access to the general configuration of the system, like LDAP/AD connectivity to users or groups, import of new licenses, creating RADIUS clients and more. The main idea of this interface is to provide access for the highest authority to perform tasks that are not needed on a day to day basis and require a relatively high level of knowledge with the system and the organization architecture.
 
-#### * Management Console ####
+####* Management Console
 A web based interface that provides access to manage users, their authentication settings, view transactions and more. The main idea of this interface is to provide access for helpdesk personnel or system administrators to perform tasks that are needed frequently but has no system-wide impact.
 
-#### * Self-Service Portal ####
+####* Self-Service Portal
 A web based interface that provides access to end users to register their authentication device.
 
-#### * RADIUS Server ####
+####* RADIUS Server
 Remote Authentication Dial In User Service (RADIUS) is a networking protocol that provides centralized Authentication, Authorization, and Accounting (AAA) management for users that connect and use a network service. The Remote Access Server, the Virtual Private Network server, the Network switch with port-based authentication, and the Network Access Server (NAS), are all gateways that control access to the network, and all have a RADIUS client component that communicates with the RADIUS server. RADIUS is often the backend of choice for 802.1X authentication as well (see http://en.wikipedia.org/wiki/RADIUS for more details).
 
 #### Safewalk Gateway VM
@@ -55,7 +55,7 @@ The Gateway VM will be created at the DMZ subnet.
 
 The main components of the Safewalk Gateway consists of:
 
-##### * SSO (SAML IdP v2) #####
+#####* SSO (SAML IdP v2)
 Provides Single Sign-On (SSO) and integration with third party web-based applications over the SAML v2 standard protocol.
 
 Single Single sign-on (SSO) is provided across all the SAML applications that are integrated with the same Safewalk Gateway.
@@ -78,10 +78,10 @@ is prompted to enter its credentials;
 6. Assuming that the credentials have been verified successfully (i.e. Access-Accept) the user is granted access
 to the application;
 
-##### * Registration-Gateway #####
+#####* Registration-Gateway
 For facilitating the over-the-air registration method of mobile applications.
 
-##### * Safewalk server authentication api #####
+#####* Safewalk server authentication api
 A proxy to the Safewalk server authentication api for external applications that do not support standard authentication protocols.
 
 **General authentication flow:**
@@ -95,7 +95,6 @@ prompted to enter its credentials;
 to the relevant application;
 
 
-###
 
 ## Prerequisites
 
@@ -111,15 +110,17 @@ Login into the Azure portal (https://portal.azure.com)
 Create or select a blob storage account on the **same region** where you plan to deploy the Safewalk2 framework. It's recommended that the VHD Images live in a separate resource group in case you need to delete/move the system components and keep the images for future deployments.
 Then add a container to copy/upload the VHD images into.
 
-You can use the storage tool AzCopy to get a copy of the custom VHD images in your container. <a href="http://aka.ms/downloadazcopy" target="_blank">Download and install the latest version of AzCopy</a>
+You can install in your machine the storage tool **AzCopy** to make a copy of the custom VHD images in your container. <a href="http://aka.ms/downloadazcopy" target="_blank">Download and install the latest version of AzCopy</a>
 
-Please replace {dest_url} with your information and provide the storage account access {dest_key2}.
+After installing **AzCopy** on Windows using the installer, open a command window and navigate to the AzCopy installation directory on your computer - where the AzCopy.exe executable is located (normally at **%ProgramFiles(x86)%\Microsoft SDKs\Azure\AzCopy**)
+
+Use the following command replacing the **{dest_url}** with your container information (copy it from the container properties), and provide the storage account access key2 **{dest_key2}** (copy it from your storage account **Access Keys** section).
 
 ```PowerShell
 AzCopy /Source:https://safewalk2.blob.core.windows.net/images /Dest:{dest_url} /SourceKey:i4dCa1J6O1TriXgGFrS2V5N/Zjw6GU9JR8dckydWHWaodLWDmHoDFQA0lrEuDLfKZgE0owpwTPThXMrmYLIGtQ== /DestKey:{dest_key2} /S
 ```
 
-After copy is finished, please refresh your container and find the copied VHD files.
+After the process is finished, please refresh your container and find the copied VHD files.
 
 A different option is to download the images to your local drive from:
 <a href="https://safewalk2.blob.core.windows.net/images/Safewalk.vhd">Safewalk VHD image</a>
@@ -213,9 +214,9 @@ Safewalk servers are accesible from SSH using the specified credentials through 
 
 The Gateway SSH is only accesible from the Safewalk nodes. Only web services are accesible from the Internet at port 443
 
-### Post installation setup ###
+### Post installation setup
 
-#### Initial configuration after deployment ####
+#### Initial configuration after deployment
 When the deployment completes connect to each of the deployed machines over SSH (First Safewalk Server,
 Second Safewalk Server and Safewalk Gateway) and execute the following procedures:
 
@@ -261,7 +262,7 @@ service apache2 restart
 install-security-updates
 ```
 
-#### Initial configuration on the superadmin console ####
+#### Initial configuration on the superadmin console
 
 **Connect to the super-admin:**
 * Open a browser and enter the address of the super-admin console (i.e.
