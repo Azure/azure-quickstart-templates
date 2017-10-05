@@ -1,4 +1,6 @@
-# Azure Spinnaker to Kubernetes [![Build Status](http://devops-ci.westcentralus.cloudapp.azure.com/job/qs/job/201-spinnaker-acr-k8s/badge/icon)](http://devops-ci.westcentralus.cloudapp.azure.com/blue/organizations/jenkins/qs%2F201-spinnaker-acr-k8s/activity)
+# Azure Spinnaker to Kubernetes [DEPRECATED]
+
+**IMPORTANT**: This template has been deprecated. Please use the [Azure Spinnaker](https://github.com/Azure/azure-quickstart-templates/tree/master/101-spinnaker) or [Continuous Deployment to Kubernetes](https://github.com/Azure/azure-quickstart-templates/tree/master/301-jenkins-acr-spinnaker-k8s) templates instead.
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-spinnaker-acr-k8s%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
@@ -18,74 +20,38 @@ This template allows you to deploy an instance of Spinnaker on a Linux Ubuntu 14
     ```bash
     az login
     az account set --subscription <Subscription ID>
-    az ad sp create-for-rbac --role="Contributor" --scopes="/subscriptions/<Subscription ID>" --name "Spinnaker"
+    az ad sp create-for-rbac --name "Spinnaker"
     ```
     > NOTE: You can run `az account list` after you login to get a list of subscription IDs for your account.
 
 ## B. Setup SSH port forwarding
-You need to setup port forwarding to view the Spinnaker UI on your local machine.
+You need to setup port forwarding to view the Spinnaker UI on your local machine. If you do not know the full DNS name of your instance, go to the Portal and find it in the deployment outputs here: `Resource Groups > {Resource Group Name} > Deployments > {Deployment Name, usually 'Microsoft.Template'} > Outputs`
 
 ### If you are using Windows:
-1. Install Putty or use any bash shell for Windows (if using a bash shell, follow the instructions for Linux or Mac).
+Install Putty or use any bash shell for Windows (if using a bash shell, follow the instructions for Linux or Mac).
+
+Run this command:
+```
+putty.exe -ssh -i <path to private key file> -L 9000:localhost:9000 -L 8084:localhost:8084 -L 8001:localhost:8001 <User name>@<Public DNS name of instance you just created>
+```
+
+Or follow these manual steps:
 1. Launch Putty and navigate to 'Connection > SSH > Tunnels'
 1. In the Options controlling SSH port forwarding window, enter 8084 for Source port. Then enter 127.0.0.1:8084 for the Destination. Click Add.
-1. Repeat this process for ports: 8087 and 9000.
+1. Repeat this process for port 9000 and 8001.
 1. Navigate to 'Connection > SSH > Auth' and enter your private key file for authentication. For more information on using ssh keys with Putty, see [here](https://docs.microsoft.com/azure/virtual-machines/virtual-machines-linux-ssh-from-windows#create-a-private-key-for-putty).
 1. Click Open to establish the connection.
 
 ### If you are using Linux or Mac:
-1. Add this to your ~/.ssh/config
-    ```
-    Host spinnaker-start
-      HostName <Public DNS name of instance you just created>
-      IdentityFile <Path to your key file>
-      ControlMaster yes
-      ControlPath ~/.ssh/spinnaker-tunnel.ctl
-      RequestTTY no
-      # Spinnaker/deck
-      LocalForward 9000 127.0.0.1:9000
-      # Spinnaker/gate
-      LocalForward 8084 127.0.0.1:8084
-      # Default port if running 'kubectl proxy' on Spinnaker VM
-      LocalForward 8001 127.0.0.1:8001
-      User <User name>
-
-    Host spinnaker-stop
-      HostName <Public DNS name of instance you just created>
-      IdentityFile <Path to your key file>
-      ControlPath ~/.ssh/spinnaker-tunnel.ctl
-      RequestTTY no
-    ```
-1. Create a spinnaker-tunnel.sh file with the following content and give it execute permission using `chmod +x spinnaker-tunnel.sh`
-    ```bash
-    #!/bin/bash
-
-    socket=$HOME/.ssh/spinnaker-tunnel.ctl
-
-    if [ "$1" == "start" ]; then
-      if [ ! \( -e ${socket} \) ]; then
-        echo "Starting tunnel to Spinnaker..."
-        ssh -f -N spinnaker-start && echo "Done."
-      else
-        echo "Tunnel to Spinnaker running."
-      fi
-    fi
-
-    if [ "$1" == "stop" ]; then
-      if [ \( -e ${socket} \) ]; then
-        echo "Stopping tunnel to Spinnaker..."
-        ssh -O "exit" spinnaker-stop && echo "Done."
-      else
-        echo "Tunnel to Spinnaker stopped."
-      fi
-    fi
-    ```
-1. Call `./spinnaker-tunnel.sh start` to start your tunnel
-1. Call `./spinnaker-tunnel.sh stop` to stop your tunnel
+Run this command:
+```bash
+ssh -i <path to private key file> -L 9000:localhost:9000 -L 8084:localhost:8084 -L 8001:localhost:8001 <User name>@<Public DNS name of instance you just created>
+```
+> NOTE: Port 9000 and 8084 correspond to Spinnaker's deck and gate services, respectively. Port 8001 is used to view the dashboard for your Kubernetes cluster - just run `kubectl proxy` on the VM before navigating to http://localhost:8001/ui on your local machine.
 
 ## C. Connect to Spinnaker
 
-1. After you have started your tunnel, navigate to `http://localhost:9000/` on your local machine.
+1. After you have started your tunnel, navigate to http://localhost:9000/ on your local machine.
 1. If you included a Kubernetes Pipeline when creating the template, navigate to 'Applications -> {Application Name} -> Pipelines' to see your pipeline. Follow steps [here](http://www.spinnaker.io/docs/kubernetes-source-to-prod#section-1-create-a-spinnaker-application) to create a pipeline manually.
 1. You can trigger the pipeline by pushing an image with a new tag to the configured repository or simply clicking 'Start Manual Execution' and selecting an existing tag.
   1. By default, Spinnaker has been targeted to use the [repository](https://hub.docker.com/r/lwander/spin-kub-demo/) in the sample pipeline. Follow steps [here](http://www.spinnaker.io/v1.0/docs/target-deployment-configuration#section-docker-registry) to target different repositories.
