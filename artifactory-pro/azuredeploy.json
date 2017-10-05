@@ -2,12 +2,12 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "storageAccountName": {
+    "clusterName": {
       "type": "string",
-      "maxLength": 11,
       "metadata": {
-        "description": "Name of the Storage Account"
-      }
+        "description": "String used as a base for naming resources. Must be 3-61 characters in length and globally unique across Azure. A hash is prepended to this string for some resources, and resource-specific information is appended."
+      },
+      "maxLength": 61
     },
     "adminUsername": {
       "type": "string",
@@ -19,12 +19,6 @@
       "type": "securestring",
       "metadata": {
         "description": "Password of the Virtual Machine."
-      }
-    },
-    "dnsLabelPrefix": {
-      "type": "string",
-      "metadata": {
-        "description": "DNS Label for the Public IP. Must be lowercase. It should match with the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ or it will raise an error."
       }
     },
     "ubuntuOSVersion": {
@@ -39,14 +33,14 @@
         "description": "The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version. Allowed values: 12.04.5-LTS, 14.04.2-LTS, 15.10."
       }
     },
-    "templateLocation": {
+    "_artifactsLocation": {
       "type": "string",
       "metadata": {
         "description": "Base URI that includes template files."
       },
       "defaultValue": "https://raw.githubusercontent.com/jainishshah17/azure-quickstart-templates/master/artifactory-pro/"
     },
-    "gitToken": {
+    "_artifactsLocationSasToken": {
       "type": "string",
       "metadata": {
         "description": "Token to connect with Git repository. The value can be blank if no token is required."
@@ -100,27 +94,30 @@
     }
   },
   "variables": {
+    "namingInfix": "[toLower(substring(concat(parameters('clusterName'), uniqueString(resourceGroup().id)), 0, 9))]",
     "imagePublisher": "Canonical",
     "imageOffer": "UbuntuServer",
     "OSDiskName": "osdiskforlinuxsimple",
-    "nicName": "myVMNic",
-    "networkSecurityGroup": "myNsg",
+    "nicName": "[concat(variables('namingInfix'), 'nic')]",
+    "networkSecurityGroup": "[concat(variables('namingInfix'), 'nsg')]",
     "addressPrefix": "10.0.0.0/16",
-    "subnetName": "Subnet",
+    "subnetName": "[concat(variables('namingInfix'), 'subnet')]",
     "subnetPrefix": "10.0.0.0/24",
+    "storageAccountName": "[concat(variables('namingInfix'), 'storage')]",
     "storageAccountType": "Standard_LRS",
-    "publicIPAddressName": "myPublicIP",
+    "publicIPAddressName": "[concat(variables('namingInfix'), 'pip')]",
     "publicIPAddressType": "Dynamic",
-    "vmStorageAccountContainerName": "vhds",
+    "vmStorageAccountContainerName": "filestore",
+    "dnsLabelPrefix": "variables('namingInfix')",
     "vmName": "MyUbuntuVM",
     "vmSize": "Standard_D2_v3",
-    "virtualNetworkName": "MyVNET",
+    "virtualNetworkName": "[concat(variables('namingInfix'), 'vnet')]",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
     "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
     "apiVersion": "2015-06-15",
-    "_gitToken": "[concat('?token=', parameters('gitToken'))]",
+    "_artifactsLocationSasToken": "[concat('?token=', parameters('_artifactsLocationSasToken'))]",
     "dbTemplate": "azureDBDeploy.json",
-    "dbTemplateLocation": "[concat(parameters('templateLocation'), 'nested', '/', variables('dbTemplate'))]"
+    "dbTemplateLocation": "[concat(parameters('_artifactsLocation'), 'nested', '/', variables('dbTemplate'))]"
   },
   "resources": [
     {
@@ -209,7 +206,7 @@
     {
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[parameters('storageAccountName')]",
+      "name": "[variables('storageAccountName')]",
       "location": "[resourceGroup().location]",
       "properties": {
         "accountType": "[variables('storageAccountType')]"
@@ -223,7 +220,7 @@
       "properties": {
         "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
         "dnsSettings": {
-          "domainNameLabel": "[parameters('dnsLabelPrefix')]"
+          "domainNameLabel": "[variables('dnsLabelPrefix')]"
         }
       }
     },
@@ -286,7 +283,7 @@
       "name": "[variables('vmName')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
       ],
       "properties": {
@@ -308,7 +305,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
+              "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -330,7 +327,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[variables('dbTemplateLocation')]",
+          "uri": "[variables('db_artifactsLocation')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -371,11 +368,11 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[concat(parameters('templateLocation'), 'scripts/','install_artifactory.sh', variables('_gitToken'))]"
+            "[concat(parameters('_artifactsLocation'), 'scripts/','install_artifactory.sh', variables('_artifactsLocationSasToken'))]"
           ]
         },
         "protectedSettings": {
-          "commandToExecute": "[concat('sh install_artifactory.sh ',reference('Microsoft.Resources/deployments/deploySQLDB').outputs.jdbcConnString.value,' ',parameters('DB_Name'),' ',parameters('DB_Admin_User'),' ',parameters('DB_Admin_Password'),' ',parameters('storageAccountName'),' ',variables('vmStorageAccountContainerName'),' ',listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), variables('apiVersion')).key1)]"
+          "commandToExecute": "[concat('sh install_artifactory.sh ',reference('Microsoft.Resources/deployments/deploySQLDB').outputs.jdbcConnString.value,' ',parameters('DB_Name'),' ',parameters('DB_Admin_User'),' ',parameters('DB_Admin_Password'),' ',variables('storageAccountName'),' ',variables('vmStorageAccountContainerName'),' ',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), variables('apiVersion')).key1)]"
         }
       }
     }
