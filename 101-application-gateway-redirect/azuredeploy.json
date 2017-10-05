@@ -1,0 +1,311 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"virtualNetworkName": {
+			"type": "string",
+			"metadata": {
+				"description": "virtual network name"
+			}
+		},
+		"vnetAddressPrefix": {
+			"type": "string",
+			"defaultValue": "10.0.0.0/16",
+			"metadata": {
+				"description": "virtual network address range"
+			}
+		},
+		"subnetName": {
+			"type": "string",
+			"defaultValue": "subnet1",
+			"metadata": {
+				"description": "Subnet Name"
+			}
+		},
+		"subnetPrefix": {
+			"type": "string",
+			"defaultValue": "10.0.0.0/24",
+			"metadata": {
+				"description": "Subnet prefix"
+			}
+		},
+		"applicationGatewayName": {
+			"type": "string",
+			"defaultValue": "applicationGateway1",
+			"metadata": {
+				"description": "application gateway name"
+			}
+		},
+		"skuName": {
+			"type": "string",
+			"allowedValues": ["Standard_Small",
+			"Standard_Medium",
+			"Standard_Large"],
+			"defaultValue": "Standard_Medium",
+			"metadata": {
+				"description": "Sku Name"
+			}
+		},
+		"capacity": {
+			"type": "int",
+			"defaultValue": 2,
+			"metadata": {
+				"description": "application gateway instance count"
+			}
+		},
+		"backendIpAddress1": {
+			"type": "string",
+			"metadata": {
+				"description": "IP Address for Backend Server 1"
+			}
+		},
+		"backendIpAddress2": {
+			"type": "string",
+			"metadata": {
+				"description": "IP Address for Backend Server 2"
+			}
+		},
+		"pathMatch1": {
+			"type": "string",
+			"metadata": {
+				"description": "Path match string for Path Rule 1"
+			}
+		},
+		"certData": {
+			"type": "string",
+			"metadata": {
+				"description": "Base-64 encoded form of the .pfx file"
+			}
+		},
+		"certPassword": {
+			"type": "securestring",
+			"metadata": {
+				"description": "Password for .pfx certificate"
+			}
+		}
+	},
+	"variables": {
+		"publicIPAddressName": "[concat('publicIp',parameters('applicationGatewayName'))]",
+		"vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
+		"subnetRef": "[concat(variables('vnetID'),'/subnets/',parameters('subnetName'))]",
+		"publicIPRef": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]",
+		"applicationGatewayID": "[resourceId('Microsoft.Network/applicationGateways',parameters('applicationGatewayName'))]",
+		"apiVersion": "2017-03-01"
+	},
+	"resources": [{
+		"apiVersion": "[variables('apiVersion')]",
+		"type": "Microsoft.Network/publicIPAddresses",
+		"name": "[variables('publicIPAddressName')]",
+		"location": "[resourceGroup().location]",
+		"properties": {
+			"publicIPAllocationMethod": "Dynamic"
+		}
+	},
+	{
+		"apiVersion": "[variables('apiVersion')]",
+		"type": "Microsoft.Network/virtualNetworks",
+		"name": "[parameters('virtualNetworkName')]",
+		"location": "[resourceGroup().location]",
+		"properties": {
+			"addressSpace": {
+				"addressPrefixes": ["[parameters('vnetAddressPrefix')]"]
+			},
+			"subnets": [{
+				"name": "[parameters('subnetName')]",
+				"properties": {
+					"addressPrefix": "[parameters('subnetPrefix')]"
+				}
+			}]
+		}
+	},
+	{
+		"apiVersion": "2017-04-01",
+		"name": "[parameters('applicationGatewayName')]",
+		"type": "Microsoft.Network/applicationGateways",
+		"location": "[resourceGroup().location]",
+		"dependsOn": ["[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
+		"[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"],
+		"properties": {
+			"sku": {
+				"name": "[parameters('skuName')]",
+				"tier": "Standard",
+				"capacity": "[parameters('capacity')]"
+			},
+			"sslCertificates": [{
+				"name": "appGatewaySslCert",
+				"properties": {
+					"data": "[parameters('certData')]",
+					"password": "[parameters('certPassword')]"
+				}
+			}],
+			"gatewayIPConfigurations": [{
+				"name": "appGatewayIpConfig",
+				"properties": {
+					"subnet": {
+						"id": "[variables('subnetRef')]"
+					}
+				}
+			}],
+			"frontendIPConfigurations": [{
+				"name": "appGatewayFrontendIP",
+				"properties": {
+					"PublicIPAddress": {
+						"id": "[variables('publicIPRef')]"
+					}
+				}
+			}],
+			"frontendPorts": [{
+				"name": "appGatewayFrontendHttpPort1",
+				"properties": {
+					"Port": 80
+				}
+			},
+			{
+				"name": "appGatewayFrontendHttpsPort1",
+				"properties": {
+					"Port": 443
+				}
+			},
+			{
+				"name": "appGatewayFrontendHttpPort2",
+				"properties": {
+					"Port": 8080
+				}
+			}],
+			"backendAddressPools": [{
+				"name": "appGatewayBackendPool1",
+				"properties": {
+					"BackendAddresses": [{
+						"IpAddress": "[parameters('backendIpAddress1')]"
+					}]
+				}
+			},
+			{
+				"name": "appGatewayBackendPool2",
+				"properties": {
+					"BackendAddresses": [{
+						"IpAddress": "[parameters('backendIpAddress2')]"
+					}]
+				}
+			}],
+			"backendHttpSettingsCollection": [{
+				"name": "appGatewayBackendHttpSettings",
+				"properties": {
+					"Port": 80,
+					"Protocol": "Http"
+				}
+			}],
+			"httpListeners": [{
+				"name": "appGatewayHttpListener1",
+				"properties": {
+					"FrontendIPConfiguration": {
+						"Id": "[concat(variables('applicationGatewayID'), '/frontendIPConfigurations/appGatewayFrontendIP')]"
+					},
+					"FrontendPort": {
+						"Id": "[concat(variables('applicationGatewayID'), '/frontendPorts/appGatewayFrontendHttpPort1')]"
+					},
+					"Protocol": "Http"
+				}
+			},
+			{
+				"name": "appGatewayHttpsListener1",
+				"properties": {
+					"FrontendIPConfiguration": {
+						"Id": "[concat(variables('applicationGatewayID'), '/frontendIPConfigurations/appGatewayFrontendIP')]"
+					},
+					"FrontendPort": {
+						"Id": "[concat(variables('applicationGatewayID'), '/frontendPorts/appGatewayFrontendHttpsPort1')]"
+					},
+					"Protocol": "Https",
+					"SslCertificate": {
+						"Id": "[concat(variables('applicationGatewayID'), '/sslCertificates/appGatewaySslCert')]"
+					}
+				}
+			},
+			{
+				"name": "appGatewayHttpListener2",
+				"properties": {
+					"FrontendIPConfiguration": {
+						"Id": "[concat(variables('applicationGatewayID'), '/frontendIPConfigurations/appGatewayFrontendIP')]"
+					},
+					"FrontendPort": {
+						"Id": "[concat(variables('applicationGatewayID'), '/frontendPorts/appGatewayFrontendHttpPort2')]"
+					},
+					"Protocol": "Http"
+				}
+			}],
+			"redirectConfigurations": [{
+				"Name": "redirectConfig1",
+				"properties": {
+					"redirectType": "Temporary",
+					"targetListener": {
+						"id": "[concat(variables('applicationGatewayID'), '/httpListeners/appGatewayHttpsListener1')]"
+					}
+				}
+			},
+			{
+				"Name": "redirectConfig2",
+				"properties": {
+					"redirectType": "Temporary",
+					"targetUrl": "http://www.bing.com"
+				}
+			}],
+			"urlPathMaps": [{
+				"name": "urlPathMap1",
+				"properties": {
+					"defaultRedirectConfiguration": {
+						"id": "[concat(variables('applicationGatewayID'), '/redirectConfigurations/redirectConfig2')]"
+					},
+					"pathRules": [{
+						"name": "pathRule1",
+						"properties": {
+							"paths": ["[parameters('pathMatch1')]"],
+							"redirectConfiguration": {
+								"id": "[concat(variables('applicationGatewayID'), '/redirectConfigurations/redirectConfig1')]"
+							}
+						}
+					}]
+				}
+			}],
+			"requestRoutingRules": [{
+				"Name": "rule1",
+				"properties": {
+					"RuleType": "Basic",
+					"httpListener": {
+						"id": "[concat(variables('applicationGatewayID'), '/httpListeners/appGatewayHttpListener1')]"
+					},
+					"redirectConfiguration": {
+						"id": "[concat(variables('applicationGatewayID'), '/redirectConfigurations/redirectConfig1')]"
+					}
+				}
+			},
+			{
+				"Name": "rule2",
+				"properties": {
+					"RuleType": "Basic",
+					"httpListener": {
+						"id": "[concat(variables('applicationGatewayID'), '/httpListeners/appGatewayHttpsListener1')]"
+					},
+					"backendAddressPool": {
+						"id": "[concat(variables('applicationGatewayID'), '/backendAddressPools/appGatewayBackendPool1')]"
+					},
+					"backendHttpSettings": {
+						"id": "[concat(variables('applicationGatewayID'), '/backendHttpSettingsCollection/appGatewayBackendHttpSettings')]"
+					}
+				}
+			},
+			{
+				"Name": "rule3",
+				"properties": {
+					"RuleType": "PathBasedRouting",
+					"httpListener": {
+						"id": "[concat(variables('applicationGatewayID'), '/httpListeners/appGatewayHttpListener2')]"
+					},
+					"urlPathMap": {
+						"id": "[concat(variables('applicationGatewayID'), '/urlPathMaps/urlPathMap1')]"
+					}
+				}
+			}]
+		}
+	}]
+}
