@@ -1,206 +1,203 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-    "contentVersion": "1.0.0.0",
-    "parameters": {
-        "clusterName": {
-            "type": "string",
-            "metadata": {
-                "description": "The name of the HDInsight cluster to create."
-            }
-        },
-        "loginUsername": {
-            "type": "string",
-            "metadata": {
-                "description": "These credentials can be used to submit jobs to the cluster, log into cluster dashboards, log into Ambari, and SSH into the cluster."
-            }
-        },
-        "loginPassword": {
-            "type": "securestring",
-            "metadata": {
-                "description": "The password must be at least 10 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter."
-            }
-        },
-        "clusterNodeSize": {
-            "type": "string",
-            "defaultValue": "Standard_D12",
-            "allowedValues": [
-                "Standard_D12",
-                "Standard_D13",
-                "Standard_D14"
-            ],
-            "metadata": {
-                "description": "All nodes will be deployed using the specified hardware profile: D12(4 CPU Cores, 28GB of RAM), D13(8 CPU Cores, 56GB of RAM), D14(16 CPU Cores, 112 GB of RAM)."
-            }
-        },
-        "clusterWorkerNodeCount": {
-            "type": "int",
-            "defaultValue": 2,
-            "metadata": {
-                "description": "The number of worker nodes in the HDInsight cluster."
-            }
-        }
-     },
-    "variables": {
-        "defaultApiVersion": "2015-06-15",
-        "clusterApiVersion": "2015-03-01-preview",
-        "clusterType": "hadoop",
-        "clusterVnetSubnetName": "[concat(parameters('clusterName'),'-subnet')]",
-        "clusterVnetAddressSpace": "172.16.228.0/23",
-        "clusterVNetSubnetAddressRange": "172.16.229.0/24",
-        "clusterStorageAccountName": "[concat(parameters('clusterName'),'storeacc')]",
-        "clusterVNetName": "[concat(parameters('clusterName'),'-vnet')]",
-        "hadoopZookeeperSize": "Small",
-        "hbaseZookeeperSize": "Medium"
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "clusterName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the HDInsight cluster to create."
+      }
     },
-    "resources": [
-      {
-        "name": "[variables('clusterVNetName')]",
-        "type": "Microsoft.Network/virtualNetworks",
-        "location": "[resourceGroup().location]",
-        "apiVersion": "[variables('defaultApiVersion')]",
-        "dependsOn": [ ],
-        "tags": { },
-        "properties": {
-          "addressSpace": {
-            "addressPrefixes": [
-              "[variables('clusterVNetAddressSpace')]"
-            ]
-          },
-          "subnets": [
+    "loginUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "These credentials can be used to submit jobs to the cluster, log into cluster dashboards, log into Ambari, and SSH into the cluster."
+      }
+    },
+    "loginPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The password must be at least 10 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter."
+      }
+    },
+    "clusterNodeSize": {
+      "type": "string",
+      "defaultValue": "Standard_D12",
+      "allowedValues": [
+        "Standard_D12",
+        "Standard_D13",
+        "Standard_D14"
+      ],
+      "metadata": {
+        "description": "All nodes will be deployed using the specified hardware profile: D12(4 CPU Cores, 28GB of RAM), D13(8 CPU Cores, 56GB of RAM), D14(16 CPU Cores, 112 GB of RAM)."
+      }
+    },
+    "clusterWorkerNodeCount": {
+      "type": "int",
+      "defaultValue": 2,
+      "metadata": {
+        "description": "The number of worker nodes in the HDInsight cluster."
+      }
+    }
+  },
+  "variables": {
+    "defaultApiVersion": "2015-06-15",
+    "clusterApiVersion": "2015-03-01-preview",
+    "clusterType": "hadoop",
+    "clusterVnetSubnetName": "[concat(parameters('clusterName'),'-subnet')]",
+    "clusterVnetAddressSpace": "172.16.228.0/23",
+    "clusterVNetSubnetAddressRange": "172.16.229.0/24",
+    "clusterStorageAccountName": "[concat(parameters('clusterName'),'storeacc')]",
+    "clusterVNetName": "[concat(parameters('clusterName'),'-vnet')]",
+    "hadoopZookeeperSize": "Small",
+    "hbaseZookeeperSize": "Medium"
+  },
+  "resources": [
+    {
+      "name": "[variables('clusterVNetName')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [],
+      "tags": {},
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('clusterVNetAddressSpace')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('clusterVNetSubnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('clusterVNetSubnetAddressRange')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[variables('clusterStorageAccountName')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [],
+      "tags": {},
+      "properties": {
+        "accountType": "Standard_LRS"
+      }
+    },
+    {
+      "name": "[parameters('clusterName')]",
+      "type": "Microsoft.HDInsight/clusters",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-03-01-preview",
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/',variables('clusterStorageAccountName'))]",
+        "[concat('Microsoft.Network/virtualNetworks/',variables('clusterVNetName'))]"
+      ],
+      "tags": {},
+      "properties": {
+        "clusterVersion": "3.2",
+        "osType": "Linux",
+        "clusterDefinition": {
+          "kind": "[variables('clusterType')]",
+          "configurations": {
+            "gateway": {
+              "restAuthCredential.isEnabled": true,
+              "restAuthCredential.username": "[parameters('loginUsername')]",
+              "restAuthCredential.password": "[parameters('loginPassword')]"
+            },
+            "hive-site": {
+              "hive.metastore.client.connect.retry.delay": "5",
+              "hive.execution.engine": "mr",
+              "hive.security.authorization.manager": "org.apache.hadoop.hive.ql.security.authorization.DefaultHiveAuthorizationProvider"
+            }
+          }
+        },
+        "storageProfile": {
+          "storageaccounts": [
             {
-              "name": "[variables('clusterVNetSubnetName')]",
-              "properties": {
-                "addressPrefix": "[variables('clusterVNetSubnetAddressRange')]"
+              "name": "[concat(variables('clusterStorageAccountName'),'.blob.core.windows.net')]",
+              "isDefault": true,
+              "container": "[parameters('clusterName')]",
+              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('clusterStorageAccountName')), variables('defaultApiVersion')).key1]"
+            }
+          ]
+        },
+        "computeProfile": {
+          "roles": [
+            {
+              "name": "headnode",
+              "targetInstanceCount": "2",
+              "hardwareProfile": {
+                "vmSize": "[parameters('clusterNodeSize')]"
+              },
+              "osProfile": {
+                "linuxOperatingSystemProfile": {
+                  "username": "[parameters('loginUsername')]",
+                  "password": "[parameters('loginPassword')]"
+                }
+              },
+              "virtualNetworkProfile": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName'))]",
+                "subnet": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName')), '/subnets/', variables('clusterVNetSubnetName'))]"
+              },
+              "scriptActions": [
+                {
+                  "name": "Genome Analysis Platform -- ADAM",
+                  "uri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/hdinsight-genomics-adam/adam-installer-v03.sh",
+                  "parameters": ""
+                }
+              ]
+            },
+            {
+              "name": "workernode",
+              "targetInstanceCount": "[parameters('clusterWorkerNodeCount')]",
+              "hardwareProfile": {
+                "vmSize": "[parameters('clusterNodeSize')]"
+              },
+              "osProfile": {
+                "linuxOperatingSystemProfile": {
+                  "username": "[parameters('loginUsername')]",
+                  "password": "[parameters('loginPassword')]"
+                }
+              },
+              "virtualNetworkProfile": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName'))]",
+                "subnet": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName')), '/subnets/', variables('clusterVNetSubnetName'))]"
+              }
+            },
+            {
+              "name": "zookeepernode",
+              "targetInstanceCount": "3",
+              "hardwareProfile": {
+                "vmSize": "[variables(concat(variables('clusterType'),'ZookeeperSize'))]"
+              },
+              "osProfile": {
+                "linuxOperatingSystemProfile": {
+                  "username": "[parameters('loginUsername')]",
+                  "password": "[parameters('loginPassword')]"
+                }
+              },
+              "virtualNetworkProfile": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName'))]",
+                "subnet": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName')), '/subnets/', variables('clusterVNetSubnetName'))]"
               }
             }
           ]
         }
-      },
-      {
-        "name": "[variables('clusterStorageAccountName')]",
-        "type": "Microsoft.Storage/storageAccounts",
-        "location": "[resourceGroup().location]",
-        "apiVersion": "[variables('defaultApiVersion')]",
-        "dependsOn": [ ],
-        "tags": { },
-        "properties": {
-          "accountType": "Standard_LRS"
-        }
-      },
-      {
-        "name": "[parameters('clusterName')]",
-        "type": "Microsoft.HDInsight/clusters",
-        "location": "[resourceGroup().location]",
-        "apiVersion": "[variables('clusterApiVersion')]",
-        "dependsOn": [
-          "[concat('Microsoft.Storage/storageAccounts/',variables('clusterStorageAccountName'))]",
-          "[concat('Microsoft.Network/virtualNetworks/',variables('clusterVNetName'))]"
-        ],
-        "tags": { },
-        "properties": {
-          "clusterVersion": "3.2",
-          "osType": "Linux",
-          "clusterDefinition": {
-            "kind": "[variables('clusterType')]",
-
-            "configurations": {
-              "gateway": {
-                "restAuthCredential.isEnabled": true,
-                "restAuthCredential.username": "[parameters('loginUsername')]",
-                "restAuthCredential.password": "[parameters('loginPassword')]"
-              },
-              "hive-site": {
-                "hive.metastore.client.connect.retry.delay": "5",
-                "hive.execution.engine": "mr",
-                "hive.security.authorization.manager": "org.apache.hadoop.hive.ql.security.authorization.DefaultHiveAuthorizationProvider"
-              }
-            }
-          },
-          "storageProfile": {
-            "storageaccounts": [
-              {
-                "name": "[concat(variables('clusterStorageAccountName'),'.blob.core.windows.net')]",
-                "isDefault": true,
-                "container": "[parameters('clusterName')]",
-                "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('clusterStorageAccountName')), variables('defaultApiVersion')).key1]"
-              }
-            ]
-          },
-          "computeProfile": {
-            "roles": [
-              {
-                "name": "headnode",
-                "targetInstanceCount": "2",
-                "hardwareProfile": {
-                  "vmSize": "[parameters('clusterNodeSize')]"
-                },
-                "osProfile": {
-                  "linuxOperatingSystemProfile": {
-                    "username": "[parameters('loginUsername')]",
-                    "password": "[parameters('loginPassword')]"
-                  }
-                },
-                "virtualNetworkProfile": {
-                  "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName'))]",
-                  "subnet": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName')), '/subnets/', variables('clusterVNetSubnetName'))]"
-                },
-                "scriptActions": [
-                  {
-                    "name": "Genome Analysis Platform -- ADAM",
-                    "uri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/hdinsight-genomics-adam/adam-installer-v03.sh",
-                    "parameters": ""
-                  }
-                ]
-              },
-              {
-                "name": "workernode",
-                "targetInstanceCount": "[parameters('clusterWorkerNodeCount')]",
-                "hardwareProfile": {
-                  "vmSize": "[parameters('clusterNodeSize')]"
-                },
-                "osProfile": {
-                  "linuxOperatingSystemProfile": {
-                    "username": "[parameters('loginUsername')]",
-                    "password": "[parameters('loginPassword')]"
-                  }
-                },
-                "virtualNetworkProfile": {
-                  "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName'))]",
-                  "subnet": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName')), '/subnets/', variables('clusterVNetSubnetName'))]"
-                }
-              },
-              {
-                "name": "zookeepernode",
-                "targetInstanceCount": "3",
-                "hardwareProfile": {
-                  "vmSize": "[variables(concat(variables('clusterType'),'ZookeeperSize'))]"
-                },
-                "osProfile": {
-                  "linuxOperatingSystemProfile": {
-                    "username": "[parameters('loginUsername')]",
-                    "password": "[parameters('loginPassword')]"
-                  }
-                },
-                "virtualNetworkProfile": {
-                  "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName'))]",
-                  "subnet": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName')), '/subnets/', variables('clusterVNetSubnetName'))]"
-                }
-              }
-            ]
-          }
-        }
       }
-
-    ],
-    "outputs": {
-        "vnet": {
-            "type": "object",
-            "value": "[reference(resourceId('Microsoft.Network/virtualNetworks',variables('clusterVNetName')))]"
-        },
-        "cluster":{
-            "type" : "object",
-            "value" : "[reference(resourceId('Microsoft.HDInsight/clusters',parameters('clusterName')))]"
-        }
     }
+  ],
+  "outputs": {
+    "vnet": {
+      "type": "object",
+      "value": "[reference(resourceId('Microsoft.Network/virtualNetworks',variables('clusterVNetName')))]"
+    },
+    "cluster": {
+      "type": "object",
+      "value": "[reference(resourceId('Microsoft.HDInsight/clusters',parameters('clusterName')))]"
+    }
+  }
 }
-

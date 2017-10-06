@@ -1,0 +1,513 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "omsWorkspaceName": {
+            "type": "string",
+            "metadata": {
+                "description": "Assign a name for the Log Analytic Workspace Name"
+            }
+        },
+        "omsWorkspaceRegion": {
+            "type": "string",
+            "defaultValue": "West Europe",
+            "allowedValues": [
+                "Australia Southeast",
+                "East US",
+                "Japan East",
+                "Southeast Asia",
+                "UK South",
+                "West Central US",
+                "West Europe"
+            ],
+            "metadata": {
+                "description": "Specify the region for your Workspace"
+            }
+        }
+    },
+    "variables": {
+        "savedSearches": {
+            "templates": [
+                {
+                    "name": "Average CPU Usage by Application Instance",
+                    "category": "CF - Apps",
+                    "query": "Type=CF_ContainerMetric_CL | measure avg(CPUPercentage_d) by Environment_s,ApplicationName_s,InstanceIndex_d interval 5Minutes"
+                },
+                {
+                    "name": "Average Memory Usage by Application Instance",
+                    "category": "CF - Apps",
+                    "query": "Type=CF_ContainerMetric_CL | measure avg(MemoryBytes_d) by Environment_s,ApplicationName_s,InstanceIndex_d interval 5Minutes"
+                },
+                {
+                    "name": "Average Memory Quota Application Instance",
+                    "category": "CF - Apps",
+                    "query": "Type=CF_ContainerMetric_CL | measure avg(MemoryBytesQuota_d) by Environment_s,ApplicationName_s,InstanceIndex_d interval 5Minutes"
+                },
+                {
+                    "name": "Average Disk Usage by Application Instance",
+                    "category": "CF - Apps",
+                    "query": "Type=CF_ContainerMetric_CL | measure avg(DiskBytes_d) by Environment_s,ApplicationName_s,InstanceIndex_d interval 5Minutes"
+                },
+                {
+                    "name": "Average Disk Quota Application Instance",
+                    "category": "CF - Apps",
+                    "query": "Type=CF_ContainerMetric_CL | measure avg(DiskBytesQuota_d) by Environment_s,ApplicationName_s,InstanceIndex_d interval 5Minutes"
+                },
+                {
+                    "name": "Total BBS Request Count",
+                    "category": "CF - BBS",
+                    "query": "Type=CF_CounterEvent_CL Origin_s=bbs Name_s=RequestCount | measure max(Total_d) by Environment_s,Job_s,IP_s"
+                },
+                {
+                    "name": "BBS Request Latency",
+                    "category": "CF - BBS",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=bbs Name_s=RequestLatency | measure avg(Value_d) by Environment_s,Job_s,IP_s interval 5Minutes"
+                },
+                {
+                    "name": "Total Convergence LRP & Task Runs",
+                    "category": "CF - BBS",
+                    "query": "Type=CF_CounterEvent_CL Origin_s=bbs Name_s=ConvergenceLRPRuns or Name_s=ConvergenceTaskRuns | measure max(Total_d) by Environment_s,Job_s,Name_s"
+                },
+                {
+                    "name": "Total Convergence Tasks Kicked & Pruned",
+                    "category": "CF - BBS",
+                    "query": "Type=CF_CounterEvent_CL Origin_s=bbs Name_s=ConvergenceTasksKicked or Name_s=ConvergenceTasksPruned | measure max(Total_d) by Environment_s,Job_s,Name_s"
+                },
+                {
+                    "name": "Convergence LRP & Task Duration",
+                    "category": "CF - BBS",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=bbs Name_s=ConvergenceLRPDuration or Name_s=ConvergenceTaskDuration | measure avg(Value_d) by Environment_s,Job_s,Name_s interval 5Minutes"
+                },
+                {
+                    "name": "Malformed LRPs",
+                    "category": "CF - BBS",
+                    "query": "Type=CF_CounterEvent_CL Origin_s=bbs Name_s:contains(\"ConvergenceLRPPreProcessing\") | measure max(Total_d) by Environment_s,Job_s,Name_s"
+                },
+                {
+                    "name": "Number of HTTP Responses",
+                    "category": "CF - CC",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=cc Name_s:contains(\"http_status\") | measure max(Value_d) by Environment_s,IP_s,Name_s interval 5Minutes"
+                },
+                {
+                    "name": "Job Queue Length",
+                    "category": "CF - CC",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=cc Name_s:contains(\"job_queue_length\") | measure avg(Value_d) by Environment_s,Job_s,Name_s interval 5Minutes"
+                },
+                {
+                    "name": "Failed Job Count",
+                    "category": "CF - CC",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=cc Name_s:contains(\"failed_job_count\") | measure avg(Value_d) by Environment_s,Job_s,Name_s interval 5Minutes"
+                },
+                {
+                    "name": "Number of Requests Completed",
+                    "category": "CF - CC",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=cc Name_s=\"requests.completed\"  | measure max(Value_d) by Environment_s,Job_s,IP_s"
+                },
+                {
+                    "name": "Number of Requests Being Processed",
+                    "category": "CF - CC",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=cc Name_s=\"requests.outstanding\" | measure avg(Value_d) by Environment_s,Job_s,IP_s interval 5Minutes"
+                },
+                {
+                    "name": "Number of Log Messages",
+                    "category": "CF - CC",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=cc Name_s:contains(\"log_count\") | measure avg(Value_d) by Environment_s,IP_s,Name_s interval 5Minutes"
+                },
+                {
+                    "name": "Total & Remaining Containers",
+                    "category": "CF - Cells Capacity",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=rep Name_s:contains(\"Containers\") | measure avg(Value_d) by Environment_s,IP_s,Name_s interval 5Minutes"
+                },
+                {
+                    "name": "Total & Remaining Memory",
+                    "category": "CF - Cells Capacity",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=rep Name_s:contains(\"Memory\") | measure avg(Value_d) by Environment_s,IP_s,Name_s interval 5Minutes"
+                },
+                {
+                    "name": "Total & Remaining Disk",
+                    "category": "CF - Cells Capacity",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=rep Name_s:contains(\"Disk\") | measure avg(Value_d) by Environment_s,IP_s,Name_s interval 5Minutes"
+                },
+                {
+                    "name": "Number of CPUs",
+                    "category": "CF - Component Metrics",
+                    "query": "Type=CF_ValueMetric_CL Name_s=numCPUS | measure avg(Value_d) by Environment_s,Job_s,IP_s interval 5Minutes"
+                },
+                {
+                    "name": "Number of Go Routines",
+                    "category": "CF - Component Metrics",
+                    "query": "Type=CF_ValueMetric_CL Name_s=numGoRoutines | measure avg(Value_d) by Environment_s,Job_s,IP_s interval 5Minutes"
+                },
+                {
+                    "name": "Memory Usage",
+                    "category": "CF - Component Metrics",
+                    "query": "Type=CF_ValueMetric_CL Name_s=\"memoryStats.numBytesAllocated\" | measure avg(Value_d) by Environment_s,Job_s,IP_s interval 5Minutes"
+                },
+                {
+                    "name": "Stack Allocator Memory Usage",
+                    "category": "CF - Component Metrics",
+                    "query": "Type=CF_ValueMetric_CL Name_s=\"memoryStats.numBytesAllocatedStack\" | measure avg(Value_d) by Environment_s,Job_s,IP_s interval 5Minutes"
+                },
+                {
+                    "name": "Main Heap Memory Usage",
+                    "category": "CF - Component Metrics",
+                    "query": "Type=CF_ValueMetric_CL Name_s=\"memoryStats.numBytesAllocatedHeap\" | measure avg(Value_d) by Environment_s,Job_s,IP_s interval 5Minutes"
+                },
+                {
+                    "name": "Garbage Collector Pause Duration",
+                    "category": "CF - Component Metrics",
+                    "query": "Type=CF_ValueMetric_CL Name_s=\"memoryStats.lastGCPauseTimeNS\" | measure avg(Value_d) by Environment_s,Job_s,IP_s interval 5Minutes"
+                },
+                {
+                    "name": "Number of Memory Allocations",
+                    "category": "CF - Component Metrics",
+                    "query": "Type=CF_ValueMetric_CL Name_s=\"memoryStats.numMallocs\" | measure max(Value_d) by Environment_s,Job_s,IP_s interval 5Minutes"
+                },
+                {
+                    "name": "Number of Memory Deallocations",
+                    "category": "CF - Component Metrics",
+                    "query": "Type=CF_ValueMetric_CL Name_s=\"memoryStats.numFrees\" | measure max(Value_d) by Environment_s,Job_s,IP_s interval 5Minutes"
+                },
+                {
+                    "name": "Total Auctions",
+                    "category": "CF - Diego Auctions",
+                    "query": "Type=CF_CounterEvent_CL Origin_s=auctioneer Name_s:contains(\"Auctions\") | measure max(Total_d) by Environment_s,Name_s"
+                },
+                {
+                    "name": "Auctions per Minute",
+                    "category": "CF - Diego Auctions",
+                    "query": "Type=CF_CounterEvent_CL Origin_s=auctioneer Name_s:contains(\"Auctions\") | measure sum(Delta_d) by Environment_s,Name_s interval 1Minute"
+                },
+                {
+                    "name": "Fetch States Duration",
+                    "category": "CF - Diego Auctions",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=auctioneer Name_s=AuctioneerFetchStatesDuration | measure max(Value_d) by Environment_s interval 5Minutes"
+                },
+                {
+                    "name": "CF Apps Synchronized",
+                    "category": "CF - Diego Health",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=bbs Name_s=\"Domain.cf-apps\" | measure min(Value_d) by Environment_s interval 5Minutes"
+                },
+                {
+                    "name": "CF Tasks Synchronized",
+                    "category": "CF - Diego Health",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=bbs Name_s=\"Domain.cf-tasks\" | measure min(Value_d) by Environment_s interval 5Minutes"
+                },
+                {
+                    "name": "Unhealthy Cells",
+                    "category": "CF - Diego Health",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=rep Name_s=UnhealthyCell | measure max(Value_d) by Environment_s interval 5Minutes"
+                },
+                {
+                    "name": "Number of Sinks",
+                    "category": "CF - Doppler Server",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=DopplerServer Name_s:contains(\"messageRouter.numberOf\") | measure max(Value_d) by Environment_s,Name_s interval 5Minutes"
+                },
+                {
+                    "name": "Number of Messages Unmarshalled",
+                    "category": "CF - Doppler Server",
+                    "query": "Type=CF_CounterEvent_CL Origin_s=DopplerServer Name_s:contains(\"dropsondeUnmarshaller\") and Name_s!=\"dropsondeUnmarshaller.unmarshalErrors\" | measure max(Total_d) by Environment_s,Name_s"
+                },
+                {
+                    "name": "Number of Messages Received by Listeners",
+                    "category": "CF - Doppler Server",
+                    "query": "Type=CF_CounterEvent_CL Origin_s=DopplerServer Name_s=\"listeners.totalReceivedMessageCount\" | measure max(Total_d) by Environment_s"
+                },
+                {
+                    "name": "Unmarshal Errors",
+                    "category": "CF - Doppler Server",
+                    "query": "Type=CF_CounterEvent_CL Origin_s=DopplerServer Name_s=\"dropsondeUnmarshaller.unmarshalErrors\" | measure max(Total_d) by Environment_s"
+                },
+                {
+                    "name": "Dropped Messages",
+                    "category": "CF - Doppler Server",
+                    "query": "Type=CF_CounterEvent_CL Origin_s=DopplerServer Name_s=\"TruncatingBuffer.totalDroppedMessages\" or Name_s=\"doppler.shedEnvelopes\" | measure max(Total_d) by Environment_s,Name_s"
+                },
+                {
+                    "name": "Leader",
+                    "category": "CF - Etcd",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=etcd Name_s=IsLeader | measure avg(Value_d) by Environment_s,Job_s,IP_s interval 5Minutes"
+                },
+                {
+                    "name": "Followers",
+                    "category": "CF - Etcd",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=etcd Name_s=Followers | measure avg(Value_d) by Environment_s,Job_s,IP_s interval 5Minutes"
+                },
+                {
+                    "name": "Watchers",
+                    "category": "CF - Etcd",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=etcd Name_s=Watchers | measure avg(Value_d) by Environment_s,Job_s,IP_s interval 5Minutes"
+                },
+                {
+                    "name": "Raft Term",
+                    "category": "CF - Etcd",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=etcd Name_s=RaftTerm | measure avg(Value_d) by Environment_s,Job_s,IP_s interval 5Minutes"
+                },
+                {
+                    "name": "Raft Index",
+                    "category": "CF - Etcd",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=etcd Name_s=RaftIndex | measure avg(Value_d) by Environment_s,Job_s,IP_s interval 5Minutes"
+                },
+                {
+                    "name": "Sending & Receiving Bandwidth Rate",
+                    "category": "CF - Etcd",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=etcd Name_s:contains(\"BandwidthRate\") | measure avg(Value_d) by Environment_s,Job_s,Name_s interval 5Minutes"
+                },
+                {
+                    "name": "Sending & Receiving Request Rate",
+                    "category": "CF - Etcd",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=etcd Name_s:contains(\"RequestRate\") | measure avg(Value_d) by Environment_s,Job_s,Name_s interval 5Minutes"
+                },
+                {
+                    "name": "Latency",
+                    "category": "CF - Etcd",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=etcd Name_s=Latency | measure avg(Value_d) by Environment_s,Job_s,IP_s interval 5Minutes"
+                },
+                {
+                    "name": "Sent & Received Append Requests Rate",
+                    "category": "CF - Etcd",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=etcd Name_s:contains(\"AppendRequests\") | measure avg(Value_d) by Environment_s,Job_s,Name_s interval 5Minutes"
+                },
+                {
+                    "name": "Sets Success & Fail",
+                    "category": "CF - Etcd Operations",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=etcd Name_s:contains(\"Sets\") | measure avg(Value_d) by Environment_s,Job_s,Name_s interval 5Minutes"
+                },
+                {
+                    "name": "Gets Success & Fail",
+                    "category": "CF - Etcd Operations",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=etcd Name_s:contains(\"Gets\") | measure avg(Value_d) by Environment_s,Job_s,Name_s interval 5Minutes"
+                },
+                {
+                    "name": "Create Success & Fail",
+                    "category": "CF - Etcd Operations",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=etcd Name_s:contains(\"Create\") | measure avg(Value_d) by Environment_s,Job_s,Name_s interval 5Minutes"
+                },
+                {
+                    "name": "Update Success & Fail",
+                    "category": "CF - Etcd Operations",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=etcd Name_s:contains(\"Update\") | measure avg(Value_d) by Environment_s,Job_s,Name_s interval 5Minutes"
+                },
+                {
+                    "name": "Delete Success & Fail",
+                    "category": "CF - Etcd Operations",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=etcd Name_s=DeleteSuccess or Name_s=DeleteFail | measure avg(Value_d) by Environment_s,Job_s,Name_s interval 5Minutes"
+                },
+                {
+                    "name": "CompareAndDelete Success & Fail",
+                    "category": "CF - Etcd Operations",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=etcd Name_s:contains(\"CompareAndDelete\") | measure avg(Value_d) by Environment_s,Job_s,Name_s interval 5Minutes"
+                },
+                {
+                    "name": "CompareAndSwap Success & Fail",
+                    "category": "CF - Etcd Operations",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=etcd Name_s:contains(\"CompareAndSwap\") | measure avg(Value_d) by Environment_s,Job_s,Name_s interval 5Minutes"
+                },
+                {
+                    "name": "Number of Container Backing Store Files",
+                    "category": "CF - Garden Linux",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=garden-linux Name_s=BackingStores | measure avg(Value_d) by Environment_s,Job_s,IP_s interval 5Minutes"
+                },
+                {
+                    "name": "Number of Directories in the Garden Depot",
+                    "category": "CF - Garden Linux",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=garden-linux Name_s=LoopDevices | measure avg(Value_d) by Environment_s,Job_s,IP_s interval 5Minutes"
+                },
+                {
+                    "name": "Number of Attached Loop Devices",
+                    "category": "CF - Garden Linux",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=garden-linux Name_s=DepotDirs | measure avg(Value_d) by Environment_s,Job_s,IP_s interval 5Minutes"
+                },
+                {
+                    "name": "LRPs",
+                    "category": "CF - LRPs & Tasks",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=bbs Name_s:contains(\"LRPs\") and not Name_s:contains(\"Crash\") | measure avg(Value_d) by Environment_s,Name_s interval 5Minutes"
+                },
+                {
+                    "name": "Tasks",
+                    "category": "CF - LRPs & Tasks",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=bbs Name_s:contains(\"Tasks\") and not Name_s:contains(\"Convergence\") | measure avg(Value_d) by Environment_s,Name_s interval 5Minutes"
+                },
+                {
+                    "name": "Crashing LRPs",
+                    "category": "CF - LRPs & Tasks",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=bbs Name_s:contains(\"Crash\") | measure avg(Value_d) by Environment_s,Name_s interval 5Minutes"
+                },
+                {
+                    "name": "Desired LRP Sync Duration",
+                    "category": "CF - LRPs & Tasks",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=nsync_bulker Name_s=DesiredLRPSyncDuration | measure avg(Value_d) by Environment_s interval 5Minutes"
+                },
+                {
+                    "name": "Sent & Received Dropsonde Envelopes",
+                    "category": "CF - Metron Agent",
+                    "query": "Type=CF_CounterEvent_CL Origin_s=MetronAgent Name_s:contains(\"Envelopes\") | measure max(Total_d) by Environment_s,Job_s,Name_s"
+                },
+                {
+                    "name": "Messages Unmarshalled",
+                    "category": "CF - Metron Agent",
+                    "query": "Type=CF_CounterEvent_CL Origin_s=MetronAgent (Name_s:contains(\"dropsondeUnmarshaller\") and Name_s:contains(\"Received\")) or Name_s=\"dropsondeUnmarshaller.logMessageTotal\" | measure max(Total_d) by Environment_s,Job_s,Name_s"
+                },
+                {
+                    "name": "Dropsonde Messages Received by Agent Listener",
+                    "category": "CF - Metron Agent",
+                    "query": "Type=CF_CounterEvent_CL Origin_s=MetronAgent Name_s=\"dropsondeAgentListener.receivedMessageCount\" | measure max(Total_d) by Environment_s,Job_s,Name_s"
+                },
+                {
+                    "name": "Dropsonde Bytes Received by Agent Listener",
+                    "category": "CF - Metron Agent",
+                    "query": "Type=CF_CounterEvent_CL Origin_s=MetronAgent Name_s=\"dropsondeAgentListener.receivedByteCount\" | measure max(Total_d) by Environment_s,Job_s,Name_s"
+                },
+                {
+                    "name": "Messages Sent to Doppler",
+                    "category": "CF - Metron Agent",
+                    "query": "Type=CF_CounterEvent_CL Origin_s=MetronAgent Name_s:contains(\"sentMessageCount\") | measure max(Total_d) by Environment_s,Job_s,Name_s"
+                },
+                {
+                    "name": "Bytes Sent to Doppler",
+                    "category": "CF - Metron Agent",
+                    "query": "Type=CF_CounterEvent_CL Origin_s=MetronAgent Name_s:contains(\"sentByteCount\") | measure max(Total_d) by Environment_s,Job_s,Name_s"
+                },
+                {
+                    "name": "Errors Sent to Doppler",
+                    "category": "CF - Metron Agent",
+                    "query": "Type=CF_CounterEvent_CL Origin_s=MetronAgent Name_s:contains(\"sendErrorCount\") | measure max(Total_d) by Environment_s,Job_s,Name_s"
+                },
+                {
+                    "name": "Number of Routes",
+                    "category": "CF - Route Emitter",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=route_emitter Name_s=RoutesTotal | measure avg(Value_d) by Environment_s,Job_s interval 5Minutes"
+                },
+                {
+                    "name": "Total Routes Registered, Synced and Unregistered",
+                    "category": "CF - Route Emitter",
+                    "query": "Type=CF_CounterEvent_CL Origin_s=route_emitter (Name_s=RoutesRegistered or Name_s=RoutesSynced or Name_s=RoutesUnregistered) | measure max(Total_d) by Environment_s,Job_s,Name_s"
+                },
+                {
+                    "name": "Total Registration Messages Emitted",
+                    "category": "CF - Route Emitter",
+                    "query": "Type=CF_CounterEvent_CL Origin_s=route_emitter Name_s=MessagesEmitted | measure max(Total_d) by Environment_s,Job_s"
+                },
+                {
+                    "name": "Route Emitter Time to Sync",
+                    "category": "CF - Route Emitter",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=route_emitter Name_s=RouteEmitterSyncDuration | measure avg(Value_d) by Environment_s,Job_s interval 5Minutes"
+                },
+                {
+                    "name": "Requests per Minute",
+                    "category": "CF - Gorouter",
+                    "query": "Type=CF_CounterEvent_CL Origin_s=gorouter Name_s=rejected_requests or Name_s=total_requests | measure sum(Delta_d) by Environment_s,Job_s,Name_s interval 1Minute"
+                },
+                {
+                    "name": "Responses per Minute",
+                    "category": "CF - Gorouter",
+                    "query": "Type=CF_CounterEvent_CL Origin_s=gorouter Name_s:contains(\"responses\") | measure sum(Delta_d) by Environment_s,Job_s,Name_s interval 1Minute"
+                },
+                {
+                    "name": "Total Requests",
+                    "category": "CF - Gorouter",
+                    "query": "Type=CF_CounterEvent_CL Origin_s=gorouter Name_s=rejected_requests or Name_s=total_requests | measure max(Total_d) by Environment_s,Job_s,Name_s"
+                },
+                {
+                    "name": "Total Responses",
+                    "category": "CF - Gorouter",
+                    "query": "Type=CF_CounterEvent_CL Origin_s=gorouter Name_s:contains(\"responses\") | measure max(Total_d) by Environment_s,Job_s,Name_s"
+                },
+                {
+                    "name": "Latency",
+                    "category": "CF - Gorouter",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=gorouter Name_s:contains(\"latency\") | measure avg(Value_d) by Environment_s,Job_s,Name_s interval 5Minutes"
+                },
+                {
+                    "name": "Route Lookup Time",
+                    "category": "CF - Gorouter",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=gorouter Name_s=route_lookup_time | measure avg(Value_d) by Environment_s,Job_s interval 5Minutes"
+                },
+                {
+                    "name": "Register Messages Received per Minute",
+                    "category": "CF - Gorouter",
+                    "query": "Type=CF_CounterEvent_CL Origin_s=gorouter Name_s:contains(\"registry_message\") | measure sum(Delta_d) by Environment_s,Job_s,Name_s interval 1Minute"
+                },
+                {
+                    "name": "Total Register Messages Received",
+                    "category": "CF - Gorouter",
+                    "query": "Type=CF_CounterEvent_CL Origin_s=gorouter Name_s:contains(\"registry_message\") | measure max(Total_d) by Environment_s,Job_s,Name_s"
+                },
+                {
+                    "name": "Total Routes Registered",
+                    "category": "CF - Gorouter",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=gorouter Name_s=total_routes | measure avg(Value_d) by Environment_s,Job_s interval 5Minutes"
+                },
+                {
+                    "name": "User & Non-user Not Found",
+                    "category": "CF - UAA",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=uaa Name_s:contains(\"not_found_count\") | measure max(Value_d) by Environment_s,Name_s interval 5Minutes"
+                },
+                {
+                    "name": "Failed Non-user Authentication Attempts",
+                    "category": "CF - UAA",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=uaa Name_s=\"audit_service.principal_authentication_failure_count\" | measure max(Value_d) by Environment_s interval 5Minutes"
+                },
+                {
+                    "name": "Successful & Failed User Authentications",
+                    "category": "CF - UAA",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=uaa Name_s:contains(\"user_authentication\") | measure max(Value_d) by Environment_s,Name_s interval 5Minutes"
+                },
+                {
+                    "name": "Successful & Failed Client Authentications",
+                    "category": "CF - UAA",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=uaa Name_s:contains(\"client_authentication\") | measure max(Value_d) by Environment_s,Name_s interval 5Minutes"
+                },
+                {
+                    "name": "Successful & Failed Password Changes",
+                    "category": "CF - UAA",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=uaa Name_s:contains(\"user_password\") | measure max(Value_d) by Environment_s,Name_s interval 5Minutes"
+                },
+                {
+                    "name": "Receiving Rate by Nozzle Instance Every 5 Minutes",
+                    "category": "CF - Nozzle Status",
+                    "query": "Type=CF_CounterEvent_CL Job_s=nozzle Name_s=eventsReceived | measure sum(Delta_d) by NozzleInstance_s interval 5Minutes"
+                },
+                {
+                    "name": "Sending Rate by Nozzle Instance Every 5 Minutes",
+                    "category": "CF - Nozzle Status",
+                    "query": "Type=CF_CounterEvent_CL Job_s=nozzle Name_s=eventsSent | measure sum(Delta_d) by NozzleInstance_s interval 5Minutes"
+                },
+                {
+                    "name": "Lost Messages by Nozzle Instance",
+                    "category": "CF - Nozzle Status",
+                    "query": "Type=CF_CounterEvent_CL Job_s=nozzle Name_s=eventsLost | measure max(Total_d) by NozzleInstance_s interval 5Minutes"
+                },
+                {
+                    "name": "Total Recieved, Sent & Lost Messages by Nozzle Instance",
+                    "category": "CF - Nozzle Status",
+                    "query": "Type=CF_CounterEvent_CL Job_s=nozzle | measure max(Total_d) by NozzleInstance_s,Name_s"
+                },
+                {
+                    "name": "Slow Consumer Alert",
+                    "category": "CF - Nozzle Status",
+                    "query": "Type=CF_ValueMetric_CL Name_s=slowConsumerAlert | measure max(Value_d) by NozzleInstance_s interval 5Minutes"
+                }
+            ]
+        } 
+    },
+    "resources": [
+        {
+            "name": "[concat(parameters('omsWorkspaceName'), '/', uniquestring('SavedSearch'), copyIndex())]",
+            "type": "Microsoft.OperationalInsights/workspaces/savedSearches",
+            "apiVersion": "2015-11-01-preview",
+            "copy": {
+                "name": "searchCopy",
+                "count": "[length(variables('savedSearches').templates)]"
+            },
+            "tags": {},
+            "properties": {
+                "etag": "*",
+                "query": "[variables('savedSearches').templates[copyIndex()].query]",
+                "displayName": "[variables('savedSearches').templates[copyIndex()].name]",
+                "category": "[variables('savedSearches').templates[copyIndex()].category]"
+            }
+        }
+    ],
+    "outputs": {}
+}

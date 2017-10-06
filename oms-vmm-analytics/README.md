@@ -51,7 +51,7 @@ in UTC string format "yyyy-MM-ddTHH:mm:ss.fffffffZ".
     The solution syncs the jobs completed after the set time. Default value is Null.
 ![lastRunTime](images/vmm-analytics-last-run-time.png)
 
-8. Create a runbook worker with appropriate credentials, which can read jobs data from your VMM instances. [Learn more](https://docs.microsoft.com/en-us/azure/automation/automation-hybrid-runbook-worker
+8. Create a runbook worker with **appropriate credentials**, which can read jobs data from your VMM instances. [Learn more](https://docs.microsoft.com/en-us/azure/automation/automation-hybrid-runbook-worker
 ).
 9. Create a schedule for the runbook **vmmanalytics** as per the required sync frequency. This will periodically push the new jobs data from VMM to OMS workspace.
 

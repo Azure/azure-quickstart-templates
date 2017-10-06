@@ -1,6 +1,8 @@
 #!/bin/bash
 keyName=$1
 orchestratorbaseurl=$2
+chefautourl=$3
+echo $keyName > /tmp/keyname.txt
 
 URL="http://$orchestratorbaseurl:33001/key/$keyName"
 echo $URL
@@ -11,4 +13,4 @@ sudo curl -H "Content-Type: application/json" -X GET $URL | tr -d "\"" | base64 
 
 
 #Next step is run sudo chef-client so that it boot straps to server
-sudo chef-client
+sudo chef-client -S $chefautourl
