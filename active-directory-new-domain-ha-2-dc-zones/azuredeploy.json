@@ -9,6 +9,17 @@
       },
       "defaultValue": "adAdministrator"
     },
+    "location": {
+      "type": "string",
+      "allowedValues": [
+        "westeurope",
+        "eastus2"
+      ],
+      "defaultValue": "westeurope",
+      "metadata": {
+        "description": "Location for the VM, only certain regions support zones during preview."
+      }
+    },
     "adminPassword": {
       "type": "securestring",
       "metadata": {
@@ -32,7 +43,7 @@
       "metadata": {
         "description": "The location of resources such as templates and DSC modules that the script is dependent"
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/resiliency/master/AZ-201-active-directory-new-domain-ha-2-dc"
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/active-directory-new-domain-ha-2-dc-zones"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -82,7 +93,7 @@
       "type": "Microsoft.Network/publicIPAddresses",
       "apiVersion": "2016-11-01",
       "zones": ["1"],
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
         "dnsSettings": {
@@ -120,7 +131,7 @@
       "name": "[variables('adPDCNicName')]",
       "type": "Microsoft.Network/networkInterfaces",
       "apiVersion": "2016-10-01",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "Microsoft.Resources/deployments/VNet"
       ],
@@ -146,7 +157,7 @@
       "name": "[variables('adBDCNicName')]",
       "type": "Microsoft.Network/networkInterfaces",
       "apiVersion": "2016-10-01",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "Microsoft.Resources/deployments/VNet"
       ],
@@ -165,28 +176,12 @@
         ]
       }
     },
-        {
-        "type": "Microsoft.Compute/disks",
-        "name": "[concat(variables('adPDCVMName'),'-data-disk1')]",
-        "apiVersion": "2016-04-30-preview",
-        "zones": ["1"],
-        "location": "[resourceGroup().location]",
-        "properties":
-        {
-            "creationData":
-            {
-                "createOption": "Empty"
-            },
-            "accountType" : "[variables('storageAccountType')]",
-            "diskSizeGB": 64
-        }
-    },
     {
       "name": "[variables('adPDCVMName')]",
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2016-04-30-preview",
+      "apiVersion": "2017-03-30",
       "zones": ["1"],
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces',variables('adPDCNicName'))]"
       ],
@@ -208,12 +203,9 @@
           },
           "dataDisks": [
             {
-              "name": "[concat(variables('adPDCVMName'),'-data-disk1')]",
+              "diskSizeGB": 64,
               "lun": 0,
-              "createOption": "Attach",
-                  "managedDisk": {
-                    "id": "[resourceId('Microsoft.Compute/disks', concat(variables('adPDCVMName'),'-data-disk1'))]"
-                }
+              "createOption": "Empty"
             }
           ]
         },
@@ -230,7 +222,7 @@
           "name": "[concat(variables('adPDCVMName'),'/CreateADForest')]",
           "type": "Microsoft.Compute/virtualMachines/extensions",
           "apiVersion": "2016-03-30",
-          "location": "[resourceGroup().location]",
+          "location": "[parameters('location')]",
           "dependsOn": [
             "[resourceId('Microsoft.Compute/virtualMachines', variables('adPDCVMName'))]"
           ],
@@ -334,27 +326,11 @@
         }
       }
     },
-        {
-        "type": "Microsoft.Compute/disks",
-        "name": "[concat(variables('adBDCVMName'),'-data-disk1')]",
-        "apiVersion": "2016-04-30-preview",
-        "location": "[resourceGroup().location]",
-        "zones": ["2"],
-        "properties":
-        {
-            "creationData":
-            {
-                "createOption": "Empty"
-            },
-            "accountType" : "[variables('storageAccountType')]",
-            "diskSizeGB": 64
-        }
-    },
     {
       "name": "[variables('adBDCVMName')]",
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2016-04-30-preview",
-      "location": "[resourceGroup().location]",
+      "apiVersion": "2017-03-30",
+      "location": "[parameters('location')]",
       "zones": ["2"],
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces',variables('adBDCNicName'))]"
@@ -377,12 +353,9 @@
           },
           "dataDisks": [
             {
-              "name": "[concat(variables('adBDCVMName'),'-data-disk1')]",
+              "diskSizeGB": 64,
               "lun": 0,
-              "createOption": "Attach",
-                  "managedDisk": {
-                    "id": "[resourceId('Microsoft.Compute/disks', concat(variables('adBDCVMName'),'-data-disk1'))]"
-                }
+              "createOption": "Empty"
             }
           ]
         },
@@ -399,7 +372,7 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('adBDCVMName'),'/PrepareBDC')]",
       "apiVersion": "2016-03-30",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', variables('adBDCVMName'))]"
       ],
@@ -439,7 +412,7 @@
             "value": "[variables('adBDCVMName')]"
           },
           "location": {
-            "value": "[resourceGroup().location]"
+            "value": "[parameters('location')]"
           },
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
