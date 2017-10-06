@@ -20,25 +20,12 @@
     "agentVMSize": {
       "type": "string",
       "defaultValue": "Standard_D2_v2",
-      "allowedValues": [
-    		"Standard_A0", "Standard_A1", "Standard_A2", "Standard_A3", "Standard_A4", "Standard_A5",
-    		"Standard_A6", "Standard_A7", "Standard_A8", "Standard_A9", "Standard_A10", "Standard_A11",
-    		"Standard_D1", "Standard_D2", "Standard_D3", "Standard_D4",
-    		"Standard_D11", "Standard_D12", "Standard_D13", "Standard_D14",
-    		"Standard_D1_v2", "Standard_D2_v2", "Standard_D3_v2", "Standard_D4_v2", "Standard_D5_v2",
-    		"Standard_D11_v2", "Standard_D12_v2", "Standard_D13_v2", "Standard_D14_v2",
-    		"Standard_G1", "Standard_G2", "Standard_G3", "Standard_G4", "Standard_G5",
-    		"Standard_DS1", "Standard_DS2", "Standard_DS3", "Standard_DS4",
-    		"Standard_DS11", "Standard_DS12", "Standard_DS13", "Standard_DS14",
-    		"Standard_GS1", "Standard_GS2", "Standard_GS3", "Standard_GS4", "Standard_GS5"
-  	  ],
       "metadata": {
         "description": "The size of the Virtual Machine."
       }
     },
-    "linuxAdminUsername": {
+    "adminUsername": {
       "type": "string",
-      "defaultValue": "azureuser",
       "metadata": {
         "description": "User name for the Linux Virtual Machines."
       }
@@ -87,22 +74,14 @@
     }
   },
   "variables": {
-    "adminUsername":"[parameters('linuxAdminUsername')]",
-    "agentCount":"[parameters('agentCount')]",
     "agentsEndpointDNSNamePrefix":"[concat(parameters('dnsNamePrefix'),'agents')]",
-    "agentVMSize":"[parameters('agentVMSize')]",
-    "masterCount":"[parameters('masterCount')]",
     "mastersEndpointDNSNamePrefix":"[concat(parameters('dnsNamePrefix'),'mgmt')]",
-    "orchestratorType":"[parameters('orchestratorType')]",
-    "sshRSAPublicKey":"[parameters('sshRSAPublicKey')]",
-    "servicePrincipalClientId": "[parameters('servicePrincipalClientId')]",
-    "servicePrincipalClientSecret": "[parameters('servicePrincipalClientSecret')]",
     "useServicePrincipalDictionary": {
       "DCOS": 0,
       "Swarm": 0,
       "Kubernetes": 1
     },
-    "useServicePrincipal": "[variables('useServicePrincipalDictionary')[variables('orchestratorType')]]",
+    "useServicePrincipal": "[variables('useServicePrincipalDictionary')[parameters('orchestratorType')]]",
     "servicePrincipalFields": [
       null,
       {
@@ -119,26 +98,26 @@
       "name":"[concat('containerservice-',resourceGroup().name)]",
       "properties": {
         "orchestratorProfile": {
-          "orchestratorType": "[variables('orchestratorType')]"
+          "orchestratorType": "[parameters('orchestratorType')]"
         },
         "masterProfile": {
-          "count": "[variables('masterCount')]",
+          "count": "[parameters('masterCount')]",
           "dnsPrefix": "[variables('mastersEndpointDNSNamePrefix')]"
         },
         "agentPoolProfiles": [
           {
             "name": "agentpools",
-            "count": "[variables('agentCount')]",
-            "vmSize": "[variables('agentVMSize')]",
+            "count": "[parameters('agentCount')]",
+            "vmSize": "[parameters('agentVMSize')]",
             "dnsPrefix": "[variables('agentsEndpointDNSNamePrefix')]"
           }
         ],
         "linuxProfile": {
-          "adminUsername": "[variables('adminUsername')]",
+          "adminUsername": "[parameters('adminUsername')]",
           "ssh": {
             "publicKeys": [
               {
-                "keyData": "[variables('sshRSAPublicKey')]"
+                "keyData": "[parameters('sshRSAPublicKey')]"
               }
             ]
           }
@@ -154,7 +133,7 @@
     },
     "sshMaster0": {
       "type": "string",
-      "value": "[concat('ssh ', variables('adminUsername'), '@', reference(concat('Microsoft.ContainerService/containerServices/', 'containerservice-', resourceGroup().name)).masterProfile.fqdn, ' -A -p 22')]"
+      "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(concat('Microsoft.ContainerService/containerServices/', 'containerservice-', resourceGroup().name)).masterProfile.fqdn, ' -A -p 22')]"
     },
     "agentFQDN": {
       "type": "string",
