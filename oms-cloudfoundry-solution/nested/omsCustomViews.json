@@ -24,6 +24,19 @@
                 "description": "Specify the region for your Workspace"
             }
         },
+        "systemMetricsProvider": {
+            "type": "string",
+            "defaultValue": "None",
+            "allowedValues": [
+                "None",
+                "Azure OMS Agent Only",
+                "BOSH Health Metrics Forwarder Only",
+                "Both Azure OMS Agent and BOSH Health Metrics Forwarder"
+            ],
+            "metadata": {
+                "description": "Select your provider of system metrics"
+            }
+        },
         "_artifactsLocation": {
             "type": "string",
             "defaultValue": "https://raw.githubusercontent.com/Azure/oms-log-analytics-firehose-nozzle/omsview/docs/omsview",
@@ -64,6 +77,10 @@
                 "CF%20-%20Route%20Emitter.omsview",
                 "CF%20-%20UAA.omsview"
             ],
+            "system_metrics": {
+                "oms_agent": "https://raw.githubusercontent.com/Azure/oms-agent-for-linux-boshrelease/master/docs/omsview/Syslog%20and%20Perf.omsview",
+                "hm_forwarder": "https://raw.githubusercontent.com/Azure/oms-log-analytics-firehose-nozzle/master/docs/omsview/CF%20KPI%20-%20System%20Metrics.omsview"
+            }
         }
     },
     "resources": [
@@ -84,11 +101,71 @@
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
+                    "resourcegroup": {
+                        "value": "[resourceGroup().name]"
+                    },
                     "location": {
                         "value": "[parameters('omsWorkspaceRegion')]"
                     },
+                    "subscriptionId": {
+                        "value": "[subscription().subscriptionId]"
+                    },
+                    "workspace": {
+                        "value": "[parameters('omsWorkspaceName')]"
+                    },
+                    "workspaceapiversion": {
+                        "value": "2015-11-01-preview"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2016-02-01",
+            "name": "CF_KPI-Syslog_and_Perf.omsview",
+            "condition": "[contains(parameters('systemMetricsProvider'), 'Azure OMS Agent')]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('omsviews').system_metrics.oms_agent]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
                     "resourcegroup": {
                         "value": "[resourceGroup().name]"
+                    },
+                    "location": {
+                        "value": "[parameters('omsWorkspaceRegion')]"
+                    },
+                    "subscriptionId": {
+                        "value": "[subscription().subscriptionId]"
+                    },
+                    "workspace": {
+                        "value": "[parameters('omsWorkspaceName')]"
+                    },
+                    "workspaceapiversion": {
+                        "value": "2015-11-01-preview"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2016-02-01",
+            "name": "CF_KPI-System_Metrics.omsview",
+            "condition": "[contains(parameters('systemMetricsProvider'), 'BOSH Health Metrics Forwarder')]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('omsviews').system_metrics.hm_forwarder]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "resourcegroup": {
+                        "value": "[resourceGroup().name]"
+                    },
+                    "location": {
+                        "value": "[parameters('omsWorkspaceRegion')]"
                     },
                     "subscriptionId": {
                         "value": "[subscription().subscriptionId]"
