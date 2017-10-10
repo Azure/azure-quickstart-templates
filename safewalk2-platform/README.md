@@ -210,42 +210,35 @@ The Gateway SSH is only accesible from the Safewalk nodes. Only web services are
 **Connect to the super-admin**
 * Open a browser and enter the address of the super-admin console (i.e.
 https://SAFEWALK_ADDRESS:8443).
-* Enter the credentials of the admin account (username: admin and the default password).
+* Enter the credentials of the admin account (username: admin and the choosed password).
 
-**Change the password and email address of the admin account**
+**Change the email address of the admin account**
 * In Internal users & groups box click Users.
 * Click the admin user.
-* Follow the “. . . this form” link in the Password field to change the admin password.
 * Update the Email address field and click Save.
 
-**Update the Management Console link and organization identity**
-* In the Organization identity box click the Change link.
+**Update the organization identity**
 * You can set your organization name in the Name field.
 * You can set your organization logo in the Logo field.
-* Change the address to the management console to be the address you have set for the machine in the
-Admin / User Portal base URL field.
 
 **Setup the following items**
-1. Follow the System update link in the Maintenance box to deploy the latest SWP update package.
-Attention: If you are running Safewalk version 1.2.2 or lower you will not see the System update
-link in the Maintenance box.
-To see the System update link in the Maintenance box for Safewalk version 1.2.2 or lower you
-will first need to install patch 1181 that is available from the download site.
-2. Follow the Import Server License link in the Import licenses box to import a server license.
-3. Import token licenses by following the Import Licenses from the Import licenses box.
+1. Follow the Import Server License link in the Import licenses box to import a server license.
+2. Import token licenses by following the Import Licenses from the Import licenses box.
 Attention: If you intend to setup multiple Safewalk servers in your environment (i.e. using either
 the multimaster topology or the clustering with load-balancing) it is recommended first to join all
 the servers to one cluster and only then to perform the import of the tokens licenses.
-4. In the Organization settings box follow the Add link to set your LDAP configuration.
-5. Create new RADIUS clients that will be used to authenticate to the server from your Firewall,
+3. In the Organization settings box follow the Add link to set your LDAP configuration.
+4. Create new RADIUS clients that will be used to authenticate to the server from your Firewall,
 SSL/VPN, etc. by following the Add link in the RADIUS settings box.
-6. Follow the Add link in the Messages delivery gateways box to create a new message delivery provider
+5. Follow the Add link in the Messages delivery gateways box to create a new message delivery provider
 that will be used to send registration codes, One-Time-Passwords and backup tokens to your users.
 For more information about the super-admin console please refer to the chapter /Super_admin_console
 6 Accessing the management console to view, manage and test
 users authentication
+
 Once the system has been configured you will be able to log into the management console to view and manage
 your users.
+
 To access the management console:
 * Open a browser and enter the address of the management console as it was given in the final screen of the
 installation (i.e. https://SAFEWALK_ADDRESS/admin).
