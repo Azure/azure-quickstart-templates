@@ -1,6 +1,8 @@
 ﻿param(
 [Parameter(Mandatory=$false)] [string]$SubscriptionidFilter,
-[Parameter(Mandatory=$false)] [bool] $collectionFromAllSubscriptions=$false)
+[Parameter(Mandatory=$false)] [bool] $collectionFromAllSubscriptions=$false,
+[Parameter(Mandatory=$false)] [bool] $getAsmHeader=$true)
+
 
 
 $ErrorActionPreference= "Stop"
@@ -490,7 +492,8 @@ IF($subscriptionInfo)
 
 #Authenticating to ASM 
 
-
+if ($getAsmHeader)
+{
 if ($AsmConn  -eq $null)
 {
 	throw "Could not retrieve connection asset: $($AsmConn.CertificateAssetName) Ensure that this asset exists in the Automation account."
@@ -512,7 +515,7 @@ Select-AzureSubscription -SubscriptionId $AsmConn.SubscriptionId
 #finally create the headers for ASM REST 
 $headerasm = @{"x-ms-version"="2013-08-01"}
 
-
+}
 #get subscriptionlist
 
 $SubscriptionsURI="https://management.azure.com/subscriptions?api-version=2016-06-01" 
@@ -534,7 +537,7 @@ IF($collectionFromAllSubscriptions -and $Subscriptions.count -gt 1 )
     Foreach($item in $subslist)
     {
 
-    $params1 = @{"SubscriptionidFilter"=$item.subscriptionId;"collectionFromAllSubscriptions" = $false}
+    $params1 = @{"SubscriptionidFilter"=$item.subscriptionId;"collectionFromAllSubscriptions" = $false;"getAsmHeader"=$false}
     Start-AzureRmAutomationRunbook -AutomationAccountName $AAAccount -Name $LogsRunbookName -ResourceGroupName $AAResourceGroup -Parameters $params1 | out-null
     }
 }
@@ -1392,6 +1395,21 @@ If($logArray)
     Post-OMSData -customerId $customerId -sharedKey $sharedKey -body ([System.Text.Encoding]::UTF8.GetBytes($jsonlogs)) -logType $logname
 
     }
+}Else
+{
+ $logArray+=New-Object PSObject -Property @{
+                	            Timestamp = $(get-date)
+	                            MetricName = 'AuditLogs'
+                                Resource="NO LOG FOUND"
+	                            SubscriptionId = $ArmConn.SubscriptionId;
+	                            AzureSubscription = $subscriptionInfo.displayName;
+	                                    }
+										 $jsonlogs= ConvertTo-Json -InputObject $logArray
+
+    Post-OMSData -customerId $customerId -sharedKey $sharedKey -body ([System.Text.Encoding]::UTF8.GetBytes($jsonlogs)) -logType $logname
+
+               
+
 }
 
 

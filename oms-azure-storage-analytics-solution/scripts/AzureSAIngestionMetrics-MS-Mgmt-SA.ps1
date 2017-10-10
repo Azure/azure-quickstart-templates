@@ -1,6 +1,7 @@
 ﻿param(
 [Parameter(Mandatory=$false)] [string]$SubscriptionidFilter,
-[Parameter(Mandatory=$false)] [bool] $collectionFromAllSubscriptions=$false)
+[Parameter(Mandatory=$false)] [bool] $collectionFromAllSubscriptions=$false,
+[Parameter(Mandatory=$false)] [bool] $getAsmHeader=$true)
 
 
 $ErrorActionPreference= "Stop"
@@ -489,7 +490,10 @@ if ($AzureCert -eq $null)
 {
 	throw "Could not retrieve certificate asset: $CertificateAssetName. Ensure that this asset exists in the Automation account."
 }
-"Logging into Azure Service Manager"
+
+if ($getAsmHeader)
+{
+	"Logging into Azure Service Manager"
 Write-Verbose "Authenticating to Azure with certificate." -Verbose
 
 Set-AzureSubscription -SubscriptionName $AsmConn.SubscriptionName -SubscriptionId $AsmConn.SubscriptionId -Certificate $AzureCert
@@ -497,7 +501,7 @@ Select-AzureSubscription -SubscriptionId $AsmConn.SubscriptionId
 
 #finally create the headers for ASM REST 
 $headerasm = @{"x-ms-version"="2013-08-01"}
-
+}
 
 #get subscriptionlist
 
@@ -522,7 +526,7 @@ IF($collectionFromAllSubscriptions -and $Subscriptions.count -gt 1 )
 	Foreach($item in $subslist)
     {
 
-    $params1 = @{"SubscriptionidFilter"=$item.subscriptionId;"collectionFromAllSubscriptions" = $false}
+    $params1 = @{"SubscriptionidFilter"=$item.subscriptionId;"collectionFromAllSubscriptions" = $false;"getAsmHeader"=$false}
     Start-AzureRmAutomationRunbook -AutomationAccountName $AAAccount -Name $MetricsRunbookName -ResourceGroupName $AAResourceGroup -Parameters $params1 | out-null
     }
 }
@@ -540,6 +544,7 @@ $saArmList=$armresp.Value
 "$(GEt-date)  $($saArmList.count) classic storage accounts found"
 
 #get Classic SA
+
 "$(GEt-date)  Get Classic storage Accounts "
 
 $Uri="https://management.azure.com/subscriptions/{1}/providers/Microsoft.ClassicStorage/storageAccounts?api-version={0}"   -f  $ApiVerSaAsm,$SubscriptionId 
@@ -548,6 +553,7 @@ $asmresp=Invoke-RestMethod -Uri $uri -Method GET  -Headers $headers -UseBasicPar
 $saAsmList=$asmresp.value
 
 "$(GEt-date)  $($saAsmList.count) storage accounts found"
+
 #endregion
 
 #region Cache Storage Account Name , RG name and Build paramter array
@@ -675,6 +681,9 @@ If($jsonSAInventory){Post-OMSData -customerId $customerId -sharedKey $sharedKey 
 #populate Storgae Account Quota Usage 
 #region get Storage Quota Consumption
 $quotas=@()
+
+IF($getAsmHeader)
+{
 $uri="https://management.core.windows.net/$subscriptionId"
 $qresp=Invoke-WebRequest -Uri $uri -Method GET  -Headers $headerasm -UseBasicParsing -Certificate $AzureCert
 [xml]$qres=$qresp.Content
@@ -691,6 +700,7 @@ $quotas+= New-Object PSObject -Property @{
 	SubscriptionId = $ArmConn.SubscriptionId;
 	AzureSubscription = $subscriptionInfo.displayName;
 	
+	}
 }
 
 $SAMAX=$SACurrent=$SAquotapct=$null
