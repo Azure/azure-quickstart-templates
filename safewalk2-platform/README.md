@@ -28,13 +28,13 @@ The virtual network will consists on three subnets:
 #### Safewalk server VM
 The Safewalk server VM is installed inside the LAN subnet. It's recommended to access it using a VPN. If cluster is enabled, 2 VMs will be created in the same Availability Set (different physical machines).
 
-**Super-Admin Console**
+- Super-Admin Console
 A web based interface that provides access to the general configuration of the system, like LDAP/AD connectivity to users or groups, import of new licenses, creating RADIUS clients and more. The main idea of this interface is to provide access for the highest authority to perform tasks that are not needed on a day to day basis and require a relatively high level of knowledge with the system and the organization architecture.
 
-**Management Console**
+- Management Console**
 A web based interface that provides access to manage users, their authentication settings, view transactions and more. The main idea of this interface is to provide access for helpdesk personnel or system administrators to perform tasks that are needed frequently but has no system-wide impact.
 
-**Self-Service Portal**
+- Self-Service Portal**
 A web based interface that provides access to end users to register their authentication device.
 
 **RADIUS Server**
@@ -46,7 +46,7 @@ The Gateway VM will be created at the DMZ subnet.
 
 The main components of the Safewalk Gateway consists of:
 
-**SSO (SAML IdP v2)**
+- SSO (SAML IdP v2)
 Provides Single Sign-On (SSO) and integration with third party web-based applications over the SAML v2 standard protocol.
 
 Single Single sign-on (SSO) is provided across all the SAML applications that are integrated with the same Safewalk Gateway.
@@ -58,7 +58,7 @@ Benefits of using single sign-on include:
 * Reducing time spent re-entering passwords for the same identity
 * Reducing IT costs due to lower number of IT help desk calls about passwords
 
-#####General SAML authentication flow
+General SAML authentication flow
 1. User generates a code (be it its static password, One-Time-Password from a mobile app/email/sms or from
 a physical device);
 2. User browses to the the application (that is enabled as a SAML SP);
@@ -69,13 +69,13 @@ is prompted to enter its credentials;
 6. Assuming that the credentials have been verified successfully (i.e. Access-Accept) the user is granted access
 to the application;
 
-**Registration-Gateway**
+- Registration-Gateway
 For facilitating the over-the-air registration method of mobile applications.
 
-**Safewalk server authentication api**
+- Safewalk server authentication api
 A proxy to the Safewalk server authentication api for external applications that do not support standard authentication protocols.
 
-#####General authentication flow
+General authentication flow
 1. User generates a code (be it its static password, One-Time-Password from a mobile app/email/sms or from
 a physical device);
 2. User browses to the address of the organization NAS (that is equipped with a RADIUS client), where he is
@@ -85,12 +85,8 @@ prompted to enter its credentials;
 5. Assuming that the credentials have been verified successfully (i.e. Access-Accept) the user is granted access
 to the relevant application;
 
-
-
 ## Prerequisites
-
 To get use this Safewalk2 platform you'll need to copy or upload the VM's VHD images to your storage account.
-
 
 ### Uploading the Safewalk Server and Safewalk Gateway VHD images
 
