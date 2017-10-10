@@ -13,7 +13,7 @@ This template deploys the **Safewalk platform** in your Azure subscription.
 
 ## Solution overview and deployed resources
 
-**Safewalk** is an ** Identity and Access Management (IAM) solution** with focus on (2FA) Strong authentication.
+**Safewalk** is an **Identity and Access Management (IAM) solution** with focus on (2FA) Strong authentication.
 
 This document includes a general overview and quick installation instructions for a single topology that is the most commonly used. For more advanced configuration, administration and maintenance of the system as well as known issues and troubleshooting please refer to the full user manual.
 
@@ -28,16 +28,16 @@ The virtual network will consists on three subnets:
 #### Safewalk server VM
 The Safewalk server VM is installed inside the LAN subnet. It's recommended to access it using a VPN. If cluster is enabled, 2 VMs will be created in the same Availability Set (different physical machines).
 
-- Super-Admin Console
+* Super-Admin Console
 A web based interface that provides access to the general configuration of the system, like LDAP/AD connectivity to users or groups, import of new licenses, creating RADIUS clients and more. The main idea of this interface is to provide access for the highest authority to perform tasks that are not needed on a day to day basis and require a relatively high level of knowledge with the system and the organization architecture.
 
-- Management Console**
+* Management Console
 A web based interface that provides access to manage users, their authentication settings, view transactions and more. The main idea of this interface is to provide access for helpdesk personnel or system administrators to perform tasks that are needed frequently but has no system-wide impact.
 
-- Self-Service Portal**
+* Self-Service Portal
 A web based interface that provides access to end users to register their authentication device.
 
-**RADIUS Server**
+* RADIUS Server
 Remote Authentication Dial In User Service (RADIUS) is a networking protocol that provides centralized Authentication, Authorization, and Accounting (AAA) management for users that connect and use a network service. The Remote Access Server, the Virtual Private Network server, the Network switch with port-based authentication, and the Network Access Server (NAS), are all gateways that control access to the network, and all have a RADIUS client component that communicates with the RADIUS server. RADIUS is often the backend of choice for 802.1X authentication as well (see http://en.wikipedia.org/wiki/RADIUS for more details).
 
 #### Safewalk Gateway VM
@@ -46,17 +46,17 @@ The Gateway VM will be created at the DMZ subnet.
 
 The main components of the Safewalk Gateway consists of:
 
-- SSO (SAML IdP v2)
+* SSO (SAML IdP v2)
 Provides Single Sign-On (SSO) and integration with third party web-based applications over the SAML v2 standard protocol.
 
 Single Single sign-on (SSO) is provided across all the SAML applications that are integrated with the same Safewalk Gateway.
 
 Benefits of using single sign-on include:
 
-* Mitigate risk for access to 3rd-party sites (user passwords not stored or managed externally)
-* Reducing password fatigue from different user name and password combinations
-* Reducing time spent re-entering passwords for the same identity
-* Reducing IT costs due to lower number of IT help desk calls about passwords
+1. Mitigate risk for access to 3rd-party sites (user passwords not stored or managed externally)
+2. Reducing password fatigue from different user name and password combinations
+3. Reducing time spent re-entering passwords for the same identity
+4. Reducing IT costs due to lower number of IT help desk calls about passwords
 
 General SAML authentication flow
 1. User generates a code (be it its static password, One-Time-Password from a mobile app/email/sms or from
@@ -69,10 +69,10 @@ is prompted to enter its credentials;
 6. Assuming that the credentials have been verified successfully (i.e. Access-Accept) the user is granted access
 to the application;
 
-- Registration-Gateway
+* Registration-Gateway
 For facilitating the over-the-air registration method of mobile applications.
 
-- Safewalk server authentication api
+* Safewalk server authentication api
 A proxy to the Safewalk server authentication api for external applications that do not support standard authentication protocols.
 
 General authentication flow
