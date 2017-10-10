@@ -5,7 +5,7 @@
         "deploymentNameSuffix": {
             "type": "string",
             "metadata": {
-                "description": "Provide an unique deployment names for each deployment  subsequent deployments"
+                "description": "Used to create unique deployment names for subsequent deployments"
             }
         },
         "omsLogAnalyticsWorkspaceName": {
@@ -134,21 +134,21 @@
     },
     "variables": {
         "nestedTemplates": {
-            "omsDeployWithAuditLogs": "[concat(parameters('_artifactsLocation'), '/nestedtemplates/omsDeployStorageAnalyticsWithAuditLogs.json', parameters('_artifactsLocationSasToken'))]",
-            "omsDeployStorageAnalyticsOnly": "[concat(parameters('_artifactsLocation'), '/nestedtemplates/omsDeployStorageAnalyticsOnly.json', parameters('_artifactsLocationSasToken'))]"
+            "deployToLinkedWorkspaceAnalyticsOnly": "[concat(parameters('_artifactsLocation'), '/nestedtemplates/deployToLinkedWorkspaceAnalyticsOnly.json', parameters('_artifactsLocationSasToken'))]",
+            "deployToWorkspaceAnalyticsOnly": "[concat(parameters('_artifactsLocation'), '/nestedtemplates/deployToWorkspaceAnalyticsOnly.json', parameters('_artifactsLocationSasToken'))]"
         }
     },
     "resources": [
         {
-            "condition": "[equals(parameters('collectAuditLogs'), 'Enabled')]",
+            "condition": "[equals(parameters('omsWorkspaceType'), 'Linked')]",
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2016-02-01",
-            "name": "[concat('omsDeployWithAuditLogs-',parameters('deploymentNameSuffix'))]",
+            "name": "[concat('LinkedWSAnalyticsOnly-',parameters('deploymentNameSuffix'))]",
             "dependsOn": [],
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[variables('nestedTemplates').omsDeployWithAuditLogs]",
+                    "uri": "[variables('nestedTemplates').deployToLinkedWorkspaceAnalyticsOnly]",
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
@@ -169,9 +169,6 @@
                     },
                     "omsAutomationRegion": {
                         "value": "[parameters('omsAutomationRegion')]"
-                    },
-                    "omsWorkspaceType": {
-                        "value": "[parameters('omsWorkspaceType')]"
                     },
                     "linkedWorkspaceSKU": {
                         "value": "[parameters('linkedWorkspaceSKU')]"
@@ -186,15 +183,14 @@
             }
         },
         {
-            "condition": "[equals(parameters('collectAuditLogs'), 'Disabled')]",
+            "condition": "[equals(parameters('omsWorkspaceType'), 'Unlinked')]",
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2016-02-01",
-            "name": "[concat('omsDeployStorageAnalyticsOnly-',parameters('deploymentNameSuffix'))]",
-            "dependsOn": [],
+            "name": "[concat('AnalyticsOnly-',parameters('deploymentNameSuffix'))]",
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[variables('nestedTemplates').omsDeployStorageAnalyticsOnly]",
+                    "uri": "[variables('nestedTemplates').deployToWorkspaceAnalyticsOnly]",
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
@@ -215,12 +211,6 @@
                     },
                     "omsAutomationRegion": {
                         "value": "[parameters('omsAutomationRegion')]"
-                    },
-                    "omsWorkspaceType": {
-                        "value": "[parameters('omsWorkspaceType')]"
-                    },
-                    "linkedWorkspaceSKU": {
-                        "value": "[parameters('linkedWorkspaceSKU')]"
                     },
                     "collectAuditLogs": {
                         "value": "[parameters('collectAuditLogs')]"

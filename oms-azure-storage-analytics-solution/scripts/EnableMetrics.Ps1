@@ -1,13 +1,29 @@
+param([switch]$enablemetrics,[switch]$enablelogs,[switch]$filterbyRG,[switch]$filterbySA,[string]$filtermatchpattern)
 
-# define metrics to enable on Storage Analytics
+#specify audited operations 
+
+[array]$logOps=('Read','Write','Delete')
+
 $services=@('Blob','Table','Queue','File')
+
+
+If($enablemetrics)
+{
+# define metrics to enable on Storage Analytics
+
 $sacount=0
 $satracking=0
 
 
 #region  Get classic Strorage Accounts
 
+IF($filterbySA)
+{
+$SAClassic=Get-AzureStorageAccount|where{$_.StorageAccountName -match $filtermatchpattern}
+}elseif(!$filterbyRG)
+{
 $SAClassic=Get-AzureStorageAccount
+}
 
 IF($SAClassic)
 {
@@ -36,7 +52,18 @@ IF($SAClassic)
 
 #region Get ARM based Storage Accounts
 
-$SAArm=Get-AzureRmStorageAccount
+
+
+
+IF($filterbySA)
+{
+$SAArm=Get-AzureRmStorageAccount |where{$_.StorageAccountName -match $filtermatchpattern}
+}elseif($filterbyRG)
+{
+$SAArm=Get-AzureRmStorageAccount |where{$_.ResourceGroupName -match $filtermatchpattern}
+}else{
+    $SAArm=Get-AzureRmStorageAccount 
+}
 
 $obj=$null
 
@@ -62,7 +89,84 @@ IF($SAArm)
 
 "$sacount storage accounts processed , $satracking  metrics enabled."
 
+}
 
+If ($enablelogs)
+{
+
+
+$sacount=0
+$satracking=0
+
+
+#ARM SA
+    IF($filterbySA)
+    {
+    $SAArm=Get-AzureRmStorageAccount |where{$_.StorageAccountName -match $filtermatchpattern}
+    }elseif($filterbyRG)
+    {
+    $SAArm=Get-AzureRmStorageAccount |where{$_.ResourceGroupName -match $filtermatchpattern} 
+    }else{
+        $SAArm=Get-AzureRmStorageAccount 
+    }
+
+IF($SAArm)
+{
+    foreach($obj in $SAArm)
+        {
+           $sacount++
+           Foreach ($svc in $services|where{$_ -ne 'File'})
+            {
+                IF(  (Get-AzureStorageServiceLoggingProperty  -ServiceType $svc   -Context $obj.Context). LoggingOperations -eq 'None')
+                {
+                    Set-AzureStorageServiceLoggingProperty -ServiceType $svc -Context $obj.Context -LoggingOperations $logops -RetentionDays 1 -Version 1.0
+
+                    Write-host "Enabling Logs  for $svc  on  $($obj.StorageAccountName)"
+                    $satracking++
+                }
+
+            }
+         }
+}
+
+
+    IF($filterbySA)
+{
+$SAClassic=Get-AzureStorageAccount|where{$_.StorageAccountName -match $filtermatchpattern}
+}elseif(!$filterbyRG)
+{
+$SAClassic=Get-AzureStorageAccount
+}
+
+IF($SAClassic)
+{
+
+    foreach($obj in $SAClassic)
+    {
+        # check and enable storage metircs 
+        $sacount++
+        
+        Foreach ($svc in $services|where{$_ -ne 'File'})
+        {
+  IF(  (Get-AzureStorageServiceLoggingProperty  -ServiceType $svc   -Context $obj.Context). LoggingOperations -eq 'None')
+                {
+                    Set-AzureStorageServiceLoggingProperty -ServiceType $svc -Context $obj.Context -LoggingOperations $logops -RetentionDays 1 -Version 1.0
+
+                    Write-host "Enabling Logs  for $svc  on  $($obj.StorageAccountName)"
+                    $satracking++
+                }
+
+        }
+    }
+
+}
+
+
+
+
+
+
+}
 
 
 
