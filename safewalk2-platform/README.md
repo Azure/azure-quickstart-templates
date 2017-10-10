@@ -53,10 +53,10 @@ Single Single sign-on (SSO) is provided across all the SAML applications that ar
 
 Benefits of using single sign-on include:
 
-1. Mitigate risk for access to 3rd-party sites (user passwords not stored or managed externally)
-2. Reducing password fatigue from different user name and password combinations
-3. Reducing time spent re-entering passwords for the same identity
-4. Reducing IT costs due to lower number of IT help desk calls about passwords
+* Mitigate risk for access to 3rd-party sites (user passwords not stored or managed externally)
+* Reducing password fatigue from different user name and password combinations
+* Reducing time spent re-entering passwords for the same identity
+* Reducing IT costs due to lower number of IT help desk calls about passwords
 
 General SAML authentication flow
 1. User generates a code (be it its static password, One-Time-Password from a mobile app/email/sms or from
