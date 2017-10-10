@@ -19,6 +19,9 @@ bash $my_dir/safewalk_make_partitions.sh
 
 sh $my_dir/set_root_password.sh $ROOT_PASSWORD
 
+bash $my_dir/setup_timezone.sh
+install-security-updates
+
 bash $my_dir/safewalk_renew_secrets.sh
 
 bash $my_dir/setup_snmp.sh
@@ -28,6 +31,8 @@ bash $my_dir/safewalk_iptables.sh
 bash $my_dir/safewalk_upgrade.sh
 
 bash $safewalk_dir/bin/safewalk_set_admin_password.sh $ADMIN_PASSWORD
+
+
 
 
 if [ "$CLUSTER_ENABLED" = "True" ]; then

@@ -7,15 +7,6 @@
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
-To deploy this template using the scripts from the root of this repo:
-
-```PowerShell
-.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'centralus' -ArtifactsStagingDirectory 'safewalk2-platform' -UploadArtifacts 
-```
-```bash
-azure-group-deploy.sh -a safewalk2-platform -l centralus -u
-```
-
 This template deploys the **Safewalk platform** in your Azure subscription.
 
 `Tags: Safewalk , Altipeak, Authentication, 2Factor, TOTP, OATH2, Identity, Strong, Secure, IAM`
@@ -37,16 +28,16 @@ The virtual network will consists on three subnets:
 #### Safewalk server VM
 The Safewalk server VM is installed inside the LAN subnet. It's recommended to access it using a VPN. If cluster is enabled, 2 VMs will be created in the same Availability Set (different physical machines).
 
-####* Super-Admin Console
+**Super-Admin Console**
 A web based interface that provides access to the general configuration of the system, like LDAP/AD connectivity to users or groups, import of new licenses, creating RADIUS clients and more. The main idea of this interface is to provide access for the highest authority to perform tasks that are not needed on a day to day basis and require a relatively high level of knowledge with the system and the organization architecture.
 
-####* Management Console
+**Management Console**
 A web based interface that provides access to manage users, their authentication settings, view transactions and more. The main idea of this interface is to provide access for helpdesk personnel or system administrators to perform tasks that are needed frequently but has no system-wide impact.
 
-####* Self-Service Portal
+**Self-Service Portal**
 A web based interface that provides access to end users to register their authentication device.
 
-####* RADIUS Server
+**RADIUS Server**
 Remote Authentication Dial In User Service (RADIUS) is a networking protocol that provides centralized Authentication, Authorization, and Accounting (AAA) management for users that connect and use a network service. The Remote Access Server, the Virtual Private Network server, the Network switch with port-based authentication, and the Network Access Server (NAS), are all gateways that control access to the network, and all have a RADIUS client component that communicates with the RADIUS server. RADIUS is often the backend of choice for 802.1X authentication as well (see http://en.wikipedia.org/wiki/RADIUS for more details).
 
 #### Safewalk Gateway VM
@@ -55,7 +46,7 @@ The Gateway VM will be created at the DMZ subnet.
 
 The main components of the Safewalk Gateway consists of:
 
-#####* SSO (SAML IdP v2)
+**SSO (SAML IdP v2)**
 Provides Single Sign-On (SSO) and integration with third party web-based applications over the SAML v2 standard protocol.
 
 Single Single sign-on (SSO) is provided across all the SAML applications that are integrated with the same Safewalk Gateway.
@@ -67,7 +58,7 @@ Benefits of using single sign-on include:
 * Reducing time spent re-entering passwords for the same identity
 * Reducing IT costs due to lower number of IT help desk calls about passwords
 
-**General SAML authentication flow:**
+#####General SAML authentication flow
 1. User generates a code (be it its static password, One-Time-Password from a mobile app/email/sms or from
 a physical device);
 2. User browses to the the application (that is enabled as a SAML SP);
@@ -78,13 +69,13 @@ is prompted to enter its credentials;
 6. Assuming that the credentials have been verified successfully (i.e. Access-Accept) the user is granted access
 to the application;
 
-#####* Registration-Gateway
+**Registration-Gateway**
 For facilitating the over-the-air registration method of mobile applications.
 
-#####* Safewalk server authentication api
+**Safewalk server authentication api**
 A proxy to the Safewalk server authentication api for external applications that do not support standard authentication protocols.
 
-**General authentication flow:**
+#####General authentication flow
 1. User generates a code (be it its static password, One-Time-Password from a mobile app/email/sms or from
 a physical device);
 2. User browses to the address of the organization NAS (that is equipped with a RADIUS client), where he is
@@ -198,6 +189,8 @@ Note: The same root password will be set to all the Safewalk servers that will p
 cluster.
 * Safewalk Server Admin Password - The password to set for the Safewalk server admin account.
 * Safewalk Gateway Root Password - The password to set for the root account of the Safewalk Gateway.
+* _artifactsLocation - 
+* _artifactsLocationSasToken - 
 
 ## Usage
 
@@ -216,73 +209,27 @@ The Gateway SSH is only accesible from the Safewalk nodes. Only web services are
 
 ### Post installation setup
 
-#### Initial configuration after deployment
-When the deployment completes connect to each of the deployed machines over SSH (First Safewalk Server,
-Second Safewalk Server and Safewalk Gateway) and execute the following procedures:
-
-**Configure the NTP daemon** to point to an NTP server of your choice so it synchronize the time automatically
-by following the instructions below:
-* Connect to the appliance using SSH
-* Open the file /etc/ntp.conf
-```bash
-vi /etc/ntp.conf
-```
-Add the following line for each NTP server you would like to add:
->> server <NTP_SERVER_ADDRESS>
-For example:
-
-```
-# ntp servers
-server 0.pool.ntp.org
-server 1.pool.ntp.org
-server 2.pool.ntp.org
-server 3.pool.ntp.org
-```
-
-* Restart the NTP service by executing the following command:
-```bash
-service ntp restart
-```
-
-**Set your geographical area** (defaults to ETC/UTC):
-* Connect to the appliance using SSH and execute the following command:
-```bash
-dpkg-reconfigure tzdata
-```
-Follow the guidelines of the command.
-* Execute the following command so that the management console will read the updated timezone:
-```bash
-service apache2 restart
-```
-
-**Update the system with the latest security updates**
-* Make sure you have Internet connection from the server.
-* Connect to the appliance using SSH and execute the following command:
-```bash
-install-security-updates
-```
-
 #### Initial configuration on the superadmin console
 
-**Connect to the super-admin:**
+**Connect to the super-admin**
 * Open a browser and enter the address of the super-admin console (i.e.
 https://SAFEWALK_ADDRESS:8443).
 * Enter the credentials of the admin account (username: admin and the default password).
 
-**Change the password and email address of the admin account:**
+**Change the password and email address of the admin account**
 * In Internal users & groups box click Users.
 * Click the admin user.
 * Follow the “. . . this form” link in the Password field to change the admin password.
 * Update the Email address field and click Save.
 
-**Update the Management Console link and organization identity:**
+**Update the Management Console link and organization identity**
 * In the Organization identity box click the Change link.
 * You can set your organization name in the Name field.
 * You can set your organization logo in the Logo field.
 * Change the address to the management console to be the address you have set for the machine in the
 Admin / User Portal base URL field.
 
-**Setup the following items:**
+**Setup the following items**
 1. Follow the System update link in the Maintenance box to deploy the latest SWP update package.
 Attention: If you are running Safewalk version 1.2.2 or lower you will not see the System update
 link in the Maintenance box.
