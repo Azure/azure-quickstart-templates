@@ -32,107 +32,6 @@ $varFilesList="AzureSAIngestion-List-Files"
 $varTableList="AzureSAIngestion-List-Tables"
 
 
-#vmIolimits
-$vmiolimits=@{"Basic_A0"=300;
-"Basic_A1"=300;
-"Basic_A2"=300;
-"Basic_A3"=300;
-"Basic_A4"=300;
-"ExtraSmall"=500;
-"Small"=500;
-"Medium"=500;
-"Large"=500;
-"ExtraLarge"=500;
-"Standard_A0"=500;
-"Standard_A1"=500;
-"Standard_A2"=500;
-"Standard_A3"=500;
-"Standard_A4"=500;
-"Standard_A5"=500;
-"Standard_A6"=500;
-"Standard_A7"=500;
-"Standard_A8"=500;
-"Standard_A9"=500;
-"Standard_A10"=500;
-"Standard_A11"=500;
-"Standard_A1_v2"=500;
-"Standard_A2_v2"=500;
-"Standard_A4_v2"=500;
-"Standard_A8_v2"=500;
-"Standard_A2m_v2"=500;
-"Standard_A4m_v2"=500;
-"Standard_A8m_v2"=500;
-"Standard_D1"=500;
-"Standard_D2"=500;
-"Standard_D3"=500;
-"Standard_D4"=500;
-"Standard_D11"=500;
-"Standard_D12"=500;
-"Standard_D13"=500;
-"Standard_D14"=500;
-"Standard_D1_v2"=500;
-"Standard_D2_v2"=500;
-"Standard_D3_v2"=500;
-"Standard_D4_v2"=500;
-"Standard_D5_v2"=500;
-"Standard_D11_v2"=500;
-"Standard_D12_v2"=500;
-"Standard_D13_v2"=500;
-"Standard_D14_v2"=500;
-"Standard_D15_v2"=500;
-"Standard_DS1"=3200;
-"Standard_DS2"=6400;
-"Standard_DS3"=12800;
-"Standard_DS4"=25600;
-"Standard_DS11"=6400;
-"Standard_DS12"=12800;
-"Standard_DS13"=25600;
-"Standard_DS14"=51200;
-"Standard_DS1_v2"=3200;
-"Standard_DS2_v2"=6400;
-"Standard_DS3_v2"=12800;
-"Standard_DS4_v2"=25600;
-"Standard_DS5_v2"=51200;
-"Standard_DS11_v2"=6400;
-"Standard_DS12_v2"=12800;
-"Standard_DS13_v2"=25600;
-"Standard_DS14_v2"=51200;
-"Standard_DS15_v2"=64000;
-"Standard_F1"=500;
-"Standard_F2"=500;
-"Standard_F4"=500;
-"Standard_F8"=500;
-"Standard_F16"=500;
-"Standard_F1s"=3200;
-"Standard_F2s"=6400;
-"Standard_F4s"=12800;
-"Standard_F8s"=25600;
-"Standard_F16s"=51200;
-"Standard_G1"=500;
-"Standard_G2"=500;
-"Standard_G3"=500;
-"Standard_G4"=500;
-"Standard_G5"=500;
-"Standard_GS1"=5000;
-"Standard_GS2"=10000;
-"Standard_GS3"=20000;
-"Standard_GS4"=40000;
-"Standard_GS5"=80000;
-"Standard_H8"=500;
-"Standard_H16"=500;
-"Standard_H8m"=500;
-"Standard_H16m"=500;
-"Standard_H16r"=500;
-"Standard_H16mr"=500;
-"Standard_NV6"=500;
-"Standard_NV12"=500;
-"Standard_NV24"=500;
-"Standard_NC6"=500;
-"Standard_NC12"=500;
-"Standard_NC24"=500;
-"Standard_NC24r"=500}
-
-
 
 #endregion
 
@@ -326,12 +225,12 @@ Function invoke-StorageREST($sharedKey, $method, $msgbody, $resource,$uri,$svc)
 			$xresp=$resp1.Content.Substring($resp1.Content.IndexOf("<")) 
 			return $xresp
 		}Elseif($method -eq 'HEAD')
-        {
-            $resp1= Invoke-WebRequest -Uri $uri -Headers $headersforsa -Method $method -ContentType application/xml -UseBasicParsing -Body $msgbody 
+		{
+			$resp1= Invoke-WebRequest -Uri $uri -Headers $headersforsa -Method $method -ContentType application/xml -UseBasicParsing -Body $msgbody 
 
 			
 			return $resp1
-        }
+		}
 	}
 }
 
