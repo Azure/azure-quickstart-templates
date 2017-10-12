@@ -188,6 +188,7 @@ describe('Template', function () {
   if (validateModifiedOnly) {
     // we automatically reset to the beginning of the commit range
     // so this includes all file paths that have changed for the CI run
+    console.log('asserting commit range');
     assert(process.env.TRAVIS_COMMIT_RANGE, 'VALIDATE_MODIFIED_ONLY requires TRAVIS_COMMIT_RANGE to be set to [START_COMMIT_HASH]...[END_COMMIT_HASH]');
 
     var modifiedPaths = childProcess.execSync('git diff --name-only ' + process.env.TRAVIS_COMMIT_RANGE, {
