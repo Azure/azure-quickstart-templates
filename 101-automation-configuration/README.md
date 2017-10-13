@@ -54,9 +54,9 @@ the intended configuration.
 The expected workflow from any public gallery is to download/save an artifact,
 review the source code and test it to verify functionality,
 and then publish it to a private, trusted feed for usage.
-However, since script/modules authors releasing to PowerShell Gallery increment the version number
+However, since module authors releasing to PowerShell Gallery increment the version number
 when changes are made,
-if template authors would like to validate and test *specific versions* of scripts/modules
+if template authors would like to validate and test *specific versions* of modules
 in the gallery and use *static links* to those artifacts,
 those artifacts can be expected to remain unchanged.
 **This does not change the operational best practice behavior of reviewing, validating, and testing
