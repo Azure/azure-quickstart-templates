@@ -83,13 +83,6 @@
                 "description": "If it's greater than 1, a multimaster cluster of Safewalk nodes will be created and the deployment procedure will take care of configuring the topology between the nodes. To install a single Safewalk node set this parameter to 1."
             }
         },
-        "FirstSafewalkServerIP": {
-            "type": "string",
-            "defaultValue": "10.1.1.5",
-            "metadata": {
-                "description": "Set to the address that will be assigned to the first Safewalk Server within the LAN subnet (e.g. 10.1.1.5)."
-            }
-        },
         "vmPrefix": {
             "type": "string",
             "defaultValue": "safewalk",
@@ -161,6 +154,8 @@
         "subnetRef": "[concat(variables('vnetID'), '/subnets/', parameters('subnetLANName'))]",
         "subnetLANAddressSplit": "[split(parameters('subnetLANAddressSpace'), '.')]",
         "subnetLANAddressPrefix": "[concat(variables('subnetLANAddressSplit')[0], '.', variables('subnetLANAddressSplit')[1], '.', variables('subnetLANAddressSplit')[2], '.')]",
+        "firstLastIPComponent": 5,
+        "firstSafewalkServerIP": "[concat(variables('subnetLANAddressPrefix'), variables('firstLastIPComponent') )]",
         "subnetDMZRef": "[concat(variables('vnetID'), '/subnets/', parameters('subnetDMZName'))]",
         "sizeOfDiskInGBSafewalk" :  "127",
 	    "sizeOfDiskInGBGateway" :  "20",
@@ -600,7 +595,7 @@
                         "name": "ipconfig1",
                         "properties": {
                             "privateIPAllocationMethod": "Static",
-                            "privateIPAddress": "[parameters('FirstSafewalkServerIP')]",
+                            "privateIPAddress": "[concat(variables('subnetLANAddressPrefix'), sum(variables('firstLastIPComponent'),1) )]",
                             "subnet": {
                                 "id": "[variables('subnetRef')]"
                             }
@@ -624,7 +619,7 @@
                         "name": "ipconfig2",
                         "properties": {
                             "privateIPAllocationMethod": "Static",
-                            "privateIPAddress": "[concat(variables('subnetLANAddressPrefix'), copyIndex(5))]",
+                            "privateIPAddress": "[concat(variables('subnetLANAddressPrefix'), copyIndex(6))]",
                             "subnet": {
                                 "id": "[variables('subnetRef')]"
                             }
@@ -812,7 +807,7 @@
                         "typeHandlerVersion": "2.0",
                         "autoUpgradeMinorVersion": true,
                         "protectedSettings": {
-                            "commandToExecute": "[concat('sh configure_safewalk_custom_script_slave.sh ', parameters('SafewalkServerRootPassword'), ' ', parameters('SafewalkGatewayIP'), ' ', reference(concat('Microsoft.Network/publicIPAddresses/', variables('gatewayPublicIPName')), '2017-04-01').ipAddress, ' ', parameters('SafewalkGatewayRootPassword'), ' ', parameters('FirstSafewalkServerIP'), ' ', resourceId('Microsoft.Network/networkInterfaces', concat(parameters('vmPrefix'), '-server-slave-', copyIndex(), '-NIC')).ipConfigurations[0].properties.privateIPAddress, ' ', parameters('subnetLANAddressSpace') )]"
+                            "commandToExecute": "[concat('sh configure_safewalk_custom_script_slave.sh ', parameters('SafewalkServerRootPassword'), ' ', parameters('SafewalkGatewayIP'), ' ', reference(concat('Microsoft.Network/publicIPAddresses/', variables('gatewayPublicIPName')), '2017-04-01').ipAddress, ' ', parameters('SafewalkGatewayRootPassword'), ' ', variables('firstSafewalkServerIP'), ' ', resourceId('Microsoft.Network/networkInterfaces', concat(parameters('vmPrefix'), '-server-slave-', copyIndex(), '-NIC')).ipConfigurations[0].properties.privateIPAddress, ' ', parameters('subnetLANAddressSpace') )]"
                         }
                     }
                 }
@@ -833,7 +828,7 @@
                 "typeHandlerVersion": "2.0",
                 "autoUpgradeMinorVersion": true,
                 "protectedSettings": {
-                    "commandToExecute": "[concat('sh configure_safewalk_custom_script_master.sh ', parameters('SafewalkServerRootPassword'), ' ', parameters('SafewalkGatewayIP'), ' ', reference(concat('Microsoft.Network/publicIPAddresses/', variables('gatewayPublicIPName')), '2017-04-01').ipAddress, ' ', parameters('SafewalkGatewayRootPassword'), ' ', parameters('FirstSafewalkServerIP'), ' ', parameters('subnetLANAddressSpace'), ' ', greater(variables('numberOfSlaves'), 0), ' ', parameters('SafewalkServerAdminPassword'))]"
+                    "commandToExecute": "[concat('sh configure_safewalk_custom_script_master.sh ', parameters('SafewalkServerRootPassword'), ' ', parameters('SafewalkGatewayIP'), ' ', reference(concat('Microsoft.Network/publicIPAddresses/', variables('gatewayPublicIPName')), '2017-04-01').ipAddress, ' ', parameters('SafewalkGatewayRootPassword'), ' ', variables('firstSafewalkServerIP'), ' ', parameters('subnetLANAddressSpace'), ' ', greater(variables('numberOfSlaves'), 0), ' ', parameters('SafewalkServerAdminPassword'))]"
                 }
             }
         },
