@@ -1,0 +1,152 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "automationAccountName": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "adminUsername": {
+      "type": "string"
+    },
+    "adminPassword": {
+      "type": "securestring"
+    },
+    "domainName": {
+      "type": "string"
+    }
+  },
+  "variables": {
+    "dscConfigurations": {
+      "domainControllerConfig": {
+        "name": "domainControllerConfig",
+        "description": "minimum viable configuration for a domain controller role",
+        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/domaincontrollerconfig.0.2.0.nupkg",
+        "compileName": "[guid(resourceGroup().id, deployment().name)]"
+      }
+    },
+    "dscResources": {
+      "xActiveDirectory": {
+        "name": "xActiveDirectory",
+        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/xactivedirectory.2.16.0.nupkg"
+      },
+      "xDisk": {
+        "name": "xDisk",
+        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/xdisk.1.0.0.nupkg"
+      }
+    }
+  },
+  "resources": [
+    {
+      "apiversion": "2015-10-31",
+      "location": "[parameters('location')]",
+      "name": "[parameters('automationAccountName')]",
+      "type": "Microsoft.Automation/automationAccounts",
+      "comments": "Automation account for OMS",
+      "properties": {
+        "sku": {
+          "name": "OMS"
+        }
+      },
+      "resources": [
+        {
+          "name": "[variables('dscResources').xActiveDirectory.name]",
+          "type": "modules",
+          "apiVersion": "2015-10-31",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('AutomationAccountName'))]"
+          ],
+          "properties": {
+            "contentLink": {
+              "uri": "[variables('dscResources').xActiveDirectory.url]"
+            }
+          }
+        },
+        {
+          "name": "[variables('dscResources').xDisk.name]",
+          "type": "modules",
+          "apiVersion": "2015-10-31",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('AutomationAccountName'))]"
+          ],
+          "properties": {
+            "contentLink": {
+              "uri": "[variables('dscResources').xDisk.url]"
+            }
+          }
+        },
+        {
+          "name": "domainName",
+          "type": "variables",
+          "apiVersion": "2015-10-31",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('AutomationAccountName'))]"
+          ],
+          "properties": {
+              "value": "[parameters('domainName')]"
+          }
+        },
+        {
+          "name": "domainCredential",
+          "type": "credentials",
+          "apiVersion": "2015-01-01-preview",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('AutomationAccountName'))]"
+          ],
+          "properties": {
+            "userName": "[parameters('adminUsername')]",
+            "password": "[parameters('adminPassword')]"
+          }
+        },
+        {
+          "name": "[variables('dscConfigurations').domainControllerConfig.name]",          
+          "type": "configurations",
+          "apiVersion": "2015-01-01-preview",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('AutomationAccountName'))]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('AutomationAccountName'),'/Modules/', 'xActiveDirectory')]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('AutomationAccountName'),'/Modules/', 'xDisk')]",            
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('AutomationAccountName'),'/Variables/', 'domainName')]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('AutomationAccountName'),'/Credentials/', 'domainCredential')]"
+          ],
+          "properties": {
+            "state": "Published",
+            "overwrite": "true",
+            "Source": {
+              "type": "uri",       
+              "value": "[variables('dscConfigurations').domainControllerConfig.url]"
+            }
+          }
+        },
+        {
+          "name": "[variables('dscConfigurations').domainControllerConfig.compileName]",
+          "type": "Compilationjobs",
+          "apiVersion": "2015-01-01-preview",
+          "tags": {},
+          "dependsOn": [
+              "[concat('Microsoft.Automation/automationAccounts/', parameters('AutomationAccountName'))]",
+              "[concat('Microsoft.Automation/automationAccounts/', parameters('AutomationAccountName'),'/Configurations/', variables('dsc').config.name)]"
+          ],
+          "properties": {
+              "configuration": {
+                "name": "[variables('dsc').config.name]"
+              }
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": {
+    "AutomationAccountRegistrationUrl": {
+      "value": "[reference(concat('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))).RegistrationUrl]",
+      "type": "string"
+    }
+  }
+}

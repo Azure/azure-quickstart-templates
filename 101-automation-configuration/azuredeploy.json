@@ -1,0 +1,295 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "prefix": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string",
+      "defaultValue":"[resourceGroup().location]"
+    },
+    "storageAccountType": {
+      "type": "string",
+      "allowedValues": [
+        "Premium_LRS",
+        "Standard_LRS",
+        "Standard_GRS"
+
+      ],
+      "metadata": {
+        "description": "The type of the Storage Account created"
+      },
+      "defaultValue": "Premium_LRS"
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Virtual Network to Create"
+      },
+      "defaultValue": "network"
+    },
+    "virtualNetworkAddressRange": {
+      "type": "string",
+      "metadata": {
+        "description": "The address range of the new virtual network "
+      },
+      "defaultValue": "10.0.0.0/16"
+    },
+    "virtualNetworkSubnet": {
+      "type": "string",
+      "metadata": {
+        "description": "The address range of the subnet created in the new virtual network"
+      },
+      "defaultValue": "10.0.0.0/24"
+    },
+    "nicIPAddress": {
+      "type": "string",
+      "metadata": {
+        "description": "The IP address of the new AD VM"
+      },
+      "defaultValue": "10.0.0.4"
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Administrator of the new VM and Domain"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The password for the Administrator account of the new VM and Domain"
+      }
+    },
+    "VMSize": {
+      "type": "string",
+      "metadata": {
+        "description": "The size of the VM Created"
+      },
+      "defaultValue": "Standard_DS2_V2"
+    },
+    "configurationURI": {
+      "type": "string",
+      "metadata": {
+        "description": "HTTP path to the configuration script"
+      }
+    },
+    "domainName": {
+      "type": "string",
+      "metadata": {
+        "description": "The full qualified domain name to be created"
+      },
+      "defaultValue": "\"contoso.local\""
+    }
+  },
+  "variables": {
+    "automationAccountName": "configuration",
+    "publicIPAddressName": "publicIP",
+    "publicIPAddressType": "Dynamic",
+    "virtualNetworkSubnetName": "Subnet",
+    "virtualNetworkSubnets": [
+      {
+        "name": "[variables('virtualNetworkSubnetName')]",
+        "properties": {
+          "addressPrefix": "[parameters('virtualNetworkSubnet')]"
+        }
+      }
+    ],
+    "VMName": "server",
+    "DataDisk": "DataDisk",
+    "DataDiskSize": 1000,
+    "nicName": "nic",
+    "virtual networkID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
+    "nicSubnetRef": "[concat(variables('virtual networkID'),'/subnets/',variables('virtualNetworkSubnetName'))]",
+    "PublicIpResourceId": "[resourceId(concat('Microsoft.Network','/','publicIPAddresses'),variables('publicIPAddressName'))]",
+    "NicId": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]",
+    "IPConfigID": "[concat(variables('NicId'),'/ipConfigurations/ipconfig')]",
+    "nestedTemplateBaseURL": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-automation-configuration/nested/",
+    "provisionConfigurationURL": "[uri(variables('nestedTemplateBaseURL'), 'provisionConfiguration.json')]",
+    "provisionStorageURL": "[uri(variables('nestedTemplateBaseURL'), 'provisionStorage.json')]",    
+    "provisionNetworkURL": "[uri(variables('nestedTemplateBaseURL'), 'provisionNetwork.json')]",
+    "provisionServerUrl": "[uri(variables('nestedTemplateBaseURL'), 'provisionServer.json')]",
+    "provisionDNSUrl": "[uri(variables('nestedTemplateBaseURL'), 'provisionDNS.json')]",
+    "storageAccountNamePrefix": "[concat(parameters('prefix'), substring(resourceGroup().name, 7, 6))]"
+  },
+  "resources": [
+    {
+      "name": "provisionStorage",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('provisionStorageURL')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "storageAccountType": {
+            "value": "[parameters('storageAccountType')]"
+          },
+          "storageAccountNamePrefix": {
+            "value": "[variables('storageAccountNamePrefix')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "provisionConfiguration",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2016-02-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('provisionConfigurationURL')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "automationAccountName": {
+            "value": "[variables('automationAccountName')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "configurationURI": {
+            "value": "[parameters('configurationURI')]"
+          },
+          "domainName": {
+            "value": "[parameters('domainName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "provisionNetwork",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('provisionNetworkURL')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "virtualNetworkName": {
+            "value": "[parameters('virtualNetworkName')]"
+          },
+          "virtualNetworkAddressRange": {
+            "value": "[parameters('virtualNetworkAddressRange')]"
+          },
+          "virtualNetworkSubnets": {
+            "value": "[variables('virtualNetworkSubnets')]"
+          },
+          "nicName": {
+            "value": "[variables('nicName')]"
+          },
+          "nicIPAddress": {
+            "value": "[parameters('nicIPAddress')]"
+          },
+          "nicSubnetRef": {
+            "value": "[variables('nicSubnetRef')]"
+          },
+          "publicIPAddressName": {
+            "value": "[variables('publicIPAddressName')]"
+          },
+          "publicIPAddressType": {
+            "value": "[variables('publicIPAddressType')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "provisionServer",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/provisionStorage",
+        "Microsoft.Resources/deployments/provisionNetwork",
+        "Microsoft.Resources/deployments/provisionConfiguration"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('provisionServerUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "VMName": {
+            "value": "[variables('VMName')]"
+          },
+          "VMSize": {
+            "value": "[parameters('VMSize')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "storageAccountNamePrefix": {
+            "value": "[variables('storageAccountNamePrefix')]"
+          },
+          "DataDisk": {
+            "value": "[variables('DataDisk')]"
+          },
+          "NicName": {
+            "value": "[variables('NicName')]"
+          },
+          "automationAccountName": {
+            "value": "[variables('automationAccountName')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "provisionDNS",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+         "Microsoft.Resources/deployments/provisionServer"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('provisionDNSUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "virtualNetworkName": {
+            "value": "[parameters('virtualNetworkName')]"
+          },
+          "virtualNetworkAddressRange": {
+            "value": "[parameters('virtualNetworkAddressRange')]"
+          },
+          "virtualNetworkSubnets": {
+            "value": "[variables('virtualNetworkSubnets')]"
+          },
+          "dnsAddress": {
+            "value": [
+              "[parameters('nicIPAddress')]"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}

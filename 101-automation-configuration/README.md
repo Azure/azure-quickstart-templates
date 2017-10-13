@@ -1,0 +1,55 @@
+# Azure Automation Managed Node template
+
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmgreenegit%2Fazure-quickstart-templates%2F101-automation-configuration%2F101-automation-configuration%2Fazuredeploy.json" target="_blank">
+    <img src="http://azuredeploy.net/deploybutton.png"/>
+</a>
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fmgreenegit%2Fazure-quickstart-templates%2F101-automation-configuration%2F101-automation-configuration%2Fazuredeploy.json" target="_blank">
+    <img src="http://armviz.io/visualizebutton.png"/>
+</a>
+
+This template demonstrates a managed virtual machine where the configuration
+will be maintained by Azure for the life of the node as opposed to only applying
+the configuration at the time of deployment.
+
+For details about Azure Operations Management services,
+see the [Azure Automation Documentation](https://docs.microsoft.com/en-us/azure/automation/).
+
+## What is new in this template
+
+Unlike previous examples, this template includes examples of nested templates
+that create an automation account, publish a configuration script and supporting modules
+from the [PowerShell Gallery](http://www.powershellgallery.com),
+compile the configuration, bootstrap the machine to the service,
+and wait for the initial delivery of the configuration to complete,
+all from a single deployment.
+This is possible because new API methods (reference, listkeys) are now available
+for the Automation service.
+
+## What is unique about this concept
+
+This model is the go-forward recommendation for utilizing DSC with Azure Virtual Machines.
+The [DSC Extension](https://blogs.msdn.microsoft.com/powershell/2014/08/07/introducing-the-azure-powershell-dsc-desired-state-configuration-extension/)
+is used only to apply settings to the Local Configuration Manager (LCM) and direct it
+to use the [Azure Automation DSC](https://docs.microsoft.com/en-us/azure/automation/automation-dsc-overview)
+service to deliver *and maintain* the state of the machine.
+The compliance state or any error messages from DSC can be viewed in the reporting
+available with the service.
+Users of the service also have tools to support Operations practices,
+such as publishing changes to the configuration without re-deployment of the virtual machine,
+or [linking the Automation Account with Log Analytics](https://docs.microsoft.com/en-us/azure/automation/automation-dsc-diagnostics)
+for alerting (including notifications to mobile devices) when a node has drifted from
+the intended configuration.
+
+## Is it acceptable to link directly to PowerShell Gallery in Azure-Quickstart-Templates?
+
+The expected workflow from any public gallery is to download/save an artifact,
+review the source code and test it to verify functionality,
+and then publish it to a private, trusted feed for usage.
+However, since script/modules authors releasing to PowerShell Gallery increment the version number
+when changes are made,
+if template authors would like to validate and test *specific versions* of scripts/modules
+in the gallery and use *static links* to those artifacts,
+those artifacts can be expected to remain unchanged.
+**This does not change the operational best practice behavior of reviewing, validating, and testing
+all code artifacts including ARM templates, PowerShell scripts, and DSC resources,
+before production deployment.**
