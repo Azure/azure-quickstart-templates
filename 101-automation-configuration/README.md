@@ -25,6 +25,15 @@ all from a single deployment.
 This is possible because new API methods (reference, listkeys) are now available
 for the Automation service.
 
+Notice that no custom scripts or chained-together ARM templates are required in this example.
+
+There is one important concept to note when using nested templates such as this,
+where dependencies flow across separate declared deployments.
+In order for the Server template to "depend on" the Configuration template,
+the Automation Account is declared again in the Server template.
+Since the account already exists,
+this is essentially verifying the account before the server deployment.
+
 ## What is unique about this concept
 
 This model is the go-forward recommendation for utilizing DSC with Azure Virtual Machines.
