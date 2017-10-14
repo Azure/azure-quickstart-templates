@@ -1,0 +1,62 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {},
+    "variables": {
+        "storageAccountName": "[concat('str1',uniqueString(resourceGroup().id))]",
+        "storageAccountName2": "[concat('str2',uniqueString(resourceGroup().id))]"     
+    },
+    "resources": [{
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[variables('storageAccountName')]",
+            "apiVersion": "2016-01-01",
+            "location": "West US",
+            "comments": "Premium Storage account used as Redis Backup storage",
+            "tags": {
+                "displayName": "Storage Account"
+            },
+            "sku": {
+                "name": "Premium_LRS"
+            },
+            "kind": "Storage",
+            "properties": {
+                "encryption": {
+                    "services": {
+                        "blob": {
+                            "enabled": false
+                        },
+                        "file": null
+                    },
+                    "keySource": "Microsoft.Storage"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[variables('storageAccountName2')]",
+            "apiVersion": "2016-01-01",
+            "location": "West US",
+            "comments": "Storage account used for storing diagnostic logs",
+            "tags": {
+                "displayName": "Storage Account"
+            },
+            "sku": {
+                "name": "Standard_LRS"
+            },
+            "kind": "Storage",
+            "properties": {
+
+            }
+        }
+    ],
+    "outputs": {
+        "diagStorageName": {
+            "type": "string",
+            "value": "[variables('storageAccountName2')]"
+        },
+        "rdbBackupStorConnString": {
+            "type": "string",
+            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value)]"
+        }
+    }
+}

@@ -1,5 +1,4 @@
 {
-
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
@@ -39,7 +38,6 @@
         "description": "VM Size, for Premium Storage specify DS VMs."
       }
     },
-
     "vmSizeDataDisks": {
       "type": "int",
       "defaultValue": 120,
@@ -108,13 +106,12 @@
       "metadata": {
         "description": "Private storage account key in which you are storing your ssh certificates"
       }
-    },    
+    },
     "dnsLabelPrefix": {
       "type": "string",
       "metadata": {
         "description": "DNS Label for the Public IP. Must be lowercase. It should match with the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ or it will raise an error."
       }
-
     },
     "publicIPType": {
       "type": "string",
@@ -190,10 +187,9 @@
     "newStorageAccountName": "[concat(uniquestring(resourceGroup().id), 'stg')]",
     "storageRef": "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]"
   },
-
   "resources": [
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[resourceGroup().location]",
@@ -220,13 +216,12 @@
       }
     },
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPName')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "[variables('vnetRef')]"
-
       ],
       "properties": {
         "publicIPAllocationMethod": "[parameters('publicIPType')]",
@@ -236,7 +231,7 @@
       }
     },
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/loadBalancers",
       "name": "[variables('loadBalancerName')]",
       "location": "[resourceGroup().location]",
@@ -244,7 +239,6 @@
         "[variables('publicIPRef')]"
       ],
       "properties": {
-
         "frontendIPConfigurations": [
           {
             "name": "[variables('lbFEConfig')]",
@@ -253,49 +247,50 @@
                 "id": "[variables('publicIPRef')]"
               }
             }
-
           }
         ],
         "backendAddressPools": [
-          { "name": "[variables('lbBEConfig')]" }
+          {
+            "name": "[variables('lbBEConfig')]"
+          }
         ],
         "inboundNatRules": [
           {
             "name": "sshToAnsibleControllerNAT",
             "properties": {
-              "frontendIPConfiguration": { "id": "[variables('lbFEConfigRef')]" },
+              "frontendIPConfiguration": {
+                "id": "[variables('lbFEConfigRef')]"
+              },
               "protocol": "tcp",
               "frontendPort": "[concat(variables('sshNatRuleFrontEndPort'),'0')]",
               "backendPort": "[variables('sshNatRuleBackEndPort')]",
               "enableFloatingIP": false
             }
           }
-
         ]
       }
     },
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('availabilitySetName')]",
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2015-06-15",
       "location": "[resourceGroup().location]",
       "properties": {
         "PlatformFaultDomainCount": "[variables('faultDomainCount')]",
         "PlatformUpdateDomainCount": "[variables('updateDomainCount')]"
-
       }
     },
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('newStorageAccountName')]",
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2015-06-15",
       "location": "[resourceGroup().location]",
       "properties": {
         "accountType": "[parameters('storageAccountType')]"
       }
     },
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('vmNICNamePattern'),copyIndex())]",
       "location": "[resourceGroup().location]",
@@ -318,16 +313,17 @@
                 "id": "[variables('subnetBackEndRef')]"
               },
               "loadBalancerBackendAddressPools": [
-                { "id": "[variables('lbBEConfigRef')]" }
+                {
+                  "id": "[variables('lbBEConfigRef')]"
+                }
               ]
             }
-
           }
         ]
       }
     },
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('vmNamePattern'),copyIndex())]",
       "location": "[resourceGroup().location]",
@@ -414,7 +410,6 @@
             }
           ]
         },
-
         "networkProfile": {
           "networkInterfaces": [
             {
@@ -427,7 +422,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmNamePattern'),copyIndex(),'/configuressh')]",
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2015-06-15",
       "location": "[resourceGroup().location]",
       "copy": {
         "name": "VMExtensionsLoop",
@@ -438,22 +433,21 @@
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
-		"type": "CustomScript",
-		"typeHandlerVersion": "2.0",
-		"autoUpgradeMinorVersion": true,
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
             "[variables('customScriptSSHRootUrl')]",
             "[variables('pythonAzureScriptUrl')]"
           ],
           "commandToExecute": "[variables('customScriptSSHRootCommand')]",
-          "protectedSettings": { }
-
+          "protectedSettings": {}
         }
       }
     },
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "AnsibleController",
       "location": "[resourceGroup().location]",
@@ -468,18 +462,21 @@
             "properties": {
               "privateIPAllocationMethod": "Static",
               "privateIPAddress": "[concat(variables('VMIPAddressStart'),parameters('numberOfVms'))]",
-              "subnet": { "id": "[variables('subnetBackEndRef')]" },
+              "subnet": {
+                "id": "[variables('subnetBackEndRef')]"
+              },
               "loadBalancerInboundNatRules": [
-                { "id": "[concat(variables('loadBalancerRef'),'/inboundNatRules/sshToAnsibleControllerNAT')]" }
+                {
+                  "id": "[concat(variables('loadBalancerRef'),'/inboundNatRules/sshToAnsibleControllerNAT')]"
+                }
               ]
             }
-
           }
         ]
       }
     },
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "AnsibleController",
       "location": "[resourceGroup().location]",
@@ -531,8 +528,7 @@
             "caching": "ReadWrite",
             "createOption": "FromImage"
           },
-          "dataDisks": [
-          ]
+          "dataDisks": []
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -546,7 +542,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "AnsibleController/installAnsible",
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2015-06-15",
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "VMExtensionsLoop"
@@ -563,12 +559,11 @@
             "[variables('pythonAzureScriptUrl')]"
           ],
           "commandToExecute": "[concat(variables('customScriptAnsibleCommand'),variables('customScriptAnsibleParameters'),' -a ', parameters('sshStorageAccountName'),' -k ', parameters('sshStorageAccountKey'))]",
-          "protectedSettings": { }
+          "protectedSettings": {}
         }
       }
     }
   ],
-
   "outputs": {
     "sshResourceURL": {
       "value": "[concat('SSH Url to Ansible Controller:',parameters('adminUsername'),'@', reference(variables('publicIPRef'),providers('Microsoft.Network', 'publicIPAddresses').apiVersions[0]).dnsSettings.fqdn,' -p ',variables('sshNatRuleFrontEndPort'))]",

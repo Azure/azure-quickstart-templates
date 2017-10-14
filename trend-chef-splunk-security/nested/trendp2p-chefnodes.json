@@ -158,7 +158,7 @@
       "type": "string",
       "defaultValue": ""
     },
-    "chef_server_url": {
+    "chef_automate_url": {
       "type": "string",
       "defaultValue": ""
     },
@@ -181,9 +181,28 @@
     "chefnodeCustomScripturl": {
       "type": "string",
       "defaultValue": ""
+    },
+    "trendmicroTags": {
+      "type": "object"
+    },
+    "chefSoftwareTags": {
+      "type": "object"
+    },
+    "splunkTags": {
+      "type": "object"
+    },
+    "quickstartTags": {
+      "type": "object"
+    },
+    "chefAutoDNS": {
+      "type": "string"
+    },
+    "computeSettings": {
+      "type": "secureObject"
     }
   },
   "variables": {
+    "chefAutoDNS": "[concat('https://',parameters('chefAutoDNS'),'.',parameters('location'),'.cloudapp.azure.com/organizations/',parameters('computeSettings').orguser)]",
     "publicIPAddressNameChefWorkstation": "publicIPChefWorkstation",
     "networkInterfaceNameChefWorkstation": "[concat(parameters('vmNameChefWorkstation'),'-nic')]",
     "securityGroupNameChefWorkstation": "[concat(variables('networkInterfaceNameChefWorkstation'),'-nsg')]",
@@ -198,13 +217,15 @@
   },
   "resources": [
     {
-      "apiVersion": "[parameters('network-api-version')]",
+      "apiVersion": "2017-06-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat(parameters('chefprefix'),variables('publicIPAddressNameChefWorkstation'))]",
       "location": "[parameters('location')]",
       "tags": {
         "program": "[parameters('tagvalues').program]",
-        "project": "[parameters('tagvalues').project]"
+        "project": "[parameters('tagvalues').project]",
+        "quickstartName": "[parameters('quickstartTags').name]",
+        "provider": "[parameters('chefSoftwareTags').provider]"
       },
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
@@ -214,13 +235,15 @@
       }
     },
     {
-      "apiVersion": "[parameters('network-api-version')]",
+      "apiVersion": "2017-06-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(parameters('chefprefix'),variables('networkInterfaceNameChefWorkstation'))]",
       "location": "[parameters('location')]",
       "tags": {
         "program": "[parameters('tagvalues').program]",
-        "project": "[parameters('tagvalues').project]"
+        "project": "[parameters('tagvalues').project]",
+        "quickstartName": "[parameters('quickstartTags').name]",
+        "provider": "[parameters('chefSoftwareTags').provider]"
       },
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/',parameters('chefprefix'),variables('publicIPAddressNameChefWorkstation'))]"
@@ -243,13 +266,15 @@
       }
     },
     {
-      "apiVersion": "[parameters('compute-api-version')]",
+      "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(parameters('chefprefix'),parameters('vmNameChefWorkstation'))]",
       "location": "[parameters('location')]",
       "tags": {
         "program": "[parameters('tagvalues').program]",
-        "project": "[parameters('tagvalues').project]"
+        "project": "[parameters('tagvalues').project]",
+        "quickstartName": "[parameters('quickstartTags').name]",
+        "provider": "[parameters('chefSoftwareTags').provider]"
       },
       "dependsOn": [
         "[concat('Microsoft.Network/networkInterfaces/', parameters('chefprefix'),variables('networkInterfaceNameChefWorkstation'))]"
@@ -289,13 +314,15 @@
       }
     },
     {
-      "apiVersion": "[parameters('network-api-version')]",
+      "apiVersion": "2017-06-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat(parameters('chefprefix'),variables('publicIPAddressNameDSAgent'),copyindex())]",
       "location": "[parameters('location')]",
       "tags": {
         "program": "[parameters('tagvalues').program]",
-        "project": "[parameters('tagvalues').project]"
+        "project": "[parameters('tagvalues').project]",
+        "quickstartName": "[parameters('quickstartTags').name]",
+        "provider": "[parameters('chefSoftwareTags').provider]"
       },
       "copy": {
         "name": "foo",
@@ -309,13 +336,15 @@
       }
     },
     {
-      "apiVersion": "[parameters('network-api-version')]",
+      "apiVersion": "2017-06-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(parameters('chefprefix'),variables('networkInterfaceNameDSAgent'),copyindex())]",
       "location": "[parameters('location')]",
       "tags": {
         "program": "[parameters('tagvalues').program]",
-        "project": "[parameters('tagvalues').project]"
+        "project": "[parameters('tagvalues').project]",
+        "quickstartName": "[parameters('quickstartTags').name]",
+        "provider": "[parameters('chefSoftwareTags').provider]"
       },
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', parameters('chefprefix'),variables('publicIPAddressNameDSAgent'),copyindex())]"
@@ -342,13 +371,15 @@
       }
     },
     {
-      "apiVersion": "[parameters('compute-api-version')]",
+      "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(parameters('chefprefix'),parameters('vmNameDSAgent'),copyindex())]",
       "location": "[parameters('location')]",
       "tags": {
         "program": "[parameters('tagvalues').program]",
-        "project": "[parameters('tagvalues').project]"
+        "project": "[parameters('tagvalues').project]",
+        "quickstartName": "[parameters('quickstartTags').name]",
+        "provider": "[parameters('chefSoftwareTags').provider]"
       },
       "dependsOn": [
         "[concat('Microsoft.Network/networkInterfaces/', parameters('chefprefix'),variables('networkInterfaceNameDSAgent'),copyindex())]"
@@ -394,11 +425,13 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('chefprefix'),parameters('vmNameDSAgent'),copyIndex(),'/', variables('vmExtensionName'))]",
-      "apiVersion": "[parameters('compute-api-version')]",
+      "apiVersion": "2015-05-01-preview",
       "location": "[parameters('location')]",
       "tags": {
         "program": "[parameters('tagvalues').program]",
-        "project": "[parameters('tagvalues').project]"
+        "project": "[parameters('tagvalues').project]",
+        "quickstartName": "[parameters('quickstartTags').name]",
+        "provider": "[parameters('chefSoftwareTags').provider]"
       },
       "copy": {
         "name": "foo",
@@ -415,7 +448,7 @@
         "settings": {
           "bootstrap_options": {
             "chef_node_name": "[concat(parameters('chef_node_name'),copyIndex())]",
-            "chef_server_url": "[parameters('chef_server_url')]",
+            "chef_automate_url": "[parameters('chef_automate_url')]",
             "validation_client_name": "[parameters('validation_client_name')]"
           },
           "validation_key_format": "[parameters('validation_key_format')]",
@@ -430,11 +463,13 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('chefprefix'),parameters('vmNameDSAgent'),copyIndex(),'/', variables('vmExtensionName2'))]",
-      "apiVersion": "[parameters('compute-api-version')]",
+      "apiVersion": "2015-05-01-preview",
       "location": "[parameters('location')]",
       "tags": {
         "program": "[parameters('tagvalues').program]",
-        "project": "[parameters('tagvalues').project]"
+        "project": "[parameters('tagvalues').project]",
+        "quickstartName": "[parameters('quickstartTags').name]",
+        "provider": "[parameters('chefSoftwareTags').provider]"
       },
       "copy": {
         "name": "foo",
@@ -453,7 +488,7 @@
           "fileUris": [
             "[parameters('chefnodeCustomScripturl')]"
           ],
-          "commandToExecute": "[concat('sh p2pchefnodebootstrap.sh',' ',parameters('keyName'),' ',parameters('kmServerUrl'))]"
+          "commandToExecute": "[concat('sh p2pchefnodebootstrap.sh',' ',parameters('keyName'),' ',parameters('kmServerUrl'), ' ',variables('chefAutoDNS'))]"
         }
       }
     }

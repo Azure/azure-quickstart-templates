@@ -29,7 +29,7 @@
     "servicePrincipalAppKey": {
       "type": "securestring",
       "metadata": {
-        "description": "Service Principal App Key that has contributor rights to the subscription used for this deployment. It is used by the Kubernetes cluster to dynamically manage resources (e.g. user-defined load balancers)."
+        "description": "Service Principal App Key (also called Client Secret) that has contributor rights to the subscription used for this deployment. It is used by the Kubernetes cluster to dynamically manage resources (e.g. user-defined load balancers)."
       }
     },
     "kubernetesPipeline": {
@@ -65,7 +65,6 @@
   "variables": {
     "resourcePrefix": "spinnaker",
     "kubernetesName": "[concat('containerservice-', resourceGroup().name)]",
-    "kubernetesMasterCount": 1,
     "storageAccountName": "[concat(variables('resourcePrefix'), uniquestring(resourceGroup().id))]",
     "OSDiskName": "[concat(variables('resourcePrefix'), 'OSDisk')]",
     "nicName": "[concat(variables('resourcePrefix'), 'VMNic')]",
@@ -74,12 +73,12 @@
     "vmStorageAccountContainerName": "vhds",
     "vmName": "[concat(variables('resourcePrefix'), 'VM')]",
     "virtualNetworkName": "[concat(variables('resourcePrefix'), 'VNET')]",
-    "vmExtensionName": "initializeSpinnaker",
+    "vmExtensionName": "[concat(variables('resourcePrefix'), 'Init')]",
     "acrPrefix": "[uniquestring(resourceGroup().id)]",
     "acrStorageAccountName": "[concat('registry', uniquestring(resourceGroup().id))]",
     "kubernetesDnsPrefix": "[concat('k8s', uniquestring(resourceGroup().id))]",
     "pipelinePort": "8000",
-    "_artifactsLocation": "https://raw.githubusercontent.com/azure/azure-devops-utils/v0.8.0/",
+    "_artifactsLocation": "https://raw.githubusercontent.com/Azure/azure-devops-utils/v0.12.0/",
     "_extensionScript": "201-spinnaker-acr-k8s.sh",
     "_artifactsLocationSasToken": ""
   },
@@ -94,7 +93,7 @@
           "orchestratorType": "Kubernetes"
         },
         "masterProfile": {
-          "count": "[variables('kubernetesMasterCount')]",
+          "count": 1,
           "dnsPrefix": "[concat(variables('kubernetesDnsPrefix'),'mgmt')]"
         },
         "agentPoolProfiles": [
@@ -208,7 +207,7 @@
           "computerName": "[variables('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
           "linuxConfiguration": {
-            "disablePasswordAuthentication": "true",
+            "disablePasswordAuthentication": true,
             "ssh": {
               "publicKeys": [
                 {
@@ -248,7 +247,34 @@
             "storageUri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2016-01-01').primaryEndpoints.blob)]"
           }
         }
-      }
+      },
+      "resources": [
+        {
+          "type": "extensions",
+          "name": "[variables('vmExtensionName')]",
+          "apiVersion": "2015-06-15",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]",
+            "[resourceId('Microsoft.ContainerService/containerServices', variables('kubernetesName'))]",
+            "[resourceId('Microsoft.ContainerRegistry/registries', variables('acrPrefix'))]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Azure.Extensions",
+            "type": "CustomScript",
+            "typeHandlerVersion": "2.0",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": [
+                "[concat(variables('_artifactsLocation'), 'quickstart_template/', variables('_extensionScript'), variables('_artifactsLocationSasToken'))]"
+              ]
+            },
+            "protectedSettings": {
+              "commandToExecute": "[concat('./', variables('_extensionScript'),' -ai \"', parameters('servicePrincipalAppId'), '\" -ak \"', parameters('servicePrincipalAppKey'), '\" -si \"', subscription().subscriptionId, '\" -ti \"', subscription().tenantId, '\" -un \"', parameters('adminUsername'), '\" -rg \"', resourceGroup().name, '\" -mf \"', reference(resourceId('Microsoft.ContainerService/containerServices', variables('kubernetesName'))).masterProfile.fqdn, '\" -san \"', variables('storageAccountName'), '\" -sak \"', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2016-01-01').keys[0].value, '\" -acr \"', reference(resourceId('Microsoft.ContainerRegistry/registries', variables('acrPrefix'))).loginServer, '\" -ikp $(expr \"', parameters('kubernetesPipeline'), '\" == \"Include\") -prg \"', parameters('pipelineRegistry'), '\" -prp \"', parameters('pipelineRepository'), '\" -pp \"', variables('pipelinePort'), '\" -al \"', variables('_artifactsLocation'), '\" -st \"', variables('_artifactsLocationSasToken'), '\"')]"
+            }
+          }
+        }
+      ]
     },
     {
       "type": "Microsoft.Storage/storageAccounts",
@@ -286,31 +312,6 @@
         "storageAccount": {
           "name": "[variables('acrStorageAccountName')]",
           "accessKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('acrStorageAccountName')), '2016-01-01').keys[0].value]"
-        }
-      }
-    },
-    {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('vmName'), '/', variables('vmExtensionName'))]",
-      "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]",
-        "[resourceId('Microsoft.ContainerService/containerServices', variables('kubernetesName'))]",
-        "[resourceId('Microsoft.ContainerRegistry/registries', variables('acrPrefix'))]"
-      ],
-      "properties": {
-        "publisher": "Microsoft.Azure.Extensions",
-        "type": "CustomScript",
-        "typeHandlerVersion": "2.0",
-        "autoUpgradeMinorVersion": true,
-        "settings": {
-          "fileUris": [
-            "[concat(variables('_artifactsLocation'), 'quickstart_template/', variables('_extensionScript'), variables('_artifactsLocationSasToken'))]"
-          ]
-        },
-        "protectedSettings": {
-          "commandToExecute": "[concat('./', variables('_extensionScript'),' -ai \"', parameters('servicePrincipalAppId'), '\" -ak \"', parameters('servicePrincipalAppKey'), '\" -si \"', subscription().subscriptionId, '\" -ti \"', subscription().tenantId, '\" -un \"', parameters('adminUsername'), '\" -rg \"', resourceGroup().name, '\" -mf \"', reference(resourceId('Microsoft.ContainerService/containerServices', variables('kubernetesName'))).masterProfile.fqdn, '\" -mc \"', variables('kubernetesMasterCount'), '\" -san \"', variables('storageAccountName'), '\" -sak \"', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2016-01-01').keys[0].value, '\" -acr \"', reference(resourceId('Microsoft.ContainerRegistry/registries', variables('acrPrefix'))).loginServer, '\" -ikp $(expr \"', parameters('kubernetesPipeline'), '\" == \"Include\") -prg \"', parameters('pipelineRegistry'), '\" -prp \"', parameters('pipelineRepository'), '\" -pp \"', variables('pipelinePort'), '\" -al \"', variables('_artifactsLocation'), '\" -st \"', variables('_artifactsLocationSasToken'), '\"')]"
         }
       }
     }
