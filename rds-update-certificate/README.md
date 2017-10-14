@@ -30,7 +30,7 @@ For information on managing certificates with Azure Key Vault see:  [Get started
 
 1. A certificate with the private key needs to be created (or acquired from CA) and imported to Azure Key Vault in tenant's subscription
 	(see [Get started with Azure Key Vault](https://azure.microsoft.com/en-us/documentation/articles/key-vault-get-started)).
-    Certificate's Subject Name should match external DSN name of the RDS Gateway server.
+    Certificate's Subject Name should match external DNS name of the RDS Gateway server.
 
 	For example, to import an existing certificate stored as a .pfx file on your local hard drive run the following PowerShell:
 	```PowerShell

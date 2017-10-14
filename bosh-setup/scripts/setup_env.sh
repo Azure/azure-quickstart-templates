@@ -62,7 +62,7 @@ environment=$(get_setting ENVIRONMENT)
 set +e
 
 echo "Start to install python packages..."
-pkg_list="pip==1.5.4 setuptools==32.3.1 msrest==0.4.4 msrestazure==0.4.4 requests==2.11.1 azure==2.0.0rc1 netaddr==0.7.18 PyGreSQL==5.0.2"
+pkg_list="pip==1.5.4 setuptools==32.3.1 msrest==0.4.4 msrestazure==0.4.4 requests==2.11.1 azure==2.0.0rc1 netaddr==0.7.18 PyGreSQL==5.0.2 ruamel.yaml==0.15.18"
 if [ "$environment" = "AzureChinaCloud" ]; then
   for pkg in $pkg_list; do
     retryop "pip install $pkg --index-url https://mirror.azure.cn/pypi/simple/ --default-timeout=60"
@@ -75,6 +75,10 @@ fi
 
 set -e
 
+# Install Ruby before other operations to make sure Ruby 2.0 is used
+bosh_init_url=$(get_setting BOSH_INIT_URL)
+install_bosh_cli_and_init $environment $bosh_init_url
+
 username=$(get_setting ADMIN_USER_NAME)
 home_dir="/home/$username"
 
@@ -85,12 +89,12 @@ chmod 400 $bosh_key
 cp $bosh_key $home_dir
 cp "$bosh_key.pub" $home_dir
 
+echo "Start to run setup_env.py..."
+python setup_env.py ${tenant_id} ${client_id} ${client_secret} ${custom_data_file}
+
 echo "Start to replace cert varialbes for manifests..."
 chmod +x replace_certs.sh
 ./replace_certs.sh
-
-echo "Start to run setup_env.py..."
-python setup_env.py ${tenant_id} ${client_id} ${client_secret} ${custom_data_file}
 
 # For backward compatibility
 sed -i "s/CLOUD_FOUNDRY_PUBLIC_IP/cf-ip/g" settings
@@ -103,17 +107,20 @@ cp deploy_bosh.sh $home_dir
 chmod +x deploy_cloudfoundry.sh
 cp deploy_cloudfoundry.sh $home_dir
 cp utils.sh $home_dir
+
 example_manifests="$home_dir/example_manifests"
 mkdir -p $example_manifests
-cp single-vm-cf.yml $example_manifests 
-cp multiple-vm-cf.yml $example_manifests
-chmod 644 $example_manifests/single-vm-cf.yml
-chmod 644 $example_manifests/multiple-vm-cf.yml
+if [ "$environment" = "AzureStack" ]; then
+  cp multiple-vm-cf.yml $example_manifests
+  chmod 644 $example_manifests/multiple-vm-cf.yml
+else
+  cp single-vm-cf.yml $example_manifests 
+  cp multiple-vm-cf.yml $example_manifests
+  chmod 644 $example_manifests/single-vm-cf.yml
+  chmod 644 $example_manifests/multiple-vm-cf.yml
+fi
 
 cp cf* $home_dir
-bosh_init_url=$(get_setting BOSH_INIT_URL)
-install_bosh_cli_and_init $environment $bosh_init_url
-
 chown -R $username $home_dir
 
 auto_deploy_bosh=$(get_setting AUTO_DEPLOY_BOSH)
