@@ -15,9 +15,9 @@ This template uses the Azure Linux CustomScript extension to install Artifactory
 
 3. Click on Purchase to start deploying resources. It will deploy MsSQL database, Azure Blob storage container, VM installing Nginx and Artifactory.
 
-4. Once deployment it done. Copy DNS of VM from Output of deployment template.
+4. Once deployment it done. Copy ARTIFACTORYVMFQDN from deployment template.
 
-5. Access artifactory using DNS. 
+5. Access artifactory using ARTIFACTORYVMFQDN. 
 
 6. Install Artifactory License.
 
@@ -35,9 +35,9 @@ Use Artifactory as Docker Registry.
    3. docker-remote: A remote docker repository proxying `https://registry-1.docker.io/`.
    4. docker: A virtual docker repository aggregating all three repo mentioned above.
 
-2. Configure insecure registry DNS:5001 in your docker client.
+2. Configure insecure registry ARTIFACTORYVMFQDN:5001 in your docker client.
 
 3. Run command to pull nginx image from artifactory:
    ```
-   docker pull DNS:5001/nginx
+   docker pull soldevqa.southcentralus.cloudapp.azure.com:5001/nginx
    ``` 
