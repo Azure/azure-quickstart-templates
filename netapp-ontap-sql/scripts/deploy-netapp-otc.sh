@@ -77,6 +77,7 @@ sleep 60
 
 echo "Getting the NetApp Tenant ID, to deploy the ONTAP Cloud" >> /tmp/createnetappotc.txt
 tenantId=`sudo curl http://localhost/occm/api/tenants -X GET --header 'Content-Type:application/json' --header 'Referer:AzureQS' --cookie cookies.txt | jq -r .[0].publicId`
+echo $tenantId
 sleep 60
 echo "Create a ONTAP Cloud working environment on Azure" >> /tmp/createnetappotc.txt
 ###
