@@ -73,7 +73,7 @@ echo $url2 >> /tmp/createnetappotc.txt
 ###
 echo "Authenticate to NetApp OnCommand CloudManager" >> /tmp/createnetappotc.txt
 curl http://localhost/occm/api/auth/login --header 'Content-Type:application/json' --header 'Referer:AzureQS1' --data '{"email":"'${adminEmail}'","password":"'${adminPassword}'"}' --cookie-jar cookies.txt 
-sleep 5
+sleep 60
 
 echo "Getting the NetApp Tenant ID, to deploy the ONTAP Cloud" >> /tmp/createnetappotc.txt
 tenantId=`sudo curl http://localhost/occm/api/tenants -X GET --header 'Content-Type:application/json' --header 'Referer:AzureQS' --cookie cookies.txt | jq -r .[0].publicId`
