@@ -62,7 +62,6 @@ sudo chmod +x /usr/bin/jq
 echo  "Setup NetApp OnCommand Cloud Manager" >> /tmp/createnetappotc.txt
 curl http://localhost/occm/api/occm/setup/init -X POST --header 'Content-Type:application/json' --header 'Referer:AzureQS1' --data '{ "tenantRequest": { "name": "'${tenantName}'", "description": "", "costCenter": "", "nssKeys": {} }, "proxyUrl": { "uri": "" }, "userRequest":{  "email": "'${adminEmail}'","lastName": "user", "firstName":"admin","roleId": "'${roleID}'","password": "'${adminPassword}'", "ldap": "false", "azureCredentials": { "subscriptionId": "'${subscriptionId}'", "tenantId": "'${azureTenantId}'", "applicationId": "'${applicationId}'", "applicationKey": "'${applicationKey}'" }  }, "site": "'${siteName}'", "company": "'${siteCompany}'", "autoVsaCapacityManagement": "'${autoVsaCapacityManagement}'",   "autoUpgrade": "'${autoUpgrade}'" }}' >> /tmp/createnetappotc.txt
 sleep 40
-
 until sudo wget http://localhost/occmui > /dev/null 2>&1; do sudo wget http://localhost > /dev/null 2>&1 ; done
 sleep 60
 echo "Authenticate to NetApp OnCommand CloudManager" >> /tmp/createnetappotc.txt
@@ -71,10 +70,9 @@ sleep 5
 echo "Getting the NetApp Tenant ID, to deploy the ONTAP Cloud" >> /tmp/createnetappotc.txt
 tenantId=""
 until [ "$tenantId" != "" ]; do
-echo "Authenticate to NetApp OnCommand CloudManager" >> /tmp/createnetappotc.txt
 curl http://localhost/occm/api/auth/login --header 'Content-Type:application/json' --header 'Referer:AzureQS1' --data '{"email":"'${adminEmail}'","password":"'${adminPassword}'"}' --cookie-jar cookies.txt 
 tenantId=`sudo curl http://localhost/occm/api/tenants -X GET --header 'Content-Type:application/json' --header 'Referer:AzureQS' --cookie cookies.txt | jq -r .[0].publicId`
-echo $tenantId >> /tmp/createnetappotc.txt
+sleep 10
 done
 sleep 5
 echo "Create a ONTAP Cloud working environment on Azure" >> /tmp/createnetappotc.txt
