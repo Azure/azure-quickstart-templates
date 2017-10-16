@@ -67,14 +67,14 @@ sleep 40
 until sudo wget http://localhost/occmui > /dev/null 2>&1; do sudo wget http://localhost > /dev/null 2>&1 ; done
 sleep 60
 
-echo "Authenticate to NetApp OnCommand CloudManager"
+echo "Authenticate to NetApp OnCommand CloudManager" >> /tmp/createnetappotc.txt
 curl http://localhost/occm/api/auth/login --header 'Content-Type:application/json' --header 'Referer:AzureQS1' --data '{"email":"'${adminEmail}'","password":"'${adminPassword}'"}' --cookie-jar cookies.txt >> /tmp/createnetappotc.txt
 sleep 5
 
-echo "Getting the NetApp Tenant ID, to deploy the ONTAP Cloud"
+echo "Getting the NetApp Tenant ID, to deploy the ONTAP Cloud" >> /tmp/createnetappotc.txt
 tenantId=`sudo curl http://localhost/occm/api/tenants -X GET --header 'Content-Type:application/json' --header 'Referer:AzureQS' --cookie cookies.txt | jq -r .[0].publicId`
 sleep 60
-echo "Create a ONTAP Cloud working environment on Azure"
+echo "Create a ONTAP Cloud working environment on Azure" >> /tmp/createnetappotc.txt
 curl http://localhost/occm/api/azure/vsa/working-environments -X POST  --header 'Content-Type:application/json' --cookie cookies.txt --data '{ "name": "'${otcName}'", "svmPassword": "'${OTCPassword}'",  "vnetId": "'${vnetID}'",   "cidr": "'${cidr}'", "vsaMetadata": { "ontapVersion": "'${netappOntapVersion}'", "licenseType": "'${licenseType}'", "instanceType": "'${instanceType}'" },"tenantId": "'${tenantId}'","region": "'${region}'", "subnetId":"'${subnetID}'", "dataEncryptionType":"NONE", "skipSnapshots": "false", "diskSize": { "size": "1","unit": "TB" }, "storageType": "'${storageType}'", "azureTags": [ { "tagKey" : "provider", "tagValue" : "'${QuickstartProviderTagValue}'"}, { "tagKey" : "quickstartName", "tagValue" : "'${QuickstartNameTagValue}'"}],"writingSpeedState": "NORMAL" }' >> /tmp/createnetappotc.txt
 
 OtcPublicId=`cat /tmp/createnetappotc.txt | jq -r .publicId`
@@ -85,7 +85,7 @@ if [ ${OtcPublicId} == null ] ; then
 fi
 sleep 2
 
-echo "Getting the NetApp Ontap Cloud Cluster Properties"
+echo "Getting the NetApp Ontap Cloud Cluster Properties" >> /tmp/createnetappotc.txt
 
 curl 'http://localhost/occm/api/azure/vsa/working-environments/'${OtcPublicId}'?fields=status' -X GET --header 'Content-Type:application/json' --header 'Referer:AzureQS' --cookie cookies.txt > /tmp/envdetails.json
 otcstatus=`cat /tmp/envdetails.json | jq -r .status.status`
