@@ -70,6 +70,10 @@ curl http://localhost/occm/api/auth/login --header 'Content-Type:application/jso
 sleep 5
 echo "Getting the NetApp Tenant ID, to deploy the ONTAP Cloud" >> /tmp/createnetappotc.txt
 tenantId=`sudo curl http://localhost/occm/api/tenants -X GET --header 'Content-Type:application/json' --header 'Referer:AzureQS' --cookie cookies.txt | jq -r .[0].publicId`
+if [ ! -z "$tenantId" ]; then
+echo "Authenticate to NetApp OnCommand CloudManager" >> /tmp/createnetappotc.txt
+curl http://localhost/occm/api/auth/login --header 'Content-Type:application/json' --header 'Referer:AzureQS1' --data '{"email":"'${adminEmail}'","password":"'${adminPassword}'"}' --cookie-jar cookies.txt 
+fi
 sleep 5
 echo $tenantId >> /tmp/createnetappotc.txt
 echo "Create a ONTAP Cloud working environment on Azure" >> /tmp/createnetappotc.txt
