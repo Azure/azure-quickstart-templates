@@ -87,7 +87,7 @@ echo $url3 >> /tmp/createnetappotc.txt
 curl http://localhost/occm/api/azure/vsa/working-environments -X POST  --header 'Content-Type:application/json' --cookie cookies.txt --data '{ "name": "'${otcName}'", "svmPassword": "'${OTCPassword}'",  "vnetId": "'${vnetID}'",   "cidr": "'${cidr}'", "vsaMetadata": { "ontapVersion": "'${netappOntapVersion}'", "licenseType": "'${licenseType}'", "instanceType": "'${instanceType}'" },"tenantId": "'${tenantId}'","region": "'${region}'", "subnetId":"'${subnetID}'", "dataEncryptionType":"NONE", "skipSnapshots": "false", "diskSize": { "size": "1","unit": "TB" }, "storageType": "'${storageType}'", "azureTags": [ { "tagKey" : "provider", "tagValue" : "'${QuickstartProviderTagValue}'"}, { "tagKey" : "quickstartName", "tagValue" : "'${QuickstartNameTagValue}'"}],"writingSpeedState": "NORMAL" }' --cookie cookies.txt  >> /tmp/createnetappotc.txt
 
 OtcPublicId=`cat /tmp/createnetappotc.txt | jq -r .publicId`
-if [ ${OtcPublicId} == null ] ; then
+if [ ${OtcPublicId} -eq null ] ; then
   message=`cat /tmp/createnetappotc.txt| jq -r .message`
   echo "OCCM setup failed: $message" > /tmp/occmError.txt
   exit 1
@@ -105,7 +105,7 @@ curl 'http://localhost/occm/api/azure/vsa/working-environments/'${OtcPublicId}'?
 otcstatus=`cat /tmp/envdetails.json | jq -r .status.status`
 }
 
-until  [ ${otcstatus} != ON ] 
+until  [ ${otcstatus} -ne ON ] 
 do
   message="OTC not deployed yet, Checking again in 60 seconds"
   echo  ${message}
