@@ -2,27 +2,29 @@
 ## Script to Setup NetApp OnCommand Cloud Manager and Deploy Working Environment NetApp ONTAP Cloud on Azure ##
 
 ## Arguments : To be passed by Azure Custom Script Extension
-region="$1"
-otcName="$2"
-adminEmail="$3"
-encodedadminPassword="$4" 
-encodedOTCPassword="$5"
-subscriptionId="$6"
-azureTenantId="$7"
-applicationId="$8"
-applicationKey="$9"
-vnetID="$10"
-cidr="$11"
-subnetID="$12"
-nsgID="$13"
-licenseType="$14"
-instanceType="$15"
-storageType="$16"
-QuickstartNameTagValue="$17"
-QuickstartProviderTagValue="$18"
-netappOntapVersion="$19"
+region=${1}
+otcName=${2}
+adminEmail1=${3}
+adminEmail="mazhar@spektrasystems.com"
+encodedadminPassword=${4} 
+encodedOTCPassword=${5} 
+subscriptionId=${6}
+azureTenantId=${7}
+applicationId=${8}
+applicationKey=${9}
+vnetID=${10}
+cidr=${11}
+subnetID=${12}
+nsgID=${13}
+licenseType=${14}
+instanceType=${15}
+storageType=${16}
+QuickstartNameTagValue=${17}
+QuickstartProviderTagValue=${18}
+netappOntapVersion=${19}
 
-adminPassword=`echo $encodedadminPassword| base64 --decode` 
+adminPassword1=`echo $encodedadminPassword| base64 --decode` 
+adminPassword=Spektra123456
 OTCPassword=`echo $encodedOTCPassword| base64 --decode` 
 
 
@@ -59,10 +61,6 @@ echo QuickstartProviderTagValue $QuickstartProviderTagValue >> /tmp/inputlog.txt
 sudo wget -O /usr/bin/jq http://stedolan.github.io/jq/download/linux64/jq
 sleep 5
 sudo chmod +x /usr/bin/jq
-##
-url1='http://localhost/occm/api/occm/setup/init -X POST --header 'Content-Type:application/json' --header 'Referer:AzureQS1' --data '{ "tenantRequest": { "name": "'${tenantName}'", "description": "", "costCenter": "", "nssKeys": {} }, "proxyUrl": { "uri": "" }, "userRequest":{  "email": "'${adminEmail}'","lastName": "user", "firstName":"admin","roleId": "'${roleID}'","password": "'${adminPassword}'", "ldap": "false", "azureCredentials": { "subscriptionId": "'${subscriptionId}'", "tenantId": "'${azureTenantId}'", "applicationId": "'${applicationId}'", "applicationKey": "'${applicationKey}'" }  }, "site": "'${siteName}'", "company": "'${siteCompany}'", "autoVsaCapacityManagement": "'${autoVsaCapacityManagement}'",   "autoUpgrade": "'${autoUpgrade}'" }}''
-echo $url1 >> /tmp/createnetappotc.txt
-##
 echo  "Setup NetApp OnCommand Cloud Manager" >> /tmp/createnetappotc.txt
 curl http://localhost/occm/api/occm/setup/init -X POST --header 'Content-Type:application/json' --header 'Referer:AzureQS1' --data '{ "tenantRequest": { "name": "'${tenantName}'", "description": "", "costCenter": "", "nssKeys": {} }, "proxyUrl": { "uri": "" }, "userRequest":{  "email": "'${adminEmail}'","lastName": "user", "firstName":"admin","roleId": "'${roleID}'","password": "'${adminPassword}'", "ldap": "false", "azureCredentials": { "subscriptionId": "'${subscriptionId}'", "tenantId": "'${azureTenantId}'", "applicationId": "'${applicationId}'", "applicationKey": "'${applicationKey}'" }  }, "site": "'${siteName}'", "company": "'${siteCompany}'", "autoVsaCapacityManagement": "'${autoVsaCapacityManagement}'",   "autoUpgrade": "'${autoUpgrade}'" }}' >> /tmp/createnetappotc.txt
 sleep 40
