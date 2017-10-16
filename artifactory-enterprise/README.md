@@ -22,11 +22,11 @@ Note: To begin with start with Capacity 1. One you have Artifactory running inst
 
 3. Click on Purchase to start deploying resources. It will deploy MsSQL database, Azure Blob storage container, VM installing Nginx and Artifactory and Load balancer.
 
-4. Once deployment it done. Copy DNS of Load Balancer from Output of deployment template.
+4. Once deployment it done. Copy FQDN from Output of deployment template.
 
-5. Access artifactory using DNS. 
+5. Access artifactory using FQDN. 
 
-6. Go to Admin -> Artifactory Licenses and paste your additional licenses.
+6. Go to Admin -> Artifactory Licenses and paste your artifactory licenses.
 
 ![screenshot](images/add_licenses.png)
 
@@ -47,14 +47,16 @@ Use Artifactory as Docker Registry.
    3. docker-remote: A remote docker repository proxying `https://registry-1.docker.io/`.
    4. docker: A virtual docker repository aggregating all three repo mentioned above.
 
-2. Configure insecure registry DNS:5001 in your docker client.
+2. Configure insecure registry FQDN:5001 in your docker client.
 
 3. Run command to pull nginx image from artifactory:
    ```
-   docker pull DNS:5001/nginx
+   docker pull soldevqaent.southcentralus.cloudapp.azure.com:5001/nginx
    ``` 
 
-
+------
+####Note:
+Supported locations: `West US`, `East US`, `South CentralUS`, `Southeast Asia`, `Western Central US`, `West Europe` and `West US 2`.
 
 
  

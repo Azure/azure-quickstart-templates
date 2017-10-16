@@ -41,3 +41,7 @@ Use Artifactory as Docker Registry.
    ```
    docker pull soldevqa.southcentralus.cloudapp.azure.com:5001/nginx
    ``` 
+
+------
+####Note:
+Supported locations: `West US`, `East US`, `South CentralUS`, `Southeast Asia`, `Western Central US`, `West Europe` and `West US 2`.
