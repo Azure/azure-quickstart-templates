@@ -2,25 +2,25 @@
 ## Script to Setup NetApp OnCommand Cloud Manager and Deploy Working Environment NetApp ONTAP Cloud on Azure ##
 
 ## Arguments : To be passed by Azure Custom Script Extension
-region="${1}"
-otcName="${2}"
-adminEmail="${3}"
-encodedadminPassword="${4}" 
-encodedOTCPassword="${5}"
-subscriptionId="${6}"
-azureTenantId="${7}"
-applicationId="${8}"
-applicationKey="${9}"
-vnetID="${10}"
-cidr="${11}"
-subnetID="${12}"
-nsgID="${13}"
-licenseType="${14}"
-instanceType="${15}"
-storageType="${16}"
-QuickstartNameTagValue="${17}"
-QuickstartProviderTagValue="${18}"
-netappOntapVersion="${19}"
+region="$1"
+otcName="$2"
+adminEmail="$3"
+encodedadminPassword="$4" 
+encodedOTCPassword="$5"
+subscriptionId="$6"
+azureTenantId="$7"
+applicationId="$8"
+applicationKey="$9"
+vnetID="$10"
+cidr="$11"
+subnetID="$12"
+nsgID="$13"
+licenseType="$14"
+instanceType="$15"
+storageType="$16"
+QuickstartNameTagValue="$17"
+QuickstartProviderTagValue="$18"
+netappOntapVersion="$19"
 
 adminPassword=`echo $encodedadminPassword| base64 --decode` 
 OTCPassword=`echo $encodedOTCPassword| base64 --decode` 
@@ -68,7 +68,7 @@ until sudo wget http://localhost/occmui > /dev/null 2>&1; do sudo wget http://lo
 sleep 60
 
 echo "Authenticate to NetApp OnCommand CloudManager" >> /tmp/createnetappotc.txt
-curl http://localhost/occm/api/auth/login --header 'Content-Type:application/json' --header 'Referer:AzureQS1' --data '{"email":"'${adminEmail}'","password":"'${adminPassword}'"}' --cookie-jar cookies.txt >> /tmp/createnetappotc.txt
+curl http://localhost/occm/api/auth/login --header 'Content-Type:application/json' --header 'Referer:AzureQS1' --data '{"email":"'${adminEmail}'","password":"'${adminPassword}'"}' --cookie-jar cookies.txt 
 sleep 5
 
 echo "Getting the NetApp Tenant ID, to deploy the ONTAP Cloud" >> /tmp/createnetappotc.txt
