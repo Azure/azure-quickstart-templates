@@ -4,8 +4,7 @@
 ## Arguments : To be passed by Azure Custom Script Extension
 region=${1}
 otcName=${2}
-adminEmail1=${3}
-adminEmail="mazhar@spektrasystems.com"
+adminEmail=${3}
 encodedadminPassword=${4} 
 encodedOTCPassword=${5} 
 subscriptionId=${6}
@@ -23,8 +22,7 @@ QuickstartNameTagValue=${17}
 QuickstartProviderTagValue=${18}
 netappOntapVersion=${19}
 
-adminPassword1=`echo $encodedadminPassword| base64 --decode` 
-adminPassword=Spektra123456
+adminPassword=`echo $encodedadminPassword| base64 --decode` 
 OTCPassword=`echo $encodedOTCPassword| base64 --decode` 
 
 
