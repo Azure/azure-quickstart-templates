@@ -60,7 +60,7 @@ sudo wget -O /usr/bin/jq http://stedolan.github.io/jq/download/linux64/jq
 sleep 5
 sudo chmod +x /usr/bin/jq
 
-echo  "Setup NetApp OnCommand Cloud Manager"
+echo  "Setup NetApp OnCommand Cloud Manager" >> /tmp/createnetappotc.txt
 curl http://localhost/occm/api/occm/setup/init -X POST --header 'Content-Type:application/json' --header 'Referer:AzureQS1' --data '{ "tenantRequest": { "name": "'${tenantName}'", "description": "", "costCenter": "", "nssKeys": {} }, "proxyUrl": { "uri": "" }, "userRequest":{  "email": "'${adminEmail}'","lastName": "user", "firstName":"admin","roleId": "'${roleID}'","password": "'${adminPassword}'", "ldap": "false", "azureCredentials": { "subscriptionId": "'${subscriptionId}'", "tenantId": "'${azureTenantId}'", "applicationId": "'${applicationId}'", "applicationKey": "'${applicationKey}'" }  }, "site": "'${siteName}'", "company": "'${siteCompany}'", "autoVsaCapacityManagement": "'${autoVsaCapacityManagement}'",   "autoUpgrade": "'${autoUpgrade}'" }}' >> /tmp/createnetappotc.txt
 sleep 40
 
