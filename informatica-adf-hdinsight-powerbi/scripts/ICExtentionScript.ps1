@@ -1,5 +1,4 @@
-param 
- ( 
+param ( 
      # The cloud security agent user name     
      [Parameter(Mandatory=$true)] 
      [String] $infoUsername, 
