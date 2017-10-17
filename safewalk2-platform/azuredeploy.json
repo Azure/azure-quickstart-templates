@@ -161,7 +161,10 @@
 	    "sizeOfDiskInGBGateway" :  "20",
         "location": "[resourceGroup().location]",
         "gatewayPublicIPName": "[concat(parameters('vmPrefix'), '-gateway-public-IP')]",
-        "numberOfSlaves": "[sub(parameters('numberOfSafewalkInstances'), 1)]",
+        "_numberOfSlavesFalse": 1,
+        "_numberOfSlavesTrue": "[sub(parameters('numberOfSafewalkInstances'), 1)]",
+        "createSlaves": "[greater(variables('_numberOfSlavesTrue'), 0)]",
+        "numberOfSlaves": "[variables(concat('_numberOfSlaves', variables('createSlaves')))]",
         "ScriptFolder": "scripts",
         "updateip_templateUri": "[concat(parameters('_artifactsLocation'), '/nested/update-nic.json', parameters('_artifactsLocationSasToken'))]"
     },
@@ -605,7 +608,7 @@
             }
         },
         {
-            "condition": "[greater(variables('numberOfSlaves'), 0)]",
+            "condition": "[variables('createSlaves')]",
             "apiVersion": "2017-04-01",
             "type": "Microsoft.Network/networkInterfaces",
             "name": "[concat(parameters('vmPrefix'), '-server-slave-', copyIndex(), '-NIC')]",
@@ -754,7 +757,7 @@
             }
         },
         {
-            "condition": "[greater(variables('numberOfSlaves'), 0)]",
+            "condition": "[variables('createSlaves')]",
             "apiVersion": "2017-03-30",
             "type": "Microsoft.Compute/virtualMachines",
             "name": "[concat(parameters('vmPrefix'), '-server-slave-', copyIndex())]",
@@ -801,7 +804,7 @@
             },
             "resources":[
                 {
-                    "condition": "[greater(variables('numberOfSlaves'), 0)]",
+                    "condition": "[variables('createSlaves')]",
                     "type": "Microsoft.Compute/virtualMachines/extensions",
                     "name": "[concat(parameters('vmPrefix'), '-server-slave-', copyIndex(), '/installcustomscript')]",
                     "apiVersion": "2017-03-30",
@@ -867,7 +870,7 @@
                     ]
                 },
                 "protectedSettings": {
-                    "commandToExecute": "[concat('sh configure_safewalk_custom_script_master.sh ', parameters('SafewalkServerRootPassword'), ' ', parameters('SafewalkGatewayIP'), ' ', reference(concat('Microsoft.Network/publicIPAddresses/', variables('gatewayPublicIPName')), '2017-04-01').ipAddress, ' ', parameters('SafewalkGatewayRootPassword'), ' ', variables('firstSafewalkServerIP'), ' ', parameters('subnetLANAddressSpace'), ' ', greater(variables('numberOfSlaves'), 0), ' ', parameters('SafewalkServerAdminPassword'))]"
+                    "commandToExecute": "[concat('sh configure_safewalk_custom_script_master.sh ', parameters('SafewalkServerRootPassword'), ' ', parameters('SafewalkGatewayIP'), ' ', reference(concat('Microsoft.Network/publicIPAddresses/', variables('gatewayPublicIPName')), '2017-04-01').ipAddress, ' ', parameters('SafewalkGatewayRootPassword'), ' ', variables('firstSafewalkServerIP'), ' ', parameters('subnetLANAddressSpace'), ' ', variables('createSlaves'), ' ', parameters('SafewalkServerAdminPassword'))]"
                 }
             }
         },
