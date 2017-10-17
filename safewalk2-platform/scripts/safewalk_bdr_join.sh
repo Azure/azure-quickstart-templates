@@ -1,5 +1,6 @@
 #!/bin/bash
 
+my_dir=`dirname $0`
 bash $my_dir/safewalk_bdr_accept_subnet.sh $3
 
 pushd /home/safewalk/safewalk_server/sources
