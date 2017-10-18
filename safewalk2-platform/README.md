@@ -127,27 +127,17 @@ Safewalk’s VHD images.
 * Safewalk VHD Image URL - Set to the URL of the Safewalk VHD image you have uploaded earlier.
 * Safewalk Gateway VHD Image URL - Set to the URL of the Safewalk Gateway VHD image you
 have uploaded earlier.
-* Create Vnet - Set to true if you would like to create a new VNet for this deployment. Set to false if
-you would like to use an existing VNet you already have.
-* Vnet Name - A name for the VNet that will be used (either new or existing).
-If Create Vnet was set to true, use the default parameter or manually set a name for a new VNet that
+* Vnet Name - A name for the VNet that will be created.
+Use the default parameter or manually set a name for a new VNet that
 will be created during the deployment.
-If Create Vnet was set to false specify a name of an existing VNet within the selected Resource group.
-* Subnet LAN Name - A name for a subnet (either new or existing) that will be used to serve the
+* Subnet LAN Name - A name for a subnet that will be used to serve the
 Safewalk server.
-If Create Vnet was set to true, use the provided default value or manually set a name for a new subnet
+Use the provided default value or manually set a name for a new subnet
 that will be created during the deployment.
-If Create Vnet was set to false specify a name of an existing subnet within the selected Resource group
-and the Vnet Name that was specified.
-* Subnet DMZ Name - A name for an Internet facing subnet (either new or existing) that will be used
+* Subnet DMZ Name - A name for an Internet facing subnet that will be used
 to serve the Safewalk Gateway.
-If Create Vnet was set to true, use the provided default value or manually set a name for a new subnet
+Use the provided default value or manually set a name for a new subnet
 that will be created during the deployment.
-If Create Vnet was set to false specify a name of an existing subnet within the selected Resource group
-and the Vnet Name that was specified.
-* Vnet Resource Group - If Create Vnet was set to false provide here the name of the Resource group
-where the provided Subnet Name exist.
-Note: This parameter will be ignored if Create Vnet was set to true.
 * Vnet Address Space - The address space of the specified VNet (either new or existing).
 If Create Vnet was set to true, use the provided default value or set a different VNet address space
 according to your preferences (e.g. 10.0.0.0/16).
@@ -164,15 +154,8 @@ If Create Vnet was set to false specify here the address space of the subnet tha
 be used at a later step to create a secured VPN connections between the different subnets.
 * Safewalk Gateway IP - Set to the address that will be assigned to the Safewalk Gateway within the
 DMZ subnet (e.g. 10.1.2.4).
-* Cluster Enabled - When set to true, a cluster with two multimaster Safewalk server nodes will be
-created and the deployment procedure will automatically configure the multimaster topology between
-the two Safewalk server nodes.
-Note: To install a single Safewalk node set this parameter to false.
-* First Safewalk Server IP - Set to the address that will be assigned to the first Safewalk Server within
-the LAN subnet (e.g. 10.1.1.5).
-* Second Safewalk Server IP - Set to the address that will be assigned to the second Safewalk Server
-within the LAN subnet (e.g. 10.1.1.6).
-Note: If Cluster Enabled was set to false (i.e. no clustering) this field is ignored.
+* Number Of Safewalk Instances - Set the number of Safewalk server nodes that will be
+created. The deployment procedure will automatically configure the multimaster topology between all the nodes.
 * Vm Username - A username for a privileged account that will be created in the Safewalk servers and
 in the Safewalk Gateway operating system.
 * Vm Password - The password for the corresponding privileged user account for the Safewalk servers
@@ -185,8 +168,8 @@ Note: The same root password will be set to all the Safewalk servers that will p
 cluster.
 * Safewalk Server Admin Password - The password to set for the Safewalk server admin account.
 * Safewalk Gateway Root Password - The password to set for the root account of the Safewalk Gateway.
-* _artifactsLocation - 
-* _artifactsLocationSasToken - 
+* _artifactsLocation - Azure reserved parameter. Keep it with the default value.
+* _artifactsLocationSasToken - Azure reserved parameter. Keep it empty.
 
 ## Usage
 
