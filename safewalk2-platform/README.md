@@ -95,21 +95,9 @@ The first thing you will need to do before you can deploy Safewalk using the ARM
 Login into the Azure portal (https://portal.azure.com)
 
 Create or select a blob storage account on the **same region** where you plan to deploy the Safewalk2 framework. It's recommended that the VHD Images live in a separate resource group in case you need to delete/move the system components and keep the images for future deployments.
-Then add a container to copy/upload the VHD images into.
+Then add a container to upload the VHD images into.
 
-You can install in your machine the storage tool **AzCopy** to make a copy of the custom VHD images in your container. <a href="http://aka.ms/downloadazcopy" target="_blank">Download and install the latest version of AzCopy</a>
-
-After installing **AzCopy** on Windows using the installer, open a command window and navigate to the AzCopy installation directory on your computer - where the AzCopy.exe executable is located (normally at **%ProgramFiles(x86)%\Microsoft SDKs\Azure\AzCopy**)
-
-Use the following command replacing the **{dest_url}** with your container information (copy it from the container properties), and provide the storage account access key2 **{dest_key2}** (copy it from your storage account **Access Keys** section).
-
-```PowerShell
-AzCopy /Source:https://safewalk2.blob.core.windows.net/images /Dest:{dest_url} /SourceKey:i4dCa1J6O1TriXgGFrS2V5N/Zjw6GU9JR8dckydWHWaodLWDmHoDFQA0lrEuDLfKZgE0owpwTPThXMrmYLIGtQ== /DestKey:{dest_key2} /S
-```
-
-After the process is finished, please refresh your container and find the copied VHD files.
-
-A different option is to download the images to your local drive from:
+Download the images to your local drive from:
 <a href="https://safewalk2.blob.core.windows.net/images/Safewalk.vhd">Safewalk VHD image</a>
 <a href="https://safewalk2.blob.core.windows.net/images/Gateway2.vhd">Gateway VHD image</a>
 and Upload it manually as a Page Blob into your storage account container.
@@ -222,7 +210,7 @@ users authentication
 Once the system has been configured you will be able to log into the management console to view and manage
 your users.
 
-To access the management console:
+* Using the management console 
 1. Open a browser and enter the address of the management console as it was given in the final screen of the
 installation (i.e. https://SAFEWALK_ADDRESS/admin).
 2. Enter the credentials of the admin account (username: admin and the password you selected for the administrator

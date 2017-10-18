@@ -83,13 +83,6 @@
                 "description": "If it's greater than 1, a multimaster cluster of Safewalk nodes will be created and the deployment procedure will take care of configuring the topology between the nodes. To install a single Safewalk node set this parameter to 1."
             }
         },
-        "vmPrefix": {
-            "type": "string",
-            "defaultValue": "safewalk",
-            "metadata": {
-                "description": "Safewalk VMs prefix"
-            }
-        },
         "vmUsername": {
             "type": "string",		
             "metadata": {
@@ -150,28 +143,30 @@
         }
     },
     "variables": {
+        "vmPrefix": "swk",
         "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('VnetName'))]",
         "subnetRef": "[concat(variables('vnetID'), '/subnets/', parameters('subnetLANName'))]",
         "subnetLANAddressSplit": "[split(parameters('subnetLANAddressSpace'), '.')]",
         "subnetLANAddressPrefix": "[concat(variables('subnetLANAddressSplit')[0], '.', variables('subnetLANAddressSplit')[1], '.', variables('subnetLANAddressSplit')[2], '.')]",
-        "firstLastIPComponent": 5,
-        "firstSafewalkServerIP": "[concat(variables('subnetLANAddressPrefix'), variables('firstLastIPComponent') )]",
-        "subnetDMZRef": "[concat(variables('vnetID'), '/subnets/', parameters('subnetDMZName'))]",
-        "sizeOfDiskInGBSafewalk" :  "127",
-	    "sizeOfDiskInGBGateway" :  "20",
-        "location": "[resourceGroup().location]",
-        "gatewayPublicIPName": "[concat(parameters('vmPrefix'), '-gateway-public-IP')]",
         "_numberOfSlavesFalse": 1,
         "_numberOfSlavesTrue": "[sub(parameters('numberOfSafewalkInstances'), 1)]",
         "createSlaves": "[greater(variables('_numberOfSlavesTrue'), 0)]",
         "numberOfSlaves": "[variables(concat('_numberOfSlaves', variables('createSlaves')))]",
+        "firstLastIPComponent": 5,
+        "firstSafewalkServerIP": "[concat(variables('subnetLANAddressPrefix'), variables('firstLastIPComponent') )]",
+        "lastSafewalkServerIP": "[concat(variables('subnetLANAddressPrefix'), add(variables('firstLastIPComponent'), variables('_numberOfSlavesTrue')))]",
+        "subnetDMZRef": "[concat(variables('vnetID'), '/subnets/', parameters('subnetDMZName'))]",
+        "sizeOfDiskInGBSafewalk" :  "127",
+	    "sizeOfDiskInGBGateway" :  "20",
+        "location": "[resourceGroup().location]",
+        "gatewayPublicIPName": "[concat(variables('vmPrefix'), '-gateway-public-IP')]",
         "ScriptFolder": "scripts",
         "updateip_templateUri": "[concat(parameters('_artifactsLocation'), '/nested/update-nic.json', parameters('_artifactsLocationSasToken'))]"
     },
     "resources": [
         {
             "type": "Microsoft.Compute/images",
-            "name": "[concat(parameters('vmPrefix'),'-server-osImage')]",
+            "name": "[concat(variables('vmPrefix'),'-server-osImage')]",
             "apiVersion": "2017-03-30",
             "location": "[resourceGroup().location]",
             "properties": {
@@ -189,7 +184,7 @@
         },
         {
             "type": "Microsoft.Compute/images",
-            "name": "[concat(parameters('vmPrefix'),'-gateway-osImage')]",
+            "name": "[concat(variables('vmPrefix'),'-gateway-osImage')]",
             "apiVersion": "2017-03-30",
             "location": "[resourceGroup().location]",
             "properties": {
@@ -207,7 +202,7 @@
         },
         {
             "type": "Microsoft.Network/networkSecurityGroups",
-            "name": "[concat(parameters('vmPrefix'), '-DMZ-NSG')]",
+            "name": "[concat(variables('vmPrefix'), '-DMZ-NSG')]",
             "apiVersion": "2017-04-01",
             "location": "[variables('location')]",
             "properties": {
@@ -360,7 +355,7 @@
         },
         {
             "type": "Microsoft.Network/networkSecurityGroups",
-            "name": "[concat(parameters('vmPrefix'), '-LAN-NSG')]",
+            "name": "[concat(variables('vmPrefix'), '-LAN-NSG')]",
             "apiVersion": "2017-04-01",
             "location": "[variables('location')]",
             "properties": {
@@ -517,8 +512,8 @@
             "name": "[parameters('VnetName')]",
             "location": "[variables('location')]",
             "dependsOn": [
-                "[concat(parameters('vmPrefix'), '-LAN-NSG')]",
-                "[concat(parameters('vmPrefix'), '-DMZ-NSG')]"
+                "[concat(variables('vmPrefix'), '-LAN-NSG')]",
+                "[concat(variables('vmPrefix'), '-DMZ-NSG')]"
             ],
             "properties": {
                 "addressSpace": {
@@ -532,7 +527,7 @@
                         "properties": {
                             "addressPrefix": "[parameters('subnetLANAddressSpace')]",
                             "networkSecurityGroup": {
-                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(parameters('vmPrefix'), '-LAN-NSG'))]"
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(variables('vmPrefix'), '-LAN-NSG'))]"
                             }
                         }
                     },
@@ -542,7 +537,7 @@
                             "addressPrefix": "[parameters('subnetDMZAddressSpace')]",
                             "privateAccessServices": [],
                             "networkSecurityGroup": {
-                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(parameters('vmPrefix'), '-DMZ-NSG'))]"
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(variables('vmPrefix'), '-DMZ-NSG'))]"
                             }
                         }
                     },
@@ -559,7 +554,7 @@
         {
             "apiVersion": "2017-04-01",
             "type": "Microsoft.Network/networkInterfaces",
-            "name": "[concat(parameters('vmPrefix'), '-gateway-NIC')]",
+            "name": "[concat(variables('vmPrefix'), '-gateway-NIC')]",
             "location": "[variables('location')]",
             "dependsOn": [
                 "[variables('gatewayPublicIPName')]",
@@ -573,7 +568,7 @@
                             "privateIPAllocationMethod": "Static",
                             "privateIPAddress": "[parameters('SafewalkGatewayIP')]",
                             "publicIPAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('vmPrefix'), '-gateway-public-IP'))]"
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('vmPrefix'), '-gateway-public-IP'))]"
                             },
                             "subnet": {
                                 "id": "[variables('subnetDMZRef')]"
@@ -587,7 +582,7 @@
         {
             "apiVersion": "2017-04-01",
             "type": "Microsoft.Network/networkInterfaces",
-            "name": "[concat(parameters('vmPrefix'), '-server-master-NIC')]",
+            "name": "[concat(variables('vmPrefix'), '-server-master-NIC')]",
             "location": "[variables('location')]",
             "dependsOn": [
                 "[parameters('VnetName')]"
@@ -611,7 +606,7 @@
             "condition": "[variables('createSlaves')]",
             "apiVersion": "2017-04-01",
             "type": "Microsoft.Network/networkInterfaces",
-            "name": "[concat(parameters('vmPrefix'), '-server-slave-', copyIndex(), '-NIC')]",
+            "name": "[concat(variables('vmPrefix'), '-server-slave-', copyIndex(), '-NIC')]",
             "location": "[variables('location')]",
             "dependsOn": [
                 "[parameters('VnetName')]"
@@ -649,16 +644,16 @@
         {
             "apiVersion": "2017-03-30",
             "type": "Microsoft.Compute/virtualMachines",
-            "name": "[concat(parameters('vmPrefix'), '-gateway')]",
+            "name": "[concat(variables('vmPrefix'), '-gateway')]",
             "location": "[variables('location')]",
             "dependsOn": [
-                "[concat('Microsoft.Network/networkInterfaces/', parameters('vmPrefix'), '-gateway-NIC')]",
-                "[concat('Microsoft.Compute/images/', parameters('vmPrefix'), '-gateway-osImage')]",
-                "[concat('Microsoft.Compute/availabilitySets/', parameters('vmPrefix'), '-gateway-AvailabilitySet')]"
+                "[concat('Microsoft.Network/networkInterfaces/', variables('vmPrefix'), '-gateway-NIC')]",
+                "[concat('Microsoft.Compute/images/', variables('vmPrefix'), '-gateway-osImage')]",
+                "[concat('Microsoft.Compute/availabilitySets/', variables('vmPrefix'), '-gateway-AvailabilitySet')]"
             ],
             "properties": {
                 "osProfile": {
-                    "computerName": "[concat(parameters('vmPrefix'), '-gateway')]",
+                    "computerName": "[concat(variables('vmPrefix'), '-gateway')]",
                     "adminUsername": "[parameters('vmUsername')]",
                     "adminPassword": "[parameters('vmPassword')]"
                 },
@@ -667,33 +662,33 @@
                 },
                 "storageProfile": {
                     "imageReference": {
-                        "id": "[resourceId('Microsoft.Compute/images', concat(parameters('vmPrefix'), '-gateway-osImage'))]"
+                        "id": "[resourceId('Microsoft.Compute/images', concat(variables('vmPrefix'), '-gateway-osImage'))]"
                     },
                     "osDisk": {
-                        "name": "[concat(parameters('vmPrefix'), '-gateway-os-vhd')]",
+                        "name": "[concat(variables('vmPrefix'), '-gateway-os-vhd')]",
                         "createOption": "FromImage"
                     }
                 },
                 "networkProfile": {
                     "networkInterfaces": [
                         {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('vmPrefix'), '-gateway-NIC'))]"
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('vmPrefix'), '-gateway-NIC'))]"
                         }
                     ]
                 },
                 "availabilitySet": {
-                    "id": "[resourceId('Microsoft.Compute/availabilitySets', concat(parameters('vmPrefix'), '-gateway-AvailabilitySet'))]"
+                    "id": "[resourceId('Microsoft.Compute/availabilitySets', concat(variables('vmPrefix'), '-gateway-AvailabilitySet'))]"
                 }
             }
         },
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "[concat(parameters('vmPrefix'), '-gateway/installcustomscript')]",
+            "name": "[concat(variables('vmPrefix'), '-gateway/installcustomscript')]",
             "apiVersion": "2017-03-30",
             "location": "[variables('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Compute/virtualMachines/', concat(parameters('vmPrefix'), '-server-master'))]",
-                "[resourceId('Microsoft.Compute/virtualMachines/', concat(parameters('vmPrefix'), '-gateway') )]"
+                "[resourceId('Microsoft.Compute/virtualMachines/', concat(variables('vmPrefix'), '-server-master'))]",
+                "[resourceId('Microsoft.Compute/virtualMachines/', concat(variables('vmPrefix'), '-gateway') )]"
             ],
             "properties": {
                 "publisher": "Microsoft.Azure.Extensions",
@@ -718,40 +713,40 @@
         {
             "apiVersion": "2017-03-30",
             "type": "Microsoft.Compute/virtualMachines",
-            "name": "[concat(parameters('vmPrefix'), '-server-master')]",
+            "name": "[concat(variables('vmPrefix'), '-server-master')]",
             "location": "[variables('location')]",
             "dependsOn": [
-                "[concat('Microsoft.Network/networkInterfaces/', parameters('vmPrefix'), '-server-master-NIC')]",
-                "[concat('Microsoft.Compute/images/', parameters('vmPrefix'), '-server-osImage')]",
-                "[concat('Microsoft.Compute/availabilitySets/', parameters('vmPrefix'), '-AvailabilitySet')]"
+                "[concat('Microsoft.Network/networkInterfaces/', variables('vmPrefix'), '-server-master-NIC')]",
+                "[concat('Microsoft.Compute/images/', variables('vmPrefix'), '-server-osImage')]",
+                "[concat('Microsoft.Compute/availabilitySets/', variables('vmPrefix'), '-AvailabilitySet')]"
             ],
             "properties": {
                 "hardwareProfile": {
                     "vmSize": "[parameters('SafewalkServerVmSize')]"
                 },
                 "osProfile": {
-                    "computerName": "[concat(parameters('vmPrefix'), '-server-master')]",
+                    "computerName": "[concat(variables('vmPrefix'), '-server-master')]",
                     "adminUsername": "[parameters('vmUsername')]",
                     "adminPassword": "[parameters('vmPassword')]"
                 },
                 "storageProfile": {
                     "imageReference": {
-                        "id": "[resourceId('Microsoft.Compute/images', concat(parameters('vmPrefix'), '-server-osImage'))]"
+                        "id": "[resourceId('Microsoft.Compute/images', concat(variables('vmPrefix'), '-server-osImage'))]"
                     },
                     "osDisk": {
-                        "name": "[concat(parameters('vmPrefix'), '-server-os-master-vhd')]",
+                        "name": "[concat(variables('vmPrefix'), '-server-os-master-vhd')]",
                         "createOption": "FromImage"
                     }
                 },
                 "networkProfile": {
                     "networkInterfaces": [
                         {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('vmPrefix'), '-server-master-NIC'))]"
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('vmPrefix'), '-server-master-NIC'))]"
                         }
                     ]
                 },
                 "availabilitySet": {
-                    "id": "[resourceId('Microsoft.Compute/availabilitySets', concat(parameters('vmPrefix'), '-AvailabilitySet'))]"
+                    "id": "[resourceId('Microsoft.Compute/availabilitySets', concat(variables('vmPrefix'), '-AvailabilitySet'))]"
                 }
             }
         },
@@ -759,40 +754,40 @@
             "condition": "[variables('createSlaves')]",
             "apiVersion": "2017-03-30",
             "type": "Microsoft.Compute/virtualMachines",
-            "name": "[concat(parameters('vmPrefix'), '-server-slave-', copyIndex())]",
+            "name": "[concat(variables('vmPrefix'), '-server-slave-', copyIndex())]",
             "location": "[variables('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/networkInterfaces/', concat(parameters('vmPrefix'), '-server-slave-', copyIndex(), '-NIC') )]",
-                "[resourceId('Microsoft.Compute/images/', concat(parameters('vmPrefix'), '-server-osImage') )]",
-                "[resourceId('Microsoft.Compute/availabilitySets/', concat(parameters('vmPrefix'), '-AvailabilitySet') )]"
+                "[resourceId('Microsoft.Network/networkInterfaces/', concat(variables('vmPrefix'), '-server-slave-', copyIndex(), '-NIC') )]",
+                "[resourceId('Microsoft.Compute/images/', concat(variables('vmPrefix'), '-server-osImage') )]",
+                "[resourceId('Microsoft.Compute/availabilitySets/', concat(variables('vmPrefix'), '-AvailabilitySet') )]"
             ],
             "properties": {
                 "hardwareProfile": {
                     "vmSize": "[parameters('SafewalkServerVmSize')]"
                 },
                 "osProfile": {
-                    "computerName": "[concat(parameters('vmPrefix'), '-server-slave-', copyIndex())]",
+                    "computerName": "[concat(variables('vmPrefix'), '-server-slave-', copyIndex())]",
                     "adminUsername": "[parameters('vmUsername')]",
                     "adminPassword": "[parameters('vmPassword')]"
                 },
                 "storageProfile": {
                     "imageReference": {
-                        "id": "[resourceId('Microsoft.Compute/images', concat(parameters('vmPrefix'), '-server-osImage'))]"
+                        "id": "[resourceId('Microsoft.Compute/images', concat(variables('vmPrefix'), '-server-osImage'))]"
                     },
                     "osDisk": {
-                        "name": "[concat(parameters('vmPrefix'), '-server-os-slave-', copyIndex(), '-vhd')]",
+                        "name": "[concat(variables('vmPrefix'), '-server-os-slave-', copyIndex(), '-vhd')]",
                         "createOption": "FromImage"
                     }
                 },
                 "networkProfile": {
                     "networkInterfaces": [
                         {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('vmPrefix'), '-server-slave-', copyIndex(), '-NIC'))]"
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('vmPrefix'), '-server-slave-', copyIndex(), '-NIC'))]"
                         }
                     ]
                 },
                 "availabilitySet": {
-                    "id": "[resourceId('Microsoft.Compute/availabilitySets', concat(parameters('vmPrefix'), '-AvailabilitySet'))]"
+                    "id": "[resourceId('Microsoft.Compute/availabilitySets', concat(variables('vmPrefix'), '-AvailabilitySet'))]"
                 }
             },
             "copy": {
@@ -805,13 +800,13 @@
                 {
                     "condition": "[variables('createSlaves')]",
                     "type": "Microsoft.Compute/virtualMachines/extensions",
-                    "name": "[concat(parameters('vmPrefix'), '-server-slave-', copyIndex(), '/installcustomscript')]",
+                    "name": "[concat(variables('vmPrefix'), '-server-slave-', copyIndex(), '/installcustomscript')]",
                     "apiVersion": "2017-03-30",
                     "location": "[variables('location')]",
                     "dependsOn": [
-                        "[resourceId('Microsoft.Compute/virtualMachines/', concat(parameters('vmPrefix'), '-server-slave-', copyIndex()) )]",
-                        "[resourceId('Microsoft.Compute/virtualMachines/extensions', concat(parameters('vmPrefix'), '-gateway') , 'installcustomscript')]",
-                        "[resourceId('Microsoft.Compute/virtualMachines/extensions', concat(parameters('vmPrefix'), '-server-master'), 'installcustomscript')]"
+                        "[resourceId('Microsoft.Compute/virtualMachines/', concat(variables('vmPrefix'), '-server-slave-', copyIndex()) )]",
+                        "[resourceId('Microsoft.Compute/virtualMachines/extensions', concat(variables('vmPrefix'), '-gateway') , 'installcustomscript')]",
+                        "[resourceId('Microsoft.Compute/virtualMachines/extensions', concat(variables('vmPrefix'), '-server-master'), 'installcustomscript')]"
                     ],
                     "properties": {
                         "publisher": "Microsoft.Azure.Extensions",
@@ -834,7 +829,7 @@
                             ]
                         },
                         "protectedSettings": {
-                            "commandToExecute": "[concat('sh configure_safewalk_custom_script_slave.sh ', parameters('SafewalkServerRootPassword'), ' ', parameters('SafewalkGatewayIP'), ' ', reference(concat('Microsoft.Network/publicIPAddresses/', variables('gatewayPublicIPName')), '2017-04-01').ipAddress, ' ', parameters('SafewalkGatewayRootPassword'), ' ', variables('firstSafewalkServerIP'), ' ', reference(concat('Microsoft.Network/networkInterfaces/', concat(parameters('vmPrefix'), '-server-slave-', copyIndex(), '-NIC')), '2017-04-01').ipConfigurations[0].properties.privateIPAddress, ' ', parameters('subnetLANAddressSpace'))]"
+                            "commandToExecute": "[concat('sh configure_safewalk_custom_script_slave.sh ', parameters('SafewalkServerRootPassword'), ' ', parameters('SafewalkGatewayIP'), ' ', reference(concat('Microsoft.Network/publicIPAddresses/', variables('gatewayPublicIPName')), '2017-04-01').ipAddress, ' ', parameters('SafewalkGatewayRootPassword'), ' ', variables('firstSafewalkServerIP'), ' ', reference(concat('Microsoft.Network/networkInterfaces/', concat(variables('vmPrefix'), '-server-slave-', copyIndex(), '-NIC')), '2017-04-01').ipConfigurations[0].properties.privateIPAddress, ' ', parameters('subnetLANAddressSpace'))]"
                         }
                     }
                 }
@@ -842,12 +837,12 @@
         },
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "[concat(parameters('vmPrefix'), '-server-master/installcustomscript')]",
+            "name": "[concat(variables('vmPrefix'), '-server-master/installcustomscript')]",
             "apiVersion": "2017-03-30",
             "location": "[variables('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Compute/virtualMachines/', concat(parameters('vmPrefix'), '-server-master'))]",
-                "[resourceId('Microsoft.Compute/virtualMachines/extensions', concat(parameters('vmPrefix'), '-gateway') , 'installcustomscript')]"
+                "[resourceId('Microsoft.Compute/virtualMachines/', concat(variables('vmPrefix'), '-server-master'))]",
+                "[resourceId('Microsoft.Compute/virtualMachines/extensions', concat(variables('vmPrefix'), '-gateway') , 'installcustomscript')]"
             ],
             "properties": {
                 "publisher": "Microsoft.Azure.Extensions",
@@ -877,7 +872,7 @@
         },
         {
             "type": "Microsoft.Compute/availabilitySets",
-            "name": "[concat(parameters('vmPrefix'), '-AvailabilitySet')]",
+            "name": "[concat(variables('vmPrefix'), '-AvailabilitySet')]",
             "apiVersion": "2017-03-30",
             "location": "[variables('location')]",
             "sku": {
@@ -890,7 +885,7 @@
         },
         {
             "type": "Microsoft.Compute/availabilitySets",
-            "name": "[concat(parameters('vmPrefix'), '-gateway-AvailabilitySet')]",
+            "name": "[concat(variables('vmPrefix'), '-gateway-AvailabilitySet')]",
             "apiVersion": "2017-03-30",
             "location": "[variables('location')]",
             "sku": {
@@ -901,5 +896,23 @@
                 "platformFaultDomainCount": 3
             }
         }
-    ]
+    ],
+    "outputs": {
+        "GatewayPublicIP" : {
+            "type" : "string",
+            "value": "[reference(concat('Microsoft.Network/publicIPAddresses/', variables('gatewayPublicIPName')), '2017-04-01').ipAddress]"
+        },
+        "GatewayPrivateIP" : {
+            "type" : "string",
+            "value": "[parameters('SafewalkGatewayIP')]"
+        },
+        "FirstSafewalkPrivateIP" : {
+            "type" : "string",
+            "value": "[variables('firstSafewalkServerIP')]"
+        },
+        "LastSafewalkPrivateIP" : {
+            "type" : "string",
+            "value": "[variables('lastSafewalkServerIP')]"
+        }
+    }
 }
