@@ -43,5 +43,5 @@ Use Artifactory as Docker Registry.
    ``` 
 
 ------
-####Note:
-Supported locations: `West US`, `East US`, `South CentralUS`, `Southeast Asia`, `Western Central US`, `West Europe` and `West US 2`.
+#### Note:
+Supported locations: `West US`, `East US`, `South Central US`, `Southeast Asia`, `Western Central US`, `West Europe` and `West US 2`.
