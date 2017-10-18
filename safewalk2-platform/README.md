@@ -188,23 +188,23 @@ The Gateway SSH is only accesible from the Safewalk nodes. Only web services are
 
 ### Post installation setup
 
-#### Initial configuration on the superadmin console
+**Initial configuration on the superadmin console**
 
-**Connect to the super-admin**
-* Open a browser and enter the address of the super-admin console (i.e.
+* Connect to the super-admin
+1. Open a browser and enter the address of the super-admin console (i.e.
 https://SAFEWALK_ADDRESS:8443).
-* Enter the credentials of the admin account (username: admin and the choosed password).
+2. Enter the credentials of the admin account (username: admin and the choosed password).
 
-**Change the email address of the admin account**
-* In Internal users & groups box click Users.
-* Click the admin user.
-* Update the Email address field and click Save.
+* Change the email address of the admin account
+1. In Internal users & groups box click Users.
+2. Click the admin user.
+3. Update the Email address field and click Save.
 
-**Update the organization identity**
-* You can set your organization name in the Name field.
-* You can set your organization logo in the Logo field.
+* Update the organization identity
+1. You can set your organization name in the Name field.
+2. You can set your organization logo in the Logo field.
 
-**Setup the following items**
+* Setup the following items
 1. Follow the Import Server License link in the Import licenses box to import a server license.
 2. Import token licenses by following the Import Licenses from the Import licenses box.
 Attention: If you intend to setup multiple Safewalk servers in your environment (i.e. using either
@@ -223,18 +223,18 @@ Once the system has been configured you will be able to log into the management 
 your users.
 
 To access the management console:
-* Open a browser and enter the address of the management console as it was given in the final screen of the
+1. Open a browser and enter the address of the management console as it was given in the final screen of the
 installation (i.e. https://SAFEWALK_ADDRESS/admin).
-* Enter the credentials of the admin account (username: admin and the password you selected for the administrator
+2. Enter the credentials of the admin account (username: admin and the password you selected for the administrator
 account during the installation).
 Note: You will be able to set other users to serve as administrators of the system (including
 LDAP users) after you sign-in.
-* After you sign in click the Users tab and search for users in the system, you will be presented with a list of
+3. After you sign in click the Users tab and search for users in the system, you will be presented with a list of
 users that are relevant for your search.
-* Select one of the users and you will be able to view the selected user settings.
-* Select the user’s Tokens tab and assign it with a token for testing.
-* If the token assigned is marked as Registered (i.e. value Yes) you will be able to use the token for authentication.
-* Click the Radius Test link to attempt an authentication for the user.
+4. Select one of the users and you will be able to view the selected user settings.
+5. Select the user’s Tokens tab and assign it with a token for testing.
+6. If the token assigned is marked as Registered (i.e. value Yes) you will be able to use the token for authentication.
+7. Click the Radius Test link to attempt an authentication for the user.
 For more information about the management console please refer to the chapter /Management_console
 
 ### Software Licenses
