@@ -86,11 +86,11 @@ prompted to enter its credentials;
 to the relevant application;
 
 ## Prerequisites
-To get use this Safewalk2 platform you'll need to copy or upload the VM's VHD images to your storage account.
+To get use this Safewalk2 platform you'll need to upload the VM's VHD images to your storage account.
 
 ### Uploading the Safewalk Server and Safewalk Gateway VHD images
 
-The first thing you will need to do before you can deploy Safewalk using the ARM template is to copy or upload the Safewalk Server and Safewalk Gateway VHD images to your Azure subscription by following the steps below:
+The first thing you will need to do before you can deploy Safewalk using the ARM template is to upload the Safewalk Server and Safewalk Gateway VHD images to your Azure subscription by following the steps below:
 
 Login into the Azure portal (https://portal.azure.com)
 
