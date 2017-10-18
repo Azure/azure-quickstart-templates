@@ -7,10 +7,7 @@ GATEWAY_ROOT_PASSWORD=$4
 FIRST_IP=$5
 COUNT_IP=$6
 SAFEWALK_SUBNET_IP=$7
-ADMIN_PASSWORD=$9
-
-
-#sh configure_safewalk_custom_script.sh root 192.168.10.244 192.168.10.244 Safewalk1 192.168.10.201
+ADMIN_PASSWORD=$8
 
 my_dir=`dirname $0`
 safewalk_dir=/home/safewalk/safewalk_server/sources
@@ -31,9 +28,6 @@ bash $my_dir/safewalk_iptables.sh
 bash $my_dir/safewalk_upgrade.sh
 
 bash $safewalk_dir/bin/safewalk_set_admin_password.sh $ADMIN_PASSWORD
-
-
-
 
 
 
