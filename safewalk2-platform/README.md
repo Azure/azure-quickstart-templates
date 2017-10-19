@@ -46,7 +46,7 @@ The Gateway VM will be created at the DMZ subnet.
 
 The main components of the Safewalk Gateway consists of:
 
-* SSO (SAML IdP v2)
+**SSO (SAML IdP v2)**
 Provides Single Sign-On (SSO) and integration with third party web-based applications over the SAML v2 standard protocol.
 
 Single Single sign-on (SSO) is provided across all the SAML applications that are integrated with the same Safewalk Gateway.
@@ -69,10 +69,12 @@ is prompted to enter its credentials;
 6. Assuming that the credentials have been verified successfully (i.e. Access-Accept) the user is granted access
 to the application;
 
-* Registration-Gateway
+**Registration-Gateway**
+
 For facilitating the over-the-air registration method of mobile applications.
 
-* Safewalk server authentication api
+**Safewalk server authentication api**
+
 A proxy to the Safewalk server authentication api for external applications that do not support standard authentication protocols.
 
 General authentication flow
