@@ -26,7 +26,7 @@ The virtual network will consists on three subnets:
 * Gateway Subnet - This subnet is a well known predefined Azure one and can be used to create virtual network connections like **vNet<->vNet** or **Point<->Site** VPN connections.
 
 #### Safewalk server VM
-The Safewalk server VM is installed inside the LAN subnet. It's recommended to access it using a VPN. If cluster is enabled, 2 VMs will be created in the same Availability Set (different physical machines).
+The Safewalk server VM is installed inside the LAN subnet. It's recommended to access it using a VPN. If multiple Safewalk VMs are created, it will be created in the same Availability Set (different physical machines).
 
 * Super-Admin Console
 A web based interface that provides access to the general configuration of the system, like LDAP/AD connectivity to users or groups, import of new licenses, creating RADIUS clients and more. The main idea of this interface is to provide access for the highest authority to perform tasks that are not needed on a day to day basis and require a relatively high level of knowledge with the system and the organization architecture.
