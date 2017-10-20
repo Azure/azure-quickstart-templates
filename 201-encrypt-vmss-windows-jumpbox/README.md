@@ -14,6 +14,8 @@ AzureDiskEncryption for VMSS is currently in preview. Consuming this feature req
 1. Register-AzureRmProviderFeature -FeatureName "UnifiedDiskEncryption" -ProviderNamespace "Microsoft.Compute"
 2. Set-AzureRmKeyVaultAccessPolicy -ResourceGroupName <rgName> -VaultName <vaultName> -EnabledForDiskEncryption"
 
+__Note: The VMSS encryption preview does not yet support image upgrade or reimage. Do not use this if you will need to upgrade your OS image in an encrypted scale set.__
+
 PARAMETER RESTRICTIONS
 ======================
 
