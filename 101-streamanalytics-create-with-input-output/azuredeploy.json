@@ -1,0 +1,156 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "iotHubName": {
+      "type": "string",
+      "minLength": 3,
+      "defaultValue": "devhub99",
+      "metadata": {
+        "description": "Name of the IoT Hub instance to provision."
+      }
+    },
+    "userDisplayName": {
+      "type": "string",
+      "minLength": 3,
+      "defaultValue": "Billy Bunter",
+      "metadata": {
+        "description": "Your name for connecting Stream Analytics to PowerBI."
+      }
+    },
+    "userLoginName": {
+      "type": "string",
+      "minLength": 3,
+      "defaultValue": "billybunter@microsoft.com",
+      "metadata": {
+        "description": "Your loginname/alias for connecting Stream Analytics to PowerBI."
+      }
+    }
+  },
+  "variables": {
+    "streamAnalyticsJobName": "ProcessHeartRate"
+  },
+  "resources": [
+    {
+      "apiVersion": "2016-02-03",
+      "location": "[resourceGroup().location]",
+      "name": "[parameters('iotHubName')]",
+      "type": "Microsoft.Devices/IotHubs",
+      "properties": {
+        "eventHubEndpoints": {
+          "events": {
+            "retentionTimeInDays": 1,
+            "partitionCount": 2
+          }
+        },
+        "cloudToDevice": {
+          "defaultTtlAsIso8601": "PT1H",
+          "maxDeliveryCount": 10,
+          "feedback": {
+            "maxDeliveryCount": 10,
+            "ttlAsIso8601": "PT1H",
+            "lockDurationAsIso8601": "PT60S"
+          }
+        },
+        "location": "[resourceGroup().location]"
+      },
+      "sku": {
+        "name": "S1",
+        "capacity": 2
+      }
+    },
+    {
+      "apiVersion": "2016-03-01",
+      "name": "[variables('streamAnalyticsJobName')]",
+      "location": "[resourceGroup().location]",
+      "type": "Microsoft.StreamAnalytics/StreamingJobs",
+      "dependsOn": [
+        "[concat('Microsoft.Devices/IotHubs/', parameters('iotHubName'))]"
+      ],
+      "properties": {
+        "sku": {
+          "name": "standard"
+        },
+        "outputErrorPolicy": "stop",
+        "eventsOutOfOrderPolicy": "adjust",
+        "eventsOutOfOrderMaxDelayInSeconds": 0,
+        "eventsLateArrivalMaxDelayInSeconds": 5,
+        "dataLocale": "en-US",
+        "inputs": [
+          {
+            "Name": "IoTHub",
+            "Properties": {
+              "DataSource": {
+                "Properties": {
+                  "iotHubNamespace": "[parameters('iothubname')]",
+                  "sharedAccessPolicyKey": "[listkeys(resourceId('Microsoft.Devices/IotHubs/IotHubKeys',parameters('iothubname'), 'iothubowner'),'2016-02-03').primaryKey]",
+                  "sharedAccessPolicyName": "iothubowner",
+                  "endpoint": "messages/events"
+                },
+                "Type": "Microsoft.Devices/IotHubs"
+              },
+              "Serialization": {
+                "Properties": {
+                  "Encoding": "UTF8"
+                },
+                "Type": "Json"
+              },
+              "Type": "Stream"
+            }
+          }
+        ],
+        "transformation": {
+          "name": "Transformation",
+          "properties": {
+            "streamingUnits": 1,
+            "query": "SELECT\r\n    *\r\nINTO\r\n    [PBI]\r\nFROM\r\n    [IoTHub]"
+          }
+        },
+        "outputs": [
+          {
+            "name": "PBI",
+            "properties": {
+              "dataSource": {
+                "type": "PowerBI",
+                "outputPowerBISource": {
+                  "dataSet": "HeartDataSet",
+                  "table": "HeartDataTable",
+                  "groupId": "",
+                  "groupName": "My Workspace",
+                  "refreshToken": "dummytoken",
+                  "tokenUserDisplayName": "[parameters('userDisplayName')]",
+                  "tokenUserPrincipalName": "[parameters('userLoginName')]"
+                },
+                "properties": {
+                  "dataSet": "HeartDataSet",
+                  "table": "HeartDataTable",
+                  "groupId": "",
+                  "groupName": "My Workspace",
+                  "refreshToken": "dummytoken",
+                  "tokenUserDisplayName": "[parameters('userDisplayName')]",
+                  "tokenUserPrincipalName": "[parameters('userLoginName')]"
+                }
+              },
+              "serialization": null,
+              "diagnostics": null
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "outputs": {
+    "IoTHub": {
+      "type": "object",
+      "value": "[reference(resourceId('Microsoft.Devices/IotHubs',parameters('iotHubName')), '2016-02-03')]"
+    },
+    "SharedAccessPolicyKey": {
+      "value": "[listkeys(resourceId('Microsoft.Devices/IotHubs/IotHubKeys',parameters('iothubname'), 'iothubowner'),'2016-02-03').primaryKey]",
+      "type": "string"
+    },
+    "Hostname": {
+      "value": "[reference(resourceId('Microsoft.Devices/IotHubs',parameters('iotHubName')), '2016-02-03').hostname]",
+      "type": "string"
+    }
+  }
+}
