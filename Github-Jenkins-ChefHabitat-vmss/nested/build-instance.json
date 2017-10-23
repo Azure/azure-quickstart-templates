@@ -1,0 +1,214 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "buildInstanceSettings": {
+            "type": "object"
+        },
+        "apiVersions": {
+            "type": "object"
+        },
+        "networkSettings": {
+            "type": "object"
+        },
+        "AzureSubscriptionId": {
+            "type": "string"
+        },
+        "AzureApplicationId": {
+            "type": "string"
+        },
+        "AzureClientSecret": {
+            "type": "string"
+        },
+        "AzureTenantId": {
+            "type": "string"
+        },
+        "packerStorageAccName":{
+            "type": "string"
+        }
+    },
+    "variables": {
+        "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', parameters('networkSettings').virtualNetworkName)]",
+        "subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('networkSettings').subnet1Name)]",
+        "sshKeyPath": "[concat('/home/',parameters('buildInstanceSettings').adminUsername,'/.ssh/authorized_keys')]",
+        "osProfilesshPublicKey": {
+            "computerName": "[parameters('buildInstanceSettings').buildInstanceVmName]",
+            "adminUsername": "[parameters('buildInstanceSettings').adminUsername]",
+            "linuxConfiguration": {
+                "disablePasswordAuthentication": true,
+                "ssh": {
+                    "publicKeys": [
+                        {
+                            "path": "[variables('sshKeyPath')]",
+                            "keyData": "[parameters('buildInstanceSettings').sshPublicKey]"
+                        }
+                    ]
+                }
+            }
+        },
+        "osProfileReference": "[variables(concat('osProfile', parameters('buildInstanceSettings').authenticationType))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[parameters('buildInstanceSettings').buildInstanceDiagnosticsStorageAccountName]",
+            "apiVersion": "[parameters('apiVersions').storageApiVersion]",
+            "location": "[parameters('buildInstanceSettings').location]",
+            "sku": {
+                "name": "Standard_LRS"
+            },
+            "kind": "Storage",
+            "properties": {}
+        },
+        {
+            "name": "[parameters('buildInstanceSettings').buildInstancePipName]",
+            "type": "Microsoft.Network/publicIpAddresses",
+            "apiVersion": "[parameters('apiVersions').networkApiVersion]",
+            "location": "[parameters('buildInstanceSettings').location]",
+            "properties": {
+                "publicIpAllocationMethod": "[parameters('buildInstanceSettings').publicIpAddressType]",
+                "dnsSettings": {
+                    "domainNameLabel": "[parameters('buildInstanceSettings').buildInstanceDnsLabelPrefix]"
+                }
+            }
+        },
+        {
+            "name": "[parameters('buildInstanceSettings').buildInstanceNsgName]",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "[parameters('apiVersions').networkApiVersion]",
+            "location": "[parameters('buildInstanceSettings').location]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "SSH",
+                        "properties": {
+                            "priority": 1010,
+                            "sourceAddressPrefix": "*",
+                            "protocol": "TCP",
+                            "destinationPortRange": "22",
+                            "access": "Allow",
+                            "direction": "Inbound",
+                            "sourcePortRange": "*",
+                            "destinationAddressPrefix": "*"
+                        }
+                    },
+                    {
+                        "name": "Port_8080",
+                        "properties": {
+                            "access": "Allow",
+                            "destinationAddressPrefix": "*",
+                            "destinationPortRange": "8080",
+                            "direction": "Inbound",
+                            "priority": 1020,
+                            "protocol": "Tcp",
+                            "sourceAddressPrefix": "Internet",
+                            "sourcePortRange": "*"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[parameters('buildInstanceSettings').buildInstanceNicName]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "[parameters('apiVersions').networkApiVersion]",
+            "location": "[parameters('buildInstanceSettings').location]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/publicIpAddresses/', parameters('buildInstanceSettings').buildInstancePipName)]",
+                "[concat('Microsoft.Network/networkSecurityGroups/', parameters('buildInstanceSettings').buildInstanceNsgName)]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "subnet": {
+                                "id": "[variables('subnetRef')]"
+                            },
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIpAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIpAddresses', parameters('buildInstanceSettings').buildInstancePipName)]"
+                            }
+                        }
+                    }
+                ],
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('buildInstanceSettings').buildInstanceNsgName)]"
+                }
+            }
+        },
+        {
+            "name": "[parameters('buildInstanceSettings').buildInstanceVmName]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "[parameters('apiVersions').computeApiVersion]",
+            "location": "[parameters('buildInstanceSettings').location]",
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('buildInstanceSettings').buildInstanceDiagnosticsStorageAccountName)]",
+                "[concat('Microsoft.Network/networkInterfaces/', parameters('buildInstanceSettings').buildInstanceNicName)]"
+            ],
+            "properties": {
+                "osProfile": "[variables('osProfileReference')]",
+                "hardwareProfile": {
+                    "vmSize": "[parameters('buildInstanceSettings').buildInstanceVmSize]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "offer": "UbuntuServer",
+                        "publisher": "Canonical",
+                        "sku": "[parameters('buildInstanceSettings').ubuntuSku]",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "createOption": "fromImage",
+                        "managedDisk": {
+                            "storageAccountType": "Premium_LRS"
+                        }
+                    },
+                    "dataDisks": []
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('buildInstanceSettings').buildInstanceNicName)]"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true,
+                        "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', parameters('buildInstanceSettings').buildInstanceDiagnosticsStorageAccountName)).primaryEndpoints.blob]"
+                    }
+                }
+            }
+        },
+        {
+            "name": "[concat(parameters('buildInstanceSettings').buildInstanceVmName, '/buildscript')]",
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "apiVersion": "[parameters('apiVersions').computeApiVersion]",
+            "location": "[parameters('buildInstanceSettings').location]",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('buildInstanceSettings').buildInstanceVmName)]"
+            ],
+            "properties": {
+                "publisher": "Microsoft.Azure.Extensions",
+                "type": "CustomScript",
+                "typeHandlerVersion": "2.0",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "fileUris": [
+                        "[concat(parameters('buildInstanceSettings').buildScriptUrl)]"
+                    ]
+                },
+                "protectedSettings": {
+                    "commandToExecute": "[concat('sh build.sh',' ',parameters('AzureApplicationId'),' ',parameters('AzureClientSecret'),' ',parameters('AzureTenantId'),' ',parameters('packerStorageAccName'),' ',parameters('AzureSubscriptionId'))]"
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "buildInstanceDNS": {
+            "type": "string",
+            "value": "[reference(parameters('buildInstanceSettings').buildInstancePipName).dnsSettings.fqdn]"
+        }
+    }
+}
