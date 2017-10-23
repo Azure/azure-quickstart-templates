@@ -37,7 +37,7 @@ function run_util_script() {
 
 #defaults
 artifacts_location="https://raw.githubusercontent.com/Azure/azure-devops-utils/master/"
-jenkins_version_location="https://raw.githubusercontent.com/sysgain/MSOSS/staging/scripts/jenkins-verified-ver"
+jenkins_version_location="https://raw.githubusercontent.com/sysgain/azure-quickstart-templates/master/Github-Jenkins-ChefHabitat-vmss/scripts/jenkins-verified-ver"
 azure_web_page_location="/usr/share/nginx/azure"
 jenkins_release_type="LTS"
 
