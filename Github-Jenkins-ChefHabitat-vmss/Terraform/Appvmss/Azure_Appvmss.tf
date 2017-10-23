@@ -15,7 +15,7 @@ resource "azurerm_public_ip" "vmsspublicip" {
   public_ip_address_allocation = "${var.DynamicIP}"
   domain_name_label            = "app${random_id.app.hex}"
   tags {
-    environment = "staging"
+    environment = "quickstart"
   }
 }
 resource "azurerm_lb" "applb" {
