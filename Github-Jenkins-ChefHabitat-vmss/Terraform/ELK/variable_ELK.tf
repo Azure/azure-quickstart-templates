@@ -14,7 +14,7 @@ variable "tenant_id" {
 description = "existing subscription tenant_id "  
 default = ""
 }
-variable "vnetName"{
+variable "vnetName" {
 description = "Exisiting virtual network name"
 default = "MyVNET"
 }
@@ -26,19 +26,19 @@ variable "ResourceGroup" {
 description = "name of the resource group which we created the vnet"
 default = ""
 }
-variable "Location"{
+variable "Location" {
  description = "where the vnet is create"
  default = ""
  }
-variable "DynamicIP"{
+variable "DynamicIP" {
 description =  "public_ip_address_allocation dynamic type"
 default = "dynamic"
 }
-variable "storageAccType"{
+variable "storageAccType" {
 description = "storage account type"
 default = "Standard_LRS"
 }
-variable "storage_account"{
+variable "storage_account" {
 description = "storage account name"
 default = ""
 }
@@ -56,5 +56,9 @@ variable "userName" {
 }
 variable "password" {
 description = "virtual machine admin password"
+default = ""
+}
+variable "_artifactsLocation" {
+description = "artifacts url"
 default = ""
 }

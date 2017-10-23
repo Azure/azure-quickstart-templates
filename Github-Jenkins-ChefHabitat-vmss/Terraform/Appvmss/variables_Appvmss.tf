@@ -14,7 +14,7 @@ variable "tenant_id" {
 description = "existing subscription tenant_id "  
 default = ""
 }
-variable "vnetName"{
+variable "vnetName" {
 description = "Exisiting virtual network name"
 default = ""
 }
@@ -26,11 +26,11 @@ variable "ResourceGroup" {
 description = "name of the resource group which we created the vnet"
 default = ""
 }
-variable "Location"{
+variable "Location" {
  description = "where the vnet is create"
  default = ""
- }
-variable "DynamicIP"{
+}
+variable "DynamicIP" {
 description =  "public_ip_address_allocation dynamic type"
 default = ""
 }
@@ -49,4 +49,4 @@ default = ""
 variable "imageUri" {
  description = "Full URIs of custom images (VHDs) to spin up new VMs"
  default = ""
- }
+}

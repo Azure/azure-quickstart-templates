@@ -26,11 +26,11 @@ sudo apt-get -y install apt-transport-https azure-cli html-xml-utils xmlstarlet 
 
 #Download the Required Jenkins Files
 echo "---Download the Required Jenkins Files---" >> $LOG
-wget -P $srcdir https://raw.githubusercontent.com/sysgain/MSOSS/staging/scripts/elk-config.xml >> $LOG
-wget -P $srcdir https://raw.githubusercontent.com/sysgain/MSOSS/staging/scripts/MongoDBTerraformjob.xml >> $LOG
-wget -P $srcdir https://raw.githubusercontent.com/sysgain/MSOSS/staging/scripts/VMSSjob.xml >> $LOG
-wget -P $srcdir https://raw.githubusercontent.com/sysgain/MSOSS/staging/scripts/MongoDBPackerjob.xml >> $LOG
-wget -P $srcdir https://raw.githubusercontent.com/sysgain/MSOSS/staging/scripts/AppPackerjob.xml >> $LOG
+wget -P $srcdir ${22}/scripts/elk-config.xml >> $LOG
+wget -P $srcdir ${22}/scripts/MongoDBTerraformjob.xml >> $LOG
+wget -P $srcdir ${22}/scripts/VMSSjob.xml >> $LOG
+wget -P $srcdir ${22}/scripts/MongoDBPackerjob.xml >> $LOG
+wget -P $srcdir ${22}/scripts/AppPackerjob.xml >> $LOG
 
 #Configuring Jenkins
 echo "---Configuring Jenkins---"
@@ -62,7 +62,8 @@ vmSize = &quot;${11}&quot;
 vmName = &quot;${12}&quot;
 storage_account = &quot;${15}&quot;
 userName = &quot;${13}&quot;
-password = &quot;${14}&quot;" $srcdir/elk-config.xml | sed "s/&amp;quot;/\"/g" > $srcdir/elk-newconfig.xml
+password = &quot;${14}&quot;
+_artifactsLocation = &quot;${22}&quot;" $srcdir/elk-config.xml | sed "s/&amp;quot;/\"/g" > $srcdir/elk-newconfig.xml
 fi
 
 if [ ! -f "MongoDBTerraformjob.xml" ]
@@ -105,18 +106,18 @@ fi
 
 if [ ! -f "MongoDBPackerjob.xml" ]
 then
-    xmlstarlet ed -u '//publishers/biz.neustar.jenkins.plugins.packer.PackerPublisher/params' -v "-var &apos;client_id=$2&apos; -var &apos;client_secret=$3&apos; -var &apos;resource_group=$5&apos; -var &apos;storage_account=${15}&apos; -var &apos;subscription_id=$1&apos; -var &apos;tenant_id=$4&apos;" $srcdir/MongoDBPackerjob.xml | sed "s/amp;//g" > $srcdir/MongoDBPackerjob-newconfig.xml
+    xmlstarlet ed -u '//publishers/biz.neustar.jenkins.plugins.packer.PackerPublisher/params' -v "-var &apos;client_id=$2&apos; -var &apos;client_secret=$3&apos; -var &apos;resource_group=$5&apos; -var &apos;storage_account=${15}&apos; -var &apos;subscription_id=$1&apos; -var &apos;tenant_id=$4&apos; -var &apos;_artifactsLocation=${22}&apos;" $srcdir/MongoDBPackerjob.xml | sed "s/amp;//g" > $srcdir/MongoDBPackerjob-newconfig.xml
 
 fi
 
 if [ ! -f "AppPackerjob.xml" ]
 then
-    xmlstarlet ed -u '//publishers/biz.neustar.jenkins.plugins.packer.PackerPublisher/params' -v "-var &apos;client_id=$2&apos; -var &apos;client_secret=$3&apos; -var &apos;resource_group=$5&apos; -var &apos;storage_account=${15}&apos; -var &apos;subscription_id=$1&apos; -var &apos;tenant_id=$4&apos; -var &apos;Hartfile=UpdateHartFile&apos;" $srcdir/AppPackerjob.xml | sed "s/amp;//g" > $srcdir/AppPackerjob-newconfig.xml
+    xmlstarlet ed -u '//publishers/biz.neustar.jenkins.plugins.packer.PackerPublisher/params' -v "-var &apos;client_id=$2&apos; -var &apos;client_secret=$3&apos; -var &apos;resource_group=$5&apos; -var &apos;storage_account=${15}&apos; -var &apos;subscription_id=$1&apos; -var &apos;tenant_id=$4&apos; -var &apos;Hartfile=UpdateHartFile&apos; -var &apos;_artifactsLocation=${22}&apos;" $srcdir/AppPackerjob.xml | sed "s/amp;//g" > $srcdir/AppPackerjob-newconfig.xml
 
 fi
 	
-wget -P $jenkinsdir https://raw.githubusercontent.com/sysgain/MSOSS/staging/scripts/biz.neustar.jenkins.plugins.packer.PackerPublisher.xml
-wget -P $jenkinsdir https://raw.githubusercontent.com/sysgain/MSOSS/staging/scripts/org.jenkinsci.plugins.terraform.TerraformBuildWrapper.xml
+wget -P $jenkinsdir ${22}/scripts/biz.neustar.jenkins.plugins.packer.PackerPublisher.xml
+wget -P $jenkinsdir ${22}/scripts/org.jenkinsci.plugins.terraform.TerraformBuildWrapper.xml
 sleep 30 && java -jar $srcdir/jenkins-cli.jar -s  http://$url restart --username $user --password $passwd && sleep 30
 curl -X POST "http://$user:$api@$url/createItem?name=ELKJob" --data-binary "@$srcdir/elk-newconfig.xml" -H "$CRUMB" -H "Content-Type: text/xml"
 curl -X POST "http://$user:$api@$url/createItem?name=AppPackerjob" --data-binary "@$srcdir/AppPackerjob-newconfig.xml" -H "$CRUMB" -H "Content-Type: text/xml"
