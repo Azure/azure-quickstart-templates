@@ -271,36 +271,8 @@ You will receive the following output:
 
             }
 
-2. Note the values for  **appId** , **password(ClientSecret)**, **tenant ID** for the parameters section.
+2. Note the values for  **appId** , **password(ClientSecret)** for the parameters section.
 
-You can take the **subscription ID** by running the following command:
-    **azure account show**
-
-You will receive the following output:
-
-            Executing command account show
-
-            Name              : Sysgain-Backup
-
-            ID                : ABCDEFGH-YOUR-GUID-HERE-IJKLMNOP
-
-            State             : Enabled
-
-            Tenant ID         : ABCDEFGH-YOUR-GUID-HERE-IJKLMNOP
-
-            Is Default        : true
-
-            Environment       : AzureCloud
-
-            Has Certificate   : No
-
-            Has Access Token  : YeS
-
-            User name         : username@sysgaininc.onmicrosoft.com
-
-            info              : account show command OK
-
-3. Note down the ID from the displayed details, that is the **Subscription ID.**
 
 ## Deploy the ARM Template:
 
@@ -324,7 +296,7 @@ You will receive the following output:
 
 ![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p1/devopstools-jekins-chefhabitat-terraform/images/10.png)
 
-7. Enter the detailsfor **Admin username, SSH Public key (Generated in prerequisites section), then provide Subscription Id, Application Id, Client Secret (Password), Tenant Id (Created in prerequisites section)** in Custom Deployment and click on **Purchase**.
+7. Enter the detailsfor **Admin username, SSH Public key (Generated in prerequisites section),Password then provide Application Id, Client Secret (Password) and _artifactsLocation in Custom Deployment and click on **Purchase**.
 
 ![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p1/devopstools-jekins-chefhabitat-terraform/images/11.png)
 
