@@ -345,7 +345,7 @@ The ARM template will deploy the following resources on Azure:
 | 1    |Jenkins server        | Jekins                           | 1                    |Install and configure plugins and jobs                                                                             | 8080   
 | 2    |Build Instance        | Chef Habitat                     | 1                    |Creating habitat packages                                                                                          | 9631,9638
 | 3    |Application Node      |  Mongo DB   | 1                    |To run National Park application                                                                                   | 8080,9631,9638,27017
-| 4    |VM ScaleSets          | Web Application (National Parks)               | 1                    |To run mongo DB                                                                                                    | 9631,9638,27017
+| 4    |VM ScaleSets          | Web Application (National Parks)               | 3                    |To run mongo DB                                                                                                    | 9631,9638,27017
 | 5    |ELK Stack             | Elasticsearch, Kibana, Filebeat  | 1                    |Elasticsearch:Contains Index data, Kibana:Segregate logs to visualize as graphs, Filebeat:Forwarding logs to Kibana| 80
 | 6    |Load Balancer         | -                                | 1                    |Directs traffic to Application Nodes                                                                                  |
 | 7    |Azure Storage Account | packer,jenkins,ELK               | 3                    |Packer:To store the Packer VHD’s |
