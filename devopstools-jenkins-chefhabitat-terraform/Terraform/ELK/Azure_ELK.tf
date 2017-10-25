@@ -159,7 +159,7 @@ resource "azurerm_virtual_machine_extension" "elasticSearch" {
      settings = <<EOF
     {
         "fileUris": ["${var._artifactsLocation}/scripts/elkstack_deploy.sh"],
-        "commandToExecute":"sh elkstack_deploy.sh ${var.client_id} ${var.client_secret} ${var.tenant_id} ${var.storage_account} ${var.subscription_id} ${var._artifactsLocation}"
+        "commandToExecute":"sh elkstack_deploy.sh ${var.client_id} ${var.client_secret} ${var.tenant_id} ${var.storage_account} ${var.subscription_id} ${var._artifactsLocation} ${var.kibanaUsername} ${var.kibanaPassword}"
     }
 EOF
     tags {                                                                                                                             
