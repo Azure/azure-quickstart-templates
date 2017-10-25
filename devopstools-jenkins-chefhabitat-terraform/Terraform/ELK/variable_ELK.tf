@@ -70,3 +70,7 @@ variable "kibanaPassword" {
 description = "kibana password"
 default = ""
 }
+variable "_artifactsLocationSasToken" {
+description = "_artifacts location sastoken"
+default = ""
+}
