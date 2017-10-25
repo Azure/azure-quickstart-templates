@@ -38,7 +38,7 @@ function run_util_script() {
 #defaults
 #artifacts_location="https://raw.githubusercontent.com/Azure/azure-devops-utils/master/"
 artifacts_location="https://raw.githubusercontent.com/sysgain/azure-quickstart-templates/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes"
-jenkins_version_location="https://raw.githubusercontent.com/sysgain/azure-quickstart-templates/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes"
+jenkins_version_location="https://raw.githubusercontent.com/sysgain/azure-quickstart-templates/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/scripts/jenkins-verified-ver"
 azure_web_page_location="/usr/share/nginx/azure"
 jenkins_release_type="LTS"
 
