@@ -49,7 +49,7 @@ sudo systemctl start kibana >> $LOG
 #Configuring Nginx
 echo "---Configuring Nginx---" >> $LOG
 sudo sudo -v >> $LOG
-echo "admin:`openssl passwd -apr1 'Password4321'`" | sudo tee -a /etc/nginx/htpasswd.users >> $LOG
+echo "$7:`openssl passwd -apr1 $8`" | sudo tee -a /etc/nginx/htpasswd.users >> $LOG
 #cat /dev/null > /etc/nginx/sites-available/default >> $LOG
 #wget $6/scripts/default -O /etc/nginx/sites-available/default >> $LOG
 

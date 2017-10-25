@@ -4,78 +4,83 @@
     "parameters": {
         "adminUsername": {
             "type": "string",
-            "defaultValue": "",
             "metadata": {
                 "description": "username for the virtual machines."
             }
         },
         "authenticationType": {
             "type": "string",
-            "defaultValue": "",
-            "allowedValues": [
-                "sshPublicKey"
-            ],
+            "defaultValue": "sshPublicKey",
             "metadata": {
                 "description": "authentication type for the virtual machines."
             }
         },
         "password":{
             "type": "securestring",
-            "defaultValue": "",
             "metadata": {
                 "description": "password for elk,vmss and mongodbterraform virtual machines"
             }
         },
         "sshPublicKey": {
             "type": "string",
-            "defaultValue": "",
             "metadata": {
                 "description": "generate ssh public key"
             }
         },
         "jenkinsVmSize": {
             "type": "string",
-            "defaultValue": "",
+            "defaultValue": "Standard_DS2_v2",
             "metadata": {
                 "description": "vm size"
             }
         },
         "buildInstanceVmSize": {
             "type": "string",
-            "defaultValue": "",
+            "defaultValue": "Standard_DS1_v2",
             "metadata": {
                 "description": "vm size"
             }
         },
-        "azureApplicationId": {
+        "kibanaWebUIUsername":{
+            "type": "string",
+            "metadata": {
+                "description": "kibana web ui username"
+            }
+        },
+        "kibanaWebUIPassword":{
             "type": "securestring",
-            "defaultValue": "",
+            "metadata": {
+                "description": "kibana web ui password"
+            }
+        },
+        "azureApplicationId": {
+            "type": "string",
             "metadata": {
                 "description": "ad application id"
             }
         },
         "azureClientSecret": {
             "type": "securestring",
-            "defaultValue": "",
             "metadata": {
                 "description": "ad clientsecret"
             }
         },
         "_artifactsLocation": {
             "type": "string",
+            "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/devopstools-jenkins-chefhabitat-terraform",
+            "metadata": {
+                "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+            }
+        },
+        "_artifactsLocationSasToken": {
+            "type": "string",
             "defaultValue": "",
             "metadata": {
-                "description": "artifacts Url"
+                "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
             }
         }
     },
     "variables": {
-        "apiVersions": {
-            "deploymentApiVersion": "[variables('deploymentApiVersion')]",
-            "computeApiVersion": "2016-04-30-preview",
-            "networkApiVersion": "2016-09-01",
-            "storageApiVersion": "2016-01-01"
-        },
         "networkSettings": {
             "location": "[variables('location')]",
             "networkApiVersion": "2016-03-30",
@@ -102,6 +107,8 @@
             "jenkinsVmName": "jenkinsserver",
             "adminUsername": "[parameters('adminUsername')]",
             "password":"[parameters('password')]",
+            "kibanaWebUIUsername":"[parameters('kibanaWebUIUsername')]",
+            "kibanaWebUIPassword":"[parameters('kibanaWebUIUsername')]",
             "authenticationType": "[parameters('authenticationType')]",
             "sshPublicKey": "[parameters('sshPublicKey')]",
             "jenkinsVmSize": "[parameters('jenkinsVmSize')]",
@@ -109,9 +116,9 @@
             "storageAccountType": "Standard_LRS",
             "installJenkinsScriptName": "install_jenkins.sh",
             "jenkinsReleaseType": "LTS",
-            "baseUrl": "[variables('baseUrl')]",
-            "installJenkinsScriptUrl": "[concat(variables('baseUrl'),'/scripts/install_jenkins.sh')]",
-            "installJenkinsjobsScriptUrl": "[concat(variables('baseUrl'),'/scripts/jenkins_deploy.sh')]"
+            "baseUrl": "[parameters('_artifactsLocation')]",
+            "installJenkinsScriptUrl": "[concat(parameters('_artifactsLocation'),'/scripts/install_jenkins.sh')]",
+            "installJenkinsjobsScriptUrl": "[concat(parameters('_artifactsLocation'),'/scripts/jenkins_deploy.sh')]"
         },
         "buildInstanceSettings": {
             "location": "[variables('location')]",
@@ -127,7 +134,7 @@
             "sshPublicKey": "[parameters('sshPublicKey')]",
             "buildInstanceVmSize": "[parameters('buildInstanceVmSize')]",
             "ubuntuSku": "16.04-LTS",
-            "buildScriptUrl": "[concat(variables('baseUrl'),'/scripts/build.sh')]"
+            "buildScriptUrl": "[concat(parameters('_artifactsLocation'),'/scripts/build.sh')]"
         },
         "azureSubscriptionId":"[subscription().subscriptionId]",
         "azureTenantId":"[subscription().tenantId]",
@@ -136,15 +143,14 @@
         "publicIpAddressType": "Dynamic",
         "location": "[resourceGroup().location]",
         "deploymentApiVersion": "2016-02-01",
-        "suffix": "[substring(uniqueString(resourceGroup().id), 0, 5)]",
-        "baseUrl": "[parameters('_artifactsLocation')]"
+        "suffix": "[substring(uniqueString(resourceGroup().id), 0, 5)]"
     },
     "resources": [
         {
             "comments": "This storage account is used to store the custom VHDs created by Packer jobs.",
             "type": "Microsoft.Storage/storageAccounts",
             "name": "[variables('packerStorageAccountName')]",
-            "apiVersion": "2016-01-01",
+            "apiVersion": "2017-06-01",
             "location": "[variables('location')]",
             "sku": {
                 "name": "Standard_LRS"
@@ -156,7 +162,7 @@
             "comments": "This network security group is used for jenkins server.",
             "name": "[variables('jenkinsSettings').jenkinsfrontEndNSGName]",
             "type": "Microsoft.Network/networkSecurityGroups",
-            "apiVersion": "2016-09-01",
+            "apiVersion": "2017-04-01",
             "location": "[variables('jenkinsSettings').location]",
             "properties": {
                 "securityRules": [
@@ -209,7 +215,7 @@
             "comments": "This virtual network is used for the entire solution.",
             "type": "Microsoft.Network/virtualNetworks",
             "name": "[variables('networkSettings').virtualNetworkName]",
-            "apiVersion": "2016-09-01",
+            "apiVersion": "2017-04-01",
             "location": "[variables('networkSettings').location]",
             "dependsOn": [
                 "[concat('Microsoft.Storage/storageAccounts/', variables('packerStorageAccountName'))]",
@@ -264,21 +270,15 @@
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[concat(variables('baseUrl'),'/nested/jenkins.json')]",
+                    "uri": "[concat(parameters('_artifactsLocation'),'/nested/jenkins.json')]",
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
                     "jenkinsSettings": {
                         "value": "[variables('jenkinsSettings')]"
                     },
-                    "apiVersions": {
-                        "value": "[variables('apiVersions')]"
-                    },
                     "networkSettings": {
                         "value": "[variables('networkSettings')]"
-                    },
-                    "storageAccountKey": {
-                        "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('packerStorageAccountName')), variables('apiVersions').storageApiVersion).keys[0].value]"
                     },
                     "packerStorageAccountName": {
                         "value": "[variables('packerStorageAccountName')]"
@@ -298,11 +298,8 @@
                     "AzureTenantId": {
                         "value": "[variables('azureTenantId')]"
                     },
-                    "deploymentApiVersion": {
-                        "value": "[variables('deploymentApiVersion')]"
-                    },
                     "baseUrl": {
-                        "value": "[variables('baseUrl')]"
+                        "value": "[parameters('_artifactsLocation')]"
                     }
                 }
             }
@@ -318,15 +315,12 @@
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[concat(variables('baseUrl'),'/nested/build-instance.json')]",
+                    "uri": "[concat(parameters('_artifactsLocation'),'/nested/build-instance.json')]",
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
                     "buildInstanceSettings": {
                         "value": "[variables('buildInstanceSettings')]"
-                    },
-                    "apiVersions": {
-                        "value": "[variables('apiVersions')]"
                     },
                     "networkSettings": {
                         "value": "[variables('networkSettings')]"
@@ -367,13 +361,13 @@
             "type": "string",
             "value": "[concat(reference('Jenkins').outputs.jenkinsDNS.value,':8080')]"
         },
-        "kibanaWebUIUsername": {
+        "KibanaWebUIUsername": {
             "type": "string",
-            "value": "admin"
+            "value": "[parameters('kibanaWebUIUsername')]"
         },
         "KibanaWebUIPassword": {
             "type": "string",
-            "value": "Password4321"
+            "value": "[parameters('kibanaWebUIPassword')]"
         },
         "StorageAccountName": {
             "type": "string",
