@@ -273,39 +273,7 @@ _      &quot;tenant&quot;:_ **&quot;a2b2d6bc-YOUR-GUID-HERE-f97a7ac416d7&quot;**
 
 _    }_
 
-**2.** Note the values for  **appId** , **password(ClientSecret)**, **tenant ID** for the parameters section.
-
-You can take the **subscription ID** by running the following command:
-
-**azure account show**
-
-_You will receive the following output:_
-
-_info:    Executing command account show_
-
-_data:    Name                        : Sysgain-Backup_
-
-_data_ **:    ID** _                             :_ **086ef973-** **YOUR-GUID-HERE** **-c3d05c01a287**
-
-_data:    State                          : Enabled_
-
-_data:    Tenant ID                   :_ _a2b2d6bc-YOUR-GUID-HERE-f97a7ac416d7_
-
-_data:    Is Default                   : true_
-
-_data:    Environment              : AzureCloud_
-
-_data:    Has Certificate            : No_
-
-_data:    Has Access Token       : Yes_
-
-_data:    User name                   : username@sysgaininc.onmicrosoft.com_
-
-_data:_
-
-_info:    account show command OK_
-
-**3.** Note down the ID from the displayed details, that is the **Subscription ID.**
+**2.** Note the values for  **appId** and **password(ClientSecret)** for the parameters section.
 
 ## Deploy the ARM Template:
 
@@ -327,7 +295,7 @@ _info:    account show command OK_
 
 ![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/10.png)
 
-7. Enter the detailsfor **Admin username, SSH Public key (Generated in prerequisites section), then provide Subscription Id, Application Id, Client Secret (Password), Tenant Id (Created in prerequisites section)** in Custom Deployment and click on **Purchase**.
+7. Enter the detailsfor **Admin username,Azure Username, Azure Password,Admin password(for ELK and VMSS VM's) SSH Public key (Generated in prerequisites section),Kibana Username, kibana password then provide Application Id, Client Secret (Password) which is Created in prerequisites section, Kubernetes cluster name, Agent count, master count, leave atifactsLocationSasToken as an empty** in Custom Deployment and click on **Purchase**.
 
 ![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/11.png)
 
