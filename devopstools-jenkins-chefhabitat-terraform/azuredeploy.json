@@ -50,7 +50,7 @@
         "kibanaWebUIPassword":{
             "type": "securestring",
             "metadata": {
-                "description": "kibana web ui password"
+                "description": "kibana web ui password, the password should have alphanumeric values only"
             }
         },
         "azureApplicationId": {
@@ -73,10 +73,10 @@
             }
         },
         "_artifactsLocationSasToken": {
-            "type": "string",
+            "type": "securestring",
             "defaultValue": "",
             "metadata": {
-                "description": "The sastoken required to access _artifactslocation.  when the template is deployed using the accompanying scripts, a sastoken will be automatically generated."
+                "description": "The sastoken required to access _artifactslocation.  when the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
             }
         }
     },
@@ -116,9 +116,9 @@
             "storageAccountType": "Standard_LRS",
             "installJenkinsScriptName": "install_jenkins.sh",
             "jenkinsReleaseType": "LTS",
-            "baseUrl": "[parameters('_artifactsLocation')]",
-            "installJenkinsScriptUrl": "[concat(parameters('_artifactsLocation'),'/scripts/install_jenkins.sh')]",
-            "installJenkinsjobsScriptUrl": "[concat(parameters('_artifactsLocation'),'/scripts/jenkins_deploy.sh')]"
+            "_artifactsLocation": "[parameters('_artifactsLocation')]",
+            "installJenkinsScriptUrl": "[concat(parameters('_artifactsLocation'),'/scripts/install_jenkins.sh', parameters('_artifactsLocationSasToken'))]",
+            "installJenkinsjobsScriptUrl": "[concat(parameters('_artifactsLocation'),'/scripts/jenkins_deploy.sh', parameters('_artifactsLocationSasToken'))]"
         },
         "buildInstanceSettings": {
             "location": "[variables('location')]",
@@ -134,7 +134,7 @@
             "sshPublicKey": "[parameters('sshPublicKey')]",
             "buildInstanceVmSize": "[parameters('buildInstanceVmSize')]",
             "ubuntuSku": "16.04-LTS",
-            "buildScriptUrl": "[concat(parameters('_artifactsLocation'),'/scripts/build.sh')]"
+            "buildScriptUrl": "[concat(parameters('_artifactsLocation'),'/scripts/build.sh', parameters('_artifactsLocationSasToken'))]"
         },
         "azureSubscriptionId":"[subscription().subscriptionId]",
         "azureTenantId":"[subscription().tenantId]",
@@ -142,7 +142,6 @@
         "packerStorageAccountName": "[concat('packerstrg',variables('suffix'))]",
         "publicIpAddressType": "Dynamic",
         "location": "[resourceGroup().location]",
-        "deploymentApiVersion": "2016-02-01",
         "suffix": "[substring(uniqueString(resourceGroup().id), 0, 5)]"
     },
     "resources": [
@@ -270,7 +269,7 @@
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[concat(parameters('_artifactsLocation'),'/nested/jenkins.json')]",
+                    "uri": "[concat(parameters('_artifactsLocation'),'/nested/jenkins.json', parameters('_artifactsLocationSasToken'))]",
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
@@ -298,8 +297,11 @@
                     "AzureTenantId": {
                         "value": "[variables('azureTenantId')]"
                     },
-                    "baseUrl": {
+                    "_artifactsLocation": {
                         "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken":{
+                        "value":"[parameters('_artifactsLocationSasToken')]"
                     }
                 }
             }
@@ -315,7 +317,7 @@
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[concat(parameters('_artifactsLocation'),'/nested/build-instance.json')]",
+                    "uri": "[concat(parameters('_artifactsLocation'),'/nested/build-instance.json', parameters('_artifactsLocationSasToken'))]",
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
