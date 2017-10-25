@@ -296,7 +296,7 @@ You will receive the following output:
 
 ![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p1/devopstools-jenkins-chefhabitat-terraform/images/10.png)
 
-7. Enter the detailsfor **Admin username, SSH Public key (Generated in prerequisites section),Password then provide Application Id, Client Secret (Password) and _artifactsLocation in Custom Deployment and click on **Purchase**.
+7. Enter the detailsfor **Admin username, SSH Public key (Generated in prerequisites section),Password, KibanaUsername, KibanaPassword then provide Application Id, Client Secret (Password) and _artifactsLocation in Custom Deployment and click on **Purchase**.
 
 ![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p1/devopstools-jenkins-chefhabitat-terraform/images/11.png)
 
