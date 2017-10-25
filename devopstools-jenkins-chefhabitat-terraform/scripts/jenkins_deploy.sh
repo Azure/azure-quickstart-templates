@@ -65,7 +65,8 @@ userName = &quot;${13}&quot;
 password = &quot;${14}&quot;
 _artifactsLocation = &quot;${22}&quot;
 kibanaUsername = &quot;${23}&quot;
-kibanaPassword = &quot;${24}&quot;" $srcdir/elk-config.xml | sed "s/&amp;quot;/\"/g" > $srcdir/elk-newconfig.xml
+kibanaPassword = &quot;${24}&quot;
+_artifactsLocationSasToken = &quot;${25}&quot;" $srcdir/elk-config.xml | sed "s/&amp;quot;/\"/g" > $srcdir/elk-newconfig.xml
 fi
 
 if [ ! -f "MongoDBTerraformjob.xml" ]
