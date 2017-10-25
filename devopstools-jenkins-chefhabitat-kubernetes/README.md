@@ -71,7 +71,7 @@ This solution will deploy the following architecture:
 2. Azure Storage Account
 3. GitHub- The Terraform code is taken from GitHub and has been configured as a job in Jenkins.
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/1.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/1.png)
 
 ## Terraform:
 
@@ -125,7 +125,7 @@ Elasticsearch is an open-source, broadly-distributable, readily-scalable, enterp
 **Packetbeat** : For Network monitoring.     **Winlogbeat** : For windows event logs.
 
 **Flow Diagram:**
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/2.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/2.png)
 
 
   ### The following logs are visualized in Kibana:
@@ -187,7 +187,7 @@ This is because in Habitat, the application is the unit of automation.  This mea
 
   ### Packaging an Application with Habitat:
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/3.png)  
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/3.png)  
 
 
 
@@ -233,17 +233,17 @@ PuTTYgen is a key generator tool for creating  [SSH keys](https://www.ssh.com/ss
 1. PuTTYgen is normally installed as part of the normal PuTTY .msi package installation. There is no need for a separate PuTTYgen download. Download PuTTY from the  [**PuTTY download page**](http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html)
 2. Go to Windows  **Start menu**  →  **All Programs**  →  **PuTTY** →  **PuTTYgen** to generate an SSH key.
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/4.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/4.png)
 
 3. Click  **Generate** , and start moving the mouse within the window. Putty uses mouse movements to collect randomness. You may need to move the mouse for some time, depending on the size of your key. As you move it, the green progress bar should advance.
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/5.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/5.png)
 
 4. Once the progress bar becomes full, the actual key generation computation takes place. When complete, the public key should appear in the Window.
 5. Copy the Public Key in a notepad. This will be used while deploying the ARM Template.
 6. You should save at the private key by clicking  **Save private key** , this private key will be used to log in to the Jenkins server.
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/6.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/6.png)
 
  ### Create Service principal
 
@@ -313,33 +313,33 @@ _info:    account show command OK_
 2. Log in to your Azure portal using your credentials
 3. Click on **New (+)** and search for **Template deployment** , then click on it.
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/7.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/7.png)
 
 4. Click on **Create.**
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/8.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/8.png)
 
 5. Click on **Build your own template in the editor**.
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/9.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/9.png)
 
 6. Clear the default template section, paste the template from the GitHub and click on **Save**.
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/10.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/10.png)
 
 7. Enter the detailsfor **Admin username, SSH Public key (Generated in prerequisites section), then provide Subscription Id, Application Id, Client Secret (Password), Tenant Id (Created in prerequisites section)** in Custom Deployment and click on **Purchase**.
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/11.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/11.png)
 
 8. The below screen shot shows that the template has been successfully deployed.
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/12.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/12.png)
 
 
 
 9. We can view the output section as shown below.
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/13.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/13.png)
 
 ## Environment Details:
 
@@ -363,19 +363,19 @@ After the template has been successfully deployed, log in to the Jenkins server 
 
 1. Open PuTTY and enter the Jenkins FQDN under **Session**.
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/14.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/14.png)
 
 2. Navigate to **Connection &gt; SSH &gt; Auth**.
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/15.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/15.png)
 
 3. Click on the **Browse** section, select SSH private key file which was generated earlier as part of the prerequisites section.
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/16.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/16.png)
 
 4. Enter the same username, which was provided while deploying the ARM template.
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/17.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/17.png)
 
 
 5. Change to the root user by using the below command:
@@ -388,7 +388,7 @@ After the template has been successfully deployed, log in to the Jenkins server 
 
 7. Make a note of this value (Password), this credential will be used to login into the Jenkins WEBUI. (as part of step 9)
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/18.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/18.png)
 
 8. Open a new browser and enter the Jenkins FQDN with extension 8080, as shown below:
 
@@ -398,20 +398,20 @@ After the template has been successfully deployed, log in to the Jenkins server 
 
 10.
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/19.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/19.png)
 
 
 11. Click on **Install suggested plugins**.
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/20.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/20.png)
 
 12. Click on **Continue as admin**.
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/21.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/21.png)
 
 13. Click on **Start using Jenkins**.
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/22.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/22.png)
 
 14. We can see the jobs which are created in Jenkins server.
 
@@ -421,7 +421,7 @@ After the template has been successfully deployed, log in to the Jenkins server 
 
  **1.** The following are the jobs that are created in Jenkins.
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/23.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/23.png)
 
  **2.** For the above jobs, we have installed the Kubernetes Continuous Deploy plugins.
 
@@ -443,40 +443,40 @@ This job will launch a Virtual Machine Scale set with three application nodes.
 
 1. Move to the Jenkins Dashboard and click on **ELKJob**.
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/24.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/24.png)
 
 2. Click on **Build Now**. Then, to view the Console output, click on **Build number** (Eg: **#1** ) as shown below.
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/25.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/25.png)
 
 3. Click on **Console Output.**
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/26.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/26.png)
 
 4. The console output log will be shown as below. If the build is successful, the output will reflect as &quot;Success&quot;.
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/27.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/27.png)
 
 
 5. Once the ELKJob is successfully executed, move to the Jenkins Dashboard and click on **KuberentesClusterjob**.
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/28.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/28.png)
 
 6. Click on **Build Now**. Then, to view the Console output, click on **Build number** (Eg: **#1** ) as shown below.
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/29.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/29.png)
 
 7. Click on **Console Output.**
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/30.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/30.png)
 
 8. The console output log will be shown as below. If the build is successful, the output will reflect as &quot;Success&quot;.
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/31.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/31.png)
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/32.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/32.png)
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/33.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/33.png)
 
 ## Chef Habitat:
 
@@ -488,7 +488,7 @@ To build the National Park application, begin by logging in to the Build Instanc
 1. Switch to the root user using **sudo -i**
 2. Chef Habitat can be configured using the command _&quot;_ **hab setup** _&quot;._
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/34.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/34.png)
 
 3. Enter &quot; **yes**&quot; for setting up the default origin
 4. Enter origin name as &quot; **root&quot;**
@@ -496,7 +496,7 @@ To build the National Park application, begin by logging in to the Build Instanc
 6. Enter &quot; **no**&quot; to setup the github access token
 7. Enter &quot; **yes**&quot; to Enable analytics
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/35.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/35.png)
 
 
   ### Creating Hart File:
@@ -505,13 +505,13 @@ To build the National Park application, begin by logging in to the Build Instanc
 
 **git clone** [https://github.com/sysgain/MSOSS.git](https://github.com/sysgain/MSOSS.git)
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/36.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/36.png)
 
 **cd MSOSS**
 
 **git checkout habcode**
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/37.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/37.png)
 
 2. Navigate to the location of the Directory where package plan.sh file is located.
 
@@ -519,30 +519,30 @@ To build the National Park application, begin by logging in to the Build Instanc
 
 3. Enter &quot; **hab studio enter** _&quot;_
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/38.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/38.png)
 
 4. Build the Application, using the &quot; **Build**&quot; Command.
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/39.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/39.png)
 
 5. Then exit the hab studio, by entering the **exit** command.
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/40.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/40.png)
 
 6. Once **build** is successful, a **HART** file will be generated in results Directory.
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/41.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/41.png)
 
 
 ### Get Azure Container Registry Password from Azure portal
 
 **1.**  Login to Azure Portal   [https://portal.azure.com/](https://portal.azure.com/) .On the home page on left side menu click on more services and search for container registries
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/42.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/42.png)
 
 **2.** Click on **Available azure container registries** **resource** and click on  **Access Keys**
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/43.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/43.png)
 
 **3.** Be handy with username, password 1 and password 2 for further deployments
 
@@ -558,7 +558,7 @@ Execute mongodb\_acrimage.sh command using below command
 
 **NOTE:** password 1 value is copied from previous step. Password 1 value should be one of the password 1 and password 2 but not both.
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/44.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/44.png)
 
   ### Uploading National parks HART File to the Azure Container Registry:
 
@@ -572,37 +572,37 @@ sh np\_acrimage.sh &lt;username&gt; &lt;password1&gt;
 
 **NOTE:** password 1 value is copied from previous step. Password 1 value should be one of the password 1 and password 2 but not both.
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/45.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/45.png)
 
 ##  Verify Docker Images in Azure Container Registry:
 
 **1.** Login to Azure Portal   [https://portal.azure.com/](https://portal.azure.com/) .On the home page on left side menu click on more services and search for container registries
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/46.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/46.png)
 
 **2.** Click on **Available azure container registries** **resource** and click on **Repositories**
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/47.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/47.png)
 
   ## Run VMSS Job:
 
 1. Move to the Jenkins Dashboard and click on VMSS Job.
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/48.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/48.png)
 
 2. Click on **Build Now**. Then, to view the Console output, click on **Build number** (Eg: **#1** ) as shown below.
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/49.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/49.png)
 
 3. Click on **Console Output.**
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/50.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/50.png)
 
 4. The console output log will be shown as below. If the build is successful, the output will reflect as &quot;Success&quot;.
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/51.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/51.png)
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/52.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/52.png)
 
 
 
@@ -621,14 +621,14 @@ sh np\_acrimage.sh &lt;username&gt; &lt;password1&gt;
 
 **Kubectl get pods**
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/53.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/53.png)
 
 
 **5.** Verify kubernetes service using below command
 
 **Kubectl get svc**
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/54.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/54.png)
 
 ## Access National Park Applications
 
@@ -636,7 +636,7 @@ sh np\_acrimage.sh &lt;username&gt; &lt;password1&gt;
 
 http://&lt;external-ip&gt;:8080/national-parks
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/55.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/55.png)
 
 ## Verifying Application Logs:
 
@@ -644,10 +644,10 @@ http://&lt;external-ip&gt;:8080/national-parks
 
   **Kubectl get pods**
 
-  ![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/56.png)
+  ![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/56.png)
 
 2. Get Logs of each pod by using below command. Replace podname with exact pod name one at a time.
 
 **Kubectl logs &lt;podname&gt;**
 
-![alt text](https://github.com/sysgain/MSOSS/raw/devopstools-jenkins-chefhabitat-kubernetes/images/57.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/57.png)
