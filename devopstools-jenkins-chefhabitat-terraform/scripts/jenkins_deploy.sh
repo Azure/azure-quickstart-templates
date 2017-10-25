@@ -108,13 +108,13 @@ fi
 
 if [ ! -f "MongoDBPackerjob.xml" ]
 then
-    xmlstarlet ed -u '//publishers/biz.neustar.jenkins.plugins.packer.PackerPublisher/params' -v "-var &apos;client_id=$2&apos; -var &apos;client_secret=$3&apos; -var &apos;resource_group=$5&apos; -var &apos;storage_account=${15}&apos; -var &apos;subscription_id=$1&apos; -var &apos;tenant_id=$4&apos; -var &apos;artifacts_location=${22}&apos; -var &apos;azure_region=${23}&apos;" $srcdir/MongoDBPackerjob.xml | sed "s/amp;//g" > $srcdir/MongoDBPackerjob-newconfig.xml
+    xmlstarlet ed -u '//publishers/biz.neustar.jenkins.plugins.packer.PackerPublisher/params' -v "-var &apos;client_id=$2&apos; -var &apos;client_secret=$3&apos; -var &apos;resource_group=$5&apos; -var &apos;storage_account=${15}&apos; -var &apos;subscription_id=$1&apos; -var &apos;tenant_id=$4&apos; -var &apos;artifacts_location=${22}&apos; -var &apos;azure_region=$6&apos;" $srcdir/MongoDBPackerjob.xml | sed "s/amp;//g" > $srcdir/MongoDBPackerjob-newconfig.xml
 
 fi
 
 if [ ! -f "AppPackerjob.xml" ]
 then
-    xmlstarlet ed -u '//publishers/biz.neustar.jenkins.plugins.packer.PackerPublisher/params' -v "-var &apos;client_id=$2&apos; -var &apos;client_secret=$3&apos; -var &apos;resource_group=$5&apos; -var &apos;storage_account=${15}&apos; -var &apos;subscription_id=$1&apos; -var &apos;tenant_id=$4&apos; -var &apos;Hartfile=UpdateHartFile&apos; -var &apos;artifacts_location=${22}&apos; -var &apos;azure_region=${23}&apos;" $srcdir/AppPackerjob.xml | sed "s/amp;//g" > $srcdir/AppPackerjob-newconfig.xml
+    xmlstarlet ed -u '//publishers/biz.neustar.jenkins.plugins.packer.PackerPublisher/params' -v "-var &apos;client_id=$2&apos; -var &apos;client_secret=$3&apos; -var &apos;resource_group=$5&apos; -var &apos;storage_account=${15}&apos; -var &apos;subscription_id=$1&apos; -var &apos;tenant_id=$4&apos; -var &apos;Hartfile=UpdateHartFile&apos; -var &apos;artifacts_location=${22}&apos; -var &apos;azure_region=$6&apos;" $srcdir/AppPackerjob.xml | sed "s/amp;//g" > $srcdir/AppPackerjob-newconfig.xml
 
 fi
 	
