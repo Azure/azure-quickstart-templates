@@ -556,27 +556,27 @@ sh np\_acrimage.sh &lt;username&gt; &lt;password1&gt;
 
 1. Move to the Jenkins Dashboard and Click on **Credentials** from left side menu.
 
-![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/48.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/52.png)
 
 2. Click on **ossAcr/******(acrReglogin)**
 
-![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/49.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/48.png)
 
 3. Click on Update from left side menu
 
-![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/50.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/49.png)
 
 4. Change the Username and Password which got from Azure Container Registry Services of Azure portal and save the changes.
 
-![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/51.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/50.png)
 
-![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/52.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/51.png)
 
   ## Run VMSS Job:
 
 1. Move to the Jenkins Dashboard and click on VMSS Job.
 
-![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/48.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/52.png)
 
 2. Click on **Build Now**. Then, to view the Console output, click on **Build number** (Eg: **#1** ) as shown below.
 
