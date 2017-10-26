@@ -7,6 +7,10 @@ $serviceAccountUser = $Args[2]
 $serviceAccountPass = $Args[3]
 $dbPass = $Args[4]
 $qlikSenseVersion = $($Args[5])
+$qlikSenseSerial = $($Args[6])
+$qlikSenseControl = $($Args[7])
+$qlikSenseOrganization = $($Args[8])
+$qlikSenseName = $($Args[9])
 $serviceAccountWithDomain = -join ($($env:ComputerName), '\',$($Args[2]))
 
 # qlik sense download urls
@@ -71,7 +75,7 @@ $path = 'c:\installation'
 $url = $selVer.url
 $fileName = $url.Substring($url.LastIndexOf("/") + 1)
 $dlLoc = join-path $path $fileName
-if ($selVer.name -like "*June 2017 Patch*") {
+if ($selVer.name -like "*Patch*") {
     (New-Object System.Net.WebClient).DownloadFile($url, $dlLoc)
     $url2 = $selVer.url2
     $fileName = $url2.Substring($url2.LastIndexOf("/") + 1)
@@ -135,3 +139,19 @@ If (Test-Path "c:\installation\Qlik_Sense_update.exe")
 		Get-Service Qlik* | where {$_.Name -eq 'QlikSenseServiceDispatcher'} | Stop-Service
 		Get-Service Qlik* | where {$_.Name -eq 'QlikSenseServiceDispatcher'} | Start-Service
 	}
+
+If (! ( $qlikSenseSerial -eq "defaultValue" ) -or $qlikSenseSerial -eq "") {
+$statusCode = 0
+    while ($StatusCode -ne 200) 
+    {
+        write-log "StatusCode is $StatusCode" -Severity "Warn"
+        try { $statusCode = (invoke-webrequest  https://$($env:COMPUTERNAME)/qps/user -usebasicParsing).statusCode }
+        Catch 
+            { 
+                Write-Log "Server down, waiting for 20 seconds" -Severity "Warn"
+                start-Sleep -s 20
+            }
+    }
+    $connectResult = Connect-Qlik $env:COMPUTERNAME -UseDefaultCredentials
+    $licenseResult = Set-QlikLicense -serial $qlikSenseSerial -control $qlikSenseControl -name "$($qlikSenseName)" -organization "$($qlikSenseOrganization)"
+}
