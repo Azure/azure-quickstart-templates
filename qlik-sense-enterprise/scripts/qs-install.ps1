@@ -8,10 +8,6 @@ $serviceAccountPass = $Args[3]
 $dbPass = $Args[4]
 $qlikSenseVersion = $($Args[5])
 $serviceAccountWithDomain = -join ($($env:ComputerName), '\',$($Args[2]))
-$qlikSenseSerial = $Args[6]
-$qlikSenseControl = $Args[7]
-$qlikSenseOrganization = $($Args[8])
-$qlikSenseName = $($Args[9])
 $qsDownloads = 'https://raw.githubusercontent.com/clintcarr/QlikSenseBinaryDownloads/master/qsBinaryDownload.json'
 
 # create qlik sense service account
@@ -108,18 +104,3 @@ If (Test-Path "c:\installation\Qlik_Sense_update.exe")
 		Get-Service Qlik* | where {$_.Name -eq 'QlikSenseServiceDispatcher'} | Stop-Service
 		Get-Service Qlik* | where {$_.Name -eq 'QlikSenseServiceDispatcher'} | Start-Service
 	}
-
-If (-not $qlikSenseSerial -eq "") {
-$statusCode = 0
-    while ($StatusCode -ne 200) 
-    {
-        write-host "StatusCode is " $StatusCode
-        try { $statusCode = (invoke-webrequest  https://$($env:COMPUTERNAME)/qps/user -usebasicParsing).statusCode }
-        Catch 
-            { 
-                start-Sleep -s 20
-            }
-    }
-    Connect-Qlik $env:COMPUTERNAME -UseDefaultCredentials | Add-Content c:\installation\connectQlik.txt
-    Set-QlikLicense -serial $qlikSenseSerial -control $qlikSenseControl -name "$($qlikSenseName)" -organization "$($qlikSenseOrganization)" | Add-Content c:\installation\connectQlik.txt
-}
