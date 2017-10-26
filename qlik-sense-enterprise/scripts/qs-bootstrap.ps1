@@ -3,7 +3,7 @@
 #
 $adminUser = $Args[0]
 $adminPassword = $Args[1]
-$scriptUrl = $($Args[10])
+$scriptUrl = $($Args[6])
 $script = $($scriptUrl)+'/scripts/qs-install.ps1'
 $password =  ConvertTo-SecureString $($adminPassword) -AsPlainText -Force
 $credential = New-Object System.Management.Automation.PSCredential -ArgumentList $env:computername\$adminUser, $password
