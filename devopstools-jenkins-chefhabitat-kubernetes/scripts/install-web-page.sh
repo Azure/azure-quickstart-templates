@@ -6,7 +6,7 @@ Command
 Arguments
   --location|-l            [Required] : The web page location
   --url|-u                 [Required] : Domain URL
-  --artifacts_location|-al            : Url used to reference other /scripts/artifacts.
+  --artifacts_location|-al            : Url used to reference other scripts/artifacts.
   --sas_token|-st                     : A sas token needed if the artifacts location is private.
 EOF
 }
