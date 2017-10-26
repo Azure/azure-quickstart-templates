@@ -52,7 +52,9 @@ New-Item -ItemType directory -Path C:\Qlik
 New-SmbShare -Name Qlik -Path C:\Qlik -FullAccess everyone
 
 #download installation files
+Write-Log -Message "Installing NuGet package provider"
 Get-PackageProvider -Name NuGet -ForceBootstrap
+Write-Log -Message "Installing Qlik-CLI module"
 Install-Module -Name Qlik-CLI -Confirm:$false -Force
 
 # download selected Qlik Sense binary and any updates
