@@ -552,6 +552,26 @@ sh np\_acrimage.sh &lt;username&gt; &lt;password1&gt;
 
 ![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/47.png)
 
+## Change the Azure container registry Username and Password
+
+1. Move to the Jenkins Dashboard and Click on **Credentials** from left side menu.
+
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/48.PNG)
+
+2. Click on **ossAcr/******(acrReglogin)**
+
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/49.PNG)
+
+3. Click on Update from left side menu
+
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/50.PNG)
+
+4. Change the Username and Password which got from Azure Container Registry Services of Azure portal and save the changes.
+
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/51.PNG)
+
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/52.PNG)
+
   ## Run VMSS Job:
 
 1. Move to the Jenkins Dashboard and click on VMSS Job.
@@ -560,17 +580,17 @@ sh np\_acrimage.sh &lt;username&gt; &lt;password1&gt;
 
 2. Click on **Build Now**. Then, to view the Console output, click on **Build number** (Eg: **#1** ) as shown below.
 
-![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/49.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/53.png)
 
 3. Click on **Console Output.**
 
-![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/50.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/54.png)
 
 4. The console output log will be shown as below. If the build is successful, the output will reflect as &quot;Success&quot;.
 
-![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/51.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/55.png)
 
-![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/52.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/56.png)
 
 
 
@@ -589,14 +609,14 @@ sh np\_acrimage.sh &lt;username&gt; &lt;password1&gt;
 
 **Kubectl get pods**
 
-![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/53.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/57.png)
 
 
 **5.** Verify kubernetes service using below command
 
 **Kubectl get svc**
 
-![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/54.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/58.png)
 
 ## Access National Park Applications
 
@@ -604,7 +624,7 @@ sh np\_acrimage.sh &lt;username&gt; &lt;password1&gt;
 
 http://&lt;external-ip&gt;:8080/national-parks
 
-![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/55.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/59.png)
 
 ## Verifying Application Logs:
 
@@ -612,10 +632,10 @@ http://&lt;external-ip&gt;:8080/national-parks
 
   **Kubectl get pods**
 
-  ![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/56.png)
+  ![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/60.png)
 
 2. Get Logs of each pod by using below command. Replace podname with exact pod name one at a time.
 
 **Kubectl logs &lt;podname&gt;**
 
-![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/57.png)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/61.png)
