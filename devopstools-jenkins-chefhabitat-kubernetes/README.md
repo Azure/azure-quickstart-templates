@@ -556,21 +556,21 @@ sh np\_acrimage.sh &lt;username&gt; &lt;password1&gt;
 
 1. Move to the Jenkins Dashboard and Click on **Credentials** from left side menu.
 
-![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/48.PNG)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/48.png)
 
 2. Click on **ossAcr/******(acrReglogin)**
 
-![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/49.PNG)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/49.png)
 
 3. Click on Update from left side menu
 
-![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/50.PNG)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/50.png)
 
 4. Change the Username and Password which got from Azure Container Registry Services of Azure portal and save the changes.
 
-![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/51.PNG)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/51.png)
 
-![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/52.PNG)
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/52.png)
 
   ## Run VMSS Job:
 
