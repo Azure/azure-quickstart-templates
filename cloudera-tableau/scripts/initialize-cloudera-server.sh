@@ -8,7 +8,6 @@ log() {
 
 #fail on any error
 set -e
-
 ClusterName=$1
 key=$2
 mip=$3
@@ -28,6 +27,30 @@ JOBROLE=${14}
 JOBFUNCTION=${15}
 COMPANY=${16}
 VMSIZE=${17}
+###debug##
+
+echo $ClusterName >> /tmp/inpvar
+echo $key=$2 >> /tmp/inpvar
+echo $mip=$3 >> /tmp/inpvar
+echo $worker_ip=$4 >> /tmp/inpvar
+echo $HA=$5 >> /tmp/inpvar
+echo $User=$6 >> /tmp/inpvar
+echo $Password=$7 >> /tmp/inpvar
+
+echo $cmUser=$8 >> /tmp/inpvar
+echo $cmPassword=$9 >> /tmp/inpvar
+
+echo $EMAILADDRESS=${10} >> /tmp/inpvar
+echo $BUSINESSPHONE=${11} >> /tmp/inpvar
+echo $FIRSTNAME=${12} >> /tmp/inpvar
+echo $LASTNAME=${13} >> /tmp/inpvar
+echo $JOBROLE=${14} >> /tmp/inpvar
+echo $JOBFUNCTION=${15} >> /tmp/inpvar
+echo $COMPANY=${16} >> /tmp/inpvar
+echo $VMSIZE=${17} >> /tmp/inpvar
+
+
+###############3end debug###############
 
 log "BEGIN: master node deployments"
 
