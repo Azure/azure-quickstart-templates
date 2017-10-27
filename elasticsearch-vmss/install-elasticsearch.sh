@@ -156,7 +156,7 @@ configure_es()
 	echo 'discovery.zen.ping.unicast.hosts: ["10.0.0.10", "10.0.0.11", "10.0.0.12"]' >> /etc/elasticsearch/elasticsearch.yml
 	echo "network.host: _site_" >> /etc/elasticsearch/elasticsearch.yml
 	echo "bootstrap.memory_lock: true" >> /etc/elasticsearch/elasticsearch.yml
-    echo "xpack.security.enabled: false" >> /etc/elasticsearch/elasticsearch.yml
+        echo "xpack.security.enabled: false" >> /etc/elasticsearch/elasticsearch.yml
 
 	if [ ${IS_DATA_NODE} -eq 1 ]; then
 	    echo "node.master: false" >> /etc/elasticsearch/elasticsearch.yml
@@ -176,7 +176,14 @@ configure_system()
     echo "JAVA_HOME=$JAVA_HOME" >> /etc/default/elasticsearch
     echo 'MAX_OPEN_FILES=65536' >> /etc/default/elasticsearch
     echo 'MAX_LOCKED_MEMORY=unlimited' >> /etc/default/elasticsearch
-    sed -i 's|#LimitMEMLOCK=infinity|LimitMEMLOCK=infinity|' /usr/lib/systemd/system/elasticsearch.service
+   
+    #https://www.elastic.co/guide/en/elasticsearch/reference/current/setting-system-settings.html#systemd
+    mkdir -p /etc/systemd/system/elasticsearch.service.d
+    touch /etc/systemd/system/elasticsearch.service.d/override.conf
+    echo '[Service]' >> /etc/systemd/system/elasticsearch.service.d/override.conf
+    echo 'LimitMEMLOCK=infinity' >> /etc/systemd/system/elasticsearch.service.d/override.conf
+    sudo systemctl daemon-reload
+   
     chown -R elasticsearch:elasticsearch /usr/share/elasticsearch
     
     if [ ${IS_DATA_NODE} -eq 0 ]; 
