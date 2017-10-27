@@ -1,0 +1,119 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "dnsNamePrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Sets the Domain name prefix for the cluster.  The concatenation of the domain name and the regionalized DNS zone make up the fully qualified domain name associated with the public IP address."
+      }
+    },
+    "agentCount": {
+      "type": "int",
+      "defaultValue": 3,
+      "metadata": {
+        "description": "The number of agents for the cluster.  This value can be from 1 to 100 (note, for Kubernetes clusters you will also get 1 or 2 public agents in addition to these seleted masters)"
+      },
+      "minValue":1,
+      "maxValue":100
+    },
+    "agentVMSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2_v2",
+      "metadata": {
+        "description": "The size of the Virtual Machine."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "defaultValue": "azureuser",
+      "metadata": {
+        "description": "User name for the Linux Virtual Machines."
+      }
+    },
+    "masterCount": {
+      "type": "int",
+      "defaultValue": 1,
+      "allowedValues": [
+        1
+      ],
+      "metadata": {
+        "description": "The number of Kubernetes masters for the cluster."
+      }
+    },
+    "sshRSAPublicKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Configure all linux machines with the SSH RSA public key string.  Your key should include three parts, for example 'ssh-rsa AAAAB...snip...UcyupgH azureuser@linuxvm'"
+      }
+    },
+    "servicePrincipalClientId": {
+      "metadata": {
+        "description": "Client ID (used by cloudprovider)"
+      },
+      "type": "securestring"
+    },
+    "servicePrincipalClientSecret": {
+      "metadata": {
+        "description": "The Service Principal Client Secret."
+      },
+      "type": "securestring"
+    }
+  },
+  "variables": {
+    "agentsEndpointDNSNamePrefix":"[concat(parameters('dnsNamePrefix'),'agents')]",
+    "mastersEndpointDNSNamePrefix":"[concat(parameters('dnsNamePrefix'),'mgmt')]",
+    "servicePrincipalFields": {
+        "ClientId": "[parameters('servicePrincipalClientId')]",
+        "Secret": "[parameters('servicePrincipalClientSecret')]"
+    }
+  },
+  "resources": [
+    {
+      "apiVersion": "2017-08-31",
+      "type": "Microsoft.ContainerService/managedClusters",
+      "location": "[resourceGroup().location]",
+      "name":"[concat('Cluster-',resourceGroup().name)]",
+      "properties": {
+        "DNSPrefix": "[variables('mastersEndpointDNSNamePrefix')]",
+        "orchestratorProfile": {
+          "orchestratorType": "Kubernetes"
+        },
+        "masterProfile": {
+          "count": "[parameters('masterCount')]",
+          "vmSize": "[parameters('agentVMSize')]",
+          "dnsPrefix": "[variables('mastersEndpointDNSNamePrefix')]"
+        },
+        "agentPoolProfiles": [
+          {
+            "name": "agentpools",
+            "count": "[parameters('agentCount')]",
+            "vmSize": "[parameters('agentVMSize')]",
+            "dnsPrefix": "[variables('agentsEndpointDNSNamePrefix')]"
+          }
+        ],
+        "linuxProfile": {
+          "adminUsername": "[parameters('adminUsername')]",
+          "ssh": {
+            "publicKeys": [
+              {
+                "keyData": "[parameters('sshRSAPublicKey')]"
+              }
+            ]
+          }
+        },
+        "servicePrincipalProfile": "[variables('servicePrincipalFields')]"
+      }
+    }
+  ],
+  "outputs": {
+    "masterFQDN": {
+      "type": "string",
+      "value": "[reference(concat('Microsoft.ContainerService/managedClusters/', 'Cluster-', resourceGroup().name)).fqdn]"
+    },
+    "sshMaster0": {
+      "type": "string",
+      "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(concat('Microsoft.ContainerService/managedClusters/', 'Cluster-', resourceGroup().name)).fqdn, ' -A -p 22')]"
+    }
+  }
+}
