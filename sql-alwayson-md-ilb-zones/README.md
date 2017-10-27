@@ -2,6 +2,10 @@
 
 This template will create a SQL Server 2016 AlwaysOn Availability Group using the PowerShell DSC Extension in an existing Azure Virtual Network and Active Directory environment. The SQL Server VMs will be provisioned across multiple Azure Availability Zones and requests will be directed to the Listener using an Internal Load Balancer (ILB).
 
+## Prerequisite Requirements
+
+Successful deployment of this template requires that an Azure Virtual Network and Windows Server Active Directory deployment across Availability Zones has already been performed.  If you do not have these prerequisites already deployed, you can leveraging <a href="https://azure.microsoft.com/en-us/resources/templates/active-directory-new-domain-ha-2-dc-zones/" target="_blank">this Quick Start template</a> as a sample for deploying them.
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsql-alwayson-md-ilb-zones%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
