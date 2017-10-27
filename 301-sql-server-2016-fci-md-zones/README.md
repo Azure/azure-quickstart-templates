@@ -1,4 +1,4 @@
-# Create a SQL Server 2016 Failover Cluster using Windows Server 2016 Storage Spaces Direct (S2D) and distribute nodes across Multiple Availability Zones
+# Create a SQL Server 2016 Failover Cluster in an existing Azure VNET and Active Directory domain using Windows Server 2016 Storage Spaces Direct (S2D) and distribute nodes across Multiple Availability Zones
 This template will create a SQL 2016 Failover Cluster using Windows Server 2016 Storage Spaces Direct (S2D) in an existing VNET and Active Directory environment and distribute the SQL Nodes across multiple Availability Zones within an Azure Region.
 
 This template creates the following resources by default:
