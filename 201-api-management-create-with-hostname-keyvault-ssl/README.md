@@ -11,3 +11,5 @@ This template shows an example of how to deploy an Azure API Management service 
 * This template creates API Management service having an MSI Identity in Developer tier 
 * Retrieves the MSI Identity of the API Management service and gives it GET permissions on the KeyVault Secrets.
 * It then executes a second template on API Management to configure hostnames with Certificate references from KeyVault.
+
+The Template expects the keyVaultSecretsIdToCertificate as https://constosovault.vault.azure.net/secrets/msitestingCert
