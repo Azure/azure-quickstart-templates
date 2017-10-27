@@ -13,7 +13,9 @@ This template allows you to deploy an Ubuntu Server VM
 and starts a Neo4J instance listening on ports 7687(bolt), 7474 (non-ssl), 7473 (ssl).
 
 After the virtual machine is deployed you can access Neo4J by browsing to http://{hostname}:7474/
+
 Default username: neo4j
+
 Default password: neo4j
 
 Below are the parameters that the template expects:
