@@ -56,9 +56,7 @@ New-Item -ItemType directory -Path C:\Qlik
 New-SmbShare -Name Qlik -Path C:\Qlik -FullAccess everyone
 
 #download installation files
-Write-Log -Message "Installing NuGet package provider"
 Get-PackageProvider -Name NuGet -ForceBootstrap
-Write-Log -Message "Installing Qlik-CLI module"
 Install-Module -Name Qlik-CLI -Confirm:$false -Force
 
 # download selected Qlik Sense binary and any updates
@@ -122,7 +120,6 @@ If (Test-Path "C:\installation\Qlik_Sense_setup.exe")
 $statusCode = 0
 while ($StatusCode -ne 200) 
 	{
-		write-host "StatusCode is " $StatusCode
 		try { $statusCode = (invoke-webrequest  https://$($env:COMPUTERNAME)/qps/user -usebasicParsing).statusCode }
 		Catch 
 			{ 
@@ -144,11 +141,9 @@ If (! ( $qlikSenseSerial -eq "defaultValue" ) -or $qlikSenseSerial -eq "") {
 $statusCode = 0
     while ($StatusCode -ne 200) 
     {
-        write-log "StatusCode is $StatusCode" -Severity "Warn"
         try { $statusCode = (invoke-webrequest  https://$($env:COMPUTERNAME)/qps/user -usebasicParsing).statusCode }
         Catch 
             { 
-                Write-Log "Server down, waiting for 20 seconds" -Severity "Warn"
                 start-Sleep -s 20
             }
     }
