@@ -599,7 +599,7 @@ sh np\_acrimage.sh &lt;username&gt; &lt;password1&gt;
 **1.** Get the DNS of Jenkins server and Kubernetes master Instances from Azure portal
 **2.** Login to Jenkins using private key and execute below command to connect to Kubernetes master instance.
 
-**ssh -i /var/lib/jenkins/.ssh/id\_rsa adminuser@&lt;** **Kubernetes master Instance dns name** **&gt;**
+**ssh -i /var/lib/jenkins/.ssh/id\_rsa &lt;username&gt;@&lt;** **Kubernetes master Instance dns name** **&gt;**
 
 **3.** Change to the root user by using the below command:
 
@@ -639,3 +639,25 @@ http://&lt;external-ip&gt;:8080/national-parks
 **Kubectl logs &lt;podname&gt;**
 
 ![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/61.png)
+
+## Visualizing logs in Kibana Dashboard
+
+1. Use the **FQDN** of **ELKJob** output from the Jenkins to log into **Kibana DashBoard** and credentials from output section of ARM template from Azure portal.
+
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/62.PNG)
+
+2. After log into Kibana Dashboard, Click on **&quot;filebeat&quot;** from left side menu and Click on star icon.
+
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/63.PNG)
+
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/64.PNG)
+
+3. Click on **&quot;Discover&quot;** from top menu to view the logs.
+
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/65.png)
+
+4. By default last 15 min logs will be displayed, you can change it as per log search and also you can set auto refresh time as shown below.
+
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/66.PNG)
+
+![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p2/devopstools-jenkins-chefhabitat-kubernetes/images/67.PNG)
