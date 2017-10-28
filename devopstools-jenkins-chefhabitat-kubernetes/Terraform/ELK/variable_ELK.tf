@@ -70,3 +70,7 @@ variable "_artifactsLocationSasToken" {
 description = "artifacts locationsastoken"
 default = ""
 }
+variable "suffix" {
+description = "unique string for elk fqdn"
+default = ""
+}
