@@ -85,7 +85,7 @@ I spent a lot of time factoring this solution to avoid redundancy,
 although I did not fully succeed in this. For repeatable jobs I use 
 subtemplates. Creating a new VM is a nice example. 
 
-In the octobe 2017 update I greatly simplified the use
+In the October 2017 update I greatly simplified the use
 of subtemplates. Using the ARM "condition()" function it's now
 possible to make deployments optional based on input parameters. 
 Using this, it is no longer needed to use two subtemplates for every 
@@ -134,7 +134,7 @@ R2. While the standard Azure image VM image for 2008 R2
 This is almost undocumented, but the short version is that almost
  nothing worked for 2008 R2 so I had to give it up. 
 
-### Update october 2017
+### Update October 2017
 
 New features:
 * Converted VMs to use managed disks.
