@@ -14,7 +14,7 @@ echo $location
 echo "Sitename"
 echo $SITENAME
 
-mkdir /opt/shibboleth-idp/
+mkdir $INSTALLDIR
 
 #install Oracle JDK 7
 echo debconf shared/accepted-oracle-license-v1-1 select true | \
@@ -28,10 +28,10 @@ echo "==============>Installing JDK 7"
 apt-get -y install python-software-properties
 add-apt-repository -y ppa:webupd8team/java
 apt-get -y update
-apt-get -y install oracle-java7-installer
+apt-get -y -f install oracle-java7-installer
 apt-get -y install bundler
 apt-get purge oracle-java7-installer
-apt-get -f install
+
 
 #install Tomcat 7
 
@@ -44,7 +44,7 @@ export JRE_HOME=/usr/lib/jvm/java-7-oracle/jre
 export JAVA_OPTS="-XX:+AggressiveOpts -Xms256m -Xmx512m -XX:MaxPermSize=256m -XX:+DisableExplicitGC"
 
 sed -i 's/#AUTHBIND=no/AUTHBIND=yes/g' /etc/default/tomcat7
-
+apt-get -f install
 #generating the self signed SSL certificate for tomcat7
 
 echo "==============>Configuring SSL for Tomcat7"
