@@ -16,6 +16,9 @@ echo $SITENAME
 
 mkdir $INSTALLDIR
 
+#update default packages
+apt-get -y update
+
 #install Oracle JDK 7
 echo debconf shared/accepted-oracle-license-v1-1 select true | \
 sudo debconf-set-selections
@@ -28,10 +31,7 @@ echo "==============>Installing JDK 7"
 apt-get -y install python-software-properties
 add-apt-repository -y ppa:webupd8team/java
 apt-get -y update
-apt-get -y -f install oracle-java7-installer
-apt-get -y install bundler
-apt-get purge oracle-java7-installer
-
+apt-get -y install oracle-java7-installer oracle-java7-unlimited-jce-policy
 
 #install Tomcat 7
 
