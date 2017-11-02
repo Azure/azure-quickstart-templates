@@ -8,7 +8,6 @@ log() {
 
 #fail on any error
 set -e
-
 ClusterName=$1
 key=$2
 mip=$3
@@ -28,6 +27,30 @@ JOBROLE=${14}
 JOBFUNCTION=${15}
 COMPANY=${16}
 VMSIZE=${17}
+###debug##
+
+echo $ClusterName >> /tmp/inpvar
+echo $key=$2 >> /tmp/inpvar
+echo $mip=$3 >> /tmp/inpvar
+echo $worker_ip=$4 >> /tmp/inpvar
+echo $HA=$5 >> /tmp/inpvar
+echo $User=$6 >> /tmp/inpvar
+echo $Password=$7 >> /tmp/inpvar
+
+echo $cmUser=$8 >> /tmp/inpvar
+echo $cmPassword=$9 >> /tmp/inpvar
+
+echo $EMAILADDRESS=${10} >> /tmp/inpvar
+echo $BUSINESSPHONE=${11} >> /tmp/inpvar
+echo $FIRSTNAME=${12} >> /tmp/inpvar
+echo $LASTNAME=${13} >> /tmp/inpvar
+echo $JOBROLE=${14} >> /tmp/inpvar
+echo $JOBFUNCTION=${15} >> /tmp/inpvar
+echo $COMPANY=${16} >> /tmp/inpvar
+echo $VMSIZE=${17} >> /tmp/inpvar
+
+
+###############3end debug###############
 
 log "BEGIN: master node deployments"
 
@@ -62,6 +85,10 @@ log "Done disabling selinux"
 set +e
 
 log "Set cloudera-manager.repo to CM v5"
+#curl -o azureclient.rpm https://rhui-1.microsoft.com/pulp/repos/microsoft-azure-rhel6/rhui-azure-rhel6-2.1-32.noarch.rpm
+#rpm -U azureclient.rpm
+#yum clean all
+#yum -t -v makecache
 yum clean all >> /tmp/initialize-cloudera-server.log
 rpm --import http://archive.cloudera.com/cdh5/redhat/6/x86_64/cdh/RPM-GPG-KEY-cloudera >> /tmp/initialize-cloudera-server.log
 wget http://archive.cloudera.com/cm5/redhat/6/x86_64/cm/cloudera-manager.repo -O /etc/yum.repos.d/cloudera-manager.repo >> /tmp/initialize-cloudera-server.log
