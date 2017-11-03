@@ -12,4 +12,11 @@ This template shows an example of how to deploy an Azure API Management service 
 * Retrieves the MSI Identity of the API Management service and gives it GET permissions on the KeyVault Secrets.
 * It then executes a second template on API Management to configure hostnames with Certificate references from KeyVault.
 
+<P>
+In order to deploy this template, you need to have the following resources: <br />
+1. A Key Vault (specified in 'keyVaultName' parameter) <br />
+2. A Key Vault secret having the Certificate(specified in 'keyVaultSecretsIdToCertificate' parameter) <br />
+3. The Certificate need to be issued for the Domain you want to configure (specified in 'proxyCustomHostname' parameter) <br />
+</P>
+
 The Template expects the keyVaultSecretsIdToCertificate as https://constosovault.vault.azure.net/secrets/msitestingCert
