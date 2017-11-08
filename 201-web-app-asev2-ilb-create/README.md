@@ -7,4 +7,4 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-For more details on App Service Environments, see the [Introduction to App Service Environments](https://docs.microsoft.com/en-us/azure/app-service/app-service-environment/intro).
+For more details on App Service Environments, see the [Introduction to App Service Environments](http://docs.microsoft.com/azure/app-service/app-service-environment/intro).  For more details on creating an App Service Environment using a Resource Manager template, see the [Create an ASE by using an Azure Resource Manager template](http://docs.microsoft.com/azure/app-service/environment/create-from-template)
