@@ -77,8 +77,7 @@ Initially I created the root domain on DC1. Then, I promoted DC2 (root)
 and DC3 (child) at the same time. After much testing I discovered that this
 would _sometimes_ go wrong because DC3 would take DC2 as a DNS source
 when it was not ready. So I reordered the dependencies to first promote
- DC1 (root), then DC3 (child), and only then add secondary DCs to both domains.
-These subtle things matter. 
+ DC1 (root), then DC3 (child), and only then add secondary DCs to both domains. 
 
 #### Subtemplates
 I spent a lot of time factoring this solution to avoid redundancy, 
