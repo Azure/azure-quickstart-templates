@@ -1,0 +1,186 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "containergroupname": {
+      "type": "string",
+      "metadata": {
+        "description": "Name for the container group"
+      },
+      "defaultValue": "acilinuxcontainergroup"
+    },
+    "containername1": {
+      "type": "string",
+      "metadata": {
+        "description": "Name for the container 1"
+      },
+      "defaultValue": "acilinuxcontainer1"
+    },
+    "containername2": {
+      "type": "string",
+      "metadata": {
+        "description": "Name for the container 2"
+      },
+      "defaultValue": "acilinuxcontainer2"
+    },
+    "volumename1": {
+      "type": "string",
+      "metadata": {
+        "description": "Name for the volume 1"
+      },
+      "defaultValue": "sharedvolume"
+    },
+    "volumename2": {
+      "type": "string",
+      "metadata": {
+        "description": "Name for the volume 2"
+      },
+      "defaultValue": "azurefile"
+    },
+    "image": {
+      "type": "string",
+      "metadata": {
+        "description": "Container image to deploy. Should be of the form accountName/imagename[:tag] for images stored in Docker Hub or a fully qualified URI for a private registry like the Azure Container Registry."
+      },
+      "defaultValue": "centos:latest"
+    },
+    "port": {
+      "type": "string",
+      "metadata": {
+        "description": "Port to open on the container and the public IP address."
+      },
+      "defaultValue": "80"
+    },
+    "cpuCores": {
+      "type": "string",
+      "metadata": {
+        "description": "The number of CPU cores to allocate to the container."
+      },
+      "defaultValue": "1.0"
+    },
+    "memoryInGb": {
+      "type": "string",
+      "metadata": {
+        "description": "The amount of memory to allocate to the container in gigabytes."
+      },
+      "defaultValue": "1.5"
+    },
+    "shareName": {
+      "type": "string",
+      "metadata": {
+        "description": "The Azure file share name."
+      }
+    },
+    "shareStorageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "The Azure storage account name for the share."
+      }
+    },
+    "shareResourceGroup": {
+      "type": "string",
+      "metadata": {
+        "description": "The resource group of the storage account containing the Azure file share."
+      }
+    }
+  },
+  "variables": {
+    "accountid": "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',parameters('shareResourceGroup'),'/providers/','Microsoft.Storage/storageAccounts/', parameters('shareStorageAccountName'))]"
+  },
+  "resources": [
+    {
+      "name": "[parameters('containergroupname')]",
+      "type": "Microsoft.ContainerInstance/containerGroups",
+      "apiVersion": "2017-10-01-preview",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "containers": [
+          {
+            "name": "[parameters('containername1')]",
+            "properties": {
+              "command": [],
+              "image": "nginx",
+              "ports": [
+                {
+                  "port": "[parameters('port')]"
+                }
+              ],
+              "resources": {
+                "requests": {
+                  "cpu": "[parameters('cpuCores')]",
+                  "memoryInGb": "[parameters('memoryInGb')]"
+                }
+              },
+              "volumeMounts": [
+                {
+                  "name": "[parameters('volumename1')]",
+                  "mountPath": "/var/log/nginx",
+                  "readOnly": false
+                }
+              ]
+            }
+          },
+          {
+            "name": "[parameters('containername2')]",
+            "properties": {
+              "command": [
+                "bin/bash",
+                "-c",
+                "while sleep 5; do cat /mnt/input/access.log > /mnt/azurefile/test.txt; done"
+              ],
+              "image": "[parameters('image')]",
+              "resources": {
+                "requests": {
+                  "cpu": "[parameters('cpuCores')]",
+                  "memoryInGb": "[parameters('memoryInGb')]"
+                }
+              },
+              "volumeMounts": [
+                {
+                  "name": "[parameters('volumename1')]",
+                  "mountPath": "/mnt/input",
+                  "readOnly": true
+                },
+                {
+                  "name": "[parameters('volumename2')]",
+                  "mountPath": "/mnt/azurefile",
+                  "readOnly": false
+                }
+              ]
+            }
+          }
+        ],
+        "osType": "Linux",
+        "ipAddress": {
+          "type": "Public",
+          "ports": [
+            {
+              "protocol": "tcp",
+              "port": "[parameters('port')]"
+            }
+          ]
+        },
+        "volumes": [
+          {
+            "name": "[parameters('volumename1')]",
+            "emptyDir": {}
+          },
+          {
+            "name": "[parameters('volumename2')]",
+            "azureFile": {
+              "shareName": "[parameters('shareName')]",
+              "storageAccountName": "[parameters('shareStorageAccountName')]",
+              "storageAccountKey": "[listKeys(variables('accountid'),'2015-05-01-preview').key1]"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "outputs": {
+    "containerIPv4Address": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups/', parameters('containergroupname'))).ipAddress.ip]"
+    }
+  }
+}
