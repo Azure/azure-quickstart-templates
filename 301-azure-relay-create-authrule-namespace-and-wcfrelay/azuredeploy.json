@@ -14,16 +14,26 @@
         "description": "Name of the Namespace AuthorizationRule"
       }
     },
-    "hybridConnectionName": {
+    "wcfrelayName": {
       "type": "string",
       "metadata": {
-        "description": "Name of the HybridConnection"
+        "description": "Name of the WcfRelay"
       }
     },
-    "hybridConnectionAuthorizationRuleName": {
+	"wcfRelayType": {
+      "type": "string",
+      "allowedValues": [
+        "NetTcp",
+        "Http"
+      ],
+      "metadata": {
+        "description": "WCF Relay Type. It could be any of the types: NetTcp/Http"
+      }
+    },
+    "wcfrelayAuthorizationRuleName": {
       "type": "string",
       "metadata": {
-        "description": "Name of the HybridConnection AuthorizationRule"
+        "description": "Name of the WcfRelay AuthorizationRule"
       }
     }
   },
@@ -32,7 +42,7 @@
     "apiVersion": "2017-04-01",
     "namespaceAuthRuleName": "[concat(parameters('namespaceName'), concat('/', parameters('namespaceAuthorizationRuleName')))]",
     "nsAuthorizationRuleResourceId": "[resourceId('Microsoft.Relay/namespaces/authorizationRules', parameters('namespaceName'), parameters('namespaceAuthorizationRuleName'))]",
-    "hcAuthorizationRuleResourceId": "[resourceId('Microsoft.Relay/namespaces/HybridConnections/authorizationRules', parameters('namespaceName'), parameters('hybridConnectionName'), parameters('hybridConnectionAuthorizationRuleName'))]"
+    "hcAuthorizationRuleResourceId": "[resourceId('Microsoft.Relay/namespaces/WcfRelays/authorizationRules', parameters('namespaceName'), parameters('wcfrelayName'), parameters('wcfrelayAuthorizationRuleName'))]"
   },
   "resources": [
     {
@@ -40,26 +50,31 @@
       "name": "[parameters('namespaceName')]",
       "type": "Microsoft.Relay/Namespaces",
       "location": "[variables('location')]",
-      "kind": "Relay",
+      "sku": {
+        "name": "Standard"
+      },
+      "properties": { },
       "resources": [
         {
           "apiVersion": "[variables('apiVersion')]",
-          "name": "[parameters('hybridConnectionName')]",
-          "type": "HybridConnections",
+          "name": "[parameters('wcfrelayName')]",
+          "type": "WcfRelays",
           "dependsOn": [
             "[concat('Microsoft.Relay/namespaces/', parameters('namespaceName'))]"
           ],
           "properties": {
-            "requiresClientAuthorization": "true",
-            "userMetadata": "Meta Data supplied by user hybridConnections"
+            "relayType": "[parameters('wcfRelayType')]",
+            "requiresClientAuthorization": "false",
+            "requiresTransportSecurity": "false",
+            "userMetadata": "Meta Data supplied by user for wcfRelays"
           },
           "resources": [
             {
               "apiVersion": "[variables('apiVersion')]",
-              "name": "[parameters('hybridConnectionAuthorizationRuleName')]",
+              "name": "[parameters('wcfrelayAuthorizationRuleName')]",
               "type": "authorizationRules",
               "dependsOn": [
-                "[parameters('hybridConnectionName')]"
+                "[parameters('wcfrelayName')]"
               ],
               "properties": {
                 "Rights": [
@@ -75,15 +90,14 @@
           "type": "Microsoft.Relay/namespaces/authorizationRules",
           "dependsOn": [
             "[concat('Microsoft.Relay/namespaces/', parameters('namespaceName'))]"
-          ]
+          ],
           "properties": {
             "Rights": [
               "Send"
             ]
           }
         }
-      ],
-      "properties": { }
+      ]
     }
   ],
   "outputs": {
