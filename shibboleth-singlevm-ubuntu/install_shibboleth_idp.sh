@@ -23,7 +23,7 @@ export JAVA_HOME=/usr/lib/jvm/java-8-oracle/jre
 echo JAVA_HOME='"'$JAVA_HOME'"' >> /etc/environment
 source /etc/environment
 
-apt-get -y install tomcat8
+apt-get -y install tomcat8  tomcat8-admin
 echo "==============>Configuring SSL for Tomcat8"
 SSLKEYPASSWORD=$(openssl rand -base64 12)
 service tomcat8 restart
