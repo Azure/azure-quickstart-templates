@@ -38,10 +38,7 @@ service tomcat8 restart
 echo export JAVA_HOME=/usr/lib/jvm/java-8-oracle/ >> /etc/profile
 echo export CATALINA_HOME=/var/lib/tomcat8 >> /etc/profile
 source /etc/profile
-sed -i 's,</tomcat-users>,  <role rolename="manager-gui"/>\n  <user username="admin" password="secret" roles="manager-gui"/>  \n</tomcat-users>,g'   $CATALINA_HOME/conf/tomcat-users.xml
-
-echo '<role rolename="manager-gui">' >> $CATALINA_HOME/conf/tomcat-users.xml
-echo '<user username="admin" password="secret" roles="manager-gui"/>' >> $CATALINA_HOME/conf/tomcat-users.xml
+sed -i 's,</tomcat-users>,  <role rolename="manager-gui"/>\n  <user username="admin" password="secret" roles="manager-gui"/>  \n</tomcat-users>,g'   /var/lib/tomcat8/conf/tomcat-users.xml
 
 #Change 128m to 512m
 sed -i 's/128m/512m/g'  /etc/default/tomcat8
