@@ -56,8 +56,6 @@
   },
   "variables": {
     "subnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('subnet').vnet), '/subnets/', parameters('subnet').name)]",
-    "apiVersion": "2015-06-15",
-    "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'standardsa')]",
     "securityGroupName": "[concat(parameters('namespace'), parameters('vmbasename'), 'nsg')]"
   },
   "resources": [
@@ -141,7 +139,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm')]",
       "location": "[parameters('location')]",
@@ -159,56 +157,22 @@
         },
         "storageProfile": {
           "imageReference": "[parameters('osSettings').imageReference]",
-          "dataDisks": [
-            {
-              "name": "datadisk1",
-              "diskSizeGB": "[parameters('sizeOfDataDiskInGB')]",
-              "lun": 0,
-              "vhd": {
-                "uri": "[concat('http://', variables('storageAccountName'),'.blob.core.windows.net/vhds/', 'datadisk1.vhd')]"
-              },
-              "createOption": "Empty",
-              "caching": "ReadWrite"
-            },
-            {
-              "name": "datadisk2",
-              "diskSizeGB": "[parameters('sizeOfDataDiskInGB')]",
-              "lun": 1,
-              "vhd": {
-                "uri": "[concat('http://', variables('storageAccountName'),'.blob.core.windows.net/vhds/', 'datadisk2.vhd')]"
-              },
-              "caching": "ReadWrite",
-              "createOption": "Empty"
-            },
-            {
-              "name": "datadisk3",
-              "diskSizeGB": "[parameters('sizeOfDataDiskInGB')]",
-              "lun": 2,
-              "vhd": {
-                "uri": "[concat('http://', variables('storageAccountName'),'.blob.core.windows.net/vhds/', 'datadisk3.vhd')]"
-              },
-              "caching": "ReadWrite",
-              "createOption": "Empty"
-            },
-            {
-              "name": "datadisk4",
-              "diskSizeGB": "[parameters('sizeOfDataDiskInGB')]",
-              "lun": 3,
-              "vhd": {
-                "uri": "[concat('http://', variables('storageAccountName'),'.blob.core.windows.net/vhds/', 'datadisk4.vhd')]"
-              },
-              "caching": "ReadWrite",
-              "createOption": "Empty"
-            }
-          ],
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat('http://', variables('storageAccountName'),'.blob.core.windows.net/vhds/', parameters('vmbasename'), '-osdisk.vhd')]"
-            },
+            "name": "[concat(parameters('vmbasename'),'-osdisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
-          }
+          },
+          "copy": [
+            {
+                "name": "dataDisks",
+                "count": "[parameters('numDataDisks')]",
+                "input": {
+                    "diskSizeGB": "[parameters('sizeOfDataDiskInGB')]",
+                    "lun": "[copyIndex('dataDisks')]",
+                    "createOption": "Empty"
+                }
+            }
+          ]
         },
         "networkProfile": {
           "networkInterfaces": [
