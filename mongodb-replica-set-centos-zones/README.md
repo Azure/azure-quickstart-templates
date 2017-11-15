@@ -1,4 +1,4 @@
-# Install MongoDB Replica Set
+# Install MongoDB Replica Set across Availability Zones 
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Falbertwo1978%2Fazure-quickstart-templates%2Fmaster%2Fmongodb-replica-set-centos-zones%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
@@ -8,9 +8,7 @@
 </a>
 
 
-This template deploys a MongoDB Replica Set on CentOS and enables Zabbix monitoring, and allows user to define the number of secondary nodes. The replica set has a primary node, 2 secondary nodes by default.
-
-This template also allows you to input your existing zabbix server IP address to monitor these MongoDB nodes.
+This template deploys a MongoDB Replica Set on CentOS and allows user to define the number of secondary nodes. The replica set has a primary node, 2 secondary nodes by default.
 
 The replica set nodes are exposed on public IP addresses that you can access through SSH on the standard port, also mongodb port 27017 open.
 
