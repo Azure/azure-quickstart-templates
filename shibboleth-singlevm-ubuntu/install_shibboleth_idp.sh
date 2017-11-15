@@ -132,6 +132,11 @@ chmod 600 $INSTALLDIR/credentials/idp.key
 
 
 getent passwd tomcat8 >/dev/null && TCUSER=tomcat8 || TCUSER=tomcat
+chown $TCUSER $INSTALLDIR/credentials/idp.key
+chown $TCUSER $INSTALLDIR/credentials/sealer.*
+chown $TCUSER $INSTALLDIR/metadata
+chown $TCUSER $INSTALLDIR/logs
+chown $TCUSER $INSTALLDIR/conf/credentials.properties
 
 #allow access to public
 sed -i -e "s~'::1/128'~'::1/128', '0.0.0.0/0'~g" /opt/shibboleth-idp/conf/access-control.xml
