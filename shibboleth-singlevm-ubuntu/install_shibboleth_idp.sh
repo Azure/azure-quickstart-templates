@@ -110,7 +110,6 @@ echo "==============>Adding JSTL to Tomcat7"
 wget https://build.shibboleth.net/nexus/service/local/repositories/thirdparty/content/javax/servlet/jstl/1.2/jstl-1.2.jar
 chmod 777 jstl-1.2.jar
 chown tomcat8 jstl-1.2.jar
-cd /opt/shibboleth-idp
 
 sed -i -e 's,https://'"$SITENAME"'/idp/profile/Shibboleth/SSO,https://'"$SITENAME"':8443/idp/profile/Shibboleth/SSO,g' /opt/shibboleth-idp/metadata/idp-metadata.xml
 sed -i -e 's,https://'"$SITENAME"'/idp/profile/SAML2/POST/SSO,https://'"$SITENAME"':8443/idp/profile/SAML2/POST/SSO,g' /opt/shibboleth-idp/metadata/idp-metadata.xml
@@ -119,8 +118,9 @@ sed -i -e 's,https://'"$SITENAME"'/idp/profile/SAML2/Redirect/SSO,https://'"$SIT
 
 echo "<Context docBase=\"/opt/shibboleth-idp/war/idp.war\" privileged=\"true\" antiResourceLocking=\"false\" antijarLocking=\"false\" unpackWar=\"false\" swallowOutput=\"true\" />" > /var/lib/tomcat8/conf/Catalina/localhost/idp.xml
 
-mv credentials.properties $INSTALLDIR/conf
+mv  /usr/share/shibboleth-identity-provider-3.2.0/credentials.properties $INSTALLDIR/conf
 
+cd /opt/shibboleth-idp
 echo -e "\nCreating self-signed certificate..."
 bin/keygen.sh --lifetime 3 \
 --certfile $INSTALLDIR/credentials/idp.crt \
