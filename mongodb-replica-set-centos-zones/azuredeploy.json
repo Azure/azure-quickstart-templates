@@ -32,16 +32,6 @@
         "description": "DNS Name for the publicly accessible primary node. Must be lowercase. It should match with the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ or it will raise an error."
       }
     },
-    "environment": {
-      "type": "string",
-      "allowedValues": [
-        "AzureCloud",
-        "AzureChinaCloud"
-      ],
-      "metadata": {
-        "description": "Different environments in Azure. Choose AzureCloud for Global Azure, and choose AzureChinaCloud for Mooncake (Azure China Cloud)."
-      }
-    },
     "sizeOfDataDiskInGB": {
       "type": "int",
       "minValue": 1,
@@ -115,33 +105,25 @@
         "description": "The size of the virtual machines used when provisioning secondary node(s)"
       }
     },
-    "zabbixServerIPAddress": {
+    "_artifactsLocation": {
       "type": "string",
-      "defaultValue": "",
       "metadata": {
-        "description": "The zabbix server IP which will monitor the mongodb nodes' mongodb status. Null means no zabbix server."
-      }
+        "description": "The location of resources such as templates and DSC modules that the script is dependent"
+      },
+      "defaultValue": "https://raw.githubusercontent.com/albertwo1978/azure-quickstart-templates/master/mongodb-replica-set-centos"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Auto-generated token to access _artifactsLocation"
+      },
+      "defaultValue": ""
     }
   },
   "variables": {
-    "baseUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/mongodb-replica-set-centos/",
-    "baseChinaUrl": "http://msmirrors.blob.core.chinacloudapi.cn/mongodb/mongodb-replica-set-centos/",
-    "environmentAzureCloud": {
-      "serviceEndPoint": "core.windows.net",
-      "templateBaseUrl": "[concat(variables('baseUrl'), 'nested/')]",
-      "primaryNodeScript": "[concat(variables('baseUrl'), 'scripts/primary.sh')]",
-      "secondaryNodeScript": "[concat(variables('baseUrl'), 'scripts/secondary.sh')]"
-    },
-    "environmentAzureChinaCloud": {
-      "serviceEndPoint": "core.chinacloudapi.cn",
-      "templateBaseUrl": "[concat(variables('baseChinaUrl'), 'nested/')]",
-      "primaryNodeScript": "[concat(variables('baseChinaUrl'), 'scripts/primary.sh')]",
-      "secondaryNodeScript": "[concat(variables('baseChinaUrl'), 'scripts/secondary.sh')]"
-    },
-    "environment": "[variables(concat('environment', parameters('environment')))]",
-    "sharedTemplateUrl": "[concat(variables('environment').templateBaseUrl, 'shared-resources.json')]",
-    "primaryTemplateUrl": "[concat(variables('environment').templateBaseUrl, 'primary-resources.json')]",
-    "secondaryTemplateUrl": "[concat(variables('environment').templateBaseUrl, 'secondary-resources.json')]",
+    "sharedTemplateUrl": "[concat(parameters('_artifactsLocation'),'/nested/shared-resources.json',parameters('_artifactsLocationSasToken'))]",
+    "primaryTemplateUrl": "[concat(parameters('_artifactsLocation'),'/nested/primary-resources.json',parameters('_artifactsLocationSasToken'))]",
+    "secondaryTemplateUrl": "[concat(parameters('_artifactsLocation'),'/nested/secondary-resources.json',parameters('_artifactsLocationSasToken'))]",
     "namespace": "mongodb-",
     "virtualNetworkName": "myVNET1",
     "numDataDisks": "4",
@@ -172,7 +154,7 @@
         "version": "latest"
       },
       "scripts": [
-        "[variables('environment').primaryNodeScript]"
+        "[concat(parameters('_artifactsLocation'),'/scripts/primary.sh',parameters('_artifactsLocationSasToken'))]"
       ]
     },
     "secondaryOsSettings": {
@@ -183,7 +165,7 @@
         "version": "latest"
       },
       "scripts": [
-        "[variables('environment').secondaryNodeScript]"
+        "[concat(parameters('_artifactsLocation'),'/scripts/secondary.sh',parameters('_artifactsLocationSasToken'))]"
       ]
     }
   },
@@ -250,17 +232,11 @@
           "numDataDisks": {
             "value": "[variables('numDataDisks')]"
           },
-          "templateBaseUrl": {
-            "value": "[variables('environment').templateBaseUrl]"
-          },
           "dnsname": {
             "value": "[parameters('dnsNamePrefix')]"
           },
           "vmSize": {
             "value": "[parameters('secondaryNodeVmSize')]"
-          },
-          "zabbixServerIPAddress": {
-            "value": "[parameters('zabbixServerIPAddress')]"
           },
           "osSettings": {
             "value": "[variables('secondaryOsSettings')]"
@@ -273,8 +249,7 @@
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2015-01-01",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'shared')]",
-        "['vmLoop']"
+        "[concat('Microsoft.Resources/deployments/', 'shared')]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -322,14 +297,8 @@
           "numDataDisks": {
             "value": "[variables('numDataDisks')]"
           },
-          "templateBaseUrl": {
-            "value": "[variables('environment').templateBaseUrl]"
-          },
           "vmSize": {
             "value": "[parameters('primaryNodeVmSize')]"
-          },
-          "zabbixServerIPAddress": {
-            "value": "[parameters('zabbixServerIPAddress')]"
           },
           "osSettings": {
             "value": "[variables('primaryOsSettings')]"

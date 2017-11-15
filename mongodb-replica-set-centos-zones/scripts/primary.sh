@@ -5,7 +5,6 @@ secondaryNodes=$2
 mongoAdminUser=$3
 mongoAdminPasswd=$4
 staticIp=$5
-zabbixServer=$6
 
 install_mongo3() {
 
@@ -63,43 +62,8 @@ disk_format() {
 		
 }
 
-install_zabbix() {
-	#install zabbix agent
-	cd /tmp
-	yum install -y gcc wget > /dev/null 
-	wget http://jaist.dl.sourceforge.net/project/zabbix/ZABBIX%20Latest%20Stable/2.2.5/zabbix-2.2.5.tar.gz > /dev/null 2>&1
-	tar zxvf zabbix-2.2.5.tar.gz
-	cd zabbix-2.2.5
-	groupadd zabbix
-	useradd zabbix -g zabbix -s /sbin/nologin
-	mkdir -p /usr/local/zabbix
-	./configure --prefix=/usr/local/zabbix --enable-agent
-	make install > /dev/null
-	cp misc/init.d/fedora/core/zabbix_agentd /etc/init.d/
-	sed -i 's/BASEDIR=\/usr\/local/BASEDIR=\/usr\/local\/zabbix/g' /etc/init.d/zabbix_agentd
-	sed -i '$azabbix-agent    10050/tcp\nzabbix-agent    10050/udp' /etc/services
-	sed -i '/^LogFile/s/tmp/var\/log/' /usr/local/zabbix/etc/zabbix_agentd.conf
-	hostName=`hostname`
-	sed -i "s/^Hostname=Zabbix server/Hostname=$hostName/" /usr/local/zabbix/etc/zabbix_agentd.conf
-	if [[ $zabbixServer =~ ([0-9]{1,3}.){3}[0-9]{1,3} ]];then
-		sed -i "s/^Server=127.0.0.1/Server=$zabbixServer/" /usr/local/zabbix/etc/zabbix_agentd.conf
-		sed -i "s/^ServerActive=127.0.0.1/ServerActive=$zabbixServer/" /usr/local/zabbix/etc/zabbix_agentd.conf
-		sed -i "s/^Server=127.0.0.1/Server=$zabbixServer/" /usr/local/zabbix/etc/zabbix_agent.conf
-	fi
-	touch /var/log/zabbix_agentd.log
-	chown zabbix:zabbix /var/log/zabbix_agentd.log
-
-	#start zabbix agent
-	chkconfig --add zabbix_agentd
-	chkconfig zabbix_agentd on
-	/etc/init.d/zabbix_agentd start
-}
-
-
 install_mongo3
 disk_format
-install_zabbix
-
 
 #start mongod
 mongod --dbpath /var/lib/mongo/ --logpath /var/log/mongodb/mongod.log --fork
