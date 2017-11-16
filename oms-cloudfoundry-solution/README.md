@@ -89,3 +89,11 @@ Go to `Log Search` in your workspace (or `Log Search` in OMS portal), you could 
 Go to `Saved Searches` in your workspace (or `Log Search` -> `Favorites` in OMS portal), you could find categorized search queries for major Cloud Foundry metrics and logs.
 
 ![saved searches](https://documentimages.blob.core.windows.net/azurequickstarttemplatereadme/savedSearches.png "saved searches")
+
+### Monitor your environment Everywhere
+
+OMS also provides mobile apps for users to view OMS views, receiving alerts and searching for logs from your mobile devices.
+
+Simply download App from your app store and login with your account, you can have experience just the same as on your workplace everywhere.
+
+OMS Apps now available on [Windows (Mobile devices)](https://www.microsoft.com/en-us/store/p/microsoft-operations-management-suite/9wzdncrfjz2r), [Android](https://play.google.com/store/apps/details?id=com.microsoft.operations.AndroidPhone) and [iOS](https://itunes.apple.com/us/app/microsoft-operations-management-suite/id1042424859) devices.
