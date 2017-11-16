@@ -85,7 +85,7 @@ Done: Here are details for connecting and running pipelines
   },
   "jumpboxConnectionString": {
     "type": "String",
-    "value": "ssh nextflow@lagripp-nf-11.westus2.cloudapp.azure.com"
+    "value": "ssh nextflow@jumpboxvmaddress.westus2.cloudapp.azure.com"
   }
 }
 ```
