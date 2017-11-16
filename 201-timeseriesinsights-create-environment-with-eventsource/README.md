@@ -10,11 +10,3 @@
 This template creates a Time Series Insights environment and a child event source configured to consume events from an Event Hub. For more information, go to: https://docs.microsoft.com/azure/time-series-insights/.
 
 The shared access key for the event hub must be stored as a secret in a Key Vault.
-
-## Temp - for testing template deployment from my fork
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https:%2F/github.com/sandshadow/azure-quickstart-templates/blob/master/201-timeseriesinsights-create-environment-with-eventsource/azuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
-</a>
-<a href="http://armviz.io/#/?load=https:%2F/github.com/sandshadow/azure-quickstart-templates/blob/master/201-timeseriesinsights-create-environment-with-eventsource/azuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
-</a>
