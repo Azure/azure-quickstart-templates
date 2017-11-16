@@ -1,0 +1,198 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environmentName": {
+      "type": "string",
+      "maxLength": 90,
+      "metadata": {
+        "description": "Name of the environment. The name cannot include:   '<', '>', '%', '&', ':', '\\', '?', '/' and any control characters. All other characters are allowed."
+      }
+    },
+    "environmentDisplayName": {
+      "type": "string",
+      "defaultValue": "",
+      "maxLength": 90,
+      "metadata": {
+        "description": "An optional friendly name to show in tooling or user interfaces instead of the environment name."
+      }
+    },
+    "environmentSkuName": {
+      "type": "string",
+      "defaultValue": "S1",
+      "allowedValues": [
+        "S1",
+        "S2"
+      ]
+    },
+    "environmentSkuCapacity": {
+      "type": "int",
+      "defaultValue": 1,
+      "minValue": 1,
+      "maxValue": 10
+    },
+    "environmentDataRetentionTime": {
+      "type": "string",
+      "defaultValue": "P30D",
+      "metadata": {
+        "description": "The minimum timespan the environment’s events will be available for query. The value must be specified in the ISO 8601 format, e.g. \"P30D\" for a retention policy of 30 days."
+      }
+    },
+    "eventSourceName": {
+      "type": "string",
+      "maxLength": 90,
+      "metadata": {
+        "description": "Name of the event source child resource. The name cannot include:   '<', '>', '%', '&', ':', '\\', '?', '/' and any control characters. All other characters are allowed."
+      }
+    },
+    "eventSourceDisplayName": {
+      "type": "string",
+      "defaultValue": "",
+      "maxLength": 90,
+      "metadata": {
+        "description": "An optional friendly name to show in tooling or user interfaces instead of the event source name."
+      }
+    },
+    "eventSourceTimestampPropertyName": {
+      "type": "string",
+      "defaultValue": "",
+      "maxLength": 90,
+      "metadata": {
+        "description": "The event property that will be used as the event source's timestamp. If a value isn't specified for timestampPropertyName, or if null or empty-string is specified, the event creation time will be used."
+      }
+    },
+    "eventHubResourceId": {
+      "type": "string",
+      "metadata": {
+        "description": "The resource id of the source event hub or IoT Hub in ARM, e.g. '/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Devices/IotHubs/{hubName}'."
+      }
+    },
+    "eventHubServiceBusNamespace": {
+      "type": "string",
+      "metadata": {
+        "description": "The service bus namespace of the source event hub."
+      }
+    },
+    "eventHubName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the source event hub."
+      }
+    },
+    "eventHubConsumerGroupName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the consumer group that RDX will use to read the data from the event hub. NOTE: You should create a dedicated consumer group on the event hub for RDX. This consumer group should not be shared with other services to avoid contention."
+      }
+    },
+    "eventHubKeyName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the event hub's shared access key that RDX will use to connect to the event hub."
+      }
+    },
+    "eventHubSharedAccessKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The shared access key value that RDX will use to connect to the event hub."
+      }
+    },
+    "accessPolicyName": {
+      "type": "string",
+      "maxLength": 90,
+      "metadata": {
+        "description": "Name of the access policy child resource. The name cannot include:   '<', '>', '%', '&', ':', '\\', '?', '/' and any control characters. All other characters are allowed."
+      }
+    },
+    "accessPolicyPrincipalObjectId": {
+      "type": "string",
+      "metadata": {
+        "description": "Object Id of the AAD user or service principal that will have access to the environment. Available from the Get-AzureRMADUser or the Get-AzureRMADServicePrincipal cmdlets"
+      }
+    },
+     "accessPolicyRole": {
+      "type": "string",
+      "allowedValues": [
+        "Reader",
+        "Contributor"
+      ],
+      "metadata": {
+        "description": "The role that will be assigned to the AAD user or service principal that will have access to the environment."
+      }
+    }
+  },
+  "variables": {
+    "environmentTagsOptions": [
+      null,
+      {
+        "displayName": "[parameters('environmentDisplayName')]"
+      }
+    ],
+    "environmentTagsValue": "[variables('environmentTagsOptions')[length(take(parameters('environmentDisplayName'), 1))]]",
+    "eventSourceTagsOptions": [
+      null,
+      {
+        "displayName": "[parameters('eventSourceDisplayName')]"
+      }
+    ],
+    "eventSourceTagsValue": "[variables('eventSourceTagsOptions')[length(take(parameters('eventSourceDisplayName'), 1))]]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.TimeSeriesInsights/environments",
+      "name": "[parameters('environmentName')]",
+      "apiVersion": "2017-02-28-preview",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "dataRetentionTime": "[parameters('environmentDataRetentionTime')]"
+      },
+      "sku": {
+        "name": "[parameters('environmentSkuName')]",
+        "capacity": "[parameters('environmentSkuCapacity')]"
+      },
+      "tags": "[variables('environmentTagsValue')]",
+      "resources": [
+        {
+          "type": "eventsources",
+          "name": "[parameters('eventSourceName')]",
+          "apiVersion": "2017-02-28-preview",
+          "location": "[resourceGroup().location]",
+          "kind": "Microsoft.EventHub",
+          "properties": {
+            "eventSourceResourceId": "[parameters('eventHubResourceId')]",
+            "serviceBusNamespace": "[parameters('eventHubServiceBusNamespace')]",
+            "eventHubName": "[parameters('eventHubName')]",
+            "consumerGroupName": "[parameters('eventHubConsumerGroupName')]",
+            "keyName": "[parameters('eventHubKeyName')]",
+            "sharedAccessKey": "[parameters('eventHubSharedAccessKey')]",
+            "timestampPropertyName": "[parameters('eventSourceTimestampPropertyName')]"
+          },
+          "tags": "[variables('eventSourceTagsValue')]",
+          "dependsOn": [
+            "[concat('Microsoft.TimeSeriesInsights/environments/', parameters('environmentName'))]"
+          ]
+        },
+        {
+          "type": "accesspolicies",
+          "name": "[parameters('accessPolicyName')]",
+          "apiVersion": "2017-02-28-preview",
+          "properties": {
+            "principalObjectId": "[parameters('accessPolicyPrincipalObjectId')]",
+            "roles": [
+              "[parameters('accessPolicyRole')]"
+            ]
+          },
+          "dependsOn": [
+            "[concat('Microsoft.TimeSeriesInsights/environments/', parameters('environmentName'))]"
+          ]
+        }
+      ]
+    }
+  ],
+  "outputs": {
+    "dataAccessId" : {
+      "value" : "[reference(resourceId('Microsoft.TimeSeriesInsights/environments', parameters('environmentName'))).dataAccessId]",
+      "type": "string"
+      }
+  }
+}
