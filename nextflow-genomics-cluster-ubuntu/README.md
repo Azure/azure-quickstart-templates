@@ -70,10 +70,24 @@ echo "Done: Here are details for connecting to the jumpbox and running pipelines
 az group deployment show -g $RESOURCE_GROUP -n azuredeploy --query properties.outputs
 ```
 
-Example output 
+Example output:
 
 ```
-
+Done: Here are details for connecting and running pipelines
+{
+  "exampleNextflowCommand": {
+    "type": "String",
+    "value": "nextflow run hello -process.executor ignite -cluster.join path:/datadisks/disk1/cifs/cluster -with-timeline runtimeline.html -with-trace -cluster.maxCpus 0"
+  },
+  "exampleNextflowCommandWithDocker": {
+    "type": "String",
+    "value": "nextflow run nextflow-io/rnatoy -with-docker -process.executor ignite -cluster.join path:/datadisks/disk1/cifs/cluster -with-timeline runtimeline.html -with-trace -cluster.maxCpus 0"
+  },
+  "jumpboxConnectionString": {
+    "type": "String",
+    "value": "ssh nextflow@lagripp-nf-11.westus2.cloudapp.azure.com"
+  }
+}
 ```
 
 ## Debugging Cluster
