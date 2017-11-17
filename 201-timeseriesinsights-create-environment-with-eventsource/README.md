@@ -7,8 +7,6 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template creates a Time Series Insights environment and a child event source configured to consume events from an Event Hub. For more information, go to: https://docs.microsoft.com/azure/time-series-insights/.
-
-The shared access key for the event hub must be stored as a secret in a Key Vault.
+This template creates a Time Series Insights environment and a child event source configured to consume events from an Event Hub or an IoT Hub. For more information, go to: https://docs.microsoft.com/azure/time-series-insights/.
 
 Before accessing data in your environment, you must create an Access Policy. For more information, go to: https://docs.microsoft.com/azure/time-series-insights/time-series-insights-data-access
