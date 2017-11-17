@@ -1,0 +1,190 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environmentName": {
+      "type": "string",
+      "maxLength": 90,
+      "metadata": {
+        "description": "Name of the environment. The name cannot include:   '<', '>', '%', '&', ':', '\\', '?', '/' and any control characters. All other characters are allowed."
+      }
+    },
+    "environmentDisplayName": {
+      "type": "string",
+      "defaultValue": "",
+      "maxLength": 90,
+      "metadata": {
+        "description": "An optional friendly name to show in tooling or user interfaces instead of the environment name."
+      }
+    },
+    "environmentSkuName": {
+      "type": "string",
+      "defaultValue": "S1",
+      "allowedValues": [
+        "S1",
+        "S2"
+      ],
+      "metadata": {
+        "description": "The name of the sku. For more information, see https://azure.microsoft.com/pricing/details/time-series-insights/"
+      }
+    },
+    "environmentSkuCapacity": {
+      "type": "int",
+      "defaultValue": 1,
+      "minValue": 1,
+      "maxValue": 10,
+      "metadata": {
+        "description": "The unit capacity of the Sku. For more information, see https://azure.microsoft.com/pricing/details/time-series-insights/"
+      }
+    },
+    "environmentDataRetentionTime": {
+      "type": "string",
+      "defaultValue": "P30D",
+      "metadata": {
+        "description": "The minimum timespan the environment’s events will be available for query. The value must be specified in the ISO 8601 format, e.g. \"P30D\" for a retention policy of 30 days."
+      }
+    },
+    "eventSourceName": {
+      "type": "string",
+      "maxLength": 90,
+      "metadata": {
+        "description": "Name of the event source child resource. The name cannot include:   '<', '>', '%', '&', ':', '\\', '?', '/' and any control characters. All other characters are allowed."
+      }
+    },
+    "eventSourceKind": {
+      "type": "string",
+      "metadata": {
+        "description": "Supported values are 'Microsoft.EventHub' and 'Microsoft.IoTHub'. "
+      }
+    },
+    "eventSourceDisplayName": {
+      "type": "string",
+      "defaultValue": "",
+      "maxLength": 90,
+      "metadata": {
+        "description": "An optional friendly name to show in tooling or user interfaces instead of the event source name."
+      }
+    },
+    "eventSourceTimestampPropertyName": {
+      "type": "string",
+      "defaultValue": "",
+      "maxLength": 90,
+      "metadata": {
+        "description": "The event property that will be used as the event source's timestamp. If a value isn't specified for timestampPropertyName, or if null or empty-string is specified, the event creation time will be used."
+      }
+    },
+    "hubResourceId": {
+      "type": "string",
+      "metadata": {
+        "description": "The resource id of the event hub or IoT hub from which the event source will read events. For IoT hubs, the format is \"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Devices/IotHubs/{hubName}\". For event hubs, the format is \"/subscriptions/{{subscriptionId}}/resourceGroups/{{resourcegroupName}}/providers/Microsoft.EventHub/namespaces/{{namespaceName}}/eventHubs/{{hubName}}\"."
+      }
+    },
+    "hubName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the source event hub or IoT hub."
+      }
+    },
+    "consumerGroupName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the consumer group that the Time Series Insights service will use to read the data from the event hub or IoT hub. NOTE: You should create a dedicated consumer group on the event hub or IoT hub for the Time Series Insights service. This consumer group should not be shared with other services to avoid contention."
+      }
+    },
+    "keyName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the shared access key that the Time Series Insights service will use to connect to the event hub or IoT hub."
+      }
+    },
+    "eventHubServiceBusNamespace": {
+      "type": "string",
+      "metadata": {
+        "description": "The service bus namespace of the source event hub. This value is only required for event hub event sources, and will be ignored for IoT hub event sources."
+      }
+    }
+  },
+  "variables": {
+    "environmentTagsOptions": [
+      null,
+      {
+        "displayName": "[parameters('environmentDisplayName')]"
+      }
+    ],
+    "environmentTagsValue": "[variables('environmentTagsOptions')[length(take(parameters('environmentDisplayName'), 1))]]",
+    "eventSourceTagsOptions": [
+      null,
+      {
+        "displayName": "[parameters('eventSourceDisplayName')]"
+      }
+    ],
+    "eventSourceTagsValue": "[variables('eventSourceTagsOptions')[length(take(parameters('eventSourceDisplayName'), 1))]]",
+    "listKeysApiVersion": "[if(equals(parameters('eventSourceKind'),'Microsoft.EventHub'), '2015-08-01', '2017-07-01')]",
+    "listKeysMethod": "[if(equals(parameters('eventSourceKind'),'Microsoft.EventHub'), '/authorizationRules/', '/Iothubkeys/')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.TimeSeriesInsights/environments",
+      "name": "[parameters('environmentName')]",
+      "apiVersion": "2017-11-15",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "dataRetentionTime": "[parameters('environmentDataRetentionTime')]"
+      },
+      "sku": {
+        "name": "[parameters('environmentSkuName')]",
+        "capacity": "[parameters('environmentSkuCapacity')]"
+      },
+      "tags": "[variables('environmentTagsValue')]",
+      "resources": [
+        {
+          "condition": "[equals(parameters('eventSourceKind'),'Microsoft.EventHub')]",
+          "type": "eventsources",
+          "name": "[if(equals(parameters('eventSourceKind'),'Microsoft.EventHub'),parameters('eventSourceName'), 'usedToGetAroundValidationRestrictionsWhenNotEventHub')]",
+          "apiVersion": "2017-11-15",
+          "location": "[resourceGroup().location]",
+          "kind": "[parameters('eventSourceKind')]",
+          "properties": {
+            "eventSourceResourceId": "[parameters('hubResourceId')]",
+            "serviceBusNamespace": "[parameters('eventHubServiceBusNamespace')]",
+            "eventHubName": "[parameters('hubName')]",
+            "consumerGroupName": "[parameters('consumerGroupName')]",
+            "keyName": "[parameters('keyName')]",
+            "sharedAccessKey": "[listkeys(concat(parameters('hubResourceId'),variables('listKeysMethod'), parameters('keyName')), variables('listKeysApiVersion')).primaryKey]",
+            "timestampPropertyName": "[parameters('eventSourceTimestampPropertyName')]"
+          },
+          "tags": "[variables('eventSourceTagsValue')]",
+          "dependsOn": [
+            "[concat('Microsoft.TimeSeriesInsights/environments/', parameters('environmentName'))]"
+          ]
+        },
+        {
+          "condition": "[equals(parameters('eventSourceKind'),'Microsoft.IoTHub')]",
+          "type": "eventsources",
+          "name": "[if(equals(parameters('eventSourceKind'),'Microsoft.IoTHub'),parameters('eventSourceName'), 'usedToGetAroundValidationRestrictionsWhenNotIoTHub')]",
+          "apiVersion": "2017-11-15",
+          "location": "[resourceGroup().location]",
+          "kind": "[parameters('eventSourceKind')]",
+          "properties": {
+            "eventSourceResourceId": "[parameters('hubResourceId')]",
+            "iotHubName": "[parameters('hubName')]",
+            "consumerGroupName": "[parameters('consumerGroupName')]",
+            "keyName": "[parameters('keyName')]",
+            "sharedAccessKey": "[listkeys(concat(parameters('hubResourceId'),variables('listKeysMethod'), parameters('keyName')),variables('listKeysApiVersion')).primaryKey]",
+            "timestampPropertyName": "[parameters('eventSourceTimestampPropertyName')]"
+          },
+          "tags": "[variables('eventSourceTagsValue')]",
+          "dependsOn": [
+            "[concat('Microsoft.TimeSeriesInsights/environments/', parameters('environmentName'))]"
+          ]
+        }
+      ]
+    }
+  ],
+  "outputs": {
+    "dataAccessId": {
+      "value": "[reference(resourceId('Microsoft.TimeSeriesInsights/environments', parameters('environmentName'))).dataAccessId]",
+      "type": "string"
+    }
+  }
+}
