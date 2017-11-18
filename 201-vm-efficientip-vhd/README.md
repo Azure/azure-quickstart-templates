@@ -12,6 +12,7 @@
 - EfficientIP VHD file that you want to create a VM from already exists in a storage account.
 - Name of the existing VNET and subnet you want to connect the new virtual machine to.
 - Name of the Resource Group that the VNET resides in.
+- Name of the Network Security Group that should be attach to the virtual NIC.
 
 ```
 NOTE
@@ -21,4 +22,4 @@ This template will create an additional Standard_GRS storage account for enablin
 
 This template creates a VM from a EfficientIP VHD and let you connect it to an existing VNET that can reside in another Resource Group then the virtual machine.
 
-Plese note: This deployment template does not create or attach an existing Network Security Group to the virtual machine. 
+
