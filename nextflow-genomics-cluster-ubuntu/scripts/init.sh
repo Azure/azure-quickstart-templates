@@ -136,6 +136,8 @@ wget -O- http://neuro.debian.net/lists/xenial.us-ca.full | tee /etc/apt/sources.
 apt-key adv --recv-keys --keyserver hkp://pool.sks-keyservers.net:80 0xA5D32F012649A5A9
 apt-get update
 apt-get install -y singularity-container
+echo "bind path = $4" >> /etc/singularity/singularity.conf
+echo "bind path = /mnt" >> /etc/singularity/singularity.conf
 
 log "Install Docker" $LOGFILE
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - | tee -a $LOGFILE
@@ -162,6 +164,10 @@ chmod 777 $NFS_SHAREPATH/assets
 #Configure nextflow environment vars    
 echo export NXF_WORK=$NFS_SHAREPATH/work >> /etc/environment
 echo export NXF_ASSETS=$NFS_SHAREPATH/assets >> /etc/environment
+
+echo export AWS_ACCESS_KEY_ID=$1 >> /etc/environment
+echo export AWS_ACCESS_KEY=$2 >> /etc/environment
+
 #Added for debugging
 echo export NXF_AZ_USER=$6 >> /etc/environment
 echo export NXF_AZ_LOGFILE=$LOGFILE >> /etc/environment
@@ -169,11 +175,11 @@ echo export NXF_AZ_CIFSPATH=$CIFS_SHAREPATH >> /etc/environment
 echo export NXF_AZ_NFSPATH=$NFS_SHAREPATH >> /etc/environment
 
 #Use asure epherical instance drive for tmp
-mkdir -p /mnt/nftemp
-echo export NXF_TEMP=/mnt/nftemp >> /etc/environment
+mkdir -p /mnt/nextflow_temp
+echo export NXF_TEMP=/mnt/nextflow_temp >> /etc/environment
 
 #Allow user access to temporary drive
-chmod -f 777 /mnt/nftemp #Todo: Review sec implications 
+chmod -f 777 /mnt/nextflow_temp #Todo: Review sec implications 
 
 #Reload environment variables in this session. 
 sed 's/^/export /' /etc/environment > /tmp/env.sh && source /tmp/env.sh
@@ -214,4 +220,5 @@ log "NODE: Cluster node started" $LOGFILE
 
 fi
 
-
+# log "Starting minio s3 proxy"
+# docker run -d --restart always -p 9000:9000 --name azure-s3  -e "MINIO_ACCESS_KEY=$1"  -e "MINIO_SECRET_KEY=$2"  minio/minio gateway azure | tee -a $LOGFILE
