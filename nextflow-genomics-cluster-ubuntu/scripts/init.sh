@@ -131,6 +131,12 @@ echo $METADATA > $CIFS_SHAREPATH/logs/$NODENAME/node.metadata
 log "Installing JAVA" $LOGFILE
 apt-get install openjdk-8-jdk -y | tee -a $LOGFILE
 
+log "Installing Singularity" $LOGFILE
+wget -O- http://neuro.debian.net/lists/xenial.us-ca.full | tee /etc/apt/sources.list.d/neurodebian.sources.list
+apt-key adv --recv-keys --keyserver hkp://pool.sks-keyservers.net:80 0xA5D32F012649A5A9
+apt-get update
+apt-get install -y singularity-container
+
 log "Install Docker" $LOGFILE
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - | tee -a $LOGFILE
 add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee -a $LOGFILE
@@ -208,11 +214,4 @@ log "NODE: Cluster node started" $LOGFILE
 
 fi
 
-log "Installing Singularity" $LOGFILE
-VERSION=2.3.1
-wget https://github.com/singularityware/singularity/releases/download/$VERSION/singularity-$VERSION.tar.gz
-tar xvf singularity-$VERSION.tar.gz
-cd singularity-$VERSION
-./configure --prefix=/usr/local
-make
-make install
+
