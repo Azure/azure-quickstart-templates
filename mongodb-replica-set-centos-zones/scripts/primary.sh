@@ -5,14 +5,18 @@ secondaryNodes=$2
 mongoAdminUser=$3
 mongoAdminPasswd=$4
 staticIp=$5
+inputArray=("$@")
+
+#remove all non-ip values from array
+ipAddresses=${inputArray[@]:5}
 
 install_mongo3() {
 
-	#create repo
-cat > /etc/yum.repos.d/mongodb-org-3.2.repo <<EOF
-[mongodb-org-3.2]
+#create repo
+cat > /etc/yum.repos.d/mongodb-org-3.4.repo <<EOF
+[mongodb-org-3.4]
 name=MongoDB Repository
-baseurl=https://repo.mongodb.org/yum/redhat/\$releasever/mongodb-org/3.2/x86_64/
+baseurl=https://repo.mongodb.org/yum/redhat/\$releasever/mongodb-org/3.4/x86_64/
 gpgcheck=0
 enabled=1
 EOF
@@ -138,7 +142,7 @@ if [[ $n -ne 1 ]];then
     echo "mongo replica set tried to start 3 times but failed!"
 fi
 
-
+# Fix this to use internal IP
 echo "start initiating the replica set"
 publicIp=`curl -s ip.cn|grep -Po '\d+.\d+.\d+.\d+'`
 if [[ -z $publicIp ]];then

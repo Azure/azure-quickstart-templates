@@ -2,476 +2,449 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "adminUsername": {
-      "type": "string",
-      "metadata": {
-        "description": "The name of the Administrator of the new VM and Domain"
-      },
-      "defaultValue": "adAdministrator"
-    },
-    "location": {
-      "type": "string",
-      "allowedValues": [
-        "westeurope",
-        "eastus2"
-      ],
-      "defaultValue": "westeurope",
-      "metadata": {
-        "description": "Location for the VM, only certain regions support zones during preview."
-      }
-    },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "The password for the Administrator account of the new VM and Domain"
-      }
-    },  
-    "domainName": {
-      "type": "string",
-      "metadata": {
-        "description": "The FQDN of the AD Domain created "
-      }
-    },
-    "dnsPrefix": {
-      "type": "string",
-      "metadata": {
-        "description": "The DNS prefix for the public IP address used by the Load Balancer"
-      }
-    },
-    "_artifactsLocation": {
-      "type": "string",
-      "metadata": {
-        "description": "The location of resources such as templates and DSC modules that the script is dependent"
-      },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/active-directory-new-domain-ha-2-dc-zones"
-    },
-    "_artifactsLocationSasToken": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Auto-generated token to access _artifactsLocation"
-      },
-      "defaultValue": ""
+      "location": {
+    "type": "string",
+    "metadata": {
+      "description": "Location for the VM, only certain regions support zones during preview."
     }
+      },
+      "namePrefix": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 8,
+          "metadata": {
+              "description": "Naming prefix for each new resource created. 3-char min, 8-char max, lowercase alphanumeric"
+          }
+      },
+      "domainName": {
+          "type": "string",
+          "metadata": {
+              "description": "DNS domain name for existing Active Directory domain"
+          }
+      },
+      "adminUsername": {
+          "type": "string",
+          "metadata": {
+              "description": "Name of the Administrator of the existing Active Directory Domain"
+          }
+      },
+      "adminPassword": {
+          "type": "securestring",
+          "minLength": 12,
+          "metadata": {
+              "description": "Password for the Administrator account of the existing Active Directory Domain"
+          }
+      },
+      "sqlServiceAccount": {
+          "type": "string",
+          "metadata": {
+              "description": "Name of the user account to be used for the SQL Server service account"
+          }
+      },
+      "sqlServicePassword": {
+          "type": "securestring",
+          "minLength": 12,
+          "metadata": {
+              "description": "Password to be used for the SQL Server service account"
+          }
+      },
+      "nicVnetUri": {
+          "type": "string",
+          "metadata": {
+              "description": "Resource ID for existing vnet/subnet to which VM NICs should be attached"
+          }
+      },
+      "existingSubnetNames": {
+          "type": "array",
+          "metadata": {
+              "description": "Name of the existing subnets in the existing VNET to which the SQL Server VMs should be deployed"
+          }
+      },
+      "vmSize": {
+          "type": "string",
+          "metadata": {
+              "description": "Size of the SQL Server VMs to be created"
+          }
+      },
+      "vmCount": {
+          "type": "int",
+          "minValue": 2,
+          "maxValue": 9,
+          "metadata": {
+              "description": "Number of SQL Server VMs to be created in AlwaysOn Availability Group cluster (Min=2, Max=9)"
+          },
+          "defaultValue": 2
+      },
+      "vmDiskSize": {
+          "type": "int",
+          "minValue": 128,
+          "maxValue": 1023,
+          "metadata": {
+              "description": "Size of each data disk in GB on each SQL Server VM (Min=128, Max=1023)"
+          }
+      },
+      "vmDiskCount": {
+          "type": "int",
+          "minValue": 2,
+          "maxValue": 32,
+          "metadata": {
+              "description": "Number of data disks on each SQL Server VM (Min=2, Max=32). Ensure that the VM size you've selected will support this number of data disks."
+          }
+      },
+      "workloadType": {
+          "type": "string",
+          "defaultValue": "GENERAL"
+      },
+      "imagePublisher": {
+          "type": "string",
+          "defaultValue": "MicrosoftSQLServer"
+      },
+      "imageOffer": {
+          "type": "string",
+          "defaultValue": "SQL2016SP1-WS2016"
+      },
+      "imageSKU": {
+          "type": "string",
+          "defaultValue": "Enterprise"
+      },
+      "imageVersion": {
+          "type": "string",
+          "defaultValue": "latest"
+      },
+      "_artifactsLocation": {
+          "type": "string"
+      },
+      "_artifactsLocationSasToken": {
+          "type": "securestring"
+      }
   },
   "variables": {
-    "adPDCVMName": "adPDC",
-    "adBDCVMName": "adBDC",
-    "adVMSize": "Standard_DS2_v2",
-    "imagePublisher": "MicrosoftWindowsServer",
-    "imageOffer": "WindowsServer",
-    "imageSKU": "2016-Datacenter",
-    "storageAccountType": "Premium_LRS",
-    "virtualNetworkName": "adVNET",
-    "virtualNetworkAddressRange": "10.0.0.0/16",
-    "adSubnetName": "adSubnet",
-    "adSubnet": "10.0.0.0/24",
-    "VnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
-    "adSubnetRef": "[concat(variables('VnetID'),'/subnets/',variables('adSubnetName'))]",
-    "adPDCNicName": "adPDCNic",
-    "adPDCNicIPAddress": "10.0.0.4",
-    "publicIPAddressName": "adPublicIp",
-    "publicIPAddressType": "Dynamic",
-    "adBDCNicName": "adBDCNic",
-    "adBDCNicIPAddress": "10.0.0.5",
-    "vnetTemplateUri": "[concat(parameters('_artifactsLocation'),'/nestedtemplates/vnet.json', parameters('_artifactsLocationSasToken'))]",
-    "nicTemplateUri": "[concat(parameters('_artifactsLocation'),'/nestedtemplates/nic.json', parameters('_artifactsLocationSasToken'))]",
-    "vnetwithDNSTemplateUri": "[concat(parameters('_artifactsLocation'),'/nestedtemplates/vnet-with-dns-server.json', parameters('_artifactsLocationSasToken'))]",
-    "configureADBDCTemplateUri": "[concat(parameters('_artifactsLocation'),'/nestedtemplates/configureADBDC.json', parameters('_artifactsLocationSasToken'))]",
-    "adPDCModulesURL": "[concat(parameters('_artifactsLocation'),'/DSC/CreateADPDC.ps1.zip')]",
-    "adPDCConfigurationScript": "CreateADPDC.ps1",
-    "adPDCConfigurationFunction": "CreateADPDC",
-    "adBDCPreparationModulesURL": "[concat(parameters('_artifactsLocation'),'/DSC/PrepareADBDC.ps1.zip')]",
-    "adBDCPreparationScript": "PrepareADBDC.ps1",
-    "adBDCPreparationFunction": "PrepareADBDC",
-    "adBDCConfigurationModulesURL": "[concat(parameters('_artifactsLocation'),'/DSC/ConfigureADBDC.ps1.zip')]",
-    "adBDCConfigurationScript": "ConfigureADBDC.ps1",
-    "adBDCConfigurationFunction": "ConfigureADBDC"
+      "apiVersionStorage": "2016-01-01",
+      "witnessStorageName": "[concat(parameters('namePrefix'),uniqueString(resourceGroup().id),'cw')]",
+      "witnessStorageType": "Standard_LRS",
+      "vmNamePrefix": "[concat(parameters('namePrefix'),'-sql-')]",
+      "clusterName": "[concat(variables('vmNamePrefix'),'c')]",
+      "vmLoopTemplateURL": "[concat(parameters('_artifactsLocation'),'/nestedtemplates/newVM.json',parameters('_artifactsLocationSasToken'))]",
+      "ipLoopTemplateURL": "[concat(parameters('_artifactsLocation'),'/nestedtemplates/getIpAddress.json',parameters('_artifactsLocationSasToken'))]",
+      "sqlPrepModulesURL": "[concat(parameters('_artifactsLocation'),'/dsc/prep-sqlao.ps1.zip',parameters('_artifactsLocationSasToken'))]",
+      "sqlPrepFunction": "PrepSQLAO.ps1\\PrepSQLAO",
+      "sqlConfigModulesURL": "[concat(parameters('_artifactsLocation'),'/dsc/config-sqlao.ps1.zip',parameters('_artifactsLocationSasToken'))]",
+      "sqlConfigFunction": "ConfigSQLAO.ps1\\ConfigSQLAO",
+      "agName": "[concat(variables('vmNamePrefix'),'ag')]",
+      "agListenerName": "[concat(variables('vmNamePrefix'),'agl')]",
+      "agEpName": "[concat(variables('vmNamePrefix'),'ha')]",
+      "zones": ["1","2","3"]
   },
   "resources": [
-    {
-      "name": "[variables('publicIPAddressName')]",
-      "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2016-11-01",
-      "zones": ["1"],
-      "location": "[parameters('location')]",
-      "properties": {
-        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
-        "dnsSettings": {
-          "domainNameLabel": "[parameters('dnsPrefix')]"
-        }
-      }
-    },
-    {
-      "name": "VNet",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2016-09-01",
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[variables('vnetTemplateUri')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "virtualNetworkName": {
-            "value": "[variables('virtualNetworkName')]"
+      {
+          "type": "Microsoft.Storage/storageAccounts",
+          "name": "[variables('witnessStorageName')]",
+          "apiVersion": "2016-01-01",
+    "location": "[parameters('location')]",
+          "sku": {
+              "name": "[variables('witnessStorageType')]"
           },
-          "virtualNetworkAddressRange": {
-            "value": "[variables('virtualNetworkAddressRange')]"
+          "kind": "Storage"
+      },
+      {
+          "name": "[concat(variables('vmNamePrefix'), copyindex(), '-nic')]",
+          "type": "Microsoft.Network/networkInterfaces",
+    "location": "[parameters('location')]",
+          "apiVersion": "2017-08-01",
+          "copy": {
+              "name": "nicLoop",
+              "count": "[parameters('vmCount')]"
           },
-          "subnetName": {
-            "value": "[variables('adSubnetName')]"
-          },
-          "subnetRange": {
-            "value": "[variables('adSubnet')]"
+          "properties": {
+              "ipConfigurations": [
+                  {
+                      "name": "ipconfig1",
+                      "properties": {
+                          "privateIPAllocationMethod": "Dynamic",
+                          "subnet": {
+                              "id": "[concat(parameters('nicVnetUri'),'/subnets/',parameters('existingSubnetNames')[mod(copyIndex(),length(variables('zones')))])]"
+                          },
+                          "primary": true
+                      }
+                  },
+                  {
+                      "name": "ipconfig2",
+                      "properties": {
+                          "privateIPAllocationMethod": "Dynamic",
+                          "subnet": {
+                              "id": "[concat(parameters('nicVnetUri'),'/subnets/',parameters('existingSubnetNames')[mod(copyIndex(),length(variables('zones')))])]"
+                          }
+                      }
+                  },
+                  {
+                      "name": "ipconfig3",
+                      "properties": {
+                          "privateIPAllocationMethod": "Dynamic",
+                          "subnet": {
+                              "id": "[concat(parameters('nicVnetUri'),'/subnets/',parameters('existingSubnetNames')[mod(copyIndex(),length(variables('zones')))])]"
+                          }
+                      }
+                  }
+              ]
           }
-        }
-      }
-    },
-    {
-      "name": "[variables('adPDCNicName')]",
-      "type": "Microsoft.Network/networkInterfaces",
-      "apiVersion": "2016-10-01",
-      "location": "[parameters('location')]",
-      "dependsOn": [
-        "Microsoft.Resources/deployments/VNet"
-      ],
-      "properties": {
-        "ipConfigurations": [
-          {
-            "name": "ipconfig1",
-            "properties": {
-              "privateIPAllocationMethod": "Static",
-              "privateIPAddress": "[variables('adPDCNicIPAddress')]",
-              "publicIPAddress": {
-                  "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
-              },              
-              "subnet": {
-                "id": "[variables('adSubnetRef')]"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "[variables('adBDCNicName')]",
-      "type": "Microsoft.Network/networkInterfaces",
-      "apiVersion": "2016-10-01",
-      "location": "[parameters('location')]",
-      "dependsOn": [
-        "Microsoft.Resources/deployments/VNet"
-      ],
-      "properties": {
-        "ipConfigurations": [
-          {
-            "name": "ipconfig1",
-            "properties": {
-              "privateIPAllocationMethod": "Static",
-              "privateIPAddress": "[variables('adBDCNicIPAddress')]",
-              "subnet": {
-                "id": "[variables('adSubnetRef')]"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "[variables('adPDCVMName')]",
-      "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2017-03-30",
-      "zones": ["1"],
-      "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces',variables('adPDCNicName'))]"
-      ],
-      "properties": {
-        "hardwareProfile": {
-          "vmSize": "[variables('adVMSize')]"
-        },
-        "osProfile": {
-          "computerName": "[variables('adPDCVMName')]",
-          "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
-        },
-        "storageProfile": {
-          "imageReference": {
-            "publisher": "[variables('imagePublisher')]",
-            "offer": "[variables('imageOffer')]",
-            "sku": "[variables('imageSKU')]",
-            "version": "latest"
-          },
-          "dataDisks": [
-            {
-              "diskSizeGB": 64,
-              "lun": 0,
-              "createOption": "Empty"
-            }
-          ]
-        },
-        "networkProfile": {
-          "networkInterfaces": [
-            {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('adPDCNicName'))]"
-            }
-          ]
-        }
-      }
-    },
-    {
-          "name": "[concat(variables('adPDCVMName'),'/CreateADForest')]",
-          "type": "Microsoft.Compute/virtualMachines/extensions",
-          "apiVersion": "2016-03-30",
-          "location": "[parameters('location')]",
+      },
+      {
+          "type": "Microsoft.Resources/deployments",
+          "apiVersion": "2015-01-01",
+          "name": "[concat(variables('vmNamePrefix'),'0-clusterIp')]",
           "dependsOn": [
-            "[resourceId('Microsoft.Compute/virtualMachines', variables('adPDCVMName'))]"
+              "nicLoop"
           ],
           "properties": {
-            "publisher": "Microsoft.Powershell",
-            "type": "DSC",
-            "typeHandlerVersion": "2.24",
-            "autoUpgradeMinorVersion": true,
-            "settings": {
-                "configuration": {
-                    "url": "[variables('adPDCModulesURL')]",
-                    "script": "[variables('adPDCConfigurationScript')]",
-                    "function": "[variables('adPDCConfigurationFunction')]"
-                },
-                "configurationArguments": {
-                    "domainName": "[parameters('domainName')]"
-                }
-            },
-            "protectedSettings": {
-                "configurationUrlSasToken": "[parameters('_artifactsLocationSasToken')]",
-                "configurationArguments": {
-                    "adminCreds": {
-                        "userName": "[parameters('adminUserName')]",
-                        "password": "[parameters('adminPassword')]"
-                    }
-                }
-            }
-          }
-        },
-    {
-      "name": "UpdateVNetDNS1",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2016-09-01",
-      "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('adPDCVMName'),'/extensions/CreateADForest')]"
-      ],
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[variables('vnetwithDNSTemplateUri')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "virtualNetworkName": {
-            "value": "[variables('virtualNetworkName')]"
-          },
-          "virtualNetworkAddressRange": {
-            "value": "[variables('virtualNetworkAddressRange')]"
-          },
-          "subnetName": {
-            "value": "[variables('adSubnetName')]"
-          },
-          "subnetRange": {
-            "value": "[variables('adSubnet')]"
-          },
-          "DNSServerAddress": {
-            "value": [
-              "[variables('adPDCNicIPAddress')]"
-            ]
-          }
-        }
-      }
-    },
-    {
-      "name": "UpdateBDCNIC",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2016-09-01",
-      "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/',variables('adBDCNicName'))]",
-        "Microsoft.Resources/deployments/UpdateVNetDNS1"
-      ],
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[variables('nicTemplateUri')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "nicName": {
-            "value": "[variables('adBDCNicName')]"
-          },
-          "ipConfigurations": {
-            "value": [
-              {
-                "name": "ipconfig1",
-                "properties": {
-                  "privateIPAllocationMethod": "Static",
-                  "privateIPAddress": "[variables('adBDCNicIPAddress')]",
-                  "subnet": {
-                    "id": "[variables('adSubnetRef')]"
+              "mode": "Incremental",
+              "templateLink": {
+                  "uri": "[variables('ipLoopTemplateURL')]"
+              },
+              "parameters": {
+                  "ipConfig": {
+                      "value": "[reference(concat(variables('vmNamePrefix'), '0-nic')).ipConfigurations[1].properties.privateIPAddress]"
                   }
-                }
               }
-            ]
-          },
-          "dnsServers": {
-            "value": [
-              "[variables('adPDCNicIPAddress')]"
-            ]
           }
-        }
-      }
-    },
-    {
-      "name": "[variables('adBDCVMName')]",
-      "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2017-03-30",
-      "location": "[parameters('location')]",
-      "zones": ["2"],
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces',variables('adBDCNicName'))]"
-      ],
-      "properties": {
-        "hardwareProfile": {
-          "vmSize": "[variables('adVMSize')]"
-        },
-        "osProfile": {
-          "computerName": "[variables('adBDCVMName')]",
-          "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
-        },
-        "storageProfile": {
-          "imageReference": {
-            "publisher": "[variables('imagePublisher')]",
-            "offer": "[variables('imageOffer')]",
-            "sku": "[variables('imageSKU')]",
-            "version": "latest"
+      },
+      {
+          "type": "Microsoft.Resources/deployments",
+          "apiVersion": "2015-01-01",
+          "copy": {
+              "name": "clusterIpLoop",
+              "count": "[sub(parameters('vmCount'),1)]"
           },
-          "dataDisks": [
-            {
-              "diskSizeGB": 64,
-              "lun": 0,
-              "createOption": "Empty"
-            }
-          ]
-        },
-        "networkProfile": {
-          "networkInterfaces": [
-            {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('adBDCNicName'))]"
-            }
-          ]
-        }
-      }
-    },
-    {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('adBDCVMName'),'/PrepareBDC')]",
-      "apiVersion": "2016-03-30",
-      "location": "[parameters('location')]",
-      "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('adBDCVMName'))]"
-      ],
-      "properties": {
-        "publisher": "Microsoft.Powershell",
-        "type": "DSC",
-        "typeHandlerVersion": "2.24",
-        "autoUpgradeMinorVersion": true,
-        "settings": {
-            "configuration": {
-                "url": "[variables('adBDCPreparationModulesURL')]",
-                "script": "[variables('adBDCPreparationScript')]",
-                "function": "[variables('adBDCPreparationFunction')]"
-            },
-            "configurationArguments": {
-                "DNSServer": "[variables('adPDCNicIPAddress')]"
-            }
-        }
-      }
-    },
-    {
-      "name": "ConfiguringBackupADDomainController",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2016-09-01",
-      "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/',variables('adBDCVMName'),'/extensions/PrepareBDC')]",
-        "Microsoft.Resources/deployments/UpdateBDCNIC"
-      ],
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[variables('configureADBDCTemplateUri')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "adBDCVMName": {
-            "value": "[variables('adBDCVMName')]"
-          },
-          "location": {
-            "value": "[parameters('location')]"
-          },
-          "adminUsername": {
-            "value": "[parameters('adminUsername')]"
-          },
-          "adminPassword": {
-            "value": "[parameters('adminPassword')]"
-          },
-          "domainName": {
-            "value": "[parameters('domainName')]"
-          },
-          "adBDCConfigurationScript": {
-            "value": "[variables('adBDCConfigurationScript')]"
-          },
-          "adBDCConfigurationFunction": {
-            "value": "[variables('adBDCConfigurationFunction')]"
-          },
-          "adBDCConfigurationModulesURL": {
-            "value": "[variables('adBDCConfigurationModulesURL')]"
-          },
-          "_artifactsLocationSasToken": {
-            "value": "[parameters('_artifactsLocationSasToken')]"
+          "name": "[concat(variables('vmNamePrefix'),copyIndex(1),'-clusterIp')]",
+          "dependsOn": [
+              "nicLoop",
+              "[concat(variables('vmNamePrefix'),'0-clusterIp')]"
+          ],
+          "properties": {
+              "mode": "Incremental",
+              "templateLink": {
+                  "uri": "[variables('ipLoopTemplateURL')]"
+              },
+              "parameters": {
+                  "ipConfig": {
+                      "value": "[reference(concat(variables('vmNamePrefix'), copyIndex(1), '-nic')).ipConfigurations[1].properties.privateIPAddress]"
+                  },
+                  "ipAddresses": {
+                      "value": "[reference(concat(variables('vmNamePrefix'),copyIndex(),'-clusterIp')).outputs.result.value]"
+                  }
+              }
           }
-        }
-      }
-    },
-    {
-      "name": "UpdateVNetDNS2",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2016-09-01",
-      "dependsOn": [
-        "Microsoft.Resources/deployments/ConfiguringBackupADDomainController"
-      ],
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[variables('vnetwithDNSTemplateUri')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "virtualNetworkName": {
-            "value": "[variables('virtualNetworkName')]"
-          },
-          "virtualNetworkAddressRange": {
-            "value": "[variables('virtualNetworkAddressRange')]"
-          },
-          "subnetName": {
-            "value": "[variables('adSubnetName')]"
-          },
-          "subnetRange": {
-            "value": "[variables('adSubnet')]"
-          },
-          "DNSServerAddress": {
-            "value": [
-              "[variables('adPDCNicIPAddress')]",
-              "[variables('adBDCNicIPAddress')]"
-            ]
+      },
+      {
+          "type": "Microsoft.Resources/deployments",
+          "apiVersion": "2015-01-01",
+          "name": "[concat(variables('vmNamePrefix'),'0-agListenerIp')]",
+          "dependsOn": [
+              "nicLoop"
+          ],
+          "properties": {
+              "mode": "Incremental",
+              "templateLink": {
+                  "uri": "[variables('ipLoopTemplateURL')]"
+              },
+              "parameters": {
+                  "ipConfig": {
+                      "value": "[reference(concat(variables('vmNamePrefix'), '0-nic')).ipConfigurations[2].properties.privateIPAddress]"
+                  }
+              }
           }
-        }
+      },
+      {
+          "type": "Microsoft.Resources/deployments",
+          "apiVersion": "2015-01-01",
+          "copy": {
+              "name": "agListenerIpLoop",
+              "count": "[sub(parameters('vmCount'),1)]"
+          },
+          "name": "[concat(variables('vmNamePrefix'),copyIndex(1),'-agListenerIp')]",
+          "dependsOn": [
+              "nicLoop",
+              "[concat(variables('vmNamePrefix'),'0-agListenerIp')]"
+          ],
+          "properties": {
+              "mode": "Incremental",
+              "templateLink": {
+                  "uri": "[variables('ipLoopTemplateURL')]"
+              },
+              "parameters": {
+                  "ipConfig": {
+                      "value": "[reference(concat(variables('vmNamePrefix'), copyIndex(1), '-nic')).ipConfigurations[2].properties.privateIPAddress]"
+                  },
+                  "ipAddresses": {
+                      "value": "[reference(concat(variables('vmNamePrefix'),copyIndex(),'-agListenerIp')).outputs.result.value]"
+                  }
+              }
+          }
+      },
+      {
+          "type": "Microsoft.Resources/deployments",
+          "apiVersion": "2015-01-01",
+          "copy": {
+              "name": "virtualMachineLoop",
+              "count": "[parameters('vmCount')]"
+          },
+          "name": "[concat(variables('vmNamePrefix'),copyindex(),'-newVM')]",
+          "dependsOn": [
+              "nicLoop"
+          ],
+          "properties": {
+              "mode": "Incremental",
+              "templateLink": {
+                  "uri": "[variables('vmLoopTemplateURL')]"
+              },
+              "parameters": {
+                  "location": {
+                      "value": "[parameters('location')]"
+                  },              
+                  "vmName": {
+                      "value": "[concat(variables('vmNamePrefix'), copyindex())]"
+                  },
+                  "vmSize": {
+                      "value": "[parameters('vmSize')]"
+                  },
+                  "vmDiskCount": {
+                      "value": "[parameters('vmDiskCount')]"
+                  },
+                  "vmDiskSize": {
+                      "value": "[parameters('vmDiskSize')]"
+                  },
+                  "adminUsername": {
+                      "value": "[parameters('adminUsername')]"
+                  },
+                  "adminPassword": {
+                      "value": "[parameters('adminPassword')]"
+                  },
+                  "_artifactsLocation": {
+                      "value": "[parameters('_artifactsLocation')]"
+                  },
+                  "_artifactsLocationSasToken": {
+                      "value": "[parameters('_artifactsLocationSasToken')]"
+                  },
+                  "imagePublisher": {
+                      "value": "[parameters('imagePublisher')]"
+                  },
+                  "imageOffer": {
+                      "value": "[parameters('imageOffer')]"
+                  },
+                  "imageSKU": {
+                      "value": "[parameters('imageSKU')]"
+                  },
+                  "imageVersion": {
+                      "value": "[parameters('imageVersion')]"
+                  },
+                  "zones": {
+                      "value": "[take(skip(variables('zones'),mod(copyIndex(),length(variables('zones')))),1)]"
+                  }
+              }
+          }
+      },
+      {
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "name": "[concat(variables('vmNamePrefix'),copyindex(1),'/sqlPrep')]",
+          "apiVersion": "2017-03-30",
+    "location": "[parameters('location')]",
+          "dependsOn": [
+              "virtualMachineLoop"
+          ],
+          "copy": {
+              "name": "virtualMachineExtensionLoop",
+              "count": "[sub(parameters('vmCount'),1)]"
+          },
+          "properties": {
+              "publisher": "Microsoft.Powershell",
+              "type": "DSC",
+              "typeHandlerVersion": "2.71",
+              "autoUpgradeMinorVersion": true,
+              "settings": {
+                  "modulesUrl": "[variables('sqlPrepModulesURL')]",
+                  "configurationFunction": "[variables('sqlPrepFunction')]",
+                  "properties": {
+                      "domainName": "[parameters('domainName')]",
+                      "adminCreds": {
+                          "userName": "[parameters('adminUserName')]",
+                          "password": "PrivateSettingsRef:adminPassword"
+                      },
+                      "sqlServiceCreds": {
+                          "userName": "[parameters('sqlServiceAccount')]",
+                          "password": "PrivateSettingsRef:sqlServicePassword"
+                      },
+                      "numberOfDisks": "[parameters('vmDiskCount')]",
+                      "workloadType": "[parameters('workloadType')]"
+                  }
+              },
+              "protectedSettings": {
+                  "items": {
+                      "adminPassword": "[parameters('adminPassword')]",
+                      "sqlServicePassword": "[parameters('sqlServicePassword')]"
+                  }
+              }
+          }
+      },
+      {
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "name": "[concat(variables('vmNamePrefix'),'0/sqlConfig')]",
+          "apiVersion": "2017-03-30",
+    "location": "[parameters('location')]",
+          "dependsOn": [
+              "virtualMachineLoop",
+              "virtualMachineExtensionLoop",
+              "clusterIpLoop",
+              "agListenerIpLoop",
+              "[resourceId('Microsoft.Storage/storageAccounts', variables('witnessStorageName'))]"
+          ],
+          "properties": {
+              "publisher": "Microsoft.Powershell",
+              "type": "DSC",
+              "typeHandlerVersion": "2.71",
+              "autoUpgradeMinorVersion": true,
+              "settings": {
+                  "modulesUrl": "[variables('sqlConfigModulesURL')]",
+                  "configurationFunction": "[variables('sqlConfigFunction')]",
+                  "properties": {
+                      "domainName": "[parameters('domainName')]",
+                      "clusterName": "[variables('clusterName')]",
+                      "vmNamePrefix": "[variables('vmNamePrefix')]",
+                      "sqlAlwaysOnAvailabilityGroupName": "[variables('agName')]",
+                      "sqlAlwaysOnAvailabilityGroupListenerName": "[variables('agListenerName')]",
+                      "sqlAlwaysOnEndpointName": "[variables('agEpName')]",
+                      "vmCount": "[parameters('vmCount')]",
+                      "clusterIpAddresses": "[reference(concat(variables('vmNamePrefix'),sub(parameters('vmCount'),1),'-clusterIp')).outputs.result.value]",
+                      "agListenerIpAddresses": "[reference(concat(variables('vmNamePrefix'),sub(parameters('vmCount'),1),'-agListenerIp')).outputs.result.value]",
+                      "numberOfDisks": "[parameters('vmDiskCount')]",
+                      "workloadType": "[parameters('workloadType')]",
+                      "witnessStorageName": "[variables('witnessStorageName')]",
+                      "witnessStorageKey": {
+                          "userName": "PLACEHOLDER-DO-NOT-USE",
+                          "password": "PrivateSettingsRef:witnessStorageKey"
+                      },
+                      "adminCreds": {
+                          "userName": "[parameters('adminUserName')]",
+                          "password": "PrivateSettingsRef:adminPassword"
+                      },
+                      "sqlServiceCreds": {
+                          "userName": "[parameters('sqlServiceAccount')]",
+                          "password": "PrivateSettingsRef:sqlServicePassword"
+                      }
+                  }
+              },
+              "protectedSettings": {
+                  "items": {
+                      "adminPassword": "[parameters('adminPassword')]",
+                      "sqlServicePassword": "[parameters('sqlServicePassword')]",
+                      "witnessStorageKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts',variables('witnessStorageName')),variables('apiVersionStorage')).keys[0].value]"
+                  }
+              }
+          }
       }
-    }
-  ]
+  ],
+  "outputs": {
+      "agListenerName": {
+          "type": "string",
+          "value": "[variables('agListenerName')]"
+      }
+  }
 }
