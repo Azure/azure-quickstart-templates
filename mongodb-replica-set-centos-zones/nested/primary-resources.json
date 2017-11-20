@@ -52,10 +52,23 @@
     },
     "staticIp": {
       "type": "string"
+    },
+    "zone":  {
+      "type": "array"
+    },
+    "ipAddresses": {
+      "type": "array"
+    },
+    "_artifactsLocation": {
+        "type": "string"
+    },
+    "_artifactsLocationSasToken": {
+        "type": "securestring"
     }
   },
   "variables": {
     "subnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('subnet').vnet), '/subnets/', parameters('subnet').name)]",
+    "ipLoopTemplateURL": "[concat(parameters('_artifactsLocation'),'/nested/getIpAddress.json',parameters('_artifactsLocationSasToken'))]",
     "securityGroupName": "[concat(parameters('namespace'), parameters('vmbasename'), 'nsg')]"
   },
   "resources": [
@@ -140,9 +153,32 @@
       }
     },
     {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'nicIp')]",
+      "dependsOn": [
+        "[concat(parameters('namespace'), concat(parameters('vmbasename'), 'nic'))]"
+      ],
+      "properties": {
+          "mode": "Incremental",
+          "templateLink": {
+              "uri": "[variables('ipLoopTemplateURL')]"
+          },
+          "parameters": {
+              "ipConfig": {
+                  "value": "[reference(concat(parameters('namespace'), concat(parameters('vmbasename'), 'nic'))).ipConfigurations[1].properties.privateIPAddress]"
+              },
+              "ipAddresses": {
+                "value": "parameters('ipAddresses')" 
+              }
+          }
+      }
+    },
+    {
       "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm')]",
+      "zones": "[parameters('zone')]",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/networkInterfaces/', concat(parameters('namespace'), concat(parameters('vmbasename'), 'nic')))]"
@@ -201,7 +237,7 @@
           "fileUris": "[parameters('osSettings').scripts]"
         },
         "protectedSettings": {
-          "commandToExecute": "[concat('bash primary.sh ', parameters('dnsname'), ' ', parameters('secondaryNodeCount'), ' ', parameters('mongoAdminUsername'), ' ', parameters('mongoAdminPassword'), ' ', parameters('staticIp'))]"
+          "commandToExecute": "[concat('bash primary.sh ', parameters('dnsname'), ' ', parameters('secondaryNodeCount'), ' ', parameters('mongoAdminUsername'), ' ', parameters('mongoAdminPassword'), ' ', parameters('staticIp'), parameters('ipAddresses'))]"
         }
       }
     }
