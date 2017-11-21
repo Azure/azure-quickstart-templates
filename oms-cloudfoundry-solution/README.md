@@ -1,5 +1,7 @@
 # Azure OMS Log Analytics Solution for Cloud Foundry
 
+Version: [2017.11](./changelog.md "See change logs")
+
 [![Deploy to Azure](https://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Foms-cloudfoundry-solution%2F%2Fazuredeploy.json)
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Foms-cloudfoundry-solution%2Fazuredeploy.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
@@ -102,3 +104,5 @@ OMS also provides mobile apps for users to view OMS views, receiving alerts and 
 Simply download App from your app store and login with your account, you can have experience just the same as on your workplace everywhere.
 
 OMS Apps now available on [Windows (Mobile devices)](https://www.microsoft.com/en-us/store/p/microsoft-operations-management-suite/9wzdncrfjz2r), [Android](https://play.google.com/store/apps/details?id=com.microsoft.operations.AndroidPhone) and [iOS](https://itunes.apple.com/us/app/microsoft-operations-management-suite/id1042424859) devices.
+
+## [Change Logs](./changelog.md "See change logs")
