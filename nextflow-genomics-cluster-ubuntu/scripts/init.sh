@@ -7,6 +7,8 @@
 # $5 = should run as nf node
 # $6 = username of nextflow user
 # $7 = number of tasks assigned to each node (cluster.maxCpus)
+# $8 = nextflow install url. Used to select specific verion
+# $9 = url of additional install script
 
 log () {
     echo "-------------------------" | tee -a $2
@@ -18,7 +20,7 @@ log () {
 #Install CIFS and JQ (used by this script)
 log "Installing CIFS and JQ" /tmp/nfinstall.log 
 apt-get -y update | tee /tmp/nfinstall.log
-apt-get install cifs-utils sudo apt-transport-https wget -y | tee -a /tmp/nfinstall.log
+apt-get install cifs-utils sudo apt-transport-https wget graphviz -y | tee -a /tmp/nfinstall.log
 
 #Create azure share if it doesn't already exist
 log "Installing AzureCLI and Mounting Azure Files Share" /tmp/nfinstall.log 
@@ -133,9 +135,9 @@ apt-get install openjdk-8-jdk -y | tee -a $LOGFILE
 
 log "Installing Singularity" $LOGFILE
 wget -O- http://neuro.debian.net/lists/xenial.us-ca.full | tee /etc/apt/sources.list.d/neurodebian.sources.list
-apt-key adv --recv-keys --keyserver hkp://pool.sks-keyservers.net:80 0xA5D32F012649A5A9
-apt-get update
-apt-get install -y singularity-container
+apt-key adv --recv-keys --keyserver hkp://pool.sks-keyservers.net:80 0xA5D32F012649A5A9 | tee -a $LOGFILE
+apt-get update | tee -a $LOGFILE
+apt-get install -y singularity-container | tee -a $LOGFILE
 echo "bind path = $4" >> /etc/singularity/singularity.conf
 echo "bind path = /mnt" >> /etc/singularity/singularity.conf
 
@@ -186,13 +188,18 @@ sed 's/^/export /' /etc/environment > /tmp/env.sh && source /tmp/env.sh
 
 #Install nextflow
 log "Installing nextflow" $LOGFILE
-curl -s https://get.nextflow.io | bash | tee -a $LOGFILE
+curl -s $8 | bash | tee -a $LOGFILE
 
 #Copy the binary to the path to be accessed by users
 cp ./nextflow /usr/local/bin
 chmod -f 777 /usr/local/bin/nextflow #Todo: Review sec implications 
 
-log "Done with Install. "
+if [[ $9 ]]; then 
+
+log "Run additional install script" $LOGFILE
+curl -s $9 | bash | tee -a $LOGFILE
+
+fi
 
 #If we're a node run the daemon
 if [ "$5" = true ]; then 
@@ -219,6 +226,3 @@ systemctl start nextflow.service | tee -a $LOGFILE
 log "NODE: Cluster node started" $LOGFILE
 
 fi
-
-# log "Starting minio s3 proxy"
-# docker run -d --restart always -p 9000:9000 --name azure-s3  -e "MINIO_ACCESS_KEY=$1"  -e "MINIO_SECRET_KEY=$2"  minio/minio gateway azure | tee -a $LOGFILE
