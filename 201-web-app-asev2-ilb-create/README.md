@@ -7,4 +7,4 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-For more details on App Service Environments, see the [Introduction to App Service Environments](https://docs.microsoft.com/azure/app-service/app-service-environment/app-service-env-intro/).
+For more details on App Service Environments, see the [Introduction to App Service Environments](https://docs.microsoft.com/en-us/azure/app-service/app-service-environment/intro).

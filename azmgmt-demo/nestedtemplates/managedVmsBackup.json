@@ -5,14 +5,17 @@
         "instanceCount": {
             "type": "int"
         },
-        "vmNameSuffix": {
+        "vmNamePrefix": {
             "type": "string",
             "metadata": {
                 "description": "Name of Azure Virtual Machines"
             }
         },
         "vmRgName": {
-            "type": "string"
+            "type": "string",
+            "metadata": {
+                "description": "Resource group containing the virtual machines."
+            }
         },
         "omsRecoveryVaultName": {
             "type": "string",
@@ -38,12 +41,11 @@
         "backupPolicy": "DefaultPolicy",
         "v2VmType": "Microsoft.Compute/virtualMachines",
         "v2VmContainer": "iaasvmcontainer;iaasvmcontainerv2;",
-        "v2Vm": "vm;iaasvmcontainerv2;"            
+        "v2Vm": "vm;iaasvmcontainerv2;"
     },
     "resources": [
         {
-            "condition": "[equals(parameters('platform'), 'Windows')]",
-            "name": "[concat(parameters('omsRecoveryVaultName'), '/', variables('backupFabric'), '/', variables('v2VmContainer'), concat(parameters('vmRgName'),';',parameters('vmNameSuffix'), 'VM',copyIndex()), '/', variables('v2Vm'), concat(parameters('vmRgName'),';',parameters('vmNameSuffix'),'VM',copyIndex()))]",
+            "name": "[concat(parameters('omsRecoveryVaultName'), '/', variables('backupFabric'), '/', variables('v2VmContainer'), concat(parameters('vmRgName'),';',parameters('vmNamePrefix'), parameters('platform'),copyIndex()), '/', variables('v2Vm'), concat(parameters('vmRgName'),';',parameters('vmNamePrefix'), parameters('platform'), copyIndex()))]",
             "apiVersion": "2016-12-01",
             "location": "[parameters('omsRecoveryVaultRegion')]",
             "type": "Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers/protectedItems",
@@ -54,24 +56,9 @@
             "properties": {
                 "protectedItemType": "[variables('v2VmType')]",
                 "policyId": "[resourceId('Microsoft.RecoveryServices/vaults/backupPolicies',parameters('omsRecoveryVaultName'),variables('backupPolicy'))]",
-                "sourceResourceId": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', parameters('vmRgName'), '/providers/Microsoft.Compute/virtualMachines/', parameters('vmNameSuffix'), 'VM', copyIndex())]"
+                "sourceResourceId": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', parameters('vmRgName'), '/providers/Microsoft.Compute/virtualMachines/', parameters('vmNamePrefix'), parameters('platform'), copyIndex())]"
             }
-        },
-        {
-            "condition": "[equals(parameters('platform'), 'Linux')]",
-            "name": "[concat(parameters('omsRecoveryVaultName'), '/', variables('backupFabric'), '/', variables('v2VmContainer'), concat(parameters('vmRgName'),';',parameters('vmNameSuffix'), 'VML',copyIndex()), '/', variables('v2Vm'), concat(parameters('vmRgName'),';',parameters('vmNameSuffix'),'VML',copyIndex()))]",
-            "apiVersion": "2016-12-01",
-            "location": "[parameters('omsRecoveryVaultRegion')]",
-            "type": "Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers/protectedItems",
-            "copy": {
-                "name": "iaasBackupCopy",
-                "count": "[parameters('instanceCount')]"
-            },
-            "properties": {
-                "protectedItemType": "[variables('v2VmType')]",
-                "policyId": "[resourceId('Microsoft.RecoveryServices/vaults/backupPolicies',parameters('omsRecoveryVaultName'),variables('backupPolicy'))]",
-                "sourceResourceId": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', parameters('vmRgName'), '/providers/Microsoft.Compute/virtualMachines/', parameters('vmNameSuffix'), 'VML', copyIndex())]"
-            }
-        }        
-    ]
+        }
+    ],
+    "outputs": {}
 }

@@ -1,0 +1,147 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/webapp-keyvault-ssl/"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    },
+    "certificateName": {
+      "type": "string",
+      "metadata": {
+        "description": "User friendly certificate resource name"
+      }
+    },
+    "existingKeyVaultId": {
+      "type": "string",
+      "metadata": {
+        "description": "Existing Key Vault resource Id with an access policy to allow Microsoft.Web RP to read Key Vault secrets (Checkout README.md for more information)"
+      }
+    },
+    "existingKeyVaultSecretName": {
+      "type": "string",
+      "metadata": {
+        "description": "Key Vault Secret that contains a PFX certificate"
+      }
+    },
+    "webAppName": {
+      "type": "string",
+      "metadata": {
+        "description": "App name to use for creating SSL binding. This App should have the hostname assigned as a custom domain"
+      }
+    },
+    "servicePlanName": {
+      "type": "string",
+      "metadata": {
+        "description": "Service Plan"
+      }
+    },
+    "hostname": {
+      "type": "string",
+      "metadata": {
+        "description": "Custom hostname for creating SSL binding. This hostname should already be assigned to the Web App"
+      }
+    }
+  },
+  "variables": {
+    "nestedTemplateFolder": "nestedtemplates",
+    "nestedTemplateFileName": "webapp-ssl-bind.json"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "sku": {
+        "name": "S1",
+        "tier": "Standard",
+        "size": "S1",
+        "family": "S",
+        "capacity": 1
+      },
+      "name": "[parameters('servicePlanName')]",
+      "apiVersion": "2015-08-01",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "name": "[parameters('servicePlanName')]",
+        "numberOfWorkers": 1
+      }
+    },
+    {
+      "type": "Microsoft.Web/certificates",
+      "name": "[parameters('certificateName')]",
+      "apiVersion": "2016-03-01",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "keyVaultId": "[parameters('existingKeyVaultId')]",
+        "keyVaultSecretName": "[parameters('existingKeyVaultSecretName')]"
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "name": "[parameters('webAppName')]",
+      "apiVersion": "2016-03-01",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', parameters('servicePlanName'))]",
+        "[resourceId('Microsoft.Web/certificates', parameters('certificateName'))]"
+      ],
+      "resources": [
+        {
+          "apiVersion": "2015-08-01",
+          "type": "hostNameBindings",
+          "name": "[parameters('hostname')]",
+          "dependsOn": [
+            "[concat('Microsoft.Web/sites/', parameters('webAppName'))]"
+          ],
+          "properties": {
+            "siteName": "parameters('webAppName'))]",
+            "domainId": null,
+            "hostNameType": "Verified"
+          }
+        }
+      ],
+      "properties": {
+        "name": "[parameters('webAppName')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('servicePlanName'))]"
+      }
+    },
+    {
+      "apiVersion": "2015-01-01",
+      "name": "linkedTemplate",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "[concat('Microsoft.Web/sites/', parameters('webAppName'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('_artifactsLocation'), '/', variables('nestedTemplateFolder'), '/', variables('nestedTemplateFileName'), parameters('_artifactsLocationSasToken'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "existingWebAppName": {
+            "value": "[parameters('webAppName')]"
+          },
+          "hostname": {
+            "value": "[parameters('hostname')]"
+          },
+          "existingAppLocation": {
+            "value": "[resourceGroup().location]"
+          },
+          "certificateThumprint": {
+            "value": "[reference(resourceId('Microsoft.Web/certificates', parameters('certificateName'))).Thumbprint]"
+          }
+        }
+      }
+    }
+  ]
+}
