@@ -1,0 +1,221 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "adminUsername": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of existing VM Scale Set"
+            }
+        },
+        "adminPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Number of desired VM instances"
+            }
+        }
+    },
+    "variables": {
+        "namingInfix": "existingvmss",
+        "virtualNetworkName": "[concat(variables('namingInfix'), 'vnet')]",
+        "publicIPAddressName": "[concat(variables('namingInfix'), 'pip')]",
+        "subnetName": "[concat(variables('namingInfix'), 'subnet')]",
+        "loadBalancerName": "[concat(variables('namingInfix'), 'lb')]",
+        "natPoolName": "[concat(variables('namingInfix'), 'natpool')]",
+        "bePoolName": "[concat(variables('namingInfix'), 'bepool')]"
+    },
+    "resources": [{
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[variables('virtualNetworkName')]",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2016-03-30",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "10.0.0.0/16"
+                    ]
+                },
+                "subnets": [{
+                    "name": "[variables('subnetName')]",
+                    "properties": {
+                        "addressPrefix": "10.0.0.0/24"
+                    }
+                }]
+            }
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[variables('publicIPAddressName')]",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2016-03-30",
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic",
+                "dnsSettings": {
+                    "domainNameLabel": "[toLower(substring(concat('existingvmss', uniqueString(resourceGroup().id)), 0, 16))]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/loadBalancers",
+            "name": "[variables('loadBalancerName')]",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2016-03-30",
+            "dependsOn": [
+                "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
+            ],
+            "properties": {
+                "frontendIPConfigurations": [{
+                    "name": "LoadBalancerFrontEnd",
+                    "properties": {
+                        "publicIPAddress": {
+                            "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+                        }
+                    }
+                }],
+                "backendAddressPools": [{
+                    "name": "[variables('bePoolName')]"
+                }],
+                "inboundNatPools": [{
+                    "name": "[variables('natPoolName')]",
+                    "properties": {
+                        "frontendIPConfiguration": {
+                            "id": "[concat(resourceId('Microsoft.Network/loadBalancers',variables('loadBalancerName')),'/frontendIPConfigurations/loadBalancerFrontEnd')]"
+                        },
+                        "protocol": "tcp",
+                        "frontendPortRangeStart": 50000,
+                        "frontendPortRangeEnd": 50119,
+                        "backendPort": 3389
+                    }
+                }]
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachineScaleSets",
+            "name": "existingvmss",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2017-03-30",
+            "dependsOn": [
+                "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]",
+                "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+            ],
+            "sku": {
+                "name": "Standard_D1_v2",
+                "tier": "Standard",
+                "capacity": 2
+            },
+            "properties": {
+                "overprovision": true,
+                "upgradePolicy": {
+                    "mode": "Manual"
+                },
+                "virtualMachineProfile": {
+                    "storageProfile": {
+                        "osDisk": {
+                            "createOption": "FromImage"
+                        },
+                        "imageReference": {
+                            "publisher": "MicrosoftWindowsServer",
+                            "offer": "WindowsServer",
+                            "sku": "2012-R2-Datacenter",
+                            "version": "latest"
+                        }
+                    },
+                    "osProfile": {
+                        "computerNamePrefix": "existvmss",
+                        "adminUsername": "[parameters('adminUsername')]",
+                        "adminPassword": "[parameters('adminPassword')]"
+                    },
+                    "networkProfile": {
+                        "networkInterfaceConfigurations": [{
+                            "name": "[concat(variables('namingInfix'), 'nic')]",
+                            "properties": {
+                                "primary": true,
+                                "ipConfigurations": [{
+                                    "name": "[concat(variables('namingInfix'), 'ipconfig')]",
+                                    "properties": {
+                                        "subnet": {
+                                            "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
+                                        },
+                                        "loadBalancerBackendAddressPools": [{
+                                            "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancerName'), variables('bePoolName'))]"
+                                        }],
+                                        "loadBalancerInboundNatPools": [{
+                                            "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatPools', variables('loadBalancerName'), variables('natPoolName'))]"
+                                        }]
+                                    }
+                                }]
+                            }
+                        }]
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Insights/autoscaleSettings",
+            "apiVersion": "2015-04-01",
+            "name": "cpuautoscale",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachineScaleSets/', 'existingvmss')]"
+            ],
+            "properties": {
+                "name": "cpuautoscale",
+                "targetResourceUri": "[concat('/subscriptions/',subscription().subscriptionId, '/resourceGroups/',  resourceGroup().name, '/providers/Microsoft.Compute/virtualMachineScaleSets/', 'existingvmss')]",
+                "enabled": true,
+                "profiles": [{
+                    "name": "Profile1",
+                    "capacity": {
+                        "minimum": "1",
+                        "maximum": "10",
+                        "default": "1"
+                    },
+                    "rules": [{
+                            "metricTrigger": {
+                                "metricName": "Percentage CPU",
+                                "metricNamespace": "",
+                                "metricResourceUri": "[concat('/subscriptions/',subscription().subscriptionId, '/resourceGroups/',  resourceGroup().name, '/providers/Microsoft.Compute/virtualMachineScaleSets/', 'existingvmss')]",
+                                "timeGrain": "PT1M",
+                                "statistic": "Average",
+                                "timeWindow": "PT5M",
+                                "timeAggregation": "Average",
+                                "operator": "GreaterThan",
+                                "threshold": 50
+                            },
+                            "scaleAction": {
+                                "direction": "Increase",
+                                "type": "ChangeCount",
+                                "value": "1",
+                                "cooldown": "PT5M"
+                            }
+                        },
+                        {
+                            "metricTrigger": {
+                                "metricName": "Percentage CPU",
+                                "metricNamespace": "",
+                                "metricResourceUri": "[concat('/subscriptions/',subscription().subscriptionId, '/resourceGroups/',  resourceGroup().name, '/providers/Microsoft.Compute/virtualMachineScaleSets/', 'existingvmss')]",
+                                "timeGrain": "PT1M",
+                                "statistic": "Average",
+                                "timeWindow": "PT5M",
+                                "timeAggregation": "Average",
+                                "operator": "LessThan",
+                                "threshold": 30
+                            },
+                            "scaleAction": {
+                                "direction": "Decrease",
+                                "type": "ChangeCount",
+                                "value": "1",
+                                "cooldown": "PT5M"
+                            }
+                        }
+                    ]
+                }]
+            }
+        }
+    ],
+    "outputs": {
+        "existingVmssName": {
+            "type": "string",
+            "value": "existingvmss"
+        }
+    }
+}

@@ -1,0 +1,216 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "buildInstanceSettings": {
+            "type": "object"
+        },
+        "networkSettings": {
+            "type": "object"
+        },
+        "AzureSubscriptionId": {
+            "type": "string"
+        },
+        "AzureApplicationId": {
+            "type": "string"
+        },
+        "AzureClientSecret": {
+            "type": "securestring"
+        },
+        "AzureTenantId": {
+            "type": "string"
+        },
+        "packerStorageAccName":{
+            "type": "string"
+        }
+    },
+    "variables": {
+        "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('networkSettings').virtualNetworkName,parameters('networkSettings').subnet1Name)]",
+        "sshKeyPath": "[concat('/home/',parameters('buildInstanceSettings').adminUsername,'/.ssh/authorized_keys')]",
+        "osProfilesshPublicKey": {
+            "computerName": "[parameters('buildInstanceSettings').buildInstanceVmName]",
+            "adminUsername": "[parameters('buildInstanceSettings').adminUsername]",
+            "linuxConfiguration": {
+                "disablePasswordAuthentication": true,
+                "ssh": {
+                    "publicKeys": [
+                        {
+                            "path": "[variables('sshKeyPath')]",
+                            "keyData": "[parameters('buildInstanceSettings').sshPublicKey]"
+                        }
+                    ]
+                }
+            }
+        },
+        "osProfileReference": "[variables(concat('osProfile', parameters('buildInstanceSettings').authenticationType))]"
+    },
+    "resources": [
+        {
+            "comments": "This storage account is used to store the Boot diagnostic reports of build instance server",
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[parameters('buildInstanceSettings').buildInstanceDiagnosticsStorageAccountName]",
+            "apiVersion":"2017-06-01",
+            "location": "[parameters('buildInstanceSettings').location]",
+            "sku": {
+                "name": "Standard_LRS"
+            },
+            "kind": "Storage",
+            "properties": {}
+        },
+        {
+            "comments": "This public ip is used for build instance.",
+            "name": "[parameters('buildInstanceSettings').buildInstancePipName]",
+            "type": "Microsoft.Network/publicIpAddresses",
+            "apiVersion": "2017-04-01",
+            "location": "[parameters('buildInstanceSettings').location]",
+            "properties": {
+                "publicIpAllocationMethod": "[parameters('buildInstanceSettings').publicIpAddressType]",
+                "dnsSettings": {
+                    "domainNameLabel": "[parameters('buildInstanceSettings').buildInstanceDnsLabelPrefix]"
+                }
+            }
+        },
+        {
+            "comments": "This network security group is used for build instance.",
+            "name": "[parameters('buildInstanceSettings').buildInstanceNsgName]",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2017-04-01",
+            "location": "[parameters('buildInstanceSettings').location]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "SSH",
+                        "properties": {
+                            "priority": 1010,
+                            "sourceAddressPrefix": "*",
+                            "protocol": "TCP",
+                            "destinationPortRange": "22",
+                            "access": "Allow",
+                            "direction": "Inbound",
+                            "sourcePortRange": "*",
+                            "destinationAddressPrefix": "*"
+                        }
+                    },
+                    {
+                        "name": "Port_8080",
+                        "properties": {
+                            "access": "Allow",
+                            "destinationAddressPrefix": "*",
+                            "destinationPortRange": "8080",
+                            "direction": "Inbound",
+                            "priority": 1020,
+                            "protocol": "Tcp",
+                            "sourceAddressPrefix": "Internet",
+                            "sourcePortRange": "*"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "comments": "This network interface is used for build instance.",
+            "name": "[parameters('buildInstanceSettings').buildInstanceNicName]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2017-04-01",
+            "location": "[parameters('buildInstanceSettings').location]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/publicIpAddresses/', parameters('buildInstanceSettings').buildInstancePipName)]",
+                "[concat('Microsoft.Network/networkSecurityGroups/', parameters('buildInstanceSettings').buildInstanceNsgName)]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "subnet": {
+                                "id": "[variables('subnetRef')]"
+                            },
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIpAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIpAddresses', parameters('buildInstanceSettings').buildInstancePipName)]"
+                            }
+                        }
+                    }
+                ],
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('buildInstanceSettings').buildInstanceNsgName)]"
+                }
+            }
+        },
+        {
+            "comments": "This is the virtual machine resource of build instance.",
+            "name": "[parameters('buildInstanceSettings').buildInstanceVmName]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2017-03-30",
+            "location": "[parameters('buildInstanceSettings').location]",
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('buildInstanceSettings').buildInstanceDiagnosticsStorageAccountName)]",
+                "[concat('Microsoft.Network/networkInterfaces/', parameters('buildInstanceSettings').buildInstanceNicName)]"
+            ],
+            "properties": {
+                "osProfile": "[variables('osProfileReference')]",
+                "hardwareProfile": {
+                    "vmSize": "[parameters('buildInstanceSettings').buildInstanceVmSize]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "offer": "UbuntuServer",
+                        "publisher": "Canonical",
+                        "sku": "[parameters('buildInstanceSettings').ubuntuSku]",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "createOption": "fromImage",
+                        "managedDisk": {
+                            "storageAccountType": "Premium_LRS"
+                        }
+                    },
+                    "dataDisks": []
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('buildInstanceSettings').buildInstanceNicName)]"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true,
+                        "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', parameters('buildInstanceSettings').buildInstanceDiagnosticsStorageAccountName)).primaryEndpoints.blob]"
+                    }
+                }
+            }
+        },
+        {
+            "comments": "This custom script extension is used to install jenkins.",
+            "name": "[concat(parameters('buildInstanceSettings').buildInstanceVmName, '/buildscript')]",
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "apiVersion": "2017-03-30",
+            "location": "[parameters('buildInstanceSettings').location]",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('buildInstanceSettings').buildInstanceVmName)]"
+            ],
+            "properties": {
+                "publisher": "Microsoft.Azure.Extensions",
+                "type": "CustomScript",
+                "typeHandlerVersion": "2.0",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "fileUris": [
+                        "[concat(parameters('buildInstanceSettings').buildScriptUrl)]"
+                    ]
+                },
+                "protectedSettings": {
+                    "commandToExecute": "[concat('sh build.sh',' ',parameters('AzureApplicationId'),' ',parameters('AzureClientSecret'),' ',parameters('AzureTenantId'),' ',parameters('packerStorageAccName'),' ',parameters('AzureSubscriptionId'))]"
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "buildInstanceDNS": {
+            "type": "string",
+            "value": "[reference(parameters('buildInstanceSettings').buildInstancePipName).dnsSettings.fqdn]"
+        }
+    }
+}

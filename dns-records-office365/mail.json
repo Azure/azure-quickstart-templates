@@ -1,0 +1,69 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"dnsZoneName": {
+			"type": "string",
+			"metadata": {
+				"description": "Name of the DNS Zone."
+			}
+		},
+		"ttl": {
+			"type": "int",
+			"defaultValue": "3600",
+			"metadata": {
+				"description": "Time to live value, in seconds."
+			}
+		},
+	},
+	"variables": {
+		"mx": "[concat(replace(parameters('dnsZoneName'),'.','-'),'.mail.protection.outlook.com')]",
+	},
+	"resources": [{
+		"comments": "CNAME record needed for autodiscover endpoint for making it easier to configure Outlook.",
+		"type": "Microsoft.Network/dnszones/CNAME",
+		"name": "[concat(parameters('dnsZoneName'),'/','autodiscover')]",
+		"apiVersion": "2016-04-01",
+		"properties": {
+			"TTL": "[parameters('ttl')]",
+			"CNAMERecord": {
+				"cname": "autodiscover.outlook.com"
+			}
+		}
+	}, {
+		"type": "Microsoft.Network/dnszones/CNAME",
+		"name": "[concat(parameters('dnsZoneName'),'/','msoid')]",
+		"apiVersion": "2016-04-01",
+		"properties": {
+			"TTL": "[parameters('ttl')]",
+			"CNAMERecord": {
+				"cname": "clientconfig.microsoftonline-p.net"
+			}
+		}
+	}, {
+		"comments": "MX record so email for your domain will be routed to Office 365",
+		"type": "Microsoft.Network/dnszones/MX",
+		"name": "[concat(parameters('dnsZoneName'),'/','@')]",
+		"apiVersion": "2016-04-01",
+		"properties": {
+			"TTL": "[parameters('ttl')]",
+			"MXRecords": [{
+				"exchange": "[variables('mx')]",
+				"preference": 0
+			}]
+		}
+	}, {
+		"comments": "TXT record for Sender policy framework (SPF) records, which are used to prevent spam.",
+		"type": "Microsoft.Network/dnszones/TXT",
+		"name": "[concat(parameters('dnsZoneName'),'/','@')]",
+		"apiVersion": "2016-04-01",
+		"properties": {
+			"TTL": "[parameters('TTL')]",
+			"TXTRecords": [{
+				"value": [
+					"v=spf1 include:spf.protection.outlook.com -all"
+				]
+			}]
+		}
+	}]
+}
