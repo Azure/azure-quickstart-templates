@@ -55,6 +55,40 @@ _Please refer to document [here](https://github.com/cloudfoundry/bosh-hm-forward
 
 _Be aware that there might be compatibility issue if you choose to use both `Microsoft Azure OMS Agent` and `BOSH Health Metrics Forwarder` in a single one Cloud Foundry environment._
 
+## Customization and Upgrade
+
+This template only deployed default resources with default settings, you might want to customize them to fit your needs.
+
+If there are new features of this template you wish to use, you can redeploy the template by clicking the `Deploy to Azure` button on top to sync with all the latest features provided by our templates.
+
+__ALERT: Redeploy this template(`azuredeploy.json`) is equivalent to deploy all nested templates in folder `/nested`, please reefer to explanations of redeploying these nested templates below and make sure you understand it will cause customization loss.__
+
+Also notice that `OMS Log Analytics workspace` itself will not be modified during a redeployment. Thus your logs already in the workspace will not be lost and you don't have to change settings of neither `Microsoft Azure Log Analytics Nozzle` nor `Microsoft Azure OMS Agent`.
+
+### Customize and Upgrade Views
+
+To Customize view, you can refer to instructions [here](https://docs.microsoft.com/en-us/azure/log-analytics/log-analytics-view-designer#import-an-existing-view).
+
+To upgrade views, you can delete corresponding solutions from azure portal and then click [here](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Foms-cloudfoundry-solution%2Fnested%2FomsCustomViews.json) to redeploy nested view templates. __Make sure you know this will overwrite your customization made to corresponding views.__
+
+You can also import new views manually. Views included in this template are located in repository `Microsoft Azure Log Analytics Nozzle` [here](https://github.com/Azure/oms-log-analytics-firehose-nozzle/tree/master/docs/omsview). Please download views you wish to add and refer to document [here](https://docs.microsoft.com/en-us/azure/log-analytics/log-analytics-view-designer#import-an-existing-view) on how to import them.
+
+As you may noticed, you may export an existing view if you wish to preserve your customization. Please refer to document [here](https://docs.microsoft.com/en-us/azure/log-analytics/log-analytics-view-designer#export-an-existing-view) on how to do that.
+
+### Customize and Upgrade Alerts
+
+To upgrade alerts, you can click [here](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Foms-cloudfoundry-solution%2Fnested%2FomsAlerts.json) to redeploy nested view templates. __Make sure you know this will overwrite your customization made to alerts and corresponding saved searches EVEN you changed its original display name.__
+
+To add or customize alerts, please refer to document [here](https://docs.microsoft.com/en-us/azure/log-analytics/log-analytics-alerts-creating) for instruction.
+
+_Reference document for query language in OMS Log Analytics can be found [here](https://docs.microsoft.com/en-us/azure/log-analytics/log-analytics-search-reference). You may also consult our template of alerts [here](./nested/omsAlerts.json)._
+
+### Customize and Upgrade Saved Searches
+
+To upgrade saved searches, you can click [here](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Foms-cloudfoundry-solution%2Fnested%2FomsSavedSearches.json) to redeploy nested saved searches templates. __Make sure you know this will also overwrite your customization made to saved searches EVEN you haved changed its display name.__
+
+To customize or create new saved searches, please login to `Microsoft Azure` portal, find and enter corresponding resource of `Log Analytics Workspace`. In page `Saved searches` under category `General`, you will find a complete list of saved searches of this workspace. Besides creating new saved searches, you can also execute, edit or delete existing searches here. _You can also save your current search in `Log Search` page of OMS portal by clicking `Save` button._
+
 ## Exploring the workspace
 
 The template will deploy several views bundled in 3 solutions to your `Log Analytics` workspace along with alerts and saved searches.
