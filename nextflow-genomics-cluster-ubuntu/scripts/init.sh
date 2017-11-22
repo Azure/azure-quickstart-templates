@@ -194,6 +194,51 @@ curl -s $8 | bash | tee -a $LOGFILE
 cp ./nextflow /usr/local/bin
 chmod -f 777 /usr/local/bin/nextflow #Todo: Review sec implications 
 
+log "Run smoke test. Validate machine is setup" $LOGFILE
+
+log "Check Installed programs" $LOGFILE
+if ! [ -x "$(command -v docker)" ] || ! [ -x "$(command -v singularity)" ] || ! [ -x "$(command -v nextflow)" ]; then
+  log "FAIL: Missing commands" $LOGFILE
+  echo "Docker" >> $LOGFILE
+  command -v docker >> $LOGFILE
+
+  echo "Singularity" >> $LOGFILE
+  command -v singularity >> $LOGFILE
+
+  echo "Nextflow" >> $LOGFILE
+  command -v nextflow >> $LOGFILE
+
+  echo "Shutting down node...." >> $LOGFILE
+  shutdown
+else 
+  echo "Success: Nextflow, docker and singularity installed" >> $LOGFILE
+fi
+
+log "Check mount points setup" $LOGFILE
+if mountpoint -q $4/cifs
+then
+   echo "CIFS Mounted" >> $LOGFILE
+else
+   echo "FAILED CIFS not mounted" >> $LOGFILE
+   echo "Shutting down node...." >> $LOGFILE
+   shutdown
+fi
+
+#If we're a node run the daemon
+if [ "$5" = true ]; then 
+
+    if mountpoint -q $4/nfs
+    then
+        echo "NFS Mounted" >> $LOGFILE
+    else
+        echo "FAILED NFS not mounted" >> $LOGFILE
+        echo "Shutting down node...." >> $LOGFILE
+        shutdown
+    fi
+
+fi 
+
+
 if [[ $9 ]]; then 
 
 log "Run additional install script" $LOGFILE
