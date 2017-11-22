@@ -57,8 +57,8 @@
         10000
       ],
       "defaultValue": 256,
-      "metadata":{
-        "description": "The SSD Size to be used for the NFS file share. For pricing details see https://azure.microsoft.com/en-us/pricing/details/managed-disks/" 
+      "metadata": {
+        "description": "The SSD Size to be used for the NFS file share. For pricing details see https://azure.microsoft.com/en-us/pricing/details/managed-disks/"
       }
     },
     "vmAdditionalInstallScriptUrl": {
@@ -129,10 +129,39 @@
       "metadata": {
         "description": "Sets the cluster.maxCpus setting on all cluster nodes"
       }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "ntent.com/lawrencegripper/azure-quickstart-templates/2f03a09492ff08577afacad2932e08528ccf1c25"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    },
+    "_artifactsSharedFolder": {
+      "type": "string",
+      "metadata": {
+        "description": "The folder in the artifacts location were shared scripts are stored."
+      },
+      "defaultValue": "/nextflow-genomics-cluster-ubuntu/Scripts"
+    },
+    "_artifactsNextflowFolder": {
+      "type": "string",
+      "metadata": {
+        "description": "The folder in teh artifacts location were nextflow scripts are stored."
+      },
+      "defaultValue": "/shared_scripts/ubuntu"
     }
   },
   "variables": {
-    "nextflowInitScript": "https://raw.githubusercontent.com/lawrencegripper/azure-quickstart-templates/3b96e2c5799d8be4c53fab2c8889690384a12e8a/nextflow-genomics-cluster-ubuntu/scripts/init.sh",
+    "nextflowInitScript": "[concat(parameters('_artifactsLocation'), parameters('_artifactsLocationSasToken'), parameters('_artifactsNextflowFolder'), '/init.sh')]",
+    "diskInitScript": "[concat(parameters('_artifactsLocation'), parameters('_artifactsLocationSasToken'), parameters('_artifactsSharedFolder'), '/vm-disk-utils-0.1.sh')]",
     "jumpboxNICName": "jumpboxNIC",
     "addressPrefix": "10.0.0.0/16",
     "subnetPrefix": "10.0.0.0/24",
@@ -263,7 +292,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('jumpboxVMName'),'/nfinit')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2017-03-30",
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', variables('jumpboxVMName'))]"
@@ -274,10 +303,12 @@
         "typeHandlerVersion": "2.0",
         "autoUpgradeMinorVersion": true,
         "settings": {
-          "timestamp": 2121,
           "fileUris": [
-            "[variables('nextflowInitScript')]"
-          ],
+            "[variables('nextflowInitScript')]",
+            "[variables('diskInitScript')]"
+          ]
+        },
+        "protectedSettings": {
           "commandToExecute": "[concat('bash init.sh ', variables('storageAccountName'), ' ', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value, ' ', parameters('shareName'), ' ', parameters('mountpointPath'), ' false ', parameters('adminUsername'), ' 0 ', parameters('nextflowInstallUrl'), ' ', parameters('vmAdditionalInstallScriptUrl'))]"
         }
       }
@@ -324,7 +355,7 @@
                       "name": "ipconfig",
                       "properties": {
                         "subnet": {
-                          "id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/virtualNetworks/', parameters('vnetName'), '/subnets/', parameters('subnetName'))]"
+                          "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnetName'))]"
                         }
                       }
                     }
@@ -343,10 +374,12 @@
                   "typeHandlerVersion": "2.0",
                   "autoUpgradeMinorVersion": true,
                   "settings": {
-                    "timestamp": 2120,
                     "fileUris": [
-                      "[variables('nextflowInitScript')]"
-                    ],
+                      "[variables('nextflowInitScript')]",
+                      "[variables('diskInitScript')]"
+                    ]
+                  },
+                  "protectedSettings": {
                     "commandToExecute": "[concat('bash init.sh ', variables('storageAccountName'), ' \"', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value, '\" ', parameters('shareName'), ' ', parameters('mountpointPath'), ' true ', parameters('adminUsername'), ' ', parameters('nodeMaxCpus'), ' ', parameters('nextflowInstallUrl'), ' ', parameters('vmAdditionalInstallScriptUrl'))]"
                   }
                 }

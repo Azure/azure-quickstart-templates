@@ -37,12 +37,6 @@ az storage share create --name $3 --quota 2048 --connection-string "DefaultEndpo
 sleep 10
 
 DATA_DIR="/datadisks/disk1"
-if ! [ -f "vm-disk-utils-0.1.sh" ]; 
-then
-    DOWNLOAD_SCRIPT="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shared_scripts/ubuntu/vm-disk-utils-0.1.sh"
-    log "Disk setup script not found in `pwd`, download from $DOWNLOAD_SCRIPT" /tmp/nfinstall.log 
-    wget -q $DOWNLOAD_SCRIPT
-fi
 
 bash ./vm-disk-utils-0.1.sh
 if [ $? -eq 0 ] && [ -d "$DATA_DIR" ];
@@ -136,7 +130,8 @@ apt-get install openjdk-8-jdk -y | tee -a $LOGFILE
 log "Installing Singularity" $LOGFILE
 wget -O- http://neuro.debian.net/lists/xenial.us-ca.full | tee /etc/apt/sources.list.d/neurodebian.sources.list
 apt-key adv --recv-keys --keyserver hkp://pool.sks-keyservers.net:80 0xA5D32F012649A5A9 | tee -a $LOGFILE
-apt-get update | tee -a $LOGFILE
+apt-key update -y | tee -a $LOGFILE
+apt-get update -y | tee -a $LOGFILE
 apt-get install -y singularity-container | tee -a $LOGFILE
 echo "bind path = $4" >> /etc/singularity/singularity.conf
 echo "bind path = /mnt" >> /etc/singularity/singularity.conf
