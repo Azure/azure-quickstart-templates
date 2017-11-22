@@ -6,8 +6,8 @@
 </a>
 
 
-Nextflow on Azure
-======
+# Nextflow on Azure
+
 
 ## What is Nextflow?
 [Nextflow enables scalable and reproducible](http://nextflow.io) scientific workflows using software containers. It allows the adaptation of pipelines written in the most common scripting languages.
@@ -55,9 +55,9 @@ Once deployed you can scale the cluster by selecting the VM Scale set and changi
 
 ### Azure CLI
 
-Update the `variables` section and the details in `azuredeploy.parameters.json` then run it in [Windows Subsystem for Linux](https://msdn.microsoft.com/en-us/commandline/wsl/install-win10?f=255&MSPPError=-2147217396) or Bash. The script will show the deployment output which contains the ssh connection string for the jumpbox and some example nextflow commands configured to use the cluster. 
+Update the `variables` section and the details in `azuredeploy.parameters.json` then run it in [Windows Subsystem for Linux](https://msdn.microsoft.com/en-us/commandline/wsl/install-win10?f=255&MSPPError=-2147217396) or Bash. The script will show the deployment output which contains the ssh connection string for the jumpbox and some example nextflow commands configured to use the cluster.
 
-```
+``` text
 #Variables
 RESOURCE_GROUP=$your_resource_group_name_here
 LOCATION=westus2
@@ -72,7 +72,7 @@ az group deployment show -g $RESOURCE_GROUP -n azuredeploy --query properties.ou
 
 Example output:
 
-```
+``` json
 Done: Here are details for connecting and running pipelines
 {
   "exampleNextflowCommand": {
@@ -96,7 +96,7 @@ The cluster is created as a 'Deployment' under a resource group. If issues occur
 
 [Debugging cluster video](https://1drv.ms/f/s!AgO58DGl6B7Rg-NyegXiV8cBhdxgKw)
 
-In most cases a good first step is to delete the resource group and redeploy to rule out transient issues.  
+In most cases a good first step is to delete the resource group and redeploy to rule out transient issues.
 
 In addition to this, logs are created during the setup of the nodes and master. These are stored in the storage account created for the cluster. You easily access these by installing [Azure Storage Explorer](https://azure.microsoft.com/en-us/features/storage-explorer/) and browsing the content under '[ResourceGroupUsed]/nfstoragexxxxxxx/File Shares/sharedstorage/logs'. Here is an example:
 
@@ -104,16 +104,22 @@ In addition to this, logs are created during the setup of the nodes and master. 
 
 ## Custom Image 
 
-The template supports using a Ubuntu 16 LTS based custom image for the master and nodes. 
+The template supports using a Ubuntu 16 LTS based custom image for the master and nodes.
 
 Once you have created your image retrieve it's `id` using the azcli. For example run this command, it will list the IDs of your custom images:
 
- `az image list --query [].id` 
+ `az image list --query [].id`
 
-Now update the example parameters file [azuredpeloy.customimage.parameters.json](./azuredeploy.customimage.parameters.json#L16) to use this ID and set any other parameters you require (password, dnsname etc). 
+Set the image ID as follows in your parameters file.
+
+``` json
+    "vmImageReference": {
+      "value": {
+        "id": "yourManagedImageId - 'az image list' then take id from output"
+      }
+    }
+```
 
 You can then deploy your Nextflow cluster as follows:
 
  `az group deployment create -g [your_resource_group_here] --template-file ./azuredeploy.json --parameters @azuredeploy.customimage.parameters.json`
-
- 
