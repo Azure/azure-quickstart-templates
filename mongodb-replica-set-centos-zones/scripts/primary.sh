@@ -6,6 +6,9 @@ mongoAdminUser=$3
 mongoAdminPasswd=$4
 inputArray=("$@")
 
+#here to keep the script from failing - once inputArray works, delete this
+staticIp='10.0.1.250'
+
 #remove all non-ip values from array
 ipAddresses=${inputArray[@]:5}
 

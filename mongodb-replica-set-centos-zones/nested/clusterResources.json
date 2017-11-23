@@ -58,6 +58,7 @@
     }
   },
   "variables": {
+    "secondaryNodeCount": "[sub(parameters('nodeCount'),1)]",
     "subnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('subnet').vnet), '/subnets/', parameters('subnet').name)]",
     "ipLoopTemplateURL": "[concat(parameters('_artifactsLocation'),'/nested/getIpAddress.json',parameters('_artifactsLocationSasToken'))]",
     "nodeLoopTemplateURL": "[concat(parameters('_artifactsLocation'),'/nested/newNode.json',parameters('_artifactsLocationSasToken'))]",
@@ -114,7 +115,7 @@
         "apiVersion": "2015-01-01",
         "copy": {
             "name": "secondaryNodeIpLoop",
-            "count": "[sub(parameters('nodeCount'),1)]"
+            "count": "[variables('secondaryNodeCount')]"
         },
         "name": "[concat(parameters('namespace'), 'node', copyIndex(1),'-nodeIp')]",
         "dependsOn": [
@@ -194,7 +195,7 @@
     ],
     "copy": {
         "name": "virtualMachineExtensionLoop",
-        "count": "[sub(parameters('nodeCount'),1)]"
+        "count": "[variables('secondaryNodeCount')]"
     },
     "properties": {
         "publisher": "Microsoft.Azure.Extensions",
@@ -202,7 +203,7 @@
         "typeHandlerVersion": "2.0",
         "autoUpgradeMinorVersion": true,
         "settings": {
-        "modulesUrl": "[variables('secondaryNodeScriptURL')]"
+        "fileUris": "[split(variables('secondaryNodeScriptURL'), ' ')]"
         },
         "protectedSettings": {
           "commandToExecute": "[concat('bash secondary.sh ', parameters('dnsname'))]"
@@ -225,10 +226,10 @@
         "typeHandlerVersion": "2.0",
         "autoUpgradeMinorVersion": true,
         "settings": {
-        "modulesURL": "[variables('primaryNodeScriptURL')]"         
+        "fireUris": "[split(variables('primaryNodeScriptURL'), ' ')]"         
         },
         "protectedSettings": {
-            "commandToExecute": "[concat('bash primary.sh ', parameters('dnsname'), ' ', sub(parameters('nodeCount'),1), ' ', parameters('mongoAdminUsername'), ' ', parameters('mongoAdminPassword'), ' ', parameters('ipAddresses'))]"
+            "commandToExecute": "[concat('bash primary.sh ', parameters('dnsname'), ' ', sub(parameters('nodeCount'),1), ' ', parameters('mongoAdminUsername'), ' ', parameters('mongoAdminPassword'), ' ', string(parameters('ipAddresses')))]"
         }
       }
     }
