@@ -76,41 +76,29 @@
         "description": "The CentOS version for the VM. This will pick a fully patched image of this given CentOS version."
       }
     },
-    "secondaryNodeCount": {
+    "clusterNodeCount": {
       "type": "int",
-      "defaultValue": 2,
+      "defaultValue": 3,
       "allowedValues": [
-        2,
-        4,
-        6,
-        8
+        3,
+        5,
+        7,
+        9
       ],
       "metadata": {
-        "description": "Number of MongoDB secondary node (2 is the default), the value should be even numbers, like 2, 4, or 6. And 6 is the maximum number of secondary nodes."
+        "description": "Number of MongoDB nodes (3 is the default), the value should be odd numbers, like 3, 5, or 7. And 9 is the maximum number of nodes."
       }
     },
-    "primaryNodeVmSize": {
+    "clusterNodeVmSize": {
       "type": "string",
-      "defaultValue": "Standard_A3",
+      "defaultValue": "Standard_D2_v2",
       "allowedValues": [
         "Standard_D2_v2",
         "Standard_D3_v2",
         "Standard_D4_v2"
       ],
       "metadata": {
-        "description": "The size of the virtual machines used when provisioning the primary node"
-      }
-    },
-    "secondaryNodeVmSize": {
-      "type": "string",
-      "defaultValue": "Standard_A3",
-      "allowedValues": [
-        "Standard_D2_v2",
-        "Standard_D3_v2",
-        "Standard_D4_v2"
-      ],
-      "metadata": {
-        "description": "The size of the virtual machines used when provisioning secondary node(s)"
+        "description": "The size of the virtual machines used when provisioning cluster nodes."
       }
     },
     "_artifactsLocation": {
@@ -129,14 +117,12 @@
     }
   },
   "variables": {
-    "sharedTemplateUrl": "[concat(parameters('_artifactsLocation'),'/nested/shared-resources.json',parameters('_artifactsLocationSasToken'))]",
-    "primaryTemplateUrl": "[concat(parameters('_artifactsLocation'),'/nested/primary-resources.json',parameters('_artifactsLocationSasToken'))]",
-    "secondaryTemplateUrl": "[concat(parameters('_artifactsLocation'),'/nested/secondary-resources.json',parameters('_artifactsLocationSasToken'))]",
+    "sharedTemplateUrl": "[concat(parameters('_artifactsLocation'),'/nested/sharedResources.json',parameters('_artifactsLocationSasToken'))]",
+    "clusterTemplateUrl": "[concat(parameters('_artifactsLocation'),'/nested/clusterResources.json',parameters('_artifactsLocationSasToken'))]",
+    "deployClusterResources": "deployClusterResources",
     "namespace": "mongodb-",
     "virtualNetworkName": "myVNET1",
-    "apiVersion": "2015-01-01",
-    "secondaryNodeZones": ["2","3","1"],
-    "primaryNodeZone": ["1"],
+    "zones": ["1","2","3"],
     "ipAddresses": [],
     "networkSettings": {
       "virtualNetworkName": "[variables('virtualNetworkName')]",
@@ -156,27 +142,13 @@
         "primaryIp": "10.0.1.240"
       }
     },
-    "primaryOsSettings": {
+    "OsSettings": {
       "imageReference": {
         "publisher": "OpenLogic",
         "offer": "CentOS",
         "sku": "[parameters('centOsVersion')]",
         "version": "latest"
-      },
-      "scripts": [
-        "[concat(parameters('_artifactsLocation'),'/scripts/primary.sh',parameters('_artifactsLocationSasToken'))]"
-      ]
-    },
-    "secondaryOsSettings": {
-      "imageReference": {
-        "publisher": "OpenLogic",
-        "offer": "CentOS",
-        "sku": "[parameters('centOsVersion')]",
-        "version": "latest"
-      },
-      "scripts": [
-        "[concat(parameters('_artifactsLocation'),'/scripts/secondary.sh',parameters('_artifactsLocationSasToken'))]"
-      ]
+      }
     }
   },
   "resources": [
@@ -201,88 +173,21 @@
       }
     },
     {
-      "name": "[concat('secondaryNode', copyindex())]",
+      "name": "[variables('deployClusterResources')]",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2015-01-01",
       "dependsOn": [
         "[concat('Microsoft.Resources/deployments/', 'shared')]"
       ],
-      "copy": {
-        "name": "vmLoop",
-        "count": "[parameters('secondaryNodeCount')]"
-      },
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[variables('secondaryTemplateUrl')]",
+          "uri": "[variables('clusterTemplateUrl')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
           "location": {
             "value": "[parameters('location')]"
-          },
-          "replSetName": {
-            "value": "repset"
-          },
-          "adminUsername": {
-            "value": "[parameters('adminUsername')]"
-          },
-          "adminPassword": {
-            "value": "[parameters('adminPassword')]"
-          },
-          "namespace": {
-            "value": "[variables('namespace')]"
-          },
-          "vmbasename": {
-            "value": "[concat('secondary', copyindex())]"
-          },
-          "subnet": {
-            "value": "[variables('networkSettings').subnet.dse]"
-          },
-          "sizeOfDataDiskInGB": {
-            "value": "[parameters('sizeOfDataDiskInGB')]"
-          },
-          "vmDiskCount": {
-            "value": "[parameters('vmDiskCount')]"
-          },
-          "dnsname": {
-            "value": "[parameters('dnsNamePrefix')]"
-          },
-          "vmSize": {
-            "value": "[parameters('secondaryNodeVmSize')]"
-          },
-          "osSettings": {
-            "value": "[variables('secondaryOsSettings')]"
-          },
-          "zone": {
-            "value": "[take(skip(variables('secondaryNodeZones'),mod(copyIndex(),length(variables('secondaryNodeZones')))),1)]"
-          },
-          "ipAddresses": {
-            "value": "[variables('ipAddresses')]"
-          }
-        }
-      }
-    },
-    {
-      "name": "primaryNode",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
-      "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'shared')]",
-        "vmLoop"
-      ],
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[variables('primaryTemplateUrl')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "location": {
-            "value": "[parameters('location')]"
-          },
-          "replSetName": {
-            "value": "repset"
           },
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
@@ -299,20 +204,8 @@
           "namespace": {
             "value": "[variables('namespace')]"
           },
-          "vmbasename": {
-            "value": "primary"
-          },
           "subnet": {
             "value": "[variables('networkSettings').subnet.dse]"
-          },
-          "dnsname": {
-            "value": "[parameters('dnsNamePrefix')]"
-          },
-          "staticIp": {
-            "value": "[variables('networkSettings').statics.primaryIp]"
-          },
-          "secondaryNodeCount": {
-            "value": "[parameters('secondaryNodeCount')]"
           },
           "sizeOfDataDiskInGB": {
             "value": "[parameters('sizeOfDataDiskInGB')]"
@@ -320,14 +213,20 @@
           "vmDiskCount": {
             "value": "[parameters('vmDiskCount')]"
           },
+          "dnsname": {
+            "value": "[parameters('dnsNamePrefix')]"
+          },
           "vmSize": {
-            "value": "[parameters('primaryNodeVmSize')]"
+            "value": "[parameters('clusterNodeVmSize')]"
+          },
+          "nodeCount": {
+            "value": "[parameters('clusterNodeCount')]"
           },
           "osSettings": {
-            "value": "[variables('primaryOsSettings')]"
+            "value": "[variables('OsSettings')]"
           },
-          "zone": {
-            "value": "[variables('primaryNodeZone')]"
+          "zones": {
+            "value": "[variables('zones')]"
           },
           "ipAddresses": {
             "value": "[variables('ipAddresses')]"

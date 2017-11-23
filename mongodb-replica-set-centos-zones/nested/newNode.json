@@ -1,0 +1,86 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+			"type": "string"
+        },
+        "vmName": {
+            "type": "string"
+        },
+        "vmSize": {
+            "type": "string"
+        },
+        "vmDiskCount": {
+            "type": "int"
+        },
+        "vmDiskSize": {
+            "type": "int"
+        },
+        "adminUsername": {
+            "type": "string"
+        },
+        "adminPassword": {
+            "type": "securestring"
+        },
+        "osSettings": {
+            "type": "object"
+        },
+        "zones": {
+            "type": "array"
+        }
+    },
+    "variables": {
+    },
+    "resources": [
+    {
+        "apiVersion": "2017-03-30",
+        "type": "Microsoft.Compute/virtualMachines",
+        "name": "[concat(parameters('vmname'), '-vm')]",        
+        "zones": "[parameters('zones')]",
+        "location": "[parameters('location')]",
+        "properties": {
+          "hardwareProfile": {
+            "vmSize": "[parameters('vmSize')]"
+          },
+          "osProfile": {
+            "computerName": "[parameters('vmName')]",
+            "adminUsername": "[parameters('adminUsername')]",
+            "adminPassword": "[parameters('adminPassword')]"
+          },
+          "storageProfile": {
+            "imageReference": "[parameters('osSettings').imageReference]",
+            "osDisk": {
+              "name": "[concat(parameters('vmname'),'-osdisk')]",
+              "caching": "ReadWrite",
+              "createOption": "FromImage"
+            },
+            "copy": [
+              {
+                  "name": "dataDisks",
+                  "count": "[parameters('vmDiskCount')]",
+                  "input": {
+                      "diskSizeGB": "[parameters('vmDiskSize')]",
+                      "lun": "[copyIndex('dataDisks')]",
+                      "createOption": "Empty"
+                  }
+              }
+            ]
+          },
+          "networkProfile": {
+            "networkInterfaces": [
+              {
+                "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('vmname'), 'nic'))]"
+              }
+            ]
+          }
+        }
+    }
+],
+    "outputs": {
+        "vmName": {
+            "type": "string",
+            "value": "[parameters('vmName')]"
+        }
+    }
+}

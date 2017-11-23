@@ -1,0 +1,233 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+			"type": "string",
+			"metadata": {
+				"description": "Location for the VM, only certain regions support zones during preview."
+			}
+    },
+    "adminUsername": {
+      "type": "string"
+    },
+    "adminPassword": {
+      "type": "securestring"
+    },
+    "mongoAdminUsername": {
+        "type": "string"
+    },
+    "mongoAdminPassword": {
+        "type": "securestring"
+    },
+    "namespace": {
+      "type": "string"
+    },
+    "dnsname": {
+      "type": "string"
+    },
+    "osSettings": {
+      "type": "object"
+    },
+    "vmDiskCount": {
+      "type": "int"
+    },
+    "sizeOfDataDiskInGB": {
+      "type": "int"
+    },
+    "vmSize": {
+        "type": "string"
+    },
+    "nodeCount": {
+    "type": "int"
+    },    
+    "subnet": {
+      "type": "object"
+    },
+    "zones":  {
+      "type": "array"
+    },
+    "ipAddresses": {
+      "type": "array"
+    },
+    "_artifactsLocation": {
+        "type": "string"
+    },
+    "_artifactsLocationSasToken": {
+        "type": "securestring"
+    }
+  },
+  "variables": {
+    "subnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('subnet').vnet), '/subnets/', parameters('subnet').name)]",
+    "ipLoopTemplateURL": "[concat(parameters('_artifactsLocation'),'/nested/getIpAddresses.json',parameters('_artifactsLocationSasToken'))]",
+    "nodeLoopTemplateURL": "[concat(parameters('_artifactsLocation'),'/nested/newNode.json',parameters('_artifactsLocationSasToken'))]"
+  },
+  "resources": [
+    {
+        "name": "[concat(parameters('namespace'), 'node', copyindex(),'nic')]",
+        "type": "Microsoft.Network/networkInterfaces",
+        "apiVersion": "2017-08-01",
+        "location": "[parameters('location')]",
+        "dependsOn": [],
+        "copy": {
+            "name": "nicLoop",
+            "count": "[parameters('nodeCount')]"
+        },
+        "properties": {
+            "ipConfigurations": [
+            {
+                "name": "[concat(parameters('namespace'), 'config', copyIndex())]",
+                "properties": {
+                "privateIPAllocationMethod": "Dynamic",
+
+                "subnet": {
+                    "id": "[variables('subnetRef')]"
+                }
+                }
+            }
+            ]
+        }
+    },
+    {
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "2015-01-01",
+        "name": "[concat(parameters('namespace'),'node0-nodeIp')]",
+        "dependsOn": [
+            "nicLoop"
+        ],
+        "properties": {
+            "mode": "Incremental",
+            "templateLink": {
+                "uri": "[variables('ipLoopTemplateURL')]"
+            },
+            "parameters": {
+                "ipConfig": {
+                    "value": "[reference(concat(parameters('namespace'), 'node', copyindex(),'nic')).ipConfigurations[1].properties.privateIPAddress]"
+                }
+            }
+        }
+    },
+    {
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "2015-01-01",
+        "copy": {
+            "name": "[concat(parameters('namespace'),'-nodeIpLoop')]",
+            "count": "[sub(parameters('nodeCount'),1)]"
+        },
+        "name": "[concat(parameters('namespace'),copyIndex(1),'-nodeIp')]",
+        "dependsOn": [
+            "nicLoop",
+            "[concat(parameters('namespace'),'node0-nodeIp')]"
+        ],
+        "properties": {
+            "mode": "Incremental",
+            "templateLink": {
+                "uri": "[variables('ipLoopTemplateURL')]"
+            },
+            "parameters": {
+                "ipConfig": {
+                    "value": "[reference(concat(parameters('namespace'), 'node', copyIndex(1), '-nic')).ipConfigurations[1].properties.privateIPAddress]"
+                },
+                "ipAddresses": {
+                    "value": "[reference(concat(parameters('namespace'), 'node', copyIndex(),'-nodeIp')).outputs.result.value]"
+                }
+            }
+        }
+    },
+    {
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "2015-01-01",
+        "copy": {
+            "name": "virtualMachineLoop",
+            "count": "[parameters('nodeCount')]"
+        },
+        "name": "[concat(parameters('namespace'), 'node', copyindex())]",
+        "dependsOn": [
+            "nicLoop"
+        ],
+        "properties": {
+            "mode": "Incremental",
+            "templateLink": {
+                "uri": "[variables('nodeLoopTemplateURL')]"
+            },
+            "parameters": {
+                "location": {
+                    "value": "[parameters('location')]"
+                },
+                "vmName": {
+                    "value": "[concat(parameters('namespace'), 'node', copyindex())]"
+                },
+                "vmSize": {
+                    "value": "[parameters('vmSize')]"
+                },
+                "vmDiskCount": {
+                    "value": "[parameters('vmDiskCount')]"
+                },
+                "vmDiskSize": {
+                    "value": "[parameters('sizeOfDataDiskInGB')]"
+                },
+                "adminUsername": {
+                    "value": "[parameters('adminUsername')]"
+                },
+                "adminPassword": {
+                    "value": "[parameters('adminPassword')]"
+                },
+                "osSettings": {
+                    "value": "[parameters('osSettings')]"
+                },
+                "zones": {
+                    "value": "[take(skip(parameters('zones'),mod(copyIndex(),length(parameters('zones')))),1)]"
+                }
+            }
+        }
+    },
+    {
+    "type": "Microsoft.Compute/virtualMachines/extensions",
+    "name": "[concat(parameters('namespace'), 'node', copyIndex(1), '/secondaryInstall')]",
+    "apiVersion": "2017-03-30",
+    "location": "[parameters('location')]",
+    "dependsOn": [
+        "virtualMachineLoop"
+    ],
+    "copy": {
+        "name": "virtualMachineExtensionLoop",
+        "count": "[sub(parameters('nodeCount'),1)]"
+    },
+    "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": "[parameters('osSettings').scripts]"
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat('bash secondary.sh ', parameters('dnsname'))]"
+        }
+      }
+    },
+    {
+        "type": "Microsoft.Compute/virtualMachines/extensions",
+        "name": "[concat(parameters('namespace'), 'node', copyIndex(), '/primaryInstall')]",
+        "apiVersion": "2017-03-30",
+        "location": "[parameters('location')]",
+        "dependsOn": [
+          "[concat(parameters('namespace'), 'node', copyIndex(1), '/secondaryInstall')]"
+        ],
+        "properties": {
+          "publisher": "Microsoft.Azure.Extensions",
+          "type": "CustomScript",
+          "typeHandlerVersion": "2.0",
+          "autoUpgradeMinorVersion": true,
+          "settings": {
+            "fileUris": "[parameters('osSettings').scripts]"
+          },
+          "protectedSettings": {
+            "commandToExecute": "[concat('bash primary.sh ', parameters('dnsname'), ' ', sub(parameters('nodeCount'),1), ' ', parameters('mongoAdminUsername'), ' ', parameters('mongoAdminPassword'), ' ', parameters('ipAddresses'))]"
+          }
+        }
+      }
+  ],
+  "outputs": {
+  }
+}

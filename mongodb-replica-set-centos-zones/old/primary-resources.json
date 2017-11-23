@@ -69,8 +69,82 @@
   "variables": {
     "subnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('subnet').vnet), '/subnets/', parameters('subnet').name)]",
     "ipLoopTemplateURL": "[concat(parameters('_artifactsLocation'),'/nested/getIpAddress.json',parameters('_artifactsLocationSasToken'))]",
+    "securityGroupName": "[concat(parameters('namespace'), parameters('vmbasename'), 'nsg')]"
   },
   "resources": [
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('securityGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "SSH",
+            "properties": {
+              "description": "Allows SSH traffic",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "MongoDB",
+            "properties": {
+              "description": "Allows MongoDB traffic",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "27017",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 110,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2017-08-01",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'PublicIp')]",
+      "zones": "[parameters('zone')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('dnsname')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'nicIp')]",
+      "dependsOn": [
+        "[concat(parameters('namespace'), concat(parameters('vmbasename'), 'nic'))]"
+      ],
+      "properties": {
+          "mode": "Incremental",
+          "templateLink": {
+              "uri": "[variables('ipLoopTemplateURL')]"
+          },
+          "parameters": {
+              "ipConfig": {
+                  "value": "[reference(concat(parameters('namespace'), concat(parameters('vmbasename'), 'nic'))).ipConfigurations[1].properties.privateIPAddress]"
+              },
+              "ipAddresses": {
+                "value": "parameters('ipAddresses')" 
+              }
+          }
+      }
+    },
     {
       "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",

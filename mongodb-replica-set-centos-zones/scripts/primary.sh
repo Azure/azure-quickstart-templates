@@ -4,7 +4,6 @@ replSetName=$1
 secondaryNodes=$2
 mongoAdminUser=$3
 mongoAdminPasswd=$4
-staticIp=$5
 inputArray=("$@")
 
 #remove all non-ip values from array
