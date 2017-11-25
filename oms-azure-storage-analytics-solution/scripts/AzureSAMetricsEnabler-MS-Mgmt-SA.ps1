@@ -1,6 +1,4 @@
 ﻿
-$ErrorActionPreference = "SilentlyContinue"
-
 #region Variables definition
 # Variables definition
 
@@ -32,107 +30,6 @@ $AAResourceGroup = Get-AutomationVariable -Name 'AzureSAIngestion-AzureAutomatio
 $varQueueList="AzureSAIngestion-List-Queues"
 $varFilesList="AzureSAIngestion-List-Files"
 $varTableList="AzureSAIngestion-List-Tables"
-
-
-#vmIolimits
-$vmiolimits=@{"Basic_A0"=300;
-"Basic_A1"=300;
-"Basic_A2"=300;
-"Basic_A3"=300;
-"Basic_A4"=300;
-"ExtraSmall"=500;
-"Small"=500;
-"Medium"=500;
-"Large"=500;
-"ExtraLarge"=500;
-"Standard_A0"=500;
-"Standard_A1"=500;
-"Standard_A2"=500;
-"Standard_A3"=500;
-"Standard_A4"=500;
-"Standard_A5"=500;
-"Standard_A6"=500;
-"Standard_A7"=500;
-"Standard_A8"=500;
-"Standard_A9"=500;
-"Standard_A10"=500;
-"Standard_A11"=500;
-"Standard_A1_v2"=500;
-"Standard_A2_v2"=500;
-"Standard_A4_v2"=500;
-"Standard_A8_v2"=500;
-"Standard_A2m_v2"=500;
-"Standard_A4m_v2"=500;
-"Standard_A8m_v2"=500;
-"Standard_D1"=500;
-"Standard_D2"=500;
-"Standard_D3"=500;
-"Standard_D4"=500;
-"Standard_D11"=500;
-"Standard_D12"=500;
-"Standard_D13"=500;
-"Standard_D14"=500;
-"Standard_D1_v2"=500;
-"Standard_D2_v2"=500;
-"Standard_D3_v2"=500;
-"Standard_D4_v2"=500;
-"Standard_D5_v2"=500;
-"Standard_D11_v2"=500;
-"Standard_D12_v2"=500;
-"Standard_D13_v2"=500;
-"Standard_D14_v2"=500;
-"Standard_D15_v2"=500;
-"Standard_DS1"=3200;
-"Standard_DS2"=6400;
-"Standard_DS3"=12800;
-"Standard_DS4"=25600;
-"Standard_DS11"=6400;
-"Standard_DS12"=12800;
-"Standard_DS13"=25600;
-"Standard_DS14"=51200;
-"Standard_DS1_v2"=3200;
-"Standard_DS2_v2"=6400;
-"Standard_DS3_v2"=12800;
-"Standard_DS4_v2"=25600;
-"Standard_DS5_v2"=51200;
-"Standard_DS11_v2"=6400;
-"Standard_DS12_v2"=12800;
-"Standard_DS13_v2"=25600;
-"Standard_DS14_v2"=51200;
-"Standard_DS15_v2"=64000;
-"Standard_F1"=500;
-"Standard_F2"=500;
-"Standard_F4"=500;
-"Standard_F8"=500;
-"Standard_F16"=500;
-"Standard_F1s"=3200;
-"Standard_F2s"=6400;
-"Standard_F4s"=12800;
-"Standard_F8s"=25600;
-"Standard_F16s"=51200;
-"Standard_G1"=500;
-"Standard_G2"=500;
-"Standard_G3"=500;
-"Standard_G4"=500;
-"Standard_G5"=500;
-"Standard_GS1"=5000;
-"Standard_GS2"=10000;
-"Standard_GS3"=20000;
-"Standard_GS4"=40000;
-"Standard_GS5"=80000;
-"Standard_H8"=500;
-"Standard_H16"=500;
-"Standard_H8m"=500;
-"Standard_H16m"=500;
-"Standard_H16r"=500;
-"Standard_H16mr"=500;
-"Standard_NV6"=500;
-"Standard_NV12"=500;
-"Standard_NV24"=500;
-"Standard_NC6"=500;
-"Standard_NC12"=500;
-"Standard_NC24"=500;
-"Standard_NC24r"=500}
 
 
 
@@ -328,12 +225,12 @@ Function invoke-StorageREST($sharedKey, $method, $msgbody, $resource,$uri,$svc)
 			$xresp=$resp1.Content.Substring($resp1.Content.IndexOf("<")) 
 			return $xresp
 		}Elseif($method -eq 'HEAD')
-        {
-            $resp1= Invoke-WebRequest -Uri $uri -Headers $headersforsa -Method $method -ContentType application/xml -UseBasicParsing -Body $msgbody 
+		{
+			$resp1= Invoke-WebRequest -Uri $uri -Headers $headersforsa -Method $method -ContentType application/xml -UseBasicParsing -Body $msgbody 
 
 			
 			return $resp1
-        }
+		}
 	}
 }
 
@@ -389,6 +286,7 @@ Function Post-OMSData($customerId, $sharedKey, $body, $logType)
 	Write-error $error[0]
 }
 #endregion
+
 #Start Script (MAIN)
 #region Login to Azure Using both ARM , ASM and REST
 #Authenticate to Azure with SPN section
@@ -547,6 +445,7 @@ Foreach($sa in $salist)
 			Foreach($blob in $blobs)
 			{
 				IF($blob.name -match '.vhd')
+
 				{
 					$cu = New-Object PSObject -Property @{
 						Timestamp = $timestamp
@@ -582,191 +481,9 @@ Else
 }
 #endregion
 
-#region Inventory Queues 
-$sa=$null
-$queueinventory=@()
-$queuearr=@()
-Foreach ($sa in $salist|where{$_.properties.accountType -notmatch 'premium' -and $_.sku.tier -ne 'Premium' -and $_.Kind -ne 'BlobStorage'})
-{
-	[uri]$uriQueue="https://{0}.queue.core.windows.net?comp=list" -f $sa.name
-	[xml]$Xresponse=invoke-StorageREST -sharedKey $sa.key -method GET -resource $sa.name -uri $uriQueue
-	# "Checking $uriQueue"
-	# $Xresponse.EnumerationResults.Queues.Queue
-	IF (![String]::IsNullOrEmpty($Xresponse.EnumerationResults.Queues.Queue))
-	{
-		Foreach ($queue in $Xresponse.EnumerationResults.Queues.Queue)
-		{
-			write-verbose  "Queue found :$($sa.name) ; $($queue.name) "
-			
-			$queuearr+="{0};{1}" -f $queue.Name.tostring(),$sa.name
-			$queueinventory+= New-Object PSObject -Property @{
-				Timestamp = $timestamp
-				MetricName = 'Inventory'
-				InventoryType='Queue'
-				StorageAccount=$sa.name
-				Queue= $queue.Name
-				Uri=$uriQueue.Scheme+'://'+$uriQueue.Host+'/'+$queue.Name
-				SubscriptionID = $ArmConn.SubscriptionId;
-				AzureSubscription = $subscriptionInfo.displayName
-				
-			}
-		}
-	}
-}
-$varq=Get-AzureRmAutomationVariable -Name $varQueueList -ResourceGroupName $AAResourceGroup -AutomationAccountName $AAAccount -ea 0
-If ($varQ)
-{
-	Set-AzureRmAutomationVariable -Name $varQueueList -Encrypted 0 -Value $queuearr -ResourceGroupName $AAResourceGroup -AutomationAccountName $AAAccount 
-	Write-Output " Updated automation variable with $($queuearr.count) items"
-}
-Else
-{
-	New-AzureRmAutomationVariable -Name $varQueueList -Description "Variable to store Ques list to be queired for messages, updated daily." -Value $queuearr -Encrypted 0 -ResourceGroupName $AAResourceGroup -AutomationAccountName $AAAccount 
-	Write-Output " Created automation variable with $($queuearr.count) items"
-}
-#upload to OMS
-$jsonqinv = ConvertTo-Json -InputObject  $queueinventory
-# Submit the data to the API endpoint
-If($jsonqinv){$postres=Post-OMSData -customerId $customerId -sharedKey $sharedKey -body ([System.Text.Encoding]::UTF8.GetBytes($jsonqinv)) -logType $logname}
-$endtime=get-date
-If ($postres -ge 200 -and $postres -lt 300)
-{
-	Write-Output " Succesfully uploaded $($queueinventory.Count) Queues to OMS"
-}
-Else
-{
-	Write-Warning " Failed to upload  $($queueinventory.Count) Queues to OMS"
-}
-#endregion
-
-
-#region Collect File Inventory
-$sa=$null
-$Fileinventory=@()
-$filearr=@()
-$timestamp=(get-date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:00.000Z")
-Foreach ($sa in $salist|where {$_.properties.accountType -notmatch 'premium' -and $_.sku.tier -ne 'Premium' -and $_.Kind -ne 'BlobStorage'})
-{
-	
-	[uri]$uriFile="https://{0}.file.core.windows.net?comp=list" -f $sa.name
-	
-	
-	[xml]$Xresponse=invoke-StorageREST -sharedKey $sa.key -method GET -resource $sa.Name -uri $uriFile
-
-	if(![string]::IsNullOrEmpty($Xresponse.EnumerationResults.Shares.Share))
-	{
-		foreach($share in @($Xresponse.EnumerationResults.Shares.Share))
-		{
-			write-verbose  "File Share found :$($sa.name) ; $($share.Name) "
-			
-			$filearr+="{0};{1}" -f $Share.Name,$sa.name
-			$fileinventory+= New-Object PSObject -Property @{
-				Timestamp = $timestamp
-				MetricName = 'Inventory'
-				InventoryType='File'
-				StorageAccount=$sa.name 
-				FileShare=$share.Name
-				Uri=$uriFile.Scheme+'://'+$uriFile.Host+'/'+$Share.Name
-				Quota=$share.Properties.Quota                              
-				SubscriptionID = $ArmConn.SubscriptionId;
-				AzureSubscription = $subscriptionInfo.displayName
-			}
-		}
-	}
-}
-$varf=Get-AzureRmAutomationVariable -Name $varFilesList -ResourceGroupName $AAResourceGroup -AutomationAccountName $AAAccount -ea 0
-If ($varf)
-{
-	Set-AzureRmAutomationVariable -Name $varfilesList -Encrypted 0 -Value $filearr -ResourceGroupName $AAResourceGroup -AutomationAccountName $AAAccount 
-	Write-Output " Updated automation variable with $($filearr.count) items"
-}
-Else
-{
-	New-AzureRmAutomationVariable -Name $varfilesList -Description "Variable to store File Sahre  list to be queired for consumption , updated daily." -Value $filearr -Encrypted 0 -ResourceGroupName $AAResourceGroup -AutomationAccountName $AAAccount 
-	Write-Output " Created automation variable with $($filearr.count) items"
-}
-#upload to OMS
-$jsonfinv = ConvertTo-Json -InputObject  $fileinventory
-# Submit the data to the API endpoint
-If($jsonfinv){$postres=Post-OMSData -customerId $customerId -sharedKey $sharedKey -body ([System.Text.Encoding]::UTF8.GetBytes($jsonfinv)) -logType $logname}
-$endtime=get-date
-If ($postres -ge 200 -and $postres -lt 300)
-{
-	Write-Output " Succesfully uploaded $($allf.count) Queues to OMS"
-}
-Else
-{
-	Write-Warning " Failed to upload  $($allf.count) Queues to OMS"
-}
-#endregion
-
-#region Collect Table Inventory
-$sa=$null
-$tableinventory=@()
-$tablearr=@{}
-$timestamp=(get-date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:00.000Z")
-Foreach ($sa in $salist|where{$_.properties.accountType -notmatch 'premium' -and $_.sku.tier -ne 'Premium'})
-{
-	[uri]$uritable="https://{0}.table.core.windows.net/Tables" -f $sa.name
-	
-	$rfc1123date = [DateTime]::UtcNow.ToString("r")
-	$signature = Build-StorageSignature `
-	-sharedKey $sa.Key `
-	-date  $rfc1123date `
-	-method GET -resource $sa.name -uri $uritable  -service table
-	$headersforsa=  @{
-		'Authorization'= "$signature"
-		'x-ms-version'="$apistorage"
-		'x-ms-date'="$rfc1123date"
-		'Accept-Charset'='UTF-8'
-		'MaxDataServiceVersion'='3.0;NetFx'
-		'Accept'='application/json;odata=nometadata'
-	}
-	$tableresp=Invoke-WebRequest -Uri $uritable -Headers $headersforsa -Method GET  -UseBasicParsing 
-	$respJson=convertFrom-Json    $tableresp.Content
-	
-	IF (![string]::IsNullOrEmpty($respJson.value.Tablename))
-	{
-		foreach($tbl in @($respJson.value.Tablename))
-		{
-			write-verbose  "Table found :$sa.name ; $($tbl) "
-			
-			#$tablearr+="{0}" -f $sa.name
-			IF ([string]::IsNullOrEmpty($tablearr.Get_item($sa.name)))
-			{
-				$tablearr.add($sa.name,'Storageaccount') 
-			}
-			$tableinventory+= New-Object PSObject -Property @{
-				Timestamp = $timestamp
-				MetricName = 'Inventory'
-				InventoryType='Table'
-				StorageAccount=$sa.name
-				Table=$tbl
-				Uri=$uritable.Scheme+'://'+$uritable.Host+'/'+$tbl
-				SubscriptionID = $ArmConn.SubscriptionId;
-				AzureSubscription = $subscriptionInfo.displayName
-				
-			}
-		}
-	}
-}
-#upload to OMS
-$jsontinv = ConvertTo-Json -InputObject  $Tableinventory
-# Submit the data to the API endpoint
-If($jsontinv){$postres=Post-OMSData -customerId $customerId -sharedKey $sharedKey -body ([System.Text.Encoding]::UTF8.GetBytes($jsontinv)) -logType $logname}
-$endtime=get-date
-If ($postres -ge 200 -and $postres -lt 300)
-{
-	Write-Output " Succesfully uploaded $($Tableinventory.count) tables  to OMS"
-}
-Else
-{
-	Write-Warning " Failed to upload  $($Tableinventory.count) tables to OMS"
-}
-#endregion
-
 #region Enable metrics
 $settingon='<?xml version="1.0" encoding="utf-8"?><StorageServiceProperties><MinuteMetrics><Version>1.0</Version><Enabled>true</Enabled><RetentionPolicy><Enabled>true</Enabled><Days>1</Days></RetentionPolicy><IncludeAPIs>true</IncludeAPIs></MinuteMetrics></StorageServiceProperties>'
+#$settingon="<?xml version="1.0" encoding="utf-8"?><StorageServiceProperties><Logging><Version>version-number</Version><Delete>true</Delete><Read>true</Read><Write>true</Write><RetentionPolicy><Enabled>true</Enabled><Days>1</Days></RetentionPolicy></Logging><MinuteMetrics><Version>1.0</Version><Enabled>true</Enabled><RetentionPolicy><Enabled>true</Enabled><Days>1</Days></RetentionPolicy><IncludeAPIs>true</IncludeAPIs></MinuteMetrics></StorageServiceProperties>"
 $settingoff='<?xml version="1.0" encoding="utf-8"?><StorageServiceProperties><MinuteMetrics><Version>1.0</Version><Enabled>false</Enabled><RetentionPolicy><Enabled>true</Enabled><Days>1</Days></RetentionPolicy></MinuteMetrics></StorageServiceProperties>'
 Foreach($sa in $salist|Where{$_.properties.accountType -notmatch 'premium' -and $_.sku.tier -ne 'Premium'})
 {
