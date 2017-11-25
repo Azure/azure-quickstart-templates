@@ -5,7 +5,7 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
->[AZURE.NOTE]This is preliminary documentation for Azure Storage Analytics, a management solution you can deploy into OMS that will provide insights, analytics and auditing  for your storage accounts. This Community resource manager template is not supported under any Microsoft support program or service and is made available AS IS without warranty of any kind! 
+>[AZURE.NOTE]This is preliminary documentation for Azure Storage Analytics, a management solution you can deploy into OMS that will provide insights, analytics and auditing for your storage accounts. This Community resource manager template is not supported under any Microsoft support program or service and is made available AS IS without warranty of any kind! 
 
  Microsoft Azure Storage is the cloud storage solution for modern applications that rely on durability, availability, and scalability to meet the needs of their customers. Azure storage provides Blob storage, Table storage, Queue storage, and File storage services.
 Azure Storage Analytics Solution collects and visualizes inventory information, capacity metrics, transaction metrics, storage errors and Audit logs for storage accounts in an Azure subscription. Users can easily create additional rules to monitor storage resources. This solution leverages Azure Automation, the Log Analytics Ingestion API, together with Log Analytics views to present data about all your storage accounts in a single workspace. 
