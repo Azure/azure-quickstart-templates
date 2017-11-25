@@ -18,7 +18,7 @@ Azure Storage Analytics Solution collects and visualizes inventory information, 
 
 Before you deploy this template, you must create an Automation Account in the Azure portal with the default settings so that the SPN account will be created. If you have an existing OMS Log Analytics Workspace you would like to use for this solution, it is important that the Automation account is created into the **same Resource Group where the OMS Log Analytics Workspace is located**. 
 
-If you want to collect data from multiple subscription Automation Account SPN needs to have the required permission on all subscriptions. See Multiple Subscription support section for details. 
+If you want to collect data from multiple subscriptions, the Automation Account SPN needs to have the required permission on all subscriptions. See Multiple Subscription support section for details. 
 
 If you **dont** have an existing OMS Log Analytics Workspace, the template will create and deploy this for you.
 
