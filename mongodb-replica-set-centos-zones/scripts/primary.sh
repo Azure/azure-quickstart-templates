@@ -144,7 +144,6 @@ if [[ $n -ne 1 ]];then
     echo "mongo replica set tried to start 3 times but failed!"
 fi
 
-# Fix this to use internal IP
 #echo "start initiating the replica set"
 #publicIp=`curl -s ip.cn|grep -Po '\d+.\d+.\d+.\d+'`
 #if [[ -z $publicIp ]];then
@@ -153,15 +152,18 @@ fi
 #	finalIp=$publicIp
 #fi
 
-finalIp=$staticIp
 
-echo "the ip address is $finalIp"
+echo "start initiating the replica set"
 
+#grab the last address in the array and set it as primary node's IP 
+primaryNodeIp=${ipAddresses[-1]}
+echo "the ip address is $primaryNodeIp"
 
+#configure primary node
 mongo<<EOF
 use admin
 db.auth("$mongoAdminUser", "$mongoAdminPasswd")
-config ={_id:"$replSetName",members:[{_id:0,host:"$finalIp:27017"}]}
+config ={_id:"$replSetName",members:[{_id:0,host:"$primaryNodeIp:27017"}]}
 rs.initiate(config)
 exit
 EOF
@@ -173,14 +175,13 @@ fi
 
 
 #add secondary nodes
-for((i=1;i<=$secondaryNodes;i++))
+for((i=0;i<$secondaryNodes;i++))
     do
-        let a=3+$i
-        mongo -u "$mongoAdminUser" -p "$mongoAdminPasswd" "admin" --eval "printjson(rs.add('10.0.1.${a}:27017'))"
+        mongo -u "$mongoAdminUser" -p "$mongoAdminPasswd" "admin" --eval "printjson(rs.add('${ipAddresses[$i]}:27017'))"
         if [[ $? -eq 0 ]];then
-            echo "adding server 10.0.1.${a} successfully"
+            echo "adding server ${ipAddresses[$i]} successfully"
         else
-            echo "adding server 10.0.1.${a} failed!"
+            echo "adding server ${ipAddresses[$i]} failed!"
         fi
     done
 	
