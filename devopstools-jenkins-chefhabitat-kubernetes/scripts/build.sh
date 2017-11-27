@@ -23,7 +23,7 @@ echo "az login --service-principal -u '$appID' --password '$password' --tenant '
 echo "az storage container create --name apphart --output table > /dev/null" >> /scripts/uploadhart.sh
 echo "az storage blob upload --container-name apphart -f \$HARTFILE -n \$HARTFILE > /dev/null" >> /scripts/uploadhart.sh
 chmod +x /scripts/uploadhart.sh
-sudo wget -O /scripts/mongodb_acrimage.sh https://raw.githubusercontent.com/sysgain/MSOSS/kubstage/scripts/mongodb_acrimage.sh
+sudo wget -O /scripts/mongodb_acrimage.sh https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/devopstools-jenkins-chefhabitat-kubernetes/scripts/mongodb_acrimage.sh
 chmod +x /scripts/mongodb_acrimage.sh
-sudo wget -O /scripts/np_acrimage.sh https://raw.githubusercontent.com/sysgain/MSOSS/kubstage/scripts/np_acrimage.sh
+sudo wget -O /scripts/np_acrimage.sh https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/devopstools-jenkins-chefhabitat-kubernetes/scripts/np_acrimage.sh
 chmod +x /scripts/np_acrimage.sh
