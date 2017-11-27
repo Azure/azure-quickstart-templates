@@ -145,13 +145,15 @@ if [[ $n -ne 1 ]];then
 fi
 
 # Fix this to use internal IP
-echo "start initiating the replica set"
-publicIp=`curl -s ip.cn|grep -Po '\d+.\d+.\d+.\d+'`
-if [[ -z $publicIp ]];then
-	finalIp=$staticIp
-else
-	finalIp=$publicIp
-fi
+#echo "start initiating the replica set"
+#publicIp=`curl -s ip.cn|grep -Po '\d+.\d+.\d+.\d+'`
+#if [[ -z $publicIp ]];then
+#	finalIp=$staticIp
+#else
+#	finalIp=$publicIp
+#fi
+
+finalIp=$staticIp
 
 echo "the ip address is $finalIp"
 
