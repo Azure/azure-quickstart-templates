@@ -9,6 +9,9 @@ SRC_DIR="/root/MSOSS/national-parks-plan-kubernetes/results"
 FILEEXT="hart"
 HART=`ls -tr1d "${SRC_DIR}/"*.${FILEEXT} 2>/dev/null | tail -1`
 
+echo $SRC_DIR
+echo $HART
+
 if [ ! -d "$SRC_DIR" ] > /dev/null
 then
         echo "Please build the package first before running the script"
