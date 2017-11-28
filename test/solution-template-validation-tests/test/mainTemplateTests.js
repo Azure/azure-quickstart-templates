@@ -39,12 +39,17 @@ describe('mainTemplate.json file - ', () => {
             // get output keys in main template
             var outputsInCreateUiDef = Object.keys(createUiDefJSONObject.parameters.outputs);
 
+            // convert to lowercase
+            for (var i in outputsInCreateUiDef) {
+                outputsInCreateUiDef[i] = outputsInCreateUiDef[i].toLowerCase();
+            }
+
             // validate each parameter in main template has a value in outputs
             mainTemplateFileJSONObject.should.have.property('parameters');
             var parametersInMainTemplate = Object.keys(mainTemplateFileJSONObject.parameters);
             parametersInMainTemplate.forEach(parameter => {
                 if (typeof(mainTemplateFileJSONObject.parameters[parameter].defaultValue) === 'undefined') {
-                    outputsInCreateUiDef.should.withMessage('in file:mainTemplate.json. outputs in createUiDefinition is missing the parameter ' + parameter).contain(parameter);
+                    outputsInCreateUiDef.should.withMessage('in file:mainTemplate.json. outputs in createUiDefinition is missing the parameter ' + parameter).contain(parameter.toLowerCase());
                 }
             });
         });
