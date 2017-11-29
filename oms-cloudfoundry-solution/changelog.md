@@ -1,5 +1,11 @@
 # Change Log
 
+## 2017.12
+
+* Add version and changelog to the template
+* Refine document, add instruction of customizing and upgrade
+* Minor updates to nested templates, change to `parallel` mode for faster deployment
+
 ## 2017.11
 
 * Refine document, add instruction of system metrics provider
