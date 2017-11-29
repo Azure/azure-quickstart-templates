@@ -42,6 +42,8 @@ if ($Dev) {
     }
 }
 
+Write-Host "Using parameter file: $TemplateParametersFile"
+
 if (!$ValidateOnly) {
     $OptionalParameters.Add('DeploymentDebugLogLevel', $DebugOptions)
 }
