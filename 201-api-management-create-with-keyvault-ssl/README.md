@@ -20,3 +20,18 @@ In order to deploy this template, you need to have the following resources: <br 
 </P>
 
 The Template expects the keyVaultSecretsIdToCertificate as https://constosovault.vault.azure.net/secrets/msitestingCert
+
+PowerShell script to upload certificate into a Key Vault Secret:  <br />
+<I>
+$pfxFilePath = "PFX_CERTIFICATE_FILE_PATH" # Change this path  <br />
+$pwd = "PFX_CERTIFICATE_PASSWORD"  # Change this password  <br />
+$flag = [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable  <br />
+$collection = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2Collection   <br />
+$collection.Import($pfxFilePath, $pwd, $flag)  <br />
+$pkcs12ContentType = [System.Security.Cryptography.X509Certificates.X509ContentType]::Pkcs12  <br />
+$clearBytes = $collection.Export($pkcs12ContentType)  <br />
+$fileContentEncoded = [System.Convert]::ToBase64String($clearBytes)  <br />
+$secret = ConvertTo-SecureString -String $fileContentEncoded -AsPlainText –Force  <br />
+$secretContentType = 'application/x-pkcs12'  <br />
+Set-AzureKeyVaultSecret -VaultName KEY_VAULT_NAME -Name KEY_VAULT_SECRET_NAME -SecretValue $Secret -ContentType $secretContentType # Change Key Vault name and Secret name <br />
+</I>
