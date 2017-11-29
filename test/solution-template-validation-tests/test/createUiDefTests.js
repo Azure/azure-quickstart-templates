@@ -49,12 +49,17 @@ describe('createUiDefinition.json file - ', () => {
         // get parameter keys in main template
         var parametersInTemplate = Object.keys(mainTemplateJSONObject.parameters);
 
+        // convert to lowercase
+        for (var i in parametersInTemplate) {
+            parametersInTemplate[i] = parametersInTemplate[i].toLowerCase();
+        }
+
         // validate each output in create ui def has a value in parameters
         createUiDefFileJSONObject.should.have.property('parameters');
         createUiDefFileJSONObject.parameters.should.have.property('outputs');
         var outputsInCreateUiDef = Object.keys(createUiDefFileJSONObject.parameters.outputs);
         outputsInCreateUiDef.forEach(output => {
-            parametersInTemplate.should.contain(output);
+            parametersInTemplate.should.contain(output.toLowerCase());
         });
     });
 
