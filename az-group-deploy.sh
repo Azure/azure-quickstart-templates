@@ -48,6 +48,8 @@ else
     fi
 fi
 
+echo "Using parameters file: "$parametersFile
+
 templateName="$( basename "${templateFile%.*}" )"
 templateDirectory="$( dirname "$templateFile")"
 
