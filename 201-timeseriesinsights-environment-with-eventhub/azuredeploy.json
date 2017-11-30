@@ -91,6 +91,20 @@
       "metadata": {
         "description": "The name of the shared access key that the Time Series Insights service will use to connect to the event hub."
       }
+    },
+    "accessPolicyReaderObjectIds": {
+      "type": "array",
+      "defaultValue": [],
+      "metadata": {
+        "description": "A list of object ids of the users or applications in AAD that should have Reader access to the environment. The service principal objectId can be obtained by calling the Get-AzureRMADUser or the Get-AzureRMADServicePrincipal cmdlets. Creating an access policy for AAD groups is not yet supported."
+      }
+    },
+    "accessPolicyContributorObjectIds": {
+      "type": "array",
+      "defaultValue": [],
+      "metadata": {
+        "description": "A list of object ids of the users or applications in AAD that should have Contributor access to the environment. The service principal objectId can be obtained by calling the Get-AzureRMADUser or the Get-AzureRMADServicePrincipal cmdlets. Creating an access policy for AAD groups is not yet supported."
+      }
     }
   },
   "variables": {
@@ -194,16 +208,48 @@
           },
           "tags": "[variables('eventSourceTagsValue')]",
           "dependsOn": [
-            "[concat('Microsoft.TimeSeriesInsights/environments/',parameters('environmentName'))]",
+            "[concat('Microsoft.TimeSeriesInsights/environments/', parameters('environmentName'))]",
             "[concat('Microsoft.EventHub/namespaces/', parameters('eventHubNamespaceName'), '/eventHubs/', parameters('eventHubName'), '/consumerGroups/', parameters('consumerGroupname'))]"
           ]
         }
+      ]
+    },
+    {
+      "type": "Microsoft.TimeSeriesInsights/environments/accesspolicies",
+      "name": "[concat(parameters('environmentName'), '/', 'readerAccessPolicy', copyIndex())]",
+      "copy": { 
+        "name": "accessPolicyReaderCopy", 
+        "count": "[length(parameters('accessPolicyReaderObjectIds'))]"
+      },
+      "apiVersion": "2017-11-15",
+      "properties": {
+        "principalObjectId": "[parameters('accessPolicyReaderObjectIds')[copyIndex()]]",
+        "roles": ["Reader"]
+      },
+      "dependsOn": [
+        "[concat('Microsoft.TimeSeriesInsights/environments/', parameters('environmentName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.TimeSeriesInsights/environments/accesspolicies",
+      "name": "[concat(parameters('environmentName'), '/', 'contributorAccessPolicy', copyIndex())]",
+      "copy": { 
+        "name": "accessPolicyReaderCopy", 
+        "count": "[length(parameters('accessPolicyContributorObjectIds'))]"
+      },
+      "apiVersion": "2017-11-15",
+      "properties": {
+        "principalObjectId": "[parameters('accessPolicyContributorObjectIds')[copyIndex()]]",
+        "roles": ["Contributor"]
+      },
+      "dependsOn": [
+        "[concat('Microsoft.TimeSeriesInsights/environments/', parameters('environmentName'))]"
       ]
     }
   ],
   "outputs": {
     "dataAccessId": {
-      "value": "[reference(resourceId('Microsoft.TimeSeriesInsights/environments', parameters('environmentName'))).dataAccessId]",
+      "value": "[reference(resourceId('Microsoft.TimeSeriesInsights/environments', parameters('environmentName'))).dataAccessFQDN]",
       "type": "string"
     }
   }
