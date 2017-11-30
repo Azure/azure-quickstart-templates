@@ -5,7 +5,9 @@ The following versions of Qlik Sense can be provisioned:
 
 | Qlik Sense Version |
 |--------------------|
+| Qlik Sense November 2017 |
 | Qlik Sense September 2017|
+| Qlik Sense June 2017 Patch 3 |
 | Qlik Sense June 2017 Patch 2 |
 | Qlik Sense June 2017 Patch 1 |
 | Qlik Sense June 2017 Patch   |
@@ -25,3 +27,5 @@ Click the button below to deploy:
 For help please review [Qlik Sense Help](http://help.qlik.com)
 
 Getting started [Qlik Sense Community](http://community.qlik.com)
+
+#### The deployment of Qlik Sense can take up to 15 minutes.
