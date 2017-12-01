@@ -2,15 +2,13 @@ var fs = require('fs');
 var lineColumn = require("line-column");
 var path = require('path');
 var chai = require('chai');
-var assert = chai.assert; // Using Assert style
-var expect = chai.expect; // Using Expect style
-var should = chai.should(); // Using Should style
+var should = chai.should();
 var _this = this;
 
 var createUiDefFileName = "createuidefinition.json";
 var mainTemplateFileName = "maintemplate.json";
 
-function getFiles(folder, fileType) {
+exports.getFiles = function getFiles(folder, fileType) {
     if (folder == './') {
         folder = __dirname + '/../';
     }
@@ -21,11 +19,11 @@ function getFiles(folder, fileType) {
     } else {
         return fs.readdirSync(folder);
     }
-}
+};
 
 // Get create ui def file
 exports.getCreateUiDefFile = function getCreateUiDefFile(folder) {
-    var createUiDefFiles = getFiles(folder, createUiDefFileName);
+    var createUiDefFiles = _this.getFiles(folder, createUiDefFileName);
     createUiDefFiles.length.should.equals(1, 'Only one createUiDefinition.json file should exist, but found ' + createUiDefFiles.length + ' file(s) in path ' + folder);
     var fileString = fs.readFileSync(path.resolve(folder, createUiDefFiles[0]), {
         encoding: 'utf8'
@@ -38,7 +36,7 @@ exports.getCreateUiDefFile = function getCreateUiDefFile(folder) {
 
 // Get main template file
 exports.getMainTemplateFile = function getMainTemplateFile(folder) {
-    var mainTemplateFiles = getFiles(folder, mainTemplateFileName);
+    var mainTemplateFiles = _this.getFiles(folder, mainTemplateFileName);
     mainTemplateFiles.length.should.equals(1, 'Only one mainTemplate.json file should exist, but found ' + mainTemplateFiles.length + ' file(s)');
     var fileString = fs.readFileSync(path.resolve(folder, mainTemplateFiles[0]), {
         encoding: 'utf8'
@@ -51,7 +49,7 @@ exports.getMainTemplateFile = function getMainTemplateFile(folder) {
 
 // Get template files
 exports.getTemplateFiles = function getTemplateFiles(folder) {
-    var templateFiles = getFiles(folder, '.json');
+    var templateFiles = _this.getFiles(folder, '.json');
     var files = [];
     var fileJSONObjects = [];
     templateFiles.forEach(f => {
