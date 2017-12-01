@@ -1,0 +1,55 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "virtualMachineName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/SpektraSystems/two-tier-app-migration-containers/master/"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    }
+  },
+  "variables": {
+    "scriptFolder": "scripts/",
+    "scriptFileName": "envcreate.ps1",
+    "dbcreateScript": "[concat(parameters('_artifactsLocation'), variables('scriptFolder'), variables('scriptFileName'), parameters('_artifactsLocationSasToken'))]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('virtualMachineName'),'/customscript')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "script"
+      },
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "CustomScriptExtension",
+        "typeHandlerVersion": "1.8",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[variables('dbcreateScript')]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat( 'powershell -noninteractive -executionpolicy bypass -file ', variables('scriptFileName'), ' >> script.log 2>&1' )]"
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}

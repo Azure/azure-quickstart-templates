@@ -1,0 +1,369 @@
+    {
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "virtualMachineName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name for the Virtual Machine."
+              }
+        },
+        "adminUsername": {
+            "type": "string",
+            "metadata": {
+                "description": "Username for the Virtual Machine."
+              }
+        },
+        "adminPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Password for the Virtual Machine."
+              }
+        },
+        "_artifactsLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+            },
+            "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/two-Tier-app-migration-to-containers-on-Azure/"
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+            },
+            "defaultValue": ""
+        }
+    },
+    "variables": {
+        "storageName": "[concat('stg', uniqueString(resourceGroup().id))]",
+        "storageAccountType": "Standard_LRS",
+        "virtualNetworkName": "VNET",
+        "vnetAddressPrefix": "10.0.0.0/16",
+        "subnet1Name": "Frontend-subnet",
+        "subnet1Prefix": "10.0.0.0/24",
+        "subnet1Ref": "[concat(variables('vnetID'),'/subnets/', variables('subnet1Name'))]",
+        "publicIPAddressType": "Dynamic",
+        "publicIPAddressName": "PublicIP",
+        "dnsLabelPrefix":"[concat('dns', uniqueString(resourceGroup().id))]",
+        "networkSecurityGroupName": "Nsg",
+        "nicName": "NIC",
+        "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
+        "subnetRef": "[concat(variables('vnetId'), '/subnets/', variables('subnet1Name'))]",
+        "nestedDscTemplateFileName": "iis.json",
+        "virtualMachineSize": "Standard_D2_v2",
+        "sqlConnectivityType": "Private",
+        "sqlPortNumber": 1433,
+        "sqlStorageDisksCount": 1,
+        "sqlStorageWorkloadType": "GENERAL",
+        "sqlStorageDisksConfigurationType": "NEW",
+        "sqlStorageStartingDeviceId": 2,
+        "sqlStorageDeploymentToken": 56996,
+        "sqlAutopatchingDayOfWeek": "Sunday",
+        "sqlAutopatchingStartHour": 2,
+        "sqlAutopatchingWindowDuration": 60,
+        "sqlAuthenticationLogin": "dbuser",
+        "sqlAuthenticationPassword": "dbPassw0rd",
+        "rServicesEnabled": "false",
+        "scriptsFolder": "scripts/",
+        "nestedFolder": "nested/",
+        "twoTierAppTags": {
+        "type": "object",
+        "provider": "NA"
+      },
+       "quickstartTags": {
+        "type": "object",
+        "name": "two-tier-app"
+      }
+    },
+    "resources": [{
+            "name": "[parameters('virtualMachineName')]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2016-04-30-preview",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]",
+                "[concat('Microsoft.Storage/storageAccounts/', variables('storageName'))]"
+            ],
+        "tags":{
+            "displayName":"Virtual Machine",
+            "quickstartName": "[variables('quickstartTags').name]",        
+            "provider": "[variables('twoTierAppTags').provider]"
+         },
+            "properties": {
+                "osProfile": {
+                    "computerName": "[parameters('virtualMachineName')]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]",
+                    "windowsConfiguration": {
+                        "provisionVmAgent": "true"
+                    }
+                },
+                "hardwareProfile": {
+                    "vmSize": "[variables('virtualMachineSize')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "MicrosoftSQLServer",
+                        "offer": "SQL2016SP1-WS2016",
+                        "sku": "SQLDEV",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "createOption": "fromImage",
+                        "managedDisk": {
+                            "storageAccountType": "Standard_LRS"
+                        }
+                    },
+                    "dataDisks": [{
+                        "createOption": "empty",
+                        "lun": 0,
+                        "diskSizeGB": "1023",
+                        "caching": "ReadOnly",
+                        "managedDisk": {
+                            "storageAccountType": "Standard_LRS"
+                        }
+                    }]
+                },
+                "networkProfile": {
+                    "networkInterfaces": [{
+                        "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+                    }]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true,
+                        "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageName')), '2015-06-15').primaryEndpoints['blob']]"
+                    }
+                }
+            }
+        },
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(parameters('virtualMachineName'), '/SqlIaasExtension')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'))]"
+            ],
+            "tags":{
+            "displayName":"Virtual Machine Extensions",
+            "quickstartName": "[variables('quickstartTags').name]",        
+            "provider": "[variables('twoTierAppTags').provider]"
+         },
+            "properties": {
+                "type": "SqlIaaSAgent",
+                "publisher": "Microsoft.SqlServer.Management",
+                "typeHandlerVersion": "1.2",
+                "autoUpgradeMinorVersion": "true",
+                "settings": {
+                    "AutoTelemetrySettings": {
+                        "Region": "[resourceGroup().location]"
+                    },
+                    "AutoPatchingSettings": {
+                        "PatchCategory": "WindowsMandatoryUpdates",
+                        "Enable": true,
+                        "DayOfWeek": "[variables('sqlAutopatchingDayOfWeek')]",
+                        "MaintenanceWindowStartingHour": "[variables('sqlAutopatchingStartHour')]",
+                        "MaintenanceWindowDuration": "[variables('sqlAutopatchingWindowDuration')]"
+                    },
+                    "KeyVaultCredentialSettings": {
+                        "Enable": false,
+                        "CredentialName": ""
+                    },
+                    "ServerConfigurationsManagementSettings": {
+                        "SQLConnectivityUpdateSettings": {
+                            "ConnectivityType": "[variables('sqlConnectivityType')]",
+                            "Port": "[variables('sqlPortNumber')]"
+                        },
+                        "SQLWorkloadTypeUpdateSettings": {
+                            "SQLWorkloadType": "[variables('sqlStorageWorkloadType')]"
+                        },
+                        "SQLStorageUpdateSettings": {
+                            "DiskCount": "[variables('sqlStorageDisksCount')]",
+                            "NumberOfColumns": "[variables('sqlStorageDisksCount')]",
+                            "StartingDeviceID": "[variables('sqlStorageStartingDeviceId')]",
+                            "DiskConfigurationType": "[variables('sqlStorageDisksConfigurationType')]"
+                        },
+                        "AdditionalFeaturesServerConfigurations": {
+                            "IsRServicesEnabled": "[variables('rServicesEnabled')]"
+                        }
+                    }
+                },
+                "protectedSettings": {
+                    "SQLAuthUpdateUserName": "[variables('sqlAuthenticationLogin')]",
+                    "SQLAuthUpdatePassword": "[variables('sqlAuthenticationPassword')]"
+                }
+            }
+        },
+        {
+            "name": "[variables('storageName')]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2015-06-15",
+            "location": "[resourceGroup().location]",
+            "tags":{
+            "displayName":"Diagnostic VM Storage Account",
+            "quickstartName": "[variables('quickstartTags').name]",        
+            "provider": "[variables('twoTierAppTags').provider]"
+         },
+            "properties": {
+                "accountType": "[variables('storageAccountType')]"
+            }
+        },
+        {
+            "name": "[variables('virtualNetworkName')]",
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2016-12-01",
+            "location": "[resourceGroup().location]",
+            "tags":{
+            "displayName":"Virtual Network",
+            "quickstartName": "[variables('quickstartTags').name]",        
+            "provider": "[variables('twoTierAppTags').provider]"
+         },
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroupName'))]"
+            ],
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('vnetAddressPrefix')]"
+                    ]
+                },
+                "subnets": [{
+                    "name": "[variables('subnet1Name')]",
+                    "properties": {
+                        "addressPrefix": "[variables('subnet1Prefix')]",
+                        "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+                }
+                  }
+                }]
+            }
+        },
+        {
+            "name": "[variables('nicName')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2016-09-01",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+                "[concat('Microsoft.Network/publicIpAddresses/', variables('publicIpAddressName'))]",
+                "[concat('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroupName'))]"
+            ],
+            "tags":{
+            "displayName":"Network Interface Card",
+            "quickstartName": "[variables('quickstartTags').name]",        
+            "provider": "[variables('twoTierAppTags').provider]"
+         },
+            "properties": {
+                "ipConfigurations": [{
+                    "name": "ipconfig1",
+                    "properties": {
+                        "subnet": {
+                            "id": "[variables('subnetRef')]"
+                        },
+                        "privateIPAllocationMethod": "Dynamic",
+                        "publicIpAddress": {
+                            "id": "[resourceId('Microsoft.Network/publicIpAddresses', variables('publicIpAddressName'))]"
+                        }
+                    }
+                }]  }
+        },
+        {
+            "apiVersion": "2015-05-01-preview",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[variables('publicIPAddressName')]",
+            "location": "[resourceGroup().location]",
+            "tags":{
+            "displayName":"Public IP Address",
+            "quickstartName": "[variables('quickstartTags').name]",        
+            "provider": "[variables('twoTierAppTags').provider]"
+         },
+            "properties": {
+                "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+                "dnsSettings": {
+                "domainNameLabel": "[variables('dnsLabelPrefix')]"
+           }
+            }
+        },
+        {
+            "name": "[variables('networkSecurityGroupName')]",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2017-06-01",
+            "location": "[resourceGroup().location]",
+            "tags":{
+            "displayName":"Network Security Group",
+            "quickstartName": "[variables('quickstartTags').name]",        
+            "provider": "[variables('twoTierAppTags').provider]"
+         },
+            "properties": {
+                "securityRules": [{
+                    "name": "default-allow-rdp",
+                    "properties": {
+                        "priority": 1000,
+                        "protocol": "TCP",
+                        "access": "Allow",
+                        "direction": "Inbound",
+                        "sourceAddressPrefix": "*",
+                        "sourcePortRange": "*",
+                        "destinationAddressPrefix": "*",
+                        "destinationPortRange": "3389"
+                    }
+                },
+                                 {
+                    "name": "hhtp",
+                    "properties": {
+                        "priority": 1010,
+                        "protocol": "TCP",
+                        "access": "Allow",
+                        "direction": "Inbound",
+                        "sourceAddressPrefix": "*",
+                        "sourcePortRange": "*",
+                        "destinationAddressPrefix": "*",
+                        "destinationPortRange": "80"
+                    }
+                }]
+            }
+        },
+        {
+            "name": "deployIIS",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2016-09-01",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'),'/extensions/', '/SqlIaasExtension')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(parameters('_artifactsLocation'),variables('nestedFolder'), variables('nestedDscTemplateFileName'), parameters('_artifactsLocationSasToken'))]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "virtualMachineName": {
+                        "value": "[parameters('virtualMachineName')]"
+                    },
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    }
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "adminUsername": {
+            "type": "string",
+            "value": "[parameters('adminUsername')]"
+        },
+        "adminPassword":{
+            "type": "string",
+            "value": "[parameters('adminPassword')]"
+        },
+        "publicIP":{
+            "value":"[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))).dnsSettings.fqdn]",
+            "type":"string"
+         }
+    }
+}
