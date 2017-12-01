@@ -4,6 +4,7 @@
   "parameters": {
     "adminUsername": {
       "type": "string",
+      "defaultValue": "azureuser",
       "metadata": {
         "description": "User name for the Virtual Machine."
       }
@@ -11,14 +12,26 @@
     "sshPublicKey": {
       "type": "string",
       "metadata": {
-        "description": "Configure all linux machines with the SSH public key string.  Your key should include three parts, for example 'ssh-rsa AAAAB...snip...UcyupgH azureuser@linuxvm'"
+        "description": "Configure all linux machines with the SSH public key string. Your key should include three parts, for example 'ssh-rsa AAAAB...snip...UcyupgH azureuser@linuxvm'"
       }
     },
     "virtualMachineSize": {
       "type": "string",
       "defaultValue": "Standard_DS2_v2",
+      "allowedValues": [
+        "Standard_B2s",
+        "Standard_B2ms",
+        "Standard_D2s_v3",
+        "Standard_D2_v3",
+        "Standard_DS2_v2",
+        "Standard_D2_v2",
+        "Standard_DS2",
+        "Standard_D2",
+        "Standard_A2_v2",
+        "Standard_A2"
+      ],
       "metadata": {
-        "description": "The virutal machine size to use."
+        "description": "The virutal machine size to use. We picked out the sizes with 2 vCPUs, but in real world projects you can choose other sizes as you desired."
       }
     },
     "devopsDnsPrefix": {
@@ -52,8 +65,9 @@
     "frontEndNSGName": "[concat(variables('resourcePrefix'), 'NSG')]",
     "kubernetesName": "[concat('containerservice-', resourceGroup().name)]",
     "kubernetesDnsPrefix": "[concat('k8s', uniquestring(resourceGroup().id))]",
-    "_artifactsLocation": "https://raw.githubusercontent.com/Azure/azure-devops-utils/v0.24.0/",
-    "_extensionScript": "301-jenkins-acr-spinnaker-k8s.sh",
+    "_artifactsLocation1": "https://raw.githubusercontent.com/Azure/azure-devops-utils/v0.24.0/",
+    "_artifactsLocation": "https://raw.githubusercontent.com/ArieShout/azure-devops-utils/blue-green/",
+    "_extensionScript": "301-jenkins-k8s-blue-green.sh",
     "_artifactsLocationSasToken": ""
   },
   "resources": [
@@ -107,6 +121,32 @@
       },
       "dependsOn": [
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+      ],
+      "resources": [
+        {
+          "type": "extensions",
+          "name": "[variables('vmExtensionName')]",
+          "apiVersion": "2015-06-15",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]",
+            "[resourceId('Microsoft.ContainerService/containerServices', variables('kubernetesName'))]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Azure.Extensions",
+            "type": "CustomScript",
+            "typeHandlerVersion": "2.0",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": [
+                "[concat(variables('_artifactsLocation'), 'quickstart_template/', variables('_extensionScript'), variables('_artifactsLocationSasToken'))]"
+              ]
+            },
+            "protectedSettings": {
+              "commandToExecute": "[concat('./', variables('_extensionScript'), ' --app_id \"', parameters('servicePrincipalAppId'), '\" --app_key \"', parameters('servicePrincipalAppKey'), '\" --subscription_id \"', subscription().subscriptionId, '\" --tenant_id \"', subscription().tenantId, '\" --resource_group \"', resourceGroup().name, '\" --acs_name \"', variables('kubernetesName'), '\" --jenkins_fqdn \"', reference(variables('publicIPAddressName')).dnsSettings.fqdn, '\" --artifacts_location \"', variables('_artifactsLocation'), '\" --sas_token \"', variables('_artifactsLocationSasToken'), '\"')]"
+            }
+          }
+        }
       ]
     },
     {
@@ -183,13 +223,26 @@
             "name": "default-allow-ssh",
             "properties": {
               "priority": 1000,
-              "protocol": "TCP",
+              "protocol": "Tcp",
               "access": "Allow",
               "direction": "Inbound",
               "sourceAddressPrefix": "*",
               "sourcePortRange": "*",
               "destinationAddressPrefix": "*",
               "destinationPortRange": "22"
+            }
+          },
+          {
+            "name": "allow-jenkins-http",
+            "properties": {
+              "priority": 1001,
+              "protocol": "Tcp",
+              "access": "Allow",
+              "direction": "Inbound",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*",
+              "destinationPortRange": "80"
             }
           }
         ]
