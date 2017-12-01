@@ -1,16 +1,17 @@
 # Qlik Sense Enterprise
 This template will deploy a new Virtual Machine and will configure it with Qlik Sense Enterprise.
 
-The following versions of Qlik Sense can be provisioned:
+The following versions of Qlik Sense Enteprise can be provisioned:
 
-| Qlik Sense Version |
+| Qlik Sense Enterprise Version |
 |--------------------|
 | Qlik Sense November 2017 |
+| Qlik Sense September 2017 Patch 1 |
 | Qlik Sense September 2017|
 | Qlik Sense June 2017 Patch 3 |
 | Qlik Sense June 2017 Patch 2 |
 | Qlik Sense June 2017 Patch 1 |
-| Qlik Sense June 2017 Patch   |
+| Qlik Sense June 2017  |
 | Qlik Sense 3.2 SR5 |
 | Qlik Sense 3.2 SR4 |
 | Qlik Sense 3.2 SR3 |
@@ -28,4 +29,4 @@ For help please review [Qlik Sense Help](http://help.qlik.com)
 
 Getting started [Qlik Sense Community](http://community.qlik.com)
 
-#### The deployment of Qlik Sense can take up to 15 minutes.
+#### The deployment of Qlik Sense Enterprise can take up to 15 minutes.
