@@ -5,6 +5,7 @@ var util = require('./util');
 const filesFolder = './';
 var path = require('path');
 var chai = require('chai');
+var jsonlint = require('jsonlint');
 var should = chai.should();
 
 var folder = process.env.npm_config_folder || filesFolder;
@@ -17,7 +18,7 @@ describe('json files in folder - ', () => {
             encoding: 'utf8'
         }).trim();
         try {
-            JSON.parse(fileString);
+            jsonlint.parse(fileString);
         } catch (e) {
             should.fail(null, null, element + ' is not a valid json. ' + e);
         }
