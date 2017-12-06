@@ -1,68 +1,75 @@
-#!/bin/sh
 #!/bin/bash
-# $1 = Azure storage account name
-# $2 = Azure storage account key
-# $3 = Azure file share name
-# $4 = mountpoint path
-# $5 = should run as nf node
-# $6 = username of nextflow user
-# $7 = number of tasks assigned to each node (cluster.maxCpus)
-# $8 = nextflow install url. Used to select specific verion
-# $9 = url of additional install script
+
+# ShellCheck is used for styling and static checking: https://github.com/koalaman/shellcheck
+# The script is split into functions to aid readability and maintainance.
+# Functions starting with an '_' child functions.  
+# See the end of the file for flow. 
+
+AZURE_STORAGE_NAME=$1
+AZURE_STORAGE_KEY=$2
+AZURE_FILESHARE_NAME=$3
+MOUNTPOINT_PATH=$4
+IS_RUNNING_ON_NODE=$5
+USERNAME=$6
+CLUSTER_MAXCPUS=$7
+NEXTFLOW_INSTALL_URL=$8
+ADDIONAL_INSTALL_SCRIPT_URL=$9
 
 log () {
-    echo "-------------------------" | tee -a $2
-    date -Is | tee -a $2
-    echo $1 | tee -a $2
-    echo "-------------------------" | tee -a $2    
+    echo "-------------------------" | tee -a "$2"
+    date -Is | tee -a "$2"
+    echo $1 | tee -a "$2"
+    echo "-------------------------" | tee -a "$2"    
 }
 
-#Install CIFS and JQ (used by this script)
-log "Installing CIFS and JQ" /tmp/nfinstall.log 
-apt-get -y update | tee /tmp/nfinstall.log
-apt-get install cifs-utils sudo apt-transport-https wget graphviz -y | tee -a /tmp/nfinstall.log
+installUtils() {
+    #Install CIFS and JQ (used by this script)
+    log "Installing CIFS and JQ" /tmp/nfinstall.log 
+    apt-get -y update | tee /tmp/nfinstall.log
+    apt-get install cifs-utils sudo apt-transport-https wget graphviz -y | tee -a /tmp/nfinstall.log
 
-#Create azure share if it doesn't already exist
-log "Installing AzureCLI and Mounting Azure Files Share" /tmp/nfinstall.log 
-echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ wheezy main" | \
-    sudo tee /etc/apt/sources.list.d/azure-cli.list 
+    #Create azure share if it doesn't already exist
+    log "Installing AzureCLI and Mounting Azure Files Share" /tmp/nfinstall.log 
+    echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ wheezy main" | \
+        sudo tee /etc/apt/sources.list.d/azure-cli.list 
 
-apt-key adv --keyserver packages.microsoft.com --recv-keys 417A0893 | tee -a /tmp/nfinstall.log
-apt-get -y update | tee /tmp/nfinstall.log
-apt-get install azure-cli -y | tee -a /tmp/nfinstall.log
+    apt-key adv --keyserver packages.microsoft.com --recv-keys 417A0893 | tee -a /tmp/nfinstall.log
+    apt-get -y update | tee /tmp/nfinstall.log
+    apt-get install azure-cli -y | tee -a /tmp/nfinstall.log
 
-az storage share create --name $3 --quota 2048 --connection-string "DefaultEndpointsProtocol=https;EndpointSuffix=core.windows.net;AccountName=$1;AccountKey=$2" | tee -a /tmp/nfinstall.log
+    az storage share create --name "$AZURE_FILESHARE_NAME" --quota 2048 --connection-string "DefaultEndpointsProtocol=https;EndpointSuffix=core.windows.net;AccountName=$AZURE_STORAGE_NAME;AccountKey=$AZURE_STORAGE_KEY" | tee -a /tmp/nfinstall.log
 
-#Wait for the file share to be available. 
-sleep 10
+    #Wait for the file share to be available. 
+    sleep 10
+}
 
-DATA_DIR="/datadisks/disk1"
+formatDataDisks() {
+    DATA_DIR="/datadisks/disk1"
+   
+    if bash ./vm-disk-utils-0.1.sh && [ -d "$DATA_DIR" ];
+    then
+        log "Disk setup successful, using $DATA_DIR" /tmp/nfinstall.log 
+    else
+        log "Disk setup failed, using default data storage location" /tmp/nfinstall.log 
+    fi
+    
+    #Format data disks
+    mkdir -p $DATA_DIR
+    chmod 777 $DATA_DIR
+    chmod 777 /datadisks
+}
 
-bash ./vm-disk-utils-0.1.sh
-if [ $? -eq 0 ] && [ -d "$DATA_DIR" ];
-then
-    log "Disk setup successful, using $DATA_DIR" /tmp/nfinstall.log 
-else
-    log "Disk setup failed, using default data storage location" /tmp/nfinstall.log 
-fi
+mountCifs() {
+    log "Mounting CIFS" /tmp/nfinstall.log 
 
- log "Mounting CIFS" /tmp/nfinstall.log 
-#Format data disks
-mkdir -p $DATA_DIR
-chmod 777 $DATA_DIR
-chmod 777 /datadisks
+    #Mount the share with symlink and fifo support: see https://wiki.samba.org/index.php/SMB3-Linux
+    mkdir -p "$MOUNTPOINT_PATH/cifs" | tee -a /tmp/nfinstall.log
+    echo "//$AZURE_STORAGE_NAME.file.core.windows.net/$AZURE_FILESHARE_NAME $MOUNTPOINT_PATH/cifs cifs vers=3.0,username=$AZURE_STORAGE_NAME,password=$AZURE_STORAGE_KEY,dir_mode=0777,file_mode=0777,mfsymlinks,sfu" >> /etc/fstab 
+    mount -a  | tee -a /tmp/nfinstall.log
+    CIFS_SHAREPATH="$MOUNTPOINT_PATH/cifs"
+}
 
-#Mount the share with symlink and fifo support: see https://wiki.samba.org/index.php/SMB3-Linux
-mkdir -p $4/cifs | tee -a /tmp/nfinstall.log
-echo //$1.file.core.windows.net/$3 $4/cifs cifs vers=3.0,username=$1,password=$2,dir_mode=0777,file_mode=0777,mfsymlinks,sfu >> /etc/fstab 
-mount -a  | tee -a /tmp/nfinstall.log
-CIFS_SHAREPATH=$4/cifs
-
-#Variables
-NFS_SHAREPATH=$4/nfs #Location NFS share will be mounted at
-
-mkdir -p $NFS_SHAREPATH | tee -a /tmp/nfinstall.log
-if [ "$5" != true ]; then 
+_setupNfsServer() {
     log "MASTER: Creating NFS share" /tmp/nfinstall.log 
 
     #Variables
@@ -73,186 +80,206 @@ if [ "$5" != true ]; then
     apt-get install nfs-kernel-server -y | tee -a /tmp/nfinstall.log
 
     #TODO: Review permissions and security
-    mkdir $NFS_SHAREPATH | tee -a /tmp/nfinstall.log
-    chown nobody:nogroup $NFS_SHAREPATH | tee -a /tmp/nfinstall.log
-    chmod 777 $NFS_SHAREPATH | tee -a /tmp/nfinstall.log
+    mkdir "$NFS_SHAREPATH" | tee -a /tmp/nfinstall.log
+    chown nobody:nogroup "$NFS_SHAREPATH" | tee -a /tmp/nfinstall.log
+    chmod 777 "$NFS_SHAREPATH" | tee -a /tmp/nfinstall.log
 
     echo "$NFS_SHAREPATH    $ALLOWEDSUBNET(rw,sync,no_subtree_check,all_squash,anonuid=1000,anongid=100)" > /etc/exports 
 
     systemctl restart nfs-kernel-server | tee -a /tmp/nfinstall.log
 
-    touch $CIFS_SHAREPATH/.done_creating_nfs_share | tee -a /tmp/nfinstall.log
-fi
+    touch "$CIFS_SHAREPATH/.done_creating_nfs_share" | tee -a /tmp/nfinstall.log
+}
 
-while [ ! -f $CIFS_SHAREPATH/.done_creating_nfs_share ]
-do
-    log "NODE: Waiting for NFS share to be created" /tmp/nfinstall.log 
-    sleep 5
-done
-
-if [ "$5" = true ]; then
+_setupNfsClient() {
     log "NODE: Install NFS client tools" /tmp/nfinstall.log 
     apt-get install nfs-kernel-server -y | tee -a /tmp/nfinstall.log
 
     log "NODE: Mounting NFS share" /tmp/nfinstall.log 
-    mkdir -p $NFS_SHAREPATH | tee -a /tmp/nfinstall.log
-    echo jumpboxvm:$NFS_SHAREPATH $NFS_SHAREPATH nfs rw,soft,intr >> /etc/fstab
+    mkdir -p "$NFS_SHAREPATH" | tee -a /tmp/nfinstall.log
+    echo "jumpboxvm:$NFS_SHAREPATH $NFS_SHAREPATH nfs rw,soft,intr" >> /etc/fstab
     mount -a | tee -a /tmp/nfinstall.log
-    chmod 777 $NFS_SHAREPATH | tee -a /tmp/nfinstall.log
-fi
+    chmod 777 "$NFS_SHAREPATH" | tee -a /tmp/nfinstall.log
+}
+ 
+setupNfs() {
+    #Variables
+    #Location NFS share will be mounted at
+    NFS_SHAREPATH="$MOUNTPOINT_PATH"/nfs 
 
-###############
-# end
-###############
+    mkdir -p "$NFS_SHAREPATH" | tee -a /tmp/nfinstall.log
+    if [ "$IS_RUNNING_ON_NODE" != true ]; then 
+        _setupNfsServer
+    fi
 
-log "Get machine metadata and copy logs to share"
+    while [ ! -f "$CIFS_SHAREPATH/.done_creating_nfs_share" ]
+    do
+        log "NODE: Waiting for NFS share to be created" /tmp/nfinstall.log 
+        sleep 5
+    done
 
-apt-get install jq curl -y | tee -a /tmp/nfinstall.log
-#Write instance details into share log folder for debugging
-METADATA=$(curl -H Metadata:true http://169.254.169.254/metadata/instance?api-version=2017-04-02)
-NODENAME=$(echo $METADATA | jq -r '.compute.name')
+    if [ "$IS_RUNNING_ON_NODE" = true ]; then
+        _setupNfsClient   
+    fi
+}
 
-#Create a log folder for each node
-mkdir -p $CIFS_SHAREPATH/logs/$NODENAME | tee -a /tmp/nfinstall.log
+copyLogsToCifsShareForDebugging() {
+    log "Get machine metadata and copy logs to share"
 
-#Copy logs used so far
-cp /tmp/nfinstall.log $CIFS_SHAREPATH/logs/$NODENAME/
-LOGFOLDER=$CIFS_SHAREPATH/logs/$NODENAME/
-LOGFILE=$CIFS_SHAREPATH/logs/$NODENAME/nfinstall.log
+    apt-get install jq curl -y | tee -a /tmp/nfinstall.log
 
-#Track the metadata for the node for debugging
-echo $METADATA > $CIFS_SHAREPATH/logs/$NODENAME/node.metadata 
+    #Write instance details into share log folder for debugging
+    METADATA=$(curl -H Metadata:true http://169.254.169.254/metadata/instance?api-version=2017-04-02)
+     # shellcheck disable=SC2116
+     # shellcheck disable=SC2086
+    NODENAME=$(echo $METADATA | jq -r '.compute.name')
 
-#Install java
-log "Installing JAVA" $LOGFILE
-apt-get install openjdk-8-jdk -y | tee -a $LOGFILE
+    #Create a log folder for each node
+    mkdir -p "$CIFS_SHAREPATH/logs/$NODENAME" | tee -a /tmp/nfinstall.log
 
-log "Installing Singularity" $LOGFILE
-wget -O- http://neuro.debian.net/lists/xenial.us-ca.full | tee /etc/apt/sources.list.d/neurodebian.sources.list
-apt-key adv --recv-keys --keyserver hkp://pool.sks-keyservers.net:80 0xA5D32F012649A5A9 | tee -a $LOGFILE
-apt-key update -y | tee -a $LOGFILE
-apt-get update -y | tee -a $LOGFILE
-apt-get install -y singularity-container | tee -a $LOGFILE
-echo "bind path = $4" >> /etc/singularity/singularity.conf
-echo "bind path = /mnt" >> /etc/singularity/singularity.conf
+    #Copy logs used so far
+    cp /tmp/nfinstall.log "$CIFS_SHAREPATH/logs/$NODENAME/"
+    LOGFOLDER="$CIFS_SHAREPATH/logs/$NODENAME/"
+    LOGFILE="$CIFS_SHAREPATH/logs/$NODENAME/nfinstall.log"
 
-log "Install Docker" $LOGFILE
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - | tee -a $LOGFILE
-add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee -a $LOGFILE
-apt-get update -y | tee -a $LOGFILE
-apt-get install -y docker-ce | tee -a $LOGFILE
-#Add the nextflow user to the docker group. 
-usermod -aG docker $6 | tee -a $LOGFILE
-#Nextflow creates files with write permissions only allowed by user that created them
-#As we run nextflow under user/group nextflow/nextlow but the docker containers run under root 
-#We need to add root to the nextflow user group to give it the correct permissions
-usermod -aG $6 root | tee -a $LOGFILE
-usermod -aG nogroup root | tee -a $LOGFILE
+    #Track the metadata for the node for debugging
+    echo "$METADATA" > "$CIFS_SHAREPATH/logs/$NODENAME/node.metadata" 
+}
 
+installNextflowDeps() {
+    log "Installing JAVA" "$LOGFILE"
+    apt-get install openjdk-8-jdk -y | tee -a "$LOGFILE"
 
-log "Setup Filesystem and Environment Variables" $LOGFILE
+    log "Installing Singularity" "$LOGFILE"
+    wget -O- http://neuro.debian.net/lists/xenial.us-ca.full | tee /etc/apt/sources.list.d/neurodebian.sources.list
+    apt-key adv --recv-keys --keyserver hkp://pool.sks-keyservers.net:80 0xA5D32F012649A5A9 | tee -a "$LOGFILE"
+    apt-key update -y | tee -a "$LOGFILE"
+    apt-get update -y | tee -a "$LOGFILE"
+    apt-get install -y singularity-container | tee -a "$LOGFILE"
+    echo "bind path = $MOUNTPOINT_PATH" >> /etc/singularity/singularity.conf
+    echo "bind path = /mnt" >> /etc/singularity/singularity.conf
 
-mkdir -p $NFS_SHAREPATH/work
-chmod 777 $NFS_SHAREPATH/work
-mkdir -p $NFS_SHAREPATH/assets
-chmod 777 $NFS_SHAREPATH/assets
+    log "Install Docker" "$LOGFILE"
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - | tee -a "$LOGFILE"
+    add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee -a "$LOGFILE"
+    apt-get update -y | tee -a "$LOGFILE"
+    apt-get install -y docker-ce | tee -a "$LOGFILE"
+    #Add the nextflow user to the docker group. 
+    usermod -aG docker "$USERNAME" | tee -a "$LOGFILE"
+    #Nextflow creates files with write permissions only allowed by user that created them
+    #As we run nextflow under user/group nextflow/nextlow but the docker containers run under root 
+    #We need to add root to the nextflow user group to give it the correct permissions
+    usermod -aG "$USERNAME" root | tee -a "$LOGFILE"
+    usermod -aG nogroup root | tee -a "$LOGFILE"
+}
 
-#Todo: This will repeatedly add the same env to the file. Fix that. 
-#Configure nextflow environment vars    
-echo export NXF_WORK=$NFS_SHAREPATH/work >> /etc/environment
-echo export NXF_ASSETS=$NFS_SHAREPATH/assets >> /etc/environment
+setNextflowEnvironmentVars() {
+    log "Setup Filesystem and Environment Variables" "$LOGFILE"
 
-echo export AWS_ACCESS_KEY_ID=$1 >> /etc/environment
-echo export AWS_ACCESS_KEY=$2 >> /etc/environment
+    mkdir -p "$NFS_SHAREPATH/work"
+    chmod 777 "$NFS_SHAREPATH/work"
+    mkdir -p "$NFS_SHAREPATH/assets"
+    chmod 777 "$NFS_SHAREPATH/assets"
 
-#Added for debugging
-echo export NXF_AZ_USER=$6 >> /etc/environment
-echo export NXF_AZ_LOGFILE=$LOGFILE >> /etc/environment
-echo export NXF_AZ_CIFSPATH=$CIFS_SHAREPATH >> /etc/environment
-echo export NXF_AZ_NFSPATH=$NFS_SHAREPATH >> /etc/environment
+    #Configure nextflow environment vars
+    {
+        echo "export NXF_WORK=$NFS_SHAREPATH/work"
+        echo "export NXF_ASSETS=$NFS_SHAREPATH/assets"
 
-#Use asure epherical instance drive for tmp
-mkdir -p /mnt/nextflow_temp
-echo export NXF_TEMP=/mnt/nextflow_temp >> /etc/environment
+        #Added for debugging
+        echo export "NXF_AZ_USER=$USERNAME" 
+        echo export "NXF_AZ_LOGFILE=$LOGFILE" 
+        echo export "NXF_AZ_CIFSPATH=$CIFS_SHAREPATH" 
+        echo export "NXF_AZ_NFSPATH=$NFS_SHAREPATH" 
+    } >> /etc/environment
 
-#Allow user access to temporary drive
-chmod -f 777 /mnt/nextflow_temp #Todo: Review sec implications 
+    #Use asure epherical instance drive for tmp
+    mkdir -p /mnt/nextflow_temp
+    echo export NXF_TEMP=/mnt/nextflow_temp >> /etc/environment
 
-#Reload environment variables in this session. 
-sed 's/^/export /' /etc/environment > /tmp/env.sh && source /tmp/env.sh
+    #Allow user access to temporary drive
+    chmod -f 777 /mnt/nextflow_temp #Todo: Review sec implications 
 
-#Install nextflow
-log "Installing nextflow" $LOGFILE
-curl -s $8 | bash | tee -a $LOGFILE
+    #Reload environment variables in this session. 
+    # shellcheck disable=SC1091
+    sed 's/^/export /' /etc/environment > /tmp/env.sh && source /tmp/env.sh
 
-#Copy the binary to the path to be accessed by users
-cp ./nextflow /usr/local/bin
-chmod -f 777 /usr/local/bin/nextflow #Todo: Review sec implications 
+}
 
-log "Run smoke test. Validate machine is setup" $LOGFILE
+installNextflow() {
+    #Install nextflow
+    log "Installing nextflow" "$LOGFILE"
+    curl -s "$NEXTFLOW_INSTALL_URL" | bash | tee -a "$LOGFILE"
 
-log "Check Installed programs" $LOGFILE
-if ! [ -x "$(command -v docker)" ] || ! [ -x "$(command -v singularity)" ] || ! [ -x "$(command -v nextflow)" ]; then
-  log "FAIL: Missing commands" $LOGFILE
-  echo "Docker" >> $LOGFILE
-  command -v docker >> $LOGFILE
+    #Copy the binary to the path to be accessed by users
+    cp ./nextflow /usr/local/bin
+    chmod -f 777 /usr/local/bin/nextflow #Todo: Review sec implications 
+}
 
-  echo "Singularity" >> $LOGFILE
-  command -v singularity >> $LOGFILE
+runSmoketest() {
+    log "Run smoke test. Validate machine is setup" "$LOGFILE"
 
-  echo "Nextflow" >> $LOGFILE
-  command -v nextflow >> $LOGFILE
+    log "Check Installed programs" "$LOGFILE"
+    if ! [ -x "$(command -v docker)" ] || ! [ -x "$(command -v singularity)" ] || ! [ -x "$(command -v nextflow)" ]; then
+        log "FAIL: Missing commands" "$LOGFILE"
+        echo "Docker" | tee -a "$LOGFILE"
+        command -v docker | tee -a "$LOGFILE"
 
-  echo "Shutting down node...." >> $LOGFILE
-  shutdown
-else 
-  echo "Success: Nextflow, docker and singularity installed" >> $LOGFILE
-fi
+        echo "Singularity" | tee -a "$LOGFILE"
+        command -v singularity | tee -a "$LOGFILE"
 
-log "Check mount points setup" $LOGFILE
-if mountpoint -q $4/cifs
-then
-   echo "CIFS Mounted" >> $LOGFILE
-else
-   echo "FAILED CIFS not mounted" >> $LOGFILE
-   echo "Shutting down node...." >> $LOGFILE
-   shutdown
-fi
+        echo "Nextflow" | tee -a "$LOGFILE"
+        command -v nextflow | tee -a "$LOGFILE"
 
-#If we're a node run the daemon
-if [ "$5" = true ]; then 
+        echo "Shutting down node...." | tee -a "$LOGFILE"
+        shutdown
+    else 
+        echo "Success: Nextflow, docker and singularity installed" >> "$LOGFILE"
+    fi
 
-    if mountpoint -q $4/nfs
-    then
-        echo "NFS Mounted" >> $LOGFILE
+    log "Check mount points setup" "$LOGFILE"
+    if mountpoint -q "$MOUNTPOINT_PATH"/cifs; then
+        echo "CIFS Mounted" | tee -a "$LOGFILE"
     else
-        echo "FAILED NFS not mounted" >> $LOGFILE
-        echo "Shutting down node...." >> $LOGFILE
+        echo "FAILED CIFS not mounted" | tee -a "$LOGFILE"
+        echo "Shutting down node...." | tee -a "$LOGFILE"
         shutdown
     fi
 
-fi 
+    #NFS mount point only present on nodes as jumpbox is the NFS server. 
+    # so only perform the check on nodes not jumpbox. 
+    if [ "$IS_RUNNING_ON_NODE" = true ]; then 
+        if mountpoint -q "$MOUNTPOINT_PATH"/nfs
+        then
+            echo "NFS Mounted" | tee -a "$LOGFILE"
+        else
+            echo "FAILED NFS not mounted" | tee -a "$LOGFILE"
+            echo "Shutting down node...." | tee -a "$LOGFILE"
+            shutdown
+        fi
+    fi 
+}
 
+runAdditionalInstallScriptIfProvided() {
+    if [[ "$ADDIONAL_INSTALL_SCRIPT_URL" ]]; then 
+        log "Run additional install script" "$LOGFILE"
+        curl -s "$ADDIONAL_INSTALL_SCRIPT_URL" | bash | tee -a "$LOGFILE"
+    fi
+}
 
-if [[ $9 ]]; then 
+setupAndStartNextflowServiceIfOnNode() {
+    #If we're a node run the daemon
+    if [ "$IS_RUNNING_ON_NODE" = true ]; then 
 
-log "Run additional install script" $LOGFILE
-curl -s $9 | bash | tee -a $LOGFILE
-
-fi
-
-#If we're a node run the daemon
-if [ "$5" = true ]; then 
-
-#Create a systemd unit
-cat >/etc/systemd/system/nextflow.service <<EOL
+    #Create a systemd unit
+    cat >/etc/systemd/system/nextflow.service <<EOL
 [Unit]
 Description=Nextflow Node service
 After=network-online.target
 
 [Service]
 Type=forking
-ExecStart=/usr/local/bin/nextflow node -bg -cluster.join path:$CIFS_SHAREPATH/cluster -cluster.interface eth0 -cluster.maxCpus $7
+ExecStart=/usr/local/bin/nextflow node -bg -cluster.join path:$CIFS_SHAREPATH/cluster -cluster.interface eth0 -cluster.maxCpus "$CLUSTER_MAXCPUS"
 Restart=always
 WorkingDirectory=$LOGFOLDER
 
@@ -260,9 +287,24 @@ WorkingDirectory=$LOGFOLDER
 WantedBy=multi-user.target 
 EOL
 
-log "NODE: Starting cluster nextflow cluster node" $LOGFILE
-systemctl enable nextflow.service | tee -a $LOGFILE
-systemctl start nextflow.service | tee -a $LOGFILE
-log "NODE: Cluster node started" $LOGFILE
+    log "NODE: Starting cluster nextflow cluster node" "$LOGFILE"
+    systemctl enable nextflow.service | tee -a "$LOGFILE"
+    systemctl start nextflow.service | tee -a "$LOGFILE"
+    log "NODE: Cluster node started" "$LOGFILE"
 
-fi
+    fi
+
+}
+
+# This is the install flow, invoking each of the functions. 
+installUtils
+formatDataDisks
+mountCifs
+setupNfs
+copyLogsToCifsShareForDebugging
+installNextflowDeps
+setNextflowEnvironmentVars
+installNextflow
+runSmokeTest
+runAdditionalInstallScriptIfProvided
+setupAndStartNextflowServiceIfOnNode

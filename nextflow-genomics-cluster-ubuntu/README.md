@@ -98,15 +98,15 @@ The cluster is created as a 'Deployment' under a resource group. If issues occur
 
 In most cases a good first step is to delete the resource group and redeploy to rule out transient issues.
 
-In addition to this, logs are created during the setup of the nodes and master. These are stored in the storage account created for the cluster. You easily access these by installing [Azure Storage Explorer](https://azure.microsoft.com/en-us/features/storage-explorer/) and browsing the content under '[ResourceGroupUsed]/nfstoragexxxxxxx/File Shares/sharedstorage/logs'. Here is an example:
+In addition to this, logs are created during the setup of the nodes and master. These are stored in the storage account created for the cluster. You easily access these by installing [Azure Storage Explorer](https://azure.microsoft.com/en-us/features/storage-explorer/) and browsing the content under `[ResourceGroupUsed]/nfstoragexxxxxxx/File Shares/sharedstorage/logs`. Here is an example:
 
 [Cluster logs video](https://1drv.ms/v/s!AgO58DGl6B7Rqu9xp6uN8Nufc5mJiA)
 
 ## Custom Image 
 
-The template supports using a Ubuntu 16 LTS based custom image for the master and nodes.
+The template supports using a `Ubuntu 16 LTS` based custom image for the master and nodes.
 
-Once you have created your image retrieve it's `id` using the azcli. For example run this command, it will list the IDs of your custom images:
+Once you have created your image retrieve it's `id` using the `azcli`. For example run this command, it will list the IDs of your custom images:
 
  `az image list --query [].id`
 
