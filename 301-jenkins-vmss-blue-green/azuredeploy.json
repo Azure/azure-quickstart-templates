@@ -47,19 +47,40 @@
                 "description": "The virutal machine size to use. We picked out the sizes with 2 vCPUs, but in real world projects you can choose other sizes as you desired."
             }
         },
+        "jenkinsDNSPrefix": {
+            "type": "string",
+            "metadata": {
+                "description": "Unique DNS name prefix for the public IP used to access the Jenkins service."
+            }
+        },
         "dnsPrefix": {
             "type": "string",
             "metadata": {
-                "description": "Unique DNS name prefix for the Public IP used to access the Tomcat service."
+                "description": "Unique DNS name prefix for the public IP used to access the Tomcat service."
+            }
+        },
+        "servicePrincipalAppId": {
+            "type": "string",
+            "metadata": {
+                "description": "Service Principal App ID (also called Client ID) that has contributor rights to the subscription used for this deployment. It is used to manage related Azure resources, e.g., bake OS image, check resource status, update VMSS image, etc."
+            }
+        },
+        "servicePrincipalAppKey": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Service Principal App Key (also called Client Secret) that has contributor rights to the subscription used for this deployment. It is used to manage related Azure resources, e.g., bake OS image, check resource status, update VMSS image, etc."
             }
         }
     },
     "variables": {
         "service": "tomcat",
+        "jenkinsVmName": "[concat(parameters('prefix'), '-jenkins')]",
+        "jenkinsNic": "[concat(variables('jenkinsVmName'), 'Nic')]",
+        "jenkinsIp": "[concat(variables('jenkinsVmName'), 'IP')]",
         "blueVmss": "[concat(parameters('prefix'), '-blue')]",
         "greenVmss": "[concat(parameters('prefix'), '-green')]",
-        "blueComputerNamePrefix": "[concat(variables('blueVmss'), uniqueString(subscription().id))]",
-        "greenComputerNamePrefix": "[concat(variables('greenVmss'), uniqueString(subscription().id))]",
+        "blueComputerNamePrefix": "[variables('blueVmss')]",
+        "greenComputerNamePrefix": "[variables('greenVmss')]",
         "ipName": "[concat(parameters('prefix'), '-ip')]",
         "lbName": "[concat(parameters('prefix'), '-lb')]",
         "vnetName": "[concat(parameters('prefix'), '-vnet')]",
@@ -70,9 +91,108 @@
         "lbBlueBeName": "blue-bepool",
         "lbBlueNatPoolName": "blue-natpool",
         "lbGreenBeName": "green-bepool",
-        "lbGreenNatPoolName": "green-natpool"
+        "lbGreenNatPoolName": "green-natpool",
+        "_artifactsLocation1": "https://raw.githubusercontent.com/Azure/azure-devops-utils/v0.24.0/",
+        "_artifactsLocation": "https://raw.githubusercontent.com/ArieShout/azure-devops-utils/blue-green/",
+        "_extensionScript": "301-jenkins-vmss-blue-green.sh",
+        "_artifactsLocationSasToken": ""
     },
     "resources": [
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[variables('jenkinsVmName')]",
+            "apiVersion": "2017-03-30",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "osProfile": {
+                    "computerName": "[variables('jenkinsVmName')]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+                                    "keyData": "[parameters('sshPublicKey')]"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "hardwareProfile": {
+                    "vmSize": "[parameters('virtualMachineSize')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "Canonical",
+                        "offer": "UbuntuServer",
+                        "sku": "16.04-LTS",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "[concat(variables('jenkinsVmName'), 'OSDisk')]",
+                        "createOption": "FromImage",
+                        "managedDisk": {
+                            "storageAccountType": "Premium_LRS"
+                        }
+                    },
+                    "dataDisks": []
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('jenkinsNic'))]"
+                        }
+                    ]
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces', variables('jenkinsNic'))]"
+            ],
+            "resources": []
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[variables('jenkinsNic')]",
+            "apiVersion": "2016-09-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('subnetName'))]"
+                            },
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIpAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('jenkinsIp'))]"
+                            }
+                        }
+                    }
+                ],
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+                "[resourceId('Microsoft.Network/publicIpAddresses', variables('jenkinsIp'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[variables('jenkinsIp')]",
+            "apiVersion": "2017-06-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic",
+                "dnsSettings": {
+                    "domainNameLabel": "[parameters('jenkinsDNSPrefix')]"
+                }
+            }
+        },
         {
             "comments": "VMSS for the blue environment.",
             "type": "Microsoft.Compute/virtualMachineScaleSets",
