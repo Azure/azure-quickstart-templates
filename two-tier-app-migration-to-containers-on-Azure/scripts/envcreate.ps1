@@ -51,9 +51,9 @@ set-webbinding -Name 'Default Web Site' -BindingInformation "*:80:" -propertyNam
 New-Website -Name crud -Force -PhysicalPath C:\inetpub\crud -Port 80
 
 #To download & deploy Crud app using local database
-$Url1 = "https://raw.githubusercontent.com/wmhussain/two-tier-app-migration-containers/master/scripts/DotNetAppSqlDb.deploy.cmd"
-$Url2 = "https://raw.githubusercontent.com/wmhussain/two-tier-app-migration-containers/master/scripts/DotNetAppSqlDb.SetParameters.xml"
-$Url3 = "https://raw.githubusercontent.com/wmhussain/two-tier-app-migration-containers/master/scripts/DotNetAppSqlDb.zip"
+$Url1 = $Args[1]
+$Url2 = $Args[2]
+$Url3 = $Args[3]
 
 Invoke-WebRequest -Uri "$Url1" -OutFile "C:\Packages\DotNetAppSqlDb.deploy.cmd"
 Invoke-WebRequest -Uri "$Url2" -OutFile "C:\Packages\DotNetAppSqlDb.SetParameters.xml"
