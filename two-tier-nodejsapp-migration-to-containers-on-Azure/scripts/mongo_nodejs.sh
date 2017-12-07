@@ -22,7 +22,7 @@ apt-get install -y nodejs
 
 #Clone todo app
 mkdir /app
-git clone https://github.com/evillgenius75/gbb-todo /app
+git clone $1 /app
 
 #Install Nodejs app
 cd /app
