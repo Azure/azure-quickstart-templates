@@ -1,5 +1,5 @@
 # to Install web deploy
-$Url = "https://raw.githubusercontent.com/wmhussain/two-tier-app-migration-containers/master/scripts/WebDeploy_amd64_en-US.msi"
+$Url = "https://download.microsoft.com/download/D/4/4/D446D154-2232-49A1-9D64-F5A9429913A4/WebDeploy_amd64_en-US.msi"
 Invoke-WebRequest -Uri "$Url" -OutFile "C:\Packages\WebDeploy_amd64_en-US.msi"
 msiexec.exe /i C:\Packages\WebDeploy_amd64_en-US.msi  /qn
 
