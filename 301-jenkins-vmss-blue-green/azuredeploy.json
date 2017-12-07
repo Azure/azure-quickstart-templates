@@ -2,17 +2,11 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "prefix": {
+        "resourceNamePrefix": {
             "defaultValue": "vmssbg",
             "type": "string",
             "metadata": {
                 "description": "Prefix for the resource names."
-            }
-        },
-        "imageId": {
-            "type": "string",
-            "metadata": {
-                "description": "The ID of the managed OS image used to provision the Virtual Machines in the VMSS."
             }
         },
         "adminUsername": {
@@ -53,7 +47,7 @@
                 "description": "Unique DNS name prefix for the public IP used to access the Jenkins service."
             }
         },
-        "dnsPrefix": {
+        "tomcatDNSPrefix": {
             "type": "string",
             "metadata": {
                 "description": "Unique DNS name prefix for the public IP used to access the Tomcat service."
@@ -74,18 +68,21 @@
     },
     "variables": {
         "service": "tomcat",
-        "jenkinsVmName": "[concat(parameters('prefix'), '-jenkins')]",
-        "jenkinsNic": "[concat(variables('jenkinsVmName'), 'Nic')]",
-        "jenkinsIp": "[concat(variables('jenkinsVmName'), 'IP')]",
-        "blueVmss": "[concat(parameters('prefix'), '-blue')]",
-        "greenVmss": "[concat(parameters('prefix'), '-green')]",
+        "baseImageName": "[concat(parameters('resourceNamePrefix'), '-base-', uniqueString(subscription().id))]",
+        "imageId": "[resourceId('Microsoft.Compute/images', variables('baseImageName'))]",
+        "jenkinsVmName": "[concat(parameters('resourceNamePrefix'), '-jenkins')]",
+        "vmExtensionName": "[concat(variables('jenkinsVmName'), '-init')]",
+        "jenkinsNic": "[concat(variables('jenkinsVmName'), '-nic')]",
+        "jenkinsIp": "[concat(variables('jenkinsVmName'), '-ip')]",
+        "blueVmss": "[concat(parameters('resourceNamePrefix'), '-blue')]",
+        "greenVmss": "[concat(parameters('resourceNamePrefix'), '-green')]",
         "blueComputerNamePrefix": "[variables('blueVmss')]",
         "greenComputerNamePrefix": "[variables('greenVmss')]",
-        "ipName": "[concat(parameters('prefix'), '-ip')]",
-        "lbName": "[concat(parameters('prefix'), '-lb')]",
-        "vnetName": "[concat(parameters('prefix'), '-vnet')]",
-        "nsgName": "[concat(parameters('prefix'), '-nsg')]",
-        "subnetName": "[concat(parameters('prefix'), '-subnet')]",
+        "ipName": "[concat(parameters('resourceNamePrefix'), '-ip')]",
+        "lbName": "[concat(parameters('resourceNamePrefix'), '-lb')]",
+        "vnetName": "[concat(parameters('resourceNamePrefix'), '-vnet')]",
+        "nsgName": "[concat(parameters('resourceNamePrefix'), '-nsg')]",
+        "subnetName": "[concat(parameters('resourceNamePrefix'), '-subnet')]",
         "lbFrontendName": "loadBalancerFrontEnd",
         "lbFrontendId": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('lbName'), variables('lbFrontendName'))]",
         "lbBlueBeName": "blue-bepool",
@@ -130,7 +127,7 @@
                         "version": "latest"
                     },
                     "osDisk": {
-                        "name": "[concat(variables('jenkinsVmName'), 'OSDisk')]",
+                        "name": "[concat(variables('jenkinsVmName'), '-os-disk')]",
                         "createOption": "FromImage",
                         "managedDisk": {
                             "storageAccountType": "Premium_LRS"
@@ -149,7 +146,31 @@
             "dependsOn": [
                 "[resourceId('Microsoft.Network/networkInterfaces', variables('jenkinsNic'))]"
             ],
-            "resources": []
+            "resources": [
+                {
+                    "type": "extensions",
+                    "name": "[variables('vmExtensionName')]",
+                    "apiVersion": "2015-06-15",
+                    "location": "[resourceGroup().location]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Compute/virtualMachines', variables('jenkinsVmName'))]"
+                    ],
+                    "properties": {
+                        "publisher": "Microsoft.Azure.Extensions",
+                        "type": "CustomScript",
+                        "typeHandlerVersion": "2.0",
+                        "autoUpgradeMinorVersion": true,
+                        "settings": {
+                            "fileUris": [
+                                "[concat(variables('_artifactsLocation'), 'quickstart_template/', variables('_extensionScript'), variables('_artifactsLocationSasToken'))]"
+                            ]
+                        },
+                        "protectedSettings": {
+                            "commandToExecute": "[concat('./', variables('_extensionScript'), ' --app_id \"', parameters('servicePrincipalAppId'), '\" --app_key \"', parameters('servicePrincipalAppKey'), '\" --subscription_id \"', subscription().subscriptionId, '\" --tenant_id \"', subscription().tenantId, '\" --resource_group \"', resourceGroup().name, '\" --location \"', resourceGroup().location, '\" --name_prefix \"', parameters('resourceNamePrefix'), '\" --image_name \"', variables('baseImageName'), '\" --jenkins_fqdn \"', reference(variables('jenkinsIp')).dnsSettings.fqdn, '\" --artifacts_location \"', variables('_artifactsLocation'), '\" --sas_token \"', variables('_artifactsLocationSasToken'), '\"')]"
+                        }
+                    }
+                }
+            ]
         },
         {
             "type": "Microsoft.Network/networkInterfaces",
@@ -233,7 +254,7 @@
                             }
                         },
                         "imageReference": {
-                            "id": "[parameters('imageId')]"
+                            "id": "[variables('imageId')]"
                         }
                     },
                     "networkProfile": {
@@ -280,7 +301,8 @@
             "dependsOn": [
                 "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]",
                 "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
-                "[resourceId('Microsoft.Network/loadBalancers', variables('lbName'))]"
+                "[resourceId('Microsoft.Network/loadBalancers', variables('lbName'))]",
+                "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('jenkinsVmName'), variables('vmExtensionName'))]"
             ]
         },
         {
@@ -323,7 +345,7 @@
                             }
                         },
                         "imageReference": {
-                            "id": "[parameters('imageId')]"
+                            "id": "[variables('imageId')]"
                         }
                     },
                     "networkProfile": {
@@ -370,7 +392,8 @@
             "dependsOn": [
                 "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]",
                 "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
-                "[resourceId('Microsoft.Network/loadBalancers', variables('lbName'))]"
+                "[resourceId('Microsoft.Network/loadBalancers', variables('lbName'))]",
+                "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('jenkinsVmName'), variables('vmExtensionName'))]"
             ]
         },
         {
@@ -448,6 +471,26 @@
                                 "id": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('lbName'), variables('service'))]"
                             }
                         }
+                    },
+                    {
+                        "name": "[concat(variables('service'), '-test')]",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[variables('lbFrontendId')]"
+                            },
+                            "frontendPort": 8080,
+                            "backendPort": 8081,
+                            "enableFloatingIP": false,
+                            "idleTimeoutInMinutes": 4,
+                            "protocol": "Tcp",
+                            "loadDistribution": "Default",
+                            "backendAddressPool": {
+                                "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('lbName'), variables('lbGreenBeName'))]"
+                            },
+                            "probe": {
+                                "id": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('lbName'), variables('service'))]"
+                            }
+                        }
                     }
                 ],
                 "probes": [
@@ -507,7 +550,7 @@
                 "publicIPAllocationMethod": "Static",
                 "idleTimeoutInMinutes": 4,
                 "dnsSettings": {
-                    "domainNameLabel": "[parameters('dnsPrefix')]"
+                    "domainNameLabel": "[parameters('tomcatDNSPrefix')]"
                 }
             }
         },
