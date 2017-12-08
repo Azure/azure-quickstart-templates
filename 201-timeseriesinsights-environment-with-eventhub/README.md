@@ -7,4 +7,4 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template creates an Event Hub, a Time Series Insights environment, a child event source configured to consume events from the Event Hub, and access policies that grant access to the environment's data. For more information, go to: <https://docs.microsoft.com/azure/time-series-insights/>.
+This template creates a Time Series Insights environment, a child event source configured to consume events from an Event Hub, and access policies that grant access to the environment's data. If an existing Event Hub isn't specified, one will be created with the deployment. For more information, go to: <https://docs.microsoft.com/azure/time-series-insights/>.
