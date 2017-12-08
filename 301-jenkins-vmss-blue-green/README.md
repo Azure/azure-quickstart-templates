@@ -10,12 +10,41 @@ preview. It may be changed in future as the Azure infrastructure level support i
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template / guide allows you to deploy and configure a DevOps pipeline to upgrade VMSS images in blue-green
-deployment strategy. 
+This template / guide provision a Jenkins Master on a VM running on Azure; configure a DevOps pipeline to bake
+managed OS image with Tomcat 7 or 8 installed and deploy to VMSS. It is an example to demonstrate how we can use
+Jenkins pipeline to do blue-green deployment on VMSS.
 
-It deploys two VMSS cluster (blue / green) which uses pre-baked Ubuntu 16.04 LTS image with either Tomcat 7 or 8 installed,
-an Azure Load Balancer to manage the routing and load balancing to the VMSS clusters, and also an instance of Jenkins 
-on Ubuntu 16.04 LTS VM to manage the blue-green deployment to upgrade the images for the VMSS clusters.
+The quickstart template will provision the following in Azure:
+
+* A Jenkins master running on a Linux Ubuntu 16.04 LTS VM in Azure. The instance is pre-configured with the Azure Service
+   Principal you provide. This credential is used to manage the Azure resources.
+
+* A managed Ubuntu 16.04 LTS OS image with Tomcat 7 installed.
+
+* Two VMSS's provisioned from the above managed OS image, one for the blue environment and one for green, which are connected
+   to an Azure Load Balancer as two separate backends. Initially, the blue one is active and green one is inactive.
+
+* A basic Jenkins pipeline that accepts a managed OS image ID, and deploy the image to the inactive VMSS and switch the
+   Load Balancer routing to the inactive one if tests look good:
+
+   1. Check the current active VMSS backend to determine which VMSS to deploy to.
+   1. Update the inactive VMSS with the given OS image ID.
+   1. Update the test endpoint to point to the inactive VMSS endpoints.
+
+      We used a separate port as the test endpoint. In real world projects, we can also add another IP to the load balancer
+      frontend, and use that IP as the endpoint for testing.
+
+   1. Verify the test endpoint works as expected.
+   1. Reset test endpoint to avoid conflict.
+
+      **Note**: Azure Load Balancer requires the (backend pool, port, protocol) combination to be unique amond all the rules
+      in the same load balancer. We need to update the test endpoint later before we switch the service routing to avoid conflict.
+
+   1. Switch the load balancer routing to route the traffic to the updated inactive environment.
+   1. Verify the updated environment works fine.
+
+* A basic Jenkins pipeline that creates a managed OS image, with either Tomcat 7 or 8 installed. This pipeline may trigger
+   the above deployment pipeline if the image is built successfully.
 
 ## Prerequisites
 
@@ -28,6 +57,38 @@ on Ubuntu 16.04 LTS VM to manage the blue-green deployment to upgrade the images
    **Note**: Azure Load Balancer Standard is still in preview stage.
 
 * [Azure Service Principal](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-create-service-principal-portal).
+
+## Try It Out
+
+1. Click the **Deploy to Azure** button from above, this will lead you to the ARM provision page.
+1. Fill in the parameters, agree to the terms & conditions and click **Purchase**. It takes about 20 minutes for the
+   provision process to complete. Once the deployment is completed, the resource group contains all the resources
+   for the OS image, Jenkins master and VMSS's.
+1. Check in the resource gorup, then click **Deployments** to find the latest deployment with the name `Microsoft.Template`.
+   The following details will be displayed in the `Outputs` section:
+
+   * `ADMIN_USERNAME`: The admin username for the Jenkins master VM and the VM's in the VMSS's. You need to use the
+      private key paired with the public key you passed in during provision to authenticate with these machines.
+   * `JENKINS_URL`: The URL for the Jenkins instance.
+   * `SSH`: The SSH command to create a tunnel through which you can login and manage the Jenkins instance securely.
+   * `TOMCAT_URL`: The URL for the Tomcat service.
+   * `BASE_IMAGE_ID`: The OS image ID that is used to provision the VMSS.
+
+1. Run the command listed in the `SSH` box. Check the password by running the following command in the SSH session:
+
+   ```sh
+   sudo cat /var/lib/jenkins/secrets/initialAdminPassword
+   ```
+
+1. Visit `http://localhost:8080`, login with the user `admin` and password from above.
+1. Run the job `Bake Image` to bake an OS image with Tomcat 8 installed. The job will trigger the job `Deploy To VMSS`
+   when the image is ready. You can also build the `Deploy To VMSS` job manually by providing an OS image ID.
+
+## Manual Steps
+
+You can also setup and do the blue/green development to VMSS manually.
+
+### Preparation
 
 * [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest).
 
@@ -67,7 +128,7 @@ on Ubuntu 16.04 LTS VM to manage the blue-green deployment to upgrade the images
    tomcat8_image_id="$(az image show --resource-group "$image_resource_group" --name tomcat-8 --query id --output tsv)"
    ```
 
-## Manual Steps to Setup and Do Blue-green Deployment on VMSS
+### Setup the Azure Infrastructure
 
 1. Setup variables for later use. It's likely you only need to customize the `location` and the variables with `$suffix`.
 
@@ -196,6 +257,8 @@ on Ubuntu 16.04 LTS VM to manage the blue-green deployment to upgrade the images
    ip="$(az network public-ip show --resource-group "$resource_group" --name "$ip_name" --query ipAddress --output tsv)"
    echo "Visit http://$ip"
    ```
+
+### Blue/Green Deploy to VMSS
 
 By now we have already setup the Azure infrastructure for the VMSS blue-green deployment. The following steps show
 how to deploy to the green environment, do online tests and flip the production environment from blue to green.
