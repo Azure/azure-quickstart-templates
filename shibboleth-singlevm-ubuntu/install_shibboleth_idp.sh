@@ -53,10 +53,10 @@ SCOPE=$(hostname -f)
 cd /usr/share
 
 # install Shibboleth
-wget http://shibboleth.net/downloads/identity-provider/3.2.0/shibboleth-identity-provider-3.2.0.zip -O shibboleth.zip
+wget http://shibboleth.net/downloads/identity-provider/3.3.2/shibboleth-identity-provider-3.3.2.zip -O shibboleth.zip
 jar -xf shibboleth.zip
 
-cd shibboleth-identity-provider-3.2.0
+cd shibboleth-identity-provider-3.3.2
 chmod -R +x bin
 
 
@@ -118,7 +118,7 @@ sed -i -e 's,https://'"$SITENAME"'/idp/profile/SAML2/Redirect/SSO,https://'"$SIT
 
 echo "<Context docBase=\"/opt/shibboleth-idp/war/idp.war\" privileged=\"true\" antiResourceLocking=\"false\" antijarLocking=\"false\" unpackWar=\"false\" swallowOutput=\"true\" />" > /var/lib/tomcat8/conf/Catalina/localhost/idp.xml
 
-mv  /usr/share/shibboleth-identity-provider-3.2.0/credentials.properties $INSTALLDIR/conf
+mv  /usr/share/shibboleth-identity-provider-3.3.2/credentials.properties $INSTALLDIR/conf
 
 cd /opt/shibboleth-idp
 echo -e "\nCreating self-signed certificate..."
