@@ -34,6 +34,17 @@
         "description": "The virutal machine size to use. We picked out the sizes with 2 vCPUs, but in real world projects you can choose other sizes as you desired."
       }
     },
+    "kubernetesVersion": {
+      "type": "string",
+      "defaultValue": "1.8.1",
+      "allowedValues": [
+        "1.7.7",
+        "1.8.1"
+      ],
+      "metadata": {
+        "description": "The version of the Kubernetes running in AKS."
+      }
+    },
     "devopsDnsPrefix": {
       "type": "string",
       "metadata": {
@@ -63,10 +74,10 @@
     "virtualNetworkName": "[concat(variables('resourcePrefix'), 'VNET')]",
     "vmExtensionName": "[concat(variables('resourcePrefix'), 'Init')]",
     "frontEndNSGName": "[concat(variables('resourcePrefix'), 'NSG')]",
-    "kubernetesName": "[concat('containerservice-', resourceGroup().name)]",
-    "kubernetesDnsPrefix": "[concat('k8s', uniquestring(resourceGroup().id))]",
+    "aksName": "aks",
+    "aksDnsPrefix": "[concat('k8s', uniquestring(resourceGroup().id))]",
     "_artifactsLocation1": "https://raw.githubusercontent.com/Azure/azure-devops-utils/v0.24.0/",
-    "_artifactsLocation": "https://raw.githubusercontent.com/ArieShout/azure-devops-utils/blue-green/",
+    "_artifactsLocation": "https://raw.githubusercontent.com/ArieShout/azure-devops-utils/blue-green-k8s/",
     "_extensionScript": "301-jenkins-k8s-blue-green.sh",
     "_artifactsLocationSasToken": ""
   },
@@ -130,7 +141,7 @@
           "location": "[resourceGroup().location]",
           "dependsOn": [
             "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]",
-            "[resourceId('Microsoft.ContainerService/containerServices', variables('kubernetesName'))]"
+            "[resourceId('Microsoft.ContainerService/managedClusters', variables('aksName'))]"
           ],
           "properties": {
             "publisher": "Microsoft.Azure.Extensions",
@@ -143,7 +154,7 @@
               ]
             },
             "protectedSettings": {
-              "commandToExecute": "[concat('./', variables('_extensionScript'), ' --app_id \"', parameters('servicePrincipalAppId'), '\" --app_key \"', parameters('servicePrincipalAppKey'), '\" --subscription_id \"', subscription().subscriptionId, '\" --tenant_id \"', subscription().tenantId, '\" --resource_group \"', resourceGroup().name, '\" --acs_name \"', variables('kubernetesName'), '\" --jenkins_fqdn \"', reference(variables('publicIPAddressName')).dnsSettings.fqdn, '\" --artifacts_location \"', variables('_artifactsLocation'), '\" --sas_token \"', variables('_artifactsLocationSasToken'), '\"')]"
+              "commandToExecute": "[concat('./', variables('_extensionScript'), ' --app_id \"', parameters('servicePrincipalAppId'), '\" --app_key \"', parameters('servicePrincipalAppKey'), '\" --subscription_id \"', subscription().subscriptionId, '\" --tenant_id \"', subscription().tenantId, '\" --resource_group \"', resourceGroup().name, '\" --aks_name \"', variables('aksName'), '\" --jenkins_fqdn \"', reference(variables('publicIPAddressName')).dnsSettings.fqdn, '\" --artifacts_location \"', variables('_artifactsLocation'), '\" --sas_token \"', variables('_artifactsLocationSasToken'), '\"')]"
             }
           }
         }
@@ -157,14 +168,14 @@
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
-            "10.0.0.0/16"
+            "10.89.0.0/16"
           ]
         },
         "subnets": [
           {
             "name": "[variables('subnetName')]",
             "properties": {
-              "addressPrefix": "10.0.0.0/24"
+              "addressPrefix": "10.89.0.0/24"
             }
           }
         ]
@@ -249,24 +260,20 @@
       }
     },
     {
-      "apiVersion": "2016-09-30",
-      "type": "Microsoft.ContainerService/containerServices",
+      "apiVersion": "2017-08-31",
+      "type": "Microsoft.ContainerService/managedClusters",
       "location": "[resourceGroup().location]",
-      "name": "[variables('kubernetesName')]",
+      "name": "[variables('aksName')]",
       "properties": {
-        "orchestratorProfile": {
-          "orchestratorType": "Kubernetes"
-        },
-        "masterProfile": {
-          "count": 1,
-          "dnsPrefix": "[concat(variables('kubernetesDnsPrefix'),'mgmt')]"
-        },
+        "kubernetesVersion": "[parameters('kubernetesVersion')]",
+        "dnsPrefix": "[variables('aksDnsPrefix')]",
         "agentPoolProfiles": [
           {
-            "name": "agentpools",
-            "count": 1,
+            "name": "agentpool",
+            "count": 2,
             "vmSize": "[parameters('virtualMachineSize')]",
-            "dnsPrefix": "[concat(variables('kubernetesDnsPrefix'),'agents')]"
+            "osType": "Linux",
+            "storageProfile": "ManagedDisks"
           }
         ],
         "linuxProfile": {
@@ -274,6 +281,7 @@
           "ssh": {
             "publicKeys": [
               {
+                "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
                 "keyData": "[parameters('sshPublicKey')]"
               }
             ]
@@ -305,11 +313,7 @@
     },
     "kubernetesMasterFQDN": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.ContainerService/containerServices', variables('kubernetesName'))).masterProfile.fqdn]"
-    },
-    "kubernetesMasterSsh": {
-      "type": "string",
-      "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(resourceId('Microsoft.ContainerService/containerServices', variables('kubernetesName'))).masterProfile.fqdn)]"
+      "value": "[reference(resourceId('Microsoft.ContainerService/managedClusters', variables('aksName'))).fqdn]"
     }
   }
 }
