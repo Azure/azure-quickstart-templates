@@ -65,7 +65,7 @@ LOCATION=westus2
 #Deployment
 az group create -l $LOCATION -g $RESOURCE_GROUP
 cp ./azuredeploy.parameters.json ./azuredeploy.parameters.$RESOURCE_GROUP.json
-az group deployment create -g $RESOURCE_GROUP --template-file ./azuredeploy.json --parameters @./azuredeploy.parameters.json
+az group deployment create --verbose -g $RESOURCE_GROUP --template-file ./azuredeploy.json --parameters @./azuredeploy.parameters.json
 echo "Done: Here are details for connecting to the jumpbox and running pipelines"
 az group deployment show -g $RESOURCE_GROUP -n azuredeploy --query properties.outputs
 ```

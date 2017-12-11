@@ -76,7 +76,7 @@ _setupNfsServer() {
     ALLOWEDSUBNET=10.0.0.0/24
 
     #Install CIFS and JQ (used by this script)
-    log "Installing NFS Server" /tmp/nfinstall.log 
+    log "MASTER: Installing NFS Server" /tmp/nfinstall.log 
     apt-get install nfs-kernel-server -y | tee -a /tmp/nfinstall.log
 
     #TODO: Review permissions and security
@@ -147,22 +147,25 @@ copyLogsToCifsShareForDebugging() {
 }
 
 installNextflowDeps() {
+    log "Add Singularity repo to apt" "$LOGFILE"
+    wget -O- http://neuro.debian.net/lists/xenial.us-ca.full | tee /etc/apt/sources.list.d/neurodebian.sources.list
+    wget -qO - http://neuro.debian.net/_static/neuro.debian.net.asc | apt-key add -
+    
+    log "Add Docker repo to apt" "$LOGFILE"
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - | tee -a "$LOGFILE"
+    add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee -a "$LOGFILE"
+   
+    apt-get update -y | tee -a "$LOGFILE"
+   
     log "Installing JAVA" "$LOGFILE"
     apt-get install openjdk-8-jdk -y | tee -a "$LOGFILE"
 
-    log "Installing Singularity" "$LOGFILE"
-    wget -O- http://neuro.debian.net/lists/xenial.us-ca.full | tee /etc/apt/sources.list.d/neurodebian.sources.list
-    apt-key adv --recv-keys --keyserver hkp://pool.sks-keyservers.net:80 0xA5D32F012649A5A9 | tee -a "$LOGFILE"
-    apt-key update -y | tee -a "$LOGFILE"
-    apt-get update -y | tee -a "$LOGFILE"
+    log "Install Singularity" "$LOGFILE"
     apt-get install -y singularity-container | tee -a "$LOGFILE"
     echo "bind path = $MOUNTPOINT_PATH" >> /etc/singularity/singularity.conf
     echo "bind path = /mnt" >> /etc/singularity/singularity.conf
 
     log "Install Docker" "$LOGFILE"
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - | tee -a "$LOGFILE"
-    add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee -a "$LOGFILE"
-    apt-get update -y | tee -a "$LOGFILE"
     apt-get install -y docker-ce | tee -a "$LOGFILE"
     #Add the nextflow user to the docker group. 
     usermod -aG docker "$USERNAME" | tee -a "$LOGFILE"
@@ -198,12 +201,7 @@ setNextflowEnvironmentVars() {
     echo export NXF_TEMP=/mnt/nextflow_temp >> /etc/environment
 
     #Allow user access to temporary drive
-    chmod -f 777 /mnt/nextflow_temp #Todo: Review sec implications 
-
-    #Reload environment variables in this session. 
-    # shellcheck disable=SC1091
-    sed 's/^/export /' /etc/environment > /tmp/env.sh && source /tmp/env.sh
-
+    chmod -f 777 /mnt/nextflow_temp  
 }
 
 installNextflow() {
@@ -213,10 +211,25 @@ installNextflow() {
 
     #Copy the binary to the path to be accessed by users
     cp ./nextflow /usr/local/bin
-    chmod -f 777 /usr/local/bin/nextflow #Todo: Review sec implications 
+    chmod -f 777 /usr/local/bin/nextflow  
+
+    log "Invoke nextflow to install dependencies" "$LOGFILE"    
+    sudo -H -u "$USERNAME" bash -c 'nextflow' | tee -a "$LOGFILE"
 }
 
-runSmoketest() {
+_smokeTestFailed() {
+    echo "Shutting down node...." | tee -a "$LOGFILE" 
+    if [ "$IS_RUNNING_ON_NODE" != true ]; then 
+        #If we're the master this fail the deployment
+        exit 1
+    fi 
+
+    #If we're just a faulty node then shutdown
+    shutdown -h now | tee -a "$LOGFILE"
+    exit 0
+}
+
+runSmokeTest() {
     log "Run smoke test. Validate machine is setup" "$LOGFILE"
 
     log "Check Installed programs" "$LOGFILE"
@@ -231,8 +244,7 @@ runSmoketest() {
         echo "Nextflow" | tee -a "$LOGFILE"
         command -v nextflow | tee -a "$LOGFILE"
 
-        echo "Shutting down node...." | tee -a "$LOGFILE"
-        shutdown
+        _smokeTestFailed
     else 
         echo "Success: Nextflow, docker and singularity installed" >> "$LOGFILE"
     fi
@@ -242,8 +254,7 @@ runSmoketest() {
         echo "CIFS Mounted" | tee -a "$LOGFILE"
     else
         echo "FAILED CIFS not mounted" | tee -a "$LOGFILE"
-        echo "Shutting down node...." | tee -a "$LOGFILE"
-        shutdown
+        _smokeTestFailed
     fi
 
     #NFS mount point only present on nodes as jumpbox is the NFS server. 
@@ -254,8 +265,7 @@ runSmoketest() {
             echo "NFS Mounted" | tee -a "$LOGFILE"
         else
             echo "FAILED NFS not mounted" | tee -a "$LOGFILE"
-            echo "Shutting down node...." | tee -a "$LOGFILE"
-            shutdown
+            _smokeTestFailed
         fi
     fi 
 }
@@ -267,7 +277,7 @@ runAdditionalInstallScriptIfProvided() {
     fi
 }
 
-setupAndStartNextflowServiceIfOnNode() {
+startNextflowServiceIfNode() {
     #If we're a node run the daemon
     if [ "$IS_RUNNING_ON_NODE" = true ]; then 
 
@@ -307,4 +317,4 @@ setNextflowEnvironmentVars
 installNextflow
 runSmokeTest
 runAdditionalInstallScriptIfProvided
-setupAndStartNextflowServiceIfOnNode
+startNextflowServiceIfNode
