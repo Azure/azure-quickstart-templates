@@ -187,44 +187,63 @@
       }
     },
     {
-      "name": "creatingVM",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2016-09-01",
-      "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts/', variables('infraStorageAccountName'))]",
-        "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
-      ],
+      "apiVersion": "2017-03-30",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('vmName')]",
+      "location": "[resourceGroup().location]",
+      "identity": {
+        "type": "systemAssigned"
+      },
       "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[variables('createVMUrl')]"
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
         },
-        "parameters": {
-          "adminUsername": {
-            "value": "[parameters('adminUsername')]"
-          },
-          "adminPassword": {
-            "value": "[variables(variables('adminPasswordChosen'))]"
-          },
-          "location": {
-            "value": "[resourceGroup().location]"
-          },
-          "vmSize": {
-            "value": "[parameters('vmSize')]"
-          },
-          "vmName": {
-            "value": "[variables('vmName')]"
-          },
-          "nicName": {
-            "value": "[variables('nicName')]"
-          },
-          "storageAccountName": {
-            "value": "[variables('infraStorageAccountName')]"
-          },
-          "linuxConfiguration": {
-            "value": "[variables(variables('linuxConfigurationChosen'))]"
+        "osProfile": {
+          "computerName": "[variables('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[variables(variables('adminPasswordChosen'))]",
+          "linuxConfiguration": "[variables(variables('linuxConfigurationChosen'))]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "Canonical",
+            "offer": "UbuntuServer",
+            "sku": "17.10",
+            "version": "latest"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[reference(concat('Microsoft.Storage/storageAccounts/', variables('infraStorageAccountName')),'2016-12-01').primaryEndpoints.blob]"
           }
         }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('vmName'),'/MSILinuxExtension')]",
+      "apiVersion": "2017-03-30",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.ManagedIdentity",
+        "type": "ManagedIdentityExtensionForLinux",
+        "typeHandlerVersion": "1.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "port": 50342
+        },
+        "protectedSettings": {}
       }
     },
     {
@@ -232,7 +251,7 @@
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2016-09-01",
       "dependsOn": [
-        "Microsoft.Resources/deployments/creatingVM"
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions/', variables('vmName'),'MSILinuxExtension')]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -242,7 +261,7 @@
         },
         "parameters": {
           "principalId": {
-            "value": "[reference('Microsoft.Resources/deployments/creatingVM', '2016-09-01').outputs.principalId.value]"
+            "value": "[reference(concat(resourceId('Microsoft.Compute/virtualMachines/', variables('vmName')),'/providers/Microsoft.ManagedIdentity/Identities/default'),'2015-08-31-PREVIEW').principalId]"
           }
         }
       }
@@ -272,15 +291,6 @@
         }
       }
     }
-  ],
-  "outputs": {
-    "hostname": {
-      "type": "string",
-      "value": "[reference(variables('publicIPAddressName')).dnsSettings.fqdn]"
-    },
-    "principalId": {
-      "type": "string",
-      "value": "[reference('Microsoft.Resources/deployments/creatingVM', '2016-09-01').outputs.principalId.value]"
-    }
-  }
+  ]
 }
+
