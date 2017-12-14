@@ -61,44 +61,4 @@ Invoke-WebRequest -Uri "$Url3" -OutFile "C:\Packages\DotNetAppSqlDb.zip"
 cd C:\Packages\
 .\DotNetAppSqlDb.deploy.cmd /Y
 
-#Download MongoDB & Install
-$Url = "https://fastdl.mongodb.org/win32/mongodb-win32-x86_64-2008plus-3.4.10-signed.msi"
-Invoke-WebRequest -Uri "$Url" -OutFile "C:\Packages\mongodb-win32-x86_64-2008plus-3.4.10-signed.msi"
-msiexec.exe /i C:\Packages\mongodb-win32-x86_64-2008plus-3.4.10-signed.msi  /qn
-sleep 30
-mkdir C:\data\db
-cd "C:\Program Files\MongoDB\Server\3.4\bin\"
-.\mongod.exe --dbpath="C:\data\db" --logpath="C:\data\db\log.txt" --install
-net start MongoDB
-$env:MONGODB_URL = "mongodb://localhost/meanstacktutorials"
-
-#Download Nodejs Application & Install
-$Url1 = "https://nodejs.org/dist/v8.8.1/node-v8.8.1-x64.msi"
-Invoke-WebRequest -Uri "$Url1" -OutFile "C:\Packages\node-v8.8.1-x64.msi"
-msiexec.exe /i C:\Packages\node-v8.8.1-x64.msi  /qn
-sleep 30
-
-#clone Nodejs ToDo app from Github
-$Url2 = "https://github.com/evillgenius75/gbb-todo/archive/master.zip"
-Invoke-WebRequest -Uri "$Url2" -OutFile "C:\Packages\gbb-todo.zip"
-cd "C:\Packages"
-
-#Function to unzip Package
-Add-Type -AssemblyName System.IO.Compression.FileSystem
-function Unzip
-{
-    param([string]$zipfile, [string]$outpath)
-
-    [System.IO.Compression.ZipFile]::ExtractToDirectory($zipfile, $outpath)
-}
-
-#Unzip ToDo Pacakge
-Unzip "C:\Packages\gbb-todo.zip" "C:\Packages\gbb-todo"
-cd "C:\Packages\gbb-todo-master"
-
-#Build Operation for the application to install all teh required dependencies for application.
-npm install
-
-#npm start: to be manually done by use
-
 exit 0
