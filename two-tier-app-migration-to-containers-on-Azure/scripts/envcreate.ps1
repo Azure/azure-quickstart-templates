@@ -7,10 +7,10 @@ sleep 20
 
 # to create a database used by app
 [String]$dbname = "cruddb";
- 
+$Password = $Args[4]
 # Open ADO.NET Connection with Windows authentification to local SQLSERVER.
 $con = New-Object Data.SqlClient.SqlConnection;
-$con.ConnectionString = "Data Source=.;Initial Catalog=master;Integrated Security=False;User Id=dbuser; Password=dbPassw0rd;";
+$con.ConnectionString = "Data Source=.;Initial Catalog=master;Integrated Security=False;User Id=dbuser; Password=$Password;";
 $con.Open();
  
 # Select-Statement for AD group logins
