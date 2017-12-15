@@ -15,22 +15,26 @@ The quickstart template will provision the following resources in Azure:
 
 * A Jenkins master running on a Linux Ubuntu 16.04 LTS VM in Azure. The instance is pre-configured with
    the Azure Service Principal credential you provide. This credential is used to manage the Azure resources.
+* An AKS cluster, with the following resources:
+   * Two similar deployments representing the environment **blue** and **green**. Both are initially setup with the `tomcat:7-jre8` image.
+   * Two test endpoint service (`tomcat-test-blue` and `tomcat-test-green`), which are connected to the corresponding
+      deployments, and can be use to test if the deployments are ready for production use.
+   * A production service endpoint (`tomcat-service`) which represents the public endpoint that the users will access.
+      Initially it is routing to the **blue** environment.
+
+      We call the environment that is serving the public traffic the **active** environment (initially "blue"), and
+      the other one "**inactive**" or "**staging**".
+
 * A basic pipeline that demonstrates the steps to do blue-green deployment to Kubernetes:
+   1. Ask for the Tomcat image version (`7-jre8`, `8-jre8`, or `9-jre8`) to be deployed.
 
-   1. Prepare two similar environments:
+      (In real world project, we can configure an upstream job to build the image, and feed the image name & tag to the
+      deployment job.)
 
-      * **Blue** with image `tomcat:7.0-jre7`
-      * **Green** with image `tomcat:8.0-jre8`
-
-      ***Note***: in real world projects, provisioning of the environment is likely to be done outside of
-      the continuous integration pipeline. We included this in the pipeline to make the quickstart configurations
-      easier to manage.
-
-   1. Deploy new application to one of the environments. The example starts with "Green" if nothing
-      has been deployed before.
-   1. Verify that the Green environment is working as expected through the test endpoint.
-   1. Update the application public endpoint to route the traffic to "Green" environment.
-   1. Verify that the public endpoint is working properly with the "Green" environment serving as backend.
+   1. Deploy the Tomcat image to the inactive environment.
+   1. Verify that the inactive environment is working as expected through the test endpoint.
+   1. Update the application public endpoint to route the traffic to inactive environment, after that it becomes active.
+   1. Verify that the public endpoint is working properly with the updated backend environment.
 
 **Note**: At the time when this quickstart is created, AKS is in preview. You may need to enable the preview
 for your Azure subscription. Please refer to https://docs.microsoft.com/en-us/azure/aks/kubernetes-walkthrough#enabling-aks-preview-for-your-azure-subscription
@@ -42,7 +46,7 @@ for more details.
 
 * An Azure subscription.
 * An Azure Service Principal to manage the related Azure resources.
-* An SSH key pair that will be used to login remotely to the Jenkins master VM and the ACS master node.
+* An SSH key pair that will be used to login remotely to the Jenkins master VM.
 
 ### Steps
 
@@ -55,12 +59,12 @@ for more details.
 
 1. Check in the resource group, then then click `Deployments` to find the latest deployment with the name
    `Microsoft.Template`, the following details will be displayed in the *Outputs* section:
-   * `ADMINUSERNAME`: The Admin username for the Jenkins master VM, which is the one you filled in the provision page
-   * `DEVOPSVMFQDN`: The host name of the Jenkins master VM
-   * `JENKINSURL`: The Jenkins URL
+   * `ADMIN_USERNAME`: The Admin username for the Jenkins master VM, which is the one you filled in the provision page
+   * `JENKINS_VM_FQDN`: The host name of the Jenkins master VM
+   * `JENKINS_URL`: The Jenkins URL
    * `SSH`: The SSH command to create a tunnel through which you can login and manage the Jenkins instance
       securely
-   * `KUBERNETESMASTERFQDN`: The host name of the ACS Kubernetes master node
+   * `KUBERNETES_MASTER_FQDN`: The host name of the ACS Kubernetes master node
 1. Run the command listed in the `SSH` box. Check the Jenkins admin password by running the following command
    in the SSH session:
 
@@ -94,28 +98,25 @@ for more details.
    kubectl proxy
    ```
 
-   Type http://localhost:8001/ui in your browser to get to the Kubernetes Web UI (Dashboard.) Since nothing
-   has been provisioned, it is not too exciting yet.
+   Type http://localhost:8001/ui in your browser to get to the Kubernetes Web UI (Dashboard.) You should be able
+   to see the deployments:
 
-   ![Kubernetes UI](img/kubernetes-ui.png)
+   ![Kubernetes Deployments](img/kubernetes-deployments.png)
+
+   and the service endpoints:
+
+   ![Tomcat Service Endpoints](img/tomcat-service-endpoints.png)
 
    ***Note***: In recent version of Kubernetes, the dashboard UI redirection seems to be broken. If you see
    blank page after the server redirection, add a trailing slash `/` to the redirected address in the
    address bar.
 
 1. Go back to your Jenkins master dashboard, you should see a job **AKS Kubernetes Blue-green Deployment**.
-1. Start the build. The build process may take several minutes for the first time, as the backend Kubernetes
-   needs to provision the Azure load balancer for the test and public endpoints for the services.
-
-   *Again, generally, this should be prepared outside of the deployment pipeline. We include them in the pipeline
-   to make the quick start template easier to manage.*
-
-1. While waiting for the build to complete, you can go back to Kubernetes Dashboard and click **Services**.
-   `tomcat-test-blue` and `tomcat-test-green` start showing up.
-
-   ![Test Endpoint](img/k8s-test-service.png)
-
-1. When the Jenkins job finishes, verify the Green environment has been switched over to the public
+1. Click the job, on the left panel click **Build with parameters**, Choose a Tomcat version that is planned
+   to be rolled into production. Initially, both the blue and green environments were setup with the version `7-jre8`,
+   so we can try `8-jre8` or `9-jre8`.
+1. Start the build.
+1. When the Jenkins job finishes, verify the new Tomcat version has been deployed and enabled through to the public
    service endpoint, click the external endpoint for `tomcat-service`.
 
    ![Service Endpoint](img/k8s-tomcat-service.png)
@@ -125,10 +126,5 @@ for more details.
    ![Tomcat Landing Page](img/tomcat.png)
 
 1. If you run the build more than once, it will cycle through BLUE and GREEN deployments. i.e., if the current
-   environment is **Green**, the job will deploy/test the **Blue** (Tomcat 7) environment and then update
-   the application public endpoint to route traffic to the **Blue** environment if all is good with testing.
-
-   **Note**: In the deployment pipeline, we always deploy the ***SAME*** image to a given environment in later builds.
-   This is just for demonstration on updating the environment. In real world projects, we would build a new image
-   with the latest project artifacts installed, update the image reference in the deployment config and deploy it
-   to the target environment.
+   environment is **Green**, the job will deploy/test the **Blue** environment and then update the application
+   public endpoint to route traffic to the **Blue** environment if all is good with testing.
