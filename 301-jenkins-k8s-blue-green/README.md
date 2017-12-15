@@ -105,25 +105,31 @@ for more details.
 
    and the service endpoints:
 
-   ![Tomcat Service Endpoints](img/tomcat-service-endpoints.png)
+   ![Service Endpoints](img/k8s-tomcat-service.png)
+
+   Click the the external endpoint for the `tomcat-service`, you'll see the Tomcat 7 landing page:
+
+   ![Tomcat 7 Landing Page](img/tomcat-7.png)
+
+   You can also check the external endpoints for `tomcat-test-blue` and `tomcat-test-green`. Both of them show
+   the same Tomcat 7 landing page initially.
 
    ***Note***: In recent version of Kubernetes, the dashboard UI redirection seems to be broken. If you see
    blank page after the server redirection, add a trailing slash `/` to the redirected address in the
    address bar.
 
 1. Go back to your Jenkins master dashboard, you should see a job **AKS Kubernetes Blue-green Deployment**.
-1. Click the job, on the left panel click **Build with parameters**, Choose a Tomcat version that is planned
-   to be rolled into production. Initially, both the blue and green environments were setup with the version `7-jre8`,
+1. Click the job, on the left panel click **Build with Parameters**, Choose a Tomcat version that is to be rolled
+   into production. Initially, both the blue and green environments were setup with the version `7-jre8`,
    so we can try `8-jre8` or `9-jre8`.
 1. Start the build.
 1. When the Jenkins job finishes, verify the new Tomcat version has been deployed and enabled through to the public
-   service endpoint, click the external endpoint for `tomcat-service`.
+   service endpoint, click the external endpoint for `tomcat-service`. The version shown is Tomcat/8.X.X.
 
-   ![Service Endpoint](img/k8s-tomcat-service.png)
+   ![Tomcat 8 Landing Page](img/tomcat-8.png)
 
-   The version shown is Tomcat/8.0.47.
-
-   ![Tomcat Landing Page](img/tomcat.png)
+   Check the `role` label for `tomcat-service`, this indicates which environment is the current active one. 
+   Go to the external endpoint for that environment and you should see the same version of Tomcat landing page.
 
 1. If you run the build more than once, it will cycle through BLUE and GREEN deployments. i.e., if the current
    environment is **Green**, the job will deploy/test the **Blue** environment and then update the application
