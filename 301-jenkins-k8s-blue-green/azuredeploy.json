@@ -45,10 +45,10 @@
         "description": "The version of the Kubernetes running in AKS."
       }
     },
-    "devopsDnsPrefix": {
+    "jenkinsDnsPrefix": {
       "type": "string",
       "metadata": {
-        "description": "Unique DNS Name for the Public IP used to access the Jenkins Virtual Machine."
+        "description": "Unique DNS Name prefix for the Public IP used to access the Jenkins Virtual Machine. Azure will form the final DNS name as '<prefix>.<region>.cloudapp.azure.com'."
       }
     },
     "servicePrincipalAppId": {
@@ -65,17 +65,17 @@
     }
   },
   "variables": {
-    "resourcePrefix": "devops",
-    "OSDiskName": "[concat(variables('resourcePrefix'), 'OSDisk')]",
-    "nicName": "[concat(variables('resourcePrefix'), 'VMNic')]",
-    "subnetName": "[concat(variables('resourcePrefix'), 'Subnet')]",
-    "publicIPAddressName": "[concat(variables('resourcePrefix'), 'PublicIP')]",
-    "vmName": "[concat(variables('resourcePrefix'), 'VM')]",
-    "virtualNetworkName": "[concat(variables('resourcePrefix'), 'VNET')]",
-    "vmExtensionName": "[concat(variables('resourcePrefix'), 'Init')]",
-    "frontEndNSGName": "[concat(variables('resourcePrefix'), 'NSG')]",
+    "resourcePrefix": "jenkins",
+    "OSDiskName": "[concat(variables('resourcePrefix'), '-os-disk')]",
+    "nicName": "[concat(variables('resourcePrefix'), '-nic')]",
+    "subnetName": "[concat(variables('resourcePrefix'), '-subnet')]",
+    "publicIPAddressName": "[concat(variables('resourcePrefix'), '-ip')]",
+    "vmName": "[concat(variables('resourcePrefix'), '-vm')]",
+    "virtualNetworkName": "[concat(variables('resourcePrefix'), '-vnet')]",
+    "vmExtensionName": "[concat(variables('resourcePrefix'), '-init')]",
+    "frontEndNSGName": "[concat(variables('resourcePrefix'), '-nsg')]",
     "aksName": "aks",
-    "aksDnsPrefix": "[concat('k8s', uniquestring(resourceGroup().id))]",
+    "aksDnsPrefix": "[concat('aks', uniqueString(resourceGroup().id))]",
     "_artifactsLocation1": "https://raw.githubusercontent.com/Azure/azure-devops-utils/v0.24.0/",
     "_artifactsLocation": "https://raw.githubusercontent.com/ArieShout/azure-devops-utils/blue-green-k8s/",
     "_extensionScript": "301-jenkins-k8s-blue-green.sh",
@@ -117,7 +117,7 @@
             "name": "[variables('OSDiskName')]",
             "createOption": "FromImage",
             "managedDisk": {
-              "storageAccountType": "Premium_LRS"
+              "storageAccountType": "Standard_LRS"
             }
           },
           "dataDisks": []
@@ -131,7 +131,7 @@
         }
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
       ],
       "resources": [
         {
@@ -192,7 +192,7 @@
             "name": "ipconfig1",
             "properties": {
               "subnet": {
-                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName')),'/subnets/',variables('subnetName'))]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
               },
               "privateIPAllocationMethod": "Dynamic",
               "publicIpAddress": {
@@ -206,9 +206,9 @@
         }
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-        "[concat('Microsoft.Network/publicIpAddresses/', variables('publicIpAddressName'))]",
-        "[concat('Microsoft.Network/networkSecurityGroups/', variables('frontEndNSGName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Network/publicIpAddresses', variables('publicIpAddressName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('frontEndNSGName'))]"
       ]
     },
     {
@@ -219,7 +219,7 @@
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
-          "domainNameLabel": "[parameters('devopsDnsPrefix')]"
+          "domainNameLabel": "[parameters('jenkinsDnsPrefix')]"
         }
       }
     },
@@ -295,15 +295,15 @@
     }
   ],
   "outputs": {
-    "adminUsername": {
+    "admin_username": {
       "type": "string",
       "value": "[parameters('adminUsername')]"
     },
-    "devopsVmFQDN": {
+    "jenkins_vm_fqdn": {
       "type": "string",
       "value": "[reference(variables('publicIPAddressName')).dnsSettings.fqdn]"
     },
-    "jenkinsURL": {
+    "jenkins_url": {
       "type": "string",
       "value": "[concat('http://', reference(variables('publicIPAddressName')).dnsSettings.fqdn)]"
     },
@@ -311,7 +311,7 @@
       "type": "string",
       "value": "[concat('ssh -L 8080:localhost:8080 ', parameters('adminUsername'), '@', reference(variables('publicIPAddressName')).dnsSettings.fqdn)]"
     },
-    "kubernetesMasterFQDN": {
+    "kubernetes_master_fqdn": {
       "type": "string",
       "value": "[reference(resourceId('Microsoft.ContainerService/managedClusters', variables('aksName'))).fqdn]"
     }
