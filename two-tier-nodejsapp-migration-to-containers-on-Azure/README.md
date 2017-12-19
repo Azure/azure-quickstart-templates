@@ -47,7 +47,7 @@ Build your Two-tier on-premises app simulation on Azure in a few simple steps:
 *	Start the Nodejs (ToDo) application and launch the same in browser 
 *	Populate the application by entering some records 
 *	Open Mongo console and verify the database is successfully created.
-*	Follow the post deployment configuration document [here](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/two-tier-nodejsapp-migration-to-containers-on-Azure/Two-tier%20Nodejs%20App%20migration%20on%20Azure%20Container%20v0.1.pdf) to learn about further configuration.
+*	Follow the post deployment configuration document [here](https://github.com/SpektraSystems/2-Tier-nodejsapp-migration-to-containers-on-Azure/raw/master/Two-tier%20Nodejs%20App%20migration%20on%20Azure%20Container%20v0.1.pdf) to learn about further configuration.
 
 ## Deployment Time
 The deployment takes about 20 minutes to complete.
