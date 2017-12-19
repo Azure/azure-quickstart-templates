@@ -41,6 +41,15 @@ The cluster consists of one jumpbox VM (master node) plus 1-100 (limit can be li
     
 ## Deploying 
 
+> ** WARNING! **
+> If you are deploying a cluster for a production environment it is recommended that you stage a copy of the script resources to avoid future updates to this repository causing issues with your deployment. See the [Uploading Artifacts](/README.MD#uploading-artifacts) guide to use Azure Storage or, alternatively, you can upload the resources to another location and set the `_artifact*` parameters manually to specify the url for the files.
+>
+> `_artifactsLocation` + `_artifactsNextflowFolder` must point to your copy of the `/init.sh` script file stored under `/nextflow-genomics-cluster-ubuntu/Scripts/init.sh` in this repository.
+>
+> `_artifactsLocation` + `_artifactsSharedFolder` must point to your copy of the `vm-disk-utils-0.1.sh` script file stored under `/shared_scripts/ubuntu/afs-utils-0.1.sh` in this repository.
+>
+> For example: `https://mylocation` (`_artifactsLocation`) + `/scripts` (`artifactsNextflowFolder`) will request the file from `https://mylocation/scripts/vm-disk-utils-0.1.sh`
+
 ### GUI
 
 Click the 'Deploy to Azure' button and follow the instructions provided. 
