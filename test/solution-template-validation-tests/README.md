@@ -19,6 +19,14 @@ To run all tests
 npm --folder=sample-solution-template run all
 ```
 
+## Running json validation tests
+
+To check if all the json files in a given folder are valid
+- npm --folder=/path/to/solutiontemplatefolder run validateJson. For instance,
+```
+npm --folder=sample-solution-template run validateJson
+```
+
 ## Running createUiDefinition tests
 
 To run just the tests for createUiDefinition.json file

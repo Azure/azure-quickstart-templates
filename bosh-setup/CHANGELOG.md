@@ -1,3 +1,13 @@
+# v3.1.0 (2017-12-12)
+
+- Bump [bosh-deployment](https://github.com/cloudfoundry/bosh-deployment/blob/ad5e958d15973269345909349fc00378abae4ba7/bosh.yml) and [cf-deployment](https://github.com/cloudfoundry/cf-deployment/blob/v1.3.1/cf-deployment.yml).
+- Upgrade Azure CPI version to v33 except AzureStack. Please see new features in [bosh-azure-cpi-release v32](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v33)
+
+# v3.0.0 (2017-11-23)
+
+- The template is using [BOSH CLI v2](https://bosh.io/docs/cli-v2.html), [bosh-deployment](https://github.com/cloudfoundry/bosh-deployment/blob/cb8e7f60145738e103eb2dc0ad3372288986dc0c/bosh.yml) and [cf-deployment](https://github.com/cloudfoundry/cf-deployment/blob/v1.0.0/cf-deployment.yml).
+- Upgrade Azure CPI version to v29. Please see new features in [bosh-azure-cpi-release v29](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v29)
+
 # v2.8.0 (2017-8-11)
 
 - Upgrade Azure CPI version to v26. Please see new features in [bosh-azure-cpi-release v26](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v26)
