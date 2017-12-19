@@ -78,7 +78,8 @@ then
             az storage account create -l "$location" --sku "Standard_LRS" -g "$artifactsResourceGroupName" -n "$artifactsStorageAccountName" 2>/dev/null
         fi
     else
-        artifactsResourceGroupName=$( az storage account list -o json | jq -r '.[] | select(.name == '\"$s\"') .resourceGroup' )
+        artifactsStorageAccountName=$storageAccountName
+        artifactsResourceGroupName=$( az storage account list -o json | jq -r '.[] | select(.name == '\"$storageAccountName\"') .resourceGroup' )
         if [[ -z $artifactsResourceGroupName ]] 
         then
             echo "Cannot find storageAccount: "$storageAccountName
