@@ -43,7 +43,7 @@ Build your Two-tier on-premises app simulation on Azure in a few simple steps:
 *	Access the deployment job once it is successful. In deployment job output, you will find the Public IP Address of VMs which can be used connect to the VMs.
 *	Open MS SQL Studio and verify the database is successfully created
 *	Open IIS Manager and verify website is created and launch the same in browser.
-*	Follow the post deployment configuration document [here](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/two-tier-app-migration-to-containers-on-Azure/Two-tier%20App%20migration%20on%20Azure%20Container.pdf) to learn about further configuration.
+*	Follow the post deployment configuration document [here](https://github.com/SpektraSystems/2-Tier-app-migration-to-containers-on-Azure/raw/master/Two-tier%20App%20migration%20on%20Azure%20Container.pdf) to learn about further configuration.
 ## Deployment Time
 The deployment takes about 20 minutes to complete.
 ## Support
