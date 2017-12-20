@@ -37,7 +37,7 @@ The quickstart template will provision the following in Azure:
    1. Verify the test endpoint works as expected.
    1. Reset test endpoint to avoid conflict.
 
-      **Note**: Azure Load Balancer requires the (backend pool, port, protocol) combination to be unique amond all the rules
+      **Note**: Azure Load Balancer requires the (backend pool, port, protocol) combination to be unique among all the rules
       in the same load balancer. We need to update the test endpoint later before we switch the service routing to avoid conflict.
 
    1. Switch the load balancer routing to route the traffic to the updated inactive environment.
@@ -71,7 +71,38 @@ The quickstart template will provision the following in Azure:
 1. Click the **Deploy to Azure** button from above, this will lead you to the ARM provision page.
 1. Fill in the parameters, agree to the terms & conditions and click **Purchase**. It takes about 20 minutes for the
    provision process to complete. Once the deployment is completed, the resource group contains all the resources
-   for the OS image, Jenkins master and VMSS's.
+   for the OS image, Jenkins master and VMSS's:
+
+   ![Resource List](img/resource-list.png)
+
+   * The base image is created during the deployment to initialize the VMSS. It's built from Ubuntu 16.04 LTS, with
+      Tomcat 7 installed.
+   * 2 VMSS clusters are created, representing the blue environment and green environment.
+   * A Ubuntu 16.04 LTS VM is created hosting the Jenkins master.
+   * A frontend Load Balancer is created to provide the public endpoint and load balancing to the backend VMSS.
+
+   Click the load balancer resource, and on the left panel, click **Load balancing rules**. You can see there are two
+   rules defined:
+
+   ![Load Balancing Rules](img/load-balancing-rules.png)
+
+   * **tomcat**: the rule that routes the public endpoint on port 80 to the active background VMSS which is
+      `blue-bepool` initially.
+   * **tomcat-test**: the rule that routes the test endpoint on port 8080 to the inactive background VMSS which is
+      `green-bepool` initially.
+
+      Note that the backend port is set to 8081 instead of the actual Tomcat working port 8080, because there is a
+      restriction that the backend pool and port combination should be unique among all the rules in the same load balancer.
+      We set this to an invalid port when we do not need the test endpoint to reduce possible conflict, e.g., when we
+      need to switch the backend pool. And when it is required such as in the deployment verification, we update the rule
+      to make it work.
+
+   Click one of the VMSS resource, and on the left panel, click **Operating system**. You can see the operating system
+   parameters for the VMSS. The `IMAGE REFERENCE` field shows the image ID for the VMSS, which is the basic one in the
+   resource group.
+
+   ![VMSS Image ID](img/vmss-image-id.png)
+
 1. Check in the resource gorup, then click **Deployments** to find the latest deployment with the name `Microsoft.Template`.
    The following details will be displayed in the `Outputs` section:
 
@@ -82,19 +113,52 @@ The quickstart template will provision the following in Azure:
    * `TOMCAT_URL`: The URL for the Tomcat service.
    * `BASE_IMAGE_ID`: The OS image ID that is used to provision the VMSS.
 
+1. Visit the `TOMCAT_URL` and you will see the Tomcat 7 landing page:
+
+   ![Tomcat 7](img/tomcat-7.png)
+
 1. Run the command listed in the `SSH` box. Check the password by running the following command in the SSH session:
 
    ```sh
    sudo cat /var/lib/jenkins/secrets/initialAdminPassword
    ```
 
-1. Visit `http://localhost:8080`, login with the user `admin` and password from above.
-1. Run the job `Bake Image` to bake an OS image with Tomcat 8 installed. The job will trigger the job `Deploy To VMSS`
-   when the image is ready. You can also build the `Deploy To VMSS` job manually by providing an OS image ID.
+1. Visit `http://localhost:8080`, login with the user `admin` and password from above. Two jobs have been setup on the
+   Jenkins instance:
+
+   ![Job List](img/job-list.png)
+
+1. Click on the job **Bake Image**, then on the left click the link **Build with Parameters**. The job accepts some parameters
+   to customize the image build process (with [Packer](https://www.packer.io/)):
+
+   ![Build with Parameters](img/build-with-parameters.png)
+
+   Click **Build**.
+
+1. If `TRIGGER_DEPLOY` is enabled in previous step (default behavior), the **Bake Image** job will trigger the **Deploy To VMSS**
+   job when the image is ready.
+
+1. The **Deploy To VMSS** job accepts a image ID and deploys the image to the inactive VMSS, which is **green** initially.
+   It then updates the frontend load balander to route the traffic to the newly updated VMSS.
+
+   ![Deploy To VMSS](img/deploy-to-vmss.png)
+
+1. When the job completes, refresh the Tomcat page and you can see the Tomcat version has been updated:
+
+   ![Tomcat 8](img/tomcat-8.png)
+
+1. Check the image ID for the **green** VMSS, you can see it's already updated:
+
+   ![VMSS Image ID Green](img/vmss-image-id-green.png)
+
+1. Check the frontend load balancer rules, you can see the **tomcat** rule is now routing to the `green-bepool`:
+
+   ![Load Balanceing Rules Green](img/load-balancing-rules-green.png)
 
 ## Manual Steps
 
-You can also setup and do the blue/green development to VMSS manually.
+You can also setup and do the blue/green development to VMSS manually. The following guides explain how is the quick
+start template doing in the background, with Azure CLI and other tools, to do blue-green deployment to VMSS manually.
 
 ### Preparation
 
@@ -103,7 +167,7 @@ You can also setup and do the blue/green development to VMSS manually.
 * [Packer](https://www.packer.io/) to bake the Tomcat VM images.
 
    [A Packer deployment configuration](packer-tomcat.json) is included in the repo. Download it to your machine, and run
-   the following commands to bake two VM images with Tomcat 7 or 8 installed. Replace the `<place-holder>` with your 
+   the following commands to bake two VM images with Tomcat 7 or 8 installed. Replace the `<place-holder>` with your
    environment configuration and run the script lines with Bash.
 
    ```bash
@@ -247,7 +311,7 @@ You can also setup and do the blue/green development to VMSS manually.
        --port 8080 \
        --protocol Http \
        --path /
-   
+
    az network lb rule create \
        --resource-group "$resource_group" \
        --lb-name "$lb_name" \
