@@ -108,10 +108,6 @@ cat >> "$home_dir/deploy_bosh.sh" << EOF
   -v internal_cidr=10.0.0.0/24 \\
   -v internal_gw=10.0.0.1 \\
   -v internal_ip=10.0.0.4 \\
-  -v cpi_release_url=$(get_setting BOSH_AZURE_CPI_RELEASE_URL) \\
-  -v cpi_release_sha1=$(get_setting BOSH_AZURE_CPI_RELEASE_SHA1) \\
-  -v stemcell_url=$(get_setting STEMCELL_URL) \\
-  -v stemcell_sha1=$(get_setting STEMCELL_SHA1) \\
   -v director_vm_instance_type=$(get_setting BOSH_VM_SIZE) \\
   -v vnet_name=$(get_setting VNET_NAME) \\
   -v subnet_name=$(get_setting SUBNET_NAME_FOR_BOSH) \\
@@ -142,7 +138,7 @@ bosh -n update-cloud-config ~/example_manifests/cloud-config.yml \\
   -v security_group=$(get_setting NSG_NAME_FOR_CLOUD_FOUNDRY) \\
   -v load_balancer_name=$(get_setting LOAD_BALANCER_NAME)
 
-bosh upload-stemcell $(get_setting STEMCELL_URL)
+bosh upload-stemcell --sha1=$(get_setting STEMCELL_SHA1) $(get_setting STEMCELL_URL)
 EOF
 
 cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
@@ -219,22 +215,25 @@ chmod 777 $home_dir/login_cloud_foundry.sh
 
 chown -R $username $home_dir
 
+echo "The devbox is prepared successfully."
+
 auto_deploy_bosh=$(get_setting AUTO_DEPLOY_BOSH)
 if [ "$auto_deploy_bosh" != "enabled" ]; then
-  echo "Finish"
+  echo "The BOSH director won't be deployed automatically. Finish."
   exit 0
 fi
 
 echo "Starting to deploy BOSH director..."
-su -c "./deploy_bosh.sh" - $username
+su - $username -c "./deploy_bosh.sh"
+echo "The BOSH director is deployed successfully. Please check run.log."
 
 auto_deploy_cf=$(get_setting AUTO_DEPLOY_CLOUD_FOUNDRY)
 if [ "$auto_deploy_cf" != "enabled" ]; then
-  echo "Finish"
+  echo "The Cloud Foundry won't be deployed automatically. Finish."
   exit 0
 fi
 
-echo "Starting to deploy Cloud Foundry..."
+echo "Starting to deploy Cloud Foundry, which would take some time..."
 nohup su - $username -c "./deploy_cloud_foundry.sh" &
 
 echo "Finish"
