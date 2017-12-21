@@ -1,4 +1,4 @@
-# Deploy Zerto Virtual Replication to Azure
+# Deploy Zerto Virtual Replication to Azure with a VPN
 
 This template deploys the Zerto Cloud Appliance (ZCA) to Azure. It deploys a virtual network, public ip, network interface and a ZCA virtual machine. 
 
