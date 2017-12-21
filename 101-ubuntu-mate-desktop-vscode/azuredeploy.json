@@ -4,19 +4,10 @@
   "parameters": {
     "vmSize": {
       "type": "string",
-      "allowedValues": [
-        "Standard_A1",
-        "Standard_A2",
-        "Standard_A3",
-        "Standard_A4",
-        "Standard_D1_v2",
-        "Standard_D2_v2",
-        "Standard_D3_v2",
-        "Standard_D4_v2"
-      ],
       "metadata": {
         "description": "Size of vm"
-      }
+      },
+      "defaultValue": "Standard_D2_v2"
     },
     "username": {
       "type": "string",
@@ -65,10 +56,8 @@
     "publicIPAddressType": "Dynamic",
     "virtualNetworkName": "net",
     "vnetAddressPrefix": "10.0.0.0/16",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
     "subnetName": "netSubnet",
     "subnetPrefix": "10.0.0.0/24",
-    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
     "dnsPrefix": "[concat(parameters('dnsLabelPrefix'), uniquestring(resourceGroup().id))]",
     "scriptFileName": "infra.sh"
   },
@@ -76,7 +65,7 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('infraStorageAccountName')]",
-      "apiVersion": "2016-01-01",
+      "apiVersion": "2017-06-01",
       "location": "[resourceGroup().location]",
       "comments": "This storage account is for infrastructure (e.g. vm disks)",
       "kind": "Storage",
@@ -86,7 +75,7 @@
       "properties": {}
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-10-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
       "location": "[resourceGroup().location]",
@@ -98,7 +87,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-10-01",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "nsg",
       "location": "[resourceGroup().location]",
@@ -136,7 +125,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-10-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[resourceGroup().location]",
@@ -163,7 +152,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-10-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
       "location": "[resourceGroup().location]",
@@ -181,7 +170,7 @@
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
               },
               "subnet": {
-                "id": "[variables('subnetRef')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('virtualNetworkName'), variables('subnetName'))]"
               }
             }
           }
@@ -193,9 +182,6 @@
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
       "location": "[resourceGroup().location]",
-      "identity": {
-        "type": "SystemAssigned"
-      },
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('infraStorageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
@@ -219,7 +205,7 @@
           "osDisk": {
             "name": "osdisk1",
             "vhd": {
-              "uri": "[concat('http://',variables('infraStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
+              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', variables('infraStorageAccountName')), '2017-06-01').primaryEndpoints.blob, variables('vmStorageAccountContainerName'), '/', variables('OSDiskName'), '.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -237,7 +223,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmName'),'/CustomScript')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
@@ -257,5 +243,15 @@
         }
       }
     }
-  ]
+  ],
+  "outputs": {
+    "fqdn": {
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName')),'2017-10-01').dnsSettings.fqdn]",
+      "type": "string"
+    },
+    "ipaddress": {
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName')),'2017-10-01').dnsSettings.fqdn]",
+       "type": "string"
+    }
+  }
 }
