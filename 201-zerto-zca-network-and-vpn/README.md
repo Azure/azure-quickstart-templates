@@ -8,6 +8,6 @@ It also configures an [Azure VPN Gateway](https://docs.microsoft.com/en-us/azure
 1. [zertowithvpn.json](./zertowithvpn.json)
 
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fnavalev%2FARM_Templates%2Fmaster%2FZerto%2FzertoWithVPN.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2FZerto%2FzertoWithVPN.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
