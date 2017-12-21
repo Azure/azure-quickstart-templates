@@ -1,4 +1,4 @@
-# Deploy Zerto Virtual Replication in Azure
+# Deploy Zerto Virtual Replication to Azure
 
 This template deploys a Zerto Cloud Appliance (ZCA) to Azure:
 
