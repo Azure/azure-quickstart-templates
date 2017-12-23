@@ -63,6 +63,25 @@ home_dir="/home/$username"
 manifests_dir="$home_dir/example_manifests"
 mkdir -p $manifests_dir
 cp *.yml $manifests_dir
+# Specify Ops file for Azure Stack
+if [ "$environment" = "AzureStack" ]; then
+  cat > "$manifests_dir/azure-stack-properties.yml" << EOF
+---
+- type: replace
+  path: /instance_groups/name=bosh/properties/azure/azure_stack?
+  value: &azure-stack-properties
+    domain: ((azure_stack_domain))
+    resource: ((azure_stack_resource))
+    authentication: AzureAD
+    endpoint_prefix: management
+    ca_cert: |-
+$(cat /var/lib/waagent/Certificates.pem | sed 's/^/      /')
+
+- type: replace
+  path: /cloud_provider/properties/azure/azure_stack?
+  value: *azure-stack-properties
+EOF
+fi
 chmod 775 $manifests_dir
 chmod 644 $manifests_dir/*
 dpkg -i cf-cli*
@@ -145,12 +164,12 @@ cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
 bosh -n -d cf deploy ~/example_manifests/cf-deployment.yml \\
   --vars-store=~/cf-deployment-vars.yml \\
   -o ~/example_manifests/azure.yml \\
+  -o ~/example_manifests/scale-to-one-az.yml \\
 EOF
 if [ "$environment" = "AzureChinaCloud" ]; then
   cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
   -o ~/example_manifests/use-azure-storage-blobstore.yml \\
   -o ~/example_manifests/use-mirror-releases-for-cf.yml \\
-  -o ~/example_manifests/scale-to-one-az.yml \\
   -v system_domain=$(get_setting CLOUD_FOUNDRY_PUBLIC_IP).xip.io \\
   -v environment=$(get_setting ENVIRONMENT) \\
   -v blobstore_storage_account_name=$(get_setting DEFAULT_STORAGE_ACCOUNT_NAME) \\
@@ -162,14 +181,11 @@ if [ "$environment" = "AzureChinaCloud" ]; then
 EOF
 elif [ "$environment" = "AzureStack" ]; then
   cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
-  -o ~/example_manifests/scale-to-one-az.yml \\
-  -o ~/example_manifests/scale-to-availability-set-no-HA.yml \\
   -v system_domain=$(get_setting CLOUD_FOUNDRY_PUBLIC_IP).xip.io
 EOF
 else
   cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
   -o ~/example_manifests/use-azure-storage-blobstore.yml \\
-  -o ~/example_manifests/scale-to-one-az.yml \\
   -v system_domain=$(get_setting CLOUD_FOUNDRY_PUBLIC_IP).xip.io \\
   -v environment=$(get_setting ENVIRONMENT) \\
   -v blobstore_storage_account_name=$(get_setting DEFAULT_STORAGE_ACCOUNT_NAME) \\
