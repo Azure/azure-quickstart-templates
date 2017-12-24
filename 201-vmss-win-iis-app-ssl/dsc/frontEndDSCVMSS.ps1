@@ -1,7 +1,7 @@
 Configuration Main
 {
 
-Param ( [string] $nodeName, [string] $webDeployPackage, [string] $certStoreName, [string]  $certDomain  )
+Param ( [string] $nodeName, [string] $webDeployPackage  )
 
 Import-DscResource -ModuleName PSDesiredStateConfiguration
 Import-DscResource -ModuleName WebAdministration
