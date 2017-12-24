@@ -63,9 +63,29 @@ home_dir="/home/$username"
 manifests_dir="$home_dir/example_manifests"
 mkdir -p $manifests_dir
 cp *.yml $manifests_dir
-# Specify Ops file for Azure Stack
-if [ "$environment" = "AzureStack" ]; then
-  cat > "$manifests_dir/azure-stack-properties.yml" << EOF
+pushd $manifests_dir > /dev/null
+  # Enable availability zones if needed
+  use_availability_zones=$(get_setting USE_AVAILABILITY_ZONES)
+  if [ "$use_availability_zones" == "enabled" ]; then
+    sed -i '1,5d' cloud-config.yml
+    cat - cloud-config.yml > cloud-config-azs-enabled.yml << EOF
+---
+azs:
+- name: z1
+  cloud_properties:
+    availability_zone: '1'
+- name: z2
+  cloud_properties:
+    availability_zone: '2'
+- name: z3
+  cloud_properties:
+    availability_zone: '3'
+EOF
+    mv cloud-config-azs-enabled.yml cloud-config.yml
+  fi
+  # Specify Ops file for Azure Stack
+  if [ "$environment" = "AzureStack" ]; then
+    cat > azure-stack-properties.yml << EOF
 ---
 - type: replace
   path: /instance_groups/name=bosh/properties/azure/azure_stack?
@@ -81,7 +101,8 @@ $(cat /var/lib/waagent/Certificates.pem | sed 's/^/      /')
   path: /cloud_provider/properties/azure/azure_stack?
   value: *azure-stack-properties
 EOF
-fi
+  fi
+popd  > /dev/null
 chmod 775 $manifests_dir
 chmod 644 $manifests_dir/*
 dpkg -i cf-cli*

@@ -27,6 +27,13 @@
         "description": "Please copy the content of your SSH RSA public key and paste it here. You can use \"ssh-keygen -t rsa -b 2048\" to generate your SSH key pairs."
       }
     },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/bosh-setup/",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      }
+    },
     "environment": {
       "type": "string",
       "allowedValues": [
@@ -62,6 +69,31 @@
         "description": "secret of the client. See https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/blob/master/docs/guidance.md"
       }
     },
+    "azureStackDomain": {
+      "type": "string",
+      "defaultValue": "NotApplicableIfEnvironmentIsNotAzureStack",
+      "metadata": {
+        "description": "Domain of the Azure Stack deployment. Please check https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/tree/master/docs/advanced/azure-stack."
+      }
+    },
+    "azureStackResource": {
+      "type": "string",
+      "defaultValue": "NotApplicableIfEnvironmentIsNotAzureStack",
+      "metadata": {
+        "description": "Azure Stack Active Directory Service Endpoint Resource ID. Please check https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/tree/master/docs/advanced/azure-stack."
+      }
+    },
+    "useAvailabilityZones": {
+      "type": "string",
+      "defaultValue": "disabled",
+      "allowedValues": [
+        "enabled",
+        "disabled"
+      ],
+      "metadata": {
+        "description": "The flag to enable availability zones in cloud config"
+      }
+    },
     "autoDeployBosh": {
       "type": "string",
       "defaultValue": "enabled",
@@ -71,17 +103,6 @@
       ],
       "metadata": {
         "description": "The flag allowing to deploy BOSH director automatically or not"
-      }
-    },
-    "autoDeployCloudFoundry": {
-      "type": "string",
-      "defaultValue": "enabled",
-      "allowedValues": [
-        "enabled",
-        "disabled"
-      ],
-      "metadata": {
-        "description": "The flag allowing to deploy Cloud Foundry automatically or not"
       }
     },
     "boshVmSize": {
@@ -105,25 +126,15 @@
         "description": "Please check if the region support this VM size https://azure.microsoft.com/en-us/regions/#services. For more information about virtual machine sizes, see https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-linux-sizes/"
       }
     },
-    "_artifactsLocation": {
+    "autoDeployCloudFoundry": {
       "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/bosh-setup/",
+      "defaultValue": "enabled",
+      "allowedValues": [
+        "enabled",
+        "disabled"
+      ],
       "metadata": {
-        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
-      }
-    },
-    "azureStackDomain": {
-      "type": "string",
-      "defaultValue": "NotApplicableIfEnvironmentIsNotAzureStack",
-      "metadata": {
-        "description": "Domain of the Azure Stack deployment. Please check https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/tree/master/docs/advanced/azure-stack."
-      }
-    },
-    "azureStackResource": {
-      "type": "string",
-      "defaultValue": "NotApplicableIfEnvironmentIsNotAzureStack",
-      "metadata": {
-        "description": "Azure Stack Active Directory Service Endpoint Resource ID. Please check https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/tree/master/docs/advanced/azure-stack."
+        "description": "The flag allowing to deploy Cloud Foundry automatically or not"
       }
     }
   },
@@ -145,12 +156,8 @@
     "boshNetworkSecurityGroup": "nsg-bosh",
     "cfNetworkSecurityGroup": "nsg-cf",
     "cfPublicIPAddressName": "[concat(parameters('vmName'), '-cf')]",
-    "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses', variables('cfPublicIPAddressName'))]",
     "loadBalancerName": "cf-lb",
-    "lbID": "[resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName'))]",
-    "frontEndIPConfigID": "[concat(variables('lbID'), '/frontendIPConfigurations/LoadBalancerFrontEnd')]",
-    "lbPoolID": "[concat(variables('lbID'), '/backendAddressPools/BackendPool')]",
-    "lbProbeID": "[concat(variables('lbID'), '/probes/healthProbe')]",
+    "loadBalancerTemplate": "[concat('nestedtemplates/load-balancer-availability-zones-', parameters('useAvailabilityZones'), '.json')]",
 
     "vmSize": "Standard_D1_v2",
     "nicName": "[parameters('vmName')]",
@@ -443,15 +450,6 @@
     },
     {
       "apiVersion": "2015-06-15",
-      "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[variables('cfPublicIPAddressName')]",
-      "location": "[resourceGroup().location]",
-      "properties": {
-        "publicIPAllocationMethod": "static"
-      }
-    },
-    {
-      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[resourceGroup().location]",
@@ -509,17 +507,37 @@
       }
     },
     {
+      "name": "create-load-balancer",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(variables('baseUriAzureCloud'), variables('loadBalancerTemplate'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "loadBalancerName": {
+            "value": "[variables('loadBalancerName')]"
+          },
+          "loadBalancerPublicIPAddressName": {
+            "value": "[variables('cfPublicIPAddressName')]"
+          }
+        }
+      }
+    },
+    {
       "name": "generate-customdata",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2015-01-01",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('defaultStorageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+        "Microsoft.Resources/deployments/create-load-balancer"
       ],
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('baseUriAzureCloud'), 'generate-customdata.json')]",
+          "uri": "[uri(variables('baseUriAzureCloud'), 'nestedtemplates/generate-customdata.json')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -530,7 +548,7 @@
               "SUBNET_ADDRESS_RANGE_FOR_BOSH": "[variables('subnetAddressRangeForBosh')]",
               "SUBNET_NAME_FOR_CLOUD_FOUNDRY": "[variables('subnetNameForCloudFoundry')]",
               "SUBNET_ADDRESS_RANGE_FOR_CLOUD_FOUNDRY": "[variables('subnetAddressRangeForCloudFoundry')]",
-              "CLOUD_FOUNDRY_PUBLIC_IP": "[reference(concat(parameters('vmName'), '-cf')).ipAddress]",
+              "CLOUD_FOUNDRY_PUBLIC_IP": "[reference('Microsoft.Resources/deployments/create-load-balancer').outputs.loadBalancerPublicIPAdress.value]",
               "LOAD_BALANCER_NAME": "[variables('loadBalancerName')]",
               "NSG_NAME_FOR_BOSH": "[variables('boshNetworkSecurityGroup')]",
               "NSG_NAME_FOR_CLOUD_FOUNDRY": "[variables('cfNetworkSecurityGroup')]",
@@ -549,87 +567,11 @@
               "AUTO_DEPLOY_CLOUD_FOUNDRY": "[parameters('autoDeployCloudFoundry')]",
               "BOSH_VM_SIZE": "[parameters('boshVmSize')]",
               "AZURE_STACK_DOMAIN": "[parameters('azureStackDomain')]",
-              "AZURE_STACK_RESOURCE": "[parameters('azureStackResource')]"
+              "AZURE_STACK_RESOURCE": "[parameters('azureStackResource')]",
+              "USE_AVAILABILITY_ZONES": "[parameters('useAvailabilityZones')]"
             }
           }
         }
-      }
-    },
-    {
-      "apiVersion": "2015-06-15",
-      "name": "[variables('loadBalancerName')]",
-      "type": "Microsoft.Network/loadBalancers",
-      "location": "[resourceGroup().location]",
-      "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('cfPublicIPAddressName'))]"
-      ],
-      "properties": {
-        "frontendIPConfigurations": [
-          {
-            "name": "LoadBalancerFrontEnd",
-            "properties": {
-              "publicIPAddress": {
-                "id": "[variables('publicIPAddressID')]"
-              }
-            }
-          }
-        ],
-        "backendAddressPools": [
-          {
-            "name": "BackendPool"
-          }
-        ],
-        "loadBalancingRules": [
-          {
-            "name": "https",
-            "properties": {
-              "frontendIPConfiguration": {
-                "id": "[variables('frontEndIPConfigID')]"
-              },
-              "backendAddressPool": {
-                "id": "[variables('lbPoolID')]"
-              },
-              "protocol": "tcp",
-              "frontendPort": 443,
-              "backendPort": 443,
-              "enableFloatingIP": false,
-              "idleTimeoutInMinutes": 15,
-              "probe": {
-                "id": "[variables('lbProbeID')]"
-              }
-            }
-          },
-          {
-            "name": "http",
-            "properties": {
-              "frontendIPConfiguration": {
-                "id": "[variables('frontEndIPConfigID')]"
-              },
-              "backendAddressPool": {
-                "id": "[variables('lbPoolID')]"
-              },
-              "protocol": "tcp",
-              "frontendPort": 80,
-              "backendPort": 80,
-              "enableFloatingIP": false,
-              "idleTimeoutInMinutes": 15,
-              "probe": {
-                "id": "[variables('lbProbeID')]"
-              }
-            }
-          }
-        ],
-        "probes": [
-          {
-            "name": "healthProbe",
-            "properties": {
-              "protocol": "tcp",
-              "port": 80,
-              "intervalInSeconds": 5,
-              "numberOfProbes": 2
-            }
-          }
-        ]
       }
     },
     {
@@ -638,6 +580,7 @@
       "name": "[parameters('vmName')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]",
         "Microsoft.Resources/deployments/generate-customdata"
       ],
       "properties": {
@@ -691,7 +634,7 @@
       "apiVersion": "2015-06-15",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]",
+        "Microsoft.Resources/deployments/create-load-balancer",
         "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
       ],
       "properties": "[variables('customScriptProperties')]"
@@ -704,7 +647,7 @@
     },
     "cloudFoundryIP": {
       "type": "string",
-      "value": "[reference(concat(parameters('vmName'), '-cf')).ipAddress]"
+      "value": "[reference('Microsoft.Resources/deployments/create-load-balancer').outputs.loadBalancerPublicIPAdress.value]"
     }
   }
 }
