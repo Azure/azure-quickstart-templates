@@ -1,5 +1,12 @@
 # Deploy a TiDB cluster on CentOS virtual machines
 
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Ftidb-cluster-on-centos%2Fazuredeploy.json" target="_blank">
+  <img src="http://azuredeploy.net/deploybutton.png"/>
+</a>
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Ftidb-cluster-on-centos%2Fazuredeploy.json" target="_blank">
+  <img src="http://armviz.io/visualizebutton.png"/>
+</a>
+
 This template deploys a TiDB cluster on the CentOS virtual machines. This template also provisions a storage account, virtual network, network security groups, availability sets, load balancer, public IP addresses and network interfaces required by the installation. The template also creates 1 publicly accessible VM acting as a "monitor server" and "jumpbox" allowing to ssh into the PD/TiKV/TiDB nodes for diagnostics or troubleshooting purposes. In addition, and created a load balancer for TiDB servers so that users can connect to the database through this.
 
 The template expects the following parameters:
