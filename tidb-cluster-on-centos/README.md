@@ -1,31 +1,60 @@
 # Deploy a TiDB cluster on CentOS virtual machines
 
-This template deploys a TiDB cluster on the CentOS virtual machines. This template also provisions a storage account, virtual network, network security groups, availability sets, load balancer, public IP addresses and network interfaces required by the installation. The template also creates 1 publicly accessible VM acting as a "monitor server" and "jumpbox" allowing to ssh into the PD/TiKV/TiDB nodes for diagnostics or troubleshooting purposes. In addition, and created a load balancer for TiDB servers so that users can connect to the database through it.
+This template deploys a TiDB cluster on the CentOS virtual machines. This template also provisions a storage account, virtual network, network security groups, availability sets, load balancer, public IP addresses and network interfaces required by the installation. The template also creates 1 publicly accessible VM acting as a "monitor server" and "jumpbox" allowing to ssh into the PD/TiKV/TiDB nodes for diagnostics or troubleshooting purposes. In addition, and created a load balancer for TiDB servers so that users can connect to the database through this.
 
 The template expects the following parameters:
 
 | Name   | Description | Default Value |
 |:--- |:---|:---|
-| adminUsername  | Administrator user name used when provisioning virtual machines (which also becomes a system administrator in MongoDB) | |
-| adminPassword  | Administrator password used when provisioning virtual machines (which is also a password for the system administrator in MongoDB) | |
-| storageAccountName | Unique namespace for the Storage Account where the Virtual Machine's disks will be placed (this name will be used as a prefix to create one or more storage accounts as per t-shirt size) | |
-| region | Location where resources will be provisioned | |
-| virtualNetworkName | The arbitrary name of the virtual network provisioned for the MongoDB deployment | mongodbVnet |
-| subnetName | Subnet name for the virtual network that resources will be provisioned in to | mongodbSubnet |
-| addressPrefix | The network address space for the virtual network | 10.0.0.0/16 |
-| subnetPrefix | The network address space for the virtual subnet | 10.0.0.0/24 |
-| nodeAddressPrefix | The IP address prefix that will be used for constructing a static private IP address for each node in the cluster | 10.0.0.1 |
-| jumpbox | The flag allowing to enable or disable provisioning of the jumpbox VM that can be used to access the MongoDB environment | Disabled | 
-| tshirtSize | The t-shirt size of the MongoDB deployment (_XSmall_, _Small_, _Medium_, _Large_, _XLarge_, _XXLarge_) | XSmall |
-| osFamily | The target OS for the virtual machines running MongoDB (_Ubuntu_ or _CentOS_) | Ubuntu |
-| mongodbVersion | The version of the MongoDB packages to be deployed | 3.0.2 |
-| replicaSetName | The name of the MongoDB replica set | rs0 |
-| replicaSetKey | The shared secret key for the MongoDB replica set (6-1024 characters) |||
+| adminUsername  | Administrator user name used when provisioning virtual machines | tidb |
+| adminPassword  | Administrator password used when provisioning virtual machines | |
+| storageAccountNamePrefix | Unique namespace for the Storage Account where the Virtual Machine's disks will be placed (this name will be used as a prefix to create three storage accounts for PD/Monitor/TiDB/TiKV) | |
+| virtualNetworkName | The arbitrary name of the virtual network provisioned for the tidb cluster deployment | tidbclusterVnet |
+| environment | Location where resources will be provisioned |AzureCloud|
+| tidbVersion | The version of the TiDB packages to be deployed | latest |
+| pdCount | Number of PD VMs in the cluster | 3 |
+| pdVmSize | The VM size of the pd deployment | `Standard_A2_v2` |
+| tidbCount | Number of TiDB VMs in the cluster | 2 |
+| tidbVmSize | The VM size of the tidb deployment | `Standard_A4_v2` |
+| tikvCount | Number of TiKV VMs in the cluster | 3 |
+| tikvVmSize | The VM size of the tikv deployment | `Standard_D12_v2` |
+| monitorVmSize | The VM size of the monitor deployment | `Standard_A3` |
+
 
 ## TiDB architecture
 To better understand TiDB’s features, you need to understand the TiDB architecture.
 
 ![image alt text](images/tidb-architecture.png)
 
-The TiDB cluster has three components: the TiDB server, the PD server, and the TiKV server. More detailed information can be found [here](https://github.com/pingcap).
+The TiDB cluster has three components: the TiDB server, the PD server, and the TiKV server. More detailed information can be found [here](https://github.com/pingcap/docs).
 
+## Topology
+
+The following table outlines the deployment topology characteristics for default setting:
+
+
+| components | Member Node VM Size | CPU Cores | Memory | Data Disks | # of Members | # of Storage Accounts |
+|:--- |:---|:---|:---|:---|:---|:---|:---|:---|
+| pd | `Standard_A2_v2` | 2 | 4 GB | 20 GB SSD  | 3 | 3 |
+| tikv | `Standard_D12_v2` | 4 | 28 GB | 300 GB SSD | 3 | 3 |
+| tidb | `Standard_A4_v2` | 4 | 8 GB | 40 GB SSD  | 2 | 3 |
+| monitor | `Standard_A3` | 4 | 7 GB | 285 GB HDD | 1 | 3 |
+
+When the deployment is completed, you can access tidb cluster's monitor by following steps.
+
+```bash
+# get monitor address
+echo http://$(az network public-ip list -g test-tidb --query "[?name=='pubip-monitor'].dnsSettings.fqdn" -otsv):3000
+
+# grafana login user name and password
+username: admin
+password: admin
+```
+And you can access tidb server by loadBalancer ip.
+
+```bash
+tidb_lb_ip=$(az network public-ip list -g test-tidb --query "[?name=='tidb-lb-pubip'].ipAddress" -otsv)
+
+# login tidb server
+mysql -uroot -h${tidb_lb_ip} -P4000
+```

@@ -14,10 +14,20 @@
         "description": "Administrator password used when provisioning virtual machines"
       }
     },
-    "storageAccountName": {
+    "storageAccountNamePrefix": {
       "type": "string",
       "metadata": {
-        "description": "Unique namespace for the Storage Account where the Virtual Machine's disks will be placed"
+        "description": "Unique namespace for the Storage Account where the Virtual Machine's disks will be placed(this name will be used as a prefix to create three storage accounts for PD/Monitor/TiKV/TiDB)"
+      }
+    },
+    "environment": {
+      "type": "string",
+      "allowedValues": [
+        "AzureCloud",
+        "AzureChinaCloud"
+      ],
+      "metadata": {
+        "description": "Different environments in Azure. Choose AzureCloud for Global Azure, and choose AzureChinaCloud for Mooncake (Azure China Cloud)."
       }
     },
     "tidbVersion": {
@@ -29,7 +39,7 @@
     "pdCount": {
       "type": "int",
       "minValue": 1,
-      "maxValue": 200,
+      "maxValue": 7,
       "metadata": {
         "description": "The numble of the pd instances to be deployed on the cluster"
       }
@@ -37,15 +47,15 @@
     "tidbCount": {
       "type": "int",
       "minValue": 1,
-      "maxValue": 245,
+      "maxValue": 20,
       "metadata": {
         "description": "The numble of the tidb instances to be deployed on the cluster"
       }
     },
     "tikvCount": {
       "type": "int",
-      "minValue": 3,
-      "maxValue": 245,
+      "minValue": 1,
+      "maxValue": 20,
       "metadata": {
         "description": "The numble of the tikv instances to be deployed on the cluster"
       }
@@ -115,7 +125,7 @@
     },
     "tidbVmSize": {
       "type": "string",
-      "defaultValue": "Standard_F8s",
+      "defaultValue": "Standard_F4s",
       "metadata": {
         "description": "Virtual machine size for the tidb virtual machine"
       }
@@ -136,7 +146,7 @@
     },
     "tikvVmSize": {
       "type": "string",
-      "defaultValue": "Standard_D13_v2",
+      "defaultValue": "Standard_D12_v2",
       "metadata": {
         "description": "Virtual machine size for the tikv virtual machine"
       }
@@ -160,8 +170,10 @@
     "tidbIpPrefix": "[substring(parameters('tidbSubnetPrefix'), 0, lastIndexOf(parameters('tidbSubnetPrefix'), '.'))]",
     "tikvIpPrefix": "[substring(parameters('tikvSubnetPrefix'), 0, lastIndexOf(parameters('tikvSubnetPrefix'), '.'))]",
     "monitorIpAddr": "[concat(variables('pdIpPrefix'), '.254')]",
-    "vmStorageAccountContainerName": "vhd-tidb",
-    "vmStorageAccountDomain": ".blob.core.windows.net",
+    "vhdContainerName": "vhd-tidbcluster",
+    "environmentAzureCloud": ".blob.core.windows.net",
+    "environmentAzureChinaCloud": ".blob.core.chinacloudapi.cn",
+    "vmStorageAccountDomain": "[variables(concat('environment', parameters('environment')))]",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
     "templateBaseUrl": "[parameters('artifactsLocation')]",
     "sharedTemplateUrl": "[concat(variables('templateBaseUrl'), 'nested/shared-resources.json')]",
@@ -170,10 +182,17 @@
       "tidbAVSName": "tidbAvailSet",
       "tikvAVSName": "tikvAvailSet"
     },
-    "storageSettings": {
-      "vhdStorageAccountName": "[parameters('storageAccountName')]",
-      "vhdContainerName": "[variables('vmStorageAccountContainerName')]",
-      "destinationVhdsContainer": "[concat('https://', parameters('storageAccountName'), variables('vmStorageAccountDomain'), '/', variables('vmStorageAccountContainerName'), '/')]"
+    "pdStorageSettings": {
+      "vhdStorageAccountName": "[concat(parameters('storageAccountNamePrefix'), 'pd')]",
+      "destinationVhdsContainer": "[concat('https://', parameters('storageAccountNamePrefix'), 'pd', variables('vmStorageAccountDomain'), '/', variables('vhdContainerName'), '/')]"
+    },
+    "tidbStorageSettings": {
+      "vhdStorageAccountName": "[concat(parameters('storageAccountNamePrefix'), 'tidb')]",
+      "destinationVhdsContainer": "[concat('https://', parameters('storageAccountNamePrefix'), 'tidb', variables('vmStorageAccountDomain'), '/', variables('vhdContainerName'), '/')]"
+    },
+    "tikvStorageSettings": {
+      "vhdStorageAccountName": "[concat(parameters('storageAccountNamePrefix'), 'tikv')]",
+      "destinationVhdsContainer": "[concat('https://', parameters('storageAccountNamePrefix'), 'tikv', variables('vmStorageAccountDomain'), '/', variables('vhdContainerName'), '/')]"
     },
     "pdNetworkSettings": {
       "subnetName": "[parameters('pdSubnetName')]",
@@ -208,8 +227,14 @@
           "commonSettings": {
             "value": "[variables('commonSettings')]"
           },
-          "storageSettings": {
-            "value": "[variables('storageSettings')]"
+          "pdStorageSettings": {
+            "value": "[variables('pdStorageSettings')]"
+          },
+          "tidbStorageSettings": {
+            "value": "[variables('tidbStorageSettings')]"
+          },
+          "tikvStorageSettings": {
+            "value": "[variables('tikvStorageSettings')]"
           },
           "pdNetworkSettings": {
             "value": "[variables('pdNetworkSettings')]"
@@ -252,7 +277,7 @@
             }
           },
           "storageSettings": {
-            "value": "[variables('storageSettings')]"
+            "value": "[variables('pdStorageSettings')]"
           },
           "networkSettings": {
             "value": "[variables('pdNetworkSettings')]"
@@ -295,7 +320,7 @@
             }
           },
           "storageSettings": {
-            "value": "[variables('storageSettings')]"
+            "value": "[variables('tikvStorageSettings')]"
           },
           "networkSettings": {
             "value": "[variables('tikvNetworkSettings')]"
@@ -338,7 +363,7 @@
             }
           },
           "storageSettings": {
-            "value": "[variables('storageSettings')]"
+            "value": "[variables('tidbStorageSettings')]"
           },
           "networkSettings": {
             "value": "[variables('tidbNetworkSettings')]"
@@ -381,7 +406,7 @@
             }
           },
           "storageSettings": {
-            "value": "[variables('storageSettings')]"
+            "value": "[variables('pdStorageSettings')]"
           },
           "networkSettings": {
             "value": "[variables('pdNetworkSettings')]"
