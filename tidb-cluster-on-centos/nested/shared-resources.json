@@ -1,0 +1,212 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "commonSettings": {
+      "type": "object",
+      "metadata": {
+        "Description": "Common settings object"
+      }
+    },
+    "storageSettings": {
+      "type": "object",
+      "metadata": {
+        "Description": "Storage settings object"
+      }
+    },
+    "pdNetworkSettings": {
+      "type": "object",
+      "metadata": {
+        "Description": "Pd network settings object"
+      }
+    },
+    "tidbNetworkSettings": {
+      "type": "object",
+      "metadata": {
+        "Description": "Tidb network settings object"
+      }
+    },
+    "tikvNetworkSettings": {
+      "type": "object",
+      "metadata": {
+        "Description": "Tikv network settings object"
+      }
+    },
+    "routeTableName": {
+      "type": "string",
+      "metadata": {
+        "Description": "The route table name"
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "metadata": {
+        "Description": "The virtual network name"
+      }
+    },
+    "addressPrefix": {
+      "type": "string",
+      "metadata": {
+        "Description": "The virtual network address prefix"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[concat(parameters('storageSettings').vhdStorageAccountName)]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "accountType": "Standard_LRS"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[parameters('commonSettings').pdAVSName]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "PlatformFaultDomainCount": "3",
+        "PlatformUpdateDomainCount": "5"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[parameters('commonSettings').tidbAVSName]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "PlatformFaultDomainCount": "3",
+        "PlatformUpdateDomainCount": "5"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[parameters('commonSettings').tikvAVSName]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "PlatformFaultDomainCount": "3",
+        "PlatformUpdateDomainCount": "5"
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/routeTables",
+      "name": "[parameters('routeTableName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "routes": [
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[parameters('virtualNetworkName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/routeTables/', parameters('routeTableName'))]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('pdNetworkSettings').subnetName]",
+            "properties": {
+              "addressPrefix": "[parameters('pdNetworkSettings').subnetPrefix]",
+              "routeTable": {
+                "id": "[resourceId('Microsoft.Network/routeTables', parameters('routeTableName'))]"
+              }
+            }
+          },
+          {
+            "name": "[parameters('tidbNetworkSettings').subnetName]",
+            "properties": {
+              "addressPrefix": "[parameters('tidbNetworkSettings').subnetPrefix]",
+              "routeTable": {
+                "id": "[resourceId('Microsoft.Network/routeTables', parameters('routeTableName'))]"
+              }
+            }
+          },
+          {
+            "name": "[parameters('tikvNetworkSettings').subnetName]",
+            "properties": {
+              "addressPrefix": "[parameters('tikvNetworkSettings').subnetPrefix]",
+              "routeTable": {
+                "id": "[resourceId('Microsoft.Network/routeTables', parameters('routeTableName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "monitor-secgroup",
+      "location": "[resourceGroup().location]",
+      "properties": {
+          "securityRules": [
+            {
+              "name": "SSH",
+              "properties": {
+                "description": "Allow SSH traffic",
+                "protocol": "Tcp",
+                "sourcePortRange": "*",
+                "destinationPortRange": "22",
+                "sourceAddressPrefix": "Internet",
+                "destinationAddressPrefix": "*",
+                "access": "Allow",
+                "priority": 100,
+                "direction": "Inbound"
+              }
+            },
+            {
+              "name": "grafana-web",
+              "properties": {
+                "description": "Allow secure grafana access",
+                "protocol": "Tcp",
+                "sourcePortRange": "*",
+                "destinationPortRange": "3000",
+                "sourceAddressPrefix": "Internet",
+                "destinationAddressPrefix": "*",
+                "access": "Allow",
+                "priority": 101,
+                "direction": "Inbound"
+              }
+            }
+          ]
+       }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "tidb-secgroup",
+      "location": "[resourceGroup().location]",
+      "properties": {
+          "securityRules": [
+            {
+              "name": "tidb-server",
+              "properties": {
+                "description": "Allow secure tidb access",
+                "protocol": "Tcp",
+                "sourcePortRange": "*",
+                "destinationPortRange": "4000",
+                "sourceAddressPrefix": "Internet",
+                "destinationAddressPrefix": "*",
+                "access": "Allow",
+                "priority": 100,
+                "direction": "Inbound"
+              }
+            }
+          ]
+       }
+    }
+  ]
+}

@@ -1,0 +1,441 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Administrator user name used when provisioning virtual machines"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Administrator password used when provisioning virtual machines"
+      }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Unique namespace for the Storage Account where the Virtual Machine's disks will be placed"
+      }
+    },
+    "tidbVersion": {
+      "type": "string",
+      "metadata": {
+        "description": "The version of the TiDB package to be deployed on the cluster"
+      }
+    },
+    "pdCount": {
+      "type": "int",
+      "minValue": 1,
+      "maxValue": 200,
+      "metadata": {
+        "description": "The numble of the pd instances to be deployed on the cluster"
+      }
+    },
+    "tidbCount": {
+      "type": "int",
+      "minValue": 1,
+      "maxValue": 245,
+      "metadata": {
+        "description": "The numble of the tidb instances to be deployed on the cluster"
+      }
+    },
+    "tikvCount": {
+      "type": "int",
+      "minValue": 3,
+      "maxValue": 245,
+      "metadata": {
+        "description": "The numble of the tikv instances to be deployed on the cluster"
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "tidbVirtNet",
+      "metadata": {
+        "description": "The arbitrary name of the virtual network provisioned for the Redis cluster"
+      }
+    },
+    "addressPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/8",
+      "metadata": {
+        "description": "The network address space for the virtual network"
+      }
+    },
+    "routeTableName": {
+      "type": "string",
+      "defaultValue": "routetable",
+      "metadata": {
+        "description": "The route table for the virtual network"
+      }
+    },
+    "pdSubnetName": {
+      "type": "string",
+      "defaultValue": "pdSubnet",
+      "metadata": {
+        "description": "Subnet name for the pd virtual network that resources will be provisioned in to"
+      }
+    },
+    "pdSubnetPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.240.0/24",
+      "metadata": {
+        "description": "Address space for the pd virtual network subnet"
+      }
+    },
+    "pdVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_A4_v2",
+      "metadata": {
+        "description": "Virtual machine size for the pd virtual machine"
+      }
+    },
+    "monitorVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_A3",
+      "metadata": {
+        "description": "Virtual machine size for the monitor virtual machine"
+      }
+    },
+    "tidbSubnetName": {
+      "type": "string",
+      "defaultValue": "tidbSubnet",
+      "metadata": {
+        "description": "Subnet name for the tidb virtual network that resources will be provisioned in to"
+      }
+    },
+    "tidbSubnetPrefix": {
+      "type": "string",
+      "defaultValue": "10.240.0.0/16",
+      "metadata": {
+        "description": "Address space for the tidb virtual network subnet"
+      }
+    },
+    "tidbVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_F8s",
+      "metadata": {
+        "description": "Virtual machine size for the tidb virtual machine"
+      }
+    },
+    "tikvSubnetName": {
+      "type": "string",
+      "defaultValue": "tikvSubnet",
+      "metadata": {
+        "description": "Subnet name for the tikv virtual network that resources will be provisioned in to"
+      }
+    },
+    "tikvSubnetPrefix": {
+      "type": "string",
+      "defaultValue": "10.248.0.0/16",
+      "metadata": {
+        "description": "Address space for the tikv virtual network subnet"
+      }
+    },
+    "tikvVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D13_v2",
+      "metadata": {
+        "description": "Virtual machine size for the tikv virtual machine"
+      }
+    },
+    "artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/onlymellb/tidb-cluster/master/"
+    }
+  },
+  "variables": {
+    "osImageReference": {
+      "publisher": "OpenLogic",
+      "offer": "CentOS",
+      "sku": "7.2",
+      "version": "latest"
+    },
+    "pdIpPrefix": "[substring(parameters('pdSubnetPrefix'), 0, lastIndexOf(parameters('pdSubnetPrefix'), '.'))]",
+    "tidbIpPrefix": "[substring(parameters('tidbSubnetPrefix'), 0, lastIndexOf(parameters('tidbSubnetPrefix'), '.'))]",
+    "tikvIpPrefix": "[substring(parameters('tikvSubnetPrefix'), 0, lastIndexOf(parameters('tikvSubnetPrefix'), '.'))]",
+    "monitorIpAddr": "[concat(variables('pdIpPrefix'), '.254')]",
+    "vmStorageAccountContainerName": "vhd-tidb",
+    "vmStorageAccountDomain": ".blob.core.windows.net",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
+    "templateBaseUrl": "[parameters('artifactsLocation')]",
+    "sharedTemplateUrl": "[concat(variables('templateBaseUrl'), 'nested/shared-resources.json')]",
+    "commonSettings": {
+      "pdAVSName": "pdAvailSet",
+      "tidbAVSName": "tidbAvailSet",
+      "tikvAVSName": "tikvAvailSet"
+    },
+    "storageSettings": {
+      "vhdStorageAccountName": "[parameters('storageAccountName')]",
+      "vhdContainerName": "[variables('vmStorageAccountContainerName')]",
+      "destinationVhdsContainer": "[concat('https://', parameters('storageAccountName'), variables('vmStorageAccountDomain'), '/', variables('vmStorageAccountContainerName'), '/')]"
+    },
+    "pdNetworkSettings": {
+      "subnetName": "[parameters('pdSubnetName')]",
+      "subnetPrefix": "[parameters('pdSubnetPrefix')]",
+      "subnetRef": "[concat(variables('vnetID'), '/subnets/', parameters('pdSubnetName'))]"
+    },
+    "tidbNetworkSettings": {
+      "subnetName": "[parameters('tidbSubnetName')]",
+      "subnetPrefix": "[parameters('tidbSubnetPrefix')]",
+      "lbName": "tidb-svc",
+      "subnetRef": "[concat(variables('vnetID'), '/subnets/', parameters('tidbSubnetName'))]"
+    },
+    "tikvNetworkSettings": {
+      "subnetName": "[parameters('tikvSubnetName')]",
+      "subnetPrefix": "[parameters('tikvSubnetPrefix')]",
+      "subnetRef": "[concat(variables('vnetID'), '/subnets/', parameters('tikvSubnetName'))]"
+    },
+    "scriptsToDownload": "[concat(parameters('artifactsLocation'), 'scripts/tidb-cluster-install.sh')]"
+  },
+  "resources": [
+    {
+      "name": "shared-resources",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('sharedTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "commonSettings": {
+            "value": "[variables('commonSettings')]"
+          },
+          "storageSettings": {
+            "value": "[variables('storageSettings')]"
+          },
+          "pdNetworkSettings": {
+            "value": "[variables('pdNetworkSettings')]"
+          },
+          "tidbNetworkSettings": {
+            "value": "[variables('tidbNetworkSettings')]"
+          },
+          "tikvNetworkSettings": {
+             "value": "[variables('tikvNetworkSettings')]"
+          },
+          "routeTableName": {
+             "value": "[parameters('routeTableName')]"
+          },
+          "virtualNetworkName": {
+             "value": "[parameters('virtualNetworkName')]"
+          },
+          "addressPrefix": {
+             "value": "[parameters('addressPrefix')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "pd-node-resources",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'shared-resources')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('templateBaseUrl'), 'nested/node-resource.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "commonSettings": {
+            "value": {
+              "availabilitySetName": "[variables('commonSettings').pdAVSName]"
+            }
+          },
+          "storageSettings": {
+            "value": "[variables('storageSettings')]"
+          },
+          "networkSettings": {
+            "value": "[variables('pdNetworkSettings')]"
+          },
+          "machineSettings": {
+            "value": {
+              "adminUsername": "[parameters('adminUsername')]",
+              "machineNamePrefix": "pd-",
+              "machineIpPrefix": "[concat(variables('pdIpPrefix'), '.')]",
+              "osImageReference": "[variables('osImageReference')]",
+              "vmSize": "[parameters('pdVmSize')]"
+            }
+          },
+          "vmCount": {
+              "value": "[parameters('pdCount')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "tikv-node-resources",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'shared-resources')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('templateBaseUrl'), 'nested/node-resource.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "commonSettings": {
+            "value": {
+              "availabilitySetName": "[variables('commonSettings').tikvAVSName]"
+            }
+          },
+          "storageSettings": {
+            "value": "[variables('storageSettings')]"
+          },
+          "networkSettings": {
+            "value": "[variables('tikvNetworkSettings')]"
+          },
+          "machineSettings": {
+            "value": {
+              "adminUsername": "[parameters('adminUsername')]",
+              "machineNamePrefix": "tikv-",
+              "machineIpPrefix": "[concat(variables('tikvIpPrefix'), '.')]",
+              "osImageReference": "[variables('osImageReference')]",
+              "vmSize": "[parameters('tikvVmSize')]"
+            }
+          },
+          "vmCount": {
+              "value": "[parameters('tikvCount')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "tidb-node-resources",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'shared-resources')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('templateBaseUrl'), 'nested/tidb-node-resource.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "commonSettings": {
+            "value": {
+              "availabilitySetName": "[variables('commonSettings').tidbAVSName]"
+            }
+          },
+          "storageSettings": {
+            "value": "[variables('storageSettings')]"
+          },
+          "networkSettings": {
+            "value": "[variables('tidbNetworkSettings')]"
+          },
+          "machineSettings": {
+            "value": {
+              "adminUsername": "[parameters('adminUsername')]",
+              "machineNamePrefix": "tidb-",
+              "machineIpPrefix": "[concat(variables('tidbIpPrefix'), '.')]",
+              "osImageReference": "[variables('osImageReference')]",
+              "vmSize": "[parameters('tidbVmSize')]"
+            }
+          },
+          "vmCount": {
+              "value": "[parameters('tidbCount')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "monitor-node-resources",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'shared-resources')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('templateBaseUrl'), 'nested/monitor-node-resource.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "commonSettings": {
+            "value": {
+              "availabilitySetName": "[variables('commonSettings').pdAVSName]"
+            }
+          },
+          "storageSettings": {
+            "value": "[variables('storageSettings')]"
+          },
+          "networkSettings": {
+            "value": "[variables('pdNetworkSettings')]"
+          },
+          "machineSettings": {
+            "value": {
+              "adminUsername": "[parameters('adminUsername')]",
+              "machineName": "monitor",
+              "machineIp": "[variables('monitorIpAddr')]",
+              "osImageReference": "[variables('osImageReference')]",
+              "vmSize": "[parameters('monitorVmSize')]"
+            }
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat('monitor', '/installscript')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'pd-node-resources')]",
+        "[concat('Microsoft.Resources/deployments/', 'tidb-node-resources')]",
+        "[concat('Microsoft.Resources/deployments/', 'tikv-node-resources')]",
+        "[concat('Microsoft.Resources/deployments/', 'monitor-node-resources')]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[concat(parameters('artifactsLocation'), 'scripts/tidb-cluster-install.sh')]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat('./tidb-cluster-install.sh -v ', parameters('tidbVersion'), ' -u ', parameters('adminUsername'), ' -p ', parameters('adminPassword'), ' -d ', parameters('pdCount'), ' -D ', variables('pdIpPrefix'), ' -b ', parameters('tidbCount'), ' -B ', variables('tidbIpPrefix'), ' -k ', parameters('tikvCount'), ' -K ', variables('tikvIpPrefix'), ' -m ', variables('monitorIpAddr'))]"
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "monitorPublicEndpoint": {
+      "type": "string",
+      "value": "[reference('monitor-node-resources').outputs.monitorPublicEndpoint.value]"
+    },
+    "tidbServerDns": {
+      "type": "string",
+      "value": "[reference('tidb-node-resources').outputs.tidbServerDns.value]"
+    }
+  }
+}
