@@ -41,7 +41,7 @@ The following table outlines the deployment topology characteristics for default
 
 
 | components | Member Node VM Size | CPU Cores | Memory | Data Disks | # of Members | # of Storage Accounts |
-|:--- |:---|:---|:---|:---|:---|:---|:---|:---|
+|:--- |:---|:---|:---|:---|:---|:---|
 | pd | `Standard_A2_v2` | 2 | 4 GB | 20 GB SSD  | 3 | 3 |
 | tikv | `Standard_D12_v2` | 4 | 28 GB | 300 GB SSD | 3 | 3 |
 | tidb | `Standard_A4_v2` | 4 | 8 GB | 40 GB SSD  | 2 | 3 |
