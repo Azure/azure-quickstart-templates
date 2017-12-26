@@ -231,8 +231,11 @@ RELATIVE_WORK_DIR=`echo ${TIDB_ANSIBLE}|awk -F'[/.]' '{if($NF=="git")print $(NF-
 [[ -d ${RELATIVE_WORK_DIR} ]] && rm -rf ${RELATIVE_WORK_DIR}
 git clone ${TIDB_ANSIBLE}
 cd ${RELATIVE_WORK_DIR}
-# this is a temporary workaround, when the upstream solve this problem, delete this code
+# There are temporary workaround, when the upstream solve those problem, delete those code
 sed -i "s/min_open_fds\(.*\)/min_open_fds: 1000/g" roles/check_config_dynamic/defaults/main.yml
+sed -i "s/role: tispark\(.*\)/role: tispark, when: False }/g" deploy.yml
+sed -i "s/\(.*\)tispark_packages\(.*\)/  with_items: []/g" roles/local/tasks/binary_deployment.yml
+echo "  when: False" >> roles/local/tasks/binary_deployment.yml
 
 generate_inventory
 deploy_tidb_cluster
