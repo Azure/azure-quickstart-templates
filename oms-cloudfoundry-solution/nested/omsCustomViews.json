@@ -10,7 +10,7 @@
         },
         "omsWorkspaceRegion": {
             "type": "string",
-            "defaultValue": "West Europe",
+            "defaultValue": "East US",
             "allowedValues": [
                 "Australia Southeast",
                 "East US",
@@ -26,10 +26,10 @@
         },
         "systemMetricsProvider": {
             "type": "string",
-            "defaultValue": "Azure OMS Agent Only",
+            "defaultValue": "BOSH Health Metrics Forwarder Only",
             "allowedValues": [
                 "None",
-                "Azure OMS Agent Only",
+                "Microsoft Azure OMS Agent Only",
                 "BOSH Health Metrics Forwarder Only",
                 "Both Azure OMS Agent and BOSH Health Metrics Forwarder"
             ],
@@ -37,6 +37,17 @@
                 "description": "Select your provider of system metrics"
             }
         },
+        "cloudFoundryVersion": {
+            "type": "string",
+            "defaultValue": "2.0+",
+            "allowedValues": [
+              "2.0+",
+              "1.12 or earlier"
+            ],
+            "metadata": {
+              "description": "Cloud Foundry environment has version 2.0+"
+            }
+          },
         "_artifactsLocation": {
             "type": "string",
             "defaultValue": "https://raw.githubusercontent.com/Azure/oms-log-analytics-firehose-nozzle/master/docs/omsview/",
@@ -54,7 +65,7 @@
     },
     "variables": {
         "omsviews": {
-            "templates": [
+            "defailt": [
                 "Cloud%20Foundry.omsview",
                 "CF%20KPI%20-%20Diego%20Metrics.omsview",
                 "CF%20KPI%20-%20Doppler%20Server%20Metrics.omsview",
@@ -67,8 +78,6 @@
                 "CF%20-%20Diego%20Auctions.omsview",
                 "CF%20-%20Diego%20Health.omsview",
                 "CF%20-%20Doppler%20Server.omsview",
-                "CF%20-%20Etcd%20Operations.omsview",
-                "CF%20-%20Etcd.omsview",
                 "CF%20-%20Garden%20Linux.omsview",
                 "CF%20-%20Gorouter.omsview",
                 "CF%20-%20LRPs%20and%20Tasks.omsview",
@@ -76,6 +85,10 @@
                 "CF%20-%20Nozzle%20Status.omsview",
                 "CF%20-%20Route%20Emitter.omsview",
                 "CF%20-%20UAA.omsview"
+            ],
+            "legacy": [
+                "CF%20-%20Etcd.omsview",
+                "CF%20-%20Etcd%20Operations.omsview"
             ],
             "system_metrics": {
                 "oms_agent": "https://raw.githubusercontent.com/Azure/oms-agent-for-linux-boshrelease/master/docs/omsview/Syslog%20and%20Perf.omsview",
@@ -87,16 +100,51 @@
         {
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2016-02-01",
-            "name": "[replace(replace(variables('omsviews').templates[copyIndex()], '%20', '_'), '_-_', '-')]",
+            "name": "[replace(replace(variables('omsviews').defailt[copyIndex()], '%20', '_'), '_-_', '-')]",
             "copy": {
                 "name": "viewCopy",
-                "count": "[length(variables('omsviews').templates)]",
+                "count": "[length(variables('omsviews').defailt)]",
                 "mode": "parallel"
             },
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[concat(parameters('_artifactsLocation'), '/', variables('omsviews').templates[copyIndex()], parameters('_artifactsLocationSasToken'))]",
+                    "uri": "[concat(parameters('_artifactsLocation'), '/', variables('omsviews').defailt[copyIndex()], parameters('_artifactsLocationSasToken'))]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "resourcegroup": {
+                        "value": "[resourceGroup().name]"
+                    },
+                    "location": {
+                        "value": "[parameters('omsWorkspaceRegion')]"
+                    },
+                    "subscriptionId": {
+                        "value": "[subscription().subscriptionId]"
+                    },
+                    "workspace": {
+                        "value": "[parameters('omsWorkspaceName')]"
+                    },
+                    "workspaceapiversion": {
+                        "value": "2015-11-01-preview"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2016-02-01",
+            "name": "[replace(replace(variables('omsviews').legacy[copyIndex()], '%20', '_'), '_-_', '-')]",
+            "condition": "[equals(parameters('cloudFoundryVersion'), '1.12 or earlier')]",
+            "copy": {
+                "name": "viewCopy",
+                "count": "[length(variables('omsviews').legacy)]",
+                "mode": "parallel"
+            },
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(parameters('_artifactsLocation'), '/', variables('omsviews').legacy[copyIndex()], parameters('_artifactsLocationSasToken'))]",
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
