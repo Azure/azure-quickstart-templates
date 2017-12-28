@@ -1,4 +1,5 @@
 # Azure Resource Manager QuickStart Templates
+[![Travis](https://img.shields.io/travis/Azure/azure-quickstart-templates/master.svg?label=travis&style=flat-square)](https://travis-ci.org/Azure/azure-quickstart-templates)
 
 This repo contains all currently available Azure Resource Manager templates contributed by the community. A searchable template index is maintained at https://azure.microsoft.com/en-us/documentation/templates/.
 The following information is relevant to get started with contributing to this repository.
