@@ -1,0 +1,48 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0", 
+ 
+	"parameters": { "moodleCommon": { "type": "object", "metadata": { "description": "Common Moodle values" } } },
+
+	"variables": {
+		"documentation1": "This sub-template drives the gluster (scale-out network-attached storage file system) creation process.",
+		"documentation2": "It expects certain values in the 'common' datastructure.",
+		"documentation3": "    computeApi             - the 'managed' resources need to all use this value",
+		"documentation4": "    gfxAvailabilitySetName  - name of availability set for the gluster farm",
+		"documentation5": "    glusterVmCount          - number of nodes to create",
+
+		"documentation6": "This sub-template calls other sub-templates",
+		"documentation7": "    glustervm - number of nodes in the gluster farm"
+	},     
+
+	"resources":   [
+		{
+			"type":			"Microsoft.Compute/availabilitySets",
+			"apiVersion":	"[parameters('moodleCommon').computeApi]",
+			"name":			"[parameters('moodleCommon').gfxAvailabilitySetName]",
+			"location":		"[resourceGroup().location]",
+
+			"tags":			{ "displayName": "Gluster Availability Set" },
+
+			"properties":	{ "platformUpdateDomainCount": 5, "platformFaultDomainCount": 2, "managed": "true" }
+		},
+
+
+		{
+			"type":			"Microsoft.Resources/deployments",
+			"apiVersion":	"2015-01-01",
+			"name" :		"[concat('glustervm',copyindex())]",
+
+			"dependsOn":	[ "[concat('Microsoft.Compute/availabilitySets/',parameters('moodleCommon').gfxAvailabilitySetName)]" ],
+
+			"copy":			{ "name": "vmloop", "count": "[parameters('moodleCommon').glusterVmCount]" },
+
+			"properties": {
+				"mode":			"Incremental",
+				"templateLink":	{ "uri":          "[concat(    parameters('moodleCommon').baseTemplateUrl,'glustervm.json')]" },
+				"parameters":	{ "moodleCommon": { "value": "[parameters('moodleCommon')]" }, 
+								  "counter":	  { "value": "[copyindex()]" } }
+			}
+		}
+    ]
+}

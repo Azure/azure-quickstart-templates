@@ -1,0 +1,184 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Username for the Virtual Machine."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the Virtual Machine."
+      }
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "The Location For the resources"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "The size of the VM to create"
+      }
+    },
+    "overProvision": {
+      "type": "bool",
+      "metadata": {
+        "description": "Over Provision VMSS Instances"
+      }
+    },
+    "vmssName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the scale set"
+      }
+    },
+    "vmssPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "The name prefix for the VMs in the scale set"
+      }
+    },
+    "nicName": {
+      "type": "string",
+      "metadata": {
+        "description": "The nic name for the VMs in the scale set"
+      }
+    },
+    "subnetRef": {
+      "type": "string",
+      "metadata": {
+        "description": "The subnet ref for the VMs in the scale set"
+      }
+    },
+    "networkSecurityGroupName": {
+      "type": "string",
+      "metadata": {
+        "description": "The NSG Name to assocaite with the NIC in the VM"
+      }
+    },
+    "storageAccountUri": {
+      "type": "string",
+      "metadata": {
+        "description": "The storage account URI for boot diagnostics for the VMs in the scale set"
+      }
+    },
+     "linuxConfiguration": {
+      "type": "object",
+      "metadata": {
+        "description": "The Linux configuration object"
+      }
+    },
+    "publisher": {
+      "type": "string",
+      "metadata": {
+        "description": "The VM Publisher"
+      }
+    },
+    "offer": {
+      "type": "string",
+      "metadata": {
+        "description": "The VM Offer"
+      }
+    },
+    "SKU": {
+      "type": "string",
+      "metadata": {
+        "description": "The VM SKU"
+      }
+    }
+  },
+  "variables": {
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/virtualMachineScaleSets",
+      "name": "[parameters('vmssName')]",
+      "location": "[parameters('location')]",
+      "apiVersion": "2017-03-30",
+      "sku": {
+        "name": "[parameters('vmSize')]",
+        "tier": "Standard",
+        "capacity": 0
+      },
+      "identity": { 
+          "type": "systemAssigned"
+      },
+      "properties": {
+        "upgradePolicy": {
+          "mode": "Manual"
+        },
+        "overprovision":"[parameters('overProvision')]",
+        "virtualMachineProfile": {
+          "storageProfile": {
+            "osDisk": {
+              "caching": "ReadOnly",
+              "createOption": "FromImage"
+            },
+            "imageReference": {
+              "publisher": "[parameters('publisher')]",
+              "offer": "[parameters('offer')]",
+              "sku": "[parameters('sku')]",
+              "version": "latest"
+            }
+          },
+          "osProfile": {
+            "computerNamePrefix": "[parameters('vmssPrefix')]",
+            "adminUsername": "[parameters('adminUsername')]",
+            "adminPassword": "[parameters('adminPassword')]",
+            "linuxConfiguration": "[parameters('linuxConfiguration')]"
+          },
+          "networkProfile": {
+            "networkInterfaceConfigurations": [
+              {
+                "name": "[parameters('nicName')]",
+                "properties": {
+                  "primary":true,
+                  "ipConfigurations": [
+                    {
+                      "name": "ipconfig1",
+                      "properties": {
+                        "subnet": {
+                          "id": "[parameters('subnetRef')]"
+                        },
+                        "publicipaddressconfiguration": {
+                          "name": "publicip",
+                          "properties": {
+                            "idleTimeoutInMinutes": 15,
+                            "dnsSettings": {
+                              "domainNameLabel": "[parameters('vmssName')]"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "networkSecurityGroup": {
+                      "id": "[resourceId('Microsoft.Network/networkSecurityGroups', Parameters('networkSecurityGroupName'))]"
+                  }
+                }
+              }
+            ]
+          },
+          "diagnosticsProfile": {
+            "bootDiagnostics": {
+              "enabled": "true",
+              "storageUri": "[parameters('storageAccountUri')]"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "principalId": {
+      "type": "string",
+      "value": "[reference(concat(resourceId('Microsoft.Compute/virtualMachineScaleSets/', parameters('vmssName')),'/providers/Microsoft.ManagedIdentity/Identities/default'),'2015-08-31-PREVIEW').principalId]"
+    }
+  }
+}

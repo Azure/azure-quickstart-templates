@@ -1,4 +1,4 @@
-﻿{
+{
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.1.0.0",
   "parameters": {
@@ -63,16 +63,13 @@
     },
     "sqDB_DBEdition": {
       "type": "string",
-      "defaultValue": "Basic",
       "allowedValues": [
         "Basic",
-        "Business",
-        "Premium",
         "Standard",
-        "Web"
+        "Premium"
       ],
       "metadata": {
-        "description": "Edition of Azure SQL Server to create"
+        "description": "Edition of Azure SQL Database to create"
       }
     },
     "sqStorage_AcctType": {
@@ -89,10 +86,10 @@
         "description": "Type of Azure Storage Acct to create"
       }
     },
-     "sqVM_Installation_Type": {
-       "type": "string",
-       "defaultValue": "Secure",
-       "allowedValues": [
+    "sqVM_Installation_Type": {
+      "type": "string",
+      "defaultValue": "Secure",
+      "allowedValues": [
         "Secure",
         "Nonsecure"
       ],
@@ -100,20 +97,20 @@
         "description": "Type of SonarQube insatlation, Secure (HTTPs) or nonsecure (HTTP)"
       }
     },
-     "sqVM_ReverseProxy_Type": {
-       "type": "string",
-       "defaultValue": "IIS",
-       "allowedValues": [
+    "sqVM_ReverseProxy_Type": {
+      "type": "string",
+      "defaultValue": "IIS",
+      "allowedValues": [
         "IIS"
       ],
       "metadata": {
         "description": "Type of Reverse Proxy to secure SonarQube"
       }
     },
-      "sqVM_LTS_Version": {
-       "type": "string",
-       "defaultValue": "sonarqube-5.6.4",
-       "allowedValues": [
+    "sqVM_LTS_Version": {
+      "type": "string",
+      "defaultValue": "sonarqube-5.6.4",
+      "allowedValues": [
         "sonarqube-5.6.4"
       ],
       "metadata": {
@@ -154,7 +151,7 @@
     "SQpublicIPName": "SQpublicIP",
     "dscZipFile": "SQdscAppConfiguration.ps1.zip",
     "SQdscAppConfigurationFunction": "SQdscAppConfiguration.ps1\\Main",
-    "SQDSCFileLocation": "[concat(parameters('_artifactsLocation'), '/', 'scripts')]",    
+    "SQDSCFileLocation": "[concat(parameters('_artifactsLocation'), '/', 'scripts')]",
     "AzureSqlServerName": "[concat(parameters('sqDB_ServerName'), uniqueString(resourceGroup().id))]",
     "SQDBTemplate": "azureDBDeploy.json",
     "SQDBTemplateLocation": "[concat(parameters('_artifactsLocation'), '/', 'nested', '/', variables('SQDBTemplate'))]"
@@ -165,7 +162,7 @@
       "name": "deploySQLDB",
       "type": "Microsoft.Resources/deployments",
       "properties": {
-        "mode": "incremental",
+        "mode": "Incremental",
         "templateLink": {
           "uri": "[variables('SQDBTemplateLocation')]",
           "contentVersion": "1.0.0.0"
@@ -289,7 +286,7 @@
             "sku": "[variables('SQvmAppWindowsOSVersion')]",
             "version": "latest"
           },
-         "osDisk": {
+          "osDisk": {
             "name": "SQvmAppOSDisk",
             "vhd": {
               "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('SQstorageName')), '2015-06-15').primaryEndpoints.blob, variables('SQvmAppStorageAccountContainerName'),'/',variables('SQvmAppOSDiskName'),'.vhd')]"
@@ -326,16 +323,15 @@
               "properties": {
                 "nodeName": "[parameters('sqVM_AppName')]",
                 "sqVM_AppAdmin_UserName": "[parameters('sqVM_AppAdmin_UserName')]",
-                "connectionString":"[replace(reference('deploySQLDB').outputs.jdbcConnString.value,'{your_password_here}',parameters('sqDB_Admin_Password'))]",
+                "connectionString": "[replace(reference('deploySQLDB').outputs.jdbcConnString.value,'{your_password_here}',parameters('sqDB_Admin_Password'))]",
                 "sqVmAdminPwd": "[parameters('sqVM_AppAdmin_Password')]",
-                "sqLtsVersion":"[parameters('sqVM_LTS_Version')]"
+                "sqLtsVersion": "[parameters('sqVM_LTS_Version')]"
               }
             },
-            "protectedSettings": {
-            }
+            "protectedSettings": {}
           }
         },
-         {
+        {
           "name": "secureSonarQube",
           "type": "extensions",
           "location": "[resourceGroup().location]",
@@ -345,7 +341,7 @@
             "[concat('Microsoft.Compute/virtualMachines/', parameters('sqVM_AppName'),'/extensions/configureAppVM_DSC')]"
           ],
           "tags": {
-              "displayName": "secureSonarQube"
+            "displayName": "secureSonarQube"
           },
           "properties": {
             "publisher": "Microsoft.Compute",
@@ -353,15 +349,15 @@
             "typeHandlerVersion": "1.4",
             "autoUpgradeMinorVersion": true,
             "settings": {
-               "fileUris": [
+              "fileUris": [
                 "[concat(variables('SQDSCFileLocation'), '/','secureSonarQube.ps1')]"
               ],
               "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File secureSonarQube.ps1', ' -serverName ' ,reference(variables('SQpublicIPName')).dnsSettings.fqdn, ' -websiteName SonarQubeProxy', ' -installationType ', parameters('sqVM_Installation_Type'),' -reverseProxyType ', parameters('sqVM_ReverseProxy_Type'))]"
-            },              
-            "protectedSettings": {              
-               "serverName": "reference(variables('SQpublicIPName')).dnsSettings.fqdn",
-               "installationType": "parameters('sqVM_Installation_Type')",
-               "reverseProxyType": "parameters('sqVM_ReverseProxy_Type')"
+            },
+            "protectedSettings": {
+              "serverName": "reference(variables('SQpublicIPName')).dnsSettings.fqdn",
+              "installationType": "parameters('sqVM_Installation_Type')",
+              "reverseProxyType": "parameters('sqVM_ReverseProxy_Type')"
             }
           }
         }
@@ -372,7 +368,7 @@
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
-      "dependsOn": [ ],
+      "dependsOn": [],
       "tags": {
         "displayName": "SQpublicIP"
       },
@@ -388,7 +384,7 @@
       "type": "Microsoft.Network/networkSecurityGroups",
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
-      "dependsOn": [ ],
+      "dependsOn": [],
       "tags": {
         "displayName": "SQnsgApp"
       },
@@ -421,7 +417,7 @@
               "priority": 101,
               "direction": "Inbound"
             }
-          },          
+          },
           {
             "name": "Allow_RDP_Out",
             "properties": {

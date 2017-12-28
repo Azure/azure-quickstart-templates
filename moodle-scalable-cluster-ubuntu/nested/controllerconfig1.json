@@ -1,0 +1,43 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+
+	"parameters": { "moodleCommon":	{ "type": "object", "metadata": { "description": "Common Moodle values" } }	},
+
+	"variables": {
+		"documentation01": "This sub-template applies a specific post-deployment script to the controller vm",
+		"documentation02": "It expects certain values in the 'common' datastructure.",
+		"documentation03": "    ScriptLocation              - partial web URI (equivalent to folder)(",
+		"documentation04": "    moodleInstallScriptFilename - name of script file",
+		"documentation05": "    lbDnsName                   - name of the dns entry for the vmscalse set",
+		"documentation06": "    gfsNameRoot                 - nameroot of gluster farm - note that the code applies a 0 to get to the first node",
+		"documentation07": "    mySqlUserPassword           - database (mariadb) password",
+		"documentation08": "    jboxVmName                  - name of the controller/jumpb ox VM",
+
+
+		"dns":			"[concat(parameters('moodleCommon').lbDnsName,'.',resourceGroup().location,'.cloudapp.azure.com')]",
+		"scriptUri":	"[concat(parameters('moodleCommon').ScriptLocation,parameters('moodleCommon').moodleInstallScriptFilename)]",
+		"cmdExec":		"[concat('sh ',                                    parameters('moodleCommon').moodleInstallScriptFilename, ' ', parameters('moodleCommon').moodleVersion, ' ', concat(parameters('moodleCommon').gfsNameRoot, '0'), ' ', 'data', ' ', variables('dns'), ' ', parameters('moodleCommon').StaticIpMariaDb, ' ', 'moodle', ' ', 'moodledba', ' ', parameters('moodleCommon').mySqlUserPassword,' ', parameters('moodleCommon').adminPassword)]"
+	},
+
+	"resources": [
+
+		{
+			"type":			"Microsoft.Compute/virtualMachines/extensions",
+			"apiVersion":	"2015-06-15",
+			"name":			"[concat(parameters('moodleCommon').jboxVmName,'/','install_moodle')]",
+			"location":		"[resourceGroup().location]",
+				
+			"tags":			{ "displayName": "install_moodle" },
+
+			"properties": {
+				"publisher":				"Microsoft.OSTCExtensions",
+				"type":						"CustomScriptForLinux",
+				"typeHandlerVersion":		"1.4",
+				"autoUpgradeMinorVersion":	true,
+				"settings":					{ "fileUris": [ "[variables('scriptUri')]" ], "commandToExecute": "[variables('cmdExec')]" }
+			}
+		}
+	]
+}
+

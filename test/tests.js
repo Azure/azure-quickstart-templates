@@ -315,6 +315,14 @@ describe('Template', function () {
                 parameters: readJSONFile(parametersFilePath)
               };
 
+              if (fs.existsSync(path.join(testDirectory, 'prereqs'))) {
+                var preReqTemplateFilePath = path.join(testDirectory, 'prereqs/prereq.azuredeploy.json');
+                var preReqParametersFilePath = path.join(testDirectory, 'prereqs/prereq.azuredeploy.parameters.json');
+
+                requestBody.preReqTemplate = readJSONFile(preReqTemplateFilePath);
+                requestBody.preReqParameters = readJSONFile(preReqParametersFilePath);
+              }
+
               return validateTemplate(requestBody, templateFilePath)
                 .then(function () {
                   return deployTemplate(requestBody, templateFilePath);

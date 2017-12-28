@@ -55,13 +55,26 @@
       "name": "[concat(parameters('clusterNamePrefix'),'-vnet1')]",
       "addressSpacePrefix": "10.1.0.0/16",
       "subnetName": "subnet1",
-      "subnetPrefix": "10.1.0.0/24"
+      "subnetPrefix": "10.1.0.0/24",
+      "gatewaySubnetName": "GatewaySubnet",
+      "gatewaySubnetPrefix": "10.1.255.0/27",
+      "vpnGatewayName": "vnet1gw",
+      "vpnGatewayIP": "vnet1gwip"
     },
     "vNet2":{
       "name": "[concat(parameters('clusterNamePrefix'),'-vnet2')]",
       "addressSpacePrefix": "10.2.0.0/16",
       "subnetName": "subnet1",
-      "subnetPrefix": "10.2.0.0/24"
+      "subnetPrefix": "10.2.0.0/24",
+      "gatewaySubnetName": "GatewaySubnet",
+      "gatewaySubnetPrefix": "10.2.255.0/27",
+      "vpnGatewayName": "vnet2gw",
+      "vpnGatewayIP": "vnet2gwip"
+    },
+    "vpnConnections":{
+      "name1": "vnet1tovnet2",
+      "name2": "vnet2tovnet1",
+      "sharedKey": "A1b2C3D4"
     }
   },
   "resources": [
@@ -82,8 +95,55 @@
             "properties": {
               "addressPrefix": "[variables('vNet1').subnetPrefix]"
             }
+          },
+          {
+            "name": "[variables('vNet1').gatewaySubnetName]",
+            "properties": {
+              "addressPrefix": "[variables('vNet1').gatewaySubnetPrefix]"
+            }
           }
         ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('vNet1').vpnGatewayIP]",
+      "location": "[variables('clusterNode1').location]",
+      "apiVersion": "2017-08-01",
+      "properties": {
+          "publicIPAllocationMethod": "Dynamic"
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworkGateways",
+      "name": "[variables('vNet1').vpnGatewayName]",
+      "location": "[variables('clusterNode1').location]",
+      "dependsOn": [
+          "[concat('Microsoft.Network/publicIPAddresses/', variables('vNet1').vpnGatewayIP)]",
+          "[concat('Microsoft.Network/virtualNetworks/', variables('vNet1').name)]"
+      ],
+      "apiVersion": "2017-06-01",
+      "properties": {
+          "gatewayType": "Vpn",
+          "vpnType": "RouteBased",
+          "sku": {
+              "name": "Basic",
+              "tier": "Basic"
+          },
+          "ipConfigurations": [
+              {
+                  "name": "default",
+                  "properties": {
+                      "privateIPAllocationMethod": "Dynamic",
+                      "subnet": {
+                          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNet1').name, variables('vNet1').gatewaySubnetName)]"
+                      },
+                      "publicIpAddress": {
+                          "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vNet1').vpnGatewayIP)]"
+                      }
+                  }
+              }
+          ]
       }
     },
     {
@@ -103,10 +163,106 @@
             "properties": {
               "addressPrefix": "[variables('vNet2').subnetPrefix]"
             }
+          },
+          {
+            "name": "[variables('vNet2').gatewaySubnetName]",
+            "properties": {
+              "addressPrefix": "[variables('vNet2').gatewaySubnetPrefix]"
+            }
           }
         ]
       }
     }, 
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('vNet2').vpnGatewayIP]",
+      "location": "[variables('clusterNode2').location]",
+      "apiVersion": "2017-08-01",
+      "properties": {
+          "publicIPAllocationMethod": "Dynamic"
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworkGateways",
+      "name": "[variables('vNet2').vpnGatewayName]",
+      "location": "[variables('clusterNode2').location]",
+      "dependsOn": [
+          "[concat('Microsoft.Network/publicIPAddresses/', variables('vNet2').vpnGatewayIP)]",
+          "[concat('Microsoft.Network/virtualNetworks/', variables('vNet2').name)]"
+      ],
+      "apiVersion": "2017-06-01",
+      "properties": {
+          "gatewayType": "Vpn",
+          "vpnType": "RouteBased",
+          "sku": {
+              "name": "Basic",
+              "tier": "Basic"
+          },
+          "ipConfigurations": [
+              {
+                  "name": "default",
+                  "properties": {
+                      "privateIPAllocationMethod": "Dynamic",
+                      "subnet": {
+                          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNet2').name, variables('vNet2').gatewaySubnetName)]"
+                      },
+                      "publicIpAddress": {
+                          "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vNet2').vpnGatewayIP)]"
+                      }
+                  }
+              }
+          ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "name": "[variables('vpnConnections').name1]",
+      "type": "Microsoft.Network/connections",
+      "location": "[variables('clusterNode1').location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworkGateways/', variables('vNet1').vpnGatewayName)]",
+        "[concat('Microsoft.Network/virtualNetworkGateways/', variables('vNet2').vpnGatewayName)]"
+      ],
+      "properties": {
+        "connectionType": "Vnet2Vnet",
+        "virtualNetworkGateway1": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworkGateways', variables('vNet1').vpnGatewayName)]"
+        },
+        "virtualNetworkGateway2": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworkGateways', variables('vNet2').vpnGatewayName)]"
+        },
+        "sharedKey": "[variables('vpnConnections').sharedKey]",
+        "routingWeight": 0,
+        "enableBgp": false,
+        "usePolicyBasedTrafficSelectors": false,
+        "ipsecPolicies": []        
+      }
+    },
+
+    {
+      "apiVersion": "2015-06-15",
+      "name": "[variables('vpnConnections').name2]",
+      "type": "Microsoft.Network/connections",
+      "location": "[variables('clusterNode2').location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworkGateways/', variables('vNet2').vpnGatewayName)]",
+        "[concat('Microsoft.Network/virtualNetworkGateways/', variables('vNet1').vpnGatewayName)]"
+      ],
+      "properties": {
+        "connectionType": "Vnet2Vnet",        
+        "virtualNetworkGateway1": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworkGateways', variables('vNet2').vpnGatewayName)]"
+        },
+        "virtualNetworkGateway2": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworkGateways', variables('vNet1').vpnGatewayName)]"
+        },
+        "sharedKey": "[variables('vpnConnections').sharedKey]",
+        "routingWeight": 0,
+        "enableBgp": false,
+        "usePolicyBasedTrafficSelectors": false,
+        "ipsecPolicies": []  
+      }
+    },
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('clusterNode1').defaultStorageAccount.name]",
@@ -129,7 +285,7 @@
       ],
       "tags": { },
       "properties": {
-        "clusterVersion": "3.4",
+        "clusterVersion": "3.5",
         "osType": "Linux",
         "clusterDefinition": {
           "kind": "hbase",
@@ -230,7 +386,7 @@
       ],
       "tags": { },
       "properties": {
-        "clusterVersion": "3.4",
+        "clusterVersion": "3.6",
         "osType": "Linux",
         "clusterDefinition": {
           "kind": "hbase",

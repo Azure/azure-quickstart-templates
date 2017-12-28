@@ -1,0 +1,213 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+
+    "parameters": {
+		"resourcesPrefix":		{ "type": "string",			"defaultValue": "changeme",   	"metadata": {"description": "Prefix of storage account name, network, virtual machines, and so on"} }, 
+		"vNetAddressSpace":		{ "type": "string",			"defaultValue": "172.31.0.0",		"metadata": {"description": "Address range for the Moodle virtual network - presumed /16 - further subneting during vnet creation"} }, 
+		"moodleVersion":		{ "type": "string",			"defaultValue": "MOODLE_32_STABLE", "metadata": {"description": "The Moodle version you want to install."},	"allowedValues": ["MOODLE_33_STABLE","MOODLE_32_STABLE","MOODLE_31_STABLE","MOODLE_30_STABLE","MOODLE_29_STABLE"] },
+		"glusterTshirtSize":	{ "type": "string",			"defaultValue": "Small",			"metadata": {"description": "VM size for the gluster nodes"},			"allowedValues": ["Small","Medium","Large"] },
+		"mariaDbTshirtSize":	{ "type": "string",			"defaultValue": "Small",			"metadata": {"description": "VM size for the mariadb nodes"},			"allowedValues": ["Small","Medium","Large"] },
+		"adminUsername":		{ "type": "string",			"defaultValue": "azureadmin",		"metadata": {"description": "ssh user name"}},
+		"adminPassword":		{ "type": "securestring",										"metadata": {"description": "ssh password"}},
+		"mySqlUserPassword":	{ "type": "securestring",										"metadata": {"description": "my sql regular user password"}},
+		"mySqlRootPassword":	{ "type": "securestring",										"metadata": {"description": "my sql root user password"}},
+		"applyScriptsSwitch":	{ "type": "int",			"defaultValue": 1,					"metadata": {"description": "Switch to process or bypass all scripts/extensions"}, "allowedValues": [ 0,1 ] },
+		 "azureBackupSwitch":	{ "type": "int",			"defaultValue": 0,					"metadata": {"description": "Switch to configure AzureBackup and enlist VM's"},    "allowedValues": [ 0,1 ] }
+	},
+
+    "variables": {
+
+		"documentation01": "This main-template calls multiple sub-templates to create the moodle system",
+		"documentation02": "    recoveryservices0 - dummy template (see next statement)",
+		"documentation03": "    recoveryservices1 - creates a recovery vault that will be subsequently used by the VM Backup - a paramter swtich controls whethe is is called or bypassed",
+		"documentation04": "    redis             - creates a redis cache",
+		"documentation05": "    vnet              - creates a virtual network with three subnets",
+		"documentation06": "    gluster           - creates a gluster file system on a vm farm",
+		"documentation07": "    mariadbb          - creates a mariadb (nosql)     on a vm farm",
+		"documentation08": "    webvmss           - creates a vm scale set",
+		"documentation09": "    controller        - creates a jumpbox and deploys code",
+
+		"documentation10": "Three sizing parameters are provided, one each for the gluster system, the mariadb system and one for the jumpbox",
+		"documentation11": "MariaDb Sizing guidance:",
+		"documentation12": "Small - 0-2000 simultaneous users",
+		"documentation13": "Medium - 2001-5000 simultaneous users",
+		"documentation14": "Large - more than  5001 simultaneous users",
+		"documentation15": "GlusterFS Sizing guidance",
+		"documentation16": "Small - small number of courses, low interactiviness in the courses, low IOPSs required",
+		"documentation17": "Medium - interactive courses, with uploads; medium number of IOPS required",
+		"documentation18": "Large - very interactive courses, highly concurrent or high number of courses in the same environemnt; burst IOPS required, during certain period of time",
+
+		"octets": "[split(parameters('vNetAddressSpace'), '.')]",
+
+		"rpfx": "[tolower(parameters('resourcesPrefix'))]",
+
+		"moodleCommon": {
+			"baseTemplateUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/moodle-scalable-cluster-ubuntu/nested/",
+			"scriptLocation":  "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/moodle-scalable-cluster-ubuntu/scripts/",
+
+			"computeApi":  	"2016-04-30-preview",
+
+			"mariaDbScriptFilename"		 : "install_mariadb.sh", "mariadbVmCount": 2, 
+			"glusterScriptFilename"		 : "install_gluster.sh", "glusterVmCount": 2,
+			"moodleInstallScriptFilename": "install_moodle.sh",
+			"moodleSetupScriptFilename"	 :   "setup_moodle.sh",
+
+			"osType": { "publisher": "Canonical", "offer": "UbuntuServer", "sku": "14.04.4-LTS", "version": "latest" },
+
+			"resourcesPrefix":		"[ variables('rpfx')]",
+			"vNetAddressSpace":		"[parameters('vNetAddressSpace')]",
+			"subnetWebRange":		"[concat( variables('octets')[0], '.', variables('octets')[1], '.', string(add(int(variables('octets')[2]),0)), '.0/24' ) ]",	"subnetWebPrefix": "[concat( variables('octets')[0], '.', variables('octets')[1], '.', string(add(int(variables('octets')[2]),0))) ]",
+			"subnetSanRange":		"[concat( variables('octets')[0], '.', variables('octets')[1], '.', string(add(int(variables('octets')[2]),1)), '.0/24' ) ]",	"subnetSanPrefix": "[concat( variables('octets')[0], '.', variables('octets')[1], '.', string(add(int(variables('octets')[2]),1))) ]",
+			"subnetDbRange":		"[concat( variables('octets')[0], '.', variables('octets')[1], '.', string(add(int(variables('octets')[2]),2)), '.0/24' ) ]",	"subnetDbPrefix": "[concat( variables('octets')[0], '.', variables('octets')[1], '.', string(add(int(variables('octets')[2]),2))) ]",	"StaticIpMariaDb": "[concat( variables('octets')[0], '.', variables('octets')[1], '.', string(add(int(variables('octets')[2]),2)),'.250') ]",
+			
+			"moodleVersion":		"[parameters('moodleVersion')]",
+			"glusterTshirtSize":	"[parameters('glusterTshirtSize')]",
+			"mariaDbTshirtSize":	"[parameters('mariaDbTshirtSize')]",
+			"adminUsername":		"[parameters('adminUsername')]",
+			"adminPassword":		"[parameters('adminPassword')]",
+			"mySqlUserPassword":	"[parameters('mySqlUserPassword')]",
+			"mySqlRootPassword":	"[parameters('mySqlRootPassword')]",
+			"applyScriptsSwitch":	"[parameters('applyScriptsSwitch')]",
+		    "azureBackupSwitch":	"[parameters( 'azureBackupSwitch')]",
+
+			"vnetName":					"[concat(        variables('rpfx'),'-vnet')  ]",
+			"subnetWeb":				"[concat( 'web-',variables('rpfx'),'-subnet')]",
+			"subnetSan":				"[concat( 'san-',variables('rpfx'),'-subnet')]",
+			"subnetDb":				"[concat('data-',variables('rpfx'),'-subnet')]",
+
+			"lbName":					"[concat(  'lb-',variables('rpfx'))]",
+				"extFeName":			"[concat(  'lb-',variables('rpfx'),'-FE')]",
+				"extBeName":			"[concat(  'lb-',variables('rpfx'),'-BE')]",
+				"extProbe":				"[concat(  'lb-',variables('rpfx'),'-Probe')]",	
+				"extNatPool":			"[concat(  'lb-',variables('rpfx'),'-NatPool')]",
+			"lbPipName":				"[concat(  'lb-',variables('rpfx'),'-ip')]",
+			"lbDnsName":				"[concat(  'lb-',variables('rpfx'))]",
+
+			"gfxAvailabilitySetName":	"[concat( 'gfs-',variables('rpfx'),'-as')]",
+			"gfsNameRoot":				"[concat( 'gfs' ,variables('rpfx'), 'vm')]",
+
+			"dbAvailabilitySetName":	"[concat(  'db-',variables('rpfx'),'-as')]",
+			"dbNameRoot":				"[concat(  'db' ,variables('rpfx'),  'vm')]",
+			"dbLoadBalancerName":		"[concat(  'db-',variables('rpfx'),'-lb')]",
+				"dbFeName":				"[concat(  'db-',variables('rpfx'),'-FE')]",
+				"dbBeName":				"[concat(  'db-',variables('rpfx'),'-BE')]",
+				"dbProbe":				"[concat(  'db-',variables('rpfx'),'-Probe')]",	
+
+			"jboxPipName":				"[concat('jbox',variables('rpfx'))]",
+			"jboxNicName":				"[concat('jbox',variables('rpfx'),'vm-nic')]",
+			"jboxNsgName":				"[concat('jbox',variables('rpfx'),'-nsg')]",
+			"jboxVmName":				"[concat('jbox',variables('rpfx'),'vm')]",
+
+			"vmssName":					"[concat('vmss',variables('rpfx')   )]",
+			"vmssdStorageAccounttName":	"[concat('vmss',uniqueString(resourceGroup().id)  )]",
+		
+			"vaultName":				"[concat(       variables('rpfx'),'-vault'  )]",
+			"policyName":				"[concat(       variables('rpfx'),'-policy' )]",
+		
+			"redisCacheName":			"[concat(       variables('rpfx'),'-redis' )]"
+		
+		}
+    },
+
+
+    "resources": [
+		{
+			"type":			"Microsoft.Resources/deployments",
+			"apiVersion":	"2015-01-01",
+			"name" :		"recoveryTemplate",
+
+			"properties":	{
+				"mode":			"Incremental",
+				"templateLink":	{ "uri":          "[concat(    variables('moodleCommon').baseTemplateUrl,'recoveryservices',variables('moodleCommon').azureBackupSwitch,'.json')]" },
+				"parameters":	{ "moodleCommon": { "value": "[variables('moodleCommon')]" } }
+			}
+		},
+
+
+		{
+			"type":			"Microsoft.Resources/deployments",
+			"apiVersion":	"2015-01-01",
+			"name" :		"redisTemplate",
+
+			"properties": {
+				"mode":			"Incremental",
+				"templateLink":	{ "uri":          "[concat(    variables('moodleCommon').baseTemplateUrl,'redis.json')]" },
+				"parameters":	{ "moodleCommon": { "value": "[variables('moodleCommon')]" } }
+			}
+		},
+
+
+		{
+			"type":			"Microsoft.Resources/deployments",
+			"apiVersion":	"2015-01-01",
+			"name" :		"networkTemplate",
+
+			"properties":	{
+				"mode":			"Incremental",
+				"templateLink":	{ "uri":          "[concat(    variables('moodleCommon').baseTemplateUrl,'network.json')]" },
+				"parameters":	{ "moodleCommon": { "value": "[variables('moodleCommon')]" } }
+			}
+		},
+
+
+		{
+			"type":			"Microsoft.Resources/deployments",
+			"apiVersion":	"2015-01-01",
+			"name" :		"glusterTemplate",
+
+			"dependsOn":	[ "Microsoft.Resources/deployments/networkTemplate", "Microsoft.Resources/deployments/recoveryTemplate" ],
+
+			"properties":	{
+				"mode":			"Incremental",
+				"templateLink":	{ "uri":          "[concat(    variables('moodleCommon').baseTemplateUrl,'gluster.json')]" },
+				"parameters":	{ "moodleCommon": { "value": "[variables('moodleCommon')]" } }
+			}
+		},
+
+
+		{
+			"type":			"Microsoft.Resources/deployments",
+			"apiVersion":	"2015-01-01",
+			"name" :		"MariaDbTemplate",
+
+			"dependsOn":	[ "Microsoft.Resources/deployments/networkTemplate", "Microsoft.Resources/deployments/recoveryTemplate" ],
+
+			"properties":	{
+				"mode":			"Incremental",
+				"templateLink":	{ "uri":          "[concat(    variables('moodleCommon').baseTemplateUrl,'mariadb.json')]" },
+				"parameters":	{ "moodleCommon": { "value": "[variables('moodleCommon')]" } }
+			}
+		},
+
+
+		{
+			"type":			"Microsoft.Resources/deployments",
+			"apiVersion":	"2015-01-01",
+			"name" :		"ControllerTemplate",
+
+			"dependsOn":	[ "Microsoft.Resources/deployments/glusterTemplate", "Microsoft.Resources/deployments/recoveryTemplate" ],
+
+			"properties": {
+				"mode":			"Incremental",
+				"templateLink":	{ "uri":          "[concat(    variables('moodleCommon').baseTemplateUrl,'controller.json')]" },
+				"parameters":	{ "moodleCommon": { "value": "[variables('moodleCommon')]" } }
+			}
+		},
+
+
+		{
+			"type":			"Microsoft.Resources/deployments",
+			"apiVersion":	"2015-01-01",
+			"name" :		"ScaleSetTemplate",
+
+			"dependsOn":	[ "Microsoft.Resources/deployments/controllerTemplate","Microsoft.Resources/deployments/redisTemplate"  ],
+
+			"properties": {
+				"mode":			"Incremental",
+				"templateLink":	{ "uri":          "[concat(    variables('moodleCommon').baseTemplateUrl,'webvmss.json')]" },
+				"parameters":	{ "moodleCommon": { "value": "[variables('moodleCommon')]" } }
+			}
+		}
+	]
+}

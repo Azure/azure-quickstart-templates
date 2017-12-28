@@ -1,0 +1,199 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "loadBalancerName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the the load balancer"
+            }
+        },
+        "stackType": {
+            "type": "string",
+            "metadata": {
+                "description": "The stack type of the SAP system."
+            }
+        },
+        "osType": {
+            "type": "string",
+            "metadata": {
+                "description": "The type of the Operating System"
+            }
+        },
+        "ascsInstanceNumber": {
+            "type": "int",
+            "defaultValue": 0,
+            "metadata": {
+                "description": "The instance number of the ASCS."
+            }
+        },
+        "scsInstanceNumber": {
+            "type": "int",
+            "defaultValue": 1,
+            "metadata": {
+                "description": "The instance number of the SCS."
+            }
+        },
+        "subnetId": {
+            "type": "string",
+            "metadata": {
+                "description": "The id of the subnet you want to use."
+            }
+        },
+        "nicBackAddressPoolsArray": {
+            "type": "array",
+            "defaultValue": [],
+            "metadata": {
+                "description": "The array that contains the backaddress pools for the Network Interface creation"
+            }
+        },
+        "frontendIPConfigurationsArray": {
+            "type": "array",
+            "defaultValue": [],
+            "metadata": {
+                "description": "The array that contains the frontend IP configurations for the Load Balancer creation"
+            }
+        },
+        "backendAddressPoolsArray": {
+            "type": "array",
+            "defaultValue": [],
+            "metadata": {
+                "description": "The array that contains the backend address pools for the Load Balancer creation"
+            }
+        },
+        "loadBalancingRulesArray": {
+            "type": "array",
+            "defaultValue": [],
+            "metadata": {
+                "description": "The array that contains the fload balancing rules for the Load Balancer creation"
+            }
+        },
+        "probesArray": {
+            "type": "array",
+            "defaultValue": [],
+            "metadata": {
+                "description": "The array that contains the probes for the Load Balancer creation"
+            }
+        }
+    },
+    "variables": {
+        "lbPrefix": "lb",
+        "lbrulePrefix": "[concat(variables('lbPrefix'), 'Rule')]",
+        "loadBalancerFrontendNFS": "[concat(variables('lbPrefix'), 'FrontendNFS')]",
+        "lbProbePortNFS": "[concat(variables('lbPrefix'), 'ProbePortNFS')]",
+        "backendPoolNFS": "[concat(variables('lbPrefix'), 'BackendPoolNFS')]",
+        "lbProbePortInternalNFS": 61000,
+        "idleTimeoutInMinutesNFS": 30,
+        "nicBackAddressPools": {
+            "Linux": [
+                {
+                    "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancerName')), '/backendAddressPools/', variables('backendPoolNFS'))]"
+                }
+            ],
+            "Windows": []
+        },
+        "frontendIPConfigurations": {
+            "Linux": [
+                {
+                    "properties": {
+                        "subnet": {
+                            "id": "[parameters('subnetId')]"
+                        },
+                        "privateIPAllocationMethod": "Dynamic"
+                    },
+                    "name": "[variables('loadBalancerFrontendNFS')]"
+                }
+            ],
+            "Windows": []
+        },
+        "backendAddressPools": {
+            "Linux": [{
+                "name": "[variables('backendPoolNFS')]"
+            }],
+            "Windows": []
+        },
+        "loadBalancingRules": {
+            "Linux": [
+                {
+                    "properties": {
+                        "frontendIPConfiguration": {
+                            "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancerName')), '/frontendIpConfigurations/', variables('loadBalancerFrontendNFS'))]"
+                        },
+                        "backendAddressPool": {
+                            "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancerName')), '/backendAddressPools/', variables('backendPoolNFS'))]"
+                        },
+                        "probe": {
+                            "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancerName')), '/probes/', variables('lbProbePortNFS'))]"
+                        },
+                        "protocol": "Tcp",
+                        "frontendPort": 2049,
+                        "backendPort": 2049,
+                        "enableFloatingIP": true,
+                        "idleTimeoutInMinutes": "[variables('idleTimeoutInMinutesNFS')]"
+                    },
+                    "name": "[concat(variables('lbrulePrefix'), '2049T')]"
+                },
+                {
+                    "properties": {
+                        "frontendIPConfiguration": {
+                            "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancerName')), '/frontendIpConfigurations/', variables('loadBalancerFrontendNFS'))]"
+                        },
+                        "backendAddressPool": {
+                            "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancerName')), '/backendAddressPools/', variables('backendPoolNFS'))]"
+                        },
+                        "probe": {
+                            "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancerName')), '/probes/', variables('lbProbePortNFS'))]"
+                        },
+                        "protocol": "Udp",
+                        "frontendPort": 2049,
+                        "backendPort": 2049,
+                        "enableFloatingIP": true,
+                        "idleTimeoutInMinutes": "[variables('idleTimeoutInMinutesNFS')]"
+                    },
+                    "name": "[concat(variables('lbrulePrefix'), '2049U')]"
+                }
+            ],
+            "Windows": []
+        },
+        "probes": {
+            "Linux": [{
+                "properties": {
+                    "protocol": "Tcp",
+                    "port": "[variables('lbProbePortInternalNFS')]",
+                    "intervalInSeconds": 5,
+                    "numberOfProbes": 2
+                },
+                "name": "[variables('lbProbePortNFS')]"
+            }],
+            "Windows": []
+        },
+        "nicBackAddressPoolsResult": "[variables('nicBackAddressPools')[parameters('osType')]]",
+        "frontendIPConfigurationsResult": "[variables('frontendIPConfigurations')[parameters('osType')]]",
+        "backendAddressPoolsResult": "[variables('backendAddressPools')[parameters('osType')]]",
+        "loadBalancingRulesResult": "[variables('loadBalancingRules')[parameters('osType')]]",
+        "probesResult": "[variables('probes')[parameters('osType')]]"
+    },
+    "resources": [],
+    "outputs": {
+        "nicBackAddressPools": {
+            "value": "[variables('nicBackAddressPoolsResult')]",
+            "type": "array"
+        },
+        "frontendIPConfigurations": {
+            "value": "[variables('frontendIPConfigurationsResult')]",
+            "type": "array"
+        },
+        "backendAddressPools": {
+            "value": "[variables('backendAddressPoolsResult')]",
+            "type": "array"
+        },
+        "loadBalancingRules": {
+            "value": "[variables('loadBalancingRulesResult')]",
+            "type": "array"
+        },
+        "probes": {
+            "value": "[variables('probesResult')]",
+            "type": "array"
+        }
+    }
+}

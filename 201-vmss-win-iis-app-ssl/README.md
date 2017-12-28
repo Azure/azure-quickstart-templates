@@ -1,4 +1,4 @@
-# Deployment of two Windows VMSS, configure windows featurtes like IIS, .Net framework etc., download application deployment packages, URL Rewrite & SSL configuration using DSC
+# Deployment of two Windows VMSS, configure windows features like IIS, .Net framework etc., download application deployment packages, URL Rewrite & SSL configuration using DSC
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vmss-win-iis-app-ssl%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vmss-win-iis-app-ssl/images/deploytoazure.png"/>

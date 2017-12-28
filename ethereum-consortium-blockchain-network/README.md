@@ -1,5 +1,7 @@
 # Ethereum Consortium Network Deployments Made Easy
 
+## NOTE: This quickstart template will be deprecated on Jan 1st 2018 in favor of our Azure Blockchain Marketplace solution. The Azure Blockchain Marketplace solution includes new features, Ethereum updates, bug fixes, and Microsoft technical support via our [forums](https://social.msdn.microsoft.com/Forums/en-US/home?forum=azureblockchain). The Azure Blockchain Marketplace solution can be found [here](https://azuremarketplace.microsoft.com/en-us/marketplace/apps/microsoft-azure-blockchain.azure-blockchain-service?tab=Overview). Click “GET IT NOW”, sign-in if needed and then select “Ethereum Consortium Blockchain” for the software plan. The Azure Marketplace template files are also available for download in the last step of the Azure portal deployment process.
+
 [![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fethereum-consortium-blockchain-network%2Fazuredeploy.json)  [![Deploy to Azure Gov](http://azuredeploy.net/AzureGov.png)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fethereum-consortium-blockchain-network%2Fazuredeploy.json)  [![Visualize](http://armviz.io/visualizebutton.png)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fethereum-consortium-blockchain-network%2Fazuredeploy.json)
 
 ## Overview
@@ -121,7 +123,7 @@ The sample code for this exercise can be found in the "sample-contracts.sol" fil
 
 The first contract we'll be working with is the StateHolder contract. This is a simple contract that just stores some state on the blockchain - you can think of it as a very simplified database. There are three variables: a number that anyone can edit (openNumber), a string that anyone can edite (openString), and a string that only the contract owner can edit (myString). The owner of the contract is the person that first deploys the contract, as seen in the StateHolder() constructor function.
 
-Click on the red "Create" button under the "StateHolder" contract section on the far right. Metamask will ask you to confirm the transaction - deploying a new contract to the blockchain costs gas, which is payable in Ether from your account:
+Click on the red "Create" button under the "StateHolder" contract section on the far right (Note: you may receive an error about Gas limit being exceeded, so make sure to increase the 'Transaction Gas Limit' to something greater if this occurs). Metamask will ask you to confirm the transaction - deploying a new contract to the blockchain costs gas, which is payable in Ether from your account:
 
 ![consortium network](images/contracts2.png)
 
@@ -147,11 +149,7 @@ Under the StateHolder section, click the "At Address" button, and enter the addr
 
 Your interface will change to reflect all the values that you modified before. This is an important point - by taking note of the contract address, you can allow other people to interact with the same contract on the blockchain, and they will see the same functions and values that you do.
 
-Attempt to modify the "openString" variable. This should work fine - after the transaction is mined, clicking the blue openString button will reflect the new value in the interface. Now, attempt to modify the "myString" variable - this should fail since we are not currently the contract owner:
-
-![consortium network](images/contracts7.png)
-
-The error message of "Gas required exceeds limit: 50000000" is admittedly not very clear, but this shows that we cannot run this function unless we are the contract owner.
+Attempt to modify the "openString" variable. This should work fine - after the transaction is mined, clicking the blue openString button will reflect the new value in the interface. Now, attempt to modify the "myString" variable. The transaction will succeed however, when you view the contract again you will see that the "myString" variable remains unchanged (you can check this my refreshing the Solidity browser and adding the contract address again with 'At Address' Button.
 
 Next, we'll look at a very simple token contract. In this contract, we have a mapping between Ethereum addresses and integers - think of this like a bank balance, showing that a particular address has a particular amount of money. The constructor function assigns a balance of one million to whoever deploys the contract, and the "transfer" function allows us to transfer from our balance to an arbitrary Ethereum address.
 
@@ -180,9 +178,7 @@ We can then check the updated balances to see if our transfer went through:
 This concludes our smart contract sample. For additional information about the Solidity language, click [here](http://solidity.readthedocs.io/en/develop/).
 
 ## Accessing VMs running nodes
-You can remotely connect to the virtual machines on which the transaction nodes run via SSH with your provided admin username and password. Since the transaction node VMs do not have their own public IP addresses, you will need to go through the load balancer and specify the port number. The SSH command to run to access the first transaction node is the third template output (e.g. for the sample deployment it is: ssh -p 3000 gethadmin@ethnet7tl.southeastasia.cloudapp.azure.com). To get to additional transaction nodes, increment the port number by one (e.g. the first transaction node is on port 3000, second, is 3001, third is 3002, etc.).
-
-Since the virtual machines on which the mining nodes run are not publicly accessible, you will need to go through one of the transaction nodes. Once you have SSH’ed into a transaction node, you can SSH into any of the mining nodes.
+You can remotely connect to the virtual machines on which the nodes run via SSH with your provided admin username and password. Since the virtual machines on which the nodes run do not have their own public IP addresses, you will need to go through the load balancer and specify the port number. The SSH command to run to access the first transaction node is the third template output (e.g. for the sample deployment it is: ssh -p 3000 gethadmin@ethnet7tl.southeastasia.cloudapp.azure.com). To get to additional transaction nodes, increment the port number by one.  (e.g. for a network with two transaction nodes, the first transaction node is on port 3000, second is 3001).  To ssh to mining nodes, ssh to a transaction node first and then ssh to the mining node from there.
 
 ## Next Steps
 You are now ready to focus on application and smart contract development against your private consortium blockchain network.  Happy coding!

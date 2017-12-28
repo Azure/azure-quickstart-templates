@@ -1,14 +1,7 @@
-﻿{
+{
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "virtualNetworkName": {
-      "type": "string",
-      "defaultValue": "myVNET",
-      "metadata": {
-        "description": "Name of the virtual network provisioned for the cluster"
-      }
-    },
     "adminUsername": {
       "type": "string",
       "metadata": {
@@ -23,6 +16,7 @@
     },
     "dnsNamePrefix": {
       "type": "string",
+      "defaultValue": "[concat('lap-mysql-', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "DNS Name for the publicly accessible Lap node. Must be lowercase. It should match with the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ or it will raise an error."
       }
@@ -30,14 +24,6 @@
     "lapVmSize": {
       "type": "string",
       "defaultValue": "Standard_D3",
-      "allowedValues": [
-	    "Standard_A1",
-		"Standard_A2",
-		"Standard_A3",
-        "Standard_D1",
-        "Standard_D3",
-        "Standard_D4"
-      ],
       "metadata": {
         "description": "The size of the virtual machines used when provisioning the Lap node"
       }
@@ -52,34 +38,39 @@
     "mysqlVmSize": {
       "type": "string",
       "defaultValue": "Standard_D3",
-      "allowedValues": [
-	    "Standard_A1",
-		"Standard_A2",
-		"Standard_A3",
-        "Standard_D1",
-        "Standard_D3",
-        "Standard_D4"
-      ],
       "metadata": {
         "description": "The size of the virtual machines used when provisioning Mysql node(s)"
       }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/lap-mysql-ubuntu"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
     }
   },
   "variables": {
-    "templateBaseUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/lap-mysql-ubuntu/",
-    "sharedTemplateUrl": "[concat(variables('templateBaseUrl'), 'shared-resources.json')]",
-    "lampLapTemplateUrl": "[concat(variables('templateBaseUrl'), 'lamplap-resources.json')]",
-    "lampMysqlTemplateUrl": "[concat(variables('templateBaseUrl'), 'lampmysql-resources.json')]",
+    "sharedTemplateUrl": "[concat(parameters('_artifactsLocation'), '/shared-resources.json', parameters('_artifactsLocationSasToken'))]",
+    "lampLapTemplateUrl": "[concat(parameters('_artifactsLocation'), '/lamplap-resources.json', parameters('_artifactsLocationSasToken'))]",
+    "lampMysqlTemplateUrl": "[concat(parameters('_artifactsLocation'), '/lampmysql-resources.json', parameters('_artifactsLocationSasToken'))]",
+    "virtualNetworkName": "virtualNetwork",
     "namespace": "lamp-",
-	"apiVersion": "2015-01-01",
     "networkSettings": {
-      "virtualNetworkName": "[parameters('virtualNetworkName')]",
+      "virtualNetworkName": "[variables('virtualNetworkName')]",
       "addressPrefix": "10.0.0.0/16",
       "subnet": {
         "dse": {
           "name": "dse",
           "prefix": "10.0.0.0/24",
-          "vnet": "[parameters('virtualNetworkName')]"
+          "vnet": "[variables('virtualNetworkName')]"
         }
       },
       "statics": {
@@ -88,7 +79,7 @@
           "start": 5
         },
         "lapip": "10.0.0.240",
-		"mysqlip": "10.0.0.10"
+        "mysqlip": "10.0.0.10"
       }
     },
     "lapOsSettings": {
@@ -99,7 +90,7 @@
         "version": "latest"
       },
       "scripts": [
-        "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/lap-mysql-ubuntu/install-lap.sh"
+        "[concat(parameters('_artifactsLocation'), '/install-lap.sh', parameters('_artifactsLocationSasToken'))]"
       ]
     },
     "mysqlOsSettings": {
@@ -110,7 +101,7 @@
         "version": "latest"
       },
       "scripts": [
-        "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/lap-mysql-ubuntu/install-mysql.sh"
+        "[concat(parameters('_artifactsLocation'), '/install-mysql.sh', parameters('_artifactsLocationSasToken'))]"
       ]
     }
   },
@@ -118,7 +109,7 @@
     {
       "name": "shared",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2017-05-10",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -135,9 +126,9 @@
     {
       "name": "lampLapNode",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2017-05-10",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'shared')]"
+        "shared"
       ],
       "properties": {
         "mode": "Incremental",
@@ -156,7 +147,7 @@
             "value": "[variables('namespace')]"
           },
           "vmbasename": {
-            "value": "Lap"
+            "value": "lap"
           },
           "subnet": {
             "value": "[variables('networkSettings').subnet.dse]"
@@ -182,10 +173,10 @@
     {
       "name": "[concat('lampMysqlNode', copyindex())]",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2017-05-10",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'shared')]",
-        "[concat('Microsoft.Resources/deployments/', 'lampLapNode')]"
+        "shared",
+        "lampLapNode"
       ],
       "copy": {
         "name": "vmLoop",
@@ -208,14 +199,14 @@
             "value": "[variables('namespace')]"
           },
           "vmbasename": {
-            "value": "[concat('Mysql', copyindex())]"
+            "value": "[concat('mysql', copyindex())]"
           },
           "lapNode": {
             "value": "[variables('networkSettings').statics.lapip]"
           },
-		  "mysqlstaticIp": {
+          "mysqlstaticIp": {
             "value": "[variables('networkSettings').statics.mysqlip]"
-		  },
+          },
           "subnet": {
             "value": "[variables('networkSettings').subnet.dse]"
           },

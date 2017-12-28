@@ -1,0 +1,388 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "adminUsername": {
+            "type": "string",
+            "metadata": {
+                "description": "username for the virtual machines."
+            }
+        },
+        "authenticationType": {
+            "type": "string",
+            "defaultValue": "sshPublicKey",
+            "metadata": {
+                "description": "authentication type for the virtual machines."
+            }
+        },
+        "adminPassword":{
+            "type": "securestring",
+            "metadata": {
+                "description": "password for elk,vmss and mongodbterraform virtual machines"
+            }
+        },
+        "sshPublicKey": {
+            "type": "string",
+            "metadata": {
+                "description": "generate ssh public key"
+            }
+        },
+        "jenkinsVmSize": {
+            "type": "string",
+            "defaultValue": "Standard_DS2_v2",
+            "metadata": {
+                "description": "vm size"
+            }
+        },
+        "buildInstanceVmSize": {
+            "type": "string",
+            "defaultValue": "Standard_DS1_v2",
+            "metadata": {
+                "description": "vm size"
+            }
+        },
+        "kibanaWebUIUsername":{
+            "type": "string",
+            "metadata": {
+                "description": "kibana web ui username"
+            }
+        },
+        "kibanaWebUIPassword":{
+            "type": "securestring",
+            "metadata": {
+                "description": "kibana web ui password, the password should have alphanumeric values only"
+            }
+        },
+        "azureApplicationId": {
+            "type": "string",
+            "metadata": {
+                "description": "ad application id"
+            }
+        },
+        "azureClientSecret": {
+            "type": "securestring",
+            "metadata": {
+                "description": "ad clientsecret"
+            }
+        },
+        "_artifactsLocation": {
+            "type": "string",
+            "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/devopstools-jenkins-chefhabitat-terraform",
+            "metadata": {
+                "description": "The base uri where artifacts required by this template are located. when the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+            }
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "defaultValue": "",
+            "metadata": {
+                "description": "The sastoken required to access _artifactslocation.  when the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+            }
+        }
+    },
+    "variables": {
+        "networkSettings": {
+            "location": "[variables('location')]",
+            "networkApiVersion": "2016-03-30",
+            "virtualNetworkName": "OSS",
+            "addressPrefix": "10.0.0.0/16",
+            "subnet1Name": "Jenkins",
+            "subnet1Prefix": "10.0.0.0/24",
+            "subnet2Name": "Applicationnode",
+            "subnet2Prefix": "10.0.1.0/24",
+            "subnet3Name": "ELK",
+            "subnet3Prefix": "10.0.2.0/24",
+            "subnet4Name": "DB",
+            "subnet4Prefix": "10.0.3.0/24"
+        },
+        "jenkinsSettings": {
+            "location": "[variables('location')]",
+            "jenkinsDiagnosticsStorageAccountName": "[concat('jenkinsstrg',variables('suffix'))]",
+            "jenkinsPipName": "jenkins-pip",
+            "publicIpAddressType": "[variables('publicIpAddressType')]",
+            "jenkinsDnsLabelPrefix": "[concat('jenkinsserver',variables('suffix'))]",
+            "jenkinsfrontEndNSGName": "jenkins-nsg",
+            "jenkinsNicName": "jenkins-nic",
+            "jenkinsVmPrivateIP": "10.0.0.5",
+            "jenkinsVmName": "jenkinsserver",
+            "adminUsername": "[parameters('adminUsername')]",
+            "password":"[parameters('adminPassword')]",
+            "kibanaWebUIUsername":"[parameters('kibanaWebUIUsername')]",
+            "kibanaWebUIPassword":"[parameters('kibanaWebUIPassword')]",
+            "authenticationType": "[parameters('authenticationType')]",
+            "sshPublicKey": "[parameters('sshPublicKey')]",
+            "jenkinsVmSize": "[parameters('jenkinsVmSize')]",
+            "ubuntuSku": "16.04-LTS",
+            "storageAccountType": "Standard_LRS",
+            "installJenkinsScriptName": "install_jenkins.sh",
+            "jenkinsReleaseType": "LTS",
+            "_artifactsLocation": "[parameters('_artifactsLocation')]",
+            "_artifactsLocationSasToken":"[parameters('_artifactsLocationSasToken')]",
+            "installJenkinsScriptUrl": "[concat(parameters('_artifactsLocation'),'/scripts/install_jenkins.sh', parameters('_artifactsLocationSasToken'))]",
+            "installJenkinsjobsScriptUrl": "[concat(parameters('_artifactsLocation'),'/scripts/jenkins_deploy.sh', parameters('_artifactsLocationSasToken'))]"
+        },
+        "buildInstanceSettings": {
+            "location": "[variables('location')]",
+            "buildInstanceDiagnosticsStorageAccountName": "[concat('buildstrg',variables('suffix'))]",
+            "buildInstancePipName": "build-pip",
+            "publicIpAddressType": "[variables('publicIpAddressType')]",
+            "buildInstanceDnsLabelPrefix": "[concat('buildserver',variables('suffix'))]",
+            "buildInstanceNsgName": "build-nsg",
+            "buildInstanceNicName": "build-nic",
+            "buildInstanceVmName": "buildinstance",
+            "adminUsername": "[parameters('adminUsername')]",
+            "authenticationType": "[parameters('authenticationType')]",
+            "sshPublicKey": "[parameters('sshPublicKey')]",
+            "buildInstanceVmSize": "[parameters('buildInstanceVmSize')]",
+            "ubuntuSku": "16.04-LTS",
+            "buildScriptUrl": "[concat(parameters('_artifactsLocation'),'/scripts/build.sh', parameters('_artifactsLocationSasToken'))]"
+        },
+        "azureSubscriptionId":"[subscription().subscriptionId]",
+        "azureTenantId":"[subscription().tenantId]",
+        "resourceGroupName": "[resourceGroup().name]",
+        "packerStorageAccountName": "[concat('packerstrg',variables('suffix'))]",
+        "publicIpAddressType": "Dynamic",
+        "location": "[resourceGroup().location]",
+        "suffix": "[substring(uniqueString(resourceGroup().id), 0, 5)]"
+    },
+    "resources": [
+        {
+            "comments": "This storage account is used to store the custom VHDs created by Packer jobs.",
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[variables('packerStorageAccountName')]",
+            "apiVersion": "2017-06-01",
+            "location": "[variables('location')]",
+            "sku": {
+                "name": "Standard_LRS"
+            },
+            "kind": "Storage",
+            "properties": {}
+        },
+        {
+            "comments": "This network security group is used for jenkins server.",
+            "name": "[variables('jenkinsSettings').jenkinsfrontEndNSGName]",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2017-04-01",
+            "location": "[variables('jenkinsSettings').location]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "ssh-rule",
+                        "properties": {
+                            "access": "Allow",
+                            "description": "Allow SSH",
+                            "destinationAddressPrefix": "*",
+                            "destinationPortRange": "22",
+                            "direction": "Inbound",
+                            "priority": 100,
+                            "protocol": "Tcp",
+                            "sourceAddressPrefix": "Internet",
+                            "sourcePortRange": "*"
+                        }
+                    },
+                    {
+                        "name": "http-rule",
+                        "properties": {
+                            "access": "Allow",
+                            "description": "Allow HTTP",
+                            "destinationAddressPrefix": "*",
+                            "destinationPortRange": "80",
+                            "direction": "Inbound",
+                            "priority": 101,
+                            "protocol": "Tcp",
+                            "sourceAddressPrefix": "Internet",
+                            "sourcePortRange": "*"
+                        }
+                    },
+                    {
+                        "name": "Port_8080",
+                        "properties": {
+                            "access": "Allow",
+                            "description": "Allow",
+                            "destinationAddressPrefix": "*",
+                            "destinationPortRange": "8080",
+                            "direction": "Inbound",
+                            "priority": 102,
+                            "protocol": "Tcp",
+                            "sourceAddressPrefix": "Internet",
+                            "sourcePortRange": "*"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "comments": "This virtual network is used for the entire solution.",
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[variables('networkSettings').virtualNetworkName]",
+            "apiVersion": "2017-04-01",
+            "location": "[variables('networkSettings').location]",
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', variables('packerStorageAccountName'))]",
+                "[concat('Microsoft.Network/networkSecurityGroups/', variables('jenkinsSettings').jenkinsfrontEndNSGName)]"
+            ],
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('networkSettings').addressPrefix]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('networkSettings').subnet1Name]",
+                        "properties": {
+                            "addressPrefix": "[variables('networkSettings').subnet1Prefix]",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('jenkinsSettings').jenkinsfrontEndNSGName)]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "[variables('networkSettings').subnet2Name]",
+                        "properties": {
+                            "addressPrefix": "[variables('networkSettings').subnet2Prefix]"
+                        }
+                    },
+                    {
+                        "name": "[variables('networkSettings').subnet3Name]",
+                        "properties": {
+                            "addressPrefix": "[variables('networkSettings').subnet3Prefix]"
+                        }
+                    },
+                    {
+                        "name": "[variables('networkSettings').subnet4Name]",
+                        "properties": {
+                            "addressPrefix": "[variables('networkSettings').subnet4Prefix]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "comments": "This is the deployment of jenkins related nested resources",
+            "type": "Microsoft.Resources/deployments",
+            "name": "Jenkins",
+            "apiVersion": "2016-02-01",
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkSecurityGroups/', variables('jenkinsSettings').jenkinsfrontEndNSGName)]",
+                "[concat('Microsoft.Network/virtualNetworks/',variables('networkSettings').virtualNetworkName)]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(parameters('_artifactsLocation'),'/nested/jenkins.json', parameters('_artifactsLocationSasToken'))]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "jenkinsSettings": {
+                        "value": "[variables('jenkinsSettings')]"
+                    },
+                    "networkSettings": {
+                        "value": "[variables('networkSettings')]"
+                    },
+                    "packerStorageAccountName": {
+                        "value": "[variables('packerStorageAccountName')]"
+                    },
+                    "resourceGroupName": {
+                        "value": "[variables('resourceGroupName')]"
+                    },
+                    "AzureSubscriptionId": {
+                        "value": "[variables('azureSubscriptionId')]"
+                    },
+                    "AzureApplicationId": {
+                        "value": "[parameters('azureApplicationId')]"
+                    },
+                    "AzureClientSecret": {
+                        "value": "[parameters('azureClientSecret')]"
+                    },
+                    "AzureTenantId": {
+                        "value": "[variables('azureTenantId')]"
+                    },
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken":{
+                        "value":"[parameters('_artifactsLocationSasToken')]"
+                    }
+                }
+            }
+        },
+        {
+            "comments": "This is the deployment of chef habitat related nested resources",
+            "type": "Microsoft.Resources/deployments",
+            "name": "BuildInstance",
+            "apiVersion": "2016-02-01",
+            "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworks/',variables('networkSettings').virtualNetworkName)]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(parameters('_artifactsLocation'),'/nested/build-instance.json', parameters('_artifactsLocationSasToken'))]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "buildInstanceSettings": {
+                        "value": "[variables('buildInstanceSettings')]"
+                    },
+                    "networkSettings": {
+                        "value": "[variables('networkSettings')]"
+                    },
+                    "AzureSubscriptionId": {
+                        "value": "[variables('AzureSubscriptionId')]"
+                    },
+                    "AzureApplicationId": {
+                        "value": "[parameters('AzureApplicationId')]"
+                    },
+                    "AzureClientSecret": {
+                        "value": "[parameters('AzureClientSecret')]"
+                    },
+                    "AzureTenantId": {
+                        "value": "[variables('AzureTenantId')]"
+                    },
+                    "packerStorageAccName": {
+                        "value": "[variables('packerStorageAccountName')]"
+                    }
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "ResourceGroupName": {
+            "type": "string",
+            "value": "[variables('resourceGroupName')]"
+        },
+        "VirtualNetworkName": {
+            "type": "string",
+            "value": "[variables('networkSettings').virtualNetworkName]"
+        },
+        "JenkinsFQDN": {
+            "type": "string",
+            "value": "[reference('Jenkins').outputs.jenkinsDNS.value]"
+        },
+        "JenkinsWebUIURL": {
+            "type": "string",
+            "value": "[concat(reference('Jenkins').outputs.jenkinsDNS.value,':8080')]"
+        },
+        "KibanaWebUIUsername": {
+            "type": "string",
+            "value": "[parameters('kibanaWebUIUsername')]"
+        },
+        "KibanaWebUIPassword": {
+            "type": "string",
+            "value": "[parameters('kibanaWebUIPassword')]"
+        },
+        "StorageAccountName": {
+            "type": "string",
+            "value": "[variables('packerStorageAccountName')]"
+        },
+        "BuildinstanceFQDN": {
+            "type": "string",
+            "value": "[reference('BuildInstance').outputs.buildInstanceDNS.value]"
+        },
+        "buildInstanceUsername": {
+            "type": "string",
+            "value": "[variables('buildInstanceSettings').adminUsername]"
+        }
+    }
+}

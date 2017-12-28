@@ -1,0 +1,35 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0", 
+
+	"parameters": {
+		"moodleCommon":	{ "type": "object", "metadata": { "description": "Common Moodle values"							} }, 
+		"vmNameList":	{ "type": "string", "metadata": { "description": "list of all names in the Maria DB cluster"	} },
+		"vmName":		{ "type": "string", "metadata": { "description": "Name of VM to process script"					} },
+		"vmNumber":		{ "type": "int",	"metadata": { "description": "Number of the VM in the pool"					} }
+	},
+
+	"variables": {
+		"scriptUri":	"[concat(parameters('moodleCommon').ScriptLocation,parameters('moodleCommon').mariaDbScriptFilename)]",
+		"cmdExec":		"[concat('bash ', parameters('moodleCommon').mariaDbScriptFilename,' ', parameters('vmNumber'), ' ', parameters('moodleCommon').mariadbVmCount, ' ', parameters('vmNameList'), ' ', parameters('moodleCommon').mySqlUserPassword )]"
+	},
+
+	"resources": [
+		{
+			"type":			"Microsoft.Compute/virtualMachines/extensions",
+			"apiVersion":	"2015-06-15",
+			"name":			"[concat(parameters('vmName'),'/','install_mariadb')]",
+			"location":		"[resourceGroup().location]",
+					
+			"tags":			{ "displayName": "install_mariadb" },
+
+			"properties": {
+				"publisher":				"Microsoft.OSTCExtensions",
+				"type":						"CustomScriptForLinux",
+				"typeHandlerVersion":		"1.4",
+				"autoUpgradeMinorVersion":	true,
+				"settings":					{ "fileUris": [ "[variables('scriptUri')]" ], "commandToExecute": "[variables('cmdExec')]" }
+			}
+		}
+	]
+}

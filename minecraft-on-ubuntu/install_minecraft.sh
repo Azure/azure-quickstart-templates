@@ -82,14 +82,6 @@ printf 'ExecReload=/bin/kill -HUP $MAINPID\nKillMode=process\nRestart=on-failure
 printf '[Install]\nWantedBy=multi-user.target\nAlias=minecraft-server.service' >> /etc/systemd/system/minecraft-server.service
 chmod +x /etc/systemd/system/minecraft-server.service
 
-# create and set permissions on user access JSON files
-touch $minecraft_server_path/banned-players.json
-chown $minecraft_user:$minecraft_group $minecraft_server_path/banned-players.json
-touch $minecraft_server_path/banned-ips.json
-chown $minecraft_user:$minecraft_group $minecraft_server_path/banned-ips.json
-touch $minecraft_server_path/whitelist.json
-chown $minecraft_user:$minecraft_group $minecraft_server_path/whitelist.json
-
 # create a valid operators file using the Mojang API
 touch $minecraft_server_path/ops.json
 mojang_output="`wget -qO- $UUID_URL`"

@@ -1,0 +1,221 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "automationAccountName": {
+            "type": "string",
+            "metadata": {
+                "description": "Specify the name of your Automation Account"
+            }
+        },
+        "automationRegion": {
+            "type": "string",
+            "allowedValues": [
+                "westeurope",
+                "southeastasia",
+                "eastus2",
+                "southcentralus",
+                "japaneast",
+                "northeurope",
+                "canadacentral",
+                "australiasoutheast",
+                "centralindia",
+                "westcentralus"
+            ],
+            "metadata": {
+                "description": "Specify the region for your automation account"
+            }
+        },
+        "_artifactsLocation": {
+            "type": "string",
+            "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/asr-automation-recovery",
+            "metadata": {
+                "description": "URI to artifacts location"
+            }
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "defaultValue": "",
+            "metadata": {
+                "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated"
+            }
+        }
+    },
+    "variables": {
+        "assets": {
+            "aaVariables": {
+                "AzureSubscriptionId": {
+                    "name": "AzureSubscriptionId",
+                    "description": "Azure subscription Id"
+                }
+            }
+        },
+        "asrScripts": {
+            "runbooks": [
+                {
+                    "name": "ASR-AddPublicIp",
+                    "url": "[concat(parameters('_artifactsLocation'), '/scripts/ASR-AddPublicIp.ps1', parameters('_artifactsLocationSasToken'))]",
+                    "version": "1.0.0.0",
+                    "type": "PowerShell",
+                    "description": "ASR Runbook to enable public IP on every VM in a Recovery Plan"
+                },
+                {
+                    "name": "ASR-SQL-FailoverAG",
+                    "url": "[concat(parameters('_artifactsLocation'), '/scripts/ASR-SQL-FailoverAG.ps1', parameters('_artifactsLocationSasToken'))]",
+                    "version": "1.0.0.0",
+                    "type": "PowerShellWorkflow",
+                    "description": "ASR Runbook to handle SQL Always On failover"
+                },
+                {
+                    "name": "ASR-AddSingleNSGPublicIp",
+                    "url": "[concat(parameters('_artifactsLocation'), '/scripts/ASR-AddSingleNSGPublicIp.ps1', parameters('_artifactsLocationSasToken'))]",
+                    "version": "1.0.0.0",
+                    "type": "PowerShell",
+                    "description": "ASR Runbook to enable NSG and Public IP on every VM in a Recovery Plan"
+                },
+                {
+                    "name": "ASR-AddSingleLoadBalancer",
+                    "url": "[concat(parameters('_artifactsLocation'), '/scripts/ASR-AddSingleLoadBalancer.ps1', parameters('_artifactsLocationSasToken'))]",
+                    "version": "1.0.0.0",
+                    "type": "PowerShell",
+                    "description": "ASR Runbook to enable a single Load Balancer for all the VMs in the recovery plan"
+                },
+                {
+                    "name": "ASR-AddMulitpleLoadBalancers",
+                    "url": "[concat(parameters('_artifactsLocation'), '/scripts/ASR-AddMultipleLoadBalancers.ps1', parameters('_artifactsLocationSasToken'))]",
+                    "version": "1.0.0.0",
+                    "type": "PowerShell",
+                    "description": "ASR Runbook to enable multiple Load Balancers for selected VMs in the recovery plan"
+                },
+                {
+                    "name": "ASR-DNS-UpdateIP",
+                    "url": "[concat(parameters('_artifactsLocation'), '/scripts/ASR-DNS-UpdateIP.ps1', parameters('_artifactsLocationSasToken'))]",
+                    "version": "1.0.0.0",
+                    "type": "PowerShellWorkflow",
+                    "description": "ASR Runbook to update DNS for VMs within the recovery plan"
+                },
+                {
+                    "name": "ASR-Wordpress-ChangeMysqlConfig",
+                    "url": "[concat(parameters('_artifactsLocation'), '/scripts/ASR-Wordpress-ChangeMysqlConfig.ps1', parameters('_artifactsLocationSasToken'))]",
+                    "version": "1.0.0.0",
+                    "type": "PowerShellWorkflow",
+                    "description": "ASR Runbook to configure Mysql as part of a recovery plan"
+                },
+                {
+                    "name": "ASR-SQL-FailoverAGClassic",
+                    "url": "[concat(parameters('_artifactsLocation'), '/scripts/ASR-SQL-FailoverAGClassic.ps1', parameters('_artifactsLocationSasToken'))]",
+                    "version": "1.0.0.0",
+                    "type": "PowerShellWorkflow",
+                    "description": "ASR Runbook to failover SQL Availability Groups"
+                }
+            ],
+            "modules": [
+                {
+                    "name": "AzureRm.Compute",
+                    "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.compute.2.8.0.nupkg"
+                },
+                {
+                    "name": "AzureRm.Resources",
+                    "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.resources.3.7.0.nupkg"
+                },
+                {
+                    "name": "AzureRm.Network",
+                    "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.network.3.6.0.nupkg"
+                },
+                {
+                    "name": "AzureRm.Automation",
+                    "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.automation.1.0.3.nupkg"
+                }
+            ]
+        },
+        "azureRmProfile": {
+            "name": "AzureRm.Profile",
+            "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.profile.2.7.0.nupkg"
+        }
+    },
+    "resources": [
+        {
+            "name": "[parameters('automationAccountName')]",
+            "type": "Microsoft.Automation/automationAccounts",
+            "apiVersion": "2015-10-31",
+            "location": "[parameters('automationRegion')]",
+            "properties": {
+                "sku": {
+                    "name": "Basic"
+                }
+            },
+            "resources": [
+                {
+                    "name": "[variables('assets').aaVariables.AzureSubscriptionId.name]",
+                    "type": "variables",
+                    "apiVersion": "2015-10-31",
+                    "dependsOn": [
+                        "[concat('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]"
+                    ],
+                    "tags": {},
+                    "properties": {
+                        "description": "[variables('assets').aaVariables.AzureSubscriptionId.description]",
+                        "value": "[concat('\"',subscription().subscriptionId,'\"')]"
+                    }
+                }
+            ]
+        },
+        {
+            "apiVersion": "2015-10-31",
+            "type": "Microsoft.Automation/automationAccounts/runbooks",
+            "name": "[concat(parameters('automationAccountName'), '/', variables('asrScripts').runbooks[copyIndex()].Name)]",
+            "location": "[parameters('automationRegion')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]"
+            ],
+            "copy": {
+                "name": "runbooksLoop",
+                "count": "[length(variables('asrScripts').runbooks)]"
+            },
+            "properties": {
+                "description": "[variables('asrScripts').runbooks[copyIndex()].description]",
+                "runbookType": "[variables('asrScripts').runbooks[copyIndex()].type]",
+                "logProgress": false,
+                "logVerbose": true,
+                "publishContentLink": {
+                    "uri": "[variables('asrScripts').runbooks[copyIndex()].url]",
+                    "version": "[variables('asrScripts').runbooks[copyIndex()].version]"
+                }
+            }
+        },
+        {
+            "apiVersion": "2015-10-31",
+            "type": "Microsoft.Automation/automationAccounts/modules",
+            "name": "[concat(parameters('automationAccountName'), '/', variables('azureRmProfile').name)]",
+            "location": "[parameters('automationRegion')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]"
+            ],
+            "properties": {
+                "contentLink": {
+                    "uri": "[variables('azureRmProfile').url]"
+                }
+            }
+        },
+        {
+            "apiVersion": "2015-10-31",
+            "type": "Microsoft.Automation/automationAccounts/modules",
+            "name": "[concat(parameters('automationAccountName'), '/', variables('asrScripts').modules[copyIndex()].Name)]",
+            "location": "[parameters('automationRegion')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]",
+                "[resourceId('Microsoft.Automation/automationAccounts/modules/', parameters('automationAccountName'), variables('azureRmProfile').name)]"
+            ],
+            "copy": {
+                "name": "modulesLoop",
+                "count": "[length(variables('asrScripts').modules)]"
+            },
+            "properties": {
+                "contentLink": {
+                    "uri": "[variables('asrScripts').modules[copyIndex()].url]"
+                }
+            }
+        }
+    ],
+    "outputs": {}
+}
