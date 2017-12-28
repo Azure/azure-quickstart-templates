@@ -69,316 +69,339 @@
     }
   },
   "variables": {
-
     "publicIpName": "[parameters('machineSettings').publicIPName]",
     "splunkServerRole": "splunk_server",
     "singleQuote": "'",
     "clusterMasterIp": "[parameters('machineSettings').clusterMasterIp]"
-
   },
-  "resources": [{
-    "apiVersion": "[parameters('network-api-version')]",
-    "type": "Microsoft.Network/publicIPAddresses",
-    "name": "[concat(parameters('publicIPAddressSettingsSplunk').name, parameters('publicIPAddressSettingsSplunk').map[copyindex()])]",
-    "copy": {
-      "name": "publicIPAddressLoop",
-      "count": "[parameters('publicIPAddressSettingsSplunk').count]"
-    },
-    "location": "[parameters('location')]",
-    "tags": {
-      "program": "[parameters('tagvalues').program]",
-      "project": "[parameters('tagvalues').project]"
-    },
-    "properties": {
-      "publicIPAllocationMethod": "Dynamic",
-      "dnsSettings": {
-        "domainNameLabel": "[concat(parameters('publicIPAddressSettingsSplunk').domainNamePrefix, parameters('publicIPAddressSettingsSplunk').map[copyindex()])]"
-      }
-    }
-  }, {
-    "apiVersion": "[parameters('network-api-version')]",
-    "type": "Microsoft.Network/networkSecurityGroups",
-    "name": "[parameters('networkSecurityGroupNameSplunkEnterprise')]",
-    "location": "[parameters('location')]",
-    "tags": {
-      "program": "[parameters('tagvalues').program]",
-      "project": "[parameters('tagvalues').project]"
-    },
-    "properties": {
-      "securityRules": [{
-        "name": "Allow-SSH",
-        "properties": {
-          "description": "Allows SSH traffic",
-          "protocol": "Tcp",
-          "sourcePortRange": "*",
-          "destinationPortRange": "22",
-          "sourceAddressPrefix": "[parameters('machineSettings').sshFrom]",
-          "destinationAddressPrefix": "*",
-          "access": "Allow",
-          "priority": 100,
-          "direction": "Inbound"
-        }
-      }, {
-        "name": "Allow-HTTP",
-        "properties": {
-          "description": "Allows HTTP traffic on port 8000",
-          "protocol": "Tcp",
-          "sourcePortRange": "*",
-          "destinationPortRange": "8000",
-          "sourceAddressPrefix": "*",
-          "destinationAddressPrefix": "*",
-          "access": "Allow",
-          "priority": 110,
-          "direction": "Inbound"
-        }
-      }, {
-        "name": "Allow-HTTPS",
-        "properties": {
-          "description": "Allows HTTPS traffic on port 443",
-          "protocol": "Tcp",
-          "sourcePortRange": "*",
-          "destinationPortRange": "443",
-          "sourceAddressPrefix": "*",
-          "destinationAddressPrefix": "*",
-          "access": "Allow",
-          "priority": 120,
-          "direction": "Inbound"
-        }
-      }, {
-        "name": "Allow-HTTP-Event-Collector",
-        "properties": {
-          "description": "Allows HTTP(S) Event Collector traffic on port 8088",
-          "protocol": "Tcp",
-          "sourcePortRange": "*",
-          "destinationPortRange": "8088",
-          "sourceAddressPrefix": "*",
-          "destinationAddressPrefix": "*",
-          "access": "Allow",
-          "priority": 130,
-          "direction": "Inbound"
-        }
-      }, {
-        "name": "Allow-Receiver-TCP",
-        "properties": {
-          "description": "Allows receiver TCP traffic on port 9997",
-          "protocol": "Tcp",
-          "sourcePortRange": "*",
-          "destinationPortRange": "9997",
-          "sourceAddressPrefix": "[parameters('machineSettings').forwardedDataFrom]",
-          "destinationAddressPrefix": "*",
-          "access": "Allow",
-          "priority": 140,
-          "direction": "Inbound"
-        }
-      }, {
-        "name": "Allow-Mgmt-From-VNET",
-        "properties": {
-          "description": "Allows mgmt on port 8089 from VNET only",
-          "protocol": "Tcp",
-          "sourcePortRange": "*",
-          "destinationPortRange": "8089",
-          "sourceAddressPrefix": "VirtualNetwork",
-          "destinationAddressPrefix": "*",
-          "access": "Allow",
-          "priority": 150,
-          "direction": "Inbound"
-        }
-      }, {
-        "name": "Allow-Custom-UDP",
-        "properties": {
-          "description": "Allows UDP port entered by user",
-          "protocol": "Udp",
-          "sourcePortRange": "*",
-          "destinationPortRange": "[parameters('udpPort')]",
-          "sourceAddressPrefix": "*",
-          "destinationAddressPrefix": "*",
-          "access": "Allow",
-          "priority": 160,
-          "direction": "Inbound"
-        }
-      }]
-    }
-  }, {
-    "apiVersion": "[parameters('network-api-version')]",
-    "type": "Microsoft.Network/networkInterfaces",
-    "name": "[parameters('networkInterfaceNameSplunkEnterprise')]",
-    "location": "[parameters('location')]",
-    "dependsOn": [
-      "[concat('Microsoft.Network/networkSecurityGroups/', parameters('networkSecurityGroupNameSplunkEnterprise'))]",
-      "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIpName'))]"
-    ],
-    "tags": {
-      "program": "[parameters('tagvalues').program]",
-      "project": "[parameters('tagvalues').project]"
-    },
-    "properties": {
-      "networkSecurityGroup": {
-        "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupNameSplunkEnterprise'))]"
+  "resources": [
+    {
+      "apiVersion": "2017-06-01",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(parameters('publicIPAddressSettingsSplunk').name, parameters('publicIPAddressSettingsSplunk').map[copyindex()])]",
+      "copy": {
+        "name": "publicIPAddressLoop",
+        "count": "[parameters('publicIPAddressSettingsSplunk').count]"
       },
-      "ipConfigurations": [{
-        "name": "ipconfig1",
-        "properties": {
-          "privateIPAllocationMethod": "Static",
-          "privateIPAddress": "[parameters('machineSettings').staticIp]",
-          "publicIPAddress": {
-            "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpName'))]"
+      "location": "[parameters('location')]",
+      "tags": {
+        "program": "[parameters('tagvalues').program]",
+        "project": "[parameters('tagvalues').project]"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[concat(parameters('publicIPAddressSettingsSplunk').domainNamePrefix, parameters('publicIPAddressSettingsSplunk').map[copyindex()])]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2017-06-01",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[parameters('networkSecurityGroupNameSplunkEnterprise')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "program": "[parameters('tagvalues').program]",
+        "project": "[parameters('tagvalues').project]"
+      },
+      "properties": {
+        "securityRules": [
+          {
+            "name": "Allow-SSH",
+            "properties": {
+              "description": "Allows SSH traffic",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "[parameters('machineSettings').sshFrom]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
           },
-          "subnet": {
-            "id": "[parameters('subnet3Ref')]"
+          {
+            "name": "Allow-HTTP",
+            "properties": {
+              "description": "Allows HTTP traffic on port 8000",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "8000",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 110,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Allow-HTTPS",
+            "properties": {
+              "description": "Allows HTTPS traffic on port 443",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 120,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Allow-HTTP-Event-Collector",
+            "properties": {
+              "description": "Allows HTTP(S) Event Collector traffic on port 8088",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "8088",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 130,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Allow-Receiver-TCP",
+            "properties": {
+              "description": "Allows receiver TCP traffic on port 9997",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "9997",
+              "sourceAddressPrefix": "[parameters('machineSettings').forwardedDataFrom]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 140,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Allow-Mgmt-From-VNET",
+            "properties": {
+              "description": "Allows mgmt on port 8089 from VNET only",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "8089",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 150,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Allow-Custom-UDP",
+            "properties": {
+              "description": "Allows UDP port entered by user",
+              "protocol": "Udp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "[parameters('udpPort')]",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 160,
+              "direction": "Inbound"
+            }
           }
-        }
-      }]
-    }
-  }, {
-    "apiVersion": "[parameters('compute-api-version')]",
-    "type": "Microsoft.Compute/virtualMachines",
-    "name": "[parameters('vmNameSplunkEnterprise')]",
-    "location": "[parameters('location')]",
-    "tags": {
-      "program": "[parameters('tagvalues').program]",
-      "project": "[parameters('tagvalues').project]"
+        ]
+      }
     },
-    "plan": {
-      "name": "[parameters('osSettingsSplunk').imageReference.sku]",
-      "publisher": "[parameters('osSettingsSplunk').imageReference.publisher]",
-      "product": "[parameters('osSettingsSplunk').imageReference.offer]"
-    },
-    "dependsOn": [
-      "[concat('Microsoft.Network/networkInterfaces/', parameters('networkInterfaceNameSplunkEnterprise'))]"
-    ],
-    "properties": {
-      "availabilitySet": {
-        "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('machineSettings').availabilitySet)]"
+    {
+      "apiVersion": "2017-06-01",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[parameters('networkInterfaceNameSplunkEnterprise')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkSecurityGroups/', parameters('networkSecurityGroupNameSplunkEnterprise'))]",
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIpName'))]"
+      ],
+      "tags": {
+        "program": "[parameters('tagvalues').program]",
+        "project": "[parameters('tagvalues').project]"
       },
-      "hardwareProfile": {
-        "vmSize": "[parameters('machineSettings').vmSize]"
-      },
-      "osProfile": {
-        "computername": "[parameters('vmNameSplunkEnterprise')]",
-        "adminUsername": "[parameters('vmAdminUsernameSplunkEnterprise')]",
-        "adminPassword": "[parameters('vmAdminPasswordSplunkEnterprise')]"
-      },
-      "storageProfile": {
-        "imageReference": "[parameters('osSettingsSplunk').imageReference]",
-        "osDisk": {
-          "name": "osdisk",
-          "vhd": {
-            "uri": "[concat('http://', parameters('storageAccountName'), '.blob.core.windows.net','/vhds/', parameters('vmNameSplunkEnterprise'), '-osdisk.vhd')]"
-          },
-          "caching": "ReadWrite",
-          "createOption": "FromImage"
+      "properties": {
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupNameSplunkEnterprise'))]"
         },
-        "dataDisks": [{
-          "name": "datadisk1",
-          "diskSizeGB": "[parameters('machineSettings').diskSize]",
-          "lun": 0,
-          "vhd": {
-            "Uri": "[concat('http://', parameters('storageAccountName'), '.blob.core.windows.net','/vhds/', parameters('vmNameSplunkEnterprise'), '-datadisk1.vhd')]"
-          },
-          "caching": "ReadOnly",
-          "createOption": "Empty"
-        }, {
-          "name": "datadisk2",
-          "diskSizeGB": "[parameters('machineSettings').diskSize]",
-          "lun": 1,
-          "vhd": {
-            "Uri": "[concat('http://', parameters('storageAccountName'), '.blob.core.windows.net','/vhds/', parameters('vmNameSplunkEnterprise'), '-datadisk2.vhd')]"
-          },
-          "caching": "ReadOnly",
-          "createOption": "Empty"
-        }, {
-          "name": "datadisk3",
-          "diskSizeGB": "[parameters('machineSettings').diskSize]",
-          "lun": 2,
-          "vhd": {
-            "Uri": "[concat('http://', parameters('storageAccountName'), '.blob.core.windows.net','/vhds/', parameters('vmNameSplunkEnterprise'), '-datadisk3.vhd')]"
-          },
-          "caching": "ReadOnly",
-          "createOption": "Empty"
-        }, {
-          "name": "datadisk4",
-          "diskSizeGB": "[parameters('machineSettings').diskSize]",
-          "lun": 3,
-          "vhd": {
-            "Uri": "[concat('http://', parameters('storageAccountName'), '.blob.core.windows.net','/vhds/', parameters('vmNameSplunkEnterprise'), '-datadisk4.vhd')]"
-          },
-          "caching": "ReadOnly",
-          "createOption": "Empty"
-        }, {
-          "name": "datadisk5",
-          "diskSizeGB": "[parameters('machineSettings').diskSize]",
-          "lun": 4,
-          "vhd": {
-            "Uri": "[concat('http://', parameters('storageAccountName'), '.blob.core.windows.net','/vhds/', parameters('vmNameSplunkEnterprise'), '-datadisk5.vhd')]"
-          },
-          "caching": "ReadOnly",
-          "createOption": "Empty"
-        }, {
-          "name": "datadisk6",
-          "diskSizeGB": "[parameters('machineSettings').diskSize]",
-          "lun": 5,
-          "vhd": {
-            "Uri": "[concat('http://', parameters('storageAccountName'), '.blob.core.windows.net','/vhds/', parameters('vmNameSplunkEnterprise'), '-datadisk6.vhd')]"
-          },
-          "caching": "ReadOnly",
-          "createOption": "Empty"
-        }, {
-          "name": "datadisk7",
-          "diskSizeGB": "[parameters('machineSettings').diskSize]",
-          "lun": 6,
-          "vhd": {
-            "Uri": "[concat('http://', parameters('storageAccountName'), '.blob.core.windows.net','/vhds/', parameters('vmNameSplunkEnterprise'), '-datadisk7.vhd')]"
-          },
-          "caching": "ReadOnly",
-          "createOption": "Empty"
-        }, {
-          "name": "datadisk8",
-          "diskSizeGB": "[parameters('machineSettings').diskSize]",
-          "lun": 7,
-          "vhd": {
-            "Uri": "[concat('http://', parameters('storageAccountName'), '.blob.core.windows.net','/vhds/', parameters('vmNameSplunkEnterprise'), '-datadisk8.vhd')]"
-          },
-          "caching": "ReadOnly",
-          "createOption": "Empty"
-        }]
-      },
-      "networkProfile": {
-        "networkInterfaces": [{
-          "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaceNameSplunkEnterprise'))]"
-        }]
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[parameters('machineSettings').staticIp]",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpName'))]"
+              },
+              "subnet": {
+                "id": "[parameters('subnet3Ref')]"
+              }
+            }
+          }
+        ]
       }
-    }
-  }, {
-    "apiVersion": "[parameters('compute-api-version')]",
-    "type": "Microsoft.Compute/virtualMachines/extensions",
-    "name": "[concat(parameters('vmNameSplunkEnterprise'), '/node-setup')]",
-    "location": "[parameters('location')]",
-    "tags": {
-      "program": "[parameters('tagvalues').program]",
-      "project": "[parameters('tagvalues').project]"
     },
-    "dependsOn": [
-      "[concat('Microsoft.Compute/virtualMachines/', parameters('vmNameSplunkEnterprise'))]",
-      "[concat('Microsoft.Network/networkInterfaces/', parameters('networkInterfaceNameSplunkEnterprise'))]"
-    ],
-    "properties": {
-      "publisher": "Microsoft.OSTCExtensions",
-      "type": "CustomScriptForLinux",
-      "typeHandlerVersion": "1.5",
-      "settings": {
-        "fileUris": "[parameters('osSettingsSplunk').scripts]"
+    {
+      "apiVersion": "2016-04-30-preview",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[parameters('vmNameSplunkEnterprise')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "program": "[parameters('tagvalues').program]",
+        "project": "[parameters('tagvalues').project]"
       },
-      "protectedSettings": {
-        "commandToExecute": "[concat('bash node-setup.sh', ' -r ', variables('splunkServerRole'), ' -c ', variables('clusterMasterIp'), ' -u ', parameters('udpPort'),  ' -p ', variables('singleQuote'), parameters('splunkAdminPassword'), variables('singleQuote'))]"
-
-
+      "plan": {
+        "name": "[parameters('osSettingsSplunk').imageReference.sku]",
+        "publisher": "[parameters('osSettingsSplunk').imageReference.publisher]",
+        "product": "[parameters('osSettingsSplunk').imageReference.offer]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', parameters('networkInterfaceNameSplunkEnterprise'))]"
+      ],
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('machineSettings').availabilitySet)]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('machineSettings').vmSize]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('vmNameSplunkEnterprise')]",
+          "adminUsername": "[parameters('vmAdminUsernameSplunkEnterprise')]",
+          "adminPassword": "[parameters('vmAdminPasswordSplunkEnterprise')]"
+        },
+        "storageProfile": {
+          "imageReference": "[parameters('osSettingsSplunk').imageReference]",
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat('http://', parameters('storageAccountName'), '.blob.core.windows.net','/vhds/', parameters('vmNameSplunkEnterprise'), '-osdisk.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          },
+          "dataDisks": [
+            {
+              "name": "datadisk1",
+              "diskSizeGB": "[parameters('machineSettings').diskSize]",
+              "lun": 0,
+              "vhd": {
+                "uri": "[concat('http://', parameters('storageAccountName'), '.blob.core.windows.net','/vhds/', parameters('vmNameSplunkEnterprise'), '-datadisk1.vhd')]"
+              },
+              "caching": "ReadOnly",
+              "createOption": "Empty"
+            },
+            {
+              "name": "datadisk2",
+              "diskSizeGB": "[parameters('machineSettings').diskSize]",
+              "lun": 1,
+              "vhd": {
+                "uri": "[concat('http://', parameters('storageAccountName'), '.blob.core.windows.net','/vhds/', parameters('vmNameSplunkEnterprise'), '-datadisk2.vhd')]"
+              },
+              "caching": "ReadOnly",
+              "createOption": "Empty"
+            },
+            {
+              "name": "datadisk3",
+              "diskSizeGB": "[parameters('machineSettings').diskSize]",
+              "lun": 2,
+              "vhd": {
+                "uri": "[concat('http://', parameters('storageAccountName'), '.blob.core.windows.net','/vhds/', parameters('vmNameSplunkEnterprise'), '-datadisk3.vhd')]"
+              },
+              "caching": "ReadOnly",
+              "createOption": "Empty"
+            },
+            {
+              "name": "datadisk4",
+              "diskSizeGB": "[parameters('machineSettings').diskSize]",
+              "lun": 3,
+              "vhd": {
+                "uri": "[concat('http://', parameters('storageAccountName'), '.blob.core.windows.net','/vhds/', parameters('vmNameSplunkEnterprise'), '-datadisk4.vhd')]"
+              },
+              "caching": "ReadOnly",
+              "createOption": "Empty"
+            },
+            {
+              "name": "datadisk5",
+              "diskSizeGB": "[parameters('machineSettings').diskSize]",
+              "lun": 4,
+              "vhd": {
+                "uri": "[concat('http://', parameters('storageAccountName'), '.blob.core.windows.net','/vhds/', parameters('vmNameSplunkEnterprise'), '-datadisk5.vhd')]"
+              },
+              "caching": "ReadOnly",
+              "createOption": "Empty"
+            },
+            {
+              "name": "datadisk6",
+              "diskSizeGB": "[parameters('machineSettings').diskSize]",
+              "lun": 5,
+              "vhd": {
+                "uri": "[concat('http://', parameters('storageAccountName'), '.blob.core.windows.net','/vhds/', parameters('vmNameSplunkEnterprise'), '-datadisk6.vhd')]"
+              },
+              "caching": "ReadOnly",
+              "createOption": "Empty"
+            },
+            {
+              "name": "datadisk7",
+              "diskSizeGB": "[parameters('machineSettings').diskSize]",
+              "lun": 6,
+              "vhd": {
+                "uri": "[concat('http://', parameters('storageAccountName'), '.blob.core.windows.net','/vhds/', parameters('vmNameSplunkEnterprise'), '-datadisk7.vhd')]"
+              },
+              "caching": "ReadOnly",
+              "createOption": "Empty"
+            },
+            {
+              "name": "datadisk8",
+              "diskSizeGB": "[parameters('machineSettings').diskSize]",
+              "lun": 7,
+              "vhd": {
+                "uri": "[concat('http://', parameters('storageAccountName'), '.blob.core.windows.net','/vhds/', parameters('vmNameSplunkEnterprise'), '-datadisk8.vhd')]"
+              },
+              "caching": "ReadOnly",
+              "createOption": "Empty"
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaceNameSplunkEnterprise'))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmNameSplunkEnterprise'), '/node-setup')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "program": "[parameters('tagvalues').program]",
+        "project": "[parameters('tagvalues').project]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmNameSplunkEnterprise'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', parameters('networkInterfaceNameSplunkEnterprise'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.OSTCExtensions",
+        "type": "CustomScriptForLinux",
+        "typeHandlerVersion": "1.5",
+        "settings": {
+          "fileUris": "[parameters('osSettingsSplunk').scripts]"
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat('bash node-setup.sh', ' -r ', variables('splunkServerRole'), ' -c ', variables('clusterMasterIp'), ' -u ', parameters('udpPort'),  ' -p ', variables('singleQuote'), parameters('splunkAdminPassword'), variables('singleQuote'))]"
+        }
       }
     }
-  }],
-"outputs": {
-  "splunkenterpriseUri": {
+  ],
+  "outputs": {
+    "splunkenterpriseUri": {
       "type": "string",
       "value": "[concat('https://',reference(resourceId('Microsoft.Network/publicIPAddresses',parameters('publicIPAddressSettingsSplunk').name)).dnsSettings.fqdn)]"
     }
-}
+  }
 }

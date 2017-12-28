@@ -14,25 +14,45 @@ You can deploy these samples directly through the Azure Portal or by using the s
 
 To deploy a sample using the Azure Portal, click the **Deploy to Azure** button found in the README.md of each sample.
 
-To deploy the sample via the command line (using [Azure PowerShell or the Azure CLI](https://azure.microsoft.com/en-us/downloads/)) you can use the scripts.
+To deploy the sample via the command line (using [Azure PowerShell](https://docs.microsoft.com/en-us/powershell/azure/overview) or the [Azure CLI 1.0](https://docs.microsoft.com/en-us/azure/cli-install-nodejs)) you can use the scripts below.
 
-Simply execute the script and pass in the folder name of the sample you want to deploy.  For example:
+Simply execute the script and pass in the folder name of the sample you want to deploy.  
 
+For example:
+
+### PowerShell
 ```PowerShell
 .\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactStagingDirectory '[foldername]'
 ```
+
+### Bash
+
+Please ensure that you have [node and npm](https://docs.npmjs.com/getting-started/installing-node), [jq](https://stedolan.github.io/jq/download/) and [azure-cli](https://docs.microsoft.com/en-us/azure/cli-install-nodejs) installed.
+
 ```bash
-azure-group-deploy.sh -a [foldername] -l eastus
+./azure-group-deploy.sh -a [foldername] -l eastus
 ```
+
+- If you see the following error: "syntax error near unexpected token `$'in\r''", run this command: 'dos2unix azure-group-deploy.sh'.
+- If you see the following error: "jq: command not found", run this command: "sudo apt install jq".
+- If you see the following error: "node: not found", install node and npm.
+- If you see the following error: "azure-group-deploy.sh is not a command", make sure you run "chmod +x azure-group-deploy.sh".
+
+## Uploading Artifacts
+
 If the sample has artifacts that need to be "staged" for deployment (Configuration Scripts, Nested Templates, DSC Packages) then set the upload switch on the command.
 You can optionally specify a storage account to use, if so the storage account must already exist within the subscription.  If you don't want to specify a storage account
 one will be created by the script or reused if it already exists (think of this as "temp" storage for AzureRM).
 
+### PowerShell
+
 ```PowerShell
 .\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactStagingDirectory '201-vm-custom-script-windows' -UploadArtifacts 
 ```
+
+### Bash
 ```bash
-azure-group-deploy.sh -a '201-vm-custom-script-windows' -l eastus -u
+./azure-group-deploy.sh -a [foldername] -l eastus -u
 ```
 
 ## Contribution guide
@@ -144,6 +164,29 @@ To ensure your template passes, special placeholder values are required when dep
 + **GEN-SSH-PUB-KEY** - use this placeholder if you need an SSH public key
 + **GEN-PASSWORD** - use this placeholder if you need an azure-compatible password for a VM
 
+Quickstart CI engine provides few pre-created azure components which can be used by templates for automated validation. This includes a key vault with sample SSL certificate stored, specialized and generalized Windows Server VHD's, a custom domain and SSL cert data for Azure App Service templates.
+
+**Key Vault Related placeholders:**
++ **GEN-KEYVAULT-NAME** - use this placeholder to leverage an existing test keyvault in your templates
++ **GEN-KEYVAULT-FQDN-URI** - use this placeholder to get FQDN URI of existing test keyvault.
++ **GEN-KEYVAULT-RESOURCE-ID** - use this placeholder to get Resource ID of existing test keyvault.
++ **GEN-KEYVAULT-SSL-SECRET-NAME** - use this placeholder to use the sample SSL cert stored in the test keyvault
++ **GEN-KEYVAULT-SSL-SECRET-URI** - use this placeholder to use the sample SSL cert stored in the test keyvault
+
+** Existing VHD related placeholders:**
++ **GEN-SPECIALIZED-WINVHD-URI** - URI of a specialized Windows VHD stored in an existing storage account.
++ **GEN-GENERALIZED-WINVHD-URI** - URI of a generalized Windows VHD stored in an existing storage account.
++ **GEN-DATAVHD-URI** - URI of a sample data disk VHD stored in an existing storage account.
++ **GEN-VHDSTORAGEACCOUNT-NAME** - Name of storage account in which the VHD's are stored.
++ **GEN-VHDRESOURCEGROUP-NAME** - Name of resource group in which the existing storage account having VHD's resides.
+
+** Custom Domain & SSL Cert related placeholders:**
++ **GEN-CUSTOMFQDN-WEBAPP-NAME** - Placeholder for the name of azure app service where you'd want to attach custom domain.
++ **GEN-CUSTOM-FQDN-NAME** - Sample Custom domain which can be added to App Service created above.
++ **GEN-CUSTOM-DOMAIN-SSLCERT-THUMBPRINT** - SSL cert thumbpring for the custom domain used in above placeholder
++ **GEN-CUSTOM-DOMAIN-SSLCERT-PASSWORD** - Password of the SSL certificate used in above placeholder.
+
+
 Here's an example in an `azuredeploy.parameters.json` file:
 
 ```
@@ -177,6 +220,14 @@ If you're making use of **raw.githubusercontent.com** links within your template
 Note: You can find an **example** of relative linking in the [nested template section](/1-CONTRIBUTION-GUIDE/best-practices.md#nested-templates) of best practices document.
 
 ### Template Pre-requisites
+
+If your template has some pre-requisite such as existing Virtual Network or storage account, you should also submit pre-requisite template which deploys the pre-requisite components. CI automated validation engine automatically validates and deploy the pre-reqsuite template first and then deploys the main template. Following guidelines would help you in understanding how to leverage this capability. 
+
++ Create a folder named  `prereqs ` in root of your template folder, Store  pre-requisite template file, parameters file and  artifacts inside this folder.
++ Store pre-requisite template file with name  `prereqs.azuredeploy.json ` and parameters files with name  `prereqs.azuredeploy.json.parameters`
++  `prereqs.azuredeploy.json` should deploy all required pre-existing resources by your main template and also output the values required by main template to leverage those resources. For example, if your template needs an existing VNET to be available prior to the deployment of main template, you should develop a pre-req template which deployes a VNET and outputs the VNET ID or VNET name of the virtual network created. 
++ In order to use the values generated by outputs after deployment of `prereqs.azuredeploy.json`, you will need to define parameter values as `GET-PREREQ-OutputName`. For exmaple, if you generated a output with name  `vnetID` in pre-req template, in order use the value of this output in main template, enter the value of corresponding parameter in main template parameters file as `GET-PREREQ-vnetID`
++ Check out this [sample template](https://github.com/Azure/azure-quickstart-templates/tree/master/101-subnet-add-vnet-existing) to learn more 
 
 If your template has some pre-requisite such as an Azure Active Directory application or service principal, we don't support this yet. To bypass the CI workflow include a file called .ci_skip in the root of your template folder.
 
@@ -260,6 +311,4 @@ Server Error:{
 }
 ```
 
-```
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
-```

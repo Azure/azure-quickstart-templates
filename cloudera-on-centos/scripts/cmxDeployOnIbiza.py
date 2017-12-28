@@ -33,7 +33,8 @@ def getParameterValue(vmsize, parameter):
         "Standard_DS13:impalad_memory_limit": "21500000000"
 
     }
-    return switcher.get(vmsize+":"+parameter, "0")
+    # vmsize[:13] is used to truncate the VM size since Standard_DS?? and Standard_DS??_v2 need same values.
+    return switcher.get(vmsize[:13]+":"+parameter, "0")
 
 def getDataDiskCount():
     bashCommand="lsblk | grep /data | grep -v /data/ | wc -l"

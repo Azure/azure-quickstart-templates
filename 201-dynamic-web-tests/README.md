@@ -37,7 +37,7 @@ The `guid` field is an arbitrary guid for the test. The `locations` field is a c
 | RU : Moscow     | emea-ru-msa-edge |
 | NL : Amsterdam     | emea-nl-ams-azr |
 | JP : Kawaguchi     | apac-jp-kaw-edge |
-| IE : Dublin     | apac-hk-hkn-azr |
+| IE : Dublin     | emea-gb-db3-azr |
 | HK : Hong Kong     | apac-hk-hkn-azr |
 | FR : Paris     | emea-fr-pra-edge |
 | CH : Zurich     | emea-ch-zrh-edge |

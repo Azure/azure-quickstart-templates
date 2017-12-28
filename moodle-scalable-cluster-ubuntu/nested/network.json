@@ -1,0 +1,83 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+
+	"parameters": { "moodleCommon": { "type": "object", "metadata": { "description": "Common Moodle values" } } },
+
+	"variables": {
+
+		"documentation01": "This sub-template creates a virtual network with three subnets and then creates the moodle load-balancer with public IP/dns",
+		"documentation02": "It expects certain values in the 'common' datastructure.",
+		"documentation03": "    vnetName         - name of virtual network",
+		"documentation04": "    vNetAddressSpace - base of address of 16 bit address range",
+		"documentation05": "    subnetWeb        - name of subnet inside virtual network - will be assigned the .0.0/24 range",
+		"documentation06": "    subnetSan        - name of subnet inside virtual network - will be assigned the .1.0/24 range",
+		"documentation07": "    subnetDb        - name of subnet inside virtual network - will be assigned the .2.0/24 range",
+		"documentation08": "    lbPipName        - name of public IP",
+		"documentation09": "    lbDnsName        - DNS entry for public consumption",
+		"documentation10": "    lbName           - name of Moodl load balancer",
+
+		"pipID":			"[resourceId('Microsoft.Network/publicIPAddresses',		parameters('moodleCommon').lbPipName)]",
+		"extLbID":			"[resourceId('Microsoft.Network/loadBalancers',			parameters('moodleCommon').lbName)]",
+
+		"extFeID":		"[concat(variables('extLbID'),'/frontendIPConfigurations/', parameters('moodleCommon').extFeName )]",
+		"extBeID":		"[concat(variables('extLbID'),'/backendAddressPools/',      parameters('moodleCommon').extBeName )]",
+		"extProbeID":	"[concat(variables('extLbID'),'/probes/',                   parameters('moodleCommon').extProbe  )]",
+		"extNatPoolID":	"[concat(variables('extLbID'),'/inboundNatPools/',          parameters('moodleCommon').extNatPool)]"
+	}, 
+
+	"resources": [
+		{
+			"type":			"Microsoft.Network/virtualNetworks",
+			"apiVersion":	"2015-06-15",
+			"name":			"[parameters('moodleCommon').vnetName]",
+			"location":		"[resourceGroup().location]",
+
+			"properties": {
+				"addressSpace": { "addressPrefixes": [ "[concat(parameters('moodleCommon').vNetAddressSpace,'/16')]" ] },
+				"subnets": [
+					{ "name": "[parameters('moodleCommon').subnetWeb]", "properties": { "addressPrefix": "[parameters('moodleCommon').subnetWebRange]" } },
+					{ "name": "[parameters('moodleCommon').subnetSan]", "properties": { "addressPrefix": "[parameters('moodleCommon').subnetSanRange]" } },
+					{ "name": "[parameters('moodleCommon').subnetDb]", "properties": { "addressPrefix": "[parameters('moodleCommon').subnetDbRange]" } } ]
+			}
+		},
+
+	
+		{
+			"type":			"Microsoft.Network/publicIPAddresses",
+			"apiVersion":	"2015-06-15",
+			"name":			"[parameters('moodleCommon').lbPipName]",
+			"location":		"[resourceGroup().location]",
+			
+			"tags":			{ "displayName": "Load Balancer Public IP" },
+			
+			"properties":	{ "publicIPAllocationMethod": "Dynamic", "dnsSettings": { "domainNameLabel": "[parameters('moodleCommon').lbDnsName]" } }
+		},
+
+       
+        {
+            "type":			"Microsoft.Network/loadBalancers",
+            "apiVersion":	"2016-03-30",
+            "name":			"[parameters('moodleCommon').lbName]",
+            "location":		"[resourceGroup().location]",
+
+			"dependsOn":	[ "[concat('Microsoft.Network/publicIPAddresses/',parameters('moodleCommon').lbPipName)]" ],
+
+            "properties": {
+				"frontendIPConfigurations": [ { "name": "[parameters('moodleCommon').extFeName ]",	"properties": { "publicIPAddress": { "id": "[variables('pipID')]" } } } ],
+				"backendAddressPools":		[ { "name": "[parameters('moodleCommon').extBeName ]" } ],
+				"probes":					[ { "name": "[parameters('moodleCommon').extProbe  ]",	"properties": {"protocol": "tcp", "port": 80, "intervalInSeconds": "5", "numberOfProbes": "3"} } ],
+                "inboundNatPools":			[ { "name": "[parameters('moodleCommon').extNatPool]",	"properties": { "frontendIPConfiguration": { "id": "[variables('extFeID')]" }, "protocol": "tcp", "frontendPortRangeStart": 50000, "frontendPortRangeEnd": 50119, "backendPort": 22 } } ],
+				"loadBalancingRules":		[
+					{ "name": "Http",		"properties": {	"frontendIPConfiguration":	{ "id": "[variables('extFeID')]"    },
+															"backendAddressPool":		{ "id": "[variables('extBeID')]"    },
+															"probe":					{ "id": "[variables('extProbeID')]" },
+															"protocol": "tcp", "frontendPort": 80, "backendPort": 80, "enableFloatingIP": false, "idleTimeoutInMinutes": 5 } },
+					{ "name": "Https",		"properties": {	"frontendIPConfiguration":	{ "id": "[variables('extFeID')]"    },
+															"backendAddressPool":		{ "id": "[variables('extBeID')]"    },
+															"probe":					{ "id": "[variables('extProbeID')]" },
+															"protocol": "tcp", "frontendPort": 443, "backendPort": 443, "enableFloatingIP": false, "idleTimeoutInMinutes": 5 } } ]
+			}
+		}
+	]
+}

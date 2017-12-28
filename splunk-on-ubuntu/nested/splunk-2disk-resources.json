@@ -23,6 +23,10 @@
     "splunkAdminPassword": {
       "type": "securestring"
     },
+    "clusterSecret": {
+      "type": "securestring",
+      "defaultValue": "NA"
+    },
     "namespace": {
       "type": "string"
     },
@@ -34,6 +38,9 @@
       "defaultValue": "splunk_server"
     },
     "securityGroupName": {
+      "type": "string"
+    },
+    "providerGuid": {
       "type": "string"
     }
   },
@@ -51,9 +58,12 @@
   },
   "resources": [
     {
-      "apiVersion": "[variables('resourceAPIVersion')]",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
+      "tags": {
+        "provider": "[parameters('providerGuid')]"
+      },
       "location": "[parameters('location')]",
       "properties": {
         "networkSecurityGroup": {
@@ -77,9 +87,12 @@
       }
     },
     {
-      "apiVersion": "[variables('resourceAPIVersion')]",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
+      "tags": {
+        "provider": "[parameters('providerGuid')]"
+      },
       "location": "[parameters('location')]",
       "plan": {
         "name": "[parameters('osSettings').imageReference.sku]",
@@ -97,7 +110,7 @@
           "vmSize": "[parameters('machineSettings').vmSize]"
         },
         "osProfile": {
-          "computername": "[variables('vmName')]",
+          "computerName": "[variables('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]"
         },
@@ -144,7 +157,7 @@
       }
     },
     {
-      "apiVersion": "[variables('resourceAPIVersion')]",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmName'), '/node-setup')]",
       "location": "[parameters('location')]",
@@ -161,7 +174,7 @@
           "fileUris": "[parameters('osSettings').scripts]"
         },
         "protectedSettings": {
-          "commandToExecute": "[concat('bash node-setup.sh', ' -r ', parameters('splunkServerRole'), ' -c ', variables('clusterMasterIp'), ' -p ', variables('singleQuote'), parameters('splunkAdminPassword'), variables('singleQuote'))]"
+          "commandToExecute": "[concat('bash node-setup.sh', ' -r ', parameters('splunkServerRole'), ' -c ', variables('clusterMasterIp'), ' -p ', variables('singleQuote'), parameters('splunkAdminPassword'), variables('singleQuote'), ' -s ', variables('singleQuote'), parameters('clusterSecret'), variables('singleQuote'))]"
         }
       }
     }
@@ -172,7 +185,7 @@
       "value": "[variables('storageReferenceName')]"
     },
     "storageApiVersion": {
-      "type":"string",
+      "type": "string",
       "value": "[variables('storageApiVersion')]"
     },
     "blobEndpoint": {

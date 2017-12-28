@@ -1,0 +1,90 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0", 
+
+	"parameters": { "moodleCommon": { "type": "object", "metadata": { "description": "Common Moodle values" } } },
+
+	"variables": {
+		"documentation01": "This sub-template drives the mariadb (similar to NoSQL) creation process.",
+		"documentation02": "It expects certain values in the 'common' datastructure.",
+		"documentation03": "    computeApi            - the 'managed' resources need to all use this value",
+		"documentation04": "    dbAvailabilitySetName  - name of availability set for the mariadb farm",
+		"documentation05": "    dbLoadBalancerName     - name of load-balnacer    for the mariadb farm - drives the naming of several LB components",
+		"documentation06": "    vnetName               - name of virtual network",
+		"documentation07": "    subnetDb              - name of subnet for mariadb",
+		"documentation08": "    dbAvailabilitySetName  - name of availability set for the gluster farm",
+
+		"documentation9": "This sub-template calls other sub-templates",
+		"documentation10": "    mariadbvm - creates each node (in a loop based on VM Count)",
+
+		"subnetDbRef":	"[concat(resourceId('Microsoft.Network/virtualNetworks',parameters('moodleCommon').vnetName),'/subnets/',parameters('moodleCommon').subnetDb)]",
+
+		"feID": "[concat(resourceId('Microsoft.Network/loadBalancers',parameters('moodleCommon').dbLoadBalancerName),'/frontendIPConfigurations/', parameters('moodleCommon').dbFeName)]",
+		"beID": "[concat(resourceId('Microsoft.Network/loadBalancers',parameters('moodleCommon').dbLoadBalancerName),'/backendAddressPools/',      parameters('moodleCommon').dbBeName)]",
+		"PRID": "[concat(resourceId('Microsoft.Network/loadBalancers',parameters('moodleCommon').dbLoadBalancerName),'/probes/',                   parameters('moodleCommon').dbProbe)]"
+	},
+
+	"resources":   [        
+		{
+			"type":			"Microsoft.Compute/availabilitySets",
+			"apiVersion":	"[parameters('moodleCommon').computeApi]",
+			"name":			"[parameters('moodleCommon').dbAvailabilitySetName]",
+			"location":		"[resourceGroup().location]",
+
+			"tags":			{ "displayName": "MariaDb Availability Set" },
+			"properties":	{ "platformUpdateDomainCount": 5, "platformFaultDomainCount": 2, "managed": "true" }
+		},
+
+
+		{
+			"type":			"Microsoft.Network/loadBalancers",
+			"apiVersion":	"2015-06-15",
+			"name":			"[parameters('moodleCommon').dbLoadBalancerName]",
+			"location":		"[resourceGroup().location]",
+
+			"tags":			{ "displayName": "MariaDb Internal Load Balancer" },
+
+			"properties": {
+				"frontendIPConfigurations": [ { "name": "[parameters('moodleCommon').dbFeName]", "properties": {"privateIPAllocationMethod": "Static", "privateIPAddress": "[parameters('moodleCommon').StaticIpMariaDb]", "subnet": { "id": "[variables('subnetDbRef')]" } } } ],
+				"backendAddressPools":		[ { "name": "[parameters('moodleCommon').dbBeName]" } ],
+				"loadBalancingRules":		[ {	"name": "MariaDbListener",       "properties": { "backendAddressPool": { "id": "[variables('beID')]" }, "frontendIPConfiguration": { "id": "[variables('feID')]" }, "probe": { "id": "[variables('prID')]" }, "protocol": "tcp", "frontendPort": 3306, "backendPort": 3306, "enableFloatingIP": false } } ],
+				"probes":					[ { "name": "[parameters('moodleCommon').dbProbe]", "properties": { "protocol": "tcp", "port": 3306, "intervalInSeconds": "5", "numberOfProbes": "6" }	} ]
+			}
+		},        
+
+
+		{
+			"type":			"Microsoft.Resources/deployments",
+			"apiVersion":	"2015-01-01",
+			"name":			"mariadbVmNaming",
+
+			"properties": {
+				"mode":			"Incremental",
+				"templateLink": { "uri": "[concat(parameters('moodleCommon').baseTemplateUrl,'vmNameListSelecter.json')]" },
+				"parameters":	{ "vmNameRoot":	{ "value": "[parameters('moodleCommon').dbNameRoot]"     }, 
+								  "vmCount":	{ "value": "[parameters('moodleCommon').mariadbVmCount]" } }
+			}
+		},
+
+
+		{
+			"type":			"Microsoft.Resources/deployments",
+			"apiVersion":	"2015-01-01",
+			"name" :		"[concat('mariadbvm',copyindex())]",
+
+			"dependsOn":	[ "[concat('Microsoft.Compute/availabilitySets/',parameters('moodleCommon').dbAvailabilitySetName)]",
+							  "[concat('Microsoft.Network/LoadBalancers/',   parameters('moodleCommon').dbLoadBalancerName)]",
+							  "Microsoft.Resources/deployments/mariadbVmNaming"			],
+
+			"copy":			{ "name": "vmloop", "count": "[parameters('moodleCommon').mariadbVmCount]" },
+
+			"properties": {
+				"mode":			"Incremental",
+				"templateLink":	{ "uri":          "[concat(    parameters('moodleCommon').baseTemplateUrl,'mariadbvm.json')]" },
+				"parameters":	{ "moodleCommon": { "value": "[parameters('moodleCommon')]" }, 
+								  "counter":	  { "value": "[copyindex()]" },
+								  "vmNameList":	  { "value": "[replace(replace(reference('mariadbVmNaming').outputs.vmNameArray.value,'[',''),']','')]" } }
+			}	
+		}
+	]
+}

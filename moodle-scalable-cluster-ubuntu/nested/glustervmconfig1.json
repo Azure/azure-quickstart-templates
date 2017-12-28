@@ -1,0 +1,41 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0", 
+	
+	"parameters": {
+		"moodleCommon":	{ "type": "object", "metadata": { "description": "Common Moodle values" } }, 
+		"vmName":		{ "type": "string", "metadata": { "description": "Name of VM to process script - not actually used" } },
+		"vmNumber":		{ "type": "int",	"metadata": { "description": "Number of the VM in the pool" } }
+	},
+
+	"variables": {
+		"documentation01": "This sub-template applies a specific post-deployment script to the gluster vms",
+		"documentation02": "It expects certain values in the 'common' datastructure.",
+		"documentation03": "    ScriptLocation        - partial web URI (equivalent to folder)(",
+		"documentation04": "    glusterScriptFilename - name of script file",
+		"documentation06": "    gfsNameRoot           - nameroot of gluster farm - note that the code applies a vmNumber to get to the specific node",
+		"documentation07": "    glusterVmCount        - database (mariadb) password",
+
+		"scriptUri":	"[concat(parameters('moodleCommon').ScriptLocation,parameters('moodleCommon').glusterScriptFilename)]",
+		"cmdExec":		"[concat('bash ',                                  parameters('moodleCommon').glusterScriptFilename, ' ', parameters('moodleCommon').gfsNameRoot, ' ', parameters('moodleCommon').subnetSanPrefix, ' data ', parameters('vmNumber'), ' ', parameters('moodleCommon').glusterVmCount)]"
+	},
+
+	"resources": [
+		{
+			"type":			"Microsoft.Compute/virtualMachines/extensions",
+			"apiVersion":	"2015-05-01-preview",
+			"name":			"[concat(parameters('vmName'),'/','install_gluster')]",
+			"location":		"[resourceGroup().location]",
+					
+			"tags":			{ "displayName": "GfsVmExtension" },
+
+			"properties": {
+				"publisher":			"Microsoft.OSTCExtensions",
+				"type":					"CustomScriptForLinux",
+				"typeHandlerVersion":	"1.3",
+				"settings":				{ "fileUris": [ "[variables('scriptUri')]" ], "commandToExecute": "[variables('cmdExec')]"
+				}
+			}
+		}
+	]
+}

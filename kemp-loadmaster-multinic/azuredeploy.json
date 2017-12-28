@@ -1,0 +1,211 @@
+{
+   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+   "contentVersion": "1.0.0.0",
+   "parameters": {
+      "balPassword": {
+         "type": "securestring",
+         "metadata": {
+            "description": "Password for bal account"
+         }
+      },
+      "existingvirtualNetworkResourceGroup": {
+         "type": "string",
+         "metadata": {
+            "description": "Name of the resource group that contains the existing virutal network."
+         }
+      },
+      "existingvirtualNetworkName": {
+         "type": "string",
+         "metadata": {
+            "description": "Name of the existing virutal network the KEMP LoadMaster will be deployed to."
+         }
+      },
+      "existingsubnetName1": {
+         "type": "string",
+         "metadata": {
+            "description": "Name of the existing subnet in the virtual network you want to use"
+         }
+      },
+      "existingsubnetName2": {
+         "type": "string",
+         "metadata": {
+            "description": "Name of the existing subnet in the virtual network you want to use"
+         }
+      }
+   },
+   "variables": {
+      "publicIPAddressType": "Dynamic",
+      "vmName": "VLM-MultiNIC",
+      "vmSize": "Standard_A3",
+      "adminUsername": "bal",
+      "subnetRef1": "[resourceId(parameters('existingvirtualNetworkResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', parameters('existingvirtualNetworkName'), parameters('existingsubnetName1'))]",
+      "subnetRef2": "[resourceId(parameters('existingvirtualNetworkResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', parameters('existingvirtualNetworkName'), parameters('existingsubnetName2'))]",
+      "nicName1": "NIC1",
+      "nicName2": "NIC2",
+      "dnsNameForPublicIP": "[concat('vlm',uniqueString(resourceGroup().id))]",
+      "storageAccountType": "Standard_LRS",
+      "imageOffer": "vlm-azure",
+      "imagePublisher": "kemptech",
+      "imageVersion": "latest",
+      "imageSKU": "basic-byol",
+      "storageAccountName": "[concat('vhds', uniqueString(resourceGroup().id))]",
+      "publicIPAddressName": "[variables('vmName')]",
+      "imageReference": {
+         "publisher": "[variables('imagePublisher')]",
+         "offer": "[variables('imageOffer')]",
+         "sku": "[variables('imageSku')]",
+         "version": "[variables('imageVersion')]"
+      },
+      "imagePlan": {
+         "name": "[variables('imageSku')]",
+         "product": "[variables('imageOffer')]",
+         "publisher": "[variables('imagePublisher')]"
+      }
+   },
+   "resources": [
+      {
+         "type": "Microsoft.Storage/storageAccounts",
+         "name": "[variables('storageAccountName')]",
+         "comments": "This storage account is used to store the VM disk.",
+         "apiVersion": "2016-01-01",
+         "location": "[resourceGroup().location]",
+         "sku": {
+            "name": "Standard_LRS"
+         },
+         "kind": "Storage",
+         "properties": {}
+      },
+      {
+         "apiVersion": "2015-06-15",
+         "type": "Microsoft.Network/publicIPAddresses",
+         "name": "[variables('publicIPAddressName')]",
+         "comments": "This is the public IP assigned to the NIC on Existing Subnet 1.",
+         "location": "[resourceGroup().location]",
+         "tags": {
+            "displayName": "PublicIPAddress"
+         },
+         "properties": {
+            "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+            "dnsSettings": {
+               "domainNameLabel": "[variables('dnsNameForPublicIP')]"
+            }
+         }
+      },
+      {
+         "apiVersion": "2015-06-15",
+         "type": "Microsoft.Network/networkInterfaces",
+         "name": "[variables('nicName1')]",
+         "comments": "This creates the NIC on Existing Subnet 1.",
+         "location": "[resourceGroup().location]",
+         "dependsOn": [
+            "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
+         ],
+         "tags": {
+            "displayName": "NetworkInterface"
+         },
+         "properties": {
+            "ipConfigurations": [
+               {
+                  "name": "ipconfig1",
+                  "properties": {
+                     "privateIPAllocationMethod": "Dynamic",
+                     "publicIPAddress": {
+                        "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+                     },
+                     "subnet": {
+                        "id": "[variables('subnetRef1')]"
+                     }
+                  }
+               }
+            ]
+         }
+      },
+      {
+         "apiVersion": "2015-06-15",
+         "type": "Microsoft.Network/networkInterfaces",
+         "name": "[variables('nicName2')]",
+         "comments": "This creates the NIC on Existing Subnet 2.",
+         "location": "[resourceGroup().location]",
+         "tags": {
+            "displayName": "NetworkInterface2"
+         },
+         "properties": {
+            "ipConfigurations": [
+               {
+                  "name": "ipconfig1",
+                  "properties": {
+                     "privateIPAllocationMethod": "Dynamic",
+                     "subnet": {
+                        "id": "[variables('subnetRef2')]"
+                     }
+                  }
+               }
+            ]
+         }
+      },
+      {
+         "apiVersion": "2015-06-15",
+         "type": "Microsoft.Compute/virtualMachines",
+         "name": "[variables('vmName')]",
+         "comments": "This creates the KEMP LoadMaster with multiple interfaces.",
+         "plan": "[variables('imagePlan')]",
+         "location": "[resourceGroup().location]",
+         "tags": {
+            "displayName": "VirtualMachine"
+         },
+         "dependsOn": [
+            "[concat('Microsoft.Network/networkInterfaces/', variables('nicName1'))]",
+            "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+            "[concat('Microsoft.Network/networkInterfaces/', variables('nicName2'))]"
+         ],
+         "properties": {
+            "hardwareProfile": {
+               "vmSize": "[variables('vmSize')]"
+            },
+            "osProfile": {
+               "computerName": "[variables('vmName')]",
+               "adminUsername": "[variables('adminUsername')]",
+               "adminPassword": "[parameters('balPassword')]"
+            },
+            "storageProfile": {
+               "imageReference": {
+                  "publisher": "[variables('imagePublisher')]",
+                  "offer": "[variables('imageOffer')]",
+                  "sku": "[variables('imageSKU')]",
+                  "version": "[variables('imageVersion')]"
+               },
+               "osDisk": {
+                  "name": "osdisk",
+                  "vhd": {
+                     "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName')),'2016-01-01').primaryEndpoints.blob, 'vhds/osdisk.vhd')]"
+                  },
+                  "caching": "ReadWrite",
+                  "createOption": "FromImage"
+               }
+            },
+            "networkProfile": {
+               "networkInterfaces": [
+                  {
+                     "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName1'))]",
+                     "properties": {
+                        "primary": true
+                     }
+                  },
+                  {
+                     "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName2'))]",
+                     "properties": {
+                        "primary": false
+                     }
+                  }
+               ]
+            }
+         }
+      }
+   ],
+   "outputs": {
+      "FQDN": {
+         "type": "string",
+         "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName')),'2015-06-15').dnsSettings.fqdn]"
+      }
+   }
+}

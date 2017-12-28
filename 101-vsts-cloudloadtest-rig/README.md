@@ -5,7 +5,13 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-Using this template, you can create your own load test rig on Azure IaaS virtual machines. The test rig will be configured for your Visual Studio Team Services (VSTS) account and can be used to run cloud-based load tests using Visual Studio. The cloud-load testing service will use this registered rig instead of provisioning one dynamically. Sample parameter values are as follows:
+Using this template, you can create your own load test rig on Azure IaaS virtual machines. The test rig will be configured for your Visual Studio Team Services (VSTS) account and can be used to run cloud-based load tests using Visual Studio. The cloud-load testing service will use this registered rig instead of provisioning one dynamically. 
+
+To learn more about the scenarios in which you may want to provision your own rig,<a href="https://blogs.msdn.microsoft.com/visualstudioalm/2016/09/27/run-cloud-based-load-tests-using-your-own-machines-a-k-a-bring-your-own-subscription/" target="_blank"> click here</a>.
+
+To learn about how to view and manage registered load agents for your VSTS account,<a href="https://blogs.msdn.microsoft.com/visualstudioalm/2016/08/22/use-cloud-load-agents-on-your-infrastructure/" target="_blank"> click here</a>.
+
+Sample parameter values are as follows:
 
 ```json
 {
@@ -13,7 +19,8 @@ Using this template, you can create your own load test rig on Azure IaaS virtual
     "VSTSPersonalAccessToken": "<get pat token for VSTS account>",
     "AgentCount": "<number of VMs you want to provision>",
     "AdminUsername": "<admin user name>",
-    "AdminPassword": "<admin user password>" 
+    "AdminPassword": "<admin user password>",
+    "AgentGroupName": "<agent group name defaults to resource groupname>"   
 }
 ```
 

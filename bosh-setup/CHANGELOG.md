@@ -1,3 +1,46 @@
+# v3.2.0 (2017-12-20)
+
+- Bump [bosh-deployment](https://github.com/cloudfoundry/bosh-deployment/blob/218e6d5030d89ca9f31c50b8b308e2a78d2a0997/bosh.yml) and [cf-deployment](https://github.com/cloudfoundry/cf-deployment/blob/v1.4.0/cf-deployment.yml).
+- Upgrade Azure CPI version to v34. Please see new features in [bosh-azure-cpi-release v34](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v34)
+
+# v3.1.0 (2017-12-12)
+
+- Bump [bosh-deployment](https://github.com/cloudfoundry/bosh-deployment/blob/ad5e958d15973269345909349fc00378abae4ba7/bosh.yml) and [cf-deployment](https://github.com/cloudfoundry/cf-deployment/blob/v1.3.1/cf-deployment.yml).
+- Upgrade Azure CPI version to v33 except AzureStack. Please see new features in [bosh-azure-cpi-release v33](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v33)
+
+# v3.0.0 (2017-11-23)
+
+- The template is using [BOSH CLI v2](https://bosh.io/docs/cli-v2.html), [bosh-deployment](https://github.com/cloudfoundry/bosh-deployment/blob/cb8e7f60145738e103eb2dc0ad3372288986dc0c/bosh.yml) and [cf-deployment](https://github.com/cloudfoundry/cf-deployment/blob/v1.0.0/cf-deployment.yml).
+- Upgrade Azure CPI version to v29. Please see new features in [bosh-azure-cpi-release v29](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v29)
+
+# v2.8.0 (2017-8-11)
+
+- Upgrade Azure CPI version to v26. Please see new features in [bosh-azure-cpi-release v26](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v26)
+- Correct the range of CloudFoundry subnet.
+
+# v2.7.0 (2017-7-10)
+
+- Upgrade Azure CPI version to v25. Please see new features in [bosh-azure-cpi-release v25](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v25)
+- Support the deployment in AzureStackTP3.
+
+# v2.6.1 (2017-6-2)
+
+- Upgrade bosh to v262
+- Upgrade bosh stemcell to v3421.3
+- Add ssl cert & key for the director job
+- Add `user_add` job to add a cpidebug user to the bosh director
+
+# v2.6.0 (2017-5-15)
+
+- Upgrade Azure CPI version to v24. Please see new features in [bosh-azure-cpi-release v24](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v24)
+- Upgrade bosh stemcell to v3363.22
+- Change the account type of the default storage account to `Standard_LRS`.
+
+# v2.5.0 (2017-3-20)
+
+- Support AzureGermanCloud
+- Upgrade Azure CPI version to v22. Please see new features in [bosh-azure-cpi-release v22](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v22)
+
 # v2.4.4 (2017-02-10)
 
 - On AzureChinaCloud, set PowerDNS server on BOSH VM as DNS server. For *.{cf-ip}.xip.io, PowerDNS server will respond without querying Azure DNS. For the real domains and *.{other-ip-other-than-cf-ip}.xip.io, PowerDNS server will go to Azure DNS at the first time, and cache the resolving result.
