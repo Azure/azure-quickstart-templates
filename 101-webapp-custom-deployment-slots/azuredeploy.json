@@ -1,0 +1,84 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    // Base resource name -> This will become a part of all URIs and names
+    // This needs to be as unique as possible to represent the organization/product
+    // Limit this to 15 characters (only alpha numeric characters)
+    "baseResourceName": {
+      "defaultValue": "AwesomeApp",
+      "type": "string",
+      "maxLength": 15
+    },
+    "environments": {
+      "defaultValue": [
+        "Dev",
+        "QA01",
+        "QA02",
+        "Preview"
+        // Release is the default, "nameless" slot; so no need to add that
+      ],
+      "type": "array",
+      "maxLength": 4 // This is specific to the type of App Service Plan; Standard: 5 (4+1); Premium: 20 (19+1)
+    }
+  },
+
+  "variables": {
+    "webAppPortalName": "[concat(parameters('baseResourceName'), 'Portal')]",
+    "appServicePlanName": "[concat('AppServicePlan-', parameters('baseResourceName'))]"
+  },
+
+  "resources": [
+    {
+      "apiVersion": "2015-08-01",
+      "type": "Microsoft.Web/serverfarms",
+      "kind": "app",
+      "name": "[variables('appServicePlanName')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "AppServicePlan"
+      },
+      "properties": {},
+      "dependsOn": [],
+      "sku": {
+        "name": "S1" // Standard
+      }
+    },
+    {
+      "apiVersion": "2016-08-01",
+      "type": "Microsoft.Web/sites",
+      "kind": "app",
+      "name": "[variables('webAppPortalName')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "WebApp"
+      },
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]"
+      ]
+    },
+    {
+      "apiVersion": "2016-08-01",
+      "type": "Microsoft.Web/sites/slots",
+      "name": "[concat(variables('webAppPortalName'), '/', parameters('environments')[copyIndex()])]",
+      "kind": "app",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "WebAppSlots"
+      },
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/Sites', variables('webAppPortalName'))]"
+      ],
+      "copy": {
+        "name": "webPortalSlot",
+        "count": "[length(parameters('environments'))]"
+      }
+    }
+  ]
+}
