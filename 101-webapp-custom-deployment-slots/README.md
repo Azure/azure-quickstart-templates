@@ -10,10 +10,11 @@
 This template provides an easy way to deploy web app with custom deployment slots/environments on Azure Web Apps.<br>
 The parameters can be used to specify different slot/environment names, and a slot will be created for every item listed in the environments array.
 
-To specify multiple environments, say N, follow this simple rule:<b>
-Add just N - 1, as depicted in the below example. There's always a default "nameless" slot created by default:
+To specify multiple environments, say N, follow this simple rule:<br>
+Add N - 1 items, as depicted in the below example of N = 5. There's always a default "nameless" slot created by default:
 
 // Environments -> Deployment slots will be created for every environment listed here
+
     "environments": {
       "value": [
         "Dev",
@@ -22,6 +23,7 @@ Add just N - 1, as depicted in the below example. There's always a default "name
         "Future"
         // A default, "nameless" slot will be created; so don't list it here
       ]
+     }
 
 Please note that different app service plans has different caps on the number of slots that can be created.<br>
 For example, at the time of this writing, a Standard plan puts a cap of <b>5</b> and a Premium plan <b>20</b>. The Free, Shared or Basic plans are not allowed to have any slots.
