@@ -11,7 +11,7 @@ This template provides an easy way to deploy web app with custom deployment slot
 The parameters can be used to specify different slot/environment names, and a slot will be created for every item listed in the environments array.
 
 To specify multiple environments, say N, follow this simple rule:<br>
-Add N - 1 items, as depicted in the below example of N = 5. There's always a default "nameless" slot created by default:
+Add N - 1 items, as depicted in the below example, with N = 5. There's always a default "nameless" slot created by default:
 
 // Environments -> Deployment slots will be created for every environment listed here
 
