@@ -35,7 +35,7 @@ $json = @{
         @{
             name= "Qlik Sense November 2017 Patch 1"
             url= "https://da3hntz84uekx.cloudfront.net/QlikSense/11.24/1/_MSI/Qlik_Sense_update.exe"
-            url2= "https://da3hntz84uekx.cloudfront.net/QlikSense/11.14/0/_MSI/Qlik_Sense_setup.exe"
+            url2= "https://da3hntz84uekx.cloudfront.net/QlikSense/11.24/0/_MSI/Qlik_Sense_setup.exe"
         },
         @{
             name= "Qlik Sense November 2017"
