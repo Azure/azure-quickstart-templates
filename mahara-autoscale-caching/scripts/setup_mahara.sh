@@ -47,16 +47,16 @@ echo $siteFQDN >> /tmp/vars.txt
   # install the base stack
   sudo apt-get -y install nginx php-fpm varnish php php-cli php-curl php-zip
 
-  # Moodle requirements
+  # Mahara requirements
   sudo apt-get install -y graphviz aspell php-soap php-json php-redis php-bcmath php-gd php-pgsql php-mysql php-xmlrpc php-intl php-xml php-bz2
 
-  # Mount gluster fs for /moodle
-  sudo mkdir -p /moodle
-  sudo chown www-data /moodle
-  sudo chmod 770 /moodle
-  sudo echo -e 'mount -t glusterfs '$glusterNode':/'$glusterVolume' /moodle'
-  sudo mount -t glusterfs $glusterNode:/$glusterVolume /moodle
-  sudo echo -e $glusterNode':/'$glusterVolume'   /moodle         glusterfs       defaults,_netdev,log-level=WARNING,log-file=/var/log/gluster.log 0 0' >> /etc/fstab
+  # Mount gluster fs for /mahara
+  sudo mkdir -p /mahara
+  sudo chown www-data /mahara
+  sudo chmod 770 /mahara
+  sudo echo -e 'mount -t glusterfs '$glusterNode':/'$glusterVolume' /mahara'
+  sudo mount -t glusterfs $glusterNode:/$glusterVolume /mahara
+  sudo echo -e $glusterNode':/'$glusterVolume'   /mahara         glusterfs       defaults,_netdev,log-level=WARNING,log-file=/var/log/gluster.log 0 0' >> /etc/fstab
   sudo mount -a
 
   # Configure syslog to forward
@@ -183,7 +183,7 @@ server {
 
 server {
         listen 443 ssl;
-        root /moodle/html/moodle;
+        root /mahara/html/mahara;
 	index index.php index.html index.htm;
 
         ssl on;
