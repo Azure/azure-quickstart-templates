@@ -12,7 +12,7 @@ set -e
 
 tenant_id=$1
 client_id=$2
-client_secret=$(echo $3 | base64 --decode)
+base64_encoded_client_secret_or_certificate=$3
 custom_data_file="/var/lib/cloud/instance/user-data.txt"
 settings=$(cat ${custom_data_file})
 
@@ -30,7 +30,12 @@ function install_bosh_cli() {
   sudo mv ./bosh-cli-* /usr/local/bin/bosh
 }
 
+function client_secret_or_certificate() {
+  echo ${base64_encoded_client_secret_or_certificate} | base64 --decode
+}
+
 environment=$(get_setting ENVIRONMENT)
+service_principal_type=$(get_setting SERVICE_PRINCIPAL_TYPE)
 
 set +e
 
@@ -83,23 +88,16 @@ azs:
 EOF
     mv cloud-config-azs-enabled.yml cloud-config.yml
   fi
-  # Specify Ops file for Azure Stack
+  if [ "${service_principal_type}" == "Certificate" ]; then
+    cat > service-principal-certificate.yml << EOF
+certificate: |-
+$(client_secret_or_certificate | sed 's/^/  /')
+EOF
+  fi
   if [ "$environment" = "AzureStack" ]; then
-    cat > azure-stack-properties.yml << EOF
----
-- type: replace
-  path: /instance_groups/name=bosh/properties/azure/azure_stack?
-  value: &azure-stack-properties
-    domain: ((azure_stack_domain))
-    resource: ((azure_stack_resource))
-    authentication: AzureAD
-    endpoint_prefix: management
-    ca_cert: |-
-$(cat /var/lib/waagent/Certificates.pem | sed 's/^/      /')
-
-- type: replace
-  path: /cloud_provider/properties/azure/azure_stack?
-  value: *azure-stack-properties
+    cat > azure-stack-ca-cert.yml << EOF
+ca_cert: |-
+$(cat /var/lib/waagent/Certificates.pem | sed 's/^/  /')
 EOF
   fi
 popd  > /dev/null
@@ -122,43 +120,54 @@ bosh create-env ~/example_manifests/bosh.yml \\
   -o ~/example_manifests/custom-environment.yml \\
   -o ~/example_manifests/use-azure-dns.yml \\
   -o ~/example_manifests/jumpbox-user.yml \\
+  -v director_name=azure \\
+  -v internal_cidr=10.0.0.0/24 \\
+  -v internal_gw=10.0.0.1 \\
+  -v internal_ip=10.0.0.4 \\
+  -v cpi_release_url=$(get_setting BOSH_AZURE_CPI_RELEASE_URL) \\
+  -v cpi_release_sha1=$(get_setting BOSH_AZURE_CPI_RELEASE_SHA1) \\
+  -v director_vm_instance_type=$(get_setting BOSH_VM_SIZE) \\
+  -v resource_group_name=$(get_setting RESOURCE_GROUP_NAME) \\
+  -v vnet_name=$(get_setting VNET_NAME) \\
+  -v subnet_name=$(get_setting SUBNET_NAME_FOR_BOSH) \\
+  -v default_security_group=$(get_setting NSG_NAME_FOR_BOSH) \\
+  -v environment=$(get_setting ENVIRONMENT) \\
+  -v subscription_id=$(get_setting SUBSCRIPTION_ID) \\
+  -v tenant_id=${tenant_id} \\
+  -v client_id=${client_id} \\
 EOF
+
+if [ "${service_principal_type}" == "Password" ]; then
+  cat >> "$home_dir/deploy_bosh.sh" << EOF
+  -v client_secret="$(client_secret_or_certificate)" \\
+EOF
+elif [ "${service_principal_type}" == "Certificate" ]; then
+  cat >> "$home_dir/deploy_bosh.sh" << EOF
+  -o ~/example_manifests/use-service-principal-with-certificate.yml \\
+  -l ~/example_manifests/service-principal-certificate.yml \\
+EOF
+fi
 
 if [ "$environment" = "AzureChinaCloud" ]; then
   cat >> "$home_dir/deploy_bosh.sh" << EOF
   -o ~/example_manifests/use-managed-disks.yml \\
   -o ~/example_manifests/use-mirror-releases-for-bosh.yml \\
-  -o ~/example_manifests/custom-ntp-server.yml \\
+  -o ~/example_manifests/custom-ntp-server.yml
 EOF
 elif [ "$environment" = "AzureStack" ]; then
   cat >> "$home_dir/deploy_bosh.sh" << EOF
-  -o ~/example_manifests/azure-stack-properties.yml \\
   -v storage_account_name=$(get_setting DEFAULT_STORAGE_ACCOUNT_NAME) \\
+  -o ~/example_manifests/azure-stack-properties.yml \\
   -v azure_stack_domain=$(get_setting AZURE_STACK_DOMAIN) \\
   -v azure_stack_resource=$(get_setting AZURE_STACK_RESOURCE) \\
+  -v azure_stack_authentication=$(get_setting AZURE_STACK_AUTHENTICATION) \\
+  -l ~/example_manifests/azure-stack-ca-cert.yml
 EOF
 else
   cat >> "$home_dir/deploy_bosh.sh" << EOF
-  -o ~/example_manifests/use-managed-disks.yml \\
+  -o ~/example_manifests/use-managed-disks.yml
 EOF
 fi
-
-cat >> "$home_dir/deploy_bosh.sh" << EOF
-  -v director_name=azure \\
-  -v internal_cidr=10.0.0.0/24 \\
-  -v internal_gw=10.0.0.1 \\
-  -v internal_ip=10.0.0.4 \\
-  -v director_vm_instance_type=$(get_setting BOSH_VM_SIZE) \\
-  -v vnet_name=$(get_setting VNET_NAME) \\
-  -v subnet_name=$(get_setting SUBNET_NAME_FOR_BOSH) \\
-  -v environment=$(get_setting ENVIRONMENT) \\
-  -v subscription_id=$(get_setting SUBSCRIPTION_ID) \\
-  -v tenant_id=${tenant_id} \\
-  -v client_id=${client_id} \\
-  -v client_secret="${client_secret}" \\
-  -v resource_group_name=$(get_setting RESOURCE_GROUP_NAME) \\
-  -v default_security_group=$(get_setting NSG_NAME_FOR_BOSH)
-EOF
 chmod 777 $home_dir/deploy_bosh.sh
 
 cat > "$home_dir/deploy_cloud_foundry.sh" << EOF
