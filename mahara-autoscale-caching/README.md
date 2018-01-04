@@ -16,7 +16,6 @@ This template set deploys the following infrastructure:
 - Controller instance running cron and handling syslog for the autoscaled site
 - Load balancer to balance across the autoscaled instances
 - Postgres or MySQL database
-- Azure Redis instance for Mahara caching
 - ObjectFS in Azure blobs (Mahara sitedata)
 - Three Elasticsearch VMs for search indexing in Mahara
 - Dual gluster nodes for high availability access to Mahara files
