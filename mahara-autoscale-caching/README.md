@@ -16,6 +16,7 @@ This template set deploys the following infrastructure:
 - Controller instance running cron and handling syslog for the autoscaled site
 - Load balancer to balance across the autoscaled instances
 - Postgres or MySQL database
+- Azure Redis instance for Mahara caching
 - ObjectFS in Azure blobs (Mahara sitedata)
 - Three Elasticsearch VMs for search indexing in Mahara
 - Dual gluster nodes for high availability access to Mahara files
@@ -49,7 +50,7 @@ In testing, stacks typically took between 1 and 2 hours to finish, depending on 
 
 - mahara-admin-password: The password for the "admin" user in your Mahara install.
 - load-balancer-dns: This is the address of your load balancer. You'll need to add a DNS entry for the website URL you entered that CNAMEs to this.
-- controller-instance-ip: This is the address of the controller. You will need to SSH into this to make changes to your Mahara code or view logs.
+- controller-instance-ip: This is the address of the controller. You will need to SSH into this to make changes to your mahara code or view logs.
 - database-dns: This is the public DNS of your database instance. If you wish to set up local backups or access the db directly, you'll need to use this.
 - database-admin-username: The master account (not Mahara) username for your database.
 - database-admin-password: The master account password for your database.

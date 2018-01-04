@@ -2,9 +2,9 @@
     "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "maharaCommon": {
+        "moodleCommon": {
             "metadata": {
-                "description": "Common mahara values"
+                "description": "Common Moodle values"
             },
             "type": "object"
         }
@@ -13,36 +13,42 @@
         {
             "apiVersion": "2015-06-15",
             "location": "[resourceGroup().location]",
-            "name": "[parameters('maharaCommon').vnetName]",
+            "name": "[parameters('moodleCommon').vnetName]",
             "properties": {
                 "addressSpace": {
                     "addressPrefixes": [
-                        "[concat(parameters('maharaCommon').vNetAddressSpace,'/16')]"
+                        "[concat(parameters('moodleCommon').vNetAddressSpace,'/16')]"
                     ]
                 },
                 "subnets": [
                     {
-                        "name": "[parameters('maharaCommon').subnetWeb]",
+                        "name": "[parameters('moodleCommon').subnetWeb]",
                         "properties": {
-                            "addressPrefix": "[parameters('maharaCommon').subnetWebRange]"
+                            "addressPrefix": "[parameters('moodleCommon').subnetWebRange]"
                         }
                     },
                     {
-                        "name": "[parameters('maharaCommon').subnetSan]",
+                        "name": "[parameters('moodleCommon').subnetSan]",
                         "properties": {
-                            "addressPrefix": "[parameters('maharaCommon').subnetSanRange]"
+                            "addressPrefix": "[parameters('moodleCommon').subnetSanRange]"
                         }
                     },
                     {
-                        "name": "[parameters('maharaCommon').subnetElastic]",
+                        "name": "[parameters('moodleCommon').subnetRedis]",
                         "properties": {
-                            "addressPrefix": "[parameters('maharaCommon').subnetElasticRange"
+                            "addressPrefix": "[parameters('moodleCommon').subnetRedisRange]"
                         }
                     },
                     {
-                        "name": "[parameters('maharaCommon').gatewaySubnet]",
+                        "name": "[parameters('moodleCommon').subnetElastic]",
                         "properties": {
-                            "addressPrefix": "[parameters('maharaCommon').gatewaySubnetRange]"
+                            "addressPrefix": "[parameters('moodleCommon').subnetElasticRange]"
+                        }
+                    },
+                    {
+                        "name": "[parameters('moodleCommon').gatewaySubnet]",
+                        "properties": {
+                            "addressPrefix": "[parameters('moodleCommon').gatewaySubnetRange]"
                         }
                     }
                 ]
@@ -52,7 +58,7 @@
         {
             "apiVersion": "2015-06-15",
             "location": "[resourceGroup().location]",
-            "name": "[parameters('maharaCommon').gatewayPublicIPName]",
+            "name": "[parameters('moodleCommon').gatewayPublicIPName]",
             "properties": {
                 "publicIPAllocationMethod": "Dynamic"
             },
@@ -64,33 +70,33 @@
         {
             "apiVersion": "2015-06-15",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualNetworks', parameters('maharaCommon').vnetName)]"
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('moodleCommon').vnetName)]"
             ],
-            "name": "[concat(parameters('maharaCommon').vnetName, '/', parameters('maharaCommon').gatewaySubnet)]",
+            "name": "[concat(parameters('moodleCommon').vnetName, '/', parameters('moodleCommon').gatewaySubnet)]",
             "properties": {
-                "addressPrefix": "[parameters('maharaCommon').gatewaySubnetRange]"
+                "addressPrefix": "[parameters('moodleCommon').gatewaySubnetRange]"
             },
             "type": "Microsoft.Network/virtualNetworks/subnets"
         },
         {
             "apiVersion": "2015-06-15",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/publicIPAddresses', parameters('maharaCommon').gatewayPublicIPName)]",
-                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('maharaCommon').vnetName, parameters('maharaCommon').gatewaySubnet)]"
+                "[resourceId('Microsoft.Network/publicIPAddresses', parameters('moodleCommon').gatewayPublicIPName)]",
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('moodleCommon').vnetName, parameters('moodleCommon').gatewaySubnet)]"
             ],
             "location": "[resourceGroup().location]",
-            "name": "[parameters('maharaCommon').gatewayName]",
+            "name": "[parameters('moodleCommon').gatewayName]",
             "properties": {
                 "activeActive": false,
                 "enableBgp": false,
-                "gatewayType": "[parameters('maharaCommon').gatewayType]",
+                "gatewayType": "[parameters('moodleCommon').gatewayType]",
                 "ipConfigurations": [
                     {
                         "name": "vnet-Gateway-Config",
                         "properties": {
                             "privateIPAllocationMethod": "Dynamic",
                             "publicIPAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('maharaCommon').gatewayPublicIPName)]"
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('moodleCommon').gatewayPublicIPName)]"
                             },
                             "subnet": {
                                 "id": "[variables('gatewaySubnetRef')]"
@@ -103,17 +109,17 @@
                     "tier": "VpnGw1",
                     "capacity": 2
                 },
-                "vpnType": "[parameters('maharaCommon').vpnType]"
+                "vpnType": "[parameters('moodleCommon').vpnType]"
             },
             "type": "Microsoft.Network/virtualNetworkGateways"
         },
         {
             "apiVersion": "2015-06-15",
             "location": "[resourceGroup().location]",
-            "name": "[parameters('maharaCommon').lbPipName]",
+            "name": "[parameters('moodleCommon').lbPipName]",
             "properties": {
                 "dnsSettings": {
-                    "domainNameLabel": "[parameters('maharaCommon').lbName]"
+                    "domainNameLabel": "[parameters('moodleCommon').lbName]"
                 },
                 "publicIPAllocationMethod": "Static"
             },
@@ -125,19 +131,19 @@
         {
             "apiVersion": "2016-03-30",
             "dependsOn": [
-                "[concat('Microsoft.Network/publicIPAddresses/',parameters('maharaCommon').lbPipName)]"
+                "[concat('Microsoft.Network/publicIPAddresses/',parameters('moodleCommon').lbPipName)]"
             ],
             "location": "[resourceGroup().location]",
-            "name": "[parameters('maharaCommon').lbName]",
+            "name": "[parameters('moodleCommon').lbName]",
             "properties": {
                 "backendAddressPools": [
                     {
-                        "name": "[parameters('maharaCommon').extBeName ]"
+                        "name": "[parameters('moodleCommon').extBeName ]"
                     }
                 ],
                 "frontendIPConfigurations": [
                     {
-                        "name": "[parameters('maharaCommon').extFeName ]",
+                        "name": "[parameters('moodleCommon').extFeName ]",
                         "properties": {
                             "publicIPAddress": {
                                 "id": "[variables('pipID')]"
@@ -187,7 +193,7 @@
                 ],
                 "probes": [
                     {
-                        "name": "[parameters('maharaCommon').extProbe  ]",
+                        "name": "[parameters('moodleCommon').extProbe  ]",
                         "properties": {
                             "intervalInSeconds": "5",
                             "numberOfProbes": "3",
@@ -201,22 +207,23 @@
         }
     ],
     "variables": {
-        "documentation01": "This sub-template creates a virtual network with three subnets and then creates the mahara load-balancer with public IP/dns",
+        "documentation01": "This sub-template creates a virtual network with three subnets and then creates the moodle load-balancer with public IP/dns",
         "documentation02": "It expects certain values in the 'common' datastructure.",
         "documentation03": "    vnetName         - name of virtual network",
         "documentation04": "    vNetAddressSpace - base of address of 16 bit address range",
         "documentation05": "    subnetWeb        - name of subnet inside virtual network - will be assigned the .0.0/24 range",
         "documentation06": "    subnetSan        - name of subnet inside virtual network - will be assigned the .1.0/24 range",
+        "documentation07": "    subnetRedis      - name of subnet inside virtual network - will be assigned the .3.0/24 range",
         "documentation08": "    subnetElastic    - name of subnet inside virtual network - will be assigned the .4.0/24 range",
         "documentation09": "    gatewaySubnet    - name of subnet inside virtual network - will be assigned the .2.0/24 range",
         "documentation10": "    lbPipName        - name of public IP",
         "documentation11": "    lbName           - name of Moodl load balancer",
-        "extBeID": "[concat(variables('extLbID'),'/backendAddressPools/',parameters('maharaCommon').extBeName)]",
-        "extFeID": "[concat(variables('extLbID'),'/frontendIPConfigurations/',parameters('maharaCommon').extFeName)]",
-        "extLbID": "[resourceId('Microsoft.Network/loadBalancers',parameters('maharaCommon').lbName)]",
-        "extNatPoolID": "[concat(variables('extLbID'),'/inboundNatPools/',parameters('maharaCommon').extNatPool)]",
-        "extProbeID": "[concat(variables('extLbID'),'/probes/',parameters('maharaCommon').extProbe)]",
-        "gatewaySubnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('maharaCommon').vnetName),'/subnets/',parameters('maharaCommon').gatewaySubnet)]",
-        "pipID": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('maharaCommon').lbPipName)]"
+        "extBeID": "[concat(variables('extLbID'),'/backendAddressPools/',parameters('moodleCommon').extBeName)]",
+        "extFeID": "[concat(variables('extLbID'),'/frontendIPConfigurations/',parameters('moodleCommon').extFeName)]",
+        "extLbID": "[resourceId('Microsoft.Network/loadBalancers',parameters('moodleCommon').lbName)]",
+        "extNatPoolID": "[concat(variables('extLbID'),'/inboundNatPools/',parameters('moodleCommon').extNatPool)]",
+        "extProbeID": "[concat(variables('extLbID'),'/probes/',parameters('moodleCommon').extProbe)]",
+        "gatewaySubnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('moodleCommon').vnetName),'/subnets/',parameters('moodleCommon').gatewaySubnet)]",
+        "pipID": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('moodleCommon').lbPipName)]"
     }
 }

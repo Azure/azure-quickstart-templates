@@ -2,9 +2,9 @@
     "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "maharaCommon": {
+        "moodleCommon": {
             "metadata": {
-                "description": "Common mahara values"
+                "description": "Common Moodle values"
             },
             "type": "object"
         },
@@ -13,16 +13,22 @@
                 "description": "Key used to create a storage container"
             },
             "type": "string"
+        },
+        "redisPrimaryKey": {
+            "metadata": {
+                "description": "Key used for Redis authentication"
+            },
+            "type": "string"
         }
     },
     "resources": [
         {
             "apiVersion": "2015-06-15",
             "location": "[resourceGroup().location]",
-            "name": "[parameters('maharaCommon').jboxPipName]",
+            "name": "[parameters('moodleCommon').jboxPipName]",
             "properties": {
                 "dnsSettings": {
-                    "domainNameLabel": "[parameters('maharaCommon').jboxPipName]"
+                    "domainNameLabel": "[parameters('moodleCommon').jboxPipName]"
                 },
                 "publicIPAllocationMethod": "Static"
             },
@@ -34,7 +40,7 @@
         {
             "apiVersion": "2016-03-30",
             "location": "[resourceGroup().location]",
-            "name": "[parameters('maharaCommon').jboxNsgName]",
+            "name": "[parameters('moodleCommon').jboxNsgName]",
             "properties": {
                 "securityRules": [
                     {
@@ -73,10 +79,10 @@
         {
             "apiVersion": "2015-06-15",
             "dependsOn": [
-                "[concat('Microsoft.Network/publicIPAddresses/', parameters('maharaCommon').jboxPipName)]"
+                "[concat('Microsoft.Network/publicIPAddresses/', parameters('moodleCommon').jboxPipName)]"
             ],
             "location": "[resourceGroup().location]",
-            "name": "[parameters('maharaCommon').jboxNicName]",
+            "name": "[parameters('moodleCommon').jboxNicName]",
             "properties": {
                 "ipConfigurations": [
                     {
@@ -102,15 +108,15 @@
             "type": "Microsoft.Network/networkInterfaces"
         },
         {
-            "apiVersion": "[parameters('maharaCommon').computeApi]",
+            "apiVersion": "[parameters('moodleCommon').computeApi]",
             "dependsOn": [
-                "[concat('Microsoft.Network/networkInterfaces/', parameters('maharaCommon').jboxNicName)]"
+                "[concat('Microsoft.Network/networkInterfaces/', parameters('moodleCommon').jboxNicName)]"
             ],
             "location": "[resourceGroup().location]",
-            "name": "[parameters('maharaCommon').jboxVmName]",
+            "name": "[parameters('moodleCommon').jboxVmName]",
             "properties": {
                 "hardwareProfile": {
-                    "vmSize": "[parameters('maharaCommon').controllerVmSku]"
+                    "vmSize": "[parameters('moodleCommon').controllerVmSku]"
                 },
                 "networkProfile": {
                     "networkInterfaces": [
@@ -120,15 +126,15 @@
                     ]
                 },
                 "osProfile": {
-                    "adminUsername": "[parameters('maharaCommon').sshUsername]",
-                    "computerName": "[parameters('maharaCommon').jboxVmName]",
+                    "adminUsername": "[parameters('moodleCommon').sshUsername]",
+                    "computerName": "[parameters('moodleCommon').jboxVmName]",
                     "linuxConfiguration": {
                         "disablePasswordAuthentication": true,
                         "ssh": {
                             "publicKeys": [
                                 {
-                                    "path": "[concat('/home/', parameters('maharaCommon').sshUsername, '/.ssh/authorized_keys')]",
-                                    "keyData": "[parameters('maharaCommon').sshPublicKey]"
+                                    "path": "[concat('/home/', parameters('moodleCommon').sshUsername, '/.ssh/authorized_keys')]",
+                                    "keyData": "[parameters('moodleCommon').sshPublicKey]"
                                 }
                             ]
                         }
@@ -136,13 +142,13 @@
                 },
                 "storageProfile": {
                     "dataDisks": [],
-                    "imageReference": "[parameters('maharaCommon').osType]",
+                    "imageReference": "[parameters('moodleCommon').osType]",
                     "osDisk": {
                         "createOption": "fromImage",
                         "managedDisk": {
                             "storageAccountType": "Standard_LRS"
                         },
-                        "name": "[parameters('maharaCommon').jboxVmName]"
+                        "name": "[parameters('moodleCommon').jboxVmName]"
                     }
                 }
             },
@@ -154,21 +160,25 @@
         {
             "apiVersion": "2015-01-01",
             "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/', parameters('maharaCommon').jboxVmName)]"
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('moodleCommon').jboxVmName)]"
             ],
-            "name": "[concat(parameters('maharaCommon').jboxVmName,'-ScriptProcessor')]",
+            "name": "[concat(parameters('moodleCommon').jboxVmName,'-ScriptProcessor')]",
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
-                    "maharaCommon": {
-                        "value": "[parameters('maharaCommon')]"
+                    "moodleCommon": {
+                        "value": "[parameters('moodleCommon')]"
                     },
                     "blobStorageAccountKey": {
                         "value": "[parameters('blobStorageAccountKey')]"
+                    },
+                    "redisPrimaryKey": {
+                        "value": "[parameters('redisPrimaryKey')]"
                     }
+
                 },
                 "templateLink": {
-                    "uri": "[concat(    parameters('maharaCommon').baseTemplateUrl,'controllerconfig',parameters('maharaCommon').applyScriptsSwitch,'.json')]"
+                    "uri": "[concat(    parameters('moodleCommon').baseTemplateUrl,'controllerconfig',parameters('moodleCommon').applyScriptsSwitch,'.json')]"
                 }
             },
             "type": "Microsoft.Resources/deployments"
@@ -176,28 +186,28 @@
         {
             "apiVersion": "2015-01-01",
             "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/',parameters('maharaCommon').jboxVmName)]"
+                "[concat('Microsoft.Compute/virtualMachines/',parameters('moodleCommon').jboxVmName)]"
             ],
-            "name": "[concat(parameters('maharaCommon').jboxVmName,'-Backup')]",
+            "name": "[concat(parameters('moodleCommon').jboxVmName,'-Backup')]",
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
-                    "maharaCommon": {
-                        "value": "[parameters('maharaCommon')]"
+                    "moodleCommon": {
+                        "value": "[parameters('moodleCommon')]"
                     },
                     "vmName": {
-                        "value": "[parameters('maharaCommon').jboxVmName]"
+                        "value": "[parameters('moodleCommon').jboxVmName]"
                     }
                 },
                 "templateLink": {
-                    "uri": "[concat(    parameters('maharaCommon').baseTemplateUrl,'recoveryservicesEnlist',parameters('maharaCommon').azureBackupSwitch,'.json')]"
+                    "uri": "[concat(    parameters('moodleCommon').baseTemplateUrl,'recoveryservicesEnlist',parameters('moodleCommon').azureBackupSwitch,'.json')]"
                 }
             },
             "type": "Microsoft.Resources/deployments"
         }
     ],
     "variables": {
-        "documentation01": "This sub-template drives the controller/jump-box which is used as the access-point for other mahara VM's ",
+        "documentation01": "This sub-template drives the controller/jump-box which is used as the access-point for other moodle VM's ",
         "documentation02": "It expects certain values in the 'common' datastructure.",
         "documentation03": "    vnetName     - name of virtual network",
         "documentation04": "    subnetWeb    - name of subnet for controller (and vm scale set)",
@@ -208,14 +218,14 @@
         "documentation09": "This sub-template calls other sub-templates",
         "documentation10": "    controllerconfig       - conditionally applies post-deployment script on the VM",
         "documentation18": "    recoveryservicesEnlist - conditionally enlists the VM into the backup regimen",
-        "nicRef": "[resourceId('Microsoft.Network/networkInterfaces', parameters('maharaCommon').jboxNicName)]",
-        "nsgRef": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('maharaCommon').jboxNsgName)]",
-        "pipRef": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('maharaCommon').jboxPipName)]",
-        "subnetWebRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('maharaCommon').vnetName), '/subnets/',parameters('maharaCommon').subnetWeb)]"
+        "nicRef": "[resourceId('Microsoft.Network/networkInterfaces', parameters('moodleCommon').jboxNicName)]",
+        "nsgRef": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('moodleCommon').jboxNsgName)]",
+        "pipRef": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('moodleCommon').jboxPipName)]",
+        "subnetWebRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('moodleCommon').vnetName), '/subnets/',parameters('moodleCommon').subnetWeb)]"
     },
     "outputs": {
         "controllerIP": {
-            "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', parameters('maharaCommon').jboxPipName), '2015-06-15').ipAddress]",
+            "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', parameters('moodleCommon').jboxPipName), '2015-06-15').ipAddress]",
             "type": "string"
         }
     }
