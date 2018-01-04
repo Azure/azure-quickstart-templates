@@ -119,7 +119,7 @@ http {
     https on;                                                                                                                         
   }   
 
-  log_format moodle_combined '\$remote_addr - \$upstream_http_x_moodleuser [\$time_local] '
+  log_format mahara_combined '\$remote_addr - \$upstream_http_x_maharauser [\$time_local] '
                              '"\$request" \$status \$body_bytes_sent '
                              '"\$http_referer" "\$http_user_agent"';
 
@@ -133,12 +133,12 @@ EOF
 server {
         listen 81 default;
         server_name ${siteFQDN};
-        root /moodle/html/moodle;
+        root /mahara/html/mahara;
 	index index.php index.html index.htm;
 
         # Log to syslog
-        error_log syslog:server=localhost,facility=local1,severity=error,tag=moodle;
-        access_log syslog:server=localhost,facility=local1,severity=notice,tag=moodle moodle_combined;
+        error_log syslog:server=localhost,facility=local1,severity=error,tag=mahara;
+        access_log syslog:server=localhost,facility=local1,severity=notice,tag=mahara mahara_combined;
 
         # Log XFF IP instead of varnish
         set_real_ip_from    10.0.0.0/8;
@@ -187,12 +187,12 @@ server {
 	index index.php index.html index.htm;
 
         ssl on;
-        ssl_certificate /moodle/certs/nginx.crt;
-        ssl_certificate_key /moodle/certs/nginx.key;
+        ssl_certificate /mahara/certs/nginx.crt;
+        ssl_certificate_key /mahara/certs/nginx.key;
 
         # Log to syslog
-        error_log syslog:server=localhost,facility=local1,severity=error,tag=moodle;
-        access_log syslog:server=localhost,facility=local1,severity=notice,tag=moodle moodle_combined;
+        error_log syslog:server=localhost,facility=local1,severity=error,tag=mahara;
+        access_log syslog:server=localhost,facility=local1,severity=notice,tag=mahara mahara_combined;
 
         # Log XFF IP instead of varnish
         set_real_ip_from    10.0.0.0/8;
@@ -230,7 +230,7 @@ EOF
    sed -i "s/;opcache.memory_consumption.*/opcache.memory_consumption = 256/" $PhpIni
    sed -i "s/;opcache.max_accelerated_files.*/opcache.max_accelerated_files = 8000/" $PhpIni
     
-   # Remove the default site. Moodle is the only site we want
+   # Remove the default site. Mahara is the only site we want
    rm -f /etc/nginx/sites-enabled/default
 
    # restart Nginx
@@ -255,11 +255,11 @@ EOF
    service php7.0-fpm restart
 
    # Configure varnish startup for 16.04
-   VARNISHSTART="ExecStart=\/usr\/sbin\/varnishd -j unix,user=vcache -F -a :80 -T localhost:6082 -f \/etc\/varnish\/moodle.vcl -S \/etc\/varnish\/secret -s malloc,1024m -p thread_pool_min=200 -p thread_pool_max=4000 -p thread_pool_add_delay=2 -p timeout_linger=100 -p timeout_idle=30 -p send_timeout=1800 -p thread_pools=4 -p http_max_hdr=512 -p workspace_backend=512k"
+   VARNISHSTART="ExecStart=\/usr\/sbin\/varnishd -j unix,user=vcache -F -a :80 -T localhost:6082 -f \/etc\/varnish\/mahara.vcl -S \/etc\/varnish\/secret -s malloc,1024m -p thread_pool_min=200 -p thread_pool_max=4000 -p thread_pool_add_delay=2 -p timeout_linger=100 -p timeout_idle=30 -p send_timeout=1800 -p thread_pools=4 -p http_max_hdr=512 -p workspace_backend=512k"
    sed -i "s/^ExecStart.*/${VARNISHSTART}/" /lib/systemd/system/varnish.service
 
-   # Configure varnish VCL for moodle
-   cat <<EOF >> /etc/varnish/moodle.vcl
+   # Configure varnish VCL for mahara
+   cat <<EOF >> /etc/varnish/mahara.vcl
 vcl 4.0;
 
 import std;
@@ -315,8 +315,8 @@ sub vcl_recv {
       return (pass);
     }
 
-    ### Rules for Moodle and Totara sites ###
-    # Moodle doesn't require Cookie to serve following assets. Remove Cookie header from request, so it will be looked up.
+    ### Rules for Mahara and Totara sites ###
+    # Mahara doesn't require Cookie to serve following assets. Remove Cookie header from request, so it will be looked up.
     if ( req.url ~ "^/altlogin/.+/.+\.(png|jpg|jpeg|gif|css|js|webp)$" ||
          req.url ~ "^/pix/.+\.(png|jpg|jpeg|gif)$" ||
          req.url ~ "^/theme/font.php" ||
@@ -334,7 +334,7 @@ sub vcl_recv {
         return(hash);
     }
 
-    # Perform lookup for selected assets that we know are static but Moodle still needs a Cookie
+    # Perform lookup for selected assets that we know are static but Mahara still needs a Cookie
     if(  req.url ~ "^/theme/.+\.(png|jpg|jpeg|gif|css|js|webp)" ||
          req.url ~ "^/lib/.+\.(png|jpg|jpeg|gif|css|js|webp)" ||
          req.url ~ "^/pluginfile.php/[0-9]+/course/overviewfiles/.+\.(?i)(png|jpg)$"
@@ -346,7 +346,7 @@ sub vcl_recv {
     }
 
     # Serve requests to SCORM checknet.txt from varnish. Have to remove get parameters. Response body always contains "1"
-    if ( req.url ~ "^/lib/yui/build/moodle-core-checknet/assets/checknet.txt" )
+    if ( req.url ~ "^/lib/yui/build/mahara-core-checknet/assets/checknet.txt" )
     {
         set req.url = regsub(req.url, "(.*)\?.*", "\1");
         unset req.http.Cookie; # Will go to hash anyway at the end of vcl_recv
@@ -359,7 +359,7 @@ sub vcl_recv {
         return (pass);
     }
 
-    # Almost everything in Moodle correctly serves Cache-Control headers, if
+    # Almost everything in Mahara correctly serves Cache-Control headers, if
     # needed, which varnish will honor, but there are some which don't. Rather
     # than explicitly finding them all and listing them here we just fail safe
     # and don't cache unknown urls that get this far.

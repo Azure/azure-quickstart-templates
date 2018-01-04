@@ -546,7 +546,7 @@ maxretry = 5
 EOF
 
     # create gluster mount point
-    mkdir -p /moodle
+    mkdir -p /mahara
 
     export DEBIAN_FRONTEND=noninteractive
 
@@ -588,8 +588,8 @@ EOF
         --output tsv)
 
     # mount gluster files system
-    echo -e '\n\rInstalling GlusterFS on '$glusterNode':/'$glusterVolume '/moodle\n\r' 
-    sudo mount -t glusterfs $glusterNode:/$glusterVolume /moodle
+    echo -e '\n\rInstalling GlusterFS on '$glusterNode':/'$glusterVolume '/mahara\n\r' 
+    sudo mount -t glusterfs $glusterNode:/$glusterVolume /mahara
 
     
     
@@ -600,7 +600,7 @@ EOF
     sudo apt-get -y  --force-yes install nginx php-fpm varnish >> /tmp/apt5a.log
     sudo apt-get -y  --force-yes install php php-cli php-curl php-zip >> /tmp/apt5b.log
 
-    # Moodle requirements
+    # Mahara requirements
     sudo apt-get -y update > /dev/null
     sudo apt-get install -y --force-yes graphviz aspell php-common php-soap php-json php-redis > /tmp/apt6.log
     sudo apt-get install -y --force-yes php-bcmath php-gd php-mysql php-xmlrpc php-intl php-xml php-bz2 >> /tmp/apt6.log
@@ -623,12 +623,12 @@ EOF
     /usr/bin/curl -k --max-redirs 10 https://github.com/MaharaProject/mahara/archive/'$maharaVersion'.zip -L -o mahara.zip
     /usr/bin/unzip -q mahara.zip
     # setup theme files
-    cd mahara-'$moodleVersion'
+    cd mahara-'$maharaVersion'
     npm install -g gulp
     make css
     /bin/mv -v * /mahara/html/mahara
 
-    chmod 755 /tmp/setup-moodle.sh
+    chmod 755 /tmp/setup-mahara.sh
     sudo -u www-data /tmp/setup-mahara.sh  >> /tmp/setupmahara.log
 
     # create cron entry
@@ -685,7 +685,7 @@ http {
     https on;                                                                                                                         
   }   
 
-  log_format moodle_combined '\$remote_addr - \$upstream_http_x_maharauser [\$time_local] '
+  log_format mahara_combined '\$remote_addr - \$upstream_http_x_maharauser [\$time_local] '
                              '"\$request" \$status \$body_bytes_sent '
                              '"\$http_referer" "\$http_user_agent"';
 
@@ -753,8 +753,8 @@ server {
 	index index.php index.html index.htm;
 
         ssl on;
-        ssl_certificate /moodle/certs/nginx.crt;
-        ssl_certificate_key /moodle/certs/nginx.key;
+        ssl_certificate /mahara/certs/nginx.crt;
+        ssl_certificate_key /mahara/certs/nginx.key;
 
         # Log to syslog
         error_log syslog:server=localhost,facility=local1,severity=error,tag=mahara;
@@ -781,7 +781,7 @@ server {
 EOF
 
     echo -e "Generating SSL self-signed certificate"
-    openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /moodle/certs/nginx.key -out /mahara/certs/nginx.crt -subj "/C=BR/ST=SP/L=SaoPaulo/O=IT/CN=$siteFQDN"
+    openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /mahara/certs/nginx.key -out /mahara/certs/nginx.crt -subj "/C=BR/ST=SP/L=SaoPaulo/O=IT/CN=$siteFQDN"
 
    # php config 
    PhpIni=/etc/php/7.0/fpm/php.ini
@@ -814,14 +814,14 @@ pm.min_spare_servers = 22
 pm.max_spare_servers = 30 
 EOF
 
-   # Remove the default site. Moodle is the only site we want
+   # Remove the default site. Mahara is the only site we want
    rm -f /etc/nginx/sites-enabled/default
 
    # restart Nginx
     sudo service nginx restart 
 
    # Configure varnish startup for 16.04
-   VARNISHSTART="ExecStart=\/usr\/sbin\/varnishd -j unix,user=vcache -F -a :80 -T localhost:6082 -f \/etc\/varnish\/moodle.vcl -S \/etc\/varnish\/secret -s malloc,1024m -p thread_pool_min=200 -p thread_pool_max=4000 -p thread_pool_add_delay=2 -p timeout_linger=100 -p timeout_idle=30 -p send_timeout=1800 -p thread_pools=4 -p http_max_hdr=512 -p workspace_backend=512k"
+   VARNISHSTART="ExecStart=\/usr\/sbin\/varnishd -j unix,user=vcache -F -a :80 -T localhost:6082 -f \/etc\/varnish\/mahara.vcl -S \/etc\/varnish\/secret -s malloc,1024m -p thread_pool_min=200 -p thread_pool_max=4000 -p thread_pool_add_delay=2 -p timeout_linger=100 -p timeout_idle=30 -p send_timeout=1800 -p thread_pools=4 -p http_max_hdr=512 -p workspace_backend=512k"
    sed -i "s/^ExecStart.*/${VARNISHSTART}/" /lib/systemd/system/varnish.service
 
    # Configure varnish VCL for mahara
@@ -890,7 +890,7 @@ sub vcl_recv {
         return(hash);
     }
  
-    # Perform lookup for selected assets that we know are static but Moodle still needs a Cookie
+    # Perform lookup for selected assets that we know are static but Mahara still needs a Cookie
     if(  req.url ~ "^/theme/.+\.(png|jpg|jpeg|gif|css|js|webp)" ||
          req.url ~ "^/lib/.+\.(png|jpg|jpeg|gif|css|js|webp)" ||
          req.url ~ "^/pluginfile.php/[0-9]+/course/overviewfiles/.+\.(?i)(png|jpg)$"
@@ -902,7 +902,7 @@ sub vcl_recv {
     }
 
     # Serve requests to SCORM checknet.txt from varnish. Have to remove get parameters. Response body always contains "1"
-    if ( req.url ~ "^/lib/yui/build/moodle-core-checknet/assets/checknet.txt" )
+    if ( req.url ~ "^/lib/yui/build/mahara-core-checknet/assets/checknet.txt" )
     {
         set req.url = regsub(req.url, "(.*)\?.*", "\1");
         unset req.http.Cookie; # Will go to hash anyway at the end of vcl_recv
@@ -915,7 +915,7 @@ sub vcl_recv {
         return (pass);
     }
 
-    # Almost everything in Moodle correctly serves Cache-Control headers, if
+    # Almost everything in Mahara correctly serves Cache-Control headers, if
     # needed, which varnish will honor, but there are some which don't. Rather
     # than explicitly finding them all and listing them here we just fail safe
     # and don't cache unknown urls that get this far.
@@ -1063,7 +1063,7 @@ EOF
     service varnish restart
 
     mysql -h $mysqlIP -u $mysqladminlogin -p${mysqladminpass} -e "CREATE DATABASE ${maharadbname} CHARACTER SET utf8;"
-    mysql -h $mysqlIP -u $mysqladminlogin -p${mysqladminpass} -e "GRANT ALL ON ${maharadbname}.* TO ${moodledbuser} IDENTIFIED BY '${moodledbpass}';"
+    mysql -h $mysqlIP -u $mysqladminlogin -p${mysqladminpass} -e "GRANT ALL ON ${maharadbname}.* TO ${maharadbuser} IDENTIFIED BY '${maharadbpass}';"
 
     echo "mysql -h $mysqlIP -u $mysqladminlogin -p${mysqladminpass} -e \"CREATE DATABASE ${maharadbname};\"" >> /tmp/debug
     echo "mysql -h $mysqlIP -u $mysqladminlogin -p${mysqladminpass} -e \"GRANT ALL ON ${maharadbname}.* TO ${maharadbuser} IDENTIFIED BY '${maharadbpass}';\"" >> /tmp/debug
@@ -1092,7 +1092,7 @@ SALT=`${PWGEN} -y 64 1`
 \$cfg->dbhost   = '$mysqlIP';
 \$cfg->dbport   = null;
 \$cfg->dbname   = '$maharadbname';
-\$cfg->dbuser   = '$azuremoodledbuser';
+\$cfg->dbuser   = '$azuremaharadbuser';
 \$cfg->dbname   = '$maharadbpass';
 \$cfg->dataroot = '/mahara/maharadata';
 \$cfg->wwwroot  = 'https://siteFQDN';
@@ -1117,7 +1117,7 @@ echo -e "cd /tmp; sudo -u www-data /usr/bin/php /mahara/html/mahara/htdocs/admin
 
    # Set up cronned sql dump
    cat <<EOF > /etc/cron.d/sql-backup
-   22 02 * * * root /usr/bin/mysqldump -h $mysqlIP -u ${azuremoodledbuser} -p'${moodledbpass}' --databases ${moodledbname} | gzip > /mahara/db-backup.sql.gz
+   22 02 * * * root /usr/bin/mysqldump -h $mysqlIP -u ${azuremaharadbuser} -p'${maharadbpass}' --databases ${maharadbname} | gzip > /mahara/db-backup.sql.gz
 EOF
 
    # Turning off services we don't need the jumpbox running
@@ -1127,9 +1127,9 @@ EOF
    service varnishncsa stop
    service varnishlog stop
 
-   # make sure Moodle can read its code directory but not write
+   # make sure Mahara can read its code directory but not write
    sudo chown -R root.root /mahara/html/mahara
-   sudo find /moodle/html/mahara -type f -exec chmod 644 '{}' \;
-   sudo find /moodle/html/mahara -type d -exec chmod 755 '{}' \;
+   sudo find /mahara/html/mahara -type f -exec chmod 644 '{}' \;
+   sudo find /mahara/html/mahara -type d -exec chmod 755 '{}' \;
 
 }  > /tmp/install.log
