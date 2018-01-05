@@ -624,13 +624,15 @@ EOF
     /usr/bin/unzip -q mahara.zip
     # setup theme files
     cd mahara-'$maharaVersion'
-    npm install -g gulp
-    make css
     /bin/mv -v * /mahara/html/mahara
     ' > /tmp/setup-mahara.sh
 
     chmod 755 /tmp/setup-mahara.sh
     sudo -u www-data /tmp/setup-mahara.sh  >> /tmp/setupmahara.log
+    cd  /mahara/html/mahara
+    npm install -g gulp
+    make css
+
 
     # create cron entry
     # It is scheduled for once per day. It can be changed as needed.
