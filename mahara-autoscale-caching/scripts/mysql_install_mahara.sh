@@ -627,6 +627,7 @@ EOF
     npm install -g gulp
     make css
     /bin/mv -v * /mahara/html/mahara
+    ' > /tmp/setup-mahara.sh
 
     chmod 755 /tmp/setup-mahara.sh
     sudo -u www-data /tmp/setup-mahara.sh  >> /tmp/setupmahara.log
@@ -1108,7 +1109,7 @@ SALT=`${PWGEN} -y 64 1`
 
 EOF
     
-echo -e "cd /tmp; sudo -u www-data /usr/bin/php /mahara/html/mahara/htdocs/admin/cli/install.php --adminpassword="$adminpass" --adminemail=admin@"$siteFQDN" --sitename='Mahara Portfolio'
+echo -e "cd /tmp; sudo -u www-data /usr/bin/php /mahara/html/mahara/htdocs/admin/cli/install.php --adminpassword="$adminpass" --adminemail=admin@"$siteFQDN" --sitename='Mahara Portfolio' || true"
 
 
 
