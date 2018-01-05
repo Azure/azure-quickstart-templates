@@ -4,7 +4,7 @@ This work is mostly based on Paulo Teixeira's work. It adds several configurable
 
 After deploying, these templates will provide you with a new Moodle site with caching for speed and scaling frontends to handle PHP load. The filesystem behind it is mirrored for high availability and optionally backed up through Azure. Filesystem permissions and options have also been tuned to make Moodle more secure than a default install.
 
-[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FCatalystAUInf%2Fazure-moodle-autoscale%2Fmaster%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FCatalystAUInf%2Fazure-moodle-autoscale%2Fmaster%2Fazuredeploy.json)
+[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmoodle-autoscale-caching%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmoodle-autoscale-caching%2Fazuredeploy.json)
 
 `Tags: cluster, ha, moodle, autoscale, linux, ubuntu`
 
@@ -21,7 +21,7 @@ This template set deploys the following infrastructure:
 - Three Elasticsearch VMs for search indexing in Moodle
 - Dual gluster nodes for high availability access to Moodle files
 
-![network_diagram](images/stack_diagram.png "Diagram of deployed stack")
+![network_diagram](images/stack_diagram.jpg "Diagram of deployed stack")
 
 ## *Deployment steps*
 
