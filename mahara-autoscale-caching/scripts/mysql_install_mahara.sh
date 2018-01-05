@@ -610,7 +610,7 @@ EOF
 
 
     # Set up initial mahara dirs
-    mkdir -p /mahara/html
+    mkdir -p /mahara/html/mahara
     mkdir -p /mahara/certs
     mkdir -p /mahara/maharadata
     chown -R www-data.www-data /mahara
