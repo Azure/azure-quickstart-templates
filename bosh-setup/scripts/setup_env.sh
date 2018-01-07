@@ -95,10 +95,17 @@ $(client_secret_or_certificate | sed 's/^/  /')
 EOF
   fi
   if [ "$environment" = "AzureStack" ]; then
-    cat > azure-stack-ca-cert.yml << EOF
+    if [ "$(get_setting AZURE_STACK_CA_ROOT_CERTIFICATE | base64 --decode)" = "" ]; then
+      cat > azure-stack-ca-cert.yml << EOF
 ca_cert: |-
 $(cat /var/lib/waagent/Certificates.pem | sed 's/^/  /')
 EOF
+    else
+      cat > azure-stack-ca-cert.yml << EOF
+ca_cert: |-
+$(get_setting AZURE_STACK_CA_ROOT_CERTIFICATE | base64 --decode | sed 's/^/  /')
+EOF
+    fi
   fi
 popd  > /dev/null
 chmod 775 $manifests_dir
