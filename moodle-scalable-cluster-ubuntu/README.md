@@ -1,6 +1,4 @@
-# *Autoscaling Moodle stack for Postgres and MySQL databases*
-
-This work is mostly based on Paulo Teixeira's work. It adds several configurable features and switches to a web stack with caching. It also uses Azure resources for Redis, ObjectFS and Databases. 
+# *Autoscaling Moodle stack for Postgres or MySQL databases*
 
 After deploying, these templates will provide you with a new Moodle site with caching for speed and scaling frontends to handle PHP load. The filesystem behind it is mirrored for high availability and optionally backed up through Azure. Filesystem permissions and options have also been tuned to make Moodle more secure than a default install.
 
