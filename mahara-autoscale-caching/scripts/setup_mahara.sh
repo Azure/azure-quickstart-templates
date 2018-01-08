@@ -133,7 +133,7 @@ EOF
 server {
         listen 81 default;
         server_name ${siteFQDN};
-        root /mahara/html/mahara;
+        root /mahara/html/mahara/htdocs;
 	index index.php index.html index.htm;
 
         # Log to syslog
@@ -183,7 +183,7 @@ server {
 
 server {
         listen 443 ssl;
-        root /mahara/html/mahara;
+        root /mahara/html/mahara/htdocs;
 	index index.php index.html index.htm;
 
         ssl on;

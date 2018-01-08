@@ -56,7 +56,7 @@
 
     # make sure system does automatic updates and fail2ban
     sudo apt-get -y update
-    sudo apt-get -y install unattended-upgrades fail2ban
+    sudo apt-get -y install unattended-upgrades fail2ban pwgen
 
     # configure fail2ban
     cat <<EOF > /etc/fail2ban/jail.conf
@@ -619,6 +619,9 @@ EOF
     echo '#!/bin/bash
     cd /tmp
 
+    # Generate urlsecret
+    URLSECRET=`/usr/bin/pwgen -1`
+
     # downloading mahara 
     /usr/bin/curl -k --max-redirs 10 https://github.com/MaharaProject/mahara/archive/'$maharaVersion'.zip -L -o mahara.zip
     /usr/bin/unzip -q mahara.zip
@@ -1091,6 +1094,7 @@ SALT=`${PWGEN} -y 64 1`
 
     cat <<EOF >> /mahara/html/mahara/htdocs/config.php
 <?php
+\$cfg = new stdClass();
 \$cfg->dbtype   = 'mysql';
 \$cfg->dbhost   = '$mysqlIP';
 \$cfg->dbport   = null;
@@ -1098,15 +1102,14 @@ SALT=`${PWGEN} -y 64 1`
 \$cfg->dbuser   = '$azuremaharadbuser';
 \$cfg->dbname   = '$maharadbpass';
 \$cfg->dataroot = '/mahara/maharadata';
-\$cfg->wwwroot  = 'https://siteFQDN';
-\$cfg->urlsecret = null;
+\$cfg->wwwroot  = 'https://$siteFQDN';
 \$cfg->passwordsaltmain = '$SALT';
 \$cfg->productionmode = true;
 \$cfg->plugin_search_elasticsearch_indexname = 'mahara';
-\$cfg->plugin_search_elasticsearch_host = '$elasticVm1IP'
+\$cfg->plugin_search_elasticsearch_host = '$elasticVm1IP';
 \$cfg->sslproxy = true;
 \$cfg->sendemail = true;
-\$cfg->urlsecret = 'dhaiChah';
+\$cfg->urlsecret = '$URLSECRET';
 \$cfg->directorypermissions = 0750;
 
 EOF
