@@ -2,12 +2,6 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "location": {
-      "type": "string",
-      "metadata": {
-        "description": "Region that will host resources created by this template."
-      }
-    },
     "adminUsername": {
       "type": "string",
       "metadata": {
@@ -37,11 +31,19 @@
         "description": "The size of the VM to create"
       },
       "defaultValue": "Standard_D1_V2"
+    },
+    "desktopInstall": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Installs Ubuntu Mate desktop GUI"
+      }
+
     }
   },
   "variables": {
     "dnsLabelPrefix": "[concat('msi',uniquestring(resourceGroup().id,deployment().name))]",
-    "_artifactsLocation": "https://raw.githubusercontent.com/sebastus/azure-quickstart-templates/sebastus-tfvm/201-vm-msi-linux-terraform",
+    "_artifactsLocation": "https://raw.githubusercontent.com/VaijanathB/azure-quickstart-templates/TerraformDevBoxMSI/201-vm-msi-linux-terraform",
     "infraStorageAccountName": "[take(concat('storeinfra', uniquestring(resourceGroup().id), variables('dnsLabelPrefix')),24)]",
     "stateStorageAccountName": "[take(concat('storestate', uniquestring(resourceGroup().id), variables('dnsLabelPrefix')),24)]",
     "nicName": "[concat('nic',uniquestring(resourceGroup().id,deployment().name))]",
@@ -76,7 +78,8 @@
     "createRBACUrl": "[concat(variables('_artifactsLocation'), '/nestedTemplates/setUpRbac.json')]",
     "installParm1": "[concat(' -u ', parameters('adminUsername'))]",
     "installParm2": "[concat(' -s ', subscription().subscriptionId)]",
-    "installParm3": "[concat(' -a ', variables('stateStorageAccountName'))]"
+    "installParm3": "[concat(' -a ', variables('stateStorageAccountName'))]",
+    "installParm4": "[if(equals(parameters('desktopInstall'), bool('true')), concat(' -d ', parameters('desktopInstall')), json('null'))]"
   },
   "resources": [
     {
@@ -153,6 +156,20 @@
               "sourcePortRange": "*",
               "destinationAddressPrefix": "*"
             }
+          },
+          {
+            "name": "rdp-rule",
+            "properties": {
+              "description": "Allow RDP",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3389",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1001,
+              "direction": "Inbound"
+            }
           }
         ]
       }
@@ -192,7 +209,7 @@
       "name": "[variables('vmName')]",
       "location": "[resourceGroup().location]",
       "identity": {
-        "type": "systemAssigned"
+        "type": "SystemAssigned"
       },
       "properties": {
         "hardwareProfile": {
@@ -283,14 +300,21 @@
           "fileUris": [
             "[concat(variables('_artifactsLocation'), '/scripts/infra.sh')]",
             "[concat(variables('_artifactsLocation'), '/scripts/install.sh')]",
+            "[concat(variables('_artifactsLocation'), '/scripts/desktop.sh')]",
             "[concat(variables('_artifactsLocation'), '/scripts/azureProviderAndCreds.tf')]"
           ]
         },
         "protectedSettings": {
-          "commandToExecute": "[concat('bash infra.sh && bash install.sh ', variables('installParm1'), variables('installParm2'), variables('installParm3'), ' -k ', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('stateStorageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value, ' -l ', reference(concat(resourceId('Microsoft.Compute/virtualMachines/', variables('vmName')),'/providers/Microsoft.ManagedIdentity/Identities/default'),'2015-08-31-PREVIEW').principalId)]"
+          "commandToExecute": "[concat('bash infra.sh && bash install.sh ', variables('installParm1'), variables('installParm2'), variables('installParm3'), variables('installParm4'), ' -k ', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('stateStorageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value, ' -l ', reference(concat(resourceId('Microsoft.Compute/virtualMachines/', variables('vmName')),'/providers/Microsoft.ManagedIdentity/Identities/default'),'2015-08-31-PREVIEW').principalId)]"
         }
       }
     }
-  ]
+  ],
+  "outputs": {
+    "fqdn": {
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName')),'2017-10-01').dnsSettings.fqdn]",
+      "type": "string"
+    }
+  }
 }
 

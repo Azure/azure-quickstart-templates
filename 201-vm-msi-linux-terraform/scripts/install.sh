@@ -46,7 +46,7 @@ then
 fi
 
 # Arguments
-while getopts :s:a:k:l:u: optname; do
+while getopts :s:a:k:l:u:d: optname; do
   if [[ $optname != 'e' && $optname != 'k' ]]; then
     log "Option $optname set with value ${OPTARG}"
   fi
@@ -65,6 +65,9 @@ while getopts :s:a:k:l:u: optname; do
       ;;
     u) #user account name
       USERNAME=${OPTARG}
+      ;;
+    d) #Desktop installation
+      DESKTOPINSTALL=${OPTARG}
       ;;
     h) #Show help
       help
@@ -99,19 +102,26 @@ echo "  }"                                                  >> $REMOTESTATEFILE
 echo "}"                                                    >> $REMOTESTATEFILE
 chmod 666 $REMOTESTATEFILE
 
-chown -R tfuser:tfuser /home/tfuser/tfTemplate
+chown -R $USERNAME:$USERNAME /home/$USERNAME/tfTemplate
 
 touch $ACCESSKEYFILE
 echo "access_key = \"$STORAGE_ACCOUNT_KEY\""                >> $ACCESSKEYFILE
 chmod 666 $ACCESSKEYFILE
-chown tfuser:tfuser $ACCESSKEYFILE
+chown $USERNAME:$USERNAME $ACCESSKEYFILE
 
 touch $TFENVFILE
 echo "export ARM_SUBSCRIPTION_ID =\"$SUBSCRIPTION_ID\""     >> $TFENVFILE
 echo "export ARM_CLIENT_ID       =\"$MSI_PRINCIPAL_ID\""    >> $TFENVFILE
 chmod 755 $TFENVFILE
-chown tfuser:tfuser $TFENVFILE
+chown $USERNAME:$USERNAME $TFENVFILE
 
 # create the container for remote state
 az login --msi
 az storage container create -n terraform-state --account-name $STORAGE_ACCOUNT_NAME --account-key $STORAGE_ACCOUNT_KEY
+
+if [[ -v DESKTOPINSTALL ]]; then
+    echo "Installing Mate Desktop"
+    bash ./desktop.sh
+    echo "Desktop installed"
+fi
+
