@@ -605,7 +605,6 @@ EOF
     sudo apt-get install -y --force-yes graphviz aspell php-common php-soap php-json php-redis > /tmp/apt6.log
     sudo apt-get install -y --force-yes php-bcmath php-gd php-mysql php-xmlrpc php-intl php-xml php-bz2 >> /tmp/apt6.log
     sudo apt-get install -y --force-yes npm nodejs-legacy
-    sudo apt-get install pwgen
 
 
 
