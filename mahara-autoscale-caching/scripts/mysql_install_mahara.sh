@@ -1086,7 +1086,7 @@ EOF
 
 # Fire off mahara setup
 PWGEN=`which pwgen`
-SALT=`${PWGEN} -y 64 1`
+SALT=`${PWGEN} 32 1`
 URLSECRET=`${PWGEN} 8 1`
 
     cat <<EOF >> /mahara/html/mahara/htdocs/config.php
