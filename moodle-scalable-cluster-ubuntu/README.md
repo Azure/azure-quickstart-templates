@@ -1,102 +1,131 @@
-# MoodleAzure
-High available, high scalable Moodle deployment using Azure Resource Manager Template
+# *Autoscaling Moodle stack for Postgres and MySQL databases*
 
-[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fpateixei%2FMoodleAzure%2Fv2%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fpateixei%2FMoodleAzure%2Fv2%2Fazuredeploy.json)
+This work is mostly based on Paulo Teixeira's work. It adds several configurable features and switches to a web stack with caching. It also uses Azure resources for Redis, ObjectFS and Databases. 
 
-This Azure Resource Manager template creates a clustered, multi-layered moodle environment. 
-With this template we have three main components being deployed: 
-- a web application layer with VMSS and auto-scale enabled
-- a database layer composed of a MariaDb Galera cluster 
-- a shared filesystem layer, for the "moodledata" content.
+After deploying, these templates will provide you with a new Moodle site with caching for speed and scaling frontends to handle PHP load. The filesystem behind it is mirrored for high availability and optionally backed up through Azure. Filesystem permissions and options have also been tuned to make Moodle more secure than a default install.
 
-Main differences from other existing Moodle templates:
-- web layer uses a VMScale Set with auto-scale configured, allowing better usage of resources (02 to 10 web nodes possible)
-- database layer was built using MariaDb Galera Cluster, in a high-available setup, providing 99.95% SLA
-- filesystem layer (MoodleData) was built on top of VMs with Premium Disks, supporting very intensive IO scenarios; also built on top of GlusterFS, a high scalable storage solution from RedHat (see www.glusterfs.org for details), in a High Available setup (data replication accross cluster nodes, also providing a 99.95% SLA).
-- Customer can define the size (small, medium, large) for database and filesystem layers 
-- Azure Redis Cache is deployed in the solution, to be used as Moodle Session Cache backend (manual setup required in moodle)
-- it was built for Moodle 3.x deployments 
-- Azure Backup can be enabled for VMS hosting MariaDb Database and Moodledata content (very important for DR scenarios)
-- Apache is configured with SSL support (using a self-signed certificate), allowing custom certificates with desired.
+[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmoodle-scalable-cluster-ubuntu%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmoodle-scalable-cluster-ubuntu%2Fazuredeploy.json)
 
-Summarizing, the following resources will be created during this process:
+`Tags: cluster, ha, moodle, autoscale, linux, ubuntu`
 
-- a Virtual Machine Scale Set (up to 10 instances) for the web tier, with auto-scale configured
-- 02 nodes Gluster Cluster  (2 Premium disks attached, raid0, a gluster brick in each virtual machine), data replicated accross nodes in a HA setup for the filesystem layer
-- 02 nodes MariaDb 10 Active-Active Cluster (Galera Cluster), in a HA setup scenario for the database layer
-- an Internal Load Balancer in front of the MariaDb cluster
-- an public Load Balancer in front of the Virtual Machine Scale Set (web layer)
-- a virtual machine used as a JumpBox for the environment, acessible via SSH
-- a redis cache to be used for Moodle Session Cache (manual setup required in Moodle)
-- a lot of underlying resources need for the environment (virtual network, storage accounts, etc)
+## *What this stack will give you*
 
-![Moodle On Azure](./images/moodle-on-azure.jpg)
+This template set deploys the following infrastructure:
+- Autoscaling web frontend layer (Nginx, php-fpm, Varnish)
+- Private virtual network for frontend instances
+- Controller instance running cron and handling syslog for the autoscaled site
+- Load balancer to balance across the autoscaled instances
+- Postgres or MySQL database
+- Azure Redis instance for Moodle caching
+- ObjectFS in Azure blobs (Moodle sitedata)
+- Three Elasticsearch VMs for search indexing in Moodle
+- Dual gluster nodes for high availability access to Moodle files
 
-## *Parameters for the deployment* 
+![network_diagram](images/stack_diagram.jpg "Diagram of deployed stack")
 
-- resourcesPrefix: Prefix for storage account name, network, virtual machines, and so on. Important: must be a unique value in the azure region; if you reach some error during the deployment, please confirm it's not being used by any other deployment (including from other people)
-- vNetAddressSpace: Address range for the Moodle virtual network - presumed /16 - further subneting during vnet creation
-- moodleVersion: The Moodle version you want to install.
-- glusterTshirtSize: VM size for the gluster nodes (please check for more guidance below)
-- mariaDbTshirtSize: VM size for the mariadb nodes (please check for more guidance below)
-- adminUsername: ssh user name (do not use 'root' or 'administrator', using any of these will cause the deployment to fail)
-- adminPassword: ssh password & moodle 'admin' password
-- mySqlUserPassword: my sql regular user password
-- mySqlRootPassword: my sql root user password (take note of this, would be necessary for database maintenance tasks)
-- applyScriptsSwitch: Use '1' ALWAYS; Switch to process or bypass all scripts/extensions; if you use '0' (zero), this template will only create the machines;
-- azureBackupSwitch: Switch to configure AzureBackup and enlist VM's; if you use '1', Azure Backup will be configured to backup MariaDb and GlusterFS nodes; highly recommended. The backup schedule can be adjusted later in the portal.
-*Accessing Moodle administrative area*
+## *Deployment steps*
 
-In order to access Moodle admin console, please use the username 'admin' (without quotes) and the password you provided during the setup in Azure Portal.
+You can click the "deploy to Azure" button at the beginning of this document or alternatively perform a deploy from the command line:
 
-## *Sizing the environment* 
+### *Command line deploys*
+Once you've checked out the templates from git, you'll want to use the [Azure CLI tool](https://docs.microsoft.com/en-us/cli/azure/overview?view=azure-cli-latest) to deploy them. First off you'll want to create a group with these:
 
-### Gluster and MariaDb
-The setup script will ask you about the 't-shirt size' for database & gluster layers.
-Here's an explanation for each one of them: 
+`az group create --name <stackname> --location <location>`
 
-Gluster t-shirt sizes: 
+Note that some locations in Azure might not support features or certain VM tiers.
 
-tshirt | VM Size         | Disk Count | Disk Size | Total Size
--------|-----------------|------------|-----------|------------
-Small  | Standard_DS2_v2 |  4         |  127 Gb   | 512 Gb
-Medium | Standard_DS3_v2 |  2         |  512 Gb   | 1 Tb
-Large  | Standard_DS4_v2 |  2         | 1023 Gb   | 2 Tb
+Next you'll want to either deploy and enter in all parameters manually:
 
-MariaDb t-shirt sizes: 
+`az group deployment create --name moodle-autoscale --resource-group <stackname> --template-file azuredeploy.json`
 
-tshirt | VM Size         | Disk Count | Disk Size | Total Size
--------|-----------------|------------|-----------|------------
-Small  | Standard_DS2_v2 |  2         |  127 Gb   | 256 Gb
-Medium | Standard_DS3_v2 |  2         |  512 Gb   | 1 Tb
-Large  | Standard_DS4_v2 |  2         | 1023 Gb   | 2 Tb
+Alternatively, you can configure all your variables in the "azuredeploy.parameters.json" file and run:
 
-There's no default rule or recommendation in order to decide which tier use for your deployment. 
-However, as an initial guidance, remember that: 
-- Moodle has a strong dependency of database setup; for a high number of simultanous users, consider using medium or large database sizes
-- GlusterFS must be dimensioned considering the space requirements (size of your moodledata) + number of IOPS required. A Moodle deployment where students upload lots of content in a small windows of time would require more IOPS during that window, so consider using medium or large tiers in that case;
+`az group deployment create --name moodle-autoscale --resource-group <stackname> --template-file azuredeploy.json --parameters azuredeploy.parameters.json`
 
-### The web layer
+Note that `siteURL` is a special case in the `azuredeploy.parameters.json` files. If you do not define a value for `siteURL` or if you leave it as the default "www.example.org" this value will be overwritten by the template to be a calculated value for the public load balancers of your deployment. This allows you to experiment with this Moodle template without configuring a new domain name whilst still enabling Moodle to be configured with a production URL when appropriate. See the next section for instructions on retrieving the generated DNS name if necesary.
 
-This script deploys a vm scale set (vmss) for the web layer. It's configured with Standard_DS2_v2 instances, with no data-disks, all connected to the GlusterFS cluster (mounted in the /moodle folder where source code, moodledata and ssl certificates resides).
-The VMSS is also configured with auto-scale settings and will run, at minimum 02 instances up to 10 instances of the web application; the trigger for deploying additional instances is based on CPU usage. Those settings can be ajusted in Azure Portal or in the Azure Resources Editor (resources.azure.com).
+Depending on what tiers you selected for VMs and the database you will be looking at roughly 1-2 hours for a full deploy. See below for selectable parameters.
 
-## *Updating the source code or Apache SSL certificates* 
+## *Using the created stack*
 
-There's a jumpbox machine in the deployment that can be used to update Moodle's source code, or SSL certificates in the web layer. 
-In order to proceed with this kind of update, connect to the machine using the root credentials provided during the template setup. 
-- Moodle source code is located at /moodle/html/moodle
-- Apache SSL certificates are located at /moodle/certs
-- Moodledata content is located at /moodle/moodledata
+In testing, stacks typically took between 1 and 2 hours to finish, depending on spec. Once this is done you will receive a JSON with outputs needed to continue setup. These outputs are also available by clicking on the deployment for your resource group when it finishes. They are:
 
-## *Step by step video walkthrough* 
+- moodle-admin-password: The password for the "admin" user in your Moodle install.
+- load-balancer-dns: This is the address of your load balancer. You'll need to add a DNS entry for the website URL you entered that CNAMEs to this.
+- controller-instance-ip: This is the address of the controller. You will need to SSH into this to make changes to your moodle code or view logs.
+- database-dns: This is the public DNS of your database instance. If you wish to set up local backups or access the db directly, you'll need to use this.
+- database-admin-username: The master account (not Moodle) username for your database.
+- database-admin-password: The master account password for your database.
 
-We also have a [step by step video](http://learningcontentdemo.azurewebsites.net/VideoHowToDemoMoodleOnAzure3) showing us how to deploy this template (Thanks to Ingo Laue for his contribution)
+Once moodle has been created, and with DNS pointing to the load balancer, you should be able to load the siteurl you entered and log in with "admin" and the password supplied in the moodle-admin-password output.
 
-This template is aimed to have constant updates, and would include other improvements in the future. 
 
-Hope it helps.
+### *Updating Moodle code/settings*
 
-Feedbacks are welcome.
+Your controller VM has Moodle code and data stored on /moodle. The code is stored in /moodle/html/moodle/. This is also mounted to your autoscaled frontends so all changes are instant. Depending on how large your Gluster disks are sized, it may be helpful to keep multiple older versions (/moodle/html1, /moodle/html2, etc) to roll back if needed.
 
+### *Getting an SQL dump*
+
+A daily sql dump of your database is taken at 02:22 and saved to /moodle/db-backup.sql(.gz). If your database is small enough to fit, you may be able to get a more current SQL dump of your Moodle db by dumping it to /moodle/. Otherwise, you'll want to do this remotely by connecting to the hostname shown in the database-dns output using the database-admin-username and database-admin-password.
+
+While Azure does not currently back up Postgres/MySQL databases, by dumping it to /moodle it is included in the Gluster VM backups should you enable Recovery Services in your parameters.
+
+### *Azure Recovery Services*
+
+If you have set azureBackupSwitch to 1 then Azure will provide VM backups of your Gluster node. This is recommended as it contains both your Moodle code and your sitedata. Restoring a backed up VM is outside the scope of this doc, but Azure's documentation on Recovery Services can be found here: https://docs.microsoft.com/en-us/azure/backup/backup-azure-vms-first-look-arm
+
+### *Resizing your Database*
+
+Note: This involves a lengthy site downtime.
+
+As mentioned above, Azure does not currently support resizing databases. You can, however, create a new database instance and change your config to point to that. To get a different size database you'll need to:
+
+1. Place your Moodle site into maintenance mode. You can do this either via the web interface or the command line on the controller VM.
+2. Perform an SQL dump of your database, either to /moodle or remotely to your machine.
+3. Create a new Azure database of the size you want inside your existing resource group.
+4. Using the details in your /moodle/html/moodle/config.php create a new user and database matching the details in config.php. Make sure to grant all rights on the db to the user.
+5. On the controller instance, change the db setting in /moodle/html/moodle/config.php to point to the new database.
+6. Take Moodle site out of maintenance mode.
+7. Once confirmed working, delete the previous database instance.
+
+How long this takes depends entirely on the size of your database and the speed of your VM tier. It will always be a large enough window to make a noticeable outage.
+
+### *Changing the SSL cert*
+
+The self-signed cert generated by the template is suitable for very basic testing, but a public website will want a real cert. After purchasing a trusted certificate, it can be copied to the following files to be ready immediately:
+
+- /moodle/certs/nginx.key: Your certificate's private key
+- /moodle/certs/nginx.crt: Your combined signed certificate and trust chain certificate(s).
+
+Once replaced these changes become effective immediately.
+
+
+## *Sizing Considerations and Limitations*
+
+Depending on what you're doing with Moodle, there are several considerations to make when configuring. The defaults included produce a cluster that is inexpensive but probably too low spec to use beyond single-user Moodle testing.
+
+It should be noted that as of the time of this writing both Postgres and MySQL databases are in preview at Azure. In the future larger DB sizes or different VM sizes will be available. The templates will allow you to select whatever size you want, but there are restrictions in place (VMs with certain storage types, disk size for database tiers, etc) that may prevent certains selections from working together.
+
+### *Database Sizing*
+
+As of the time of this writing, Azure supports "Basic" and "Standard" tiers for database instances. In addition the skuCapacityDTU defines Compute Units, and the number of those you can use is limited by database tier:
+
+- Basic: 50, 100
+- Standard: 100, 200, 400, 800
+
+This value also limits the maximum number of connections, as defined here: https://docs.microsoft.com/en-us/azure/mysql/concepts-limits
+
+As the Moodle database will handle cron processes as well as the website, any public facing website with more than 10 users will likely require upgrading to 100. Once the site reaches 30+ users it will require upgrading to Standard for more compute units. This depends entirely on the individual site. As MySQL databases cannot change (or be restored to a different tier) once deployed it is a good idea to slightly overspec your database.
+
+Standard instances have a minimum storage requirement of 128000MB. All database storage, regardless of tier, has a hard upper limit of 1 terrabyte. After 128GB you gain additional iops for each GB, so if you're expecting a heavy amount of traffic you will want to oversize your storage. The current maximum iops with a 1TB disk is 3000.
+
+### *Controller instance sizing*
+
+The controller handles both syslog and cron duties. Depending on how big your Moodle cron runs are this may not be sufficient. If cron jobs are very delayed and cron processes are building up on the controller then an upgrade in tier is needed.
+
+### *Frontend instances*
+
+In general the frontend instances will not be the source of any bottlenecks unless they are severely undersized versus the rest of the cluster. More powerful instances will be needed should fpm processes spawn and exhaust memory during periods of heavy site load. This can also be mitigated against by increasing the number of VMs but spawning new VMs is slower (and potentially more expensive) than having that capacity already available.
+
+It is worth noting that the memory allowances on these instances allow for more memory than they may be able to provide with lower instance tiers. This is intentional as you can opt to run larger VMs with more memory and not require manual configuration. FPM also allows for a very large number of threads which prevents the system from failing during many small jobs.
 
