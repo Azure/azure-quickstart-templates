@@ -12,7 +12,8 @@
 #  3 - k: Storage account key (password)
 #  4 - l: MSI client id (principal id)
 #  5 - u: User account name
-#  6 - h: help
+#  6 - d: Ubuntu Desktop GUI for developement 
+#  7 - h: help
 # Note : 
 # This script has only been tested on Ubuntu 12.04 LTS & 14.04 LTS and must be root
 
@@ -28,6 +29,7 @@ help()
     echo "- k: Storage account key (password)"
     echo "- l: MSI client id (principal id)"
     echo "- u: User account name"
+    echo "- d: Ubuntu Desktop GUI"
     echo "- h: help"
 }
 
