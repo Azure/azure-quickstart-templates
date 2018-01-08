@@ -1066,10 +1066,10 @@ EOF
     service varnish restart
 
     mysql -h $mysqlIP -u $mysqladminlogin -p${mysqladminpass} -e "CREATE DATABASE ${maharadbname} CHARACTER SET utf8;"
-    mysql -h $mysqlIP -u $mysqladminlogin -p${mysqladminpass} -e "GRANT ALL ON ${maharadbname}.* TO ${azuremaharadbuser} IDENTIFIED BY '${maharadbpass}';"
+    mysql -h $mysqlIP -u $mysqladminlogin -p${mysqladminpass} -e "GRANT ALL ON ${maharadbname}.* TO ${maharadbuser} IDENTIFIED BY '${maharadbpass}';"
 
     echo "mysql -h $mysqlIP -u $mysqladminlogin -p${mysqladminpass} -e \"CREATE DATABASE ${maharadbname};\"" >> /tmp/debug
-    echo "mysql -h $mysqlIP -u $mysqladminlogin -p${mysqladminpass} -e \"GRANT ALL ON ${maharadbname}.* TO ${azuremaharadbuser} IDENTIFIED BY '${maharadbpass}';\"" >> /tmp/debug
+    echo "mysql -h $mysqlIP -u $mysqladminlogin -p${mysqladminpass} -e \"GRANT ALL ON ${maharadbname}.* TO ${maharadbuser} IDENTIFIED BY '${maharadbpass}';\"" >> /tmp/debug
 
     # Master config for syslog
     mkdir /var/log/sitelogs
@@ -1097,7 +1097,7 @@ URLSECRET=`${PWGEN} 8 1`
 \$cfg->dbhost   = '$mysqlIP';
 \$cfg->dbport   = null;
 \$cfg->dbname   = '$maharadbname';
-\$cfg->dbuser   = '$azuremaharadbuser';
+\$cfg->dbuser   = '$maharadbuser';
 \$cfg->dbpass   = '$maharadbpass';
 \$cfg->dataroot = '/mahara/maharadata';
 \$cfg->wwwroot  = 'https://$siteFQDN';
