@@ -619,9 +619,6 @@ EOF
     echo '#!/bin/bash
     cd /tmp
 
-    # Generate urlsecret
-    URLSECRET=`/usr/bin/pwgen -1`
-
     # downloading mahara 
     /usr/bin/curl -k --max-redirs 10 https://github.com/MaharaProject/mahara/archive/'$maharaVersion'.zip -L -o mahara.zip
     /usr/bin/unzip -q mahara.zip
@@ -1091,6 +1088,7 @@ EOF
 # Fire off mahara setup
 PWGEN=`which pwgen`
 SALT=`${PWGEN} -y 64 1`
+URLSECRET=`${PWGEN} 8 1`
 
     cat <<EOF >> /mahara/html/mahara/htdocs/config.php
 <?php
@@ -1100,7 +1098,7 @@ SALT=`${PWGEN} -y 64 1`
 \$cfg->dbport   = null;
 \$cfg->dbname   = '$maharadbname';
 \$cfg->dbuser   = '$azuremaharadbuser';
-\$cfg->dbname   = '$maharadbpass';
+\$cfg->dbpass   = '$maharadbpass';
 \$cfg->dataroot = '/mahara/maharadata';
 \$cfg->wwwroot  = 'https://$siteFQDN';
 \$cfg->passwordsaltmain = '$SALT';
