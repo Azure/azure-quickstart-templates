@@ -1110,6 +1110,7 @@ URLSECRET=`${PWGEN} 8 1`
 \$cfg->directorypermissions = 0750;
 
 EOF
+echo $azuremaharadbuser > /tmp/myuser.log
     
 echo -e "cd /tmp; sudo -u www-data /usr/bin/php /mahara/html/mahara/htdocs/admin/cli/install.php --adminpassword="$adminpass" --adminemail=admin@"$siteFQDN" --sitename='Mahara Portfolio' || true"
 cd /tmp; sudo -u www-data /usr/bin/php /mahara/html/mahara/htdocs/admin/cli/install.php --adminpassword="$adminpass" --adminemail=admin@"$siteFQDN" --sitename='Mahara Portfolio' || true
