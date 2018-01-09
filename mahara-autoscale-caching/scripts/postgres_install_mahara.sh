@@ -1072,7 +1072,7 @@ EOF
     echo "${postgresIP}:5432:postgres:${pgadminlogin}:${pgadminpass}" > /root/.pgpass
     chmod 600 /root/.pgpass
     psql -h $postgresIP -U $pgadminlogin -c "CREATE DATABASE ${maharadbname};" postgres 2>>/tmp/pg_error.log
-    psql -h $postgresIP -U $pgadminlogin -c "CREATE USER ${maharaedbuser} WITH PASSWORD '${maharadbpass}';" postgres 2>>/tmp/pg_error.log
+    psql -h $postgresIP -U $pgadminlogin -c "CREATE USER ${maharadbuser} WITH PASSWORD '${maharadbpass}';" postgres 2>>/tmp/pg_error.log
     psql -h $postgresIP -U $pgadminlogin -c "GRANT ALL ON DATABASE ${maharadbname} TO ${maharadbuser};" postgres 2>>/tmp/pg_error.log
     rm -f /root/.pgpass
 
