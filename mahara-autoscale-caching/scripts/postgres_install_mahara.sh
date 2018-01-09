@@ -557,7 +557,7 @@ EOF
     # configure gluster repository & install gluster client
     sudo add-apt-repository ppa:gluster/glusterfs-3.8 -y                     >> /tmp/apt1.log
     sudo apt-get -y update                                                   >> /tmp/apt2.log
-    sudo apt-get -y --force-yes install rsyslog glusterfs-client mysql-client git    >> /tmp/apt3.log
+    sudo apt-get -y --force-yes install rsyslog glusterfs-client postgresql-client git    >> /tmp/apt3.log
 
     # install azure cli & setup container
     echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ wheezy main" | \
@@ -1071,10 +1071,14 @@ EOF
      # Create postgres db
     echo "${postgresIP}:5432:postgres:${pgadminlogin}:${pgadminpass}" > /root/.pgpass
     chmod 600 /root/.pgpass
-    psql -h $postgresIP -U $pgadminlogin -c "CREATE DATABASE ${maharadbname};" postgres
-    psql -h $postgresIP -U $pgadminlogin -c "CREATE USER ${maharaedbuser} WITH PASSWORD '${maharadbpass}';" postgres
-    psql -h $postgresIP -U $pgadminlogin -c "GRANT ALL ON DATABASE ${maharadbname} TO ${maharadbuser};" postgres
+    psql -h $postgresIP -U $pgadminlogin -c "CREATE DATABASE ${maharadbname};" postgres 2>>/tmp/pg_error.log
+    psql -h $postgresIP -U $pgadminlogin -c "CREATE USER ${maharaedbuser} WITH PASSWORD '${maharadbpass}';" postgres 2>>/tmp/pg_error.log
+    psql -h $postgresIP -U $pgadminlogin -c "GRANT ALL ON DATABASE ${maharadbname} TO ${maharadbuser};" postgres 2>>/tmp/pg_error.log
     rm -f /root/.pgpass
+
+    echo -e 'psql -h $postgresIP -U $pgadminlogin -c "CREATE DATABASE ${maharadbname};" postgres' >> /tmp/debug
+    echo -e 'psql -h $postgresIP -U $pgadminlogin -c "CREATE USER ${maharaedbuser} WITH PASSWORD ${maharadbpass};" postgres' >> /tmp/debug
+    echo -e 'psql -h $postgresIP -U $pgadminlogin -c "GRANT ALL ON DATABASE ${maharadbname} TO ${maharadbuser};" postgres' >> /tmp/debug
 
 
 
@@ -1132,7 +1136,7 @@ cd /tmp; sudo -u www-data /usr/bin/php /mahara/html/mahara/htdocs/admin/cli/inst
    add-apt-repository "deb http://apt.postgresql.org/pub/repos/apt/ xenial-pgdg main"
    wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
    apt-get update
-   apt-get install postgresql-client-9.6
+   apt-get install -y postgresql-client-9.6
 
       # Set up cronned sql dump
    cat <<EOF > /etc/cron.d/sql-backup
