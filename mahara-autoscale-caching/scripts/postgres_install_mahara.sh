@@ -35,7 +35,7 @@
     pgadminpass=$11
     wabsacctname=$12
     wabsacctkey=$13
-    azuremoodledbuser=$14
+    azuremaharadbuser=$14
     redisDns=$15
     redisAuth=$16
     elasticVm1IP=$17
@@ -1100,8 +1100,8 @@ URLSECRET=`${PWGEN} 8 1`
     cat <<EOF >> /mahara/html/mahara/htdocs/config.php
 <?php
 \$cfg = new stdClass();
-\$cfg->dbtype   = 'mysql';
-\$cfg->dbhost   = '$mysqlIP';
+\$cfg->dbtype   = 'postgres';
+\$cfg->dbhost   = '$postgresIP';
 \$cfg->dbport   = null;
 \$cfg->dbname   = '$maharadbname';
 \$cfg->dbuser   = '$azuremaharadbuser';
@@ -1134,10 +1134,9 @@ cd /tmp; sudo -u www-data /usr/bin/php /mahara/html/mahara/htdocs/admin/cli/inst
    apt-get update
    apt-get install postgresql-client-9.6
 
-
-   # Set up cronned sql dump
+      # Set up cronned sql dump
    cat <<EOF > /etc/cron.d/sql-backup
-   22 02 * * * root /usr/bin/mysqldump -h $mysqlIP -u ${azuremaharadbuser} -p'${maharadbpass}' --databases ${maharadbname} | gzip > /mahara/db-backup.sql.gz
+22 02 * * * root /usr/bin/pg_dump -Fc -h $postgresIP -U ${azuremaharadbuser} ${maharadbname} > /mahara/db-backup.sql
 EOF
 
    # Turning off services we don't need the jumpbox running
