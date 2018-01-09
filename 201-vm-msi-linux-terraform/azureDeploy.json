@@ -43,7 +43,7 @@
   },
   "variables": {
     "dnsLabelPrefix": "[concat('msi',uniquestring(resourceGroup().id,deployment().name))]",
-    "_artifactsLocation": "https://raw.githubusercontent.com/sebastus/azure-quickstart-templates/vj-desktopvm/201-vm-msi-linux-terraform",
+    "_artifactsLocation": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vm-msi-linux-terraform",
     "infraStorageAccountName": "[take(concat('storeinfra', uniquestring(resourceGroup().id), variables('dnsLabelPrefix')),24)]",
     "stateStorageAccountName": "[take(concat('storestate', uniquestring(resourceGroup().id), variables('dnsLabelPrefix')),24)]",
     "nicName": "[concat('nic',uniquestring(resourceGroup().id,deployment().name))]",
@@ -56,7 +56,25 @@
     "virtualNetworkName": "[concat('vnet',uniquestring(resourceGroup().id,deployment().name))]",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
     "linuxConfigurationChosen": "[concat('linuxConfiguration', parameters('authenticationType'))]",
+    "linuxConfigurationsshPublicKey": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordorSSHKey')]"
+          }
+        ]
+      }
+    },
+    "linuxConfigurationpassword": {
+      "disablePasswordAuthentication": false
+    },
     "adminPasswordChosen": "[concat('adminPassword', parameters('authenticationType'))]",
+    "adminPasswordsshPublicKey": "",
+    "adminPasswordpassword": "[parameters('adminPasswordorSSHKey')]",
+    "containerName": "msi",
+    "createVMUrl": "[concat(variables('_artifactsLocation'), '/nestedTemplates/createVM.json')]",
     "createRBACUrl": "[concat(variables('_artifactsLocation'), '/nestedTemplates/setUpRbac.json')]",
     "installParm1": "[concat(' -u ', parameters('adminUsername'))]",
     "installParm2": "[concat(' -s ', subscription().subscriptionId)]",
@@ -248,7 +266,7 @@
     {
       "name": "creatingRBAC",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2017-06-01",
+      "apiVersion": "2016-09-01",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines/extensions/', variables('vmName'),'MSILinuxExtension')]"
       ],
