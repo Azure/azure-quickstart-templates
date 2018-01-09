@@ -603,7 +603,7 @@ EOF
     # Mahara requirements
     sudo apt-get -y update > /dev/null
     sudo apt-get install -y --force-yes graphviz aspell php-common php-soap php-json php-redis > /tmp/apt6.log
-    sudo apt-get install -y --force-yes php-bcmath php-gd php-mysql php-xmlrpc php-intl php-xml php-bz2 >> /tmp/apt6.log
+    sudo apt-get install -y --force-yes php-mbstring php-bcmath php-gd php-mysql php-xmlrpc php-intl php-xml php-bz2 >> /tmp/apt6.log
     sudo apt-get install -y --force-yes npm nodejs-legacy
 
 
@@ -1096,7 +1096,7 @@ URLSECRET=`${PWGEN} 8 1`
 \$cfg->dbhost   = '$mysqlIP';
 \$cfg->dbport   = null;
 \$cfg->dbname   = '$maharadbname';
-\$cfg->dbuser   = '$maharadbuser';
+\$cfg->dbuser   = '$azuremaharadbuser';
 \$cfg->dbpass   = '$maharadbpass';
 \$cfg->dataroot = '/mahara/maharadata';
 \$cfg->wwwroot  = 'https://$siteFQDN';
@@ -1112,6 +1112,7 @@ URLSECRET=`${PWGEN} 8 1`
 EOF
     
 echo -e "cd /tmp; sudo -u www-data /usr/bin/php /mahara/html/mahara/htdocs/admin/cli/install.php --adminpassword="$adminpass" --adminemail=admin@"$siteFQDN" --sitename='Mahara Portfolio' || true"
+cd /tmp; sudo -u www-data /usr/bin/php /mahara/html/mahara/htdocs/admin/cli/install.php --adminpassword="$adminpass" --adminemail=admin@"$siteFQDN" --sitename='Mahara Portfolio' || true
 
 
 

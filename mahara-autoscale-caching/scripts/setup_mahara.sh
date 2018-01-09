@@ -500,6 +500,7 @@ sub vcl_synth {
         return (deliver);
     }
 }
+#this is a comment
 EOF
 
   # Restart Varnish
