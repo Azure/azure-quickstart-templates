@@ -46,17 +46,60 @@ Depending on what tiers you selected for VMs and the database you will be lookin
 
 ## *Using the created stack*
 
-In testing, stacks typically took between 1 and 2 hours to finish, depending on spec. Once this is done you will receive a JSON with outputs needed to continue setup. These outputs are also available by clicking on the deployment for your resource group when it finishes. They are:
+In testing, stacks typically took between 1 and 2 hours to finish,
+depending on spec. Once this is done you will receive a JSON with
+outputs needed to continue setup. You can also retrieve these from the
+portal or the CLI, more information below. The available parameters
+are:
 
-- moodle-admin-password: The password for the "admin" user in your Moodle install.
-- load-balancer-dns: This is the address of your load balancer. You'll need to add a DNS entry for the website URL you entered that CNAMEs to this.
-- controller-instance-ip: This is the address of the controller. You will need to SSH into this to make changes to your moodle code or view logs.
-- database-dns: This is the public DNS of your database instance. If you wish to set up local backups or access the db directly, you'll need to use this.
-- database-admin-username: The master account (not Moodle) username for your database.
-- database-admin-password: The master account password for your database.
+- siteURL: If you provided a `siteURL` parameter when deploying this
+  will be set to the supplied value. Otherwise it will be the same as
+  the loadBalancerDNS, see below.
+- loadBalancerDNS: This is the address of your load balancer. If you
+  provided a `siteURL` parameter when deploying you'll need to add a
+  DNS entry CNAMEs to this.
+- moodleAdminPassword: The password for the "admin" user in your
+  Moodle install.
+- controllerInstanceIP: This is the address of the controller. You
+  will need to SSH into this to make changes to your moodle code or
+  view logs.
+- databaseDNS: This is the public DNS of your database instance. If
+  you wish to set up local backups or access the db directly, you'll
+  need to use this.
+- databaseAdminUsername: The master account (not Moodle) username for
+  your database.
+- databaseAdminPassword: The master account password for your
+  database.
 
-Once moodle has been created, and with DNS pointing to the load balancer, you should be able to load the siteurl you entered and log in with "admin" and the password supplied in the moodle-admin-password output.
+Once Moodle has been created, and (if necessary) with your custom
+`siteURL` DNS pointing to the load balancer, you should be able to
+load the `siteURL` and login with "admin" and the password supplied in
+the moodleAdminPassword.
 
+#### Retrieving Deployment Configuration
+
+The outputs provided by your deployment should include everytyrhing
+you need to manage your Moodle deployment. These are available in the
+portal by clicking on the deployment for your resource group. They are
+also available in via the Azure CLI. For example:
+
+Retrieve all the outputs in JSON format:
+
+```
+az group deployment show --resource-group $MOODLE_RG_NAME --name $MOODLE_DEPLOYMENT_NAME --out json --query *.outputs
+```
+
+Retrieve just the database password
+
+```
+az group deployment show --resource-group $MOODLE_RG_NAME --name $MOODLE_DEPLOYMENT_NAME --out tsv --query *.outputs.databaseAdminPassword.value
+```
+
+Assign the database password to a variable (BASH):
+
+```
+MOODLE_DATABASE_DNS="$(az group deployment show --resource-group $MOODLE_RG_NAME --name $MOODLE_DEPLOYMENT_NAME --out tsv --query *.outputs.databaseDNS.value)"
+```
 
 ### *Updating Moodle code/settings*
 
