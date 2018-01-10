@@ -1,160 +1,166 @@
 {
-	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-	"contentVersion": "1.0.0.0",
-	"parameters": {
-
-		"deploymentName": {
-			"type": "string"
-		},
-		"storageAccountName": {
-			"type": "string"
-		},
-		"storageAccountKey": {
-			"type": "string"
-		},
-		"containerName": {
-			"type": "string"
-		},
-		"desktopUsername": {
-			"type": "string"
-		},
-		"desktopAdminPassword": {
-			"type": "string"
-		}
-
-
-	},
-	"variables": {
-		"vmName": "[concat(parameters('deploymentName'), 'desktop')]",
-		"vmSize": "Standard_DS2",
-		"dnsLabelPrefix": "[concat(parameters('deploymentName'), 'desktop')]",
-		"windowsOSVersion": "2012-R2-Datacenter",
-		"imagePublisher": "MicrosoftWindowsServer",
-		"imageOffer": "WindowsServer",
-		"OSDiskName": "osdiskforwindowssimple",
-		"nicName": "myVMNic",
-		"addressPrefix": "10.0.0.0/16",
-		"subnetName": "wow",
-		"subnetPrefix": "10.0.1.0/24",
-		"storageAccountType": "Standard_LRS",
-		"publicIPAddressName": "myPublicIP",
-		"publicIPAddressType": "Dynamic",
-		"vmStorageAccountContainerName": "vhds",
-		"virtualNetworkName": "MyVNET",
-		"vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
-		"subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
-		"storageAccountName": "[concat(uniqueString(resourceGroup().id),'winrmsa')]",
-		"apiVersion": "2015-06-15",
-		"FQDN": "[concat(variables('dnsLabelPrefix'),'.',resourceGroup().location,'.cloudapp.azure.com')]"
-
-	},
-	"resources": [{
-		"type": "Microsoft.Storage/storageAccounts",
-		"name": "[variables('storageAccountName')]",
-		"apiVersion": "[variables('apiVersion')]",
-		"location": "[resourceGroup().location]",
-		"properties": {
-			"accountType": "[variables('storageAccountType')]"
-		}
-	}, {
-		"apiVersion": "[variables('apiVersion')]",
-		"type": "Microsoft.Network/publicIPAddresses",
-		"name": "[variables('publicIPAddressName')]",
-		"location": "[resourceGroup().location]",
-		"properties": {
-			"publicIPAllocationMethod": "[variables('publicIPAddressType')]",
-			"dnsSettings": {
-				"domainNameLabel": "[variables('dnsLabelPrefix')]"
-			}
-		}
-	}, {
-		"apiVersion": "[variables('apiVersion')]",
-		"type": "Microsoft.Network/virtualNetworks",
-		"name": "[variables('virtualNetworkName')]",
-		"location": "[resourceGroup().location]",
-		"properties": {
-			"addressSpace": {
-				"addressPrefixes": [
-					"[variables('addressPrefix')]"
-				]
-			},
-			"subnets": [{
-				"name": "[variables('subnetName')]",
-				"properties": {
-					"addressPrefix": "[variables('subnetPrefix')]"
-				}
-			}]
-		}
-	}, {
-		"apiVersion": "[variables('apiVersion')]",
-		"type": "Microsoft.Network/networkInterfaces",
-		"name": "[variables('nicName')]",
-		"location": "[resourceGroup().location]",
-		"dependsOn": [
-			"[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
-			"[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
-		],
-		"properties": {
-			"ipConfigurations": [{
-				"name": "ipconfig1",
-				"properties": {
-					"privateIPAllocationMethod": "Dynamic",
-					"publicIPAddress": {
-						"id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
-					},
-					"subnet": {
-						"id": "[variables('subnetRef')]"
-					}
-				}
-			}]
-		}
-	}, {
-		"apiVersion": "[variables('apiVersion')]",
-		"type": "Microsoft.Compute/virtualMachines",
-		"name": "[variables('vmName')]",
-		"location": "[resourceGroup().location]",
-		"dependsOn": [
-			"[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-			"[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
-		],
-		"properties": {
-			"hardwareProfile": {
-				"vmSize": "[variables('vmSize')]"
-			},
-			"osProfile": {
-				"computername": "[variables('vmName')]",
-				"adminUsername": "[parameters('desktopUsername')]",
-				"adminPassword": "[parameters('desktopAdminPassword')]"
-			},
-			"storageProfile": {
-				"imageReference": {
-					"publisher": "[variables('imagePublisher')]",
-					"offer": "[variables('imageOffer')]",
-					"sku": "[variables('windowsOSVersion')]",
-					"version": "latest"
-				},
-				"osDisk": {
-					"name": "osdisk",
-					"vhd": {
-						"uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
-					},
-					"caching": "ReadWrite",
-					"createOption": "FromImage"
-				}
-			},
-			"networkProfile": {
-				"networkInterfaces": [{
-					"id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
-				}]
-			}
-		}
-
-	}],
-"outputs": {
-        "desktopURL": {
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "deploymentName": {
+      "type": "string"
+    },
+    "storageAccountName": {
+      "type": "string"
+    },
+    "storageAccountKey": {
+      "type": "string"
+    },
+    "containerName": {
+      "type": "string"
+    },
+    "desktopUsername": {
+      "type": "string"
+    },
+    "desktopAdminPassword": {
+      "type": "string"
+    }
+  },
+  "variables": {
+    "vmName": "[concat(parameters('deploymentName'), 'desktop')]",
+    "vmSize": "Standard_DS2",
+    "dnsLabelPrefix": "[concat(parameters('deploymentName'), 'desktop')]",
+    "windowsOSVersion": "2012-R2-Datacenter",
+    "imagePublisher": "MicrosoftWindowsServer",
+    "imageOffer": "WindowsServer",
+    "OSDiskName": "osdiskforwindowssimple",
+    "nicName": "myVMNic",
+    "addressPrefix": "10.0.0.0/16",
+    "subnetName": "wow",
+    "subnetPrefix": "10.0.1.0/24",
+    "storageAccountType": "Standard_LRS",
+    "publicIPAddressName": "myPublicIP",
+    "publicIPAddressType": "Dynamic",
+    "vmStorageAccountContainerName": "vhds",
+    "virtualNetworkName": "MyVNET",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
+    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
+    "storageAccountName": "[concat(uniqueString(resourceGroup().id),'winrmsa')]",
+    "apiVersion": "2015-06-15",
+    "FQDN": "[concat(variables('dnsLabelPrefix'),'.',resourceGroup().location,'.cloudapp.azure.com')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('storageAccountName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "accountType": "[variables('storageAccountType')]"
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[variables('dnsLabelPrefix')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+              },
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('vmName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('vmName')]",
+          "adminUsername": "[parameters('desktopUsername')]",
+          "adminPassword": "[parameters('desktopAdminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[variables('windowsOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "desktopURL": {
       "type": "string",
       "value": "[ variables('FQDN')]"
-    
-        }
-}
+    }
+  }
 }

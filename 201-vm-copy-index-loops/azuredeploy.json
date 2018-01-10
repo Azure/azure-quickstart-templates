@@ -11,7 +11,7 @@
     "adminPassword": {
       "type": "securestring",
       "metadata": {
-        "description": "Admin password for VM"
+        "description": "Admin password for VMs"
       }
     },
     "numberOfInstances": {
@@ -31,12 +31,11 @@
         "Windows"
       ],
       "metadata": {
-        "description": "OS Platform for the V<"
+        "description": "OS Platform for the VM"
       }
     }
   },
   "variables": {
-    "storageAccountName": "[uniquestring(resourceGroup().id)]",
     "virtualNetworkName": "myVNET",
     "addressPrefix": "10.0.0.0/16",
     "subnet1Name": "Subnet-1",
@@ -59,21 +58,15 @@
   },
   "resources": [
     {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('storageAccountName')]",
-      "apiVersion": "2016-01-01",
-      "location": "[resourceGroup().location]",
-      "sku": {
-        "name": "Standard_LRS"
-      },
-      "kind": "Storage",
-      "properties": {}
-    },
-    {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('availabilitySetName')]",
-      "apiVersion": "2016-03-30",
-      "location": "[resourceGroup().location]"
+      "apiVersion": "2016-04-30-preview",
+	"location": "[resourceGroup().location]",
+	"properties": {
+	    "platformFaultDomainCount": "2",
+	    "platformUpdateDomainCount": "2",
+	    "managed" : "true"
+	}
     },
     {
       "type": "Microsoft.Network/virtualNetworks",
@@ -125,15 +118,14 @@
     {
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat('myvm', copyIndex())]",
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2016-04-30-preview",
       "location": "[resourceGroup().location]",
       "copy": {
         "name": "virtualMachineLoop",
         "count": "[parameters('numberOfInstances')]"
       },
       "dependsOn": [
-        "nicLoop",
-        "[variables('storageAccountName')]"
+        "nicLoop"
       ],
       "properties": {
         "availabilitySet": {
@@ -150,11 +142,6 @@
         "storageProfile": {
           "imageReference": "[variables('imageReference')]",
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat(reference(variables('StorageAccountName'), '2016-01-01').primaryEndpoints.blob, 'vhds/osdisk', copyIndex(), '.vhd')]"
-            },
-            "caching": "ReadWrite",
             "createOption": "FromImage"
           }
         },

@@ -1,782 +1,763 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-    "contentVersion": "1.0.0.0",
-    "parameters": {
-	"newStorageAccountName": {
-	    "type": "string",
-	    "metadata": {
-		"description": "Unique DNS Name for the Storage Account where the Virtual Machine's disks will be placed."
-	    }
-	},
-	"newDBStorageAccountName": {
-	    "type": "string",
-	    "metadata": {
-		"description": "Unique DNS Name for the Storage Account where the DB Virtual Machine disks will be placed."
-	    }
-	},
-	"adminUsername": {
-	    "type": "string",
-	    "metadata": {
-		"description": "Username for the Virtual Machine."
-	    }
-	},
-	"adminPassword": {
-	    "type": "securestring",
-	    "metadata": {
-		"description": "Password for the Virtual Machine."
-	    }
-	},
-	"appVmNamePrefix": {
-	    "type": "string",
-	    "defaultValue": "MultiTierApp",
-	    "metadata": {
-		"description": "Prefix for the name of Application servers"
-	    }
-	},
-	"dbVmNamePrefix": {
-	    "type": "string",
-	    "defaultValue": "MultiTierDB",
-	    "metadata": {
-		"description": "Prefix for the name of Database servers"
-	    }
-	},
-	"vmSize": {
-	    "type": "string",
-	    "defaultValue": "Standard_D2",
-	    "metadata": {
-		"description": "Size of the VM"
-	    }
-	},
-	"publicIPAddressType": {
-	    "type": "string",
-	    "defaultValue": "Dynamic",
-	    "allowedValues": [
-		"Dynamic",
-		"Static"
-	    ],
-	    "metadata": {
-		"description": "Type of public IP address"
-	    }
-	},
-	"appServersPublicIPPrefix": {
-	    "type": "string",
-	    "defaultValue": "appserverpubIP",
-	    "metadata": {
-		"description": "Prefix for the name of Database servers"
-	    }
-	},
-	"skuName": {
-	    "type": "string",
-	    "allowedValues": [
-		"Standard_Small",
-		"Standard_Medium",
-		"Standard_Large"
-	    ],
-	    "defaultValue": "Standard_Medium",
-	    "metadata": {
-		"description": "Sku Name"
-	    }
-	},
-	"appGatewayCapacity": {
-	    "type": "int",
-	    "defaultValue": 2,
-	    "metadata": {
-		"description": "Number of instances of the Appication Gateway"
-	    }
-	},
-	"multitierILB": {
-	    "type": "string",
-	    "defaultValue": "ILBforSql",
-	    "metadata": {
-		"description": "Internal Load Balancer name"
-	    }
-	},
-	"windowsOSVersion": {
-	    "type": "string",
-	    "defaultValue": "2012-R2-Datacenter",
-	    "allowedValues": [
-		"2008-R2-SP1",
-		"2012-Datacenter",
-		"2012-R2-Datacenter"
-	    ],
-	    "metadata": {
-		"description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version. Allowed values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter."
-	    }
-	}
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "newDBStorageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Unique DNS Name for the Storage Account where the DB Virtual Machine disks will be placed."
+      }
     },
-    "variables": {
-	"imagePublisher": "MicrosoftWindowsServer",
-	"imageOffer": "WindowsServer",
-	"OSDiskName": "osdiskforwindowssimple",
-	"storageAccountType": "Standard_LRS",
-	"vmStorageAccountContainerName": "vhds",
-	"vmSize": "Standard_A2",
-	"VNetName": "multiTierVNet",
-	"FESubnetName": "FrontendSubnet",
-	"AppSubnetName": "AppSubnet",
-	"BESubnetName": "BackendSubnet",
-	"vnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('VNetName'))]",
-	"FESubnetRef": "[concat(variables('vnetID'),'/subnets/', variables('FESubnetName'))]",
-	"AppSubnetRef": "[concat(variables('vnetID'),'/subnets/', variables('AppSubnetName'))]",
-	"BESubnetRef": "[concat(variables('vnetID'),'/subnets/', variables('BESubnetName'))]",
-	"VNetAddressPrefix": "10.1.0.0/16",
-	"FrontendPrefix": "10.1.0.0/24",
-	"AppPrefix": "10.1.1.0/24",
-	"BackendPrefix": "10.1.2.0/24",
-	"feAvailabilitySetName": "feAvSet",
-	"appAvailabilitySetName": "appAvSet",
-	"beAvailabilitySetName": "beAvSet",
-	"AppServerIP1": "10.1.1.4",
-	"AppServerIP2": "10.1.1.5",
-	"FeNsgname": "FrontendNSG",
-	"AppNsgname": "AppNSG",
-	"BeNsgname": "BackendNSG",
-	"appGatewayName": "multitierAppGateway",
-	"appGatewayPubIPName": "multitierAppGatewayIP",
-	"appGatewayPubPRef": "[resourceId('Microsoft.Network/publicIPAddresses', variables('appGatewayPubIPName'))]",
-	"applicationGatewayID": "[resourceId('Microsoft.Network/applicationGateways',variables('appGatewayName'))]" ,
-	"ILBIP": "10.1.2.100",
-	"SqlIP1": "10.1.2.4",
-	"SqlIP2": "10.1.2.5",
-	"SqlIP3": "10.1.2.6",
-	"IlbID": "[resourceId('Microsoft.Network/loadBalancers',parameters('multitierILB'))]",
-	"privateIPConfigID": "[concat(variables('IlbID'),'/frontendIPConfigurations/LoadBalancerFrontEnd')]",
-	"IlbPoolID": "[concat(variables('IlbID'),'/backendAddressPools/BackendPool1')]",
-	"IlbProbeID": "[concat(variables('IlbID'),'/probes/tcpProbe')]",
-	"appNicName": "appNic",
-	"dbNicName": "dbNic",
-	"appScaleCount" : 2,
-	"dbSclaeCount" : 3,
-	"dbAvailabilitySetName": "DbAvlSet",
-	"apiVer": "2015-06-15"
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Username for the Virtual Machine."
+      }
     },
-    "resources": [
-      {
-        "type": "Microsoft.Storage/storageAccounts",
-        "name": "[parameters('newStorageAccountName')]",
-        "apiVersion": "2015-05-01-preview",
-        "location": "[resourceGroup().location]",
-        "properties": {
-          "accountType": "[variables('storageAccountType')]"
-        }
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the Virtual Machine."
+      }
+    },
+    "appVmNamePrefix": {
+      "type": "string",
+      "defaultValue": "MultiTierApp",
+      "metadata": {
+        "description": "Prefix for the name of Application servers"
+      }
+    },
+    "dbVmNamePrefix": {
+      "type": "string",
+      "defaultValue": "MultiTierDB",
+      "metadata": {
+        "description": "Prefix for the name of Database servers"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2",
+      "metadata": {
+        "description": "Size of the VM"
+      }
+    },
+    "publicIPAddressType": {
+      "type": "string",
+      "defaultValue": "Dynamic",
+      "allowedValues": [
+        "Dynamic",
+        "Static"
+      ],
+      "metadata": {
+        "description": "Type of public IP address"
+      }
+    },
+    "appServersPublicIPPrefix": {
+      "type": "string",
+      "defaultValue": "appserverpubIP",
+      "metadata": {
+        "description": "Prefix for the name of Database servers"
+      }
+    },
+    "skuName": {
+      "type": "string",
+      "allowedValues": [
+        "Standard_Small",
+        "Standard_Medium",
+        "Standard_Large"
+      ],
+      "defaultValue": "Standard_Medium",
+      "metadata": {
+        "description": "Sku Name"
+      }
+    },
+    "appGatewayCapacity": {
+      "type": "int",
+      "defaultValue": 2,
+      "metadata": {
+        "description": "Number of instances of the Appication Gateway"
+      }
+    },
+    "multitierILB": {
+      "type": "string",
+      "defaultValue": "ILBforSql",
+      "metadata": {
+        "description": "Internal Load Balancer name"
+      }
+    },
+    "windowsOSVersion": {
+      "type": "string",
+      "defaultValue": "2012-R2-Datacenter",
+      "allowedValues": [
+        "2008-R2-SP1",
+        "2012-Datacenter",
+        "2012-R2-Datacenter"
+      ],
+      "metadata": {
+        "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version. Allowed values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter."
+      }
+    }
+  },
+  "variables": {
+    "imagePublisher": "MicrosoftWindowsServer",
+    "imageOffer": "WindowsServer",
+    "storageAccountType": "Standard_LRS",
+    "vmSize": "Standard_A2",
+    "VNetName": "multiTierVNet",
+    "FESubnetName": "FrontendSubnet",
+    "AppSubnetName": "AppSubnet",
+    "BESubnetName": "BackendSubnet",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('VNetName'))]",
+    "FESubnetRef": "[concat(variables('vnetID'),'/subnets/', variables('FESubnetName'))]",
+    "AppSubnetRef": "[concat(variables('vnetID'),'/subnets/', variables('AppSubnetName'))]",
+    "BESubnetRef": "[concat(variables('vnetID'),'/subnets/', variables('BESubnetName'))]",
+    "VNetAddressPrefix": "10.1.0.0/16",
+    "FrontendPrefix": "10.1.0.0/24",
+    "AppPrefix": "10.1.1.0/24",
+    "BackendPrefix": "10.1.2.0/24",
+    "feAvailabilitySetName": "feAvSet",
+    "appAvailabilitySetName": "appAvSet",
+    "beAvailabilitySetName": "beAvSet",
+    "AppServerIP1": "10.1.1.4",
+    "AppServerIP2": "10.1.1.5",
+    "FeNsgname": "FrontendNSG",
+    "AppNsgname": "AppNSG",
+    "BeNsgname": "BackendNSG",
+    "appGatewayName": "multitierAppGateway",
+    "appGatewayPubIPName": "multitierAppGatewayIP",
+    "appGatewayPubPRef": "[resourceId('Microsoft.Network/publicIPAddresses', variables('appGatewayPubIPName'))]",
+    "applicationGatewayID": "[resourceId('Microsoft.Network/applicationGateways',variables('appGatewayName'))]",
+    "ILBIP": "10.1.2.100",
+    "SqlIP1": "10.1.2.4",
+    "SqlIP2": "10.1.2.5",
+    "SqlIP3": "10.1.2.6",
+    "IlbID": "[resourceId('Microsoft.Network/loadBalancers',parameters('multitierILB'))]",
+    "privateIPConfigID": "[concat(variables('IlbID'),'/frontendIPConfigurations/LoadBalancerFrontEnd')]",
+    "IlbPoolID": "[concat(variables('IlbID'),'/backendAddressPools/BackendPool1')]",
+    "IlbProbeID": "[concat(variables('IlbID'),'/probes/tcpProbe')]",
+    "appNicName": "appNic",
+    "dbNicName": "dbNic",
+    "appScaleCount": 2,
+    "dbSclaeCount": 3,
+    "dbAvailabilitySetName": "DbAvlSet",
+    "apiVer": "2015-06-15"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[parameters('newDBStorageAccountName')]",
+      "apiVersion": "2015-05-01-preview",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "accountType": "[variables('storageAccountType')]"
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('appGatewayPubIPName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publicIPAllocationMethod": "[parameters('publicIPAddressType')]"
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(parameters('appServersPublicIPPrefix'), copyIndex())]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "foo",
+        "count": "[variables('appScaleCount')]"
       },
-      {
-        "type": "Microsoft.Storage/storageAccounts",
-        "name": "[parameters('newDBStorageAccountName')]",
-        "apiVersion": "2015-05-01-preview",
-        "location": "[resourceGroup().location]",
-        "properties": {
-          "accountType": "[variables('storageAccountType')]"
-        }
-      },
-      {
-        "apiVersion": "[variables('apiVer')]",
-        "type": "Microsoft.Network/publicIPAddresses",
-        "name": "[variables('appGatewayPubIPName')]",
-        "location": "[resourceGroup().location]",
-        "properties": {
-          "publicIPAllocationMethod": "[parameters('publicIPAddressType')]"
-        }
-      },
-      {
-        "apiVersion": "[variables('apiVer')]",
-        "type": "Microsoft.Network/publicIPAddresses",
-        "name": "[concat(parameters('appServersPublicIPPrefix'), copyIndex())]",
-        "location": "[resourceGroup().location]",
-        "copy": {
-          "name": "foo",
-          "count": "[variables('appScaleCount')]"
+      "properties": {
+        "publicIPAllocationMethod": "[parameters('publicIPAddressType')]"
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('VNetName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('FeNsgname'))]",
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('AppNsgname'))]",
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('BeNsgname'))]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('VNetAddressPrefix')]"
+          ]
         },
-        "properties": {
-          "publicIPAllocationMethod": "[parameters('publicIPAddressType')]"
-        }
-      },
-      {
-        "apiVersion": "[variables('apiVer')]",
-        "type": "Microsoft.Network/virtualNetworks",
-        "name": "[variables('VNetName')]",
-        "location": "[resourceGroup().location]",
-        "dependsOn": [
-          "[concat('Microsoft.Network/networkSecurityGroups/', variables('FeNsgname'))]",
-          "[concat('Microsoft.Network/networkSecurityGroups/', variables('AppNsgname'))]",
-          "[concat('Microsoft.Network/networkSecurityGroups/', variables('BeNsgname'))]"
-        ],
-        "properties": {
-          "addressSpace": {
-            "addressPrefixes": [
-              "[variables('VNetAddressPrefix')]"
-            ]
-          },
-          "subnets": [
-            {
-              "name": "[variables('FESubnetName')]",
-              "properties": {
-                "addressPrefix": "[variables('FrontendPrefix')]",
-                "networkSecurityGroup": {
-                  "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('FeNsgname'))]"
-                }
+        "subnets": [
+          {
+            "name": "[variables('FESubnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('FrontendPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('FeNsgname'))]"
               }
-            },
-            {
-              "name": "[variables('AppSubnetName')]",
-              "properties": {
-                "addressPrefix": "[variables('AppPrefix')]",
-                "networkSecurityGroup": {
-                  "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('AppNsgname'))]"
-                }
-              }
-            },
-            {
-              "name": "[variables('BESubnetName')]",
-              "properties": {
-                "addressPrefix": "[variables('BackendPrefix')]",
-                "networkSecurityGroup": {
-                  "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('BeNsgname'))]"
-                }
-              }
-            }
-          ]
-        }
-      },
-      {
-        "apiVersion": "[variables('apiVer')]",
-        "type": "Microsoft.Network/networkSecurityGroups",
-        "name": "[variables('FeNsgname')]",
-        "location": "[resourceGroup().location]",
-        "properties": {
-          "securityRules": [
-            {
-              "name": "rdp_rule",
-              "properties": {
-                "description": "Allow RDP",
-                "protocol": "Tcp",
-                "sourcePortRange": "*",
-                "destinationPortRange": "3389",
-                "sourceAddressPrefix": "Internet",
-                "destinationAddressPrefix": "*",
-                "access": "Allow",
-                "priority": 100,
-                "direction": "Inbound"
-              }
-            },
-            {
-              "name": "web_rule",
-              "properties": {
-                "description": "Allow Website",
-                "protocol": "Tcp",
-                "sourcePortRange": "*",
-                "destinationPortRange": "80",
-                "sourceAddressPrefix": "Internet",
-                "destinationAddressPrefix": "*",
-                "access": "Allow",
-                "priority": 200,
-                "direction": "Inbound"
-              }
-            },
-            {
-              "name": "App_subnet_rule",
-              "properties": {
-                "description": "Outbound to App",
-                "protocol": "Tcp",
-                "sourcePortRange": "*",
-                "destinationPortRange": "*",
-                "sourceAddressPrefix": "*",
-                "destinationAddressPrefix": "[variables('AppPrefix')]",
-                "access": "Allow",
-                "priority": 1000,
-                "direction": "Outbound"
-              }
-            },
-            {
-              "name": "Block_Internal_Network",
-              "properties": {
-                "description": "Outbound to Internal Network",
-                "protocol": "*",
-                "sourcePortRange": "*",
-                "destinationPortRange": "*",
-                "sourceAddressPrefix": "*",
-                "destinationAddressPrefix": "VirtualNetwork",
-                "access": "Deny",
-                "priority": 2000,
-                "direction": "Outbound"
-              }
-            }
-          ]
-        }
-      },
-      {
-        "apiVersion": "[variables('apiVer')]",
-        "type": "Microsoft.Network/networkSecurityGroups",
-        "name": "[variables('AppNsgname')]",
-        "location": "[resourceGroup().location]",
-        "properties": {
-          "securityRules": [
-            {
-              "name": "fe_rule",
-              "properties": {
-                "description": "Allow Frontend",
-                "protocol": "Tcp",
-                "sourcePortRange": "*",
-                "destinationPortRange": "*",
-                "sourceAddressPrefix": "[variables('FrontendPrefix')]",
-                "destinationAddressPrefix": "*",
-                "access": "Allow",
-                "priority": 100,
-                "direction": "Inbound"
-              }
-            },
-            {
-              "name": "rdp_rule",
-              "properties": {
-                "description": "Allow RDP",
-                "protocol": "Tcp",
-                "sourcePortRange": "*",
-                "destinationPortRange": "3389",
-                "sourceAddressPrefix": "Internet",
-                "destinationAddressPrefix": "*",
-                "access": "Allow",
-                "priority": 200,
-                "direction": "Inbound"
-              }
-            },
-            {
-              "name": "vnet_rule",
-              "properties": {
-                "description": "Block Internal Network",
-                "protocol": "*",
-                "sourcePortRange": "*",
-                "destinationPortRange": "*",
-                "sourceAddressPrefix": "VirtualNetwork",
-                "destinationAddressPrefix": "*",
-                "access": "Deny",
-                "priority": 300,
-                "direction": "Inbound"
-              }
-            },
-            {
-              "name": "DB_outbound_rule",
-              "properties": {
-                "description": "Allow Outbound DB",
-                "protocol": "*",
-                "sourcePortRange": "*",
-                "destinationPortRange": "*",
-                "sourceAddressPrefix": "*",
-                "destinationAddressPrefix": "[variables('BackendPrefix')]",
-                "access": "Allow",
-                "priority": 1000,
-                "direction": "Outbound"
-              }
-            },
-            {
-              "name": "Deny_Internet",
-              "properties": {
-                "description": "Deny_Internet",
-                "protocol": "*",
-                "sourcePortRange": "*",
-                "destinationPortRange": "*",
-                "sourceAddressPrefix": "*",
-                "destinationAddressPrefix": "Internet",
-                "access": "Deny",
-                "priority": 2000,
-                "direction": "Outbound"
-              }
-            }
-          ]
-        }
-      },
-      {
-        "apiVersion": "[variables('apiVer')]",
-        "type": "Microsoft.Network/networkSecurityGroups",
-        "name": "[variables('BeNsgname')]",
-        "location": "[resourceGroup().location]",
-        "properties": {
-          "securityRules": [
-            {
-              "name": "app_rule",
-              "properties": {
-                "description": "Allow App servers",
-                "protocol": "Tcp",
-                "sourcePortRange": "*",
-                "destinationPortRange": "*",
-                "sourceAddressPrefix": "[variables('AppPrefix')]",
-                "destinationAddressPrefix": "*",
-                "access": "Allow",
-                "priority": 100,
-                "direction": "Inbound"
-              }
-            },
-            {
-              "name": "vnet_rule",
-              "properties": {
-                "description": "Block Internal Network",
-                "protocol": "*",
-                "sourcePortRange": "*",
-                "destinationPortRange": "*",
-                "sourceAddressPrefix": "VirtualNetwork",
-                "destinationAddressPrefix": "*",
-                "access": "Deny",
-                "priority": 200,
-                "direction": "Inbound"
-              }
-            },
-            {
-              "name": "Deny_Internet",
-              "properties": {
-                "description": "Deny_Internet",
-                "protocol": "*",
-                "sourcePortRange": "*",
-                "destinationPortRange": "*",
-                "sourceAddressPrefix": "*",
-                "destinationAddressPrefix": "Internet",
-                "access": "Deny",
-                "priority": 1000,
-                "direction": "Outbound"
-              }
-            }
-          ]
-        }
-      },
-      {
-        "apiVersion": "[variables('apiVer')]",
-        "name": "[variables('appGatewayName')]",
-        "type": "Microsoft.Network/applicationGateways",
-        "location": "[resourceGroup().location]",
-        "dependsOn": [
-          "[concat('Microsoft.Network/virtualNetworks/', variables('VNetName'))]",
-          "[concat('Microsoft.Network/publicIPAddresses/', variables('appGatewayPubIPName'))]"
-        ],
-        "properties": {
-          "sku": {
-            "name": "[parameters('skuName')]",
-            "tier": "Standard",
-            "capacity": "[parameters('appGatewayCapacity')]"
-          },
-          "gatewayIPConfigurations": [
-            {
-              "name": "appGatewayIpConfig",
-              "properties": {
-                "subnet": {
-                  "id": "[variables('FESubnetRef')]"
-                }
-              }
-            }
-          ],
-          "frontendIPConfigurations": [
-            {
-              "name": "appGatewayFrontendIP",
-              "properties": {
-                "PublicIPAddress": {
-                  "id": "[variables('appGatewayPubPRef')]"
-                }
-              }
-            }
-          ],
-          "frontendPorts": [
-            {
-              "name": "appGatewayFrontendPort",
-              "properties": {
-                "Port": 80
-              }
-            }
-          ],
-          "backendAddressPools": [
-            {
-              "name": "appGatewayBackendPool",
-              "properties": {
-                "BackendAddresses": [
-                  {
-                    "IpAddress": "[variables('AppServerIP1')]"
-                  },
-                  {
-                    "IpAddress": "[variables('AppServerIP2')]"
-                  }
-                ]
-              }
-            }
-          ],
-          "backendHttpSettingsCollection": [
-            {
-              "name": "appGatewayBackendHttpSettings",
-              "properties": {
-                "Port": 80,
-                "Protocol": "Http",
-                "CookieBasedAffinity": "Enabled"
-              }
-            }
-          ],
-          "httpListeners": [
-            {
-              "name": "appGatewayHttpListener",
-              "properties": {
-                "FrontendIPConfiguration": {
-                  "Id": "[concat(variables('applicationGatewayID'), '/frontendIPConfigurations/appGatewayFrontendIP')]"
-                },
-                "FrontendPort": {
-                  "Id": "[concat(variables('applicationGatewayID'), '/frontendPorts/appGatewayFrontendPort')]"
-                },
-                "Protocol": "Http",
-                "SslCertificate": null
-              }
-            }
-          ],
-          "requestRoutingRules": [
-            {
-              "Name": "rule1",
-              "properties": {
-                "RuleType": "Basic",
-                "httpListener": {
-                  "id": "[concat(variables('applicationGatewayID'), '/httpListeners/appGatewayHttpListener')]"
-                },
-                "backendAddressPool": {
-                  "id": "[concat(variables('applicationGatewayID'), '/backendAddressPools/appGatewayBackendPool')]"
-                },
-                "backendHttpSettings": {
-                  "id": "[concat(variables('applicationGatewayID'), '/backendHttpSettingsCollection/appGatewayBackendHttpSettings')]"
-                }
-              }
-            }
-          ]
-        }
-      },
-      {
-        "apiVersion": "2015-05-01-preview",
-        "name": "[parameters('multitierILB')]",
-        "type": "Microsoft.Network/loadBalancers",
-        "location": "[resourceGroup().location]",
-        "dependsOn": [
-          "[concat('Microsoft.Network/virtualNetworks/', variables('VNetName'))]"
-        ],
-        "properties": {
-          "frontendIPConfigurations": [
-            {
-              "name": "LoadBalancerFrontEnd",
-              "properties": {
-                "subnet": {
-                  "id": "[variables('BESubnetRef')]"
-                },
-                "privateIPAddress": "[variables('ILBIP')]",
-                "privateIPAllocationMethod": "Static"
-              }
-            }
-          ],
-          "backendAddressPools": [
-            {
-              "name": "BackendPool1"
-            }
-          ],
-          "loadBalancingRules": [
-            {
-              "name": "LBRule",
-              "properties": {
-                "frontendIPConfiguration": {
-                  "id": "[variables('privateIPConfigID')]"
-                },
-                "backendAddressPool": {
-                  "id": "[variables('IlbPoolID')]"
-                },
-                "protocol": "tcp",
-                "frontendPort": 1433,
-                "backendPort": 1433,
-                "enableFloatingIP": true,
-                "idleTimeoutInMinutes": 5,
-                "probe": {
-                  "id": "[variables('IlbProbeID')]"
-                }
-              }
-            }
-          ],
-          "probes": [
-            {
-              "name": "tcpProbe",
-              "properties": {
-                "protocol": "tcp",
-                "port": 1433,
-                "intervalInSeconds": "5",
-                "numberOfProbes": "2"
-              }
-            }
-          ]
-        }
-      },
-      {
-        "apiVersion": "[variables('apiVer')]",
-        "type": "Microsoft.Network/networkInterfaces",
-        "name": "[concat(variables('appNicName'), copyIndex())]",
-        "location": "[resourceGroup().location]",
-        "copy": {
-          "name": "foo",
-          "count": "[variables('appScaleCount')]"
-        },
-        "dependsOn": [
-          "[concat('Microsoft.Network/publicIPAddresses/', parameters('appServersPublicIPPrefix'), copyIndex())]",
-          "[concat('Microsoft.Network/virtualNetworks/', variables('VNetName'))]"
-        ],
-        "properties": {
-          "ipConfigurations": [
-            {
-              "name": "ipconfig1",
-              "properties": {
-                "privateIPAllocationMethod": "Static",
-                "privateIPAddress": "[concat('10.1.1.', copyIndex(4))]",
-                "publicIPAddress": {
-                  "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('appServersPublicIPPrefix'), copyIndex()))]"
-                },
-                "subnet": {
-                  "id": "[variables('AppSubnetRef')]"
-                }
-              }
-            }
-          ]
-        }
-      },
-      {
-        "apiVersion": "[variables('apiVer')]",
-        "type": "Microsoft.Network/networkInterfaces",
-        "name": "[concat(variables('dbNicName'), copyIndex())]",
-        "location": "[resourceGroup().location]",
-        "copy": {
-          "name": "foo",
-          "count": "[variables('dbSclaeCount')]"
-        },
-        "dependsOn": [
-          "[concat('Microsoft.Network/virtualNetworks/', variables('VNetName'))]",
-          "[concat('Microsoft.Network/loadBalancers/', parameters('multitierILB'))]"
-        ],
-        "properties": {
-          "ipConfigurations": [
-            {
-              "name": "ipconfig1",
-              "properties": {
-                "privateIPAllocationMethod": "Static",
-                "privateIPAddress": "[concat('10.1.2.', copyIndex(4))]",
-                "subnet": {
-                  "id": "[variables('BESubnetRef')]"
-                },
-                "loadBalancerBackendAddressPools": [
-                  {
-                    "id": "[concat(variables('IlbID'), '/backendAddressPools/BackendPool1')]"
-                  }
-                ]
-              }
-            }
-          ]
-        }
-      },
-      {
-        "type": "Microsoft.Compute/availabilitySets",
-        "name": "[variables('appAvailabilitySetName')]",
-        "apiVersion": "[variables('apiVer')]",
-        "location": "[resourceGroup().location]",
-        "properties": { }
-      },
-      {
-        "apiVersion": "2015-05-01-preview",
-        "type": "Microsoft.Compute/virtualMachines",
-        "name": "[concat(parameters('appVmNamePrefix'), copyIndex())]",
-        "location": "[resourceGroup().location]",
-        "copy": {
-          "name": "foo",
-          "count": "[variables('appScaleCount')]"
-        },
-        "dependsOn": [
-          "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
-          "[concat('Microsoft.Network/networkInterfaces/', variables('appNicName'), copyIndex())]",
-          "[concat('Microsoft.Compute/availabilitySets/', variables('appAvailabilitySetName'))]"
-        ],
-        "properties": {
-          "availabilitySet": {
-            "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('appAvailabilitySetName'))]"
-          },
-          "hardwareProfile": {
-            "vmSize": "[parameters('vmSize')]"
-          },
-          "osProfile": {
-            "computerName": "[concat(parameters('appVmNamePrefix'), copyIndex())]",
-            "adminUsername": "[parameters('adminUserName')]",
-            "adminPassword": "[parameters('adminPassword')]"
-          },
-          "storageProfile": {
-            "imageReference": {
-              "publisher": "[variables('imagePublisher')]",
-              "offer": "[variables('imageOffer')]",
-              "sku": "[parameters('windowsOSVersion')]",
-              "version": "latest"
-            },
-            "osDisk": {
-              "name": "osdisk",
-              "vhd": {
-                "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/', 'osdisk', copyIndex(), '.vhd')]"
-              },
-              "caching": "ReadWrite",
-              "createOption": "FromImage"
             }
           },
-          "networkProfile": {
-            "networkInterfaces": [
-              {
-                "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('appNicName'), copyIndex()))]"
+          {
+            "name": "[variables('AppSubnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('AppPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('AppNsgname'))]"
               }
-            ]
+            }
+          },
+          {
+            "name": "[variables('BESubnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('BackendPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('BeNsgname'))]"
+              }
+            }
           }
-        }
-      },
-      {
-        "type": "Microsoft.Compute/availabilitySets",
-        "name": "[variables('dbAvailabilitySetName')]",
-        "apiVersion": "2015-05-01-preview",
-        "location": "[resourceGroup().location]",
-        "properties": { }
-      },
-      {
-        "apiVersion": "2015-05-01-preview",
-        "type": "Microsoft.Compute/virtualMachines",
-        "name": "[concat(parameters('dbVmNamePrefix'), copyIndex())]",
-        "location": "[resourceGroup().location]",
-        "copy": {
-          "name": "foo",
-          "count": "[variables('dbSclaeCount')]"
-        },
-        "dependsOn": [
-          "[concat('Microsoft.Storage/storageAccounts/', parameters('newDBStorageAccountName'))]",
-          "[concat('Microsoft.Network/networkInterfaces/', variables('dbNicName'), copyIndex())]",
-          "[concat('Microsoft.Compute/availabilitySets/', variables('dbAvailabilitySetName'))]"
-        ],
-        "properties": {
-          "availabilitySet": {
-            "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('dbAvailabilitySetName'))]"
-          },
-          "hardwareProfile": {
-            "vmSize": "[parameters('vmSize')]"
-          },
-          "osProfile": {
-            "computerName": "[concat(parameters('dbVmNamePrefix'), copyIndex())]",
-            "adminUsername": "[parameters('adminUserName')]",
-            "adminPassword": "[parameters('adminPassword')]"
-          },
-          "storageProfile": {
-            "imageReference": {
-              "publisher": "[variables('imagePublisher')]",
-              "offer": "[variables('imageOffer')]",
-              "sku": "[parameters('windowsOSVersion')]",
-              "version": "latest"
-            },
-            "osDisk": {
-              "name": "osdisk",
-              "vhd": {
-                "uri": "[concat('http://',parameters('newDBStorageAccountName'),'.blob.core.windows.net/vhds/', 'osdisk', copyIndex(), '.vhd')]"
-              },
-              "caching": "ReadWrite",
-              "createOption": "FromImage"
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('FeNsgname')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "rdp_rule",
+            "properties": {
+              "description": "Allow RDP",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3389",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
             }
           },
-          "networkProfile": {
-            "networkInterfaces": [
-              {
-                "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('dbNicName'), copyIndex()))]"
-              }
-            ]
+          {
+            "name": "web_rule",
+            "properties": {
+              "description": "Allow Website",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 200,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "App_subnet_rule",
+            "properties": {
+              "description": "Outbound to App",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "[variables('AppPrefix')]",
+              "access": "Allow",
+              "priority": 1000,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "Block_Internal_Network",
+            "properties": {
+              "description": "Outbound to Internal Network",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Deny",
+              "priority": 2000,
+              "direction": "Outbound"
+            }
           }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('AppNsgname')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "fe_rule",
+            "properties": {
+              "description": "Allow Frontend",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "[variables('FrontendPrefix')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "rdp_rule",
+            "properties": {
+              "description": "Allow RDP",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3389",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 200,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "vnet_rule",
+            "properties": {
+              "description": "Block Internal Network",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "*",
+              "access": "Deny",
+              "priority": 300,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "DB_outbound_rule",
+            "properties": {
+              "description": "Allow Outbound DB",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "[variables('BackendPrefix')]",
+              "access": "Allow",
+              "priority": 1000,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "Deny_Internet",
+            "properties": {
+              "description": "Deny_Internet",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "Internet",
+              "access": "Deny",
+              "priority": 2000,
+              "direction": "Outbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('BeNsgname')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "app_rule",
+            "properties": {
+              "description": "Allow App servers",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "[variables('AppPrefix')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "vnet_rule",
+            "properties": {
+              "description": "Block Internal Network",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "*",
+              "access": "Deny",
+              "priority": 200,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Deny_Internet",
+            "properties": {
+              "description": "Deny_Internet",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "Internet",
+              "access": "Deny",
+              "priority": 1000,
+              "direction": "Outbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2017-06-01",
+      "name": "[variables('appGatewayName')]",
+      "type": "Microsoft.Network/applicationGateways",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', variables('VNetName'))]",
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('appGatewayPubIPName'))]"
+      ],
+      "properties": {
+        "sku": {
+          "name": "[parameters('skuName')]",
+          "tier": "Standard",
+          "capacity": "[parameters('appGatewayCapacity')]"
+        },
+        "gatewayIPConfigurations": [
+          {
+            "name": "appGatewayIpConfig",
+            "properties": {
+              "subnet": {
+                "id": "[variables('FESubnetRef')]"
+              }
+            }
+          }
+        ],
+        "frontendIPConfigurations": [
+          {
+            "name": "appGatewayFrontendIP",
+            "properties": {
+              "PublicIPAddress": {
+                "id": "[variables('appGatewayPubPRef')]"
+              }
+            }
+          }
+        ],
+        "frontendPorts": [
+          {
+            "name": "appGatewayFrontendPort",
+            "properties": {
+              "Port": 80
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "appGatewayBackendPool",
+            "properties": {
+              "BackendAddresses": [
+                {
+                  "IpAddress": "[variables('AppServerIP1')]"
+                },
+                {
+                  "IpAddress": "[variables('AppServerIP2')]"
+                }
+              ]
+            }
+          }
+        ],
+        "backendHttpSettingsCollection": [
+          {
+            "name": "appGatewayBackendHttpSettings",
+            "properties": {
+              "Port": 80,
+              "Protocol": "Http",
+              "CookieBasedAffinity": "Enabled"
+            }
+          }
+        ],
+        "httpListeners": [
+          {
+            "name": "appGatewayHttpListener",
+            "properties": {
+              "FrontendIPConfiguration": {
+                "Id": "[concat(variables('applicationGatewayID'), '/frontendIPConfigurations/appGatewayFrontendIP')]"
+              },
+              "FrontendPort": {
+                "Id": "[concat(variables('applicationGatewayID'), '/frontendPorts/appGatewayFrontendPort')]"
+              },
+              "Protocol": "Http",
+              "SslCertificate": null
+            }
+          }
+        ],
+        "requestRoutingRules": [
+          {
+            "Name": "rule1",
+            "properties": {
+              "RuleType": "Basic",
+              "httpListener": {
+                "id": "[concat(variables('applicationGatewayID'), '/httpListeners/appGatewayHttpListener')]"
+              },
+              "backendAddressPool": {
+                "id": "[concat(variables('applicationGatewayID'), '/backendAddressPools/appGatewayBackendPool')]"
+              },
+              "backendHttpSettings": {
+                "id": "[concat(variables('applicationGatewayID'), '/backendHttpSettingsCollection/appGatewayBackendHttpSettings')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "name": "[parameters('multitierILB')]",
+      "type": "Microsoft.Network/loadBalancers",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', variables('VNetName'))]"
+      ],
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "LoadBalancerFrontEnd",
+            "properties": {
+              "subnet": {
+                "id": "[variables('BESubnetRef')]"
+              },
+              "privateIPAddress": "[variables('ILBIP')]",
+              "privateIPAllocationMethod": "Static"
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "BackendPool1"
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "name": "LBRule",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('privateIPConfigID')]"
+              },
+              "backendAddressPool": {
+                "id": "[variables('IlbPoolID')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 1433,
+              "backendPort": 1433,
+              "enableFloatingIP": true,
+              "idleTimeoutInMinutes": 5,
+              "probe": {
+                "id": "[variables('IlbProbeID')]"
+              }
+            }
+          }
+        ],
+        "probes": [
+          {
+            "name": "tcpProbe",
+            "properties": {
+              "protocol": "Tcp",
+              "port": 1433,
+              "intervalInSeconds": 5,
+              "numberOfProbes": 2
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('appNicName'), copyIndex())]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "foo",
+        "count": "[variables('appScaleCount')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', parameters('appServersPublicIPPrefix'), copyIndex())]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('VNetName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[concat('10.1.1.', copyIndex(4))]",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('appServersPublicIPPrefix'), copyIndex()))]"
+              },
+              "subnet": {
+                "id": "[variables('AppSubnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('dbNicName'), copyIndex())]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "foo",
+        "count": "[variables('dbSclaeCount')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', variables('VNetName'))]",
+        "[concat('Microsoft.Network/loadBalancers/', parameters('multitierILB'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[concat('10.1.2.', copyIndex(4))]",
+              "subnet": {
+                "id": "[variables('BESubnetRef')]"
+              },
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[concat(variables('IlbID'), '/backendAddressPools/BackendPool1')]"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[variables('appAvailabilitySetName')]",
+      "apiVersion": "2016-04-30-preview",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "platformFaultDomainCount": 2,
+        "platformUpdateDomainCount": 2,
+        "managed": true
+      }
+    },
+    {
+      "apiVersion": "2016-04-30-preview",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(parameters('appVmNamePrefix'), copyIndex())]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "foo",
+        "count": "[variables('appScaleCount')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', variables('appNicName'), copyIndex())]",
+        "[concat('Microsoft.Compute/availabilitySets/', variables('appAvailabilitySetName'))]"
+      ],
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('appAvailabilitySetName'))]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[concat(parameters('appVmNamePrefix'), copyIndex())]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[parameters('windowsOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('appNicName'), copyIndex()))]"
+            }
+          ]
         }
       }
-    ]
+    },
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[variables('dbAvailabilitySetName')]",
+      "apiVersion": "2016-04-30-preview",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "platformFaultDomainCount": 2,
+        "platformUpdateDomainCount": 2,
+        "managed": true
+      }
+    },
+    {
+      "apiVersion": "2016-04-30-preview",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(parameters('dbVmNamePrefix'), copyIndex())]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "foo",
+        "count": "[variables('dbSclaeCount')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', variables('dbNicName'), copyIndex())]",
+        "[concat('Microsoft.Compute/availabilitySets/', variables('dbAvailabilitySetName'))]"
+      ],
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('dbAvailabilitySetName'))]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[concat(parameters('dbVmNamePrefix'), copyIndex())]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[parameters('windowsOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('dbNicName'), copyIndex()))]"
+            }
+          ]
+        }
+      }
+    }
+  ]
 }

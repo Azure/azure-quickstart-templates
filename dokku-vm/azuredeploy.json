@@ -22,7 +22,7 @@
         },
         "ubuntuOSVersion": {
             "type": "string",
-            "defaultValue": "14.04.4-LTS",
+            "defaultValue": "16.04.0-LTS",
             "allowedValues": [
                 "14.04.4-LTS",
                 "16.04.0-LTS"
@@ -33,68 +33,73 @@
         },
         "dokkuVersion": {
             "type": "string",
-            "defaultValue": "0.7.1",
+            "defaultValue": "0.10.3",
             "metadata": {
                 "description": "The Dokku version to launch"
             }
         },
         "vmSize": {
             "type": "string",
-            "defaultValue": "Standard_F2",
+            "defaultValue": "Standard_D2S_V3",
+            "metadata": {
+                "description": "Size of the virtual machine"
+            }
+        },
+        "storageAccountType": {
+            "type": "string",
+            "defaultValue": "Standard_LRS",
             "allowedValues": [
-                "Standard_F1",
-                "Standard_F2",
-                "Standard_F4",
-                "Standard_F8",
-                "Standard_D1_v2",
-                "Standard_D11_v2",
-                "Standard_D12_v2",
-                "Standard_D13_v2",
-                "Standard_D14_v2",
-                "Standard_D2_v2",
-                "Standard_D3_v2",
-                "Standard_D4_v2",
-                "Standard_D5_v2"
+                "Standard_LRS",
+                "Premium_LRS"
             ],
             "metadata": {
-                "description": "Size of vm"
+                "description": "Type of storage to be used for the VM's OS disk.  Diagnostics disk will use Standard_LRS."
             }
+        },
+        "_artifactsLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+            },
+            "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/dokku-vm"
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+            },
+            "defaultValue": ""
         }
     },
     "variables": {
         "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'dokku')]",
         "imagePublisher": "Canonical",
         "imageOffer": "UbuntuServer",
-        "OSDiskName": "osdiskforlinuxsimple",
         "nicName": "dokkuVMNic",
         "addressPrefix": "10.0.0.0/16",
         "subnetName": "Subnet",
         "subnetPrefix": "10.0.0.0/24",
-        "storageAccountType": "Standard_LRS",
         "publicIPAddressName": "dokkuPublicIP",
         "publicIPAddressType": "Dynamic",
-        "vmStorageAccountContainerName": "vhds",
         "vmName": "DokkuVM",
         "virtualNetworkName": "DokkuVNet",
-        "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
-        "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
-        "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
-        "githubPath": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/dokku-vm/"
+        "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('virtualNetworkName'), variables('subnetName'))]",
+        "sshKeyPath": "[concat('/home/',parameters('adminUsername'), '/.ssh/authorized_keys')]"
     },
     "resources": [
         {
             "type": "Microsoft.Storage/storageAccounts",
             "name": "[variables('storageAccountName')]",
-            "apiVersion": "2016-01-01",
+            "apiVersion": "2017-06-01",
             "location": "[resourceGroup().location]",
             "sku": {
-                "name": "[variables('storageAccountType')]"
+                "name": "Standard_LRS"
             },
             "kind": "Storage",
             "properties": {}
         },
         {
-            "apiVersion": "2015-06-15",
+            "apiVersion": "2017-08-01",
             "type": "Microsoft.Network/publicIPAddresses",
             "name": "[variables('publicIPAddressName')]",
             "location": "[resourceGroup().location]",
@@ -106,7 +111,7 @@
             }
         },
         {
-            "apiVersion": "2015-06-15",
+            "apiVersion": "2017-08-01",
             "type": "Microsoft.Network/virtualNetworks",
             "name": "[variables('virtualNetworkName')]",
             "location": "[resourceGroup().location]",
@@ -127,13 +132,13 @@
             }
         },
         {
-            "apiVersion": "2015-06-15",
+            "apiVersion": "2017-08-01",
             "type": "Microsoft.Network/networkInterfaces",
             "name": "[variables('nicName')]",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
-                "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+                "[variables('publicIPAddressName')]",
+                "[variables('virtualNetworkName')]"
             ],
             "properties": {
                 "ipConfigurations": [
@@ -153,13 +158,13 @@
             }
         },
         {
-            "apiVersion": "2016-03-30",
+            "apiVersion": "2017-03-30",
             "type": "Microsoft.Compute/virtualMachines",
             "name": "[variables('vmName')]",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-                "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+                "[variables('storageAccountName')]",
+                "[variables('nicName')]"
             ],
             "properties": {
                 "hardwareProfile": {
@@ -169,7 +174,7 @@
                     "computerName": "[variables('vmName')]",
                     "adminUsername": "[parameters('adminUsername')]",
                     "linuxConfiguration": {
-                        "disablePasswordAuthentication": "true",
+                        "disablePasswordAuthentication": true,
                         "ssh": {
                             "publicKeys": [
                                 {
@@ -188,12 +193,10 @@
                         "version": "latest"
                     },
                     "osDisk": {
-                        "name": "osdisk",
-                        "vhd": {
-                            "uri": "[concat('http://', variables('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
-                        },
-                        "caching": "ReadWrite",
-                        "createOption": "FromImage"
+                        "createOption": "FromImage",
+                        "managedDisk": {
+                            "storageAccountType": "[parameters('storageAccountType')]"
+                        }
                     }
                 },
                 "networkProfile": {
@@ -206,31 +209,33 @@
                 "diagnosticsProfile": {
                     "bootDiagnostics": {
                         "enabled": "true",
-                        "storageUri": "[concat('http://', variables('storageAccountName'),'.blob.core.windows.net')]"
+                        "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))).primaryEndpoints['blob']]"
                     }
                 }
-            }
-        },
-        {
-            "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "[concat(variables('vmName'),'/initdokku')]",
-            "apiVersion": "2016-03-30",
-            "location": "[resourceGroup().location]",
-            "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
-            ],
-            "properties": {
-                "publisher": "Microsoft.Azure.Extensions",
-				"type": "CustomScript",
-				"typeHandlerVersion": "2.0",
-				"autoUpgradeMinorVersion": true,
-                "settings": {
-                    "fileUris": [
-                        "[concat(variables('githubPath'),'deploy_dokku.sh')]"
+            },
+            "resources": [
+                {
+                    "type": "extensions",
+                    "name": "initdokku",
+                    "apiVersion": "2017-03-30",
+                    "location": "[resourceGroup().location]",
+                    "dependsOn": [
+                        "[variables('vmName')]"
                     ],
-                    "commandToExecute": "[concat('sh deploy_dokku.sh ', parameters('dokkuVersion'))]"
+                    "properties": {
+                        "publisher": "Microsoft.Azure.Extensions",
+                        "type": "CustomScript",
+                        "typeHandlerVersion": "2.0",
+                        "autoUpgradeMinorVersion": true,
+                        "settings": {
+                            "fileUris": [
+                                "[concat(parameters('_artifactsLocation'), '/scripts/deploy_dokku.sh', parameters('_artifactsLocationSasToken'))]"
+                            ],
+                            "commandToExecute": "[concat('sh deploy_dokku.sh ', parameters('dokkuVersion'))]"
+                        }
+                    }
                 }
-            }
+            ]
         }
     ]
 }

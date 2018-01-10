@@ -1,221 +1,240 @@
 {
-	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-	"contentVersion": "1.0.0.0",
-	"parameters": {
-		"vmName": {
-			"type": "string",
-			"defaultValue": "dnsproxy",
-			"metadata": {
-				"description": "Name of the Virtual Machine."
-			}
-		},
-		"adminUsername": {
-			"type": "string",
-			"metadata": {
-				"description": "User name for the Virtual Machine."
-			}
-		},
-		"adminPassword": {
-			"type": "securestring",
-			"metadata": {
-				"description": "Password for the Virtual Machine."
-			}
-		},
-		"storageAccName": {
-			"type": "string",
-			"metadata": {
-				"description": "The name of the storage account for the VM's OS disk.  Storage account names must be globally unique."
-			}
-		},
-		"forwardIP": {
-			"type": "string",
-			"defaultValue": "168.63.129.16",
-			"metadata": {
-				"description": "This is the IP address to forward DNS queries to.  The default value represents Azure's internal DNS recursive resolvers."
-			}
-		}
-	},
-	"variables": {
-		"vmSize": "Standard_A1",
-		"ubuntuOSVersion": "14.04.2-LTS",
-		"asetName": "dnsproxy-avail",
-		"nsgName": "dnsproxy-nsg",
-		"vnetName" : "dnsproxy-vnet",
-		"vnetAddressPrefix": "10.0.0.0/8",
-		"subNet1Name": "subnet1",
-		"subNet1Prefix": "10.1.0.0/16",
-		"storType": "Standard_LRS",
-		"location": "[resourceGroup().location]",
-		"vhdName": "[concat(parameters('vmName'), '-', 'osdisk')]",
-		"nicName": "[concat(parameters('vmName'), '-', 'nic')]",
-		"pipName": "[concat(parameters('vmName'), '-', 'pip')]",
-		"apiVersion": "2015-06-15",
-		"artifactsBaseUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/301-dns-forwarder",
-		"scriptUrl":"[concat(variables('artifactsBaseUrl'),'/','forwarderSetup.sh')]"
-	},
-	"resources": [
-	{
-		"type": "Microsoft.Storage/StorageAccounts",
-		"comments": "Storage account for the VHD files for the VMs",
-		"name": "[parameters('storageAccName')]",
-		"apiVersion": "[variables('apiVersion')]",
-		"location": "[variables('location')]",
-		"properties": {
-			"accountType": "[variables('storType')]"
-		}
-	},
-	{
-		"type": "Microsoft.Compute/availabilitySets",
-		"comments": "availability set for creating a HA cluster, run the template multiple times to get multiple DNS servers",
-		"name": "[variables('asetName')]",
-		"apiVersion": "[variables('apiVersion')]",
-		"location": "[variables('location')]"
-	},
-	{
-		"type": "Microsoft.Network/networkSecurityGroups",
-		"comments": "An NSG to prevent inbound traffic other than SSH, set sourceAddressPrefix to restrict access further or block all together (or remove the public ip) and ssh in from another vm",
-		"name": "[variables('nsgName')]",
-		"apiVersion": "[variables('apiVersion')]",
-		"location": "[variables('location')]",
-		"properties": {
-			"securityRules": [{
-				"name": "allow_ssh_in",
-				"properties": {
-					"description": "The only thing allowed is SSH",
-					"protocol": "Tcp",
-					"sourcePortRange": "*",
-					"destinationPortRange": "22",
-					"sourceAddressPrefix": "*",
-					"destinationAddressPrefix": "*",
-					"access": "Allow",
-					"priority": 100,
-					"direction": "Inbound"
-				}
-			}]
-		}
-	},
-	{
-		"type": "Microsoft.Network/virtualNetworks",
-		"comments": "An example virtual network, for real scenarios add the DNS forwarder to your own vnet",
-		"name": "[variables('vnetName')]",
-		"apiVersion": "[variables('apiVersion')]",
-		"location": "[variables('location')]",
-		"properties": {
-			"addressSpace": {
-				"addressPrefixes": ["[variables('vnetAddressPrefix')]"]
-			},
-			"subnets": [{
-				"name": "[variables('subnet1Name')]",
-				"properties": {
-					"addressPrefix": "[variables('subNet1Prefix')]"
-				}
-			}]
-		}
-	},
-	{
-		"type": "Microsoft.Network/publicIPAddresses",
-		"comments": "A public IP to allow us to SSH into the VM, not recommended for production DNS servers",
-		"name": "[variables('pipName')]",
-		"apiVersion": "[variables('apiVersion')]",
-		"location": "[variables('location')]",
-		"properties": {
-			"publicIPAllocationMethod": "Dynamic"
-		}
-	},
-	{
-		"type": "Microsoft.Network/networkInterfaces",
-		"comments": "A single network interface on each DNS server",
-		"name": "[variables('nicName')]",
-		"apiVersion": "[variables('apiVersion')]",
-		"location": "[variables('location')]",
-		"dependsOn": ["[concat('Microsoft.Network/publicIPAddresses/', variables('pipName'))]",
-					  "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
-					  "[concat('Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]"
-					  ],
-		"properties": {
-			"ipConfigurations": [{
-				"name": "ipconfig1",
-				"properties": {
-					"privateIPAllocationMethod": "Dynamic",
-					"publicIPAddress": {
-						"id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('pipName'))]"
-					},
-					"subnet": {
-						"id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('vnetName')), '/subnets/', variables('subnet1Name'))]"
-					},
-					"networkSecurityGroup": {
-						"id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
-					}
-				}
-			}]
-		}
-	},
-	{
-		"type": "Microsoft.Compute/virtualMachines",
-		"comments": "A stock Ubuntu server, a VM extension will add the DNS server to it later",
-		"name": "[parameters('vmName')]",
-		"apiVersion": "[variables('apiVersion')]",
-		"location": "[variables('location')]",
-		"dependsOn": ["[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]",
-					  "[concat('Microsoft.Storage/StorageAccounts/', parameters('storageAccName'))]",
-					  "[concat('Microsoft.Compute/availabilitySets/', variables('asetName'))]"],
-		"properties": {
-			"availabilitySet": {
-				"id": "[resourceId('Microsoft.Compute/availabilitySets', variables('asetName'))]"
-			},
-			"hardwareProfile": {
-				"vmSize": "[variables('vmSize')]"
-			},
-			"osProfile": {
-				"computerName": "[parameters('vmName')]",
-				"adminUsername": "[parameters('adminUsername')]",
-				"adminPassword": "[parameters('adminPassword')]"
-			},
-			"storageProfile": {
-				"imageReference": {
-					"publisher": "Canonical",
-					"offer": "UbuntuServer",
-					"sku": "[variables('ubuntuOSVersion')]",
-					"version": "latest"
-				},
-				"osDisk": {
-					"name": "osdisk",
-					"vhd": {
-						"uri": "[concat('http://',parameters('storageAccName'),'.blob.core.windows.net/vhds/',variables('vhdName'),'.vhd')]"
-					},
-					"caching": "ReadWrite",
-					"createOption": "FromImage"
-				}
-			},
-			"networkProfile": {
-				"networkInterfaces": [{
-					"id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
-				}]
-			},
-			"diagnosticsProfile": {
-				"bootDiagnostics": {
-					"enabled": "true",
-					"storageUri": "[concat('http://',parameters('storageAccName'),'.blob.core.windows.net')]"
-				}
-			}
-		}
-	},
-	{
-		"type": "Microsoft.Compute/virtualMachines/extensions",
-		"comments": "The shell script to install Bind9 and setup the ACL and forwarders.  If this step fails, check the logs in /var/log/waagent.log and /var/log/azure/* for details",
-		"name": "[concat(parameters('vmName'),'/setupdnsfirewall')]",
-		"apiVersion": "[variables('apiVersion')]",
-		"location": "[variables('location')]",
-		"dependsOn": ["[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"],
-		"properties": {
-			"publisher": "Microsoft.Azure.Extensions",
-			"type": "CustomScript",
-			"typeHandlerVersion": "2.0",
-			"autoUpgradeMinorVersion": true,
-			"settings": {
-				"fileUris": ["[variables('scriptUrl')]"],
-				"commandToExecute": "[concat('sh forwarderSetup.sh',' ',parameters('forwardIP'),' ', variables('vnetAddressPrefix'))]"
-			}
-		}
-	}]
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmName": {
+      "type": "string",
+      "defaultValue": "dnsproxy",
+      "metadata": {
+        "description": "Name of the Virtual Machine."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "User name for the Virtual Machine."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the Virtual Machine."
+      }
+    },
+    "storageAccName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the storage account for diagnostics.  Storage account names must be globally unique."
+      }
+    },
+    "forwardIP": {
+      "type": "string",
+      "defaultValue": "168.63.129.16",
+      "metadata": {
+        "description": "This is the IP address to forward DNS queries to.  The default value represents Azure's internal DNS recursive resolvers."
+      }
+    }
+  },
+  "variables": {
+    "vmSize": "Standard_A1",
+    "ubuntuOSVersion": "14.04.2-LTS",
+    "asetName": "dnsproxy-avail",
+    "nsgName": "dnsproxy-nsg",
+    "vnetName": "dnsproxy-vnet",
+    "vnetAddressPrefix": "10.0.0.0/8",
+    "subNet1Name": "subnet1",
+    "subNet1Prefix": "10.1.0.0/16",
+    "storType": "Standard_LRS",
+    "location": "[resourceGroup().location]",
+    "vhdName": "[concat(parameters('vmName'), '-', 'osdisk')]",
+    "nicName": "[concat(parameters('vmName'), '-', 'nic')]",
+    "pipName": "[concat(parameters('vmName'), '-', 'pip')]",
+    "apiVersion": "2015-06-15",
+    "artifactsBaseUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/301-dns-forwarder",
+    "scriptUrl": "[concat(variables('artifactsBaseUrl'),'/','forwarderSetup.sh')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/StorageAccounts",
+      "comments": "Storage account for the VHD files for the VMs",
+      "name": "[parameters('storageAccName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[variables('location')]",
+      "properties": {
+        "accountType": "[variables('storType')]"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "comments": "availability set for creating a HA cluster, run the template multiple times to get multiple DNS servers",
+      "name": "[variables('asetName')]",
+      "apiVersion": "2016-04-30-preview",
+      "location": "[variables('location')]",
+      "properties": {
+        "platformFaultDomainCount": "2",
+        "platformUpdateDomainCount": "2",
+        "managed": "true"
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "comments": "An NSG to prevent inbound traffic other than SSH, set sourceAddressPrefix to restrict access further or block all together (or remove the public ip) and ssh in from another vm",
+      "name": "[variables('nsgName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[variables('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "allow_ssh_in",
+            "properties": {
+              "description": "The only thing allowed is SSH",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "comments": "An example virtual network, for real scenarios add the DNS forwarder to your own vnet",
+      "name": "[variables('vnetName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[variables('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('vnetAddressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnet1Name')]",
+            "properties": {
+              "addressPrefix": "[variables('subNet1Prefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "comments": "A public IP to allow us to SSH into the VM, not recommended for production DNS servers",
+      "name": "[variables('pipName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[variables('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic"
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "comments": "A single network interface on each DNS server",
+      "name": "[variables('nicName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[variables('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('pipName'))]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('pipName'))]"
+              },
+              "subnet": {
+                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('vnetName')), '/subnets/', variables('subnet1Name'))]"
+              },
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "comments": "A stock Ubuntu server, a VM extension will add the DNS server to it later",
+      "name": "[parameters('vmName')]",
+      "apiVersion": "2016-04-30-preview",
+      "location": "[variables('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]",
+        "[concat('Microsoft.Storage/StorageAccounts/', parameters('storageAccName'))]",
+        "[concat('Microsoft.Compute/availabilitySets/', variables('asetName'))]"
+      ],
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('asetName'))]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[variables('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "Canonical",
+            "offer": "UbuntuServer",
+            "sku": "[variables('ubuntuOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": "true",
+            "storageUri": "[concat('http://',parameters('storageAccName'),'.blob.core.windows.net')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "comments": "The shell script to install Bind9 and setup the ACL and forwarders.  If this step fails, check the logs in /var/log/waagent.log and /var/log/azure/* for details",
+      "name": "[concat(parameters('vmName'),'/setupdnsfirewall')]",
+      "apiVersion": "2015-06-15",
+      "location": "[variables('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[variables('scriptUrl')]"
+          ],
+          "commandToExecute": "[concat('sh forwarderSetup.sh',' ',parameters('forwardIP'),' ', variables('vnetAddressPrefix'))]"
+        }
+      }
+    }
+  ]
 }

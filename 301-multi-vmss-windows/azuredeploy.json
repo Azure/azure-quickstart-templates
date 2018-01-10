@@ -1,5 +1,5 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2015-01-01-preview/deploymentTemplate.json",
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "adminUsername": {
@@ -16,16 +16,22 @@
     },
     "numberOfVMSS": {
       "type": "int",
-      "maxValue": 5,
       "metadata": {
-        "description": "Number of VMSSes to deploy (max of 5)"
+        "description": "Number of VMSSes to deploy"
+      }
+    },
+    "singlePlacementGroup": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Documentation here: https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-placement-groups"
       }
     },
     "instanceCountPerVMSS": {
       "type": "int",
-      "maxValue": 100,
+      "maxValue": 1000,
       "metadata": {
-        "description": "Number of VM instances per scale set (max of 100)"
+        "description": "Number of VM instances per scale set; if singlePlacementGroup is true (the default), then this value must be 100 or less; if singlePlacementGroup is false, then this value must be 1000 or less"
       }
     },
     "_artifactsLocation": {
@@ -52,7 +58,7 @@
   },
   "resources": [
     {
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2017-04-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('newVNETName')]",
       "location": "[resourceGroup().location]",
@@ -75,7 +81,7 @@
     {
       "name": "[concat('clusterSet', copyindex())]",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2016-02-01",
+      "apiVersion": "2016-09-01",
       "copy": {
         "name": "deploymentLoop",
         "count": "[parameters('numberOfVMSS')]"
@@ -92,6 +98,9 @@
         "parameters": {
           "VMSSName": {
             "value": "[concat(variables('VMSSPrefix'), padLeft(copyindex(), 2, '0'))]"
+          },
+          "singlePlacementGroup": {
+            "value": "[parameters('singlePlacementGroup')]"
           },
           "instanceCount": {
             "value": "[parameters('instanceCountPerVMSS')]"

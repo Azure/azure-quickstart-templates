@@ -1,6 +1,6 @@
-﻿{
-    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-    "contentVersion": "1.0.0.0",
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
   "parameters": {
     "dnsName": {
       "type": "string",
@@ -69,7 +69,7 @@
       "metadata": {
         "description": "New or existing Virtual network name"
       }
-    },    
+    },
     "VNETExistingResourceGroupName": {
       "type": "string",
       "defaultValue": "",
@@ -202,7 +202,7 @@
     "storageAccountName": {
       "type": "string",
       "metadata": {
-        "description":  "storage account name"
+        "description": "storage account name"
       }
     }
   },
@@ -225,327 +225,322 @@
     "customScriptFilePath": "[concat(parameters('artifactsPath'), '/scripts/azuremysql.sh')]",
     "mysqlConfigFilePath": "[concat(parameters('artifactsPath'), '/scripts/my.cnf.template')]",
     "singleQuote": "",
-
     "virtualNetworkSetupURL": "[concat(parameters('artifactsPath'),'/nested/vnet-',parameters('vnetNewOrExisting'),'.json')]",
     "sa": "[parameters('dbSubnetStartAddress')]",
     "ipOctet01": "[concat(split(variables('sa'), '.')[0], '.', split(variables('sa'), '.')[1], '.')]",
     "ipOctet2": "[int(split(variables('sa'), '.')[2])]",
-    "ipOctet3": "[int(split(variables('sa'), '.')[3])]"
+    "ipOctet3": "[int(split(variables('sa'), '.')[3])]",
+    "DBName": "[concat(uniquestring(resourceGroup().id),'wordpress')]"
   },
-    "resources": [
-        {
-            "name": "SettingUpVirtualNetwork",
-            "type": "Microsoft.Resources/deployments",
-            "apiVersion": "[variables('templateAPIVersion')]",
-            "properties": {
-                "mode": "Incremental",
-                "templateLink": {
-                    "uri": "[variables('virtualNetworkSetupURL')]",
-                    "contentVersion": "1.0.0.0"
-                },
-                "parameters": {
-                    "virtualNetworkName": {
-                        "value": "[parameters('virtualNetworkName')]"
-                    },
-                    "virtualNetworkAddressPrefix": {
-                        "value": "[parameters('vnetAddressPrefix')]"
-                    },
-                    "dbSubnetName": {
-                        "value": "[parameters('dbSubnetName')]"
-                    },
-                    "dbSubnetAddressPrefix": {
-                        "value": "[parameters('dbSubnetAddressPrefix')]"
-                    },
-                    "VNETExistingResourceGroupName": {
-                        "value": "[parameters('VNETExistingResourceGroupName')]"
-                    }
-                }
-            }
+  "resources": [
+    {
+      "name": "SettingUpVirtualNetwork",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('virtualNetworkSetupURL')]",
+          "contentVersion": "1.0.0.0"
         },
-      {
-        "type": "Microsoft.Storage/storageAccounts",
-        "name": "[parameters('storageAccountName')]",
-        "apiVersion": "[variables('resourceAPIVersion')]",
-        "location": "[resourceGroup().location]",
-        "properties": {
-          "accountType": "[parameters('storageAccountType')]"
-        }
-      },
-      {
-        "apiVersion": "[variables('resourceAPIVersion')]",
-        "type": "Microsoft.Network/publicIPAddresses",
-        "name": "[variables('lbPublicIPName')]",
-        "location": "[resourceGroup().location]",
-        "properties": {
-          "publicIPAllocationMethod": "Static",
-          "dnsSettings": {
-            "domainNameLabel": "[parameters('dnsName')]"
+        "parameters": {
+          "virtualNetworkName": {
+            "value": "[parameters('virtualNetworkName')]"
+          },
+          "virtualNetworkAddressPrefix": {
+            "value": "[parameters('vnetAddressPrefix')]"
+          },
+          "dbSubnetName": {
+            "value": "[parameters('dbSubnetName')]"
+          },
+          "dbSubnetAddressPrefix": {
+            "value": "[parameters('dbSubnetAddressPrefix')]"
+          },
+          "VNETExistingResourceGroupName": {
+            "value": "[parameters('VNETExistingResourceGroupName')]"
           }
         }
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[parameters('storageAccountName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "accountType": "[parameters('storageAccountType')]"
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('lbPublicIPName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publicIPAllocationMethod": "Static",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('dnsName')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[variables('availabilitySetName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "properties": {}
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('nicName'), copyIndex())]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "nicLoop",
+        "count": "[variables('nodeCount')]"
       },
-      {
-        "type": "Microsoft.Compute/availabilitySets",
-        "name": "[variables('availabilitySetName')]",
-        "apiVersion": "[variables('resourceAPIVersion')]",
-        "location": "[resourceGroup().location]",
-        "properties": { }
-      },
-      {
-        "apiVersion": "[variables('resourceAPIVersion')]",
-        "type": "Microsoft.Network/networkInterfaces",
-        "name": "[concat(variables('nicName'), copyIndex())]",
-        "location": "[resourceGroup().location]",
-        "copy": {
-          "name": "nicLoop",
-          "count": "[variables('nodeCount')]"
-        },
-        "dependsOn": [
-          "[concat('Microsoft.Resources/deployments/', 'SettingUpVirtualNetwork')]",
-          "[concat('Microsoft.Network/loadBalancers/', variables('lbName'))]"
-        ],
-        "properties": {
-          "ipConfigurations": [
-            {
-              "name": "[concat('ipconfig', copyIndex())]",
-              "properties": {
-                "privateIPAllocationMethod": "Static",
-                "privateIPAddress": "[concat(variables('ipOctet01'), add(variables('ipOctet2'), div(copyIndex(variables('ipOctet3')), 255)), '.', mod(copyIndex(variables('ipOctet3')), 255))]",
-                "subnet": {
-                  "id": "[reference('Microsoft.Resources/deployments/SettingUpVirtualNetwork', variables('templateAPIVersion')).outputs.dbSubnetRef.value]"
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'SettingUpVirtualNetwork')]",
+        "[concat('Microsoft.Network/loadBalancers/', variables('lbName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "[concat('ipconfig', copyIndex())]",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[concat(variables('ipOctet01'), add(variables('ipOctet2'), div(copyIndex(variables('ipOctet3')), 255)), '.', mod(copyIndex(variables('ipOctet3')), 255))]",
+              "subnet": {
+                "id": "[reference('Microsoft.Resources/deployments/SettingUpVirtualNetwork', variables('templateAPIVersion')).outputs.dbSubnetRef.value]"
+              },
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[variables('ilbBackendAddressPoolID')]"
+                }
+              ],
+              "loadBalancerInboundNatRules": [
+                {
+                  "id": "[concat(variables('lbID'),'/inboundNatRules/',parameters('dnsName'), 'NatRule', copyIndex())]"
                 },
-                "loadBalancerBackendAddressPools": [
-                  {
-                    "id": "[variables('ilbBackendAddressPoolID')]"
-                  }
-                ],
-                "loadBalancerInboundNatRules": [
-                  {
-                    "id": "[concat(variables('lbID'),'/inboundNatRules/',parameters('dnsName'), 'NatRule', copyIndex())]"
-                  },
-                  {
-                    "id": "[concat(variables('lbID'),'/inboundNatRules/',parameters('dnsName'), 'ProbeNatRule', copyIndex())]"
-                  },
-                  {
-                    "id": "[concat(variables('lbID'),'/inboundNatRules/',parameters('dnsName'), 'MySQLNatRule', copyIndex())]"
-                  }
-                ]
-              }
+                {
+                  "id": "[concat(variables('lbID'),'/inboundNatRules/',parameters('dnsName'), 'ProbeNatRule', copyIndex())]"
+                },
+                {
+                  "id": "[concat(variables('lbID'),'/inboundNatRules/',parameters('dnsName'), 'MySQLNatRule', copyIndex())]"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[concat(parameters('dnsName'), copyIndex())]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "vmLoop",
+        "count": "[variables('nodeCount')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex())]"
+      ],
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetName'))]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[concat(parameters('dnsName'), copyIndex())]",
+          "adminUsername": "[parameters('vmUserName')]",
+          "adminPassword": "[parameters('vmPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[parameters('imagePublisher')]",
+            "offer": "[parameters('imageOffer')]",
+            "sku": "[parameters('imageSKU')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName')), variables('resourceAPIVersion')).primaryEndpoints.blob, 'vhds/', parameters('dnsName'), copyIndex(), 'osdisk.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          },
+          "dataDisks": [
+            {
+              "name": "datadisk1",
+              "diskSizeGB": "1000",
+              "lun": 0,
+              "vhd": {
+                "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName')), variables('resourceAPIVersion')).primaryEndpoints.blob, 'vhds/', parameters('dnsName'), copyIndex(), 'dataDisk1.vhd')]"
+              },
+              "createOption": "Empty"
+            },
+            {
+              "name": "datadisk2",
+              "diskSizeGB": "1000",
+              "lun": 1,
+              "vhd": {
+                "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName')), variables('resourceAPIVersion')).primaryEndpoints.blob, 'vhds/', parameters('dnsName'), copyIndex(), 'dataDisk2.vhd')]"
+              },
+              "createOption": "Empty"
             }
           ]
-        }
-      },
-      {
-        "name": "[concat(parameters('dnsName'), copyIndex())]",
-        "type": "Microsoft.Compute/virtualMachines",
-        "apiVersion": "[variables('resourceAPIVersion')]",
-        "location": "[resourceGroup().location]",
-        "copy": {
-          "name": "vmLoop",
-          "count": "[variables('nodeCount')]"
         },
-        "dependsOn": [
-          "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]",
-          "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
-          "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex())]"
-        ],
-        "properties": {
-          "availabilitySet": {
-            "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetName'))]"
-          },
-          "hardwareProfile": {
-            "vmSize": "[parameters('vmSize')]"
-          },
-          "osProfile": {
-            "computerName": "[concat(parameters('dnsName'), copyIndex())]",
-            "adminUsername": "[parameters('vmUserName')]",
-            "adminPassword": "[parameters('vmPassword')]"
-          },
-          "storageProfile": {
-            "imageReference": {
-              "publisher": "[parameters('imagePublisher')]",
-              "offer": "[parameters('imageOffer')]",
-              "sku": "[parameters('imageSKU')]",
-              "version": "latest"
-            },
-            "osDisk": {
-              "name": "osdisk",
-              "vhd": {
-                "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName')), variables('resourceAPIVersion')).primaryEndpoints.blob, 'vhds/', parameters('dnsName'), copyIndex(), 'osdisk.vhd')]"
-              },
-              "caching": "ReadWrite",
-              "createOption": "FromImage"
-            },
-            "dataDisks": [
-              {
-                "name": "datadisk1",
-                "diskSizeGB": "1000",
-                "lun": 0,
-                "vhd": {
-                  "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName')), variables('resourceAPIVersion')).primaryEndpoints.blob, 'vhds/', parameters('dnsName'), copyIndex(), 'dataDisk1.vhd')]"
-                },
-                "createOption": "Empty"
-              },
-              {
-                "name": "datadisk2",
-                "diskSizeGB": "1000",
-                "lun": 1,
-                "vhd": {
-                  "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName')), variables('resourceAPIVersion')).primaryEndpoints.blob, 'vhds/', parameters('dnsName'), copyIndex(), 'dataDisk2.vhd')]"
-                },
-                "createOption": "Empty"
-              }
-            ]
-          },
-          "networkProfile": {
-            "networkInterfaces": [
-              {
-                "id": "[concat(resourceId('Microsoft.Network/networkInterfaces',variables('nicName')), copyIndex())]"
-              }
-            ]
-          }
-        }
-      },
-      {
-        "type": "Microsoft.Compute/virtualMachines/extensions",
-        "name": "[concat(parameters('dnsName'), copyIndex(), '/setupMySQL')]",
-        "apiVersion": "[variables('resourceAPIVersion')]",
-        "location": "[resourceGroup().location]",
-        "copy": {
-          "name": "extLoop",
-          "count": "[variables('nodeCount')]"
-        },
-        "dependsOn": [
-          "[concat('Microsoft.Compute/virtualMachines/', parameters('dnsName'), copyIndex())]"
-        ],
-        "properties": {
-          "publisher": "Microsoft.Azure.Extensions",
-          "type": "CustomScript",
-          "typeHandlerVersion": "2.0",
-          "autoUpgradeMinorVersion": true,
-          "settings": {
-            "fileUris": [
-              "[variables('customScriptFilePath')]"
-            ]
-          },
-          "protectedSettings": {
-            "commandToExecute": "[concat(parameters('customScriptCommandToExecute'), ' ', copyIndex(1), ' ', variables('ipOctet01'), add(variables('ipOctet2'), div(copyIndex(variables('ipOctet3')), 255)), '.', mod(copyIndex(variables('ipOctet3')), 255), ' ', variables('mysqlConfigFilePath'), ' ', variables('singleQuote'), parameters('mysqlReplicationPassword'), variables('singleQuote'), ' ', variables('singleQuote'), parameters('mysqlRootPassword'), variables('singleQuote'), ' ', variables('singleQuote'), parameters('mysqlProbePassword'), variables('singleQuote'), ' ', parameters('dbSubnetStartAddress'))]",
-            "Items": {
-              "mysqlRootPassword": "[parameters('mysqlRootPassword')]",
-              "mysqlReplicationPassword": "[parameters('mysqlReplicationPassword')]",
-              "mysqlProbePassword": "[parameters('mysqlProbePassword')]"
-            }
-          }
-        }
-      },
-      {
-        "apiVersion": "[variables('resourceAPIVersion')]",
-        "type": "Microsoft.Network/loadBalancers",
-        "name": "[variables('lbName')]",
-        "location": "[resourceGroup().location]",
-        "dependsOn": [
-          "[concat('Microsoft.Network/publicIPAddresses/', variables('lbPublicIPName'))]"
-        ],
-        "properties": {
-          "frontendIPConfigurations": [
+        "networkProfile": {
+          "networkInterfaces": [
             {
-              "name": "[variables('sshIPConfigName')]",
-              "properties": {
-                "publicIPAddress": {
-                  "id": "[variables('lbPublicIPRef')]"
-                }
-              }
-            }
-          ],
-          "backendAddressPools": [
-            {
-              "name": "[variables('ilbBackendAddressPoolName')]"
-            }
-          ],
-          "inboundNatRules": [
-            {
-              "name": "[concat(parameters('dnsName'),'NatRule0')]",
-              "properties": {
-                "frontendIPConfiguration": {
-                  "id": "[variables('sshIPConfig')]"
-                },
-                "protocol": "tcp",
-                "frontendPort": "[parameters('sshNatRuleFrontEndPort0')]",
-                "backendPort": 22,
-                "enableFloatingIP": false
-              }
-            },
-            {
-              "name": "[concat(parameters('dnsName'),'NatRule1')]",
-              "properties": {
-                "frontendIPConfiguration": {
-                  "id": "[variables('sshIPConfig')]"
-                },
-                "protocol": "tcp",
-                "frontendPort": "[parameters('sshNatRuleFrontEndPort1')]",
-                "backendPort": 22,
-                "enableFloatingIP": false
-              }
-            },
-            {
-              "name": "[concat(parameters('dnsName'),'MySQLNatRule0')]",
-              "properties": {
-                "frontendIPConfiguration": {
-                  "id": "[variables('sshIPConfig')]"
-                },
-                "protocol": "tcp",
-                "frontendPort": "[parameters('mysqlFrontEndPort0')]",
-                "backendPort": 3306,
-                "enableFloatingIP": false
-              }
-            },
-            {
-              "name": "[concat(parameters('dnsName'),'MySQLNatRule1')]",
-              "properties": {
-                "frontendIPConfiguration": {
-                  "id": "[variables('sshIPConfig')]"
-                },
-                "protocol": "tcp",
-                "frontendPort": "[parameters('mysqlFrontEndPort1')]",
-                "backendPort": 3306,
-                "enableFloatingIP": false
-              }
-            },
-            {
-              "name": "[concat(parameters('dnsName'),'ProbeNatRule0')]",
-              "properties": {
-                "frontendIPConfiguration": {
-                  "id": "[variables('sshIPConfig')]"
-                },
-                "protocol": "tcp",
-                "frontendPort": "[parameters('mysqlProbePort0')]",
-                "backendPort": 9200,
-                "enableFloatingIP": false
-              }
-            },
-            {
-              "name": "[concat(parameters('dnsName'),'ProbeNatRule1')]",
-              "properties": {
-                "frontendIPConfiguration": {
-                  "id": "[variables('sshIPConfig')]"
-                },
-                "protocol": "tcp",
-                "frontendPort": "[parameters('mysqlProbePort1')]",
-                "backendPort": 9200,
-                "enableFloatingIP": false
-              }
+              "id": "[concat(resourceId('Microsoft.Network/networkInterfaces',variables('nicName')), copyIndex())]"
             }
           ]
         }
       }
-    ],
-    "outputs": {
-        "fqdn": {
-            "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('lbPublicIPName')),providers('Microsoft.Network', 'publicIPAddresses').apiVersions[0]).dnsSettings.fqdn]",
-            "type": "string"
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('dnsName'), copyIndex(), '/setupMySQL')]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "extLoop",
+        "count": "[variables('nodeCount')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('dnsName'), copyIndex())]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[variables('customScriptFilePath')]"
+          ]
         },
-        "ipaddress": {
-            "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('lbPublicIPName')),providers('Microsoft.Network', 'publicIPAddresses').apiVersions[0]).ipAddress]",
-            "type": "string"
+        "protectedSettings": {
+          "commandToExecute": "[concat(parameters('customScriptCommandToExecute'), ' ', copyIndex(1), ' ', variables('ipOctet01'), add(variables('ipOctet2'), div(copyIndex(variables('ipOctet3')), 255)), '.', mod(copyIndex(variables('ipOctet3')), 255), ' ', variables('mysqlConfigFilePath'), ' ', variables('singleQuote'), parameters('mysqlReplicationPassword'), variables('singleQuote'), ' ', variables('singleQuote'), parameters('mysqlRootPassword'), variables('singleQuote'), ' ', variables('singleQuote'), parameters('mysqlProbePassword'), variables('singleQuote'), ' ', parameters('dbSubnetStartAddress'), ' ', variables('DBName'))]"
         }
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/loadBalancers",
+      "name": "[variables('lbName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('lbPublicIPName'))]"
+      ],
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "[variables('sshIPConfigName')]",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[variables('lbPublicIPRef')]"
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "[variables('ilbBackendAddressPoolName')]"
+          }
+        ],
+        "inboundNatRules": [
+          {
+            "name": "[concat(parameters('dnsName'),'NatRule0')]",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('sshIPConfig')]"
+              },
+              "protocol": "tcp",
+              "frontendPort": "[parameters('sshNatRuleFrontEndPort0')]",
+              "backendPort": 22,
+              "enableFloatingIP": false
+            }
+          },
+          {
+            "name": "[concat(parameters('dnsName'),'NatRule1')]",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('sshIPConfig')]"
+              },
+              "protocol": "tcp",
+              "frontendPort": "[parameters('sshNatRuleFrontEndPort1')]",
+              "backendPort": 22,
+              "enableFloatingIP": false
+            }
+          },
+          {
+            "name": "[concat(parameters('dnsName'),'MySQLNatRule0')]",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('sshIPConfig')]"
+              },
+              "protocol": "tcp",
+              "frontendPort": "[parameters('mysqlFrontEndPort0')]",
+              "backendPort": 3306,
+              "enableFloatingIP": false
+            }
+          },
+          {
+            "name": "[concat(parameters('dnsName'),'MySQLNatRule1')]",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('sshIPConfig')]"
+              },
+              "protocol": "tcp",
+              "frontendPort": "[parameters('mysqlFrontEndPort1')]",
+              "backendPort": 3306,
+              "enableFloatingIP": false
+            }
+          },
+          {
+            "name": "[concat(parameters('dnsName'),'ProbeNatRule0')]",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('sshIPConfig')]"
+              },
+              "protocol": "tcp",
+              "frontendPort": "[parameters('mysqlProbePort0')]",
+              "backendPort": 9200,
+              "enableFloatingIP": false
+            }
+          },
+          {
+            "name": "[concat(parameters('dnsName'),'ProbeNatRule1')]",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('sshIPConfig')]"
+              },
+              "protocol": "tcp",
+              "frontendPort": "[parameters('mysqlProbePort1')]",
+              "backendPort": 9200,
+              "enableFloatingIP": false
+            }
+          }
+        ]
+      }
     }
+  ],
+  "outputs": {
+    "fqdn": {
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('lbPublicIPName')),providers('Microsoft.Network', 'publicIPAddresses').apiVersions[0]).dnsSettings.fqdn]",
+      "type": "string"
+    },
+    "ipaddress": {
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('lbPublicIPName')),providers('Microsoft.Network', 'publicIPAddresses').apiVersions[0]).ipAddress]",
+      "type": "string"
+    }
+  }
 }

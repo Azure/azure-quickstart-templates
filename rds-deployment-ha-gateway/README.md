@@ -1,32 +1,35 @@
-# Provide High Availability to RDG and RDWA Server on top of Remote Desktop Session Collection deployment
+# Provide High Availability to RD Gateway and RD Web Access servers in RDS deployment
 
 This template deploys the following resources:
 
-<ul><li>a number of RD Gateway/RD Web Access vm (number defined by 'numberOfWebGwInstances' parameter)</li></ul>
+* a number of RD Gateway/RD Web Access VMs (number defined by 'numberOfWebGwInstances' parameter)
 
 The template will
-<ul>
-<li>join all new VM’s to the domain.</li>
-<li>Deploy RDS roles in the deployment.</li>
-<li>Join new VM's to the existing web and Gateway farm of basic RDS deployment.</li>
-<li>Post configurations for web/Gateway VM's such as defining the Machine keys for IIS modules.</li>
-</ul>
 
-Prerequisites:
-RDS-deployment-HA is an extension to the Basic-RDS-Deployment and it is mandatory to deploy any one of the template as prerequisite 
+* Join all new VMs to the domain
+* Deploy RDS roles in the deployment
+* Join new VM's to the existing web and Gateway farm of basic RDS deployment
+* Post configurations for web/Gateway VM's such as defining the Machine keys for IIS modules
 
-rds-deployment: https://github.com/Azure/azure-quickstart-templates/tree/master/rds-deployment 
+### Prerequisites
 
-rds-deployment-custom-image-rdsh: https://github.com/Azure/azure-quickstart-templates/tree/master/rds-deployment-custom-image-rdsh
+Current Template is an extension to the Basic RDS Deployment Template, and it is mandatory to deploy any one of the template as prerequisite:
 
-rds-deployment-existing-ad : https://github.com/Azure/azure-quickstart-templates/tree/master/rds-deployment-existing-ad
+* Basic RDS deployment template  
+  https://github.com/Azure/azure-quickstart-templates/tree/master/rds-deployment 
+
+* RDS deployment from custom RDSH image  
+  https://github.com/Azure/azure-quickstart-templates/tree/master/rds-deployment-custom-image-rdsh
+
+* RDS deployment on pre-existing VNET and AD  
+  https://github.com/Azure/azure-quickstart-templates/tree/master/rds-deployment-existing-ad
 
 This template expects the same names of resources from RDS deployment, if resource names are changed in your deployment then please edit the parameters and resources accordingly, example of such resources are below:
 <ul>
-<li>StorageAccountName: Resource must be exact same to existing RDS deployment.</li>
-<li>publicIpRef : Resource must be exact same to existing RDS deployment.</li>
-<li>availabilitySets : Resource must be exact same to existing RDS deployment.</li>
-<li>Load-balancer : Load balancer name, Backend pool, LB-rules, Nat-Rule and NIC.</li>
+<li>storageAccountName: Resource must be exact same to existing RDS deployment.</li>
+<li>publicIpRef: Resource must be exact same to existing RDS deployment.</li>
+<li>availabilitySets: Resource must be exact same to existing RDS deployment.</li>
+<li>Load-balancer: Load balancer name, Backend pool, LB-rules, Nat-Rule and NIC.</li>
 <li>VM’s – VM name classification which is using copy index function.</li>
 <li>NIC – NIC naming convention.</li>
 </ul>

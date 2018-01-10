@@ -1,237 +1,265 @@
-﻿{
-   "$schema":"https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-   "contentVersion":"1.0.0.0",
-   "parameters":{
-      "vstsAccountName":{
-         "type":"string",
-         "metadata":{
-            "description": "Please enter the VSTS account name. If you access your VSTS account using 'https://yourAccountName.visualstudio.com', enter yourAccountName."
-         }
-      },
-      "vstsPersonalAccessToken":{
-         "type":"securestring",
-         "metadata":{
-            "description": "Personal Access Token (PAT) for the VSTS account. You should select the scope as 'Load test (read and write)'. Please refer 'https://www.visualstudio.com/en-us/get-started/setup/use-personal-access-tokens-to-authenticate' for more details."
-         }
-      },
-      "agentCount":{
-         "type":"int",
-         "metadata":{
-            "description": "Number of load generating agent machines to provision"
-         },
-         "defaultValue":1
-      },
-	  "publicIPAddressType": {
-         "type": "string",
-         "defaultValue": "Dynamic",
-         "allowedValues": [
-            "Dynamic",
-            "Static"
-         ],
-         "metadata": {
-            "description": "Type of public IP allocation method"
-         }
-      },
-      "adminUsername":{
-         "type":"string",
-         "metadata":{
-            "description":"Username for the virtual machine."
-         }
-      },
-      "adminPassword":{
-         "type":"securestring",
-         "metadata":{
-            "description":"Password for the virtual machine."
-         }
-      }
-   },
-   "variables":{
-      "sizeOfDiskInGB":"100",
-      "imagePublisher":"MicrosoftWindowsServer",
-      "imageOffer":"WindowsServer",
-      "addressPrefix":"10.0.0.0/16",
-      "sequenceVersion":"[uniqueString(resourceGroup().id)]",
-      "uniqueStringValue":"[substring(variables('sequenceVersion'), 3, 7)]",
-      "subnetName":"Subnet",
-      "subnetPrefix":"10.0.0.0/24",
-      "storageAccountType":"Standard_LRS",
-      "vmName":"[concat('vm', variables('uniqueStringValue'))]",
-      "vmSize":"Standard_D4_v2",
-      "storageAccountName":"[concat('storage', variables('uniqueStringValue'))]",
-      "vmStorageAccountContainerName":"vhd",
-      "virtualNetworkName":"clttemplatelocalagentvnet",
-      "publicIPAddressName":"[concat('publicip', variables('uniqueStringValue'))]",
-      "publicIPAddressType":"[parameters('publicIPAddressType')]",
-      "nicName":"[concat('nic', variables('uniqueStringValue'))]",
-      "dataDisk1VhdName":"datadisk",
-      "windowsOSVersion":"2012-R2-Datacenter",
-      "OSDiskName":"osdisk",
-      "vnetID":"[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
-      "subnetRef":"[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
-      "apiVersion":"2015-06-15"
-   },
-   "resources":[
-      {
-         "apiVersion":"2015-06-15",
-         "location":"[resourceGroup().location]",
-         "name":"[variables('storageAccountName')]",
-         "properties":{
-            "accountType":"[variables('storageAccountType')]"
-         },
-         "type":"Microsoft.Storage/storageAccounts"
-      },
-      {
-         "apiVersion":"2015-06-15",
-         "copy":{
-            "name":"publicAddressCopy",
-            "count":"[parameters('agentCount')]"
-         },
-         "type":"Microsoft.Network/publicIPAddresses",
-         "name":"[concat(variables('publicIPAddressName'),'i', copyIndex())]",
-         "location":"[resourceGroup().location]",
-         "properties":{
-            "publicIPAllocationMethod":"[variables('publicIPAddressType')]"
-         }
-      },
-      {
-         "apiVersion":"2015-06-15",
-         "type":"Microsoft.Network/virtualNetworks",
-         "name":"[variables('virtualNetworkName')]",
-         "location":"[resourceGroup().location]",
-         "properties":{
-            "addressSpace":{
-               "addressPrefixes":[
-                  "[variables('addressPrefix')]"
-               ]
-            },
-            "subnets":[
-               {
-                  "name":"[variables('subnetName')]",
-                  "properties":{
-                     "addressPrefix":"[variables('subnetPrefix')]"
-                  }
-               }
-            ]
-         }
-      },
-      {
-         "apiVersion":"2015-06-15",
-         "copy":{
-            "name":"nicCopy",
-            "count":"[parameters('agentCount')]"
-         },
-         "type":"Microsoft.Network/networkInterfaces",
-         "name":"[concat(variables('nicName'), 'i', copyIndex())]",
-         "location":"[resourceGroup().location]",
-         "dependsOn":[
-            "[concat('Microsoft.Network/publicIPAddresses/', concat(variables('publicIPAddressName'),'i', copyIndex()))]",
-            "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
-         ],
-         "properties":{
-            "ipConfigurations":[
-               {
-                  "name":"ipconfig1",
-                  "properties":{
-                     "privateIPAllocationMethod":"Dynamic",
-                     "publicIPAddress":{
-                        "id":"[resourceId('Microsoft.Network/publicIPAddresses',concat(variables('publicIPAddressName'),'i', copyIndex()))]"
-                     },
-                     "subnet":{
-                        "id":"[variables('subnetRef')]"
-                     }
-                  }
-               }
-            ]
-         }
-      },
-      {
-         "apiVersion":"2015-06-15",
-         "copy":{
-            "name":"vmCopy",
-            "count":"[parameters('agentCount')]"
-         },
-         "type":"Microsoft.Compute/virtualMachines",
-         "name":"[concat(variables('vmName'), 'i',copyIndex())]",
-         "location":"[resourceGroup().location]",
-         "dependsOn":[
-            "[concat('Microsoft.Network/networkInterfaces/', concat(variables('nicName'), 'i', copyIndex()))]"
-         ],
-         "properties":{
-            "hardwareProfile":{
-               "vmSize":"[variables('vmSize')]"
-            },
-            "osProfile":{
-               "computerName":"[concat(variables('vmName'), 'i',copyIndex())]",
-               "adminUsername":"[parameters('adminUsername')]",
-               "adminPassword":"[parameters('adminPassword')]"
-            },
-            "storageProfile":{
-               "imageReference":{
-                  "publisher":"[variables('imagePublisher')]",
-                  "offer":"[variables('imageOffer')]",
-                  "sku":"[variables('windowsOSVersion')]",
-                  "version":"latest"
-               },
-               "osDisk":{
-                  "name":"osdisk",
-                  "vhd":{
-                     "uri":"[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',concat(variables('vmName'), copyIndex(), variables('OSDiskName')),'.vhd')]"
-                  },
-                  "caching":"ReadWrite",
-                  "createOption":"FromImage"
-               },
-               "dataDisks":[
-                  {
-                     "name":"datadisk",
-                     "diskSizeGB":"[variables('sizeOfDiskInGB')]",
-                     "lun":0,
-                     "vhd":{
-                        "uri":"[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/', concat(variables('vmName'), copyIndex(), variables('dataDisk1VhdName')),'.vhd')]"
-                     },
-                     "createOption":"Empty"
-                  }
-               ]
-            },
-            "networkProfile":{
-               "networkInterfaces":[
-                  {
-                     "id":"[resourceId('Microsoft.Network/networkInterfaces',concat(variables('nicName'), 'i', copyIndex()))]"
-                  }
-               ]
-            },
-            "diagnosticsProfile":{
-               "bootDiagnostics":{
-                  "enabled":"true",
-                  "storageUri":"[concat('http://',variables('storageAccountName'),'.blob.core.windows.net')]"
-               }
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vstsAccountName": {
+            "type": "string",
+            "metadata": {
+                "description": "Please enter the VSTS account name. If you access your VSTS account using 'https://yourAccountName.visualstudio.com', enter yourAccountName."
             }
-         }
-      },
-      {
-         "type":"Microsoft.Compute/virtualMachines/extensions",
-         "copy":{
-            "name":"vmCopy",
-            "count":"[parameters('agentCount')]"
-         },
-         "name":"[concat(variables('vmName'), 'i', copyIndex(), '/StartupScript')]",
-         "apiVersion":"2015-06-15",
-         "location":"[resourceGroup().location]",
-         "dependsOn":[
-            "[concat('Microsoft.Compute/virtualMachines/',concat(variables('vmName'), 'i', copyIndex()))]"
-         ],
-         "properties":{
-            "publisher":"Microsoft.Compute",
-            "type":"CustomScriptExtension",
-            "forceUpdateTag":"[variables('sequenceVersion')]",
-            "typeHandlerVersion":"1.8",
-            "autoUpgradeMinorVersion":true,
-            "settings":{
-               "fileUris":[
-                  "https://elsprodch2su1.blob.core.windows.net/ets-containerfor-loadagentresources/bootstrap/ConfigureUserLoadAgent.ps1"
-               ],
-               "commandToExecute":"[concat('powershell.exe -ExecutionPolicy Unrestricted -File .\\bootstrap\\ConfigureUserLoadAgent.ps1 -TeamServicesAccountName https://', parameters('vstsAccountName'), '.vsclt.visualstudio.com', ' -PATToken ', parameters('vstsPersonalAccessToken'))]"
+        },
+        "vstsPersonalAccessToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Personal Access Token (PAT) for the VSTS account. You should select the scope as 'Load test (read and write)'. Please refer 'https://www.visualstudio.com/en-us/get-started/setup/use-personal-access-tokens-to-authenticate' for more details."
             }
-         }
-      }
-   ]
+        },
+        "agentCount": {
+            "defaultValue": 1,
+            "type": "int",
+            "metadata": {
+                "description": "Number of load generating agent machines to provision"
+            }
+        },
+        "agentGroupName": {
+            "defaultValue": "",
+            "type": "string",
+            "metadata": {
+                "description": "LoadTest Agent Group Name (can be empty and will default to resource groupname)"
+            }
+        },
+        "publicIPAddressType": {
+            "type": "string",
+            "defaultValue": "Dynamic",
+            "allowedValues": [
+                "Dynamic",
+                "Static"
+            ],
+            "metadata": {
+                "description": "Type of public IP allocation method"
+            }
+        },
+        "adminUsername": {
+            "type": "string",
+            "metadata": {
+                "description": "Username for the virtual machine."
+            }
+        },
+        "adminPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Password for the virtual machine."
+            }
+        }
+    },
+    "variables": {
+        "sizeOfDiskInGB": "100",
+        "imagePublisher": "MicrosoftWindowsServer",
+        "imageOffer": "WindowsServer",
+        "addressPrefix": "10.0.0.0/16",
+        "sequenceVersion": "[uniqueString(resourceGroup().id)]",
+        "uniqueStringValue": "[substring(variables('sequenceVersion'), 3, 7)]",
+        "subnetName": "Subnet",
+        "subnetPrefix": "10.0.0.0/24",
+        "storageAccountType": "Standard_LRS",
+        "vmName": "[concat('vm', variables('uniqueStringValue'))]",
+        "vmSize": "Standard_D4_v2",
+        "storageAccountName": "[concat('storage', variables('uniqueStringValue'))]",
+        "vmStorageAccountContainerName": "vhd",
+        "virtualNetworkName": "clttemplatelocalagentvnet",
+        "publicIPAddressName": "[concat('publicip', variables('uniqueStringValue'))]",
+        "publicIPAddressType": "[parameters('publicIPAddressType')]",
+        "nicName": "[concat('nic', variables('uniqueStringValue'))]",
+        "dataDisk1VhdName": "datadisk",
+        "windowsOSVersion": "2012-R2-Datacenter",
+        "OSDiskName": "osdisk",
+        "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
+        "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
+        "apiVersion": "2015-06-15",
+        "defaultAgentGroupName": "[resourceGroup().name]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[variables('storageAccountName')]",
+            "apiVersion": "2015-06-15",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "accountType": "[variables('storageAccountType')]"
+            }
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[concat(variables('publicIPAddressName'),'i', copyIndex())]",
+            "apiVersion": "2015-06-15",
+            "location": "[resourceGroup().location]",
+            "copy": {
+                "name": "publicAddressCopy",
+                "count": "[parameters('agentCount')]"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "[variables('publicIPAddressType')]"
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[variables('virtualNetworkName')]",
+            "apiVersion": "2015-06-15",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('addressPrefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('subnetName')]",
+                        "properties": {
+                            "addressPrefix": "[variables('subnetPrefix')]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[concat(variables('nicName'), 'i', copyIndex())]",
+            "apiVersion": "2015-06-15",
+            "location": "[resourceGroup().location]",
+            "copy": {
+                "name": "nicCopy",
+                "count": "[parameters('agentCount')]"
+            },
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(variables('publicIPAddressName'),'i', copyIndex()))]"
+                            },
+                            "subnet": {
+                                "id": "[variables('subnetRef')]"
+                            }
+                        }
+                    }
+                ]
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Network/publicIPAddresses/', concat(variables('publicIPAddressName'),'i', copyIndex()))]",
+                "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[concat(variables('vmName'), 'i',copyIndex())]",
+            "apiVersion": "2016-04-30-preview",
+            "location": "[resourceGroup().location]",
+            "copy": {
+                "name": "vmCopy",
+                "count": "[parameters('agentCount')]"
+            },
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[variables('vmSize')]"
+                },
+                "osProfile": {
+                    "computerName": "[concat(variables('vmName'), 'i',copyIndex())]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[variables('imagePublisher')]",
+                        "offer": "[variables('imageOffer')]",
+                        "sku": "[variables('windowsOSVersion')]",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "createOption": "FromImage"
+                    },
+                    "dataDisks": [
+                        {
+                            "diskSizeGB": "[variables('sizeOfDiskInGB')]",
+                            "lun": 0,
+                            "createOption": "Empty"
+                        }
+                    ]
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('nicName'), 'i', copyIndex()))]"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": "true",
+                        "storageUri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net')]"
+                    }
+                }
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkInterfaces/', concat(variables('nicName'), 'i', copyIndex()))]",
+                "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(variables('vmName'), 'i', copyIndex(), '/DefaultStartupScript')]",
+            "apiVersion": "2015-06-15",
+            "location": "[resourceGroup().location]",
+            "copy": {
+                "name": "vmCopy",
+                "count": "[parameters('agentCount')]"
+            },
+            "properties": {
+                "publisher": "Microsoft.Compute",
+                "type": "CustomScriptExtension",
+                "forceUpdateTag": "[variables('sequenceVersion')]",
+                "typeHandlerVersion": "1.8",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "fileUris": [
+                        "https://elsprodch2su1.blob.core.windows.net/ets-containerfor-loadagentresources/bootstrap/ManageVSTSCloudLoadAgent.ps1"
+                    ],
+                    "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File .\\bootstrap\\ManageVSTSCloudLoadAgent.ps1 -TeamServicesAccountName ', parameters('vstsAccountName'), ' -PATToken ', parameters('vstsPersonalAccessToken'), ' -AgentGroupName ', variables('defaultAgentGroupName') , ' -ConfigureAgent')]"
+                }
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/',concat(variables('vmName'), 'i', copyIndex()))]"
+            ],
+            "condition": "[empty(replace(parameters('agentGroupName'), ' ',''))]"
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(variables('vmName'), 'i', copyIndex(), '/StartupScript')]",
+            "apiVersion": "2015-06-15",
+            "location": "[resourceGroup().location]",
+            "copy": {
+                "name": "vmCopy",
+                "count": "[parameters('agentCount')]"
+            },
+            "properties": {
+                "publisher": "Microsoft.Compute",
+                "type": "CustomScriptExtension",
+                "forceUpdateTag": "[variables('sequenceVersion')]",
+                "typeHandlerVersion": "1.8",
+                "autoUpgradeMinorVersion": false,
+                "settings": {
+                    "fileUris": [
+                        "https://elsprodch2su1.blob.core.windows.net/ets-containerfor-loadagentresources/bootstrap/ManageVSTSCloudLoadAgent.ps1"
+                    ],
+                    "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File .\\bootstrap\\ManageVSTSCloudLoadAgent.ps1 -TeamServicesAccountName ', parameters('vstsAccountName'), ' -PATToken ', parameters('vstsPersonalAccessToken'), ' -AgentGroupName ', parameters('agentGroupName') , ' -ConfigureAgent')]"
+                }
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/',concat(variables('vmName'), 'i', copyIndex()))]"
+            ],
+            "condition": "[greater(length(replace(parameters('agentGroupName'), ' ','')),0)]"
+        }
+    ]
 }

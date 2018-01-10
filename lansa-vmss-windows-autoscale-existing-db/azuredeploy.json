@@ -1,0 +1,705 @@
+{
+   "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+   "contentVersion": "1.0.0.0",
+   "parameters": {
+      "msiURL": {
+         "type": "string",
+         "defaultValue": "https://lansalpcmsdn.blob.core.windows.net/app/test/AWAMAPP_v14.1.2_en-us.msi",
+         "metadata": {
+            "description": "URL of the LANSA MSI which will be installed on each virtual machine."
+         }
+      },
+      "virtualMachineSize": {
+         "type": "string",
+         "defaultValue": "Standard_A2",
+         "metadata": {
+            "description": "Size of Virtual Machines in the Virtual Machine Scale Set."
+         }
+      },
+      "stackName": {
+         "type": "string",
+         "metadata": {
+            "description": "String used as a base for naming resources. Must be 3-61 characters in length and globally unique across Azure. A hash is prepended to this string for some resources, and resource-specific information is appended. Some identifiers use precisely 9 characters from this name and so it can be useful to use exactly 9. The template pads it out or truncates it as necessary to make it 9 characters long where required."
+         },
+         "minLength": 3,
+         "maxLength": 61
+      },
+      "minimumInstanceCount": {
+         "type": "int",
+         "defaultValue": 1,
+         "metadata": {
+            "description": "Minimum number of Virtual Machine instances (1 or more)."
+         },
+         "minValue": 1
+      },
+      "maximumInstanceCount": {
+         "type": "int",
+         "defaultValue": 100,
+         "metadata": {
+            "description": "Maximum number of Virtual Machine instances (100 or less)."
+         },
+         "maxValue": 100
+      },
+      "databaseType": {
+         "type": "string",
+         "defaultValue": "MSSQLS",
+         "allowedValues": [
+            "MSSQLS",
+            "SQLAZURE",
+            "MYSQL"
+         ],
+         "metadata": {
+            "description": "Refer to LANSA documentation for an explanation of each Database Type and the supported versions of the database servers"
+         }
+      },
+      "databaseServerName": {
+         "type": "string",
+         "defaultValue": "lansa",
+         "metadata": {
+            "description": "The name of the existing Database Server to connect to. If the name has /MSSQLSERVER appended, omit it."
+         }
+      },
+      "databaseName": {
+         "type": "string",
+         "defaultValue": "lansa",
+         "metadata": {
+            "description": "The name of the existing database to connect to."
+         }
+      },
+      "databaseLogin": {
+         "type": "string",
+         "defaultValue": "lansa",
+         "metadata": {
+            "description": "The admin user of the Database"
+         }
+      },
+      "databaseLoginPassword": {
+         "type": "securestring",
+         "metadata": {
+            "description": "The password of the admin user of the Database"
+         }
+
+      },
+      "adminUsername": {
+         "type": "string",
+         "defaultValue": "lansa",
+         "metadata": {
+            "description": "Admin username on all Virtual Machines."
+         }
+      },
+      "adminPassword": {
+         "type": "securestring",
+         "metadata": {
+            "description": "Admin password on all Virtual Machines."
+         }
+      },
+      "webUsername": {
+         "type": "string",
+         "defaultValue": "Pcxuser2",
+         "metadata": {
+            "description": "Web Server username on all Virtual Machines."
+         }
+      },
+      "webPassword": {
+         "type": "securestring",
+         "metadata": {
+            "description": "Web Server password on all Virtual Machines."
+         }
+      },
+
+      "webServerMaxConnect": {
+         "type": "string",
+         "defaultValue": "20",
+         "metadata": {
+            "description": "The maximum number of LANSA jobs to run on each Web Server. Setting triggerWebConfig will cause this value to be updated."
+         }
+      },
+      "installMSI": {
+         "type": "string",
+         "defaultValue": "0",
+         "metadata": {
+            "description": "Install the MSI: Set this to 1 to execute an MSI install. Usually set to 0 when updating the stack"
+         }
+      },
+      "updateMSI": {
+         "type": "string",
+         "defaultValue": "0",
+         "metadata": {
+            "description": "Update Stack: Set this to 1 to execute an MSI Upgrade. Obtains the specified MSI and installs it. Ensure the LansaMSI parameter is set correctly."
+         }
+      },
+      "uninstallMSI": {
+         "type": "string",
+         "defaultValue": "0",
+         "metadata": {
+            "description": "Uninstall the MSI: Set this to 1 to uninstall the MSI. The MSI used to uninstall is the last one that was installed. It is called c:\\lansa\\MyApp.msi"
+         }
+      },
+      "triggerWebConfig": {
+         "type": "string",
+         "defaultValue": "0",
+         "metadata": {
+            "description": "Update Stack: Set this to 1 to update the web configuration."
+         }
+      },
+      "trace": {
+         "type": "string",
+         "defaultValue": "N",
+         "allowedValues": [
+            "Y",
+            "N"
+         ],
+         "metadata": {
+            "description": "Switch tracing on. Allowed values Y or N"
+         }
+      },
+      "fixLicense": {
+         "type": "string",
+         "defaultValue": "0",
+         "metadata": {
+            "description": "Re-run licensing. It is unlikely that this parameter needs to be used."
+         }
+      }
+   },
+   "variables": {
+      "storageAccountType": "Standard_LRS",
+      "namingInfix": "[toLower(substring(concat(parameters('stackName'), uniqueString(resourceGroup().id)), 0, 9))]",
+      "longNamingInfix": "[toLower(parameters('stackName'))]",
+      "dblongNamingInfix": "[toLower(concat('db',parameters('stackName')))]",
+      "dbstackName": "[toLower(substring(concat('db',parameters('stackName'), uniqueString(resourceGroup().id)), 0, 9))]",
+      "newStorageAccountSuffix": "[concat(variables('namingInfix'), 'sa')]",
+      "uniqueStringArray": [
+         "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '0')))]",
+         "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '1')))]",
+         "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '2')))]",
+         "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '3')))]",
+         "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '4')))]"
+      ],
+      "saCount": "[length(variables('uniqueStringArray'))]",
+      "vhdContainerName": "[concat(variables('namingInfix'), 'vhd')]",
+      "osDiskName": "[concat(variables('namingInfix'), 'osdisk')]",
+      "addressPrefix": "10.0.0.0/16",
+      "subnetPrefix": "10.0.0.0/24",
+      "virtualNetworkName": "[concat(variables('namingInfix'), 'vnet')]",
+      "publicIPAddressName": "[concat(variables('namingInfix'), 'pip')]",
+      "dbpublicIPAddressName": "[concat(variables('namingInfix'), 'dbpip')]",
+      "subnetName": "[concat(variables('namingInfix'), 'subnet')]",
+      "loadBalancerName": "[concat(variables('namingInfix'), 'lb')]",
+      "dbloadBalancerName": "[concat(variables('namingInfix'), 'dblb')]",
+      "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]",
+      "dbpublicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('dbpublicIPAddressName'))]",
+      "lbID": "[resourceId('Microsoft.Network/loadBalancers',variables('loadBalancerName'))]",
+      "dblbID": "[resourceId('Microsoft.Network/loadBalancers',variables('dbloadBalancerName'))]",
+      "natPoolName": "[concat(variables('namingInfix'), 'natpool')]",
+      "dbnatPoolName": "[concat(variables('namingInfix'), 'dbnatpool')]",
+      "bePoolName": "[concat(variables('namingInfix'), 'bepool')]",
+      "dbbePoolName": "[concat(variables('namingInfix'), 'dbbepool')]",
+      "dbvmSize": "Standard_A1",
+      "natStartPort": 50000,
+      "natEndPort": 50119,
+      "natBackendPort": 3389,
+      "nicName": "[concat(variables('namingInfix'), 'nic')]",
+      "ipConfigName": "[concat(variables('namingInfix'), 'ipconfig')]",
+      "frontEndIPConfigID": "[concat(variables('lbID'),'/frontendIPConfigurations/loadBalancerFrontEnd')]",
+      "imagePublisher": "lansa",
+      "imageSku": "lansa-scalable-license-14-1",
+      "imageOffer": "lansa-scalable-license",
+      "osType": {
+         "publisher": "[variables('imagePublisher')]",
+         "offer": "[variables('imageOffer')]",
+         "sku": "[variables('imageSku')]",
+         "version": "latest"
+      },
+      "imageReference": "[variables('osType')]",
+      "diagnosticsStorageAccountName": "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'))), variables('newStorageAccountSuffix') )]",
+      "diagnosticsStorageAccountResourceGroup": "[resourceGroup().name]",
+      "accountid": "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',variables('diagnosticsStorageAccountResourceGroup'),'/providers/','Microsoft.Storage/storageAccounts/', variables('diagnosticsStorageAccountName'))]",
+      "gitRepo": "https://raw.githubusercontent.com/robe070/cookbooks/",
+      "gitBranch": "support/L4W14000_scalable_azure",
+      "gitRefreshName": "git-pull.ps1",
+      "gitRefreshUri": "[concat(variables('gitRepo'), variables('gitBranch'), '/scripts/', variables('gitRefreshName'))]",
+      "q": "'"
+   },
+   "resources": [
+      {
+         "type": "Microsoft.Network/virtualNetworks",
+         "name": "[variables('virtualNetworkName')]",
+         "location": "[resourceGroup().location]",
+         "apiVersion": "2016-03-30",
+         "properties": {
+            "addressSpace": {
+               "addressPrefixes": [
+                  "[variables('addressPrefix')]"
+               ]
+            },
+            "subnets": [
+               {
+                  "name": "[variables('subnetName')]",
+                  "properties": {
+                     "addressPrefix": "[variables('subnetPrefix')]"
+                  }
+               }
+            ]
+         }
+      },
+      {
+         "type": "Microsoft.Storage/storageAccounts",
+         "name": "[concat(variables('uniqueStringArray')[copyIndex()], variables('newStorageAccountSuffix'))]",
+         "location": "[resourceGroup().location]",
+         "apiVersion": "2015-06-15",
+         "copy": {
+            "name": "storageLoop",
+            "count": "[variables('saCount')]"
+         },
+         "properties": {
+            "accountType": "[variables('storageAccountType')]"
+         }
+      },
+      {
+         "type": "Microsoft.Storage/storageAccounts",
+         "name": "[variables('diagnosticsStorageAccountName')]",
+         "location": "[resourceGroup().location]",
+         "apiVersion": "2015-06-15",
+         "properties": {
+            "accountType": "[variables('storageAccountType')]"
+         }
+      },
+      {
+         "type": "Microsoft.Network/publicIPAddresses",
+         "name": "[variables('publicIPAddressName')]",
+         "location": "[resourceGroup().location]",
+         "apiVersion": "2016-03-30",
+         "properties": {
+            "publicIPAllocationMethod": "Dynamic",
+            "dnsSettings": {
+               "domainNameLabel": "[variables('longNamingInfix')]"
+            }
+         }
+      },
+      {
+         "type": "Microsoft.Network/loadBalancers",
+         "name": "[variables('loadBalancerName')]",
+         "location": "[resourceGroup().location]",
+         "apiVersion": "2016-03-30",
+         "dependsOn": [
+            "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
+         ],
+         "properties": {
+            "frontendIPConfigurations": [
+               {
+                  "name": "LoadBalancerFrontEnd",
+                  "properties": {
+                     "publicIPAddress": {
+                        "id": "[variables('publicIPAddressID')]"
+                     }
+                  }
+               }
+            ],
+            "backendAddressPools": [
+               {
+                  "name": "[variables('bePoolName')]"
+               }
+            ],
+            "inboundNatPools": [
+               {
+                  "name": "[variables('natPoolName')]",
+                  "properties": {
+                     "frontendIPConfiguration": {
+                        "id": "[variables('frontEndIPConfigID')]"
+                     },
+                     "protocol": "tcp",
+                     "frontendPortRangeStart": "[variables('natStartPort')]",
+                     "frontendPortRangeEnd": "[variables('natEndPort')]",
+                     "backendPort": "[variables('natBackendPort')]"
+                  }
+               }
+            ],
+            "loadBalancingRules": [
+               {
+                  "name": "lbrule",
+                  "properties": {
+                     "frontendIPConfiguration": {
+                        "id": "[variables('frontEndIPConfigID')]"
+                     },
+                     "backendAddressPool": {
+                        "id": "[concat(variables('lbID'), '/backendAddressPools/', variables('bePoolName'))]"
+                     },
+                     "probe": {
+                        "id": "[concat(variables('lbID'), '/probes/lbprobe')]"
+                     },
+                     "protocol": "Tcp",
+                     "loadDistribution": "SourceIP",
+                     "frontendPort": 80,
+                     "backendPort": 80,
+                     "idleTimeoutInMinutes": 15
+                  }
+               }
+            ],
+            "probes": [
+               {
+                  "name": "lbprobe",
+                  "properties": {
+                     "protocol": "Http",
+                     "port": 80,
+                     "intervalInSeconds": 15,
+                     "timeoutInSeconds": 31,
+                     "numberOfProbes": 2,
+                     "requestPath": "cgi-bin/probe"
+                  }
+               }
+            ]
+         }
+      },
+      {
+         "type": "Microsoft.Network/publicIPAddresses",
+         "name": "[variables('dbpublicIPAddressName')]",
+         "location": "[resourceGroup().location]",
+         "apiVersion": "2016-03-30",
+         "properties": {
+            "publicIPAllocationMethod": "Dynamic",
+            "dnsSettings": {
+               "domainNameLabel": "[variables('dblongNamingInfix')]"
+            }
+         }
+      },
+      {
+         "type": "Microsoft.Network/loadBalancers",
+         "name": "[variables('dbloadBalancerName')]",
+         "location": "[resourceGroup().location]",
+         "apiVersion": "2016-03-30",
+         "dependsOn": [
+            "[concat('Microsoft.Network/publicIPAddresses/', variables('dbpublicIPAddressName'))]"
+         ],
+         "properties": {
+            "frontendIPConfigurations": [
+               {
+                  "name": "LoadBalancerFrontEnd",
+                  "properties": {
+                     "publicIPAddress": {
+                        "id": "[variables('dbpublicIPAddressID')]"
+                     }
+                  }
+               }
+            ],
+            "backendAddressPools": [
+               {
+                  "name": "[variables('dbbePoolName')]"
+               }
+            ],
+            "loadBalancingRules": [
+               {
+                  "name": "lbrule",
+                  "properties": {
+                     "frontendIPConfiguration": {
+                        "id": "[concat(variables('dblbID'),'/frontendIPConfigurations/loadBalancerFrontEnd')]"
+                     },
+                     "backendAddressPool": {
+                        "id": "[concat(variables('dblbID'), '/backendAddressPools/', variables('dbbePoolName'))]"
+                     },
+                     "probe": {
+                        "id": "[concat(variables('dblbID'), '/probes/lbprobe')]"
+                     },
+                     "protocol": "Tcp",
+                     "loadDistribution": "SourceIP",
+                     "frontendPort": 50000,
+                     "backendPort": 3389,
+                     "idleTimeoutInMinutes": 15
+                  }
+               }
+            ],
+            "probes": [
+               {
+                  "name": "lbprobe",
+                  "properties": {
+                     "protocol": "Tcp",
+                     "port": 3389,
+                     "intervalInSeconds": 15,
+                     "timeoutInSeconds": 31,
+                     "numberOfProbes": 2
+                  }
+               }
+            ]
+         }
+      },
+      {
+         "type": "Microsoft.Compute/virtualMachineScaleSets",
+         "name": "[variables('dbstackName')]",
+         "location": "[resourceGroup().location]",
+         "apiVersion": "2016-03-30",
+         "dependsOn": [
+            "storageLoop",
+            "[concat('Microsoft.Storage/storageAccounts/', variables('diagnosticsStorageAccountName'))]",
+            "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]",
+            "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+         ],
+         "sku": {
+            "name": "[variables('dbvmSize')]",
+            "tier": "Standard",
+            "capacity": 1
+         },
+         "plan": {
+            "name": "[variables('imageSKU')]",
+            "product": "[variables('imageOffer')]",
+            "publisher": "[variables('imagePublisher')]"
+         },
+         "properties": {
+            "overprovision": false,
+            "upgradePolicy": {
+               "mode": "Automatic"
+            },
+            "virtualMachineProfile": {
+               "storageProfile": {
+                  "osDisk": {
+                     "vhdContainers": [
+                        "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray')[0], variables('newStorageAccountSuffix')),'2015-06-15').primaryEndpoints.blob, variables('vhdContainerName'))]",
+                        "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray')[1], variables('newStorageAccountSuffix')),'2015-06-15').primaryEndpoints.blob, variables('vhdContainerName'))]",
+                        "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray')[2], variables('newStorageAccountSuffix')),'2015-06-15').primaryEndpoints.blob, variables('vhdContainerName'))]",
+                        "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray')[3], variables('newStorageAccountSuffix')),'2015-06-15').primaryEndpoints.blob, variables('vhdContainerName'))]",
+                        "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray')[4], variables('newStorageAccountSuffix')),'2015-06-15').primaryEndpoints.blob, variables('vhdContainerName'))]"
+                     ],
+                     "name": "[variables('osDiskName')]",
+                     "caching": "ReadOnly",
+                     "createOption": "FromImage"
+                  },
+                  "imageReference": "[variables('imageReference')]"
+               },
+               "osProfile": {
+                  "computerNamePrefix": "[variables('dbstackName')]",
+                  "adminUsername": "[parameters('adminUsername')]",
+                  "adminPassword": "[parameters('adminPassword')]",
+                  "windowsConfiguration": {
+                     "provisionVMAgent": true
+                  }
+               },
+               "networkProfile": {
+                  "networkInterfaceConfigurations": [
+                     {
+                        "name": "[concat('db', variables('nicName'))]",
+                        "properties": {
+                           "primary": true,
+                           "ipConfigurations": [
+                              {
+                                 "name": "[concat( 'db',variables('ipConfigName'))]",
+                                 "properties": {
+                                    "subnet": {
+                                       "id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'), '/subnets/', variables('subnetName'))]"
+                                    },
+                                    "loadBalancerBackendAddressPools": [
+                                       {
+                                          "id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('dbloadBalancerName'), '/backendAddressPools/', variables('dbbePoolName'))]"
+                                       }
+                                    ]
+                                 }
+                              }
+                           ]
+                        }
+                     }
+                  ]
+               },
+               "extensionProfile": {
+                  "extensions": [
+                     {
+                        "name": "FirstInstall",
+                        "properties": {
+                           "publisher": "Microsoft.Compute",
+                           "type": "CustomScriptExtension",
+                           "typeHandlerVersion": "1.8",
+                           "autoUpgradeMinorVersion": true,
+                           "forceUpdateTag": "[concat( parameters('installMSI'),parameters('updateMSI'),parameters('triggerWebConfig'),parameters('UninstallMSI'),parameters('fixLicense'), parameters('trace') )]",
+                           "settings": {
+                              "fileUris": [ "[variables('gitRefreshUri')]" ]
+                           },
+                           "protectedSettings": {
+                              "commandToExecute": "[concat('powershell -NoProfile -ExecutionPolicy unrestricted -command \"& {pushd;./', variables('gitRefreshName'), ' ', variables('gitBranch'), ';popd;', 'pushd;c:\\lansa\\scripts\\azure-custom-script.ps1 ', '-server_name ', variables('Q'), parameters('databaseServerName'), variables('Q'), ' -DBUT ', variables('Q'), parameters('databaseType'), variables('Q'), ' -dbname ', variables('Q'), parameters('databaseName'), variables('Q'), ' -dbuser ', variables('Q'), parameters('databaseLogin'), variables('Q'), ' -dbpassword ', variables('Q'), parameters('databaseLoginPassword'), variables('Q'), ' -webuser ', variables('Q'), parameters('webUsername'), variables('Q'), ' -webpassword ', variables('Q'), parameters('webPassword'), variables('Q'), ' -MSIuri ', variables('Q'), parameters('MsiURL'), variables('Q'),  ' -maxconnections ', variables('Q'), parameters('webServerMaxConnect'), variables('Q'), ' -trace ', variables('Q'), parameters('trace'), variables('Q'), ' -installMSI ', variables('Q'), parameters('installMSI'), variables('Q'), ' -updateMSI ', variables('Q'), parameters('updateMSI'), variables('Q'),' -triggerWebConfig ', variables('Q'), parameters('triggerWebConfig'), variables('Q'),' -UninstallMSI ', variables('Q'), parameters('UninstallMSI'), variables('Q'), ' -fixLicense ', variables('Q'), parameters('fixLicense'), variables('Q'), ';if ($LASTEXITCODE -ne 0) {Write-Error (\"\"\"MSI Install failed. LASTEXITCODE=$LASTEXITCODE\"\"\");exit $LASTEXITCODE}; exit 0;popd;}\"')]"
+                           }
+                        }
+                     }
+                  ]
+               }
+            }
+         }
+      },
+      {
+         "type": "Microsoft.Compute/virtualMachineScaleSets",
+         "name": "[variables('namingInfix')]",
+         "location": "[resourceGroup().location]",
+         "apiVersion": "2016-03-30",
+         "dependsOn": [
+            "storageLoop",
+            "[concat('Microsoft.Storage/storageAccounts/', variables('diagnosticsStorageAccountName'))]",
+            "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]",
+            "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+            "[concat('Microsoft.Compute/virtualMachineScaleSets/', variables('dbstackName'))]"
+         ],
+         "sku": {
+            "name": "[parameters('virtualMachineSize')]",
+            "tier": "Standard",
+            "capacity": "[parameters('minimumInstanceCount')]"
+         },
+         "plan": {
+            "name": "[variables('imageSKU')]",
+            "product": "[variables('imageOffer')]",
+            "publisher": "[variables('imagePublisher')]"
+         },
+         "properties": {
+            "overprovision": false,
+            "upgradePolicy": {
+               "mode": "Automatic"
+            },
+            "virtualMachineProfile": {
+               "storageProfile": {
+                  "osDisk": {
+                     "vhdContainers": [
+                        "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray')[0], variables('newStorageAccountSuffix')),'2015-06-15').primaryEndpoints.blob, variables('vhdContainerName'))]",
+                        "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray')[1], variables('newStorageAccountSuffix')),'2015-06-15').primaryEndpoints.blob, variables('vhdContainerName'))]",
+                        "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray')[2], variables('newStorageAccountSuffix')),'2015-06-15').primaryEndpoints.blob, variables('vhdContainerName'))]",
+                        "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray')[3], variables('newStorageAccountSuffix')),'2015-06-15').primaryEndpoints.blob, variables('vhdContainerName'))]",
+                        "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray')[4], variables('newStorageAccountSuffix')),'2015-06-15').primaryEndpoints.blob, variables('vhdContainerName'))]"
+                     ],
+                     "name": "[variables('osDiskName')]",
+                     "caching": "ReadOnly",
+                     "createOption": "FromImage"
+                  },
+                  "imageReference": "[variables('imageReference')]"
+               },
+               "osProfile": {
+                  "computerNamePrefix": "[variables('namingInfix')]",
+                  "adminUsername": "[parameters('adminUsername')]",
+                  "adminPassword": "[parameters('adminPassword')]",
+                  "windowsConfiguration": {
+                     "provisionVMAgent": true
+                  }
+               },
+               "networkProfile": {
+                  "networkInterfaceConfigurations": [
+                     {
+                        "name": "[variables('nicName')]",
+                        "properties": {
+                           "primary": true,
+                           "ipConfigurations": [
+                              {
+                                 "name": "[variables('ipConfigName')]",
+                                 "properties": {
+                                    "subnet": {
+                                       "id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'), '/subnets/', variables('subnetName'))]"
+                                    },
+                                    "loadBalancerBackendAddressPools": [
+                                       {
+                                          "id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('loadBalancerName'), '/backendAddressPools/', variables('bePoolName'))]"
+                                       }
+                                    ],
+                                    "loadBalancerInboundNatPools": [
+                                       {
+                                          "id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('loadBalancerName'), '/inboundNatPools/', variables('natPoolName'))]"
+                                       }
+                                    ]
+                                 }
+                              }
+                           ]
+                        }
+                     }
+                  ]
+               },
+               "extensionProfile": {
+                  "extensions": [
+                     {
+                        "name": "MainInstall",
+                        "properties": {
+                           "publisher": "Microsoft.Compute",
+                           "type": "CustomScriptExtension",
+                           "typeHandlerVersion": "1.8",
+                           "autoUpgradeMinorVersion": true,
+                           "forceUpdateTag": "[concat( parameters('installMSI'),parameters('updateMSI'),parameters('triggerWebConfig'),parameters('UninstallMSI'),parameters('fixLicense'), parameters('trace') )]",
+                           "settings": {
+                              "fileUris": [ "[variables('gitRefreshUri')]" ]
+                           },
+                           "protectedSettings": {
+                              "commandToExecute": "[concat('powershell -NoProfile -ExecutionPolicy unrestricted -command \"& {pushd;./',variables('gitRefreshName'), ' ', variables('gitBranch'), ';popd;', 'pushd;c:\\lansa\\scripts\\azure-custom-script.ps1 ', '-SUDB \"0\" -server_name ',variables('Q'), parameters('databaseServerName'), variables('Q'), ' -DBUT ',variables('Q'), parameters('databaseType'), variables('Q'),  ' -dbname ',variables('Q'), parameters('databaseName'), variables('Q'), ' -dbuser ',variables('Q'), parameters('databaseLogin'), variables('Q'), ' -dbpassword ',variables('Q'), parameters('databaseLoginPassword'), variables('Q'), ' -webuser ',variables('Q'), parameters('webUsername'), variables('Q'), ' -webpassword ',variables('Q'), parameters('webPassword'), variables('Q'), ' -MSIuri ',variables('Q'), parameters('MsiURL'), variables('Q'),  ' -maxconnections ',variables('Q'), parameters('webServerMaxConnect'), variables('Q'), ' -trace ',variables('Q'), parameters('trace'), variables('Q'), ' -installMSI ',variables('Q'), parameters('installMSI'), variables('Q'), ' -updateMSI ',variables('Q'), parameters('updateMSI'), variables('Q'),' -triggerWebConfig ',variables('Q'), parameters('triggerWebConfig'), variables('Q'), ' -UninstallMSI ',variables('Q'), parameters('UninstallMSI'), variables('Q'), ' -fixLicense ',variables('Q'), parameters('fixLicense'), variables('Q'),  ';if ($LASTEXITCODE -ne 0) {Write-Error (\"\"\"MSI Install failed. LASTEXITCODE=$LASTEXITCODE\"\"\");exit $LASTEXITCODE}; exit 0;popd;}\"')]"
+                           }
+                        }
+                     }
+                  ]
+               }
+            }
+         }
+      },
+      {
+         "type": "Microsoft.Insights/autoscaleSettings",
+         "apiVersion": "2015-04-01",
+         "name": "autoscalehost",
+         "location": "[resourceGroup().location]",
+         "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachineScaleSets/', variables('namingInfix'))]"
+         ],
+         "properties": {
+            "name": "autoscalehost",
+            "targetResourceUri": "[concat('/subscriptions/',subscription().subscriptionId, '/resourceGroups/',  resourceGroup().name, '/providers/Microsoft.Compute/virtualMachineScaleSets/', variables('namingInfix'))]",
+            "enabled": true,
+            "profiles": [
+               {
+                  "name": "Profile1",
+                  "capacity": {
+                     "minimum": "[parameters('minimumInstanceCount')]",
+                     "maximum": "[parameters('maximumInstanceCount')]",
+                     "default": "[parameters('minimumInstanceCount')]"
+                  },
+                  "rules": [
+                     {
+                        "metricTrigger": {
+                           "metricName": "Percentage CPU",
+                           "metricNamespace": "",
+                           "metricResourceUri": "[concat('/subscriptions/',subscription().subscriptionId, '/resourceGroups/',  resourceGroup().name, '/providers/Microsoft.Compute/virtualMachineScaleSets/', variables('namingInfix'))]",
+                           "timeGrain": "PT1M",
+                           "statistic": "Average",
+                           "timeWindow": "PT5M",
+                           "timeAggregation": "Average",
+                           "operator": "GreaterThan",
+                           "threshold": 60.0
+                        },
+                        "scaleAction": {
+                           "direction": "Increase",
+                           "type": "PercentChangeCount",
+                           "value": "10",
+                           "cooldown": "PT20M"
+                        }
+                     },
+                     {
+                        "metricTrigger": {
+                           "metricName": "Percentage CPU",
+                           "metricNamespace": "",
+                           "metricResourceUri": "[concat('/subscriptions/',subscription().subscriptionId, '/resourceGroups/',  resourceGroup().name, '/providers/Microsoft.Compute/virtualMachineScaleSets/', variables('namingInfix'))]",
+                           "timeGrain": "PT1M",
+                           "statistic": "Average",
+                           "timeWindow": "PT5M",
+                           "timeAggregation": "Average",
+                           "operator": "LessThan",
+                           "threshold": 30.0
+                        },
+                        "scaleAction": {
+                           "direction": "Decrease",
+                           "type": "ChangeCount",
+                           "value": "1",
+                           "cooldown": "PT20M"
+                        }
+                     }
+                  ]
+               }
+            ]
+         }
+      }
+   ],
+   "outputs": {
+      "lbFqdn": {
+         "type": "string",
+         "value": "[reference(variables('publicIPAddressName')).dnsSettings.fqdn]"
+      },
+      "dbrdpAddress": {
+         "type": "string",
+         "value": "[concat(reference(variables('dbpublicIPAddressName')).dnsSettings.fqdn, ':50000')]"
+      },
+      "rdpAddress": {
+         "type": "string",
+         "value": "[concat(reference(variables('publicIPAddressName')).dnsSettings.fqdn, ':50000')]"
+      }
+   }
+}

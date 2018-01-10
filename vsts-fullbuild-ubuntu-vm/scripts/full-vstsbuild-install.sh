@@ -104,15 +104,33 @@ sudo /bin/date +%H:%M:%S >> /home/$5/install.progress.txt
 sudo -u $5 mkdir /home/$5/downloads
 sudo -u $5 mkdir /home/$5/lib
 
-# Install .NET
+# Install latest release of .NET Core
 echo "Installing .NET" >> /home/$5/install.progress.txt
 sudo -u $5 mkdir /home/$5/lib/dotnet
 cd /home/$5/downloads
-sudo -u $5 wget https://dotnetcli.blob.core.windows.net/dotnet/preview/Binaries/1.0.0-preview2-002875/dotnet-dev-ubuntu-x64.1.0.0-preview2-002875.tar.gz
+sudo -u $5 wget https://dotnetcli.blob.core.windows.net/dotnet/preview/Binaries/Latest/dotnet-ubuntu.16.04-x64.latest.tar.gz
 cd /home/$5/lib/dotnet
-sudo -u $5 tar zxfv /home/$5/downloads/dotnet-dev-ubuntu-x64.1.0.0-preview2-002875.tar.gz
+sudo -u $5 tar zxfv /home/$5/downloads/dotnet-ubuntu.16.04-x64.latest.tar.gz
 sudo /bin/date +%H:%M:%S >> /home/$5/install.progress.txt
 
+# Install Docker Engine and Compose
+echo "Installing Docker Engine and Compose" >> /home/$5/install.progress.txt
+sudo apt-get update
+sudo apt-get install -y apt-transport-https ca-certificates
+sudo apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
+echo "deb https://apt.dockerproject.org/repo ubuntu-xenial main" | sudo tee /etc/apt/sources.list.d/docker.list
+sudo apt-get update
+sudo apt-get install -y linux-image-extra-$(uname -r) linux-image-extra-virtual
+sudo apt-get install -y docker-engine
+sudo service docker start
+sudo systemctl enable docker
+sudo groupadd docker
+sudo usermod -aG docker $5
+
+sudo curl -L https://github.com/docker/compose/releases/download/1.9.0/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+
+sudo /bin/date +%H:%M:%S >> /home/$5/install.progress.txt
 
 # Install VSTS build agent dependencies
 
@@ -127,8 +145,7 @@ echo "Downloading VSTS Build agent package" >> /home/$5/install.progress.txt
 
 cd /home/$5/downloads
 
-# sudo -u $5 wget https://github.com/Microsoft/vsts-agent/releases/download/v2.101.1/vsts-agent-ubuntu.14.04-x64-2.101.1.tar.gz
-sudo -u $5 wget https://github.com/Microsoft/vsts-agent/releases/download/v2.104.2/vsts-agent-ubuntu.14.04-x64-2.104.2.tar.gz
+sudo -u $5 wget https://github.com/Microsoft/vsts-agent/releases/download/v2.109.2/vsts-agent-ubuntu.14.04-x64-2.109.2.tar.gz
 sudo -u $5 wget http://security.ubuntu.com/ubuntu/pool/main/i/icu/libicu52_52.1-8ubuntu0.2_amd64.deb
 sudo dpkg -i libicu52_52.1-8ubuntu0.2_amd64.deb
 
@@ -176,7 +193,7 @@ echo User: $5 >> /home/$5/vsts.install.log.txt 2>&1
 echo =============================== >> /home/$5/vsts.install.log.txt 2>&1
 
 echo Running Agent.Listener >> /home/$5/vsts.install.log.txt 2>&1
-sudo -u $5 -E bin/Agent.Listener --configure --unattended --nostart --replace --acceptteeeula --url $1 --auth PAT --token $2 --pool $3 --agent $4 >> /home/$5/vsts.install.log.txt 2>&1
+sudo -u $5 -E bin/Agent.Listener configure --unattended --nostart --replace --acceptteeeula --url $1 --auth PAT --token $2 --pool $3 --agent $4 >> /home/$5/vsts.install.log.txt 2>&1
 echo =============================== >> /home/$5/vsts.install.log.txt 2>&1
 echo Running ./svc.sh install >> /home/$5/vsts.install.log.txt 2>&1
 sudo -E ./svc.sh install $5 >> /home/$5/vsts.install.log.txt 2>&1

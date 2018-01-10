@@ -70,19 +70,23 @@
     }
   },
   "variables": {
-    "defaultStorageAccountName": "[concat(parameters('clusterName'),'store')]",
-    "storageAccountType": "Standard_LRS",
-    "sqlDatabaseServerName": "[concat(parameters('clusterName'),'dbserver')]",
-    "sqlDatabaseName": "[concat(parameters('clusterName'),'db')]"
+    "defaultStorageAccount":{
+      "name": "[uniqueString(resourceGroup().id)]",
+      "type": "Standard_LRS"
+    },
+    "sqlDatabase":{
+      "serverName": "[concat(parameters('clusterName'),'dbserver')]",
+      "databaseName": "[concat(parameters('clusterName'),'db')]"
+    }
   },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('defaultStorageAccountName')]",
+      "name": "[variables('defaultStorageAccount').name]",
       "location": "[resourceGroup().location]",
       "apiVersion": "2016-01-01",
       "sku": {
-          "name": "[variables('storageAccountType')]"
+          "name": "[variables('defaultStorageAccount').type]"
       },
       "kind": "Storage", 
       "properties": {}
@@ -92,12 +96,12 @@
       "type": "Microsoft.HDInsight/clusters",
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-03-01-preview",
-      "dependsOn": [ "[concat('Microsoft.Storage/storageAccounts/',variables('defaultStorageAccountName'))]" ],
+      "dependsOn": [ "[concat('Microsoft.Storage/storageAccounts/',variables('defaultStorageAccount').name)]" ],
       "tags": {
 
       },
       "properties": {
-        "clusterVersion": "3.4",
+        "clusterVersion": "3.6",
         "osType": "Linux",
         "clusterDefinition": {
           "kind": "hadoop",
@@ -112,10 +116,10 @@
         "storageProfile": {
           "storageaccounts": [
             {
-              "name": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccountName')), '2016-01-01').primaryEndpoints.blob,'https://',''),'/','')]",
+              "name": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name), '2016-01-01').primaryEndpoints.blob,'https://',''),'/','')]",
               "isDefault": true,
               "container": "[parameters('clusterName')]",
-              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccountName')), '2016-01-01').keys[0].value]"
+              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name), '2016-01-01').keys[0].value]"
             }
           ]
         },
@@ -125,7 +129,7 @@
               "name": "headnode",
               "targetInstanceCount": "2",
               "hardwareProfile": {
-                "vmSize": "Standard_D3"
+                "vmSize": "Standard_D3_v2"
               },
               "osProfile": {
                 "linuxOperatingSystemProfile": {
@@ -138,7 +142,7 @@
               "name": "workernode",
               "targetInstanceCount": 2,
               "hardwareProfile": {
-                "vmSize": "Standard_D3"
+                "vmSize": "Standard_D3_v2"
               },
               "osProfile": {
                 "linuxOperatingSystemProfile": {
@@ -152,14 +156,14 @@
       }
     },
     {
-      "name": "[variables('sqlDatabaseServerName')]",
       "type": "Microsoft.Sql/servers",
+      "name": "[variables('sqlDatabase').serverName]",
+      "dependsOn": [ ],
       "location": "[resourceGroup().location]",
       "tags": {
         "displayName": "SqlServer"        
       },
-      "apiVersion": "2014-04-01",
-      "dependsOn": [ ],
+      "apiVersion": "2015-05-01-preview",
       "properties": {
         "administratorLogin": "[parameters('sqlAdminLogin')]",
         "administratorLoginPassword": "[parameters('sqlAdminPassword')]",
@@ -167,15 +171,15 @@
       },
       "resources": [
         {
-          "name": "[variables('sqlDatabaseName')]",
           "type": "databases",
+          "name": "[variables('sqlDatabase').databaseName]",
           "location": "[resourceGroup().location]",
           "tags": {
             "displayName": "Database"
           },
           "apiVersion": "2015-01-01",
           "dependsOn": [
-            "[variables('sqlDatabaseServerName')]"
+            "[variables('sqlDatabase').serverName]"
           ],
           "properties": {
             "edition": "Basic",
@@ -189,7 +193,7 @@
               "type": "extensions",
               "apiVersion": "2014-04-01",
               "dependsOn": [
-                "[resourceId('Microsoft.Sql/servers/databases', variables('sqlDatabaseServerName'), variables('sqlDatabaseName'))]"
+                "[resourceId('Microsoft.Sql/servers/databases', variables('sqlDatabase').serverName, variables('sqlDatabase').databaseName)]"
               ],
               "properties": {
                 "operationMode": "Import",
@@ -203,12 +207,12 @@
           ]
         },
         {
-          "name": "AllowAllWindowsAzureIps",
           "type": "firewallrules",
+          "name": "AllowAllAzureIps",
           "location": "[resourceGroup().location]",
           "apiVersion": "2014-04-01",
           "dependsOn": [
-            "[variables('sqlDatabaseServerName')]"
+            "[concat('Microsoft.Sql/servers/', variables('sqlDatabase').serverName)]"
           ],
           "properties": {
             "startIpAddress": "0.0.0.0",
@@ -221,7 +225,7 @@
   "outputs": {
     "storage": {
       "type": "object",
-      "value": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccountName')))]"
+      "value": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name))]"
     },
     "cluster": {
       "type": "object",
@@ -229,7 +233,7 @@
     },    
     "sqlSvrFqdn": {
       "type": "string",
-      "value": "[reference(concat('Microsoft.Sql/servers/', variables('sqlDatabaseServerName'))).fullyQualifiedDomainName]"
+      "value": "[reference(concat('Microsoft.Sql/servers/', variables('sqlDatabase').serverName)).fullyQualifiedDomainName]"
     }
   }
 }
