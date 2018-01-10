@@ -19,6 +19,8 @@
 
 set -e
 
+logger -t devvm "Install started: $?"
+
 help()
 {
     echo "This script sets up a node, and configures pre-installed Splunk Enterprise"
@@ -119,8 +121,10 @@ chmod 755 $TFENVFILE
 chown $USERNAME:$USERNAME $TFENVFILE
 
 # create the container for remote state
+logger -t devvm "Creating the container for remote state"
 az login --msi
 az storage container create -n terraform-state --account-name $STORAGE_ACCOUNT_NAME --account-key $STORAGE_ACCOUNT_KEY
+logger -t devvm "Container for remote state created: $?"
 
 if [[ -v DESKTOPINSTALL ]]; then
     echo "Installing Mate Desktop"
