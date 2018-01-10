@@ -17,7 +17,7 @@ New-AzureRmResourceGroupDeployment -Name "deploy" -ResourceGroupName $ResourceGr
     -imageSku "6.6" `
     -vmssName $ResourceGroupName `
     -clientCount 2 `
-    -adminUserName "azureuser" `
+    -adminUsername "azureuser" `
     -authenticationType password `
     -adminPassword $AdminPassword `
     -filesystemName "scratch" `

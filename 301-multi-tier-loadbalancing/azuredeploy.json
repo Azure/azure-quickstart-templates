@@ -1,0 +1,1010 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "region1-Location-Name": {
+      "defaultValue": "Central US",
+      "allowedValues": [
+        "EastUS",
+        "EastUS",
+        "Central US",
+        "NorthCentralUS",
+        "SouthCentralUS",
+        "WestCentralUS",
+        "WestUS",
+        "WestUS2",
+        "USGovVirginia",
+        "USGovIowa",
+        "CanadaEast",
+        "CanadaCentral",
+        "BrazilSouth",
+        "North Europe",
+        "WestEurope",
+        "GermanyCentral",
+        "GermanyNortheast",
+        "UKWest",
+        "UKSouth",
+        "SoutheastAsia",
+        "EastAsia",
+        "AustraliaEast",
+        "AustraliaSoutheast",
+        "CentralIndia",
+        "WestIndia",
+        "SouthIndia",
+        "JapanEast",
+        "JapanWest",
+        "ChinaEast",
+        "ChinaNorth"
+      ],
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Azure Region valid name"
+      }
+    },
+    "region2-Location-Name": {
+      "defaultValue": "North Europe",
+      "allowedValues": [
+        "EastUS",
+        "EastUS2",
+        "Central US",
+        "NorthCentralUS",
+        "SouthCentralUS",
+        "WestCentralUS",
+        "WestUS",
+        "WestUS2",
+        "USGovVirginia",
+        "USGovIowa",
+        "CanadaEast",
+        "CanadaCentral",
+        "BrazilSouth",
+        "North Europe",
+        "WestEurope",
+        "GermanyCentral",
+        "GermanyNortheast",
+        "UKWest",
+        "UKSouth",
+        "SoutheastAsia",
+        "EastAsia",
+        "AustraliaEast",
+        "AustraliaSoutheast",
+        "CentralIndia",
+        "WestIndia",
+        "SouthIndia",
+        "JapanEast",
+        "JapanWest",
+        "ChinaEast",
+        "ChinaNorth"
+      ],
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Azure Region valid name"
+      }
+    },
+    "trafficManagerProfile_name": {
+      "defaultValue": "gentm",
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Traffice Manager profile name"
+      }
+    },
+    "adminuser": {
+      "defaultValue": "sedouard",
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Admin username"
+      }
+    },
+    "adminuserPassword": {
+      "defaultValue": "GEN-PASSWORD",
+      "type": "securestring",
+      "minLength": 1,
+      "metadata": {
+        "description": "Admin Password"
+      }
+    },
+    "app-prefix": {
+      "defaultValue": "GEN-UNIQUE",
+      "type": "string",
+      "minLength": 1,
+     "metadata": {
+        "description": "Application prefix name, should be <= 10 characters"
+      }
+    },
+    "imageSKU": {
+      "type": "string",
+      "defaultValue": "2016-Datacenter",
+      "allowedValues": [
+        "2016-Datacenter",
+        "2008-R2-SP1",
+        "2012-Datacenter",
+        "2012-R2-Datacenter"
+      ],
+      "metadata": {
+        "description": "The Windows version for the VM"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "Standard_D1_v2",
+      "allowedValues": [
+        "Standard_A0",
+        "Standard_A1",
+        "Standard_A2",
+        "Standard_A3",
+        "Standard_A4",
+        "Standard_A5",
+        "Standard_A6",
+        "Standard_A7",
+        "Standard_D1_v2",
+        "Standard_D2_v2",
+        "Standard_D3_v2",
+        "Standard_D4_v2",
+        "Standard_D11_v2",
+        "Standard_D12_v2",
+        "Standard_D13_v2",
+        "Standard_D14_v2"
+      ],
+      "metadata": {
+        "description": "Size of the virtual machine, must be available in the virtual machine's location"
+      }
+    },
+    "numberOfVMInstances": {
+      "type": "int",
+      "minValue": 1,
+      "maxValue": 10,
+      "defaultValue": 2,
+      "metadata": {
+        "description": "Number of VM instances to be created behind internal load balancer control"
+      }
+    },
+    "loadbalancer-dns-prefix": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "gen-unique",
+      "metadata": {
+        "description": "Loadbalancer dns name should be lowercase letters!"
+      }
+    },
+    "appGW-skuName": {
+      "type": "string",
+      "allowedValues": [
+        "Standard_Small",
+        "Standard_Medium",
+        "Standard_Large"
+      ],
+      "defaultValue": "Standard_Small",
+      "metadata": {
+        "description": "Choose Application gateway SKU!"
+      }
+    },
+    "appGW-capacity": {
+      "type": "int",
+      "minValue": 1,
+      "maxValue": 10,
+      "defaultValue": 4,
+      "metadata": {
+        "description": "Number of Application Gateway instances"
+      }
+    },
+    "appGW-pathMatch1": {
+      "type": "string",
+      "metadata": {
+        "description": "Path match string for Path Rule 1"
+      }
+    },
+    "appGW-pathMatch2": {
+      "type": "string",
+      "metadata": {
+        "description": "Path match string for Path Rule 2"
+      }
+    }
+  },
+  "variables": {
+    "app-prefix": "[toLower(replace(replace(substring(parameters('app-prefix'),0,4),' ',''),'-',''))]",
+    "front-end-subnetref1": "[concat(variables('region1-vnet-id'), '/subnets/', variables('vnet-front-end-subnet'))]",
+    "imageOffer": "WindowsServer",
+    "imagePublisher": "MicrosoftWindowsServer",
+    "region": [
+      "[parameters('region1-Location-Name')]",
+      "[parameters('region2-Location-Name')]"
+    ],
+    "region1-vnet-id": "[resourceId('Microsoft.Network/virtualNetworks', concat(variables('region-vnet-name'),'0'))]",
+    "region1-web-vm-nic": "[concat(variables('app-prefix'), '-web-vm-nic-rg1-')]",
+    "region1-web-vm-pip": "[concat(variables('app-prefix'), '-web-vm-pip-rg1-')]",
+    "region1-web-vmsprefix": "[concat(variables('app-prefix'),'webvmrg1')]",
+    "region2-vnet-id": "[resourceId('Microsoft.Network/virtualNetworks', concat(variables('region-vnet-name'),'1'))]",
+    "region2-web-vm-nic": "[concat(variables('app-prefix'), '-web-vm-nic-rg2-')]",
+    "region2-web-vm-pip": "[concat(variables('app-prefix'), '-web-vm-pip-rg2-')]",
+    "region2-web-vmsprefix": "[concat(variables('app-prefix'),'webvmrg2')]",
+    "region-appGW-backendIp-default": "[concat(variables('region1-web-vmsprefix'),'0.',resourceGroup().location,'.cloudapp.azure.com')]",
+    "region-appGW-backendIp-ForPathRule1": "[concat(variables('region1-web-vmsprefix'),'1.',resourceGroup().location,'.cloudapp.azure.com')]",
+    "region-appGW-backendIp-ForPathRule2": "[concat(variables('region1-web-vmsprefix'),'1.',resourceGroup().location,'.cloudapp.azure.com')]",
+    "region-appgw-name": "region-appgw-",
+    "region-appgw-pip": "region-appgw-pip-",
+    "region-appGW-subnetRef": "[concat(variables('region1-vnet-id'),'/subnets/',variables('vnet-appGW-subnet'))]",
+    "region-availabilitySet": "region_AvSet",
+    "region-storage-account": "[concat('rg', uniqueString(resourceGroup().id))]",
+    "region-tm-test-vm": "[concat(variables('app-prefix'),'-tm-vm-rg')]",
+    "region-tm-vm-nic": "[concat(variables('region-tm-test-vm'),'-nic')]",
+    "region-tm-vm-pip": "[concat(variables('region-tm-test-vm'),'-pip')]",
+    "region-vnet-name": "region-multitierlb-vnet",
+    "region-web-ilb-pip": "[concat(parameters('loadbalancer-dns-prefix'),'rg')]",
+    "region-web-lb": "[concat(parameters('loadbalancer-dns-prefix'),'rg')]",
+    "vhdStorageType": "Standard_LRS",
+    "vnet-appGW-subnet": "appGatewaySubnet",
+    "vnet-front-end-subnet": "front-end-subnet",
+    "vnet-lb-subnet": "lb-subnet"
+  },
+  "resources": [
+    {
+      "apiVersion": "2016-01-01",
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[concat(variables('region-storage-account'),copyIndex())]",
+      "sku": {
+        "name": "Standard_LRS",
+        "tier": "Standard"
+      },
+      "kind": "Storage",
+      "location": "[variables('region')[copyIndex()]]",
+      "tags": {
+        "displayName": "storage-accounts"
+      },
+      "properties": {},
+      "copy": {
+        "name": "storage-accounts-loop",
+        "count": 2
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[concat(variables('region-vnet-name'),copyIndex())]",
+      "apiVersion": "2016-03-30",
+      "location": "[variables('region')[copyIndex()]]",
+      "tags": {
+        "displayName": "vnetloop"
+      },
+      "dependsOn": [ "storage-accounts-loop" ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/16"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "default",
+            "properties": {
+              "addressPrefix": "10.0.4.0/24"
+            }
+          },
+          {
+            "name": "[variables('vnet-front-end-subnet')]",
+            "properties": {
+              "addressPrefix": "10.0.2.0/24"
+            }
+          },
+          {
+            "name": "[variables('vnet-lb-subnet')]",
+            "properties": {
+              "addressPrefix": "10.0.1.0/24"
+            }
+          },
+          {
+            "name": "[variables('vnet-appGW-subnet')]",
+            "properties": {
+              "addressPrefix": "10.0.3.0/28"
+            }
+          }
+        ]
+      },
+      "copy": {
+        "name": "vnetloop",
+        "count": 2
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "name": "[concat(variables('region-web-ilb-pip'),copyIndex())]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "location": "[variables('region')[copyIndex()]]",
+      "tags": {
+        "displayName": "region-web-ilb-pips"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Static",
+        "dnsSettings": {
+          "domainNameLabel": "[toLower(concat(variables('region-web-lb'),copyIndex()))]"
+        }
+      },
+      "copy": {
+        "name": "region-web-ilb-pip-loop",
+        "count": 2
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/loadBalancers",
+      "name": "[concat(variables('region-web-lb'),copyIndex())]",
+      "location": "[variables('region')[copyIndex()]]",
+      "tags": {
+        "displayName": "region-web-lbs"
+      },
+      "dependsOn": [
+        "region-web-ilb-pip-loop"
+      ],
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "LoadBalancerFrontend",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(variables('region-web-ilb-pip'),copyIndex()))]"
+
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "BackendPool1"
+          }
+        ],
+        "probes": [
+          {
+            "name": "lbprobe",
+            "properties": {
+              "protocol": "Tcp",
+              "port": 80,
+              "intervalInSeconds": 15,
+              "numberOfProbes": 2
+            }
+
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "name": "lbrule",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', concat(variables('region-web-lb'),copyIndex())), '/frontendIPConfigurations/LoadBalancerFrontend')]"
+              },
+              "backendAddressPool": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', concat(variables('region-web-lb'),copyIndex())), '/backendAddressPools/BackendPool1')]"
+              },
+              "probe": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', concat(variables('region-web-lb'),copyIndex())), '/probes/lbprobe')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 80,
+              "backendPort": 80,
+              "idleTimeoutInMinutes": 15
+            }
+
+          }
+        ]
+
+      },
+      "copy": {
+        "name": "region-web-lb-loop",
+        "count": 2
+      }
+    },
+    {
+      "apiVersion": "2016-03-30",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(variables('region-tm-vm-pip'),copyIndex())]",
+      "location": "[variables('region')[copyIndex()]]",
+      "tags": {
+        "displayName": "region-tm-vm-pips"
+      },
+      "comments": "Test VMs to test traffic manager scenario from each region!",
+      "properties": {
+        "publicIPAllocationMethod": "Static",
+        "dnsSettings": {
+          "domainNameLabel": "[toLower(concat(variables('region-tm-test-vm'),copyIndex()))]"
+        },
+        "idleTimeoutInMinutes": 4
+      },
+      "copy": {
+        "name": "region-tm-vm-pips-loop",
+        "count": 2
+      }
+    },
+    {
+      "apiVersion": "2016-03-30",
+      "name": "[concat(variables('region-tm-vm-nic'),copyIndex())]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[variables('region')[copyIndex()]]",
+      "tags": {
+        "displayName": "region-tm-vm-nics"
+      },
+      "comments": "Test VMs to test traffic manager scenario from each region!",
+      "dependsOn": [
+        "vnetloop",
+        "region-tm-vm-pips-loop"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAddress": "10.0.4.4",
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(variables('region-tm-vm-pip'),copyIndex()))]"
+              },
+              "subnet": {
+                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', concat(variables('region-vnet-name'),copyIndex())), '/subnets/default')]"
+              }
+            }
+          }
+        ],
+        "dnsSettings": {
+          "dnsServers": []
+        },
+        "enableIPForwarding": false
+      },
+      "copy": {
+        "name": "region-tm-vm-nics-loop",
+        "count": 2
+      }
+    },
+    {
+      "apiVersion": "2016-04-30-preview",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(variables('region-tm-test-vm'),copyIndex())]",
+      "location": "[variables('region')[copyIndex()]]",
+      "tags": {
+        "displayName": "regions-test-vms"
+      },
+      "comments": "Test VMs to test traffic manager scenario from each region!",
+      "dependsOn": [
+        "region-tm-vm-pips-loop",
+        "region-tm-vm-nics-loop"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "Standard_DS1_v2"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "MicrosoftWindowsServer",
+            "offer": "WindowsServer",
+            "sku": "2012-R2-Datacenter",
+            "version": "latest"
+          },
+          "osDisk": {
+              "createOption": "FromImage",
+            "caching": "ReadWrite"
+          },
+          "dataDisks": []
+        },
+        "osProfile": {
+          "computerName": "[replace(replace(concat(variables('region-tm-test-vm'),copyIndex()),'_',''),'-','')]",
+          "adminUsername": "[parameters('adminuser')]",
+          "windowsConfiguration": {
+            "provisionVMAgent": true,
+            "enableAutomaticUpdates": true
+          },
+          "secrets": [],
+          "adminPassword": "[parameters('adminuserPassword')]"
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('region-tm-vm-nic'), copyindex()))]"
+
+            }
+          ]
+        }
+      },
+      "copy": {
+        "name": "test-vms-Loop",
+        "count": 2
+      }
+    },
+    {
+      "apiVersion": "2016-04-30-preview",
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[concat(variables('region-availabilitySet'),copyIndex())]",
+      "location": "[variables('region')[copyIndex()]]",
+      "tags": {
+        "displayName": "Region-availabilitySets"
+      },
+	"properties": {
+	    "platformFaultDomainCount": 2,
+	    "platformUpdateDomainCount": 2,
+	    "managed" : true
+	},
+      "copy": {
+        "name": "web-vms-availabilitysets-Loop",
+        "count": 2
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('region1-web-vm-nic'), copyindex())]",
+      "location": "[variables('region')[0]]",
+      "tags": {
+        "displayName": "region1-web-vm-nics"
+      },
+      "copy": {
+        "name": "region1-vm-nic-loop",
+        "count": "[parameters('numberOfVMInstances')]"
+      },
+      "dependsOn": [
+        "vnetloop",
+        "region-web-lb-loop",
+        "region1-web-vm-pip-Loop"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('front-end-subnetref1')]"
+              },
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[concat(resourceId('Microsoft.Network/loadBalancers', concat(variables('region-web-lb'),'0')),'/backendAddressPools/BackendPool1')]"
+                }
+              ],
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(variables('region1-web-vm-pip'), copyindex()))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2016-04-30-preview",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(variables('region1-web-vmsprefix'), copyindex())]",
+      "location": "[variables('region')[0]]",
+      "tags": {
+        "displayName": "Region1-web-vms"
+      },
+      "dependsOn": [
+        "storage-accounts-loop",
+        "region1-vm-nic-loop",
+        "region1-web-vm-pip-Loop",
+        "web-vms-availabilitysets-Loop"
+      ],
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets',concat(variables('region-availabilitySet'),'0'))]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[replace(concat(variables('region1-web-vmsprefix'), copyIndex()),'-','')]",
+          "adminUsername": "[parameters('adminuser')]",
+          "adminPassword": "[parameters('adminuserPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[parameters('imageSKU')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('region1-web-vm-nic'), copyindex()))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('region-storage-account'),'0'), '2015-06-15').primaryEndpoints.blob)]"
+          }
+        }
+      },
+      "copy": {
+        "name": "virtualMachineLoop1",
+        "count": "[parameters('numberOfVMInstances')]"
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "name": "[concat(variables('region1-web-vm-pip'), copyindex())]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "location": "[variables('region')[0]]",
+      "tags": {
+        "displayName": "region1-web-vm-pip"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Static",
+        "dnsSettings": {
+          "domainNameLabel": "[concat(variables('region1-web-vmsprefix'), copyindex())]"
+        }
+      },
+      "copy": {
+        "name": "region1-web-vm-pip-Loop",
+        "count": "[parameters('numberOfVMInstances')]"
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('region2-web-vm-nic'), copyindex())]",
+      "location": "[variables('region')[1]]",
+      "tags": {
+        "displayName": "region2-web-vm-nics"
+      },
+      "copy": {
+        "name": "region2-vm-nic-loop",
+        "count": "[parameters('numberOfVMInstances')]"
+      },
+      "dependsOn": [
+        "vnetloop",
+        "region-web-lb-loop",
+        "region2-web-vm-pip-loop"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', concat(variables('region-vnet-name'),'1')), '/subnets/front-end-subnet')]"
+              },
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[concat(resourceId('Microsoft.Network/loadBalancers', concat(variables('region-web-lb'),'1')),'/backendAddressPools/BackendPool1')]"
+                }
+              ],
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(variables('region2-web-vm-pip'), copyindex()))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2016-04-30-preview",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(variables('region2-web-vmsprefix'), copyindex())]",
+      "location": "[variables('region')[1]]",
+      "tags": {
+        "displayName": "region2-web-vms"
+      },
+      "dependsOn": [
+        "storage-accounts-loop",
+        "region2-vm-nic-loop",
+        "region2-web-vm-pip-Loop",
+        "web-vms-availabilitysets-Loop"
+      ],
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets',concat(variables('region-availabilitySet'),'1'))]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[replace(concat(variables('region2-web-vmsprefix'), copyIndex()),'-','')]",
+          "adminUsername": "[parameters('adminuser')]",
+          "adminPassword": "[parameters('adminuserPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[parameters('imageSKU')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('region2-web-vm-nic'), copyindex()))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('region-storage-account'),'1'), '2015-06-15').primaryEndpoints.blob)]"
+          }
+        }
+      },
+      "copy": {
+        "name": "virtualMachineLoop2",
+        "count": "[parameters('numberOfVMInstances')]"
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "name": "[concat(variables('region2-web-vm-pip'), copyindex())]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "location": "[variables('region')[1]]",
+      "tags": {
+        "displayName": "region2-web-vm-pip"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Static",
+        "dnsSettings": {
+          "domainNameLabel": "[concat(variables('region2-web-vmsprefix'), copyindex())]"
+        }
+      },
+      "copy": {
+        "name": "region2-web-vm-pip-loop",
+        "count": "[parameters('numberOfVMInstances')]"
+      }
+    },
+    {
+      "apiVersion": "2016-03-30",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(variables('region-appgw-pip'),copyIndex())]",
+      "location": "[variables('region')[copyIndex()]]",
+      "tags": {
+        "displayName": "region-appgw-pips"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic"
+      },
+      "copy": {
+        "name": "region-appgw-pips-loop",
+        "count": 2
+      }
+    },
+    {
+      "apiVersion": "2017-06-01",
+      "type": "Microsoft.Network/applicationGateways",
+      "name": "[concat(variables('region-appgw-name'),copyIndex())]",
+      "location": "[variables('region')[copyIndex()]]",
+      "tags": {
+        "displayName": "region-appgws"
+      },
+      "dependsOn": [
+        "vnetloop",
+        "region-appgw-pips-loop",
+        "region-web-lb-loop"
+      ],
+      "properties": {
+        "sku": {
+          "name": "[parameters('appGW-skuName')]",
+          "tier": "Standard",
+          "capacity": "[parameters('appGW-capacity')]"
+        },
+        "gatewayIPConfigurations": [
+          {
+            "name": "appGatewayIpConfig",
+            "properties": {
+              "subnet": {
+                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', Concat(variables('region-vnet-name'),copyIndex())), '/subnets/',variables('vnet-appGW-subnet'))]"
+              }
+            }
+          }
+        ],
+        "frontendIPConfigurations": [
+          {
+            "name": "appGateway-Frontend-PIP",
+            "properties": {
+              "PublicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(variables('region-appgw-pip'),copyIndex()))]"
+              }
+            }
+          }
+        ],
+        "frontendPorts": [
+          {
+            "name": "appGatewayFrontendPort80",
+            "properties": {
+              "Port": 80
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "appGatewayBackendPoolDefault",
+            "properties": {
+              "backendAddresses": [
+                {
+                  "fqdn": "[reference(concat('Microsoft.Network/publicIPAddresses/',variables('region-web-ilb-pip'),copyIndex())).dnsSettings.fqdn]"
+                }
+              ],
+              "requestRoutingRules": [
+                {
+                  "Id": "[concat(resourceId('Microsoft.Network/applicationGateways',concat(variables('region-appgw-name'),copyIndex())), '/requestRoutingRules/rule1')]"
+                }
+              ]
+            }
+          },
+          {
+            "name": "appGatewayBackendPool1",
+            "properties": {
+              "backendAddresses": [
+                {
+                  "fqdn": "[reference(concat('Microsoft.Network/publicIPAddresses/',variables('region1-web-vm-pip'), '0')).dnsSettings.fqdn]"
+
+                }
+              ],
+              "requestRoutingRules": [
+                {
+                  "Id": "[concat(resourceId('Microsoft.Network/applicationGateways',concat(variables('region-appgw-name'),copyIndex())), '/requestRoutingRules/rule1')]"
+                }
+              ]
+            }
+          },
+          {
+            "name": "appGatewayBackendPool2",
+            "properties": {
+              "backendAddresses": [
+
+              ],
+              "requestRoutingRules": [
+                {
+                  "Id": "[concat(resourceId('Microsoft.Network/applicationGateways',concat(variables('region-appgw-name'),copyIndex())), '/requestRoutingRules/rule1')]"
+                }
+              ]
+            }
+          }
+        ],
+        "backendHttpSettingsCollection": [
+          {
+            "name": "appGatewayBackendHttpSettings",
+            "properties": {
+              "Port": 80,
+              "Protocol": "Http",
+              "CookieBasedAffinity": "Disabled"
+            }
+          }
+        ],
+        "httpListeners": [
+          {
+            "name": "appGatewayHttpListener",
+            "properties": {
+              "FrontendIPConfiguration": {
+                "Id": "[concat(resourceId('Microsoft.Network/applicationGateways',concat(variables('region-appgw-name'),copyIndex())), '/frontendIPConfigurations/appGateway-Frontend-PIP')]"
+              },
+              "FrontendPort": {
+                "Id": "[concat(resourceId('Microsoft.Network/applicationGateways',concat(variables('region-appgw-name'),copyIndex())), '/frontendPorts/appGatewayFrontendPort80')]"
+              },
+              "Protocol": "Http",
+              "requireServerNameIndication": false,
+              "SslCertificate": null
+            }
+          }
+        ],
+        "urlPathMaps": [
+          {
+            "name": "urlPathMap1",
+            "properties": {
+              "defaultBackendAddressPool": {
+                "id": "[concat(resourceId('Microsoft.Network/applicationGateways',concat(variables('region-appgw-name'),copyIndex())),'/backendAddressPools/appGatewayBackendPoolDefault')]"
+              },
+              "defaultBackendHttpSettings": {
+                "id": "[concat(resourceId('Microsoft.Network/applicationGateways',concat(variables('region-appgw-name'),copyIndex())),'/backendHttpSettingsCollection/appGatewayBackendHttpSettings')]"
+              },
+              "pathRules": [
+                {
+                  "name": "pathRule1",
+                  "properties": {
+                    "paths": [
+                      "[parameters('appGW-pathMatch1')]"
+                    ],
+                    "backendAddressPool": {
+                      "id": "[concat(resourceId('Microsoft.Network/applicationGateways',concat(variables('region-appgw-name'),copyIndex())),'/backendAddressPools/appGatewayBackendPool1')]"
+                    },
+                    "backendHttpSettings": {
+                      "id": "[concat(resourceId('Microsoft.Network/applicationGateways',concat(variables('region-appgw-name'),copyIndex())),'/backendHttpSettingsCollection/appGatewayBackendHttpSettings')]"
+                    }
+                  }
+                },
+                {
+                  "name": "pathRule2",
+                  "properties": {
+                    "paths": [
+                      "[parameters('appGW-pathMatch2')]"
+                    ],
+                    "backendAddressPool": {
+                      "id": "[concat(resourceId('Microsoft.Network/applicationGateways',concat(variables('region-appgw-name'),copyIndex())),'/backendAddressPools/appGatewayBackendPool2')]"
+                    },
+                    "backendHttpSettings": {
+                      "id": "[concat(resourceId('Microsoft.Network/applicationGateways',concat(variables('region-appgw-name'),copyIndex())),'/backendHttpSettingsCollection/appGatewayBackendHttpSettings')]"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "requestRoutingRules": [
+          {
+            "Name": "rule1",
+            "properties": {
+              "RuleType": "PathBasedRouting",
+              "httpListener": {
+                "id": "[concat(resourceId('Microsoft.Network/applicationGateways',concat(variables('region-appgw-name'),copyIndex())), '/httpListeners/appGatewayHttpListener')]"
+              },
+              "urlPathMap": {
+                "id": "[concat(resourceId('Microsoft.Network/applicationGateways',concat(variables('region-appgw-name'),copyIndex())), '/urlPathMaps/urlPathMap1')]"
+              }
+            }
+          }
+        ]
+      },
+      "copy": {
+        "name": "region-appgw-loop",
+        "count": 2
+      }
+    },
+    {
+      "apiVersion": "2015-11-01",
+      "type": "Microsoft.Network/trafficManagerProfiles",
+      "name": "[parameters('trafficManagerProfile_name')]",
+      "location": "global",
+      "tags": {
+        "displayName": "Global-TrafficProfile"
+      },
+      "comments": "Traffic Manager Profiles tmdemo'.",
+      "dependsOn": [
+        "region-appgw-loop"
+      ],
+      "properties": {
+        "profileStatus": "Enabled",
+        "trafficRoutingMethod": "Performance",
+        "dnsConfig": {
+          "relativeName": "[parameters('trafficManagerProfile_name')]",
+          "fqdn": "[concat(parameters('trafficManagerProfile_name'),'.trafficmanager.net')]",
+          "ttl": 300
+        },
+        "monitorConfig": {
+          "protocol": "HTTP",
+          "port": 80,
+          "path": "/"
+        },
+        "endpoints": [
+          {
+            "name": "region1-endpoint",
+            "type": "Microsoft.Network/trafficManagerProfiles/azureEndpoints",
+            "properties": {
+              "endpointStatus": "Enabled",
+              "targetResourceId": "[resourceId('Microsoft.Network/publicIPAddresses',concat(variables('region-appgw-pip'),'0'))]",
+              "target": "[concat(variables('region-appgw-pip'),'0')]",
+              "weight": 1,
+              "priority": 1,
+              "endpointLocation": "[variables('region')[0]]"
+            }
+          },
+          {
+            "name": "region2-endpoint",
+            "type": "Microsoft.Network/trafficManagerProfiles/azureEndpoints",
+            "properties": {
+              "endpointStatus": "Enabled",
+              "targetResourceId": "[resourceId('Microsoft.Network/publicIPAddresses',concat(variables('region-appgw-pip'),'1'))]",
+              "target": "[concat(variables('region-appgw-pip'),'1')]",
+              "weight": 1,
+              "priority": 2,
+              "endpointLocation": "[variables('region')[1]]"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

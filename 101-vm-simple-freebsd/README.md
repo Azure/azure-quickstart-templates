@@ -8,4 +8,5 @@
 </a>
 
 
-This template allows you to deploy a simple FreeBSD VM using a few different options for the FreeBSD version, using the latest patched version. This will deploy in resource group location on a D1 VM Size.
+This template allows you to deploy a simple FreeBSD VM using a few different options for the FreeBSD version, using the latest patched version. This will deploy a A1 size VM in the resource group location and return the FQDN of the VM.
+

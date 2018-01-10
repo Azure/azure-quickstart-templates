@@ -19,15 +19,24 @@
       "metadata": {
         "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
       }
+    },
+    "freeBSDOSVersion": {
+      "type": "string",
+      "defaultValue": "11.1",
+      "allowedValues": [
+        "11.1",
+        "11.0",
+        "10.3"
+      ],
+      "metadata": {
+        "description": "The FreeBSD version for the VM. This will pick a fully patched image of this given FreeBSD version."
+      }
     }
   },
   "variables": {
-    "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'savm')]",
-    "dataDisk1VhdName": "datadisk1",
+    "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'safreebsdvm')]",
     "imagePublisher": "MicrosoftOSTC",
     "imageOffer": "FreeBSD",
-    "freeBSDOSVersion": "10.3",
-    "OSDiskName": "osdiskforfreebsdsimple",
     "nicName": "myVMNic",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
@@ -35,26 +44,25 @@
     "storageAccountType": "Standard_LRS",
     "publicIPAddressName": "myPublicIP",
     "publicIPAddressType": "Dynamic",
-    "vmStorageAccountContainerName": "vhds",
     "vmName": "MyFreeBSDVM",
-    "vmSize": "Standard_D1",
+    "vmSize": "Standard_A1",
     "virtualNetworkName": "MyVNET",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
-    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
-    "apiVersion": "2015-06-15"
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('virtualNetworkName'), variables('subnetName'))]"
   },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountName')]",
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2017-06-01",
       "location": "[resourceGroup().location]",
-      "properties": {
-        "accountType": "[variables('storageAccountType')]"
-      }
+      "sku": {
+        "name": "[variables('storageAccountType')]"
+      },
+      "kind": "Storage",
+      "properties": {}
     },
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2017-04-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
       "location": "[resourceGroup().location]",
@@ -66,7 +74,7 @@
       }
     },
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2017-04-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[resourceGroup().location]",
@@ -87,13 +95,13 @@
       }
     },
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2017-04-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -113,13 +121,13 @@
       }
     },
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -134,25 +142,16 @@
           "imageReference": {
             "publisher": "[variables('imagePublisher')]",
             "offer": "[variables('imageOffer')]",
-            "sku": "[variables('freeBSDOSVersion')]",
+            "sku": "[parameters('freeBSDOSVersion')]",
             "version": "latest"
           },
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
-            },
-            "caching": "ReadWrite",
             "createOption": "FromImage"
           },
           "dataDisks": [
             {
-              "name": "datadisk1",
-              "diskSizeGB": "100",
+              "diskSizeGB": 1023,
               "lun": 0,
-              "vhd": {
-                "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('dataDisk1VhdName'),'.vhd')]"
-              },
               "createOption": "Empty"
             }
           ]
@@ -166,21 +165,21 @@
         },
         "diagnosticsProfile": {
           "bootDiagnostics": {
-            "enabled": "true",
-            "storageUri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net')]"
+            "enabled": true,
+            "storageUri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2016-01-01').primaryEndpoints.blob)]"
           }
         }
       }
     }
   ],
   "outputs": {
-     "hostname": {
-         "type": "string",
-         "value": "[concat(parameters('dnsLabelPrefix'), '.', resourceGroup().location, '.cloudapp.azure.com')]"
-     },
+    "hostname": {
+      "type": "string",
+      "value": "[reference(variables('publicIPAddressName')).dnsSettings.fqdn]"
+    },
     "sshCommand": {
       "type": "string",
-      "value": "[concat('ssh ', parameters('adminUsername'), '@', parameters('dnsLabelPrefix'), '.', resourceGroup().location, '.cloudapp.azure.com')]"
+      "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(variables('publicIPAddressName')).dnsSettings.fqdn)]"
     }
   }
 }

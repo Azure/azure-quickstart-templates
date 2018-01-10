@@ -1,9 +1,31 @@
 #!/bin/bash
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+LOG_FILE="/var/log/cloudera-azure-initialize.log"
+
+# manually set EXECNAME because this file is called from another script and it $0 contains a 
+# relevant path
+EXECNAME="prepare-masternode-disks.sh"
+
+# logs everything to the $LOG_FILE
+log() {
+  echo "$(date) [${EXECNAME}]: $*" >> "${LOG_FILE}"
+}
 
 # ok this is the fun part. Let's create a file here
 # use temp file to use sudo
 cat > inputs2.sh << 'END'
-  
+
 
 
 mountDriveForLogCloudera()
@@ -14,7 +36,7 @@ mountDriveForLogCloudera()
   mkdir $dirname
   mount -o noatime,barrier=1 -t ext4 $drivename $dirname
   UUID=`sudo lsblk -no UUID $drivename`
-  echo "UUID=$UUID   $dirname    ext4   defaults,noatime,barrier=0 0 1" | sudo tee -a /etc/fstab
+  echo "UUID=$UUID   $dirname    ext4   defaults,noatime,discard,barrier=0 0 1" | sudo tee -a /etc/fstab
   mkdir /log/cloudera
   ln -s /log/cloudera /opt/cloudera
 }
@@ -27,7 +49,7 @@ mountDriveForZookeeper()
   mkdir $dirname
   mount -o noatime,barrier=1 -t ext4 $drivename $dirname
   UUID=`sudo lsblk -no UUID $drivename`
-  echo "UUID=$UUID   $dirname    ext4   defaults,noatime,barrier=0 0 1" | sudo tee -a /etc/fstab
+  echo "UUID=$UUID   $dirname    ext4   defaults,noatime,discard,barrier=0 0 1" | sudo tee -a /etc/fstab
 }
 
 
@@ -41,7 +63,7 @@ mountDriveForQJN()
   mkdir $dirname
   mount -o noatime,barrier=1 -t ext4 $drivename $dirname
   UUID=`sudo lsblk -no UUID $drivename`
-  echo "UUID=$UUID   $dirname    ext4   defaults,noatime,barrier=0 0 1" | sudo tee -a /etc/fstab
+  echo "UUID=$UUID   $dirname    ext4   defaults,noatime,discard,barrier=0 0 1" | sudo tee -a /etc/fstab
 }
 
 mountDriveForPostgres()
@@ -52,7 +74,7 @@ mountDriveForPostgres()
   mkdir $dirname
   mount -o noatime,barrier=1 -t ext4 $drivename $dirname
   UUID=`sudo lsblk -no UUID $drivename`
-  echo "UUID=$UUID   $dirname    ext4   defaults,noatime,barrier=0 0 1" | sudo tee -a /etc/fstab
+  echo "UUID=$UUID   $dirname    ext4   defaults,noatime,discard,barrier=0 0 1" | sudo tee -a /etc/fstab
 }
 
 prepare_unmounted_volumes()
@@ -133,7 +155,7 @@ prepare_disk()
 
     # Set up the blkid for device entry in /etc/fstab
 
-    echo "UUID=${blockid} $mount $FS defaults,noatime 0 0" >> /etc/fstab
+    echo "UUID=${blockid} $mount $FS defaults,noatime,discard,barrier=0 0 0" >> /etc/fstab
     mount ${mount}
 
   fi
@@ -141,5 +163,11 @@ prepare_disk()
 
 END
 
+log "------- prepare-masternode-disks.sh starting -------"
+
 sudo bash -c "source ./inputs2.sh; prepare_unmounted_volumes"
-exit 0  # and this is useful
+
+log "------- prepare-masternode-disks.sh succeeded -------"
+
+# always `exit 0` on success
+exit 0

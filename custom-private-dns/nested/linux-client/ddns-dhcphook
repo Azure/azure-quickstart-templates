@@ -1,0 +1,44 @@
+ #!/bin/sh
+requireddomain=$new_domain_name
+
+# only execute on the primary nic
+if [ "$interface" != "eth0" ]
+then
+	return
+fi
+
+# when we have a new IP, perform nsupdate
+if [ "$reason" = BOUND ] || [ "$reason" = RENEW ] ||
+   [ "$reason" = REBIND ] || [ "$reason" = REBOOT ]
+then
+  host=`hostname`
+  nsupdatecmds=/var/tmp/nsupdatecmds
+  nsupdateout=/var/tmp/nsupdateout
+
+  ipA=$(echo $new_ip_address | cut -d '.' -f1)
+  ipB=$(echo $new_ip_address | cut -d '.' -f2)
+  ipC=$(echo $new_ip_address | cut -d '.' -f3)
+  ipD=$(echo $new_ip_address | cut -d '.' -f4)
+  newR=$ipD.$ipC.$ipB.$ipA.in-addr.arpa.
+
+  ipA=$(echo $old_ip_address | cut -d '.' -f1)
+  ipB=$(echo $old_ip_address | cut -d '.' -f2)
+  ipC=$(echo $old_ip_address | cut -d '.' -f3)
+  ipD=$(echo $old_ip_address | cut -d '.' -f4)
+  oldR=$ipD.$ipC.$ipB.$ipA.in-addr.arpa.
+
+  echo "update delete $host.$requireddomain a" > $nsupdatecmds
+  echo "update add $host.$requireddomain 3600 a $new_ip_address" >> $nsupdatecmds
+  echo "send" >> $nsupdatecmds
+
+  if [ "$old_ip_address" != "" ]
+  then
+	echo "update delete $oldR ptr" >>  $nsupdatecmds
+  fi
+
+  echo "update delete $newR ptr" >>  $nsupdatecmds
+  echo "update add $newR 300 ptr $host.$requireddomain" >> $nsupdatecmds
+  echo "send" >> $nsupdatecmds
+
+  nsupdate -d $nsupdatecmds > $nsupdateout 2>&1
+fi

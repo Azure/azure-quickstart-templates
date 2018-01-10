@@ -1,0 +1,216 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "computeSettings": {
+            "type": "secureObject"
+        },
+        "networkSettings": {
+            "type": "object"
+        },
+        "subnet2Ref":{
+            "type": "string"
+        },
+        "publicIPDomainNameLabelOrchServer": {
+            "type": "string",
+            "defaultValue": ""
+        }
+    },
+    "variables": {
+        "singleQuote": "'",
+        "pipID":"[resourceId('Microsoft.Network/publicIPAddresses',parameters('networkSettings').chefAutoPip)]",
+        "publicIPDomainNameLabelOrchServer": "[concat('http://',parameters('publicIPDomainNameLabelOrchServer'),'.',parameters('computeSettings').location,'.cloudapp.azure.com:33001/key')]"
+
+    },
+    "resources": [
+        {
+            "name": "[parameters('networkSettings').chefAutoPip]",
+            "type": "Microsoft.Network/publicIpAddresses",
+            "apiVersion": "[parameters('networkSettings').networkApiVersion]",
+            "location": "[parameters('networkSettings').location]",
+            "properties": {
+                "publicIpAllocationMethod": "[parameters('networkSettings').publicIpAddressType]",
+                "dnsSettings": {
+                    "domainNameLabel": "[parameters('networkSettings').chefAutoDns]"
+                }
+            }
+        },
+         {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[parameters('networksettings').chefAutoNsg]",
+            "apiVersion": "[parameters('networkSettings').networkApiVersion]",
+            "location": "[parameters('networkSettings').location]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "ssh",
+                        "properties": {
+                            "priority": 1010,
+                            "sourceAddressPrefix": "*",
+                            "protocol": "TCP",
+                            "destinationPortRange": "22",
+                            "access": "Allow",
+                            "direction": "Inbound",
+                            "sourcePortRange": "*",
+                            "destinationAddressPrefix": "*"
+                        }
+                    },
+                    {
+                        "name": "https",
+                        "properties": {
+                            "priority": 1020,
+                            "sourceAddressPrefix": "*",
+                            "protocol": "TCP",
+                            "destinationPortRange": "443",
+                            "access": "Allow",
+                            "direction": "Inbound",
+                            "sourcePortRange": "*",
+                            "destinationAddressPrefix": "*"
+                        }
+                    },
+                    {
+                        "name": "http",
+                        "properties": {
+                            "priority": 1030,
+                            "sourceAddressPrefix": "*",
+                            "protocol": "TCP",
+                            "destinationPortRange": "80",
+                            "access": "Allow",
+                            "direction": "Inbound",
+                            "sourcePortRange": "*",
+                            "destinationAddressPrefix": "*"
+                        }
+                    },
+                    {
+                        "name": "git",
+                        "properties": {
+                            "priority": 1040,
+                            "sourceAddressPrefix": "*",
+                            "protocol": "TCP",
+                            "destinationPortRange": "8989",
+                            "access": "Allow",
+                            "direction": "Inbound",
+                            "sourcePortRange": "*",
+                            "destinationAddressPrefix": "*"
+                        }
+                    },
+                    {
+                        "name": "udp",
+                        "properties": {
+                            "priority": 1050,
+                            "sourceAddressPrefix": "*",
+                            "protocol": "TCP",
+                            "destinationPortRange": "8443",
+                            "access": "Allow",
+                            "direction": "Inbound",
+                            "sourcePortRange": "*",
+                            "destinationAddressPrefix": "*"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[parameters('networkSettings').chefAutoNic]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "[parameters('networkSettings').networkApiVersion]",
+            "location": "[parameters('networkSettings').location]",
+            "dependsOn": [
+                 "[concat('Microsoft.Network/publicIpAddresses/', parameters('networkSettings').chefAutoPip)]",
+                  "[concat('Microsoft.Network/networkSecurityGroups/', parameters('networkSettings').chefautoNsg)]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "subnet": {
+                                "id": "[parameters('subnet2Ref')]"
+                            },
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIpAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIpAddresses', parameters('networkSettings').chefAutoPip)]"
+                            }
+                        }
+                    }
+                ],
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSettings').chefautoNsg)]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[parameters('computeSettings').chefAutoVmName]",
+            "apiVersion": "[parameters('computeSettings').computeApiVersion]",
+            "location": "[parameters('computeSettings').location]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkInterfaces/', parameters('computeSettings').chefAutoNic)]"
+            ],
+            "plan": {
+                "name": "[parameters('computeSettings').imageSKU]",
+                "product": "[parameters('computeSettings').imageOffer]",
+                "publisher": "[parameters('computeSettings').imagePublisher]"
+            },
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('computeSettings').virtualMachineSize]"
+                },
+                "osProfile": {
+                    "computerName": "[parameters('computeSettings').chefAutoVmName]",
+                    "adminUsername": "[parameters('computeSettings').adminUsername]",
+                    "adminPassword": "[parameters('computeSettings').adminPassword]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[parameters('computeSettings').imagePublisher]",
+                        "offer": "[parameters('computeSettings').imageOffer]",
+                        "sku": "[parameters('computeSettings').imageSKU]",
+                        "version": "[parameters('computeSettings').imageVersion]"
+                    },
+                    "osDisk": {
+                        "createOption": "FromImage",
+                        "managedDisk": {
+                            "storageAccountType": "[parameters('computeSettings').storageAccountType]"
+                        }
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('computeSettings').chefAutoNic)]"
+                        }
+                    ]
+                }
+            }
+        },
+         {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(parameters('computeSettings').chefAutoVmName,'/automate_setup')]",
+            "apiVersion": "[parameters('computeSettings').computeApiVersion]",
+            "location": "[parameters('computeSettings').location]",
+            "properties": {
+                "publisher": "Microsoft.Azure.Extensions",
+                "type": "CustomScript",
+                "typeHandlerVersion": "2.0",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "fileUris": [
+                        "[parameters('computeSettings').chefAutoScriptUrl1]"
+                    ],
+                   "commandToExecute": "[concat(parameters('computeSettings').rubyPath, ' ./automate_setup.rb --fqdn \"', reference(variables('pipId')).dnsSettings.fqdn, '\" --license \"', parameters('computeSettings').automateLicenseUri, '\"',' --adminUsername \"',parameters('computeSettings').adminUsername,'\"',' --firstname ','\"',parameters('computeSettings').firstname,'\"',' --lastname ','\"',parameters('computeSettings').lastname,'\"',' --mailid ','\"',parameters('computeSettings').mailid,'\"',' --adminpassword ','\"',parameters('computeSettings').adminpassword,'\"',' --orguser ','\"',parameters('computeSettings').orguser,'\"',' --fqdnorch ','\"',variables('publicIPDomainNameLabelOrchServer'),'\"')]"
+                }
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('computeSettings').chefAutoVmName)]"
+            ]
+        }
+        
+    ],
+     "outputs":{
+        "chefAutomatefqdn":{
+            "type": "string",
+            "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',parameters('networkSettings').chefAutoPip)).dnsSettings.fqdn]"
+        }
+    }
+}

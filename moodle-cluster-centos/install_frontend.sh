@@ -225,7 +225,7 @@ chown -R apache:apache /www/moodledata
 #Restart apache server
 /usr/local/apache/bin/apachectl restart
 
-# Install Office 365 plugins if asked for
+# install Office 365 plugins if asked for
 if [ "$installOfficePlugins" = "True" ]; then
     curl -k --max-redirs 10 https://github.com/Microsoft/o365-moodle/archive/$moodleVersion.zip -L -o o365.zip
     unzip o365.zip
@@ -240,7 +240,7 @@ if [ "$installOfficePlugins" = "True" ]; then
     rm -rf o365-moodle-$moodleVersion/user/profile/
     rm -rf o365-moodle-$moodleVersion/repository/onenote	
     
-# Copy office plugins folder into moodle  and remove unzipped folder
+# Copy office plugins folder into moodle  and remove unzipped folder    
     cp -r o365-moodle-$moodleVersion/* moodle
     rm -rf o365-moodle-$moodleVersion
 fi
@@ -266,3 +266,4 @@ DbIpAddress=$(dig +short $DbFqdn)
 sed -i "s/Defaults    requiretty/#Defaults    requiretty/" /etc/sudoers
 
 sudo -u apache /usr/local/php/bin/php admin/cli/install.php --chmod=770 --lang=en --wwwroot=$wwwrootval --dataroot='/www/moodledata' --dbhost=$DbIpAddress --dbpass=$dbpass --fullname=$FullNameOfSite --shortname=$ShortNameOfSite --adminuser=$MoodleAdminUser --adminpass=$MoodleAdminPass --adminemail=$MoodleAdminEmail --non-interactive --agree-license --allow-unstable || true
+

@@ -1,0 +1,155 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "databaseAdminUsername": {
+            "type": "string",
+            "metadata": {
+                "description": "Username for DB Admin"
+            }
+        },
+        "databaseAdminPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Password for DB Admin"
+            }
+        }
+    },
+    "variables": {
+        "storageAccountName": "[concat('storage', uniqueString(resourceGroup().id))]",
+        "storageAccountType": "Standard_LRS",
+        "vNetName": "vNet",
+        "vNetPrefix": "10.0.0.0/16",
+        "SubnetName": "Subnet-1",
+        "SubnetPrefix": "10.0.0.0/24",
+        "serverName": "[concat('server', uniqueString(resourceGroup().id))]",
+        "dataBaseName": "DB",
+        "dataBaseCollation": "SQL_Latin1_General_CP1_CI_AS",
+        "dataBaseEdition": "Basic",
+        "dataBaseRequestedServiceObjectiveName": "Basic"
+
+    },
+    "resources": [{
+            "name": "[variables('storageAccountName')]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2016-01-01",
+            "sku": {
+                "name": "[variables('storageAccountType')]"
+            },
+            "dependsOn": [],
+            "tags": {
+                "displayName": "storageAccount"
+            },
+            "kind": "Storage"
+        },
+        {
+            "name": "[variables('vNetName')]",
+            "type": "Microsoft.Network/virtualNetworks",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2016-03-30",
+            "dependsOn": [],
+            "tags": {
+                "displayName": "vNet"
+            },
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('vNetPrefix')]"
+                    ]
+                },
+                "subnets": [{
+                    "name": "[variables('SubnetName')]",
+                    "properties": {
+                        "addressPrefix": "[variables('SubnetPrefix')]"
+                    }
+                }]
+            }
+        },
+        {
+            "name": "[variables('serverName')]",
+            "type": "Microsoft.Sql/servers",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2014-04-01-preview",
+            "dependsOn": [],
+            "tags": {
+                "displayName": "server"
+            },
+            "properties": {
+                "administratorLogin": "[parameters('databaseAdminUsername')]",
+                "administratorLoginPassword": "[parameters('databaseAdminPassword')]"
+            },
+            "resources": [{
+                    "name": "AllowAllWindowsAzureIps",
+                    "type": "firewallrules",
+                    "location": "East US",
+                    "apiVersion": "2014-04-01-preview",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Sql/servers', variables('serverName'))]"
+                    ],
+                    "properties": {
+                        "startIpAddress": "0.0.0.0",
+                        "endIpAddress": "0.0.0.0"
+                    }
+                },
+                {
+                    "name": "[variables('dataBaseName')]",
+                    "type": "databases",
+                    "location": "[resourceGroup().location]",
+                    "apiVersion": "2014-04-01-preview",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Sql/servers', variables('serverName'))]"
+                    ],
+                    "tags": {
+                        "displayName": "dataBase"
+                    },
+                    "properties": {
+                        "collation": "[variables('dataBaseCollation')]",
+                        "edition": "[variables('dataBaseEdition')]",
+                        "maxSizeBytes": "1073741824",
+                        "requestedServiceObjectiveName": "[variables('dataBaseRequestedServiceObjectiveName')]"
+                    }
+                }
+            ]
+        }
+
+    ],
+    "outputs": {
+        "existingClusterStorageResourceGroup": {
+            "type": "string",
+            "value": "[resourceGroup().name]"
+        },
+        "existingClusterStorageAccountName": {
+            "type": "string",
+            "value": "[variables('storageAccountName')]"
+        },
+        "existingVirtualNetworkName": {
+            "type": "string",
+            "value": "[variables('vNetName')]"
+        },
+        "existingHiveMetastoreServerName": {
+            "type": "string",
+            "value": "[concat(variables('serverName'),'.database.windows.net')]"
+        },
+        "existingHiveMetastoreDatabaseName": {
+            "type": "string",
+            "value": "[variables('dataBaseName')]"
+        },
+        "existingHiveMetastoreUsername": {
+            "type": "string",
+            "value": "[parameters('databaseAdminUsername')]"
+        },
+        "existingHiveMetastorePassword": {
+            "type": "string",
+            "value": "[parameters('databaseAdminPassword')]"
+        },
+        "existingVirtualNetworkResourceGroup": {
+            "type": "string",
+            "value": "[resourceGroup().name]"
+        },
+        "existingVirtualNetworkSubnetName": {
+            "type": "string",
+            "value": "[variables('SubnetName')]"
+        }
+    }
+}

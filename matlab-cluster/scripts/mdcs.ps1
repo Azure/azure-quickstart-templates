@@ -157,7 +157,7 @@ Admin user credential for all VMs. The supplied password must be between 8-123 c
     -replace '\[\[vmSizeClient\]\]', $ClientVmSize `
     -replace '\[\[vmSizeMJS\]\]', $MJSVmSize `
     -replace '\[\[vmSizeWorker\]\]', $WorkerVmSize `
-    -replace '\[\[adminUserName\]\]', $VmUsername `
+    -replace '\[\[adminUsername\]\]', $VmUsername `
     -replace '\[\[adminPassword\]\]', $VmPassword |
   Out-File $updated_template_param
 
