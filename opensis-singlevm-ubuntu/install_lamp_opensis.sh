@@ -13,7 +13,7 @@ apt-get -y install apache2 mysql-server php5 php5-mysql
 
 # install OpenSIS
 cd /var/www/html
-wget http://sourceforge.net/projects/opensis-ce/files/opensis6.4.zip/download -O opensis.zip
+wget http://nchc.dl.sourceforge.net/project/opensis-ce/opensis6.4.zip -O opensis.zip
 apt-get install unzip
 unzip opensis.zip
 
