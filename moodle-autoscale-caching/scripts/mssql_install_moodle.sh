@@ -31,8 +31,8 @@
     moodledbuser=${7}
     moodledbpass=${8}
     adminpass=${9}
-    mysqladminlogin=${10}
-    mysqladminpass=${11}
+    mssqladminlogin=${10}
+    mssqladminpass=${11}
     wabsacctname=${12}
     wabsacctkey=${13}
     azuremoodledbuser=${14}
@@ -49,8 +49,8 @@
     echo $moodledbuser         >> /tmp/vars.txt
     echo $moodledbpass         >> /tmp/vars.txt
     echo    $adminpass         >> /tmp/vars.txt
-    echo $mysqladminlogin      >> /tmp/vars.txt
-    echo $mysqladminpass       >> /tmp/vars.txt
+    echo $mssqladminlogin      >> /tmp/vars.txt
+    echo $mssqladminpass       >> /tmp/vars.txt
     echo $wabsacctname         >> /tmp/vars.txt
     echo $wabsacctkey          >> /tmp/vars.txt
     echo $azuremoodledbuser    >> /tmp/vars.txt
@@ -460,17 +460,6 @@ port    = smtp,ssmtp,submission,imap2,imap3,imaps,pop3,pop3s
 filter  = dovecot
 logpath = /var/log/mail.log
 
-# To log wrong MySQL access attempts add to /etc/my.cnf:
-# log-error=/var/log/mysqld.log
-# log-warning = 2
-[mysqld-auth]
-
-enabled  = false
-filter   = mysqld-auth
-port     = 3306
-logpath  = /var/log/mysqld.log
-
-
 # DNS Servers
 
 
@@ -557,7 +546,7 @@ EOF
     # configure gluster repository & install gluster client
     sudo add-apt-repository ppa:gluster/glusterfs-3.8 -y                     >> /tmp/apt1.log
     sudo apt-get -y update                                                   >> /tmp/apt2.log
-    sudo apt-get -y --force-yes install rsyslog glusterfs-client mysql-client git    >> /tmp/apt3.log
+    sudo apt-get -y --force-yes install rsyslog glusterfs-client git    >> /tmp/apt3.log
 
     # install azure cli & setup container
     echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ wheezy main" | \
@@ -607,7 +596,26 @@ EOF
     # Moodle requirements
     sudo apt-get -y update > /dev/null
     sudo apt-get install -y --force-yes graphviz aspell php-common php-soap php-json php-redis > /tmp/apt6.log
-    sudo apt-get install -y --force-yes php-bcmath php-gd php-mysql php-xmlrpc php-intl php-xml php-bz2 >> /tmp/apt6.log
+    sudo apt-get install -y --force-yes php-bcmath php-gd php-xmlrpc php-intl php-xml php-bz2 >> /tmp/apt6.log
+    sudo apt-get install -y php-mbstring php-dev mcrypt php-pear
+  
+    # Download and build php/mssql driver
+    /usr/bin/curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -  
+    /usr/bin/curl https://packages.microsoft.com/config/ubuntu/16.04/prod.list > /etc/apt/sources.list.d/mssql-release.list
+    ACCEPT_EULA=Y apt-get install msodbcsql mssql-tools -y
+    apt-get install unixodbc-dev -y
+    echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bash_profile
+    echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bashrc
+    source ~/.bashrc
+    
+    #Build mssql driver
+    /usr/bin/pear config-set php_ini `php --ini | grep "Loaded Configuration" | sed -e "s|.*:\s*||"` system
+    /usr/bin/pecl install sqlsrv
+    /usr/bin/pecl install pdo_sqlsrv
+    PHPVER=`/usr/bin/php -r "echo PHP_VERSION;" | /usr/bin/cut -c 1,2,3`
+    echo "extension=sqlsrv.so" >> /etc/php/$PHPVER/apache2/php.ini
+    echo "extension=pdo_sqlsrv.so" >> /etc/php/$PHPVER/apache2/php.ini
+
 
 
     # Set up initial moodle dirs
@@ -1105,11 +1113,17 @@ EOF
     systemctl daemon-reload
     service varnish restart
 
-    mysql -h $mssqlIP -u $mysqladminlogin -p${mysqladminpass} -e "CREATE DATABASE ${moodledbname} CHARACTER SET utf8;"
-    mysql -h $mssqlIP -u $mysqladminlogin -p${mysqladminpass} -e "GRANT ALL ON ${moodledbname}.* TO ${moodledbuser} IDENTIFIED BY '${moodledbpass}';"
+    sqlcmd -S $mssqlIP -U $mssqladminlogin -P ${mssqladminpass} -Q "CREATE DATABASE ${moodledbname};"
+    sqlcmd -S $mssqlIP -U $mssqladminlogin -P ${mssqladminpass} -Q "CREATE LOGIN ${moodledbuser} with password = '${moodledbpass}';"
+    sqlcmd -S $mssqlIP -U $mssqladminlogin -P ${mssqladminpass} -Q "CREATE USER ${moodledbuser} FROM LOGIN ${moodledbuser};"
+    sqlcmd -S $mssqlIP -U $mssqladminlogin -P ${mssqladminpass} -Q "exec sp_addrolemember 'db_owner','${moodledbuser}';"
 
-    echo "mysql -h $sysqlIP -u $mysqladminlogin -p${mysqladminpass} -e \"CREATE DATABASE ${moodledbname};\"" >> /tmp/debug
-    echo "mysql -h $sysqlIP -u $mysqladminlogin -p${mysqladminpass} -e \"GRANT ALL ON ${moodledbname}.* TO ${moodledbuser} IDENTIFIED BY '${moodledbpass}';\"" >> /tmp/debug
+    echo "sqlcmd -S $mssqlIP -U $mssqladminlogin -P ${mssqladminpass} -Q CREATE DATABASE ${moodledbname};" > /tmp/debug.log
+    echo "sqlcmd -S $mssqlIP -U $mssqladminlogin -P ${mssqladminpass} -Q CREATE LOGIN ${moodledbuser} with password = '${moodledbpass}';" >> /tmp/debug.log
+    echo "sqlcmd -S $mssqlIP -U $mssqladminlogin -P ${mssqladminpass} -Q CREATE USER ${moodledbuser} FROM LOGIN ${moodledbuser};" >> /tmp/debug.log
+    echo "sqlcmd -S $mssqlIP -U $mssqladminlogin -P ${mssqladminpass} -Q exec sp_addrolemember 'db_owner','${moodledbuser}';" >> /tmp/debug.log
+
+
 
     # Master config for syslog
     mkdir /var/log/sitelogs
@@ -1126,14 +1140,14 @@ EOF
     service rsyslog restart
 
     # Fire off moodle setup
-    echo -e "cd /tmp; sudo -u www-data /usr/bin/php /moodle/html/moodle/admin/cli/install.php --chmod=770 --lang=en_us --wwwroot=https://"$siteFQDN" --dataroot=/moodle/moodledata --dbhost="$mssqlIP" --dbname="$moodledbname" --dbuser="$azuremoodledbuser" --dbpass="$moodledbpass" --dbtype=mysqli --fullname='Moodle LMS' --shortname='Moodle' --adminuser=admin --adminpass="$adminpass" --adminemail=admin@"$siteFQDN" --non-interactive --agree-license --allow-unstable || true "
-    cd /tmp; sudo -u www-data /usr/bin/php /moodle/html/moodle/admin/cli/install.php --chmod=770 --lang=en_us --wwwroot=https://$siteFQDN   --dataroot=/moodle/moodledata --dbhost=$mssqlIP   --dbname=$moodledbname   --dbuser=$azuremoodledbuser   --dbpass=$moodledbpass   --dbtype=mysqli --fullname='Moodle LMS' --shortname='Moodle' --adminuser=admin --adminpass=$adminpass   --adminemail=admin@$siteFQDN   --non-interactive --agree-license --allow-unstable || true
+    echo -e "cd /tmp; sudo -u www-data /usr/bin/php /moodle/html/moodle/admin/cli/install.php --chmod=770 --lang=en_us --wwwroot=https://"$siteFQDN" --dataroot=/moodle/moodledata --dbhost="$mssqlIP" --dbname="$moodledbname" --dbuser="$azuremoodledbuser" --dbpass="$moodledbpass" --dbtype=mssql --fullname='Moodle LMS' --shortname='Moodle' --adminuser=admin --adminpass="$adminpass" --adminemail=admin@"$siteFQDN" --non-interactive --agree-license --allow-unstable || true "
+    cd /tmp; sudo -u www-data /usr/bin/php /moodle/html/moodle/admin/cli/install.php --chmod=770 --lang=en_us --wwwroot=https://$siteFQDN   --dataroot=/moodle/moodledata --dbhost=$mssqlIP   --dbname=$moodledbname   --dbuser=$azuremoodledbuser   --dbpass=$moodledbpass   --dbtype=mssql --fullname='Moodle LMS' --shortname='Moodle' --adminuser=admin --adminpass=$adminpass   --adminemail=admin@$siteFQDN   --non-interactive --agree-license --allow-unstable || true
 
-    mysql -h $mssqlIP -u $mysqladminlogin -p${mysqladminpass} ${moodledbname} -e "INSERT INTO mdl_config_plugins (plugin, name, value) VALUES ('tool_objectfs', 'enabletasks', 1);" 
-    mysql -h $mssqlIP -u $mysqladminlogin -p${mysqladminpass} ${moodledbname} -e "INSERT INTO mdl_config_plugins (plugin, name, value) VALUES ('tool_objectfs', 'filesystem', '\\\tool_objectfs\\\azure_file_system');"
-    mysql -h $mssqlIP -u $mysqladminlogin -p${mysqladminpass} ${moodledbname} -e "INSERT INTO mdl_config_plugins (plugin, name, value) VALUES ('tool_objectfs', 'azure_accountname', '${wabsacctname}');"
-    mysql -h $mssqlIP -u $mysqladminlogin -p${mysqladminpass} ${moodledbname} -e "INSERT INTO mdl_config_plugins (plugin, name, value) VALUES ('tool_objectfs', 'azure_container', 'objectfs');"
-    mysql -h $mssqlIP -u $mysqladminlogin -p${mysqladminpass} ${moodledbname} -e "INSERT INTO mdl_config_plugins (plugin, name, value) VALUES ('tool_objectfs', 'azure_sastoken', '${sas}');"
+    mssql -S $mssqlIP -U $mssqladminlogin -P ${mssqladminpass} ${moodledbname} -Q "INSERT INTO mdl_config_plugins (plugin, name, value) VALUES ('tool_objectfs', 'enabletasks', 1);" 
+    mssql -S $mssqlIP -U $mssqladminlogin -P ${mssqladminpass} ${moodledbname} -Q "INSERT INTO mdl_config_plugins (plugin, name, value) VALUES ('tool_objectfs', 'filesystem', '\\\tool_objectfs\\\azure_file_system');"
+    mssql -S $mssqlIP -U $mssqladminlogin -P ${mssqladminpass} ${moodledbname} -Q "INSERT INTO mdl_config_plugins (plugin, name, value) VALUES ('tool_objectfs', 'azure_accountname', '${wabsacctname}');"
+    mssql -S $mssqlIP -U $mssqladminlogin -P ${mssqladminpass} ${moodledbname} -Q "INSERT INTO mdl_config_plugins (plugin, name, value) VALUES ('tool_objectfs', 'azure_container', 'objectfs');"
+    mssql -S $mssqlIP -U $mssqladminlogin -P ${mssqladminpass} ${moodledbname} -Q "INSERT INTO mdl_config_plugins (plugin, name, value) VALUES ('tool_objectfs', 'azure_sastoken', '${sas}');"
 
     echo -e "\n\rDone! Installation completed!\n\r"
 
@@ -2099,7 +2113,7 @@ EOF
 
    # Set up cronned sql dump
    cat <<EOF > /etc/cron.d/sql-backup
-   22 02 * * * root /usr/bin/mysqldump -h $mssqlIP -u ${azuremoodledbuser} -p'${moodledbpass}' --databases ${moodledbname} | gzip > /moodle/db-backup.sql.gz
+   #22 02 * * * root /usr/bin/mysqldump -h $mssqlIP -u ${azuremoodledbuser} -p'${moodledbpass}' --databases ${moodledbname} | gzip > /moodle/db-backup.sql.gz
 EOF
 
    # Turning off services we don't need the jumpbox running
