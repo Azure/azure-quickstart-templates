@@ -57,7 +57,6 @@
     echo $redisDns             >> /tmp/vars.txt
     echo $redisAuth            >> /tmp/vars.txt
     echo $elasticVm1IP         >> /tmp/vars.txt
-exit 0
     # make sure system does automatic updates and fail2ban
     sudo apt-get -y update
     sudo apt-get -y install unattended-upgrades fail2ban
