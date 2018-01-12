@@ -1,9 +1,9 @@
-# Jenkins Blue-Green Deployment on Kubernetes
+# Zero-downtime Deployment to AKS with Jenkins
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FArieShout%2Fazure-quickstart-templates%2Fblue-green-aks%2F301-jenkins-k8s-blue-green%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FArieShout%2Fazure-quickstart-templates%2Faks-zero-downtime%2F301-jenkins-aks-zero-downtime-deployment%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FArieShout%2Fazure-quickstart-templates%2Fblue-green-aks%2F301-jenkins-k8s-blue-green%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FArieShout%2Fazure-quickstart-templates%2Faks-zero-downtime%2F301-jenkins-aks-zero-downtime-deployment%2Fazuredeploy.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
@@ -42,7 +42,7 @@ The quickstart template will provision the following resources in Azure:
 * A basic pipieline that demonstrates the rolling update deployment to Kubernetes.
 
    ***Note***: As the rolling-update process is pretty straight forward, we do not provide further instructions on it.
-   You can check the "AKS Rolling Update Deployment" job in Jenkins after the quickstart template deployment finishes,
+   You can check the **AKS Rolling Update Deployment** job in Jenkins after the quickstart template deployment finishes,
    and try to build the Job.
 
 **Note**: At the time when this quickstart is created, AKS is in preview. You may need to enable the preview
@@ -127,7 +127,7 @@ for more details.
    blank page after the server redirection, add a trailing slash `/` to the redirected address in the
    address bar.
 
-1. Go back to your Jenkins master dashboard, you should see a job **AKS Kubernetes Blue-green Deployment**.
+1. Go back to your Jenkins master dashboard, you should see a job **AKS Kubernetes Blue/green Deployment**.
 1. Click the job, on the left panel click **Build with Parameters**, Choose a Tomcat version that is to be rolled
    into production. Initially, both the blue and green environments were setup with the version `7`,
    so we can try `8` or `9`.
