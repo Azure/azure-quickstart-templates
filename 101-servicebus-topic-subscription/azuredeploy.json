@@ -1,62 +1,104 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "serviceBusNamespaceName": {
       "type": "string",
       "metadata": {
-        "description": "Name of the Service Bus Namespace"
+        "description": "Name of the Service Bus namespace"
       }
     },
-    "serviceBusTopicName": {
+    "serviceBusTopicName1": {
       "type": "string",
       "metadata": {
-        "description": "Name of the Service Bus Topic"
+        "description": "Name of the Topic"
       }
     },
-    "serviceBusTopicSubscriptionName": {
+    "serviceBusTopicName2": {
       "type": "string",
       "metadata": {
-        "description": "Name of the Service Bus Topic Subscription"
+        "description": "Name of the Topic"
+      }
+    },
+    "serviceBusSubscriptionName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Subscription"
+      }
+    },
+    "serviceBusApiVersion": {
+      "type": "string",
+      "defaultValue": "2017-04-01",
+      "metadata": {
+        "description": "Service Bus ApiVersion used by the template"
       }
     }
   },
   "variables": {
-    "sbVersion": "2015-08-01"
+    "location": "[resourceGroup().location]",
+    "sbVersion": "[parameters('serviceBusApiVersion')]",
+    "defaultSASKeyName": "RootManageSharedAccessKey",
+    "authRuleResourceId": "[resourceId('Microsoft.ServiceBus/namespaces/authorizationRules', parameters('serviceBusNamespaceName'), variables('defaultSASKeyName'))]"
   },
   "resources": [
     {
-      "apiVersion": "2015-08-01",
+      "apiVersion": "[variables('sbVersion')]",
       "name": "[parameters('serviceBusNamespaceName')]",
-      "type": "Microsoft.ServiceBus/namespaces",
-      "location": "[resourceGroup().location]",
-      "properties": {},
+      "type": "Microsoft.ServiceBus/Namespaces",
+      "location": "[variables('location')]",
+      "sku": {
+        "name": "Standard",
+        "tier": "Standard"
+      },
       "resources": [
         {
           "apiVersion": "[variables('sbVersion')]",
-          "name": "[parameters('serviceBusTopicName')]",
+          "name": "[parameters('serviceBusTopicName1')]",
           "type": "Topics",
           "dependsOn": [
             "[concat('Microsoft.ServiceBus/namespaces/', parameters('serviceBusNamespaceName'))]"
           ],
           "properties": {
-            "path": "[parameters('serviceBusTopicName')]"
+            "path": "[parameters('serviceBusTopicName1')]"
+          }
+        },
+        {
+          "apiVersion": "[variables('sbVersion')]",
+          "name": "[parameters('serviceBusTopicName2')]",
+          "type": "Topics",
+          "dependsOn": [
+            "[concat('Microsoft.ServiceBus/namespaces/', parameters('serviceBusNamespaceName'))]"
+          ],
+          "properties": {
+            "path": "[parameters('serviceBusTopicName2')]"
           },
           "resources": [
             {
               "apiVersion": "[variables('sbVersion')]",
-              "name": "[parameters('serviceBusTopicSubscriptionName')]",
+              "name": "[parameters('serviceBusSubscriptionName')]",
               "type": "Subscriptions",
               "dependsOn": [
-                "[parameters('serviceBusTopicName')]"
+                "[parameters('serviceBusTopicName1')]",
+                "[parameters('serviceBusTopicName2')]"
               ],
-              "properties": {},
-              "resources": []
+              "properties": {
+                "forwardTo": "[parameters('serviceBusTopicName1')]",
+                "forwardDeadLetteredMessagesTo": "[parameters('serviceBusTopicName1')]"
+              }
             }
           ]
         }
       ]
     }
   ],
-  "outputs": {}
+  "outputs": {
+    "NamespaceConnectionString": {
+      "type": "string",
+      "value": "[listkeys(variables('authRuleResourceId'), variables('sbVersion')).primaryConnectionString]"
+    },
+    "SharedAccessPolicyPrimaryKey": {
+      "type": "string",
+      "value": "[listkeys(variables('authRuleResourceId'), variables('sbVersion')).primaryKey]"
+    }
+  }
 }
