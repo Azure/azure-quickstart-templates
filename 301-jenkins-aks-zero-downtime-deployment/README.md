@@ -9,24 +9,28 @@
 
 This template provisions a Jenkins master running in a VM on Azure; configures a DevOps pipeline based on
 two public Tomcat Docker images and deploys to [AKS (Azure Container Service)](https://azure.microsoft.com/en-us/services/container-service/).
-It is an example to demonstrate how we can use Jenkins pipeline to do blue-green deployment on AKS.
+It is an example to demonstrate how we can use Jenkins pipeline to do zero-downtime deployment on AKS.
 
 The quickstart template will provision the following resources in Azure:
 
 * A Jenkins master running on a Linux Ubuntu 16.04 LTS VM in Azure. The instance is pre-configured with
    the Azure Service Principal credential you provide. This credential is used to manage the Azure resources.
 * An AKS cluster, with the following resources:
-   * Two similar deployments representing the environment **blue** and **green**. Both are initially setup with the `tomcat:7-jre8` image.
-   * Two test endpoint service (`tomcat-test-blue` and `tomcat-test-green`), which are connected to the corresponding
-      deployments, and can be use to test if the deployments are ready for production use.
-   * A production service endpoint (`tomcat-service`) which represents the public endpoint that the users will access.
-      Initially it is routing to the **blue** environment.
+   * For blue/green deployment demonstration:
+      * Two similar deployments representing the environment **blue** and **green**. Both are initially setup with the 
+         `tomcat:7` image.
+      * Two test endpoint service (`tomcat-test-blue` and `tomcat-test-green`), which are connected to the corresponding
+         deployments, and can be use to test if the deployments are ready for production use.
+      * A production service endpoint (`tomcat-service`) which represents the public endpoint that the users will access.
+         Initially it is routing to the **blue** environment.
 
-      We call the environment that is serving the public traffic the **active** environment (initially "blue"), and
-      the other one "**inactive**" or "**staging**".
-
-* A basic pipeline that demonstrates the steps to do blue-green deployment to Kubernetes:
-   1. Ask for the Tomcat image version (`7-jre8`, `8-jre8`, or `9-jre8`) to be deployed.
+         We call the environment that is serving the public traffic the **active** environment (initially "blue"), and
+         the other one "**inactive**" or "**staging**".
+   * For RollingUpdate deployment demonstration:
+      * A deployment `tomcat-deployment-rolling-update` with 2 replicas and using the `RollingUpdate` strategy.
+      * A service endpoint `tomcat-service-rolling` for public access to the Tomcat service in the deployment.
+* A basic pipeline that demonstrates the steps to do blue/green deployment to Kubernetes:
+   1. Ask for the Tomcat image version (`7`, `8`, or `9`) to be deployed.
 
       (In real world project, we can configure an upstream job to build the image, and feed the image name & tag to the
       deployment job.)
@@ -35,6 +39,11 @@ The quickstart template will provision the following resources in Azure:
    1. Verify that the inactive environment is working as expected through the test endpoint.
    1. Update the application public endpoint to route the traffic to inactive environment, after that it becomes active.
    1. Verify that the public endpoint is working properly with the updated backend environment.
+* A basic pipieline that demonstrates the rolling update deployment to Kubernetes.
+
+   ***Note***: As the rolling-update process is pretty straight forward, we do not provide further instructions on it.
+   You can check the "AKS Rolling Update Deployment" job in Jenkins after the quickstart template deployment finishes,
+   and try to build the Job.
 
 **Note**: At the time when this quickstart is created, AKS is in preview. You may need to enable the preview
 for your Azure subscription. Please refer to https://docs.microsoft.com/en-us/azure/aks/kubernetes-walkthrough#enabling-aks-preview-for-your-azure-subscription
@@ -120,8 +129,8 @@ for more details.
 
 1. Go back to your Jenkins master dashboard, you should see a job **AKS Kubernetes Blue-green Deployment**.
 1. Click the job, on the left panel click **Build with Parameters**, Choose a Tomcat version that is to be rolled
-   into production. Initially, both the blue and green environments were setup with the version `7-jre8`,
-   so we can try `8-jre8` or `9-jre8`.
+   into production. Initially, both the blue and green environments were setup with the version `7`,
+   so we can try `8` or `9`.
 1. Start the build.
 1. When the Jenkins job finishes, verify the new Tomcat version has been deployed and enabled through to the public
    service endpoint, click the external endpoint for `tomcat-service`. The version shown is Tomcat/8.X.X.
