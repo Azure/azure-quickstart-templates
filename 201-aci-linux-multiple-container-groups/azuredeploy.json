@@ -1,0 +1,105 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "parameters": {
+      "name": {
+          "type": "string",
+          "metadata": {
+              "description": "Name for the container group"
+          },
+          "defaultValue": "acilinuxpublicipcontainergroup"
+      },
+      "image": {
+          "type": "string",
+          "metadata": {
+              "description": "Container image to deploy. Should be of the form accountName/imagename:tag for images stored in Docker Hub or a fully qualified URI for a private registry like the Azure Container Registry."
+          },
+          "defaultValue": "microsoft/aci-helloworld"
+      },
+      "port": {
+          "type": "string",
+          "metadata": {
+              "description": "Port to open on the container and the public IP address."
+          },
+          "defaultValue": "80"
+      },
+      "cpuCores": {
+          "type": "string",
+          "metadata": {
+              "description": "The number of CPU cores to allocate to the container. Must be an integer."
+          },
+          "defaultValue": "1.0"
+      },
+      "memoryInGb": {
+          "type": "string",
+          "metadata": {
+              "description": "The amount of memory to allocate to the container in gigabytes."
+          },
+          "defaultValue": "1.5"
+      }
+  },
+  "variables": {
+    "container1name": "aci-tutorial-app",
+    "container1image": "microsoft/aci-helloworld:latest",
+    "container2name": "aci-tutorial-sidecar",
+    "container2image": "microsoft/aci-tutorial-sidecar"
+  },
+    "resources": [
+      {
+        "name": "myContainerGroup",
+        "type": "Microsoft.ContainerInstance/containerGroups",
+        "apiVersion": "2017-08-01-preview",
+        "location": "[resourceGroup().location]",
+        "properties": {
+          "containers": [
+            {
+              "name": "[variables('container1name')]",
+              "properties": {
+                "image": "[variables('container1image')]",
+                "resources": {
+                  "requests": {
+                    "cpu": 1,
+                    "memoryInGb": 1.5
+                    }
+                },
+                "ports": [
+                  {
+                    "port": 80
+                  }
+                ]
+              }
+            },
+            {
+              "name": "[variables('container2name')]",
+              "properties": {
+                "image": "[variables('container2image')]",
+                "resources": {
+                  "requests": {
+                    "cpu": 1,
+                    "memoryInGb": 1.5
+                    }
+                }
+              }
+            }
+          ],
+          "osType": "Linux",
+          "ipAddress": {
+            "type": "Public",
+            "ports": [
+              {
+                "protocol": "tcp",
+                "port": "80"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "outputs": {
+      "containerIPv4Address": {
+        "type": "string",
+        "value": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups/', 'myContainerGroup')).ipAddress.ip]"
+      }
+    }
+  }
