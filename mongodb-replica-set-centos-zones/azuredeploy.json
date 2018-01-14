@@ -1,0 +1,245 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+			"type": "string",
+			"allowedValues": [
+				"westeurope",
+				"eastus2"
+			],
+			"defaultValue": "westeurope",
+			"metadata": {
+				"description": "Location for the VM, only certain regions support zones during preview."
+			}
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Administrator user name used when provisioning virtual machines"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Administrator password used when provisioning virtual machines"
+      }
+    },
+    "mongoAdminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "MongoDB Administrator user name used when provisioning MongoDB replica set"
+      }
+    },
+    "mongoAdminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "MongoDB Administrator password used when provisioning MongoDB replica set"
+      }
+    },
+    "dnsNamePrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "DNS Name for the publicly accessible primary node. Must be lowercase. It should match with the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ or it will raise an error."
+      }
+    },
+    "vmDiskCount": {
+      "type": "int",
+      "minValue": 2,
+      "maxValue": 32,
+      "metadata": {
+        "description": "Number of data disks on each SQL Server VM (Min=2, Max=32). Ensure that the VM size you've selected will support this number of data disks."
+      },
+      "defaultValue": 4
+    },
+    "sizeOfDataDiskInGB": {
+      "type": "int",
+      "minValue": 1,
+      "maxValue": 1023,
+      "defaultValue": 20,
+      "metadata": {
+        "description": "The size of each data disk, the value is between 1 and 1023. We use 4 data disks on each VM for raid0 to improve performance."
+      }
+    },
+    "centOsVersion": {
+      "type": "string",
+      "defaultValue": "7.0",
+      "allowedValues": [
+        "6.5",
+        "6.6",
+        "6.7",
+        "7.0",
+        "7.1",
+        "7.2"
+      ],
+      "metadata": {
+        "description": "The CentOS version for the VM. This will pick a fully patched image of this given CentOS version."
+      }
+    },
+    "clusterNodeCount": {
+      "type": "int",
+      "defaultValue": 3,
+      "allowedValues": [
+        3,
+        5,
+        7,
+        9
+      ],
+      "metadata": {
+        "description": "Number of MongoDB nodes (3 is the default), the value should be odd numbers, like 3, 5, or 7. And 9 is the maximum number of nodes."
+      }
+    },
+    "clusterNodeVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2_v2",
+      "allowedValues": [
+        "Standard_D2_v2",
+        "Standard_D3_v2",
+        "Standard_D4_v2"
+      ],
+      "metadata": {
+        "description": "The size of the virtual machines used when provisioning cluster nodes."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The location of resources such as templates and DSC modules that the script is dependent"
+      },
+      "defaultValue": "https://raw.githubusercontent.com/albertwo1978/azure-quickstart-templates/master/mongodb-replica-set-centos-zones"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Auto-generated token to access _artifactsLocation"
+      },
+      "defaultValue": ""
+    }
+  },
+  "variables": {
+    "sharedTemplateUrl": "[concat(parameters('_artifactsLocation'),'/nested/sharedResources.json',parameters('_artifactsLocationSasToken'))]",
+    "clusterTemplateUrl": "[concat(parameters('_artifactsLocation'),'/nested/clusterResources.json',parameters('_artifactsLocationSasToken'))]",
+    "deployClusterResources": "deployClusterResources",
+    "namespace": "mongodb-",
+    "virtualNetworkName": "myVNET1",
+    "zones": ["1","2","3"],
+    "ipAddresses": [],
+    "networkSettings": {
+      "virtualNetworkName": "[variables('virtualNetworkName')]",
+      "addressPrefix": "10.0.0.0/16",
+      "subnet": {
+        "dse": {
+          "name": "dse",
+          "prefix": "10.0.1.0/24",
+          "vnet": "[variables('virtualNetworkName')]"
+        }
+      },
+      "statics": {
+        "clusterRange": {
+          "base": "10.0.1.",
+          "start": 5
+        },
+        "primaryIp": "10.0.1.240"
+      }
+    },
+    "OsSettings": {
+      "imageReference": {
+        "publisher": "OpenLogic",
+        "offer": "CentOS",
+        "sku": "[parameters('centOsVersion')]",
+        "version": "latest"
+      }
+    }
+  },
+  "resources": [
+    {
+      "name": "shared",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('sharedTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "networkSettings": {
+            "value": "[variables('networkSettings')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "[variables('deployClusterResources')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'shared')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('clusterTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "mongoAdminUsername": {
+            "value": "[parameters('mongoAdminUsername')]"
+          },
+          "mongoAdminPassword": {
+            "value": "[parameters('mongoAdminPassword')]"
+          },
+          "namespace": {
+            "value": "[variables('namespace')]"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnet.dse]"
+          },
+          "sizeOfDataDiskInGB": {
+            "value": "[parameters('sizeOfDataDiskInGB')]"
+          },
+          "vmDiskCount": {
+            "value": "[parameters('vmDiskCount')]"
+          },
+          "dnsname": {
+            "value": "[parameters('dnsNamePrefix')]"
+          },
+          "vmSize": {
+            "value": "[parameters('clusterNodeVmSize')]"
+          },
+          "nodeCount": {
+            "value": "[parameters('clusterNodeCount')]"
+          },
+          "osSettings": {
+            "value": "[variables('OsSettings')]"
+          },
+          "zones": {
+            "value": "[variables('zones')]"
+          },
+          "ipAddresses": {
+            "value": "[variables('ipAddresses')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}
