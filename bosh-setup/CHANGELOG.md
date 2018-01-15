@@ -1,3 +1,10 @@
+# v3.4.0 (2018-01-30)
+
+- Bump cf-deployment to [`v1.9.0`](https://github.com/cloudfoundry/cf-deployment/tree/v1.9.0).
+- Bump bosh release to `264.7.0`
+- Bump stemcell in bosh-deployment to `3468.21`
+- Bump stemcell in cf-deployment to `3468.19`
+
 # v3.3.0 (2018-01-09)
 
 - Upgrade Azure CPI version to v35.0.0. Please see new features in [bosh-azure-cpi-release v35.0.0](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v35.0.0)
