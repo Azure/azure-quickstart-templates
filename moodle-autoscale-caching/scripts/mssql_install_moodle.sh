@@ -599,10 +599,11 @@ EOF
     sudo apt-get install -y php-mbstring php-dev mcrypt php-pear
   
     # Download and build php/mssql driver
+    echo -e '\n\rINstalling php/mssql driver\n\r'
     /usr/bin/curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -  
     /usr/bin/curl https://packages.microsoft.com/config/ubuntu/16.04/prod.list > /etc/apt/sources.list.d/mssql-release.list
-    ACCEPT_EULA=Y apt-get install msodbcsql mssql-tools -y
-    apt-get install unixodbc-dev -y
+    sudo apt-get update
+    ACCEPT_EULA=Y sudo apt-get install msodbcsql mssql-tools unixodbc-dev -y
     echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bash_profile
     echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bashrc
     source ~/.bashrc
