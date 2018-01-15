@@ -4,7 +4,7 @@ SITENAME=$1.$2.cloudapp.azure.com
 
 INSTALLDIR=/opt/shibboleth-idp
 
-apt-get -y update
+apt-get -y upgrade
 
 echo "==============>Printing values of all variables"
 echo "domain"
