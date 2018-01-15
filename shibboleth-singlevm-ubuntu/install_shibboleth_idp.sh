@@ -5,7 +5,6 @@ SITENAME=$1.$2.cloudapp.azure.com
 INSTALLDIR=/opt/shibboleth-idp
 
 apt-get -y update
-apt-get -y upgrade
 
 echo "==============>Printing values of all variables"
 echo "domain"
@@ -24,7 +23,7 @@ export JAVA_HOME=/usr/lib/jvm/java-8-oracle
 echo JAVA_HOME='"'$JAVA_HOME'"' >> /etc/environment
 source /etc/environment
 
-apt-get -y install tomcat8  tomcat8-admin
+apt-get -y install tomcat8
 echo "==============>Configuring SSL for Tomcat8"
 SSLKEYPASSWORD=$(openssl rand -base64 12)
 service tomcat8 restart
