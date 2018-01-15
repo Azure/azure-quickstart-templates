@@ -1,5 +1,10 @@
 # Telegraf-influsDB-Grafana in Azure 
-
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-Telegraf-InfluxDB-Grafana%2Fazuredeploy.json" target="_blank">
+    <img src="http://azuredeploy.net/deploybutton.png"/>
+</a>
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-Telegraf-InfluxDB-Grafana%2Fazuredeploy.json" target="_blank">
+    <img src="http://armviz.io/visualizebutton.png"/>
+</a>
 This template allows you to deploy an instance of Telegraf-InfluxDB-Grafana on a Linux Ubuntu 14.04 LTS VM. This will deploy a VM in the resource group location and return the FQDN of the VM and installs the components of Telegraf, InfluxDB and Grafana. The template provides configuration for telegraf with plugins enabled for Docker,container host metrics.
 
 ## A. Deploy TIG VM
