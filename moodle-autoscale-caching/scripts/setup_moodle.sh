@@ -49,6 +49,26 @@ echo $siteFQDN >> /tmp/vars.txt
 
   # Moodle requirements
   sudo apt-get install -y graphviz aspell php-soap php-json php-redis php-bcmath php-gd php-pgsql php-mysql php-xmlrpc php-intl php-xml php-bz2
+  sudo apt-get install -y php-mbstring php-dev mcrypt php-pear
+
+  # Download and build php/mssql driver
+   echo -e '\n\rINstalling php/mssql driver\n\r'
+   /usr/bin/curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
+   /usr/bin/curl https://packages.microsoft.com/config/ubuntu/16.04/prod.list > /etc/apt/sources.list.d/mssql-release.list
+   sudo apt-get update
+   ACCEPT_EULA=Y sudo apt-get install msodbcsql mssql-tools unixodbc-dev -y
+   echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bash_profile
+   echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bashrc
+   source ~/.bashrc
+
+   #Build mssql driver
+   /usr/bin/pear config-set php_ini `php --ini | grep "Loaded Configuration" | sed -e "s|.*:\s*||"` system
+   /usr/bin/pecl install sqlsrv
+   /usr/bin/pecl install pdo_sqlsrv
+   PHPVER=`/usr/bin/php -r "echo PHP_VERSION;" | /usr/bin/cut -c 1,2,3`
+   echo "extension=sqlsrv.so" >> /etc/php/$PHPVER/fpm/php.ini
+   echo "extension=pdo_sqlsrv.so" >> /etc/php/$PHPVER/fpm/php.ini
+
 
   # Mount gluster fs for /moodle
   sudo mkdir -p /moodle
