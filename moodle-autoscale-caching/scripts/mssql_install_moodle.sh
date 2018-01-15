@@ -1112,10 +1112,10 @@ EOF
     systemctl daemon-reload
     service varnish restart
 
-    sqlcmd -S $mssqlIP -U $mssqladminlogin -P ${mssqladminpass} -Q "CREATE DATABASE ${moodledbname};"
-    sqlcmd -S $mssqlIP -U $mssqladminlogin -P ${mssqladminpass} -Q "CREATE LOGIN ${moodledbuser} with password = '${moodledbpass}';"
-    sqlcmd -S $mssqlIP -U $mssqladminlogin -P ${mssqladminpass} -Q "CREATE USER ${moodledbuser} FROM LOGIN ${moodledbuser};"
-    sqlcmd -S $mssqlIP -U $mssqladminlogin -P ${mssqladminpass} -Q "exec sp_addrolemember 'db_owner','${moodledbuser}';"
+    /opt/mssql-tools/bin/sqlcmd -S $mssqlIP -U $mssqladminlogin -P ${mssqladminpass} -Q "CREATE DATABASE ${moodledbname};"
+    /opt/mssql-tools/bin/sqlcmd -S $mssqlIP -U $mssqladminlogin -P ${mssqladminpass} -Q "CREATE LOGIN ${moodledbuser} with password = '${moodledbpass}';"
+    /opt/mssql-tools/bin/sqlcmd -S $mssqlIP -U $mssqladminlogin -P ${mssqladminpass} -Q "CREATE USER ${moodledbuser} FROM LOGIN ${moodledbuser};"
+    /opt/mssql-tools/bin/sqlcmd -S $mssqlIP -U $mssqladminlogin -P ${mssqladminpass} -Q "exec sp_addrolemember 'db_owner','${moodledbuser}';"
 
     echo "sqlcmd -S $mssqlIP -U $mssqladminlogin -P ${mssqladminpass} -Q CREATE DATABASE ${moodledbname};" > /tmp/debug.log
     echo "sqlcmd -S $mssqlIP -U $mssqladminlogin -P ${mssqladminpass} -Q CREATE LOGIN ${moodledbuser} with password = '${moodledbpass}';" >> /tmp/debug.log
