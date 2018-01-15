@@ -11,6 +11,19 @@ echo mysql-server-5.6 mysql-server/root_password_again password $dbpass | debcon
 # install the LAMP stack
 apt-get -y install apache2 mysql-server php5 php5-mysql  
 
+#Iterate loop to avoid below commands failing
+CommandStatus=$?
+
+for i in {1..10}
+do
+if [ $CommandStatus -eq 0 ]; then
+break
+else
+apt-get -y install apache2 mysql-server php5 php5-mysql  
+CommandStatus=$?
+fi
+done
+
 # install OpenSIS
 cd /var/www/html
 wget http://nchc.dl.sourceforge.net/project/opensis-ce/opensis6.4.zip -O opensis.zip
