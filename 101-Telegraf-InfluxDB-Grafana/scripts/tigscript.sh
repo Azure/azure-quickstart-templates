@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script parameters from arguments
-
+configfile=$1
 HostIP=$(dig +short myip.opendns.com @resolver1.opendns.com)
 
 
@@ -23,7 +23,7 @@ then
 	echo "directory delete"
   fi  
 fi
-wget https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-Telegraf-InfluxDB-Grafana/scripts/Configfiles.zip
+wget $configfile
 unzip Configfiles.zip -d /home/Configfiles/
 
 
