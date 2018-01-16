@@ -1,0 +1,425 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "publisherEmail": {
+            "type": "string",
+            "minLength": 1,
+            "metadata": {
+                "description": "The email address of the owner of the service"
+            }
+        },
+        "publisherName": {
+            "type": "string",
+            "minLength": 1,
+            "metadata": {
+                "description": "The name of the owner of the service"
+            }
+        },
+        "sku": {
+            "type": "string",
+            "allowedValues": [
+                "Developer",
+                "Standard",
+                "Premium"
+            ],
+            "defaultValue": "Developer",
+            "metadata": {
+                "description": "The pricing tier of this API Management service"
+            }
+        },
+        "skuCount": {
+            "type": "int",
+            "defaultValue": 1,
+            "metadata": {
+                "description": "The instance size of this API Management service."
+            }
+        },
+        "proxyCustomHostname": {
+            "type": "string",
+            "metadata": {
+                "description": "Proxy Custom hostname."
+            }
+        },
+        "proxyCustomHostnameBase64EncodedPfxCertificate": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Base-64 encoded SSL .pfx Certificate for proxy custom hostname."
+            }
+        },
+        "proxySSLCertificatePassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Proxy SSL certificate password."
+            }
+        },
+        "portalCustomHostname": {
+            "type": "string",
+            "metadata": {
+                "description": "Portal Custom hostname."
+            }
+        },
+        "portalCustomHostnameBase64EncodedPfxCertificate": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Base-64 encoded SSL .pfx Certificate for portal custom hostname."
+            }
+        },
+        "portalSSLCertificatePassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Portal SSL certificate password."
+            }
+        },
+        "virtualNetworkName": {
+            "type": "string",
+            "metadata": {
+                "description": "Virtual Network name"
+            }
+        },
+        "virtualNetworkAddressPrefix": {
+            "type": "string",
+            "defaultValue": "10.0.0.0/16",
+            "metadata": {
+                "description": "Address prefix"
+            }
+        },
+        "subnetPrefix": {
+            "type": "string",
+            "defaultValue": "10.0.0.0/24",
+            "metadata": {
+                "description": "Subnet Prefix"
+            }
+        },
+        "subnetName": {
+            "type": "string",
+            "metadata": {
+                "description": "Subnet Name"
+            }
+        }
+    },
+    "variables": {
+        "apiManagementServiceName": "[concat('apiservice', uniqueString(resourceGroup().id))]",
+        "virtualNetworkID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
+        "subnetRef": "[concat(variables('virtualNetworkID'),'/subnets/',parameters('subnetName'))]",
+		"apiManagementNSGName": "[concat(parameters('subnetName'),'-nsg')]"
+    },
+    "resources": [
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[parameters('virtualNetworkName')]",
+            "location": "[resourceGroup().location]",
+			"dependsOn": [
+                "[concat('Microsoft.Network/networkSecurityGroups/', variables('apiManagementNSGName'))]"
+            ],
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[parameters('virtualNetworkAddressPrefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[parameters('subnetName')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('subnetPrefix')]",
+							              "networkSecurityGroup": {
+							                  "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('apiManagementNSGName'))]"
+							              }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2017-03-01",
+            "name": "[variables('apiManagementServiceName')]",
+            "type": "Microsoft.ApiManagement/service",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
+            ],
+            "tags": {},
+            "sku": {
+                "name": "[parameters('sku')]",
+                "capacity": "[parameters('skuCount')]"
+            },
+            "properties": {
+                "publisherEmail": "[parameters('publisherEmail')]",
+                "publisherName": "[parameters('publisherName')]",
+                "hostnameConfigurations": [
+                    {
+                        "type": "Proxy",
+                        "hostName": "[parameters('proxyCustomHostname')]",
+                        "encodedCertificate": "[parameters('proxyCustomHostnameBase64EncodedPfxCertificate')]",
+                        "certificatePassword": "[parameters('proxySSLCertificatePassword')]",
+                        "negotiateClientCertificate": false
+                    },
+                    {
+                        "type": "Portal",
+                        "hostName": "[parameters('portalCustomHostname')]",
+                        "encodedCertificate": "[parameters('portalCustomHostnameBase64EncodedPfxCertificate')]",
+                        "certificatePassword": "[parameters('portalSSLCertificatePassword')]",
+                        "negotiateClientCertificate": false
+                    }
+                ],
+                "virtualNetworkType": "Internal",
+                "virtualNetworkConfiguration": {
+                    "subnetResourceId": "[variables('subnetRef')]",
+                    "location": "[resourceGroup().location]"
+                }
+            }
+        },
+		{
+		    "apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[variables('apiManagementNSGName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "Port_3443",
+                        "properties": {
+                            "description": "",
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "3443",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    },
+					{
+                        "name": "Port_6381-6383_in",
+                        "properties": {
+                            "description": "",
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "6381-6383",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "priority": 110,
+                            "direction": "Inbound"
+                        }
+                    },
+					{
+                        "name": "Port_80",
+                        "properties": {
+                            "description": "",
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "80",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 100,
+                            "direction": "Outbound"
+                        }
+                    },
+					{
+                        "name": "Port_443_out",
+                        "properties": {
+                            "description": "",
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "443",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 110,
+                            "direction": "Outbound"
+                        }
+                    },
+					{
+                        "name": "Port_443_in",
+                        "properties": {
+                            "description": "",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "443",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "priority": 180,
+                            "direction": "Inbound"
+                        }
+                    },
+					{
+                        "name": "Port_1433",
+                        "properties": {
+                            "description": "",
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "1433",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 120,
+                            "direction": "Outbound"
+                        }
+                    },
+					{
+                        "name": "Port_11000-11999",
+                        "properties": {
+                            "description": "",
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "11000-11999",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 130,
+                            "direction": "Outbound"
+                        }
+                    },
+					{
+                        "name": "Port_14000-14999",
+                        "properties": {
+                            "description": "",
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "14000-14999",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 140,
+                            "direction": "Outbound"
+                        }
+                    },
+					{
+                        "name": "Port_5671",
+                        "properties": {
+                            "description": "",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "5671",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 150,
+                            "direction": "Outbound"
+                        }
+                    },
+					{
+                        "name": "Port_445",
+                        "properties": {
+                            "description": "",
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "445",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 160,
+                            "direction": "Outbound"
+                        }
+                    },
+					{
+                        "name": "Port_6381-6383_out",
+                        "properties": {
+                            "description": "",
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "6381-6383",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 170,
+                            "direction": "Outbound"
+                        }
+                    }
+                ],
+				"defaultSecurityRules":[
+				    {
+					    "name": "AllowVnetInBound",
+						"properties": {
+						    "description": "Allow inbound traffic from all VMs in VNET",
+							"protocol": "*",
+							"sourcePortRange": "*",
+							"destinationPortRange": "*",
+							"sourceAddressPrefix": "VirtualNetwork",
+							"destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "priority": 65000,
+                            "direction": "Inbound"
+						}
+					},
+					{
+					    "name": "AllowAzureLoadBalancerInBound",
+						"properties": {
+						    "description": "Allow inbound traffic from azure load balancer",
+							"protocol": "*",
+							"sourcePortRange": "*",
+							"destinationPortRange": "*",
+							"sourceAddressPrefix": "AzureLoadBalancer",
+							"destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 65001,
+                            "direction": "Inbound"
+						}
+					},
+					{
+					    "name": "DenyAllInBound",
+						"properties": {
+						    "description": "Deny all inbound traffic",
+							"protocol": "*",
+							"sourcePortRange": "*",
+							"destinationPortRange": "*",
+							"sourceAddressPrefix": "*",
+							"destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 65500,
+                            "direction": "Inbound"
+						}
+					},
+					{
+					    "name": "AllowVnetOutBound",
+						"properties": {
+						    "description": "Allow outbound traffic from all VMs to all VMs in VNET",
+							"protocol": "*",
+							"sourcePortRange": "*",
+							"destinationPortRange": "*",
+							"sourceAddressPrefix": "VirtualNetwork",
+							"destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "priority": 65000,
+                            "direction": "Outbound"
+						}
+					},
+					{
+					    "name": "AllowInternetOutBound",
+						"properties": {
+						    "description": "Allow outbound traffic from all VMs to Internet",
+							"protocol": "*",
+							"sourcePortRange": "*",
+							"destinationPortRange": "*",
+							"sourceAddressPrefix": "*",
+							"destinationAddressPrefix": "Internet",
+                            "access": "Allow",
+                            "priority": 65001,
+                            "direction": "Outbound"
+						}
+					},
+					{
+					    "name": "DenyAllOutBound",
+						"properties": {
+						    "description": "Deny all outbound traffic",
+							"protocol": "*",
+							"sourcePortRange": "*",
+							"destinationPortRange": "*",
+							"sourceAddressPrefix": "*",
+							"destinationAddressPrefix": "Internet",
+                            "access": "Deny",
+                            "priority": 65500,
+                            "direction": "Outbound"
+						}
+					}
+				]
+            }
+        }
+    ]
+}
