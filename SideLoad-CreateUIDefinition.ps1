@@ -6,8 +6,9 @@
 
 [cmdletbinding()]
 param(
-    $createUIDefFile='createUIDefinition.json',
-    $storageContainerName='createuidef',
+    [string] $ArtifactsStagingDirectory = ".",
+    [string] $createUIDefFile='createUIDefinition.json',
+    [string] $storageContainerName='createuidef',
     [switch] $Gov
 )
 
