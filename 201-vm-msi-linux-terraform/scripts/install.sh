@@ -102,7 +102,6 @@ echo " backend \"azurerm\" {"                               >> $REMOTESTATEFILE
 echo "  storage_account_name = \"$STORAGE_ACCOUNT_NAME\""   >> $REMOTESTATEFILE
 echo "  container_name       = \"terraform-state\""         >> $REMOTESTATEFILE
 echo "  key                  = \"prod.terraform.tfstate\""  >> $REMOTESTATEFILE
-echo "  access_key           = \" \""                       >> $REMOTESTATEFILE
 echo "  }"                                                  >> $REMOTESTATEFILE
 echo "}"                                                    >> $REMOTESTATEFILE
 chmod 666 $REMOTESTATEFILE

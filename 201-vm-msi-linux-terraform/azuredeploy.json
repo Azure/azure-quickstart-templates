@@ -19,10 +19,18 @@
         "description": "Authentication type"
       }
     },
-    "adminPasswordorSSHKey": {
+    "adminPassword": {
       "type": "securestring",
+      "defaultValue": "",
       "metadata": {
-        "description": "OS Admin password or SSH Key depending on value of authentication type"
+        "description": "Password for the Virtual Machine."
+      }
+    },
+    "sshPublicKey": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "ssh key for the Virtual Machine."
       }
     },
     "vmSize": {
@@ -38,44 +46,47 @@
       "metadata": {
         "description": "Installs Ubuntu Mate desktop GUI"
       }
-
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vm-msi-linux-terraform"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
     }
   },
   "variables": {
-    "dnsLabelPrefix": "[concat('msi',uniquestring(resourceGroup().id,deployment().name))]",
-    "_artifactsLocation": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vm-msi-linux-terraform",
+    "dnsLabelPrefix": "[concat('msi',uniquestring(resourceGroup().id))]",
     "infraStorageAccountName": "[take(concat('storeinfra', uniquestring(resourceGroup().id), variables('dnsLabelPrefix')),24)]",
     "stateStorageAccountName": "[take(concat('storestate', uniquestring(resourceGroup().id), variables('dnsLabelPrefix')),24)]",
-    "nicName": "[concat('nic',uniquestring(resourceGroup().id,deployment().name))]",
-    "networkSecurityGroupName": "[concat('nsg',uniquestring(resourceGroup().id,deployment().name))]",
+    "nicName": "[concat('nic',uniquestring(resourceGroup().id))]",
+    "networkSecurityGroupName": "[concat('nsg',uniquestring(resourceGroup().id))]",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
     "subnetPrefix": "10.0.0.0/24",
-    "publicIPAddressName": "[concat('pip',uniquestring(resourceGroup().id,deployment().name))]",
-    "vmName": "[concat('vm',uniquestring(resourceGroup().id,deployment().name))]",
-    "virtualNetworkName": "[concat('vnet',uniquestring(resourceGroup().id,deployment().name))]",
+    "publicIPAddressName": "[concat('pip',uniquestring(resourceGroup().id))]",
+    "vmName": "[concat('vm',uniquestring(resourceGroup().id))]",
+    "virtualNetworkName": "[concat('vnet',uniquestring(resourceGroup().id))]",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
-    "linuxConfigurationChosen": "[concat('linuxConfiguration', parameters('authenticationType'))]",
-    "linuxConfigurationsshPublicKey": {
+    "linuxConfiguration": {
       "disablePasswordAuthentication": true,
       "ssh": {
         "publicKeys": [
           {
-            "path": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
-            "keyData": "[parameters('adminPasswordorSSHKey')]"
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('sshPublicKey')]"
           }
         ]
       }
     },
-    "linuxConfigurationpassword": {
-      "disablePasswordAuthentication": false
-    },
-    "adminPasswordChosen": "[concat('adminPassword', parameters('authenticationType'))]",
-    "adminPasswordsshPublicKey": "",
-    "adminPasswordpassword": "[parameters('adminPasswordorSSHKey')]",
-    "containerName": "msi",
-    "createVMUrl": "[concat(variables('_artifactsLocation'), '/nestedTemplates/createVM.json')]",
-    "createRBACUrl": "[concat(variables('_artifactsLocation'), '/nestedTemplates/setUpRbac.json')]",
+    "createRBACUrl": "[concat(parameters('_artifactsLocation'), '/nestedTemplates/setUpRbac.json')]",
     "installParm1": "[concat(' -u ', parameters('adminUsername'))]",
     "installParm2": "[concat(' -s ', subscription().subscriptionId)]",
     "installParm3": "[concat(' -a ', variables('stateStorageAccountName'))]",
@@ -218,8 +229,8 @@
         "osProfile": {
           "computerName": "[variables('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[variables(variables('adminPasswordChosen'))]",
-          "linuxConfiguration": "[variables(variables('linuxConfigurationChosen'))]"
+          "adminPassword": "[parameters('adminPassword')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
@@ -298,14 +309,14 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[concat(variables('_artifactsLocation'), '/scripts/infra.sh')]",
-            "[concat(variables('_artifactsLocation'), '/scripts/install.sh')]",
-            "[concat(variables('_artifactsLocation'), '/scripts/desktop.sh')]",
-            "[concat(variables('_artifactsLocation'), '/scripts/azureProviderAndCreds.tf')]"
+            "[concat(parameters('_artifactsLocation'), '/scripts/infra.sh', parameters('_artifactsLocationSasToken'))]",
+            "[concat(parameters('_artifactsLocation'), '/scripts/install.sh', parameters('_artifactsLocationSasToken'))]",
+            "[concat(parameters('_artifactsLocation'), '/scripts/desktop.sh', parameters('_artifactsLocationSasToken'))]",
+            "[concat(parameters('_artifactsLocation'), '/scripts/azureProviderAndCreds.tf', parameters('_artifactsLocationSasToken'))]"
           ]
         },
         "protectedSettings": {
-          "commandToExecute": "[concat('bash infra.sh && bash install.sh ', variables('installParm1'), variables('installParm2'), variables('installParm3'), variables('installParm4'), ' -k ', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('stateStorageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value, ' -l ', reference(concat(resourceId('Microsoft.Compute/virtualMachines/', variables('vmName')),'/providers/Microsoft.ManagedIdentity/Identities/default'),'2015-08-31-PREVIEW').principalId)]"
+          "commandToExecute": "[concat('bash infra.sh && bash install.sh ', variables('installParm1'), variables('installParm2'), variables('installParm3'), variables('installParm4'), ' -k ', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('stateStorageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value , ' -l ', resourceId('Microsoft.Compute/virtualMachines/', variables('vmName')),'/providers/Microsoft.ManagedIdentity/Identities/default','2015-08-31-PREVIEW').principalId]"
         }
       }
     }
@@ -317,4 +328,3 @@
     }
   }
 }
-
