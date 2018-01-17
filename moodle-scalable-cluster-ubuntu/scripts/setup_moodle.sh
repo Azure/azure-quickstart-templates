@@ -26,10 +26,13 @@ glusterNode=$1
 glusterVolume=$2 
 siteFQDN=$3
 syslogserver=$4
+webServerType=$5
 
 echo $glusterNode    > /tmp/vars.txt
 echo $glusterVolume  >> /tmp/vars.txt
 echo $siteFQDN >> /tmp/vars.txt
+echo $syslogserver >> /tmp/vars.txt
+echo $webServerType >> /tmp/vars.txt
 
 {
   # make sure the system does automatic update
@@ -45,10 +48,15 @@ echo $siteFQDN >> /tmp/vars.txt
   sudo apt-get -y install glusterfs-client postgresql-client mysql-client git
 
   # install the base stack
-  sudo apt-get -y install nginx php-fpm varnish php php-cli php-curl php-zip
+  sudo apt-get -y install nginx varnish php php-cli php-curl php-zip
 
-  # install apache pacakges
-  sudo apt-get -y install apache2 libapache2-mod-php
+  if [ "$webServerType" = "apache" ]; then
+    # install apache pacakges
+    sudo apt-get -y install apache2 libapache2-mod-php
+  else
+    # for nginx-only option
+    sudo apt-get -y install php-fpm
+  fi
 
   # Moodle requirements
   sudo apt-get install -y graphviz aspell php-soap php-json php-redis php-bcmath php-gd php-pgsql php-mysql php-xmlrpc php-intl php-xml php-bz2
@@ -132,6 +140,62 @@ http {
 }
 EOF
 
+  if [ "$webServerType" = "nginx" ]; then
+    cat <<EOF >> /etc/nginx/sites-enabled/${siteFQDN}.conf
+server {
+        listen 81 default;
+        server_name ${siteFQDN};
+        root /moodle/html/moodle;
+	index index.php index.html index.htm;
+
+        # Log to syslog
+        error_log syslog:server=localhost,facility=local1,severity=error,tag=moodle;
+        access_log syslog:server=localhost,facility=local1,severity=notice,tag=moodle moodle_combined;
+
+        # Log XFF IP instead of varnish
+        set_real_ip_from    10.0.0.0/8;
+        set_real_ip_from    127.0.0.1;
+        set_real_ip_from    172.16.0.0/12;
+        set_real_ip_from    192.168.0.0/16;
+        real_ip_header      X-Forwarded-For;
+        real_ip_recursive   on;
+
+
+        # Redirect to https
+        if (\$http_x_forwarded_proto != https) {
+                return 301 https://\$server_name\$request_uri;
+        }
+        rewrite ^/(.*\.php)(/)(.*)$ /\$1?file=/\$3 last;
+
+
+        # Filter out php-fpm status page
+        location ~ ^/server-status {
+            return 404;
+        }
+
+	location / {
+		try_files \$uri \$uri/index.php?\$query_string;
+	}
+ 
+        location ~ [^/]\.php(/|$) {
+          fastcgi_split_path_info ^(.+?\.php)(/.*)$;
+          if (!-f \$document_root\$fastcgi_script_name) {
+                  return 404;
+          }
+ 
+          fastcgi_buffers 16 16k;
+          fastcgi_buffer_size 32k;
+          fastcgi_param   SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
+          fastcgi_pass unix:/run/php/php7.0-fpm.sock;
+          fastcgi_read_timeout 3600;
+          fastcgi_index index.php;
+          include fastcgi_params;
+        }
+}
+
+EOF
+  fi
+
     cat <<EOF > /etc/nginx/sites-enabled/${siteFQDN}.conf
 server {
         listen 443 ssl;
@@ -166,6 +230,7 @@ server {
 }
 EOF
 
+ if [ "$webServerType" = "apache" ]; then
    sed -i "s/Listen 80/Listen 81/" /etc/apache2/ports.conf
 
    cat <<EOF > /etc/apache2/sites-enabled/${siteFQDN}.conf
@@ -181,14 +246,19 @@ EOF
 		Require all granted
 	</Directory>
 
-	ErrorLog \${APACHE_LOG_DIR}/error.log
-	CustomLog \${APACHE_LOG_DIR}/access.log combined
+	ErrorLog "|/usr/bin/logger -t moodle -p local1.error"
+	CustomLog "|/usr/bin/logger -t moodle -p local1.notice" combined
 
 </VirtualHost>
 EOF
+  fi
 
    # php config 
-   PhpIni=/etc/php/7.0/apache2/php.ini
+   if [ "$webServerType" = "apache" ]; then
+     PhpIni=/etc/php/7.0/apache2/php.ini
+   else
+     PhpIni=/etc/php/7.0/fpm/php.ini
+   fi
    sed -i "s/memory_limit.*/memory_limit = 512M/" $PhpIni
    sed -i "s/max_execution_time.*/max_execution_time = 18000/" $PhpIni
    sed -i "s/max_input_vars.*/max_input_vars = 100000/" $PhpIni
@@ -205,12 +275,36 @@ EOF
     
    # Remove the default site. Moodle is the only site we want
    rm -f /etc/nginx/sites-enabled/default
-   rm -f /etc/apache2/sites-enabled/000-default.conf
+   if [ "$webServerType" = "apache" ]; then
+     rm -f /etc/apache2/sites-enabled/000-default.conf
+   fi
 
    # restart Nginx
    sudo service nginx restart 
-   # restart apache as well
-   sudo service apache2 restart
+
+   if [ "$webServerType" = "nginx" ]; then
+     # fpm config - overload this 
+     cat <<EOF > /etc/php/7.0/fpm/pool.d/www.conf
+[www]
+user = www-data
+group = www-data
+listen = /run/php/php7.0-fpm.sock
+listen.owner = www-data
+listen.group = www-data
+pm = dynamic
+pm.max_children = 3000 
+pm.start_servers = 20 
+pm.min_spare_servers = 20 
+pm.max_spare_servers = 30 
+EOF
+
+     # Restart fpm
+     service php7.0-fpm restart
+   fi
+
+   if [ "$webServerType" = "apache" ]; then
+     sudo service apache2 restart
+   fi
 
    # Configure varnish startup for 16.04
    VARNISHSTART="ExecStart=\/usr\/sbin\/varnishd -j unix,user=vcache -F -a :80 -T localhost:6082 -f \/etc\/varnish\/moodle.vcl -S \/etc\/varnish\/secret -s malloc,1024m -p thread_pool_min=200 -p thread_pool_max=4000 -p thread_pool_add_delay=2 -p timeout_linger=100 -p timeout_idle=30 -p send_timeout=1800 -p thread_pools=4 -p http_max_hdr=512 -p workspace_backend=512k"
