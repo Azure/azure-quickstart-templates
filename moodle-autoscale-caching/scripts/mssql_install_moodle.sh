@@ -39,6 +39,9 @@
     redisDns=${15}
     redisAuth=${16}
     elasticVm1IP=${17}
+    serviceObject=${18}
+    serviceTier=${19}
+    serviceSize=${20}
 
     echo $moodleVersion        >> /tmp/vars.txt
     echo $glusterNode          >> /tmp/vars.txt
@@ -57,6 +60,8 @@
     echo $redisDns             >> /tmp/vars.txt
     echo $redisAuth            >> /tmp/vars.txt
     echo $elasticVm1IP         >> /tmp/vars.txt
+    echo $serviceObjective     >> /tmp/vars.txt
+
     # make sure system does automatic updates and fail2ban
     sudo apt-get -y update
     sudo apt-get -y install unattended-upgrades fail2ban
@@ -1113,7 +1118,7 @@ EOF
     systemctl daemon-reload
     service varnish restart
 
-    /opt/mssql-tools/bin/sqlcmd -S $mssqlIP -U $mssqladminlogin -P ${mssqladminpass} -Q "CREATE DATABASE ${moodledbname} ( MAXSIZE = 1024GB, EDITION = 'standard', SERVICE_OBJECTIVE = 'S7' )" > /tmp/db.log
+    /opt/mssql-tools/bin/sqlcmd -S $mssqlIP -U $mssqladminlogin -P ${mssqladminpass} -Q "CREATE DATABASE ${moodledbname} ( MAXSIZE = $serviceSize, EDITION = '$serviceTier', SERVICE_OBJECTIVE = '$serviceObjective' )" > /tmp/db.log
     /opt/mssql-tools/bin/sqlcmd -S $mssqlIP -U $mssqladminlogin -P ${mssqladminpass} -Q "CREATE LOGIN ${moodledbuser} with password = '${moodledbpass}'" >> /tmp/db.log
     /opt/mssql-tools/bin/sqlcmd -S $mssqlIP -U $mssqladminlogin -P ${mssqladminpass} -d ${moodledbname} -Q "CREATE USER ${moodledbuser} FROM LOGIN ${moodledbuser}" >> /tmp/db.log
     /opt/mssql-tools/bin/sqlcmd -S $mssqlIP -U $mssqladminlogin -P ${mssqladminpass} -d ${moodledbname} -Q "exec sp_addrolemember 'db_owner','${moodledbuser}'" >> /tmp/db.log
