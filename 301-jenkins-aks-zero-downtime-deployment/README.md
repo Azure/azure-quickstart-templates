@@ -64,7 +64,7 @@ for more details.
    for the provision process to complete. Once the deployment is complete, the resource group contains
    all resources for the Jenkins master and the AKS cluster:
 
-   ![Resource List](img/resource-list.png)
+   ![Resource List](images/resource-list.png)
 
 1. Check in the resource group, then then click `Deployments` to find the latest deployment with the name
    `Microsoft.Template`, the following details will be displayed in the *Outputs* section:
@@ -101,7 +101,7 @@ for more details.
 
    To verify the connection to your cluster, use the `kubectl get` command.
 
-   ![kubectl get](img/kubectl-get.png)
+   ![kubectl get](images/kubectl-get.png)
 
    ```sh
    kubectl proxy
@@ -110,15 +110,15 @@ for more details.
    Type http://localhost:8001/ui in your browser to get to the Kubernetes Web UI (Dashboard.) You should be able
    to see the deployments:
 
-   ![Kubernetes Deployments](img/kubernetes-deployments.png)
+   ![Kubernetes Deployments](images/kubernetes-deployments.png)
 
    and the service endpoints:
 
-   ![Service Endpoints](img/k8s-tomcat-service.png)
+   ![Service Endpoints](images/k8s-tomcat-service.png)
 
    Click the the external endpoint for the `tomcat-service`, you'll see the Tomcat 7 landing page:
 
-   ![Tomcat 7 Landing Page](img/tomcat-7.png)
+   ![Tomcat 7 Landing Page](images/tomcat-7.png)
 
    You can also check the external endpoints for `tomcat-test-blue` and `tomcat-test-green`. Both of them show
    the same Tomcat 7 landing page initially.
@@ -135,7 +135,7 @@ for more details.
 1. When the Jenkins job finishes, verify the new Tomcat version has been deployed and enabled through to the public
    service endpoint, click the external endpoint for `tomcat-service`. The version shown is Tomcat/8.X.X.
 
-   ![Tomcat 8 Landing Page](img/tomcat-8.png)
+   ![Tomcat 8 Landing Page](images/tomcat-8.png)
 
    Check the `role` label for `tomcat-service`, this indicates which environment is the current active one. 
    Go to the external endpoint for that environment and you should see the same version of Tomcat landing page.
