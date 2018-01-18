@@ -39,7 +39,7 @@
     redisDns=${15}
     redisAuth=${16}
     elasticVm1IP=${17}
-    serviceObject=${18}
+    serviceObjective=${18}
     serviceTier=${19}
     serviceSize=${20}
 
@@ -61,6 +61,8 @@
     echo $redisAuth            >> /tmp/vars.txt
     echo $elasticVm1IP         >> /tmp/vars.txt
     echo $serviceObjective     >> /tmp/vars.txt
+    echo $serviceTier          >> /tmp/vars.txt
+    echo $serviceSize          >> /tmp/vars.tx
 
     # make sure system does automatic updates and fail2ban
     sudo apt-get -y update
