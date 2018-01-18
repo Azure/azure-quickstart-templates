@@ -1123,7 +1123,7 @@ EOF
     /opt/mssql-tools/bin/sqlcmd -S $mssqlIP -U $mssqladminlogin -P ${mssqladminpass} -d ${moodledbname} -Q "CREATE USER ${moodledbuser} FROM LOGIN ${moodledbuser}" >> /tmp/db.log
     /opt/mssql-tools/bin/sqlcmd -S $mssqlIP -U $mssqladminlogin -P ${mssqladminpass} -d ${moodledbname} -Q "exec sp_addrolemember 'db_owner','${moodledbuser}'" >> /tmp/db.log
 
-    echo "/opt/mssql-tools/bin/sqlcmd -S $mssqlIP -U $mssqladminlogin -P ${mssqladminpass} -Q \"CREATE DATABASE ${moodledbname}\"" > /tmp/debug.log
+    echo "/opt/mssql-tools/bin/sqlcmd -S $mssqlIP -U $mssqladminlogin -P ${mssqladminpass} -Q \"CREATE DATABASE ${moodledbname} ( MAXSIZE = $serviceSize, EDITION = '$serviceTier', SERVICE_OBJECTIVE = '$serviceObjective' )\"" > /tmp/debug.log
     echo "/opt/mssql-tools/bin/sqlcmd -S $mssqlIP -U $mssqladminlogin -P ${mssqladminpass} -Q \"CREATE LOGIN ${moodledbuser} with password = \'${moodledbpass}\'\"" >> /tmp/debug.log
     echo "/opt/mssql-tools/bin/sqlcmd -S $mssqlIP -U $mssqladminlogin -P ${mssqladminpass} -d ${moodledbname} -Q \"CREATE USER ${moodledbuser} FROM LOGIN ${moodledbuser}\"" >> /tmp/debug.log
     echo "/opt/mssql-tools/bin/sqlcmd -S $mssqlIP -U $mssqladminlogin -P ${mssqladminpass} -d ${moodledbname} -Q \"exec sp_addrolemember 'db_owner','${moodledbuser}'\"" >> /tmp/debug.log
