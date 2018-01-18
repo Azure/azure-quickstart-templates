@@ -85,7 +85,7 @@ for more details.
 1. Follow the instructions to setup the Jenkins instance.
 1. You can access the AKS cluster by doing the following from your local machine.
 
-   > **Note**: 	You need Azure CLI version 2.0.21 or later for AKS.
+   > **Note**: 	You need Azure CLI version 2.0.25 or later for AKS.
    > Refer to https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest#update-the-cli 
    > if you need to update your installation.
 
@@ -95,7 +95,7 @@ for more details.
    az login
    az aks get-credentials \
        --resource-group <yourResourceGroup> \
-       --name containerservice-<yourResourceGroup> \
+       --name aks \
        --admin
    ```
 
