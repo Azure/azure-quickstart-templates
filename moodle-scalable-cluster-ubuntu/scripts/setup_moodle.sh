@@ -26,10 +26,13 @@ glusterNode=$1
 glusterVolume=$2 
 siteFQDN=$3
 syslogserver=$4
+webServerType=$5
 
-echo $glusterNode    >> /tmp/vars.txt
+echo $glusterNode    > /tmp/vars.txt
 echo $glusterVolume  >> /tmp/vars.txt
 echo $siteFQDN >> /tmp/vars.txt
+echo $syslogserver >> /tmp/vars.txt
+echo $webServerType >> /tmp/vars.txt
 
 {
   # make sure the system does automatic update
@@ -45,7 +48,15 @@ echo $siteFQDN >> /tmp/vars.txt
   sudo apt-get -y install glusterfs-client postgresql-client mysql-client git
 
   # install the base stack
-  sudo apt-get -y install nginx php-fpm varnish php php-cli php-curl php-zip
+  sudo apt-get -y install nginx varnish php php-cli php-curl php-zip
+
+  if [ "$webServerType" = "apache" ]; then
+    # install apache pacakges
+    sudo apt-get -y install apache2 libapache2-mod-php
+  else
+    # for nginx-only option
+    sudo apt-get -y install php-fpm
+  fi
 
   # Moodle requirements
   sudo apt-get install -y graphviz aspell php-soap php-json php-redis php-bcmath php-gd php-pgsql php-mysql php-xmlrpc php-intl php-xml php-bz2
@@ -129,6 +140,7 @@ http {
 }
 EOF
 
+  if [ "$webServerType" = "nginx" ]; then
     cat <<EOF >> /etc/nginx/sites-enabled/${siteFQDN}.conf
 server {
         listen 81 default;
@@ -181,6 +193,10 @@ server {
         }
 }
 
+EOF
+  fi
+
+    cat <<EOF > /etc/nginx/sites-enabled/${siteFQDN}.conf
 server {
         listen 443 ssl;
         root /moodle/html/moodle;
@@ -214,8 +230,35 @@ server {
 }
 EOF
 
+ if [ "$webServerType" = "apache" ]; then
+   sed -i "s/Listen 80/Listen 81/" /etc/apache2/ports.conf
+
+   cat <<EOF > /etc/apache2/sites-enabled/${siteFQDN}.conf
+<VirtualHost *:81>
+	ServerName ${siteFQDN}
+
+	ServerAdmin webmaster@localhost
+	DocumentRoot /moodle/html/moodle
+
+	<Directory /moodle/html/moodle>
+		Options FollowSymLinks
+		AllowOverride All
+		Require all granted
+	</Directory>
+
+	ErrorLog "|/usr/bin/logger -t moodle -p local1.error"
+	CustomLog "|/usr/bin/logger -t moodle -p local1.notice" combined
+
+</VirtualHost>
+EOF
+  fi
+
    # php config 
-   PhpIni=/etc/php/7.0/fpm/php.ini
+   if [ "$webServerType" = "apache" ]; then
+     PhpIni=/etc/php/7.0/apache2/php.ini
+   else
+     PhpIni=/etc/php/7.0/fpm/php.ini
+   fi
    sed -i "s/memory_limit.*/memory_limit = 512M/" $PhpIni
    sed -i "s/max_execution_time.*/max_execution_time = 18000/" $PhpIni
    sed -i "s/max_input_vars.*/max_input_vars = 100000/" $PhpIni
@@ -232,12 +275,16 @@ EOF
     
    # Remove the default site. Moodle is the only site we want
    rm -f /etc/nginx/sites-enabled/default
+   if [ "$webServerType" = "apache" ]; then
+     rm -f /etc/apache2/sites-enabled/000-default.conf
+   fi
 
    # restart Nginx
    sudo service nginx restart 
 
-   # fpm config - overload this 
-   cat <<EOF > /etc/php/7.0/fpm/pool.d/www.conf
+   if [ "$webServerType" = "nginx" ]; then
+     # fpm config - overload this 
+     cat <<EOF > /etc/php/7.0/fpm/pool.d/www.conf
 [www]
 user = www-data
 group = www-data
@@ -251,15 +298,20 @@ pm.min_spare_servers = 20
 pm.max_spare_servers = 30 
 EOF
 
-   # Restart fpm
-   service php7.0-fpm restart
+     # Restart fpm
+     service php7.0-fpm restart
+   fi
+
+   if [ "$webServerType" = "apache" ]; then
+     sudo service apache2 restart
+   fi
 
    # Configure varnish startup for 16.04
    VARNISHSTART="ExecStart=\/usr\/sbin\/varnishd -j unix,user=vcache -F -a :80 -T localhost:6082 -f \/etc\/varnish\/moodle.vcl -S \/etc\/varnish\/secret -s malloc,1024m -p thread_pool_min=200 -p thread_pool_max=4000 -p thread_pool_add_delay=2 -p timeout_linger=100 -p timeout_idle=30 -p send_timeout=1800 -p thread_pools=4 -p http_max_hdr=512 -p workspace_backend=512k"
    sed -i "s/^ExecStart.*/${VARNISHSTART}/" /lib/systemd/system/varnish.service
 
    # Configure varnish VCL for moodle
-   cat <<EOF >> /etc/varnish/moodle.vcl
+   cat <<EOF > /etc/varnish/moodle.vcl
 vcl 4.0;
 
 import std;

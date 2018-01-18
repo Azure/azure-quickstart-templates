@@ -9,7 +9,7 @@ After deploying, these templates will provide you with a new Moodle site with ca
 ## *What this stack will give you*
 
 This template set deploys the following infrastructure:
-- Autoscaling web frontend layer (Nginx, php-fpm, Varnish)
+- Autoscaling web frontend layer (Nginx for https termination, Varnish for caching, Nginx/php-fpm or Apache/php)
 - Private virtual network for frontend instances
 - Controller instance running cron and handling syslog for the autoscaled site
 - Load balancer to balance across the autoscaled instances
