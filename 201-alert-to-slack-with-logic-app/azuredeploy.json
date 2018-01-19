@@ -1,17 +1,52 @@
 {
-    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "endpointName": {
+        "logicAppName": {
             "type": "string",
             "metadata": {
-                "description": "Give a unique name that will be used to create the web endpoint for your Logic app. As this is used in a DNS name it must be globally unique."
+                "description": "The name for the logic app."
+            }
+        },
+        "slackConnectionName": {
+            "type": "string",
+            "defaultValue": "SlackConnection",
+            "metadata": {
+                "description": "The name for the Slack connection."
             }
         },
         "slackChannel": {
             "type": "string",
+            "defaultValue": "#general",
             "metadata": {
-                "description": "Which #channel you want to post to. Be sure to include the \"#\"."
+                "description": "The Slack channel to post to."
+            }
+        },
+        "svcPlanName": {
+            "type": "string",
+            "defaultValue": "SlackLogicAppsPlan",
+            "metadata": {
+                "description": "The name of the App Service plan to create for hosting the logic app."
+            }
+        },
+        "sku": {
+            "type": "string",
+            "defaultValue": "Standard",
+            "allowedValues": [
+                "Free",
+                "Basic",
+                "Standard",
+                "Premium"
+            ],
+            "metadata": {
+                "description": "The pricing tier for the App Service plan."
+            }
+        },
+        "svcPlanSize": {
+            "defaultValue": "S1",
+            "type": "string",
+            "metadata": {
+                "description": "The instance size of the app."
             }
         }
     },
@@ -19,406 +54,149 @@
     "resources": [
         {
             "type": "Microsoft.Web/serverfarms",
-            "apiVersion": "2015-04-01",
-            "name": "[parameters('endpointName')]",
+            "apiVersion": "2015-08-01",
+            "name": "[parameters('svcPlanName')]",
             "location": "[resourceGroup().location]",
-            "properties": {
-                "sku": "Free",
-                "workerSize": "0"
+            "sku": {
+                "name": "[parameters('svcPlanSize')]",
+                "tier": "[parameters('sku')]",
+                "capacity": 1
             }
         },
         {
-            "type": "Microsoft.Web/sites",
-            "apiVersion": "2015-04-01",
-            "name": "[concat(parameters('endpointName'),'gateway')]",
+            "type": "Microsoft.Web/connections",
+            "apiVersion": "2016-06-01",
             "location": "[resourceGroup().location]",
-            "kind": "gateway",
-            "resources": [
-                {
-                    "type": "providers/links",
-                    "apiVersion": "2015-01-01",
-                    "name": "Microsoft.Resources/gateway",
-                    "dependsOn": [
-                        "[resourceId('Microsoft.Web/sites', concat(parameters('endpointName'), 'gateway'))]"
-                    ],
-                    "properties": {
-                        "targetId": "[resourceId('Microsoft.AppService/gateways', concat(parameters('endpointName'), 'gateway'))]"
-                    }
-                }
-            ],
-            "dependsOn": [
-                "[resourceId('Microsoft.Web/serverfarms', parameters('endpointName'))]"
-            ],
+            "name": "[parameters('slackConnectionName')]",
             "properties": {
-                "gatewaySiteName": "[concat(parameters('endpointName'),'gateway')]",
-                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('endpointName'))]",
-                "siteConfig": {
-                    "appSettings": [
-                        {
-                            "name": "ApiAppsGateway_EXTENSION_VERSION",
-                            "value": "latest"
-                        },
-                        {
-                            "name": "EmaStorage",
-                            "value": "D:\\home\\data\\apiapps"
-                        },
-                        {
-                            "name": "WEBSITE_START_SCM_ON_SITE_CREATION",
-                            "value": "1"
-                        }
-                    ]
-                }
-            }
-        },
-        {
-            "type": "Microsoft.AppService/gateways",
-            "apiVersion": "2015-03-01-preview",
-            "name": "[concat(parameters('endpointName'),'gateway')]",
-            "location": "[resourceGroup().location]",
-            "resources": [
-                {
-                    "type": "providers/links",
-                    "apiVersion": "2015-01-01",
-                    "name": "Microsoft.Resources/gatewaySite",
-                    "dependsOn": [
-                        "[resourceId('Microsoft.AppService/gateways', concat(parameters('endpointName'),'gateway'))]"
-                    ],
-                    "properties": {
-                        "targetId": "[resourceId('Microsoft.Web/sites', concat(parameters('endpointName'),'gateway'))]"
-                    }
+                "api": {
+                    "id": "[concat(subscription().id,'/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/slack')]"
                 },
-                {
-                    "type": "tokens",
-                    "apiVersion": "2015-03-01-preview",
-                    "location": "[resourceGroup().location]",
-                    "name": "AlertLogicApp",
-                    "dependsOn": [
-                        "[resourceId('Microsoft.AppService/gateways', concat(parameters('endpointName'),'gateway'))]"
-                    ]
-                }
-            ],
-            "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', concat(parameters('endpointName'),'gateway'))]"
-            ],
-            "properties": {
-                "host": {
-                    "resourceName": "[concat(parameters('endpointName'),'gateway')]"
-                }
-            }
-        },
-        {
-            "type": "Microsoft.Web/sites",
-            "apiVersion": "2015-04-01",
-            "name": "[concat(parameters('endpointName'),'httplistener')]",
-            "location": "[resourceGroup().location]",
-            "kind": "apiApp",
-            "tags": {
-                "packageId": "HTTPListener"
-            },
-            "resources": [
-                {
-                    "type": "siteextensions",
-                    "apiVersion": "2015-02-01",
-                    "name": "HTTPListener",
-                    "dependsOn": [
-                        "[resourceId('Microsoft.Web/sites', concat(parameters('endpointName'),'httplistener'))]"
-                    ],
-                    "properties": {
-                        "type": "WebRoot",
-                        "feed_url": "http://apiapps-preview.nuget.org/api/v2/",
-                        "version": "0.0.651"
-                    }
-                },
-                {
-                    "type": "providers/links",
-                    "apiVersion": "2015-01-01",
-                    "name": "Microsoft.Resources/apiApp",
-                    "dependsOn": [
-                        "[resourceId('Microsoft.Web/sites', concat(parameters('endpointName'),'httplistener'))]"
-                    ],
-                    "properties": {
-                        "targetId": "[resourceId('Microsoft.AppService/apiapps', concat(parameters('endpointName'),'httplistener'))]"
-                    }
-                }
-            ],
-            "dependsOn": [
-                "[resourceId('Microsoft.Web/serverfarms', parameters('endpointName'))]",
-                "[resourceId('Microsoft.AppService/gateways', concat(parameters('endpointName'),'gateway'))]"
-            ],
-            "properties": {
-                "gatewaySiteName": "[concat(parameters('endpointName'),'gateway')]",
-                "serverFarmId": "[parameters('endpointName')]",
-                "siteConfig": {
-                    "appSettings": [
-                        {
-                            "name": "EMA_MicroserviceId",
-                            "value": "[concat(parameters('endpointName'),'httplistener')]"
-                        },
-                        {
-                            "name": "EMA_Secret",
-                            "value": "e90a052c266ecbcff6870c8c89780ee02d628c923dc1e2bbb91103062fa976ae"
-                        },
-                        {
-                            "name": "EMA_RuntimeUrl",
-                            "value": "[concat('https://', reference(resourceId('Microsoft.Web/sites', concat(parameters('endpointName'),'gateway'))).hostNames[0])]"
-                        },
-                        {
-                            "name": "WEBSITE_START_SCM_ON_SITE_CREATION",
-                            "value": "1"
-                        },
-                        {
-                            "name": "AutoResponse",
-                            "value": "true"
-                        }
-                    ]
-                }
-            }
-        },
-        {
-            "type": "Microsoft.AppService/apiapps",
-            "apiVersion": "2015-03-01-preview",
-            "name": "[concat(parameters('endpointName'),'httplistener')]",
-            "location": "[resourceGroup().location]",
-            "resources": [
-                {
-                    "type": "providers/links",
-                    "apiVersion": "2015-01-01",
-                    "name": "Microsoft.Resources/apiAppSite",
-                    "dependsOn": [
-                        "[resourceId('Microsoft.AppService/apiapps', concat(parameters('endpointName'),'httplistener'))]"
-                    ],
-                    "properties": {
-                        "targetId": "[resourceId('Microsoft.Web/sites', concat(parameters('endpointName'),'httplistener'))]"
-                    }
-                }
-            ],
-            "dependsOn": [
-                "[resourceId('Microsoft.Web/sites/siteextensions', concat(parameters('endpointName'),'httplistener'), 'HTTPListener')]"
-            ],
-            "properties": {
-                "package": {
-                    "id": "HTTPListener"
-                },
-                "accessLevel": "PublicAnonymous",
-                "host": {
-                    "resourceName": "[concat(parameters('endpointName'),'httplistener')]"
-                },
-                "gateway": {
-                    "resourceName": "[concat(parameters('endpointName'),'gateway')]"
-                }
-            }
-        },
-        {
-            "type": "Microsoft.Web/sites",
-            "apiVersion": "2015-04-01",
-            "name": "[concat(parameters('endpointName'),'slack')]",
-            "location": "[resourceGroup().location]",
-            "kind": "apiApp",
-            "tags": {
-                "packageId": "SlackConnector"
-            },
-            "resources": [
-                {
-                    "type": "siteextensions",
-                    "apiVersion": "2015-02-01",
-                    "name": "SlackConnector",
-                    "dependsOn": [
-                        "[resourceId('Microsoft.Web/sites', concat(parameters('endpointName'),'slack'))]"
-                    ],
-                    "properties": {
-                        "type": "WebRoot",
-                        "feed_url": "http://apiapps-preview.nuget.org/api/v2/",
-                        "version": "0.0.587"
-                    }
-                },
-                {
-                    "type": "providers/links",
-                    "apiVersion": "2015-01-01",
-                    "name": "Microsoft.Resources/apiApp",
-                    "dependsOn": [
-                        "[resourceId('Microsoft.Web/sites', concat(parameters('endpointName'),'slack'))]"
-                    ],
-                    "properties": {
-                        "targetId": "[resourceId('Microsoft.AppService/apiapps', concat(parameters('endpointName'),'slack'))]"
-                    }
-                }
-            ],
-            "dependsOn": [
-                "[resourceId('Microsoft.Web/serverfarms', parameters('endpointName'))]",
-                "[resourceId('Microsoft.AppService/gateways', concat(parameters('endpointName'),'gateway'))]"
-            ],
-            "properties": {
-                "gatewaySiteName": "[concat(parameters('endpointName'),'gateway')]",
-                "serverFarmId": "[parameters('endpointName')]",
-                "siteConfig": {
-                    "appSettings": [
-                        {
-                            "name": "EMA_MicroserviceId",
-                            "value": "[concat(parameters('endpointName'),'slack')]"
-                        },
-                        {
-                            "name": "EMA_Secret",
-                            "value": "e90a052c266ecbcff6870c8c89780ee02d628c923dc1e2bbb91103062fa976ae"
-                        },
-                        {
-                            "name": "EMA_RuntimeUrl",
-                            "value": "[concat('https://', reference(resourceId('Microsoft.Web/sites', concat(parameters('endpointName'),'gateway'))).hostNames[0])]"
-                        },
-                        {
-                            "name": "WEBSITE_START_SCM_ON_SITE_CREATION",
-                            "value": "1"
-                        }
-                    ]
-                }
-            }
-        },
-        {
-            "type": "Microsoft.AppService/apiapps",
-            "apiVersion": "2015-03-01-preview",
-            "name": "[concat(parameters('endpointName'),'slack')]",
-            "location": "[resourceGroup().location]",
-            "resources": [
-                {
-                    "type": "providers/links",
-                    "apiVersion": "2015-01-01",
-                    "name": "Microsoft.Resources/apiAppSite",
-                    "dependsOn": [
-                        "[resourceId('Microsoft.AppService/apiapps', concat(parameters('endpointName'),'slack'))]"
-                    ],
-                    "properties": {
-                        "targetId": "[resourceId('Microsoft.Web/sites', concat(parameters('endpointName'),'slack'))]"
-                    }
-                }
-            ],
-            "dependsOn": [
-                "[resourceId('Microsoft.Web/sites/siteextensions', concat(parameters('endpointName'),'slack'), 'SlackConnector')]"
-            ],
-            "properties": {
-                "package": {
-                    "id": "SlackConnector"
-                },
-                "host": {
-                    "resourceName": "[concat(parameters('endpointName'),'slack')]"
-                },
-                "gateway": {
-                    "resourceName": "[concat(parameters('endpointName'),'gateway')]"
-                }
+                "displayName": "slack",
+                "parameterValues": {}
             }
         },
         {
             "type": "Microsoft.Logic/workflows",
             "apiVersion": "2015-02-01-preview",
-            "name": "[parameters('endpointName')]",
-            "location": "[resourceGroup().location]",
+            "name": "[parameters('logicAppName')]",
             "dependsOn": [
-                "[resourceId('Microsoft.AppService/apiApps', concat(parameters('endpointName'),'httplistener'))]",
-                "[resourceId('Microsoft.AppService/apiApps', concat(parameters('endpointName'),'slack'))]"
+                "[resourceId('Microsoft.Web/connections', parameters('slackConnectionName'))]",
+                "[resourceId('Microsoft.Web/serverfarms', parameters('svcPlanName'))]"
             ],
+            "location": "[resourceGroup().location]",
             "properties": {
                 "sku": {
-                    "name": "Standard",
+                    "name": "[parameters('sku')]",
                     "plan": {
-                        "id": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/',parameters('endpointName'))]"
+                        "id": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/',parameters('svcPlanName'))]"
                     }
                 },
                 "definition": {
-                    "$schema": "http://schema.management.azure.com/providers/Microsoft.Logic/schemas/2014-12-01-preview/workflowdefinition.json#",
+                    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
                     "contentVersion": "1.0.0.0",
                     "parameters": {
-                        "token": {
-                            "defaultValue": "[reference(resourceId('Microsoft.AppService/gateways/tokens', concat(parameters('endpointName'), 'gateway'), 'AlertLogicApp')).token]",
-                            "type": "String",
-                            "metadata": {
-                                "token": {
-                                    "name": "token"
+                        "$connections": {
+                            "defaultValue": {},
+                            "type": "Object"
+                        }
+                    },
+                    "triggers": {
+                        "manual": {
+                            "type": "request",
+                            "kind": "Http",
+                            "inputs": {
+                                "schema": {
+                                    "$schema": "http://json-schema.org/draft-04/schema#",
+                                    "properties": {
+                                        "context": {
+                                            "properties": {
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "portalLink": {
+                                                    "type": "string"
+                                                },
+                                                "resourceName": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "name",
+                                                "portalLink",
+                                                "resourceName"
+                                            ],
+                                            "type": "object"
+                                        },
+                                        "status": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "status",
+                                        "context"
+                                    ],
+                                    "type": "object"
                                 }
                             }
                         }
                     },
-                    "triggers": {
-                        "httplistener": {
-                            "type": "ApiApp",
-                            "inputs": {
-                                "apiVersion": "2015-01-14",
-                                "host": {
-                                    "id": "[concat(resourceGroup().id, '/providers/Microsoft.AppService/apiApps/',concat(parameters('endpointName'),'httplistener'))]",
-                                    "gateway": "[concat('https://', reference(resourceId('Microsoft.Web/sites', concat(parameters('endpointName'), 'gateway'))).hostNames[0])]"
-                                },
-                                "operation": "Trigger",
-                                "parameters": {
-                                    "triggerId": "@workflow().name",
-                                    "parameters": {
-                                        "callbackUrl": "@accessKeys('default').primary.secretRunUri",
-                                        "inputs": {
-                                            "HttpMethod": "Post"
-                                        }
-                                    }
-                                },
-                                "authentication": {
-                                    "type": "Raw",
-                                    "scheme": "Zumo",
-                                    "parameter": "@parameters('token')"
-                                }
-                            },
-                            "recurrence": {
-                                "frequency": "Hour",
-                                "interval": 1
-                            },
-                            "conditions": [
-                                {
-                                    "expression": "@bool('false')"
-                                }
-                            ]
-                        }
-                    },
                     "actions": {
-                        "http": {
+                        "Http": {
                             "type": "Http",
                             "inputs": {
-                                "method": "POST",
-                                "uri": "https://www.googleapis.com/urlshortener/v1/url?key=AIzaSyBkT1BRbA-uULHz8HMUAi0ywJtpNLXHShI",
+                                "body": {
+                                    "longUrl": "@{triggerBody()['context']['portalLink']}"
+                                },
                                 "headers": {
                                     "Content-Type": "application/json"
                                 },
-                                "body": {
-                                    "longUrl": "@{parse(triggerBody().Content).context.portalLink}"
-                                }
+                                "method": "POST",
+                                "uri": "https://www.googleapis.com/urlshortener/v1/url?key=AIzaSyBkT1BRbA-uULHz8HMUAi0ywJtpNLXHShI"
                             },
-                            "conditions": [
-                                {
-                                    "expression": "@equals(parameters('token'),triggerBody().QueryParameters.token)"
-                                }
-                            ]
+                            "runAfter": {}
                         },
-                        "slackconnector": {
-                            "type": "ApiApp",
+                        "Post_Message": {
+                            "type": "ApiConnection",
                             "inputs": {
-                                "apiVersion": "2015-01-14",
                                 "host": {
-                                    "id": "[concat(resourceGroup().id, '/providers/Microsoft.AppService/apiApps/',concat(parameters('endpointName'),'slack'))]",
-                                    "gateway": "[concat('https://', reference(resourceId('Microsoft.Web/sites', concat(parameters('endpointName'), 'gateway'))).hostNames[0])]"
-                                },
-                                "operation": "PostMessage",
-                                "parameters": {
-                                    "input": {
-                                        "Text": "Azure Alert - '@{parse(triggerBody().Content).context.name}' @{toUpper(parse(triggerBody().Content).status)} on '@{parse(triggerBody().Content).context.resourceName}'. Details: @{body('http').id}",
-                                        "Channel": "[parameters('slackChannel')]"
+                                    "connection": {
+                                        "name": "@parameters('$connections')['slack']['connectionId']"
                                     }
+                                },
+                                "method": "post",
+                                "path": "/chat.postMessage",
+                                "queries": {
+                                    "channel": "[parameters('slackChannel')]",
+                                    "text": "Azure Alert - '@{triggerBody()['context']['name']}' @{triggerBody()['status']} on '@{triggerBody()['context']['resourceName']}'.  Details: @{body('Http')['id']}"
                                 }
                             },
-                            "conditions": []
+                            "runAfter": {
+                                "Http": [
+                                    "Succeeded"
+                                ]
+                            }
                         }
                     },
                     "outputs": {}
                 },
-                "parameters": {}
+                "parameters": {
+                    "$connections": {
+                        "value": {
+                            "slack": {
+                                "id": "[concat(subscription().id,'/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/slack')]",
+                                "connectionId": "[resourceId('Microsoft.Web/connections', parameters('slackConnectionName'))]"
+                            }
+                        }
+                    }
+                }
             }
         }
     ],
     "outputs": {
-        "webhookURI": {
+        "WebHookURI": {
             "type": "string",
-            "value": "[concat('https://', reference(resourceId('Microsoft.Web/sites', concat(parameters('endpointName'), 'httplistener'))).hostNames[0],'?token=', reference(resourceId('Microsoft.AppService/gateways/tokens', concat(parameters('endpointName'), 'gateway'), 'AlertLogicApp')).token )]"
+            "value": "[listCallbackURL(concat(resourceId('Microsoft.Logic/workflows/', parameters('logicAppName')), '/triggers/manual'), '2016-06-01').value]"
         }
     }
 }

@@ -7,6 +7,7 @@ zabbixServer=$2
 
 disk_format() {
 	cd /tmp
+	yum install wget -y
 	for ((j=1;j<=3;j++))
 	do
 		wget https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shared_scripts/ubuntu/vm-disk-utils-0.1.sh 
@@ -113,7 +114,7 @@ mongod --dbpath /var/lib/mongo/ --config /etc/mongod.conf --replSet $replSetName
 
 #check if mongod started or not
 sleep 15
-n=`ps -ef |grep -v grep|grep mongod |wc -l`
+n=`ps -ef |grep "mongod --dbpath /var/lib/mongo/" |grep -v grep|wc -l`
 if [[ $n -eq 1 ]];then
     echo "replica set started successfully"
 else

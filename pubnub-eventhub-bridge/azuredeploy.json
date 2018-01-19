@@ -1,0 +1,303 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "Event Hub Namespace": {
+      "type": "String",
+      "metadata": {
+        "description": "A unique Namespace. It's suggested to replace the 'pn-' prefix with your own unique prefix, such as your company name, and add a '-suffix' at the end, where the suffix is also unique."
+      }
+    },
+    "Azure Webjob Name": {
+      "type": "String",
+      "metadata": {
+        "description": "A unique Web Job Name. Follow the same naming conventions as for Event Hub Namespaces to ensure you have a unique, legal string."
+      }
+    },
+    "Azure Datacenter Location": {
+      "type": "String",
+      "defaultValue": "westus",
+      "metadata": {
+        "description": "Must be westus unless you ensure all components are in the same region.  See README for more information."
+      }
+    },
+    "PubNub Ingress Channel": {
+      "type": "String",
+      "defaultValue": "pnInput",
+      "metadata": {
+        "description": "A channel name that the PubNub Subscriber should listen on. If you wish for the subscriber to listen on multiple channels, enter a CSV list of channels, with no spaces."
+      }
+    },
+    "PubNub Egress Channel": {
+      "type": "String",
+      "defaultValue": "pnOutput",
+      "metadata": {
+        "description": "A channel name that the PubNub Publisher should publish back out on."
+      }
+    },
+    "PubNub Announce Channel": {
+      "type": "String",
+      "defaultValue": "pnAnnounce",
+      "metadata": {
+        "description": "A channel name that the PubNub Deployment script will alert on when the deployment has completed. If you don't intend on using this, just set this value to all caps, case-sensitive DISABLED. See below for more information on using the Provisioning Listener and the Announce channel."
+      }
+    },
+    "PubNub Publish Key": {
+      "type": "String",
+      "defaultValue": "demo-36",
+      "metadata": {
+        "description": "The PubNub Publish API Key that the PubNub component should publish against."
+      }
+    },
+    "PubNub Subscribe Key": {
+      "type": "String",
+      "defaultValue": "demo-36",
+      "metadata": {
+        "description": "The PubNub Subscribe API Key that the PubNub component should subscribe against."
+      }
+    },
+    "Azure Service Plan": {
+      "defaultValue": "USWestBasic",
+      "type": "String",
+      "metadata": {
+        "description": "Must be USWestBasic unless you ensure all components are in the same region.  See README for more information."
+      }
+    },
+    "Azure Ingress Event Hub Name": {
+      "defaultValue": "infromsubscriberhub",
+      "type": "String",
+      "metadata": {
+        "description": "The name you wish to give the Ingress (Input) Event Hub. You can accept the default, as the Event Hub name needs only to be unique within a unique Event Hub Namespace."
+      }
+    },
+    "Azure Egress Event Hub Name": {
+      "defaultValue": "outtopnpublisher",
+      "type": "String",
+      "metadata": {
+        "description": "The name you wish to give the Egress (Output) Event Hub. You can accept the default, as the Event Hub name needs only to be unique within a unique Event Hub Namespace."
+      }
+    },
+    "Azure Ingress SAS Policy Name": {
+      "defaultValue": "infromsubscriberhub",
+      "type": "String",
+      "metadata": {
+        "description": "The name you wish to give the Ingress (Input) Event Hub SAS Policy. You can accept the default, as the Event Hub SAS Policy name needs only to be unique within a unique Event Hub Namespace."
+      }
+    },
+    "Azure Egress SAS Policy Name": {
+      "defaultValue": "outtopublisherhub",
+      "type": "String",
+      "metadata": {
+        "description": "The name you wish to give the Egress (Output) Event Hub SAS Policy. You can accept the default, as the Event Hub SAS Policy name needs only to be unique within a unique Event Hub Namespace."
+      }
+    }
+  },
+  "variables": {
+    "location": "[resourceGroup().location]",
+    "sbVersion": "2015-08-01",
+    "ehInAuthorizationRuleResourceId": "[resourceId('Microsoft.EventHub/namespaces/eventhubs/authorizationRules', parameters('Event Hub Namespace'), parameters('Azure Ingress Event Hub Name'), parameters('Azure Ingress SAS Policy Name'))]",
+    "ehOutAuthorizationRuleResourceId": "[resourceId('Microsoft.EventHub/namespaces/eventhubs/authorizationRules', parameters('Event Hub Namespace'), parameters('Azure Egress Event Hub Name'), parameters('Azure Egress SAS Policy Name'))]"
+  },
+  "resources": [
+    {
+      "comments": "Generalized from resource: '/subscriptions/38ccde7a-8dbd-46b4-a0c6-71201ffab311/resourcegroups/AutoNub/providers/Microsoft.EventHub/namespaces/AutoNubEventHub'.",
+      "type": "Microsoft.EventHub/namespaces",
+      "sku": {
+        "name": "Basic",
+        "tier": "Basic"
+      },
+      "name": "[parameters('Event Hub Namespace')]",
+      "apiVersion": "2015-08-01",
+      "location": "[parameters('Azure Datacenter Location')]",
+      "tags": {},
+      "properties": {},
+      "resources": [
+        {
+          "comments": "Generalized from resource: '/subscriptions/38ccde7a-8dbd-46b4-a0c6-71201ffab311/resourcegroups/AutoNub/providers/Microsoft.EventHub/namespaces/AutoNubEventHub/eventhubs/infrompnsubscriber'.",
+          "type": "eventhubs",
+          "name": "[parameters('Azure Ingress Event Hub Name')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.EventHub/namespaces', parameters('Event Hub Namespace'))]"
+          ],
+          "apiVersion": "2015-08-01",
+          "location": "[parameters('Azure Datacenter Location')]",
+          "properties": {
+            "messageRetentionInDays": 1,
+            "partitionCount": 2
+          },
+          "resources": [
+            {
+              "comments": "Generalized from resource: '/subscriptions/38ccde7a-8dbd-46b4-a0c6-71201ffab311/resourcegroups/AutoNub/providers/Microsoft.EventHub/namespaces/AutoNubEventHub/eventhubs/infrompnsubscriber/authorizationRules/infromsubscriberhub'.",
+              "type": "authorizationRules",
+              "dependsOn": [
+                "[concat('Microsoft.EventHub/namespaces/', parameters('Event Hub Namespace'),'/eventhubs/',parameters('Azure Ingress Event Hub Name'))]"
+              ],
+              "name": "[parameters('Azure Ingress SAS Policy Name')]",
+              "apiVersion": "2015-08-01",
+              "location": "[variables('location')]",
+              "properties": {
+                "rights": [
+                  "Send",
+                  "Listen"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "comments": "Generalized from resource: '/subscriptions/38ccde7a-8dbd-46b4-a0c6-71201ffab311/resourcegroups/AutoNub/providers/Microsoft.EventHub/namespaces/AutoNubEventHub/eventhubs/outtopnpublisher'.",
+          "type": "eventhubs",
+          "name": "[parameters('Azure Egress Event Hub Name')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.EventHub/namespaces', parameters('Event Hub Namespace'))]",
+            "[concat('Microsoft.EventHub/namespaces/', parameters('Event Hub Namespace'),'/eventhubs/',parameters('Azure Ingress Event Hub Name'))]"
+          ],
+          "apiVersion": "2015-08-01",
+          "location": "[variables('location')]",
+          "properties": {
+            "messageRetentionInDays": 1,
+            "partitionCount": 2
+          },
+          "resources": [
+            {
+              "comments": "Generalized from resource: '/subscriptions/38ccde7a-8dbd-46b4-a0c6-71201ffab311/resourcegroups/AutoNub/providers/Microsoft.EventHub/namespaces/AutoNubEventHub/eventhubs/outtopnpublisher/authorizationRules/outtopublisherhub'.",
+              "type": "authorizationRules",
+              "dependsOn": [
+                "[concat('Microsoft.EventHub/namespaces/', parameters('Event Hub Namespace'),'/eventhubs/',parameters('Azure Egress Event Hub Name'))]"
+              ],
+              "name": "[parameters('Azure Egress SAS Policy Name')]",
+              "apiVersion": "2015-08-01",
+              "location": "[variables('location')]",
+              "properties": {
+                "rights": [
+                  "Send",
+                  "Listen"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "comments": "Generalized from resource: '/subscriptions/38ccde7a-8dbd-46b4-a0c6-71201ffab311/resourceGroups/AutoNub/providers/Microsoft.Web/serverfarms/USWestBasic'.",
+      "type": "Microsoft.Web/serverfarms",
+      "sku": {
+        "name": "B1",
+        "tier": "Basic",
+        "size": "B1",
+        "family": "B",
+        "capacity": 1
+      },
+      "name": "[parameters('Azure Service Plan')]",
+      "apiVersion": "2015-08-01",
+      "location": "[variables('location')]",
+      "properties": {
+        "name": "[parameters('Azure Service Plan')]",
+        "numberOfWorkers": 1
+      },
+      "resources": [],
+      "dependsOn": []
+    },
+    {
+      "comments": "Generalized from resource: '/subscriptions/38ccde7a-8dbd-46b4-a0c6-71201ffab311/resourceGroups/AutoNub/providers/Microsoft.Web/sites/pnwebjob'.",
+      "type": "Microsoft.Web/sites",
+      "name": "[parameters('Azure Webjob Name')]",
+      "apiVersion": "2015-08-01",
+      "location": "[variables('location')]",
+      "properties": {
+        "name": "[parameters('Azure Webjob Name')]",
+        "hostNames": [
+          "[concat(parameters('Azure Webjob Name'),'.azurewebsites.net')]"
+        ],
+        "enabledHostNames": [
+          "[concat(parameters('Azure Webjob Name'),'.azurewebsites.net')]",
+          "[concat(parameters('Azure Webjob Name'),'.scm.azurewebsites.net')]"
+        ],
+        "hostNameSslStates": [
+          {
+            "name": "[concat(parameters('Azure Webjob Name'),'.azurewebsites.net')]",
+            "sslState": 0,
+            "thumbprint": null,
+            "ipBasedSslState": 0
+          },
+          {
+            "name": "[concat(parameters('Azure Webjob Name'),'.scm.azurewebsites.net')]",
+            "sslState": 0,
+            "thumbprint": null,
+            "ipBasedSslState": 0
+          }
+        ],
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('Azure Service Plan'))]"
+      },
+      "resources": [
+        {
+          "apiVersion": "2015-08-01",
+          "name": "web",
+          "type": "config",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/Sites', parameters('Azure Webjob Name'))]"
+          ],
+          "properties": {
+            "alwaysOn": true
+          }
+        },
+        {
+          "apiVersion": "2015-04-01",
+          "name": "web",
+          "type": "sourcecontrols",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/Sites', parameters('Azure Webjob Name'))]"
+          ],
+          "properties": {
+            "RepoUrl": "https://github.com/pubnub/azureEventHubBridge.git",
+            "branch": "master",
+            "IsManualIntegration": true
+          }
+        },
+        {
+          "apiVersion": "2015-08-01",
+          "name": "connectionstrings",
+          "type": "config",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/Sites', parameters('Azure Webjob Name'))]",
+            "[resourceId('Microsoft.Web/Sites/sourcecontrols', parameters('Azure Webjob Name'), 'web')]"
+          ],
+          "properties": {
+            "PNSubChannel": {
+              "value": "[parameters('PubNub Ingress Channel')]",
+              "type": "custom"
+            },
+            "PNPubChannel": {
+              "value": "[parameters('PubNub Egress Channel')]",
+              "type": "custom"
+            },
+            "PNAnnounceChannel": {
+              "value": "[parameters('PubNub Announce Channel')]",
+              "type": "custom"
+            },
+            "PNPublishKey": {
+              "value": "[parameters('PubNub Publish Key')]",
+              "type": "custom"
+            },
+            "PNSubscribeKey": {
+              "value": "[parameters('PubNub Subscribe Key')]",
+              "type": "custom"
+            },
+            "EHInConnectionString": {
+              "value": "[listkeys(variables('ehInAuthorizationRuleResourceId'), variables('sbVersion')).primaryConnectionString]",
+              "type": "custom"
+            },
+            "EHOutConnectionString": {
+              "value": "[listkeys(variables('ehOutAuthorizationRuleResourceId'), variables('sbVersion')).primaryConnectionString]",
+              "type": "custom"
+            }
+          }
+        }
+      ],
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', parameters('Azure Service Plan'))]"
+      ]
+    }
+  ]
+}

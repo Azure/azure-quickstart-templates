@@ -1,0 +1,109 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "omsWorkspaceName": {
+      "type": "string",
+      "defaultValue": "omsws01",
+      "metadata": {
+        "description": "Specify name of your OMS workspace"
+      }
+    },
+    "omsRegion": {
+      "type": "string",
+      "defaultValue": "West Europe",
+      "allowedValues": [
+        "West Europe",
+        "East US",
+        "Southeast Asia"
+      ],
+      "metadata": {
+        "description": "Select OMS region"
+      }
+    },
+    "existingStorageAccountName": {
+      "type": "string",
+      "defaultValue": "mystorage",
+      "metadata": {
+        "description": "Specify the name of the existing storage account to add to OMS"
+      }
+    },
+    "existingStorageAccountResourceGroupName": {
+      "type": "string",
+      "defaultValue": "myrgname",
+      "metadata": {
+        "description": "Resource group containing the storage account"
+      }
+    },
+    "table": {
+      "type": "string",
+      "defaultValue": "WADServiceFabric*EventTable",
+      "allowedValues": [
+        "WADWindowsEventLogsTable",
+        "WADServiceFabric*EventTable",
+        "wad-iis-logfiles",
+        "WADETWEventTable"
+      ],
+      "metadata": {
+        "description": "Select the table to add to OMS"
+      }
+    }
+  },
+  "variables": {
+    "solution": "[concat('ServiceFabric', '(', parameters('omsWorkspaceName'), ')')]",
+    "solutionName": "ServiceFabric"      
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-11-01-preview",
+      "location": "[parameters('omsRegion')]",
+      "name": "[variables('solution')]",
+      "type": "Microsoft.OperationsManagement/solutions",
+      "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.OperationsManagement/solutions/', variables('solution'))]",
+      "dependsOn": [
+        "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+      ],
+      "properties": {
+        "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+      },
+      "plan": {
+        "name": "[variables('solution')]",
+        "publisher": "Microsoft",
+        "product": "[Concat('OMSGallery/', variables('solutionName'))]",
+        "promotionCode": ""
+      }
+    },
+    {
+      "apiVersion": "2015-11-01-preview",
+      "name": "[parameters('omsWorkspaceName')]",
+      "location": "[parameters('omsRegion')]",
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "properties": {
+        "sku": {
+          "name": "Free"
+        }
+      },
+      "resources": [
+        {
+          "apiVersion": "2015-11-01-preview",
+          "name": "[concat(parameters('existingstorageaccountName'),parameters('omsWorkspaceName'))]",
+          "type": "storageinsightconfigs",
+          "dependsOn": [
+            "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+          ],
+          "properties": {
+            "containers": [ ],
+            "tables": [
+              "[parameters('table')]"
+            ],
+            "storageAccount": {
+              "id": "[resourceId(parameters('existingStorageAccountResourceGroupName'),'Microsoft.Storage/storageaccounts/', parameters('existingStorageAccountName'))]",
+              "key": "[listKeys(resourceId(parameters('existingStorageAccountResourceGroupName'),'Microsoft.Storage/storageAccounts', parameters('existingStorageAccountName')),'2015-06-15').key1]"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": { }
+}

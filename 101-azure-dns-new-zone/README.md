@@ -8,5 +8,3 @@
 </a>
 
 This is a starter template that shows how to create a DNS zone and some records using Azure DNS.  
-
-AzureDNSExample.ps1 includes some PowerShell code to read back the records in the zone.

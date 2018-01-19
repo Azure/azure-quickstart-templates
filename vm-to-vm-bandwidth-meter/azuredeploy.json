@@ -1,0 +1,500 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "probeVmSize": {
+      "type": "string",
+      "allowedValues": [
+        "Basic_A0",
+        "Basic_A4",
+        "Standard_A1",
+        "Standard_A5",
+        "Standard_A8",
+        "Standard_D4",
+        "Standard_D14",
+        "Standard_DS1",
+        "Standard_DS14",
+        "Standard_D1_v2",
+        "Standard_D15_v2",
+        "Standard_DS1_v2",
+        "Standard_DS15_v2",
+        "Standard_F1",
+        "Standard_F16",
+        "Standard_F1s",
+        "Standard_F16s",
+        "Standard_G1",
+        "Standard_G5",
+        "Standard_GS1",
+        "Standard_GS5",
+        "Standard_NV6",
+        "Standard_NC6"
+      ],
+      "defaultValue": "Standard_A5",
+      "metadata": {
+        "description": "Size of the VM that runs the test."
+      }
+    },
+    "probeVmLocation": {
+      "type": "string",
+      "allowedValues": [
+        "East Asia",
+        "Southeast Asia",
+        "Central US",
+        "East US",
+        "East US 2",
+        "West US",
+        "North Central US",
+        "South Central US",
+        "North Europe",
+        "West Europe",
+        "Japan West",
+        "Japan East",
+        "Brazil South",
+        "Canada Central",
+        "Canada East"
+      ],
+      "defaultValue": "East US",
+      "metadata": {
+        "description": "Location of the VM that runs the test."
+      }
+    },
+    "targetVmSize": {
+      "type": "string",
+      "allowedValues": [
+        "Basic_A0",
+        "Basic_A4",
+        "Standard_A1",
+        "Standard_A5",
+        "Standard_A8",
+        "Standard_D4",
+        "Standard_D14",
+        "Standard_DS1",
+        "Standard_DS14",
+        "Standard_D1_v2",
+        "Standard_D15_v2",
+        "Standard_DS1_v2",
+        "Standard_DS15_v2",
+        "Standard_F1",
+        "Standard_F16",
+        "Standard_F1s",
+        "Standard_F16s",
+        "Standard_G1",
+        "Standard_G5",
+        "Standard_GS1",
+        "Standard_GS5",
+        "Standard_NV6",
+        "Standard_NC6"
+      ],
+      "defaultValue": "Standard_A5",
+      "metadata": {
+        "description": "Size of the target VM."
+      }
+    },
+    "targetVmLocation": {
+      "type": "string",
+      "allowedValues": [
+        "East Asia",
+        "Southeast Asia",
+        "Central US",
+        "East US",
+        "East US 2",
+        "West US",
+        "North Central US",
+        "South Central US",
+        "North Europe",
+        "West Europe",
+        "Japan West",
+        "Japan East",
+        "Brazil South",
+        "Canada Central",
+        "Canada East"
+      ],
+      "defaultValue": "West US",
+      "metadata": {
+        "description": "Location of the target VM."
+      }
+    },
+    "testRequestSize": {
+      "type": "string",
+      "allowedValues": [
+        "8k",
+        "16k",
+        "32k",
+        "64k",
+        "128k",
+        "256k",
+        "512k",
+        "1m"
+      ],
+      "defaultValue": "8k",
+      "metadata": {
+        "description": "Size of the request to send to the target VM."
+      }
+    },
+    "testRequestCount": {
+      "type": "int",
+      "defaultValue": 1000,
+      "metadata": {
+        "description": "Number of the requests to send to the target VM."
+      }
+    },
+      "adminUsername": {
+        "type": "string",
+        "metadata": {
+          "description": "Username for the probe and target VMs."
+        }
+      },
+      "adminPassword": {
+        "type": "securestring",
+        "metadata": {
+          "description": "Password for the probe and target VMs."
+        }
+      },
+      "_artifactsLocation": {
+        "type": "string",
+        "metadata": {
+          "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+        },
+        "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/vm-to-vm-bandwidth-meter"
+      },
+      "_artifactsLocationSasToken": {
+        "type": "securestring",
+        "metadata": {
+          "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+        },
+        "defaultValue": ""
+      }
+    },
+  "variables": {
+    "osVersion": [
+      "2012-R2-Datacenter",
+      "14.04.5-LTS"
+    ],
+    "imagePublisher": [
+      "MicrosoftWindowsServer",
+      "Canonical"
+    ],
+    "imageOffer": [
+      "WindowsServer",
+      "UbuntuServer"
+    ],
+    "OSDiskName": "osdiskforwindowssimple",
+    "nicName": "myVMNic",
+    "addressPrefix": "10.0.0.0/16",
+    "subnetName": "Subnet",
+    "subnetPrefix": "10.0.0.0/24",
+    "storageAccountType": "Standard_LRS",
+    "publicIPAddressName": "publicIP",
+    "publicIPAddressType": "Static",
+    "vmStorageAccountContainerName": "vhds",
+    "virtualNetworkName": "testVNET",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
+    "scriptFolder": "scripts",
+    "scriptFileName": "testBandwidth.ps1",
+    "vhdStorageAccountName": "[concat(uniqueString(resourceGroup().id), 'storage')]",
+    "frontEndNSGName": "[concat('webtestnsg-', uniqueString(resourceGroup().id))]",
+    "location": [
+      "[parameters('probeVmLocation')]",
+      "[parameters('targetVmLocation')]"
+    ],
+    "vmName": [
+      "probeVM",
+      "targetVM"
+    ],
+    "subnetRef": [
+      "[concat(variables('vnetID'),'1','/subnets/',variables('subnetName'))]",
+      "[concat(variables('vnetID'),'2','/subnets/',variables('subnetName'))]"
+    ]
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[concat(variables('vhdStorageAccountName'),copyIndex(1))]",
+      "apiVersion": "2016-01-01",
+      "location": "[variables('location')[copyIndex()]]",
+      "copy": {
+        "name": "storageCopy",
+        "count": 2
+      },
+      "sku": {
+        "name": "[variables('storageAccountType')]"
+      },
+      "kind": "Storage"
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(variables('publicIPAddressName'), copyIndex(1))]",
+      "location": "[variables('location')[copyIndex()]]",
+      "copy": {
+        "name": "publicIPCopy",
+        "count": 2
+      },
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]"
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[concat(variables('virtualNetworkName'), copyIndex(1))]",
+      "location": "[variables('location')[copyIndex()]]",
+      "copy": {
+        "name": "vNetCopy",
+        "count": 2
+      },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('nicName'), '1')]",
+      "location": "[variables('location')[0]]",
+      "dependsOn": [
+        "[concat(variables('publicIPAddressName'), '1')]",
+        "[concat(variables('virtualNetworkName'), '1')]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(variables('publicIPAddressName'), '1'))]"
+              },
+              "subnet": {
+                "id": "[variables('subnetRef')[0]]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('vmName')[0]]",
+      "location": "[variables('location')[0]]",
+      "dependsOn": [
+        "[concat(variables('vhdStorageAccountName'), '1')]",
+        "[concat(variables('nicName'), '1')]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('probeVmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('vmName')[0]]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')[0]]",
+            "offer": "[variables('imageOffer')[0]]",
+            "sku": "[variables('osVersion')[0]]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat(reference(concat(variables('vhdStorageAccountName'),'1'), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob, variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'), '1'))]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "type": "extensions",
+          "name": "CustomScriptExtension",
+          "apiVersion": "2015-06-15",
+          "location": "[variables('location')[0]]",
+          "dependsOn": [
+            "[variables('vmName')[0]]",
+            "[concat(variables('publicIPAddressName'), '2')]",
+            "TargetVmCustomScriptExtension"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Compute",
+            "type": "CustomScriptExtension",
+            "typeHandlerVersion": "1.8",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": [
+                "[concat(parameters('_artifactsLocation'), '/', variables('ScriptFolder'), '/', variables('ScriptFileName'), parameters('_artifactsLocationSasToken'))]"
+              ],
+              "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('ScriptFileName'), ' -TestIPPort ', reference(concat(variables('publicIPAddressName'), '2')).ipAddress, ':80 -TestNumber ', parameters('testRequestCount'), ' -PacketSize ', parameters('testRequestSize'))]"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('frontEndNSGName')]",
+      "location": "[variables('location')[1]]",
+      "tags": {
+        "displayName": "NSG - test web server from probe"
+      },
+      "dependsOn": [
+        "[concat(variables('publicIPAddressName'), '1')]"
+      ],
+      "properties": {
+        "securityRules": [
+          {
+            "name": "ssh-rule",
+            "properties": {
+              "description": "Allow SSH",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "web-rule",
+            "properties": {
+              "description": "Allow Web",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "[reference(concat(variables('publicIPAddressName'), '1')).ipAddress]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 101,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('nicName'), '2')]",
+      "location": "[variables('location')[1]]",
+      "dependsOn": [
+        "[concat(variables('publicIPAddressName'), '2')]",
+        "[concat(variables('virtualNetworkName'), '2')]",
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('frontEndNSGName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(variables('publicIPAddressName'), '2'))]"
+              },
+              "subnet": {
+                "id": "[variables('subnetRef')[1]]"
+              }
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('frontEndNSGName'))]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('vmName')[1]]",
+      "location": "[variables('location')[1]]",
+      "dependsOn": [
+        "[concat(variables('vhdStorageAccountName'), '2')]",
+        "[concat(variables('nicName'), '2')]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('targetVmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('vmName')[1]]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')[1]]",
+            "offer": "[variables('imageOffer')[1]]",
+            "sku": "[variables('osVersion')[1]]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat(reference(concat(variables('vhdStorageAccountName'),'2'), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob, variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'), '2'))]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "type": "extensions",
+          "name": "TargetVmCustomScriptExtension",
+          "apiVersion": "2015-06-15",
+          "dependsOn": [
+            "[variables('vmName')[1]]"
+          ],
+          "location": "[variables('location')[1]]",
+          "properties": {
+            "publisher": "Microsoft.Azure.Extensions",
+            "type": "CustomScript",
+            "typeHandlerVersion": "2.0",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "commandToExecute": "sudo bash -c 'apt-get update && apt-get -y install apache2' "
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": {
+    "bandwidthtestresult": {
+      "type": "string",
+      "value": "[trim(reference('CustomScriptExtension').instanceView.substatuses[0].message)]"
+    }
+  }
+}

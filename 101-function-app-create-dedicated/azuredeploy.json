@@ -1,5 +1,5 @@
 {
-    "$schema": "http://schemas.management.azure.com/schemas/2015-01-01-preview/deploymentTemplate.json#",
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
         "appName": {
@@ -39,8 +39,7 @@
             "allowedValues": [
                 "Standard_LRS",
                 "Standard_GRS",
-                "Standard_ZRS",
-                "Premium_LRS"
+                "Standard_RAGRS"                
             ],
             "metadata": {
                 "description": "Storage Account type"
@@ -56,10 +55,11 @@
         {
             "type": "Microsoft.Storage/storageAccounts",
             "name": "[variables('storageAccountName')]",
-            "apiVersion": "2015-06-15",
+            "apiVersion": "2016-12-01",
             "location": "[resourceGroup().location]",
-            "properties": {
-                "accountType": "[parameters('storageAccountType')]"
+            "kind": "Storage",
+            "sku": {
+                "name": "[parameters('storageAccountType')]"
             }
         },
         {
@@ -84,7 +84,11 @@
             "properties": {
                 "name": "[variables('functionAppName')]",
                 "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
-                "hostingEnvironment": ""
+                "hostingEnvironment": "",
+                "clientAffinityEnabled": false,
+                "siteConfig": {
+                    "alwaysOn": true
+                }
             },
             "dependsOn": [
                 "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
@@ -102,7 +106,7 @@
                     "properties": {
                         "AzureWebJobsStorage": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'),';AccountKey=',listkeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2015-05-01-preview').key1,';')]", 
                         "AzureWebJobsDashboard": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'),';AccountKey=',listkeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2015-05-01-preview').key1,';')]", 
-                        "FUNCTIONS_EXTENSION_VERSION": "latest"
+                        "FUNCTIONS_EXTENSION_VERSION": "~1"
                     }
                 }
 			]

@@ -1,0 +1,264 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "existingRdshCollectionName": {
+            "type": "string",
+            "defaultValue": "Desktop Collection",
+            "metadata": {
+                "description": "Name of the RDSH collection to update"
+            }
+        },
+        "rdshTemplateImageUri": {
+            "type": "string",
+            "metadata": {
+                "description": "URI for the template VHD to use for RDSH instances. For example, https://rdsstorage.blob.core.windows.net/vhds/MyWindowServerOSImage.vhd"
+            }
+        },
+        "rdshUpdateIteration": {
+            "type": "string",
+            "metadata": {
+                "description": "A unique designator representing update iteration; newly created RDSH instances will have their names in the form: 'rdsh-&lt;index&gt;&lt;iteration&gt;"
+            }
+        },
+        "rdshNumberOfInstances": {
+            "type": "int",
+            "defaultValue": 2,
+            "metadata": {
+                "description": "Number of RD Session Hosts"
+            }
+        },
+        "rdshVmSize": {
+            "type": "string",
+            "metadata": {
+                "description": "The size of the RDSH virtual machines"
+            },
+            "defaultValue": "Standard_A2"
+        },
+        "userLogoffTimeoutInMinutes": {
+            "type": "int",
+            "defaultValue": 60,
+            "metadata": {
+                "description": "Timeout before forced user logoff from old RDSH instances"
+            }
+        },
+        "existingDomainName": {
+            "type": "string",
+            "metadata": {
+                "description": "Domain name of the exisiting RDS deployment"
+            }
+        },
+        "existingAdminUsername": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of administrator in the existing RDS deployment"
+            }
+        },
+        "existingAdminPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Domain administrator password"
+            }
+        },
+        "existingVnetName": {
+            "type": "string",
+            "defaultValue": "vnet",
+            "metadata": {
+                "description": "VNET name"
+            }
+        },
+        "existingSubnetName": {
+            "type": "string",
+            "defaultValue": "Subnet",
+            "metadata": {
+                "description": "Subnet name"
+            }
+        },
+        "availabilitySet": {
+            "type": "string",
+            "defaultValue": "rdsh-availabilityset",
+            "metadata": {
+                "description": "Availability set for new RDSH instances"
+            }
+        },
+        "_artifactsLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+            },
+            "defaultValue": "https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/rds-update-rdsh-collection/"
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+            },
+            "defaultValue": ""
+        }
+
+    },
+
+    "variables": {
+        "iteration": "[toLower(parameters('rdshUpdateIteration'))]",
+        "storageAccountName": "[split( split( parameters('rdshTemplateImageUri'), '/')[2], '.' )[0]]",
+        "impersonateScript": "https://gallery.technet.microsoft.com/scriptcenter/Impersonate-a-User-9bfeff82/file/127189/1/New-ImpersonateUser.ps1",
+        "p": {
+            "domain": "[concat(' -domain ', parameters('existingDomainName'))]",
+            "user": "[concat(' -username ', parameters('existingAdminUsername'))]",
+            "pwd": "[concat(' -password ', parameters('existingAdminPassword'))]",
+            "collection": "[concat(' -collection \"', parameters('existingRdshCollectionName'), '\"')]",
+            "iteration": "[concat(' -iteration ', toLower(parameters('rdshUpdateIteration')))]",
+            "servers": "[concat(' -nServers ', parameters('rdshNumberOfInstances'))]",
+            "timeout": "[concat(' -nTimeoutMinutes ', parameters('userLogoffTimeoutInMinutes'))]"
+        },
+        "scriptParameters": "[concat(variables('p').domain, variables('p').user, variables('p').pwd, variables('p').collection, variables('p').iteration, variables('p').servers, variables('p').timeout)]",
+        "scriptFolder": "Scripts",
+        "scriptFileName":  "Script.ps1"
+    },
+
+    "resources": [
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[concat('rdsh-', copyindex(),variables('iteration'), '-nic')]",
+            "location": "[resourceGroup().location]",
+            "copy": {
+                "name": "rdsh-nic-loop",
+                "count": "[parameters('rdshNumberOfInstances')]"
+            },
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('existingVnetName'), parameters('existingSubnetName'))]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Compute/availabilitySets",
+            "name": "[parameters('availabilitySet')]",
+            "location": "[resourceGroup().location]"
+        },
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[concat('rdsh-', copyindex(),variables('iteration'))]",
+            "location": "[resourceGroup().location]",
+            "copy": {
+                "name": "rdsh-vm-loop",
+                "count": "[parameters('rdshNumberOfInstances')]"
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkInterfaces/', 'rdsh-', copyindex(),variables('iteration'), '-nic')]"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('rdshVmSize')]"
+                },
+                "availabilitySet": {
+                    "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySet'))]"
+                },
+                "osProfile": {
+                    "computerName": "[concat('rdsh-', copyindex(),variables('iteration'))]",
+                    "adminUsername": "[parameters('existingAdminUsername')]",
+                    "adminPassword": "[parameters('existingAdminPassword')]"
+                },
+                "storageProfile": {
+                    "osDisk": {
+                        "name": "[concat('rdsh-', copyindex(),variables('iteration'),'-osDisk')]",
+                        "osType": "Windows",
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage",
+                        "image": {
+                            "uri": "[parameters('rdshTemplateImageUri')]"
+                        },
+                        "vhd": {
+                            "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2016-01-01').primaryEndpoints.blob, 'vhds/rdsh-', copyindex(), variables('iteration'), '-osdisk.vhd')]"
+                        }
+
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces',concat('rdsh-', copyindex(),variables('iteration'), '-nic'))]"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": "true",
+                        "storageUri": "[reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2016-01-01').primaryEndpoints.blob]"
+                    }
+                }
+            },
+            "resources": [
+                {
+                    "apiVersion": "2015-06-15",
+                    "type": "Microsoft.Compute/virtualMachines/extensions",
+                    "name": "[concat('rdsh-',copyindex(),variables('iteration'),'/sessionhost')]",
+                    "location": "[resourceGroup().location]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Compute/virtualMachines', concat('rdsh-', copyindex(),variables('iteration')))]"
+                    ],
+                    "properties": {
+                        "publisher": "Microsoft.Powershell",
+                        "type": "DSC",
+                        "typeHandlerVersion": "2.11",
+                        "autoUpgradeMinorVersion": true,
+                        "settings": {
+                            "ModulesUrl": "[concat(parameters('_artifactsLocation'),'/DSC/Configuration.zip', parameters('_artifactsLocationSasToken'))]",
+                            "ConfigurationFunction": "Configuration.ps1\\SessionHost",
+                            "Properties": {
+                                "DomainName": "[parameters('existingDomainName')]",
+                                "AdminCreds": {
+                                    "UserName": "[parameters('existingAdminUsername')]",
+                                    "Password": "PrivateSettingsRef:AdminPassword"
+                                }
+                            }
+                        },
+                        "protectedSettings": {
+                            "Items": {
+                                "AdminPassword": "[parameters('existingAdminPassword')]"
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "cb-vm/customscript",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "rdsh-vm-loop"
+            ],
+            "tags": {
+                "displayName": "script"
+            },
+            "properties": {
+                "publisher": "Microsoft.Compute",
+                "type": "CustomScriptExtension",
+                "typeHandlerVersion": "1.8",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "fileUris": [
+                        "[variables('impersonateScript')]",
+                        "[concat(parameters('_artifactsLocation'), '/', variables('scriptFolder'), '/', variables('scriptFileName'), parameters('_artifactsLocationSasToken'))]"
+                    ]
+                },
+                "protectedSettings": {
+                    "commandToExecute": "[concat( 'powershell -noninteractive -executionpolicy bypass -file ', variables('scriptFileName'), variables('scriptParameters'), ' >> script.log 2>&1' )]"
+                }
+            }
+        }
+    ]
+}

@@ -15,7 +15,7 @@ The template creates the following deployment resources:
 * Public IP address (named publicip) for accessing the Apache web server and the hosted PHP test page
 * Network Interface Card (NIC) for Apache web (named nicapache)
 * Multiple Network Interface Cards (NICs) for memcached servers (named memcachednic0, memcachednic1, etc.)
-* One remotely-hosted CustomScriptForLinux (install_apache.sh with passed in parameters) extension to install Apache, PHP5, memcached PHP extension, and the index.php test page on the Apache VM
-* Multiple remotely-hosted CustomScriptForLinux (install_memcached.sh with passed in parameters) extensions to install and configure the memcached service on each of the numberOfMemcachedInstances VMs
+* One remotely-hosted CustomScript (install_apache.sh with passed in parameters) extension to install Apache, PHP5, memcached PHP extension, and the index.php test page on the Apache VM
+* Multiple remotely-hosted CustomScript (install_memcached.sh with passed in parameters) extensions to install and configure the memcached service on each of the numberOfMemcachedInstances VMs
 
 NOTE: In the current version of the template, Apache test page is dynamically configured with the IP addresses of the memcached servers by assuming that they are always deployed into an empty Subnet-Memcached and that the first server is at x.x.x.4, second at x.x.x.5, third at x.x.x.6, etc. IP addresses.

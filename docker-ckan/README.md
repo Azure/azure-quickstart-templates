@@ -24,4 +24,4 @@ about this deployment method.
 
 [ext]: https://github.com/Azure/azure-docker-extension
 [compose]: https://docs.docker.com/compose
-[ckan_install_docs]: http://docs.ckan.org/en/latest/maintaining/installing/install-using-docker.html
+[ckan_install_docs]: http://docs.ckan.org/en/latest/maintaining/installing/index.html?highlight=docker

@@ -51,7 +51,7 @@
       "type": "int",
       "defaultValue": 2,
       "metadata": {
-        "description": "Number of RDSH instances"
+        "description": "Number of RD Gateway instances"
       }
     },
     "brokerServer": {
@@ -82,30 +82,42 @@
       "type": "string",
       "allowedValues": [
         "2012-R2-Datacenter",
-        "Windows-Server-Technical-Preview"
+        "2016-Datacenter"
       ],
       "metadata": {
         "description": "Windows server SKU"
       },
-      "defaultValue": "2012-R2-Datacenter"
+      "defaultValue": "2016-Datacenter"
     },
-    "rdshVmSize": {
+    "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_D2",
+      "defaultValue": "Standard_A2",
       "metadata": {
-        "description": "The size of the RDSH VMs"
+        "description": "Size for the new RD Gateway VMs"
       }
+    },
+    "existingVnet": {
+      "type": "string",
+      "metadata": {
+        "description": "The vnet name of AD domain. For example johnvnet1"
+      },
+      "defaultValue": "vnet"
+    },
+    "existingSubnet": {
+      "type": "string",
+      "metadata": {
+        "description": "The subnet name of AD domain. For example johnsubnet1"
+      },
+      "defaultValue": "Subnet"
     }
   },
   "variables": {
     "imagePublisher": "MicrosoftWindowsServer",
     "imageOffer": "WindowsServer",
-    "imageSKU": "2012-R2-Datacenter",
     "vnetAddressRange": "10.0.0.0/16",
     "subnetAddressRange": "10.0.0.0/24",
     "dnsServerPrivateIp": "10.0.0.8",
-    "subnetName": "Subnet",
-    "subnet-id": "[concat(resourceId('Microsoft.Network/virtualNetworks','vnet'),'/subnets/',variables('subnetName'))]",
+    "subnet-id": "[concat(resourceId('Microsoft.Network/virtualNetworks',parameters('existingVnet')),'/subnets/',parameters('existingSubnet'))]",
     "publicIpRef": "publicIp",
     "assetLocation": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/rds-deployment",
     "apiVersion": "2015-06-15",
@@ -113,7 +125,7 @@
   },
   "resources": [
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[parameters('storageAccountName')]",
       "location": "[resourceGroup().location]",
@@ -122,13 +134,13 @@
       }
     },
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[Parameters('gw-availabilityset')]",
       "location": "[resourceGroup().location]"
     },
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIpRef')]",
       "location": "[resourceGroup().location]",
@@ -140,7 +152,7 @@
       }
     },
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/loadBalancers",
       "name": "[Parameters('Loadbalancer')]",
       "location": "[resourceGroup().location]",
@@ -163,7 +175,6 @@
             "name": "[parameters('backendAddressPools')]"
           }
         ],
-
         "loadBalancingRules": [
           {
             "name": "LBRule01",
@@ -226,7 +237,6 @@
             }
           }
         ],
-
         "inboundNatRules": [
           {
             "name": "rdp",
@@ -240,16 +250,14 @@
               "enableFloatingIP": false
             }
           }
-
         ]
-
       }
     },
     {
       "name": "[concat('gw-',copyindex(),'-nic')]",
       "type": "Microsoft.Network/networkInterfaces",
       "location": "[resourceGroup().location]",
-      "apiVersion": "[variables('apiversion')]",
+      "apiVersion": "2017-06-01",
       "copy": {
         "name": "gw-nic-loop",
         "count": "[parameters('numberOfWebGwInstances')]"
@@ -258,7 +266,6 @@
         "Microsoft.Network/loadBalancers/loadBalancer"
       ],
       "properties": {
-
         "ipConfigurations": [
           {
             "name": "ipconfig1",
@@ -272,7 +279,7 @@
                   "id": "[concat(resourceId('Microsoft.Network/loadBalancers','loadBalancer'),'/backendAddressPools/',parameters('backendAddressPools'))]"
                 }
               ],
-              "loadBalancerInboundNatRules": [ ]
+              "loadBalancerInboundNatRules": []
             }
           }
         ]
@@ -282,7 +289,7 @@
       "name": "[concat('gw-vm-',copyindex())]",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[resourceGroup().location]",
-      "apiVersion": "[variables('apiversion')]",
+      "apiVersion": "2015-05-01-preview",
       "copy": {
         "name": "gw-vm-loop",
         "count": "[parameters('numberOfWebGwInstances')]"
@@ -293,9 +300,8 @@
         "[concat('Microsoft.Network/networkInterfaces/gw-',copyindex(),'-nic')]"
       ],
       "properties": {
-
         "hardwareProfile": {
-          "vmSize": "Standard_D2"
+          "vmSize": "[parameters('vmSize')]"
         },
         "availabilitySet": {
           "id": "[resourceId('Microsoft.Compute/availabilitySets', 'gw-availabilityset')]"
@@ -309,7 +315,7 @@
           "imageReference": {
             "publisher": "[variables('imagePublisher')]",
             "offer": "[variables('imageOffer')]",
-            "sku": "[variables('imageSKU')]",
+            "sku": "[parameters('imageSKU')]",
             "version": "latest"
           },
           "osDisk": {
@@ -334,7 +340,7 @@
           "name": "[concat('gw-vm-',copyindex(),'/Gateway')]",
           "type": "Microsoft.Compute/virtualMachines/extensions",
           "location": "[resourceGroup().location]",
-          "apiVersion": "[variables('apiversion')]",
+          "apiVersion": "2015-05-01-preview",
           "dependsOn": [
             "[resourceId('Microsoft.Compute/virtualMachines', Concat('gw-vm-',copyindex()))]"
           ],
@@ -359,14 +365,13 @@
                 "AdminPassword": "[parameters('adminPassword')]"
               }
             }
-
           }
         },
         {
           "name": "[concat('gw-vm-',copyindex(),'/WebAndGwFarmAdd_PostConfig1.1')]",
           "type": "Microsoft.Compute/virtualMachines/extensions",
           "location": "[resourceGroup().location]",
-          "apiVersion": "[variables('apiversion')]",
+          "apiVersion": "2015-05-01-preview",
           "dependsOn": [
             "[resourceId('Microsoft.Compute/virtualMachines', Concat('gw-vm-',copyindex()))]",
             "[concat('Microsoft.Compute/virtualMachines/gw-vm-',copyindex(),'/extensions/','Gateway')]"
@@ -377,22 +382,20 @@
             "typeHandlerVersion": "1.8",
             "autoUpgradeMinorVersion": true,
             "settings": {
-              "fileUris": [ "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/rds-deployment-ha-gateway/Scripts/WebAndGwFarmAdd_PostConfig1.1.ps1" ]
-              
+              "fileUris": [
+                "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/rds-deployment-ha-gateway/Scripts/WebAndGwFarmAdd_PostConfig1.1.ps1"
+              ]
             },
             "protectedSettings": {
-              
-              "Items": { "AdminPassword": "[parameters('adminPassword')]" },
+              "Items": {
+                "AdminPassword": "[parameters('adminPassword')]"
+              },
               "storageAccountName": "[parameters('storageaccountname')]",
               "commandToExecute": "[Concat('powershell.exe -ExecutionPolicy Unrestricted -File', ' ', 'WebAndGwFarmAdd_PostConfig1.1.ps1',' ','-username \"',parameters('adminusername'),'\" ', '-password \"',parameters('adminpassword'),'\" ','-BrokerServer \"',parameters('BrokerServer'),'\" ','-WebURL \"',parameters('WebURL'),'\" ','-Domainname \"',parameters('adDomainName'),'\" ','-DomainNetbios \"',parameters('DomainNetbios'),'\" ','-numberofwebServers ',parameters('numberOfWebGwInstances'))]"
             }
-
           }
         }
-
       ]
-
     }
-
   ]
 }

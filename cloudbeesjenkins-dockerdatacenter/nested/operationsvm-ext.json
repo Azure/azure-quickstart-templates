@@ -1,0 +1,236 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "westus",
+      "metadata": {
+        "description": "VM Deployment Location"
+      }
+    },
+    "tag": {
+      "type": "object",
+      "defaultValue": {
+        "key1": "key",
+        "value1": "value"
+      },
+      "metadata": {
+        "description": "Tag Values"
+      }
+    },
+    "vmName": {
+      "type": "string",
+      "defaultValue": "operations-center",
+      "allowedValues": [
+        "operations-center"
+      ],
+      "metadata": {
+        "description": "Virtual Machine Name"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2",
+      "metadata": {
+        "description": "Virtual Machine Size"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "defaultValue": "sysgain",
+      "metadata": {
+        "description": "Admin Username of Virtual Machine to SSH or RDP"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "defaultValue": "Sysga1n4205!",
+      "metadata": {
+        "description": "SSH key of Virtual Machine"
+      }
+    },
+    "imagePublisher": {
+      "type": "string",
+      "defaultValue": "Canonical",
+      "metadata": {
+        "description": "Virtual Machine Image Publisher"
+      }
+    },
+    "imageOffer": {
+      "type": "string",
+      "defaultValue": "UbuntuServer",
+      "metadata": {
+        "description": "Virtual Machine Image Offer"
+      }
+    },
+    "imageSKU": {
+      "type": "string",
+      "defaultValue": "14.04.2-LTS",
+      "metadata": {
+        "description": "Virtual Machine Image SKU"
+      }
+    },
+    "imageVersion": {
+      "type": "string",
+      "defaultValue": "latest",
+      "metadata": {
+        "description": "Virtual Machine Image Version"
+      }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "defaultValue": "storageAccountName",
+      "metadata": {
+        "description": "Storage Account Name"
+      }
+    },
+    "jenkinsAdminPassword": {
+      "type": "securestring"
+    },
+    "vmStorageAccountContainerName": {
+      "type": "string",
+      "defaultValue": "vhds",
+      "metadata": {
+        "description": "Container name in the storage account"
+      }
+    },
+    "networkInterfaceName": {
+      "type": "string",
+      "defaultValue": "networkInterfaceName",
+      "metadata": {
+        "description": "Network Interface Name"
+      }
+    },
+    "mastersProperty": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "executorsProperty": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "templateBaseUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "Base URL for Marketplace"
+      },
+      "defaultValue": "https://gallery.azure.com/artifact/20151001/cloudbees.jenkins-platformjenkins-platform.1.0.10/Artifacts"
+    },
+    "size": {
+      "type": "string",
+      "defaultValue": "Solo",
+      "allowedValues": [
+        "Solo",
+        "Project",
+        "Team",
+        "Workgroup",
+        "Pro"
+      ],
+      "metadata": {
+        "description": "Size of your CloudBees Jenkins Platform deployment."
+      }
+    },
+    "FQdns": {
+      "type": "string"
+    },
+    "subscription": {
+      "type": "string"
+    },
+    "mastersCount": {
+      "type": "int",
+      "defaultValue": 1
+    },
+    "dockerTags": {
+      "type": "object"
+    },
+    "cloudbeesTags": {
+      "type": "object"
+    },
+    "quickstartTags": {
+       "type": "object"
+    }
+  },
+    "variables": {},
+    "resources": [
+        {
+            "apiVersion": "2016-03-30",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[parameters('vmName')]",
+            "location": "[parameters('location')]",
+            "tags": {
+                "[parameters('tag').key1]": "[parameters('tag').value1]",
+                "quickstartName":"[parameters('quickstartTags').name]",
+                "provider":"[parameters('dockerTags').provider]"
+            },
+            "plan": {
+                "name": "[parameters('imageSku')]",
+                "publisher": "[parameters('imagePublisher')]",
+                "product": "[parameters('imageOffer')]"
+            },
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('vmSize')]"
+                },
+                "osProfile": {
+                    "computerName": "[parameters('vmName')]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]",
+                    "linuxConfiguration": {},
+                    "customData": "[base64(concat(parameters('mastersProperty'), '\n', parameters('executorsProperty')))]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[parameters('imagePublisher')]",
+                        "offer": "[parameters('imageOffer')]",
+                        "sku": "[parameters('Imagesku')]",
+                        "version": "[parameters('imageVersion')]"
+                    },
+                    "osDisk": {
+                        "name": "osdisk",
+                        "vhd": {
+                            "uri": "[concat('http://', parameters('storageAccountName'), '.blob.core.windows.net/',parameters('vmStorageAccountContainerName'),'/', parameters('vmName'),'-osdisk.vhd')]"
+                        },
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaceName'))]"
+                        }
+                    ]
+                }
+            },
+            "resources": [
+                {
+                    "apiVersion": "2016-03-30",
+                    "type": "Microsoft.Compute/virtualMachines/extensions",
+                    "name": "operations-center/CustomScript",
+                    "location": "[parameters('location')]",
+                    "tags": {
+                        "[parameters('tag').key1]": "[parameters('tag').value1]",
+                        "quickstartName":"[parameters('quickstartTags').name]",
+                        "provider":"[parameters('dockerTags').provider]"
+                    },
+                    "dependsOn": [
+                        "Microsoft.Compute/virtualMachines/operations-center"
+                    ],
+                    "properties": {
+                        "publisher": "Microsoft.OSTCExtensions",
+                        "type": "CustomScriptForLinux",
+                        "typeHandlerVersion": "1.5",
+                        "autoUpgradeMinorVersion": true,
+                        "settings": {
+                            "fileUris": [
+                                "[concat(parameters('templateBaseUrl'), '/setup-operations-center.sh')]"
+                            ],
+                            "commandToExecute": "[concat('bash setup-operations-center.sh ', parameters('mastersCount'), ' ', parameters('FQdns'), ' ', base64(parameters('jenkinsAdminPassword')), ' ', parameters('templateBaseUrl'), ' ', parameters('subscription'), ' ', parameters('size'))]"
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}

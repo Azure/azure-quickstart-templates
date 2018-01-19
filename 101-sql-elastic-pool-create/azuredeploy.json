@@ -1,0 +1,139 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"administratorLogin": {
+			"type": "string",
+			"metadata": {
+				"description": "The SQL Server administrator login"
+			}
+		},
+		"administratorLoginPassword": {
+			"type": "securestring",
+			"metadata": {
+				"description": "The SQL Server administrator login password."
+			}
+		},
+		"serverName": {
+			"type": "string",
+			"metadata": {
+				"description": "The SQL Server name."
+			}
+		},
+		"elasticPoolName": {
+			"type": "string",
+			"metadata": {
+				"description": "The Elastic Pool name."
+			}
+		},
+		"edition": {
+			"type": "string",
+			"defaultValue": "Standard",
+			"allowedValues": [
+				"Basic",
+				"Standard",
+				"Premium"
+			],
+			"metadata": {
+				"description": "The Elastic Pool edition."
+			}
+		},
+		"poolDtu": {
+			"type": "int",
+			"metadata": {
+				"description": "The Elastic Pool DTU."
+			}
+		},
+		"databaseDtuMin": {
+			"type": "int",
+			"defaultValue": 0,
+			"metadata": {
+				"description": "The Elastic Pool database DTU min."
+			}
+		},
+		"databaseDtuMax": {
+			"type": "int",
+			"metadata": {
+				"description": "The Elastic Pool database DTU max."
+			}
+		},
+		"databasesNames": {
+			"type": "array",
+			"defaultValue": [
+				"db1",
+				"db2"
+			],
+			"metadata": {
+				"description": "The SQL Databases names."
+			}
+		},
+		"databaseCollation": {
+			"type": "string",
+			"defaultValue": "SQL_Latin1_General_CP1_CI_AS",
+			"metadata": {
+				"description": "The SQL Database collation."
+			}
+		}
+	},
+	"variables": {},
+	"resources": [
+		{
+			"apiVersion": "2014-04-01-preview",
+			"location": "[resourceGroup().location]",
+			"name": "[parameters('serverName')]",
+			"properties": {
+				"administratorLogin": "[parameters('administratorLogin')]",
+				"administratorLoginPassword": "[parameters('administratorLoginPassword')]",
+				"version": "12.0"
+			},
+			"type": "Microsoft.Sql/servers"
+		},
+		{
+			"apiVersion": "2014-04-01-preview",
+			"dependsOn": [
+				"[concat('Microsoft.Sql/servers/', parameters('serverName'))]"
+			],
+			"location": "[resourceGroup().location]",
+			"name": "[concat(parameters('serverName'), '/', parameters('elasticPoolName'))]",
+			"properties": {
+				"edition": "[parameters('edition')]",
+				"dtu": "[parameters('poolDtu')]",
+				"databaseDtuMin": "[parameters('databaseDtuMin')]",
+				"databaseDtuMax": "[parameters('databaseDtuMax')]"
+			},
+			"type": "Microsoft.Sql/servers/elasticpools"
+		},
+		{
+			"type": "Microsoft.Sql/servers/databases",
+			"name": "[concat(parameters('serverName'), '/', parameters('databasesNames')[copyIndex()])]",
+			"location": "[resourceGroup().location]",
+			"apiVersion": "2014-04-01-preview",
+			"dependsOn": [
+				"[concat('Microsoft.Sql/servers/', parameters('serverName'))]",
+				"[concat('Microsoft.Sql/servers/', parameters('serverName') ,'/elasticpools/', parameters('elasticPoolName'))]"
+			],
+			"properties": {
+				"collation": "[parameters('databaseCollation')]",
+				"requestedServiceObjectiveName": "ElasticPool",
+				"elasticPoolName": "[parameters('elasticPoolName')]"
+			},
+			"copy": {
+				"name": "addDatabasesInElasticPool",
+				"count": "[length(parameters('databasesNames'))]"
+			}
+		},
+		{
+			"apiVersion": "2014-04-01-preview",
+			"dependsOn": [
+				"[concat('Microsoft.Sql/servers/', parameters('serverName'))]"
+			],
+			"location": "[resourceGroup().location]",
+			"name": "[concat(parameters('serverName'), '/', 'AllowAllWindowsAzureIps')]",
+			"properties": {
+				"endIpAddress": "0.0.0.0",
+				"startIpAddress": "0.0.0.0"
+			},
+			"type": "Microsoft.Sql/servers/firewallrules"
+		}
+	]
+}

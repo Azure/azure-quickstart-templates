@@ -1,0 +1,266 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "clusterType": {
+      "type": "string",
+      "allowedValues": [
+        "hadoop",
+        "hbase",
+        "storm",
+        "spark"
+      ],
+      "metadata": {
+        "description": "The type of the HDInsight cluster to create."
+      }
+    },
+    "clusterName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the HDInsight cluster to create."
+      }
+    },
+    "clusterLoginUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "These credentials can be used to submit jobs to the cluster and to log into cluster dashboards."
+      }
+    },
+    "clusterLoginPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The password must be at least 10 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter."
+      }
+    },
+    "sshUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "These credentials can be used to remotely access the cluster."
+      }
+    },
+    "sshPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The password must be at least 10 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter."
+      }
+    },
+    "clusterWorkerNodeCount": {
+      "type": "int",
+      "defaultValue": 2,
+      "metadata": {
+        "description": "The number of nodes in the HDInsight cluster."
+      }
+    },
+    "storageAccount": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the storage account to use"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "westus",
+      "allowedValues": [
+        "westus",
+        "eastus",
+        "centralus"
+      ],
+      "metadata": {
+        "description": "Location where all the resources will be deployed"
+      }
+    },
+    "clusterVNetName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the VirtualNetwork that the cluster need to bind to"
+      }
+    },
+    "clusterVnetAddressSpace": {
+      "type": "string",
+      "metadata": {
+        "description": "The VNet subnet CIDR start address"
+      }
+    },
+    "clusterVNetSubnetAddressRange": {
+      "type": "string",
+      "metadata": {
+        "description": "The VNet subnet CIDR address range"
+      }
+    },
+    "clusterVNetSubnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "The VNet subnet Name of the HD cluster"
+      }
+    },
+    "datameerTags": {
+        "type": "object"
+    },
+    "trendmicroTags": {
+        "type": "object"
+    },
+    "chefSoftwareTags": {
+        "type": "object"
+    },
+    "quickstartTags": {
+        "type": "object"
+    }
+  },
+  "variables": {
+    "storageAccountName": "[parameters('storageAccount')]",
+    "defaultApiVersion": "2015-05-01-preview",
+    "clusterApiVersion": "2015-03-01-preview",
+    "clusterVNetName": "[parameters('clusterVNetName')]",
+    "clusterVNetSubnetName": "[parameters('clusterVNetSubnetName')]",
+    "clusterVnetAddressSpace": "[parameters('clusterVnetAddressSpace')]",
+    "clusterVNetSubnetAddressRange": "[parameters('clusterVNetSubnetAddressRange')]"
+  },
+  "resources": [
+    {
+      "name": "[parameters('storageAccount')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "location": "[parameters('location')]",
+      "apiVersion": "[variables('defaultApiVersion')]",
+      "tags": {
+         "quickstartName": "[parameters('quickstartTags').name]",
+         "provider": "[parameters('datameerTags').provider]"
+      },
+      "dependsOn": [],
+      "properties": {
+        "accountType": "Standard_LRS"
+      }
+    },
+    {
+      "name": "[parameters('clusterName')]",
+      "type": "Microsoft.HDInsight/clusters",
+      "location": "[parameters('location')]",
+      "apiVersion": "[variables('clusterApiVersion')]",
+      "tags": {
+         "quickstartName": "[parameters('quickstartTags').name]",
+         "provider": "[parameters('datameerTags').provider]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/',variables('storageAccountName'))]"
+      ],
+      "properties": {
+        "clusterVersion": "3.2",
+        "osType": "Linux",
+        "clusterDefinition": {
+          "kind": "[parameters('clusterType')]",
+          "configurations": {
+            "gateway": {
+              "restAuthCredential.isEnabled": true,
+              "restAuthCredential.username": "[parameters('clusterLoginUserName')]",
+              "restAuthCredential.password": "[parameters('clusterLoginPassword')]"
+            }
+          }
+        },
+        "storageProfile": {
+          "storageaccounts": [
+            {
+              "name": "[replace(replace(concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), variables('defaultApiVersion')).primaryEndpoints.blob),'https:',''),'/','')]",
+              "isDefault": true,
+              "container": "[parameters('clusterName')]",
+              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), variables('defaultApiVersion')).key1]"
+            }
+          ]
+        },
+        "computeProfile": {
+          "roles": [
+            {
+              "name": "headnode",
+              "targetInstanceCount": "2",
+              "hardwareProfile": {
+                "vmSize": "Standard_D3_V2"
+              },
+              "osProfile": {
+                "linuxOperatingSystemProfile": {
+                  "username": "[parameters('sshUserName')]",
+                  "password": "[parameters('sshPassword')]"
+                }
+              },
+              "virtualNetworkProfile": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName'))]",
+                "subnet": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName')), '/subnets/', variables('clusterVNetSubnetName'))]"
+              },
+              "scriptActions": []
+            },
+            {
+              "name": "workernode",
+              "targetInstanceCount": "[parameters('clusterWorkerNodeCount')]",
+              "hardwareProfile": {
+                "vmSize": "Standard_D3_V2"
+              },
+              "osProfile": {
+                "linuxOperatingSystemProfile": {
+                  "username": "[parameters('sshUserName')]",
+                  "password": "[parameters('sshPassword')]"
+                }
+              },
+              "virtualNetworkProfile": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName'))]",
+                "subnet": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName')), '/subnets/', variables('clusterVNetSubnetName'))]"
+              },
+              "scriptActions": []
+            },
+            {
+              "name": "zookeepernode",
+              //"minInstanceCount": 1,
+              "targetInstanceCount": 3,
+              "hardwareProfile": {
+                "vmSize": "Small"
+              },
+              "osProfile": {
+                "linuxOperatingSystemProfile": {
+                  "username": "[parameters('sshUserName')]",
+                  "password": "[parameters('sshPassword')]"
+                }
+              },
+              "virtualNetworkProfile": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName'))]",
+                "subnet": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName')), '/subnets/', variables('clusterVNetSubnetName'))]"
+              },
+              "scriptActions": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "datameerdatameer_2016-08-12T19.37.23.326Z",
+      "apiVersion": "2015-01-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "https://gallery.azure.com/artifact/20151001/datameer.datameerdatameer.1.0.2/Artifacts/mainTemplate.json",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "clusterName": {
+            "value": "[parameters('clusterName')]"
+          },
+          "galleryPackageIdentity": {
+            "value": "datameer.datameerdatameer.1.0.2"
+          },
+          "edgeNodeSize": {
+            "value": "STANDARD_D3_V2"
+          }
+        }
+      },
+      "dependsOn": [
+        "[concat('Microsoft.HDInsight/clusters/', parameters('clusterName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "cluster": {
+      "type": "object",
+      "value": "[reference(resourceId('Microsoft.HDInsight/clusters',parameters('clusterName')))]"
+    },
+    "datameerAppURL": {
+      "type": "string",
+      "value": "[concat('https://',parameters('clusterName'),'-dtu.apps.azurehdinsight.net:443')]"
+    }
+  }
+}

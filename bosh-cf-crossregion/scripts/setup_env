@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+
+echo "Start to update package lists from repositories..."
+n=0
+max=10
+interval=30
+until [ $n -ge $max ]
+do
+  apt-get update && break
+  n=$[$n+1]
+  echo "Failed to update package lists. Sleep $interval seconds and retry #$n ..."
+  sleep $interval
+done
+if [ $n -ge $max ]; then
+  echo "Failed to update package lists with retrying $max times"
+  exit 1
+fi
+
+set -e
+
+apt-get -y install python-pip jq
+pip install msrest msrestazure azure==2.0.0rc1 azure-storage netaddr
+
+seq_no=$(cat ../../mrseq)
+custom_script_config_file="../../config/${seq_no}.settings"
+settings=$(cat $custom_script_config_file | jq '.runtimeSettings[0].handlerSettings.publicSettings' -r)
+tenant_id=$1
+client_id=$2
+client_secret=$3
+
+function get_setting() {
+  key=$1
+  local value=$(echo $settings | jq ".$key" -r)
+  echo $value
+}
+
+username=$(get_setting ADMIN_USER_NAME)
+home_dir="/home/$username"
+
+# Generate SSH key pair for BOSH
+bosh_key="bosh"
+ssh-keygen -t rsa -f $bosh_key -P "" -C ""
+chmod 400 $bosh_key
+cp $bosh_key $home_dir
+cp "$bosh_key.pub" $home_dir
+
+# Generate SSL certificate for cloud foundry
+chmod +x create_cert.sh
+cf_key="cloudfoundry.key"
+cf_cert="cloudfoundry.cert"
+./create_cert.sh $cf_key $cf_cert
+
+bosh_director_ip=$(python setup_env.py ${tenant_id} ${client_id} ${client_secret} ${custom_script_config_file})
+
+# For backward compatibility
+sed -i "s/CLOUD_FOUNDRY_PUBLIC_IP/cf-ip/g" settings
+cp settings $home_dir
+
+sed -i "s/REPLACE_WITH_BOSH_DIRECOT_IP/$bosh_director_ip/g" deploy_bosh.sh
+chmod +x deploy_bosh.sh
+cp deploy_bosh.sh $home_dir
+cp bosh.yml $home_dir
+
+chmod +x deploy_cloudfoundry.sh
+cp deploy_cloudfoundry.sh $home_dir
+example_manifests="$home_dir/example_manifests"
+mkdir -p $example_manifests
+cp cross.yml $example_manifests
+
+cp cf* $home_dir
+environment=$(get_setting ENVIRONMENT)
+bosh_init_url=$(get_setting BOSH_INIT_URL)
+install_log="$home_dir/install.log"
+chmod +x init.sh
+./init.sh $environment $bosh_init_url >$install_log 2>&1
+
+chown -R $username $home_dir
+
+auto_deploy_bosh=$(get_setting AUTO_DEPLOY_BOSH)
+if [ "$auto_deploy_bosh" != "enabled" ]; then
+  exit 0
+fi
+
+su -c "./deploy_bosh.sh" - $username

@@ -1,76 +1,80 @@
-﻿{
-  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "parameters": {},
   "variables": {
-    "cdnApiVersion":"2015-06-01",
-    "storageApiVersion":"2015-06-15"
-  },
-  "parameters": {
-    "storageAccountName": {
-      "type": "string",
-      "metadata": {
-        "description": "Name of the Storage Account"
-      }
-    },
-    "profileName": {
-      "type": "string",
-      "metadata": {
-        "description": "Name of the CDN Profile"
-      }
-    },
-    "endpointName": {
-      "type": "string",
-      "metadata": {
-        "description": "Name of the CDN Endpoint"
-      }
-    }
+    "storageAccountName": "[concat('storage', uniqueString(resourceGroup().id))]",
+    "endpointName": "[concat('endpoint-', uniqueString(resourceGroup().id))]",
+    "profileName": "CdnProfile1"
   },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[parameters('storageAccountName')]",
-      "apiVersion": "[variables('storageApiVersion')]",
+      "name": "[variables('storageAccountName')]",
+      "apiVersion": "2016-01-01",
       "location": "[resourceGroup().location]",
-      "properties": {
-        "accountType": "Standard_LRS"
-      }
+      "tags": {
+        "displayName": "[variables('storageAccountName')]"
+      },
+      "kind": "Storage",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "properties": {}
     },
     {
-      "name": "[parameters('profileName')]",
+      "name": "[variables('profileName')]",
       "type": "Microsoft.Cdn/profiles",
       "location": "[resourceGroup().location]",
-      "apiVersion": "[variables('cdnApiVersion')]",
-      "properties": {
-        "sku": {
-          "name": "Standard"
-        }
-      }
-    },
-    {
-      "apiVersion": "[variables('cdnApiVersion')]",
-      "dependsOn": [
-        "[concat('Microsoft.Cdn/profiles/', parameters('profileName'))]",
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]"
-      ],
-      "location": "[resourceGroup().location]",
-      "name": "[concat(parameters('profileName'),'/',parameters('endpointName'))]",
-      "type": "Microsoft.Cdn/profiles/endpoints",
-      "properties": {
-        "originHostHeader": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')),'2015-06-15' ).primaryEndpoints.blob,'https://',''),'/','')]",
-        "isHttpAllowed": true,
-        "isHttpsAllowed": true,
-        "queryStringCachingBehavior": "IgnoreQueryString",
-        "contentTypesToCompress": [ "text/plain", "text/html", "text/css", "application/x-javascript", "text/javascript" ],
-        "isCompressionEnabled": "True",
-        "origins": [
-          {
-            "name": "origin1",
-            "properties": {
-              "hostName": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')),'2015-06-15' ).primaryEndpoints.blob,'https://',''),'/','')]"
-            }
+      "apiVersion": "2016-04-02",
+      "tags": {
+        "displayName": "[variables('profileName')]"
+      },
+      "sku": {
+        "name": "Standard_Akamai"
+      },
+      "properties": {},
+      "resources": [
+        {
+          "apiVersion": "2016-04-02",
+          "name": "[variables('endpointName')]",
+          "type": "endpoints",
+          "dependsOn": [
+            "[variables('profileName')]",
+            "[variables('storageAccountName')]"
+          ],
+          "location": "[resourceGroup().location]",
+          "tags": {
+            "displayName": "[variables('endpointName')]"
+          },
+          "properties": {
+            "originHostHeader": "[replace(replace(reference(variables('storageAccountName')).primaryEndpoints.blob,'https://',''),'/','')]",
+            "isHttpAllowed": true,
+            "isHttpsAllowed": true,
+            "queryStringCachingBehavior": "IgnoreQueryString",
+            "contentTypesToCompress": [ "text/plain", "text/html", "text/css", "application/x-javascript", "text/javascript" ],
+            "isCompressionEnabled": true,
+            "origins": [
+              {
+                "name": "origin1",
+                "properties": {
+                  "hostName": "[replace(replace(reference(variables('storageAccountName')).primaryEndpoints.blob,'https://',''),'/','')]"
+                }
+              }
+            ]
           }
-        ]
-      }
+        }
+      ]
     }
-  ]
+  ],
+  "outputs": {
+    "hostName": {
+      "type": "string",
+      "value": "[reference(variables('endpointName')).hostName]"
+    },
+    "originHostHeader": {
+      "type": "string",
+      "value": "[reference(variables('endpointName')).originHostHeader]"
+    }
+  }
 }

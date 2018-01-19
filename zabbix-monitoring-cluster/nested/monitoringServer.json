@@ -1,0 +1,252 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "existingStorageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "The existing Storage account for storing VM vhd."
+      }
+    },
+    "existingVirtualNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "The existing vnet name the monitor VM connects to."
+      }
+    },
+    "existingSubnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "The existing subnet name the monitor VM connects to, also agents will also be installed on those VMs."
+      },
+      "defaultValue": "default"
+    },
+    "vmName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name for the monitor VM. This would become part of the fully qualified domain name for monitor VM, thus it should be globally unique."
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "Size for the monitor VM."
+      },
+      "defaultValue": "Standard_DS2"
+    },
+    "vmImageReference": {
+      "type": "object",
+      "metadata": {
+        "description": "Image reference for the monitor VM. Ubuntu-14.04 and CentOS-7 are verified."
+      },
+      "defaultValue": {
+        "publisher": "Canonical",
+        "offer": "UbuntuServer",
+        "sku": "14.04.3-LTS",
+        "version": "latest"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Monitor VM user name."
+      },
+      "defaultValue": "monitoruser"
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Monitor VM password."
+      }
+    },
+    "mysqlHost": {
+      "type": "string",
+      "metadata": {
+        "description": "Monitoring service backend MySQL host. Using 'localhost' here will set up a new MySQL instance on the monitor VM."
+      },
+      "defaultValue": "localhost"
+    },
+    "mysqlDbName": {
+      "type": "string",
+      "metadata": {
+        "description": "Monitoring service backend MySQL database name."
+      },
+      "defaultValue": "zabbixdb"
+    },
+    "mysqlUser": {
+      "type": "string",
+      "metadata": {
+        "description": "Monitoring service backend MySQL user name."
+      },
+      "defaultValue": "zabbixuser"
+    },
+    "mysqlPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Monitoring service backend MySQL password."
+      }
+    },
+    "smtpServer": {
+      "type": "string",
+      "metadata": {
+        "description": "Smtp server, format is server:port."
+      },
+      "defaultValue": ""
+    },
+    "smtpUser": {
+      "type": "string",
+      "metadata": {
+        "description": "Smtp username."
+      },
+      "defaultValue": ""
+    },
+    "smtpPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Smtp password."
+      },
+      "defaultValue": ""
+    },
+    "notificationReceiver": {
+      "type": "string",
+      "metadata": {
+        "description": "Notification receiver's Email."
+      },
+      "defaultValue": ""
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/zabbix-monitoring-cluster"
+    }
+  },
+  "variables": {
+    "location": "[resourceGroup().location]",
+    "imageReference": "[parameters('vmImageReference')]",
+    "OSDiskName": "[concat(parameters('vmName'),'disk')]",
+    "nicName": "[concat(parameters('vmName'),'nic')]",
+    "publicIPAddressName": "[concat(parameters('vmName'),'ip')]",
+    "publicIPAddressType": "Dynamic",
+    "storageAccountName": "[parameters('existingStorageAccountName')]",
+    "vmStorageAccountContainerName": "vhds",
+    "vmName": "[parameters('vmName')]",
+    "vmSize": "[parameters('vmSize')]",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('existingVirtualNetworkName'))]",
+    "subnetRef": "[concat(variables('vnetID'),'/subnets/',parameters('existingSubnetName'))]",
+    "singleQuote": "'"
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[variables('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('vmName')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicName')]",
+      "location": "[variables('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses/',variables('publicIPAddressName'))]"
+              },
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('vmName')]",
+      "location": "[variables('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[concat(variables('vmName'))]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "osDisk": {
+            "vhd": {
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/',variables('storageAccountName')), '2015-06-15').primaryEndpoints.blob,variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
+            },
+            "name": "osdisk",
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          },
+          "imageReference": "[variables('imageReference')]"
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('nicName')))]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "apiVersion": "2015-06-15",
+          "type": "extensions",
+          "name": "configMonitoring",
+          "location": "[variables('location')]",
+          "dependsOn": [
+            "[variables('vmName')]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Azure.Extensions",
+            "type": "CustomScript",
+            "typeHandlerVersion": "2.0",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": [
+                "[concat(parameters('_artifactsLocation'), '/scripts/setup')]",
+                "[concat(parameters('_artifactsLocation'), '/scripts/templateAzureVmLinux.xml')]"
+              ]
+            },
+            "protectedSettings": {
+              "commandToExecute": "[concat('./setup -v server -cserver.mysqlHost=\"', parameters('mysqlHost'),'\" -cserver.mysqlDbName=\"', parameters('mysqlDbName'), '\" -cserver.mysqlUser=\"', parameters('mysqlUser'), '\" -cserver.mysqlPassword=', variables('singleQuote'), parameters('mysqlPassword'), variables('singleQuote'), ' -cserver.smtpServer=\"', parameters('smtpServer'), '\" -cserver.smtpUser=\"', parameters('smtpUser'), '\" -cserver.smtpPassword=', variables('singleQuote'), parameters('smtpPassword'), variables('singleQuote'), ' -cserver.smtpTo=\"', parameters('notificationReceiver'), '\"')]"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": {
+    "serverPublicEndpoint": {
+      "type": "string",
+      "value": "[concat('http://',reference(variables('publicIPAddressName')).dnsSettings.fqdn,'/zab/')]"
+    },
+    "serverInternalIp": {
+      "type": "string",
+      "value": "[reference(variables('nicName')).ipConfigurations[0].properties.privateIPAddress]"
+    }
+  }
+}

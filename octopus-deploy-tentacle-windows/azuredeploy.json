@@ -1,0 +1,335 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmAdminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Admin username for the Virtual Machine."
+      }
+    },
+    "vmAdminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Admin password for the Virtual Machine."
+      }
+    },
+    "vmDnsName": {
+      "type": "string",
+      "metadata": {
+        "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
+      }
+    },
+    "vmSize": {
+      "defaultValue": "Standard_D2_v2",
+      "type": "string",
+      "metadata": {
+        "description": "Size of the Virtual Machine."
+      }
+    },
+    "tentacleOctopusServerUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "The URL of the Octopus Server with which to register."
+      }
+    },
+    "tentacleApiKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The Api Key to use to register the Tentacle with the Octopus Server."
+      }
+    },
+    "tentacleCommunicationMode": {
+      "defaultValue": "Listen",
+      "allowedValues": [
+        "Listen",
+        "Poll"
+      ],
+      "type": "string",
+      "metadata": {
+        "description": "The type of Tentacle - whether the Tentacle listens for requests from the Octopus Server, or actively polls the Octopus Server for requests."
+      }
+    },
+    "tentaclePort": {
+      "defaultValue": 10933,
+      "minValue": 0,
+      "maxValue": 65535,
+      "type": "int",
+      "metadata": {
+        "description": "The port on which the Tentacle should listen, when CommunicationMode is set to Listen, or the port on which to poll the Octopus Server, when CommunicationMode is set to Poll. By default, Tentacle's listen on 10933 and polls the Octopus Server on 10943."
+      }
+    },
+    "tentacleRoles": {
+      "type": "string",
+      "metadata": {
+        "description": "A comma delimited list of Roles to apply to the Tentacle."
+      }
+    },
+    "tentacleEnvironments": {
+      "type": "string",
+      "metadata": {
+        "description": "A comma delimited list of Environments in which the Tentacle should be placed."
+      }
+    },
+    "tentaclePublicHostNameConfiguration": {
+      "defaultValue": "PublicIP",
+      "allowedValues": [
+        "PublicIP",
+        "FQDN",
+        "ComputerName",
+        "Custom"
+      ],
+      "type": "string",
+      "metadata": {
+        "description": "How the Octopus Server should contact the Tentacle. Only required when CommunicationMode is 'Listen'."
+      }
+    },
+    "tentacleCustomPublicHostName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The custom public host name that the Octopus Server should use to contact the Tentacle. Only required when communicationMode is 'Listen' and publicHostNameConfiguration is 'Custom'."
+      }
+    }
+  },
+  "variables": {
+    "namespace": "octopus",
+    "location": "[resourceGroup().location]",
+    "tags": {
+      "vendor": "Octopus Deploy",
+      "description": "Example deployment of Octopus Tentacle to a Windows Server."
+    },
+    "diagnostics": {
+      "storageAccount": {
+        "name": "[concat('diagnostics', uniquestring(resourceGroup().id))]"
+      }
+    },
+    "networkSecurityGroupName": "[concat(variables('namespace'), '-nsg')]",
+    "publicIPAddressName": "[concat(variables('namespace'), '-publicip')]",
+    "vnet": {
+      "name": "[concat(variables('namespace'), '-vnet')]",
+      "addressPrefix": "10.0.0.0/16",
+      "subnet": {
+        "name": "[concat(variables('namespace'), '-subnet')]",
+        "addressPrefix": "10.0.0.0/24"
+      }
+    },
+    "nic": {
+      "name": "[concat(variables('namespace'), '-nic')]",
+      "ipConfigName": "[concat(variables('namespace'), '-ipconfig')]"
+    },
+    "vmName": "[concat(variables('namespace'),'-vm')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2016-01-01",
+      "name": "[variables('diagnostics').storageAccount.name]",
+      "location": "[variables('location')]",
+      "tags": {
+        "vendor": "[variables('tags').vendor]",
+        "description": "[variables('tags').description]"
+      },
+      "kind": "Storage",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2016-03-30",
+      "name": "[variables('networkSecurityGroupName')]",
+      "location": "[variables('location')]",
+      "tags": {
+        "vendor": "[variables('tags').vendor]",
+        "description": "[variables('tags').description]"
+      },
+      "properties": {
+        "securityRules": [
+          {
+            "name": "allow_rdp",
+            "properties": {
+              "description": "Allow inbound RDP",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3389",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 123,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAddressName')]",
+      "apiVersion": "2016-03-30",
+      "location": "[variables('location')]",
+      "tags": {
+        "vendor": "[variables('tags').vendor]",
+        "description": "[variables('tags').description]"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('vmDnsName')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('vnet').name]",
+      "apiVersion": "2016-03-30",
+      "location": "[variables('location')]",
+      "tags": {
+        "vendor": "[variables('tags').vendor]",
+        "description": "[variables('tags').description]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroupName'))]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('vnet').addressPrefix]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('vnet').subnet.name]",
+            "properties": {
+              "addressPrefix": "[variables('vnet').subnet.addressPrefix]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nic').name]",
+      "apiVersion": "2016-03-30",
+      "location": "[variables('location')]",
+      "tags": {
+        "vendor": "[variables('tags').vendor]",
+        "description": "[variables('tags').description]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', variables('vnet').name)]",
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroupName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "[variables('nic').ipConfigName]",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
+              },
+              "subnet": {
+                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('vnet').name), '/subnets/', variables('vnet').subnet.name)]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('vmName')]",
+      "apiVersion": "2016-04-30-preview",
+      "location": "[variables('location')]",
+      "tags": {
+        "vendor": "[variables('tags').vendor]",
+        "description": "[variables('tags').description]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('diagnostics').storageAccount.name)]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nic').name)]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('vmName')]",
+          "adminUsername": "[parameters('vmAdminUsername')]",
+          "adminPassword": "[parameters('vmAdminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "MicrosoftWindowsServer",
+            "offer": "WindowsServer",
+            "sku": "2016-Datacenter",
+            "version": "latest"
+          },
+          "osDisk": {
+            "createOption": "FromImage",
+            "caching": "ReadWrite",
+            "managedDisk": {
+              "storageAccountType": "Standard_LRS"
+            }
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nic').name)]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[concat('http://', variables('diagnostics').storageAccount.name, '.blob.core.windows.net')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('namespace'),'-vm/OctopusDeployWindowsTentacle')]",
+      "apiVersion": "2016-03-30",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "vendor": "[variables('tags').vendor]",
+        "description": "[variables('tags').description]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+      ],
+      "properties": {
+        "publisher": "OctopusDeploy.Tentacle",
+        "type": "OctopusDeployWindowsTentacle",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": "true",
+        "settings": {
+          "OctopusServerUrl": "[parameters('tentacleOctopusServerUrl')]",
+          "Environments": "[split(parameters('tentacleEnvironments'), ',')]",
+          "Roles": "[split(parameters('tentacleRoles'), ',')]",
+          "CommunicationMode": "[parameters('tentacleCommunicationMode')]",
+          "Port": "[parameters('tentaclePort')]",
+          "PublicHostNameConfiguration": "[parameters('tentaclePublicHostNameConfiguration')]",
+          "CustomPublicHostName": "[parameters('tentacleCustomPublicHostName')]"
+        },
+        "protectedSettings": {
+          "ApiKey": "[parameters('tentacleApiKey')]"
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "vmFullyQualifiedDomainName": {
+      "type": "string",
+      "value": "[reference(concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))).dnsSettings.fqdn]"
+    }
+  }
+}

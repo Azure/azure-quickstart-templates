@@ -1,0 +1,210 @@
+{
+	"contentVersion": "1.0.0.0",
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"parameters": {
+		"storageAccountName": {
+			"type": "string",
+			"metadata": {
+				"description": "Name of the Azure Storage"
+			}
+		},
+		"storageAccountKey": {
+			"type": "securestring",
+			"metadata": {
+				"description": "Key associated with the corresponding Azure Storage"
+			}
+		},
+		"SfUserName": {
+			"type": "string",
+			"metadata": {
+				"description": "User Name associated with Salesforce account"
+			}
+		},
+		"SfPassword": {
+			"type": "securestring",
+			"metadata": {
+				"description": "Password associated with the corresponding Salesforce account"
+			}
+		},
+		"SfSecurityToken": {
+			"type": "securestring",
+			"metadata": {
+				"description": "Password associated with the corresponding Salesforce account"
+			}
+		},
+		"SfTable": {
+			"type": "string",
+			"metadata": {
+				"description": "Salesforce Object from where to copy the data from"
+			}
+		}
+	},
+	"variables": {
+		"dataFactoryName": "[concat('SalesforceToAzureBlobDF', uniqueString(resourceGroup().id))]",
+		"apiVersion": "2015-10-01",
+		"SfLinkedServiceName": "SflLinkedService",
+		"storageLinkedServiceName": "StorageLinkedService",
+		"SfDataset": "SfDataset",
+		"StorageDataset": "StorageContainerDataset",
+		"PipelineName": "SftoBlobsCopyPipeline"
+	},
+	"resources": [
+		{
+			"name": "[variables('dataFactoryName')]",
+			"apiVersion": "2015-10-01",
+			"type": "Microsoft.DataFactory/datafactories",
+			"location": "west us",
+			"resources": [
+				{
+					"dependsOn": [
+						"[variables('dataFactoryName')]"
+					],
+					"type": "linkedservices",
+					"name": "[variables('SfLinkedServiceName')]",
+					"apiVersion": "2015-10-01",
+					"properties": {
+						"type": "Salesforce",
+						"description": "SalesForce Linked Service",
+						"typeProperties": {
+							"username": "[parameters('SfUserName')]",
+							"password": "[parameters('SfPassword')]",
+							"securityToken": "[parameters('SfSecurityToken')]"
+						}
+					}
+				},
+				{
+					"type": "linkedservices",
+					"name": "[variables('storageLinkedServiceName')]",
+					"dependsOn": [
+						"[variables('dataFactoryName')]"
+					],
+					"apiVersion": "2015-10-01",
+					"properties": {
+						"type": "AzureStorage",
+						"description": "Azure Blobs Storage Linked Service",
+						"typeProperties": {
+							"connectionString": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storageAccountName'),';AccountKey=',parameters('storageAccountKey'))]"
+						}
+					}
+				},
+				{
+					"dependsOn": [
+						"[variables('dataFactoryName')]",
+						"[variables('SfLinkedServiceName')]"
+					],
+					"type": "datasets",
+					"name": "[variables('SfDataset')]",
+					"apiVersion": "2015-10-01",
+					"properties": {
+						"type": "RelationalTable",
+						"linkedServiceName": "[variables('SfLinkedServiceName')]",
+						"typeProperties": {
+							"tableName": "[parameters('SfTable')]"
+						},
+						"availability": {
+							"frequency": "Day",
+							"interval": 1
+						},
+						"external": true
+					}
+				},
+				{
+					"dependsOn": [
+						"[variables('dataFactoryName')]",
+						"[variables('storageLinkedServiceName')]"
+					],
+					"type": "datasets",
+					"name": "[variables('StorageDataset')]",
+					"apiVersion": "2015-10-01",
+					"properties": {
+						"type": "AzureBlob",
+						"linkedServiceName": "[variables('storageLinkedServiceName')]",
+						"typeProperties": {
+							"folderPath": "datafromsftable/{Year}/{Month}/{Day}/Data.csv",
+							"partitionedBy": [
+								{
+									"name": "Year",
+									"value": {
+										"type": "DateTime",
+										"date": "SliceStart",
+										"format": "yyyy"
+									}
+								},
+								{
+									"name": "Month",
+									"value": {
+										"type": "DateTime",
+										"date": "SliceStart",
+										"format": "%M"
+									}
+								},
+								{
+									"name": "Day",
+									"value": {
+										"type": "DateTime",
+										"date": "SliceStart",
+										"format": "%d"
+									}
+								}
+							],
+							"format": {
+								"type": "TextFormat"
+							}
+						},
+						"availability": {
+							"frequency": "Day",
+							"interval": 1
+						},
+						"external": false
+					}
+				},
+				{
+					"dependsOn": [
+						"[variables('dataFactoryName')]",
+						"[variables('storageLinkedServiceName')]",
+						"[variables('SfLinkedServiceName')]",
+						"[variables('SfDataset')]",
+						"[variables('StorageDataset')]"
+					],
+					"type": "datapipelines",
+					"name": "[variables('PipelineName')]",
+					"apiVersion": "2015-10-01",
+					"properties": {
+						"description": "Pipeline to copy data from SF Object to Azure Blobs",
+						"activities": [
+							{
+								"name": "SftoBlobsCopyActivity",
+								"description": "Copies data from SF Table to Azure Blobs",
+								"type": "Copy",
+								"inputs": [
+									{
+										"name": "[variables('SfDataset')]"
+									}
+								],
+								"outputs": [
+									{
+										"name": "[variables('StorageDataset')]"
+									}
+								],
+								"typeProperties": {
+									"source": {
+										"type": "RelationalSource"
+									},
+									"sink": {
+										"type": "BlobSink"
+									}
+								},
+								"Policy": {
+									"retry": 3,
+									"timeout": "00:30:00"
+								}
+							}
+						],
+						"start": "2016-10-01T00:00:00Z",
+						"end": "2016-10-01T00:00:00Z"
+					}
+				}
+			]
+		}
+	]
+}
