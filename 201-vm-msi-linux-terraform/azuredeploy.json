@@ -86,11 +86,12 @@
         ]
       }
     },
-    "createRBACUrl": "[concat(parameters('_artifactsLocation'), '/nestedTemplates/setUpRbac.json')]",
+    "contributor" : "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', '8e3af657-a8ff-443c-a75c-2fe8c4bcb635')]",
     "installParm1": "[concat(' -u ', parameters('adminUsername'))]",
     "installParm2": "[concat(' -s ', subscription().subscriptionId)]",
     "installParm3": "[concat(' -a ', variables('stateStorageAccountName'))]",
     "installParm4": "[if(equals(parameters('desktopInstall'), bool('true')), concat(' -d ', parameters('desktopInstall')), '')]"
+
   },
   "resources": [
     {
@@ -275,23 +276,16 @@
       }
     },
     {
-      "name": "creatingRBAC",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2016-09-01",
+      "apiVersion": "2017-09-01",
+      "name": "setupRbac",
+      "type": "Microsoft.Authorization/roleAssignments",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines/extensions/', variables('vmName'),'MSILinuxExtension')]"
       ],
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[variables('createRBACUrl')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "principalId": {
-            "value": "[reference(concat(resourceId('Microsoft.Compute/virtualMachines/', variables('vmName')),'/providers/Microsoft.ManagedIdentity/Identities/default'),'2015-08-31-PREVIEW').principalId]"
-          }
-        }
+        "properties": {
+        "roleDefinitionId": "[variables('contributor')]",
+        "principalId": "[reference(concat(resourceId('Microsoft.Compute/virtualMachines/', variables('vmName')),'/providers/Microsoft.ManagedIdentity/Identities/default'),'2015-08-31-PREVIEW').principalId]",
+        "scope": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name)]"
       }
     },
     {
@@ -300,7 +294,7 @@
       "apiVersion": "2017-03-30",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "Microsoft.Resources/deployments/creatingRBAC"
+        "Microsoft.Resources/deployments/setupRbac"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
