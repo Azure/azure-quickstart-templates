@@ -14,6 +14,7 @@ USERNAME=$6
 CLUSTER_MAXCPUS=$7
 NEXTFLOW_INSTALL_URL=$8
 ADDITIONAL_INSTALL_SCRIPT_URL=$9
+ADDITIONAL_INSTALL_SCRIPT_ARGUMENT=${10}
 
 log () {
     echo "-------------------------" | tee -a "$2"
@@ -273,7 +274,9 @@ runSmokeTest() {
 runAdditionalInstallScriptIfProvided() {
     if [[ "$ADDITIONAL_INSTALL_SCRIPT_URL" ]]; then
         log "Run additional install script" "$LOGFILE"
-        curl -s "$ADDITIONAL_INSTALL_SCRIPT_URL" | bash | tee -a "$LOGFILE"
+        log "Additional script url: $ADDITIONAL_INSTALL_SCRIPT_URL / argument: $ADDITIONAL_INSTALL_SCRIPT_ARGUMENT" "$LOGFILE"
+        curl -s "$ADDITIONAL_INSTALL_SCRIPT_URL" -o additional_script.sh
+        bash additional_script.sh "$ADDITIONAL_INSTALL_SCRIPT_ARGUMENT" | tee -a "$LOGFILE"
     fi
 }
 
