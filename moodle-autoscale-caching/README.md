@@ -1,4 +1,4 @@
-# *Autoscaling Moodle stack for Postgres and MySQL databases*
+# *Autoscaling Moodle stack for Postgres, MySQL and MS SQL databases*
 
 This work is mostly based on Paulo Teixeira's work. It adds several configurable features and switches to a web stack with caching. It also uses Azure resources for Redis, ObjectFS and Databases. 
 
@@ -15,7 +15,7 @@ This template set deploys the following infrastructure:
 - Private virtual network for frontend instances
 - Controller instance running cron and handling syslog for the autoscaled site
 - Load balancer to balance across the autoscaled instances
-- Postgres or MySQL database
+- Postgres, MS SQL or MySQL database
 - Azure Redis instance for Moodle caching
 - ObjectFS in Azure blobs (Moodle sitedata)
 - Three Elasticsearch VMs for search indexing in Moodle
@@ -64,7 +64,7 @@ Your controller VM has Moodle code and data stored on /moodle. The code is store
 
 ### *Getting an SQL dump*
 
-A daily sql dump of your database is taken at 02:22 and saved to /moodle/db-backup.sql(.gz). If your database is small enough to fit, you may be able to get a more current SQL dump of your Moodle db by dumping it to /moodle/. Otherwise, you'll want to do this remotely by connecting to the hostname shown in the database-dns output using the database-admin-username and database-admin-password.
+A daily sql dump of your database is taken at 02:22 and saved to /moodle/db-backup.sql(.gz). Backups for MS SQL are handled by Azure, see https://docs.microsoft.com/en-us/azure/sql-database/sql-database-automated-backups. If your database is small enough to fit, you may be able to get a more current SQL dump of your Moodle db by dumping it to /moodle/. Otherwise, you'll want to do this remotely by connecting to the hostname shown in the database-dns output using the database-admin-username and database-admin-password.
 
 While Azure does not currently back up Postgres/MySQL databases, by dumping it to /moodle it is included in the Gluster VM backups should you enable Recovery Services in your parameters.
 
