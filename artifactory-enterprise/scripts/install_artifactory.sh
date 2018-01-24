@@ -8,10 +8,11 @@ DB_PASSWORD=$4
 STORAGE_ACCT=$5
 STORAGE_CONTAINER=$6
 STORAGE_ACCT_KEY=$7
+MASTER_KEY=$8
 
 export DEBIAN_FRONTEND=noninteractive
 
-# install the LAMP stack
+# install the wget and curl
 apt-get update
 apt-get -y install wget curl>> /tmp/yum-install.log 2>&1
 
@@ -23,7 +24,7 @@ apt-get install -y oracle-java8-installer>> /tmp/yum-java8.log 2>&1
 
 #Generate Self-Signed Cert
 mkdir -p /etc/pki/tls/private/ /etc/pki/tls/certs/
-openssl req -nodes -x509 -newkey rsa:4096 -keyout /etc/pki/tls/private/example.key -out /etc/pki/tls/certs/example.pem -days 356 -subj "/C=US/ST=California/L=SantaClara/O=IT/CN=localhost"
+openssl req -nodes -x509 -newkey rsa:4096 -keyout /etc/pki/tls/private/example.key -out /etc/pki/tls/certs/example.pem -days 356 -subj "/C=US/ST=California/L=SantaClara/O=IT/CN=*.localhost"
 
 # install the MySQL stack
 echo "deb https://jfrog.bintray.com/artifactory-pro-debs trusty main" | tee -a /etc/apt/sources.list
@@ -74,31 +75,6 @@ server {
     proxy_set_header    X-Forwarded-For   \$proxy_add_x_forwarded_for;
    }
 }
-## server configuration
-  server {
-    listen 5001 ssl;
-    server_name artifactory;
-    if (\$http_x_forwarded_proto = '') {
-      set \$http_x_forwarded_proto  \$scheme;
-    }
-    ## Application specific logs
-    ## access_log /var/log/nginx/artifactory-access.log timing;
-    ## error_log /var/log/nginx/artifactory-error.log;
-    rewrite ^/(v1|v2)/(.*) /artifactory/api/docker/docker/\$1/\$2;
-    chunked_transfer_encoding on;
-    client_max_body_size 0;
-    location /artifactory/ {
-    proxy_read_timeout  900;
-    proxy_pass_header   Server;
-    proxy_cookie_path   ~*^/.* /;
-    proxy_pass          http://127.0.0.1:8081/artifactory/;
-    proxy_set_header    X-Artifactory-Override-Base-Url \$http_x_forwarded_proto://\$host:\$server_port/artifactory;
-    proxy_set_header    X-Forwarded-Port  \$server_port;
-    proxy_set_header    X-Forwarded-Proto \$http_x_forwarded_proto;
-    proxy_set_header    Host              \$http_host;
-    proxy_set_header    X-Forwarded-For   \$proxy_add_x_forwarded_for;
-  }
-}
 EOF
 
 cat <<EOF >/var/opt/jfrog/artifactory/etc/ha-node.properties
@@ -118,9 +94,45 @@ username=${DB_USER}
 password=${DB_PASSWORD}
 EOF
 
+mkdir -p /var/opt/jfrog/artifactory/etc/security
+
+cat <<EOF >/var/opt/jfrog/artifactory/etc/security/master.key
+  ${MASTER_KEY}
+EOF
+
 cat <<EOF >/var/opt/jfrog/artifactory/etc/binarystore.xml
-<config version="1">
-    <chain template="azure-blob-storage"/>
+<config version="2">
+    <chain template=“cluster-azure-blob-storage”>
+       <provider id=“cache-fs-eventual-azure-blob-storage” type=“cache-fs”>
+           <provider id=“sharding-cluster-eventual-azure-blob-storage” type=“sharding-cluster”>
+               <sub-provider id=“eventual-cluster-azure-blob-storage” type=“eventual-cluster”>
+                   <provider id=“retry-azure-blob-storage” type=“retry”>
+                       <provider id=“azure-blob-storage” type=“azure-blob-storage”/>
+                   </provider>
+               </sub-provider>
+               <dynamic-provider id=“remote-azure-blob-storage” type=“remote”/>
+           </provider>
+       </provider>
+   </chain>
+
+    <!-- cluster eventual Azure Blob Storage Service default chain -->
+    <provider id="sharding-cluster-eventual-azure-blob-storage" type="sharding-cluster">
+        <readBehavior>crossNetworkStrategy</readBehavior>
+        <writeBehavior>crossNetworkStrategy</writeBehavior>
+        <redundancy>2</redundancy>
+        <lenientLimit>1</lenientLimit>
+        <property name="zones" value="local,remote"/>
+    </provider>
+
+    <provider id="remote-azure-blob-storage" type="remote">
+        <zone>remote</zone>
+    </provider>
+
+    <provider id="eventual-cluster-azure-blob-storage" type="eventual-cluster">
+        <zone>local</zone>
+    </provider>
+
+    <!--cluster eventual template-->
     <provider id="azure-blob-storage" type="azure-blob-storage">
         <accountName>${STORAGE_ACCT}</accountName>
         <accountKey>${STORAGE_ACCT_KEY}</accountKey>
@@ -129,11 +141,6 @@ cat <<EOF >/var/opt/jfrog/artifactory/etc/binarystore.xml
     </provider>
 </config>
 EOF
-
-wget -P /var/opt/jfrog/artifactory/access/etc/keys/ https://raw.githubusercontent.com/JFrogDev/artifactory-docker-examples/master/files/access/etc/keys/root.crt
-wget -P /var/opt/jfrog/artifactory/access/etc/keys/ https://raw.githubusercontent.com/JFrogDev/artifactory-docker-examples/master/files/access/etc/keys/private.key
-wget -P /var/opt/jfrog/artifactory/etc/security/ https://raw.githubusercontent.com/JFrogDev/artifactory-docker-examples/master/files/security/communication.key
-cp -f /var/opt/jfrog/artifactory/etc/security/communication.key /var/opt/jfrog/artifactory/etc/security/artifactory.key
 
 HOSTNAME=$(hostname -i)
 sed -i -e "s/art1/art-$(date +%s$RANDOM)/" /var/opt/jfrog/artifactory/etc/ha-node.properties
