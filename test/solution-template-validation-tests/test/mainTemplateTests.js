@@ -138,10 +138,13 @@ describe('mainTemplate.json file - ', () => {
                     var val = templateObject.resources[resource];
                     if (val.type) {
                         var rType = val.type.split('/');
+                        var lowerType = val.type.toLowerCase();
                         var cond = rType[0].toLowerCase() == 'microsoft.compute' ||
                             rType[0].toLowerCase() == 'microsoft.storage' ||
                             rType[0].toLowerCase() == 'microsoft.network' ||
-                            rType[0].toLowerCase() == 'microsoft.resources';
+                            rType[0].toLowerCase() == 'microsoft.resources' ||
+                            lowerType == 'microsoft.insights/autoscalesettings' || 
+                            lowerType == 'microsoft.authorization/roleassignments';
                         expect(cond, getErrorMessage(val, templateJSONObject.filepath, message + '. The resource object: ' + JSON.stringify(val))).to.be.true;
                     }
                 });
