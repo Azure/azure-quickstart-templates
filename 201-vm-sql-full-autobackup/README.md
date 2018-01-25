@@ -1,4 +1,4 @@
-# Create an Azure virtual machine running SQL Server 2014 SP1 Enterprise edition with Automated Backup feature enabled.
+# Create an Azure virtual machine running SQL Server 2014 SP2 Enterprise edition with Automated Backup feature enabled.
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vm-sql-full-autobackup%2Fazuredeploy.json" target="_blank">
   <img src="http://azuredeploy.net/deploybutton.png"/>
@@ -9,7 +9,7 @@
 
 ## Solution overview
 
-This template provisions a virtual machine with **SQL Server 2014 SP1 running on Windows Server 2012 R2**. It also enables the Automated Backup feature.
+This template provisions a virtual machine with **SQL Server 2014 SP2 running on Windows Server 2012 R2**. It also enables the Automated Backup feature.
 
 `Tags: SQL Server, Auto Backup, SQL Server 2014 Enterprise`
 
