@@ -153,7 +153,7 @@ describe('mainTemplate.json file - ', () => {
                         var providerLower = rType[0];
                         var typeLower = rType[1];
                         var condition = allowedResourceTypes[providerLower] &&
-                                    (allowedResourceTypes[providerLower][0] == '*' || allowedResourceTypes[providerLower].indexOf(typeLower) > -1);
+                                    (allowedResourceTypes[providerLower][0] == '*' || (typeLower && allowedResourceTypes[providerLower].indexOf(typeLower) > -1));
                         expect(condition, getErrorMessage(val, templateJSONObject.filepath, message + '. The resource object: ' + JSON.stringify(val))).to.be.true;
                     }
                 });
