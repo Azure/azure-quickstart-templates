@@ -1,0 +1,144 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Username for the Virtual Machine."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the Virtual Machine."
+      }
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "The Location For the resources"
+      }, 
+      "defaultValue": "[resourceGroup().location]"
+    },
+    "vmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "The size of the VM to create"
+      }, 
+      "defaultValue": "Standard_DS1_V2"
+    },
+    "vmName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the VM to create"
+      }
+    },
+     "nicName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the NIC to create"
+      }
+    },
+     "storageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the storage account to create"
+      }
+    },
+     "linuxConfiguration": {
+      "type": "object",
+      "metadata": {
+        "description": "The Linux configuration object"
+      }
+    },
+    "publisher": {
+      "type": "string",
+      "metadata": {
+        "description": "The VM Publisher"
+      }
+    },
+    "offer": {
+      "type": "string",
+      "metadata": {
+        "description": "The VM Offer"
+      }
+    },
+    "SKU": {
+      "type": "string",
+      "metadata": {
+        "description": "The VM SKU"
+      }
+    }
+  },
+  "variables": {
+  },
+  "resources": [
+    {
+      "apiVersion": "2017-03-30",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[parameters('vmName')]",
+      "location": "[parameters('Location')]",
+      "identity": { 
+          "type": "systemAssigned"
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]",
+          "linuxConfiguration": "[parameters('linuxConfiguration')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[parameters('publisher')]",
+            "offer": "[parameters('offer')]",
+            "sku": "[parameters('sku')]",
+            "version": "latest"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',parameters('nicName'))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": "true",
+            "storageUri": "[reference(concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName')),'2016-12-01').primaryEndpoints.blob]"
+          }
+        }
+      }
+    },
+    {
+        "type": "Microsoft.Compute/virtualMachines/extensions",
+        "name": "[concat(parameters('vmName'),'/MSILinuxExtension')]",
+        "apiVersion": "2017-03-30",
+        "location": "[parameters('Location')]",
+        "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
+        ],
+        "properties": {
+            "publisher": "Microsoft.ManagedIdentity",
+            "type": "ManagedIdentityExtensionForLinux",
+            "typeHandlerVersion": "1.0",
+            "autoUpgradeMinorVersion": true  ,
+            "settings": {
+                "port": 50342
+            },
+            "protectedSettings": {}
+        }
+    } 
+  ],
+  "outputs": {
+     "principalId": {
+      "type": "string",
+      "value": "[reference(concat(resourceId('Microsoft.Compute/virtualMachines/', parameters('vmName')),'/providers/Microsoft.ManagedIdentity/Identities/default'),'2015-08-31-PREVIEW').principalId]"
+    }
+  }
+}

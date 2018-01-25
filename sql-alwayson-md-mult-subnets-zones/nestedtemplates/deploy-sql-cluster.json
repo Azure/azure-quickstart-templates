@@ -1,0 +1,450 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+			"type": "string",
+			"metadata": {
+				"description": "Location for the VM, only certain regions support zones during preview."
+			}
+        },
+        "namePrefix": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 8,
+            "metadata": {
+                "description": "Naming prefix for each new resource created. 3-char min, 8-char max, lowercase alphanumeric"
+            }
+        },
+        "domainName": {
+            "type": "string",
+            "metadata": {
+                "description": "DNS domain name for existing Active Directory domain"
+            }
+        },
+        "adminUsername": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Administrator of the existing Active Directory Domain"
+            }
+        },
+        "adminPassword": {
+            "type": "securestring",
+            "minLength": 12,
+            "metadata": {
+                "description": "Password for the Administrator account of the existing Active Directory Domain"
+            }
+        },
+        "sqlServiceAccount": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the user account to be used for the SQL Server service account"
+            }
+        },
+        "sqlServicePassword": {
+            "type": "securestring",
+            "minLength": 12,
+            "metadata": {
+                "description": "Password to be used for the SQL Server service account"
+            }
+        },
+        "nicVnetUri": {
+            "type": "string",
+            "metadata": {
+                "description": "Resource ID for existing vnet/subnet to which VM NICs should be attached"
+            }
+        },
+        "existingSubnetNames": {
+            "type": "array",
+            "metadata": {
+                "description": "Name of the existing subnets in the existing VNET to which the SQL Server VMs should be deployed"
+            }
+        },
+        "vmSize": {
+            "type": "string",
+            "metadata": {
+                "description": "Size of the SQL Server VMs to be created"
+            }
+        },
+        "vmCount": {
+            "type": "int",
+            "minValue": 2,
+            "maxValue": 9,
+            "metadata": {
+                "description": "Number of SQL Server VMs to be created in AlwaysOn Availability Group cluster (Min=2, Max=9)"
+            },
+            "defaultValue": 2
+        },
+        "vmDiskSize": {
+            "type": "int",
+            "minValue": 128,
+            "maxValue": 1023,
+            "metadata": {
+                "description": "Size of each data disk in GB on each SQL Server VM (Min=128, Max=1023)"
+            }
+        },
+        "vmDiskCount": {
+            "type": "int",
+            "minValue": 2,
+            "maxValue": 32,
+            "metadata": {
+                "description": "Number of data disks on each SQL Server VM (Min=2, Max=32). Ensure that the VM size you've selected will support this number of data disks."
+            }
+        },
+        "workloadType": {
+            "type": "string",
+            "defaultValue": "GENERAL"
+        },
+        "imagePublisher": {
+            "type": "string",
+            "defaultValue": "MicrosoftSQLServer"
+        },
+        "imageOffer": {
+            "type": "string",
+            "defaultValue": "SQL2016SP1-WS2016"
+        },
+        "imageSKU": {
+            "type": "string",
+            "defaultValue": "Enterprise"
+        },
+        "imageVersion": {
+            "type": "string",
+            "defaultValue": "latest"
+        },
+        "_artifactsLocation": {
+            "type": "string"
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring"
+        }
+    },
+    "variables": {
+        "apiVersionStorage": "2016-01-01",
+        "witnessStorageName": "[concat(parameters('namePrefix'),uniqueString(resourceGroup().id),'cw')]",
+        "witnessStorageType": "Standard_LRS",
+        "vmNamePrefix": "[concat(parameters('namePrefix'),'-sql-')]",
+        "clusterName": "[concat(variables('vmNamePrefix'),'c')]",
+        "vmLoopTemplateURL": "[concat(parameters('_artifactsLocation'),'/nestedtemplates/newVM.json',parameters('_artifactsLocationSasToken'))]",
+        "ipLoopTemplateURL": "[concat(parameters('_artifactsLocation'),'/nestedtemplates/getIpAddress.json',parameters('_artifactsLocationSasToken'))]",
+        "sqlPrepModulesURL": "[concat(parameters('_artifactsLocation'),'/dsc/prep-sqlao.ps1.zip',parameters('_artifactsLocationSasToken'))]",
+        "sqlPrepFunction": "PrepSQLAO.ps1\\PrepSQLAO",
+        "sqlConfigModulesURL": "[concat(parameters('_artifactsLocation'),'/dsc/config-sqlao.ps1.zip',parameters('_artifactsLocationSasToken'))]",
+        "sqlConfigFunction": "ConfigSQLAO.ps1\\ConfigSQLAO",
+        "agName": "[concat(variables('vmNamePrefix'),'ag')]",
+        "agListenerName": "[concat(variables('vmNamePrefix'),'agl')]",
+        "agEpName": "[concat(variables('vmNamePrefix'),'ha')]",
+        "zones": ["1","2","3"]
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[variables('witnessStorageName')]",
+            "apiVersion": "2016-01-01",
+			"location": "[parameters('location')]",
+            "sku": {
+                "name": "[variables('witnessStorageType')]"
+            },
+            "kind": "Storage"
+        },
+        {
+            "name": "[concat(variables('vmNamePrefix'), copyindex(), '-nic')]",
+            "type": "Microsoft.Network/networkInterfaces",
+			"location": "[parameters('location')]",
+            "apiVersion": "2017-08-01",
+            "copy": {
+                "name": "nicLoop",
+                "count": "[parameters('vmCount')]"
+            },
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[concat(parameters('nicVnetUri'),'/subnets/',parameters('existingSubnetNames')[mod(copyIndex(),length(variables('zones')))])]"
+                            },
+                            "primary": true
+                        }
+                    },
+                    {
+                        "name": "ipconfig2",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[concat(parameters('nicVnetUri'),'/subnets/',parameters('existingSubnetNames')[mod(copyIndex(),length(variables('zones')))])]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "ipconfig3",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[concat(parameters('nicVnetUri'),'/subnets/',parameters('existingSubnetNames')[mod(copyIndex(),length(variables('zones')))])]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2015-01-01",
+            "name": "[concat(variables('vmNamePrefix'),'0-clusterIp')]",
+            "dependsOn": [
+                "nicLoop"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('ipLoopTemplateURL')]"
+                },
+                "parameters": {
+                    "ipConfig": {
+                        "value": "[reference(concat(variables('vmNamePrefix'), '0-nic')).ipConfigurations[1].properties.privateIPAddress]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2015-01-01",
+            "copy": {
+                "name": "clusterIpLoop",
+                "count": "[sub(parameters('vmCount'),1)]"
+            },
+            "name": "[concat(variables('vmNamePrefix'),copyIndex(1),'-clusterIp')]",
+            "dependsOn": [
+                "nicLoop",
+                "[concat(variables('vmNamePrefix'),'0-clusterIp')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('ipLoopTemplateURL')]"
+                },
+                "parameters": {
+                    "ipConfig": {
+                        "value": "[reference(concat(variables('vmNamePrefix'), copyIndex(1), '-nic')).ipConfigurations[1].properties.privateIPAddress]"
+                    },
+                    "ipAddresses": {
+                        "value": "[reference(concat(variables('vmNamePrefix'),copyIndex(),'-clusterIp')).outputs.result.value]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2015-01-01",
+            "name": "[concat(variables('vmNamePrefix'),'0-agListenerIp')]",
+            "dependsOn": [
+                "nicLoop"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('ipLoopTemplateURL')]"
+                },
+                "parameters": {
+                    "ipConfig": {
+                        "value": "[reference(concat(variables('vmNamePrefix'), '0-nic')).ipConfigurations[2].properties.privateIPAddress]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2015-01-01",
+            "copy": {
+                "name": "agListenerIpLoop",
+                "count": "[sub(parameters('vmCount'),1)]"
+            },
+            "name": "[concat(variables('vmNamePrefix'),copyIndex(1),'-agListenerIp')]",
+            "dependsOn": [
+                "nicLoop",
+                "[concat(variables('vmNamePrefix'),'0-agListenerIp')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('ipLoopTemplateURL')]"
+                },
+                "parameters": {
+                    "ipConfig": {
+                        "value": "[reference(concat(variables('vmNamePrefix'), copyIndex(1), '-nic')).ipConfigurations[2].properties.privateIPAddress]"
+                    },
+                    "ipAddresses": {
+                        "value": "[reference(concat(variables('vmNamePrefix'),copyIndex(),'-agListenerIp')).outputs.result.value]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2015-01-01",
+            "copy": {
+                "name": "virtualMachineLoop",
+                "count": "[parameters('vmCount')]"
+            },
+            "name": "[concat(variables('vmNamePrefix'),copyindex(),'-newVM')]",
+            "dependsOn": [
+                "nicLoop"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('vmLoopTemplateURL')]"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },              
+                    "vmName": {
+                        "value": "[concat(variables('vmNamePrefix'), copyindex())]"
+                    },
+                    "vmSize": {
+                        "value": "[parameters('vmSize')]"
+                    },
+                    "vmDiskCount": {
+                        "value": "[parameters('vmDiskCount')]"
+                    },
+                    "vmDiskSize": {
+                        "value": "[parameters('vmDiskSize')]"
+                    },
+                    "adminUsername": {
+                        "value": "[parameters('adminUsername')]"
+                    },
+                    "adminPassword": {
+                        "value": "[parameters('adminPassword')]"
+                    },
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    },
+                    "imagePublisher": {
+                        "value": "[parameters('imagePublisher')]"
+                    },
+                    "imageOffer": {
+                        "value": "[parameters('imageOffer')]"
+                    },
+                    "imageSKU": {
+                        "value": "[parameters('imageSKU')]"
+                    },
+                    "imageVersion": {
+                        "value": "[parameters('imageVersion')]"
+                    },
+                    "zones": {
+                        "value": "[take(skip(variables('zones'),mod(copyIndex(),length(variables('zones')))),1)]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(variables('vmNamePrefix'),copyindex(1),'/sqlPrep')]",
+            "apiVersion": "2017-03-30",
+			"location": "[parameters('location')]",
+            "dependsOn": [
+                "virtualMachineLoop"
+            ],
+            "copy": {
+                "name": "virtualMachineExtensionLoop",
+                "count": "[sub(parameters('vmCount'),1)]"
+            },
+            "properties": {
+                "publisher": "Microsoft.Powershell",
+                "type": "DSC",
+                "typeHandlerVersion": "2.71",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "modulesUrl": "[variables('sqlPrepModulesURL')]",
+                    "configurationFunction": "[variables('sqlPrepFunction')]",
+                    "properties": {
+                        "domainName": "[parameters('domainName')]",
+                        "adminCreds": {
+                            "userName": "[parameters('adminUserName')]",
+                            "password": "PrivateSettingsRef:adminPassword"
+                        },
+                        "sqlServiceCreds": {
+                            "userName": "[parameters('sqlServiceAccount')]",
+                            "password": "PrivateSettingsRef:sqlServicePassword"
+                        },
+                        "numberOfDisks": "[parameters('vmDiskCount')]",
+                        "workloadType": "[parameters('workloadType')]"
+                    }
+                },
+                "protectedSettings": {
+                    "items": {
+                        "adminPassword": "[parameters('adminPassword')]",
+                        "sqlServicePassword": "[parameters('sqlServicePassword')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(variables('vmNamePrefix'),'0/sqlConfig')]",
+            "apiVersion": "2017-03-30",
+			"location": "[parameters('location')]",
+            "dependsOn": [
+                "virtualMachineLoop",
+                "virtualMachineExtensionLoop",
+                "clusterIpLoop",
+                "agListenerIpLoop",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('witnessStorageName'))]"
+            ],
+            "properties": {
+                "publisher": "Microsoft.Powershell",
+                "type": "DSC",
+                "typeHandlerVersion": "2.71",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "modulesUrl": "[variables('sqlConfigModulesURL')]",
+                    "configurationFunction": "[variables('sqlConfigFunction')]",
+                    "properties": {
+                        "domainName": "[parameters('domainName')]",
+                        "clusterName": "[variables('clusterName')]",
+                        "vmNamePrefix": "[variables('vmNamePrefix')]",
+                        "sqlAlwaysOnAvailabilityGroupName": "[variables('agName')]",
+                        "sqlAlwaysOnAvailabilityGroupListenerName": "[variables('agListenerName')]",
+                        "sqlAlwaysOnEndpointName": "[variables('agEpName')]",
+                        "vmCount": "[parameters('vmCount')]",
+                        "clusterIpAddresses": "[reference(concat(variables('vmNamePrefix'),sub(parameters('vmCount'),1),'-clusterIp')).outputs.result.value]",
+                        "agListenerIpAddresses": "[reference(concat(variables('vmNamePrefix'),sub(parameters('vmCount'),1),'-agListenerIp')).outputs.result.value]",
+                        "numberOfDisks": "[parameters('vmDiskCount')]",
+                        "workloadType": "[parameters('workloadType')]",
+                        "witnessStorageName": "[variables('witnessStorageName')]",
+                        "witnessStorageKey": {
+                            "userName": "PLACEHOLDER-DO-NOT-USE",
+                            "password": "PrivateSettingsRef:witnessStorageKey"
+                        },
+                        "adminCreds": {
+                            "userName": "[parameters('adminUserName')]",
+                            "password": "PrivateSettingsRef:adminPassword"
+                        },
+                        "sqlServiceCreds": {
+                            "userName": "[parameters('sqlServiceAccount')]",
+                            "password": "PrivateSettingsRef:sqlServicePassword"
+                        }
+                    }
+                },
+                "protectedSettings": {
+                    "items": {
+                        "adminPassword": "[parameters('adminPassword')]",
+                        "sqlServicePassword": "[parameters('sqlServicePassword')]",
+                        "witnessStorageKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts',variables('witnessStorageName')),variables('apiVersionStorage')).keys[0].value]"
+                    }
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "agListenerName": {
+            "type": "string",
+            "value": "[variables('agListenerName')]"
+        }
+    }
+}

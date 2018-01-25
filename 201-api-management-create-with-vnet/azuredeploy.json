@@ -1,0 +1,168 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "publisherEmail": {
+            "type": "string",
+            "minLength": 1,
+            "metadata": {
+                "description": "The email address of the owner of the service"
+            }
+        },
+        "publisherName": {
+            "type": "string",
+            "minLength": 1,
+            "metadata": {
+                "description": "The name of the owner of the service"
+            }
+        },
+        "sku": {
+            "type": "string",
+            "allowedValues": [
+                "Developer",
+                "Standard",
+                "Premium"
+            ],
+            "defaultValue": "Developer",
+            "metadata": {
+                "description": "The pricing tier of this API Management service"
+            }
+        },
+        "skuCount": {
+            "type": "int",
+            "defaultValue": 1,
+            "metadata": {
+                "description": "The instance size of this API Management service."
+            }
+        },
+        "proxyCustomHostname": {
+            "type": "string",
+            "metadata": {
+                "description": "Proxy Custom hostname."
+            }
+        },
+        "proxyCustomHostnameBase64EncodedPfxCertificate": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Base-64 encoded SSL .pfx Certificate for proxy custom hostname."
+            }
+        },
+        "proxySSLCertificatePassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Proxy SSL certificate password."
+            }
+        },
+        "portalCustomHostname": {
+            "type": "string",
+            "metadata": {
+                "description": "Portal Custom hostname."
+            }
+        },
+        "portalCustomHostnameBase64EncodedPfxCertificate": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Base-64 encoded SSL .pfx Certificate for portal custom hostname."
+            }
+        },
+        "portalSSLCertificatePassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Portal SSL certificate password."
+            }
+        },
+        "virtualNetworkName": {
+            "type": "string",
+            "metadata": {
+                "description": "Virtual Network name"
+            }
+        },
+        "virtualNetworkAddressPrefix": {
+            "type": "string",
+            "defaultValue": "10.0.0.0/16",
+            "metadata": {
+                "description": "Address prefix"
+            }
+        },
+        "subnetPrefix": {
+            "type": "string",
+            "defaultValue": "10.0.0.0/24",
+            "metadata": {
+                "description": "Subnet Prefix"
+            }
+        },
+        "subnetName": {
+            "type": "string",
+            "metadata": {
+                "description": "Subnet Name"
+            }
+        }
+    },
+    "variables": {
+        "apiManagementServiceName": "[concat('apiservice', uniqueString(resourceGroup().id))]",
+        "virtualNetworkID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
+        "subnetRef": "[concat(variables('virtualNetworkID'),'/subnets/',parameters('subnetName'))]"
+    },
+    "resources": [
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[parameters('virtualNetworkName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[parameters('virtualNetworkAddressPrefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[parameters('subnetName')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('subnetPrefix')]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2017-03-01",
+            "name": "[variables('apiManagementServiceName')]",
+            "type": "Microsoft.ApiManagement/service",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
+            ],
+            "tags": {},
+            "sku": {
+                "name": "[parameters('sku')]",
+                "capacity": "[parameters('skuCount')]"
+            },
+            "properties": {
+                "publisherEmail": "[parameters('publisherEmail')]",
+                "publisherName": "[parameters('publisherName')]",
+                "hostnameConfigurations": [
+                    {
+                        "type": "Proxy",
+                        "hostName": "[parameters('proxyCustomHostname')]",
+                        "encodedCertificate": "[parameters('proxyCustomHostnameBase64EncodedPfxCertificate')]",
+                        "certificatePassword": "[parameters('proxySSLCertificatePassword')]",
+                        "negotiateClientCertificate": false
+                    },
+                    {
+                        "type": "Portal",
+                        "hostName": "[parameters('portalCustomHostname')]",
+                        "encodedCertificate": "[parameters('portalCustomHostnameBase64EncodedPfxCertificate')]",
+                        "certificatePassword": "[parameters('portalSSLCertificatePassword')]",
+                        "negotiateClientCertificate": false
+                    }
+                ],
+                "virtualNetworkType": "External",
+                "virtualNetworkConfiguration": {
+                    "subnetResourceId": "[variables('subnetRef')]",
+                    "location": "[resourceGroup().location]"
+                }
+            }
+        }
+    ]
+}

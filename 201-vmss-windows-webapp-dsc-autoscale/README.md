@@ -12,7 +12,7 @@ The following template deploys a Windows VM Scale Set (VMSS) running an IIS .NET
 ### VMSS Initial Deployment ###
 The template deploys a Windows VMSS with a desired count of VMs in the scale set. Once the VMSS is deployed, the VMSS PowerShell DSC extension installs IIS and a default web app from a WebDeploy package. The web app is nothing fancy, it's just the default MVC web app from Visual Studio, with a slight modification that shows the version (1.0 or 2.0) on the landing page. 
 
-The application URL will be http://\<vmsspublicip\>/MyApp. 
+The application URL is an output on ARM template. It's http://\<vmsspublicipfqdn>\/MyApp or http://\<vmsspublicip\>/MyApp. 
 
 ### VMSS Application Upgrade ###
 This template can also be used to demonstrate application upgrades for VMSS leveraging ARM template deployments and the VMSS PowerShell DSC extension. 

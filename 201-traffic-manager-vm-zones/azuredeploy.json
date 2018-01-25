@@ -1,0 +1,241 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "allowedValues": [
+        "westeurope",
+        "eastus2"
+      ],
+      "defaultValue": "westeurope",
+      "metadata": {
+        "description": "Location for the VM, only certain regions support zones during preview."
+      }
+    },
+    "trafficManagerDnsName": {
+      "type": "string",
+      "metadata": {
+        "description": "Relative DNS name for the traffic manager profile, resulting FQDN will be <uniqueDnsName>.trafficmanager.net, must be globally unique."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "User name for the Virtual Machines."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the Virtual Machines."
+      }
+    },
+    "publicIpDnsName": {
+      "type": "string",
+      "metadata": {
+        "description": "Relative DNS Name for the Public IPs used to access the Virtual Machines, must be globally unique.  An index will be appended for each instance."
+      }
+    },
+    "numberOfVms": {
+      "type": "int",
+      "defaultValue": 3,
+      "minValue": 1,
+      "maxValue": 10,
+      "metadata": {
+        "description": "Number of VMs to provision"
+      }
+    }
+  },
+  "variables": {
+    "nicName": "myVMNic",
+    "subnetName": "Subnet-1",
+    "publicIPAddressName": "myPublicIP",
+    "vmName": "MyUbuntuVM",
+    "virtualNetworkName": "MyVNET",
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('virtualNetworkName'), variables('subnetName'))]",
+    "linuxImage": {
+      "publisher": "Canonical",
+      "offer": "UbuntuServer",
+      "sku": "16.04.0-LTS",
+      "version": "latest"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2017-08-01",
+      "name": "[concat(variables('publicIPAddressName'), copyIndex())]",
+      "zones": "[split(string(add(mod(copyIndex(),3),1)), ',')]",
+      "sku": {
+        "name": "Basic"
+      },
+      "copy": {
+        "name": "ipLoop",
+        "count": "[parameters('numberOfVms')]"
+      },
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[concat(parameters('publicIpDnsName'), copyindex())]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2017-08-01",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/16"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "10.0.0.0/24"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2017-08-01",
+      "name": "[concat(variables('nicName'), copyIndex())]",
+      "copy": {
+        "name": "nicLoop",
+        "count": "[parameters('numberOfVms')]"
+      },
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "ipLoop",
+        "[variables('virtualNetworkName')]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIPAddressName'), copyIndex()))]"
+              },
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2017-03-30",
+      "name": "[concat(variables('vmName'), copyIndex())]",
+      "zones": "[split(string(add(mod(copyIndex(),3),1)), ',')]",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "vmLoop",
+        "count": "[parameters('numberOfVms')]"
+      },
+      "dependsOn": [
+        "nicLoop"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "Standard_A2_v2"
+        },
+        "osProfile": {
+          "computerName": "[variables('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": "[variables('linuxImage')]",
+          "osDisk": {
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'), copyIndex()))]"
+            }
+          ]
+        }        
+      },
+      "resources": [
+        {
+          "type": "extensions",
+          "apiVersion": "2017-03-30",
+          "name": "installcustomscript",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), copyIndex())]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Azure.Extensions",
+            "type": "CustomScript",
+            "typeHandlerVersion": "2.0",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "commandToExecute": "sudo bash -c 'apt-get update && apt-get -y install apache2' "
+            }
+          }
+        }    
+      ]
+    },
+    {
+      "apiVersion": "2017-05-01",
+      "type": "Microsoft.Network/trafficManagerProfiles",
+      "name": "VMEndpointExample",
+      "location": "global",
+      "dependsOn": [
+        "ipLoop"
+      ],
+      "properties": {
+        "profileStatus": "Enabled",
+        "trafficRoutingMethod": "Weighted",
+        "dnsConfig": {
+          "relativeName": "[parameters('trafficManagerDnsName')]",
+          "ttl": 30
+        },
+        "monitorConfig": {
+          "protocol": "HTTP",
+          "port": 80,
+          "path": "/"
+        },
+        "copy" :[
+          {
+            "name": "endpoints",
+            "count": "[parameters('numberOfVms')]",
+            "input":{
+              "name": "[concat('endpoint', copyIndex('endpoints'))]",
+              "type": "Microsoft.Network/trafficManagerProfiles/azureEndpoints",
+              "properties": {
+                "targetResourceId": "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIPAddressName'), copyIndex('endpoints')))]",
+                "endpointStatus": "Enabled",
+                "weight": 1
+              }
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "outputs": {
+    "trafficManagerFqdn": {
+      "type": "string",
+      "value": "[reference('VMEndpointExample', '2017-05-01').dnsConfig.fqdn]"
+    },
+    "trafficManagerEndpoints": {
+      "type": "array",
+      "value": "[reference('VMEndpointExample', '2017-05-01').endpoints]"
+    }
+  }
+}

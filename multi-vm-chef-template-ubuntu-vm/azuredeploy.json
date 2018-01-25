@@ -2,16 +2,10 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "newStorageAccountName": {
-      "type": "string",
-      "metadata": {
-        "description": "Unique  Name for the Storage Account where the Virtual Machine's disks will be placed"
-      }
-    },
     "vmDnsName": {
       "type": "string",
       "metadata": {
-        "description": "DNS  name for the VM"
+        "description": "DNS name for the VM"
       }
     },
     "numberOfInstances": {
@@ -27,7 +21,7 @@
         "description": "Availability Set name for the VMs"
       }
     },
-    "adminUserName": {
+    "adminUsername": {
       "type": "string",
       "metadata": {
         "description": "Admin user name for the Virtual Machines"
@@ -55,45 +49,39 @@
     },
     "imageSKU": {
       "type": "string",
-      "defaultValue": "14.04.2-LTS",
+      "defaultValue": "16.04-LTS",
       "metadata": {
-        "description": "Version of the image. The default is 14.04.2-LTS"
+        "description": "Version of the image. The default is 16.04-LTS"
       }
     },
     "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_A0",
+      "defaultValue": "Standard_D1",
       "metadata": {
         "description": "VM Size"
-      }
-    },
-    "chef_node_name": {
-      "type": "string",
-      "metadata": {
-        "description": "Unique name for the node (VM) in the Chef Organization"
       }
     },
     "chef_server_url": {
       "type": "string",
       "metadata": {
-        "description": "Organization URL for the Chef Server. Example https://ChefServerDnsName.cloudapp.net/organizations/Orgname"
+        "description": "Organization URL for the Chef Server. Example https://chefserver.cloudapp.net/organizations/orgname"
       }
     },
     "validation_client_name": {
       "type": "string",
       "metadata": {
-        "description": "Validator key name for the organization. Example : MyOrg-validator"
+        "description": "Validator key name for the organization. Example: myorg-validator"
       }
     },
     "runlist": {
       "type": "string",
-      "defaultValue": "recipe[getting-started]",
+      "defaultValue": "recipe[getting-started::default]",
       "metadata": {
         "description": "Optional Run List to Execute"
       }
     },
     "validation_key": {
-      "type": "string",
+      "type": "securestring",
       "metadata": {
         "description": "JSON Escaped Validation Key"
       }
@@ -104,38 +92,34 @@
     "subnet1Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]",
     "vmExtensionName": "LinuxChefExtension",
     "vmName": "[parameters('vmDnsName')]",
-    "storageAccountType": "Standard_LRS",
     "publicIPAddressName": "chefPublicIP",
     "publicIPAddressType": "Dynamic",
     "vmStorageAccountContainerName": "vhds",
     "virtualNetworkName": "MyVNET",
     "addressPrefix": "10.0.0.0/16",
     "subnet1Name": "subnet-1",
-    "subnet2Name": "subnet-2",
     "subnet1Prefix": "10.0.0.0/24",
-    "subnet2Prefix": "10.0.1.0/24",
     "nicName": "myVMNic",
-    "dnsName": "[variables('subnet1Name')]"
+    "dnsName": "[variables('subnet1Name')]",
+    "provider": "[toUpper('33194f91-eb5f-4110-827a-e95f640a9e46')]"
   },
   "resources": [
     {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[parameters('newStorageAccountName')]",
-      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[parameters('availabilitySetName')]",
+      "apiVersion": "2016-04-30-preview",
       "location": "[resourceGroup().location]",
       "properties": {
-        "accountType": "[variables('storageAccountType')]"
+        "managed": true,
+        "platformFaultDomainCount": 3,
+        "platformUpdateDomainCount": 5
+      },
+      "tags": {
+        "provider": "[variables('provider')]"
       }
     },
     {
-      "type": "Microsoft.Compute/availabilitySets",
-      "name": "[parameters('availabilitySetName')]",
-      "apiVersion": "2015-05-01-preview",
-      "location": "[resourceGroup().location]",
-      "properties": { }
-    },
-    {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2017-03-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat(variables('publicIPAddressName'),copyIndex())]",
       "location": "[resourceGroup().location]",
@@ -146,12 +130,15 @@
       "properties": {
         "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
         "dnsSettings": {
-          "domainNameLabel": "[parameters('vmDnsName')]"
+          "domainNameLabel": "[concat(parameters('vmDnsName'),copyIndex())]"
         }
+      },
+      "tags": {
+        "provider": "[variables('provider')]"
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2017-03-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[resourceGroup().location]",
@@ -167,18 +154,15 @@
             "properties": {
               "addressPrefix": "[variables('subnet1Prefix')]"
             }
-          },
-          {
-            "name": "[variables('subnet2Name')]",
-            "properties": {
-              "addressPrefix": "[variables('subnet2Prefix')]"
-            }
           }
         ]
+      },
+      "tags": {
+        "provider": "[variables('provider')]"
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2017-03-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('nicName'),copyIndex())]",
       "location": "[resourceGroup().location]",
@@ -197,7 +181,7 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIPAddressName'), copyIndex()))]"
               },
               "subnet": {
                 "id": "[variables('subnet1Ref')]"
@@ -205,10 +189,13 @@
             }
           }
         ]
+      },
+      "tags": {
+        "provider": "[variables('provider')]"
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2016-04-30-preview",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('vmName'),copyIndex())]",
       "location": "[resourceGroup().location]",
@@ -217,7 +204,6 @@
         "count": "[parameters('numberOfInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex())]",
         "[concat('Microsoft.Compute/availabilitySets/', parameters('availabilitySetName'))]"
       ],
@@ -234,34 +220,32 @@
           "adminPassword": "[parameters('adminPassword')]"
         },
         "storageProfile": {
+          "osDisk": {
+            "createOption": "FromImage"
+          },
           "imageReference": {
             "publisher": "[parameters('imagePublisher')]",
             "offer": "[parameters('imageOffer')]",
             "sku": "[parameters('imageSKU')]",
             "version": "latest"
-          },
-          "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/','osdisk', copyindex(), '.vhd')]"
-            },
-            "caching": "ReadWrite",
-            "createOption": "FromImage"
           }
         },
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'),copyIndex())]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'),copyIndex()))]"
             }
           ]
         }
+      },
+      "tags": {
+        "provider": "[variables('provider')]"
       }
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmName'),copyIndex(),'/', variables('vmExtensionName'))]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2016-04-30-preview",
       "location": "[resourceGroup().location]",
       "copy": {
         "name": "extensionLoop",
@@ -273,10 +257,9 @@
       "properties": {
         "publisher": "Chef.Bootstrap.WindowsAzure",
         "type": "LinuxChefClient",
-        "typeHandlerVersion": "1207.12",
+        "typeHandlerVersion": "1210.12",
         "settings": {
           "bootstrap_options": {
-            "chef_node_name": "[concat(parameters('chef_node_name'),copyIndex())]",
             "chef_server_url": "[parameters('chef_server_url')]",
             "validation_client_name": "[parameters('validation_client_name')]"
           },
