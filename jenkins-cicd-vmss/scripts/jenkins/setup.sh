@@ -182,8 +182,8 @@ sudo service jenkins restart
 ms_run_util_script "jenkins/run-cli-command.sh" -j "$jenkins_url" -ju "$jenkins_username" -jp "$jenkins_password" -c "version"
 
 # download dependencies
-job_xml=$(curl -s ${artifacts_location}/jobs-build-vm.xml${artifacts_location_sas_token})
-credentials_xml=$(curl -s ${artifacts_location}/credentials-basic.xml${artifacts_location_sas_token})
+job_xml=$(curl -s ${artifacts_location}/scripts/jenkins/jobs-build-vm.xml${artifacts_location_sas_token})
+credentials_xml=$(curl -s ${artifacts_location}/scripts/jenkins/credentials-basic.xml${artifacts_location_sas_token})
 
 # prepare job xml
 job_xml=${job_xml//'{insert-repository-url}'/${repository}}
