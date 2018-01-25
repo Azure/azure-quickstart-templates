@@ -14,7 +14,7 @@ groupadd tomcat
 useradd -s /bin/false -g tomcat -d /opt/tomcat tomcat
 
 # Install Tomcat
-wget http://mirrors.shuosc.org/apache/tomcat/tomcat-8/v8.5.24/bin/apache-tomcat-8.5.24.tar.gz
+wget https://archive.apache.org/dist/tomcat/tomcat-8/v8.5.24/bin/apache-tomcat-8.5.24.tar.gz
 tar -xzvf apache-tomcat-8.5.24.tar.gz
 mv apache-tomcat-8.5.24 /opt/tomcat
 
