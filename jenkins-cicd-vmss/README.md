@@ -8,3 +8,4 @@
 </a>
 
 Azure is a world-class cloud for hosting virtual machines running Windows or Linux. Whether you use Java, Node, Go or PHP to develop your applications, you will need a continuous integration and continuous deployment (CI/CD) pipeline to push your changes to these virtual machines automatically.
+
