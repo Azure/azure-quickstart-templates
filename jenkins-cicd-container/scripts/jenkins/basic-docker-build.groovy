@@ -15,7 +15,7 @@ node {
     }
     stage('Deploy configurations to Azure Container Service (AKS)') {
       withEnv(['TAGGED_IMAGE_NAME=' + taggedImageName]) {
-        acsDeploy azureCredentialsId: params.AZURE_SERVICE_PRINCIPAL_ID, configFilePaths: 'kubernetes/*.yaml', containerService: params.AKS_CLUSTER_NAME + ' | AKS', dcosDockerCredentialsPath: '', enableConfigSubstitution: true, resourceGroupName: params.AKS_RESOURCE_GROUP_NAME, secretName: '', sshCredentialsId: ''
+        acsDeploy azureCredentialsId: params.AZURE_SERVICE_PRINCIPAL_ID, configFilePaths: 'jenkins-cicd-container/kubernetes/*.yaml', containerService: params.AKS_CLUSTER_NAME + ' | AKS', dcosDockerCredentialsPath: '', enableConfigSubstitution: true, resourceGroupName: params.AKS_RESOURCE_GROUP_NAME, secretName: '', sshCredentialsId: ''
       }
     }
 }
