@@ -24,7 +24,7 @@
 #
 # Script Name: node-setup.sh
 # Author: Roy Arsan - Splunk Inc github:(rarsan)
-# Version: 0.2
+# Version: 0.3
 # Last Modified By: Roy Arsan
 # Description:
 #  This script sets up a node by configuring pre-installed Splunk Enterprise via Chef in local mode.
@@ -33,10 +33,11 @@
 #  1 - r: role of Splunk server
 #  2 - p: password of Splunk server
 #  3 - c: cluster master ip address (optional)
-#  4 - i: index of node (optional)
-#  5 - h: Help
+#  4 - s: cluster secret (optional)
+#  5 - i: index of node (optional)
+#  6 - h: Help
 # Note : 
-# This script has only been tested on Ubuntu 12.04 LTS & 14.04.2-LTS and must be root
+# This script has only been tested on Ubuntu 12.04 LTS & 14.04 LTS and must be root
 
 set -e
 
@@ -48,6 +49,7 @@ help()
     echo "-r role to configure node, supported role(s): splunk_server"
     echo "-p password for Splunk Enterprise admin"
     echo "-c cluster master ip address"
+    echo "-s cluster secret"
     echo "-i index of node"
     echo "-h help"
 }
@@ -72,9 +74,18 @@ MY_IP="$(ip -4 address show eth0 | sed -rn 's/^[[:space:]]*inet ([[:digit:].]+)[
 DATA_MOUNTPOINT="/datadrive"
 SPLUNK_DB_DIR="${DATA_MOUNTPOINT}/splunk_db"
 
+# Minimum recommended values for system-wide resource limits for Splunk Enterprise
+MIN_LIMITS=(
+  'n|nofile|8192'  # Open files
+  'u|nproc|16384'  # User processes
+  'd|data|-1'      # Data segment size
+  'm|rss|-1'       # Resident memory size
+  'f|fsize|-1'     # File size limit
+)
+
 # Arguments
-while getopts :r:p:c:i: optname; do
-  if [ $optname != 'p' ]; then
+while getopts :r:p:c:s:i: optname; do
+  if [[ $optname != 'p' && $optname != 's' ]]; then
     log "Option $optname set with value ${OPTARG}"
   fi
   case $optname in
@@ -86,6 +97,9 @@ while getopts :r:p:c:i: optname; do
       ;;
     c) #IP of cluster master
       CLUSTER_MASTER_IP=${OPTARG}
+      ;;
+    s) #Secret shared by cluster members
+      CLUSTER_SECRET=${OPTARG}
       ;;
     i) #Index of node
       NODE_INDEX=${OPTARG}
@@ -113,6 +127,7 @@ chmod u+x vm-disk-utils-0.1.sh && ./vm-disk-utils-0.1.sh -s -p $DATA_MOUNTPOINT
 
 # Update Chef data bag with custom user credentials
 sed -i "s/notarealpassword/${ADMIN_PASSWD}/" /etc/chef/repo/data_bags/vault/splunk__default.json
+sed -i "s/notarealsecret/${CLUSTER_SECRET}/" /etc/chef/repo/data_bags/vault/splunk__default.json
 
 # Update Chef placeholder nodes with existing resources data
 if [ -n "${CLUSTER_MASTER_IP}" ]; then
@@ -163,6 +178,30 @@ ip6tables -t nat -A PREROUTING -p tcp -m tcp --dport 443 -j REDIRECT --to-ports 
 ip6tables -t nat -A PREROUTING -p udp -m udp --dport 514 -j REDIRECT --to-ports 10514
 ip6tables -t nat -A PREROUTING -p tcp -m tcp --dport 514 -j REDIRECT --to-ports 10514
 ip6tables-save > /etc/iptables/rules.v6
+
+log "Set system-wide resources to minimum recommended values for Splunk performance"
+# Set up user limits in limits.conf
+sed -i 's/# End of file//' /etc/security/limits.conf
+for min_limit in "${MIN_LIMITS[@]}"; do
+  # Example ulimit: n(option) nofile(item) 8192(min)
+  IFS=$'|' read -r option item min <<< "$min_limit"
+  # Get existing ulimit for splunk user and increase it if below min value
+  val=$(su - splunk -c "ulimit -${option}")
+  if [[ $val == "unlimited" || $val == "-1" ]]; then
+    new="-1"
+  elif [[ $val -eq "0" || $val -lt $min ]]; then
+    new=$min
+    log "Increasing ulimit ${item} from ${val} to ${new}"
+  else
+    new=$val
+  fi
+  echo "splunk       soft    ${item}  ${new}" >> /etc/security/limits.conf
+  echo "splunk       hard    ${item}  ${new}" >> /etc/security/limits.conf
+done
+echo " " >> /etc/security/limits.conf
+echo "# End of file" >> /etc/security/limits.conf
+# Enable pam_limits module for su command (used by splunk init.d)
+sed -i 's/^#\s*\(session\s*required\s*pam_limits.so\)$/\1/' /etc/pam.d/su
 
 log "Configuring Splunk"
 # Finally configure Splunk using chef client in local mode

@@ -118,47 +118,32 @@
         "description": "Orchestrator Server unique public DNS prefix"
       }
     },
-    "vmAdminUsernameChefServer": {
+    "vmAdminUsernameChefAutomate": {
       "defaultValue": "trend",
       "type": "string",
       "metadata": {
-        "description": "Chef Server Virtual Machine admin username"
+        "description": "Chef Automate Virtual Machine admin username"
       }
     },
-    "vmAdminPasswordChefServer": {
+    "vmAdminPasswordChefAutomate": {
       "defaultValue": "",
-      "type": "SecureString",
+      "type": "securestring",
       "metadata": {
-        "description": "Chef Server Virtual Machine admin password"
+        "description": "Chef Automate Virtual Machine admin password"
       }
     },
-    "vmSizeChefServer": {
+    "vmSizeChefAutomate": {
       "type": "string",
-      "defaultValue": "Standard_D2",
-      "allowedValues": [
-        "Standard_D2",
-        "Standard_D3",
-        "Standard_D4",
-        "Standard_D2_v2",
-        "Standard_D3_v2",
-        "Standard_D4_v2"
-      ],
+      "defaultValue": "Standard_DS2_v2",
       "metadata": {
-        "description": "Chef Server Virtual Machine size"
+        "description": "Chef Automate Virtual Machine size"
       }
     },
-    "publicIPDomainNameLabelChefServer": {
+    "chefAutoDns": {
       "type": "string",
-      "defaultValue": "publicdnschefserver",
+      "defaultValue": "chefautomate",
       "metadata": {
-        "description": "Chef Server unique public DNS prefix"
-      }
-    },
-    "chefUserName": {
-      "type": "string",
-      "defaultValue": "chefuser",
-      "metadata": {
-        "description": "Chef user name"
+        "description": "Chef Automate unique public DNS prefix"
       }
     },
     "chefUserFirstName": {
@@ -182,25 +167,11 @@
         "description": "Chef user email"
       }
     },
-    "chefUserPassword": {
-      "type": "securestring",
-      "defaultValue": "",
-      "metadata": {
-        "description": "Chef user password"
-      }
-    },
     "chefOrgShortName": {
       "type": "string",
       "defaultValue": "ct",
       "metadata": {
         "description": "Chef org short name"
-      }
-    },
-    "chefOrgFullName": {
-      "type": "string",
-      "defaultValue": "Chef Test Inc",
-      "metadata": {
-        "description": "Chef Org full name"
       }
     },
     "vmAdminUsernameSplunkEnterprise": {
@@ -212,14 +183,14 @@
     },
     "vmAdminPasswordSplunkEnterprise": {
       "defaultValue": "",
-      "type": "SecureString",
+      "type": "securestring",
       "metadata": {
         "description": "Splunk Enterprise Virtual Machine admin password"
       }
     },
     "splunkAdminPassword": {
       "defaultValue": "",
-      "type": "SecureString",
+      "type": "securestring",
       "metadata": {
         "description": "Splunk Enterprise Virtual Machine admin password"
       }
@@ -336,31 +307,62 @@
         "description": "The base URL for dependent deployment files",
         "artifactsBaseUrl": ""
       },
-      "defaultValue": "https://raw.githubusercontent.com/uday-sg/azure-quickstart-templates/add-trend-push-to-pilot/trend-chef-splunk-security"
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/trend-chef-splunk-security"
     }
   },
   "variables": {
+    "computeSettings": {
+      "computeApiVersion": "2016-04-30-preview",
+      "location": "[variables('location')]",
+      "chefAutoVmName": "chefautomate",
+      "imagePublisher": "chef-software",
+      "imageOffer": "chef-automate-vm-image",
+      "imageSKU": "byol",
+      "imageVersion": "latest",
+      "storageAccountType": "Standard_LRS",
+      "firstname": "[parameters('chefUserFirstName')]",
+      "lastname": "[parameters('chefUserLastName')]",
+      "orguser": "[parameters('chefOrgShortName')]",
+      "mailid": "[parameters('chefUserEmail')]",
+      "adminUsername": "[parameters('vmAdminUsernameChefAutomate')]",
+      "adminPassword": "[parameters('vmAdminPasswordChefAutomate')]",
+      "virtualMachineSize": "[parameters('vmSizeChefAutomate')]",
+      "chefAutoNic": "[variables('chefAutoNic')]",
+      "rubyPath": "/opt/chef-marketplace/embedded/bin/ruby",
+      "chefAutoScriptUrl1": "[concat(parameters('baseUrl'), '/scripts/automate_setup.rb')]",
+      "chefAutoScriptUrl2": "[concat(parameters('baseUrl'),'/scripts/chefautomate_setup.sh')]",
+      "automateLicenseUri": ""
+    },
+    "networkSettings": {
+      "networkApiVersion": "2015-06-15",
+      "location": "[variables('location')]",
+      "chefAutoPip": "chefauto-pip",
+      "chefAutoNsg": "chefauto-nsg",
+      "chefAutoNic": "[variables('chefAutoNic')]",
+      "publicIpAddressType": "Dynamic",
+      "chefAutoDns": "[concat(parameters('chefAutoDns'),substring(variables('prefix') ,0 ,5))]"
+    },
+    "prefix": "[uniqueString(resourceGroup().id)]",
+    "deploymentApiVersion": "2015-01-01",
+    "chefAutoNic": "chefauto-nic",
     "location": "[parameters('location')]",
     "vmNameTrendDSM": "trendMicroDSM",
-    "vmNameChefServer": "chefServer",
     "vmNameSplunkEnterprise": "splunkEnterprise",
     "vmNameChefWorkstation": "chefWS",
     "vmNameDSAWindows": "dsawindows",
     "vmNameDSAgent": "dsalinux",
     "vmNameOrchServer": "orchestratorServer",
     "nicNameTrendDSM": "[concat(variables('vmNameTrendDSM'),'-nic')]",
-    "networkInterfaceNameChefServer": "[concat(variables('vmNameChefServer'),'-nic')]",
     "networkInterfaceNameSplunkEnterprise": "[concat(variables('vmNameSplunkEnterprise'),'-nic')]",
     "networkInterfaceNameOrchServer": "[concat(variables('vmNameOrchServer'),'-nic')]",
     "securityGroupNameTrendDSM": "[concat(variables('nicNameTrendDSM'),'-nsg')]",
-    "networkSecurityGroupNameChefServer": "[concat(variables('networkInterfaceNameChefServer'),'-nsg')]",
     "networkSecurityGroupNameSplunkEnterprise": "[concat(variables('networkInterfaceNameSplunkEnterprise'),'-nsg')]",
     "networkSecurityGroupNameOrchServer": "[concat(variables('networkInterfaceNameOrchServer'),'-nsg')]",
     "virtualNetworkName": "trendMicroP2PVnet",
     "vnetAddressPrefix": "10.7.0.0/16",
     "subnet1Name": "trendMicroDSMsubnet",
     "subnet1Prefix": "10.7.0.0/24",
-    "subnet2Name": "chefServersubnet",
+    "subnet2Name": "chefAutomateSubnet",
     "subnet2Prefix": "10.7.1.0/24",
     "subnet3Name": "splunkEnterprisesubnet",
     "subnet3Prefix": "10.7.2.0/24",
@@ -369,7 +371,6 @@
     "subnet4Prefix": "10.7.3.0/24",
     "publicIPAddressType": "Dynamic",
     "publicIPAddressNameTrendDSM": "publicIPTrendDSM",
-    "publicIPAddressNameChefServer": "publicIPChefServer",
     "publicIPAddressNameSplunkEnterprise": "publicIPSplunkEnterprise",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
     "subnet1Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]",
@@ -385,14 +386,9 @@
     "deployment-api-version2": "2015-01-01",
     "network-api-version": "2015-06-15",
     "compute-api-version": "2015-06-15",
-    "automation-api-version": "2015-01-01-preview",
-    "automation-api-version2": "2015-10-31",
     "publisherTrendDSM": "trendmicro",
-    "publisherChefServer": "chef-software",
-    "licenseMode": "10",
     "databaseOption": "new",
     "offerChoosedTrendDSM": "[variables(concat('offer', parameters('vmSizeTrendDSM')))]",
-    "offerChoosedChefServer": "[variables(concat('offer', parameters('vmSizeChefServer')))]",
     "offerStandard_D2_v2": {
       "vmSize": "Standard_D2_v2",
       "vmSku": "dxxn25d2v2",
@@ -418,10 +414,10 @@
       "vmSku": "dxxnbyol",
       "product": "deep-security-vm-byol"
     },
-    "offerStandard_D2": {
-      "vmSize": "Standard_D2",
-      "vmSku": "azure_marketplace_25",
-      "product": "chef-server"
+    "offerStandard_DS2_v2": {
+      "vmSize": "Standard_DS2_v2",
+      "vmSku": "byol",
+      "product": "chef-automate"
     },
     "availabilitySetSettings": {
       "name": "[concat(variables('virtualNetworkName'), '-aset')]",
@@ -491,7 +487,7 @@
       "disablePasswordAuthentication": "false"
     },
     "linuxConfigurationsshPublicKey": {
-      "disablePasswordAuthentication": "true",
+      "disablePasswordAuthentication": true,
       "ssh": {
         "publicKeys": [
           {
@@ -514,10 +510,8 @@
     "vmAuthTypeTrendDSM": "password",
     "vmAdminSshPublicKeyTrendDSM": "",
     "existingSQLServerName": "",
-    "networkExists": "new",
     "ManagerAddress": "[concat(parameters('publicIPDomainNameLabelTrendDSM'),variables('uniqueString'),'.',parameters('location'),'.cloudapp.azure.com')]",
     "udpPort": "5005",
-    "chefServerScriptUrl": "[concat(parameters('baseUrl'),'/scripts/chefserver.sh')]",
     "chefprefix": "chef",
     "vmSizeDSAWindows": "Standard_D1",
     "windowsOSVersion": "2012-R2-Datacenter",
@@ -528,21 +522,38 @@
     "resourcegroupName": "[resourceGroup().name]",
     "kmServerUrl": "[concat(parameters('publicIPDomainNameLabelOrchServer'),variables('uniqueString'),'.',variables('location'),'.cloudapp.azure.com')]",
     "chef_node_name": "chefnodedsagent",
-    "chef_server_url": "[concat('https://',parameters('publicIPDomainNameLabelChefServer'),variables('uniqueString'),'.',parameters('location'),'.cloudapp.azure.com/organizations/',parameters('chefOrgShortName'))]",
+    "chef_automate_url": "[concat('https://',variables('networkSettings').chefAutoDns,'.',parameters('location'),'.cloudapp.azure.com/organizations/',parameters('chefOrgShortName'))]",
     "validation_client_name": "[concat(parameters('chefOrgShortName'),'-validator')]",
     "validation_key_format": "base64encoded",
     "runlist": "recipe[trendmicro]",
     "vmSizeOrcServer": "Standard_D1",
     "orcServerubuntuOSVersion": "14.04.2-LTS",
     "installOrchTemplateurl": "[concat(parameters('baseUrl'),'/nested/orchestrator-server-setup-trend.json')]",
-    "chefnodeCustomScripturl": "[concat(parameters('baseUrl'),'/scripts/p2pchefnodebootstrap.sh')]"
+    "chefnodeCustomScripturl": "[concat(parameters('baseUrl'),'/scripts/p2pchefnodebootstrap.sh')]",
+    "chefAutomateURL": "[concat(parameters('baseUrl'),'/nested/trendp2p-chefautomate.json')]",
+    "trendmicroTags": {
+      "type": "object",
+      "provider": "F0253A01-8156-4D41-BD91-E182158D4972"
+    },
+    "chefSoftwareTags": {
+      "type": "object",
+      "provider": "33194f91-eb5f-4110-827a-e95f640a9e46"
+    },
+    "splunkTags": {
+      "type": "object",
+      "provider": "7d69ff10-1a05-4353-b69d-0e87c3382e96"
+    },
+    "quickstartTags": {
+      "type": "object",
+      "name": "trend-chef-splunk-security"
+    }
   },
   "resources": [
     {
       "comments": "Gene",
       "name": "vnetstorage",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "[variables('deployment-api-version2')]",
+      "apiVersion": "2015-01-01",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -600,6 +611,18 @@
           },
           "availabilitySetSettings": {
             "value": "[variables('availabilitySetSettings')]"
+          },
+          "trendmicroTags": {
+            "value": "[variables('trendmicroTags')]"
+          },
+          "chefSoftwareTags": {
+            "value": "[variables('chefSoftwareTags')]"
+          },
+          "splunkTags": {
+            "value": "[variables('splunkTags')]"
+          },
+          "quickstartTags": {
+            "value": "[variables('quickstartTags')]"
           }
         }
       }
@@ -607,7 +630,7 @@
     {
       "name": "trendmicrodsm",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "[variables('deployment-api-version2')]",
+      "apiVersion": "2015-01-01",
       "dependsOn": [
         "['Microsoft.Resources/deployments/vnetstorage']"
       ],
@@ -710,6 +733,18 @@
           },
           "dsmAdminPassword": {
             "value": "[parameters('dsmAdminPassword')]"
+          },
+          "trendmicroTags": {
+            "value": "[variables('trendmicroTags')]"
+          },
+          "chefSoftwareTags": {
+            "value": "[variables('chefSoftwareTags')]"
+          },
+          "splunkTags": {
+            "value": "[variables('splunkTags')]"
+          },
+          "quickstartTags": {
+            "value": "[variables('quickstartTags')]"
           }
         }
       }
@@ -717,7 +752,7 @@
     {
       "name": "orchestrator",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "[variables('deployment-api-version2')]",
+      "apiVersion": "2015-01-01",
       "dependsOn": [
         "['Microsoft.Resources/deployments/vnetstorage']"
       ],
@@ -784,14 +819,26 @@
           },
           "installOrchTemplateurl": {
             "value": "[variables('installOrchTemplateurl')]"
+          },
+          "trendmicroTags": {
+            "value": "[variables('trendmicroTags')]"
+          },
+          "chefSoftwareTags": {
+            "value": "[variables('chefSoftwareTags')]"
+          },
+          "splunkTags": {
+            "value": "[variables('splunkTags')]"
+          },
+          "quickstartTags": {
+            "value": "[variables('quickstartTags')]"
           }
         }
       }
     },
     {
-      "name": "chefserver",
+      "name": "chefAutomate",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "[variables('deployment-api-version2')]",
+      "apiVersion": "2015-01-01",
       "dependsOn": [
         "['Microsoft.Resources/deployments/vnetstorage']",
         "['Microsoft.Resources/deployments/trendmicrodsm']",
@@ -800,84 +847,18 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('baseUrl'), '/nested/trendp2p-chefserver.json')]",
+          "uri": "[variables('chefAutomateURL')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "storageAccountName": {
-            "value": "[variables('storageAccountName')]"
+          "computeSettings": {
+            "value": "[variables('computeSettings')]"
           },
-          "publicIPAddressNameChefServer": {
-            "value": "[variables('publicIPAddressNameChefServer')]"
-          },
-          "publicIPDomainNameLabelChefServer": {
-            "value": "[concat(parameters('publicIPDomainNameLabelChefServer'),variables('uniqueString'))]"
-          },
-          "networkSecurityGroupNameChefServer": {
-            "value": "[variables('networkSecurityGroupNameChefServer')]"
-          },
-          "networkInterfaceNameChefServer": {
-            "value": "[variables('networkInterfaceNameChefServer')]"
-          },
-          "vmNameChefServer": {
-            "value": "[variables('vmNameChefServer')]"
-          },
-          "vmAdminUsernameChefServer": {
-            "value": "[parameters('vmAdminUsernameChefServer')]"
-          },
-          "vmAdminPasswordChefServer": {
-            "value": "[parameters('vmAdminPasswordChefServer')]"
-          },
-          "vmStorageAccountContainerName": {
-            "value": "[variables('vmStorageAccountContainerName')]"
-          },
-          "location": {
-            "value": "[variables('location')]"
-          },
-          "network-api-version": {
-            "value": "[variables('network-api-version')]"
-          },
-          "compute-api-version": {
-            "value": "[variables('compute-api-version')]"
-          },
-          "tagvalues": {
-            "value": "[variables('tagvalues')]"
-          },
-          "publisherChefServer": {
-            "value": "[variables('publisherChefServer')]"
-          },
-          "offerChoosedChefServer": {
-            "value": "[variables('offerChoosedChefServer')]"
+          "networkSettings": {
+            "value": "[variables('networkSettings')]"
           },
           "subnet2Ref": {
             "value": "[variables('subnet2Ref')]"
-          },
-          "publicIPAddressType": {
-            "value": "[variables('publicIPAddressType')]"
-          },
-          "chefUserName": {
-            "value": "[parameters('chefUserName')]"
-          },
-          "chefUserFirstName": {
-            "value": "[parameters('chefUserFirstName')]"
-          },
-          "chefUserLastName": {
-            "value": "[parameters('chefUserLastName')]"
-          },
-          "chefUserEmail": {
-            "value": "[parameters('chefUserEmail')]"
-          },
-          "chefUserPassword": {
-            "value": "[parameters('chefUserPassword')]"
-          },
-          "chefOrgShortName": {
-            "value": "[parameters('chefOrgShortName')]"
-          },
-          "chefOrgFullName": {
-            "value": "[parameters('chefOrgFullName')]"
-          },
-          "chefServerScriptUrl": {
-            "value": "[variables('chefServerScriptUrl')]"
           },
           "publicIPDomainNameLabelOrchServer": {
             "value": "[concat(parameters('publicIPDomainNameLabelOrchServer'),variables('uniqueString'))]"
@@ -886,7 +867,7 @@
       }
     },
     {
-      "apiVersion": "[variables('deployment-api-version2')]",
+      "apiVersion": "2015-01-01",
       "type": "Microsoft.Resources/deployments",
       "name": "splunkstandalonedeployment",
       "dependsOn": [
@@ -955,18 +936,30 @@
           },
           "udpPort": {
             "value": "[variables('udpPort')]"
+          },
+          "trendmicroTags": {
+            "value": "[variables('trendmicroTags')]"
+          },
+          "chefSoftwareTags": {
+            "value": "[variables('chefSoftwareTags')]"
+          },
+          "splunkTags": {
+            "value": "[variables('splunkTags')]"
+          },
+          "quickstartTags": {
+            "value": "[variables('quickstartTags')]"
           }
         }
       }
     },
     {
-      "apiVersion": "[variables('deployment-api-version2')]",
+      "apiVersion": "2015-01-01",
       "type": "Microsoft.Resources/deployments",
       "name": "dsagents",
       "dependsOn": [
         "['Microsoft.Resources/deployments/vnetstorage']",
         "['Microsoft.Resources/deployments/trendmicrodsm']",
-        "['Microsoft.Resources/deployments/chefserver']"
+        "['Microsoft.Resources/deployments/chefAutomate']"
       ],
       "properties": {
         "mode": "Incremental",
@@ -1061,18 +1054,30 @@
           },
           "tagvalues": {
             "value": "[variables('tagvalues')]"
+          },
+          "trendmicroTags": {
+            "value": "[variables('trendmicroTags')]"
+          },
+          "chefSoftwareTags": {
+            "value": "[variables('chefSoftwareTags')]"
+          },
+          "splunkTags": {
+            "value": "[variables('splunkTags')]"
+          },
+          "quickstartTags": {
+            "value": "[variables('quickstartTags')]"
           }
         }
       }
     },
     {
-      "apiVersion": "[variables('deployment-api-version2')]",
+      "apiVersion": "2015-01-01",
       "type": "Microsoft.Resources/deployments",
       "name": "chefnodes",
       "dependsOn": [
         "['Microsoft.Resources/deployments/vnetstorage']",
         "['Microsoft.Resources/deployments/trendmicrodsm']",
-        "['Microsoft.Resources/deployments/chefserver']"
+        "['Microsoft.Resources/deployments/chefAutomate']"
       ],
       "properties": {
         "mode": "Incremental",
@@ -1198,8 +1203,8 @@
           "chef_node_name": {
             "value": "[variables('chef_node_name')]"
           },
-          "chef_server_url": {
-            "value": "[variables('chef_server_url')]"
+          "chef_automate_url": {
+            "value": "[variables('chef_automate_url')]"
           },
           "validation_client_name": {
             "value": "[variables('validation_client_name')]"
@@ -1215,19 +1220,61 @@
           },
           "chefnodeCustomScripturl": {
             "value": "[variables('chefnodeCustomScripturl')]"
+          },
+          "trendmicroTags": {
+            "value": "[variables('trendmicroTags')]"
+          },
+          "chefSoftwareTags": {
+            "value": "[variables('chefSoftwareTags')]"
+          },
+          "splunkTags": {
+            "value": "[variables('splunkTags')]"
+          },
+          "quickstartTags": {
+            "value": "[variables('quickstartTags')]"
+          },
+          "chefAutoDNS": {
+            "value": "[variables('networkSettings').chefAutoDns]"
+          },
+          "computeSettings": {
+            "value": "[variables('computeSettings')]"
           }
         }
       }
     }
   ],
   "outputs": {
+    "TrendAdminUserName": {
+      "type": "string",
+      "value": "[parameters('vmAdminNameTrendDSM')]"
+    },
+    "TrendAdminPassword": {
+      "type": "string",
+      "value": "[parameters('vmAdminPasswordTrendDSM')]"
+    },
+    "splunkAdminUserName": {
+      "type": "string",
+      "value": "admin"
+    },
+    "splunkAdminPassword": {
+      "type": "string",
+      "value": "[parameters('splunkAdminPassword')]"
+    },
+    "chefAutomateAdminUserName": {
+      "type": "string",
+      "value": "[parameters('vmAdminUsernameChefAutomate')]"
+    },
+    "chefAutomateAdminPassword": {
+      "type": "string",
+      "value": "[parameters('vmAdminPasswordChefAutomate')]"
+    },
     "TrendMicro DSM URI": {
       "type": "string",
       "value": "[reference('trendmicrodsm').outputs.trendmicrodsmUri.value]"
     },
-    "Chef Server URI": {
+    "Chef Automate URI": {
       "type": "string",
-      "value": "[reference('chefserver').outputs.chefserverUri.value]"
+      "value": "[concat('https://',reference('chefAutomate').outputs.chefAutomatefqdn.value)]"
     },
     "Splunk Server URI": {
       "type": "string",

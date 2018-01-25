@@ -1,0 +1,176 @@
+{  
+   "$schema":"http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+   "contentVersion":"1.0.0.0",
+   "parameters":{  
+      "siteName":{  
+         "type":"string",
+         "metadata":{  
+            "description":"Name of azure web app"
+         }
+      },
+      "administratorLogin":{  
+         "type":"string",
+         "minLength":1,
+         "metadata":{  
+            "description":"Database administrator login name"
+         }
+      },
+      "administratorLoginPassword":{  
+         "type":"securestring",
+         "minLength":8,
+         "metadata":{  
+            "description":"Database administrator password"
+         }
+      },
+      "databaseDTU":{  
+         "type":"int",
+         "allowedValues":[  
+            50,
+            100
+         ],
+         "defaultValue":50,
+         "metadata":{  
+            "description":"Azure database for MySQL pricing tier : 50 DTU , 100 DTU"
+         }
+      },
+      "databaseSkuName":{  
+         "type":"string",
+         "allowedValues":[  
+            "MYSQLB100",
+            "MYSQLB50"
+         ],
+         "defaultValue":"MYSQLB100",
+         "metadata":{  
+            "description":"Azure database for MySQL sku name : MYSQLB100 (Basic 100 DTU tier) or MYSQLB50 (Basic 50 DTU tier)"
+         }
+      },
+      "databaseSkuSizeMB":{  
+         "type":"int",
+         "allowedValues":[  
+            102400,
+            51200
+         ],
+         "defaultValue":51200,
+         "metadata":{  
+            "description":"Azure database for MySQL Sku Size "
+         }
+      },
+      "databaseSkuTier":{  
+         "type":"string",
+         "allowedValues":[  
+            "Basic"
+         ],
+         "defaultValue":"Basic",
+         "metadata":{  
+            "description":"Azure database for MySQL pricing tier"
+         }
+      },
+      "mysqlVersion":{  
+         "type":"string",
+         "allowedValues":[  
+            "5.6",
+            "5.7"
+         ],
+         "defaultValue":"5.7",
+         "metadata":{  
+            "description":"MySQL version"
+         }
+      }
+   },
+   "variables":{  
+      "databaseName":"[concat(parameters('siteName'), 'database')]",
+      "serverName":"[concat(parameters('siteName'), 'mysqlserver')]",
+      "hostingPlanName":"[concat(parameters('siteName'), 'serviceplan')]"
+   },
+   "resources":[  
+      {  
+         "type":"Microsoft.Web/sites",
+         "name":"[parameters('siteName')]",
+         "properties":{  
+            "siteConfig":{  
+               "linuxFxVersion":"php|7.0",
+               "connectionStrings":[  
+                  {  
+                     "name":"defaultConnection",
+                     "ConnectionString":"[concat('Database=', variables('databaseName'), ';Data Source=', variables('serverName') ,'.mysql.database.azure.com;User Id=',parameters('administratorLogin'),'@',variables('serverName') ,';Password=',parameters('administratorLoginPassword'))]",
+                     "type":"MySQL"
+                  }
+               ]
+            },
+            "name":"[parameters('siteName')]",
+            "serverFarmId":"[variables('hostingPlanName')]",
+            "hostingEnvironment":""
+         },
+         "apiVersion":"2016-08-01",
+         "location":"[resourceGroup().location]",
+         "dependsOn":[  
+            "[variables('hostingPlanName')]"
+         ]
+      },
+      {  
+         "apiVersion":"2016-09-01",
+         "name":"[variables('hostingPlanName')]",
+         "type":"Microsoft.Web/serverfarms",
+         "location":"[resourceGroup().location]",
+         "properties":{  
+            "name":"[variables('hostingPlanName')]",
+            "workerSizeId":"1",
+            "reserved":true,
+            "numberOfWorkers":"1",
+            "hostingEnvironment":""
+         },
+         "sku":{  
+            "Tier":"Standard",
+            "Name":"S1"
+         },
+         "kind":"linux"
+      },
+      {  
+         "apiVersion":"2016-02-01-privatepreview",
+         "kind":"",
+         "location":"[resourceGroup().location]",
+         "name":"[variables('serverName')]",
+         "properties":{  
+            "version":"[parameters('mysqlVersion')]",
+            "administratorLogin":"[parameters('administratorLogin')]",
+            "administratorLoginPassword":"[parameters('administratorLoginPassword')]",
+            "storageMB":"[parameters('databaseSkuSizeMB')]"
+         },
+         "sku":{  
+            "name":"[parameters('databaseSkuName')]",
+            "tier":"[parameters('databaseSkuTier')]",
+            "capacity":"[parameters('databaseDTU')]",
+            "size":"[parameters('databaseSkuSizeMB')]",
+            "family":"SkuFamily"
+         },
+         "type":"Microsoft.DBforMySQL/servers",
+         "resources":[  
+            {  
+               "type":"firewallrules",
+               "apiVersion":"2016-02-01-privatepreview",
+               "dependsOn":[  
+                  "[concat('Microsoft.DBforMySQL/servers/', variables('serverName'))]"
+               ],
+               "location":"[resourceGroup().location]",
+               "name":"[concat(variables('serverName'),'firewall')]",
+               "properties":{  
+                  "startIpAddress":"0.0.0.0",
+                  "endIpAddress":"255.255.255.255"
+               }
+            },
+            {  
+               "name":"[variables('databaseName')]",
+               "type":"databases",
+               "apiVersion":"2016-02-01-privatepreview",
+               "properties":{  
+                  "charset":"utf8",
+                  "collation":"utf8_general_ci"
+               },
+               "dependsOn":[  
+                  "[concat('Microsoft.DBforMySQL/servers/', variables('serverName'))]"
+               ]
+            }
+         ]
+      }
+   ]
+}
