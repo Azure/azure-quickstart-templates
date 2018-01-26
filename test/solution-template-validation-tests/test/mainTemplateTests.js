@@ -129,20 +129,32 @@ describe('mainTemplate.json file - ', () => {
             });
         });
 
-        it('template must contain only approved resources (Compute/Network/Storage)', () => {
+        it('template must contain only approved resources', () => {
+            // Add allowed types here
+            // NOTE that the property name is the lower case resource provider portion of the type
+            // and the array can either be a single entry of '*' for all types for that provider
+            // or it can be one or more elements which are the resource type names to allow
+            var allowedResourceTypes = {
+                'microsoft.compute' : ['*'],
+                'microsoft.storage' : ['*'],
+                'microsoft.network' : ['*'],
+                'microsoft.resources' : ['*'],
+                'microsoft.insights' : ['autoscalesettings'],
+                'microsoft.authorization' : ['roleassignments']
+            };
             templateFileJSONObjects.forEach(templateJSONObject => {
                 var templateObject = templateJSONObject.value;
                 templateObject.should.have.property('resources');
-                var message = 'in file:' + templateJSONObject.filename + ' is NOT a compute, network or a storage resource type';
+                var message = 'in file:' + templateJSONObject.filename + ' is NOT an approved resource type (' + JSON.stringify(allowedResourceTypes) + ')';
                 Object.keys(templateObject.resources).forEach(resource => {
                     var val = templateObject.resources[resource];
                     if (val.type) {
-                        var rType = val.type.split('/');
-                        var cond = rType[0].toLowerCase() == 'microsoft.compute' ||
-                            rType[0].toLowerCase() == 'microsoft.storage' ||
-                            rType[0].toLowerCase() == 'microsoft.network' ||
-                            rType[0].toLowerCase() == 'microsoft.resources';
-                        expect(cond, getErrorMessage(val, templateJSONObject.filepath, message + '. The resource object: ' + JSON.stringify(val))).to.be.true;
+                        var rType = val.type.toLowerCase().split('/');
+                        var providerLower = rType[0];
+                        var typeLower = rType[1];
+                        var condition = allowedResourceTypes[providerLower] &&
+                                    (allowedResourceTypes[providerLower][0] == '*' || (typeLower && allowedResourceTypes[providerLower].indexOf(typeLower) > -1));
+                        expect(condition, getErrorMessage(val, templateJSONObject.filepath, message + '. The resource object: ' + JSON.stringify(val))).to.be.true;
                     }
                 });
             });
