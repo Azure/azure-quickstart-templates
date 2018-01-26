@@ -39,23 +39,18 @@ The guidance below shows a sample script, where you only have to provide your un
 $MgmtRgName = '' # Specify a name for the resource group containing the management services
 $WorkloadRgName = '' # Specify a name for the resource group containing the virtual machine(s)
 
-$MgmtRg = New-AzureRmResourceGroup -Name $MgmtRgName -Location westeurope -Verbose
-$WorkloadRg = New-AzureRmResourceGroup -Name $WorkloadRgName -Location westeurope -Verbose
+$MgmtRg = New-AzureRmResourceGroup -Name $MgmtRgName -Location eastus -Verbose
+$WorkloadRg = New-AzureRmResourceGroup -Name $WorkloadRgName -Location eastus -Verbose
 
-# Define parameters for template deployment - remember to change the values!
+# Define parameters for template deployment - remember to change the values!f
 
-$OMSWorkspaceName = '' # Specify the prefix for the OMS Workspace
-$OMSWorkspaceRegion = '' # Select the region for your workspace
-$OMSRecoveryVaultName = '' # Specify the prefix for the Recovery Vault
-$OMSRecoveryVaultRegion = '' # Select the region for your Recovery Vault
-$OMSAutomationName = '' # Specify the prefix for the Azure Automation account
-$OMSAutomationRegion = '' # Select the region for the Automation account
-$Platform = '' # Select either 'Windows' or 'Linux'
-$userName = '' # username for the VM
-$vmNameSuffix = '' # Specify the suffix for the virtual machine(s) that will be created
+$azMgmtPrefix = '' # Specify the prefix for the Azure mgmt. services that will be deployed
+$Platform = '' # Select either 'WinSrv' or 'Linux'. If WinSrv, DSC will be enabled.
+$userName = '' # username for the VM(s)
+$vmNamePrefix = '' # Specify the prefix for the virtual machine(s) that will be created
 $instanceCount = '' # You can create 1-10 VMs
 $deploymentName = '' # Specify the name of the main ARM template deployment job
-$templateUri = 'https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/azmgmt-demo/azuredeploy.json'
+$templateuri = 'https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/azmgmt-demo/azuredeploy.json'
 
 # Deploy template
 
@@ -63,17 +58,12 @@ New-AzureRmResourceGroupDeployment -Name $deploymentName `
                                    -ResourceGroupName $MgmtRg.ResourceGroupName `
                                    -TemplateUri $templateUri `
                                    -vmResourceGroup $WorkloadRg.ResourceGroupName `
-                                   -omsRecoveryVaultName $OMSRecoveryVaultName `
-                                   -omsRecoveryVaultRegion $OMSRecoveryVaultRegion `
-                                   -omsWorkspaceName $OMSWorkspaceName `
-                                   -omsWorkspaceRegion $OMSWorkspaceRegion `
-                                   -omsAutomationAccountName $OMSAutomationName `
-                                   -omsAutomationRegion $OMSAutomationRegion `
-                                   -vmNameSuffix $vmNameSuffix `
+                                   -azMgmtPrefix $azMgmtPrefix `
+                                   -vmNamePrefix $vmNamePrefix `
                                    -userName $userName `
                                    -platform $platform `
                                    -instanceCount $instanceCount `
-                                   -verbose
+                                   -Verbose
 ```
 
 Navigate to [Azure Portal](https://portal.azure.com) and find the newly created dashboard, which will have the following naming convention *AzureMgmt(uniqueString(deployment().name))*:

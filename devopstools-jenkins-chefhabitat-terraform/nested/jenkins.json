@@ -1,0 +1,229 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "jenkinsSettings": {
+            "type": "secureobject"
+        },
+        "networkSettings": {
+            "type": "object"
+        },
+        "packerStorageAccountName": {
+            "type": "string"
+        },
+        "_artifactsLocation": {
+            "type": "string"
+        },
+        "_artifactsLocationSasToken":{
+            "type": "securestring"
+        },
+        "resourceGroupName": {
+            "type": "string"
+        },
+        "AzureSubscriptionId": {
+            "type": "string"
+        },
+        "AzureApplicationId": {
+            "type": "string"
+        },
+        "AzureClientSecret": {
+            "type": "securestring"
+        },
+        "AzureTenantId": {
+            "type": "string"
+        }
+    },
+    "variables": {
+        "sasToken": "",
+        "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('networkSettings').virtualNetworkName,parameters('networkSettings').subnet1Name)]",
+        "sshKeyPath": "[concat('/home/',parameters('jenkinsSettings').adminUsername,'/.ssh/authorized_keys')]",
+        "osProfilesshPublicKey": {
+            "computerName": "[parameters('jenkinsSettings').jenkinsVmName]",
+            "adminUsername": "[parameters('jenkinsSettings').adminUsername]",
+            "linuxConfiguration": {
+                "disablePasswordAuthentication": true,
+                "ssh": {
+                    "publicKeys": [
+                        {
+                            "path": "[variables('sshKeyPath')]",
+                            "keyData": "[parameters('jenkinsSettings').sshPublicKey]"
+                        }
+                    ]
+                }
+            }
+        },
+        "osProfileReference": "[variables(concat('osProfile', parameters('jenkinsSettings').authenticationType))]"
+    },
+    "resources": [
+        {
+            "comments": "This storage account is used to store the Boot diagnostic reports of Jenkins server",
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[parameters('jenkinsSettings').jenkinsDiagnosticsStorageAccountName]",
+            "apiVersion": "2017-06-01",
+            "location": "[parameters('jenkinsSettings').location]",
+            "sku": {
+                "name": "Standard_LRS"
+            },
+            "kind": "Storage",
+            "properties": {}
+        },
+        {
+            "comments": "This public ip is used for Jenkins server",
+            "name": "[parameters('jenkinsSettings').jenkinsPipName]",
+            "type": "Microsoft.Network/publicIpAddresses",
+            "apiVersion": "2017-04-01",
+            "location": "[parameters('jenkinsSettings').location]",
+            "properties": {
+                "publicIpAllocationMethod": "[parameters('jenkinsSettings').publicIpAddressType]",
+                "dnsSettings": {
+                    "domainNameLabel": "[parameters('jenkinsSettings').jenkinsDnsLabelPrefix]"
+                }
+            }
+        },
+        {
+            "comments": "This network interface is used for jenkins server.",
+            "name": "[parameters('jenkinsSettings').jenkinsNicName]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2017-04-01",
+            "location": "[parameters('jenkinsSettings').location]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/publicIpAddresses/', parameters('jenkinsSettings').jenkinsPipName)]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIpAddress": "[parameters('jenkinsSettings').jenkinsVmPrivateIP]",
+                            "privateIPAllocationMethod": "Static",
+                            "publicIpAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIpAddresses', parameters('jenkinsSettings').jenkinsPipName)]"
+                            },
+                            "subnet": {
+                                "id": "[variables('subnetRef')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "comments": "This is the virtual machine resource of jenkins server.",
+            "name": "[parameters('jenkinsSettings').jenkinsVmName]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2017-03-30",
+            "location": "[parameters('jenkinsSettings').location]",
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('jenkinsSettings').jenkinsDiagnosticsStorageAccountName)]",
+                "[concat('Microsoft.Network/networkInterfaces/', parameters('jenkinsSettings').jenkinsNicName)]"
+            ],
+            "properties": {
+                "osProfile": "[variables('osProfileReference')]",
+                "hardwareProfile": {
+                    "vmSize": "[parameters('jenkinsSettings').jenkinsVmSize]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "offer": "UbuntuServer",
+                        "publisher": "Canonical",
+                        "sku": "[parameters('jenkinsSettings').ubuntuSku]",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "createOption": "FromImage",
+                        "managedDisk": {
+                            "storageAccountType": "Premium_LRS"
+                        }
+                    },
+                    "dataDisks": []
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('jenkinsSettings').jenkinsNicName)]"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true,
+                        "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', parameters('jenkinsSettings').jenkinsDiagnosticsStorageAccountName)).primaryEndpoints.blob]"
+                    }
+                }
+            }
+        },
+        {
+            "comments": "This custom script extension is used to install jenkins.",
+            "name": "[concat(parameters('jenkinsSettings').jenkinsVmName, '/Init')]",
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "apiVersion": "2017-03-30",
+            "location": "[parameters('jenkinsSettings').location]",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('jenkinsSettings').jenkinsVmName)]"
+            ],
+            "properties": {
+                "publisher": "Microsoft.Azure.Extensions",
+                "type": "CustomScript",
+                "typeHandlerVersion": "2.0",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "fileUris": [
+                        "[concat(parameters('jenkinsSettings').installJenkinsScriptUrl)]"
+                    ]
+                },
+                "protectedSettings": {
+                    "commandToExecute": "[concat('./' , parameters('jenkinsSettings').installJenkinsScriptName, ' -jf \"', reference(parameters('jenkinsSettings').jenkinsPipName).dnsSettings.fqdn, '\" -pi \"', parameters('jenkinsSettings').jenkinsVmPrivateIP, '\" -jrt \"', parameters('jenkinsSettings').jenkinsReleaseType , '\" -al \"', parameters('jenkinsSettings')._artifactsLocation, '\" -st \"', variables('sasToken'), '\"' )]"
+                }
+            }
+        },
+        {
+            "comments": "This is the deployment of jenkins related nested resources",
+            "type": "Microsoft.Resources/deployments",
+            "name": "Extension",
+            "apiVersion": "2016-02-01",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('jenkinsSettings').jenkinsVmName)]",
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('jenkinsSettings').jenkinsVmName,'/extensions/Init')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(parameters('_artifactsLocation'),'/nested/jenkins-jobs.json', parameters('_artifactsLocationSasToken'))]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "networkSettings": {
+                        "value": "[parameters('networkSettings')]"
+                    },
+                    "jenkinsSettings": {
+                        "value": "[parameters('jenkinsSettings')]"
+                    },
+                    "resourceGroupName": {
+                        "value": "[parameters('resourceGroupName')]"
+                    },
+                    "AzureSubscriptionId": {
+                        "value": "[parameters('AzureSubscriptionId')]"
+                    },
+                    "AzureApplicationId": {
+                        "value": "[parameters('AzureApplicationId')]"
+                    },
+                    "AzureClientSecret": {
+                        "value": "[parameters('AzureClientSecret')]"
+                    },
+                    "AzureTenantId": {
+                        "value": "[parameters('AzureTenantId')]"
+                    },
+                    "packerStorageAccountName": {
+                        "value": "[parameters('packerStorageAccountName')]"
+                    }
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "jenkinsDNS": {
+            "type": "string",
+            "value": "[reference(parameters('jenkinsSettings').jenkinsPipName).dnsSettings.fqdn]"
+        }
+    }
+}

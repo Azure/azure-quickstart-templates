@@ -1,5 +1,5 @@
 #!/bin/bash -e
-while getopts "a:l:g:s:f:e:uv" opt; do
+while getopts "a:l:g:s:f:e:uvd" opt; do
     case $opt in
         a)
             artifactsStagingDirectory=$OPTARG #the folder or sample to deploy
@@ -25,6 +25,9 @@ while getopts "a:l:g:s:f:e:uv" opt; do
         v)
             validateOnly='true'
         ;;
+        d)
+            devMode='true'
+        ;;
     esac
 done
     
@@ -34,10 +37,18 @@ if [[ -z $templateFile ]]
 then
     templateFile="$artifactsStagingDirectory/azuredeploy.json"
 fi
-if [[ -z $parametersFile ]]
+
+if [[ $devMode ]]
 then
-    parametersFile="$artifactsStagingDirectory/azuredeploy.parameters.json"
+    parametersFile="$artifactsStagingDirectory/azuredeploy.parameters.dev.json"
+else
+    if [[ -z $parametersFile ]]
+    then
+        parametersFile="$artifactsStagingDirectory/azuredeploy.parameters.json"
+    fi
 fi
+
+echo "Using parameters file: "$parametersFile
 
 templateName="$( basename "${templateFile%.*}" )"
 templateDirectory="$( dirname "$templateFile")"
@@ -67,7 +78,8 @@ then
             az storage account create -l "$location" --sku "Standard_LRS" -g "$artifactsResourceGroupName" -n "$artifactsStorageAccountName" 2>/dev/null
         fi
     else
-        artifactsResourceGroupName=$( az storage account list -o json | jq -r '.[] | select(.name == '\"$s\"') .resourceGroup' )
+        artifactsStorageAccountName=$storageAccountName
+        artifactsResourceGroupName=$( az storage account list -o json | jq -r '.[] | select(.name == '\"$storageAccountName\"') .resourceGroup' )
         if [[ -z $artifactsResourceGroupName ]] 
         then
             echo "Cannot find storageAccount: "$storageAccountName
@@ -97,7 +109,10 @@ then
         relFilePath=${filepath:$artifactsStagingDirectoryLen}
         echo "Uploading file $relFilePath..."
         az storage blob upload -f $filepath --container $artifactsStorageContainerName -n $relFilePath --account-name "$artifactsStorageAccountName" --account-key "$artifactsStorageAccountKey" --verbose
-    done 
+    done
+
+    templateUri=$blobEndpoint$artifactsStorageContainerName/$(basename $templateFile)?$sasToken
+
 fi
 
 az group create -n "$resourceGroupName" -l "$location"
@@ -107,7 +122,17 @@ parameterJson=$( echo "$parameterJson" | jq -c '.' )
 
 if [[ $validateOnly ]]
 then
-    az group deployment validate -g "$resourceGroupName" --template-file $templateFile --parameters "$parameterJson" --verbose
+    if [[ $uploadArtifacts ]]
+    then
+        az group deployment validate -g "$resourceGroupName" --template-uri $templateUri --parameters "$parameterJson" --verbose
+    else
+        az group deployment validate -g "$resourceGroupName" --template-file $templateFile --parameters "$parameterJson" --verbose
+    fi
 else
-    az group deployment create -g "$resourceGroupName" -n AzureRMSamples --template-file $templateFile --parameters "$parameterJson" --verbose
+    if [[ $uploadArtifacts ]]
+    then
+        az group deployment create -g "$resourceGroupName" -n AzureRMSamples --template-uri $templateUri --parameters "$parameterJson" --verbose
+    else
+        az group deployment create -g "$resourceGroupName" -n AzureRMSamples --template-file $templateFile --parameters "$parameterJson" --verbose
+    fi
 fi

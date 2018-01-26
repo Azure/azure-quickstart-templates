@@ -1,0 +1,412 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "dnsNameForJumpBox": {
+      "type": "string",
+      "metadata": {
+        "description": "Unique DNS Name for the Public IP used to access the Docker Virtual Machine (master node)."
+      }
+    },
+    "vmImageReference": {
+      "type": "object",
+      "defaultValue": {
+        "publisher": "Canonical",
+        "offer": "UbuntuServer",
+        "sku": "16.04-LTS",
+        "version": "latest"
+      },
+      "metadata": {
+        "description": "The image to use for VMs created. This can be marketplace or custom image",
+        "link": "https://docs.microsoft.com/en-us/nodejs/api/azure-arm-compute/imagereference?view=azure-node-2.2.0"
+      }
+    },
+    "vmNodeSku": {
+      "type": "string",
+      "defaultValue": "Standard_F8s",
+      "metadata": {
+        "description": "Size of VMs in the VM Scale Set."
+      }
+    },
+    "vmMasterSku": {
+      "type": "string",
+      "defaultValue": "Standard_F16s",
+      "metadata": {
+        "description": "Size of VMs in the VM Scale Set."
+      }
+    },
+    "vmMasterDiskType": {
+      "type": "string",
+      "allowedValues": [
+        "Premium_LRS",
+        "Standard_LRS"
+      ],
+      "defaultValue": "Premium_LRS",
+      "metadata": {
+        "description": "Choose between a standard disk for and SSD disk for the master nodes NFS fileshare"
+      }
+    },
+    "vmMasterDiskSize": {
+      "type": "int",
+      "allowedValues": [
+        32,
+        64,
+        128,
+        256,
+        512,
+        1000,
+        2000,
+        4000,
+        10000
+      ],
+      "defaultValue": 256,
+      "metadata": {
+        "description": "The SSD Size to be used for the NFS file share. For pricing details see https://azure.microsoft.com/en-us/pricing/details/managed-disks/"
+      }
+    },
+    "vmAdditionalInstallScriptUrl": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "An additional installs script (bash run as root) to be run after nodes/master are configured. Can be used to mount additional storage or do additional setup"
+      }
+    },
+    "nextflowInstallUrl": {
+      "type": "string",
+      "defaultValue": "https://get.nextflow.io",
+      "metadata": {
+        "description": "The install url for nextflow, this can be used to pin nextflow versions"
+      }
+    },
+    "instanceCount": {
+      "type": "int",
+      "metadata": {
+        "description": "Number of cluster VM instances (100 or less)."
+      },
+      "defaultValue": 2,
+      "maxValue": 100
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Admin username on all VMs."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Admin password on all VMs."
+      }
+    },
+    "vnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the virtual network to deploy the scale set into."
+      },
+      "defaultValue": "nfvnet"
+    },
+    "subnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the subnet to deploy the scale set into."
+      },
+      "defaultValue": "nfsubnet"
+    },
+    "shareName": {
+      "type": "string",
+      "metadata": {
+        "description": "Azure file share name."
+      },
+      "defaultValue": "sharedstorage"
+    },
+    "mountpointPath": {
+      "type": "string",
+      "defaultValue": "/datadisks/disk1",
+      "metadata": {
+        "description": "Path on VM to mount file shares. '/datadisks/disk1/' is a Premium Managed disk with high iops, this will suit most uses."
+      }
+    },
+    "nodeMaxCpus": {
+      "defaultValue": 2,
+      "type": "int",
+      "metadata": {
+        "description": "Sets the cluster.maxCpus setting on all cluster nodes"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "*Advanced* This is best left as default unless you are an advanced user. The base URI where artifacts required by this template are located."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "*Advanced* This should be left as default unless you are an advanced user. The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    },
+    "_artifactsSharedFolder": {
+      "type": "string",
+      "metadata": {
+        "description": "*Advanced* This should be left as default unless you are an advanced user. The folder in the artifacts location were shared scripts are stored."
+      },
+      "defaultValue": "/shared_scripts/ubuntu"
+    },
+    "_artifactsNextflowFolder": {
+      "type": "string",
+      "metadata": {
+        "description": "*Advanced* This should be left as default unless you are an advanced user. The folder in teh artifacts location were nextflow scripts are stored."
+      },
+      "defaultValue": "/nextflow-genomics-cluster-ubuntu/scripts"
+    }
+  },
+  "variables": {
+    "nextflowInitScript": "[concat(parameters('_artifactsLocation'), parameters('_artifactsNextflowFolder'), '/init.sh', parameters('_artifactsLocationSasToken'))]",
+    "diskInitScript": "[concat(parameters('_artifactsLocation'), parameters('_artifactsSharedFolder'), '/vm-disk-utils-0.1.sh', parameters('_artifactsLocationSasToken'))]",
+    "jumpboxNICName": "jumpboxNIC",
+    "addressPrefix": "10.0.0.0/16",
+    "subnetPrefix": "10.0.0.0/24",
+    "vmssName": "[concat('cluster', uniqueString(parameters('dnsNameForJumpBox')))]",
+    "storageAccountType": "Standard_LRS",
+    "storageAccountName": "[concat('nfstorage', uniqueString(resourceGroup().id))]",
+    "publicIPAddressName": "jumpboxPublicIP",
+    "publicIPAddressType": "Dynamic",
+    "jumpboxVMName": "jumpboxVM",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('vnetName'))]",
+    "subnetRef": "[concat(variables('vnetID'),'/subnets/',parameters('subnetName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('storageAccountName')]",
+      "apiVersion": "2016-01-01",
+      "location": "[resourceGroup().location]",
+      "kind": "Storage",
+      "sku": {
+        "name": "[variables('storageAccountType')]"
+      }
+    },
+    {
+      "apiVersion": "2017-06-01",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('dnsNameForJumpBox')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2017-06-01",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[parameters('vnetName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('subnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2017-06-01",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('jumpboxNICName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "[concat('Microsoft.Network/virtualNetworks/', parameters('vnetName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+              },
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2017-03-30",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('jumpboxVMName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('jumpboxNICName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmMasterSKU')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('jumpboxVMName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": "[parameters('vmImageReference')]",
+          "osDisk": {
+            "createOption": "FromImage"
+          },
+          "dataDisks": [
+            {
+              "lun": 0,
+              "name": "jumpboxdatadisk",
+              "diskSizeGB": "[parameters('vmMasterDiskSize')]",
+              "caching": "None",
+              "createOption": "Empty",
+              "managedDisk": {
+                "storageAccountType": "[parameters('vmMasterDiskType')]"
+              }
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('jumpboxNICName'))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('jumpboxVMName'),'/nfinit')]",
+      "apiVersion": "2017-03-30",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', variables('jumpboxVMName'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "forceUpdateTag": "rerunnow",
+        "settings": {
+          "fileUris": [
+            "[variables('nextflowInitScript')]",
+            "[variables('diskInitScript')]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat('bash init.sh ', variables('storageAccountName'), ' ', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value, ' ', parameters('shareName'), ' ', parameters('mountpointPath'), ' false ', parameters('adminUsername'), ' 0 ', parameters('nextflowInstallUrl'), ' ', parameters('vmAdditionalInstallScriptUrl'))]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachineScaleSets",
+      "name": "[variables('vmssName')]",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2017-03-30",
+      "sku": {
+        "name": "[parameters('vmNodeSKU')]",
+        "capacity": "[parameters('instanceCount')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', parameters('vnetName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
+      ],
+      "properties": {
+        "overprovision": true,
+        "upgradePolicy": {
+          "mode": "Manual"
+        },
+        "virtualMachineProfile": {
+          "storageProfile": {
+            "osDisk": {
+              "createOption": "FromImage",
+              "caching": "ReadWrite"
+            },
+            "imageReference": "[parameters('vmImageReference')]"
+          },
+          "osProfile": {
+            "computerNamePrefix": "[variables('vmssName')]",
+            "adminUsername": "[parameters('adminUsername')]",
+            "adminPassword": "[parameters('adminPassword')]"
+          },
+          "networkProfile": {
+            "networkInterfaceConfigurations": [
+              {
+                "name": "nic",
+                "properties": {
+                  "primary": true,
+                  "ipConfigurations": [
+                    {
+                      "name": "ipconfig",
+                      "properties": {
+                        "subnet": {
+                          "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnetName'))]"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "extensionProfile": {
+            "extensions": [
+              {
+                "name": "filesextension",
+                "properties": {
+                  "publisher": "Microsoft.Azure.Extensions",
+                  "type": "CustomScript",
+                  "typeHandlerVersion": "2.0",
+                  "autoUpgradeMinorVersion": true,
+                  "forceUpdateTag": "rerunnow",
+                  "settings": {
+                    "fileUris": [
+                      "[variables('nextflowInitScript')]",
+                      "[variables('diskInitScript')]"
+                    ]
+                  },
+                  "protectedSettings": {
+                    "commandToExecute": "[concat('bash init.sh ', variables('storageAccountName'), ' \"', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value, '\" ', parameters('shareName'), ' ', parameters('mountpointPath'), ' true ', parameters('adminUsername'), ' ', parameters('nodeMaxCpus'), ' ', parameters('nextflowInstallUrl'), ' ', parameters('vmAdditionalInstallScriptUrl'))]"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "JumpboxConnectionString": {
+      "type": "string",
+      "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(variables('publicIPAddressName')).dnsSettings.fqdn)]"
+    },
+    "ExampleNextflowCommand": {
+      "type": "string",
+      "value": "[concat('nextflow run hello -process.executor ignite -cluster.join path:', parameters('mountpointPath'), '/cifs/cluster', ' -with-timeline runtimeline.html -with-trace -cluster.maxCpus 0')]"
+    },
+    "ExampleNextflowCommandWithDocker": {
+      "type": "string",
+      "value": "[concat('nextflow run nextflow-io/rnatoy -with-docker -process.executor ignite -cluster.join path:', parameters('mountpointPath'), '/cifs/cluster', ' -with-timeline runtimeline.html -with-trace -cluster.maxCpus 0')]"
+    }
+  }
+}

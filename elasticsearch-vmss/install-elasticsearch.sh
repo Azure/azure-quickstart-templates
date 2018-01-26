@@ -90,7 +90,7 @@ done
 # Install Oracle Java
 install_java()
 {
-    if [ -f "jdk-8u73-linux-x64.tar.gz" ];
+    if [ -f "jdk-8u151-linux-x64.tar.gz" ];
     then
         log "Java already downloaded"
         return
@@ -100,8 +100,8 @@ install_java()
     RETRY=0
     MAX_RETRY=5
     while [ $RETRY -lt $MAX_RETRY ]; do
-        log "Retry $RETRY: downloading jdk-8u73-linux-x64.tar.gz"
-        wget --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/8u73-b02/jdk-8u73-linux-x64.tar.gz
+        log "Retry $RETRY: downloading jdk-8u151-linux-x64.tar.gz"
+        wget --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/8u151-b12/e758a0de34e24606bca991d704f6dcbf/jdk-8u151-linux-x64.tar.gz
         if [ $? -ne 0 ]; then
             let RETRY=RETRY+1
         else
@@ -109,12 +109,12 @@ install_java()
         fi
     done
     if [ $RETRY -eq $MAX_RETRY ]; then
-        log "Failed to download jdk-8u73-linux-x64.tar.gz"
+        log "Failed to download jdk-8u151-linux-x64.tar.gz"
         exit 1
     fi
     
-    tar xzf jdk-8u73-linux-x64.tar.gz -C /var/lib
-    export JAVA_HOME=/var/lib/jdk1.8.0_73
+    tar xzf jdk-8u151-linux-x64.tar.gz -C /var/lib
+    export JAVA_HOME=/var/lib/jdk1.8.0_151
     export PATH=$PATH:$JAVA_HOME/bin
     log "JAVA_HOME: $JAVA_HOME"
     log "PATH: $PATH"
@@ -156,7 +156,7 @@ configure_es()
 	echo 'discovery.zen.ping.unicast.hosts: ["10.0.0.10", "10.0.0.11", "10.0.0.12"]' >> /etc/elasticsearch/elasticsearch.yml
 	echo "network.host: _site_" >> /etc/elasticsearch/elasticsearch.yml
 	echo "bootstrap.memory_lock: true" >> /etc/elasticsearch/elasticsearch.yml
-    echo "xpack.security.enabled: false" >> /etc/elasticsearch/elasticsearch.yml
+        echo "xpack.security.enabled: false" >> /etc/elasticsearch/elasticsearch.yml
 
 	if [ ${IS_DATA_NODE} -eq 1 ]; then
 	    echo "node.master: false" >> /etc/elasticsearch/elasticsearch.yml
@@ -176,7 +176,14 @@ configure_system()
     echo "JAVA_HOME=$JAVA_HOME" >> /etc/default/elasticsearch
     echo 'MAX_OPEN_FILES=65536' >> /etc/default/elasticsearch
     echo 'MAX_LOCKED_MEMORY=unlimited' >> /etc/default/elasticsearch
-    sed -i 's|#LimitMEMLOCK=infinity|LimitMEMLOCK=infinity|' /usr/lib/systemd/system/elasticsearch.service
+   
+    #https://www.elastic.co/guide/en/elasticsearch/reference/current/setting-system-settings.html#systemd
+    mkdir -p /etc/systemd/system/elasticsearch.service.d
+    touch /etc/systemd/system/elasticsearch.service.d/override.conf
+    echo '[Service]' >> /etc/systemd/system/elasticsearch.service.d/override.conf
+    echo 'LimitMEMLOCK=infinity' >> /etc/systemd/system/elasticsearch.service.d/override.conf
+    sudo systemctl daemon-reload
+   
     chown -R elasticsearch:elasticsearch /usr/share/elasticsearch
     
     if [ ${IS_DATA_NODE} -eq 0 ]; 
