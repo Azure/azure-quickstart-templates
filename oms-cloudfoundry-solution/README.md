@@ -1,6 +1,6 @@
 # Azure OMS Log Analytics Solution for Cloud Foundry
 
-Version: [2017.12](./changelog.md "See change logs")
+Version: [2018.1](./changelog.md "See change logs")
 
 [![Deploy to Azure](https://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Foms-cloudfoundry-solution%2F%2Fazuredeploy.json)
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Foms-cloudfoundry-solution%2Fazuredeploy.json" target="_blank">
