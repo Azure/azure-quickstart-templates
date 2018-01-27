@@ -22,22 +22,18 @@
     },
     "windowsOSVersion": {
       "type": "string",
-      "defaultValue": "2012-R2-Datacenter",
+      "defaultValue": "2016-Datacenter",
       "allowedValues": [
         "2008-R2-SP1",
         "2012-Datacenter",
-        "2012-R2-Datacenter"
+        "2012-R2-Datacenter",
+        "2016-Nano-Server",
+        "2016-Datacenter-with-Containers",
+        "2016-Datacenter"
       ],
       "metadata": {
-        "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version. Allowed values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter."
+        "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version. Allowed values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter, 2016-Nano-Server, 2016-Datacenter-with-Containers, 2016-Datacenter."
       }
-    },
-    "vaultName": {
-        "type": "string",
-        "defaultValue": "MyRSVault",
-        "metadata": {
-            "description": "Name of Recovery services vault"
-        }
     }
   },
   "variables": {
@@ -58,8 +54,8 @@
     "vmName": "BackedupWinVM",
     "vmSize": "Standard_D1",
     "virtualNetworkName": "MyVNET",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
-    "subnetRef": "[concat(variables('vnetID'), '/subnets/', variables('subnetName'))]",
+    "vaultName": "MyRSVault",
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
     "backupFabric": "Azure",
     "backupPolicyName": "DefaultPolicy",
     "protectionContainer": "[concat('iaasvmcontainer;iaasvmcontainerv2;', resourceGroup().name, ';', variables('vmName'))]",
@@ -137,7 +133,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
       "location": "[resourceGroup().location]",
@@ -200,7 +196,7 @@
       "apiVersion": "2016-06-01",
       "type": "Microsoft.RecoveryServices/vaults",
       "location": "[resourceGroup().location]",
-      "name": "[parameters('vaultName')]",
+      "name": "[variables('vaultName')]",
       "sku": {
         "name": "RS0",
         "tier": "Standard"
@@ -210,14 +206,14 @@
     {
       "apiVersion": "2016-06-01",
       "type": "Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers/protectedItems",
-      "name": "[concat(parameters('vaultName'), '/', variables('backupFabric'), '/', variables('protectionContainer'), '/', variables('protectedItem'))]",
+      "name": "[concat(variables('vaultName'), '/', variables('backupFabric'), '/', variables('protectionContainer'), '/', variables('protectedItem'))]",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines/', variables('vmName'))]",
-        "[resourceId('Microsoft.RecoveryServices/vaults/', parameters('vaultName'))]"
+        "[resourceId('Microsoft.RecoveryServices/vaults/', variables('vaultName'))]"
       ],
       "properties": {
         "protectedItemType": "Microsoft.ClassicCompute/virtualMachines",
-        "policyId": "[resourceId('Microsoft.RecoveryServices/vaults/backupPolicies', parameters('vaultName'), variables('backupPolicyName'))]",
+        "policyId": "[resourceId('Microsoft.RecoveryServices/vaults/backupPolicies', variables('vaultName'), variables('backupPolicyName'))]",
         "sourceResourceId": "[resourceId('Microsoft.Compute/virtualMachines/', variables('vmName'))]"        
       }
     }
