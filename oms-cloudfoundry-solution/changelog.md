@@ -1,5 +1,12 @@
 # Change Log
 
+## 2018.1
+
+* Upgrade all alerts to KQL and remove workaround due to language limitation
+* Add alerts for new KPIs including internal MySQL KPIs
+* Remove views for etcd server from default views list according to component change in PCF2.0
+* Rename alerts and saved searches for clarity
+
 ## 2017.12
 
 * Add version and changelog to the template
