@@ -1,0 +1,96 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmssName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of VMSS to be encrypted"
+      },
+      "maxLength": 61
+    },
+    "keyVaultName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the KeyVault to place the volume encryption key"
+      }
+    },
+    "keyVaultResourceGroup": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource group of the KeyVault"
+      }
+    },
+    "keyEncryptionKeyURL": {
+      "type": "string",
+	  "defaultValue": "",
+      "metadata": {
+        "description": "URL of the KeyEncryptionKey used to encrypt the volume encryption key"
+      }
+    },
+    "keyEncryptionAlgorithm": {
+      "type": "string",
+	  "defaultValue": "RSA-OAEP",	  
+      "metadata": {
+        "description": "keyEncryptionAlgorithm used to wrap volume encryption key using KeyEncryptionKeyURL"
+      }
+    },	
+    "volumeType": {
+      "type": "string",
+      "defaultValue": "All",
+      "metadata": {
+        "description": "Type of the volume OS or Data to perform encryption operation"
+      }
+    },
+    "forceUpdateTag": {
+      "type": "string",
+      "defaultValue": "1.0",
+      "metadata": {
+        "description": "Pass in an unique value like a GUID everytime the operation needs to be force run"
+      }
+    }
+  },
+  "variables": {
+    "computeApiVersion": "2017-03-30", 
+    "extensionName": "AzureDiskEncryption",
+    "extensionVersion": "2.1",
+    "encryptionOperation": "EnableEncryption",
+    "keyVaultURL": "[concat('https://', parameters('keyVaultName'), '.vault.azure.net/')]",
+    "keyVaultResourceID": "[concat(subscription().id,'/resourceGroups/',parameters('keyVaultResourceGroup'),'/providers/Microsoft.KeyVault/vaults/', parameters('keyVaultName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/virtualMachineScaleSets",
+      "name": "[parameters('vmssName')]",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "[variables('computeApiVersion')]",
+      "properties": {
+        "virtualMachineProfile": {
+          "extensionProfile": {
+            "extensions": [
+              {
+                "name": "[variables('extensionName')]",
+                "properties": {
+                  "publisher": "Microsoft.Azure.Security",
+                  "type": "[variables('extensionName')]",
+                  "typeHandlerVersion": "[variables('extensionVersion')]",
+                  "autoUpgradeMinorVersion": true,
+                  "forceUpdateTag": "[parameters('forceUpdateTag')]",
+                  "settings": {
+                    "EncryptionOperation": "[variables('encryptionOperation')]",
+				    "KeyVaultURL": "[variables('keyVaultURL')]",
+                    "KeyVaultResourceId": "[variables('keyVaultResourceID')]",
+                    "KeyEncryptionKeyURL": "[parameters('keyEncryptionKeyURL')]",
+                    "KekVaultResourceId": "[variables('keyVaultResourceID')]",					
+                    "KeyEncryptionAlgorithm": "[parameters('keyEncryptionAlgorithm')]",
+                    "VolumeType": "[parameters('volumeType')]"
+                  }                  
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
