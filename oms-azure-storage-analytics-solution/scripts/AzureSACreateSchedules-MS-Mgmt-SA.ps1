@@ -2,8 +2,13 @@ param ($collectAuditLogs,$collectionFromAllSubscriptions)
 
 #region Login to Azure account and select the subscription.
 #Authenticate to Azure with SPN section
-Write-Verbose "Logging in to Azure..."
-$Conn = Get-AutomationConnection -Name AzureRunAsConnection 
+"Logging in to Azure..."
+$ArmConn = Get-AutomationConnection -Name AzureRunAsConnection 
+
+if ($ArmConn  -eq $null)
+{
+	throw "Could not retrieve connection asset AzureRunAsConnection,  Ensure that runas account  exists in the Automation account."
+}
 
 # retry
 $retry = 6
@@ -12,7 +17,7 @@ do
 { 
 	try
 	{  
-		Add-AzureRMAccount -ServicePrincipal -Tenant $Conn.TenantID -ApplicationId $Conn.ApplicationID -CertificateThumbprint $Conn.CertificateThumbprint
+		Add-AzureRMAccount -ServicePrincipal -Tenant $ArmConn.TenantID -ApplicationId $ArmConn.ApplicationID -CertificateThumbprint $ArmConn.CertificateThumbprint
 		$syncOk = $true
 	}
 	catch
@@ -24,9 +29,69 @@ do
 		Start-Sleep -s 60        
 	}
 } while (-not $syncOk -and $retry -ge 0)
+"Selecting Azure subscription..."
+$SelectedAzureSub = Select-AzureRmSubscription -SubscriptionId $ArmConn.SubscriptionId -TenantId $ArmConn.tenantid 
+#Creating headers for REST ARM Interface
+$subscriptionid=$ArmConn.SubscriptionId
+"Azure rm profile path  $((get-module -Name AzureRM.Profile).path) "
+$path=(get-module -Name AzureRM.Profile).path
+$path=Split-Path $path
+$dlllist=Get-ChildItem -Path $path  -Filter Microsoft.IdentityModel.Clients.ActiveDirectory.dll  -Recurse
+$adal =  $dlllist[0].VersionInfo.FileName
+try
+{
+	Add-type -Path $adal
+	[reflection.assembly]::LoadWithPartialName( "Microsoft.IdentityModel.Clients.ActiveDirectory" )
+}
+catch
+{
+	$ErrorMessage = $_.Exception.Message
+	$StackTrace = $_.Exception.StackTrace
+	Write-Warning "Error during sync: $ErrorMessage, stack: $StackTrace. "
+}
+#Create authentication token using the Certificate for ARM connection
+$certs= Get-ChildItem -Path Cert:\Currentuser\my -Recurse | Where{$_.Thumbprint -eq $ArmConn.CertificateThumbprint}
+#$certs
+[System.Security.Cryptography.X509Certificates.X509Certificate2]$mycert=$certs[0]
+#Write-output "$mycert will be used to acquire token"
+$CliCert=new-object   Microsoft.IdentityModel.Clients.ActiveDirectory.ClientAssertionCertificate($ArmConn.ApplicationId,$mycert)
+$AuthContext = new-object Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext("https://login.windows.net/$($ArmConn.tenantid)")
+$result = $AuthContext.AcquireToken("https://management.core.windows.net/",$CliCert)
+$header = "Bearer " + $result.AccessToken
+$headers = @{"Authorization"=$header;"Accept"="application/json"}
+$body=$null
+$HTTPVerb="GET"
+$subscriptionInfoUri = "https://management.azure.com/subscriptions/"+$subscriptionid+"?api-version=2016-02-01"
+$subscriptionInfo = Invoke-RestMethod -Uri $subscriptionInfoUri -Headers $headers -Method Get -UseBasicParsing
+IF($subscriptionInfo)
+{
+	"Successfully connected to Azure ARM REST"
+}
 
-Write-Verbose "Selecting Azure subscription..."
-Select-AzureRmSubscription -SubscriptionId $Conn.SubscriptionID -TenantId $Conn.tenantid 
+#cheking if ASM Runas Account exist
+   
+	try
+    {
+        $AsmConn = Get-AutomationConnection -Name AzureClassicRunAsConnection -ea 0
+       
+    }
+    Catch
+    {
+        if ($AsmConn -eq $null) {
+            Write-Warning "Could not retrieve connection asset AzureClassicRunAsConnection. Ensure that runas account exist and valid in the Automation account."
+            $getAsmHeader=$false
+        }
+    }
+     if ($AsmConn -eq $null) {
+        Write-Warning "Could not retrieve connection asset AzureClassicRunAsConnection. Ensure that runas account exist and valid in the Automation account. Quota usage infomration for classic accounts will no tbe collected"
+        $getAsmHeader=$false
+    }Else
+	{
+			$getAsmHeader=$true
+    }
+
+
+
 #endregion
 
 $AAResourceGroup = Get-AutomationVariable -Name 'AzureSAIngestion-AzureAutomationResourceGroup-MS-Mgmt-SA'
@@ -44,7 +109,7 @@ $varText= "AAResourceGroup = $AAResourceGroup , AAAccount = $AAAccount"
 Write-output $varText
 
 
-New-AzureRmAutomationVariable -Name $varVMIopsList -Description "Variable to store IOPS limits for Azure VM Sizes." -Value $vmiolimits -Encrypted 0 -ResourceGroupName $AAResourceGroup -AutomationAccountName $AAAccount  -ea 0
+New-AzureRmAutomationVariable -Name varVMIopsList -Description "Variable to store IOPS limits for Azure VM Sizes." -Value $vmiolimits -Encrypted 0 -ResourceGroupName $AAResourceGroup -AutomationAccountName $AAAccount  -ea 0
 
 IF([string]::IsNullOrEmpty($AAAccount) -or [string]::IsNullOrEmpty($AAResourceGroup))
 {
@@ -111,7 +176,7 @@ Do {
 
 	IF ($collectionFromAllSubscriptions  -match 'Enabled')
 	{
-		$params = @{"collectionFromAllSubscriptions" = $true}
+		$params = @{"collectionFromAllSubscriptions" = $true ; "getAsmHeader"=$getAsmHeader}
 
 		Register-AzureRmAutomationScheduledRunbook `
 		-AutomationAccountName $AAAccount `
@@ -120,11 +185,13 @@ Do {
 		-ScheduleName $($MetricsScheduleName+"-$i") -Parameters $Params
 	}Else
 	{
+
+		$params = @{"collectionFromAllSubscriptions" = $false ; "getAsmHeader"=$getAsmHeader}
 		Register-AzureRmAutomationScheduledRunbook `
 		-AutomationAccountName $AAAccount `
 		-ResourceGroupName  $AAResourceGroup `
 		-RunbookName $MetricsRunbookName `
-		-ScheduleName $($MetricsScheduleName+"-$i")
+		-ScheduleName $($MetricsScheduleName+"-$i")  -Parameters $Params 
 	}
 
 	$i++
@@ -157,7 +224,7 @@ IF($collectAuditLogs -eq 'Enabled')
 
 	IF ($collectionFromAllSubscriptions  -match 'Enabled')
 	{
-		$params = @{"collectionFromAllSubscriptions" = $true}
+		$params = @{"collectionFromAllSubscriptions" = $true ; "getAsmHeader"=$getAsmHeader}
 		Register-AzureRmAutomationScheduledRunbook `
 		-AutomationAccountName $AAAccount `
 		-ResourceGroupName  $AAResourceGroup `
@@ -167,11 +234,14 @@ IF($collectAuditLogs -eq 'Enabled')
 		Start-AzureRmAutomationRunbook -AutomationAccountName $AAAccount -Name $LogsRunbookName -ResourceGroupName $AAResourceGroup -Parameters $Params | out-null
 	}Else
 	{
+		
+		$params = @{"collectionFromAllSubscriptions" = $false ; "getAsmHeader"=$getAsmHeader}
+		
 		Register-AzureRmAutomationScheduledRunbook `
 		-AutomationAccountName $AAAccount `
 		-ResourceGroupName  $AAResourceGroup `
 		-RunbookName $LogsRunbookName `
-		-ScheduleName $LogsScheduleName
+		-ScheduleName $LogsScheduleName -Parameters $Params
 
 		Start-AzureRmAutomationRunbook -AutomationAccountName $AAAccount -Name $LogsRunbookName -ResourceGroupName $AAResourceGroup | out-null
 	}
@@ -202,10 +272,7 @@ Register-AzureRmAutomationScheduledRunbook `
 -ScheduleName "$MetricsEnablerScheduleName"
 
 
-<#
-$Schedule = New-AzureRmAutomationSchedule -Name " -StartTime $MetricsRunbookStartTime  -DayInterval 1  -AutomationAccountName $AAAccount -ResourceGroupName $AAResourceGroup
-	$Sch = Register-AzureRmAutomationScheduledRunbook -RunbookName $MetricsEnablerRunbookName -AutomationAccountName $AAAccount -ResourceGroupName $AAResourceGroup -ScheduleName "$MetricsScheduleName"
-#>
+
 #finally start the  MEtrics enabled runbook once to enable metrics asap
 
 Start-AzureRmAutomationRunbook -Name $MetricsEnablerRunbookName -ResourceGroupName $AAResourceGroup -AutomationAccountName $AAAccount | out-null
