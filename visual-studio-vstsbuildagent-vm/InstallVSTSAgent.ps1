@@ -7,7 +7,10 @@ Param(
 [Parameter(Mandatory=$true)]$VSTSAccount,
 [Parameter(Mandatory=$true)]$PersonalAccessToken,
 [Parameter(Mandatory=$true)]$AgentName,
-[Parameter(Mandatory=$true)]$PoolName
+[Parameter(Mandatory=$true)]$PoolName,
+[Parameter(Mandatory=$true)]$runAsAutoLogon,
+[Parameter(Mandatory=$false)]$vmAdminUserName,
+[Parameter(Mandatory=$false)]$vmAdminPassword
 )
 
 Write-Verbose "Entering InstallVSOAgent.ps1" -verbose
@@ -82,7 +85,14 @@ Write-Verbose "Configuring agent" -Verbose
 # Set the current directory to the agent dedicated one previously created.
 Push-Location -Path $agentInstallationPath
 
-.\config.cmd --unattended --url $serverUrl --auth PAT --token $PersonalAccessToken --pool $PoolName --agent $AgentName --runasservice
+if ($runAsAutoLogon -ieq "true")
+{
+  .\config.cmd --unattended --url $serverUrl --auth PAT --token $PersonalAccessToken --pool $PoolName --agent $AgentName --runAsAutoLogon --overwriteAutoLogon --windowslogonaccount $vmAdminUserName --windowslogonpassword $vmAdminPassword
+}
+else 
+{
+  .\config.cmd --unattended --url $serverUrl --auth PAT --token $PersonalAccessToken --pool $PoolName --agent $AgentName --runasservice
+}
 
 Pop-Location
 
