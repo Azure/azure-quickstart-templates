@@ -20,7 +20,7 @@ Param(
 )
 
 try {
-    [Microsoft.Azure.Common.Authentication.AzureSession]::ClientFactory.AddUserAgent("VSAzureTools-$UI$($host.name)".replace(" ","_"), "AzureRMSamples")
+    [Microsoft.Azure.Common.Authentication.AzureSession]::ClientFactory.AddUserAgent("AzureQuickStarts-$UI$($host.name)".replace(" ","_"), "1.0")
 } catch { }
 
 $ErrorActionPreference = 'Stop'
@@ -41,6 +41,8 @@ if ($Dev) {
         $TemplateParametersFile = $TemplateParametersFile.Replace('azuredeploy.parameters.dev.json', 'azuredeploy.parameters.1.json')
     }
 }
+
+Write-Host "Using parameter file: $TemplateParametersFile"
 
 if (!$ValidateOnly) {
     $OptionalParameters.Add('DeploymentDebugLogLevel', $DebugOptions)
