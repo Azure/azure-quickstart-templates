@@ -73,7 +73,7 @@ The quickstart template will provision the following in Azure:
    provision process to complete. Once the deployment is completed, the resource group contains all the resources
    for the OS image, Jenkins master and VMSS's:
 
-   ![Resource List](img/resource-list.png)
+   ![Resource List](images/resource-list.png)
 
    * The base image is created during the deployment to initialize the VMSS. It's built from Ubuntu 16.04 LTS, with
       Tomcat 7 installed.
@@ -84,7 +84,7 @@ The quickstart template will provision the following in Azure:
    Click the load balancer resource, and on the left panel, click **Load balancing rules**. You can see there are two
    rules defined:
 
-   ![Load Balancing Rules](img/load-balancing-rules.png)
+   ![Load Balancing Rules](images/load-balancing-rules.png)
 
    * **tomcat**: the rule that routes the public endpoint on port 80 to the active background VMSS which is
       `blue-bepool` initially.
@@ -101,7 +101,7 @@ The quickstart template will provision the following in Azure:
    parameters for the VMSS. The `IMAGE REFERENCE` field shows the image ID for the VMSS, which is the basic one in the
    resource group.
 
-   ![VMSS Image ID](img/vmss-image-id.png)
+   ![VMSS Image ID](images/vmss-image-id.png)
 
 1. Check in the resource gorup, then click **Deployments** to find the latest deployment with the name `Microsoft.Template`.
    The following details will be displayed in the `Outputs` section:
@@ -115,7 +115,7 @@ The quickstart template will provision the following in Azure:
 
 1. Visit the `TOMCAT_URL` and you will see the Tomcat 7 landing page:
 
-   ![Tomcat 7](img/tomcat-7.png)
+   ![Tomcat 7](images/tomcat-7.png)
 
 1. Run the command listed in the `SSH` box. Check the password by running the following command in the SSH session:
 
@@ -126,12 +126,12 @@ The quickstart template will provision the following in Azure:
 1. Visit `http://localhost:8080`, login with the user `admin` and password from above. Two jobs have been setup on the
    Jenkins instance:
 
-   ![Job List](img/job-list.png)
+   ![Job List](images/job-list.png)
 
 1. Click on the job **Bake Image**, then on the left click the link **Build with Parameters**. The job accepts some parameters
    to customize the image build process (with [Packer](https://www.packer.io/)):
 
-   ![Build with Parameters](img/build-with-parameters.png)
+   ![Build with Parameters](images/build-with-parameters.png)
 
    Click **Build**.
 
@@ -141,19 +141,19 @@ The quickstart template will provision the following in Azure:
 1. The **Deploy To VMSS** job accepts a image ID and deploys the image to the inactive VMSS, which is **green** initially.
    It then updates the frontend load balander to route the traffic to the newly updated VMSS.
 
-   ![Deploy To VMSS](img/deploy-to-vmss.png)
+   ![Deploy To VMSS](images/deploy-to-vmss.png)
 
 1. When the job completes, refresh the Tomcat page and you can see the Tomcat version has been updated:
 
-   ![Tomcat 8](img/tomcat-8.png)
+   ![Tomcat 8](images/tomcat-8.png)
 
 1. Check the image ID for the **green** VMSS, you can see it's already updated:
 
-   ![VMSS Image ID Green](img/vmss-image-id-green.png)
+   ![VMSS Image ID Green](images/vmss-image-id-green.png)
 
 1. Check the frontend load balancer rules, you can see the **tomcat** rule is now routing to the `green-bepool`:
 
-   ![Load Balanceing Rules Green](img/load-balancing-rules-green.png)
+   ![Load Balanceing Rules Green](images/load-balancing-rules-green.png)
 
 ## Manual Steps
 
