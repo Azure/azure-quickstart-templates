@@ -253,7 +253,7 @@ if [ "\$ERROR_MSG" != "" ]
 then
         # mysql is fine, return http 200
         echo -en "HTTP/1.1 200 OK\r\n"
-        echo -en "Content-Type: Content-Type: text/plain\r\n"
+        echo -en "Content-Type: text/plain\r\n"
         echo -en "Connection: close\r\n"
         echo -en "Content-Length: 19\r\n"
         echo -en "\r\n"
@@ -263,7 +263,7 @@ then
 else
         # mysql is down, return http 503
         echo -en "HTTP/1.1 503 Service Unavailable\r\n"
-        echo -en "Content-Type: Content-Type: text/plain\r\n"
+        echo -en "Content-Type: text/plain\r\n"
         echo -en "Connection: close\r\n"
         echo -en "Content-Length: 16\r\n"
         echo -en "\r\n"
