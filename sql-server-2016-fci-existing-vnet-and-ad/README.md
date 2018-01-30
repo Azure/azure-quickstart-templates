@@ -13,7 +13,7 @@ This template creates the following resources:
 
 ## Deploying Sample Templates
 
-To deploy the required Azure VNET and Active Directory infrastructure, if not already in place, you may use <a href="https://github.com/Azure/azure-quickstart-templates/tree/master/active-directory-new-domain-ha-2-dc">this template</a> to deploy a prerequisite infrastructure. 
+If not already in place, you may use <a href="https://github.com/Azure/azure-quickstart-templates/tree/master/active-directory-new-domain-ha-2-dc">this template</a> to deploy a prerequisite infrastructure. 
 
 Click the button below to deploy from the portal:
 
