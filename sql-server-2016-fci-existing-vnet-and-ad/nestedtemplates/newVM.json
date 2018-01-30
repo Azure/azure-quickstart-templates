@@ -17,6 +17,10 @@
         "vmDiskSize": {
             "type": "int"
         },
+        "diskCaching": {
+            "type": "string",
+            "defaultValue": "ReadOnly"
+        },
         "adminUsername": {
             "type": "string"
         },
@@ -34,50 +38,17 @@
         },
         "imageVersion": {
             "type": "string"
-        },
-        "_artifactsLocation": {
-            "type": "string"
-        },
-        "_artifactsLocationSasToken": {
-            "type": "string"
         }
     },
     "variables": {
-        "diskSelectionTemplateUri": "[concat(parameters('_artifactsLocation'),'/nestedtemplates/diskSelection.json',parameters('_artifactsLocationSasToken'))]"
     },
     "resources": [
-        {
-            "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2015-01-01",
-            "name": "[concat(parameters('vmName'),'-diskSelection')]",
-            "properties": {
-                "mode": "Incremental",
-                "templateLink": {
-                    "uri": "[variables('diskSelectionTemplateUri')]"
-                },
-                "parameters": {
-                    "vmDiskCount": {
-                        "value": "[parameters('vmDiskCount')]"
-                    },
-                    "vmDiskSize": {
-                        "value": "[parameters('vmDiskSize')]"
-                    },
-                    "diskCaching": {
-                        "value": "None"
-                    },
-                    "diskNamingPrefix": {
-                        "value": "[concat(parameters('vmName'), '-data')]"
-                    }
-                }
-            }
-        },
         {
             "type": "Microsoft.Compute/virtualMachines",
             "apiVersion": "2016-04-30-preview",
             "location": "[resourceGroup().location]",
             "name": "[parameters('vmName')]",
             "dependsOn": [
-                "[concat('Microsoft.Resources/deployments/',parameters('vmName'),'-diskSelection')]"
             ],
             "properties": {
                 "hardwareProfile": {
@@ -101,9 +72,27 @@
                     "osDisk": {
                         "name": "[concat(parameters('vmName'),'-osdisk')]",
                         "caching": "ReadWrite",
-                        "createOption": "FromImage"
+                        "createOption": "FromImage",
+                        "managedDisk":{
+                            "storageAccountType": "Premium_LRS"
+                        }
                     },
-                    "dataDisks": "[reference(concat(parameters('vmName'),'-diskSelection')).outputs.dataDiskArray.value]"
+                    "dataDisks": [
+                        {
+                            "copy": {
+                                "name": "storageLoop",
+                                "count": "[parameters('vmDiskCount')]"
+                              },
+                              "diskSizeGB": "[parameters('vmDiskSize')]",
+                              "lun": "[copyIndex()]",
+                              "createOption": "Empty",
+                              "managedDisk":{
+                                  "storageAccountType": "Premium_LRS"
+                              },
+                              "caching":"[parameters('diskCaching')]",
+                              "name": "[concat(parameters('vmName'),'-datadisk',copyindex())]"
+                        }    
+                      ]
                 },
                 "networkProfile": {
                     "networkInterfaces": [
