@@ -17,6 +17,7 @@ Arguments
   --location|-l                    [Required] : Azure resource group location for the components
   --image_resourcegroup|-irg       [Required] : Azure resource group for the VM image
   --image|-im                                 : VM image name
+  --vm_dns|-vd                     [Required] : Unique DNS name for the Virtual Machine
   --vm_username|-vu                [Required] : Username for the Virtual Machine
   --vm_password|-vp                [Required] : Password for the Virtual Machine
   --repository|-rr                 [Required] : Repository targeted by the build
@@ -112,6 +113,10 @@ do
       image="$1"
       shift
       ;;
+    --vm_dns|-vd)
+      vm_dns="$1"
+      shift
+      ;;
     --vm_username|-vu)
       vm_username="$1"
       shift
@@ -162,6 +167,9 @@ throw_if_empty --clientsecret $clientsecret
 throw_if_empty --resourcegroup $resourcegroup
 throw_if_empty --location $location
 throw_if_empty --image_resourcegroup $image_resourcegroup
+throw_if_empty --vm_dns $vm_dns
+throw_if_empty --vm_username $vm_username
+throw_if_empty --vm_password $vm_password
 throw_if_empty --repository $repository
 throw_if_empty --oms_workspace_id $oms_workspace_id
 throw_if_empty --oms_workspace_key $oms_workspace_key
@@ -196,6 +204,7 @@ job_xml=${job_xml//'{insert-resource-group}'/${resourcegroup}}
 job_xml=${job_xml//'{insert-location}'/${location}}
 job_xml=${job_xml//'{insert-image-resource-group}'/${image_resourcegroup}}
 job_xml=${job_xml//'{insert-image-name}'/${image}}
+job_xml=${job_xml//'{insert-dns-name}'/${vm_dns}}
 job_xml=${job_xml//'{insert-repository-url}'/${repository}}
 job_xml=${job_xml//'{insert-oms-workspace-id}'/${oms_workspace_id}}
 job_xml=${job_xml//'{insert-oms-workspace-key}'/${oms_workspace_key}}
