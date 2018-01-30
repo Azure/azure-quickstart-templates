@@ -48,7 +48,7 @@ echo $siteFQDN >> /tmp/vars.txt
   sudo apt-get -y install nginx php-fpm varnish php php-cli php-curl php-zip
 
   # Mahara requirements
-  sudo apt-get install -y graphviz aspell php-soap php-json php-redis php-bcmath php-gd php-pgsql php-mysql php-xmlrpc php-intl php-xml php-bz2
+  sudo apt-get install -y graphviz aspell php-soap php-json php-redis php-bcmath php-gd php-pgsql php-mysql php-xmlrpc php-intl php-xml php-bz2 php-mbstring
 
   # Mount gluster fs for /mahara
   sudo mkdir -p /mahara
