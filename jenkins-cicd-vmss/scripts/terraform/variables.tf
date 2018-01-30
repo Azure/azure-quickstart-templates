@@ -18,6 +18,11 @@ variable "image_name" {
   default     = ""
 }
 
+variable "dns_name" {
+  description = "Unique DNS name"
+  default     = ""
+}
+
 variable "application_port" {
   description = "The port that you want to expose to the external load balancer"
   default     = 80

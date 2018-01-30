@@ -30,7 +30,7 @@ resource "azurerm_public_ip" "vmss" {
   location                     = "${var.location}"
   resource_group_name          = "${azurerm_resource_group.vmss.name}"
   public_ip_address_allocation = "static"
-  domain_name_label            = "${lower(azurerm_resource_group.vmss.name)}"
+  domain_name_label            = "${lower(var.dns_name)}"
 
   tags {
     environment = "codelab"
@@ -154,7 +154,7 @@ resource "azurerm_public_ip" "jumpbox" {
   location                     = "${var.location}"
   resource_group_name          = "${azurerm_resource_group.vmss.name}"
   public_ip_address_allocation = "static"
-  domain_name_label            = "${lower(azurerm_resource_group.vmss.name)}-ssh"
+  domain_name_label            = "${lower(var.dns_name)}-ssh"
 
   tags {
     environment = "codelab"

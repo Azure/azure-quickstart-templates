@@ -35,13 +35,7 @@
     "repositoryUrl": {
       "type": "string",
       "metadata": {
-        "description": "GitHub repository URL, e.g. https://github.com/xxx/yyy."
-      }
-    },
-    "artifactsLocation": {
-      "type": "string",
-      "metadata": {
-        "description": "Location for the required artifacts."
+        "description": "GitHub repository URL for the source code."
       }
     },
     "clientId": {
@@ -59,7 +53,14 @@
     "VMResourceGroup": {
       "type": "string",
       "metadata": {
-        "description": "Resource group for the new Tomcat Virtual Machine components."
+        "description": "New Resource group for the new Tomcat Virtual Machine components."
+      }
+    },
+    "VMDnsPrefix": {
+      "type": "string",
+      "minLength": 3,
+      "metadata": {
+        "description": "Unique DNS Name for the new Tomcat Virtual Machine."
       }
     },
     "VMAdminUsername": {
@@ -85,6 +86,18 @@
       "metadata": {
         "description": "OMS workspace key."
       }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "string",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      }
     }
   },
   "variables": {
@@ -101,12 +114,11 @@
     "sNetAddressPrefixes": "10.0.0.0/24",
     "vmPrivateIP": "10.0.0.5",
     "vmImageName": "myPackerLinuxImage",
-    "_extensionScript": "setup.sh",
-    "_artifactsLocationSasToken": ""
+    "_extensionScript": "setup.sh"
   },
   "resources": [
     {
-      "apiVersion": "2016-09-01",
+      "apiVersion": "2017-10-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
       "location": "[resourceGroup().location]",
@@ -118,7 +130,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-10-01",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('frontEndNSGName')]",
       "location": "[resourceGroup().location]",
@@ -163,6 +175,9 @@
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('frontEndNSGName'))]"
+      ],
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -180,10 +195,7 @@
             }
           }
         ]
-      },
-      "dependsOn": [
-        "[concat('Microsoft.Network/networkSecurityGroups/', variables('frontEndNSGName'))]"
-      ]
+      }
     },
     {
       "apiVersion": "2016-09-01",
@@ -205,7 +217,7 @@
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
               },
               "subnet": {
-                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName')),'/subnets/',variables('subnetName'))]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
               }
             }
           }
@@ -213,7 +225,7 @@
       }
     },
     {
-      "apiVersion": "2016-04-30-preview",
+      "apiVersion": "2017-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
       "location": "[resourceGroup().location]",
@@ -257,7 +269,7 @@
         {
           "type": "extensions",
           "name": "[variables('vmExtensionName')]",
-          "apiVersion": "2016-04-30-preview",
+          "apiVersion": "2017-12-01",
           "location": "[resourceGroup().location]",
           "dependsOn": [
             "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
@@ -269,11 +281,11 @@
             "autoUpgradeMinorVersion": true,
             "settings": {
               "fileUris": [
-                "[concat(parameters('artifactsLocation'), '/scripts/jenkins/', variables('_extensionScript'), variables('_artifactsLocationSasToken'))]"
+                "[concat(parameters('_artifactsLocation'), '/scripts/jenkins/', variables('_extensionScript'), parameters('_artifactsLocationSasToken'))]"
               ]
             },
             "protectedSettings": {
-              "commandToExecute": "[concat('./' , variables('_extensionScript'), ' -jf \"', reference(variables('publicIPAddressName')).dnsSettings.fqdn, '\" -jpi \"', variables('vmPrivateIP'), '\" -jrt \"', parameters('jenkinsReleaseType'), '\" -su \"', subscription().subscriptionId, '\" -t \"', subscription().tenantId, '\" -i \"', parameters('clientId'), '\" -s \"', parameters('clientSecret'), '\" -rg \"', parameters('VMResourceGroup'), '\" -l \"', resourceGroup().location, '\" -irg \"', resourceGroup().name, '\" -im \"', variables('vmImageName'), '\" -vu \"', parameters('VMAdminUsername'), '\" -vp \"', parameters('VMAdminPassword'), '\" -rr \"', parameters('repositoryUrl'), '\" -wi \"', parameters('OMSWorkspaceId'), '\" -wk \"', parameters('OMSWorkspaceKey'), '\" -al \"', parameters('artifactsLocation'), '\" -st \"', variables('_artifactsLocationSasToken'), '\"')]"
+              "commandToExecute": "[concat('./' , variables('_extensionScript'), ' -jf \"', reference(variables('publicIPAddressName')).dnsSettings.fqdn, '\" -jpi \"', variables('vmPrivateIP'), '\" -jrt \"', parameters('jenkinsReleaseType'), '\" -su \"', subscription().subscriptionId, '\" -t \"', subscription().tenantId, '\" -i \"', parameters('clientId'), '\" -s \"', parameters('clientSecret'), '\" -rg \"', parameters('VMResourceGroup'), '\" -l \"', resourceGroup().location, '\" -irg \"', resourceGroup().name, '\" -im \"', variables('vmImageName'), '\" -vd \"', parameters('VMDnsPrefix'), '\" -vu \"', parameters('VMAdminUsername'), '\" -vp \"', parameters('VMAdminPassword'), '\" -rr \"', parameters('repositoryUrl'), '\" -wi \"', parameters('OMSWorkspaceId'), '\" -wk \"', parameters('OMSWorkspaceKey'), '\" -al \"', parameters('_artifactsLocation'), '\" -st \"', parameters('_artifactsLocationSasToken'), '\"')]"
             }
           }
         }
