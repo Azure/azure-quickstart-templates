@@ -41,6 +41,7 @@ az group deployment create --name deployfci --resource-group sqlfci01 --template
 +	To successfully deploy this template ensure:
     +    the subnet the SQL nodes are being deployed to already exists on the specified Azure virtual network
     +    this subnet is defined in Active Directory Sites and Services and bound to a nearby AD site in which Domain Controllers reside.
+    +    the DNS settings for the specified virtual network are configured to allow name resolution of the specified AD domain.
 
 
 
