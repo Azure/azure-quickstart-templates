@@ -139,7 +139,7 @@
         "UsePlan": false
       },
       "SLES 12": {
-        "sku": "12-SP1",
+        "sku": "12-SP2",
         "offer": "SLES-SAP",
         "publisher": "SUSE",
         "version": "latest",
@@ -148,7 +148,7 @@
         "UsePlan": false
       },
       "SLES 12 BYOS": {
-        "sku": "12-SP1",
+        "sku": "12-SP2",
         "offer": "SLES-SAP-BYOS",
         "publisher": "SUSE",
         "OSType": "Linux",
@@ -473,7 +473,23 @@
     "avSetNameDI": "[concat(variables('sidlower'), '-avset-di')]",
     "nicNameDI": "[concat(variables('sidlower'), '-nic-di')]",
     "vmNameDI": "[concat(variables('vmName'), '-di')]",
-    "osDiskType": "image"
+    "osDiskType": "image",
+    "osSecurityAllowAll": [
+      {
+        "name": "ALLOW_ALL",
+        "properties": {
+          "description": "Allow all",
+          "protocol": "*",
+          "sourcePortRange": "*",
+          "destinationPortRange": "*",
+          "sourceAddressPrefix": "*",
+          "destinationAddressPrefix": "*",
+          "access": "Allow",
+          "priority": 150,
+          "direction": "Inbound"
+        }
+      }
+    ]
   },
   "resources": [
     {
@@ -647,6 +663,19 @@
           }
         }
       }
+    },    
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[concat(variables('nicNameCL'), '-nsg-', copyIndex())]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "nicNSGCLLoop",
+        "count": "[variables('clvmCount')]"
+      },
+      "properties": {
+        "securityRules": "[variables('osSecurityAllowAll')]"
+      }
     },
     {
       "type": "Microsoft.Network/networkInterfaces",
@@ -659,6 +688,7 @@
       "dependsOn": [
         "pipLoop",
         "nicConfigCLLoop",
+        "nicNSGCLLoop",
         "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameVnet'))]",
         "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameLBCL'))]"
       ],
@@ -674,7 +704,10 @@
               "loadBalancerBackendAddressPools": "[reference(variables('nestedDeploymentNameLBCL')).outputs.nicBackAddressPools.value]"
             }
           }
-        ]
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(variables('nicNameCL'), '-nsg-', copyIndex()))]"
+        }
       }
     },
     {
