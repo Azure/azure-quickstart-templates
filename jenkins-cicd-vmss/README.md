@@ -46,7 +46,7 @@ Azure is a world-class cloud for hosting virtual machines running Windows or Lin
 
 2. Open Jenkins URL in browser.
 
-3. The **BuildVM** job will run automatically once the deployment complete, a running build instance will present in the **Build Executor Status** section at the bottom of the left side bar, or alternatively a completed build instance present in **Last Success** or **Last Failure** column if the build complete.
+3. The `BuildVM` job will run automatically once the deployment complete, a running build instance will present in the **Build Executor Status** section at the bottom of the left side bar, or alternatively a completed build instance present in **Last Success** or **Last Failure** column if the build complete.
 
    ![](images/jenkins-anonymous.png)
 
@@ -76,7 +76,7 @@ If you want to manage Jenkins, e.g. trigger a build manually, just follow the st
    ssh -L 127.0.0.1:8080:localhost:8080 username@msvmsstest004.eastus.cloudapp.azure.com
    ```
 
-   Or use [PuTTY](https://www.chiark.greenend.org.uk/~sgtatham/putty/) for Windows alternatively.
+   Or use [PuTTY](https://www.chiark.greenend.org.uk/~sgtatham/putty/) for Windows client alternatively.
 
    ```shell
    putty -ssh -L 127.0.0.1:8080:localhost:8080 username@msvmsstest004.eastus.cloudapp.azure.com
@@ -96,14 +96,14 @@ If you want to manage Jenkins, e.g. trigger a build manually, just follow the st
 
 6. Proceed management operations as need.
 
-### Manage the VMSS
+### Manage VMSS
 
 The VMSS components are created in a separate resource group whose name is provided in the ARM template parameter **VM Resource Group**, you could access and manage them via the Azure portal.
 ![](images/vmss-resources.png)
 
-### Connect to the HelloWorld Java Web App
+### Connect to HelloWorld Java Web App
 
-1. The website URL of the Java web app could be found in the output of the Jenkins job (see this [section](#connect-to-jenkins-anonymously)), or in the `vmss-public-ip` component in the separate resource group for VMSS components.
+1. The website URL of the Java web app could be found in the output of the Jenkins job (see this [section](#check-jenkins-build-job-status)), or in the `vmss-public-ip` component in the separate resource group for VMSS components.
 
    ![](images/vmss-publicip.png)
 
