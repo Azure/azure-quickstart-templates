@@ -99,11 +99,14 @@ If you want to manage Jenkins, e.g. trigger a build manually, just follow the st
 ### Manage VMSS
 
 The VMSS components are created in a separate resource group whose name is provided in the ARM template parameter **VM Resource Group**, you could access and manage them via the Azure portal.
+
+> **Note:** Any custom changes in the VMSS components would get lost when there's new commits in the repository specified by the ARM template parameter **Repository Url**, as that would trigger Jenkins job to re-create the image and all VMSS components.
+
 ![](images/vmss-resources.png)
 
 ### Connect to HelloWorld Java Web App
 
-1. The website URL of the Java web app could be found in the output of the Jenkins job (see this [section](#check-jenkins-build-job-status)), or in the `vmss-public-ip` component in the separate resource group for VMSS components.
+1. The website URL of the Java web app could be found in the output of the Jenkins build (see this [section](#check-jenkins-build-job-status)), or in the `vmss-public-ip` component in the separate resource group for VMSS components.
 
    ![](images/vmss-publicip.png)
 
