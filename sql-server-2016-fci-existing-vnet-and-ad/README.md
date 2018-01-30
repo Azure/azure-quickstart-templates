@@ -3,10 +3,10 @@ This template will create a SQL 2016 Failover Cluster using Windows Server 2016 
 
 This template creates the following resources:
 
-+   A Standard Storage Account for a Cloud Witness
-+	A SQL Server 2016 failover cluster provisioned on Windows Server 2016 using Storage Spaces Direct (S2D)
++	One SQL Server 2016 failover cluster provisioned on Windows Server 2016 using Storage Spaces Direct (S2D)
 +	One Availability Set for the cluster nodes
 +   One internal load balancer
++   One Standard Storage Account for the Cloud Witness
 
 ## Deploying Sample Templates
 
