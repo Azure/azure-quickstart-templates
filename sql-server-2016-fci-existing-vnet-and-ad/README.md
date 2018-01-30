@@ -1,16 +1,16 @@
 # Create a SQL Server 2016 Failover Cluster using Windows Server 2016 Storage Spaces Direct (S2D)
 This template will create a SQL 2016 Failover Cluster using Windows Server 2016 Storage Spaces Direct (S2D) in an existing VNET and Active Directory environment.
 
-This template creates the following resources by default:
+This template creates the following resources:
 
-+	A Premium Storage Account for storing VM disks for each storage node
 +   A Standard Storage Account for a Cloud Witness
-+	A SQL Server 2016 cluster for storage nodes provisioned on Storage Spaces Direct (S2D)
++	A SQL Server 2016 failover cluster provisioned on Windows Server 2016 using Storage Spaces Direct (S2D)
 +	One Availability Set for the cluster nodes
++   One internal load balancer
 
 ## Deploying Sample Templates
 
-To deploy the required Azure VNET and Active Directory infrastructure, if not already in place, you may use <a href="https://github.com/Azure/azure-quickstart-templates/tree/master/active-directory-new-domain-ha-2-dc">this template</a> to deploy the prerequisite infrastructure. 
+To deploy the required Azure VNET and Active Directory infrastructure, if not already in place, you may use <a href="https://github.com/Azure/azure-quickstart-templates/tree/master/active-directory-new-domain-ha-2-dc">this template</a> to deploy a prerequisite infrastructure. 
 
 Click the button below to deploy from the portal:
 
