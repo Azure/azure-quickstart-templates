@@ -30,16 +30,11 @@ az group deployment create --name deployfci --resource-group sqlfci01 --template
 ## Requirements
 
 + 	The service account used by SQL Server should be created ahead of time in AD by an admin.  Use the standard SQL Server guidance for these accounts.
-
 +	The default settings for storage are to deploy using **premium storage**, which is **strongly** recommended for S2D performance.  When using Premium Storage, be sure to select a VM size (DS-series, GS-series) that supports Premium Storage.
-
 +   The default settings deploy 2 data disks per storage node, but can be increased to up to 32 data disks per node.  When increasing # of data disks, be sure to select a VM size that can support the # of data disks you specify.
-
 + 	The default settings for compute require that you have at least 4 cores of free quota to deploy.
-
 + 	The images used to create this deployment are
 	+ 	SQL Server 2016 SP1 and Windows Server 2016 Datacenter Edition - Latest Image
-
 +	To successfully deploy this template, be sure that the subnet to which the storage nodes are being deployed already exists on the specified Azure virtual network, AND this subnet should be defined in Active Directory Sites and Services for the appropriate AD site in which the closest domain controllers are configured.
 
 
