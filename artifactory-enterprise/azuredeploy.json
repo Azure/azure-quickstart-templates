@@ -25,6 +25,7 @@
     },
     "masterKey": {
       "type": "string",
+      "defaultValue": "35767fa0164bac66b6cccb8880babefb",
       "metadata": {
         "description": "Master key for Artifactory cluster. Generate master.key using command '$openssl rand -hex 16'"
       },
@@ -123,7 +124,8 @@
   "variables": {
     "namingInfix": "[toLower(substring(concat(parameters('clusterName'), uniqueString(resourceGroup().id)), 0, 9))]",
     "addressPrefix": "10.0.0.0/16",
-    "subnetPrefix": "10.0.0.0/24",
+    "subnetPrefix": "10.0.1.0/24",
+    "secondarySubnetPrefix": "10.0.2.0/24",
     "virtualNetworkName": "[concat(variables('namingInfix'), 'vnet')]",
     "subnetName": "[concat(variables('namingInfix'), 'subnet')]",
     "lbName": "[concat(variables('namingInfix'), 'lb')]",
@@ -218,20 +220,6 @@
             }
           },
           {
-            "name": "docker-rule",
-            "properties": {
-              "description": "Allow HTTP",
-              "protocol": "Tcp",
-              "sourcePortRange": "*",
-              "destinationPortRange": "5000-5010",
-              "sourceAddressPrefix": "Internet",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 104,
-              "direction": "Inbound"
-            }
-          },
-          {
             "name": "membership-rule",
             "properties": {
               "description": "Allow HTTP",
@@ -273,6 +261,15 @@
                 "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
               }
             }
+          },
+          {
+            "name": "[concat(variables('subnetName'),'-secondary')]",
+            "properties": {
+              "addressPrefix": "[variables('secondarySubnetPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+              }
+            }
           }
         ]
       }
@@ -295,6 +292,33 @@
               "privateIPAllocationMethod": "Dynamic",
               "subnet": {
                 "id": "[concat(resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName')), '/subnets/', variables('subnetName'))]"
+              }
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('nicName'),'-secondary')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('pipName'))]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName')), '/subnets/', concat(variables('subnetName'),'-secondary'))]"
               }
             }
           }
@@ -396,23 +420,6 @@
               "probe": {
                 "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('lbName')), '/probes/', variables('httpsProbeName'))]"
               }
-            }
-          },
-          {
-            "name": "DockerRule",
-            "properties": {
-              "loadDistribution": "Default",
-              "frontendIPConfiguration": {
-                "id": "[variables('feIpConfigId')]"
-              },
-              "backendAddressPool": {
-                "id": "[variables('bepoolId')]"
-              },
-              "protocol": "Tcp",
-              "frontendPort": 5001,
-              "backendPort": 5001,
-              "enableFloatingIP": false,
-              "idleTimeoutInMinutes": 5
             }
           }
         ],
@@ -542,7 +549,7 @@
           "extensionProfile": {
             "extensions": [
               {
-                "name": "lapextension",
+                "name": "primary_extension",
                 "properties": {
                   "publisher": "Microsoft.Azure.Extensions",
                   "type": "CustomScript",
@@ -599,7 +606,7 @@
           "networkProfile": {
             "networkInterfaceConfigurations": [
               {
-                "name": "[variables('nicName')]",
+                "name": "[concat(variables('nicName'),'-secondary')]",
                 "properties": {
                   "primary": true,
                   "ipConfigurations": [
@@ -607,7 +614,7 @@
                       "name": "[variables('ipConfigName')]",
                       "properties": {
                         "subnet": {
-                          "id": "[concat(resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName')), '/subnets/', variables('subnetName'))]"
+                          "id": "[concat(resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName')), '/subnets/', concat(variables('subnetName'),'-secondary'))]"
                         },
                         "loadBalancerBackendAddressPools": [
                           {
@@ -629,7 +636,7 @@
           "extensionProfile": {
             "extensions": [
               {
-                "name": "lapextension",
+                "name": "secondary_extension",
                 "properties": {
                   "publisher": "Microsoft.Azure.Extensions",
                   "type": "CustomScript",
@@ -641,7 +648,7 @@
                     ]
                   },
                   "protectedSettings": {
-                    "commandToExecute": "[concat('sh install_artifactory.sh ',reference('Microsoft.Resources/deployments/deploySQLDB').outputs.jdbcConnString.value,' ',parameters('DB_Name'),' ',parameters('DB_Admin_User'),' ',parameters('DB_Admin_Password'),' ',variables('storageAccountName'),' ',variables('vmStorageAccountContainerName'),' ',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), variables('apiVersion')).key1,' ',parameters('masterKey'),' ',parameters('artifactoryVersion'))]"
+                    "commandToExecute": "[concat('sh install_artifactory_secondary.sh ',reference('Microsoft.Resources/deployments/deploySQLDB').outputs.jdbcConnString.value,' ',parameters('DB_Name'),' ',parameters('DB_Admin_User'),' ',parameters('DB_Admin_Password'),' ',variables('storageAccountName'),' ',variables('vmStorageAccountContainerName'),' ',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), variables('apiVersion')).key1,' ',parameters('masterKey'),' ',parameters('artifactoryVersion'))]"
                   }
                 }
               }
