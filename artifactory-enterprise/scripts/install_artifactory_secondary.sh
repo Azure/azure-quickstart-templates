@@ -104,15 +104,15 @@ EOF
 
 cat <<EOF >/var/opt/jfrog/artifactory/etc/binarystore.xml
 <config version="2">
-    <chain template=“cluster-azure-blob-storage”>
-       <provider id=“cache-fs-eventual-azure-blob-storage” type=“cache-fs”>
-           <provider id=“sharding-cluster-eventual-azure-blob-storage” type=“sharding-cluster”>
-               <sub-provider id=“eventual-cluster-azure-blob-storage” type=“eventual-cluster”>
-                   <provider id=“retry-azure-blob-storage” type=“retry”>
-                       <provider id=“azure-blob-storage” type=“azure-blob-storage”/>
+    <chain template="cluster-azure-blob-storage">
+       <provider id="cache-fs-eventual-azure-blob-storage" type="cache-fs">
+           <provider id="sharding-cluster-eventual-azure-blob-storage" type="sharding-cluster">
+               <sub-provider id="eventual-cluster-azure-blob-storage" type="eventual-cluster">
+                   <provider id="retry-azure-blob-storage" type="retry">
+                       <provider id="azure-blob-storage" type="azure-blob-storage"/>
                    </provider>
                </sub-provider>
-               <dynamic-provider id=“remote-azure-blob-storage” type=“remote”/>
+               <dynamic-provider id="remote-azure-blob-storage" type="remote"/>
            </provider>
        </provider>
    </chain>
