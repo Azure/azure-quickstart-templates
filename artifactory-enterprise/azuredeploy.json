@@ -23,6 +23,21 @@
       },
       "maxValue": 100
     },
+    "masterKey": {
+      "type": "string",
+      "metadata": {
+        "description": "Master key for Artifactory cluster. Generate master.key using command '$openssl rand -hex 16'"
+      },
+      "maxLength": 64
+    },
+    "artifactoryVersion": {
+      "type": "string",
+      "defaultValue": "5.8.1",
+      "metadata": {
+        "description": "Artifactory version to deploy"
+      },
+      "maxLength": 64
+    },
     "adminUsername": {
       "type": "string",
       "metadata": {
@@ -539,7 +554,94 @@
                     ]
                   },
                   "protectedSettings": {
-                    "commandToExecute": "[concat('sh install_artifactory.sh ',reference('Microsoft.Resources/deployments/deploySQLDB').outputs.jdbcConnString.value,' ',parameters('DB_Name'),' ',parameters('DB_Admin_User'),' ',parameters('DB_Admin_Password'),' ',variables('storageAccountName'),' ',variables('vmStorageAccountContainerName'),' ',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), variables('apiVersion')).key1)]"
+                    "commandToExecute": "[concat('sh install_artifactory.sh ',reference('Microsoft.Resources/deployments/deploySQLDB').outputs.jdbcConnString.value,' ',parameters('DB_Name'),' ',parameters('DB_Admin_User'),' ',parameters('DB_Admin_Password'),' ',variables('storageAccountName'),' ',variables('vmStorageAccountContainerName'),' ',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), variables('apiVersion')).key1,' ',parameters('masterKey'),' ',parameters('artifactoryVersion'))]"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachineScaleSets",
+      "name": "[concat(variables('namingInfix'),'-seconday')]",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-04-30-preview",
+      "dependsOn": [
+        "[concat('Microsoft.Network/loadBalancers/', variables('lbName'))]",
+        "[concat('Microsoft.Resources/deployments/', 'deploySQLDB')]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "sku": {
+        "name": "[parameters('vmSku')]",
+        "tier": "Standard",
+        "capacity": "1"
+      },
+      "properties": {
+        "upgradePolicy": {
+          "mode": "Manual"
+        },
+        "virtualMachineProfile": {
+          "storageProfile": {
+            "osDisk": {
+              "caching": "ReadWrite",
+              "createOption": "FromImage"
+            },
+            "imageReference": "[variables('imageReference')]"
+          },
+          "osProfile": {
+            "computerNamePrefix": "[variables('namingInfix')]",
+            "adminUsername": "[parameters('adminUsername')]",
+            "adminPassword": "[parameters('adminPassword')]"
+          },
+          "networkProfile": {
+            "networkInterfaceConfigurations": [
+              {
+                "name": "[variables('nicName')]",
+                "properties": {
+                  "primary": true,
+                  "ipConfigurations": [
+                    {
+                      "name": "[variables('ipConfigName')]",
+                      "properties": {
+                        "subnet": {
+                          "id": "[concat(resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName')), '/subnets/', variables('subnetName'))]"
+                        },
+                        "loadBalancerBackendAddressPools": [
+                          {
+                            "id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('lbName'), '/backendAddressPools/', variables('bePoolName'))]"
+                          }
+                        ],
+                        "loadBalancerInboundNatPools": [
+                          {
+                            "id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('lbName'), '/inboundNatPools/', variables('natPoolName'))]"
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "extensionProfile": {
+            "extensions": [
+              {
+                "name": "lapextension",
+                "properties": {
+                  "publisher": "Microsoft.Azure.Extensions",
+                  "type": "CustomScript",
+                  "typeHandlerVersion": "2.0",
+                  "autoUpgradeMinorVersion": false,
+                  "settings": {
+                    "fileUris": [
+                      "[concat(parameters('_artifactsLocation'), 'scripts/','install_artifactory_secondary.sh')]"
+                    ]
+                  },
+                  "protectedSettings": {
+                    "commandToExecute": "[concat('sh install_artifactory.sh ',reference('Microsoft.Resources/deployments/deploySQLDB').outputs.jdbcConnString.value,' ',parameters('DB_Name'),' ',parameters('DB_Admin_User'),' ',parameters('DB_Admin_Password'),' ',variables('storageAccountName'),' ',variables('vmStorageAccountContainerName'),' ',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), variables('apiVersion')).key1,' ',parameters('masterKey'),' ',parameters('artifactoryVersion'))]"
                   }
                 }
               }

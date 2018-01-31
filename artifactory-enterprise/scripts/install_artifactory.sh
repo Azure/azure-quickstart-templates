@@ -9,6 +9,8 @@ STORAGE_ACCT=$5
 STORAGE_CONTAINER=$6
 STORAGE_ACCT_KEY=$7
 MASTER_KEY=$8
+ARTIFACTORY_VERSION=$9
+# EXTRA_JAVA_OPTS=$9
 
 export DEBIAN_FRONTEND=noninteractive
 
@@ -31,7 +33,7 @@ echo "deb https://jfrog.bintray.com/artifactory-pro-debs trusty main" | tee -a /
 curl https://bintray.com/user/downloadSubjectPublicKey?username=jfrog | apt-key add -
 apt-get update
 apt-get -y install nginx>> /tmp/yum-nginx.log 2>&1
-apt-get -y install jfrog-artifactory-pro>> /tmp/yum-artifactory.log 2>&1
+apt-get -y install jfrog-artifactory-pro=${ARTIFACTORY_VERSION} >> /tmp/yum-artifactory.log 2>&1
 
 #Install database drivers
 curl -L -o  /opt/jfrog/artifactory/tomcat/lib/mysql-connector-java-5.1.38.jar https://bintray.com/artifact/download/bintray/jcenter/mysql/mysql-connector-java/5.1.38/mysql-connector-java-5.1.38.jar
@@ -142,6 +144,12 @@ cat <<EOF >/var/opt/jfrog/artifactory/etc/binarystore.xml
 </config>
 EOF
 
+#cat /etc/pki/tls/certs/result.pem | sed 's/CERTIFICATE----- /CERTIFICATE-----\n/g' | sed 's/-----END/\n-----END/' > temp.pem
+#mv -f temp.pem /etc/pki/tls/certs/cert.pem
+#cat /etc/pki/tls/private/result.key | sed 's/KEY----- /KEY-----\n/g' | sed 's/-----END/\n-----END/'  > temp.key
+#mv -f temp.key /etc/pki/tls/private/cert.key
+#echo "artifactory.ping.allowUnauthenticated=true" >> /var/opt/jfrog/artifactory/etc/artifactory.system.properties
+#echo "export JAVA_OPTIONS=\"${EXTRA_JAVA_OPTS}\"" >> /var/opt/jfrog/artifactory/etc/default
 HOSTNAME=$(hostname -i)
 sed -i -e "s/art1/art-$(date +%s$RANDOM)/" /var/opt/jfrog/artifactory/etc/ha-node.properties
 sed -i -e "s/127.0.0.1/$HOSTNAME/" /var/opt/jfrog/artifactory/etc/ha-node.properties
