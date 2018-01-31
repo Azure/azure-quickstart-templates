@@ -16,11 +16,11 @@ By setting up a continuous build to produce your container images and orchestrat
 
 # Deploy to Azure
 
-##Create service principle 
+## Create service principle 
 
 TODO
 
-###Deploy
+## Deploy
 
 Click the button below to deploy the relates resource to Azure.
 
@@ -36,9 +36,9 @@ Click the button below to deploy the relates resource to Azure.
 
 It take about 13 minutes to finish the deployment. 
 
-###Deployment output
+## Deployment output
 
-After the deployment finised, you will get some import infomation from the output section.
+After the deployment finised, you will get some import infomation from the output section.
 
 ![](images/azure-deployment-output.png)
 
