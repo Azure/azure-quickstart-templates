@@ -4,7 +4,6 @@
   "parameters": {
     "jenkinsVMAdminUsername": {
       "type": "string",
-      "defaultValue": "jenkinsadmin",
       "minLength": 1,
       "metadata": {
         "description": "User name for the Jenkins Virtual Machine."
@@ -67,7 +66,6 @@
     },
     "mySqlAdminLogin": {
       "type": "string",
-      "defaultValue": "adminLogin",
       "minLength": 3,
       "metadata": {
         "description": "User name for MySQL admin login."
@@ -79,6 +77,20 @@
       "metadata": {
         "description": "Password for MySQL admin login."
       }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/jenkins-cicd-webapp",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      }
     }
   },
   "variables": {
@@ -87,8 +99,7 @@
     "webAppName": "[concat(parameters('appDnsPrefix'), 'Web')]",
     "appInsightsName": "[concat(parameters('appDnsPrefix'), 'AppInsights')]",
     "mySqlServerName": "[concat(toLower(parameters('appDnsPrefix')), 'mysqlserver')]",
-    "mySqlDbName": "[concat(toLower(parameters('appDnsPrefix')), 'mysqldb')]",
-    "_artifactsLocation": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/jenkins-cicd-webapp/"
+    "mySqlDbName": "[concat(toLower(parameters('appDnsPrefix')), 'mysqldb')]"
   },
   "resources": [
     {
@@ -100,9 +111,7 @@
       "name": "[variables('storageAccountName')]",
       "apiVersion": "2017-06-01",
       "location": "[resourceGroup().location]",
-      "tags": {},
-      "properties": {},
-      "dependsOn": []
+      "properties": {}
     },
     {
       "type": "Microsoft.Web/serverfarms",
@@ -115,8 +124,7 @@
       "location": "[resourceGroup().location]",
       "properties": {
           "name": "[variables('servicePlanName')]"
-      },
-      "dependsOn": []
+      }
     },
     {
       "type": "Microsoft.Web/sites",
@@ -124,28 +132,26 @@
       "name": "[variables('webAppName')]",
       "apiVersion": "2016-08-01",
       "location": "[resourceGroup().location]",
-      "tags": {},
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('servicePlanName'))]"
+      ],
       "properties": {
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('servicePlanName'))]"
       },
-      "dependsOn": [
-          "[resourceId('Microsoft.Web/serverfarms', variables('servicePlanName'))]"
-      ],
       "resources": [
         {
           "type": "config",
           "name": "web",
           "apiVersion": "2016-08-01",
-          "location": "East US",
-          "tags": {},
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+              "[resourceId('Microsoft.Web/sites', variables('webAppName'))]"
+          ],
           "properties": {
               "javaVersion": "1.8",
               "javaContainer": "TOMCAT",
               "javaContainerVersion": "9.0"
-          },
-          "dependsOn": [
-              "[resourceId('Microsoft.Web/sites', variables('webAppName'))]"
-          ]
+          }
         },
         {
           "apiVersion":"2016-08-01",
@@ -167,17 +173,17 @@
       "type": "microsoft.insights/components",
       "kind": "java",
       "name": "[variables('appInsightsName')]",
-      "apiVersion": "2014-04-01",
+      "apiVersion": "2015-05-01",
       "location": "eastus",
       "tags": {
           "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/sites/', variables('webAppName'))]": "Resource"
       },
       "properties": {
           "ApplicationId": "[variables('appInsightsName')]"
-      },
-      "dependsOn": []
+      }
     },
     {  
+      "type":"Microsoft.DBforMySQL/servers",
       "apiVersion":"2017-04-30-preview",
       "location":"[resourceGroup().location]",
       "name":"[variables('mySqlServerName')]",
@@ -192,16 +198,15 @@
          "tier":"Basic",
          "capacity":50
       },
-      "type":"Microsoft.DBforMySQL/servers",
       "resources":[  
          {  
             "type":"firewallrules",
             "apiVersion":"2017-04-30-preview",
-            "dependsOn":[  
-               "[resourceId('Microsoft.DBforMySQL/servers', variables('mySqlServerName'))]"
-            ],
             "location":"[resourceGroup().location]",
             "name":"[concat(variables('mySqlServerName'),'Firewall')]",
+            "dependsOn":[  
+              "[resourceId('Microsoft.DBforMySQL/servers', variables('mySqlServerName'))]"
+            ],
             "properties":{  
                "startIpAddress":"0.0.0.0",
                "endIpAddress":"255.255.255.255"
@@ -211,13 +216,13 @@
             "name":"[variables('mySqlDbName')]",
             "type":"databases",
             "apiVersion":"2017-04-30-preview",
+            "dependsOn":[  
+               "[resourceId('Microsoft.DBforMySQL/servers', variables('mySqlServerName'))]"
+            ],
             "properties":{  
                "charset":"utf8",
                "collation":"utf8_general_ci"
-            },
-            "dependsOn":[  
-               "[resourceId('Microsoft.DBforMySQL/servers', variables('mySqlServerName'))]"
-            ]
+            }
          }
       ]
     },
@@ -225,10 +230,13 @@
       "apiVersion": "2017-05-10",
       "name": "jenkinsDeployment",
       "type": "Microsoft.Resources/deployments",
+      "dependsOn": [          
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+      ],
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('_artifactsLocation'), 'nested/jenkins.json')]",
+          "uri": "[concat(parameters('_artifactsLocation'), '/nested/jenkins.json')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -247,9 +255,6 @@
           "repositoryUrl": {
             "value": "[parameters('repositoryUrl')]"
           },
-          "artifactsLocation": {
-            "value": "[variables('_artifactsLocation')]"
-          },
           "clientId": {
             "value": "[parameters('clientId')]"
           },
@@ -264,12 +269,15 @@
           },
           "webAppName": {
             "value": "[variables('webAppName')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
           }
         }
-      },
-      "dependsOn": [          
-        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
-      ]
+      }
     }
   ],
   "outputs": {
