@@ -18,8 +18,7 @@
         "type": "string",
         "metadata": {
           "description": "User name for the Linux Virtual Machines (Jenkins and Kubernetes)."
-        },
-        "defaultValue": "azureuser"
+        }
       },
       "linuxAdminPassword": {
         "type": "securestring",
@@ -163,6 +162,20 @@
           "description": "URL to a public git repository that includes a Dockerfile."
         },
         "defaultValue": "https://github.com/Azure/azure-quickstart-templates"
+      },
+      "_artifactsLocation": {
+        "type": "string",
+        "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/jenkins-cicd-container/",
+        "metadata": {
+          "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+        }
+      },
+      "_artifactsLocationSasToken": {
+        "type": "string",
+        "defaultValue": "",
+        "metadata": {
+          "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+        }
       }
     },
     "variables": {
@@ -171,9 +184,7 @@
       "cosmosDbName": "[parameters('cosmosDbName')]",
       "acrName": "[parameters('acrName')]",
       "virtualNetworkName": "virtual-network",
-      "subnetName": "default-subnet",
-      "_artifactsLocation": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/jenkins-cicd-container/",
-      "_artifactsLocationSasToken": ""
+      "subnetName": "default-subnet"
     },
     "resources": [
       {
@@ -223,10 +234,15 @@
         "apiVersion": "2017-05-10",
         "name": "jenkinsDeployment",
         "type": "Microsoft.Resources/deployments",
+        "dependsOn": [          
+          "[resourceId('Microsoft.ContainerRegistry/registries', variables('acrName'))]",
+          "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
+          "[resourceId('Microsoft.DocumentDb/databaseAccounts', variables('cosmosDbName'))]"
+        ],
         "properties": {
           "mode": "Incremental",
           "templateLink": {
-            "uri": "[concat(variables('_artifactsLocation'), 'nested/jenkins.json')]",
+            "uri": "[concat(parameters('_artifactsLocation'), 'nested/jenkins.json')]",
             "contentVersion": "1.0.0.0"
           },
           "parameters": {
@@ -249,7 +265,7 @@
               "value": "[parameters('jenkinsDnsPrefix')]"
             },
             "subnetId": {
-              "value": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName')), '/subnets/', variables('subnetName'))]"
+              "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
             },
             "gitRepository": {
               "value": "[parameters('gitRepository')]"
@@ -273,18 +289,13 @@
               "value": "[parameters('kubernetesClusterName')]"
             },
             "_artifactsLocation": {
-              "value": "[variables('_artifactsLocation')]"
+              "value": "[parameters('_artifactsLocation')]"
             },
             "_artifactsLocationSasToken": {
-              "value": "[variables('_artifactsLocationSasToken')]"
+              "value": "[parameters('_artifactsLocationSasToken')]"
             }
           }
-        },
-        "dependsOn": [          
-          "[resourceId('Microsoft.ContainerRegistry/registries', variables('acrName'))]",
-          "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
-          "[resourceId('Microsoft.DocumentDb/databaseAccounts', variables('cosmosDbName'))]"
-        ]
+        }
       },
       {
         "apiVersion": "2017-08-31",
@@ -324,10 +335,14 @@
         "apiVersion": "2017-05-10",
         "name": "grafanaDeployment",
         "type": "Microsoft.Resources/deployments",
+        "dependsOn": [
+          "[resourceId('Microsoft.DocumentDb/databaseAccounts', variables('cosmosDbName'))]",
+          "[resourceId('Microsoft.ContainerService/managedClusters', parameters('kubernetesClusterName'))]"
+        ],
         "properties": {
           "mode": "Incremental",
           "templateLink": {
-            "uri": "[concat(variables('_artifactsLocation'), 'nested/grafana.json')]",
+            "uri": "[concat(parameters('_artifactsLocation'), 'nested/grafana.json')]",
             "contentVersion": "1.0.0.0"
           },
           "parameters": {
@@ -350,7 +365,7 @@
               "value": "[parameters('grafanaDnsPrefix')]"
             },
             "subnetId": {
-              "value": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName')), '/subnets/', variables('subnetName'))]"
+              "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
             },
             "cosmosDbName": {
               "value": "[parameters('cosmosDbName')]"
@@ -359,17 +374,13 @@
               "value": "[parameters('kubernetesClusterName')]"
             },
             "_artifactsLocation": {
-              "value": "[variables('_artifactsLocation')]"
+              "value": "[parameters('_artifactsLocation')]"
             },
             "_artifactsLocationSasToken": {
-              "value": "[variables('_artifactsLocationSasToken')]"
+              "value": "[parameters('_artifactsLocationSasToken')]"
             }
           }
-        },
-        "dependsOn": [
-          "[resourceId('Microsoft.DocumentDb/databaseAccounts', variables('cosmosDbName'))]",
-          "[resourceId('Microsoft.ContainerService/managedClusters', parameters('kubernetesClusterName'))]"
-        ]
+        }
       }
     ],
     "outputs": {
