@@ -14,13 +14,13 @@ By setting up a continuous build to produce your container images and orchestrat
 
 ![](images/architecture.png)
 
-# Deploy to Azure
+## Deploy to Azure
 
-## Create service principle 
+### Create service principle 
 
 TODO
 
-## Deploy
+### Deploy
 
 Click the button below to deploy the relates resource to Azure.
 
@@ -36,7 +36,7 @@ Click the button below to deploy the relates resource to Azure.
 
 It take about 13 minutes to finish the deployment. 
 
-## Deployment output
+### Deployment output
 
 After the deployment finised, you will get some import infomation from the output section.
 
@@ -48,13 +48,13 @@ After the deployment finised, you will get some import infomation from the outpu
 >
 >Click the first one **Microsoft.Template**.
 
-# Access deployed resources
+## Access Deployed Resources
 
-## Access Jenkins
+### Access Jenkins
 
 This Jenkins instance does not support https, so logging in through a public IP address has been disabled (it would expose your password and other information to eavesdropping). To securely login, you need to connect to the Jenkins instance using SSH port forwarding.
 
-### Connect to the Jenkins instance using SSH port forwarding
+#### Connect to the Jenkins instance using SSH port forwarding
 
 1. Copy the JENKINSSSH value from the Outputs section of the deployment.
 
@@ -85,7 +85,7 @@ This Jenkins instance does not support https, so logging in through a public IP 
 
    Keep the terminal open.
 
-### Get the Jenkins admin password
+#### Get the Jenkins admin password
 
 1. Execute the command in the terminal:
 
@@ -99,7 +99,7 @@ This Jenkins instance does not support https, so logging in through a public IP 
    77a6d3183ad24f9ca7df6181c81400d0
    ```
 
-### Log into Jenkins
+#### Log into Jenkins
 
 1. Open http://localhost:8080 in a browser.
 
@@ -112,20 +112,20 @@ This Jenkins instance does not support https, so logging in through a public IP 
 
    Click **log in**.
 
-### Check the sample pipeline job
+#### Check the sample pipeline job
 
 After logged in, you will see the **Hello World Build & Deploy** pipline job. Please click to explore it.
 
 ![](images/jenkins-pipline-job.png) 
 
-## Access the hello world web app
+### Access the hello world web app
 
 Install the following tools if you have not:
 
 * [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest)
 * [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
 
-### Sign into Azure and get AKS credentials
+#### Sign into Azure and get AKS credentials
 
 1. Open terminal, execute:
 
@@ -149,7 +149,7 @@ Install the following tools if you have not:
    Merged "kube-180131-1520" as current context in /Users/<User>/.kube/config
    ```
 
-### Get Kubenetes service
+#### Get Kubenetes service
 
 1. Execute the command below:
 
@@ -167,7 +167,7 @@ Install the following tools if you have not:
 
 3. Copy the **external ip** of the **hello-world-service**.
 
-### Access the hello world web app
+#### Access the hello world web app
 
 1. Open the **external ip** in a browser. You will see the response:
 
@@ -178,7 +178,7 @@ Install the following tools if you have not:
 
 2. Refresh the page, the number of request records will increase.
 
-## Access the Grafana instance
+### Access the Grafana instance
 
 1. Copy the GRAFANAURL value from the Outputs section of the deployment.
 
