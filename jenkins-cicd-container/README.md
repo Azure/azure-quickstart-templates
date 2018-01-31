@@ -16,7 +16,7 @@ By setting up a continuous build to produce your container images and orchestrat
 
 # Deploy to Azure
 
-###Create service principle 
+##Create service principle 
 
 TODO
 
@@ -42,11 +42,11 @@ It take about 13 minutes to finish the deployment.
 
 ![](images/azure-deployment-output.png)
 
-	>Note: the deployment window above could be re-open in the **Deployments** tab of the resource group.
-	>
-	>![](images/azure-resource-group-deployments.png)
-	>
-	>Click the first one **Microsoft.Template**.
+>Note: the deployment window above could be re-open in the **Deployments** tab of the resource group.
+>
+>![](images/azure-resource-group-deployments.png)
+>
+>Click the first one **Microsoft.Template**.
 
 # Access deployed resources
 
@@ -108,7 +108,7 @@ This Jenkins instance does not support https, so logging in through a public IP 
 3. Input the user and password:
 
    * User: admin
-   * Password: *<use the password you get in previous step>*
+   * Password: *use the password you get in previous step*
 
    Click **log in**.
 
@@ -141,7 +141,7 @@ Install the following tools if you have not:
    aks get-credentials --resource-group <ResourceGroup> --name <KubenetesClusterName>
    ```
 
-   > Note: please replace <<ResourceGroup>> and <<KubenetesClusterName>> before executing it.
+   > Note: please replace \<ResourceGroup> and \<KubenetesClusterName> before executing it.
 
    When done, you will get a prompt:
 
@@ -185,7 +185,7 @@ Install the following tools if you have not:
 2. Open it in a browser, then log in:
 
    * User: admin
-   * Password: *<use Linux Admin Password>*
+   * Password: *use the Linux Admin Password*
 
 3. Click **Home**.
 
