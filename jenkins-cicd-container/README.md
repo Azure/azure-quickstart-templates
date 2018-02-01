@@ -53,27 +53,39 @@ By setting up a continuous build to produce your container images and orchestrat
 
    Copy the values **appId** and **password**, they will be used later.
 
-   > Note: for more details about create an Azure service principal, please refer to [Create an Azure service principal with Azure CLI 2.0](https://docs.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azure-cli?view=azure-cli-latest)
+   > Note: for more details about creating an Azure service principal, please refer to [Create an Azure service principal with Azure CLI 2.0](https://docs.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azure-cli?view=azure-cli-latest)
 
 ### Deploy
 
-Click the button below to deploy the relates resource to Azure.
+1. Click **Deploy to Azure** to start the deployment.
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fjenkins-cicd-container%2Fazuredeploy.json" target="_blank">
+   <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fjenkins-cicd-container%2Fazuredeploy.json" target="_blank">
 
-<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
-</a>
+   <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
+   </a>
 
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fjenkins-cicd-container%2Fazuredeploy.json" target="_blank">
-<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
-</a>
+   <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fjenkins-cicd-container%2Fazuredeploy.json" target="_blank">
+   <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
+   </a>
 
-> Note: 
->
-> * The names and DNS prefixes should be unique. To avoid naming conflicting, we strongly recommend you to add some suffix. For example, the Cosmos Db name could be **cosmos-180130-1512**.
-> * ACR (Azure Container Registry) names may contain alpha numeric characters only. A valid name is **acr1801301512**.
+2. Fill the form
 
-It take about 13 minutes to finish the deployment. 
+   * Choose a subscription.
+
+   * Use a new resource group and choose a location.
+
+   * Input the settings.
+
+     > Note: 
+     >
+     > - The names and DNS prefixes should be unique. To avoid naming conflicting, we strongly recommend you to add some suffix. For example, the Cosmos Db name could be **cosmos-180130-1512**.
+     > - ACR (Azure Container Registry) names may contain alpha numeric characters only. A valid name is **acr1801301512**.
+
+   * Check **I agree to the terms and conditions stated above**.
+
+3. Click **Purchase**.
+
+   > Note: It will take about 13 minutes to finish the deployment. 
 
 ### Deployment output
 
@@ -132,7 +144,7 @@ This Jenkins instance does not support https, so logging in through a public IP 
    sudo cat /var/lib/jenkins/secrets/initialAdminPassword
    ```
 
-2. You will get the the Jenkins admin password which looks like below:
+2. You will get the Jenkins admin password which looks like below:
 
    ```Sh
    77a6d3183ad24f9ca7df6181c81400d0
