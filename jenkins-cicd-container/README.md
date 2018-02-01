@@ -31,7 +31,7 @@ By setting up a continuous build to produce your container images and orchestrat
 
    Follow the guide to sign in.
 
-3.  Execute the command below:
+3. Execute the command below:
 
    ```sh
    az ad sp create-for-rbac --name <AppName>
@@ -53,7 +53,7 @@ By setting up a continuous build to produce your container images and orchestrat
 
    Copy the values **appId** and **password**, they will be used later.
 
-   > Note: for more details about create an Azure service principal, please refer to:
+   > Note: for more details about create an Azure service principal, please refer to [Create an Azure service principal with Azure CLI 2.0](https://docs.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azure-cli?view=azure-cli-latest)
 
 ### Deploy
 
