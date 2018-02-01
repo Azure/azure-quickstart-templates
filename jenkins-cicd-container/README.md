@@ -23,7 +23,7 @@ By setting up a continuous build to produce your container images and orchestrat
 
 1. Install [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest) if you have not.
 
-2. Open terminal, execute:
+2. Open terminal, then execute:
 
    ```sh
    az login
@@ -68,7 +68,7 @@ By setting up a continuous build to produce your container images and orchestrat
    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
    </a>
 
-2. Fill the form
+2. Fill the form:
 
    * Choose a subscription.
 
@@ -89,7 +89,7 @@ By setting up a continuous build to produce your container images and orchestrat
 
 ### Deployment output
 
-After the deployment finised, you will get some import infomation from the output section.
+After the deployment finishes, you will get some important infomation from the outputs section.
 
 ![](images/azure-deployment-output.png)
 
