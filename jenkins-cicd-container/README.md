@@ -1,24 +1,59 @@
 # Container CI/CD using Jenkins and Kubernetes on Azure Container Service (AKS)
 
-
-
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fjenkins-cicd-container%2Fazuredeploy.json" target="_blank">
-<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
-</a>
+## Architecture overview
 
 Containers make it very easy for you to continuously build and deploy your applications. By orchestrating deployment of those containers using Kubernetes in Azure Container Service, you can achieve replicable, manageable clusters of containers.
 
 By setting up a continuous build to produce your container images and orchestration, you can increase the speed and reliability of your deployment.
 
-## Architecture
-
 ![](images/architecture.png)
+
+1. Change application source code.
+2. Commit code to GitHub.
+3. Continuous Integration Trigger to Jenkins.
+4. Jenkins triggers a build job using Azure Container Service (AKS) for a dynamic build agent.
+5. Jenkins builds and pushes Docker container Azure Container Registry.
+6. Jenkins deploys new containerized app to Kubernetes on Azure Container Service (AKS) backed by Azure Cosmos DB.
+7. Grafana displays visualization of infrastructure and application metrics via Azure Monitor.
+8. Monitor application and make improvements.
 
 ## Deploy to Azure
 
-### Create service principle 
+### Create an Azure service principal
 
-TODO
+1. Install [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest) if you have not.
+
+2. Open terminal, execute:
+
+   ```sh
+   az login
+   ```
+
+   Follow the guide to sign in.
+
+3.  Execute the command below:
+
+   ```sh
+   az ad sp create-for-rbac --name <AppName>
+   ```
+
+   > Note: please replate the \<AppName> placeholder.
+
+4. You will get a response like below.
+
+   ```json
+   {
+     "appId": "8e897eb4-069d-40c2-9563-b20fb0ac3c14",
+     "displayName": "<AppName>",
+     "name": "http://<AppName>",
+     "password": "4309f67d-1719-44e3-bd47-12ab0409b13a",
+     "tenant": "cc8ae42e-e3ba-44c6-97ba-2d7645d0a885"
+   }
+   ```
+
+   Copy the values **appId** and **password**, they will be used later.
+
+   > Note: for more details about create an Azure service principal, please refer to:
 
 ### Deploy
 
@@ -27,6 +62,10 @@ Click the button below to deploy the relates resource to Azure.
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fjenkins-cicd-container%2Fazuredeploy.json" target="_blank">
 
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
+</a>
+
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fjenkins-cicd-container%2Fazuredeploy.json" target="_blank">
+<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
 > Note: 
@@ -120,11 +159,6 @@ After logged in, you will see the **Hello World Build & Deploy** pipline job. Pl
 
 ### Access the hello world web app
 
-Install the following tools if you have not:
-
-* [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest)
-* [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
-
 #### Sign into Azure and get AKS credentials
 
 1. Open terminal, execute:
@@ -151,13 +185,15 @@ Install the following tools if you have not:
 
 #### Get Kubenetes service
 
-1. Execute the command below:
+1. Install [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) if you have not.
+
+2. Execute the command below:
 
    ```Sh
    kubectl get service
    ```
 
-2. You will get the response like below:
+3. You will get the response like below:
 
    ```Sh
    NAME                  TYPE           CLUSTER-IP   EXTERNAL-IP      PORT(S)        AGE
@@ -165,7 +201,7 @@ Install the following tools if you have not:
    kubernetes            ClusterIP      10.0.0.1     <none>           443/TCP        1h
    ```
 
-3. Copy the **external ip** of the **hello-world-service**.
+4. Copy the **external ip** of the **hello-world-service**.
 
 #### Access the hello world web app
 
