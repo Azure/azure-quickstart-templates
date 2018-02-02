@@ -13,6 +13,8 @@ Param(
 [Parameter(Mandatory=$false)]$vmAdminPassword
 )
 
+sleep(120)
+
 Write-Verbose "Entering InstallVSOAgent.ps1" -verbose
 
 $currentLocation = Split-Path -parent $MyInvocation.MyCommand.Definition
