@@ -290,9 +290,15 @@ Function Post-OMSData($customerId, $sharedKey, $body, $logType)
 #Start Script (MAIN)
 #region Login to Azure Using both ARM , ASM and REST
 #Authenticate to Azure with SPN section
+
 "Logging in to Azure..."
 $ArmConn = Get-AutomationConnection -Name AzureRunAsConnection 
-$AsmConn = Get-AutomationConnection -Name AzureClassicRunAsConnection 
+
+if ($ArmConn  -eq $null)
+{
+	throw "Could not retrieve connection asset AzureRunAsConnection,  Ensure that runas account  exists in the Automation account."
+}
+
 # retry
 $retry = 6
 $syncOk = $false
@@ -350,23 +356,48 @@ IF($subscriptionInfo)
 {
 	"Successfully connected to Azure ARM REST"
 }
-#Authenticating to ASM 
-if ($AsmConn  -eq $null)
-{
-	throw "Could not retrieve connection asset: $($AsmConn.CertificateAssetName) Ensure that this asset exists in the Automation account."
+
+#try to authenticate with ASM 
+
+if ($getAsmHeader) {
+    
+	try
+    {
+        $AsmConn = Get-AutomationConnection -Name AzureClassicRunAsConnection -ea 0
+       
+    }
+    Catch
+    {
+        if ($AsmConn -eq $null) {
+            Write-Warning "Could not retrieve connection asset AzureClassicRunAsConnection. Ensure that runas account exist and valid in the Automation account."
+            $getAsmHeader=$false
+        }
+    }
+     if ($AsmConn -eq $null) {
+        Write-Warning "Could not retrieve connection asset AzureClassicRunAsConnection. Ensure that runas account exist and valid in the Automation account. Quota usage infomration for classic accounts will no tbe collected"
+        $getAsmHeader=$false
+    }Else{
+
+        $CertificateAssetName = $AsmConn.CertificateAssetName
+        $AzureCert = Get-AutomationCertificate -Name $CertificateAssetName
+        if ($AzureCert -eq $null)
+        {
+            Write-Warning  "Could not retrieve certificate asset: $CertificateAssetName. Ensure that this asset exists and valid  in the Automation account."
+            $getAsmHeader=$false
+        }
+        Else{
+
+        "Logging into Azure Service Manager"
+        Write-Verbose "Authenticating to Azure with certificate." -Verbose
+        Set-AzureSubscription -SubscriptionName $AsmConn.SubscriptionName -SubscriptionId $AsmConn.SubscriptionId -Certificate $AzureCert
+        Select-AzureSubscription -SubscriptionId $AsmConn.SubscriptionId
+        #finally create the headers for ASM REST 
+        $headerasm = @{"x-ms-version"="2013-08-01"}
+        }
+    }
+
 }
-$CertificateAssetName = $AsmConn.CertificateAssetName
-$AzureCert = Get-AutomationCertificate -Name $CertificateAssetName
-if ($AzureCert -eq $null)
-{
-	throw "Could not retrieve certificate asset: $CertificateAssetName. Ensure that this asset exists in the Automation account."
-}
-"Logging into Azure Service Manager"
-Write-Verbose "Authenticating to Azure with certificate." -Verbose
-Set-AzureSubscription -SubscriptionName $AsmConn.SubscriptionName -SubscriptionId $AsmConn.SubscriptionId -Certificate $AzureCert
-Select-AzureSubscription -SubscriptionId $AsmConn.SubscriptionId
-#finally create the headers for ASM REST 
-$headerasm = @{"x-ms-version"="2013-08-01"}
+
 #endregion
 #Logtype will be the name of the custom log in Log Analytics 
 # Define Log Type 
