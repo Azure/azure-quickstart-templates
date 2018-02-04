@@ -14,7 +14,7 @@ exports.getFiles = function getFiles(folder, fileType) {
     }
     if (fileType) {
         return fs.readdirSync(folder).filter(function(file) {
-            return file.toLowerCase().indexOf(fileType) !== -1;
+            return file.toLowerCase().endsWith(fileType);
         });
     } else {
         return fs.readdirSync(folder);
