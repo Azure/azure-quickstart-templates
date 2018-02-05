@@ -92,43 +92,46 @@ if ($runAsAutoLogon -ieq "true")
   try
   {
     # Check if the HKU drive already exists
-    Get-PSDrive -PSProvider Registry -Name HKU
+    Get-PSDrive -PSProvider Registry -Name HKU | Out-Null
   }
   catch [System.Management.Automation.DriveNotFoundException]
   {
     try 
     {
       # Create the HKU drive
-      New-PSDrive -PSProvider Registry -Name HKU -Root HKEY_USERS
-
-      # Check if the registry key required for enabling autologon is present on the machine, if not wait for 120 seconds in case the user profile is still getting created
-      while ($timeout -gt 0)
-      {
-        $objUser = New-Object System.Security.Principal.NTAccount($vmAdminUserName)
-        $securityId = $objUser.Translate([System.Security.Principal.SecurityIdentifier])
-        $securityId = $securityId.Value
-        
-        if (Test-Path "HKU:\$securityId")
-        {
-          break
-        }
-        else
-        {
-          $timeout -= 10
-          Start-Sleep(10)
-        }
-      }
-
-      if ($timeout -lt 0)
-      {
-        Write-Warning "Failed to find the registry entry for the SId of the user, this is required to enable autologon. Trying to start the agent anyway."
-      }
+      New-PSDrive -PSProvider Registry -Name HKU -Root HKEY_USERS | Out-Null
     }
     catch 
     {
       # Ignore the failure to create the drive and go ahead with trying to set the agent up
       Write-Warning "Moving ahead with agent setup as the script failed to create HKU drive necessary for checking if the registry entry for the user's SId exists.\n$_"
     }
+  }
+
+  # Check if the registry key required for enabling autologon is present on the machine, if not wait for 120 seconds in case the user profile is still getting created
+  while ($timeout -gt 0)
+  {
+    Write-Host $timeout
+
+    $objUser = New-Object System.Security.Principal.NTAccount($vmAdminUserName)
+    $securityId = $objUser.Translate([System.Security.Principal.SecurityIdentifier])
+    $securityId = $securityId.Value
+    
+    if (Test-Path "HKU:\$securityId")
+    {
+      Write-Host "Found the registry entry required to anable autologon."
+      break
+    }
+    else
+    {
+      $timeout -= 10
+      Start-Sleep(10)
+    }
+  }
+
+  if ($timeout -lt 0)
+  {
+    Write-Warning "Failed to find the registry entry for the SId of the user, this is required to enable autologon. Trying to start the agent anyway."
   }
 
   # Setup the agent with autologon enabled
