@@ -13,12 +13,16 @@ Please select the relevant log, “AzureBackupReport” in this case, to be sent
 ![alt text](images/DiagnosticSettings.JPG "Azure log analytics workspace diagnostic setting")
 
 
+
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-backup-oms-monitoring%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-backup-oms-monitoring%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
+
+
 
 ## Solution overview and deployed resources
 
@@ -28,7 +32,7 @@ Upon deploying the solution, you would view an overview tile which reflects back
 
 Clicking on the solution would let you explore Alerts, backups, restores, Cloud Storage and active data source details.
 
-![alt text](images/KeyBackupJobsParameters.JPG "OMS Monitoring solution for Azure backup alerts, backups, restores")
+![alt text](images/KeyBackupJobsParameters.jpg "OMS Monitoring solution for Azure backup alerts, backups, restores")
 
 ![alt text](images/ActiveStorageParams.JPG "OMS Monitoring solution for Azure backup cloud storage distribution, active data sources")
 
