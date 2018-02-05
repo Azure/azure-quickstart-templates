@@ -1,5 +1,18 @@
 # OMS monitoring solution for Azure Backup
 
+This template deploys **OMS Monitoring solution for Azure backup** on an OMS log analytics workspace. This allows you to monitor key backup parameters such as backup and restore jobs, backup alerts and Cloud storage usage across Recovery services vaults
+
+`Tags: Azure Backup, OMS Log Analytics, Monitoring`
+
+## Prerequisites
+
+You need to configure the OMS log analytics workspace to receive backup related data from Azure Recovery Services vaults. To do so, loggin into Azure portal –> Click “Monitor” service –> “Diagnostic settings” in Settings section –> Specify the relevant Subscription, Resource Group and Recovery Services Vault. In the Diagnostic settings window, as shown below, in addition to specifying a storage account, you can select “Send data to log analytics” and then select the relevant OMS workspace. You can choose any existing log analytics workspace such that all vaults pump the data to the same workspace
+
+Please select the relevant log, “AzureBackupReport” in this case, to be sent to the log analytics workspace. Click “Save” to save the setting.
+
+![alt text](images/DiagnosticSettings.JPG "Azure log analytics workspace diagnostic setting")
+
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-backup-oms-monitoring%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
@@ -7,32 +20,20 @@
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
-This template deploys **OMS Monitoring solution for Azure backup**. This allows you to monitor key backup parameters such as backup and restore jobs, backup alerts and Cloud storage usage across Recovery services vaults
-
-`Tags: Azure Backup, OMS Log Analytics, Monitoring`
-
 ## Solution overview and deployed resources
 
-This is an overview of the solution
+Upon deploying the solution, you would view an overview tile which reflects backup jobs and their status.
 
-## Prerequisites
+![alt text](images/OverviewTile.JPG "OMS Monitoring solution for Azure backup monitoring tile")
 
-Decscription of the prerequistes for the deployment
+Clicking on the solution would let you explore Alerts, backups, restores, Cloud Storage and active data source details.
 
-## Deployment steps
+![alt text](images/KeyBackupJobsParameters.JPG "OMS Monitoring solution for Azure backup alerts, backups, restores")
 
-You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
+![alt text](images/ActiveStorageParams.JPG "OMS Monitoring solution for Azure backup cloud storage distribution, active data sources")
 
-## Usage
+You can click on each tile to get more details about the queries used to create it and you can configure it as per your requirement. Clicking further on values appearing in the tiles will lead you to Log analytics screen where you can raise alerts for configurable event thresholds and automate actions to be performed when those thresholds are met/crossed.
 
-#### Connect
+![alt text](images/LogAnalyticsScreen.JPG "OMS Monitoring solution for Azure backup Log search")
 
-How to connect to the solution
-
-#### Management
-
-How to manage the solution
-
-## Notes
-
-Solution notes
+More information about configuring alerts can be found [here](https://docs.microsoft.com/azure/log-analytics/log-analytics-tutorial-response)
