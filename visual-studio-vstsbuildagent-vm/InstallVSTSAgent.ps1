@@ -87,7 +87,7 @@ if ($runAsAutoLogon -ieq "true")
 {
   $ErrorActionPreference = "stop"
 
-  $timeout = 180 # seconds
+  $timeout = 240 # seconds
 
   try
   {
@@ -119,7 +119,7 @@ if ($runAsAutoLogon -ieq "true")
     $securityId = $objUser.Translate([System.Security.Principal.SecurityIdentifier])
     $securityId = $securityId.Value
     
-    if (Test-Path "HKU:\$securityId")
+    if (Test-Path "HKU:\\$securityId")
     {
       Write-Host "Found the registry entry required to anable autologon."
       break
