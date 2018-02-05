@@ -6,13 +6,16 @@ OPTIND=1         # Reset in case getopts has been used previously in the shell.
 current_index=""
 ip_prefix=""
 number_of_instances=""
-password="admin"
+password_file=""
+disk_size=""
+disk_volume=""
+solace_url=""
 DEBUG="-vvvv"
 is_primary="false"
 
 verbose=0
 
-while getopts "c:i:n:p:" opt; do
+while getopts "c:i:n:p:s:v:u:" opt; do
     case "$opt" in
     c)  current_index=$OPTARG
         ;;
@@ -20,8 +23,14 @@ while getopts "c:i:n:p:" opt; do
         ;;
     n)  number_of_instances=$OPTARG
         ;;
-    p)  password=$OPTARG
-        ;;        
+    p)  password_file=$OPTARG
+        ;;
+    s)  disk_size=$OPTARG
+        ;;
+    v)  disk_volume=$OPTARG
+        ;;
+    u)  solace_url=$OPTARG
+        ;;
     esac
 done
 
@@ -29,9 +38,9 @@ shift $((OPTIND-1))
 [ "$1" = "--" ] && shift
 
 verbose=1
-echo "`date` current_index=$current_index ,ip_prefix=$ip_prefix ,number_of_instances=$number_of_instances, \
-       ,Leftovers: $@"
-
+echo "`date` current_index=$current_index , ip_prefix=$ip_prefix , number_of_instances=$number_of_instances , \
+      password_file=$password_file , disk_size=$disk_size , disk_volume=$disk_volume , solace_url=$solace_url , Leftovers: $@"
+export password=`cat ${password_file}`
 
 #Install the logical volume manager and jq for json parsing
 yum -y install lvm2
@@ -48,6 +57,18 @@ for filename in ./*; do
 done
 
 echo "`date` INFO: check to make sure we have a complete load"
+if [[ ${REAL_LINK} == "" ]]; then
+    # an already-existing load (plus its md5 file) hosted somewhere else (e.g. in an s3 bucket)
+    wget -O /tmp/solos.info -nv  ${solace_url}.md5
+    IFS=' ' read -ra SOLOSOTHER_INFO <<< `cat /tmp/solos.info`
+    MD5_SUM_OTHER=${SOLOSOTHER_INFO[0]}
+    SolOS_OTHER_LOAD=${SOLOSOTHER_INFO[1]}
+    echo "`date` INFO: Reference md5sum is: ${MD5_SUM_OTHER}"
+else
+    MD5_SUM_OTHER=""
+    SolOS_OTHER_LOAD=""
+fi
+
 wget -O /tmp/solosEval.info -nv  https://products.solace.com/download/VMR_DOCKER_EVAL_MD5
 IFS=' ' read -ra SOLOSEVAL_INFO <<< `cat /tmp/solosEval.info`
 MD5_SUM_EVAL=${SOLOSEVAL_INFO[0]}
@@ -66,7 +87,11 @@ SolOS_LOAD=solos.tar.gz
 isEval=0
 
 while [ $LOOP_COUNT -lt 3 ]; do
-  wget -q -O /tmp/${SolOS_LOAD} -nv ${REAL_LINK}
+  if [[ ${REAL_LINK} == "" ]]; then
+    mv ./$(basename ${solace_url}) /tmp/${SolOS_LOAD}
+  else
+    wget -q -O /tmp/${SolOS_LOAD} -nv ${REAL_LINK}
+  fi
 
   LOCAL_OS_INFO=`md5sum /tmp/${SolOS_LOAD}`
   IFS=' ' read -ra SOLOS_INFO <<< ${LOCAL_OS_INFO}
@@ -78,6 +103,13 @@ while [ $LOOP_COUNT -lt 3 ]; do
   if [ ${LOCAL_MD5_SUM} == ${MD5_SUM_EVAL} ]; then
     echo "`date` INFO: Successfully downloaded ${SolOS_EVAL_LOAD}"
     isEval=1
+    break
+  fi
+  if [ ${LOCAL_MD5_SUM} == ${MD5_SUM_OTHER} ]; then
+    echo "`date` INFO: Successfully downloaded ${SolOS_OTHER_LOAD}"
+    if [[ $(basename ${solace_url}) != *"-vmr-community"* ]]; then
+        isEval=1
+    fi
     break
   fi
   echo "`date` WARNING: CORRUPT SolOS load re-try ${LOOP_COUNT}"
@@ -96,13 +128,6 @@ if [ ${isEval} == 0 ] && [ ${number_of_instances} == 3 ]; then
 fi
 
 echo "`date` INFO: Setting up SolOS Docker image"
-#Create new volumes that the VMR container can use to consume and store data.
-docker volume create --name=jail
-docker volume create --name=var
-docker volume create --name=internalSpool
-docker volume create --name=adbBackup
-docker volume create --name=softAdb
-
 docker load -i /tmp/${SolOS_LOAD} 
 
 export VMR_VERSION=`docker images | grep solace | awk '{print $2}'`
@@ -131,7 +156,7 @@ if [ ${number_of_instances} -gt 1 ]; then
       --env routername=primary \
       --env redundancy_matelink_connectvia=${ip_prefix}1 \
       --env redundancy_activestandbyrole=primary \
-      --env redundancy_group_password=${password} \
+      --env redundancy_group_passwordfilepath=$(basename ${password_file}) \
       --env redundancy_enable=yes \
       --env redundancy_group_node_primary_nodetype=message_routing \
       --env redundancy_group_node_primary_connectvia=${ip_prefix}0 \
@@ -148,7 +173,7 @@ if [ ${number_of_instances} -gt 1 ]; then
       --env routername=backup \
       --env redundancy_matelink_connectvia=${ip_prefix}0 \
       --env redundancy_activestandbyrole=backup \
-      --env redundancy_group_password=${password} \
+      --env redundancy_group_passwordfilepath=$(basename ${password_file}) \
       --env redundancy_enable=yes \
       --env redundancy_group_node_primary_nodetype=message_routing \
       --env redundancy_group_node_primary_connectvia=${ip_prefix}0 \
@@ -162,7 +187,7 @@ if [ ${number_of_instances} -gt 1 ]; then
       redundancy_config="\
       --env nodetype=monitoring \
       --env routername=monitor \
-      --env redundancy_group_password=${password} \
+      --env redundancy_group_passwordfilepath=$(basename ${password_file}) \
       --env redundancy_enable=yes \
       --env redundancy_group_node_primary_nodetype=message_routing \
       --env redundancy_group_node_primary_connectvia=${ip_prefix}0 \
@@ -177,21 +202,68 @@ else
   redundancy_config=""
 fi
 
+#Create new volumes that the VMR container can use to consume and store data.
+docker volume create --name=jail
+docker volume create --name=var
+docker volume create --name=softAdb
+docker volume create --name=adbBackup
+
+if [ $disk_size == "0" ]; then
+  docker volume create --name=diagnostics
+  docker volume create --name=internalSpool
+  SPOOL_MOUNT="-v diagnostics:/var/lib/solace/diags -v internalSpool:/usr/sw/internalSpool"
+else
+  echo "`date` Create primary partition on new disk"
+  (
+  echo n # Add a new partition
+  echo p # Primary partition
+  echo 1  # Partition number
+  echo   # First sector (Accept default: 1)
+  echo   # Last sector (Accept default: varies)
+  echo w # Write changes
+  ) | sudo fdisk $disk_volume
+  mkfs.xfs  ${disk_volume}1 -m crc=0
+  UUID=`blkid -s UUID -o value ${disk_volume}1`
+  echo "UUID=${UUID} /opt/vmr xfs defaults 0 0" >> /etc/fstab
+  mkdir /opt/vmr
+  mkdir /opt/vmr/diagnostics
+  mkdir /opt/vmr/internalSpool
+  mount -a
+  SPOOL_MOUNT="-v /opt/vmr/diagnostics:/var/lib/solace/diags -v /opt/vmr/internalSpool:/usr/sw/internalSpool"
+fi
 
 #Define a create script
 tee /root/docker-create <<-EOF 
 #!/bin/bash 
 docker create \
  --privileged=true \
- --shm-size 2g \
  --net=host \
+ --uts=host \
+ --shm-size 2g \
+ --ulimit core=-1 \
+ --ulimit memlock=-1 \
+ --ulimit nofile=2448:38048 \
+ --log-driver syslog \
+ --log-opt syslog-format=rfc3164 \
+ --log-opt syslog-address=udp://127.0.0.1:25224 \
+ -v $(dirname ${password_file}):/run/secrets \
  -v jail:/usr/sw/jail \
  -v var:/usr/sw/var \
- -v internalSpool:/usr/sw/internalSpool \
- -v adbBackup:/usr/sw/adb \
  -v softAdb:/usr/sw/internalSpool/softAdb \
+ -v adbBackup:/usr/sw/adb \
+ ${SPOOL_MOUNT} \
  --env username_admin_globalaccesslevel=admin \
- --env username_admin_password=${password} \
+ --env username_admin_passwordfilepath=$(basename ${password_file}) \
+ --env logging_debug_output=all \
+ --env logging_debug_format=graylog \
+ --env logging_command_output=all \
+ --env logging_command_format=graylog \
+ --env logging_system_output=all \
+ --env logging_system_format=graylog \
+ --env logging_event_output=all \
+ --env logging_event_format=graylog \
+ --env logging_kernel_output=all \
+ --env logging_kernel_format=graylog \
  ${redundancy_config} \
  --name=solace solace-app:${VMR_VERSION} 
 EOF
@@ -221,16 +293,43 @@ systemctl daemon-reload
 systemctl enable solace-docker-vmr 
 systemctl start solace-docker-vmr
 
+# Poll the VMR SEMP port until it is Up
+loop_guard=30
+pause=10
+count=0
+echo "`date` INFO: Wait for the VMR SEMP service to be enabled"
+while [ ${count} -lt ${loop_guard} ]; do
+  online_results=`./semp_query.sh -n admin -p ${password} -u http://localhost:8080/SEMP \
+    -q "<rpc><show><service/></show></rpc>" \
+    -v "/rpc-reply/rpc/show/service/services/service[name='SEMP']/enabled[text()]"`
 
+  is_vmr_up=`echo ${online_results} | jq '.valueSearchResult' -`
+  echo "`date` INFO: SEMP service 'enabled' status is: ${is_vmr_up}"
+
+  run_time=$((${count} * ${pause}))
+  if [ "${is_vmr_up}" = "\"true\"" ]; then
+      echo "`date` INFO: VMR SEMP service is up, after ${run_time} seconds"
+      break
+  fi
+  ((count++))
+  echo "`date` INFO: Waited ${run_time} seconds, VMR SEMP service not yet up"
+  sleep ${pause}
+done
+
+# Remove all VMR Secrets from the host; at this point, the VMR should have come up
+# and it won't be needing those files anymore
+rm ${password_file}
+
+# Poll the redundancy status on the Primary VMR
 loop_guard=30
 pause=10
 count=0
 mate_active_check=""
-echo "`date` INFO: Wait for Primary to be 'Local Active' or 'Mate Active'"
 if [ "${is_primary}" = "true" ]; then
+  echo "`date` INFO: Wait for Primary to be 'Local Active' or 'Mate Active'"
   while [ ${count} -lt ${loop_guard} ]; do 
     online_results=`./semp_query.sh -n admin -p ${password} -u http://localhost:8080/SEMP \
-         -q "<rpc semp-version='soltr/8_5VMR'><show><redundancy><detail/></redundancy></show></rpc>" \
+         -q "<rpc><show><redundancy><detail/></redundancy></show></rpc>" \
          -v "/rpc-reply/rpc/show/redundancy/virtual-routers/primary/status/activity[text()]"`
 
     local_activity=`echo ${online_results} | jq '.valueSearchResult' -`
@@ -265,7 +364,7 @@ if [ "${is_primary}" = "true" ]; then
   echo "`date` INFO: Wait for Backup to be 'Active' or 'Standby'"
   while [ ${count} -lt ${loop_guard} ]; do 
     online_results=`./semp_query.sh -n admin -p ${password} -u http://localhost:8080/SEMP \
-         -q "<rpc semp-version='soltr/8_5VMR'><show><redundancy><detail/></redundancy></show></rpc>" \
+         -q "<rpc><show><redundancy><detail/></redundancy></show></rpc>" \
          -v "/rpc-reply/rpc/show/redundancy/virtual-routers/primary/status/detail/priority-reported-by-mate/summary[text()]"`
 
     mate_activity=`echo ${online_results} | jq '.valueSearchResult' -`
@@ -295,7 +394,8 @@ if [ "${is_primary}" = "true" ]; then
   fi
 
  ./semp_query.sh -n admin -p ${password} -u http://localhost:8080/SEMP \
-         -q "<rpc semp-version='soltr/8_5VMR'><admin><config-sync><assert-master><router/></assert-master></config-sync></admin></rpc>"
+         -q "<rpc><admin><config-sync><assert-master><router/></assert-master></config-sync></admin></rpc>"
  ./semp_query.sh -n admin -p ${password} -u http://localhost:8080/SEMP \
-         -q "<rpc semp-version='soltr/8_5VMR'><admin><config-sync><assert-master><vpn-name>default</vpn-name></assert-master></config-sync></admin></rpc>"
+         -q "<rpc><admin><config-sync><assert-master><vpn-name>default</vpn-name></assert-master></config-sync></admin></rpc>"
 fi
+echo "`date` INFO: Solace VMR bringup complete"
