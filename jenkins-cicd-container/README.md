@@ -31,7 +31,7 @@ By setting up a continuous build to produce your container images and orchestrat
 
    Follow the guide to sign in.
 
-3. Execute the command below:
+3. Execute the command below to create service principal (default role is ``Contributor``):
 
    ```sh
    az ad sp create-for-rbac --name <AppName>
