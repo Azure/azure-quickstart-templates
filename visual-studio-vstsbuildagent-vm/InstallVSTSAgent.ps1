@@ -87,12 +87,13 @@ if ($runAsAutoLogon -ieq "true")
 {
   $ErrorActionPreference = "stop"
 
-  $timeout = 120 # seconds
+  $timeout = 180 # seconds
 
   try
   {
     # Check if the HKU drive already exists
     Get-PSDrive -PSProvider Registry -Name HKU | Out-Null
+    $canCheckRegistry = $true
   }
   catch [System.Management.Automation.DriveNotFoundException]
   {
@@ -100,6 +101,7 @@ if ($runAsAutoLogon -ieq "true")
     {
       # Create the HKU drive
       New-PSDrive -PSProvider Registry -Name HKU -Root HKEY_USERS | Out-Null
+      $canCheckRegistry = $true
     }
     catch 
     {
@@ -109,7 +111,7 @@ if ($runAsAutoLogon -ieq "true")
   }
 
   # Check if the registry key required for enabling autologon is present on the machine, if not wait for 120 seconds in case the user profile is still getting created
-  while ($timeout -gt 0)
+  while ($timeout -ge 0 -and $canCheckRegistry)
   {
     Write-Host $timeout
 
