@@ -6,7 +6,7 @@
   <img src="http://azuredeploy.net/AzureGov.png"/>
 </a>
 
-This template deploys a WordPress site in [App service](https://docs.microsoft.com/en-us/azure/app-service/app-service-linux-readme) with [MySQL in App](https://blogs.msdn.microsoft.com/appserviceteam/2017/03/06/announcing-general-availability-for-mysql-in-app/).
+This template deploys a WordPress site in [App service](https://docs.microsoft.com/azure/app-service/) with [MySQL in App](https://blogs.msdn.microsoft.com/appserviceteam/2017/03/06/announcing-general-availability-for-mysql-in-app/).
 
 
 
