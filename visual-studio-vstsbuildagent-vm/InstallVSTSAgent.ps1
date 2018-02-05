@@ -13,7 +13,7 @@ Param(
 [Parameter(Mandatory=$false)]$vmAdminPassword
 )
 
-sleep(120)
+Start-Sleep(120)
 
 Write-Verbose "Entering InstallVSOAgent.ps1" -verbose
 
@@ -59,7 +59,6 @@ New-Item -ItemType Directory -Force -Path $agentInstallationPath
 # Create a folder for the build work
 New-Item -ItemType Directory -Force -Path (Join-Path $agentInstallationPath $WorkFolder)
 
-
 Write-Verbose "Extracting the zip file for the agent" -verbose
 $destShellFolder = (new-object -com shell.application).namespace("$agentInstallationPath")
 $destShellFolder.CopyHere((new-object -com shell.application).namespace("$agentTempFolderName\agent.zip").Items(),16)
@@ -88,10 +87,58 @@ Push-Location -Path $agentInstallationPath
 
 if ($runAsAutoLogon -ieq "true")
 {
+  $ErrorActionPreference = "stop"
+
+  $timeout = 120 # seconds
+
+  try
+  {
+    # Check if the HKU drive already exists
+    Get-PSDrive -PSProvider Registry -Name HKU
+  }
+  catch [System.Management.Automation.DriveNotFoundException]
+  {
+    try 
+    {
+      # Create the HKU drive
+      New-PSDrive -PSProvider Registry -Name HKU -Root HKEY_USERS
+
+      # Check if the registry key required for enabling autologon is present on the machine, if not wait for 120 seconds in case the user profile is still getting created
+      while ($timeout -gt 0)
+      {
+        $objUser = New-Object System.Security.Principal.NTAccount($vmAdminUserName)
+        $securityId = $objUser.Translate([System.Security.Principal.SecurityIdentifier])
+        $securityId = $securityId.Value
+        
+        if (Test-Path "HKU:\$securityId")
+        {
+          break
+        }
+        else
+        {
+          $timeout -= 10
+          Start-Sleep(10)
+        }
+      }
+
+      if ($timeout -lt 0)
+      {
+        Write-Warning "Failed to find the registry entry for the SId of the user, this is required to enable autologon. Trying to start the agent anyway."
+      }
+    }
+    catch 
+    {
+      # Ignore the failure to create the drive and go ahead with trying to set the agent up
+      Write-Warning "Moving ahead with agent setup as the script failed to create HKU drive necessary for checking if the registry entry for the user's SId exists.\n$_"
+    }
+  }
+
+  # Setup the agent with autologon enabled
   .\config.cmd --unattended --url $serverUrl --auth PAT --token $PersonalAccessToken --pool $PoolName --agent $AgentName --runAsAutoLogon --overwriteAutoLogon --windowslogonaccount $vmAdminUserName --windowslogonpassword $vmAdminPassword
 }
 else 
 {
+  # Setup the agent as a service
   .\config.cmd --unattended --url $serverUrl --auth PAT --token $PersonalAccessToken --pool $PoolName --agent $AgentName --runasservice
 }
 
