@@ -26,7 +26,6 @@ Azure is a world-class cloud for hosting virtual machines running Windows or Lin
    - **Repository Url** - Provide the GitHub repository URL for the source code.
    - **Client Id** - Provide the client id for Azure service principal, use **appId** noted above.
    - **Client Secret** - Provide the client secret for Azure service principal, use **password** noted above.
-   - **VM Resource Group** - Provide the name of new resource group for the VMSS components, *DO NOT* use the same resource group as Jenkins.
    - **VM Dns Prefix** - Provide the unique DNS prefix name for the VMSS VMs and Jumpbox VM.
    - **VM Admin Username** - Provide the username for the VMSS VMs.
    - **VM Admin Password** - Provide the password for the VMSS VMs, it must meet the complexity requirements, e.g. `30Jan2@18`
@@ -98,7 +97,7 @@ If you want to manage Jenkins, e.g. trigger a build manually, just follow the st
 
 ### Manage VMSS
 
-The VMSS components are created in a separate resource group whose name is provided in the ARM template parameter **VM Resource Group**, you could access and manage them via the Azure portal.
+The VMSS components are created in a separate resource group whose name is postfixed with `-VMSS`, you could access and manage them via the Azure portal.
 
 > **Note:** Any custom changes in the VMSS components would get lost when there's new commits in the repository specified by the ARM template parameter **Repository Url**, as that would trigger Jenkins job to re-create the image and all VMSS components.
 
