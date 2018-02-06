@@ -1,6 +1,6 @@
 # Very simple deployment of a Linux VM
 
-These buttons DO NOT WORK AT THIS TIME. Place-holders from another template.
+<p>These buttons DO NOT WORK AT THIS TIME. Place-holders from another template.</p>
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-vm-simple-linux%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
@@ -10,7 +10,7 @@ These buttons DO NOT WORK AT THIS TIME. Place-holders from another template.
 
 
 This template creates an Ubuntu VM with user-specified credentials. It then sets the PublicDNS name, runs a script to install Ark dependencies, and creates a network security group for firewall settings.
-FQDN:  <PublicDNSname>.<datacenter-region>.cloudapp.azure.com
+FQDN:  PublicDNSname.datacenter-region.cloudapp.azure.com
 To Do:
 Additional VM sizes to choose from
 Variables to run node installation / setup directly at template level before login
