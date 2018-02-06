@@ -14,8 +14,7 @@
 <ul style="list-style-type:circle">
     <li>Additional VM sizes to choose from</li>
     <li>Variables to run node installation / setup directly at template level before login</li>
-    <li>Fix dependency issues (Install nodejs 8.9.1 globally instead of via user-level NVM)</li>
-    <li>Fix 'Deploy to Azure' buttons</li>
+    <li>nodejs must be user-level for this to run, unfortunately</li
 </ul>
 
 
