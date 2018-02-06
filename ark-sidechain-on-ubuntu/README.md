@@ -8,10 +8,9 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-
-This template creates an Ubuntu VM with user-specified credentials. It then sets the PublicDNS name, runs a script to install Ark dependencies, and creates a network security group for firewall settings.
-FQDN:  PublicDNSname.datacenter-region.cloudapp.azure.com
-To Do:
+<p>This template creates an Ubuntu VM with user-specified credentials. It then sets the PublicDNS name, runs a script to install Ark dependencies, and creates a network security group for firewall settings.</p>
+<p>FQDN:  PublicDNSname.datacenter-region.cloudapp.azure.com</p>
+<p>To Do:</p>
 Additional VM sizes to choose from
 Variables to run node installation / setup directly at template level before login
 Fix dependency issues (Install nodejs 8.9.1 globally instead of via user-level NVM)
