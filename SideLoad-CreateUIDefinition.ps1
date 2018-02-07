@@ -9,6 +9,7 @@ param(
     [string] $ArtifactsStagingDirectory = ".",
     [string] $createUIDefFile='createUIDefinition.json',
     [string] $storageContainerName='createuidef',
+    [string] $StorageResourceGroupLocation', # this must be specified only when the staging resource group needs to be created
     [switch] $Gov
 )
 
@@ -20,7 +21,7 @@ try {
     # Create the storage account if it doesn't already exist
     if ($StorageAccount -eq $null) {
         $StorageResourceGroupName = 'ARM_Deploy_Staging'
-        New-AzureRmResourceGroup -Location "$ResourceGroupLocation" -Name $StorageResourceGroupName -Force
+        New-AzureRmResourceGroup -Location "$StorageResourceGroupLocation" -Name $StorageResourceGroupName -Force
         $StorageAccount = New-AzureRmStorageAccount -StorageAccountName $StorageAccountName -Type 'Standard_LRS' -ResourceGroupName $StorageResourceGroupName -Location "$ResourceGroupLocation"
     }
 
