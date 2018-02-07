@@ -9,7 +9,7 @@ param(
     [string] $ArtifactsStagingDirectory = ".",
     [string] $createUIDefFile='createUIDefinition.json',
     [string] $storageContainerName='createuidef',
-    [string] $StorageResourceGroupLocation', # this must be specified only when the staging resource group needs to be created
+    [string] $StorageResourceGroupLocation, # this must be specified only when the staging resource group needs to be created - first run or if the account has been deleted
     [switch] $Gov
 )
 
@@ -20,6 +20,7 @@ try {
 
     # Create the storage account if it doesn't already exist
     if ($StorageAccount -eq $null) {
+        if ($StorageResourceGroupLocation -eq "") { throw "The StorageResourceGroupLocaiton parameter is required on first run in a subscription." }
         $StorageResourceGroupName = 'ARM_Deploy_Staging'
         New-AzureRmResourceGroup -Location "$StorageResourceGroupLocation" -Name $StorageResourceGroupName -Force
         $StorageAccount = New-AzureRmStorageAccount -StorageAccountName $StorageAccountName -Type 'Standard_LRS' -ResourceGroupName $StorageResourceGroupName -Location "$ResourceGroupLocation"
