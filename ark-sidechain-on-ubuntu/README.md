@@ -1,6 +1,5 @@
 # Deployment of Ark.io Sidechain
 
-<p>These buttons DO NOT WORK AT THIS TIME. Place-holders from another linux-based template.</p>
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fdavepinkawa%2Fazure-quickstart-templates%2Fmaster%2Fark-sidechain-on-ubuntu%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
