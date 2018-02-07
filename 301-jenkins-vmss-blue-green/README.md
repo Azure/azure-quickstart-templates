@@ -3,10 +3,10 @@
 ***Disclaimer***: The blue-green deployment to Azure Virtual Machine ScaleSet (VMSS) described here is still in
 preview. It may be changed in future as the Azure infrastructure level support is still not finalized.
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FArieShout%2Fazure-quickstart-templates%2Fvmss-bg%2F301-jenkins-vmss-blue-green%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fgithub.com%2FAzure%2Fazure-quickstart-templates%2Fblob%2Fmaster%2F301-jenkins-vmss-blue-green%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FArieShout%2Fazure-quickstart-templates%2Fvmss-bg%2F301-jenkins-vmss-blue-green%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fgithub.com%2FAzure%2Fazure-quickstart-templates%2Fblob%2Fmaster%2F301-jenkins-vmss-blue-green%2Fazuredeploy.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
