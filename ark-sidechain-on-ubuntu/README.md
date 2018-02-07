@@ -1,6 +1,5 @@
 # Deployment of Ark.io Sidechain
 
-<p>These buttons DO NOT WORK AT THIS TIME. Place-holders from another linux-based template.</p>
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fdavepinkawa%2Fazure-quickstart-templates%2Fmaster%2Fark-sidechain-on-ubuntu%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
@@ -12,9 +11,7 @@
 <p>FQDN:  PublicDNSname.datacenter-region.cloudapp.azure.com</p>
 <p>To Do:</p>
 <ul style="list-style-type:circle">
-    <li>Additional VM sizes to choose from</li>
-    <li>Variables to run node installation / setup directly at template level before login</li>
-    <li>nodejs must be user-level for this to run, unfortunately</li
+    <li>nodejs must be user-level for this to run, unfortunately. Therefore it is not possible for me to run the full installation as part of a script at this time</li
 </ul>
 
 
