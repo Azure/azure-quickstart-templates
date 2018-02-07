@@ -1,0 +1,341 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"publisherEmail": {
+			"type": "string",            
+			"minLength": 1,
+			"metadata": {
+				"description": "The email address of the owner of the service"
+			}
+		},
+		"publisherName": {
+			"type": "string",
+			"minLength": 1,            
+			"metadata": {
+				"description": "The name of the owner of the service"
+			}
+		},
+		"sku": {
+			"type": "string",
+			"allowedValues": [
+				"Developer",
+				"Basic",
+				"Standard",
+				"Premium"
+			],
+			"defaultValue": "Developer",
+			"metadata": {
+				"description": "The pricing tier of this API Management service"
+			}
+		},
+		"skuCount": {
+			"type": "int",			
+			"metadata": {
+				"description": "The instance size of this API Management service."
+			}
+		},
+		"virtualNetworkName": {
+			"type": "string",            
+			"metadata": {
+				"description": "Virtual Network name"
+			}
+		},
+		"virtualNetworkAddressPrefix": {
+			"type": "string",
+			"defaultValue": "172.20.0.0/24",
+			"metadata": {
+				"description": "Address prefix"
+			}
+		},
+		"apimSubnetPrefix": {
+			"type": "string",
+			"defaultValue": "172.20.0.0/29",
+			"metadata": {
+				"description": "APIM Subnet Prefix"
+			}
+		},
+		"apimSubnetName": {
+			"type": "string",            
+			"metadata": {
+				"description": "APIM Subnet Name"
+			}
+		},
+		"appGatewaySubnetName": {
+			"type": "string",            
+			"metadata": {
+				"description": "App Gateway Subnet Name"
+			}
+		},		
+		"appGatewaySubnetPrefix": {
+			"type": "string",
+			"defaultValue": "172.20.0.10/29",
+			"metadata": {
+				"description": "Application Gateway Subnet prefix"
+			}
+		},
+		"applicationGatewaySize": {
+			"type": "string",
+			"allowedValues": [
+				"Standard_Small",
+				"Standard_Medium",
+				"Standard_Large"
+			],
+			"defaultValue": "Standard_Small",
+			"metadata": {
+				"description": "Application Gateway size"
+			}
+		},
+		"capacity": {
+			"type": "int",
+			"allowedValues": [
+				1,
+				2,
+				3,
+				4,
+				5,
+				6,
+				7,
+				8,
+				9,
+				10
+			],
+			"defaultValue": 1,
+			"metadata": {
+				"description": "Number of instances for Application Gateway"
+			}
+		},
+		"probeEnabled": {
+			"type": "bool",
+			"defaultValue": true,
+			"metadata": {
+				"description": "Probe Enabled"
+			}
+		},
+        "sslCertData": {
+            "type": "securestring",			
+			"metadata": {
+				"description": "Base-64 encoded SSL .pfx Certificate for proxy custom hostname."
+			}
+        },
+        "sslCertPassword": {
+            "type": "securestring",	            
+			"metadata": {
+				"description": "Password for SSL certificate"
+			}
+        },
+        "authCertData": {
+            "type": "string",	            
+			"metadata": {
+				"description": "Base 64 encoded Auth certificate public key"
+			}
+        },
+        "customHostName": {
+            "type": "string",			
+			"metadata": {
+				"description": "Custom domain name for API Management gateway endpoint"
+			}
+        }
+	},
+	"variables": {
+		"apiManagementServiceName": "[concat('apiservice', uniqueString(resourceGroup().id))]",
+		"virtualNetworkID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
+		"apimSubnetRef": "[concat(variables('virtualNetworkID'),'/subnets/',parameters('apimSubnetName'))]",
+		"applicationGatewayName": "[concat('appgateway', uniqueString(resourceGroup().id))]",
+		"publicIPAddressName": "[concat('publicip', uniqueString(resourceGroup().id))]",
+		"appGatewaySubnetRef": "[concat(variables('virtualNetworkID'),'/subnets/',parameters('appGatewaySubnetName'))]",
+		"publicIPRef": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]",
+		"applicationGatewayID": "[resourceId('Microsoft.Network/applicationGateways',variables('applicationGatewayName'))]"
+	},
+	"resources": [{
+		"apiVersion": "2017-06-01",
+		"type": "Microsoft.Network/publicIPAddresses",
+		"name": "[variables('publicIPAddressName')]",
+		"location": "[resourceGroup().location]",
+		"properties": {
+			"publicIPAllocationMethod": "Dynamic"
+		}
+	},
+	{
+		"apiVersion": "2015-06-15",
+		"type": "Microsoft.Network/virtualNetworks",
+		"name": "[parameters('virtualNetworkName')]",
+		"location": "[resourceGroup().location]",
+		"properties": {
+			"addressSpace": {
+				"addressPrefixes": ["[parameters('virtualNetworkAddressPrefix')]"]
+			},
+			"subnets": [{
+				"name": "[parameters('apimSubnetName')]",
+				"properties": {
+					"addressPrefix": "[parameters('apimSubnetPrefix')]"
+				}
+			},
+			{
+				"name": "[parameters('appGatewaySubnetName')]",
+				"properties": {
+					"addressPrefix": "[parameters('appGatewaySubnetPrefix')]"
+				}
+			}]
+		}
+	},
+	{
+		"apiVersion": "2017-03-01",
+		"name": "[variables('apiManagementServiceName')]",
+		"type": "Microsoft.ApiManagement/service",
+		"location": "[resourceGroup().location]",
+		"dependsOn": ["[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"],
+		"tags": {
+			
+		},
+		"sku": {
+			"name": "[parameters('sku')]",
+			"capacity": "[parameters('skuCount')]"
+		},
+		"properties": {
+			"publisherEmail": "[parameters('publisherEmail')]",
+			"publisherName": "[parameters('publisherName')]",
+			"virtualNetworkType": "Internal",
+			"virtualNetworkConfiguration": {
+				"subnetResourceId": "[variables('apimSubnetRef')]",
+				"location": "[resourceGroup().location]"
+			},
+            "hostnameConfigurations": [
+                {
+                    "type": "Proxy",
+                    "hostName": "[parameters('customHostName')]",
+                    "encodedCertificate": "[parameters('sslCertData')]",
+                    "certificatePassword": "[parameters('sslCertPassword')]",
+                    "negotiateClientCertificate": false
+                }
+            ]
+		}
+	},
+	{
+		"apiVersion": "2017-06-01",
+		"name": "[variables('applicationGatewayName')]",
+		"type": "Microsoft.Network/applicationGateways",
+		"location": "[resourceGroup().location]",
+		"dependsOn": ["[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
+		"[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+		"[concat('Microsoft.ApiManagement/service/', variables('apiManagementServiceName'))]"
+		],
+		"properties": {
+			"sku": {
+				"name": "[parameters('applicationGatewaySize')]",
+				"tier": "Standard",
+				"capacity": "[parameters('capacity')]"
+			},
+            "sslCertificates": [
+                {
+                    "name": "appGatewaySslCert",
+                    "properties": {
+                        "data": "[parameters('sslCertData')]",
+                        "password": "[parameters('sslCertPassword')]"
+                    }
+                }
+            ],
+            "authenticationCertificates": [
+                {
+                    "name": "appGatewayAuthCert",
+                    "properties": {
+                        "data": "[parameters('authCertData')]"                        
+                    }
+                }
+            ],
+			"gatewayIPConfigurations": [{
+				"name": "appGatewayIpConfig",
+				"properties": {
+					"subnet": {
+						"id": "[variables('appGatewaySubnetRef')]"
+					}
+				}
+			}],
+			"frontendIPConfigurations": [{
+				"name": "appGatewayFrontendIP",
+				"properties": {
+					"PublicIPAddress": {
+						"id": "[variables('publicIPRef')]"
+					}
+				}
+			}],
+			"frontendPorts": [{
+				"name": "appGatewayFrontendPort",
+				"properties": {
+					"Port": 443
+				}
+			}],
+			"backendAddressPools": [{
+				"name": "appGatewayBackendPool",
+				"properties": {
+					"BackendAddresses": [{
+						"IpAddress": "[reference(resourceId(resourceGroup().Name,'Microsoft.ApiManagement/service/',variables('apiManagementServiceName')), '2017-03-01').staticIPs[1]]"
+					}]
+				}
+			}],
+			"backendHttpSettingsCollection": [{
+				"name": "appGatewayBackendHttpSettings",
+				"properties": {
+					"Port": 443,
+					"Protocol": "Https",
+					"CookieBasedAffinity": "Disabled",
+					"PickHostNameFromBackendAddress": false,
+                    "RequestTimeout": 180,
+                    "HostName": "[parameters('customHostName')]",
+                    "authenticationCertificates": [
+                        {
+                            "Id": "[concat(variables('applicationGatewayID'), '/authenticationCertificates/appGatewayAuthCert')]"
+                        }
+                    ],
+					"ProbeEnabled": "[parameters('probeEnabled')]",
+					"Probe": {
+						"Id": "[concat(variables('applicationGatewayID'), '/probes/Probe1')]"
+					}
+				}
+			}],
+			"httpListeners": [{
+				"name": "appGatewayHttpListener",
+				"properties": {
+					"FrontendIPConfiguration": {
+						"Id": "[concat(variables('applicationGatewayID'), '/frontendIPConfigurations/appGatewayFrontendIP')]"
+					},
+					"FrontendPort": {
+						"Id": "[concat(variables('applicationGatewayID'), '/frontendPorts/appGatewayFrontendPort')]"
+					},
+					"Protocol": "Https",
+					"SslCertificate": {
+                        "Id": "[concat(variables('applicationGatewayID'), '/sslCertificates/appGatewaySslCert')]"
+                    }
+				}
+			}],
+			"requestRoutingRules": [{
+				"Name": "rule1",
+				"properties": {
+					"RuleType": "Basic",
+					"httpListener": {
+						"id": "[concat(variables('applicationGatewayID'), '/httpListeners/appGatewayHttpListener')]"
+					},
+					"backendAddressPool": {
+						"id": "[concat(variables('applicationGatewayID'), '/backendAddressPools/appGatewayBackendPool')]"
+					},
+					"backendHttpSettings": {
+						"id": "[concat(variables('applicationGatewayID'), '/backendHttpSettingsCollection/appGatewayBackendHttpSettings')]"
+					}
+				}
+			}],
+			"probes": [{
+				"Name": "Probe1",
+				"properties": {
+					"Protocol": "Https",
+					"Path": "/status-0123456789abcdef",
+                    "Host": "[parameters('customHostName')]",
+					"Interval": 30,
+					"Timeout": 120,
+					"UnhealthyThreshold": 8,
+					"MinServers": 0,
+					"PickHostNameFromBackendHttpSettings": false
+				}
+			}]
+		}
+	}]
+}
