@@ -4,6 +4,7 @@
   "parameters": {
     "adminUsername": {
       "type": "string",
+      "defaultValue": "arkadmin",
       "metadata": {
         "description": "User name for the Virtual Machine."
       }
@@ -29,31 +30,75 @@
       "metadata": {
         "description": "The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version."
       }
+    },
+    "ARKNSGName": {
+      "type": "string",
+      "defaultValue": "ARK_NSG",
+      "metadata": {
+        "description": "This is name of the networkSecurityGroup that will be assigned to Ark Ubuntu Server Subnet"
+      }
     }
   },
   "variables": {
     "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'salinuxvm')]",
     "imagePublisher": "Canonical",
     "imageOffer": "UbuntuServer",
-    "nicName": "myArkVMNic",
+    "nicName": "myVMNic",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
     "subnetPrefix": "10.0.0.0/24",
-    "networkSecurityGroupName": "ARK-NSG",
     "storageAccountType": "Standard_LRS",
     "publicIPAddressName": "myPublicIP",
     "publicIPAddressType": "Dynamic",
-    "vmName": "MyArkUbuntuVM",
+    "vmName": "MyUbuntuVM",
     "vmSize": "Standard_A1",
     "virtualNetworkName": "MyVNET",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
     "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]"
   },
   "resources": [
+        {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[parameters('ARKNSGName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "ssh_rule",
+            "properties": {
+              "description": "Allow ssh",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "ark_rule",
+            "properties": {
+              "description": "Allow ARK",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "4100-4200",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 101,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
     {
-      "apiVersion": "2017-06-01",
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountName')]",
+      "apiVersion": "2017-06-01",
       "location": "[resourceGroup().location]",
       "sku": {
         "name": "[variables('storageAccountType')]"
@@ -62,7 +107,7 @@
       "properties": {}
     },
     {
-      "apiVersion": "2017-06-01",
+      "apiVersion": "2017-04-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
       "location": "[resourceGroup().location]",
@@ -70,14 +115,38 @@
         "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
         "dnsSettings": {
           "domainNameLabel": "[parameters('dnsLabelPrefix')]"
-        },
-        "networkSecurityGroup":{
-          "id":"[concat('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroupName'))]"
         }
       }
     },
     {
-      "apiVersion": "2017-06-01",
+      "apiVersion": "2017-04-01",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkSecurityGroups/', parameters('ARKNSGName'))]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetPrefix')]",
+                 "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('ARKNSGName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2017-04-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
       "location": "[resourceGroup().location]",
@@ -96,99 +165,6 @@
               },
               "subnet": {
                 "id": "[variables('subnetRef')]"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Network/networkSecurityGroups",
-      "name": "[variables('networkSecurityGroupName')]",
-      "location": "[resourceGroup().location]",
-      "properties": {
-        "securityRules": [
-          {
-            "name": "ssh-in-rule",
-            "properties": {
-              "description": "Allow SSH",
-              "protocol": "Tcp",
-              "sourcePortRange": "*",
-              "destinationPortRange": "22",
-              "sourceAddressPrefix": "Internet",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 100,
-              "direction": "Inbound"
-            }
-          },
-          {
-            "name": "ark-node-in-rule",
-            "properties": {
-              "description": "Allow ark node",
-              "protocol": "Tcp",
-              "sourcePortRange": "*",
-              "destinationPortRange": "4100",
-              "sourceAddressPrefix": "Internet",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 103,
-              "direction": "Inbound"
-            }
-          },
-          {
-            "name": "arkexplorer-in-rule",
-            "properties": {
-              "description": "Allow Explorer",
-              "protocol": "Tcp",
-              "sourcePortRange": "*",
-              "destinationPortRange": "4200",
-              "sourceAddressPrefix": "Internet",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 101,
-              "direction": "Inbound"
-            }
-          },
-          {
-            "name": "ark-in-rule",
-            "properties": {
-              "description": "Allow ark",
-              "protocol": "Tcp",
-              "sourcePortRange": "*",
-              "destinationPortRange": "4001-4002",
-              "sourceAddressPrefix": "Internet",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 102,
-              "direction": "Inbound"
-            }
-          }
-        ]
-      }
-    },
-    {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Network/virtualNetworks",
-      "name": "[variables('virtualNetworkName')]",
-      "location": "[resourceGroup().location]",
-      "dependsOn": [
-        "[concat('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroupName'))]"
-      ],
-      "properties": {
-        "addressSpace": {
-          "addressPrefixes": [
-            "[variables('addressPrefix')]"
-          ]
-        },
-        "subnets": [
-          {
-            "name": "[variables('subnetName')]",
-            "properties": {
-              "addressPrefix": "[variables('subnetPrefix')]",
-              "networkSecurityGroup": {
-                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
               }
             }
           }
@@ -247,17 +223,17 @@
       }
     },
     {
-      "name": "[concat(variables('vmName'), '/script')]",
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2015-06-15",
-      "dependsOn": [
+        "name": "[concat(variables('vmName'), '/script')]",
+        "type": "Microsoft.Compute/virtualMachines/extensions",
+        "location": "[resourceGroup().location]",
+        "apiVersion": "2015-06-15",
+        "dependsOn": [
           "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
-      ],
-      "tags": {
+        ],
+        "tags": {
           "displayName": "script"
-      },
-      "properties": {
+        },
+        "properties": {
           "publisher": "Microsoft.Azure.Extensions",
           "type": "CustomScript",
           "typeHandlerVersion": "2.0",
@@ -269,7 +245,7 @@
           "commandToExecute": "./preparkserver.sh"
         }
       }
-  }
+    }   
   ],
   "outputs": {
     "hostname": {
