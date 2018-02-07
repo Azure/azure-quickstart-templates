@@ -12,9 +12,7 @@
 <p>FQDN:  PublicDNSname.datacenter-region.cloudapp.azure.com</p>
 <p>To Do:</p>
 <ul style="list-style-type:circle">
-    <li>Additional VM sizes to choose from</li>
-    <li>Variables to run node installation / setup directly at template level before login</li>
-    <li>nodejs must be user-level for this to run, unfortunately</li
+    <li>nodejs must be user-level for this to run, unfortunately. Therefore it is not possible for me to run the full installation as part of a script at this time</li
 </ul>
 
 
