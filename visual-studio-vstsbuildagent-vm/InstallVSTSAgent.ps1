@@ -119,7 +119,7 @@ if ($runAsAutoLogon -ieq "true")
     $securityId = $objUser.Translate([System.Security.Principal.SecurityIdentifier])
     $securityId = $securityId.Value
     
-    New-Item -Path "HKU:\\$securityId\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run" -Force
+    #New-Item -Path "HKU:\\$securityId\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run" -Force
 
     if (Test-Path "HKU:\\$securityId\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run")
     {
