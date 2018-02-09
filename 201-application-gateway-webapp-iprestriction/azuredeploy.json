@@ -90,19 +90,26 @@
       "metadata": {
         "description": "MySQL version"
       }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/MCKLMT/azure-quickstart-templates/master/201-application-gateway-webapp-iprestriction/"
     }
   },
   "variables": {
-    "applicationGatewayName": "applicationGateway1",
-    "publicIPAddressName": "publicIp1",
+    "applicationGatewayName": "[concat(parameters('siteName'),'-agw')]",
+    "publicIPAddressName": "[concat(parameters('siteName'),'-pip')]",
     "virtualNetworkName": "virtualNetwork1",
     "subnetName": "appGatewaySubnet",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
     "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
     "publicIPRef": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]",
     "applicationGatewayID": "[resourceId('Microsoft.Network/applicationGateways',variables('applicationGatewayName'))]",
-    "databaseName": "[concat(parameters('siteName'), 'database')]",
-    "serverName": "[concat(parameters('siteName'), 'pgserver')]",
+    "databaseName": "[concat(parameters('siteName'), 'db')]",
+    "serverName": "[concat(parameters('siteName'), 'mysqlserver')]",
     "hostingPlanName": "[concat(parameters('siteName'), 'serviceplan')]"
   },
   "resources": [
@@ -256,20 +263,39 @@
       }
     },
     {
-      "apiVersion": "2016-09-01",
+      "apiVersion": "2017-05-10",
+      "name": "fetchIpAddress",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "[variables('applicationGatewayName')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "contentVersion": "1.0.0.0",
+          "uri": "[uri(parameters('_artifactsLocation'), 'fetchIpAddress.json')]"
+        },
+        "parameters": {
+          "publicIPAddressId": {
+            "value": "[resourceId('Microsoft.Network/publicIpAddresses', variables('publicIPAddressName'))]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2016-03-01",
       "name": "[variables('hostingPlanName')]",
       "type": "Microsoft.Web/serverfarms",
       "location": "[resourceGroup().location]",
-      "properties": {
-        "name": "[variables('hostingPlanName')]",
-        "workerSizeId": "1",
-        "reserved": true,
-        "numberOfWorkers": 0,
-        "hostingEnvironment": ""
+      "tags": {
+        "displayName": "HostingPlan"
       },
       "sku": {
-        "Tier": "Standard",
-        "Name": "S1"
+        "name": "S1",
+        "capacity": "1"
+      },
+      "properties": {
+        "name": "[variables('hostingPlanName')]"
       }
     },
     {
@@ -278,31 +304,42 @@
       "type": "Microsoft.Web/sites",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
+        "[variables('hostingPlanName')]"
       ],
       "properties": {
         "name": "[parameters('siteName')]",
-        "serverFarmId": "[variables('hostingPlanName')]",
-        "hostingEnvironment": ""
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]"
       },
       "resources": [
         {
           "apiVersion": "2016-08-01",
-          "name": "connectionstrings",
           "type": "config",
+          "name": "connectionstrings",
           "dependsOn": [
-            "[concat('Microsoft.Web/sites/', parameters('siteName'))]",
-            "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
-            "[concat('Microsoft.DBforMySQL/servers/', variables('serverName'))]"
+            "[parameters('siteName')]"
           ],
           "properties": {
-            "defaultConnection": {
+            "DefaultConnection": {
               "value": "[concat('Database=', variables('databaseName'), ';Data Source=', variables('serverName'), '.mysql.database.azure.com;User Id=', parameters('administratorLogin'),'@', variables('serverName'),';Password=', parameters('administratorLoginPassword'))]",
-              "type": "MySQL"
-            },
-            "ipSecurityRestrictions": {
-              "ipAddress": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))).IpAddress]"
+              "type": "MySql"
             }
+          }
+        },
+        {
+          "apiVersion": "2016-08-01",
+          "type": "config",
+          "name": "web",
+          "dependsOn": [
+            "[parameters('siteName')]",
+            "fetchIpAddress"
+          ],
+          "properties": {
+            "ipSecurityRestrictions": [
+              {
+                "ipAddress": "[reference('fetchIpAddress').outputs.ipAddress.value]",
+                "subnetMask": "255.255.255.255"
+              }
+            ]
           }
         }
       ]
