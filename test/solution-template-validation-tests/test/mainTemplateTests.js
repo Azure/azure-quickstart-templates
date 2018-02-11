@@ -7,6 +7,8 @@ var assert = chai.assert; // Using Assert style
 var expect = chai.expect; // Using Expect style
 var should = chai.should(); // Using Should style
 
+require('it-each')({ testPerIteration: true });
+
 var folder = process.env.npm_config_folder || filesFolder;
 
 var mainTemplateFileJSONObject = util.getMainTemplateFile(folder).jsonObject;
@@ -129,7 +131,7 @@ describe('mainTemplate.json file - ', () => {
             });
         });
 
-        it('template must contain only approved resources', () => {
+        describe('template must contain only approved resources', () => {
             // Add allowed types here
             // NOTE that the property name is the lower case resource provider portion of the type
             // and the array can either be a single entry of '*' for all types for that provider
@@ -146,16 +148,18 @@ describe('mainTemplate.json file - ', () => {
                 var templateObject = templateJSONObject.value;
                 templateObject.should.have.property('resources');
                 var message = 'in file:' + templateJSONObject.filename + ' is NOT an approved resource type (' + JSON.stringify(allowedResourceTypes) + ')';
-                Object.keys(templateObject.resources).forEach(resource => {
-                    var val = templateObject.resources[resource];
+                var resources =  Object.keys(templateObject.resources);
+                it.each(resources, "resource type must be approved", function(element, next) {
+                    var val = templateObject.resources[element];
                     if (val.type) {
                         var rType = val.type.toLowerCase().split('/');
                         var providerLower = rType[0];
                         var typeLower = rType[1];
                         var condition = allowedResourceTypes[providerLower] &&
                                     (allowedResourceTypes[providerLower][0] == '*' || (typeLower && allowedResourceTypes[providerLower].indexOf(typeLower) > -1));
-                        expect(condition, getErrorMessage(val, templateJSONObject.filepath, message + '. The resource object: ' + JSON.stringify(val))).to.be.true;
+                        expect(condition, getErrorMessage(val, templateJSONObject.filepath, message + '. The resource type: ' + val.type)).to.be.true;
                     }
+                    next();
                 });
             });
         });
