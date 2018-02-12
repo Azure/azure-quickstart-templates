@@ -58,13 +58,27 @@
       "metadata": {
         "description": "Pass phrase for SSH certificate"
       }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+      "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/jboss-eap-standalone-rhel7/"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+      "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+       },
+      "defaultValue": ""
     }
   },
   "variables": {
     "imagePublisher": "redhat",
     "imageOffer": "rhel",
     "imageSKU":"7.2",
-    "baseName": "[uniquestring(parameters('dnsLabelPrefix'),resourceGroup().id,uniquestring(deployment().name))]",
+    "baseName": "[uniquestring(parameters('dnsLabelPrefix'),resourceGroup().id)]",
     "nicName": "[concat('myNic8',variables('baseName'))]",
     "addressPrefix": "10.0.0.0/16",
     "subnet1Name": "Subnet-1",
@@ -72,6 +86,7 @@
     "publicIPAddressName": "[concat('myIP8',variables('baseName'))]",
     "publicIPAddressType": "Dynamic",
     "vmStorageAccountContainerName": "vhds",
+    "OSDiskName": "osdisk1spec",
     "vmName": "[parameters('dnsLabelPrefix')]",
     "vmSize": "Standard_F1",
     "virtualNetworkName": "MyVNET8",
@@ -79,6 +94,8 @@
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
     "storageAccountType": "Standard_LRS",
     "storageAccountName": "[concat('vsts8',variables('baseName'))]",
+    "ScriptFolder": "scripts",
+    "ScriptFileName": "eap-setup-redhat.sh",
     "subnet1Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]"
   },
   "resources": [
@@ -95,7 +112,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-10-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
       "location": "[resourceGroup().location]",
@@ -107,7 +124,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-10-01",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('frontEndNSGName')]",
       "location": "[resourceGroup().location]",
@@ -162,7 +179,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-10-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[resourceGroup().location]",
@@ -189,7 +206,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-10-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
       "location": "[resourceGroup().location]",
@@ -219,7 +236,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
       "location": "[resourceGroup().location]",
@@ -247,8 +264,9 @@
           "osDisk": {
             "name": "osdisk1",
             "vhd": {
-              "uri": "[concat('http://',variables('StorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/','osdisk1spec.vhd')]"
-            },
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/',variables('StorageAccountName')), '2015-06-15').primaryEndpoints.blob, variables('vmStorageAccountContainerName'),
+'/',variables('OSDiskName'),'.vhd')]"
+	    },
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -265,7 +283,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmName'),'/newuserscript')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-12-01",
       "location": "[resourceGroup().location]",
       "dependsOn": ["[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"],
       "properties": {
@@ -275,7 +293,7 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "https://raw.githubusercontent.com/MyriamFentanes/eap-template/master/scripts/eap-setup-redhat.sh"  
+            "[concat(parameters('_artifactsLocation'), '/', variables('ScriptFolder'), '/', variables('ScriptFileName'), parameters('_artifactsLocationSasToken'))]"
           ],
           "commandToExecute": "[concat('sh eap-setup-redhat.sh',' ',parameters('adminUsername'),' ',parameters('eapUserName'),' ',parameters('eapPassword'),' ',parameters('rhsmUserName'),' ',parameters('rhsmPassword'),' ',parameters('sshPassPhrase'))]"
         }
