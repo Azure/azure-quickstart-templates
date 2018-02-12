@@ -120,6 +120,8 @@ if ($runAsAutoLogon -ieq "true")
     }
   }
 
+  dir Registry::HKU
+
   # Check if the registry key required for enabling autologon is present on the machine, if not wait for 120 seconds in case the user profile is still getting created
   while ($timeout -ge 0 -and $canCheckRegistry)
   {
@@ -131,7 +133,7 @@ if ($runAsAutoLogon -ieq "true")
     
     #New-Item -Path "HKU:\\$securityId\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run" -Force
 
-    if (Test-Path "HKU:\\$securityId\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run")
+    if (Test-Path "HKU:\\$securityId") #\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run
     {
       Write-Host "Found the registry entry required to enable autologon."
       break
