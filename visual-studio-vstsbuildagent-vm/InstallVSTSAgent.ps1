@@ -83,11 +83,21 @@ Write-Verbose "Configuring agent" -Verbose
 # Set the current directory to the agent dedicated one previously created.
 Push-Location -Path $agentInstallationPath
 
+
+
+$Computer = Hostname
+$pass = ConvertTo-SecureString $vmAdminPassword -AsPlainText -Force
+$cred= New-Object System.Management.Automation.PSCredential ($vmAdminUserName, $pass)
+Enter-PSSession -ComputerName $Computer -Credential $cred
+Start-Sleep(10)
+Exit-PSSession
+
+
 if ($runAsAutoLogon -ieq "true")
 {
   $ErrorActionPreference = "stop"
 
-  $timeout = 30 # seconds
+  $timeout = 180 # seconds
 
   try
   {
@@ -123,7 +133,7 @@ if ($runAsAutoLogon -ieq "true")
 
     if (Test-Path "HKU:\\$securityId\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run")
     {
-      Write-Host "Found the registry entry required to anable autologon."
+      Write-Host "Found the registry entry required to enable autologon."
       break
     }
     else
