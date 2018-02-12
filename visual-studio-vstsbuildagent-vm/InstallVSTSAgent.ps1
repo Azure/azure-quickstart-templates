@@ -98,7 +98,7 @@ if ($runAsAutoLogon -ieq "true")
 {
   $ErrorActionPreference = "stop"
 
-  $timeout = 180 # seconds
+  $timeout = 60 # seconds
 
   try
   {
@@ -137,6 +137,10 @@ if ($runAsAutoLogon -ieq "true")
     if (Test-Path "HKU:\\$securityId") #\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run
     {
       Write-Host "Found the registry entry required to enable autologon."
+      if (!(Test-Path "HKU:\\$securityId\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run"))
+      {
+        New-Item -Path "HKU:\\$securityId\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run" -Force
+      }
       break
     }
     else
@@ -145,6 +149,7 @@ if ($runAsAutoLogon -ieq "true")
       Start-Sleep(10)
     }
   }
+
 
   if ($timeout -lt 0)
   {
