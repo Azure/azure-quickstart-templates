@@ -7,6 +7,8 @@ var assert = chai.assert; // Using Assert style
 var expect = chai.expect; // Using Expect style
 var should = chai.should(); // Using Should style
 
+require('it-each')({ testPerIteration: true });
+
 var folder = process.env.npm_config_folder || filesFolder;
 
 var mainTemplateFileJSONObject = util.getMainTemplateFile(folder).jsonObject;
@@ -115,16 +117,17 @@ describe('mainTemplate.json file - ', () => {
             });
         });
 
-        it('apiVersions must NOT be retrieved using providers().apiVersions[n].  This function is non-deterministic', () => {
+        // providers().apiVersions[n] MUST not be present
+        describe('apiVersions must NOT be retrieved using providers().apiVersions[n].  This function is non-deterministic', () => {
             templateFileJSONObjects.forEach(templateJSONObject => {
                 var templateObject = templateJSONObject.value;
-                templateObject.should.have.property('resources');
                 var message = 'in file:' + templateJSONObject.filename + ' should NOT have api version determined by providers().';
-                Object.keys(templateObject.resources).forEach(resource => {
-                    var val = templateObject.resources[resource];
-                    if (val.apiVersion) {
-                        val.apiVersion.should.withMessage(getErrorMessage(val, templateJSONObject.filepath, message)).not.contain('providers(');
-                    }
+                var properties = Object.keys(templateObject);
+                var resources = templateObject.resources;
+                it.each(properties, "providers().apiVersions[n] must NOT be present in the template", function(element, next) {
+                    var val = JSON.stringify(templateObject[element]);
+                    val.should.withMessage('file:' + templateJSONObject.filename + ' property:' + element).not.match(/providers\([a-zA-Z0-9_., '\\-]*\)\.apiVersions\[0\]/);
+                    next();
                 });
             });
         });
