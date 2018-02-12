@@ -86,8 +86,15 @@ Push-Location -Path $agentInstallationPath
 if ($runAsAutoLogon -ieq "true")
 {
   # Create a PS session for the user to trigger the creation of the registry entries required for autologon
+  if ($vmAdminUserName.Split("\").Count == 2)
+  {
+    $domain = $vmAdminUserName.Split("\")[0]
+  }
+  else
+  {
+    $domain = Hostname
+  }
   $computerName = "localhost"
-  $domain = Hostname
   $password = ConvertTo-SecureString $vmAdminPassword -AsPlainText -Force
   $credentials = New-Object System.Management.Automation.PSCredential ("$domain\\$vmAdminUserName", $password)
   Enter-PSSession -ComputerName $computerName -Credential $credentials
