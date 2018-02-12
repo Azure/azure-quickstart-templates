@@ -86,8 +86,9 @@ Push-Location -Path $agentInstallationPath
 
 
 $Computer = "localhost"
+$domain = Hostname
 $pass = ConvertTo-SecureString $vmAdminPassword -AsPlainText -Force
-$cred= New-Object System.Management.Automation.PSCredential ($vmAdminUserName, $pass)
+$cred= New-Object System.Management.Automation.PSCredential ("$domain\\$vmAdminUserName", $pass)
 Enter-PSSession -ComputerName $Computer -Credential $cred
 Start-Sleep(10)
 Exit-PSSession
