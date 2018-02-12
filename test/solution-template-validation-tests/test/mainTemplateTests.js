@@ -7,6 +7,8 @@ var assert = chai.assert; // Using Assert style
 var expect = chai.expect; // Using Expect style
 var should = chai.should(); // Using Should style
 
+require('it-each')({ testPerIteration: true });
+
 var folder = process.env.npm_config_folder || filesFolder;
 
 var mainTemplateFileJSONObject = util.getMainTemplateFile(folder).jsonObject;
@@ -71,22 +73,16 @@ describe('mainTemplate.json file - ', () => {
 
         });
 
-        // TODO: should location prop in resources all be set to param('location') ?
+        // The location parameter MUST NOT have allowedValues property and MUST have defaultValue property whose value MUST be '[resourceGroup().location]'
         it('a parameter named "location" must exist and must be used on all resource "location" properties', () => {
             mainTemplateFileJSONObject.should.withMessage('file:mainTemplate.json is missing parameters property').have.property('parameters');
             mainTemplateFileJSONObject.parameters.should.withMessage('file:mainTemplate.json is missing location property in parameters').have.property('location');
 
-            // TODO: if location default value exists, it should be set to resourceGroup.location(). Correct?
-
-            // each resource location should be "location": "[parameters('location')]"
-            var expectedLocation = '[parameters(\'location\')]';
-            var message = 'in file:mainTemplate.json should have location set to [parameters(\'location\')]';
-            Object.keys(mainTemplateFileJSONObject.resources).forEach(resource => {
-                var val = mainTemplateFileJSONObject.resources[resource];
-                if (val.location && val.type.toLowerCase() != 'microsoft.resources/deployments') {
-                    val.location.split(' ').join('').should.withMessage(getErrorMessage(val, mainTemplateFile, message)).be.eql(expectedLocation);
-                }
-            });
+            // The location parameter must have a defaultValue property, and its value must be '[resourceGroup().location]'
+            var location = mainTemplateFileJSONObject.parameters.location;
+            location.should.withMessage('file:mainTemplate.json location property must have a default value').have.property('defaultValue');
+            location.defaultValue.should.withMessage('file:mainTemplate.json location property default value MUST be [resourceGroup().location]').be.eql('[resourceGroup().location]');
+            location.should.withMessage('file:mainTemplate.json location property must NOT have allowedValues property').not.have.property('allowedValues');
         });
 
         it('the template must not contain any unused parameters', () => {
@@ -100,17 +96,30 @@ describe('mainTemplate.json file - ', () => {
     });
 
     describe('resources tests - ', () => {
-        it('resourceGroup().location must not be used in the solution template except as a defaultValue for the location parameter', () => {
+        describe('resource object location property tests - ', () => {
+            var expectedLocation1 = '[parameters(\'location\')]';
+            var expectedLocation2 = '[variables(\'location\')]';
             templateFileJSONObjects.forEach(templateJSONObject => {
                 var templateObject = templateJSONObject.value;
                 templateObject.should.have.property('resources');
-                var locationString = '[resourceGroup().location]';
-                var message = 'in file:' + templateJSONObject.filename + ' should NOT have location set to [resourceGroup().location]';
-                Object.keys(templateObject.resources).forEach(resource => {
-                    var val = templateObject.resources[resource];
+                var resources = Object.keys(templateObject.resources);
+                // each resource location should be "location": "[parameters('location')]" or ""[variables('location')]""
+                it.each(resources, 'resource location should be location: [parameters(location)] or [variables(location)]', function(element, next) {
+                    var val = templateObject.resources[element];
+                    var message = 'in json files should have location set to [parameters(\'location\')] or [variables(\'location\')]';
                     if (val.location) {
-                        val.location.should.withMessage(getErrorMessage(val, templateJSONObject.filepath, message)).not.be.eql(locationString);
+                        val.location.split(' ').join('').should.withMessage(getErrorMessage(val, templateJSONObject.filepath, message)).be.eql(expectedLocation1, expectedLocation2);
                     }
+                    next();
+                });
+                // resourceGroup().location can only be as a defaultValue for the location parameter
+                it.each(resources, 'resourceGroup().location must not be used in the solution template except as a defaultValue for the location parameter', function(element, next) {
+                    var val = templateObject.resources[element];
+                    var valStr = JSON.stringify(val);
+                    var locationString = '[resourceGroup().location]';
+                    var message = 'in file:' + templateJSONObject.filename + ' should NOT have location set to [resourceGroup().location]';
+                    valStr.should.withMessage(getErrorMessage(val, templateJSONObject.filepath, message)).not.contain(locationString);
+                    next();
                 });
             });
         });
