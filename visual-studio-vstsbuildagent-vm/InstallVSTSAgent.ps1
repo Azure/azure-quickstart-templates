@@ -83,22 +83,20 @@ Write-Verbose "Configuring agent" -Verbose
 # Set the current directory to the agent dedicated one previously created.
 Push-Location -Path $agentInstallationPath
 
-
-
-$Computer = "localhost"
-$domain = Hostname
-$pass = ConvertTo-SecureString $vmAdminPassword -AsPlainText -Force
-$cred= New-Object System.Management.Automation.PSCredential ("$domain\\$vmAdminUserName", $pass)
-Enter-PSSession -ComputerName $Computer -Credential $cred
-Start-Sleep(10)
-Exit-PSSession
-
-
 if ($runAsAutoLogon -ieq "true")
 {
+  # Create a PS session for the user to trigger the creation of the registry entries required for autologon
+  $computerName = "localhost"
+  $domain = Hostname
+  $password = ConvertTo-SecureString $vmAdminPassword -AsPlainText -Force
+  $credentials = New-Object System.Management.Automation.PSCredential ("$domain\\$vmAdminUserName", $password)
+  Enter-PSSession -ComputerName $computerName -Credential $credentials
+  Exit-PSSession
+
   $ErrorActionPreference = "stop"
 
-  $timeout = 60 # seconds
+  # 120 seconds timeout
+  $timeout = 120 
 
   try
   {
@@ -121,26 +119,21 @@ if ($runAsAutoLogon -ieq "true")
     }
   }
 
-  dir Registry::HKU
-
   # Check if the registry key required for enabling autologon is present on the machine, if not wait for 120 seconds in case the user profile is still getting created
   while ($timeout -ge 0 -and $canCheckRegistry)
   {
-    Write-Host $timeout
-
     $objUser = New-Object System.Security.Principal.NTAccount($vmAdminUserName)
     $securityId = $objUser.Translate([System.Security.Principal.SecurityIdentifier])
     $securityId = $securityId.Value
-    
-    #New-Item -Path "HKU:\\$securityId\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run" -Force
 
-    if (Test-Path "HKU:\\$securityId") #\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run
+    if (Test-Path "HKU:\\$securityId")
     {
-      Write-Host "Found the registry entry required to enable autologon."
       if (!(Test-Path "HKU:\\$securityId\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run"))
       {
         New-Item -Path "HKU:\\$securityId\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run" -Force
+        Write-Host "Created the registry entry path required to enable autologon."
       }
+      
       break
     }
     else
@@ -149,7 +142,6 @@ if ($runAsAutoLogon -ieq "true")
       Start-Sleep(10)
     }
   }
-
 
   if ($timeout -lt 0)
   {
