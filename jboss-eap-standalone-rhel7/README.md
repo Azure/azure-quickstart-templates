@@ -10,6 +10,7 @@ This template deploys a web applicaton deployed on JBoss EAP 7 running on RHEL 7
 
 `Tags: JBoss, EAP, Red Hat,EAP7`
 
+To obtain a rhsm account go to: www.redhat.com and sign in.
 
 ## Solution overview and deployed resources
 This template creates all of the compute resources to run JBoss EAP 7 on top of RHEL 7.2, deploying the following components:
