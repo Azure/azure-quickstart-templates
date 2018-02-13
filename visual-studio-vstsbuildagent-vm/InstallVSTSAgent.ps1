@@ -1,4 +1,4 @@
-ï»¿# Downloads the Visual Studio Team Services Build Agent and installs on the new machine
+# Downloads the Visual Studio Team Services Build Agent and installs on the new machine
 # and registers with the Visual Studio Team Services account and build agent pool
 
 # Enable -Verbose option
@@ -86,18 +86,20 @@ Push-Location -Path $agentInstallationPath
 if ($runAsAutoLogon -ieq "true")
 {
   # Create a PS session for the user to trigger the creation of the registry entries required for autologon
+  $computerName = "localhost"
+  $password = ConvertTo-SecureString $vmAdminPassword -AsPlainText -Force
   if ($vmAdminUserName.Split("\").Count -eq 2)
   {
     $domain = $vmAdminUserName.Split("\")[0]
+    $userName = $vmAdminUserName.Split('\')[1]
   }
   else
   {
     $domain = Hostname
+    $userName = $vmAdminUserName
   }
-  $computerName = "localhost"
-  $passwordÂ =Â ConvertTo-SecureStringÂ $vmAdminPassword -AsPlainTextÂ -Force
-  $credentials =Â New-ObjectÂ System.Management.Automation.PSCredential("$domain\\$vmAdminUserName",Â $password)
-  Enter-PSSessionÂ -ComputerNameÂ $computerNameÂ -CredentialÂ $credentials
+  $credentials = New-Object System.Management.Automation.PSCredential("$domain\\$userName", $password)
+  Enter-PSSession -ComputerName $computerName -Credential $credentials
   Exit-PSSession
 
   $ErrorActionPreference = "stop"
