@@ -96,9 +96,9 @@
         "description": "Name of the virtual network"
       }
     },
-    "addressPrefix": {
-      "type": "string",
-      "defaultValue": "10.0.0.0/16",
+    "addressPrefixes": {
+      "type": "array",
+      "defaultValue": [ "10.0.0.0/16" ],
       "metadata": {
         "description": "Address prefix of the virtual network"
       }
@@ -155,25 +155,19 @@
   },
   "variables": {
     "nicName": "[concat(parameters('vmName'), '-nic')]",
-    "passwordAuth": {
-      "computerName": "[parameters('vmName')]",
-      "adminUsername": "[parameters('adminUsername')]",
-      "adminPassword": "[parameters('adminPassword')]"
-    },
-    "sshAuth": {
-      "computerName": "[parameters('vmName')]",
-      "adminUsername": "[parameters('adminUsername')]",
-      "linuxConfiguration": {
-        "disablePasswordAuthentication": true,
-        "ssh": {
-          "publicKeys": [
-            {
-              "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
-              "keyData": "[parameters('sshPublicKey')]"
-            }
-          ]
-        }
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('sshPublicKey')]"
+          }
+        ]
       }
+    },
+    "publicIpAddressId": {
+      "id": "[resourceId(parameters('publicIpResourceGroupName'), 'Microsoft.Network/publicIPAddresses', parameters('publicIpName'))]"
     }
   },
   "resources": [
@@ -209,9 +203,7 @@
       "location": "[parameters('location')]",
       "properties": {
         "addressSpace": {
-          "addressPrefixes": [
-            "[parameters('addressPrefix')]"
-          ]
+          "addressPrefixes": "[parameters('addressPrefixes')]"
         },
         "subnets": [
           {
@@ -238,12 +230,10 @@
             "name": "ipconfig1",
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
-              "publicIPAddress": {
-                "id": "[resourceId(parameters('publicIpResourceGroupName'), 'Microsoft.Network/publicIPAddresses', parameters('publicIpName'))]"
-              },
               "subnet": {
                 "id": "[resourceId(parameters('virtualNetworkResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets/', parameters('virtualNetworkName'), parameters('subnetName'))]"
-              }
+              },
+              "publicIPAddress": "[if(not(equals(parameters('publicIpNewOrExisting'), 'none')), variables('publicIpAddressId') , json('null'))]"
             }
           }
         ]
@@ -262,7 +252,12 @@
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
         },
-        "osProfile": "[if(equals(parameters('authenticationType'), 'password'), variables('passwordAuth'), variables('sshAuth'))]",
+        "osProfile": {
+          "computerName": "[parameters('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+        },
         "storageProfile": {
           "imageReference": {
             "publisher": "Canonical",
