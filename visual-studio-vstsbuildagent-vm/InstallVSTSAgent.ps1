@@ -96,7 +96,7 @@ if ($runAsAutoLogon -ieq "true")
   }
   $computerName = "localhost"
   $password = ConvertTo-SecureString $vmAdminPassword -AsPlainText -Force
-  $credentials = New-Object System.Management.Automation.PSCredential ("$domain\\$vmAdminUserName", $password)
+  $credentials = New-Object System.Management.Automation.PSCredential("$domain\\$vmAdminUserName", $password)
   Enter-PSSession -ComputerName $computerName -Credential $credentials
   Exit-PSSession
 
