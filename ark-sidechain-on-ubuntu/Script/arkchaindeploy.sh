@@ -5,7 +5,6 @@ curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.8/install.sh | b
 source ~/.profile
 nvm install 8.9.1
 
-# Variables - Current settings are defaults
 SIDECHAINNAME=MyTestChain
 CHAINTOKEN=MyTestToken
 CHAINSYMBOL=MCT
