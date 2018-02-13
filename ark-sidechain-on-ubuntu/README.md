@@ -9,6 +9,8 @@
 
 <p>This template creates an Ubuntu VM with user-specified credentials. It then sets the PublicDNS name, runs a script to install Ark dependencies, and creates a network security group for firewall settings.</p>
 <p>FQDN:  PublicDNSname.datacenter-region.cloudapp.azure.com</p>
+<p>Once the server is fully deployed, run: curl -o- https://raw.githubusercontent.com/davepinkawa/azure-quickstart-templates/master/ark-sidechain-on-ubuntu/Script/arkchaindeploy.sh | bash <p>    
+
 <p>To Do:</p>
 <ul style="list-style-type:circle">
     <li>nodejs must be user-level for this to run, unfortunately. Therefore it is not possible for me to run the full installation as part of a script at this time</li
