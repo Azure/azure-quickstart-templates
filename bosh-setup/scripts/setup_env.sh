@@ -124,6 +124,7 @@ bosh create-env ~/example_manifests/bosh.yml \\
   --state=state.json \\
   --vars-store=~/bosh-deployment-vars.yml \\
   -o ~/example_manifests/cpi.yml \\
+  -o ~/example_manifests/custom-cpi-release.yml \\
   -o ~/example_manifests/custom-environment.yml \\
   -o ~/example_manifests/use-azure-dns.yml \\
   -o ~/example_manifests/jumpbox-user.yml \\
