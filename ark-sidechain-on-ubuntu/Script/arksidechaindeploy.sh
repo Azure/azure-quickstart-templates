@@ -14,10 +14,11 @@ CHAINTRANSPERBLOCK=50
 REWARDSTART=75600
 REWARDPERBLOCK=200000000
 TOTALPREMINE=2100000000000000
-IPADDR=10.0.0.4
+IPNODE=13.65.212.56
+IPEXPLORE=13.65.212.56
 
-~/ark-deployer/sidechain.sh install-node --name $SIDECHAINNAME --database ark_$SIDECHAINNAME --ip $IPADDR --token $CHAINTOKEN --symbol $CHAINSYMBOL --forgers $CHAINFORGERS --max-votes $MAXVOTESPERWALLET --blocktime $CHAINBLOCKTIME --transactions-per-block $CHAINTRANSPERBLOCK --reward-height-start $REWARDSTART --reward-per-block $REWARDPERBLOCK --total-premine $TOTALPREMINE --autoinstall-deps
+~/ark-deployer/sidechain.sh install-node --name $SIDECHAINNAME --database ark_$SIDECHAINNAME --ip $IPNODE --token $CHAINTOKEN --symbol $CHAINSYMBOL --forgers $CHAINFORGERS --max-votes $MAXVOTESPERWALLET --blocktime $CHAINBLOCKTIME --transactions-per-block $CHAINTRANSPERBLOCK --reward-height-start $REWARDSTART --reward-per-block $REWARDPERBLOCK --total-premine $TOTALPREMINE --autoinstall-deps
 ~/ark-deployer/sidechain.sh start-node --name $SIDECHAINNAME
 
-~/ark-deployer/sidechain.sh install-explorer --name $SIDECHAINNAME --token $CHAINTOKEN --ip $IPADDR --autoinstall-deps
+~/ark-deployer/sidechain.sh install-explorer --name $SIDECHAINNAME --token $CHAINTOKEN --ip $IPEXPLORE --autoinstall-deps
 ~/ark-deployer/sidechain.sh start-explorer
