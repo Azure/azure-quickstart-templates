@@ -24,7 +24,7 @@ function PrepMachineForAutologon () {
     }
     else
     {
-      $domain = $env:COMPUTERNAME
+      $domain = $Env:ComputerName
       $userName = $vmAdminUserName
       Write-Verbose "Username constructed to use for creating a PSSession: $domain\\$userName"
     }
