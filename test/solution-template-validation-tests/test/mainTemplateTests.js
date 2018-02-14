@@ -126,7 +126,7 @@ describe('mainTemplate.json file - ', () => {
                 var resources = templateObject.resources;
                 it.each(properties, "providers().apiVersions[n] must NOT be present in the template", function(element, next) {
                     var val = JSON.stringify(templateObject[element]);
-                    val.should.withMessage('file:' + templateJSONObject.filename + ' property:' + element).not.match(/providers\([a-zA-Z0-9_., '\\-]*\)\.apiVersions\[0\]/);
+                    val.should.withMessage('file:' + templateJSONObject.filepath + ' property:' + element).not.match(/providers\([a-zA-Z0-9_., '\\-]*\)\.apiVersions/);
                     next();
                 });
             });
