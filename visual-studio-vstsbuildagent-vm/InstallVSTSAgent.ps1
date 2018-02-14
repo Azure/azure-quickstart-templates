@@ -26,7 +26,7 @@ function PrepMachineForAutologon () {
     {
       $domain = $env:COMPUTERNAME
       $userName = $vmAdminUserName
-    Write-Verbose "Username constructed to use for creating a PSSession: $domain\\$userName"
+      Write-Verbose "Username constructed to use for creating a PSSession: $domain\\$userName"
     }
    
     $credentials = New-Object System.Management.Automation.PSCredential("$domain\\$userName", $password)
