@@ -13,6 +13,82 @@ Param(
 [Parameter(Mandatory=$false)]$vmAdminPassword
 )
 
+function PrepMachineForAutologon () {
+    # Create a PS session for the user to trigger the creation of the registry entries required for autologon
+    $computerName = "localhost"
+    $password = ConvertTo-SecureString $vmAdminPassword -AsPlainText -Force
+    if ($vmAdminUserName.Split("\").Count -eq 2)
+    {
+      $domain = $vmAdminUserName.Split("\")[0]
+      $userName = $vmAdminUserName.Split('\')[1]
+    }
+    else
+    {
+      $domain = $env:COMPUTERNAME
+      $userName = $vmAdminUserName
+    Write-Verbose "Username constructed to use for creating a PSSession: $domain\\$userName"
+    }
+   
+    $credentials = New-Object System.Management.Automation.PSCredential("$domain\\$userName", $password)
+    Enter-PSSession -ComputerName $computerName -Credential $credentials
+    Exit-PSSession
+  
+    $ErrorActionPreference = "stop"
+  
+    try
+    {
+      # Check if the HKU drive already exists
+      Get-PSDrive -PSProvider Registry -Name HKU | Out-Null
+      $canCheckRegistry = $true
+    }
+    catch [System.Management.Automation.DriveNotFoundException]
+    {
+      try 
+      {
+        # Create the HKU drive
+        New-PSDrive -PSProvider Registry -Name HKU -Root HKEY_USERS | Out-Null
+        $canCheckRegistry = $true
+      }
+      catch 
+      {
+        # Ignore the failure to create the drive and go ahead with trying to set the agent up
+        Write-Warning "Moving ahead with agent setup as the script failed to create HKU drive necessary for checking if the registry entry for the user's SId exists.\n$_"
+      }
+    }
+  
+    # 120 seconds timeout
+    $timeout = 120 
+  
+    # Check if the registry key required for enabling autologon is present on the machine, if not wait for 120 seconds in case the user profile is still getting created
+    while ($timeout -ge 0 -and $canCheckRegistry)
+    {
+      $objUser = New-Object System.Security.Principal.NTAccount($vmAdminUserName)
+      $securityId = $objUser.Translate([System.Security.Principal.SecurityIdentifier])
+      $securityId = $securityId.Value
+  
+      if (Test-Path "HKU:\\$securityId")
+      {
+        if (!(Test-Path "HKU:\\$securityId\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run"))
+        {
+          New-Item -Path "HKU:\\$securityId\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run" -Force
+          Write-Host "Created the registry entry path required to enable autologon."
+        }
+        
+        break
+      }
+      else
+      {
+        $timeout -= 10
+        Start-Sleep(10)
+      }
+    }
+  
+    if ($timeout -lt 0)
+    {
+      Write-Warning "Failed to find the registry entry for the SId of the user, this is required to enable autologon. Trying to start the agent anyway."
+    }
+}
+
 Write-Verbose "Entering InstallVSOAgent.ps1" -verbose
 
 $currentLocation = Split-Path -parent $MyInvocation.MyCommand.Definition
@@ -85,77 +161,7 @@ Push-Location -Path $agentInstallationPath
 
 if ($runAsAutoLogon -ieq "true")
 {
-  # Create a PS session for the user to trigger the creation of the registry entries required for autologon
-  $computerName = "localhost"
-  $password = ConvertTo-SecureString $vmAdminPassword -AsPlainText -Force
-  if ($vmAdminUserName.Split("\").Count -eq 2)
-  {
-    $domain = $vmAdminUserName.Split("\")[0]
-    $userName = $vmAdminUserName.Split('\')[1]
-  }
-  else
-  {
-    $domain = Hostname
-    $userName = $vmAdminUserName
-  }
-  $credentials = New-Object System.Management.Automation.PSCredential("$domain\\$userName", $password)
-  Enter-PSSession -ComputerName $computerName -Credential $credentials
-  Exit-PSSession
-
-  $ErrorActionPreference = "stop"
-
-  # 120 seconds timeout
-  $timeout = 120 
-
-  try
-  {
-    # Check if the HKU drive already exists
-    Get-PSDrive -PSProvider Registry -Name HKU | Out-Null
-    $canCheckRegistry = $true
-  }
-  catch [System.Management.Automation.DriveNotFoundException]
-  {
-    try 
-    {
-      # Create the HKU drive
-      New-PSDrive -PSProvider Registry -Name HKU -Root HKEY_USERS | Out-Null
-      $canCheckRegistry = $true
-    }
-    catch 
-    {
-      # Ignore the failure to create the drive and go ahead with trying to set the agent up
-      Write-Warning "Moving ahead with agent setup as the script failed to create HKU drive necessary for checking if the registry entry for the user's SId exists.\n$_"
-    }
-  }
-
-  # Check if the registry key required for enabling autologon is present on the machine, if not wait for 120 seconds in case the user profile is still getting created
-  while ($timeout -ge 0 -and $canCheckRegistry)
-  {
-    $objUser = New-Object System.Security.Principal.NTAccount($vmAdminUserName)
-    $securityId = $objUser.Translate([System.Security.Principal.SecurityIdentifier])
-    $securityId = $securityId.Value
-
-    if (Test-Path "HKU:\\$securityId")
-    {
-      if (!(Test-Path "HKU:\\$securityId\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run"))
-      {
-        New-Item -Path "HKU:\\$securityId\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run" -Force
-        Write-Host "Created the registry entry path required to enable autologon."
-      }
-      
-      break
-    }
-    else
-    {
-      $timeout -= 10
-      Start-Sleep(10)
-    }
-  }
-
-  if ($timeout -lt 0)
-  {
-    Write-Warning "Failed to find the registry entry for the SId of the user, this is required to enable autologon. Trying to start the agent anyway."
-  }
+  PrepMachineForAutologon
 
   # Setup the agent with autologon enabled
   .\config.cmd --unattended --url $serverUrl --auth PAT --token $PersonalAccessToken --pool $PoolName --agent $AgentName --runAsAutoLogon --overwriteAutoLogon --windowslogonaccount $vmAdminUserName --windowslogonpassword $vmAdminPassword
