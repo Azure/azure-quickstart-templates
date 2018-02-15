@@ -7,6 +7,8 @@ var assert = chai.assert; // Using Assert style
 var expect = chai.expect; // Using Expect style
 var should = chai.should(); // Using Should style
 
+require('it-each')({ testPerIteration: true });
+
 var folder = process.env.npm_config_folder || filesFolder;
 
 var mainTemplateFileJSONObject = util.getMainTemplateFile(folder).jsonObject;
@@ -28,7 +30,7 @@ function getErrorMessage(obj, file, message) {
 
 describe('mainTemplate.json file - ', () => {
     describe('parameters tests - ', () => {
-        it('each parameter that does not have a defaultValue, must have a corresponding output in createUIDef', () => {
+        describe('parameters value tests - ', () => {
             var currentDir = path.dirname(mainTemplateFile);
             // assert create ui def exists in the above directory
             util.assertCreateUiDefExists(currentDir);
@@ -47,11 +49,13 @@ describe('mainTemplate.json file - ', () => {
             // validate each parameter in main template has a value in outputs
             mainTemplateFileJSONObject.should.have.property('parameters');
             var parametersInMainTemplate = Object.keys(mainTemplateFileJSONObject.parameters);
-            parametersInMainTemplate.forEach(parameter => {
-                if (typeof(mainTemplateFileJSONObject.parameters[parameter].defaultValue) === 'undefined') {
-                    outputsInCreateUiDef.should.withMessage('in file:mainTemplate.json. outputs in createUiDefinition is missing the parameter ' + parameter).contain(parameter.toLowerCase());
+
+           it.each(parametersInMainTemplate, 'each parameter that does not have a defaultValue, must have a corresponding output in createUIDef', function(element, next){
+                if (typeof(mainTemplateFileJSONObject.parameters[element].defaultValue) === 'undefined') {
+                    outputsInCreateUiDef.should.withMessage('in file:mainTemplate.json. outputs in createUiDefinition is missing the parameter ' + element).contain(element.toLowerCase());
                 }
-            });
+                next();
+           });
         });
 
         // TODO: should it be non null, or should all secure strings not contain default value?
@@ -89,12 +93,13 @@ describe('mainTemplate.json file - ', () => {
             });
         });
 
-        it('the template must not contain any unused parameters', () => {
+        describe('unused parameters tests - ', () => {
             mainTemplateFileJSONObject.should.have.property('parameters');
             var parametersInMainTemplate = Object.keys(mainTemplateFileJSONObject.parameters);
-            parametersInMainTemplate.forEach(parameter => {
-                var paramString = 'parameters(\'' + parameter.toLowerCase() + '\')';
-                JSON.stringify(mainTemplateFileJSONObject).toLowerCase().should.withMessage('file:mainTemplate.json. unused parameter ' + parameter + ' in mainTemplate').contain(paramString);
+            it.each(parametersInMainTemplate, 'the template must not contain any unused parameters', function(element, next) {
+                var paramString = 'parameters(\'' + element.toLowerCase() + '\')';
+                JSON.stringify(mainTemplateFileJSONObject).toLowerCase().should.withMessage('file:mainTemplate.json. unused parameter ' + element + ' in mainTemplate').contain(paramString);
+                next();
             });
         });
     });
