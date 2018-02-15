@@ -7,4 +7,4 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template will create an Azure Cosmos Database Account with Cassandra.
+This template creates an Azure Cosmos Database Account using the Cassandra API.
