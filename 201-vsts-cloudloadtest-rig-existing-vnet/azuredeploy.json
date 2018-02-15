@@ -62,6 +62,12 @@
                 "description": "Name of the subnet in the virtual network you want to use"
             }
         },
+        "subnetPrefix": {
+            "type": "String",
+            "metadata": {
+                "description": "Subnet prefix in the virtual network you want to use, make sure it is valid for existing virtual network"
+            }
+        },
         "vmSize": {
             "type": "String",
             "defaultValue": "Standard_D4_v2",
@@ -74,10 +80,9 @@
         "sizeOfDiskInGB": "100",
         "imagePublisher": "MicrosoftWindowsServer",
         "imageOffer": "WindowsServer",
-        "addressPrefix": "10.0.0.0/16",
         "sequenceVersion": "[uniqueString(resourceGroup().id)]",
         "uniqueStringValue": "[substring(variables('sequenceVersion'), 3, 7)]",
-        "subnetPrefix": "10.0.0.0/24",
+        "subnetPrefix": "[parameters('subnetPrefix')]",
         "storageAccountType": "Standard_LRS",
         "vmName": "[concat('vm', variables('uniqueStringValue'))]",
         "vmSize": "[parameters('vmSize')]",
@@ -90,6 +95,7 @@
         "windowsOSVersion": "2012-R2-Datacenter",
         "OSDiskName": "osdisk",
         "vnetID": "[resourceId(parameters('existingVNetResourceGroupName'), 'Microsoft.Network/virtualNetworks', parameters('existingVNetName'))]",
+        "existingVNetLocation": "[resourceGroup().location]",
         "subnetRef": "[concat(variables('vnetID'),'/subnets/', parameters('subnetName'))]",
         "apiVersion": "2015-06-15",
 		"agentGroupName":"[resourceGroup().name]"
@@ -118,6 +124,33 @@
             }
         },
         {
+            "apiVersion": "2017-05-10",
+            "name": "nestedTemplate",
+            "type": "Microsoft.Resources/deployments",
+            "resourceGroup": "[parameters('existingVNetResourceGroupName')]",
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {},
+                    "variables": {},
+                    "resources": [
+                        {
+                            "type": "Microsoft.Network/virtualNetworks/subnets",
+                            "name": "[concat(parameters('existingVNetName'), '/', parameters('subnetName'))]",
+                            "apiVersion": "2017-10-01",
+                            "location": "[variables( 'existingVNetLocation' )]",
+                            "properties": {
+                              "addressPrefix": "[variables('subnetPrefix')]"
+                            }
+                        }
+                    ]
+                },
+                "parameters": {}
+            }
+        },        
+        {
             "type": "Microsoft.Network/networkInterfaces",
             "name": "[concat(variables('nicName'), 'i', copyIndex())]",
             "apiVersion": "2015-06-15",
@@ -143,7 +176,8 @@
                 ]
             },
             "dependsOn": [
-                "[concat('Microsoft.Network/publicIPAddresses/', concat(variables('publicIPAddressName'),'i', copyIndex()))]"
+                "[concat('Microsoft.Network/publicIPAddresses/', concat(variables('publicIPAddressName'),'i', copyIndex()))]",
+                "Microsoft.Resources/deployments/nestedTemplate"
             ]
         },
         {
