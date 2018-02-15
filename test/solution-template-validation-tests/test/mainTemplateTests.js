@@ -74,7 +74,7 @@ describe('mainTemplate.json file - ', () => {
         });
 
         // The location parameter MUST NOT have allowedValues property and MUST have defaultValue property whose value MUST be '[resourceGroup().location]'
-        it('a parameter named "location" must exist and must be used on all resource "location" properties', () => {
+        it('a parameter named "location" must exist and it must have a defaultValue of resourceGroup().location', () => {
             mainTemplateFileJSONObject.should.withMessage('file:mainTemplate.json is missing parameters property').have.property('parameters');
             mainTemplateFileJSONObject.parameters.should.withMessage('file:mainTemplate.json is missing location property in parameters').have.property('location');
 
@@ -96,29 +96,29 @@ describe('mainTemplate.json file - ', () => {
     });
 
     describe('resources tests - ', () => {
-        describe('resource object location property tests - ', () => {
+        describe('resource location format tests and resourceGroup().location tests - ', () => {
             var expectedLocation1 = '[parameters(\'location\')]';
             var expectedLocation2 = '[variables(\'location\')]';
             templateFileJSONObjects.forEach(templateJSONObject => {
                 var templateObject = templateJSONObject.value;
                 templateObject.should.have.property('resources');
-                var resources = Object.keys(templateObject.resources);
+                var resources = Object.keys(templateObject.resources).map(function(key) {
+                    return templateObject.resources[key];
+                });
                 // each resource location should be "location": "[parameters('location')]" or ""[variables('location')]""
-                it.each(resources, 'resource location should be location: [parameters(location)] or [variables(location)]', function(element, next) {
-                    var val = templateObject.resources[element];
+                it.each(resources, 'resource named %s resource location should be location: [parameters(\'location\')] or [variables(\'location\')]', ['name'], function(element, next) {
                     var message = 'in json files should have location set to [parameters(\'location\')] or [variables(\'location\')]';
-                    if (val.location) {
-                        val.location.split(' ').join('').should.withMessage(getErrorMessage(val, templateJSONObject.filepath, message)).be.eql(expectedLocation1, expectedLocation2);
+                    if (element.location) {
+                        element.location.split(' ').join('').should.withMessage(getErrorMessage(element, templateJSONObject.filepath, message)).be.eql(expectedLocation1, expectedLocation2);
                     }
                     next();
                 });
-                // resourceGroup().location can only be as a defaultValue for the location parameter
-                it.each(resources, 'resourceGroup().location must not be used in the solution template except as a defaultValue for the location parameter', function(element, next) {
-                    var val = templateObject.resources[element];
-                    var valStr = JSON.stringify(val);
-                    var locationString = '[resourceGroup().location]';
-                    var message = 'in file:' + templateJSONObject.filename + ' should NOT have location set to [resourceGroup().location]';
-                    valStr.should.withMessage(getErrorMessage(val, templateJSONObject.filepath, message)).not.contain(locationString);
+                // resourceGroup().location should NOT be present anywhere in template, EXCEPT as a defaultValue
+                it.each(resources, 'resource named %s resourceGroup().location must not be used in the solution template except as a defaultValue for the location parameter', ['name'], function(element, next) {
+                    var valStr = JSON.stringify(element);
+                    var locationString = 'resourceGroup().location';
+                    var message = 'in file:' + templateJSONObject.filename + ' should NOT have location set to resourceGroup().location';
+                    valStr.should.withMessage(getErrorMessage(element, templateJSONObject.filepath, message)).not.contain(locationString);
                     next();
                 });
             });
