@@ -17,7 +17,7 @@ if(!$githubBuildFilesFolderUri) {
 }
 
 Write-Host "Getting contents from $githubTestFilesFolderUri"
-$folderContents = Invoke-WebRequest $githubTestFilesFolderUri | Select-Object -ExpandProperty Content | ConvertFrom-Json
+$folderContents = Invoke-WebRequest $githubTestFilesFolderUri -UseBasicParsing | Select-Object -ExpandProperty Content | ConvertFrom-Json
 
 Write-Host "Creating test directory if one doesn't exist already"
 $path = (Get-Item -Path ".\" -Verbose).FullName + "\test"
@@ -31,7 +31,7 @@ cd $path
 foreach($file in $folderContents) 
 {
     Write-Host "Downloading file $file.name"
-    Invoke-WebRequest $file.download_url -OutFile $file.name
+    Invoke-WebRequest $file.download_url -UseBasicParsing -OutFile $file.name
 }
 
 Write-Host "Listing files downloaded"
@@ -41,17 +41,17 @@ dir
 cd ..
 
 Write-Host "Getting contents from $githubBuildFilesFolderUri"
-$folderContents = Invoke-WebRequest $githubBuildFilesFolderUri | Select-Object -ExpandProperty Content | ConvertFrom-Json
+$folderContents = Invoke-WebRequest $githubBuildFilesFolderUri -UseBasicParsing | Select-Object -ExpandProperty Content | ConvertFrom-Json
 
 foreach($file in $folderContents) 
 {
     Write-Host "Downloading file $file.name"
-    Invoke-WebRequest $file.download_url -OutFile $file.name
+    Invoke-WebRequest $file.download_url -UseBasicParsing -OutFile $file.name
 }
 
 $packageJsonFile = "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/test/solution-template-validation-tests/package.json"
 Write-Host "Downloading package.json file from $packageJsonFile"
-Invoke-WebRequest $packageJsonFile -OutFile "package.json"
+Invoke-WebRequest $packageJsonFile -OutFile -UseBasicParsing "package.json"
 
 Write-Host "Listing files downloaded"
 dir
