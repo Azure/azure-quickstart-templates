@@ -1,0 +1,214 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "commonSettings": {
+      "type": "object",
+      "metadata": {
+        "Description": "Common settings object"
+      }
+    },
+    "storageSettings": {
+      "type": "object",
+      "metadata": {
+        "Description": "Storage settings object"
+      }
+    },
+    "networkSettings": {
+      "type": "object",
+      "metadata": {
+        "Description": "Network settings object"
+      }
+    },
+    "machineSettings": {
+      "type": "object",
+      "metadata": {
+        "Description": "Machine settings object"
+      }
+    },
+    "vmCount": {
+      "type": "int",
+      "metadata": {
+        "Description": "The number of VM instances to be created"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "Description": "Administrator password used when provisioning virtual machines"
+      }
+    }
+  },
+  "variables": {
+    "vmStart": 1,
+    "ipBase": 9,
+    "privateIPAddressType": "Static",
+    "lbPublicIPAddressType": "Static",
+    "lbName": "[parameters('networkSettings').lbName]",
+    "lbID": "[resourceId('Microsoft.Network/loadBalancers', variables('lbName'))]",
+    "lbPublicIPAddressName": "[concat(parameters('machineSettings').machineNamePrefix, 'lb-pubip')]",
+    "lbPublicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses', variables('lbPublicIPAddressName'))]",
+    "frontendLbName": "[concat(variables('lbName'), '-frontend')]",
+    "backendAddrPoolName": "[concat(variables('lbName'), '-backend')]",
+    "lbRulesName": "[concat(variables('lbName'), '-rules')]",
+    "lbProbeName": "[concat(variables('lbName'), '-probe')]",
+    "networkInterfacesName": "[concat('nic-', parameters('machineSettings').machineNamePrefix)]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('lbPublicIPAddressName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publicIPAllocationMethod": "[variables('lbPublicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[concat('loadbalancer', uniqueString(resourceGroup().id))]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "name": "[variables('lbName')]",
+      "type": "Microsoft.Network/loadBalancers",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('lbPublicIPAddressName'))]"
+      ],
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "[variables('frontendLbName')]",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[variables('lbPublicIPAddressID')]"
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "[variables('backendAddrPoolName')]"
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "name": "[variables('lbRulesName')]",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(variables('lbID'), '/frontendIPConfigurations/', variables('frontendLbName'))]"
+              },
+              "backendAddressPool": {
+                "id": "[concat(variables('lbID'), '/backendAddressPools/', variables('backendAddrPoolName'))]"
+              },
+              "protocol": "tcp",
+              "frontendPort": "4000",
+              "backendPort": "4000",
+              "enableFloatingIP": false,
+              "idleTimeoutInMinutes": 5,
+              "probe": {
+                "id": "[concat(variables('lbID'), '/probes/', variables('lbProbeName'))]"
+              }
+            }
+          }
+        ],
+        "probes": [
+          {
+            "name": "[variables('lbProbeName')]",
+            "properties": {
+              "protocol": "tcp",
+              "port": "4000",
+              "intervalInSeconds": 5,
+              "numberOfProbes": 2
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkInterfaces",
+      "copy": {
+        "name": "[concat(parameters('machineSettings').machineNamePrefix, 'count-copy')]",
+        "count": "[parameters('vmCount')]"
+      },
+      "name": "[concat(variables('networkInterfacesName'), copyIndex(variables('vmStart')))]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+          "[concat('Microsoft.Network/loadBalancers/', variables('lbName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "[variables('privateIPAddressType')]",
+              "privateIPAddress": "[concat(parameters('machineSettings').machineIpPrefix, add(variables('ipBase'), copyIndex(variables('vmStart'))))]",
+              "subnet": {
+                "id": "[parameters('networkSettings').subnetRef]"
+              },
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[concat(variables('lbID'), '/backendAddressPools/', variables('backendAddrPoolName'))]"
+                }
+              ]
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'tidb-secgroup')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2015-06-15",
+      "copy": {
+        "name": "[concat(parameters('machineSettings').machineNamePrefix, 'count-copy')]",
+        "count": "[parameters('vmCount')]"
+      },
+      "name": "[concat(parameters('machineSettings').machineNamePrefix, copyIndex(variables('vmStart')))]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', variables('networkInterfacesName'), copyIndex(variables('vmStart')))]"
+      ],
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('commonSettings').availabilitySetName)]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('machineSettings').vmSize]"
+        },
+        "osProfile": {
+          "computerName": "[concat(parameters('machineSettings').machineNamePrefix, copyIndex(variables('vmStart')))]",
+          "adminUsername": "[parameters('machineSettings').adminUsername]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": "[parameters('machineSettings').osImageReference]",
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat(parameters('storageSettings').destinationVhdsContainer, parameters('machineSettings').machineNamePrefix, copyIndex(variables('vmStart')), '.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('networkInterfacesName'), copyIndex(variables('vmStart'))))]"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "tidbServerDns": {
+      "type": "string",
+      "value": "[concat(reference(variables('lbPublicIPAddressName')).dnsSettings.fqdn, ':4000')]"
+    }
+  }
+}
