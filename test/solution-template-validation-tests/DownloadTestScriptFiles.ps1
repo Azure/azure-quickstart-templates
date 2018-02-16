@@ -53,5 +53,9 @@ $packageJsonFile = "https://raw.githubusercontent.com/Azure/azure-quickstart-tem
 Write-Host "Downloading package.json file from $packageJsonFile"
 Invoke-WebRequest $packageJsonFile -UseBasicParsing -OutFile "package.json"
 
+$npmrcFile = "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/test/solution-template-validation-tests/.npmrc"
+Write-Host "Downloading .npmrc file from $npmrcFile"
+Invoke-WebRequest $npmrcFile -UseBasicParsing -OutFile ".npmrc"
+
 Write-Host "Listing files downloaded"
 dir
