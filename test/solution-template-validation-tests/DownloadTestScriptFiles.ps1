@@ -51,7 +51,7 @@ foreach($file in $folderContents)
 
 $packageJsonFile = "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/test/solution-template-validation-tests/package.json"
 Write-Host "Downloading package.json file from $packageJsonFile"
-Invoke-WebRequest $packageJsonFile -OutFile -UseBasicParsing "package.json"
+Invoke-WebRequest $packageJsonFile -UseBasicParsing -OutFile "package.json"
 
 Write-Host "Listing files downloaded"
 dir
