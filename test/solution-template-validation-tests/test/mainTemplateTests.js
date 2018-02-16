@@ -99,7 +99,7 @@ describe('template files - ', () => {
             var parametersInMainTemplate = Object.keys(mainTemplateFileJSONObject.parameters);
             parametersInMainTemplate.forEach(parameter => {
                 var paramString = 'parameters(\'' + parameter.toLowerCase() + '\')';
-                JSON.stringify(mainTemplateFileJSONObject).toLowerCase().should.withMessage('file:mainTemplate.json. unused parameter ' + parameter + ' in mainTemplate').contain(paramString);
+                JSON.stringify(mainTemplateFileJSONObject).toLowerCase().should.withMessage('file:mainTemplate.json. unused parameter "' + parameter + '" in mainTemplate').contain(paramString);
             });
         });
     });
