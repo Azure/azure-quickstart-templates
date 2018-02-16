@@ -1,0 +1,314 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "_artifactsLocation": {
+      "type": "string"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "string"
+    },
+    "virtualMachineName": {
+      "type": "string"
+    },
+    "adminUsername": {
+      "type": "string"
+    },
+    "adminPassword": {
+      "type": "securestring"
+    },
+    "dnsLabelPrefix": {
+      "type": "string"
+    },
+    "qlikSenseVersion": {
+      "type": "string"
+    },
+    "qlikSenseServiceAccount": {
+      "type": "string"
+    },
+    "qlikSenseServiceAccountPassword": {
+      "type": "securestring"
+    },
+    "qlikSenseRepositoryPassword": {
+      "type": "securestring"
+    },
+    "qlikSenseSerial": {
+      "type": "string"
+    },
+    "qlikSenseControl": {
+      "type": "securestring"
+    },
+    "qlikSenseOrganization": {
+      "type": "string"
+    },
+    "qlikSenseName": {
+      "type": "string"
+    },
+    "virtualMachineSize": {
+      "type": "string"
+    },
+    "windowsOSVersion": {
+      "type": "string"
+    }
+  },
+  "variables": {
+    "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'sawinvm')]",
+    "nicName": "[concat(parameters('virtualMachineName'), 'nic')]",
+    "addressPrefix": "10.0.0.0/16",
+    "subnetName": "Subnet",
+    "subnetPrefix": "10.0.0.0/24",
+    "publicIPAddressName": "[concat(parameters('virtualMachineName'), 'IP')]",
+    "OSDiskName": "[concat(parameters('virtualMachineName'), 'osDisk')]",
+    "vhdStorageContainerName": "vhds",
+    "vmName": "[parameters('virtualMachineName')]",
+    "virtualNetworkName": "qliksense",
+    "networkSecurityGroupName": "qlikSenseSecurityGroup",
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
+    "scriptFolder": ".",
+    "scriptInstallFileName": "cn-install.ps1",
+    "scriptBootStrapFileName": "cn-bootstrap.ps1"
+  },
+  "resources": [
+    {
+      "apiVersion": "2016-03-30",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('networkSecurityGroupName')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "[variables('networkSecurityGroupName')]"
+      },
+      "properties": {
+        "securityRules": [
+          {
+            "name": "http",
+            "properties": {
+              "description": "http endpoint",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "httpAuth",
+            "properties": {
+              "description": "http Windows Auth endpoint",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "4248",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "https",
+            "properties": {
+              "description": "https endpoint",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1200,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "httpsAuth",
+            "properties": {
+              "description": "https Windows Auth endpoint",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "4244",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1300,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "rdp",
+            "properties": {
+              "description": "rdp endpoint",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3389",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 200,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('storageAccountName')]",
+      "apiVersion": "2016-01-01",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "Storage",
+      "properties": {}
+    },
+    {
+      "apiVersion": "2016-03-30",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('dnsLabelPrefix')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2017-06-01",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroupName'))]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroupName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2016-03-30",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+              },
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2017-03-30",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('vmName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('virtualMachineSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "MicrosoftWindowsServer",
+            "offer": "WindowsServer",
+            "sku": "[parameters('windowsOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2016-01-01').primaryEndpoints.blob, variables('vhdStorageContainerName'), '/', variables('OSDiskName'), '.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": "true",
+            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))).primaryEndpoints.blob]"
+          }
+        }
+      },
+      "resources": [
+        {
+          "name": "QlikSenseCnBootstrap",
+          "type": "extensions",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2016-03-30",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
+          ],
+          "tags": {
+            "displayName": "QlikSense"
+          },
+          "properties": {
+            "publisher": "Microsoft.Compute",
+            "type": "CustomScriptExtension",
+            "typeHandlerVersion": "1.9",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": [
+                "[concat(parameters('_artifactsLocation'), '/', variables('scriptFolder'), '/', variables('scriptBootStrapFileName'), parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/', variables('scriptFolder'), '/', variables('scriptInstallFileName'), parameters('_artifactsLocationSasToken'))]"                            
+              ],
+              "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('scriptFolder'), '/', variables('scriptBootStrapFileName'),' \"', parameters('adminUsername'), '\"',' \"', parameters('adminPassword'), '\"',' \"', parameters('qlikSenseServiceAccount'), '\"',' \"', parameters('qlikSenseServiceAccountPassword'), '\"',' \"', parameters('qlikSenseRepositoryPassword'), '\"',' \"', parameters('qlikSenseVersion'), '\"',' \"', parameters('qlikSenseSerial'), '\"',' \"', parameters('qlikSenseControl'), '\"',' \"', parameters('qlikSenseOrganization'), '\"',' \"', parameters('qlikSenseName'), '\"')]"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": {
+    "hostname": {
+      "type": "string",
+      "value": "[reference(variables('publicIPAddressName')).dnsSettings.fqdn]"
+    }
+  }
+}
