@@ -7,9 +7,9 @@ source ~/.profile
 nvm install 8.9.1
 sudo apt-get install -y jq
 
-#Variables for installations - default values input below
-IPNODE=13.84.184.172
-IPEXPLORE=10.0.0.4
+#Variables for installations
+PUBLICIP="$(dig TXT +short o-o.myaddr.l.google.com @ns1.google.com | awk -F'"' '{ print $2}')"
+AZUREIP=10.0.0.4
 SIDECHAINNAME=MyTest
 DATABASENAME=ark_mytest
 CHAINTOKEN=MYTEST
@@ -26,5 +26,5 @@ TOTALPREMINE=2100000000000000
 ~/ark-deployer/sidechain.sh start-node --name $SIDECHAINNAME
 
 ~/ark-deployer/sidechain.sh install-explorer --name $SIDECHAINNAME --token $CHAINTOKEN --ip $IPNODE --autoinstall-deps
-
+sed -i "s/$IPNODE/$IPEXPLORE/g" ~/ark-explorer/package.json
 ~/ark-deployer/sidechain.sh start-explorer &>/dev/null &
