@@ -10,7 +10,7 @@
 <p>This template creates an Ubuntu VM with user-specified credentials. It then sets the PublicDNS name, runs a script to install Ark dependencies, and creates a network security group for firewall settings.</p>
 <p>FQDN:  PublicDNSname.datacenter-region.cloudapp.azure.com</p>
 <p>Once the server is fully deployed, connect via SSH (PuTTY > PublicDNSName > Credentials) and then run: <p> 
-<code>curl -o- https://raw.githubusercontent.com/davepinkawa/azure-quickstart-templates/master/ark-sidechain-on-ubuntu/Script/arksidechaindeploy.sh | bash </code>
+<code>curl -o- https://raw.githubusercontent.com/davepinkawa/azure-quickstart-templates/master/ark-sidechain-on-ubuntu/Script/arkdefaultinstall.sh | bash </code>
 
 <p>To Do:</p>
 <ul style="list-style-type:circle">
