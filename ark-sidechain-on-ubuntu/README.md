@@ -7,15 +7,11 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-<p>This template creates an Ubuntu VM with user-specified credentials. It then sets the PublicDNS name, runs a script to install Ark dependencies, and creates a network security group for firewall settings.</p>
+<p>This template creates an Ubuntu VM with user-specified credentials. It then sets the PublicDNS name, creates a network security group for all ark firewall settings, and leaves you with a fresh Ubuntu 16.04-LTS VM in less than 5 minutes.</p>
 <p>FQDN:  PublicDNSname.datacenter-region.cloudapp.azure.com</p>
 <p>Once the server is fully deployed, connect via SSH (PuTTY > PublicDNSName > Credentials) and then run: <p> 
 <code>curl -o- https://raw.githubusercontent.com/davepinkawa/azure-quickstart-templates/master/ark-sidechain-on-ubuntu/Script/arkdefaultinstall.sh | bash </code>
 
-<p>To Do:</p>
-<ul style="list-style-type:circle">
-    <li>nodejs must be user-level for this to run, unfortunately. Therefore it is not possible for me to run the full installation as part of a script at this time</li
-</ul>
 
 
 
