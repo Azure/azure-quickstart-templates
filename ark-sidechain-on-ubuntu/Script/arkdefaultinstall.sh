@@ -22,7 +22,7 @@ REWARDPERBLOCK=200000000
 TOTALPREMINE=2100000000000000
 
 ~/ark-deployer/sidechain.sh install-node --name $SIDECHAINNAME --database $DATABASENAME --token $CHAINTOKEN --symbol $CHAINSYMBOL --ip $PUBLICIP --forgers $CHAINFORGERS --max-votes $MAXVOTESPERWALLET --blocktime $CHAINBLOCKTIME --transactions-per-block $CHAINTRANSPERBLOCK --reward-height-start $REWARDSTART --reward-per-block $REWARDPERBLOCK --total-premine $TOTALPREMINE --autoinstall-deps
-~/ark-deployer/sidechain.sh start-node --name $SIDECHAINNAME
+~/ark-deployer/sidechain.sh start-node --name $SIDECHAINNAME &>/dev/null &
 
 ~/ark-deployer/sidechain.sh install-explorer --name $SIDECHAINNAME --token $CHAINTOKEN --ip $PUBLICIP --autoinstall-deps
 sed -i "s/$PUBLICIP/$AZUREIP/g" ~/ark-explorer/package.json
