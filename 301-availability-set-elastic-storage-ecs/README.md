@@ -61,12 +61,16 @@ Also, you can use Visual Studio. SImply create a new ressource group deployment 
 
 ### visual studio example
 
-![deploy](images/new_rg.png "Create new deployment from Visual Studio")
+![new deploy](images/new_rg.png "Create new deployment from Visual Studio")
 
 #### parameters of resource group
 ![deploy](images/rg_parameter.png "parameters for resource group")
 
-once the resource group deployment has finished, the ecs installer will be stgarted from
+The ressource group deployment will tahe between 10 and 15 Minutes, depneding on VM Types
+
+![rg](images/rg_done.png "parameters for resource group")
+
+once the resource group deployment has finished, the ecs installer will be started from
 [ecs.sh](emcecs/ecs.sh)
 
 #### monitor installation
@@ -75,7 +79,7 @@ ssh into the first node (use the external dns name ), port 2201
 sudo su
 tail -f /root/install.log
 ```
-![log](images/log.png "parameters for resource group")
+![log](images/log.png "installation logs")
 the system will do a reboot after package installation.
 the reboot´s will be controlled by a systemd service [ecs-installer.service](emcecs/ecs-installer.service)
 
@@ -85,18 +89,23 @@ the progress is also logged
 sudo su
 tail -f /root/install.log
 ```
-![log](images/ansible.png "parameters for resource group")
+![log](images/ansible.png "ansible logger")
 
 #### Connect
 
-once the template is deployed, 
+once the installation has finished step2, you can connect to port 443 of your externa DNS from a webbrowser. 
+the initial user / password is root:ChangeMe
+
+![log](images/dashboard.png "ECS Dashboard")
+
 
 #### Management
 
 For more information, see
-[DellEMC ECS Community Edition Documentation](http://ecsce.readthedocs.io/en/latest/installation/ECS-Installation.html)
+[DellEMC ECS Community Edition readthedocs](http://ecsce.readthedocs.io/en/latest/installation/ECS-Installation.html)
 
-How to manage the solution
+and 
+[DellEMC ECS Documentation](https://community.emc.com/docs/DOC-56978)
 
 ## Notes
 
