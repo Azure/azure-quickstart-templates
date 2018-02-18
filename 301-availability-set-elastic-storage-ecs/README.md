@@ -36,29 +36,27 @@ Storage ressources provided per vm
 #### networkSecurityGroups
 
 Firewall rules for Network
-+ **Resource type 2A**: Description Resource type 2A
 
 #### networkLoadbalancer
-
 Public loadbalancer for ECS Nodes
-
 + **lbRulesA**: Load Balancing rules for ECS Ports 111,2049,9020.9021,9022,9023,9024,9025,10000
++ **inboundNatRules**: ports 220x are forwarded to port 22 on NodeX
 
 #### OSTCExtensions
-
 Custom Script Extensions for Linux
-
+The deployment utilizes the custom script extension 
 + **configurenode**: Used on the Node to configure installer Prerequirements, used on nodes 2-N
 + **install_ecs**: the ecs installer, run´s on node 1
 
 ## Prerequisites
-
 The required VM Types need to have at least 4vCPU and 16GB memory.
 Depending on your Subscription, you may require to increase your arm quota vor cores.
 
 ## Deployment steps
 
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
+
+Also, you can use Visual Studio. SImply create a new ressource group deployment from azure-quickstart-templates
 
 
 ### visual studio example
@@ -67,9 +65,22 @@ You can click the "deploy to Azure" button at the beginning of this document or 
 
 #### parameters of resource group
 ![deploy](images/rg_parameter.png "parameters for resource group")
-![deploy](images/ansible.png "parameters for resource group")
-![deploy](images/log.png "parameters for resource group")
+
+once the resource group deployment has finished, the ecs installer will be stgarted from
+[ecs.sh](emcecs/ecs.sh)
+
 #### monitor installation
+ssh into the first node (use the external dns name ), port 2201
+```bash
+sudo su
+tail -f /root/install.log
+```
+the system will do a reebot after package installation.
+the reeboot´s will be controlled by a systemd service [deploy](emcecs/ecs-installer.service)
+
+you can monitor 
+
+
 #### Connect
 
 once the template is deployed, 
