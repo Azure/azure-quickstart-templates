@@ -57,7 +57,7 @@ You can click the "deploy to Azure" button at the beginning of this document or 
 
 # visual studio example
 
-![deploy](/images/new_rg.png "Create new deployment from Visual Studio")
+![deploy](images/new_rg.png "Create new deployment from Visual Studio")
 
 #### Connect
 
