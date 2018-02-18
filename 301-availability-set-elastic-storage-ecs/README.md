@@ -10,25 +10,15 @@
 To deploy this template using the scripts from the root of this repo: (change the folder name below to match the folder name for this sample)
 
 ```PowerShell
-.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactsStagingDirectory '[foldername]'
+.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactsStagingDirectory '301-availability-set-elastic-storage-ecs'
 ```
 ```bash
-azure-group-deploy.sh -a [foldername] -l eastus -u
-```
-If your sample has artifacts that need to be "staged" for deployment (Configuration Scripts, Nested Templates, DSC Packages) then set the upload switch on the command.
-You can optionally specify a storage account to use, if so the storage account must already exist within the subscription.  If you don't want to specify a storage account
-one will be created by the script (think of this as "temp" storage for AzureRM) and reused by subsequent deployments.
-
-```PowerShell
-.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactsStagingDirectory '100-blank-template' -UploadArtifacts 
-```
-```bash
-azure-group-deploy.sh -a 100-blank-template -l eastus -u
+azure-group-deploy.sh -a '301-availability-set-elastic-storage-ecs' -l eastus 
 ```
 
-This template deploys a **solution name**. The **solution name** is a **description**
+This template deploys a **multinode dellemc ecs community edition**. The **ecs community edition** is a **elastic cloud storage solution providing object storage (sr, atoms, cas)**
 
-`Tags: Tag1, Tag2, Tag3`
+`Tags: arm, centos, ecs, ecs community edition`
 
 ## Solution overview and deployed resources
 
