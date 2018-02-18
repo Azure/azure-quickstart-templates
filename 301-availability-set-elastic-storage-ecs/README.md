@@ -75,11 +75,13 @@ ssh into the first node (use the external dns name ), port 2201
 sudo su
 tail -f /root/install.log
 ```
+![log](images/log.png "parameters for resource group")
 the system will do a reebot after package installation.
-the reeboot´s will be controlled by a systemd service [deploy](emcecs/ecs-installer.service)
+the reboot´s will be controlled by a systemd service [ecs-installer.service](emcecs/ecs-installer.service)
 
 you can monitor 
 
+![log](images/ansible.png "parameters for resource group")
 
 #### Connect
 
