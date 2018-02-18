@@ -1,4 +1,4 @@
-# Solution name
+# multinode dellemc ecs community edition in an azure availabilty set
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fbottkars%2Fazure-quickstart-templates%2Fmaster%2F301-availability-set-elstic-storage-ecs%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
@@ -26,30 +26,28 @@ This is an overview of the solution
 
 The following resources are deployed as part of the solution
 
-#### Resource provider 1
+#### Storage Accounts 
 
-Description Resource Provider 1
+Storage ressources provided per vm
 
-+ **Resource type 1A**: Description Resource type 1A
-+ **Resource type 1B**: Description Resource type 1B
-+ **Resource type 1C**: Description Resource type 1C
++ **vm storage account**: holds the os copy from image (CentOS) and up to 8 data disks per node
++ **diagnostic storage account**: storage for vm diagnostics
 
-#### Resource provider 2
+#### networkSecurityGroups
 
-Description Resource Provider 2
-
+Firewall rules for Network
 + **Resource type 2A**: Description Resource type 2A
 
-#### Resource provider 3
+#### networkLoadbalancer
 
-Description Resource Provider 3
+Public loadbalancer for ECS Nodes
 
-+ **Resource type 3A**: Description Resource type 3A
-+ **Resource type 3B**: Description Resource type 3B
++ **lbRulesA**: Load Balancing rules for ECS Ports 111,2049,9020.9021,9022,9023,9024,9025,10000
 
 ## Prerequisites
 
-Decscription of the prerequistes for the deployment
+Ther required VM Types need to have at least 4vCPU and 16GB memory.
+Depending on your Subscription, you may require to increase your arm quota vor cores.
 
 ## Deployment steps
 
@@ -57,9 +55,13 @@ You can click the "deploy to Azure" button at the beginning of this document or 
 
 ## Usage
 
+# visual studio example
+
+[deploy](images/bew_rg.png "Create new deployment from Visual Studio"))
+
 #### Connect
 
-How to connect to the solution
+once the template is deployed, 
 
 #### Management
 
