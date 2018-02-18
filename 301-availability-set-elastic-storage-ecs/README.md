@@ -67,8 +67,8 @@ You can click the "deploy to Azure" button at the beginning of this document or 
 
 #### parameters of resource group
 ![deploy](mages/rg_parameter.png "parameters for resource group")
-
-
+![deploy](mages/ansible.png "parameters for resource group")
+![deploy](mages/log.png "parameters for resource group")
 #### monitor installation
 #### Connect
 
