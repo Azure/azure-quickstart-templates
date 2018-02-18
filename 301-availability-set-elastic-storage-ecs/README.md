@@ -76,6 +76,9 @@ once the template is deployed,
 
 #### Management
 
+For more information, see
+[DellEMC ECS Communioty Edition Documentation](http://ecsce.readthedocs.io/en/latest/installation/ECS-Installation.html)
+
 How to manage the solution
 
 ## Notes
