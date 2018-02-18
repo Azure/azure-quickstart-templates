@@ -44,21 +44,32 @@ Public loadbalancer for ECS Nodes
 
 + **lbRulesA**: Load Balancing rules for ECS Ports 111,2049,9020.9021,9022,9023,9024,9025,10000
 
+#### OSTCExtensions
+
+Custom Script Extensions for Linux
+
++ **configurenode**: Used on the Node to configure installer Prerequirements, used on nodes 2-N
++ **install_ecs**: the ecs installer, run´s on node 1
+
 ## Prerequisites
 
-Ther required VM Types need to have at least 4vCPU and 16GB memory.
+The required VM Types need to have at least 4vCPU and 16GB memory.
 Depending on your Subscription, you may require to increase your arm quota vor cores.
 
 ## Deployment steps
 
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
 
-## Usage
 
-# visual studio example
+### visual studio example
 
-![deploy](images/new_rg.png "Create new deployment from Visual Studio")
+![deploy](mages/new_rg.png "Create new deployment from Visual Studio")
 
+#### parameters of resource group
+![deploy](mages/rg_parameter.png "parameters for resource group")
+
+
+#### monitor installation
 #### Connect
 
 once the template is deployed, 
