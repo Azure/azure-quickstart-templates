@@ -52,7 +52,8 @@ https://portal.azure.com/#blade/Microsoft_Azure_Compute/CreateMultiVmWizardBlade
 Write-Host `n"File: "$uidefurl `n
 Write-Host "Target URL: "$target
 
-start $target
+# launching the default browser doesn't work if the default is Chrome - so force edge here
+Start-Process "microsoft-edge:$target"
 
 }
 catch {
