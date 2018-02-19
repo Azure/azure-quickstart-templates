@@ -1,9 +1,9 @@
 # multinode dellemc ecs community edition in an azure availabilty set
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fbottkars%2Fazure-quickstart-templates%2Fmaster%2F301-availability-set-elstic-storage-ecs%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fbottkars%2Fazure-quickstart-templates%2Fmaster%2F301-availability-set-elastic-storage-ecs%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fbottkars%2Fazure-quickstart-templates%2Fmaster%2F301-availability-set-elstic-storage-ecs%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fbottkars%2Fazure-quickstart-templates%2Fmaster%2F301-availability-set-elastic-storage-ecs%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
@@ -50,13 +50,33 @@ The deployment utilizes the custom script extension
 
 ## Prerequisites
 The required VM Types need to have at least 4vCPU and 16GB memory.
-Depending on your Subscription, you may require to increase your arm quota vor cores.
+Depending on your Subscription, you may require to increase your arm quota vor cores.  
+also notice that some vm types are not available in some regions, specially the promo ones.
 
 ## Deployment steps
 
+### deploy to Azure from this site
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
+the parameters section will be the same 
 
-Also, you can use Visual Studio. SImply create a new ressource group deployment from azure-quickstart-templates
+### from new azure template from azure portal
+From the azure Portal, click new and type in template.
+select the new custom template dialog
+
+![new deploy](images/template_new.png "new template from azure portal")  
+
+
+once open, click on the upload and load the azuredeploy.json
+
+![new deploy](images/template_load.png "new template from azure portal")  
+
+
+fill in all parameters to you need and make sure the dns prefix is not used 
+![new deploy](images/template_edit.png "new template from azure portal")  
+### quickstart emplate 
+
+
+Also, you can use Visual Studio to deploy the template. If you have installed the ressourcegroup extensions creater a new deployment and select '301-availability-set-elastic-storage-ecs' from the quickstart templates
 
 
 ### visual studio example
@@ -81,7 +101,7 @@ tail -f /root/install.log
 ```
 ![log](images/log.png "installation logs")
 the system will do a reboot after package installation.
-the reboot´s will be controlled by a systemd service [ecs-installer.service](emcecs/ecs-installer.service)
+the reboot(s) will be controlled by a systemd service [ecs-installer.service](emcecs/ecs-installer.service)
 
 after the reboot, the CES ansible installer starts withn step1 and step2  
 the progress is also logged 
@@ -113,3 +133,4 @@ future improvement´s
 + feedback of installation logs to arm
 + ubntu based install
 + singlenode from same deployment
++ nested template for loadbalancer as copy set
