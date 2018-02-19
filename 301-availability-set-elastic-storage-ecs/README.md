@@ -86,7 +86,7 @@ Also, you can use Visual Studio to deploy the template. If you have installed th
 #### parameters of resource group
 ![deploy](images/rg_parameter.png "parameters for resource group")
 
-The ressource group deployment will tahe between 10 and 15 Minutes, depneding on VM Types
+The ressource group deployment will take between 10 and 15 Minutes, depneding on VM Types
 
 ![rg](images/rg_done.png "parameters for resource group")
 
@@ -103,7 +103,7 @@ tail -f /root/install.log
 the system will do a reboot after package installation.
 the reboot(s) will be controlled by a systemd service [ecs-installer.service](emcecs/ecs-installer.service)
 
-after the reboot, the CES ansible installer starts withn step1 and step2  
+after the reboot, the ECS ansible installer starts withn step1 and step2  
 the progress is also logged 
 ```bash
 sudo su
