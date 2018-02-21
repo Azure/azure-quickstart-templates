@@ -131,6 +131,6 @@ and
 
 future improvement´s
 + feedback of installation logs to arm
-+ ubntu based install
++ ubntu based install ( pending verification )
 + singlenode from same deployment
 + nested template for loadbalancer as copy set
