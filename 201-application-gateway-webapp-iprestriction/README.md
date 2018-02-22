@@ -1,4 +1,4 @@
-# Create Application Gateway in front of two Azure Web Apps.
+# Creates an application gateway in front of an Azure Web App with IP restriction enabled on the Web App.
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-application-gateway-webapp-iprestriction%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
