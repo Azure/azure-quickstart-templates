@@ -9,6 +9,7 @@ param(
     [string] $ArtifactsStagingDirectory = ".",
     [string] $createUIDefFile='createUIDefinition.json',
     [string] $storageContainerName='createuidef',
+    [string] $StorageResourceGroupLocation, # this must be specified only when the staging resource group needs to be created - first run or if the account has been deleted
     [switch] $Gov
 )
 
@@ -19,8 +20,9 @@ try {
 
     # Create the storage account if it doesn't already exist
     if ($StorageAccount -eq $null) {
+        if ($StorageResourceGroupLocation -eq "") { throw "The StorageResourceGroupLocaiton parameter is required on first run in a subscription." }
         $StorageResourceGroupName = 'ARM_Deploy_Staging'
-        New-AzureRmResourceGroup -Location "$ResourceGroupLocation" -Name $StorageResourceGroupName -Force
+        New-AzureRmResourceGroup -Location "$StorageResourceGroupLocation" -Name $StorageResourceGroupName -Force
         $StorageAccount = New-AzureRmStorageAccount -StorageAccountName $StorageAccountName -Type 'Standard_LRS' -ResourceGroupName $StorageResourceGroupName -Location "$ResourceGroupLocation"
     }
 
@@ -50,7 +52,8 @@ https://portal.azure.com/#blade/Microsoft_Azure_Compute/CreateMultiVmWizardBlade
 Write-Host `n"File: "$uidefurl `n
 Write-Host "Target URL: "$target
 
-start $target
+# launching the default browser doesn't work if the default is Chrome - so force edge here
+Start-Process "microsoft-edge:$target"
 
 }
 catch {
