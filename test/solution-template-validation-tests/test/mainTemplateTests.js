@@ -7,8 +7,9 @@ var assert = chai.assert; // Using Assert style
 var expect = chai.expect; // Using Expect style
 var should = chai.should(); // Using Should style
 
-var folder = process.env.npm_config_folder || filesFolder;
+require('it-each')({ testPerIteration: true });
 
+var folder = process.env.npm_config_folder || filesFolder;
 var mainTemplateFileJSONObject = util.getMainTemplateFile(folder).jsonObject;
 var mainTemplateFile = util.getMainTemplateFile(folder).file;
 var createUiDefFileJSONObject = util.getCreateUiDefFile(folder).jsonObject;
@@ -32,6 +33,13 @@ describe('template files - ', () => {
     /** Tests for parameters in template files */
     describe('parameters tests - ', () => {
 
+        /** maintemplate.json should have a parameters property */
+        it('maintemplate.json should have a "parameters" property', () => {
+            mainTemplateFileJSONObject.should.have.property('parameters');
+        });
+
+        var parametersInMainTemplate = Object.keys(mainTemplateFileJSONObject.parameters);
+
         /** Each parameter that does not have a defaultValue MUST have a corresponding output in createUiDefinition.json */
         it('each parameter that does not have a defaultValue, must have a corresponding output in createUIDef', () => {
             var currentDir = path.dirname(mainTemplateFile);
@@ -50,8 +58,6 @@ describe('template files - ', () => {
             }
 
             // validate each parameter in main template has a value in outputs
-            mainTemplateFileJSONObject.should.have.property('parameters');
-            var parametersInMainTemplate = Object.keys(mainTemplateFileJSONObject.parameters);
             parametersInMainTemplate.forEach(parameter => {
                 if (typeof(mainTemplateFileJSONObject.parameters[parameter].defaultValue) === 'undefined') {
                     outputsInCreateUiDef.should.withMessage('in file:mainTemplate.json. outputs in createUiDefinition is missing the parameter ' + parameter).contain(parameter.toLowerCase());
@@ -94,13 +100,11 @@ describe('template files - ', () => {
             });
         });
 
-        it('the template must not contain any unused parameters', () => {
-            mainTemplateFileJSONObject.should.have.property('parameters');
-            var parametersInMainTemplate = Object.keys(mainTemplateFileJSONObject.parameters);
-            parametersInMainTemplate.forEach(parameter => {
-                var paramString = 'parameters(\'' + parameter.toLowerCase() + '\')';
-                JSON.stringify(mainTemplateFileJSONObject).toLowerCase().should.withMessage('file:mainTemplate.json. unused parameter ' + parameter + ' in mainTemplate').contain(paramString);
-            });
+        var mainTemplateFileContent = JSON.stringify(mainTemplateFileJSONObject).toLowerCase();
+        it.each(parametersInMainTemplate, 'parameter %s must be used in maintemplate', ['element'], function(element, next) {
+            var paramString = 'parameters(\'' + element.toLowerCase() + '\')';
+            assert(mainTemplateFileContent.includes(paramString) === true, 'unused parameter ' + element + ' in file mainTemplate.json');
+            next();
         });
     });
 
