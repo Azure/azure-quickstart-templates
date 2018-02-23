@@ -50,7 +50,7 @@
 				"description": "The name of API Management diagnostics entity"
 			}
         },
-		"deploymentLocation"" {
+		"deploymentLocation": {
 			"type": "string",
 			"minLength": 1,
 			"allowedValues": [
@@ -68,80 +68,82 @@
 		}
 	},
 	"variables": {
-		"serviceName": "[concat('apiservice', uniqueString(resourceGroup().id))]",		
+		"serviceName": "[concat('apiservice', uniqueString(resourceGroup().id))]"		
 	},
-	"resources": [{
-		"apiVersion": "2017-03-01",
-		"name": "[variables('serviceName')]",
-		"type": "Microsoft.ApiManagement/service",
-		"location": "parameters('deploymentLocation')]",
-		"tags": {			
+	"resources": [
+		{
+			"apiVersion": "2017-03-01",
+			"name": "[variables('serviceName')]",
+			"type": "Microsoft.ApiManagement/service",
+			"location": "parameters('deploymentLocation')]",
+			"tags": {			
+			},
+			"sku": {
+				"name": "[parameters('sku')]",
+				"capacity": "[parameters('skuCount')]"
+			},
+			"properties": {            
+				"notificationSenderEmail": "[parameters('publisherEmail')]",
+				"publisherEmail": "[parameters('publisherEmail')]",
+				"publisherName": "[parameters('publisherName')]",
+				"virtualNetworkType": "None",
+				"customProperties": {
+					"Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls10": "false",
+					"Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls11": "false",
+					"Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TripleDes168": "false"
+				}          
+			}            	
 		},
-		"sku": {
-			"name": "[parameters('sku')]",
-			"capacity": "[parameters('skuCount')]"
+		{
+		  "apiVersion": "2014-04-01",
+		  "name": "[parameters('applicationInsightsName')]",
+		  "type": "Microsoft.Insights/components",
+		  "location": "parameters('deploymentLocation')]",
+		  "properties": {
+			"ApplicationId": "[parameters('applicationInsightsName')]"
+		  }
 		},
-        "properties": {            
-            "notificationSenderEmail": "[parameters('publisherEmail')]",
-            "publisherEmail": "[parameters('publisherEmail')]",
-			"publisherName": "[parameters('publisherName')]",
-            "virtualNetworkType": "None",
-            "customProperties": {
-                "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls10": "false",
-                "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls11": "false",
-                "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TripleDes168": "false"
-            }          
-        }            	
-	},
-    {
-      "apiVersion": "2014-04-01",
-      "name": "[parameters('applicationInsightsName')]",
-      "type": "Microsoft.Insights/components",
-      "location": "parameters('deploymentLocation')]",
-      "properties": {
-        "ApplicationId": "[parameters('applicationInsightsName')]"
-      }
-    },
-    {
-        "type": "Microsoft.ApiManagement/service/loggers",
-        "apiVersion": "2017-03-01",
-        "name": "[concat(variables('serviceName'), '/', parameters('applicationInsightsName'))]",
-        "properties": {
-            "loggerType": "applicationInsights",
-            "description": null,
-            "credentials": {
-                "instrumentationKey": "[reference(resourceId('Microsoft.Insights/components', parameters('applicationInsightsName')), '2014-04-01').InstrumentationKey]"
-            },
-            "isBuffered": true
-        },
-        "dependsOn": [
-            "[resourceId('Microsoft.ApiManagement/service', variables('serviceName'))]",
-            "[resourceId('Microsoft.Insights/components', parameters('applicationInsightsName'))]"
-        ]
-    },
-    {
-        "type": "Microsoft.ApiManagement/service/diagnostics",
-        "apiVersion": "2017-03-01",
-        "name": "[concat(variables('serviceName'), '/', parameters('apimDiagnosticsName'))]",
-        "properties": {            
-            "enabled": true
-        },
-        "dependsOn": [
-            "[resourceId('Microsoft.ApiManagement/service', variables('serviceName'))]",
-            "[resourceId('Microsoft.Insights/components', parameters('applicationInsightsName'))]"
-        ]
-    },
-    {
-        "type": "Microsoft.ApiManagement/service/diagnostics/loggers",
-        "apiVersion": "2017-03-01",
-        "name": "[concat(variables('serviceName'), '/', parameters('apimDiagnosticsName'), '/', parameters('applicationInsightsName'))]",
-        "properties": {            
-        },
-        "dependsOn": [
-            "[resourceId('Microsoft.ApiManagement/service', variables('serviceName'))]",
-            "[resourceId('Microsoft.Insights/components', parameters('applicationInsightsName'))]",
-            "[resourceId('Microsoft.ApiManagement/service/loggers', variables('serviceName'), parameters('applicationInsightsName'))]",
-            "[resourceId('Microsoft.ApiManagement/service/diagnostics', variables('serviceName'), parameters('apimDiagnosticsName'))]"
-        ]
-    }]    
+		{
+			"type": "Microsoft.ApiManagement/service/loggers",
+			"apiVersion": "2017-03-01",
+			"name": "[concat(variables('serviceName'), '/', parameters('applicationInsightsName'))]",
+			"properties": {
+				"loggerType": "applicationInsights",
+				"description": null,
+				"credentials": {
+					"instrumentationKey": "[reference(resourceId('Microsoft.Insights/components', parameters('applicationInsightsName')), '2014-04-01').InstrumentationKey]"
+				},
+				"isBuffered": true
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.ApiManagement/service', variables('serviceName'))]",
+				"[resourceId('Microsoft.Insights/components', parameters('applicationInsightsName'))]"
+			]
+		},
+		{
+			"type": "Microsoft.ApiManagement/service/diagnostics",
+			"apiVersion": "2017-03-01",
+			"name": "[concat(variables('serviceName'), '/', parameters('apimDiagnosticsName'))]",
+			"properties": {            
+				"enabled": true
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.ApiManagement/service', variables('serviceName'))]",
+				"[resourceId('Microsoft.Insights/components', parameters('applicationInsightsName'))]"
+			]
+		},
+		{
+			"type": "Microsoft.ApiManagement/service/diagnostics/loggers",
+			"apiVersion": "2017-03-01",
+			"name": "[concat(variables('serviceName'), '/', parameters('apimDiagnosticsName'), '/', parameters('applicationInsightsName'))]",
+			"properties": {            
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.ApiManagement/service', variables('serviceName'))]",
+				"[resourceId('Microsoft.Insights/components', parameters('applicationInsightsName'))]",
+				"[resourceId('Microsoft.ApiManagement/service/loggers', variables('serviceName'), parameters('applicationInsightsName'))]",
+				"[resourceId('Microsoft.ApiManagement/service/diagnostics', variables('serviceName'), parameters('apimDiagnosticsName'))]"
+			]
+		}
+	]    
 }
