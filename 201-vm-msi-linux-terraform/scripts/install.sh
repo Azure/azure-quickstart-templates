@@ -87,7 +87,6 @@ done
 
 TEMPLATEFOLDER="/home/$USERNAME/tfTemplate"
 REMOTESTATEFILE="$TEMPLATEFOLDER/remoteState.tf"
-ACCESSKEYFILE="/home/$USERNAME/access_key"
 TFENVFILE="/home/$USERNAME/tfEnv.sh"
 CREDSFILE="$TEMPLATEFOLDER/azureProviderAndCreds.tf"
 
@@ -108,12 +107,6 @@ echo "}"                                                    >> $REMOTESTATEFILE
 chmod 666 $REMOTESTATEFILE
 
 chown -R $USERNAME:$USERNAME /home/$USERNAME/tfTemplate
-
-touch $ACCESSKEYFILE
-echo "access_key = \"$STORAGE_ACCOUNT_KEY\""                >> $ACCESSKEYFILE
-chmod 666 $ACCESSKEYFILE
-chown $USERNAME:$USERNAME $ACCESSKEYFILE
-
 
 touch $TFENVFILE
 echo "export ARM_SUBSCRIPTION_ID=\"$SUBSCRIPTION_ID\""     >> $TFENVFILE

@@ -19,7 +19,7 @@ This template creates a new Linux VM with a MSI and deploys the MSI extension to
 
 
 ### Steps to enable Remote State
-Copy remoteState.tf from home directory to the root of the Terraform scripts to enable remote state management
+Copy ~/tfTemplate/remoteState.tf from home directory to the root of the Terraform scripts to enable remote state management
 
 ### Steps to enable MSI
 Once the template is deployed, log into the vm and run the following command to enable MSI with terraform
