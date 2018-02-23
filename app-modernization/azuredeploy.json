@@ -1,0 +1,442 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "webAppName": {
+      "defaultValue": "AppModernizationWebApp",
+      "minLength": 1,
+      "type": "string"
+    },
+    "webAppServicePlanName": {
+      "defaultValue": "AppModernizationServicePlan",
+      "minLength": 1,
+      "type": "string"
+    },
+    "webAppServicePlanSku": {
+      "defaultValue": "Basic",
+      "allowedValues": [ "Free", "Shared*", "Basic", "Standard", "Premium", "PremiumV2" ],
+      "type": "string"
+    },
+    "webAppServicePlanSkuCode": {
+      "defaultValue": "B1",
+      "allowedValues": [ "F1", "D1", "B1", "B2", "B3", "S1", "S2", "S3", "P1", "P2", "P3", "P1V2", "P2V2", "P3V2" ],
+      "type": "string",
+      "metadata": {
+        "description": "Please choose the option match the sku above."
+      }
+    },
+    "sqlServerName": {
+      "defaultValue": "appmodernizationsqlserver",
+      "minLength": 1,
+      "type": "string"
+    },
+    "sqlServerAdminLogin": {
+      "defaultValue": "administratorLogin",
+      "minLength": 1,
+      "type": "string"
+    },
+    "sqlServerAdminPassword": {
+      "minLength": 6,
+      "type": "securestring"
+    },
+    "sqlDatabaseName": {
+      "defaultValue": "AppModernizationSQLDatabase",
+      "minLength": 1,
+      "type": "string"
+    },
+    "sqlDatabaseEdition": {
+      "defaultValue": "Basic",
+      "allowedValues": [ "Basic", "Standard", "Premium", "PremiumRS" ],
+      "type": "string"
+    },
+    "applicationInsightsName": {
+      "defaultValue": "AppModernizationAppInsights",
+      "minLength": 1,
+      "type": "string"
+    },
+    "storageAccountName": {
+      "defaultValue": "appmodernizationstorage",
+      "minLength": 1,
+      "type": "string"
+    },
+    "storageAccountSkuName": {
+      "defaultValue": "Standard_RAGRS",
+      "allowedValues": [ "Standard_RAGRS", "Premium_LRS" ],
+      "type": "string"
+    },
+    "logicAppTemplateName": {
+      "defaultValue": "LogicAppTemplate",
+      "minLength": 1,
+      "type": "string"
+    },
+    "cognitiveServicesName": {
+      "defaultValue": "CognitiveServices",
+      "minLength": 1,
+      "type": "string"
+    },
+    "cognitiveServicesSKUName": {
+      "defaultValue": "S1",
+      "minLength": 1,
+      "type": "string",
+      "allowedValues": [
+        "F0",
+        "S1"
+      ]
+    }
+  },
+  "variables": {
+    "webAppConfigName": "appsettings",
+    "sqlServerFirewallRulesName": "AllowAllWindowsAzureIps",
+    "sqlDatabaseCollation": "SQL_Latin1_General_CP1_CI_AS",
+    "powerbiConnectionName": "powerbi",
+    "cognitiveservicescomputervisionConnectionName": "cognitiveservicescomputervision",
+    "lowerSqlServerName": "[toLower(parameters('sqlServerName'))]",
+    "lowerStorageAccountName": "[toLower(parameters('storageAccountName'))]",
+    "logicAppTemplateLocation": "westus",
+    "cognitiveservicescomputervision": {
+      "Id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', variables('logicAppTemplateLocation'), '/managedApis/', 'cognitiveservicescomputervision')]",
+      "ResourceId": "[resourceId('Microsoft.Web/connections', variables('cognitiveservicescomputervisionConnectionName'))]"
+    },
+    "powerbi": {
+      "Id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', variables('logicAppTemplateLocation'), '/managedApis/', 'powerbi')]",
+      "ResourceId": "[resourceId('Microsoft.Web/connections', variables('powerbiConnectionName'))]"
+    }
+  },
+  "resources": [
+    {
+      "type": "microsoft.insights/components",
+      "kind": "web",
+      "name": "[parameters('applicationInsightsName')]",
+      "apiVersion": "2014-04-01",
+      "location": "westus2",
+      "tags": {},
+      "scale": null,
+      "properties": {
+        "ApplicationId": "[parameters('applicationInsightsName')]"
+      },
+      "dependsOn": []
+    },
+    {
+      "type": "Microsoft.Sql/servers",
+      "kind": "v12.0",
+      "name": "[variables('lowerSqlServerName')]",
+      "apiVersion": "2015-05-01-preview",
+      "location": "westus",
+      "scale": null,
+      "properties": {
+        "administratorLogin": "[parameters('sqlServerAdminLogin')]",
+        "administratorLoginPassword": "[parameters('sqlServerAdminPassword')]",
+        "version": "12.0"
+      },
+      "resources": [
+        {
+          "type": "Microsoft.Sql/servers/databases",
+          "kind": "v12.0,user",
+          "name": "[concat(variables('lowerSqlServerName'), '/', parameters('sqlDatabaseName'))]",
+          "apiVersion": "2014-04-01-preview",
+          "location": "West US",
+          "scale": null,
+          "properties": {
+            "edition": "[parameters('sqlDatabaseEdition')]",
+            "collation": "[variables('sqlDatabaseCollation')]",
+            "maxSizeBytes": "2147483648"
+          },
+          "dependsOn": [
+            "[resourceId('Microsoft.Sql/servers', variables('lowerSqlServerName'))]"
+          ]
+        },
+        {
+          "type": "Microsoft.Sql/servers/firewallRules",
+          "kind": "v12.0",
+          "name": "[concat(variables('lowerSqlServerName'), '/', variables('sqlServerFirewallRulesName'))]",
+          "apiVersion": "2014-04-01-preview",
+          "location": "West US",
+          "scale": null,
+          "properties": {
+            "startIpAddress": "0.0.0.0",
+            "endIpAddress": "0.0.0.0"
+          },
+          "dependsOn": [
+            "[resourceId('Microsoft.Sql/servers', variables('lowerSqlServerName'))]"
+          ]
+        }
+      ],
+      "dependsOn": []
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "sku": {
+        "name": "[parameters('storageAccountSkuName')]"
+      },
+      "kind": "Storage",
+      "name": "[variables('lowerStorageAccountName')]",
+      "apiVersion": "2017-06-01",
+      "location": "westus",
+      "tags": {},
+      "scale": null,
+      "properties": {
+        "encryption": {
+          "keySource": "Microsoft.Storage",
+          "services": {
+            "blob": {
+              "enabled": true
+            },
+            "file": {
+              "enabled": true
+            }
+          }
+        },
+        "networkAcls": {
+          "bypass": "AzureServices",
+          "defaultAction": "Allow",
+          "ipRules": [],
+          "virtualNetworkRules": []
+        },
+        "supportsHttpsTrafficOnly": false
+      },
+      "dependsOn": []
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "sku": {
+        "name": "[parameters('webAppServicePlanSkuCode')]",
+        "tier": "[parameters('webAppServicePlanSku')]"
+      },
+      "kind": "app",
+      "name": "[parameters('webAppServicePlanName')]",
+      "apiVersion": "2016-09-01",
+      "location": "West US",
+      "scale": null,
+      "properties": {
+        "name": "[parameters('webAppServicePlanName')]",
+        "workerTierName": null,
+        "adminSiteName": null,
+        "hostingEnvironmentProfile": null,
+        "perSiteScaling": false,
+        "reserved": false,
+        "targetWorkerCount": 0,
+        "targetWorkerSizeId": 0
+      },
+      "dependsOn": []
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "kind": "app",
+      "name": "[parameters('webAppName')]",
+      "apiVersion": "2016-08-01",
+      "location": "West US",
+      "tags": {},
+      "scale": null,
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('webAppServicePlanName'))]",
+        "reserved": false,
+        "siteConfig": null,
+        "scmSiteAlsoStopped": false,
+        "hostingEnvironmentProfile": null,
+        "clientAffinityEnabled": true,
+        "clientCertEnabled": false,
+        "hostNamesDisabled": false,
+        "containerSize": 0,
+        "dailyMemoryTimeQuota": 0,
+        "cloningInfo": null
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', parameters('webAppServicePlanName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Logic/workflows",
+      "name": "[parameters('logicAppTemplateName')]",
+      "apiVersion": "2016-06-01",
+      "location": "[variables('logicAppTemplateLocation')]",
+      "tags": {},
+      "scale": null,
+      "properties": {
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "$connections": {
+              "defaultValue": {},
+              "type": "Object"
+            }
+          },
+          "triggers": {
+            "manual": {
+              "type": "Request",
+              "kind": "Http",
+              "inputs": {
+                "schema": {}
+              }
+            }
+          },
+          "actions": {
+            "Analyze_Image": {
+              "runAfter": {},
+              "type": "ApiConnection",
+              "inputs": {
+                "body": {
+                  "url": "@{triggerBody()}"
+                },
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['cognitiveservicescomputervision']['connectionId']"
+                  }
+                },
+                "method": "post",
+                "path": "/vision/v1.0/analyze",
+                "queries": {
+                  "format": "Image URL",
+                  "visualFeatures": "Tags,Description,Categories"
+                }
+              }
+            },
+            "If_the_claim_image_is_valid": {
+              "actions": {
+                "Add_rows_to_a_dataset": {
+                  "runAfter": {
+                    "Store_Images": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "ApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connection": {
+                        "name": "@parameters('$connections')['powerbi']['connectionId']"
+                      }
+                    },
+                    "method": "post",
+                    "path": "/v1.0/myorg/groups/@{encodeURIComponent(variables('Placeholder'))}/datasets/@{encodeURIComponent(variables('Placeholder'))}/tables/@{encodeURIComponent(variables('Placeholder'))}/rows"
+                  }
+                },
+                "Notify_Customer_of_Success": {
+                  "runAfter": {},
+                  "type": "Response",
+                  "inputs": {
+                    "body": {
+                      "isValid": true
+                    },
+                    "statusCode": 200
+                  }
+                },
+                "Store_Images": {
+                  "runAfter": {
+                    "Notify_Customer_of_Success": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "SetVariable",
+                  "inputs": {
+                    "name": "Placeholder",
+                    "value": "Remove this action then insert the proper action here."
+                  }
+                }
+              },
+              "runAfter": {
+                "Validate_Image": [
+                  "Succeeded"
+                ]
+              },
+              "else": {
+                "actions": {
+                  "Notify_Customer_of_Error": {
+                    "runAfter": {},
+                    "type": "Response",
+                    "inputs": {
+                      "body": {
+                        "isValid": false
+                      },
+                      "statusCode": 200
+                    }
+                  }
+                }
+              },
+              "expression": "@not(equals(variables('Placeholder'), False))",
+              "type": "If"
+            },
+            "Validate_Image": {
+              "runAfter": {
+                "Analyze_Image": [
+                  "Succeeded"
+                ]
+              },
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "Placeholder",
+                    "type": "String",
+                    "value": "Remove this variable initialization and add your Azure function here."
+                  }
+                ]
+              }
+            }
+          },
+          "outputs": {}
+        },
+        "parameters": {
+          "$connections": {
+            "value": {
+              "cognitiveservicescomputervision": {
+                "connectionId": "[resourceId('Microsoft.Web/connections', variables('cognitiveservicescomputervisionConnectionName'))]",
+                "connectionName": "[variables('cognitiveservicescomputervisionConnectionName')]",
+                "id": "[variables('cognitiveservicescomputervision').Id]"
+              },
+              "powerbi": {
+                "connectionId": "[resourceId('Microsoft.Web/connections', variables('powerbiConnectionName'))]",
+                "connectionName": "[variables('powerbiConnectionName')]",
+                "id": "[variables('powerbi').Id]"
+              }
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[variables('cognitiveservicescomputervision').ResourceId]",
+        "[variables('powerbi').ResourceId]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/connections",
+      "name": "[variables('cognitiveservicescomputervisionConnectionName')]",
+      "apiVersion": "2016-06-01",
+      "location": "[variables('logicAppTemplateLocation')]",
+      "scale": null,
+      "properties": {
+        "displayName": "CognitiveServices",
+        "customParameterValues": {},
+        "api": {
+          "id": "[variables('cognitiveservicescomputervision').Id]"
+        }
+      },
+      "dependsOn": []
+    },
+    {
+      "type": "Microsoft.Web/connections",
+      "name": "[variables('powerbiConnectionName')]",
+      "apiVersion": "2016-06-01",
+      "location": "[variables('logicAppTemplateLocation')]",
+      "scale": null,
+      "properties": {
+        "api": {
+          "id": "[variables('powerbi').Id]"
+        }
+      },
+      "dependsOn": []
+    },
+    {
+      "type": "Microsoft.CognitiveServices/accounts",
+      "sku": {
+        "name": "[parameters('cognitiveServicesSKUName')]"
+      },
+      "kind": "ComputerVision",
+      "name": "[parameters('cognitiveServicesName')]",
+      "apiVersion": "2016-02-01-preview",
+      "location": "westus",
+      "scale": null,
+      "properties": {},
+      "dependsOn": []
+    }
+  ]
+}
