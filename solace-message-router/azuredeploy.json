@@ -29,15 +29,16 @@
     },
     "workspaceName": {
       "type": "string",
+      "defaultValue": "",
       "metadata": {
-        "description": "Unique OMS Workspace Name for Log Analytics."
+        "description": "Unique OMS Workspace Name for Log Analytics. Leave this field empty to not deploy an OMS Workspace."
       }
     },
     "workspaceRegion": {
       "type": "string",
       "defaultValue": "East US",
       "metadata": {
-        "description": "OMS Workspace Region for Log Analytics."
+        "description": "OMS Workspace Region for Log Analytics. Not used if Workspace Name is empty."
       },
       "allowedValues": [
         "East US",
@@ -140,13 +141,16 @@
     "OSDiskName": "osdiskfordockersimple",
     "dataDiskName": "datadiskfordockersimple",
     "nicName": "myVMNicD",
-    "scriptUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/solace-message-router/",
+    "baseUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/solace-message-router/",
+    "nestedUrl": "[concat(variables('baseUrl'), 'nested/')]",
+    "scriptsUrl": "[concat(variables('baseUrl'), 'scripts/')]",
     "solaceSecurityName": "SolaceSecurity.Template",
     "securitySharedTemplateName": "security-shared-resources.json",
     "solaceLoadBalancerName": "SolaceLoadBalancer.Template",
     "loadBalancerSharedTemplateName": "loadbalancer-shared-resources.json",
     "solaceWorkspaceName": "SolaceWorkspace.Template",
-    "workspaceSharedTemplateName": "workspace-shared-resources.json",
+    "workspaceEnabledSharedTemplateName": "workspace-enabled-shared-resources.json",
+    "workspaceDisabledSharedTemplateName": "workspace-disabled-shared-resources.json",
     "solaceInstallScriptName": "deploy_vmr.sh",
     "sempQueryScriptName": "semp_query.sh",
     "publicIPAddressName": "myPublicIPD",
@@ -210,7 +214,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('scriptUrl'), variables('securitySharedTemplateName'))]",
+          "uri": "[concat(variables('nestedUrl'), variables('securitySharedTemplateName'))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -230,7 +234,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('scriptUrl'), variables('loadBalancerSharedTemplateName'))]",
+          "uri": "[concat(variables('nestedUrl'), variables('loadBalancerSharedTemplateName'))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -259,7 +263,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('scriptUrl'), variables('workspaceSharedTemplateName'))]",
+          "uri": "[if(empty(parameters('workspaceName')), concat(variables('nestedUrl'), variables('workspaceDisabledSharedTemplateName')), concat(variables('nestedUrl'), variables('workspaceEnabledSharedTemplateName')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -449,6 +453,7 @@
       }
     },
     {
+      "condition": "[not(empty(parameters('workspaceName')))]",
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmName'), copyindex(), '/OmsAgentExtension')]",
@@ -483,7 +488,7 @@
         "count": "[variables('numberOfInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), copyindex(), '/extensions/DockerExtension')]"
+        "[if(empty(parameters('workspaceName')), concat('Microsoft.Compute/virtualMachines/', variables('vmName'), copyindex(), '/extensions/DockerExtension'), concat('Microsoft.Compute/virtualMachines/', variables('vmName'), copyindex(), '/extensions/OmsAgentExtension'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
@@ -493,12 +498,12 @@
         "settings": {
           "fileUris": [
             "[parameters('solaceVmrUri')]",
-            "[concat(variables('scriptUrl'), 'scripts/', variables('solaceInstallScriptName'))]",
-            "[concat(variables('scriptUrl'), 'scripts/', variables('sempQueryScriptName'))]"
+            "[concat(variables('scriptsUrl'), variables('solaceInstallScriptName'))]",
+            "[concat(variables('scriptsUrl'), variables('sempQueryScriptName'))]"
           ]
         },
         "protectedSettings": {
-          "commandToExecute": "[concat('mkdir -p -m 600 ', variables('adminPasswordDir'), '; echo ', parameters('adminPassword'), ' > ', variables('adminPasswordFile'), '; bash ', variables('solaceInstallScriptName'), ' -c ', copyindex(), ' -i ', variables('nodeAddressPrefix'), ' -n ', variables('numberOfInstances'), ' -p ', variables('adminPasswordFile'), ' -s ', if(equals(copyindex(), variables('monitorNodeIndex')), '0', parameters('dataDiskSize')), if(equals(copyindex(), variables('monitorNodeIndex')), '', concat(' -v ', variables('dataDiskVolume'))), ' -u ', parameters('solaceVmrUri'))]"
+          "commandToExecute": "[concat('mkdir -p -m 600 ', variables('adminPasswordDir'), '; echo ', parameters('adminPassword'), ' > ', variables('adminPasswordFile'), '; bash ', variables('solaceInstallScriptName'), ' -c ', copyindex(), ' -i ', variables('nodeAddressPrefix'), ' -n ', variables('numberOfInstances'), ' -p ', variables('adminPasswordFile'), ' -s ', if(equals(copyindex(), variables('monitorNodeIndex')), '0', parameters('dataDiskSize')), if(equals(copyindex(), variables('monitorNodeIndex')), '', concat(' -v ', variables('dataDiskVolume'))), if(empty(parameters('workspaceName')), '', concat(' -w ', reference(variables('solaceWorkspaceName')).outputs.workspaceId.value)), ' -u ', parameters('solaceVmrUri'))]"
         }
       }
     }

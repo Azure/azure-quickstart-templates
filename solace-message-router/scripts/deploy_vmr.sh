@@ -9,13 +9,14 @@ number_of_instances=""
 password_file=""
 disk_size=""
 disk_volume=""
+workspace_id=""
 solace_url=""
 DEBUG="-vvvv"
 is_primary="false"
 
 verbose=0
 
-while getopts "c:i:n:p:s:v:u:" opt; do
+while getopts "c:i:n:p:s:v:w:u:" opt; do
     case "$opt" in
     c)  current_index=$OPTARG
         ;;
@@ -29,6 +30,8 @@ while getopts "c:i:n:p:s:v:u:" opt; do
         ;;
     v)  disk_volume=$OPTARG
         ;;
+    w)  workspace_id=$OPTARG
+        ;;
     u)  solace_url=$OPTARG
         ;;
     esac
@@ -39,7 +42,8 @@ shift $((OPTIND-1))
 
 verbose=1
 echo "`date` current_index=$current_index , ip_prefix=$ip_prefix , number_of_instances=$number_of_instances , \
-      password_file=$password_file , disk_size=$disk_size , disk_volume=$disk_volume , solace_url=$solace_url , Leftovers: $@"
+      password_file=$password_file , disk_size=$disk_size , disk_volume=$disk_volume , workspace_id=$workspace_id , \
+      solace_url=$solace_url , Leftovers: $@"
 export password=`cat ${password_file}`
 
 #Install the logical volume manager and jq for json parsing
@@ -208,12 +212,12 @@ docker volume create --name=var
 docker volume create --name=softAdb
 docker volume create --name=adbBackup
 
-if [ $disk_size == "0" ]; then
+if [ ${disk_size} == "0" ]; then
   docker volume create --name=diagnostics
   docker volume create --name=internalSpool
   SPOOL_MOUNT="-v diagnostics:/var/lib/solace/diags -v internalSpool:/usr/sw/internalSpool"
 else
-  echo "`date` Create primary partition on new disk"
+  echo "`date` INFO: Create primary partition on new disk"
   (
   echo n # Add a new partition
   echo p # Primary partition
@@ -232,6 +236,34 @@ else
   SPOOL_MOUNT="-v /opt/vmr/diagnostics:/var/lib/solace/diags -v /opt/vmr/internalSpool:/usr/sw/internalSpool"
 fi
 
+LOG_OPT=""
+logging_config=""
+if [[ ${workspace_id} != "" ]]; then
+  SYSLOG_CONF="/etc/opt/microsoft/omsagent/${workspace_id}/conf/omsagent.d/syslog.conf"
+  SYSLOG_PORT=""
+  if [ -f ${SYSLOG_CONF} ]; then
+    echo "`date` INFO: Configuration file for syslog found"
+    SYSLOG_PORT=$(sed -n 's/.*port \(.*\).*/\1/p' $SYSLOG_CONF)
+  fi
+  if [[ ${SYSLOG_PORT} == "" ]]; then
+    echo "`date` INFO: Default syslog port to 25224"
+    SYSLOG_PORT="25224"
+  fi
+  echo "`date` INFO: Configuring logging on syslog port ${SYSLOG_PORT}"
+  LOG_OPT="--log-driver syslog --log-opt syslog-format=rfc3164 --log-opt syslog-address=udp://127.0.0.1:$SYSLOG_PORT"
+  logging_config="\
+    --env logging_debug_output=all \
+    --env logging_debug_format=graylog \
+    --env logging_command_output=all \
+    --env logging_command_format=graylog \
+    --env logging_system_output=all \
+    --env logging_system_format=graylog \
+    --env logging_event_output=all \
+    --env logging_event_format=graylog \
+    --env logging_kernel_output=all \
+    --env logging_kernel_format=graylog"
+fi
+
 #Define a create script
 tee /root/docker-create <<-EOF 
 #!/bin/bash 
@@ -243,9 +275,7 @@ docker create \
  --ulimit core=-1 \
  --ulimit memlock=-1 \
  --ulimit nofile=2448:38048 \
- --log-driver syslog \
- --log-opt syslog-format=rfc3164 \
- --log-opt syslog-address=udp://127.0.0.1:25224 \
+ ${LOG_OPT} \
  -v $(dirname ${password_file}):/run/secrets \
  -v jail:/usr/sw/jail \
  -v var:/usr/sw/var \
@@ -254,16 +284,7 @@ docker create \
  ${SPOOL_MOUNT} \
  --env username_admin_globalaccesslevel=admin \
  --env username_admin_passwordfilepath=$(basename ${password_file}) \
- --env logging_debug_output=all \
- --env logging_debug_format=graylog \
- --env logging_command_output=all \
- --env logging_command_format=graylog \
- --env logging_system_output=all \
- --env logging_system_format=graylog \
- --env logging_event_output=all \
- --env logging_event_format=graylog \
- --env logging_kernel_output=all \
- --env logging_kernel_format=graylog \
+ ${logging_config} \
  ${redundancy_config} \
  --name=solace solace-app:${VMR_VERSION} 
 EOF
