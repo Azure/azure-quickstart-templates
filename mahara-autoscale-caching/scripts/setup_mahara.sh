@@ -1,4 +1,4 @@
-# Custom Script for Linux
+# Custom Script for Linux for Mahara/Azure
 
 #!/bin/bash
 
