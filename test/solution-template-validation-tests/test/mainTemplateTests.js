@@ -10,7 +10,6 @@ var should = chai.should(); // Using Should style
 require('it-each')({ testPerIteration: true });
 
 var folder = process.env.npm_config_folder || filesFolder;
-
 var mainTemplateFileJSONObject = util.getMainTemplateFile(folder).jsonObject;
 var mainTemplateFile = util.getMainTemplateFile(folder).file;
 var createUiDefFileJSONObject = util.getCreateUiDefFile(folder).jsonObject;
@@ -28,37 +27,42 @@ function getErrorMessage(obj, file, message) {
     return 'json object with \'name\' at line number ' + util.getPosition(obj, file) + ' ' + message;
 }
 
-describe('mainTemplate.json file - ', () => {
+/** Tests for template files in a solution template */
+describe('template files - ', () => {
+
+    /** Tests for parameters in template files */
     describe('parameters tests - ', () => {
-        describe('parameters value tests - ', () => {
-            var currentDir = path.dirname(mainTemplateFile);
-            // assert create ui def exists in the above directory
-            util.assertCreateUiDefExists(currentDir);
 
-            // get the corresponding create ui def
-            var createUiDefJSONObject = util.getCreateUiDefFile(currentDir).jsonObject;
-
-            // get output keys in main template
-            var outputsInCreateUiDef = Object.keys(createUiDefJSONObject.parameters.outputs);
-
-            // convert to lowercase
-            for (var i in outputsInCreateUiDef) {
-                outputsInCreateUiDef[i] = outputsInCreateUiDef[i].toLowerCase();
-            }
-
-            // validate each parameter in main template has a value in outputs
+        /** maintemplate.json should have a parameters property */
+        it('maintemplate.json should have a "parameters" property', () => {
             mainTemplateFileJSONObject.should.have.property('parameters');
-            var parametersInMainTemplate = Object.keys(mainTemplateFileJSONObject.parameters);
-
-           it.each(parametersInMainTemplate, 'each parameter that does not have a defaultValue, must have a corresponding output in createUIDef', function(element, next){
-                if (typeof(mainTemplateFileJSONObject.parameters[element].defaultValue) === 'undefined') {
-                    outputsInCreateUiDef.should.withMessage('in file:mainTemplate.json. outputs in createUiDefinition is missing the parameter ' + element).contain(element.toLowerCase());
-                }
-                next();
-           });
         });
 
-        // TODO: should it be non null, or should all secure strings not contain default value?
+        var currentDir = path.dirname(mainTemplateFile);
+        // assert create ui def exists in the above directory
+        util.assertCreateUiDefExists(currentDir);
+
+        // get the corresponding create ui def
+        var createUiDefJSONObject = util.getCreateUiDefFile(currentDir).jsonObject;
+
+        // get output keys in main template
+        var outputsInCreateUiDef = Object.keys(createUiDefJSONObject.parameters.outputs);
+
+        // convert to lowercase
+        for (var i in outputsInCreateUiDef) {
+            outputsInCreateUiDef[i] = outputsInCreateUiDef[i].toLowerCase();
+        }
+
+        /* Validate each parameter in main template has value in outputs */
+        var parametersInMainTemplate = Object.keys(mainTemplateFileJSONObject.parameters);
+        it.each(parametersInMainTemplate, 'parameter %s that does not have a defaultValue, must have a corresponding output in createUIDef', ['element'], function(element, next){
+            if (typeof(mainTemplateFileJSONObject.parameters[element].defaultValue) === 'undefined') {
+                outputsInCreateUiDef.should.withMessage('in file:mainTemplate.json. outputs in createUiDefinition is missing the parameter ' + element).contain(element.toLowerCase());
+            }
+            next();
+        });
+
+        /** If securestring, the default value (if it exists) should be null*/
         it('non-null default values must not be provided for secureStrings', () => {
             templateFileJSONObjects.forEach(templateJSONObject => {
                 var templateObject = templateJSONObject.value;
@@ -75,7 +79,7 @@ describe('mainTemplate.json file - ', () => {
 
         });
 
-        // TODO: should location prop in resources all be set to param('location') ?
+        // Not required pending Jianping's PR
         it('a parameter named "location" must exist and must be used on all resource "location" properties', () => {
             mainTemplateFileJSONObject.should.withMessage('file:mainTemplate.json is missing parameters property').have.property('parameters');
             mainTemplateFileJSONObject.parameters.should.withMessage('file:mainTemplate.json is missing location property in parameters').have.property('location');
@@ -93,18 +97,17 @@ describe('mainTemplate.json file - ', () => {
             });
         });
 
-        describe('unused parameters tests - ', () => {
-            mainTemplateFileJSONObject.should.have.property('parameters');
-            var parametersInMainTemplate = Object.keys(mainTemplateFileJSONObject.parameters);
-            it.each(parametersInMainTemplate, 'the template must not contain any unused parameters', function(element, next) {
-                var paramString = 'parameters(\'' + element.toLowerCase() + '\')';
-                JSON.stringify(mainTemplateFileJSONObject).toLowerCase().should.withMessage('file:mainTemplate.json. unused parameter ' + element + ' in mainTemplate').contain(paramString);
-                next();
-            });
+        /* Validate each parameter should be used in main template */
+        var mainTemplateFileContent = JSON.stringify(mainTemplateFileJSONObject).toLowerCase();
+        it.each(parametersInMainTemplate, 'parameter %s must be used in maintemplate', ['element'], function(element, next) {
+            var paramString = 'parameters(\'' + element.toLowerCase() + '\')';
+            assert(mainTemplateFileContent.includes(paramString) === true, 'unused parameter ' + element + ' in file mainTemplate.json');
+            next();
         });
     });
 
     describe('resources tests - ', () => {
+        // Not required pending Jianping's PR
         it('resourceGroup().location must not be used in the solution template except as a defaultValue for the location parameter', () => {
             templateFileJSONObjects.forEach(templateJSONObject => {
                 var templateObject = templateJSONObject.value;
@@ -129,37 +132,6 @@ describe('mainTemplate.json file - ', () => {
                     var val = templateObject.resources[resource];
                     if (val.apiVersion) {
                         val.apiVersion.should.withMessage(getErrorMessage(val, templateJSONObject.filepath, message)).not.contain('providers(');
-                    }
-                });
-            });
-        });
-
-        it('template must contain only approved resources', () => {
-            // Add allowed types here
-            // NOTE that the property name is the lower case resource provider portion of the type
-            // and the array can either be a single entry of '*' for all types for that provider
-            // or it can be one or more elements which are the resource type names to allow
-            var allowedResourceTypes = {
-                'microsoft.compute' : ['*'],
-                'microsoft.storage' : ['*'],
-                'microsoft.network' : ['*'],
-                'microsoft.resources' : ['*'],
-                'microsoft.insights' : ['autoscalesettings'],
-                'microsoft.authorization' : ['roleassignments']
-            };
-            templateFileJSONObjects.forEach(templateJSONObject => {
-                var templateObject = templateJSONObject.value;
-                templateObject.should.have.property('resources');
-                var message = 'in file:' + templateJSONObject.filename + ' is NOT an approved resource type (' + JSON.stringify(allowedResourceTypes) + ')';
-                Object.keys(templateObject.resources).forEach(resource => {
-                    var val = templateObject.resources[resource];
-                    if (val.type) {
-                        var rType = val.type.toLowerCase().split('/');
-                        var providerLower = rType[0];
-                        var typeLower = rType[1];
-                        var condition = allowedResourceTypes[providerLower] &&
-                                    (allowedResourceTypes[providerLower][0] == '*' || (typeLower && allowedResourceTypes[providerLower].indexOf(typeLower) > -1));
-                        expect(condition, getErrorMessage(val, templateJSONObject.filepath, message + '. The resource object: ' + JSON.stringify(val))).to.be.true;
                     }
                 });
             });
