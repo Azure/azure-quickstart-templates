@@ -1,0 +1,232 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "moodleCommon": {
+            "metadata": {
+                "description": "Common Moodle values"
+            },
+            "type": "object"
+        },
+        "blobStorageAccountKey": {
+            "metadata": {
+                "description": "Key used to create a storage container"
+            },
+            "type": "string"
+        },
+        "redisPrimaryKey": {
+            "metadata": {
+                "description": "Key used for Redis authentication"
+            },
+            "type": "string"
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "2015-06-15",
+            "location": "[resourceGroup().location]",
+            "name": "[parameters('moodleCommon').jboxPipName]",
+            "properties": {
+                "dnsSettings": {
+                    "domainNameLabel": "[parameters('moodleCommon').jboxPipName]"
+                },
+                "publicIPAllocationMethod": "Static"
+            },
+            "tags": {
+                "displayName": "jboxpip"
+            },
+            "type": "Microsoft.Network/publicIPAddresses"
+        },
+        {
+            "apiVersion": "2016-03-30",
+            "location": "[resourceGroup().location]",
+            "name": "[parameters('moodleCommon').jboxNsgName]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "Allow_SSH",
+                        "properties": {
+                            "access": "Allow",
+                            "destinationAddressPrefix": "*",
+                            "destinationPortRange": "22",
+                            "direction": "Inbound",
+                            "priority": 1000,
+                            "protocol": "Tcp",
+                            "sourceAddressPrefix": "*",
+                            "sourcePortRange": "*"
+                        }
+                    },
+                    {
+                        "name": "Allow_http",
+                        "properties": {
+                            "access": "Allow",
+                            "destinationAddressPrefix": "*",
+                            "destinationPortRange": "80",
+                            "direction": "Inbound",
+                            "priority": 1005,
+                            "protocol": "Tcp",
+                            "sourceAddressPrefix": "*",
+                            "sourcePortRange": "*"
+                        }
+                    }
+                ]
+            },
+            "tags": {
+                "displayName": "JumpBox NSG"
+            },
+            "type": "Microsoft.Network/networkSecurityGroups"
+        },
+        {
+            "apiVersion": "2015-06-15",
+            "dependsOn": [
+                "[concat('Microsoft.Network/publicIPAddresses/', parameters('moodleCommon').jboxPipName)]"
+            ],
+            "location": "[resourceGroup().location]",
+            "name": "[parameters('moodleCommon').jboxNicName]",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipcfgjbox",
+                        "networkSecurityGroup": {
+                            "id": "[variables('nsgRef')]"
+                        },
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[variables('pipRef')]"
+                            },
+                            "subnet": {
+                                "id": "[variables('subnetWebRef')]"
+                            }
+                        }
+                    }
+                ]
+            },
+            "tags": {
+                "displayName": "jboxNic"
+            },
+            "type": "Microsoft.Network/networkInterfaces"
+        },
+        {
+            "apiVersion": "[parameters('moodleCommon').computeApi]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkInterfaces/', parameters('moodleCommon').jboxNicName)]"
+            ],
+            "location": "[resourceGroup().location]",
+            "name": "[parameters('moodleCommon').jboxVmName]",
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('moodleCommon').controllerVmSku]"
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[variables('nicRef')]"
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "adminUsername": "[parameters('moodleCommon').sshUsername]",
+                    "computerName": "[parameters('moodleCommon').jboxVmName]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "path": "[concat('/home/', parameters('moodleCommon').sshUsername, '/.ssh/authorized_keys')]",
+                                    "keyData": "[parameters('moodleCommon').sshPublicKey]"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "storageProfile": {
+                    "dataDisks": [],
+                    "imageReference": "[parameters('moodleCommon').osType]",
+                    "osDisk": {
+                        "createOption": "fromImage",
+                        "managedDisk": {
+                            "storageAccountType": "Standard_LRS"
+                        },
+                        "name": "[parameters('moodleCommon').jboxVmName]"
+                    }
+                }
+            },
+            "tags": {
+                "displayName": "Gluster Virtual Machine"
+            },
+            "type": "Microsoft.Compute/virtualMachines"
+        },
+        {
+            "apiVersion": "2015-01-01",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('moodleCommon').jboxVmName)]"
+            ],
+            "name": "[concat(parameters('moodleCommon').jboxVmName,'-ScriptProcessor')]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "moodleCommon": {
+                        "value": "[parameters('moodleCommon')]"
+                    },
+                    "blobStorageAccountKey": {
+                        "value": "[parameters('blobStorageAccountKey')]"
+                    },
+                    "redisPrimaryKey": {
+                        "value": "[parameters('redisPrimaryKey')]"
+                    }
+
+                },
+                "templateLink": {
+                    "uri": "[concat(    parameters('moodleCommon').baseTemplateUrl,'controllerconfig',parameters('moodleCommon').applyScriptsSwitch,'.json')]"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        },
+        {
+            "apiVersion": "2015-01-01",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/',parameters('moodleCommon').jboxVmName)]"
+            ],
+            "name": "[concat(parameters('moodleCommon').jboxVmName,'-Backup')]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "moodleCommon": {
+                        "value": "[parameters('moodleCommon')]"
+                    },
+                    "vmName": {
+                        "value": "[parameters('moodleCommon').jboxVmName]"
+                    }
+                },
+                "templateLink": {
+                    "uri": "[concat(    parameters('moodleCommon').baseTemplateUrl,'recoveryservicesEnlist',parameters('moodleCommon').azureBackupSwitch,'.json')]"
+                }
+            },
+            "type": "Microsoft.Resources/deployments"
+        }
+    ],
+    "variables": {
+        "documentation01": "This sub-template drives the controller/jump-box which is used as the access-point for other moodle VM's ",
+        "documentation02": "It expects certain values in the 'common' datastructure.",
+        "documentation03": "    vnetName     - name of virtual network",
+        "documentation04": "    subnetWeb    - name of subnet for controller (and vm scale set)",
+        "documentation05": "    computeApi   - the 'managed' resources need to all use this value",
+        "documentation06": "    jboxPipName  - name of Public IP address for the jumpbox (note that none of the other VM's get a PIP - just the jumpbox",
+        "documentation07": "    jboxNicName  - name of the network interface (all VM's must hae a nic) to crate, tied to the public IP address",
+        "documentation08": "    jboxNsgName  - name of the network security group, regulating access to/from the jumpbox",
+        "documentation09": "This sub-template calls other sub-templates",
+        "documentation10": "    controllerconfig       - conditionally applies post-deployment script on the VM",
+        "documentation18": "    recoveryservicesEnlist - conditionally enlists the VM into the backup regimen",
+        "nicRef": "[resourceId('Microsoft.Network/networkInterfaces', parameters('moodleCommon').jboxNicName)]",
+        "nsgRef": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('moodleCommon').jboxNsgName)]",
+        "pipRef": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('moodleCommon').jboxPipName)]",
+        "subnetWebRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('moodleCommon').vnetName), '/subnets/',parameters('moodleCommon').subnetWeb)]"
+    },
+    "outputs": {
+        "controllerIP": {
+            "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', parameters('moodleCommon').jboxPipName), '2015-06-15').ipAddress]",
+            "type": "string"
+        }
+    }
+}
