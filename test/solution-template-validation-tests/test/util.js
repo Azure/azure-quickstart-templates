@@ -47,6 +47,21 @@ exports.getMainTemplateFile = function getMainTemplateFile(folder) {
     };
 };
 
+// Get objects that matches a given key and value
+exports.getObjects = function getObjects(obj, key, val) {
+    var objects = [];
+    for (var i in obj) {
+        if (!obj.hasOwnProperty(i)) continue;
+        if (typeof obj[i] == 'object') {
+            objects = objects.concat(getObjects(obj[i], key, val));
+        } else
+        if (i.toLowerCase() == key && obj[i].toLowerCase() == val) { //
+            objects.push(obj);
+        }
+    }
+    return objects;
+};
+
 // Get template files
 exports.getTemplateFiles = function getTemplateFiles(folder) {
     var templateFiles = _this.getFiles(folder, '.json');
