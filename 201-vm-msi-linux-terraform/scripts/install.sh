@@ -50,7 +50,7 @@ then
 fi
 
 # Arguments
-while getopts :s:a:k:l:u:d: optname; do
+while getopts :s:t:a:k:l:u:d: optname; do
   if [[ $optname != 'e' && $optname != 'k' ]]; then
     log "Option $optname set with value ${OPTARG}"
   fi
