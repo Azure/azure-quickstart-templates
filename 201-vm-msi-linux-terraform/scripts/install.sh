@@ -109,17 +109,14 @@ chmod 666 $REMOTESTATEFILE
 
 chown -R $USERNAME:$USERNAME /home/$USERNAME/tfTemplate
 
-touch $TFENVFILE
-echo "export ARM_SUBSCRIPTION_ID=\"$SUBSCRIPTION_ID\""     >> $TFENVFILE
-echo "export ARM_CLIENT_ID=\"$MSI_PRINCIPAL_ID\""          >> $TFENVFILE
-echo "export USE_MSI=true"                                 >> $TFENVFILE
-
 # Set these variables in the profile
-echo "echo export ARM_SUBSCRIPTION_ID=\"$SUBSCRIPTION_ID\" >>$PROFILEFILE" >> $TFENVFILE
-echo "echo export ARM_CLIENT_ID=\"$MSI_PRINCIPAL_ID\" >>$PROFILEFILE"      >> $TFENVFILE
-echo "echo export USE_MSI=true >>$PROFILEFILE"                             >> $TFENVFILE
+echo "export ARM_SUBSCRIPTION_ID=\"$SUBSCRIPTION_ID\""      >> $PROFILEFILE
+echo "export ARM_CLIENT_ID=\"$MSI_PRINCIPAL_ID\""           >> $PROFILEFILE
+echo "export ARM_USE_MSI=true"                              >> $PROFILEFILE
+echo "export ARM_MSI_ENDPOINT=\"https://localhost:50342\""  >> $PROFILEFILE
 
 # Add contributor permissions to the MSI for entire subscription
+touch $TFENVFILE
 echo "az login"                                            >> $TFENVFILE
 echo "az role assignment create  --assignee \"$MSI_PRINCIPAL_ID\" --role 'b24988ac-6180-42a0-ab88-20f7382dd24c'  --scope /subscriptions/\"$SUBSCRIPTION_ID\""  >> $TFENVFILE
 chmod 755 $TFENVFILE
