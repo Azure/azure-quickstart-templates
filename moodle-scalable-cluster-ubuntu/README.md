@@ -6,7 +6,7 @@ After deploying, these templates will provide you with a new Moodle site with ca
 
 `Tags: cluster, ha, moodle, autoscale, linux, ubuntu`
 
-## Reporting issues and Contributions
+## Reporting issues and Making Contributions
 
 If you found these templates in the Azure Quickstarts Gallery then you are using the latest released version of the templates. Dependending on your goals you may prefer to work with the [development versions](http://github.com/Azure/Moodle) at http://github.com/Azure/Moodle.
 
