@@ -51,7 +51,7 @@ The deployment utilizes the custom script extension
 Password Change extension
 the Deployment utilizes the Password change extension for linux
 + **resetpassword** to overcome some issues where cloudinit does not accept password
-the default password is Subscription#**id**, example Subscription#8c21cadc-9e41-459e-bf4b-9b5aa2fad938
+the default password is Subscription#**id**, example Subscription#8c21cadc-9e41-459e-bf4b-9b5aa2fad938 
 
 ## Prerequisites
 The required VM Types need to have at least 4vCPU and 16GB memory.
