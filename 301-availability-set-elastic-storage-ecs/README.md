@@ -1,10 +1,10 @@
 # multinode dellemc ecs community edition in an azure availabilty set
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fbottkars%2Fazure-quickstart-templates%2Fkb-dev%2F301-availability-set-elastic-storage-ecs%2Fazuredeploy.json" target="_blank">
-<img src="https://raw.githubusercontent.com/bottkars/azure-quickstart-templates/kb-dev/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fbottkars%2Fazure-quickstart-templates%2Fmaster%2F301-availability-set-elastic-storage-ecs%2Fazuredeploy.json" target="_blank">
+<img src="https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fbottkars%2Fazure-quickstart-templates%2Fkb-dev%2F301-availability-set-elastic-storage-ecs%2Fazuredeploy.json" target="_blank">
-<img src="https://raw.githubusercontent.com/bottkars/azure-quickstart-templates/kb-dev/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fbottkars%2Fazure-quickstart-templates%2Fmaster%2F301-availability-set-elastic-storage-ecs%2Fazuredeploy.json" target="_blank">
+<img src="https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
 To deploy this template using the scripts from the root of this repo: (change the folder name below to match the folder name for this sample)
@@ -96,7 +96,7 @@ The ressource group deployment will take between 10 and 15 Minutes, depneding on
 ![rg](images/rg_done.png "parameters for resource group")
 
 once the resource group deployment has finished, the ecs installer will be started from
-[ecs.sh](emcecs/ecs.sh)
+[ecs.sh](scripts/ecs.sh)
 
 #### monitor installation
 ssh into the first node (use the external dns name ), port 2201
@@ -106,7 +106,7 @@ tail -f /root/install.log
 ```
 ![log](images/log.png "installation logs")
 the system will do a reboot after package installation.
-the reboot(s) will be controlled by a systemd service [ecs-installer.service](emcecs/ecs-installer.service)
+the reboot(s) will be controlled by a systemd service [ecs-installer.service](scripts/ecs-installer.service)
 
 after the reboot, the ECS ansible installer starts withn step1 and step2  
 the progress is also logged 
