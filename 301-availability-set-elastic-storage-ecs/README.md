@@ -1,7 +1,7 @@
 # multinode dellemc ecs community edition in an azure availabilty set
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fbottkars%2Fazure-quickstart-templates%2Fkb-dev%2F301-availability-set-elastic-storage-ecs%2Fazuredeploy.json" target="_blank">
-<img src="https://raw.githubusercontent.com/azure/azure-quickstart-templates/kb-dev/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
+<img src="https://raw.githubusercontent.com/bottkars/azure-quickstart-templates/kb-dev/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fbottkars%2Fazure-quickstart-templates%2Fkb-dev%2F301-availability-set-elastic-storage-ecs%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/azure/azure-quickstart-templates/kb-dev/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
