@@ -48,6 +48,11 @@ The deployment utilizes the custom script extension
 + **configurenode**: Used on the Node to configure installer Prerequirements, used on nodes 2-N
 + **install_ecs**: the ecs installer, run´s on node 1
 
+Password Change extension
+the Deployment utilizes the Password change extension for linux
++ **resetpassword** to overcome some issues where cloudinit does not accept password
+the default password is Subscription#**id**, example Subscription#8c21cadc-9e41-459e-bf4b-9b5aa2fad938
+
 ## Prerequisites
 The required VM Types need to have at least 4vCPU and 16GB memory.
 Depending on your Subscription, you may require to increase your arm quota vor cores.  
