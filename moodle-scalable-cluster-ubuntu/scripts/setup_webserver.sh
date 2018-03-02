@@ -26,10 +26,24 @@ glusterNode=$1
 glusterVolume=$2 
 siteFQDN=$3
 syslogserver=$4
+webServerType=$5
+fileServerType=$6
+storageAccountName=$7
+storageAccountKey=$8
+nfsVmName=$9
 
 echo $glusterNode    >> /tmp/vars.txt
 echo $glusterVolume  >> /tmp/vars.txt
 echo $siteFQDN >> /tmp/vars.txt
+echo $syslogserver >> /tmp/vars.txt
+echo $webServerType >> /tmp/vars.txt
+echo $fileServerType >> /tmp/vars.txt
+echo $storageAccountName >> /tmp/vars.txt
+echo $storageAccountKey >> /tmp/vars.txt
+echo $nfsVmName >> /tmp/vars.txt
+
+. ./helper_functions.sh
+check_fileServerType_param $fileServerType
 
 {
   # make sure the system does automatic update
@@ -39,25 +53,45 @@ echo $siteFQDN >> /tmp/vars.txt
   # install pre-requisites
   sudo apt-get -y install python-software-properties unzip rsyslog
 
-  #configure gluster repository & install gluster client
-  sudo add-apt-repository ppa:gluster/glusterfs-3.8 -y
-  sudo apt-get -y update
-  sudo apt-get -y install glusterfs-client postgresql-client mysql-client git
+  sudo apt-get -y install postgresql-client mysql-client git
+
+  if [ $fileServerType = "gluster" ]; then
+    #configure gluster repository & install gluster client
+    sudo add-apt-repository ppa:gluster/glusterfs-3.8 -y
+    sudo apt-get -y update
+    sudo apt-get -y install glusterfs-client
+  else # "azurefiles"
+    sudo apt-get -y install cifs-utils
+  fi
 
   # install the base stack
-  sudo apt-get -y install nginx php-fpm varnish php php-cli php-curl php-zip
+  sudo apt-get -y install nginx varnish php php-cli php-curl php-zip
+
+  if [ "$webServerType" = "apache" ]; then
+    # install apache pacakges
+    sudo apt-get -y install apache2 libapache2-mod-php
+  else
+    # for nginx-only option
+    sudo apt-get -y install php-fpm
+  fi
 
   # Moodle requirements
   sudo apt-get install -y graphviz aspell php-soap php-json php-redis php-bcmath php-gd php-pgsql php-mysql php-xmlrpc php-intl php-xml php-bz2
 
-  # Mount gluster fs for /moodle
-  sudo mkdir -p /moodle
-  sudo chown www-data /moodle
-  sudo chmod 770 /moodle
-  sudo echo -e 'mount -t glusterfs '$glusterNode':/'$glusterVolume' /moodle'
-  sudo mount -t glusterfs $glusterNode:/$glusterVolume /moodle
-  sudo echo -e $glusterNode':/'$glusterVolume'   /moodle         glusterfs       defaults,_netdev,log-level=WARNING,log-file=/var/log/gluster.log 0 0' >> /etc/fstab
-  sudo mount -a
+  if [ $fileServerType = "gluster" ]; then
+    # Mount gluster fs for /moodle
+    sudo mkdir -p /moodle
+    sudo chown www-data /moodle
+    sudo chmod 770 /moodle
+    sudo echo -e 'mount -t glusterfs '$glusterNode':/'$glusterVolume' /moodle'
+    sudo mount -t glusterfs $glusterNode:/$glusterVolume /moodle
+    sudo echo -e $glusterNode':/'$glusterVolume'   /moodle         glusterfs       defaults,_netdev,log-level=WARNING,log-file=/var/log/gluster.log 0 0' >> /etc/fstab
+    sudo mount -a
+  elif [ $fileServerType = "nfs" ]; then
+    configure_nfs_client_and_mount $nfsVmName /moodle /moodle
+  else # "azurefiles"
+    setup_and_mount_azure_files_moodle_share $storageAccountName $storageAccountKey
+  fi
 
   # Configure syslog to forward
   cat <<EOF >> /etc/rsyslog.conf
@@ -129,6 +163,47 @@ http {
 }
 EOF
 
+  # Configure nginx/https
+  cat <<EOF >> /etc/nginx/sites-enabled/${siteFQDN}.conf
+server {
+        listen 443 ssl;
+        root /moodle/html/moodle;
+	index index.php index.html index.htm;
+
+        ssl on;
+        ssl_certificate /moodle/certs/nginx.crt;
+        ssl_certificate_key /moodle/certs/nginx.key;
+
+        # Log to syslog
+        error_log syslog:server=localhost,facility=local1,severity=error,tag=moodle;
+        access_log syslog:server=localhost,facility=local1,severity=notice,tag=moodle moodle_combined;
+
+        # Log XFF IP instead of varnish
+        set_real_ip_from    10.0.0.0/8;
+        set_real_ip_from    127.0.0.1;
+        set_real_ip_from    172.16.0.0/12;
+        set_real_ip_from    192.168.0.0/16;
+        real_ip_header      X-Forwarded-For;
+        real_ip_recursive   on;
+
+        location / {
+          proxy_set_header Host \$host;
+          proxy_set_header HTTP_REFERER \$http_referer;
+          proxy_set_header X-Forwarded-Host \$host;
+          proxy_set_header X-Forwarded-Server \$host;
+          proxy_set_header X-Forwarded-Proto https;
+          proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+          proxy_pass http://localhost:80;
+
+          proxy_connect_timeout       3600;
+          proxy_send_timeout          3600;
+          proxy_read_timeout          3600;
+          send_timeout                3600;
+        }
+}
+EOF
+
+  if [ "$webServerType" = "nginx" ]; then
     cat <<EOF >> /etc/nginx/sites-enabled/${siteFQDN}.conf
 server {
         listen 81 default;
@@ -181,41 +256,52 @@ server {
         }
 }
 
-server {
-        listen 443 ssl;
-        root /moodle/html/moodle;
-	index index.php index.html index.htm;
-
-        ssl on;
-        ssl_certificate /moodle/certs/nginx.crt;
-        ssl_certificate_key /moodle/certs/nginx.key;
-
-        # Log to syslog
-        error_log syslog:server=localhost,facility=local1,severity=error,tag=moodle;
-        access_log syslog:server=localhost,facility=local1,severity=notice,tag=moodle moodle_combined;
-
-        # Log XFF IP instead of varnish
-        set_real_ip_from    10.0.0.0/8;
-        set_real_ip_from    127.0.0.1;
-        set_real_ip_from    172.16.0.0/12;
-        set_real_ip_from    192.168.0.0/16;
-        real_ip_header      X-Forwarded-For;
-        real_ip_recursive   on;
-
-        location / {
-          proxy_set_header Host \$host;
-          proxy_set_header HTTP_REFERER \$http_referer;
-          proxy_set_header X-Forwarded-Host \$host;
-          proxy_set_header X-Forwarded-Server \$host;
-          proxy_set_header X-Forwarded-Proto https;
-          proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-          proxy_pass http://localhost:80;
-        }
-}
 EOF
+  fi
+
+  if [ "$webServerType" = "apache" ]; then
+    # Configure Apache/php
+    sed -i "s/Listen 80/Listen 81/" /etc/apache2/ports.conf
+    a2enmod rewrite && a2enmod remoteip && a2enmod headers
+
+    cat <<EOF >> /etc/apache2/sites-enabled/${siteFQDN}.conf
+<VirtualHost *:81>
+	ServerName ${siteFQDN}
+
+	ServerAdmin webmaster@localhost
+	DocumentRoot /moodle/html/moodle
+
+	<Directory /moodle/html/moodle>
+		Options FollowSymLinks
+		AllowOverride All
+		Require all granted
+	</Directory>
+
+    # Redirect unencrypted direct connections to HTTPS
+    <IfModule mod_rewrite.c>
+      RewriteEngine on
+      RewriteCond %{HTTP:X-Forwarded-Proto} !https [NC]
+      RewriteRule ^ https://%{SERVER_NAME}%{REQUEST_URI} [L,R=301]
+    </IFModule>
+
+    # Log X-Forwarded-For IP address instead of varnish (127.0.0.1)
+    SetEnvIf X-Forwarded-For "^.*\..*\..*\..*" forwarded
+    LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" combined
+    LogFormat "%{X-Forwarded-For}i %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" forwarded
+	ErrorLog "|/usr/bin/logger -t moodle -p local1.error"
+    CustomLog "|/usr/bin/logger -t moodle -p local1.notice" combined env=!forwarded
+    CustomLog "|/usr/bin/logger -t moodle -p local1.notice" forwarded env=forwarded
+
+</VirtualHost>
+EOF
+  fi
 
    # php config 
-   PhpIni=/etc/php/7.0/fpm/php.ini
+   if [ "$webServerType" = "apache" ]; then
+     PhpIni=/etc/php/7.0/apache2/php.ini
+   else
+     PhpIni=/etc/php/7.0/fpm/php.ini
+   fi
    sed -i "s/memory_limit.*/memory_limit = 512M/" $PhpIni
    sed -i "s/max_execution_time.*/max_execution_time = 18000/" $PhpIni
    sed -i "s/max_input_vars.*/max_input_vars = 100000/" $PhpIni
@@ -232,12 +318,16 @@ EOF
     
    # Remove the default site. Moodle is the only site we want
    rm -f /etc/nginx/sites-enabled/default
+   if [ "$webServerType" = "apache" ]; then
+     rm -f /etc/apache2/sites-enabled/000-default.conf
+   fi
 
    # restart Nginx
    sudo service nginx restart 
 
-   # fpm config - overload this 
-   cat <<EOF > /etc/php/7.0/fpm/pool.d/www.conf
+   if [ "$webServerType" = "nginx" ]; then
+     # fpm config - overload this 
+     cat <<EOF > /etc/php/7.0/fpm/pool.d/www.conf
 [www]
 user = www-data
 group = www-data
@@ -251,8 +341,13 @@ pm.min_spare_servers = 20
 pm.max_spare_servers = 30 
 EOF
 
-   # Restart fpm
-   service php7.0-fpm restart
+     # Restart fpm
+     service php7.0-fpm restart
+   fi
+
+   if [ "$webServerType" = "apache" ]; then
+     sudo service apache2 restart
+   fi
 
    # Configure varnish startup for 16.04
    VARNISHSTART="ExecStart=\/usr\/sbin\/varnishd -j unix,user=vcache -F -a :80 -T localhost:6082 -f \/etc\/varnish\/moodle.vcl -S \/etc\/varnish\/secret -s malloc,1024m -p thread_pool_min=200 -p thread_pool_max=4000 -p thread_pool_add_delay=2 -p timeout_linger=100 -p timeout_idle=30 -p send_timeout=1800 -p thread_pools=4 -p http_max_hdr=512 -p workspace_backend=512k"
