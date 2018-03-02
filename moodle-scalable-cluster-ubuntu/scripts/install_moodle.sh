@@ -22,41 +22,65 @@
 
 #parameters 
 {
-    moodleVersion=$1
-    glusterNode=$2
-    glusterVolume=$3
-    siteFQDN=$4
-    postgresIP=$5
-    moodledbname=$6
-    moodledbuser=$7
-    moodledbpass=$8
-    adminpass=$9
-    pgadminlogin=$10
-    pgadminpass=$11
-    wabsacctname=$12
-    wabsacctkey=$13
-    azuremoodledbuser=$14
-    redisDns=$15
-    redisAuth=$16
-    elasticVm1IP=$17
+    moodleVersion=${1}
+    glusterNode=${2}
+    glusterVolume=${3}
+    siteFQDN=${4}
+    dbIP=${5}
+    moodledbname=${6}
+    moodledbuser=${7}
+    moodledbpass=${8}
+    adminpass=${9}
+    dbadminlogin=${10}
+    dbadminpass=${11}
+    wabsacctname=${12}
+    wabsacctkey=${13}
+    azuremoodledbuser=${14}
+    redisDns=${15}
+    redisAuth=${16}
+    elasticVm1IP=${17}
+    installO365pluginsSwitch=${18}
+    installElasticSearchSwitch=${19}
+    dbServerType=${20}
+    fileServerType=${21}
 
     echo $moodleVersion        >> /tmp/vars.txt
     echo $glusterNode          >> /tmp/vars.txt
     echo $glusterVolume        >> /tmp/vars.txt
     echo $siteFQDN             >> /tmp/vars.txt
-    echo $postgresIP           >> /tmp/vars.txt
+    echo $dbIP                 >> /tmp/vars.txt
     echo $moodledbname         >> /tmp/vars.txt
     echo $moodledbuser         >> /tmp/vars.txt
     echo $moodledbpass         >> /tmp/vars.txt
-    echo    $adminpass         >> /tmp/vars.txt
-    echo $pgadminlogin         >> /tmp/vars.txt
-    echo $pgadminpass          >> /tmp/vars.txt
+    echo $adminpass            >> /tmp/vars.txt
+    echo $dbadminlogin         >> /tmp/vars.txt
+    echo $dbadminpass          >> /tmp/vars.txt
     echo $wabsacctname         >> /tmp/vars.txt
     echo $wabsacctkey          >> /tmp/vars.txt
     echo $azuremoodledbuser    >> /tmp/vars.txt
     echo $redisDns             >> /tmp/vars.txt
     echo $redisAuth            >> /tmp/vars.txt
     echo $elasticVm1IP         >> /tmp/vars.txt
+    echo $installO365pluginsSwitch    >> /tmp/vars.txt
+    echo $installElasticSearchSwitch  >> /tmp/vars.txt
+    echo $dbServerType                >> /tmp/vars.txt
+    echo $fileServerType              >> /tmp/vars.txt
+
+    . ./helper_functions.sh
+    check_fileServerType_param $fileServerType
+
+    if [ "$dbServerType" = "mysql" ]; then
+      mysqlIP=$dbIP
+      mysqladminlogin=$dbadminlogin
+      mysqladminpass=$dbadminpass
+    elif [ "$dbServerType" = "postgres" ]; then
+      postgresIP=$dbIP
+      pgadminlogin=$dbadminlogin
+      pgadminpass=$dbadminpass
+    else
+      echo "Invalid dbServerType ($dbServerType) given. Only 'mysql' or 'postgres' is allowed. Exiting"
+      exit 1
+    fi
 
     # make sure system does automatic updates and fail2ban
     sudo apt-get -y update
@@ -549,15 +573,34 @@ findtime = 86400   ; 1 day
 maxretry = 5
 EOF
 
-    # create gluster mount point
+    # create gluster, nfs or Azure Files mount point
     mkdir -p /moodle
 
     export DEBIAN_FRONTEND=noninteractive
 
-    # configure gluster repository & install gluster client
-    sudo add-apt-repository ppa:gluster/glusterfs-3.8 -y                     >> /tmp/apt1.log
+    if [ $fileServerType = "gluster" ]; then
+        # configure gluster repository & install gluster client
+        sudo add-apt-repository ppa:gluster/glusterfs-3.8 -y                 >> /tmp/apt1.log
+    elif [ $fileServerType = "nfs" ]; then
+        # configure NFS server and export
+        create_filesystem_with_raid /moodle /dev/md1 /dev/md1p1
+        configure_nfs_server_and_export /moodle
+    fi
+
     sudo apt-get -y update                                                   >> /tmp/apt2.log
-    sudo apt-get -y --force-yes install rsyslog glusterfs-client postgresql-client git    >> /tmp/apt3.log
+    sudo apt-get -y --force-yes install rsyslog git                          >> /tmp/apt3.log
+
+    if [ $fileServerType = "gluster" ]; then
+        sudo apt-get -y --force-yes install glusterfs-client                 >> /tmp/apt3.log
+    else # "azurefiles"
+        sudo apt-get -y --force-yes install cifs-utils                       >> /tmp/apt3.log
+    fi
+
+    if [ $dbServerType = "mysql" ]; then
+        sudo apt-get -y --force-yes install mysql-client >> /tmp/apt3.log
+    else
+        sudo apt-get -y --force-yes install postgresql-client >> /tmp/apt3.log
+    fi
 
     # install azure cli & setup container
     echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ wheezy main" | \
@@ -591,11 +634,11 @@ EOF
         --policy readwrite \
         --output tsv)
 
-    # mount gluster files system
-    echo -e '\n\rInstalling GlusterFS on '$glusterNode':/'$glusterVolume '/moodle\n\r' 
-    sudo mount -t glusterfs $glusterNode:/$glusterVolume /moodle
-
-    
+    if [ $fileServerType = "gluster" ]; then
+        # mount gluster files system
+        echo -e '\n\rInstalling GlusterFS on '$glusterNode':/'$glusterVolume '/moodle\n\r' 
+        sudo mount -t glusterfs $glusterNode:/$glusterVolume /moodle
+    fi
     
     # install pre-requisites
     sudo apt-get install -y --fix-missing python-software-properties unzip
@@ -607,8 +650,12 @@ EOF
     # Moodle requirements
     sudo apt-get -y update > /dev/null
     sudo apt-get install -y --force-yes graphviz aspell php-common php-soap php-json php-redis > /tmp/apt6.log
-    sudo apt-get install -y --force-yes php-bcmath php-gd php-pgsql php-xmlrpc php-intl php-xml php-bz2 >> /tmp/apt6.log
-
+    sudo apt-get install -y --force-yes php-bcmath php-gd php-xmlrpc php-intl php-xml php-bz2 >> /tmp/apt6.log
+    if [ $dbServerType = "mysql" ]; then
+        sudo apt-get install -y --force-yes php-mysql
+    else
+        sudo apt-get install -y --force-yes php-pgsql
+    fi
 
     # Set up initial moodle dirs
     mkdir -p /moodle/html
@@ -625,27 +672,28 @@ EOF
     /usr/bin/unzip -q moodle.zip
     /bin/mv -v moodle-'$moodleVersion' /moodle/html/moodle
 
-    # Commented out as the plugin is not available
-    # install Office 365 plugins
-    #if [ "$installOfficePlugins" = "True" ]; then
-    #        curl -k --max-redirs 10 https://github.com/Microsoft/o365-moodle/archive/'$moodleVersion'.zip -L -o o365.zip
-    #        unzip -q o365.zip
-    #        cp -r o365-moodle-'$moodleVersion'/* /moodle/html/moodle
-    #        rm -rf o365-moodle-'$moodleVersion'
-    #fi
+    if [ "'$installO365pluginsSwitch'" = "True" ]; then
+        # install Office 365 plugins
+        curl -k --max-redirs 10 https://github.com/Microsoft/o365-moodle/archive/'$moodleVersion'.zip -L -o o365.zip
+        unzip -q o365.zip
+        cp -r o365-moodle-'$moodleVersion'/* /moodle/html/moodle
+        rm -rf o365-moodle-'$moodleVersion'
+    fi
 
-    # Install ElasticSearch plugin
-    /usr/bin/curl -k --max-redirs 10 https://github.com/catalyst/moodle-search_elastic/archive/master.zip -L -o plugin-elastic.zip
-    /usr/bin/unzip -q plugin-elastic.zip
-    /bin/mkdir -p /moodle/html/moodle/search/engine/elastic
-    /bin/cp -r moodle-search_elastic-master/* /moodle/html/moodle/search/engine/elastic
-    /bin/rm -rf moodle-search_elastic-master
+    if [ "'$installElasticSearchSwitch'" = "True" ]; then
+        # Install ElasticSearch plugin
+        /usr/bin/curl -k --max-redirs 10 https://github.com/catalyst/moodle-search_elastic/archive/master.zip -L -o plugin-elastic.zip
+        /usr/bin/unzip -q plugin-elastic.zip
+        /bin/mkdir -p /moodle/html/moodle/search/engine/elastic
+        /bin/cp -r moodle-search_elastic-master/* /moodle/html/moodle/search/engine/elastic
+        /bin/rm -rf moodle-search_elastic-master
 
-    # Install ElasticSearch plugin dependency
-    /usr/bin/curl -k --max-redirs 10 https://github.com/catalyst/moodle-local_aws/archive/master.zip -L -o local-aws.zip
-    /usr/bin/unzip -q local-aws.zip
-    /bin/mkdir -p /moodle/html/moodle/local/aws
-    /bin/cp -r moodle-local_aws-master/* /moodle/html/moodle/local/aws
+        # Install ElasticSearch plugin dependency
+        /usr/bin/curl -k --max-redirs 10 https://github.com/catalyst/moodle-local_aws/archive/master.zip -L -o local-aws.zip
+        /usr/bin/unzip -q local-aws.zip
+        /bin/mkdir -p /moodle/html/moodle/local/aws
+        /bin/cp -r moodle-local_aws-master/* /moodle/html/moodle/local/aws
+    fi
 
     # Install the ObjectFS plugin
     /usr/bin/curl -k --max-redirs 10 https://github.com/catalyst/moodle-tool_objectfs/archive/master.zip -L -o plugin-objectfs.zip
@@ -664,10 +712,6 @@ EOF
 
     chmod 755 /tmp/setup-moodle.sh
     sudo -u www-data /tmp/setup-moodle.sh >> /tmp/setupmoodle.log
-
-    # create cron entry
-    # It is scheduled for once per day. It can be changed as needed.
-    echo '* * * * * www-data /usr/bin/php /moodle/html/moodle/admin/cli/cron.php 2>&1 | /usr/bin/logger -p local2.notice -t moodle' > /etc/cron.d/moodle-cron
 
     # Build nginx config
     cat <<EOF > /etc/nginx/nginx.conf
@@ -846,7 +890,6 @@ pm.start_servers = 20
 pm.min_spare_servers = 22 
 pm.max_spare_servers = 30 
 EOF
-   
 
    # Remove the default site. Moodle is the only site we want
    rm -f /etc/nginx/sites-enabled/default
@@ -1106,13 +1149,21 @@ EOF
     systemctl daemon-reload
     service varnish restart
 
-    # Create postgres db
-    echo "${postgresIP}:5432:postgres:${pgadminlogin}:${pgadminpass}" > /root/.pgpass
-    chmod 600 /root/.pgpass
-    psql -h $postgresIP -U $pgadminlogin -c "CREATE DATABASE ${moodledbname};" postgres
-    psql -h $postgresIP -U $pgadminlogin -c "CREATE USER ${moodledbuser} WITH PASSWORD '${moodledbpass}';" postgres
-    psql -h $postgresIP -U $pgadminlogin -c "GRANT ALL ON DATABASE ${moodledbname} TO ${moodledbuser};" postgres
-    rm -f /root/.pgpass
+    if [ $dbServerType = "mysql" ]; then
+        mysql -h $mysqlIP -u $mysqladminlogin -p${mysqladminpass} -e "CREATE DATABASE ${moodledbname} CHARACTER SET utf8;"
+        mysql -h $mysqlIP -u $mysqladminlogin -p${mysqladminpass} -e "GRANT ALL ON ${moodledbname}.* TO ${moodledbuser} IDENTIFIED BY '${moodledbpass}';"
+
+        echo "mysql -h $mysqlIP -u $mysqladminlogin -p${mysqladminpass} -e \"CREATE DATABASE ${moodledbname};\"" >> /tmp/debug
+        echo "mysql -h $mysqlIP -u $mysqladminlogin -p${mysqladminpass} -e \"GRANT ALL ON ${moodledbname}.* TO ${moodledbuser} IDENTIFIED BY '${moodledbpass}';\"" >> /tmp/debug
+    else
+        # Create postgres db
+        echo "${postgresIP}:5432:postgres:${pgadminlogin}:${pgadminpass}" > /root/.pgpass
+        chmod 600 /root/.pgpass
+        psql -h $postgresIP -U $pgadminlogin -c "CREATE DATABASE ${moodledbname};" postgres
+        psql -h $postgresIP -U $pgadminlogin -c "CREATE USER ${moodledbuser} WITH PASSWORD '${moodledbpass}';" postgres
+        psql -h $postgresIP -U $pgadminlogin -c "GRANT ALL ON DATABASE ${moodledbname} TO ${moodledbuser};" postgres
+        rm -f /root/.pgpass
+    fi
 
     # Master config for syslog
     mkdir /var/log/sitelogs
@@ -1129,960 +1180,33 @@ EOF
     service rsyslog restart
 
     # Fire off moodle setup
-    echo -e "cd /tmp; sudo -u www-data /usr/bin/php /moodle/html/moodle/admin/cli/install.php --chmod=770 --lang=en_us --wwwroot=https://"$siteFQDN" --dataroot=/moodle/moodledata --dbhost="$postgresIP" --dbname="$moodledbname" --dbuser="$azuremoodledbuser" --dbpass="$moodledbpass" --dbtype=pgsql --fullname='Moodle LMS' --shortname='Moodle' --adminuser=admin --adminpass="$adminpass" --adminemail=admin@"$siteFQDN" --non-interactive --agree-license --allow-unstable || true "
-    cd /tmp; sudo -u www-data /usr/bin/php /moodle/html/moodle/admin/cli/install.php --chmod=770 --lang=en_us --wwwroot=https://$siteFQDN   --dataroot=/moodle/moodledata --dbhost=$postgresIP   --dbname=$moodledbname   --dbuser=$azuremoodledbuser   --dbpass=$moodledbpass   --dbtype=pgsql --fullname='Moodle LMS' --shortname='Moodle' --adminuser=admin --adminpass=$adminpass   --adminemail=admin@$siteFQDN   --non-interactive --agree-license --allow-unstable || true
+    if [ $dbServerType = "mysql" ]; then
+        echo -e "cd /tmp; sudo -u www-data /usr/bin/php /moodle/html/moodle/admin/cli/install.php --chmod=770 --lang=en_us --wwwroot=https://"$siteFQDN" --dataroot=/moodle/moodledata --dbhost="$mysqlIP" --dbname="$moodledbname" --dbuser="$azuremoodledbuser" --dbpass="$moodledbpass" --dbtype=mysqli --fullname='Moodle LMS' --shortname='Moodle' --adminuser=admin --adminpass="$adminpass" --adminemail=admin@"$siteFQDN" --non-interactive --agree-license --allow-unstable || true "
+        cd /tmp; sudo -u www-data /usr/bin/php /moodle/html/moodle/admin/cli/install.php --chmod=770 --lang=en_us --wwwroot=https://$siteFQDN   --dataroot=/moodle/moodledata --dbhost=$mysqlIP   --dbname=$moodledbname   --dbuser=$azuremoodledbuser   --dbpass=$moodledbpass   --dbtype=mysqli --fullname='Moodle LMS' --shortname='Moodle' --adminuser=admin --adminpass=$adminpass   --adminemail=admin@$siteFQDN   --non-interactive --agree-license --allow-unstable || true
 
-    # Add the ObjectFS configuration to Moodle.
-    echo "${postgresIP}:5432:${moodledbname}:${azuremoodledbuser}:${moodledbpass}" > /root/.pgpass
-    chmod 600 /root/.pgpass
-    psql -h $postgresIP -U $azuremoodledbuser -c "INSERT INTO mdl_config_plugins (plugin, name, value) VALUES ('tool_objectfs', 'enabletasks', 1);" $moodledbname
-    psql -h $postgresIP -U $azuremoodledbuser -c "INSERT INTO mdl_config_plugins (plugin, name, value) VALUES ('tool_objectfs', 'filesystem', '\tool_objectfs\azure_file_system');" $moodledbname
-    psql -h $postgresIP -U $azuremoodledbuser -c "INSERT INTO mdl_config_plugins (plugin, name, value) VALUES ('tool_objectfs', 'azure_accountname', '$wabsacctname');" $moodledbname
-    psql -h $postgresIP -U $azuremoodledbuser -c "INSERT INTO mdl_config_plugins (plugin, name, value) VALUES ('tool_objectfs', 'azure_container', 'objectfs');" $moodledbname
-    psql -h $postgresIP -U $azuremoodledbuser -c "INSERT INTO mdl_config_plugins (plugin, name, value) VALUES ('tool_objectfs', 'azure_sastoken', '$sas');" $moodledbname
+        mysql -h $mysqlIP -u $mysqladminlogin -p${mysqladminpass} ${moodledbname} -e "INSERT INTO mdl_config_plugins (plugin, name, value) VALUES ('tool_objectfs', 'enabletasks', 1);" 
+        mysql -h $mysqlIP -u $mysqladminlogin -p${mysqladminpass} ${moodledbname} -e "INSERT INTO mdl_config_plugins (plugin, name, value) VALUES ('tool_objectfs', 'filesystem', '\\\tool_objectfs\\\azure_file_system');"
+        mysql -h $mysqlIP -u $mysqladminlogin -p${mysqladminpass} ${moodledbname} -e "INSERT INTO mdl_config_plugins (plugin, name, value) VALUES ('tool_objectfs', 'azure_accountname', '${wabsacctname}');"
+        mysql -h $mysqlIP -u $mysqladminlogin -p${mysqladminpass} ${moodledbname} -e "INSERT INTO mdl_config_plugins (plugin, name, value) VALUES ('tool_objectfs', 'azure_container', 'objectfs');"
+        mysql -h $mysqlIP -u $mysqladminlogin -p${mysqladminpass} ${moodledbname} -e "INSERT INTO mdl_config_plugins (plugin, name, value) VALUES ('tool_objectfs', 'azure_sastoken', '${sas}');"
+    else
+        echo -e "cd /tmp; sudo -u www-data /usr/bin/php /moodle/html/moodle/admin/cli/install.php --chmod=770 --lang=en_us --wwwroot=https://"$siteFQDN" --dataroot=/moodle/moodledata --dbhost="$postgresIP" --dbname="$moodledbname" --dbuser="$azuremoodledbuser" --dbpass="$moodledbpass" --dbtype=pgsql --fullname='Moodle LMS' --shortname='Moodle' --adminuser=admin --adminpass="$adminpass" --adminemail=admin@"$siteFQDN" --non-interactive --agree-license --allow-unstable || true "
+        cd /tmp; sudo -u www-data /usr/bin/php /moodle/html/moodle/admin/cli/install.php --chmod=770 --lang=en_us --wwwroot=https://$siteFQDN   --dataroot=/moodle/moodledata --dbhost=$postgresIP   --dbname=$moodledbname   --dbuser=$azuremoodledbuser   --dbpass=$moodledbpass   --dbtype=pgsql --fullname='Moodle LMS' --shortname='Moodle' --adminuser=admin --adminpass=$adminpass   --adminemail=admin@$siteFQDN   --non-interactive --agree-license --allow-unstable || true
+
+        # Add the ObjectFS configuration to Moodle.
+        echo "${postgresIP}:5432:${moodledbname}:${azuremoodledbuser}:${moodledbpass}" > /root/.pgpass
+        chmod 600 /root/.pgpass
+        psql -h $postgresIP -U $azuremoodledbuser -c "INSERT INTO mdl_config_plugins (plugin, name, value) VALUES ('tool_objectfs', 'enabletasks', 1);" $moodledbname
+        psql -h $postgresIP -U $azuremoodledbuser -c "INSERT INTO mdl_config_plugins (plugin, name, value) VALUES ('tool_objectfs', 'filesystem', '\tool_objectfs\azure_file_system');" $moodledbname
+        psql -h $postgresIP -U $azuremoodledbuser -c "INSERT INTO mdl_config_plugins (plugin, name, value) VALUES ('tool_objectfs', 'azure_accountname', '$wabsacctname');" $moodledbname
+        psql -h $postgresIP -U $azuremoodledbuser -c "INSERT INTO mdl_config_plugins (plugin, name, value) VALUES ('tool_objectfs', 'azure_container', 'objectfs');" $moodledbname
+        psql -h $postgresIP -U $azuremoodledbuser -c "INSERT INTO mdl_config_plugins (plugin, name, value) VALUES ('tool_objectfs', 'azure_sastoken', '$sas');" $moodledbname
+    fi
 
     echo -e "\n\rDone! Installation completed!\n\r"
 
-   # create redis configuration in /moodle/moodledata/muc/config.php
-   cat <<EOF > /moodle/moodledata/muc/config.php
-<?php defined('MOODLE_INTERNAL') || die();
- \$configuration = array (
-  'siteidentifier' => '7a142be09ea65699e4a6f6ef91c0773c',
-  'stores' => 
-  array (
-    'default_application' => 
-    array (
-      'name' => 'default_application',
-      'plugin' => 'file',
-      'configuration' => 
-      array (
-      ),
-      'features' => 30,
-      'modes' => 3,
-      'default' => true,
-      'class' => 'cachestore_file',
-      'lock' => 'cachelock_file_default',
-    ),
-    'default_session' => 
-    array (
-      'name' => 'default_session',
-      'plugin' => 'session',
-      'configuration' => 
-      array (
-      ),
-      'features' => 14,
-      'modes' => 2,
-      'default' => true,
-      'class' => 'cachestore_session',
-      'lock' => 'cachelock_file_default',
-    ),
-    'default_request' => 
-    array (
-      'name' => 'default_request',
-      'plugin' => 'static',
-      'configuration' => 
-      array (
-      ),
-      'features' => 31,
-      'modes' => 4,
-      'default' => true,
-      'class' => 'cachestore_static',
-      'lock' => 'cachelock_file_default',
-    ),
-    'redis' => 
-    array (
-      'name' => 'redis',
-      'plugin' => 'redis',
-      'configuration' => 
-      array (
-        'server' => '$redisDns',
-        'prefix' => 'moodle_prod',
-        'password' => '$redisAuth',
-        'serializer' => '1',
-      ),
-      'features' => 26,
-      'modes' => 3,
-      'mappingsonly' => false,
-      'class' => 'cachestore_redis',
-      'default' => false,
-      'lock' => 'cachelock_file_default',
-    ),
-    'local_file' => 
-    array (
-      'name' => 'local_file',
-      'plugin' => 'file',
-      'configuration' => 
-      array (
-        'path' => '/tmp/muc/moodle_prod',
-        'autocreate' => 1,
-      ),
-      'features' => 30,
-      'modes' => 3,
-      'mappingsonly' => false,
-      'class' => 'cachestore_file',
-      'default' => false,
-      'lock' => 'cachelock_file_default',
-    ),
-  ),
-  'modemappings' => 
-  array (
-    0 => 
-    array (
-      'store' => 'redis',
-      'mode' => 1,
-      'sort' => 0,
-    ),
-    1 => 
-    array (
-      'store' => 'default_session',
-      'mode' => 2,
-      'sort' => 0,
-    ),
-    2 => 
-    array (
-      'store' => 'default_request',
-      'mode' => 4,
-      'sort' => 0,
-    ),
-  ),
-  'definitions' => 
-  array (
-    'core/string' => 
-    array (
-      'mode' => 1,
-      'simplekeys' => true,
-      'simpledata' => true,
-      'staticacceleration' => true,
-      'staticaccelerationsize' => 30,
-      'canuselocalstore' => true,
-      'component' => 'core',
-      'area' => 'string',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 15,
-    ),
-    'core/langmenu' => 
-    array (
-      'mode' => 1,
-      'simplekeys' => true,
-      'simpledata' => true,
-      'staticacceleration' => true,
-      'canuselocalstore' => true,
-      'component' => 'core',
-      'area' => 'langmenu',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 15,
-    ),
-    'core/databasemeta' => 
-    array (
-      'mode' => 1,
-      'requireidentifiers' => 
-      array (
-        0 => 'dbfamily',
-      ),
-      'simpledata' => true,
-      'staticacceleration' => true,
-      'staticaccelerationsize' => 15,
-      'component' => 'core',
-      'area' => 'databasemeta',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 15,
-    ),
-    'core/eventinvalidation' => 
-    array (
-      'mode' => 1,
-      'staticacceleration' => true,
-      'requiredataguarantee' => true,
-      'simpledata' => true,
-      'component' => 'core',
-      'area' => 'eventinvalidation',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 15,
-    ),
-    'core/questiondata' => 
-    array (
-      'mode' => 1,
-      'simplekeys' => true,
-      'requiredataguarantee' => false,
-      'datasource' => 'question_finder',
-      'datasourcefile' => 'question/engine/bank.php',
-      'component' => 'core',
-      'area' => 'questiondata',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 15,
-    ),
-    'core/htmlpurifier' => 
-    array (
-      'mode' => 1,
-      'canuselocalstore' => true,
-      'component' => 'core',
-      'area' => 'htmlpurifier',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 15,
-    ),
-    'core/config' => 
-    array (
-      'mode' => 1,
-      'staticacceleration' => true,
-      'simpledata' => true,
-      'component' => 'core',
-      'area' => 'config',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 15,
-    ),
-    'core/groupdata' => 
-    array (
-      'mode' => 1,
-      'simplekeys' => true,
-      'simpledata' => true,
-      'staticacceleration' => true,
-      'staticaccelerationsize' => 2,
-      'component' => 'core',
-      'area' => 'groupdata',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 15,
-    ),
-    'core/calendar_subscriptions' => 
-    array (
-      'mode' => 1,
-      'simplekeys' => true,
-      'simpledata' => true,
-      'staticacceleration' => true,
-      'component' => 'core',
-      'area' => 'calendar_subscriptions',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 15,
-    ),
-    'core/capabilities' => 
-    array (
-      'mode' => 1,
-      'simplekeys' => true,
-      'simpledata' => true,
-      'staticacceleration' => true,
-      'staticaccelerationsize' => 1,
-      'ttl' => 3600,
-      'component' => 'core',
-      'area' => 'capabilities',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 15,
-    ),
-    'core/yuimodules' => 
-    array (
-      'mode' => 1,
-      'component' => 'core',
-      'area' => 'yuimodules',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 15,
-    ),
-    'core/observers' => 
-    array (
-      'mode' => 1,
-      'simplekeys' => true,
-      'simpledata' => true,
-      'staticacceleration' => true,
-      'staticaccelerationsize' => 2,
-      'component' => 'core',
-      'area' => 'observers',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 15,
-    ),
-    'core/plugin_manager' => 
-    array (
-      'mode' => 1,
-      'simplekeys' => true,
-      'simpledata' => true,
-      'component' => 'core',
-      'area' => 'plugin_manager',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 15,
-    ),
-    'core/coursecattree' => 
-    array (
-      'mode' => 1,
-      'staticacceleration' => true,
-      'invalidationevents' => 
-      array (
-        0 => 'changesincoursecat',
-      ),
-      'component' => 'core',
-      'area' => 'coursecattree',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 15,
-    ),
-    'core/coursecat' => 
-    array (
-      'mode' => 2,
-      'invalidationevents' => 
-      array (
-        0 => 'changesincoursecat',
-        1 => 'changesincourse',
-      ),
-      'ttl' => 600,
-      'component' => 'core',
-      'area' => 'coursecat',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 2,
-    ),
-    'core/coursecatrecords' => 
-    array (
-      'mode' => 4,
-      'simplekeys' => true,
-      'invalidationevents' => 
-      array (
-        0 => 'changesincoursecat',
-      ),
-      'component' => 'core',
-      'area' => 'coursecatrecords',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 2,
-    ),
-    'core/coursecontacts' => 
-    array (
-      'mode' => 1,
-      'staticacceleration' => true,
-      'simplekeys' => true,
-      'ttl' => 3600,
-      'component' => 'core',
-      'area' => 'coursecontacts',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 15,
-    ),
-    'core/repositories' => 
-    array (
-      'mode' => 4,
-      'component' => 'core',
-      'area' => 'repositories',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 2,
-    ),
-    'core/externalbadges' => 
-    array (
-      'mode' => 1,
-      'simplekeys' => true,
-      'ttl' => 3600,
-      'component' => 'core',
-      'area' => 'externalbadges',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 15,
-    ),
-    'core/coursemodinfo' => 
-    array (
-      'mode' => 1,
-      'simplekeys' => true,
-      'canuselocalstore' => true,
-      'component' => 'core',
-      'area' => 'coursemodinfo',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 15,
-    ),
-    'core/userselections' => 
-    array (
-      'mode' => 2,
-      'simplekeys' => true,
-      'simpledata' => true,
-      'component' => 'core',
-      'area' => 'userselections',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 2,
-    ),
-    'core/completion' => 
-    array (
-      'mode' => 1,
-      'simplekeys' => true,
-      'simpledata' => true,
-      'ttl' => 3600,
-      'staticacceleration' => true,
-      'staticaccelerationsize' => 2,
-      'component' => 'core',
-      'area' => 'completion',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 15,
-    ),
-    'core/coursecompletion' => 
-    array (
-      'mode' => 1,
-      'simplekeys' => true,
-      'simpledata' => true,
-      'ttl' => 3600,
-      'staticacceleration' => true,
-      'staticaccelerationsize' => 30,
-      'component' => 'core',
-      'area' => 'coursecompletion',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 15,
-    ),
-    'core/navigation_expandcourse' => 
-    array (
-      'mode' => 2,
-      'simplekeys' => true,
-      'simpledata' => true,
-      'component' => 'core',
-      'area' => 'navigation_expandcourse',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 2,
-    ),
-    'core/suspended_userids' => 
-    array (
-      'mode' => 4,
-      'simplekeys' => true,
-      'simpledata' => true,
-      'component' => 'core',
-      'area' => 'suspended_userids',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 2,
-    ),
-    'core/roledefs' => 
-    array (
-      'mode' => 1,
-      'simplekeys' => true,
-      'simpledata' => true,
-      'staticacceleration' => true,
-      'staticaccelerationsize' => 30,
-      'component' => 'core',
-      'area' => 'roledefs',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 15,
-    ),
-    'core/plugin_functions' => 
-    array (
-      'mode' => 1,
-      'simplekeys' => true,
-      'simpledata' => true,
-      'staticacceleration' => true,
-      'staticaccelerationsize' => 5,
-      'component' => 'core',
-      'area' => 'plugin_functions',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 15,
-    ),
-    'core/tags' => 
-    array (
-      'mode' => 4,
-      'simplekeys' => true,
-      'staticacceleration' => true,
-      'component' => 'core',
-      'area' => 'tags',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 2,
-    ),
-    'core/grade_categories' => 
-    array (
-      'mode' => 2,
-      'simplekeys' => true,
-      'invalidationevents' => 
-      array (
-        0 => 'changesingradecategories',
-      ),
-      'component' => 'core',
-      'area' => 'grade_categories',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 2,
-    ),
-    'core/temp_tables' => 
-    array (
-      'mode' => 4,
-      'simplekeys' => true,
-      'simpledata' => true,
-      'component' => 'core',
-      'area' => 'temp_tables',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 2,
-    ),
-    'core/tagindexbuilder' => 
-    array (
-      'mode' => 2,
-      'simplekeys' => true,
-      'simplevalues' => true,
-      'staticacceleration' => true,
-      'staticaccelerationsize' => 10,
-      'ttl' => 900,
-      'invalidationevents' => 
-      array (
-        0 => 'resettagindexbuilder',
-      ),
-      'component' => 'core',
-      'area' => 'tagindexbuilder',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 2,
-    ),
-    'core/contextwithinsights' => 
-    array (
-      'mode' => 1,
-      'simplekeys' => true,
-      'simpledata' => true,
-      'staticacceleration' => true,
-      'staticaccelerationsize' => 1,
-      'component' => 'core',
-      'area' => 'contextwithinsights',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 15,
-    ),
-    'core/message_processors_enabled' => 
-    array (
-      'mode' => 1,
-      'simplekeys' => true,
-      'simpledata' => true,
-      'staticacceleration' => true,
-      'staticaccelerationsize' => 3,
-      'component' => 'core',
-      'area' => 'message_processors_enabled',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 15,
-    ),
-    'core/message_time_last_message_between_users' => 
-    array (
-      'mode' => 1,
-      'simplekeys' => true,
-      'simplevalues' => true,
-      'datasource' => '\\core_message\\time_last_message_between_users',
-      'component' => 'core',
-      'area' => 'message_time_last_message_between_users',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 15,
-    ),
-    'core/fontawesomeiconmapping' => 
-    array (
-      'mode' => 1,
-      'simplekeys' => true,
-      'simpledata' => true,
-      'staticacceleration' => true,
-      'staticaccelerationsize' => 1,
-      'component' => 'core',
-      'area' => 'fontawesomeiconmapping',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 15,
-    ),
-    'core/postprocessedcss' => 
-    array (
-      'mode' => 1,
-      'simplekeys' => true,
-      'simpledata' => true,
-      'staticacceleration' => false,
-      'component' => 'core',
-      'area' => 'postprocessedcss',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 15,
-    ),
-    'core/user_group_groupings' => 
-    array (
-      'mode' => 1,
-      'simplekeys' => true,
-      'simpledata' => true,
-      'staticacceleration' => true,
-      'component' => 'core',
-      'area' => 'user_group_groupings',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 15,
-    ),
-    'availability_grade/scores' => 
-    array (
-      'mode' => 1,
-      'staticacceleration' => true,
-      'staticaccelerationsize' => 2,
-      'ttl' => 3600,
-      'component' => 'availability_grade',
-      'area' => 'scores',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 15,
-    ),
-    'availability_grade/items' => 
-    array (
-      'mode' => 1,
-      'staticacceleration' => true,
-      'staticaccelerationsize' => 2,
-      'ttl' => 3600,
-      'component' => 'availability_grade',
-      'area' => 'items',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 15,
-    ),
-    'mod_glossary/concepts' => 
-    array (
-      'mode' => 1,
-      'simplekeys' => true,
-      'simpledata' => false,
-      'staticacceleration' => true,
-      'staticaccelerationsize' => 30,
-      'component' => 'mod_glossary',
-      'area' => 'concepts',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 15,
-    ),
-    'repository_googledocs/folder' => 
-    array (
-      'mode' => 1,
-      'simplekeys' => false,
-      'simpledata' => true,
-      'staticacceleration' => true,
-      'staticaccelerationsize' => 10,
-      'canuselocalstore' => true,
-      'component' => 'repository_googledocs',
-      'area' => 'folder',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 15,
-    ),
-    'repository_onedrive/folder' => 
-    array (
-      'mode' => 1,
-      'simplekeys' => false,
-      'simpledata' => true,
-      'staticacceleration' => true,
-      'staticaccelerationsize' => 10,
-      'canuselocalstore' => true,
-      'component' => 'repository_onedrive',
-      'area' => 'folder',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 15,
-    ),
-    'repository_skydrive/foldername' => 
-    array (
-      'mode' => 2,
-      'component' => 'repository_skydrive',
-      'area' => 'foldername',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 2,
-    ),
-    'tool_mobile/plugininfo' => 
-    array (
-      'mode' => 1,
-      'simplekeys' => true,
-      'staticacceleration' => true,
-      'staticaccelerationsize' => 1,
-      'component' => 'tool_mobile',
-      'area' => 'plugininfo',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 15,
-    ),
-    'tool_monitor/eventsubscriptions' => 
-    array (
-      'mode' => 1,
-      'simplekeys' => true,
-      'simpledata' => true,
-      'staticacceleration' => true,
-      'staticaccelerationsize' => 10,
-      'component' => 'tool_monitor',
-      'area' => 'eventsubscriptions',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 15,
-    ),
-    'tool_uploadcourse/helper' => 
-    array (
-      'mode' => 4,
-      'component' => 'tool_uploadcourse',
-      'area' => 'helper',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 2,
-    ),
-    'tool_usertours/tourdata' => 
-    array (
-      'mode' => 1,
-      'simplekeys' => true,
-      'simpledata' => true,
-      'staticacceleration' => true,
-      'staticaccelerationsize' => 1,
-      'component' => 'tool_usertours',
-      'area' => 'tourdata',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 15,
-    ),
-    'tool_usertours/stepdata' => 
-    array (
-      'mode' => 1,
-      'simplekeys' => true,
-      'simpledata' => true,
-      'staticacceleration' => true,
-      'staticaccelerationsize' => 1,
-      'component' => 'tool_usertours',
-      'area' => 'stepdata',
-      'selectedsharingoption' => 2,
-      'userinputsharingkey' => '',
-      'sharingoptions' => 15,
-    ),
-  ),
-  'definitionmappings' => 
-  array (
-    0 => 
-    array (
-      'store' => 'local_file',
-      'definition' => 'core/coursemodinfo',
-      'sort' => 1,
-    ),
-    1 => 
-    array (
-      'store' => 'redis',
-      'definition' => 'core/groupdata',
-      'sort' => 1,
-    ),
-    2 => 
-    array (
-      'store' => 'redis',
-      'definition' => 'core/roledefs',
-      'sort' => 1,
-    ),
-    3 => 
-    array (
-      'store' => 'redis',
-      'definition' => 'tool_usertours/tourdata',
-      'sort' => 1,
-    ),
-    4 => 
-    array (
-      'store' => 'redis',
-      'definition' => 'repository_onedrive/folder',
-      'sort' => 1,
-    ),
-    5 => 
-    array (
-      'store' => 'redis',
-      'definition' => 'core/message_processors_enabled',
-      'sort' => 1,
-    ),
-    6 => 
-    array (
-      'store' => 'redis',
-      'definition' => 'core/coursecontacts',
-      'sort' => 1,
-    ),
-    7 => 
-    array (
-      'store' => 'redis',
-      'definition' => 'repository_googledocs/folder',
-      'sort' => 1,
-    ),
-    8 => 
-    array (
-      'store' => 'redis',
-      'definition' => 'core/questiondata',
-      'sort' => 1,
-    ),
-    9 => 
-    array (
-      'store' => 'redis',
-      'definition' => 'core/coursecat',
-      'sort' => 1,
-    ),
-    10 => 
-    array (
-      'store' => 'redis',
-      'definition' => 'core/databasemeta',
-      'sort' => 1,
-    ),
-    11 => 
-    array (
-      'store' => 'redis',
-      'definition' => 'core/eventinvalidation',
-      'sort' => 1,
-    ),
-    12 => 
-    array (
-      'store' => 'redis',
-      'definition' => 'core/coursecattree',
-      'sort' => 1,
-    ),
-    13 => 
-    array (
-      'store' => 'redis',
-      'definition' => 'core/coursecompletion',
-      'sort' => 1,
-    ),
-    14 => 
-    array (
-      'store' => 'redis',
-      'definition' => 'core/user_group_groupings',
-      'sort' => 1,
-    ),
-    15 => 
-    array (
-      'store' => 'redis',
-      'definition' => 'core/capabilities',
-      'sort' => 1,
-    ),
-    16 => 
-    array (
-      'store' => 'redis',
-      'definition' => 'core/yuimodules',
-      'sort' => 1,
-    ),
-    17 => 
-    array (
-      'store' => 'redis',
-      'definition' => 'core/observers',
-      'sort' => 1,
-    ),
-    18 => 
-    array (
-      'store' => 'redis',
-      'definition' => 'mod_glossary/concepts',
-      'sort' => 1,
-    ),
-    19 => 
-    array (
-      'store' => 'redis',
-      'definition' => 'core/fontawesomeiconmapping',
-      'sort' => 1,
-    ),
-    20 => 
-    array (
-      'store' => 'redis',
-      'definition' => 'core/config',
-      'sort' => 1,
-    ),
-    21 => 
-    array (
-      'store' => 'redis',
-      'definition' => 'tool_mobile/plugininfo',
-      'sort' => 1,
-    ),
-    22 => 
-    array (
-      'store' => 'redis',
-      'definition' => 'core/plugin_functions',
-      'sort' => 1,
-    ),
-    23 => 
-    array (
-      'store' => 'redis',
-      'definition' => 'core/postprocessedcss',
-      'sort' => 1,
-    ),
-    24 => 
-    array (
-      'store' => 'redis',
-      'definition' => 'core/plugin_manager',
-      'sort' => 1,
-    ),
-    25 => 
-    array (
-      'store' => 'redis',
-      'definition' => 'tool_usertours/stepdata',
-      'sort' => 1,
-    ),
-    26 => 
-    array (
-      'store' => 'redis',
-      'definition' => 'availability_grade/items',
-      'sort' => 1,
-    ),
-    27 => 
-    array (
-      'store' => 'local_file',
-      'definition' => 'core/string',
-      'sort' => 1,
-    ),
-    28 => 
-    array (
-      'store' => 'redis',
-      'definition' => 'core/externalbadges',
-      'sort' => 1,
-    ),
-    29 => 
-    array (
-      'store' => 'local_file',
-      'definition' => 'core/langmenu',
-      'sort' => 1,
-    ),
-    30 => 
-    array (
-      'store' => 'local_file',
-      'definition' => 'core/htmlpurifier',
-      'sort' => 1,
-    ),
-    31 => 
-    array (
-      'store' => 'redis',
-      'definition' => 'core/completion',
-      'sort' => 1,
-    ),
-    32 => 
-    array (
-      'store' => 'redis',
-      'definition' => 'core/calendar_subscriptions',
-      'sort' => 1,
-    ),
-    33 => 
-    array (
-      'store' => 'redis',
-      'definition' => 'core/contextwithinsights',
-      'sort' => 1,
-    ),
-    34 => 
-    array (
-      'store' => 'redis',
-      'definition' => 'tool_monitor/eventsubscriptions',
-      'sort' => 1,
-    ),
-    35 => 
-    array (
-      'store' => 'redis',
-      'definition' => 'core/message_time_last_message_between_users',
-      'sort' => 1,
-    ),
-    36 => 
-    array (
-      'store' => 'redis',
-      'definition' => 'availability_grade/scores',
-      'sort' => 1,
-    ),
-  ),
-  'locks' => 
-  array (
-    'cachelock_file_default' => 
-    array (
-      'name' => 'cachelock_file_default',
-      'type' => 'cachelock_file',
-      'dir' => 'filelocks',
-      'default' => true,
-    ),
-  ),
-);
-EOF
-
+    create_redis_configuration_in_moodledata_muc_config_php
+    
     # redis configuration in /moodle/html/moodle/config.php
     sed -i "23 a \$CFG->session_redis_lock_expire = 7200;" /moodle/html/moodle/config.php
     sed -i "23 a \$CFG->session_redis_acquire_lock_timeout = 120;" /moodle/html/moodle/config.php
@@ -2096,25 +1220,38 @@ EOF
     # We proxy ssl, so moodle needs to know this
     sed -i "23 a \$CFG->sslproxy  = 'true';" /moodle/html/moodle/config.php
 
-    # Set up elasticsearch plugin
-    sed -i "23 a \$CFG->forced_plugin_settings = ['search_elastic' => ['hostname' => 'http://$elasticVm1IP']];" /moodle/html/moodle/config.php
-    sed -i "23 a \$CFG->searchengine = 'elastic';" /moodle/html/moodle/config.php
-    sed -i "23 a \$CFG->enableglobalsearch = 'true';" /moodle/html/moodle/config.php
+    if [ "$installElasticSearchSwitch" = "True" ]; then
+        # Set up elasticsearch plugin
+        sed -i "23 a \$CFG->forced_plugin_settings = ['search_elastic' => ['hostname' => 'http://$elasticVm1IP']];" /moodle/html/moodle/config.php
+        sed -i "23 a \$CFG->searchengine = 'elastic';" /moodle/html/moodle/config.php
+        sed -i "23 a \$CFG->enableglobalsearch = 'true';" /moodle/html/moodle/config.php
+    fi
 
     # Set the ObjectFS alternate filesystem
     sed -i "23 a \$CFG->alternative_file_system_class = '\\\tool_objectfs\\\azure_file_system';" /moodle/html/moodle/config.php
 
-   # Get a new version of Postgres to match Azure version
-   add-apt-repository "deb http://apt.postgresql.org/pub/repos/apt/ xenial-pgdg main"
-   wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
-   apt-get update
-   apt-get install postgresql-client-9.6
+   if [ "$dbServerType" = "postgres" ]; then
+     # Get a new version of Postgres to match Azure version
+     add-apt-repository "deb http://apt.postgresql.org/pub/repos/apt/ xenial-pgdg main"
+     wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+     apt-get update
+     apt-get install postgresql-client-9.6
+   fi
+
+   # create cron entry
+   # It is scheduled for once per minute. It can be changed as needed.
+   echo '* * * * * www-data /usr/bin/php /moodle/html/moodle/admin/cli/cron.php 2>&1 | /usr/bin/logger -p local2.notice -t moodle' > /etc/cron.d/moodle-cron
 
    # Set up cronned sql dump
-   cat <<EOF > /etc/cron.d/sql-backup
+   if [ "$dbServerType" = "mysql" ]; then
+      cat <<EOF > /etc/cron.d/sql-backup
+22 02 * * * root /usr/bin/mysqldump -h $mysqlIP -u ${azuremoodledbuser} -p'${moodledbpass}' --databases ${moodledbname} | gzip > /moodle/db-backup.sql.gz
+EOF
+   else
+      cat <<EOF > /etc/cron.d/sql-backup
 22 02 * * * root /usr/bin/pg_dump -Fc -h $postgresIP -U ${azuremoodledbuser} ${moodledbname} > /moodle/db-backup.sql
 EOF
-
+   fi
 
    # Turning off services we don't need the jumpbox running
    service nginx stop
@@ -2123,9 +1260,28 @@ EOF
    service varnishncsa stop
    service varnishlog stop
 
-   # make sure Moodle can read its code directory but not write
-   sudo chown -R root.root /moodle/html/moodle
-   sudo find /moodle/html/moodle -type f -exec chmod 644 '{}' \;
-   sudo find /moodle/html/moodle -type d -exec chmod 755 '{}' \;
+   if [ $fileServerType = "gluster" -o $fileServerType = "nfs" ]; then
+      # make sure Moodle can read its code directory but not write
+      sudo chown -R root.root /moodle/html/moodle
+      sudo find /moodle/html/moodle -type f -exec chmod 644 '{}' \;
+      sudo find /moodle/html/moodle -type d -exec chmod 755 '{}' \;
+   fi
+
+   if [ $fileServerType = "azurefiles" ]; then
+      # Delayed copy of moodle installation to the Azure Files share
+
+      # First rename moodle directory to something else
+      mv /moodle /moodle_old_delete_me
+      # Then create the moodle share
+      echo -e '\n\rCreating an Azure Files share for moodle'
+      create_azure_files_moodle_share $wabsacctname $wabsacctkey /tmp/wabs.log
+      # Set up and mount Azure Files share. Must be done after nginx is installed because of www-data user/group
+      echo -e '\n\rSetting up and mounting Azure Files share on //'$wabsacctname'.file.core.windows.net/moodle on /moodle\n\r'
+      setup_and_mount_azure_files_moodle_share $wabsacctname $wabsacctkey
+      # Move the local installation over to the Azure Files
+      echo -e '\n\rMoving locally installed moodle over to Azure Files'
+      cp -a /moodle_old_delete_me/* /moodle || true # Ignore case sensitive directory copy failure
+      # rm -rf /moodle_old_delete_me || true # Keep the files just in case
+   fi
 
 }  > /tmp/install.log
