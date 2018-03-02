@@ -10,4 +10,4 @@
 This template creates an Azure Cosmos DB Gremlin (Graph) account with the provided name, and the offer type set to `Standard`.
 
 By not setting the optional consistency level parameter `consistencyLevel`, the account will be created with the default consistency level of `Session`.
-To set the consistency level to another value, see[101-create-documentdb-account-consistencypolicy](https://github.com/Azure/azure-quickstart-templates/tree/master/101-documentdb-account-consistencypolicy-create).
+To set the consistency level to another value, see [101-create-documentdb-account-consistencypolicy](https://github.com/Azure/azure-quickstart-templates/tree/master/101-documentdb-account-consistencypolicy-create).
