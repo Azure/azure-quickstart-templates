@@ -14,3 +14,4 @@ wget https://raw.githubusercontent.com/cloudfoundry/cf-deployment/master/cf-depl
 wget https://raw.githubusercontent.com/cloudfoundry/cf-deployment/master/operations/azure.yml -O manifests/azure.yml
 wget https://raw.githubusercontent.com/cloudfoundry/cf-deployment/master/operations/use-azure-storage-blobstore.yml -O manifests/use-azure-storage-blobstore.yml
 wget https://raw.githubusercontent.com/cloudfoundry/cf-deployment/master/operations/scale-to-one-az.yml -O manifests/scale-to-one-az.yml
+wget https://raw.githubusercontent.com/cloudfoundry/cf-deployment/master/operations/use-compiled-releases.yml -O manifests/use-compiled-releases.yml
