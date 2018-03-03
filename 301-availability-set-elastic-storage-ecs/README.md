@@ -1,11 +1,17 @@
-# multinode dellemc ecs community edition in an azure availabilty set
+# mMltinode DELLEMC ECS Community Edition in an Azure Availabilty Set
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fbottkars%2Fazure-quickstart-templates%2Fkb-dev%2F301-availability-set-elastic-storage-ecs%2Fazuredeploy.json" target="_blank">
-<img src="https://raw.githubusercontent.com/bottkars/azure-quickstart-templates/kb-dev/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2F301-availability-set-elastic-storage-ecs%2Fazuredeploy.json" target="_blank">
+<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2F301-availability-set-elastic-storage-ecs%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F301-availability-set-elastic-storage-ecs%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
+
+### Prerequisites
+The required VM Types need to have at least 4vCPU and 16GB memory.
+Depending on your Subscription, you may require to increase your arm quota vor cores.  
+also notice that some vm types are not available in some regions, specially the promo ones.?
+
 
 To deploy this template using the scripts from the root of this repo: (change the folder name below to match the folder name for this sample)
 
@@ -51,20 +57,14 @@ The deployment utilizes the custom script extension
 Password Change extension
 the Deployment utilizes the Password change extension for linux
 + **resetpassword** to overcome some issues where cloudinit does not accept password
-the default password is Subscription#**id**, example Subscription#8c21cadc-9e41-459e-bf4b-9b5aa2fad938 
-
-## Prerequisites
-The required VM Types need to have at least 4vCPU and 16GB memory.
-Depending on your Subscription, you may require to increase your arm quota vor cores.  
-also notice that some vm types are not available in some regions, specially the promo ones.
 
 ## Deployment steps
 
-### deploy to Azure from this site
+### Deploy to Azure from this Page
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
 the parameters section will be the same 
 
-### from new azure template from azure portal
+### From new Azure template in Aure Portal
 From the azure Portal, click new and type in template.
 select the new custom template dialog
 
@@ -78,17 +78,17 @@ once open, click on the upload and load the azuredeploy.json
 
 fill in all parameters to you need and make sure the dns prefix is not used 
 ![new deploy](images/template_edit.png "new template from azure portal")  
-### quickstart emplate 
+### quickstart template 
 
 
 Also, you can use Visual Studio to deploy the template. If you have installed the ressourcegroup extensions creater a new deployment and select '301-availability-set-elastic-storage-ecs' from the quickstart templates
 
 
-### visual studio example
+### Visual Studio Example
 
 ![new deploy](images/new_rg.png "Create new deployment from Visual Studio")
 
-#### parameters of resource group
+#### Parameters of Resource Group
 ![deploy](images/rg_parameter.png "parameters for resource group")
 
 The ressource group deployment will take between 10 and 15 Minutes, depneding on VM Types
