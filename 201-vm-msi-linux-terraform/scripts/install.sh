@@ -87,7 +87,6 @@ done
 
 TEMPLATEFOLDER="/home/$USERNAME/tfTemplate"
 REMOTESTATEFILE="$TEMPLATEFOLDER/remoteState.tf"
-ACCESSKEYFILE="/home/$USERNAME/access_key"
 TFENVFILE="/home/$USERNAME/tfEnv.sh"
 CREDSFILE="$TEMPLATEFOLDER/azureProviderAndCreds.tf"
 
@@ -102,20 +101,18 @@ echo " backend \"azurerm\" {"                               >> $REMOTESTATEFILE
 echo "  storage_account_name = \"$STORAGE_ACCOUNT_NAME\""   >> $REMOTESTATEFILE
 echo "  container_name       = \"terraform-state\""         >> $REMOTESTATEFILE
 echo "  key                  = \"prod.terraform.tfstate\""  >> $REMOTESTATEFILE
+echo "  access_key           = \"$STORAGE_ACCOUNT_KEY\""    >> $REMOTESTATEFILE
 echo "  }"                                                  >> $REMOTESTATEFILE
 echo "}"                                                    >> $REMOTESTATEFILE
 chmod 666 $REMOTESTATEFILE
 
 chown -R $USERNAME:$USERNAME /home/$USERNAME/tfTemplate
 
-touch $ACCESSKEYFILE
-echo "access_key = \"$STORAGE_ACCOUNT_KEY\""                >> $ACCESSKEYFILE
-chmod 666 $ACCESSKEYFILE
-chown $USERNAME:$USERNAME $ACCESSKEYFILE
-
 touch $TFENVFILE
-echo "export ARM_SUBSCRIPTION_ID =\"$SUBSCRIPTION_ID\""     >> $TFENVFILE
-echo "export ARM_CLIENT_ID       =\"$MSI_PRINCIPAL_ID\""    >> $TFENVFILE
+echo "export ARM_SUBSCRIPTION_ID=\"$SUBSCRIPTION_ID\""     >> $TFENVFILE
+echo "export ARM_CLIENT_ID=\"$MSI_PRINCIPAL_ID\""          >> $TFENVFILE
+echo "az login"                                            >> $TFENVFILE
+echo "az role assignment create  --assignee \"$MSI_PRINCIPAL_ID\" --role 'b24988ac-6180-42a0-ab88-20f7382dd24c'  --scope /subscriptions/\"$SUBSCRIPTION_ID\""  >> $TFENVFILE
 chmod 755 $TFENVFILE
 chown $USERNAME:$USERNAME $TFENVFILE
 
