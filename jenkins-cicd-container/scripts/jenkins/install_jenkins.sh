@@ -36,7 +36,7 @@ function throw_if_empty() {
 function run_util_script() {
   local script_path="$1"
   shift
-  curl --silent "${artifacts_location}${script_path}${artifacts_location_sas_token}" | sudo bash -s -- "$@"
+  curl --silent "${artifacts_location}/${script_path}${artifacts_location_sas_token}" | sudo bash -s -- "$@"
   local return_value=$?
   if [ $return_value -ne 0 ]; then
     >&2 echo "Failed while executing script '$script_path'."
@@ -59,7 +59,7 @@ function retry_until_successful {
 }
 
 #defaults
-jenkins_version_location="${artifacts_location}/scripts/jenkins/jenkins-verified-ver"
+jenkins_version_location="${artifacts_location}/scripts/jenkins/jenkins-verified-ver${artifacts_location_sas_token}"
 azure_web_page_location="/usr/share/nginx/azure"
 jenkins_release_type="LTS"
 
