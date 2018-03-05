@@ -51,18 +51,10 @@ The quickstart template will provision the following in Azure:
 * Enable [Azure Load Balancer Standard](https://docs.microsoft.com/en-us/azure/load-balancer/load-balancer-standard-overview)
    for your subscription.
 
-   Follow [the guide](https://docs.microsoft.com/en-us/azure/load-balancer/load-balancer-standard-overview#preview-sign-up)
-   to register the the Standard tier of Azure Load Balancer for your subscription.
-
-   **Note**: Azure Load Balancer Standard is still in preview stage, and it's only enabled in
-   [a few regions](https://docs.microsoft.com/en-us/azure/load-balancer/load-balancer-standard-overview?toc=%2fazure%2fvirtual-network%2ftoc.json#region-availability):
-
-   * East US 2
-   * Central US
-   * North Europe
-   * West Central US
-   * West Europe
-   * Southeast Asia
+   Check the [Region availability](https://docs.microsoft.com/en-us/azure/load-balancer/load-balancer-standard-overview?toc=%2fazure%2fvirtual-network%2ftoc.json#region-availability)
+   documentation to see if the target region has enabled Azure Load Balancer Standard, and if not, follow 
+   [the steps](https://docs.microsoft.com/en-us/azure/load-balancer/load-balancer-standard-overview?toc=%2fazure%2fvirtual-network%2ftoc.json#additionalpreviewregions)
+   to register it for your subscription.
 
 * [Azure Service Principal](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-create-service-principal-portal).
 
