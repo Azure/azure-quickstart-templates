@@ -8,7 +8,6 @@ ip_prefix=""
 number_of_instances=""
 password_file=""
 disk_size=""
-disk_volume=""
 workspace_id=""
 solace_url=""
 DEBUG="-vvvv"
@@ -16,7 +15,7 @@ is_primary="false"
 
 verbose=0
 
-while getopts "c:i:n:p:s:v:w:u:" opt; do
+while getopts "c:i:n:p:s:w:u:" opt; do
     case "$opt" in
     c)  current_index=$OPTARG
         ;;
@@ -27,8 +26,6 @@ while getopts "c:i:n:p:s:v:w:u:" opt; do
     p)  password_file=$OPTARG
         ;;
     s)  disk_size=$OPTARG
-        ;;
-    v)  disk_volume=$OPTARG
         ;;
     w)  workspace_id=$OPTARG
         ;;
@@ -42,8 +39,8 @@ shift $((OPTIND-1))
 
 verbose=1
 echo "`date` current_index=$current_index , ip_prefix=$ip_prefix , number_of_instances=$number_of_instances , \
-      password_file=$password_file , disk_size=$disk_size , disk_volume=$disk_volume , workspace_id=$workspace_id , \
-      solace_url=$solace_url , Leftovers: $@"
+      password_file=$password_file , disk_size=$disk_size , workspace_id=$workspace_id , solace_url=$solace_url , \
+      Leftovers: $@"
 export password=`cat ${password_file}`
 
 #Install the logical volume manager and jq for json parsing
@@ -217,7 +214,24 @@ if [ ${disk_size} == "0" ]; then
   docker volume create --name=internalSpool
   SPOOL_MOUNT="-v diagnostics:/var/lib/solace/diags -v internalSpool:/usr/sw/internalSpool"
 else
-  echo "`date` INFO: Create primary partition on new disk"
+  # Look for unpartitioned disks
+  disk_volume=""
+  DEVS=($(ls -1 /dev/sd*|egrep -v "[0-9]$"))
+  for DEV in "${DEVS[@]}"; do
+    # Check each device if there is a "1" partition.
+    # If not, assume it is not partitioned.
+    if [ ! -b ${DEV}1 ]; then
+      echo "`date` INFO: Disk device with no primary partition found"
+      disk_volume="${DEV}"
+      break
+    fi
+  done
+  if [ ${disk_volume} == "" ]; then
+    echo "`date` INFO: Default disk device to /dev/sdc"
+    disk_volume="/dev/sdc"
+  fi
+  echo "`date` INFO: Create primary partition on disk device ${disk_volume} of size ${disk_size} GiB"
+
   (
   echo n # Add a new partition
   echo p # Primary partition
