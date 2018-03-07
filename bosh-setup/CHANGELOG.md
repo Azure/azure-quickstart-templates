@@ -1,3 +1,32 @@
+# v3.4.0 (2018-01-30)
+
+- Bump cf-deployment to [`v1.9.0`](https://github.com/cloudfoundry/cf-deployment/tree/v1.9.0).
+- Bump bosh release to `264.7.0`
+- Bump stemcell in bosh-deployment to `3468.21`
+- Bump stemcell in cf-deployment to `3468.19`
+
+# v3.3.0 (2018-01-09)
+
+- Upgrade Azure CPI version to v35.0.0. Please see new features in [bosh-azure-cpi-release v35.0.0](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v35.0.0)
+- Bump cf-deployment to [`v1.6.0`](https://github.com/cloudfoundry/cf-deployment/tree/v1.6.0).
+- Support [Availability Zones](https://docs.microsoft.com/en-us/azure/availability-zones/az-overview).
+- Set the default value of `autoDeployCloudFoundry` to `disabled`
+
+# v3.2.0 (2017-12-20)
+
+- Bump [bosh-deployment](https://github.com/cloudfoundry/bosh-deployment/blob/218e6d5030d89ca9f31c50b8b308e2a78d2a0997/bosh.yml) and [cf-deployment](https://github.com/cloudfoundry/cf-deployment/blob/v1.4.0/cf-deployment.yml).
+- Upgrade Azure CPI version to v34. Please see new features in [bosh-azure-cpi-release v34](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v34)
+
+# v3.1.0 (2017-12-12)
+
+- Bump [bosh-deployment](https://github.com/cloudfoundry/bosh-deployment/blob/ad5e958d15973269345909349fc00378abae4ba7/bosh.yml) and [cf-deployment](https://github.com/cloudfoundry/cf-deployment/blob/v1.3.1/cf-deployment.yml).
+- Upgrade Azure CPI version to v33 except AzureStack. Please see new features in [bosh-azure-cpi-release v33](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v33)
+
+# v3.0.0 (2017-11-23)
+
+- The template is using [BOSH CLI v2](https://bosh.io/docs/cli-v2.html), [bosh-deployment](https://github.com/cloudfoundry/bosh-deployment/blob/cb8e7f60145738e103eb2dc0ad3372288986dc0c/bosh.yml) and [cf-deployment](https://github.com/cloudfoundry/cf-deployment/blob/v1.0.0/cf-deployment.yml).
+- Upgrade Azure CPI version to v29. Please see new features in [bosh-azure-cpi-release v29](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v29)
+
 # v2.8.0 (2017-8-11)
 
 - Upgrade Azure CPI version to v26. Please see new features in [bosh-azure-cpi-release v26](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v26)

@@ -11,3 +11,4 @@ This template allows you to deploy a simple VM and specify the number of data di
 
 Docs are <a href="https://docs.microsoft.com/en-us/azure/virtual-machines/virtual-machines-windows-sizes" target="_blank">here</a> if you want the details.
 
+`Tags: datadisk, data, disk, copy, property, loop, vm`
