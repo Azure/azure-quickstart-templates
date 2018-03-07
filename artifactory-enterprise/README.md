@@ -1,13 +1,13 @@
 # Setup Artifactory Enterprise
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fjainishshah17%2Fazure-quickstart-templates%2Fmaster%2Fartifactory-enterprise%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FJFrogDev%2FJFrog-Cloud-Installers%2Fmaster%2FAzureResourceManager%2Fazuredeploy.json" target="_blank">
 <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fjainishshah17%2Fazure-quickstart-templates%2Fmaster%2Fartifactory-enterprise%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FJFrogDev%2FJFrog-Cloud-Installers%2Fmaster%2FAzureResourceManager%2Fazuredeploy.json" target="_blank">
 <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template can help you setup the Artifactory Enterprise environment to deploy [Artifactory](https://jfrog.com/artifactory) on Azure.
+This template can help you setup the [Artifactory Enterprise](https://jfrog.com/artifactory) on Azure.
 
 ## A. Deploy Artifactory Enterprise on Azure
 ![screenshot](images/HA_Diagram.png)
@@ -15,48 +15,67 @@ This template can help you setup the Artifactory Enterprise environment to deplo
 
 1. Click "Deploy to Azure" button. If you haven't got an Azure subscription, it will guide you on how to signup for a free trial.
 
-2. Enter a valid values to parameters. 
+2. Enter a valid values to parameters. At least 1 license has to be provided.
 
-Note: To begin with start with Capacity 1. One you have Artifactory running install artifactory licenses through UI and scale your cluster with desired capacity.
+
 ![screenshot](images/Parameters.png)
 
 3. Click on Purchase to start deploying resources. It will deploy MsSQL database, Azure Blob storage container, VM installing Nginx and Artifactory and Load balancer.
 
-4. Once deployment it done. Copy FQDN from Output of deployment template.
+4. Once deployment is done. Copy FQDN from Output of deployment template.
 
 5. Access artifactory using FQDN. 
 
-6. Go to Admin -> Artifactory Licenses and paste your artifactory licenses.
+6. You will see specified artifactory member nodes in 'Admin ->  High Availability' page.
 
-![screenshot](images/add_licenses.png)
+### Note: 
+1. This template only supports Artifactory version 5.8.x and above.
+2. Turn off daily backups.  Read Documentation provided [here](https://www.jfrog.com/confluence/display/RTF/Managing+Backups)
+3. Use SSL Certificate with valid wild card to you artifactory as docker registry with subdomain method.
+4. Input values for 'adminUsername' and 'adminPassword' parameters needs to follow azure VM access rules.
+5. One primary node is configured automatically. And, Minimum 1 member node is expected for the Artifactory HA installation.
+6. This template provides support for max 5 licenses. To add more licenses, Edit the template (input fields, CustomScript sections) and install_artifactory.sh script.
+7. Refer to [System Requirements](https://www.jfrog.com/confluence/display/RTF/System+Requirements) for changing 'extraJavaOptions' input parameter value. 
 
-Note: To get a trial license, go to [JFrog's website](https://www.jfrog.com/artifactory/free-trial-mesosphere/).
+### Steps to setup Artifactory as secure docker registry
+considering you have SSL certificate for `*.jfrog.team`
+1. Pass your SSL Certificate in parameter `Certificate` as string
+2. Pass your SSL Certificate Key in parameter `CertificateKey` as string
+3. Set `CertificateDomain` as `jfrog.team`
+4. Set `ArtifactoryServerName` as `artifactory` if you want to access artifactory with `https://artifactory.jfrog.team`
+5. Create DNS record with entry `artifactory.jfrog.team` pointing to load balancer value provided as output in template deployment.
+6. Create DNS record with entry `*.jfrog.team` pointing to load balancer value provided as output in template deployment.
+7. If you have virtual docker registry with name `docker-virtual` in artifactory. You can access it via `docker-virtual.jfrog.team`
+   e.g ```docker pull docker-virtual.jfrog.team/nginx```
 
-7. Go to VMScaleSet in Azure portal and scale instance capacity to n.
+### Steps to upgrade Artifactory Version
 
-8. In couple of minutes you will see n artifactory nodes in Admin ->  High Availability.
+1. Login into Primary VM instance and sudo as root. Use the admin credentials provided in the install setup.  
+Note: Use load balancer's NAT entries under Azure resources, to get the allocated NAT port for accessing the VM instance.
 
-Use Artifactory as Docker Registry.
+2. Stop nginx and artifactory services.
+    ```
+    service nginx stop
+    service artifactory stop
+    ```
+
+3. Upgrade artifactory with following apt-get install command.
+    ```
+    apt-get update
+    apt-get -y install jfrog-artifactory-pro=${ARTIFACTORY_VERSION}
+    ```
+4. Start artifactory and nginx services.
+    ```
+    service artifactory start
+    service nginx start
+    ```
+5. Repeat above steps for all member nodes.
+
 ------
-* This template comes with preconfigured Nginx to do Reverse Proxy to use Artifactory as docker registry on port 5001.
-
-1. Create set of docker repository in Artifactory using Quick Setup Wizard.
-   It will create four docker repo for you.
-   1. docker-local: A local docker repository.
-   2. bintray-docker-remote:  A remote docker repository proxying `https://docker.bintray.io`.
-   3. docker-remote: A remote docker repository proxying `https://registry-1.docker.io/`.
-   4. docker: A virtual docker repository aggregating all three repo mentioned above.
-
-2. Configure insecure registry FQDN:5001 in your docker client.
-
-3. Run command to pull nginx image from artifactory:
-   ```
-   docker pull soldevqaent.southcentralus.cloudapp.azure.com:5001/nginx
-   ``` 
-
-------
-####Note:
-Supported locations: `West US`, `East US`, `South CentralUS`, `Southeast Asia`, `Western Central US`, `West Europe` and `West US 2`.
+#### Note:
+Supported locations: `East US 2`, `Central US`, `West Central US` and `West Europe`.  
+Please check the Azure region support for `Standard Sku` property in load balancer for this template to work properly.  
+Check for SQL server support on specified location. If SQL server is not available in the location, Use 'DB_Location' to specify the location with SQL server support.  
 
 
  
