@@ -7,4 +7,4 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template allows you to create a Azure Databricks workspace. For more information, see <a href="https://docs.microsoft.com/en-us/azure/azure-databricks/">Azure Databricks Documentation</a>.
+This template allows you to create a Azure Databricks workspace. For more information, see the <a href="https://docs.microsoft.com/en-us/azure/azure-databricks/">Azure Databricks Documentation</a>.
