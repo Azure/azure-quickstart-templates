@@ -53,11 +53,11 @@ describe('template files - ', () => {
             outputsInCreateUiDef[i] = outputsInCreateUiDef[i].toLowerCase();
         }
 
-        /* Validate each parameter in main template has value in outputs */
         var parametersInMainTemplate = Object.keys(mainTemplateFileJSONObject.parameters);
-        it.each(parametersInMainTemplate, 'parameter %s that does not have a defaultValue, must have a corresponding output in createUIDef', ['element'], function(element, next){
+        /** Validate each parameter in main template has value in outputs */
+        it.each(parametersInMainTemplate, 'parameter %s that does not have a defaultValue in file mainTemplate.json, must have a corresponding output in createUiDefinition.json', ['element'], function(element, next){
             if (typeof(mainTemplateFileJSONObject.parameters[element].defaultValue) === 'undefined') {
-                outputsInCreateUiDef.should.withMessage('in file:mainTemplate.json. outputs in createUiDefinition is missing the parameter ' + element).contain(element.toLowerCase());
+                outputsInCreateUiDef.should.withMessage('in file:mainTemplate.json, outputs in createUiDefinition is missing the parameter ' + element).contain(element.toLowerCase());
             }
             next();
         });
@@ -97,9 +97,9 @@ describe('template files - ', () => {
             });
         });
 
-        /* Validate each parameter should be used in main template */
+        /** Validate each parameter should be used in main template */
         var mainTemplateFileContent = JSON.stringify(mainTemplateFileJSONObject).toLowerCase();
-        it.each(parametersInMainTemplate, 'parameter %s must be used in maintemplate', ['element'], function(element, next) {
+        it.each(parametersInMainTemplate, 'parameter %s must be used in file mainTemplate.json', ['element'], function(element, next) {
             var paramString = 'parameters(\'' + element.toLowerCase() + '\')';
             assert(mainTemplateFileContent.includes(paramString) === true, 'unused parameter ' + element + ' in file mainTemplate.json');
             next();
