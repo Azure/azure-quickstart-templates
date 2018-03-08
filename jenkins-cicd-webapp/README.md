@@ -114,3 +114,4 @@ If you want to manage Jenkins, e.g. trigger a build manually, just follow the st
 2. Navigate to the web app, it will query MySQL database and return the data.
 
    ![](images/webapp-show.png)
+
