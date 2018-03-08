@@ -11,7 +11,8 @@
     },
     "resources": [
         {
-            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2017-10-01",
             "location": "[resourceGroup().location]",
             "name": "[parameters('moodleCommon').elasticNicName1]",
             "properties": {
@@ -30,11 +31,11 @@
             },
             "tags": {
                 "displayName": "Elastic NIC 1"
-            },
-            "type": "Microsoft.Network/networkInterfaces"
+            }
         },
         {
-            "apiVersion": "[parameters('moodleCommon').computeApi]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2017-03-30",
             "dependsOn": [
                 "[concat('Microsoft.Network/networkInterfaces/', parameters('moodleCommon').elasticNicName1)]"
             ],
@@ -70,7 +71,7 @@
                     "dataDisks": [],
                     "imageReference": "[parameters('moodleCommon').osType]",
                     "osDisk": {
-                        "createOption": "fromImage",
+                        "createOption": "FromImage",
                         "managedDisk": {
                             "storageAccountType": "Standard_LRS"
                         },
@@ -80,11 +81,12 @@
             },
             "tags": {
                 "displayName": "Elastic Search Virtual Machine"
-            },
-            "type": "Microsoft.Compute/virtualMachines"
+            }
         },
         {
-            "apiVersion": "2015-01-01",
+            "condition": "[parameters('moodleCommon').applyScriptsSwitch]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2017-05-10",
             "dependsOn": [
                 "[concat('Microsoft.Compute/virtualMachines/', parameters('moodleCommon').elasticVmName1)]"
             ],
@@ -98,13 +100,14 @@
 
                 },
                 "templateLink": {
-                    "uri": "[concat(parameters('moodleCommon').baseTemplateUrl,'elasticconfig',parameters('moodleCommon').applyScriptsSwitch,'.json')]"
+                    "uri": "[concat(parameters('moodleCommon').baseTemplateUrl,'elasticconfig.json',parameters('moodleCommon').artifactsSasToken)]"
                 }
-            },
-            "type": "Microsoft.Resources/deployments"
+            }
         },
         {
-            "apiVersion": "2015-01-01",
+            "condition": "[parameters('moodleCommon').azureBackupSwitch]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2017-05-10",
             "dependsOn": [
                 "[concat('Microsoft.Compute/virtualMachines/',parameters('moodleCommon').elasticVmName1)]"
             ],
@@ -120,13 +123,13 @@
                     }
                 },
                 "templateLink": {
-                    "uri": "[concat(parameters('moodleCommon').baseTemplateUrl,'recoveryservicesEnlist',parameters('moodleCommon').azureBackupSwitch,'.json')]"
+                    "uri": "[concat(parameters('moodleCommon').baseTemplateUrl,'recoveryservicesEnlist.json',parameters('moodleCommon').artifactsSasToken)]"
                 }
-            },
-            "type": "Microsoft.Resources/deployments"
+            }
         },
         {
-            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2017-10-01",
             "location": "[resourceGroup().location]",
             "name": "[parameters('moodleCommon').elasticNicName2]",
             "properties": {
@@ -145,11 +148,11 @@
             },
             "tags": {
                 "displayName": "Elastic NIC 2"
-            },
-            "type": "Microsoft.Network/networkInterfaces"
+            }
         },
         {
-            "apiVersion": "[parameters('moodleCommon').computeApi]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2017-03-30",
             "dependsOn": [
                 "[concat('Microsoft.Network/networkInterfaces/', parameters('moodleCommon').elasticNicName2)]"
             ],
@@ -167,15 +170,25 @@
                     ]
                 },
                 "osProfile": {
-                    "adminPassword": "[parameters('moodleCommon').sshPassword]",
                     "adminUsername": "[parameters('moodleCommon').sshUsername]",
-                    "computerName": "[parameters('moodleCommon').elasticVmName2]"
+                    "computerName": "[parameters('moodleCommon').elasticVmName2]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "path": "[concat('/home/', parameters('moodleCommon').sshUsername, '/.ssh/authorized_keys')]",
+                                    "keyData": "[parameters('moodleCommon').sshPublicKey]"
+                                }
+                            ]
+                        }
+                    }
                 },
                 "storageProfile": {
                     "dataDisks": [],
                     "imageReference": "[parameters('moodleCommon').osType]",
                     "osDisk": {
-                        "createOption": "fromImage",
+                        "createOption": "FromImage",
                         "managedDisk": {
                             "storageAccountType": "Standard_LRS"
                         },
@@ -185,11 +198,12 @@
             },
             "tags": {
                 "displayName": "Elastic Search Virtual Machine"
-            },
-            "type": "Microsoft.Compute/virtualMachines"
+            }
         },
         {
-            "apiVersion": "2015-01-01",
+            "condition": "[parameters('moodleCommon').applyScriptsSwitch]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2017-05-10",
             "dependsOn": [
                 "[concat('Microsoft.Compute/virtualMachines/', parameters('moodleCommon').elasticVmName2)]"
             ],
@@ -203,13 +217,14 @@
 
                 },
                 "templateLink": {
-                    "uri": "[concat(parameters('moodleCommon').baseTemplateUrl,'elasticconfig',parameters('moodleCommon').applyScriptsSwitch,'.json')]"
+                    "uri": "[concat(parameters('moodleCommon').baseTemplateUrl,'elasticconfig.json',parameters('moodleCommon').artifactsSasToken)]"
                 }
-            },
-            "type": "Microsoft.Resources/deployments"
+            }
         },
         {
-            "apiVersion": "2015-01-01",
+            "condition": "[parameters('moodleCommon').azureBackupSwitch]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2017-05-10",
             "dependsOn": [
                 "[concat('Microsoft.Compute/virtualMachines/',parameters('moodleCommon').elasticVmName2)]"
             ],
@@ -225,13 +240,13 @@
                     }
                 },
                 "templateLink": {
-                    "uri": "[concat(parameters('moodleCommon').baseTemplateUrl,'recoveryservicesEnlist',parameters('moodleCommon').azureBackupSwitch,'.json')]"
+                    "uri": "[concat(parameters('moodleCommon').baseTemplateUrl,'recoveryservicesEnlist.json',parameters('moodleCommon').artifactsSasToken)]"
                 }
-            },
-            "type": "Microsoft.Resources/deployments"
+            }
         },
         {
-            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2017-10-01",
             "location": "[resourceGroup().location]",
             "name": "[parameters('moodleCommon').elasticNicName3]",
             "properties": {
@@ -250,11 +265,11 @@
             },
             "tags": {
                 "displayName": "Elastic NIC 2"
-            },
-            "type": "Microsoft.Network/networkInterfaces"
+            }
         },
         {
-            "apiVersion": "[parameters('moodleCommon').computeApi]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2017-03-30",
             "dependsOn": [
                 "[concat('Microsoft.Network/networkInterfaces/', parameters('moodleCommon').elasticNicName3)]"
             ],
@@ -272,15 +287,25 @@
                     ]
                 },
                 "osProfile": {
-                    "adminPassword": "[parameters('moodleCommon').sshPassword]",
                     "adminUsername": "[parameters('moodleCommon').sshUsername]",
-                    "computerName": "[parameters('moodleCommon').elasticVmName3]"
+                    "computerName": "[parameters('moodleCommon').elasticVmName3]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "path": "[concat('/home/', parameters('moodleCommon').sshUsername, '/.ssh/authorized_keys')]",
+                                    "keyData": "[parameters('moodleCommon').sshPublicKey]"
+                                }
+                            ]
+                        }
+                    }
                 },
                 "storageProfile": {
                     "dataDisks": [],
                     "imageReference": "[parameters('moodleCommon').osType]",
                     "osDisk": {
-                        "createOption": "fromImage",
+                        "createOption": "FromImage",
                         "managedDisk": {
                             "storageAccountType": "Standard_LRS"
                         },
@@ -290,11 +315,12 @@
             },
             "tags": {
                 "displayName": "Elastic Search Virtual Machine"
-            },
-            "type": "Microsoft.Compute/virtualMachines"
+            }
         },
         {
-            "apiVersion": "2015-01-01",
+            "condition": "[parameters('moodleCommon').applyScriptsSwitch]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2017-05-10",
             "dependsOn": [
                 "[concat('Microsoft.Compute/virtualMachines/', parameters('moodleCommon').elasticVmName3)]"
             ],
@@ -308,13 +334,14 @@
 
                 },
                 "templateLink": {
-                    "uri": "[concat(parameters('moodleCommon').baseTemplateUrl,'elasticconfig',parameters('moodleCommon').applyScriptsSwitch,'.json')]"
+                    "uri": "[concat(parameters('moodleCommon').baseTemplateUrl,'elasticconfig.json',parameters('moodleCommon').artifactsSasToken)]"
                 }
-            },
-            "type": "Microsoft.Resources/deployments"
+            }
         },
         {
-            "apiVersion": "2015-01-01",
+            "condition": "[parameters('moodleCommon').azureBackupSwitch]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2017-05-10",
             "dependsOn": [
                 "[concat('Microsoft.Compute/virtualMachines/',parameters('moodleCommon').elasticVmName3)]"
             ],
@@ -330,10 +357,9 @@
                     }
                 },
                 "templateLink": {
-                    "uri": "[concat(parameters('moodleCommon').baseTemplateUrl,'recoveryservicesEnlist',parameters('moodleCommon').azureBackupSwitch,'.json')]"
+                    "uri": "[concat(parameters('moodleCommon').baseTemplateUrl,'recoveryservicesEnlist.json',parameters('moodleCommon').artifactsSasToken)]"
                 }
-            },
-            "type": "Microsoft.Resources/deployments"
+            }
         }
     ],
     "variables": {
@@ -341,22 +367,21 @@
         "documentation02": "It expects certain values in the 'common' datastructure.",
         "documentation03": "    vnetName               - name of the virtual network",
         "documentation04": "    subnetElastic          - name of subnet for elastic (and vm scale set)",
-        "documentation05": "    computeApi             - the 'managed' resources need to all use this value",
         "documentation06": "    elasticNicName1        - name of the eastlic vm 1 network interface",
         "documentation07": "    elasticNicName2        - name of the eastlic vm 2 network interface",
         "documentation08": "    elasticNicName3        - name of the eastlic vm 3 network interface",
         "documentation09": "    elasticVmName1         - name of the eastlic vm 1",
         "documentation10": "    elasticVmName2         - name of the eastlic vm 2",
         "documentation11": "    elasticVmName3         - name of the eastlic vm 3",
-        "documentation09": "    elasticVm1IP           - IP of the eastlic vm 1",
-        "documentation10": "    elasticVm2IP           - IP of the eastlic vm 2",
-        "documentation11": "    elasticVm3IP           - IP of the eastlic vm 3",
-        "documentation12": "This sub-template calls other sub-templates",
-        "documentation13": "    elasticconfig          - conditionally applies post-deployment script on the VM",
-        "documentation14": "    recoveryservicesEnlist - conditionally enlists the VM into the backup regimen",
+        "documentation12": "    elasticVm1IP           - IP of the eastlic vm 1",
+        "documentation13": "    elasticVm2IP           - IP of the eastlic vm 2",
+        "documentation14": "    elasticVm3IP           - IP of the eastlic vm 3",
+        "documentation15": "This sub-template calls other sub-templates",
+        "documentation16": "    elasticconfig          - conditionally applies post-deployment script on the VM",
+        "documentation17": "    recoveryservicesEnlist - conditionally enlists the VM into the backup regimen",
         "nicRef1": "[resourceId('Microsoft.Network/networkInterfaces', parameters('moodleCommon').elasticNicName1)]",
         "nicRef2": "[resourceId('Microsoft.Network/networkInterfaces', parameters('moodleCommon').elasticNicName2)]",
         "nicRef3": "[resourceId('Microsoft.Network/networkInterfaces', parameters('moodleCommon').elasticNicName3)]",
-        "subnetElasticRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('moodleCommon').vnetName), '/subnets/',parameters('moodleCommon').subnetElastic)]"
+        "subnetElasticRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('moodleCommon').vnetName, parameters('moodleCommon').subnetElastic)]"
     }
 }
