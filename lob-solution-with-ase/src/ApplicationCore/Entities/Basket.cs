@@ -29,6 +29,7 @@ namespace Microsoft.eShopWeb.ApplicationCore.Entities
                 return;
             }
             var existingItem = Items.FirstOrDefault(i => i.CatalogItemId == catalogItemId);
+            existingItem.UnitPrice = unitPrice;
             existingItem.Quantity += quantity;
         }
     }

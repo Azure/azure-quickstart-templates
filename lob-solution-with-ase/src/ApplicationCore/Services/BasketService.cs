@@ -82,11 +82,28 @@ namespace ApplicationCore.Services
         {
             Guard.Against.NullOrEmpty(anonymousId, nameof(anonymousId));
             Guard.Against.NullOrEmpty(userName, nameof(userName));
-            var basketSpec = new BasketWithItemsSpecification(anonymousId);
-            var basket = (await _basketRepository.ListAsync(basketSpec)).FirstOrDefault();
-            if (basket == null) return;
-            basket.BuyerId = userName;
-            await _basketRepository.UpdateAsync(basket);
+            var anonymousBasketSpec = new BasketWithItemsSpecification(anonymousId);
+            var anonymousBasket = (await _basketRepository.ListAsync(anonymousBasketSpec)).FirstOrDefault();
+            if (anonymousBasket == null) return;
+
+            var userBasketSpec = new BasketWithItemsSpecification(userName);
+            var userBasket = (await _basketRepository.ListAsync(userBasketSpec)).FirstOrDefault();
+
+            if (userBasket != null)
+            {
+                foreach (var item in anonymousBasket.Items)
+                    userBasket.AddItem(item.CatalogItemId, item.UnitPrice, item.Quantity);
+
+                await _basketRepository.UpdateAsync(userBasket);
+                await _basketRepository.DeleteAsync(anonymousBasket);
+            }
+            else
+            {
+                anonymousBasket.BuyerId = userName;
+                await _basketRepository.UpdateAsync(anonymousBasket);
+            }
+
+
         }
     }
 }
