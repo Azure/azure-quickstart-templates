@@ -34,6 +34,8 @@ namespace Infrastructure.Data
             var navigation = builder.Metadata.FindNavigation(nameof(Basket.Items));
 
             navigation.SetPropertyAccessMode(PropertyAccessMode.Field);
+
+            builder.HasMany(o => o.Items).WithOne().OnDelete(DeleteBehavior.Cascade);
         }
 
         private void ConfigureOrder(EntityTypeBuilder<Order> builder)
@@ -43,7 +45,7 @@ namespace Infrastructure.Data
             navigation.SetPropertyAccessMode(PropertyAccessMode.Field);
 
             builder.OwnsOne(o => o.ShipToAddress);
-            builder.HasMany(o => o.OrderItems).WithOne(i => i.Order);
+            builder.HasMany(o => o.OrderItems).WithOne(i => i.Order).OnDelete(DeleteBehavior.Cascade);
         }
 
         private void ConfigureOrderItem(EntityTypeBuilder<OrderItem> builder)
