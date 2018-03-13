@@ -43,34 +43,35 @@
     }
   },
   "variables": {
-    "hostplanName": "[concat(toLower(parameters('namePrefix')), 'hostplan', uniqueString(resourceGroup().id))]",
-    "webSiteName": "[concat(toLower(parameters('namePrefix')), 'web', uniqueString(resourceGroup().id))]",
-    "cdnwebSiteName": "[concat(toLower(parameters('namePrefix')), 'cdnweb', uniqueString(resourceGroup().id))]",
-    "applicationInsightName": "[concat(toLower(parameters('namePrefix')), 'appinsight', uniqueString(resourceGroup().id))]",
-    "sqlserverName": "[concat(toLower(parameters('namePrefix')), 'sqlserver', uniqueString(resourceGroup().id))]",
-    "rediscacheName": "[concat(toLower(parameters('namePrefix')), 'rediscache', uniqueString(resourceGroup().id))]",
-    "cdnprofileName": "[concat(toLower(parameters('namePrefix')), 'cdnprofile', uniqueString(resourceGroup().id))]",
-    "cdnprofileendpointsName": "[concat(toLower(parameters('namePrefix')), 'cdnendpoints', uniqueString(resourceGroup().id))]",
-    "cdnprofileendpointsoriginsName": "[concat(toLower(parameters('namePrefix')), 'cdnorigins', uniqueString(resourceGroup().id))]",
-    "storageaccountName": "[concat(toLower(parameters('namePrefix')), uniqueString(resourceGroup().id))]",
-    "functionAppName": "[concat(toLower('OrderPaymentProcessing'), uniqueString(resourceGroup().id))]"
+    "namePrefixLower": "[toLower(parameters('namePrefix'))]",
+    "hostPlanName": "[concat(parameters('namePrefix'), uniqueString(resourceGroup().id), 'Plan')]",
+    "webSiteName": "[concat(parameters('namePrefix'), uniqueString(resourceGroup().id), 'Web')]",
+    "cdnWebName": "[concat(parameters('namePrefix'), uniqueString(resourceGroup().id), 'CDNWeb')]",
+    "appInsightName": "[concat(parameters('namePrefix'), uniqueString(resourceGroup().id), 'AppInsight')]",
+    "sqlServerName": "[concat(variables('namePrefixLower'), uniqueString(resourceGroup().id), 'sqlserver')]",
+    "redisCacheName": "[concat(parameters('namePrefix'), uniqueString(resourceGroup().id), 'RedisCache')]",
+    "cdnProfileName": "[concat(parameters('namePrefix'), uniqueString(resourceGroup().id), 'CDNProfile')]",
+    "cdnEndpointName": "[concat(parameters('namePrefix'), uniqueString(resourceGroup().id), 'CDNEndpoint')]",
+    "cdnEndpointOriginName": "[concat(parameters('namePrefix'), uniqueString(resourceGroup().id), 'CDNOrigin')]",
+    "storageAccountName": "[concat(variables('namePrefixLower'), uniqueString(resourceGroup().id))]",
+    "funcAppName": "[concat(parameters('namePrefix'), uniqueString(resourceGroup().id), 'OrderProcessing')]"
   },
   "resources": [
     {
       "apiVersion": "2015-05-01",
-      "name": "[variables('applicationInsightName')]",
+      "name": "[variables('appInsightName')]",
       "type": "Microsoft.Insights/components",
       "kind": "web",
-      "location": "East US",
+      "location": "[resourceGroup().location]",
       "properties": {
-        "ApplicationId": "[variables('applicationInsightName')]"
+        "ApplicationId": "[variables('appInsightName')]"
       }
     },
     {
       "apiVersion": "2016-09-01",
-      "name": "[variables('hostplanName')]",
+      "name": "[variables('hostPlanName')]",
       "type": "Microsoft.Web/serverfarms",
-      "location": "East US",
+      "location": "[resourceGroup().location]",
       "tags": {
         "displayName": "HostingPlan"
       },
@@ -82,23 +83,23 @@
         "capacity": 1
       },
       "properties": {
-        "name": "[variables('hostplanName')]"
+        "name": "[variables('hostPlanName')]"
       }
     },
     {
       "apiVersion": "2016-08-01",
-      "name": "[variables('cdnwebSiteName')]",
+      "name": "[variables('cdnWebName')]",
       "type": "Microsoft.Web/sites",
-      "location": "East US",
+      "location": "[resourceGroup().location]",
       "tags": {
         "displayName": "WebsiteCDN"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Web/serverFarms/', variables('hostplanName'))]"
+        "[resourceId('Microsoft.Web/serverFarms/', variables('hostPlanName'))]"
       ],
       "properties": {
-        "name": "[variables('cdnwebSiteName')]",
-        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostplanName'))]"
+        "name": "[variables('cdnWebName')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostPlanName'))]"
       },
       "resources": [
         {
@@ -106,7 +107,7 @@
           "type": "config",
           "name": "appsettings",
           "dependsOn": [
-            "[resourceId('Microsoft.Web/Sites/', variables('cdnwebSiteName'))]"
+            "[resourceId('Microsoft.Web/Sites/', variables('cdnWebName'))]"
           ],
           "properties": {
             "SourceCodeRepositoryUrl": "[parameters('sourceCodeRepositoryURL')]",
@@ -118,8 +119,8 @@
           "name": "web",
           "type": "sourcecontrols",
           "dependsOn": [
-            "[resourceId('Microsoft.Web/sites/', variables('cdnwebSiteName'))]",
-            "[resourceId('Microsoft.Web/sites/config', variables('cdnwebSiteName'), 'appsettings')]"
+            "[resourceId('Microsoft.Web/sites/', variables('cdnWebName'))]",
+            "[resourceId('Microsoft.Web/sites/config', variables('cdnWebName'), 'appsettings')]"
           ],
           "properties": {
             "RepoUrl": "[parameters('sourceCodeRepositoryURL')]",
@@ -130,9 +131,9 @@
       ]
     },
     {
-      "name": "[variables('cdnprofileName')]",
+      "name": "[variables('cdnProfileName')]",
       "type": "Microsoft.Cdn/profiles",
-      "location": "East US",
+      "location": "[resourceGroup().location]",
       "apiVersion": "2017-04-02",
       "tags": {
         "displayName": "CdnProfile"
@@ -143,24 +144,24 @@
       "properties": {},
       "resources": [
         {
-          "name": "[variables('cdnprofileendpointsName')]",
+          "name": "[variables('cdnEndpointName')]",
           "type": "endpoints",
           "apiVersion": "2017-04-02",
-          "location": "East US",
+          "location": "[resourceGroup().location]",
           "tags": {
-            "displayName": "CdnProfileEndpoints"
+            "displayName": "CdnEndpoints"
           },
           "scale": null,
           "properties": {
-            "originHostHeader": "[reference(variables('cdnwebSiteName')).hostNames[0]]",
+            "originHostHeader": "[reference(variables('cdnWebName')).hostNames[0]]",
             "isHttpAllowed": true,
             "isHttpsAllowed": true,
             "queryStringCachingBehavior": "IgnoreQueryString",
             "origins": [
               {
-                "name": "[variables('cdnprofileendpointsoriginsName')]",
+                "name": "[variables('cdnEndpointOriginName')]",
                 "properties": {
-                  "hostName": "[reference(variables('cdnwebSiteName')).hostNames[0]]",
+                  "hostName": "[reference(variables('cdnWebName')).hostNames[0]]",
                   "httpPort": 80,
                   "httpsPort": 443
                 }
@@ -170,17 +171,17 @@
             "isCompressionEnabled": false
           },
           "dependsOn": [
-            "[resourceId('Microsoft.Cdn/profiles', variables('cdnprofileName'))]",
-            "[resourceId('Microsoft.Web/sites', variables('cdnwebSiteName'))]"
+            "[resourceId('Microsoft.Cdn/profiles', variables('cdnProfileName'))]",
+            "[resourceId('Microsoft.Web/sites', variables('cdnWebName'))]"
           ]
         }
       ]
     },
     {
-      "name": "[variables('rediscacheName')]",
+      "name": "[variables('redisCacheName')]",
       "type": "Microsoft.Cache/Redis",
       "apiVersion": "2017-10-01",
-      "location": "East US",
+      "location": "[resourceGroup().location]",
       "tags": {
         "displayName": "RedisCache"
       },
@@ -209,8 +210,8 @@
         "tier": "Standard"
       },
       "kind": "Storage",
-      "name": "[variables('storageaccountName')]",
-      "location": "East US",
+      "name": "[variables('storageAccountName')]",
+      "location": "[resourceGroup().location]",
       "tags": {
         "displayName": "StorageAccounts"
       },
@@ -237,9 +238,9 @@
       }
     },
     {
-      "name": "[variables('sqlserverName')]",
+      "name": "[variables('sqlServerName')]",
       "type": "Microsoft.Sql/servers",
-      "location": "East US",
+      "location": "[resourceGroup().location]",
       "apiVersion": "2015-05-01-preview",
       "tags": {
         "displayName": "SqlServer"
@@ -252,13 +253,13 @@
         {
           "name": "eShopCatalogDb",
           "type": "databases",
-          "location": "East US",
+          "location": "[resourceGroup().location]",
           "apiVersion": "2015-05-01-preview",
           "tags": {
             "displayName": "Database"
           },
           "dependsOn": [
-            "[resourceId('Microsoft.Sql/servers/', variables('sqlserverName'))]"
+            "[resourceId('Microsoft.Sql/servers/', variables('sqlServerName'))]"
           ],
           "properties": {
             "edition": "Basic",
@@ -268,13 +269,13 @@
         {
           "name": "eShopIdentity",
           "type": "databases",
-          "location": "East US",
+          "location": "[resourceGroup().location]",
           "apiVersion": "2015-05-01-preview",
           "tags": {
             "displayName": "Database"
           },
           "dependsOn": [
-            "[resourceId('Microsoft.Sql/servers/', variables('sqlserverName'))]"
+            "[resourceId('Microsoft.Sql/servers/', variables('sqlServerName'))]"
           ],
           "properties": {
             "edition": "Basic",
@@ -284,10 +285,10 @@
         {
           "type": "firewallrules",
           "apiVersion": "2015-05-01-preview",
-          "location": "East US",
+          "location": "[resourceGroup().location]",
           "name": "AllowAllWindowsAzureIps",
           "dependsOn": [
-            "[resourceId('Microsoft.Sql/servers/', variables('sqlserverName'))]"
+            "[resourceId('Microsoft.Sql/servers/', variables('sqlServerName'))]"
           ],
           "properties": {
             "endIpAddress": "0.0.0.0",
@@ -300,22 +301,22 @@
       "apiVersion": "2016-08-01",
       "name": "[variables('webSiteName')]",
       "type": "Microsoft.Web/sites",
-      "location": "East US",
+      "location": "[resourceGroup().location]",
       "tags": {
         "displayName": "Website"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Web/serverFarms/', variables('hostplanName'))]",
-        "[resourceId('Microsoft.Web/Sites/', variables('cdnwebSiteName'))]",
-        "[resourceId('Microsoft.Cache/Redis/', variables('rediscacheName'))]",
-        "[resourceId('Microsoft.Sql/servers/', variables('sqlserverName'))]",
-        "[resourceId('Microsoft.Cdn/profiles/endpoints', variables('cdnprofileName'), variables('cdnprofileendpointsName'))]",
-        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageaccountName'))]",
-        "[resourceId('Microsoft.Insights/components', variables('applicationInsightName'))]"
+        "[resourceId('Microsoft.Web/serverFarms/', variables('hostPlanName'))]",
+        "[resourceId('Microsoft.Web/Sites/', variables('cdnWebName'))]",
+        "[resourceId('Microsoft.Cache/Redis/', variables('redisCacheName'))]",
+        "[resourceId('Microsoft.Sql/servers/', variables('sqlServerName'))]",
+        "[resourceId('Microsoft.Cdn/profiles/endpoints', variables('cdnProfileName'), variables('cdnEndpointName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Insights/components', variables('appInsightName'))]"
       ],
       "properties": {
         "name": "[variables('webSiteName')]",
-        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostplanName'))]"
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostPlanName'))]"
       },
       "resources": [
         {
@@ -335,7 +336,7 @@
               "type": "SQLAzure"
             },
             "StorageConnection": {
-              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageaccountName'),';AccountKey=',concat(listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageaccountName')),'2017-06-01').keys[0].value))]",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'),';AccountKey=',concat(listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')),'2017-06-01').keys[0].value))]",
               "type": "Custom"
             }
           }
@@ -348,9 +349,9 @@
             "[resourceId('Microsoft.Web/Sites/', variables('webSiteName'))]"
           ],
           "properties": {
-            "CDNRoot": "[concat('https://', reference(resourceId('Microsoft.Cdn/profiles/endpoints', variables('cdnprofileName'), variables('cdnprofileendpointsName'))).hostName)]",
-            "CacheConnection": "[concat(reference(resourceId('Microsoft.Cache/redis', variables('rediscacheName'))).hostName, ':', reference(resourceId('Microsoft.Cache/redis', variables('rediscacheName'))).sslPort, ',password=', listkeys(resourceId('Microsoft.Cache/redis', variables('rediscacheName')), providers('Microsoft.Cache', 'redis').apiVersions[0]).primaryKey, ',ssl=True,abortConnect=False,syncTimeout=2000,allowAdmin=true')]",
-            "ApplicationInsights:InstrumentationKey": "[reference(resourceId('Microsoft.Insights/components', variables('applicationInsightName')), '2014-04-01').InstrumentationKey]",
+            "CDNRoot": "[concat('https://', reference(resourceId('Microsoft.Cdn/profiles/endpoints', variables('cdnProfileName'), variables('cdnEndpointName'))).hostName)]",
+            "CacheConnection": "[concat(reference(resourceId('Microsoft.Cache/redis', variables('redisCacheName'))).hostName, ':', reference(resourceId('Microsoft.Cache/redis', variables('redisCacheName'))).sslPort, ',password=', listkeys(resourceId('Microsoft.Cache/redis', variables('redisCacheName')), providers('Microsoft.Cache', 'redis').apiVersions[0]).primaryKey, ',ssl=True,abortConnect=False,syncTimeout=2000,allowAdmin=true')]",
+            "ApplicationInsights:InstrumentationKey": "[reference(resourceId('Microsoft.Insights/components', variables('appInsightName')), '2014-04-01').InstrumentationKey]",
             "SourceCodeRepositoryUrl": "[parameters('sourceCodeRepositoryURL')]",
             "project": "src/Web/Web.csproj"
           }
@@ -374,16 +375,16 @@
     },
     {
       "apiVersion": "2016-08-01",
-      "name": "[variables('functionAppName')]",
+      "name": "[variables('funcAppName')]",
       "type": "Microsoft.Web/sites",
-      "location": "East US",
+      "location": "[resourceGroup().location]",
       "kind": "functionapp",
       "dependsOn": [
-        "[resourceId('Microsoft.Web/serverFarms', variables('hostplanName'))]",
+        "[resourceId('Microsoft.Web/serverFarms', variables('hostPlanName'))]",
         "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
       ],
       "properties": {
-        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostplanName'))]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostPlanName'))]",
         "siteConfig": {
           "AlwaysOn": true,
           "appSettings": [
@@ -404,14 +405,14 @@
           "name": "appsettings",
           "type": "config",
           "dependsOn": [
-            "[resourceId('Microsoft.Web/Sites/', variables('functionAppName'))]",
-            "[resourceId('Microsoft.Web/Sites/sourcecontrols', variables('functionAppName'), 'web')]",
+            "[resourceId('Microsoft.Web/Sites/', variables('funcAppName'))]",
+            "[resourceId('Microsoft.Web/Sites/sourcecontrols', variables('funcAppName'), 'web')]",
             "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
           ],
           "properties": {
-            "AzureWebJobsStorage": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageaccountName'),';AccountKey=',concat(listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageaccountName')),'2017-06-01').keys[0].value))]",
-            "AzureWebJobsDashboard": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageaccountName'),';AccountKey=',concat(listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageaccountName')),'2017-06-01').keys[0].value))]",
-            "StorageConnection": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageaccountName'),';AccountKey=',concat(listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageaccountName')),'2017-06-01').keys[0].value))]"
+            "AzureWebJobsStorage": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'),';AccountKey=',concat(listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')),'2017-06-01').keys[0].value))]",
+            "AzureWebJobsDashboard": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'),';AccountKey=',concat(listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')),'2017-06-01').keys[0].value))]",
+            "StorageConnection": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'),';AccountKey=',concat(listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')),'2017-06-01').keys[0].value))]"
           }
         },
         {
@@ -419,9 +420,9 @@
           "type": "config",
           "name": "connectionstrings",
           "dependsOn": [
-            "[resourceId('Microsoft.Web/Sites/', variables('functionAppName'))]",
-            "[resourceId('Microsoft.Web/Sites/sourcecontrols', variables('functionAppName'), 'web')]",
-            "[resourceId('Microsoft.Sql/servers/', variables('sqlserverName'))]"
+            "[resourceId('Microsoft.Web/Sites/', variables('funcAppName'))]",
+            "[resourceId('Microsoft.Web/Sites/sourcecontrols', variables('funcAppName'), 'web')]",
+            "[resourceId('Microsoft.Sql/servers/', variables('sqlServerName'))]"
           ],
           "properties": {
             "CatalogConnection": {
@@ -435,7 +436,7 @@
           "name": "web",
           "type": "sourcecontrols",
           "dependsOn": [
-            "[resourceId('Microsoft.Web/Sites/', variables('functionAppName'))]"
+            "[resourceId('Microsoft.Web/Sites/', variables('funcAppName'))]"
           ],
           "properties": {
             "RepoUrl": "[parameters('sourceCodeRepositoryURL')]",
