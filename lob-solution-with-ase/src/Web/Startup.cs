@@ -10,8 +10,6 @@ using Infrastructure.Data;
 using Infrastructure.Identity;
 using Infrastructure.Logging;
 using Infrastructure.Services;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -164,7 +162,6 @@ namespace Microsoft.eShopWeb
 
             var storageConnection = Configuration.GetConnectionString("StorageConnection");
             services.AddTransient<IStorageService>(p => new CloudStorageService(storageConnection));
-
 
             services.AddMvc();
 
