@@ -11,7 +11,7 @@ Arguments
   --jenkins_release_type|-jrt         : The Jenkins release type (LTS or weekly or verified). By default it's set to LTS
   --jenkins_version_location|-jvl     : Url used to specify the version of Jenkins.
   --service_principal_type|-sp        : The type of service principal: MSI or manual.
-  --service_principal_id|-spid         : The service principal ID.
+  --service_principal_id|-spid        : The service principal ID.
   --service_principal_secret|-ss      : The service principal secret.
   --subscription_id|-subid            : The subscription ID of the SP.
   --tenant_id|-tid                    : The tenant id of the SP.
@@ -221,7 +221,7 @@ server {
         proxy_set_header        X-Forwarded-Proto \$scheme;
 
 
-        # Fix the “It appears that your reverse proxy set up is broken" error.
+        # Fix the "It appears that your reverse proxy set up is broken" error.
         proxy_pass          http://localhost:8080;
         proxy_redirect      http://localhost:8080 http://${jenkins_fqdn};
         proxy_read_timeout  90;

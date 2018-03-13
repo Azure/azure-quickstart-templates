@@ -17,7 +17,7 @@ Arguments
   --service_principal_secret|-ss  [Required] : The service principal secret.
   --subscription_id|-subid        [Required] : The subscription ID of the SP.
   --tenant_id|-tid                [Required] : The tenant id of the SP.
-  --mongodb_uri|-mu               [Required]: URI of the MongoDB
+  --mongodb_uri|-mu               [Required] : URI of the MongoDB
   --artifacts_location|-al                   : Url used to reference other scripts/artifacts.
   --sas_token|-st                            : A sas token needed if the artifacts location is private.
 EOF
