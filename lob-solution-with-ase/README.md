@@ -22,6 +22,8 @@
 
 ![](images/architecture.png)
 
+Download the Visio diagram [here](/architecture.vsdx).
+
 ## Create App Registrations in Azure Active Directory (AAD) 
 
 ### Get Tenant Id
