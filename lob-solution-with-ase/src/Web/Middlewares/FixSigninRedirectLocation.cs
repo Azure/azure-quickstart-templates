@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
 using System;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Web.Middlewares
@@ -24,14 +23,13 @@ namespace Web.Middlewares
         public async Task Invoke(HttpContext context)
         {
             await _next.Invoke(context);
-
             if (context.Response.StatusCode != 302) return;
 
             var location = context.Response.Headers["Location"].FirstOrDefault();
             if (location.StartsWith("/")) return;
 
             var locationUri = new Uri(location);
-            if (locationUri.Authority == context.Request.Host.Value 
+            if (locationUri.Authority == context.Request.Host.Value
                 && locationUri.Scheme == context.Request.Scheme
                 && locationUri.AbsolutePath == "/Account/Signin")
             {

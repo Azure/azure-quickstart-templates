@@ -39,18 +39,17 @@ namespace Infrastructure.OData
 
         public void Delete(TEntity entity)
         {
-            DeleteAsync(entity).Wait();
+            throw new NotImplementedException();
         }
 
         public Task DeleteAsync(TEntity entity)
         {
-            container.DeleteObject(entity);
-            return container.SaveChangesAsync();
+            throw new NotImplementedException();
         }
 
         public TEntity GetById(int id)
         {
-            return GetByIdAsync(id).Result;
+            throw new NotImplementedException();
         }
 
         public Task<TEntity> GetByIdAsync(int id)
@@ -88,13 +87,12 @@ namespace Infrastructure.OData
 
         public void Update(TEntity entity)
         {
-            UpdateAsync(entity).Wait();
+            throw new NotImplementedException();
         }
 
         public virtual Task UpdateAsync(TEntity entity)
         {
-            container.UpdateObject(entity);
-            return container.SaveChangesAsync();
+            throw new NotImplementedException();
         }
 
 
