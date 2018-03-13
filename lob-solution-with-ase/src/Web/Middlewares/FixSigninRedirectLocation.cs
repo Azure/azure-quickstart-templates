@@ -28,8 +28,12 @@ namespace Web.Middlewares
             if (context.Response.StatusCode != 302) return;
 
             var location = context.Response.Headers["Location"].FirstOrDefault();
+            if (location.StartsWith("/")) return;
+
             var locationUri = new Uri(location);
-            if (locationUri.Authority == context.Request.Host.Value && locationUri.Scheme == context.Request.Scheme)
+            if (locationUri.Authority == context.Request.Host.Value 
+                && locationUri.Scheme == context.Request.Scheme
+                && locationUri.AbsolutePath == "/Account/Signin")
             {
                 context.Response.Headers["Location"] = new StringValues(locationUri.PathAndQuery);
             }
