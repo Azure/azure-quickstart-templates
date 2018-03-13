@@ -68,3 +68,4 @@ for i in "${artifacts[@]}"; do
       curl --silent "${artifacts_location}/scripts/jenkins/jenkins-on-azure/$i${artifacts_location_sas_token}" -o ${location}/$i
   fi
 done
+
