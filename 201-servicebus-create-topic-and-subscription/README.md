@@ -8,4 +8,4 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-For information about using this template, see [Create a Service Bus namespace with Topic and Subscription using an ARM template](http://azure.microsoft.com/documentation/articles/service-bus-resource-manager-namespace-topic/).
+For information about using this template, see [Create a Service Bus namespace with Topic and Subscription with auto forwarding using an ARM template](http://azure.microsoft.com/documentation/articles/service-bus-resource-manager-namespace-topic/).

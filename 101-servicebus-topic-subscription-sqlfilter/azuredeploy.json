@@ -1,82 +1,138 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-    "contentVersion": "1.0.0.0",
-    "parameters": {
-      "serviceBusNamespaceName": {
-        "type": "string",
-        "metadata": {
-          "description": "Name of the Service Bus Namespace"
-        }
-      },
-      "serviceBusTopicName": {
-        "type": "string",
-        "metadata": {
-          "description": "Name of the Service Bus Topic"
-        }
-      },
-      "serviceBusTopicSubscriptionName": {
-        "type": "string",
-        "metadata": {
-          "description": "Name of the Service Bus Topic Subscription"
-        }
-      },
-      "serviceBusTopicSubscriptionSqlFilter": {
-        "type": "string",
-        "metadata": {
-          "description": "The SQL Filter of the Service Bus Topic Subscription"
-        }
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "serviceBusNamespaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Service Bus Namespace"
       }
     },
-    "variables": {
+    "serviceBusTopicName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Service Bus Topic"
+      }
     },
-    "resources": [
-      {
-        "apiVersion": "2017-04-01",
-        "name": "[parameters('serviceBusNamespaceName')]",
-        "type": "Microsoft.ServiceBus/namespaces",
-        "location": "[resourceGroup().location]",
-        "properties": {
-        },
-        "resources": [
-          {
+    "serviceBusTopicSubscriptionName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Service Bus Topic Subscription"
+      }
+    },
+    "serviceBusTopicSubscriptionSqlFilterExpression": {
+      "type": "string",
+      "metadata": {
+        "description": "The SQL Filter of the Service Bus Topic Subscription"
+      }
+    },
+    "serviceBusTopicSubscriptionActionSqlExpression": {
+      "type": "string",
+      "metadata": {
+        "description": "The SQL Filter of the Service Bus Topic Subscription"
+      }
+    }
+  },
+  "variables": {
+    "defaultSASKeyName": "RootManageSharedAccessKey",
+    "authRuleResourceId": "[resourceId('Microsoft.ServiceBus/namespaces/authorizationRules', parameters('serviceBusNamespaceName'), variables('defaultSASKeyName'))]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2017-04-01",
+      "name": "[parameters('serviceBusNamespaceName')]",
+      "type": "Microsoft.ServiceBus/namespaces",
+      "location": "[resourceGroup().location]",
+      "properties": {
+      },
+      "resources": [
+        {
+          "apiVersion": "2017-04-01",
+          "name": "[parameters('serviceBusTopicName')]",
+          "type": "topics",
+          "dependsOn": [
+            "[concat('Microsoft.ServiceBus/namespaces/', parameters('serviceBusNamespaceName'))]"
+          ],
+          "properties": {
+            "defaultMessageTimeToLive": "P10675199DT2H48M5.4775807S",
+            "maxSizeInMegabytes": 5120,
+            "requiresDuplicateDetection": false,
+            "duplicateDetectionHistoryTimeWindow": "PT10M",
+            "enableBatchedOperations": true,
+            "sizeInBytes": 0,
+            "status": "Active",
+            "supportOrdering": true,
+            "autoDeleteOnIdle": "P10675199DT2H48M5.4775807S",
+            "enablePartitioning": false,
+            "enableExpress": false
+          },
+          "resources": [
+            {
               "apiVersion": "2017-04-01",
-              "name": "[parameters('serviceBusTopicName')]",
-              "type": "topics",
+              "name": "[parameters('serviceBusTopicSubscriptionName')]",
+              "type": "subscriptions",
               "dependsOn": [
-                  "[concat('Microsoft.ServiceBus/namespaces/', parameters('serviceBusNamespaceName'))]"
+                "[parameters('serviceBusTopicName')]"
               ],
               "properties": {
-                  "path": "[parameters('serviceBusTopicName')]"
+                "lockDuration": "PT1M",
+                "requiresSession": false,
+                "defaultMessageTimeToLive": "P10675199DT2H48M5.4775807S",
+                "deadLetteringOnMessageExpiration": false,
+                "deadLetteringOnFilterEvaluationExceptions": true,
+                "messageCount": 0,
+                "maxDeliveryCount": 10,
+                "status": "Active",
+                "enableBatchedOperations": true,
+                "autoDeleteOnIdle": "P10675199DT2H48M5.4775807S"
               },
               "resources": [
-                  {
-                      "apiVersion": "2017-04-01",
-                      "name": "[parameters('serviceBusTopicSubscriptionName')]",
-                      "type": "subscriptions",
-                      "dependsOn": [
-                          "[parameters('serviceBusTopicName')]"
-                      ],
-                      "properties": {
-                      },
-                      "resources": [{
-                          "apiVersion": "2017-04-01",
-                          "name": "[concat(parameters('serviceBusTopicSubscriptionName'), '-filter')]",
-                          "type": "Rules",
-                          "dependsOn": [
-                              "[parameters('serviceBusTopicSubscriptionName')]"
-                          ],
-                          "properties": {
-                              "filter": {
-                                  "sqlExpression": "[parameters('serviceBusTopicSubscriptionSqlFilter')]"
-                              }
-                          }
-                      }]
+                {
+                  "apiVersion": "2017-04-01",
+                  "name": "[concat(parameters('serviceBusTopicSubscriptionName'), '-filter')]",
+                  "type": "Rules",
+                  "dependsOn": [
+                    "[parameters('serviceBusTopicSubscriptionName')]"
+                  ],
+                  "properties": {
+                    "action": {
+                      "sqlExpression": "parameters('serviceBusTopicSubscriptionActionSqlExpression')",
+                      "compatibility_level": 20,
+                      "requires_preprocessing": false
+                    },
+                    "filterType": "SqlFilter",
+                    "sqlFilter": {
+                      "sqlExpression": "[parameters('serviceBusTopicSubscriptionSqlFilterExpression')]",
+                      "requiresPreprocessing": "false"
+                    },
+                    "CorrelationFilter": {
+                      "properties":,
+                      "messageId":,
+                      "to":,
+                      "replyTo":,
+                      "label":,
+                      "sessionId":,
+                      "replyToSessionId":,
+                      "contentType":,
+                      "requiresPreprocessing":,
+                    }
                   }
+                }
               ]
-          }
-        ]
-      }
-    ],
-    "outputs": {
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "outputs": {
+    "NamespaceDefaultConnectionString": {
+      "type": "string",
+      "value": "[listkeys(variables('authRuleResourceId'), '2017-04-01').primaryConnectionString]"
+    },
+    "DefaultSharedAccessPolicyPrimaryKey": {
+      "type": "string",
+      "value": "[listkeys(variables('authRuleResourceId'), '2017-04-01').primaryKey]"
     }
   }
+}
