@@ -54,7 +54,7 @@ describe('template files - ', () => {
         }
 
         var parametersInMainTemplate = Object.keys(mainTemplateFileJSONObject.parameters);
-        /** Validate each parameter in main template has value in outputs */
+        /** Validate each parameter that does not have a defaultValue in mainTemplate, has a value in outputs */
         it.each(parametersInMainTemplate, 'parameter %s that does not have a defaultValue in file mainTemplate.json, must have a corresponding output in createUiDefinition.json', ['element'], function(element, next){
             if (typeof(mainTemplateFileJSONObject.parameters[element].defaultValue) === 'undefined') {
                 outputsInCreateUiDef.should.withMessage('in file:mainTemplate.json, outputs in createUiDefinition is missing the parameter ' + element).contain(element.toLowerCase());
