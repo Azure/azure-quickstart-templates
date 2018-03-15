@@ -130,17 +130,45 @@ describe('template files - ', () => {
             });
         });
 
-        it('apiVersions must NOT be retrieved using providers().apiVersions[n].  This function is non-deterministic', () => {
+        /** providers().apiVersions[n] must not be present for all template files. */
+        describe('apiVersions must NOT be retrieved using providers().apiVersions[n].  This function is non-deterministic', () => {
             templateFileJSONObjects.forEach(templateJSONObject => {
                 var templateObject = templateJSONObject.value;
-                templateObject.should.have.property('resources');
                 var message = 'in file:' + templateJSONObject.filename + ' should NOT have api version determined by providers().';
-                Object.keys(templateObject.resources).forEach(resource => {
-                    var val = templateObject.resources[resource];
-                    if (val.apiVersion) {
-                        val.apiVersion.should.withMessage(getErrorMessage(val, templateJSONObject.filepath, message)).not.contain('providers(');
-                    }
-                });
+                var properties = Object.keys(templateObject);
+                if (templateObject.parameters) {
+                    var parametersProperties = Object.keys(templateObject.parameters);
+                    it.each(parametersProperties, "providers().apiVersions[n] must NOT be present in the template "+ templateJSONObject.filename +" for parameter %s", ['element'], function(element, next){
+                        var val = JSON.stringify(templateObject.parameters[element]);
+                        val.should.withMessage('file:' + templateJSONObject.filepath + ' property:' + element).not.match(/providers\(.*?\)\.apiVersions/);
+                        next();
+                    });
+                }
+                if (templateObject.variables) {
+                    var variablesProperties = Object.keys(templateObject.variables);
+                    it.each(variablesProperties, "providers().apiVersions[n] must NOT be present in the template "+ templateJSONObject.filename +" for variable %s", ['element'], function(element, next){
+                        var val = JSON.stringify(templateObject.variables[element]);
+                        val.should.withMessage('file:' + templateJSONObject.filepath + ' property:' + element).not.match(/providers\(.*?\)\.apiVersions/);
+                        next();
+                    });
+                }
+                if (templateObject.resources) {
+                    var resourcesProperties = Object.keys(templateObject.resources);
+                    var message = 'in file:' + templateJSONObject.filename + ' should NOT have api version determined by providers().';
+                    it.each(resourcesProperties, "providers().apiVersions[n] must NOT be present in the template "+ templateJSONObject.filename +" for resource with name \'%s\'", ['name'], function(element, next){
+                        var val = JSON.stringify(element);
+                        val.should.withMessage(getErrorMessage(element, templateJSONObject.filepath, message)).not.match(/providers\(.*?\)\.apiVersions/);
+                        next();
+                    });
+                }
+                if (templateObject.outputs) {
+                    var outputsProperties = Object.keys(templateObject.outputs);
+                    it.each(outputsProperties, "providers().apiVersions[n] must NOT be present in the template "+ templateJSONObject.filename +" for output %s", ['element'], function(element, next){
+                        var val = JSON.stringify(templateObject.outputs[element]);
+                        val.should.withMessage('file:' + templateJSONObject.filepath + ' property:' + element).not.match(/providers\(.*?\)\.apiVersions/);
+                        next();
+                    });
+                }
             });
         });
     });
