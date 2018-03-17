@@ -38,31 +38,28 @@ describe('template files - ', () => {
             mainTemplateFileJSONObject.should.have.property('parameters');
         });
 
+        var currentDir = path.dirname(mainTemplateFile);
+        // assert create ui def exists in the above directory
+        util.assertCreateUiDefExists(currentDir);
+
+        // get the corresponding create ui def
+        var createUiDefJSONObject = util.getCreateUiDefFile(currentDir).jsonObject;
+
+        // get output keys in main template
+        var outputsInCreateUiDef = Object.keys(createUiDefJSONObject.parameters.outputs);
+
+        // convert to lowercase
+        for (var i in outputsInCreateUiDef) {
+            outputsInCreateUiDef[i] = outputsInCreateUiDef[i].toLowerCase();
+        }
+
         var parametersInMainTemplate = Object.keys(mainTemplateFileJSONObject.parameters);
-
-        /** Each parameter that does not have a defaultValue MUST have a corresponding output in createUiDefinition.json */
-        it('each parameter that does not have a defaultValue, must have a corresponding output in createUIDef', () => {
-            var currentDir = path.dirname(mainTemplateFile);
-            // assert create ui def exists in the above directory
-            util.assertCreateUiDefExists(currentDir);
-
-            // get the corresponding create ui def
-            var createUiDefJSONObject = util.getCreateUiDefFile(currentDir).jsonObject;
-
-            // get output keys in main template
-            var outputsInCreateUiDef = Object.keys(createUiDefJSONObject.parameters.outputs);
-
-            // convert to lowercase
-            for (var i in outputsInCreateUiDef) {
-                outputsInCreateUiDef[i] = outputsInCreateUiDef[i].toLowerCase();
+        /** Validate each parameter that does not have a defaultValue in mainTemplate, has a value in outputs */
+        it.each(parametersInMainTemplate, 'parameter %s that does not have a defaultValue in file mainTemplate.json, must have a corresponding output in createUiDefinition.json', ['element'], function(element, next){
+            if (typeof(mainTemplateFileJSONObject.parameters[element].defaultValue) === 'undefined') {
+                outputsInCreateUiDef.should.withMessage('in file:mainTemplate.json, outputs in createUiDefinition is missing the parameter ' + element).contain(element.toLowerCase());
             }
-
-            // validate each parameter in main template has a value in outputs
-            parametersInMainTemplate.forEach(parameter => {
-                if (typeof(mainTemplateFileJSONObject.parameters[parameter].defaultValue) === 'undefined') {
-                    outputsInCreateUiDef.should.withMessage('in file:mainTemplate.json. outputs in createUiDefinition is missing the parameter ' + parameter).contain(parameter.toLowerCase());
-                }
-            });
+            next();
         });
 
         /** If securestring, the default value (if it exists) should be null*/
@@ -94,8 +91,9 @@ describe('template files - ', () => {
             location.should.withMessage('in file:mainTemplate.json, location property MUST NOT have allowedValues property').not.have.property('allowedValues');
         });
 
+        /** Validate each parameter should be used in main template */
         var mainTemplateFileContent = JSON.stringify(mainTemplateFileJSONObject).toLowerCase();
-        it.each(parametersInMainTemplate, 'parameter %s must be used in maintemplate', ['element'], function(element, next) {
+        it.each(parametersInMainTemplate, 'parameter %s must be used in file mainTemplate.json', ['element'], function(element, next) {
             var paramString = 'parameters(\'' + element.toLowerCase() + '\')';
             assert(mainTemplateFileContent.includes(paramString) === true, 'unused parameter ' + element + ' in file mainTemplate.json');
             next();
@@ -132,17 +130,45 @@ describe('template files - ', () => {
             });
         });
 
-        it('apiVersions must NOT be retrieved using providers().apiVersions[n].  This function is non-deterministic', () => {
+        /** providers().apiVersions[n] must not be present for all template files. */
+        describe('apiVersions must NOT be retrieved using providers().apiVersions[n].  This function is non-deterministic', () => {
             templateFileJSONObjects.forEach(templateJSONObject => {
                 var templateObject = templateJSONObject.value;
-                templateObject.should.have.property('resources');
                 var message = 'in file:' + templateJSONObject.filename + ' should NOT have api version determined by providers().';
-                Object.keys(templateObject.resources).forEach(resource => {
-                    var val = templateObject.resources[resource];
-                    if (val.apiVersion) {
-                        val.apiVersion.should.withMessage(getErrorMessage(val, templateJSONObject.filepath, message)).not.contain('providers(');
-                    }
-                });
+                var properties = Object.keys(templateObject);
+                if (templateObject.parameters) {
+                    var parametersProperties = Object.keys(templateObject.parameters);
+                    it.each(parametersProperties, "providers().apiVersions[n] must NOT be present in the template "+ templateJSONObject.filename +" for parameter %s", ['element'], function(element, next){
+                        var val = JSON.stringify(templateObject.parameters[element]);
+                        val.should.withMessage('file:' + templateJSONObject.filepath + ' property:' + element).not.match(/providers\(.*?\)\.apiVersions/);
+                        next();
+                    });
+                }
+                if (templateObject.variables) {
+                    var variablesProperties = Object.keys(templateObject.variables);
+                    it.each(variablesProperties, "providers().apiVersions[n] must NOT be present in the template "+ templateJSONObject.filename +" for variable %s", ['element'], function(element, next){
+                        var val = JSON.stringify(templateObject.variables[element]);
+                        val.should.withMessage('file:' + templateJSONObject.filepath + ' property:' + element).not.match(/providers\(.*?\)\.apiVersions/);
+                        next();
+                    });
+                }
+                if (templateObject.resources) {
+                    var resourcesProperties = Object.keys(templateObject.resources);
+                    var message = 'in file:' + templateJSONObject.filename + ' should NOT have api version determined by providers().';
+                    it.each(resourcesProperties, "providers().apiVersions[n] must NOT be present in the template "+ templateJSONObject.filename +" for resource with name \'%s\'", ['name'], function(element, next){
+                        var val = JSON.stringify(element);
+                        val.should.withMessage(getErrorMessage(element, templateJSONObject.filepath, message)).not.match(/providers\(.*?\)\.apiVersions/);
+                        next();
+                    });
+                }
+                if (templateObject.outputs) {
+                    var outputsProperties = Object.keys(templateObject.outputs);
+                    it.each(outputsProperties, "providers().apiVersions[n] must NOT be present in the template "+ templateJSONObject.filename +" for output %s", ['element'], function(element, next){
+                        var val = JSON.stringify(templateObject.outputs[element]);
+                        val.should.withMessage('file:' + templateJSONObject.filepath + ' property:' + element).not.match(/providers\(.*?\)\.apiVersions/);
+                        next();
+                    });
+                }
             });
         });
     });
