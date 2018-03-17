@@ -12,7 +12,7 @@ The template system that deploys to US Government Cloud is largely identical to 
 
 [![Deploy to Azure](https://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsplunk-on-ubuntu%2Fazuredeploy.json)
 
-This template deploys Splunk Enterprise 6.6 on Azure as either **standalone** instance or distributed **cluster** (up to 20 indexers). Each instance has eight (8) 1-TB data drives in RAID0 configuration. The template also provisions a storage account, a virtual network with subnets, public IP address, and all network interfaces & security groups required.
+This template deploys Splunk Enterprise 6.6 on Azure as either **standalone** instance or distributed **cluster** (up to 30 indexers). Each instance has eight (8) 1-TB data drives in RAID0 configuration. The template also provisions a storage account, a virtual network with subnets, public IP address, and all network interfaces & security groups required.
 
 Once the deployment is complete, Splunk Enterprise can be accessed using the configured DNS address. The DNS address will include the `domainNamePrefix` and `location` entered as parameters in the format `{domainNamePrefix}.{location}.cloudapp.azure.com`. If you created a deployment with `domainNamePrefix` parameter set to "splunk" in the West US region, then Splunk Enterprise can be accessed at `https://splunk.westus.cloudapp.azure.com`.
 
