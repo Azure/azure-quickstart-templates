@@ -1,0 +1,232 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "storageAccountType": {
+            "type": "string",
+            "defaultValue": "Standard_LRS",
+            "allowedValues": [
+                "Standard_LRS",
+                "Standard_GRS",
+                "Standard_ZRS",
+                "Premium_LRS"
+            ],
+            "metadata": {
+                "description": "Storage Account type"
+            }
+        },
+        "storageAccountName": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().name]"
+        },
+        "dnsName": {
+            "type": "string"
+        },
+        "mysqlPassword": {
+            "type": "securestring"
+        }
+    },
+    "variables": {
+        "image": "microsoft/azure-cli",
+        "cpuCores": "0.5",
+        "memoryInGb": "0.75",
+        "shareContainerGroupName": "[concat(resourceGroup().name, '-createshare')]",
+        "wordpressContainerGroupName": "[concat(resourceGroup().name, '-wordpress')]",
+        "wordpressShareName": "[concat(toLower(resourceGroup().name), '-wp')]",
+        "mysqlShareName": "[concat(toLower(resourceGroup().name), '-sql')]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[parameters('storageAccountName')]",
+            "apiVersion": "2016-01-01",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "[parameters('storageAccountType')]"
+            },
+            "kind": "Storage",
+            "properties": {}
+        },
+        {
+            "name": "[variables('shareContainerGroupName')]",
+            "type": "Microsoft.ContainerInstance/containerGroups",
+            "apiVersion": "2018-02-01-preview",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]"
+            ],
+            "properties": {
+                "containers": [
+                    {
+                        "name": "[variables('wordpressShareName')]",
+                        "properties": {
+                            "image": "[variables('image')]",
+                            "command": [
+                                "az",
+                                "storage",
+                                "share",
+                                "create",
+                                "--name",
+                                "[variables('wordpressShareName')]"
+                            ],
+                            "environmentVariables": [
+                                {
+                                    "name": "AZURE_STORAGE_KEY",
+                                    "value": "[listKeys(parameters('storageAccountName'),'2016-01-01').keys[0].value]"
+                                },
+                                {
+                                    "name": "AZURE_STORAGE_ACCOUNT",
+                                    "value": "[parameters('storageAccountName')]"
+                                }
+                            ],
+                            "resources": {
+                                "requests": {
+                                    "cpu": "[variables('cpuCores')]",
+                                    "memoryInGb": "[variables('memoryInGb')]"
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "name": "[variables('mysqlShareName')]",
+                        "properties": {
+                            "image": "[variables('image')]",
+                            "command": [
+                                "az",
+                                "storage",
+                                "share",
+                                "create",
+                                "--name",
+                                "[variables('mysqlShareName')]"
+                            ],
+                            "environmentVariables": [
+                                {
+                                    "name": "AZURE_STORAGE_KEY",
+                                    "value": "[listKeys(parameters('storageAccountName'),'2016-01-01').keys[0].value]"
+                                },
+                                {
+                                    "name": "AZURE_STORAGE_ACCOUNT",
+                                    "value": "[parameters('storageAccountName')]"
+                                }
+                            ],
+                            "resources": {
+                                "requests": {
+                                    "cpu": "[variables('cpuCores')]",
+                                    "memoryInGb": "[variables('memoryInGb')]"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "restartPolicy": "OnFailure",
+                "osType": "Linux"
+            }
+        },
+        {
+            "name": "[variables('wordpresscontainerGroupName')]",
+            "type": "Microsoft.ContainerInstance/containerGroups",
+            "apiVersion": "2018-02-01-preview",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.ContainerInstance/containerGroups/', variables('shareContainerGroupName'))]"
+            ],
+            "properties": {
+                "containers": [
+                    {
+                        "name": "wordpress",
+                        "properties": {
+                            "image": "wordpress:4.9-apache",
+                            "ports": [
+                                {
+                                    "protocol": "tcp",
+                                    "port": 80
+                                }
+                            ],
+                            "environmentVariables": [
+                                {
+                                    "name": "WORDPRESS_DB_HOST",
+                                    "value": "127.0.0.1:3306"
+                                },
+                                {
+                                    "name": "WORDPRESS_DB_PASSWORD",
+                                    "value": "[variables('mysqlPassword')]"
+                                }
+                            ],
+                            "volumeMounts": [
+                                {
+                                    "mountPath": "/var/www/html",
+                                    "name": "wordpressfile"
+                                }
+                            ],
+                            "resources": {
+                                "requests": {
+                                    "cpu": "[variables('cpuCores')]",
+                                    "memoryInGb": "[variables('memoryInGb')]"
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "name": "mysql",
+                        "properties": {
+                            "image": "mysql:5.6",
+                            "ports": [
+                                {
+                                    "protocol": "tcp",
+                                    "port": 3306
+                                }
+                            ],
+                            "environmentVariables": [
+                                {
+                                    "name": "MYSQL_ROOT_PASSWORD",
+                                    "value": "[variables('mysqlPassword')]"
+                                }
+                            ],
+                            "volumeMounts": [
+                                {
+                                    "mountPath": "/var/lib/mysql",
+                                    "name": "mysqlfile"
+                                }
+                            ],
+                            "resources": {
+                                "requests": {
+                                    "cpu": "[variables('cpuCores')]",
+                                    "memoryInGb": "[variables('memoryInGb')]"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "volumes": [
+                    {
+                        "azureFile": {
+                            "shareName": "[variables('wordpressShareName')]",
+                            "storageAccountKey": "[listKeys(parameters('storageAccountName'),'2016-01-01').keys[0].value]",
+                            "storageAccountName": "[parameters('storageAccountName')]"
+                        },
+                        "name": "wordpressfile"
+                    },
+                    {
+                        "azureFile": {
+                            "shareName": "[variables('mysqlShareName')]",
+                            "storageAccountKey": "[listKeys(parameters('storageAccountName'),'2016-01-01').keys[0].value]",
+                            "storageAccountName": "[parameters('storageAccountName')]"
+                        },
+                        "name": "mysqlfile"
+                    }
+                ],
+                "ipAddress": {
+                    "ports": [
+                        {
+                            "protocol": "tcp",
+                            "port": 80
+                        }
+                    ],
+                    "type": "Public",
+                    "dnsNameLabel": "[parameters('dnsName')]"
+                },
+                "osType": "Linux"
+            }
+        }
+    ]
+}
