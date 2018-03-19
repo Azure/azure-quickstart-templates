@@ -43,6 +43,7 @@ to use the [Azure Automation DSC](https://docs.microsoft.com/en-us/azure/automat
 service to deliver *and maintain* the state of the machine.
 The compliance state or any error messages from DSC can be viewed in the reporting
 available with the service.
+
 Users of the service also have tools to support Operations practices,
 such as publishing changes to the configuration without re-deployment of the virtual machine,
 or [linking the Automation Account with Log Analytics](https://docs.microsoft.com/en-us/azure/automation/automation-dsc-diagnostics)
