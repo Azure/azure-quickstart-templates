@@ -7,7 +7,7 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template will create a Azure Cosmos DB Database Account with the name provided, the location set to the same location as the resource group that was used, and the Offer Type set to ***Standard***.
+This template will create an Azure Cosmos DB Database Account with the name provided, the location set to the same location as the resource group that was used, and the Offer Type set to ***Standard***.
 
 This template includes the optional Consistency Policy property, the account will be created with the default consistency level specified.
 
