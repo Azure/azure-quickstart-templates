@@ -13,5 +13,5 @@ This template includes the optional Consistency Policy property, the account wil
 
 For more information on Azure Cosmos DB Consistency Levels please refer to, [Using consistency levels to maximize availability and performance in Azure Cosmos DB](https://azure.microsoft.com/en-us/documentation/articles/documentdb-consistency-levels/)
 
-If you want just want to create a Azure Cosmos DB with the default values set then refer to, [101-create-documentdb-account](https://github.com/Azure/azure-quickstart-templates/tree/master/101-create-documentdb-account) to see how it is done.
+If you want just want to create an Azure Cosmos DB with the default values set then refer to, [101-create-documentdb-account](https://github.com/Azure/azure-quickstart-templates/tree/master/101-create-documentdb-account) to see how it is done.
 
