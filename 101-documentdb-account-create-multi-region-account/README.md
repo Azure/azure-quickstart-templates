@@ -7,7 +7,7 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template will create a Azure Cosmos DB Database Account with the two specifed regions, the provided name, and the Offer Type set to ***Standard***.
+This template will create an Azure Cosmos DB Database Account with the two specifed regions, the provided name, and the Offer Type set to ***Standard***.
 
 By not setting the optional Default Consistency Level parameter, the account will be created with the default consistency level of ***Session***.
 If you want to set the Default Consistency Level to another value refer to, [101-create-documentdb-account-consistencypolicy](https://github.com/Azure/azure-quickstart-templates/tree/master/101-create-documentdb-account-consistencypolicy) to see how it is done.
