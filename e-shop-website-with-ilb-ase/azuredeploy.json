@@ -84,6 +84,20 @@
       "metadata": {
         "description": "Use 'true' if you are deploying from the base repo, 'false' if you are deploying from your own fork. If you're using 'false', make sure you have admin permissions to the repo. If you get an error, you should add GitHub integration to another web app manually, so that you get a GitHub access token associated with your Azure Subscription."
       }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/e-shop-website-with-ilb-ase",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      }
     }
   },
   "variables": {
@@ -112,24 +126,6 @@
     "cdnStorageEndpointName": "[concat(parameters('aseName'), '-cdn-storage')]"
   },
   "resources": [
-    {
-      "apiVersion": "2015-08-01",
-      "type": "Microsoft.Web/hostingEnvironments",
-      "name": "[parameters('aseName')]",
-      "location": "[parameters('aseLocation')]",
-      "kind": "ASEV2",
-      "properties": {
-        "name": "[parameters('aseName')]",
-        "location": "[parameters('aseLocation')]",
-        "virtualNetwork": {
-          "Id": "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
-          "Subnet": "[variables('eshopSubnetName')]"
-        }
-      },
-      "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
-      ]
-    },
     {
       "apiVersion": "2016-12-01",
       "type": "Microsoft.Network/virtualNetworks",
@@ -471,26 +467,87 @@
       }
     },
     {
-      "apiVersion": "2016-03-01",
-      "type": "Microsoft.Web/serverfarms",
-      "name": "[variables('aspName')]",
-      "location": "[parameters('aseLocation')]",
-      "kind": "app",
-      "properties": {
-        "name": "[variables('aspName')]",
-        "workerSize": "0",
-        "workerSizeId": "0",
-        "numberOfWorkers": "1",
-        "reserved": false,
-        "hostingEnvironment": "[parameters('aseName')]"
-      },
-      "sku": {
-        "tier": "Isolated",
-        "name": "I1"
-      },
+      "apiVersion": "2017-05-10",
+      "name": "aseDeployment",
+      "type": "Microsoft.Resources/deployments",
       "dependsOn": [
-        "[concat('Microsoft.Web/hostingEnvironments/', parameters('aseName'))]"
-      ]
+        "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('_artifactsLocation'), '/nested/ase.json', parameters('_artifactsLocationSasToken'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "aseName": {
+            "value": "[parameters('aseName')]"
+          },
+          "location": {
+            "value": "[parameters('aseLocation')]"
+          },
+          "sqlServerName": {
+            "value": "[variables('sqlServerName')]"
+          },
+          "sqlServerAdministratorLogin": {
+            "value": "[parameters('sqlServerAdministratorLogin')]"
+          },
+          "sqlServerAdministratorLoginPassword": {
+            "value": "[parameters('sqlServerAdministratorLoginPassword')]"
+          },
+          "vnetName": {
+            "value": "[variables('vnetName')]"
+          },
+          "eshopSubnetName": {
+            "value": "[variables('eshopSubnetName')]"
+          },
+          "appInsightsName": {
+            "value": "[variables('appInsightsName')]"
+          },
+          "storageAccountName": {
+            "value": "[variables('storageAccountName')]"
+          },
+          "redisCacheName": {
+            "value": "[variables('redisCacheName')]"
+          },
+          "aspName": {
+            "value": "[variables('aspName')]"
+          },
+          "webAppName": {
+            "value": "[variables('webAppName')]"
+          },
+          "contentAppName": {
+            "value": "[variables('contentAppName')]"
+          },
+          "apiAppName": {
+            "value": "[variables('apiAppName')]"
+          },
+          "adminAppName": {
+            "value": "[variables('adminAppName')]"
+          },
+          "azureAdTenantId": {
+            "value": "[parameters('azureAdTenantId')]"
+          },
+          "azureAdClientId": {
+            "value": "[parameters('azureAdClientId')]"
+          },
+          "cdnWebAppEndpointName": {
+            "value": "[variables('cdnWebAppEndpointName')]"
+          },
+          "cdnStorageEndpointName": {
+            "value": "[variables('cdnStorageEndpointName')]"
+          },
+          "sourceCodeRepositoryURL": {
+            "value": "[parameters('sourceCodeRepositoryURL')]"
+          },
+          "sourceCodeBranch": {
+            "value": "[parameters('sourceCodeBranch')]"
+          },
+          "sourceCodeManualIntegration": {
+            "value": "[parameters('sourceCodeManualIntegration')]"
+          }
+        }
+      }
     },
     {
       "apiVersion": "2015-05-01",
@@ -501,241 +558,6 @@
         "ApplicationId": "[variables('appInsightsName')]",
         "Request_Source": "IbizaWebAppExtensionCreate"
       }
-    },
-    {
-      "apiVersion": "2016-03-01",
-      "type": "Microsoft.Web/sites",
-      "name": "[variables('webAppName')]",
-      "location": "[variables('location')]",
-      "properties": {
-        "name": "[variables('webAppName')]",
-        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]",
-        "hostingEnvironment": "[parameters('aseName')]",
-        "siteConfig": {
-          "alwaysOn": true,
-          "appSettings": [
-            {
-              "name": "ODataServiceBaseUrl",
-              "value": "[concat('http://', reference(resourceId('Microsoft.Web/sites/', variables('apiAppName'))).defaultHostName)]"
-            },
-            {
-              "name": "cdn:url",
-              "value": "[concat('https://', variables('cdnWebAppEndpointName'), '.azureedge.net')]"
-            },
-            {
-              "name": "CatalogBaseUrl",
-              "value": "[concat('https://', variables('cdnStorageEndpointName'), '.azureedge.net')]"
-            },
-            {
-              "name": "ApplicationInsights:InstrumentationKey",
-              "value": "[reference(resourceId('microsoft.insights/components/', variables('appInsightsName')), '2015-05-01').InstrumentationKey]"
-            },
-            {
-              "name": "project",
-              "value": "e-shop-website-with-ilb-ase/src/Web/Web.csproj"
-            }
-          ],
-          "connectionstrings": [
-            {
-              "name": "CatalogConnection",
-              "type": "SQLAzure",
-              "connectionString": "[concat('Server=tcp:', variables('sqlServerName'), '.database.windows.net,1433;Initial Catalog=Catalog;Persist Security Info=False;User ID=', parameters('sqlServerAdministratorLogin'), ';Password=', parameters('sqlServerAdministratorLoginPassword'), ';MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]"
-            },
-            {
-              "name": "SalesConnection",
-              "type": "SQLAzure",
-              "connectionString": "[concat('Server=tcp:', variables('sqlServerName'), '.database.windows.net,1433;Initial Catalog=Sales;Persist Security Info=False;User ID=', parameters('sqlServerAdministratorLogin'), ';Password=', parameters('sqlServerAdministratorLoginPassword'), ';MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]"
-            },
-            {
-              "name": "IdentityConnection",
-              "type": "SQLAzure",
-              "connectionString": "[concat('Server=tcp:', variables('sqlServerName'), '.database.windows.net,1433;Initial Catalog=Identity;Persist Security Info=False;User ID=', parameters('sqlServerAdministratorLogin'), ';Password=', parameters('sqlServerAdministratorLoginPassword'), ';MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]"
-            },
-            {
-              "name": "StorageConnection",
-              "type": "Custom",
-              "connectionString": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'),';AccountKey=',listkeys(resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2015-05-01-preview').key1,';')]"
-            },
-            {
-              "name": "RedisConnection",
-              "type": "Custom",
-              "connectionString": "[concat(variables('redisCacheName'), '.redis.cache.windows.net:6380,password=', listKeys(resourceId('Microsoft.Cache/Redis/', variables('redisCacheName')), '2016-04-01').primaryKey, ',ssl=True,abortConnect=False')]"
-            }
-          ]
-        }
-      },
-      "resources": [
-        {
-          "apiVersion": "2015-08-01",
-          "name": "web",
-          "type": "sourcecontrols",
-          "properties": {
-            "RepoUrl": "[parameters('sourceCodeRepositoryURL')]",
-            "branch": "[parameters('sourceCodeBranch')]",
-            "IsManualIntegration": "parameters('sourceCodeManualIntegration')]"
-          },
-          "dependsOn": [
-            "[resourceId('Microsoft.Web/sites/', variables('webAppName'))]"
-          ]
-        }
-      ],
-      "dependsOn": [
-        "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]",
-        "[resourceId('microsoft.insights/components/', variables('appInsightsName'))]",
-        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
-        "[resourceId('Microsoft.Cache/Redis/', variables('redisCacheName'))]",
-        "[resourceId('Microsoft.Web/sites/', variables('apiAppName'))]"
-      ]
-    },
-    {
-      "apiVersion": "2016-03-01",
-      "type": "Microsoft.Web/sites",
-      "name": "[variables('contentAppName')]",
-      "location": "[variables('location')]",
-      "properties": {
-        "name": "[variables('contentAppName')]",
-        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]",
-        "hostingEnvironment": "[parameters('aseName')]",
-        "siteConfig": {
-          "alwaysOn": true,
-          "appSettings": [
-            {
-              "name": "project",
-              "value": "e-shop-website-with-ilb-ase/src/Web/wwwroot"
-            }
-          ]
-        }
-      },
-      "resources": [
-        {
-          "apiVersion": "2015-08-01",
-          "name": "web",
-          "type": "sourcecontrols",
-          "properties": {
-            "RepoUrl": "[parameters('sourceCodeRepositoryURL')]",
-            "branch": "[parameters('sourceCodeBranch')]",
-            "IsManualIntegration": "parameters('sourceCodeManualIntegration')]"
-          },
-          "dependsOn": [
-            "[resourceId('Microsoft.Web/sites/', variables('contentAppName'))]"
-          ]
-        }
-      ],
-      "dependsOn": [
-        "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]"
-      ]
-    },
-    {
-      "apiVersion": "2016-03-01",
-      "type": "Microsoft.Web/sites",
-      "name": "[variables('apiAppName')]",
-      "location": "[variables('location')]",
-      "properties": {
-        "name": "[variables('apiAppName')]",
-        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]",
-        "hostingEnvironment": "[parameters('aseName')]",
-        "siteConfig": {
-          "alwaysOn": true,
-          "appSettings": [
-            {
-              "name": "ApplicationInsights:InstrumentationKey",
-              "value": "[reference(resourceId('microsoft.insights/components/', variables('appInsightsName')), '2015-05-01').InstrumentationKey]"
-            },
-            {
-              "name": "project",
-              "value": "e-shop-website-with-ilb-ase/src/API/API.csproj"
-            }
-          ],
-          "connectionstrings": [
-            {
-              "name": "SalesConnection",
-              "type": "SQLAzure",
-              "connectionString": "[concat('Server=tcp:', variables('sqlServerName'), '.database.windows.net,1433;Initial Catalog=Sales;Persist Security Info=False;User ID=', parameters('sqlServerAdministratorLogin'), ';Password=', parameters('sqlServerAdministratorLoginPassword'), ';MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]"
-            }
-          ]
-        }
-      },
-      "resources": [
-        {
-          "apiVersion": "2015-08-01",
-          "name": "web",
-          "type": "sourcecontrols",
-          "properties": {
-            "RepoUrl": "[parameters('sourceCodeRepositoryURL')]",
-            "branch": "[parameters('sourceCodeBranch')]",
-            "IsManualIntegration": "parameters('sourceCodeManualIntegration')]"
-          },
-          "dependsOn": [
-            "[resourceId('Microsoft.Web/sites/', variables('apiAppName'))]",
-            "[resourceId('Microsoft.Web/sites/sourcecontrols/', variables('webAppName'), 'web')]"
-          ]
-        }
-      ],
-      "dependsOn": [
-        "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]",
-        "[resourceId('microsoft.insights/components/', variables('appInsightsName'))]"
-      ]
-    },
-    {
-      "apiVersion": "2016-03-01",
-      "type": "Microsoft.Web/sites",
-      "name": "[variables('adminAppName')]",
-      "location": "[variables('location')]",
-      "properties": {
-        "name": "[variables('adminAppName')]",
-        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]",
-        "hostingEnvironment": "[parameters('aseName')]",
-        "siteConfig": {
-          "alwaysOn": true,
-          "appSettings": [
-            {
-              "name": "AzureAd:Domain",
-              "value": ""
-            },
-            {
-              "name": "AzureAd:TenantId",
-              "value": "[parameters('azureAdTenantId')]"
-            },
-            {
-              "name": "AzureAd:ClientId",
-              "value": "[parameters('azureAdClientId')]"
-            },
-            {
-              "name": "ODataServiceBaseUrl",
-              "value": "[concat('http://', reference(resourceId('Microsoft.Web/sites/', variables('apiAppName'))).defaultHostName)]"
-            },
-            {
-              "name": "ApplicationInsights:InstrumentationKey",
-              "value": "[reference(resourceId('microsoft.insights/components/', variables('appInsightsName')), '2015-05-01').InstrumentationKey]"
-            },
-            {
-              "name": "project",
-              "value": "e-shop-website-with-ilb-ase/src/Admin/Admin.csproj"
-            }
-          ]
-        }
-      },
-      "resources": [
-        {
-          "apiVersion": "2015-08-01",
-          "name": "web",
-          "type": "sourcecontrols",
-          "properties": {
-            "RepoUrl": "[parameters('sourceCodeRepositoryURL')]",
-            "branch": "[parameters('sourceCodeBranch')]",
-            "IsManualIntegration": "parameters('sourceCodeManualIntegration')]"
-          },
-          "dependsOn": [
-            "[resourceId('Microsoft.Web/sites/', variables('adminAppName'))]",
-            "[resourceId('Microsoft.Web/sites/sourcecontrols/', variables('apiAppName'), 'web')]"
-          ]
-        }
-      ],
-      "dependsOn": [
-        "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]",
-        "[resourceId('microsoft.insights/components/', variables('appInsightsName'))]",
-        "[resourceId('Microsoft.Web/sites/', variables('apiAppName'))]"
-      ]
     },
     {
       "apiVersion": "2015-05-01-preview",
@@ -899,7 +721,7 @@
             "properties": {
               "BackendAddresses": [
                 {
-                  "fqdn": "[concat(variables('webAppName'), '.', parameters('aseName'), '.p.azurewebsites.net')]"
+                  "fqdn": "[reference('aseDeployment').outputs.webAppDefaultHostName.value]"
                 }
               ]
             }
@@ -1031,7 +853,7 @@
               {
                 "name": "WebApp",
                 "properties": {
-                  "hostName": "[reference(resourceId('Microsoft.Web/sites/', variables('contentAppName'))).defaultHostName]"
+                  "hostName": "[reference('aseDeployment').outputs.contentAppDefaultHostName.value]"
                 }
               }
             ],
@@ -1048,11 +870,11 @@
             ],
             "optimizationType": "GeneralWebDelivery",
             "probePath": null,
-            "originHostHeader": "[reference(resourceId('Microsoft.Web/sites/', variables('webAppName'))).defaultHostName]"
+            "originHostHeader": "[reference('aseDeployment').outputs.contentAppDefaultHostName.value]"
           },
           "dependsOn": [
             "[resourceId('microsoft.cdn/profiles/', variables('cdnName'))]",
-            "[resourceId('Microsoft.Web/sites/sourcecontrols/', variables('webAppName'), 'web')]"
+            "[resourceId('Microsoft.Resources/deployments/', 'aseDeployment')]"
           ]
         },
         {
@@ -1101,7 +923,7 @@
     },
     "adminAppURL": {
       "type": "string",
-      "value": "[concat('https://', reference(resourceId('Microsoft.Web/sites/', variables('adminAppName'))).defaultHostName)]"
+      "value": "[concat('https://', reference('aseDeployment').outputs.adminAppDefaultHostName.value)]"
     }
   }
 }
