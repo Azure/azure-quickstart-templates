@@ -1,13 +1,15 @@
 # Create a Storage Account and a File Share
 
-Create a Storage Account and a File Share via az-cli in Container Instance - <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-aci-storage-file-share%2Fazuredeploy.json" target="_blank">
+Create a Storage Account and a File Share via az-cli in Container Instance
+
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-aci-storage-file-share%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-aci-storage-file-share%2Fazuredeploy.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template demonstrates createing Storage File Share via az-cli and Azure Container Instance, modify the template to create blob or other similar storage operations. Azure Container Instance and az-cli can be used to create services not directly available in Azure Resource Manager Template.
+This template demonstrates creating Storage File Share via az-cli and Azure Container Instance, modify the template to create blob or other similar storage operations. Azure Container Instance and az-cli can be used to create services not directly available in Azure Resource Manager Template.
 
 `Tags: Azure Container Instance, az-cli`
 
