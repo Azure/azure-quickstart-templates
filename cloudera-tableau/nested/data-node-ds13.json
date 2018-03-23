@@ -3,10 +3,10 @@
   "contentVersion": "1.0.0.1",
   "parameters": {
     "vnetID": {
-      "type":"string"
+      "type": "string"
     },
-    "resourceAPIVersion":{
-      "type":"string"
+    "resourceAPIVersion": {
+      "type": "string"
     },
     "dnsNamePrefix": {
       "type": "string"
@@ -21,18 +21,27 @@
       "type": "int"
     },
     "vmSpec": {
-      "type": "secureobject"
+      "type": "secureObject"
     },
     "networkSpec": {
       "type": "object"
     },
     "clusterSpec": {
       "type": "object"
+    },
+    "clouderaTags": {
+      "type": "object"
+    },
+    "tableauTags": {
+      "type": "object"
+    },
+    "quickstartTags": {
+      "type": "object"
     }
   },
   "variables": {
-    "masterIP":"[parameters('networkSpec').masterIP]",
-    "workerIP":"[parameters('networkSpec').workerIP]",
+    "masterIP": "[parameters('networkSpec').masterIP]",
+    "workerIP": "[parameters('networkSpec').workerIP]",
     "vmName": "[concat(parameters('dnsNamePrefix'), '-dn')]",
     "nicName": "[concat(variables('vmName'), '-nic')]",
     "storageAccountName": "[concat('dn', parameters('storageAccount').prefix)]",
@@ -41,11 +50,14 @@
   },
   "resources": [
     {
-      "apiVersion": "[parameters('resourceAPIVersion')]",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('securityGroupName')]",
       "location": "[resourceGroup().location]",
       "comments": "Shared Resources Network Security Group Rules",
+      "tags": {
+        "quickstartName": "[parameters('quickstartTags').name]",
+        "provider": "[parameters('clouderaTags').provider]"
+      },
       "properties": {
         "securityRules": [
           {
@@ -264,9 +276,12 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[concat(copyIndex(), variables('storageAccountName'))]",
-      "apiVersion": "[parameters('resourceAPIVersion')]",
       "location": "[resourceGroup().location]",
       "comments": "Data Node storage account configurations",
+      "tags": {
+        "quickstartName": "[parameters('quickstartTags').name]",
+        "provider": "[parameters('clouderaTags').provider]"
+      },
       "copy": {
         "name": "storageAccountLoop",
         "count": "[parameters('vmCount')]"
@@ -276,11 +291,14 @@
       }
     },
     {
-      "apiVersion": "[parameters('resourceAPIVersion')]",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat(variables('publicIPAddressName'), copyIndex())]",
       "location": "[resourceGroup().location]",
       "comments": "Data Node Public IP Address configuration",
+      "tags": {
+        "quickstartName": "[parameters('quickstartTags').name]",
+        "provider": "[parameters('clouderaTags').provider]"
+      },
       "copy": {
         "name": "publicIPLoop",
         "count": "[parameters('vmCount')]"
@@ -293,11 +311,14 @@
       }
     },
     {
-      "apiVersion": "[parameters('resourceAPIVersion')]",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('nicName'), copyIndex())]",
       "location": "[resourceGroup().location]",
       "comments": "Data Node network interface configuration",
+      "tags": {
+        "quickstartName": "[parameters('quickstartTags').name]",
+        "provider": "[parameters('clouderaTags').provider]"
+      },
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'), copyIndex())]",
         "[concat('Microsoft.Network/networkSecurityGroups/', variables('securityGroupName'))]"
@@ -328,7 +349,6 @@
       }
     },
     {
-      "apiVersion": "[parameters('resourceAPIVersion')]",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('vmName'), copyIndex())]",
       "plan": {
@@ -338,6 +358,10 @@
       },
       "location": "[resourceGroup().location]",
       "comments": "Data Node virtual machines configurations",
+      "tags": {
+        "quickstartName": "[parameters('quickstartTags').name]",
+        "provider": "[parameters('clouderaTags').provider]"
+      },
       "copy": {
         "name": "dataNodeNicLoop",
         "count": "[parameters('vmCount')]"
@@ -355,7 +379,7 @@
         },
         "osProfile": {
           "computerName": "[reference(concat(variables('publicIPAddressName'), copyIndex())).dnsSettings.fqdn]",
-          "adminUsername": "[parameters('vmSpec').adminUserName]",
+          "adminUsername": "[parameters('vmSpec').adminUsername]",
           "adminPassword": "[parameters('vmSpec').adminPassword]",
           "linuxConfiguration": {
             "disablePasswordAuthentication": "false"
@@ -379,55 +403,55 @@
           "dataDisks": [
             {
               "name": "datadisk0",
-              "diskSizeGB": "512",
+              "diskSizeGB": 512,
               "lun": 0,
               "vhd": {
-                "Uri": "[concat('http://', copyIndex(), variables('storageAccountName'), '.blob.core.windows.net/vhds0/', variables('vmName'), '-datadisk0.vhd')]"
+                "uri": "[concat('http://', copyIndex(), variables('storageAccountName'), '.blob.core.windows.net/vhds0/', variables('vmName'), '-datadisk0.vhd')]"
               },
               "createOption": "Empty"
             },
             {
               "name": "datadisk1",
-              "diskSizeGB": "1023",
+              "diskSizeGB": 1023,
               "lun": 1,
               "vhd": {
-                "Uri": "[concat('http://', copyIndex(), variables('storageAccountName'), '.blob.core.windows.net/vhds1/', variables('vmName'), '-datadisk1.vhd')]"
+                "uri": "[concat('http://', copyIndex(), variables('storageAccountName'), '.blob.core.windows.net/vhds1/', variables('vmName'), '-datadisk1.vhd')]"
               },
               "createOption": "Empty"
             },
             {
               "name": "datadisk2",
-              "diskSizeGB": "1023",
+              "diskSizeGB": 1023,
               "lun": 2,
               "vhd": {
-                "Uri": "[concat('http://', copyIndex(), variables('storageAccountName'), '.blob.core.windows.net/vhds2/', variables('vmName'), '-datadisk2.vhd')]"
+                "uri": "[concat('http://', copyIndex(), variables('storageAccountName'), '.blob.core.windows.net/vhds2/', variables('vmName'), '-datadisk2.vhd')]"
               },
               "createOption": "Empty"
             },
             {
               "name": "datadisk3",
-              "diskSizeGB": "1023",
+              "diskSizeGB": 1023,
               "lun": 3,
               "vhd": {
-                "Uri": "[concat('http://', copyIndex(), variables('storageAccountName'), '.blob.core.windows.net/vhds3/', variables('vmName'), '-datadisk3.vhd')]"
+                "uri": "[concat('http://', copyIndex(), variables('storageAccountName'), '.blob.core.windows.net/vhds3/', variables('vmName'), '-datadisk3.vhd')]"
               },
               "createOption": "Empty"
             },
             {
               "name": "datadisk4",
-              "diskSizeGB": "1023",
+              "diskSizeGB": 1023,
               "lun": 4,
               "vhd": {
-                "Uri": "[concat('http://', copyIndex(), variables('storageAccountName'), '.blob.core.windows.net/vhds4/', variables('vmName'), '-datadisk4.vhd')]"
+                "uri": "[concat('http://', copyIndex(), variables('storageAccountName'), '.blob.core.windows.net/vhds4/', variables('vmName'), '-datadisk4.vhd')]"
               },
               "createOption": "Empty"
             },
             {
               "name": "datadisk5",
-              "diskSizeGB": "1023",
+              "diskSizeGB": 1023,
               "lun": 5,
               "vhd": {
-                "Uri": "[concat('http://', copyIndex(), variables('storageAccountName'), '.blob.core.windows.net/vhds5/', variables('vmName'), '-datadisk5.vhd')]"
+                "uri": "[concat('http://', copyIndex(), variables('storageAccountName'), '.blob.core.windows.net/vhds5/', variables('vmName'), '-datadisk5.vhd')]"
               },
               "createOption": "Empty"
             }
@@ -461,9 +485,12 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmName'), copyIndex(), '/prepareDisks')]",
-      "apiVersion": "[parameters('resourceAPIVersion')]",
       "location": "[resourceGroup().location]",
       "comments": "Data Node VM Extensions and scripts to configure the Cloudera cluster",
+      "tags": {
+        "quickstartName": "[parameters('quickstartTags').name]",
+        "provider": "[parameters('clouderaTags').provider]"
+      },
       "copy": {
         "name": "dataNodeNicLoop",
         "count": "[parameters('vmCount')]"
@@ -481,7 +508,7 @@
             "[concat(parameters('scriptsUri'), '/scripts/prepare-datanode-disks.sh')]",
             "[concat(parameters('scriptsUri'), '/scripts/initialize-node.sh')]"
           ],
-          "commandToExecute": "[concat('sh initialize-node.sh \"', variables('masterIP'), '\" \"', variables('workerIP'), '\" \"', parameters('dnsNamePrefix'), '\" \"', reference(concat(variables('publicIPAddressName'), copyIndex())).dnsSettings.fqdn, '\" ', parameters('clusterSpec').masterNodeCount, ' ', parameters('clusterSpec').dataNodeCount, ' \"', parameters('vmSpec').adminUserName, '\" ', 'datanode', ' >> /home/$ADMINUSER/initialize-datanode.log 2>&1')]"
+          "commandToExecute": "[concat('sh initialize-node.sh \"', variables('masterIP'), '\" \"', variables('workerIP'), '\" \"', parameters('dnsNamePrefix'), '\" \"', reference(concat(variables('publicIPAddressName'), copyIndex())).dnsSettings.fqdn, '\" ', parameters('clusterSpec').masterNodeCount, ' ', parameters('clusterSpec').dataNodeCount, ' \"', parameters('vmSpec').adminUsername, '\" ', 'datanode', ' >> /home/$ADMINUSER/initialize-datanode.log 2>&1')]"
         }
       }
     }

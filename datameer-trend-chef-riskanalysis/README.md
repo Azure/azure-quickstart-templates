@@ -1,10 +1,10 @@
 
 <h1> Enterprise Risk Analysis using Datameer, HDInsight, TrendMicro, Chef </h1>
 <h3>Composite template version 1.0</h3>
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAvyanConsultingCorp%2Fazure-quickstart-templates%2Fmaster%2Fdatameer-trend-chef-riskanalysis%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdatameer-trend-chef-riskanalysis%2Fazuredeploy.json" target="_blank">
 <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAvyanConsultingCorp%2Fazure-quickstart-templates%2Fmaster%2Fdatameer-trend-chef-riskanalysis%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAAzure%2Fazure-quickstart-templates%2Fmaster%2Fdatameer-trend-chef-riskanalysis%2Fazuredeploy.json" target="_blank">
 <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
@@ -13,7 +13,7 @@
 
 - [1. Solution Overview](#1-solution-overview)
 - [2. Solution Template Overview](#2-solution-template-overview)
-- [3. Licenses & Costs](#3-licenses-costs)
+- [3. Licenses & Costs](#3-licenses--costs)
 - [4. Target Audience](#4-target-audience)
 - [5. Prerequisites](#5-prerequisites)
 - [6. Reference Architecture Diagram](#6-reference-architecture-diagram)

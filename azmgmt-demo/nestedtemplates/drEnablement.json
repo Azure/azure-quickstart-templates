@@ -1,0 +1,270 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vmResourceGroup": {
+            "type": "string"
+        },
+        "vmResourceGroupLocation": {
+            "type": "string"
+        },
+        "vmDrResourceGroup": {
+            "type": "string"
+        }
+    },
+    "variables": {
+        "storageAccountName": "[toLower(concat('dr', uniquestring(resourceGroup().name)))]",
+        "sourcevNetName": "managedVnet",
+        "sourceSubnetName": "subnet01",
+        "vNetName": "managedVnet-asr",
+        "vNetAddressPrefix": "192.168.0.0/16",
+        "subnetName": "subnet01-asr",
+        "subnetAddressPrefix": "192.168.0.0/24",
+        "vNetId": "[resourceId('Microsoft.Network/virtualNetworks', variables('vNetName'))]",
+        "subnetRef": "[concat(variables('vNetId'),'/subnets/', variables('subnetName'))]",
+        "vaultName": "a2adrvault",
+        "sourceFabricName": "[concat(variables('vaultName'), '/asr-a2a-default-', parameters('vmResourceGroupLocation'))]",
+        "targetFabricName": "[concat(variables('vaultName'), '/asr-a2a-default-', resourceGroup().location)]",
+        "sourceContainerName": "[concat(variables('sourceContainerName'), '/asr-a2a-default-', parameters('vmresourceGroupLocation'), '-container')]",
+        "targetContainerName": "[concat(variables('targetFabricName'), '/asr-a2a-default-', resourceGroup().location, '-container')]",
+        "sourceMapping": "[concat(variables('sourceContainerName'), '/', parameters('vmResourceGroupLocation'), '-', resourceGroup().location, '-24-hour-retention-policy')]",
+        "targetMapping": "[concat(variables('targetContainerName'), '/', resourceGroup().location, '-', parameters('vmResourceGroupLocation'), '-24-hour-retention-policy')]",
+        "sourcevNetMapping": "[concat(variables('sourceFabricName'), '/azureNetwork/', resourceGroup().location, '-', parameters('vmResourceGroupLocation'), variables('vNetName'))]",
+        "targetvNetMapping": "[concat(variables('targetFabricName'), '/azureNetwork/', parameters('vmResourceGroupLocation'), '-', resourceGroup().location, variables('vNetName'))]"
+    },
+    "resources": [
+        {
+            "apiVersion": "2017-06-01",
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[variables('storageAccountName')]",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Standard_LRS"
+            },
+            "kind": "Storage",
+            "properties": {}
+        },
+        {
+            "apiVersion": "2017-04-01",
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[variables('vNetName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('vNetAddressPrefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('subnetName')]",
+                        "properties": {
+                            "addressPrefix": "[variables('subnetAddressPrefix')]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.RecoveryServices/vaults",
+            "apiVersion": "2016-08-10",
+            "location": "[resourceGroup().location]",
+            "name": "a2adrvault",
+            "properties": {},
+            "sku": {
+                "name": "RS0",
+                "tier": "Standard"
+            }
+        },
+        {
+            "type": "Microsoft.RecoveryServices/vaults/replicationFabrics",
+            "name": "[variables('sourceFabricName')]",
+            "apiVersion": "2016-08-10",
+            "properties": {
+                "customDetails": {
+                    "instanceType": "Azure",
+                    "location": "[parameters('vmResourceGroupLocation')]"
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "type": "Microsoft.RecoveryServices/vaults/replicationFabrics",
+            "name": "[variables('targetFabricName')]",
+            "apiVersion": "2016-08-10",
+            "properties": {
+                "customDetails": {
+                    "instanceType": "Azure",
+                    "location": "[resourceGroup().location]"
+                }
+            },
+            "dependsOn": [
+                "[variables('sourceFabricName')]"
+            ]
+        },
+        {
+            "type": "Microsoft.RecoveryServices/vaults/replicationPolicies",
+            "name": "[concat(variables('vaultName'), '/24-hour-retention-policy')]",
+            "apiVersion": "2016-08-10",
+            "properties": {
+                "providerSpecificInput": {
+                    "instanceType": "A2A",
+                    "appConsistentFrequencyInMinutes": 240,
+                    "crashConsistentFrequencyInMinutes": 5,
+                    "multiVmSyncStatus": "Enable",
+                    "recoveryPointHistory": 1440
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "type": "Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers",
+            "name": "[variables('sourceContainerName')]",
+            "apiVersion": "2016-08-10",
+            "properties": {
+                "providerSpecificDetails": [
+                    {
+                        "instanceType": "A2A"
+                    }
+                ]
+            },
+            "dependsOn": [
+                "[variables('sourceFabricName')]"
+            ]
+        },
+        {
+            "type": "Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers",
+            "name": "[variables('targetContainerName')]",
+            "apiVersion": "2016-08-10",
+            "properties": {
+                "providerSpecificDetails": [
+                    {
+                        "instanceType": "A2A"
+                    }
+                ]
+            },
+            "dependsOn": [
+                "[variables('targetFabricName')]"
+            ]
+        },
+        {
+            "type": "Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers/replicationProtectionContainerMappings",
+            "name": "[variables('sourceMapping')]",
+            "apiVersion": "2016-08-10",
+            "properties": {
+                "policyId": "[resourceId('Microsoft.RecoveryServices/vaults/replicationPolicies/', variables('vaultName'), '24-hour-retention-policy')]",
+                "targetProtectionContainerId": "[concat('/subscriptions/', subscription().id, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.RecoveryServices/vaults/', variables('targetMapping'))]"
+            },
+            "dependsOn": [
+                "[variables('sourceMapping')]",
+                "[variables('targetMapping')]",
+                "[resourceId('Microsoft.RecoveryServices/vaults/', variables('vaultName'), '24-hour-retention-policy')]"
+            ]
+        },
+        {
+            "type": "Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers/replicationProtectionContainerMappings",
+            "name": "[variables('targetMapping')]",
+            "apiVersion": "2016-08-10",
+            "properties": {
+                "policyId": "[resourceId('Microsoft.RecoveryServices/vaults/replicationPolicies/', variables('vaultName'), '24-hour-retention-policy')]",
+                "targetProtectionContainerId": "[concat('/subscriptions/', subscription().id, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.RecoveryServices/vaults/', variables('sourceMapping'))]"
+            },
+            "dependsOn": [
+                "[variables('sourceMapping')]",
+                "[variables('targetMapping')]",
+                "[resourceId('Microsoft.RecoveryServices/vaults/', variables('vaultName'), '24-hour-retention-policy')]"
+            ]
+        },
+        {
+            "type": "Microsoft.RecoveryServices/vaults/replicationFabrics/replicationNetworks/replicationNetworkMappings",
+            "name": "[variables('sourcevNetMapping')]",
+            "apiVersion": "2016-08-10",
+            "properties": {
+                "recoveryFabricName": "asr-a2a-default-northeurope",
+                "recoveryNetworkId": "[concat('/subscriptions/', subscription().id, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
+                "fabricSpecificDetails": {
+                    "instanceType": "AzureToAzure",
+                    "primaryNetworkId": "[concat('/subscriptions/', subscription().id, '/resourceGroups/', parameters('vmResourceGroup'), '/providers/Microsoft.Network/virtualNetworks/', variables('sourcevNetName'))]"
+                }
+            },
+            "dependsOn": [
+                "[variables('sourceFabricName')]",
+                "[variables('targetFabricName')]"
+            ]
+        },
+        {
+            "type": "Microsoft.RecoveryServices/vaults/replicationFabrics/replicationNetworks/replicationNetworkMappings",
+            "name": "[variables('targetvNetMapping')]",
+            "apiVersion": "2016-08-10",
+            "properties": {
+                "recoveryFabricName": "asr-a2a-default-westeurope",
+                "recoveryNetworkId": "[concat('/subscriptions/', subscription().id, '/resourceGroups/', parameters('vmResourceGroup'), '/providers/Microsoft.Network/virtualNetworks/', variables('sourcevNetName'))]",
+                "fabricSpecificDetails": {
+                    "instanceType": "AzureToAzure",
+                    "primaryNetworkId": "[concat('/subscriptions/', subscription().id, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/virtualNetworks/', variables('vNetName'))]"
+                }
+            },
+            "dependsOn": [
+                "[variables('sourcevNetMapping')]",
+                "[variables('sourceFabricName')]",
+                "[variables('targetFabricName')]"
+                ]
+        },
+        {
+            "type": "Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers/replicationProtectedItems",
+            "name": "drvaultas/asr-a2a-default-westeurope/asr-a2a-default-westeurope-container/e5ec70ea-098b-4ae8-a72f-c74e595a8f6e",
+            "apiVersion": "2016-08-10",
+            "properties": {
+                "policyId": "/subscriptions/155c4768-b71c-4e4b-a990-97407f43edda/resourceGroups/drsetup/providers/Microsoft.RecoveryServices/vaults/drvaultas/replicationPolicies/24-hour-retention-policy",
+                "protectableItemId": "",
+                "providerSpecificDetails": {
+                    "instanceType": "A2A",
+                    "fabricObjectId": "/subscriptions/155c4768-b71c-4e4b-a990-97407f43edda/resourceGroups/KeyNoteWL/providers/Microsoft.Compute/virtualMachines/keynotewlVM0",
+                    "recoveryResourceGroupId": "/subscriptions/155c4768-b71c-4e4b-a990-97407f43edda/resourceGroups/KeyNoteWL-asr",
+                    "recoveryContainerId": "/subscriptions/155c4768-b71c-4e4b-a990-97407f43edda/resourceGroups/drsetup/providers/Microsoft.RecoveryServices/vaults/drvaultas/replicationFabrics/asr-a2a-default-northeurope/replicationProtectionContainers/asr-a2a-default-northeurope-container",
+                    "vmDisks": [
+                        {
+                            "diskUri": "http://stw45gwvufbhhbe.blob.core.windows.net/vhds/osdisk0.vhd",
+                            "primaryStagingAzureStorageAccountId": "/subscriptions/155c4768-b71c-4e4b-a990-97407f43edda/resourceGroups/keynotewl-asr/providers/Microsoft.Storage/storageAccounts/stw45gwvufbhhbecacheasr",
+                            "recoveryAzureStorageAccountId": "/subscriptions/155c4768-b71c-4e4b-a990-97407f43edda/resourceGroups/keynotewl-asr/providers/Microsoft.Storage/storageAccounts/stw45gwvufbhhbeasr"
+                        }
+                    ]
+                }
+            },
+            "dependsOn": [
+                "/subscriptions/155c4768-b71c-4e4b-a990-97407f43edda/resourceGroups/drsetup/providers/Microsoft.RecoveryServices/vaults/drvaultas/replicationFabrics/asr-a2a-default-westeurope/replicationProtectionContainers/asr-a2a-default-westeurope-container/replicationProtectionContainerMappings/westeurope-northeurope-24-hour-retention-policy",
+                "/subscriptions/155c4768-b71c-4e4b-a990-97407f43edda/resourceGroups/drsetup/providers/Microsoft.RecoveryServices/vaults/drvaultas/replicationFabrics/asr-a2a-default-northeurope/replicationProtectionContainers/asr-a2a-default-northeurope-container/replicationProtectionContainerMappings/northeurope-westeurope-24-hour-retention-policy",
+                "/subscriptions/155c4768-b71c-4e4b-a990-97407f43edda/resourceGroups/drsetup/providers/Microsoft.RecoveryServices/vaults/drvaultas/replicationFabrics/asr-a2a-default-westeurope/replicationNetworks/azureNetwork/replicationNetworkMappings/westeurope-northeurope-managedVnet",
+                "/subscriptions/155c4768-b71c-4e4b-a990-97407f43edda/resourceGroups/drsetup/providers/Microsoft.RecoveryServices/vaults/drvaultas/replicationFabrics/asr-a2a-default-northeurope/replicationNetworks/azureNetwork/replicationNetworkMappings/northeurope-westeurope-managedVnet-asr"
+            ]
+        },
+        {
+            "type": "Microsoft.RecoveryServices/vaults/replicationFabrics/replicationProtectionContainers/replicationProtectedItems",
+            "name": "drvaultas/asr-a2a-default-westeurope/asr-a2a-default-westeurope-container/f30f328b-ab2a-4f0a-86e2-b2edd16e9c57",
+            "apiVersion": "2016-08-10",
+            "properties": {
+                "policyId": "/subscriptions/155c4768-b71c-4e4b-a990-97407f43edda/resourceGroups/drsetup/providers/Microsoft.RecoveryServices/vaults/drvaultas/replicationPolicies/24-hour-retention-policy",
+                "protectableItemId": "",
+                "providerSpecificDetails": {
+                    "instanceType": "A2A",
+                    "fabricObjectId": "/subscriptions/155c4768-b71c-4e4b-a990-97407f43edda/resourceGroups/KeyNoteWL/providers/Microsoft.Compute/virtualMachines/keynotewlVM1",
+                    "recoveryResourceGroupId": "/subscriptions/155c4768-b71c-4e4b-a990-97407f43edda/resourceGroups/KeyNoteWL-asr",
+                    "recoveryContainerId": "/subscriptions/155c4768-b71c-4e4b-a990-97407f43edda/resourceGroups/drsetup/providers/Microsoft.RecoveryServices/vaults/drvaultas/replicationFabrics/asr-a2a-default-northeurope/replicationProtectionContainers/asr-a2a-default-northeurope-container",
+                    "vmDisks": [
+                        {
+                            "diskUri": "http://stw45gwvufbhhbe.blob.core.windows.net/vhds/osdisk1.vhd",
+                            "primaryStagingAzureStorageAccountId": "/subscriptions/155c4768-b71c-4e4b-a990-97407f43edda/resourceGroups/keynotewl-asr/providers/Microsoft.Storage/storageAccounts/stw45gwvufbhhbecacheasr",
+                            "recoveryAzureStorageAccountId": "/subscriptions/155c4768-b71c-4e4b-a990-97407f43edda/resourceGroups/keynotewl-asr/providers/Microsoft.Storage/storageAccounts/stw45gwvufbhhbeasr"
+                        }
+                    ]
+                }
+            },
+            "dependsOn": [
+                "/subscriptions/155c4768-b71c-4e4b-a990-97407f43edda/resourceGroups/drsetup/providers/Microsoft.RecoveryServices/vaults/drvaultas/replicationFabrics/asr-a2a-default-westeurope/replicationProtectionContainers/asr-a2a-default-westeurope-container/replicationProtectionContainerMappings/westeurope-northeurope-24-hour-retention-policy",
+                "/subscriptions/155c4768-b71c-4e4b-a990-97407f43edda/resourceGroups/drsetup/providers/Microsoft.RecoveryServices/vaults/drvaultas/replicationFabrics/asr-a2a-default-northeurope/replicationProtectionContainers/asr-a2a-default-northeurope-container/replicationProtectionContainerMappings/northeurope-westeurope-24-hour-retention-policy",
+                "/subscriptions/155c4768-b71c-4e4b-a990-97407f43edda/resourceGroups/drsetup/providers/Microsoft.RecoveryServices/vaults/drvaultas/replicationFabrics/asr-a2a-default-westeurope/replicationNetworks/azureNetwork/replicationNetworkMappings/westeurope-northeurope-managedVnet",
+                "/subscriptions/155c4768-b71c-4e4b-a990-97407f43edda/resourceGroups/drsetup/providers/Microsoft.RecoveryServices/vaults/drvaultas/replicationFabrics/asr-a2a-default-northeurope/replicationNetworks/azureNetwork/replicationNetworkMappings/northeurope-westeurope-managedVnet-asr"
+            ]
+        }
+    ]
+}

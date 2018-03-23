@@ -2,19 +2,13 @@
   "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "newStorageAccountName": {
-      "type": "string",
-      "metadata": {
-        "description": "This is the name of the storage account"
-      }
-    },
     "dnsNameForPublicIP": {
       "type": "string",
       "metadata": {
         "description": "DNS Name for the Public IP. Must be lowercase."
       }
     },
-    "adminUserName": {
+    "adminUsername": {
       "type": "string",
       "metadata": {
         "description": "Admin username"
@@ -49,26 +43,22 @@
     },
     "vmSize": {
       "type": "string",
+      "defaultValue": "Standard_A2_v2",
       "metadata": {
         "description": "Size of the VM"
       }
     },
     "vmName": {
       "type": "string",
+      "defaultValue": "WinRmVm",
       "metadata": {
         "description": "Name of the VM"
       }
     },
-    "vaultName": {
+    "vaultResourceId": {
       "type": "string",
       "metadata": {
-        "description": "Name of the KeyVault"
-      }
-    },
-    "vaultResourceGroup": {
-      "type": "string",
-      "metadata": {
-        "description": "Resource Group of the KeyVault"
+        "description": "ResourceId of the KeyVault"
       }
     },
     "certificateUrl": {
@@ -82,28 +72,16 @@
     "addressPrefix": "10.0.0.0/16",
     "subnet1Name": "Subnet-1",
     "subnet1Prefix": "10.0.0.0/24",
-    "vmStorageAccountContainerName": "vhds",
     "publicIPAddressName": "myPublicIP",
     "publicIPAddressType": "Dynamic",
-    "storageAccountType": "Standard_LRS",
     "virtualNetworkName": "myVNET",
     "nicName": "myNIC",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
-    "subnet1Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]"
+    "subnet1Ref": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnet1Name'))]"
   },
   "resources": [
     {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[parameters('newStorageAccountName')]",
-      "apiVersion": "2015-05-01-preview",
-      "location": "[resourceGroup().location]",
-      "properties": {
-        "accountType": "[variables('storageAccountType')]"
-      }
-    },
-    {
-      "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2017-09-01",
       "name": "[variables('publicIPAddressName')]",
       "location": "[resourceGroup().location]",
       "properties": {
@@ -114,8 +92,8 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2017-09-01",
       "name": "[variables('virtualNetworkName')]",
       "location": "[resourceGroup().location]",
       "properties": {
@@ -135,13 +113,13 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2017-09-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[variables('publicIPAddressName')]",
+        "[variables('virtualNetworkName')]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -150,7 +128,7 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
               },
               "subnet": {
                 "id": "[variables('subnet1Ref')]"
@@ -161,13 +139,12 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2017-03-30",
       "name": "[parameters('vmName')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+        "[variables('nicName')]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -180,7 +157,7 @@
           "secrets": [
             {
               "sourceVault": {
-                "id": "[resourceId(parameters('vaultResourceGroup'), 'Microsoft.KeyVault/vaults', parameters('vaultName'))]"
+                "id": "[parameters('vaultResourceId')]"
               },
               "vaultCertificates": [
                 {
@@ -191,19 +168,19 @@
             }
           ],
           "windowsConfiguration": {
-            "provisionVMAgent": "true",
+            "provisionVMAgent": true,
             "winRM": {
               "listeners": [
                 {
-                  "protocol": "http"
+                  "protocol": "Http"
                 },
                 {
-                  "protocol": "https",
+                  "protocol": "Https",
                   "certificateUrl": "[parameters('certificateUrl')]"
                 }
               ]
             },
-            "enableAutomaticUpdates": "true"
+            "enableAutomaticUpdates": true
           }
         },
         "storageProfile": {
@@ -214,10 +191,6 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/','osdisk.vhd')]"
-            },
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -228,12 +201,6 @@
               "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
             }
           ]
-        },
-        "diagnosticsProfile": {
-          "bootDiagnostics": {
-            "enabled": "true",
-            "storageUri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net')]"
-          }
         }
       }
     }

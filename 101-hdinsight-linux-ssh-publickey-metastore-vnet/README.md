@@ -7,4 +7,4 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template allows you to create an HDInsight cluster running Linux, on an existing Hive metastore and virtual network. The SSH authentication method for the cluster is username / password.
+This template allows you to create an HDInsight cluster running Linux, on an existing Hive metastore and virtual network. The SSH authentication method for the cluster is username / password. 

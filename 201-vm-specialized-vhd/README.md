@@ -60,7 +60,6 @@ If you are looking to accomplish the above scenario through PowerShell instead o
 ##### Compute
 
     ## Setup local VM object
-    $cred = Get-Credential
     $vm = New-AzureRmVMConfig -VMName $vmName -VMSize $vmSize
 
     $vm = Add-AzureRmVMNetworkInterface -VM $vm -Id $nic.Id

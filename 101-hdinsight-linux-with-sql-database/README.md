@@ -7,4 +7,4 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template allows you to create a Linux-based HDInsight cluster, a SQL Database server, a SQL Database, and two tables. This template is used by the Use Sqoop with Hadoop in HDInsight article, https://azure.microsoft.com/documentation/articles/hdinsight-use-sqoop/. 
+This template allows you to create a HDInsight cluster, a SQL Database server, a SQL Database, and two tables. This template is used by the Use Sqoop with Hadoop in HDInsight article, https://azure.microsoft.com/documentation/articles/hdinsight-use-sqoop/. 

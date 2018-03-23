@@ -1,0 +1,111 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmSku": {
+      "type": "string",
+      "defaultValue": "Standard_D1_v2",
+      "metadata": {
+        "description": "Size of VMs in the VM Scale Set."
+      }
+    },
+    "vmssName": {
+      "type": "string",
+      "metadata": {
+        "description": "Unique name for the scale set. Must be 3-61 characters in length and unique across the VNet."
+      },
+      "maxLength": 61
+    },
+    "instanceCount": {
+      "type": "int",
+      "metadata": {
+        "description": "Number of VM instances (100 or less)."
+      },
+      "defaultValue": 2,
+      "maxValue": 100
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Admin username on all VMs."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Admin password on all VMs."
+      }
+    },
+    "existingVnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "vName of the existing virtual network to deploy the scale set into."
+      }
+    },
+    "existingSubnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the existing subnet to deploy the scale set into."
+      }
+    }
+  },
+  "variables": {
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/virtualMachineScaleSets",
+      "name": "[parameters('vmssName')]",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2017-03-30",
+      "sku": {
+        "name": "[parameters('vmSku')]",
+        "capacity": "[parameters('instanceCount')]"
+      },
+      "properties": {
+        "overprovision": "false",
+        "upgradePolicy": {
+          "mode": "Manual"
+        },
+        "virtualMachineProfile": {
+          "storageProfile": {
+            "osDisk": {
+              "createOption": "FromImage",
+              "caching": "ReadWrite"
+            },
+            "imageReference": {
+              "publisher": "MicrosoftWindowsServer",
+              "offer": "WindowsServer",
+              "sku": "2016-Datacenter",
+              "version": "latest"
+            }
+          },
+          "osProfile": {
+            "computerNamePrefix": "[parameters('vmssName')]",
+            "adminUsername": "[parameters('adminUsername')]",
+            "adminPassword": "[parameters('adminPassword')]"
+          },
+          "networkProfile": {
+            "networkInterfaceConfigurations": [
+              {
+                "name": "nic",
+                "properties": {
+                  "primary": true,
+                  "ipConfigurations": [
+                    {
+                      "name": "ipconfig",
+                      "properties": {
+                        "subnet": {
+                          "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks/subnets', parameters('existingVnetName'), parameters('existingSubNetName'))]"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
