@@ -2,37 +2,15 @@
   "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "aseName": {
+    "existingASEName": {
       "type": "string",
       "defaultValue": "<YourName>-eshop-<Date>",
       "metadata": {
         "description": "Name of the App Service Environment."
       }
     },
-    "aseLocation": {
+    "existingASELocation": {
       "type": "string",
-      "allowedValues": [
-        "Central US",
-        "East US",
-        "East US 2",
-        "North Central US",
-        "South Central US",
-        "West US",
-        "Canada Central",
-        "North Europe",
-        "West Europe",
-        "East Asia",
-        "Southeast Asia",
-        "Japan East",
-        "Japan West",
-        "Brazil South",
-        "Australia East",
-        "Australia Southeast",
-        "West India",
-        "Central India",
-        "South India"
-      ],
-      "defaultValue": "West US",
       "metadata": {
         "description": "Location of the App Service Environment."
       }
@@ -87,409 +65,48 @@
     }
   },
   "variables": {
-    "location": "[parameters('aseLocation')]",
-    "vnetName": "[concat(parameters('aseName'), '-vnet')]",
-    "eshopSubnetName": "eshop-subnet",
+    "location": "[parameters('existingAseLocation')]",
+    "vnetName": "[concat(parameters('existingAseName'), '-vnet')]",
+    "aseSubnetName": "[concat(parameters('existingAseName'), '-subnet')]",
     "agSubnetName": "app-gateway-subnet",
-    "subnetRouteTableName": "[concat(parameters('aseName'), '-route-table')]",
-    "subnetNSGName": "[concat(parameters('aseName'), '-nsg')]",
-    "aspName": "[concat(parameters('aseName'), '-asp')]",
-    "webAppName": "[concat(parameters('aseName'), '-web')]",
-    "contentAppName": "[concat(parameters('aseName'), '-content')]",
-    "apiAppName": "[concat(parameters('aseName'), '-api')]",
-    "adminAppName": "[concat(parameters('aseName'), '-admin')]",
-    "appInsightsName": "[concat(parameters('aseName'), '-app-insights')]",
-    "sqlServerName": "[concat(parameters('aseName'), '-sql-server')]",
-    "storageAccountName": "[concat(replace(parameters('aseName'), '-', ''), 'storage')]",
-    "redisCacheName": "[concat(parameters('aseName'), '-cache')]",
+    "subnetRouteTableName": "[concat(parameters('existingAseName'), '-route-table')]",
+    "subnetNSGName": "[concat(parameters('existingAseName'), '-nsg')]",
+    "aspName": "[concat(parameters('existingAseName'), '-asp')]",
+    "webAppName": "[concat(parameters('existingAseName'), '-web')]",
+    "contentAppName": "[concat(parameters('existingAseName'), '-content')]",
+    "apiAppName": "[concat(parameters('existingAseName'), '-api')]",
+    "adminAppName": "[concat(parameters('existingAseName'), '-admin')]",
+    "appInsightsName": "[concat(parameters('existingAseName'), '-app-insights')]",
+    "sqlServerName": "[concat(parameters('existingAseName'), '-sql-server')]",
+    "storageAccountName": "[concat(replace(parameters('existingAseName'), '-', ''), '')]",
+    "redisCacheName": "[concat(parameters('existingAseName'), '-cache')]",
     "redisCacheSubnetName": "redis-cache-subnet",
-    "appGatewayName": "[concat(parameters('aseName'), '-waf')]",
+    "appGatewayName": "[concat(parameters('existingAseName'), '-waf')]",
     "appGatewayID": "[resourceId('Microsoft.Network/applicationGateways', variables('appGatewayName'))]",
-    "appGatewayPublicIPName": "[concat(parameters('aseName'), '-waf-ip')]",
-    "appGatewayPublicIPDnsPrefix": "[concat(parameters('aseName'), '-waf')]",
-    "cdnName": "[concat(parameters('aseName'), '-cdn')]",
-    "cdnWebAppEndpointName": "[concat(parameters('aseName'), '-cdn-web')]",
-    "cdnStorageEndpointName": "[concat(parameters('aseName'), '-cdn-storage')]"
+    "appGatewayPublicIPName": "[concat(parameters('existingAseName'), '-waf-ip')]",
+    "appGatewayPublicIPDnsPrefix": "[concat(parameters('existingAseName'), '-waf')]",
+    "cdnName": "[concat(parameters('existingAseName'), '-cdn')]",
+    "cdnWebAppEndpointName": "[concat(parameters('existingAseName'), '-cdn-web')]",
+    "cdnStorageEndpointName": "[concat(parameters('existingAseName'), '-cdn-storage')]"
   },
   "resources": [
     {
-      "apiVersion": "2015-08-01",
-      "type": "Microsoft.Web/hostingEnvironments",
-      "name": "[parameters('aseName')]",
-      "location": "[parameters('aseLocation')]",
-      "kind": "ASEV2",
+      "apiVersion": "2018-01-01",
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "name": "[concat(variables('vnetName'), '/', variables('redisCacheSubnetName'))]",
       "properties": {
-        "name": "[parameters('aseName')]",
-        "location": "[parameters('aseLocation')]",
-        "virtualNetwork": {
-          "Id": "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
-          "Subnet": "[variables('eshopSubnetName')]"
-        }
-      },
-      "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
-      ]
-    },
-    {
-      "apiVersion": "2016-12-01",
-      "type": "Microsoft.Network/virtualNetworks",
-      "name": "[variables('vnetName')]",
-      "location": "[variables('location')]",
-      "dependsOn": [
-        "[concat('Microsoft.Network/networkSecurityGroups/', variables('subnetNSGName'))]",
-        "[concat('Microsoft.Network/routeTables/', variables('subnetRouteTableName'))]"
-      ],
-      "properties": {
-        "addressSpace": {
-          "addressPrefixes": [
-            "10.0.0.0/16"
-          ]
-        },
-        "subnets": [
-          {
-            "name": "[variables('agSubnetName')]",
-            "properties": {
-              "addressPrefix": "10.0.0.0/24",
-              "networkSecurityGroup": {
-                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('subnetNSGName'))]"
-              },
-              "routeTable": {
-                "id": "[resourceId('Microsoft.Network/routeTables', variables('subnetRouteTableName'))]"
-              }
-            }
-          },
-          {
-            "name": "[variables('eshopSubnetName')]",
-            "properties": {
-              "addressPrefix": "10.0.1.0/24",
-              "networkSecurityGroup": {
-                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('subnetNSGName'))]"
-              },
-              "routeTable": {
-                "id": "[resourceId('Microsoft.Network/routeTables', variables('subnetRouteTableName'))]"
-              },
-              "serviceEndpoints": [
-                {
-                  "service": "Microsoft.Sql",
-                  "locations": [
-                    "[variables('location')]"
-                  ]
-                },
-                {
-                  "service": "Microsoft.Storage",
-                  "locations": [
-                    "[variables('location')]"
-                  ]
-                }
-              ]
-            }
-          },
-          {
-            "name": "[variables('redisCacheSubnetName')]",
-            "properties": {
-              "addressPrefix": "10.0.2.0/24",
-              "networkSecurityGroup": {
-                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('subnetNSGName'))]"
-              },
-              "routeTable": {
-                "id": "[resourceId('Microsoft.Network/routeTables', variables('subnetRouteTableName'))]"
-              }
-            }
-          }
-        ]
+        "addressPrefix": "192.168.251.0/26"
       }
     },
     {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Network/routeTables",
-      "name": "[variables('subnetRouteTableName')]",
-      "location": "[variables('location')]",
-      "tags": {
-        "displayName": "UDR - Subnet"
-      },
+      "apiVersion": "2018-01-01",
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "name": "[concat(variables('vnetName'), '/', variables('agSubnetName'))]",
       "properties": {
-        "routes": [
-          {
-            "name": "[concat(parameters('aseName'), '-route')]",
-            "properties": {
-              "addressPrefix": "0.0.0.0/0",
-              "nextHopType": "Internet"
-            }
-          }
-        ]
-      }
-    },
-    {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Network/networkSecurityGroups",
-      "name": "[variables('subnetNSGName')]",
-      "location": "[variables('location')]",
-      "tags": {
-        "displayName": "NSG - Subnet"
-      },
-      "properties": {
-        "securityRules": [
-          {
-            "name": "Inbound-management",
-            "properties": {
-              "description": "Used to manage ASE from public VIP",
-              "protocol": "*",
-              "sourcePortRange": "*",
-              "destinationPortRange": "454-455",
-              "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 100,
-              "direction": "Inbound"
-            }
-          },
-          {
-            "name": "ASE-internal-inbound",
-            "properties": {
-              "description": "ASE-internal-inbound",
-              "protocol": "*",
-              "sourcePortRange": "*",
-              "destinationPortRange": "*",
-              "sourceAddressPrefix": "192.168.250.0/24",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 110,
-              "direction": "Inbound"
-            }
-          },
-          {
-            "name": "Inbound-HTTP",
-            "properties": {
-              "description": "Allow HTTP",
-              "protocol": "*",
-              "sourcePortRange": "*",
-              "destinationPortRange": "80",
-              "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 120,
-              "direction": "Inbound"
-            }
-          },
-          {
-            "name": "Inbount-HTTPS",
-            "properties": {
-              "description": "Allow HTTPS",
-              "protocol": "*",
-              "sourcePortRange": "*",
-              "destinationPortRange": "443",
-              "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 130,
-              "direction": "Inbound"
-            }
-          },
-          {
-            "name": "Inbound-FTP",
-            "properties": {
-              "description": "Allow FTP over port 21",
-              "protocol": "*",
-              "sourcePortRange": "*",
-              "destinationPortRange": "21",
-              "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 140,
-              "direction": "Inbound"
-            }
-          },
-          {
-            "name": "Inbound-FTPS",
-            "properties": {
-              "description": "Allow FTPS",
-              "protocol": "*",
-              "sourcePortRange": "*",
-              "destinationPortRange": "990",
-              "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 150,
-              "direction": "Inbound"
-            }
-          },
-          {
-            "name": "Inbound-FTP-Data",
-            "properties": {
-              "description": "RDP",
-              "protocol": "*",
-              "sourcePortRange": "*",
-              "destinationPortRange": "10001-10020",
-              "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 160,
-              "direction": "Inbound"
-            }
-          },
-          {
-            "name": "Inbound-Remote-Debugging",
-            "properties": {
-              "description": "Visual Studio remote debugging",
-              "protocol": "*",
-              "sourcePortRange": "*",
-              "destinationPortRange": "4016-4022",
-              "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 170,
-              "direction": "Inbound"
-            }
-          },
-          {
-            "name": "Outbound-443",
-            "properties": {
-              "description": "Azure Storage blob",
-              "protocol": "*",
-              "sourcePortRange": "*",
-              "destinationPortRange": "443",
-              "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 100,
-              "direction": "Outbound"
-            }
-          },
-          {
-            "name": "Outbound-SMB",
-            "properties": {
-              "description": "Azure Storage queue",
-              "protocol": "*",
-              "sourcePortRange": "*",
-              "destinationPortRange": "445",
-              "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 110,
-              "direction": "Outbound"
-            }
-          },
-          {
-            "name": "Outbound-DB",
-            "properties": {
-              "description": "Database",
-              "protocol": "*",
-              "sourcePortRange": "*",
-              "destinationPortRange": "1433",
-              "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 120,
-              "direction": "Outbound"
-            }
-          },
-          {
-            "name": "Outbound-DB2",
-            "properties": {
-              "description": "Database 2",
-              "protocol": "*",
-              "sourcePortRange": "*",
-              "destinationPortRange": "11000-11999",
-              "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 130,
-              "direction": "Outbound"
-            }
-          },
-          {
-            "name": "Outbound-DB3",
-            "properties": {
-              "description": "Database 3",
-              "protocol": "*",
-              "sourcePortRange": "*",
-              "destinationPortRange": "14000-14999",
-              "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 140,
-              "direction": "Outbound"
-            }
-          },
-          {
-            "name": "Outbound-DNS",
-            "properties": {
-              "description": "DNS",
-              "protocol": "*",
-              "sourcePortRange": "*",
-              "destinationPortRange": "53",
-              "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 150,
-              "direction": "Outbound"
-            }
-          },
-          {
-            "name": "ASE-internal-outbound",
-            "properties": {
-              "description": "Azure Storage queue",
-              "protocol": "*",
-              "sourcePortRange": "*",
-              "destinationPortRange": "*",
-              "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "192.168.250.0/24",
-              "access": "Allow",
-              "priority": 160,
-              "direction": "Outbound"
-            }
-          },
-          {
-            "name": "Outbound-80",
-            "properties": {
-              "description": "Outbound 80",
-              "protocol": "*",
-              "sourcePortRange": "*",
-              "destinationPortRange": "80",
-              "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 170,
-              "direction": "Outbound"
-            }
-          },
-          {
-            "name": "ASE-to-VNET",
-            "properties": {
-              "description": "ASE to VNET",
-              "protocol": "*",
-              "sourcePortRange": "*",
-              "destinationPortRange": "*",
-              "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "192.168.250.0/23",
-              "access": "Allow",
-              "priority": 180,
-              "direction": "Outbound"
-            }
-          }
-        ]
-      }
-    },
-    {
-      "apiVersion": "2016-03-01",
-      "type": "Microsoft.Web/serverfarms",
-      "name": "[variables('aspName')]",
-      "location": "[parameters('aseLocation')]",
-      "kind": "app",
-      "properties": {
-        "name": "[variables('aspName')]",
-        "workerSize": "0",
-        "workerSizeId": "0",
-        "numberOfWorkers": "1",
-        "reserved": false,
-        "hostingEnvironment": "[parameters('aseName')]"
-      },
-      "sku": {
-        "tier": "Isolated",
-        "name": "I1"
+        "addressPrefix": "192.168.251.64/26"
       },
       "dependsOn": [
-        "[concat('Microsoft.Web/hostingEnvironments/', parameters('aseName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('vnetName'), variables('redisCacheSubnetName'))]"
       ]
     },
     {
@@ -504,13 +121,32 @@
     },
     {
       "apiVersion": "2016-03-01",
+      "type": "Microsoft.Web/serverfarms",
+      "name": "[variables('aspName')]",
+      "location": "[variables('location')]",
+      "kind": "app",
+      "properties": {
+        "name": "[variables('aspName')]",
+        "workerSize": "0",
+        "workerSizeId": "0",
+        "numberOfWorkers": "1",
+        "reserved": false,
+        "hostingEnvironment": "[parameters('existingAseName')]"
+      },
+      "sku": {
+        "tier": "Isolated",
+        "name": "I1"
+      }
+    },
+    {
+      "apiVersion": "2016-03-01",
       "type": "Microsoft.Web/sites",
       "name": "[variables('webAppName')]",
       "location": "[variables('location')]",
       "properties": {
         "name": "[variables('webAppName')]",
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]",
-        "hostingEnvironment": "[parameters('aseName')]",
+        "hostingEnvironment": "[parameters('existingAseName')]",
         "siteConfig": {
           "alwaysOn": true,
           "appSettings": [
@@ -595,7 +231,7 @@
       "properties": {
         "name": "[variables('contentAppName')]",
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]",
-        "hostingEnvironment": "[parameters('aseName')]",
+        "hostingEnvironment": "[parameters('existingAseName')]",
         "siteConfig": {
           "alwaysOn": true,
           "appSettings": [
@@ -633,7 +269,7 @@
       "properties": {
         "name": "[variables('apiAppName')]",
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]",
-        "hostingEnvironment": "[parameters('aseName')]",
+        "hostingEnvironment": "[parameters('existingAseName')]",
         "siteConfig": {
           "alwaysOn": true,
           "appSettings": [
@@ -684,7 +320,7 @@
       "properties": {
         "name": "[variables('adminAppName')]",
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]",
-        "hostingEnvironment": "[parameters('aseName')]",
+        "hostingEnvironment": "[parameters('existingAseName')]",
         "siteConfig": {
           "alwaysOn": true,
           "appSettings": [
@@ -760,7 +396,7 @@
             "zoneRedundant": false
           },
           "dependsOn": [
-            "[concat('Microsoft.Sql/servers/', variables('sqlServerName'))]"
+            "[resourceId('Microsoft.Sql/servers/', variables('sqlServerName'))]"
           ]
         },
         {
@@ -775,7 +411,7 @@
             "zoneRedundant": false
           },
           "dependsOn": [
-            "[concat('Microsoft.Sql/servers/', variables('sqlServerName'))]"
+            "[resourceId('Microsoft.Sql/servers/', variables('sqlServerName'))]"
           ]
         },
         {
@@ -790,20 +426,19 @@
             "zoneRedundant": false
           },
           "dependsOn": [
-            "[concat('Microsoft.Sql/servers/', variables('sqlServerName'))]"
+            "[resourceId('Microsoft.Sql/servers/', variables('sqlServerName'))]"
           ]
         },
         {
           "apiVersion": "2015-05-01-preview",
           "type": "virtualNetworkRules",
-          "name": "[concat('allow-access-from-', variables('eshopSubnetName'))]",
+          "name": "[concat('allow-access-from-', variables('aseSubnetName'))]",
           "scale": null,
           "properties": {
-            "virtualNetworkSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('eshopSubnetName'))]"
+            "virtualNetworkSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('vnetName'), variables('aseSubnetName'))]"
           },
           "dependsOn": [
-            "[concat('Microsoft.Sql/servers/', variables('sqlServerName'))]",
-            "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+            "[resourceId('Microsoft.Sql/servers/', variables('sqlServerName'))]"
           ]
         }
       ]
@@ -845,13 +480,13 @@
           "family": "P",
           "capacity": 1
         },
-        "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('redisCacheSubnetName'))]",
-        "staticIP": "10.0.2.128",
+        "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('vnetName'), variables('redisCacheSubnetName'))]",
+        "staticIP": "192.168.251.62",
         "redisConfiguration": {},
         "enableNonSslPort": true
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('vnetName'), variables('redisCacheSubnetName'))]"
       ]
     },
     {
@@ -870,7 +505,7 @@
             "name": "appGatewayIpConfig",
             "properties": {
               "subnet": {
-                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('agSubnetName'))]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('vnetName'), variables('agSubnetName'))]"
               }
             }
           }
@@ -899,7 +534,7 @@
             "properties": {
               "BackendAddresses": [
                 {
-                  "fqdn": "[concat(variables('webAppName'), '.', parameters('aseName'), '.p.azurewebsites.net')]"
+                  "fqdn": "[concat(variables('webAppName'), '.', parameters('existingAseName'), '.p.azurewebsites.net')]"
                 }
               ]
             }
@@ -994,8 +629,8 @@
         }
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('appGatewayPublicIPName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('vnetName'), variables('agSubnetName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('appGatewayPublicIPName'))]"
       ]
     },
     {
