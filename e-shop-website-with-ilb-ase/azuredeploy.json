@@ -253,6 +253,241 @@
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('vnetName'), variables('redisCacheSubnetName'))]"
       ]
+    },
+    {
+      "apiVersion": "2016-03-01",
+      "type": "Microsoft.Web/sites",
+      "name": "[variables('webAppName')]",
+      "location": "[variables('location')]",
+      "properties": {
+        "name": "[variables('webAppName')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]",
+        "hostingEnvironment": "[parameters('existingAseName')]",
+        "siteConfig": {
+          "alwaysOn": true,
+          "appSettings": [
+            {
+              "name": "ODataServiceBaseUrl",
+              "value": "[concat('http://', reference(resourceId('Microsoft.Web/sites/', variables('apiAppName'))).defaultHostName)]"
+            },
+            {
+              "name": "cdn:url",
+              "value": "[concat('https://', variables('cdnWebAppEndpointName'), '.azureedge.net')]"
+            },
+            {
+              "name": "CatalogBaseUrl",
+              "value": "[concat('https://', variables('cdnStorageEndpointName'), '.azureedge.net')]"
+            },
+            {
+              "name": "ApplicationInsights:InstrumentationKey",
+              "value": "[reference(resourceId('microsoft.insights/components/', variables('appInsightsName')), '2015-05-01').InstrumentationKey]"
+            },
+            {
+              "name": "project",
+              "value": "e-shop-website-with-ilb-ase/src/Web/Web.csproj"
+            }
+          ],
+          "connectionstrings": [
+            {
+              "name": "CatalogConnection",
+              "type": "SQLAzure",
+              "connectionString": "[concat('Server=tcp:', variables('sqlServerName'), '.database.windows.net,1433;Initial Catalog=Catalog;Persist Security Info=False;User ID=', parameters('sqlServerAdministratorLogin'), ';Password=', parameters('sqlServerAdministratorLoginPassword'), ';MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]"
+            },
+            {
+              "name": "SalesConnection",
+              "type": "SQLAzure",
+              "connectionString": "[concat('Server=tcp:', variables('sqlServerName'), '.database.windows.net,1433;Initial Catalog=Sales;Persist Security Info=False;User ID=', parameters('sqlServerAdministratorLogin'), ';Password=', parameters('sqlServerAdministratorLoginPassword'), ';MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]"
+            },
+            {
+              "name": "IdentityConnection",
+              "type": "SQLAzure",
+              "connectionString": "[concat('Server=tcp:', variables('sqlServerName'), '.database.windows.net,1433;Initial Catalog=Identity;Persist Security Info=False;User ID=', parameters('sqlServerAdministratorLogin'), ';Password=', parameters('sqlServerAdministratorLoginPassword'), ';MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]"
+            },
+            {
+              "name": "StorageConnection",
+              "type": "Custom",
+              "connectionString": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'),';AccountKey=',listkeys(resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2015-05-01-preview').key1,';')]"
+            },
+            {
+              "name": "RedisConnection",
+              "type": "Custom",
+              "connectionString": "[concat(variables('redisCacheName'), '.redis.cache.windows.net:6380,password=', listKeys(resourceId('Microsoft.Cache/Redis/', variables('redisCacheName')), '2016-04-01').primaryKey, ',ssl=True,abortConnect=False')]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "apiVersion": "2015-08-01",
+          "name": "web",
+          "type": "sourcecontrols",
+          "properties": {
+            "RepoUrl": "[parameters('sourceCodeRepositoryURL')]",
+            "branch": "[parameters('sourceCodeBranch')]",
+            "IsManualIntegration": "parameters('sourceCodeManualIntegration')]"
+          },
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites/', variables('webAppName'))]"
+          ]
+        }
+      ],
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]",
+        "[resourceId('microsoft.insights/components/', variables('appInsightsName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Cache/Redis/', variables('redisCacheName'))]",
+        "[resourceId('Microsoft.Web/sites/', variables('apiAppName'))]"
+      ]
+    },
+    {
+      "apiVersion": "2016-03-01",
+      "type": "Microsoft.Web/sites",
+      "name": "[variables('contentAppName')]",
+      "location": "[variables('location')]",
+      "properties": {
+        "name": "[variables('contentAppName')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]",
+        "hostingEnvironment": "[parameters('existingAseName')]",
+        "siteConfig": {
+          "alwaysOn": true,
+          "appSettings": [
+            {
+              "name": "project",
+              "value": "e-shop-website-with-ilb-ase/src/Web/wwwroot"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "apiVersion": "2015-08-01",
+          "name": "web",
+          "type": "sourcecontrols",
+          "properties": {
+            "RepoUrl": "[parameters('sourceCodeRepositoryURL')]",
+            "branch": "[parameters('sourceCodeBranch')]",
+            "IsManualIntegration": "parameters('sourceCodeManualIntegration')]"
+          },
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites/', variables('contentAppName'))]"
+          ]
+        }
+      ],
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]"
+      ]
+    },
+    {
+      "apiVersion": "2016-03-01",
+      "type": "Microsoft.Web/sites",
+      "name": "[variables('apiAppName')]",
+      "location": "[variables('location')]",
+      "properties": {
+        "name": "[variables('apiAppName')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]",
+        "hostingEnvironment": "[parameters('existingAseName')]",
+        "siteConfig": {
+          "alwaysOn": true,
+          "appSettings": [
+            {
+              "name": "ApplicationInsights:InstrumentationKey",
+              "value": "[reference(resourceId('microsoft.insights/components/', variables('appInsightsName')), '2015-05-01').InstrumentationKey]"
+            },
+            {
+              "name": "project",
+              "value": "e-shop-website-with-ilb-ase/src/API/API.csproj"
+            }
+          ],
+          "connectionstrings": [
+            {
+              "name": "SalesConnection",
+              "type": "SQLAzure",
+              "connectionString": "[concat('Server=tcp:', variables('sqlServerName'), '.database.windows.net,1433;Initial Catalog=Sales;Persist Security Info=False;User ID=', parameters('sqlServerAdministratorLogin'), ';Password=', parameters('sqlServerAdministratorLoginPassword'), ';MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "apiVersion": "2015-08-01",
+          "name": "web",
+          "type": "sourcecontrols",
+          "properties": {
+            "RepoUrl": "[parameters('sourceCodeRepositoryURL')]",
+            "branch": "[parameters('sourceCodeBranch')]",
+            "IsManualIntegration": "parameters('sourceCodeManualIntegration')]"
+          },
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites/', variables('apiAppName'))]",
+            "[resourceId('Microsoft.Web/sites/sourcecontrols/', variables('webAppName'), 'web')]"
+          ]
+        }
+      ],
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]",
+        "[resourceId('microsoft.insights/components/', variables('appInsightsName'))]"
+      ]
+    },
+    {
+      "apiVersion": "2016-03-01",
+      "type": "Microsoft.Web/sites",
+      "name": "[variables('adminAppName')]",
+      "location": "[variables('location')]",
+      "properties": {
+        "name": "[variables('adminAppName')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]",
+        "hostingEnvironment": "[parameters('existingAseName')]",
+        "siteConfig": {
+          "alwaysOn": true,
+          "appSettings": [
+            {
+              "name": "AzureAd:Domain",
+              "value": ""
+            },
+            {
+              "name": "AzureAd:TenantId",
+              "value": "[parameters('azureAdTenantId')]"
+            },
+            {
+              "name": "AzureAd:ClientId",
+              "value": "[parameters('azureAdClientId')]"
+            },
+            {
+              "name": "ODataServiceBaseUrl",
+              "value": "[concat('http://', reference(resourceId('Microsoft.Web/sites/', variables('apiAppName'))).defaultHostName)]"
+            },
+            {
+              "name": "ApplicationInsights:InstrumentationKey",
+              "value": "[reference(resourceId('microsoft.insights/components/', variables('appInsightsName')), '2015-05-01').InstrumentationKey]"
+            },
+            {
+              "name": "project",
+              "value": "e-shop-website-with-ilb-ase/src/Admin/Admin.csproj"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "apiVersion": "2015-08-01",
+          "name": "web",
+          "type": "sourcecontrols",
+          "properties": {
+            "RepoUrl": "[parameters('sourceCodeRepositoryURL')]",
+            "branch": "[parameters('sourceCodeBranch')]",
+            "IsManualIntegration": "parameters('sourceCodeManualIntegration')]"
+          },
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites/', variables('adminAppName'))]",
+            "[resourceId('Microsoft.Web/sites/sourcecontrols/', variables('apiAppName'), 'web')]"
+          ]
+        }
+      ],
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]",
+        "[resourceId('microsoft.insights/components/', variables('appInsightsName'))]",
+        "[resourceId('Microsoft.Web/sites/', variables('apiAppName'))]"
+      ]
     }
   ],
   "outputs": {
