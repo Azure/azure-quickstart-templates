@@ -3,53 +3,53 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "location": {
-            "type": "string",
+            "defaultValue": "CentralUS",
             "allowedValues": [
                 "CentralUS",
                 "FranceCentral"
             ],
-            "defaultValue": "CentralUS",
+            "type": "String",
             "metadata": {
                 "description": "Location for the VM, only certain regions support Availability Zones"
             }
         },
         "adminUsername": {
-            "type": "string",
+            "type": "String",
             "metadata": {
                 "description": "Admin username on all VMs."
             }
         },
         "adminPassword": {
-            "type": "securestring",
+            "type": "SecureString",
             "metadata": {
                 "description": "Admin password on all VMs."
             }
         },
         "ubuntuOSVersion": {
-            "type": "string",
             "defaultValue": "16.04-LTS",
             "allowedValues": [
                 "14.04.4-LTS",
                 "16.04-LTS"
             ],
+            "type": "String",
             "metadata": {
                 "description": "The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version. Allowed values are: 14.04.4-LTS, 16.04-LTS."
             }
         },
         "vmssName": {
-            "type": "string",
-              "metadata": {
+            "maxLength": 61,
+            "type": "String",
+            "metadata": {
                 "description": "String used as a base for naming resources. Must be 3-61 characters in length and globally unique across Azure. A hash is prepended to this string for some resources, and resource-specific information is appended."
-            },
-            "maxLength": 61
+            }
         },
         "instanceCount": {
-            "type": "int",
             "defaultValue": 3,
+            "maxValue": 100,
+            "type": "Int",
             "metadata": {
                 "description": "Number of VM instances (100 or less)."
-            },
-            "maxValue": 100
+            }
         }
     },
     "variables": {
@@ -70,15 +70,15 @@
             "offer": "UbuntuServer",
             "sku": "[parameters('ubuntuOSVersion')]",
             "version": "latest"
-            },
-       "computeApiVersion": "2017-12-01",
-    "networkApiVersion": "2017-10-01"
-  },
+        },
+        "computeApiVersion": "2017-12-01",
+        "networkApiVersion": "2017-10-01"
+    },
     "resources": [
         {
             "type": "Microsoft.Network/virtualNetworks",
-            "apiVersion": "[variables('networkApiVersion')]",
             "name": "[variables('virtualNetworkName')]",
+            "apiVersion": "[variables('networkApiVersion')]",
             "location": "[parameters('location')]",
             "properties": {
                 "addressSpace": {
@@ -98,8 +98,8 @@
         },
         {
             "type": "Microsoft.Network/networkSecurityGroups",
-            "apiVersion": "[variables('networkApiVersion')]",
             "name": "[variables('networkSecurityGroupName')]",
+            "apiVersion": "[variables('networkApiVersion')]",
             "location": "[parameters('location')]",
             "properties": {
                 "securityRules": [
@@ -136,12 +136,12 @@
         },
         {
             "type": "Microsoft.Network/publicIPAddresses",
-            "apiVersion": "[variables('networkApiVersion')]",
-            "name": "[variables('publicIPAddressName')]",
-            "location": "[parameters('location')]",
             "sku": {
                 "name": "Standard"
             },
+            "name": "[variables('publicIPAddressName')]",
+            "apiVersion": "[variables('networkApiVersion')]",
+            "location": "[parameters('location')]",
             "properties": {
                 "publicIPAllocationMethod": "Static",
                 "dnsSettings": {
@@ -151,15 +151,12 @@
         },
         {
             "type": "Microsoft.Network/loadBalancers",
-            "apiVersion": "[variables('networkApiVersion')]",
-            "name": "[variables('loadBalancerName')]",
-            "location": "[parameters('location')]",
             "sku": {
                 "name": "Standard"
             },
-            "dependsOn": [
-                "[variables('publicIPAddressName')]"
-            ],
+            "name": "[variables('loadBalancerName')]",
+            "apiVersion": "[variables('networkApiVersion')]",
+            "location": "[parameters('location')]",
             "properties": {
                 "frontendIPConfigurations": [
                     {
@@ -190,25 +187,24 @@
                         }
                     }
                 ]
-            }
+            },
+            "dependsOn": [
+                "[variables('publicIPAddressName')]"
+            ]
         },
         {
             "type": "Microsoft.Compute/virtualMachineScaleSets",
-            "name": "[parameters('vmssName')]",
-            "location": "[parameters('location')]",
-            "zones": [
-                "1"
-            ],
-            "apiVersion":  "[variables('computeApiVersion')]",
-            "dependsOn": [
-                "[variables('loadBalancerName')]",
-                "[variables('virtualNetworkName')]"
-            ],
             "sku": {
                 "name": "Standard_A1_v2",
                 "tier": "Standard",
                 "capacity": "[parameters('instanceCount')]"
             },
+            "name": "[parameters('vmssName')]",
+            "apiVersion": "[variables('computeApiVersion')]",
+            "location": "[parameters('location')]",
+            "zones": [
+                "1"
+            ],
             "properties": {
                 "overprovision": "true",
                 "upgradePolicy": {
@@ -251,7 +247,7 @@
                                                 "loadBalancerInboundNatPools": [
                                                     {
                                                         "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatPools/', variables('loadBalancerName'), variables('natPoolName'))]"
-                                                  }
+                                                    }
                                                 ]
                                             }
                                         }
@@ -261,7 +257,11 @@
                         ]
                     }
                 }
-            }
+            },
+            "dependsOn": [
+                "[variables('loadBalancerName')]",
+                "[variables('virtualNetworkName')]"
+            ]
         }
     ]
 }
