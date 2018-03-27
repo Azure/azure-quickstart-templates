@@ -116,54 +116,19 @@ describe('template files - ', () => {
                 next();
             });
             /** resourceGroup().location should NOT be present anywhere in template, EXCEPT as a defaultValue */
-            it.each(templateObject, 'resourceGroup().location must NOT be be used in the template for resource %s, except as a default value for the location parameter', ['name'], function(element, next) {
-                var valStr = JSON.stringify(templateObject);
+            it.each(templateObject, 'resourceGroup().location must NOT be be used in the template file ' + templateJSONObject.filename + ', except as a default value for the location parameter. Please correct similar errors in the file', function(element, next) {
+                var templateFileContent = JSON.stringify(templateObject);
                 var locationString = 'resourceGroup().location';
                 var message = 'in file:' + templateJSONObject.filename + ' should NOT have location set to resourceGroup().location';
-                valStr.should.not.contain(locationString, message);
+                assert(templateFileContent.includes(locationString) === false, message);
                 next();
             });
-        });
-
-        /** providers().apiVersions[n] must not be present for all template files. */
-        describe('apiVersions must NOT be retrieved using providers().apiVersions[n].  This function is non-deterministic', () => {
-            templateFileJSONObjects.forEach(templateJSONObject => {
-                var templateObject = templateJSONObject.value;
+            /** providers().apiVersions[n] must not be present for all template files. */
+            it.each(templateObject, 'providers().apiVersions must NOT be retrieved using providers().apiVersions[n] in the template file ' + templateJSONObject.filename + '. This function is non-deterministic. Please correct similar errors in the file', function(element, next) {
+                var templateFileContent = JSON.stringify(templateObject);
                 var message = 'in file:' + templateJSONObject.filename + ' should NOT have api version determined by providers().';
-                var properties = Object.keys(templateObject);
-                if (templateObject.parameters) {
-                    var parametersProperties = Object.keys(templateObject.parameters);
-                    it.each(parametersProperties, "providers().apiVersions[n] must NOT be present in the template "+ templateJSONObject.filename +" for parameter %s", ['element'], function(element, next){
-                        var val = JSON.stringify(templateObject.parameters[element]);
-                        val.should.withMessage('file:' + templateJSONObject.filepath + ' property:' + element).not.match(/providers\(.*?\)\.apiVersions/);
-                        next();
-                    });
-                }
-                if (templateObject.variables) {
-                    var variablesProperties = Object.keys(templateObject.variables);
-                    it.each(variablesProperties, "providers().apiVersions[n] must NOT be present in the template "+ templateJSONObject.filename +" for variable %s", ['element'], function(element, next){
-                        var val = JSON.stringify(templateObject.variables[element]);
-                        val.should.withMessage('file:' + templateJSONObject.filepath + ' property:' + element).not.match(/providers\(.*?\)\.apiVersions/);
-                        next();
-                    });
-                }
-                if (templateObject.resources) {
-                    var resourcesProperties = Object.keys(templateObject.resources);
-                    var message = 'in file:' + templateJSONObject.filename + ' should NOT have api version determined by providers().';
-                    it.each(resourcesProperties, "providers().apiVersions[n] must NOT be present in the template "+ templateJSONObject.filename +" for resource with name \'%s\'", ['name'], function(element, next){
-                        var val = JSON.stringify(element);
-                        val.should.withMessage(getErrorMessage(element, templateJSONObject.filepath, message)).not.match(/providers\(.*?\)\.apiVersions/);
-                        next();
-                    });
-                }
-                if (templateObject.outputs) {
-                    var outputsProperties = Object.keys(templateObject.outputs);
-                    it.each(outputsProperties, "providers().apiVersions[n] must NOT be present in the template "+ templateJSONObject.filename +" for output %s", ['element'], function(element, next){
-                        var val = JSON.stringify(templateObject.outputs[element]);
-                        val.should.withMessage('file:' + templateJSONObject.filepath + ' property:' + element).not.match(/providers\(.*?\)\.apiVersions/);
-                        next();
-                    });
-                }
+                assert(templateFileContent.match(/providers\(.*?\)\.apiVersions/) === null, message);
+                next();
             });
         });
     });
