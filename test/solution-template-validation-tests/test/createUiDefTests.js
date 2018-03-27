@@ -80,7 +80,7 @@ describe('createUiDefinition.json file - ', () => {
     it.each(textboxObjects, 'text box control %s must have a regex constraint', ['name'], function(element, next) {
         element.should.have.property('constraints');
         expect(element.constraints, getErrorMessage(element)).to.have.property('regex');
-        element.constraints.regex.length.should.withMessage('regex value on this text box control should not be an empty string').be.above(0);
+        element.constraints.regex.replace(/\s/g, '').length.should.withMessage('regex value on this text box control should not be an empty string').be.above(0);
         next();
     });
 
