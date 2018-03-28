@@ -32,7 +32,8 @@
     }
   },
   "variables": {
-    "storageAccountType": "Standard_LRS"
+    "storageAccountType": "Standard_LRS",
+    "automationApiVersion": "2018-01-15"
   },
   "resources": [
     {
@@ -49,7 +50,7 @@
     {
       "name": "[parameters('automationAccountName')]",
       "type": "Microsoft.Automation/automationAccounts",
-      "apiVersion": "2018-01-15",
+      "apiVersion": "[variables('automationApiVersion')]",
       "location": "[parameters('location')]",
       "comments": "Automation account for OMS",
       "properties": {
@@ -123,47 +124,21 @@
         "typeHandlerVersion": "2.75",
         "autoUpgradeMinorVersion": true,
         "settings": {
-          "protectedSettings": {
-            "Items": {
-                "registrationKeyPrivate": "[listKeys(resourceId('Microsoft.Automation/automationAccounts/', parameters('automationAccountName')), '2015-01-01-preview').Keys[0].value]"
+          "configurationArguments":
+            {
+              "RegistrationUrl": "[reference(resourceId('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))).registrationUrl]",
+              "NodeConfigurationName": "[parameters('nodeConfigurationName')]",
+              "ConfigurationMode": "ApplyandAutoCorrect",
+              "RebootNodeIfNeeded": true,
+              "ActionAfterReboot": "ContinueConfiguration"
             }
-          },
-          "publicSettings": {
-              "configurationArguments": [
-              {
-                "Name": "RegistrationKey",
-                  "Value": {
-                    "UserName": "PLACEHOLDER_DONOTUSE",
-                    "Password": "PrivateSettingsRef:registrationKeyPrivate"
-                  },
-                "TypeName": "System.Management.Automation.PSCredential"
-              },
-              {
-                "Name": "RegistrationUrl",
-                "Value": "[reference(resourceId('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))).registrationUrl]",
-                "TypeName": "System.String"
-              },
-              {
-                "Name": "NodeConfigurationName",
-                "Value": "[parameters('nodeConfigurationName')]",
-                "TypeName": "System.String"
-              },
-              {
-                "Name": "ConfigurationMode",
-                "Value": "ApplyandAutoCorrect",
-                "TypeName": "System.String"
-              },
-              {
-                "Name": "RebootNodeIfNeeded",
-                "Value": true,
-                "TypeName": "System.Boolean"
-              },
-              {
-                "Name": "ActionAfterReboot",
-                "Value": "ContinueConfiguration",
-                "TypeName": "System.String"
+        },
+        "protectedSettings": {
+          "configurationArguments": {
+              "registrationKey": {
+                "userName": "notused",
+                "Password": "[listKeys(resourceId('Microsoft.Automation/automationAccounts/', parameters('automationAccountName')), variables('automationApiVersion')).Keys[0].value]"
               }
-            ]
           }
         }
       }
