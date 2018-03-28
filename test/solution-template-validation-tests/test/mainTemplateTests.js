@@ -95,7 +95,7 @@ describe('template files - ', () => {
         var mainTemplateFileContent = JSON.stringify(mainTemplateFileJSONObject).toLowerCase();
         it.each(parametersInMainTemplate, 'parameter %s must be used in file mainTemplate.json', ['element'], function(element, next) {
             var paramString = 'parameters(\'' + element.toLowerCase() + '\')';
-            assert(mainTemplateFileContent.includes(paramString) === true, 'unused parameter ' + element + ' in file mainTemplate.json');
+            assert(mainTemplateFileContent.includes(paramString) === true, 'unused parameter "' + element + '" in file mainTemplate.json');
             next();
         });
     });
