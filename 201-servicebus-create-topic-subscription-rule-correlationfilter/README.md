@@ -1,5 +1,5 @@
 # 201-servicebus-create-topic-subscription-rule-correlationfilter
-# This template allows you to deploy a Service Bus Standard Namespace, Topic, Subscription and Rule with CorrelationFilter. 
+# This template allows you to deploy Service Bus Standard Namespace, Topic, Subscription and Rule with CorrelationFilter to receive only the messages that match the defined CorrelationFilter Expressions.
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-servicebus-create-topic-subscription-rule%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>

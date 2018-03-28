@@ -1,5 +1,5 @@
 # 201-servicebus-create-queue
-# This template allows you to deploy a Service Bus Standard namespace and queue with auto-forwarding
+# This template allows you to deploy Service Bus Standard namespace and queue with auto-forwarding
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-servicebus-create-queue%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
