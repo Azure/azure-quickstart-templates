@@ -7,6 +7,8 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
+<br><br>
+
 ![Dynatrace Logo](./images/Dynatrace_Logo_RGB_CPH_512x92px.png)
 
 This template allows you to deploy a Ubuntu VM with the Dynatrace OneAgent VM extension installed and fully configured.
