@@ -50,7 +50,7 @@
     {
       "name": "[parameters('automationAccountName')]",
       "type": "Microsoft.Automation/automationAccounts",
-      "apiVersion": "2018-01-15",
+      "apiVersion": "[variables('automationApiVersion')]",
       "location": "[parameters('location')]",
       "comments": "Automation account for OMS",
       "properties": {
@@ -118,32 +118,23 @@
       "dependsOn": [
         "[parameters('VMName')]"
       ],
-      "Properties": {
+      "properties": {
         "publisher": "Microsoft.Powershell",
         "type": "DSC",
         "typeHandlerVersion": "2.75",
         "autoUpgradeMinorVersion": true,
-        "protectedSettings": {
-          "Items": {
-            "RegistrationKeyPrivate": "[listKeys(resourceId('Microsoft.Automation/automationAccounts/', parameters('automationAccountName')), '2015-01-01-preview').Keys[0].Value]"
-          }
-        },
         "settings": {
-          "properties": [
-            {
-              "Name": "RegistrationKey",
-              "Value": {
-                "UserName": "PLACEHOLDER_DONOTUSE",
-                "Password": "PrivateSettingsRef:registrationKeyPrivate"
-              },
-              "TypeName": "System.Management.Automation.PSCredential"
-            },
-            {
-              "Name": "RegistrationUrl",
-              "Value": "[reference(resourceId('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))).registrationUrl]",
-              "TypeName": "System.String"
+          "RegistrationUrl": "[reference(resourceId('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))).registrationUrl]",
+          "NodeConfigurationName": "[parameters('nodeConfigurationName')]",
+          "ConfigurationMode": "ApplyandAutoCorrect",
+          "RebootNodeIfNeeded": true,
+          "ActionAfterReboot": "ContinueConfiguration"
+        },
+        "protectedSettings": {
+            "registrationKey": {
+              "userName": "notused",
+              "Password": "[listKeys(resourceId('Microsoft.Automation/automationAccounts/', parameters('automationAccountName')), variables('automationApiVersion')).Keys[0].value]"
             }
-          ]
         }
       }
     }
