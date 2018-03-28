@@ -15,6 +15,18 @@
         "description": "Location of the App Service Environment."
       }
     },
+    "existingASEDNSSuffix": {
+      "type": "string",
+      "metadata": {
+        "description": "DNS Suffix used for the ILB ASE"
+      }
+    },
+    "dnsSuffix": {
+      "type": "string",
+      "metadata": {
+        "description": "Root domain name used to access web apps on internet."
+      }
+    },
     "sqlServerAdministratorLogin": {
       "type": "string",
       "defaultValue": "eshop-admin",
@@ -44,21 +56,21 @@
     },
     "sourceCodeRepositoryURL": {
       "type": "string",
-      "defaultValue": "https://github.com/TylerLu/MS-Azure-LOB-ASE",
+      "defaultValue": "https://github.com/OGCanviz/azure-quickstart-templates",
       "metadata": {
         "description": "Source code repository URL"
       }
     },
     "sourceCodeBranch": {
       "type": "string",
-      "defaultValue": "master",
+      "defaultValue": "lob-solution-with-ase",
       "metadata": {
         "description": "Sourcecode Repo branch"
       }
     },
     "sourceCodeManualIntegration": {
       "type": "bool",
-      "defaultValue": false,
+      "defaultValue": true,
       "metadata": {
         "description": "Use 'true' if you are deploying from the base repo, 'false' if you are deploying from your own fork. If you're using 'false', make sure you have admin permissions to the repo. If you get an error, you should add GitHub integration to another web app manually, so that you get a GitHub access token associated with your Azure Subscription."
       }
@@ -87,7 +99,14 @@
     "appGatewayPublicIPDnsPrefix": "[concat(parameters('existingAseName'), '-waf')]",
     "cdnName": "[concat(parameters('existingAseName'), '-cdn')]",
     "cdnWebAppEndpointName": "[concat(parameters('existingAseName'), '-cdn-web')]",
-    "cdnStorageEndpointName": "[concat(parameters('existingAseName'), '-cdn-storage')]"
+    "cdnStorageEndpointName": "[concat(parameters('existingAseName'), '-cdn-storage')]",
+    "webAppExternalHostName": "[concat(variables('webAppName'), '.', parameters('dnsSuffix'))]",
+    "webAppInternalHostName": "[concat(variables('webAppName'), '.', parameters('existingASEDNSSuffix'))]",
+    "apiAppInternalHostName": "[concat(variables('apiAppName'), '.', parameters('existingASEDNSSuffix'))]",
+    "contentAppExternalHostName": "[concat(variables('contentAppName'), '.', parameters('dnsSuffix'))]",
+    "contentAppInternalHostName": "[concat(variables('contentAppName'), '.', parameters('existingASEDNSSuffix'))]",
+    "adminAppExternalHostName": "[concat(variables('adminAppName'), '.', parameters('dnsSuffix'))]",
+    "adminAppInternalHostName": "[concat(variables('adminAppName'), '.', parameters('existingASEDNSSuffix'))]"
   },
   "resources": [
     {
@@ -152,7 +171,7 @@
           "appSettings": [
             {
               "name": "ODataServiceBaseUrl",
-              "value": "[concat('http://', reference(resourceId('Microsoft.Web/sites/', variables('apiAppName'))).defaultHostName)]"
+              "value": "[variables('apiAppInternalHostName')]"
             },
             {
               "name": "cdn:url",
@@ -168,7 +187,7 @@
             },
             {
               "name": "project",
-              "value": "src/Web/Web.csproj"
+              "value": "e-shop-website-with-ilb-ase/src/Web/Web.csproj"
             }
           ],
           "connectionstrings": [
@@ -198,7 +217,11 @@
               "connectionString": "[concat(variables('redisCacheName'), '.redis.cache.windows.net:6380,password=', listKeys(resourceId('Microsoft.Cache/Redis/', variables('redisCacheName')), '2016-04-01').primaryKey, ',ssl=True,abortConnect=False')]"
             }
           ]
-        }
+        },
+        "hostNames": [
+          "[variables('webAppExternalHostName')]",
+          "[variables('webAppInternalHostName')]"
+        ]
       },
       "resources": [
         {
@@ -208,7 +231,7 @@
           "properties": {
             "RepoUrl": "[parameters('sourceCodeRepositoryURL')]",
             "branch": "[parameters('sourceCodeBranch')]",
-            "IsManualIntegration": true
+            "IsManualIntegration": "parameters('sourceCodeManualIntegration')]"
           },
           "dependsOn": [
             "[resourceId('Microsoft.Web/sites/', variables('webAppName'))]"
@@ -237,12 +260,29 @@
           "appSettings": [
             {
               "name": "project",
-              "value": "src/Web/wwwroot"
+              "value": "e-shop-website-with-ilb-ase/src/Web/wwwroot"
             }
           ]
-        }
+        },
+        "hostNames": [
+          "[variables('contentAppExternalHostName')]",
+          "[variables('contentAppInternalHostName')]"
+        ]
       },
       "resources": [
+        {
+          "apiVersion": "2015-08-01",
+          "name": "web",
+          "type": "sourcecontrols",
+          "properties": {
+            "RepoUrl": "[parameters('sourceCodeRepositoryURL')]",
+            "branch": "[parameters('sourceCodeBranch')]",
+            "IsManualIntegration": "parameters('sourceCodeManualIntegration')]"
+          },
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites/', variables('contentAppName'))]"
+          ]
+        }
       ],
       "dependsOn": [
         "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]"
@@ -266,7 +306,7 @@
             },
             {
               "name": "project",
-              "value": "src/API/API.csproj"
+              "value": "e-shop-website-with-ilb-ase/src/API/API.csproj"
             }
           ],
           "connectionstrings": [
@@ -279,6 +319,20 @@
         }
       },
       "resources": [
+        {
+          "apiVersion": "2015-08-01",
+          "name": "web",
+          "type": "sourcecontrols",
+          "properties": {
+            "RepoUrl": "[parameters('sourceCodeRepositoryURL')]",
+            "branch": "[parameters('sourceCodeBranch')]",
+            "IsManualIntegration": "parameters('sourceCodeManualIntegration')]"
+          },
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites/', variables('apiAppName'))]",
+            "[resourceId('Microsoft.Web/sites/sourcecontrols/', variables('webAppName'), 'web')]"
+          ]
+        }
       ],
       "dependsOn": [
         "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]",
@@ -311,7 +365,7 @@
             },
             {
               "name": "ODataServiceBaseUrl",
-              "value": "[concat('http://', reference(resourceId('Microsoft.Web/sites/', variables('apiAppName'))).defaultHostName)]"
+              "value": "[variables('apiAppInternalHostName')]"
             },
             {
               "name": "ApplicationInsights:InstrumentationKey",
@@ -319,12 +373,30 @@
             },
             {
               "name": "project",
-              "value": "src/Admin/Admin.csproj"
+              "value": "e-shop-website-with-ilb-ase/src/Admin/Admin.csproj"
             }
           ]
-        }
+        },
+        "hostNames": [
+          "[variables('adminAppExternalHostName')]",
+          "[variables('adminAppInternalHostName')]"
+        ]
       },
       "resources": [
+        {
+          "apiVersion": "2015-08-01",
+          "name": "web",
+          "type": "sourcecontrols",
+          "properties": {
+            "RepoUrl": "[parameters('sourceCodeRepositoryURL')]",
+            "branch": "[parameters('sourceCodeBranch')]",
+            "IsManualIntegration": "parameters('sourceCodeManualIntegration')]"
+          },
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites/', variables('adminAppName'))]",
+            "[resourceId('Microsoft.Web/sites/sourcecontrols/', variables('apiAppName'), 'web')]"
+          ]
+        }
       ],
       "dependsOn": [
         "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]",
@@ -489,11 +561,31 @@
         ],
         "backendAddressPools": [
           {
-            "name": "appGatewayBackendPool",
+            "name": "webAppBackendPool",
             "properties": {
               "BackendAddresses": [
                 {
-                  "fqdn": "[concat(variables('webAppName'), '.', parameters('existingAseName'), '.p.azurewebsites.net')]"
+                  "fqdn": "[variables('webAppInternalHostName')]"
+                }
+              ]
+            }
+          },
+          {
+            "name": "contentAppBackendPool",
+            "properties": {
+              "BackendAddresses": [
+                {
+                  "fqdn": "[variables('contentAppInternalHostName')]"
+                }
+              ]
+            }
+          },
+          {
+            "name": "adminAppBackendPool",
+            "properties": {
+              "BackendAddresses": [
+                {
+                  "fqdn": "[variables('adminAppInternalHostName')]"
                 }
               ]
             }
@@ -515,7 +607,7 @@
         ],
         "httpListeners": [
           {
-            "name": "appGatewayHttpListener",
+            "name": "webAppHttpListener",
             "properties": {
               "FrontendIPConfiguration": {
                 "Id": "[concat(variables('appGatewayID'), '/frontendIPConfigurations/appGatewayFrontendIP')]"
@@ -524,20 +616,79 @@
                 "Id": "[concat(variables('appGatewayID'), '/frontendPorts/appGatewayFrontendPort')]"
               },
               "Protocol": "Http",
-              "SslCertificate": null
+              "SslCertificate": null,
+              "HostName": "[variables('webAppExternalHostName')]"
+            }
+          },
+          {
+            "name": "contentAppHttpListener",
+            "properties": {
+              "FrontendIPConfiguration": {
+                "Id": "[concat(variables('appGatewayID'), '/frontendIPConfigurations/appGatewayFrontendIP')]"
+              },
+              "FrontendPort": {
+                "Id": "[concat(variables('appGatewayID'), '/frontendPorts/appGatewayFrontendPort')]"
+              },
+              "Protocol": "Http",
+              "SslCertificate": null,
+              "HostName": "[variables('contentAppExternalHostName')]"
+            }
+          },
+          {
+            "name": "adminAppHttpListener",
+            "properties": {
+              "FrontendIPConfiguration": {
+                "Id": "[concat(variables('appGatewayID'), '/frontendIPConfigurations/appGatewayFrontendIP')]"
+              },
+              "FrontendPort": {
+                "Id": "[concat(variables('appGatewayID'), '/frontendPorts/appGatewayFrontendPort')]"
+              },
+              "Protocol": "Http",
+              "SslCertificate": null,
+              "HostName": "[variables('adminAppExternalHostName')]"
             }
           }
         ],
         "requestRoutingRules": [
           {
-            "Name": "rule1",
+            "Name": "webAppRule",
             "properties": {
               "RuleType": "Basic",
               "httpListener": {
-                "id": "[concat(variables('appGatewayID'), '/httpListeners/appGatewayHttpListener')]"
+                "id": "[concat(variables('appGatewayID'), '/httpListeners/webAppHttpListener')]"
               },
               "backendAddressPool": {
-                "id": "[concat(variables('appGatewayID'), '/backendAddressPools/appGatewayBackendPool')]"
+                "id": "[concat(variables('appGatewayID'), '/backendAddressPools/webAppBackendPool')]"
+              },
+              "backendHttpSettings": {
+                "id": "[concat(variables('appGatewayID'), '/backendHttpSettingsCollection/appGatewayBackendHttpSettings')]"
+              }
+            }
+          },
+          {
+            "Name": "contentAppRule",
+            "properties": {
+              "RuleType": "Basic",
+              "httpListener": {
+                "id": "[concat(variables('appGatewayID'), '/httpListeners/contentAppHttpListener')]"
+              },
+              "backendAddressPool": {
+                "id": "[concat(variables('appGatewayID'), '/backendAddressPools/contentAppBackendPool')]"
+              },
+              "backendHttpSettings": {
+                "id": "[concat(variables('appGatewayID'), '/backendHttpSettingsCollection/appGatewayBackendHttpSettings')]"
+              }
+            }
+          },
+          {
+            "Name": "adminAppRule",
+            "properties": {
+              "RuleType": "Basic",
+              "httpListener": {
+                "id": "[concat(variables('appGatewayID'), '/httpListeners/adminAppHttpListener')]"
+              },
+              "backendAddressPool": {
+                "id": "[concat(variables('appGatewayID'), '/backendAddressPools/adminAppBackendPool')]"
               },
               "backendHttpSettings": {
                 "id": "[concat(variables('appGatewayID'), '/backendHttpSettingsCollection/appGatewayBackendHttpSettings')]"
@@ -623,9 +774,9 @@
             "isHttpsAllowed": true,
             "origins": [
               {
-                "name": "WebApp",
+                "name": "contentApp",
                 "properties": {
-                  "hostName": "[reference(resourceId('Microsoft.Web/sites/', variables('contentAppName'))).defaultHostName]"
+                  "hostName": "[variables('contentAppExternalHostName')]"
                 }
               }
             ],
@@ -642,7 +793,7 @@
             ],
             "optimizationType": "GeneralWebDelivery",
             "probePath": null,
-            "originHostHeader": "[reference(resourceId('Microsoft.Web/sites/', variables('webAppName'))).defaultHostName]"
+            "originHostHeader": "[variables('contentAppExternalHostName')]"
           },
           "dependsOn": [
             "[resourceId('microsoft.cdn/profiles/', variables('cdnName'))]"
@@ -690,12 +841,19 @@
   "outputs": {
     "webAppURL": {
       "type": "string",
-      "value": "[concat('http://', reference(variables('appGatewayPublicIPName')).dnsSettings.fqdn)]"
+      "value": "[concat('http://', variables('webAppExternalHostName'))]"
     },
     "adminAppURL": {
       "type": "string",
-      "value": "[concat('https://', reference(resourceId('Microsoft.Web/sites/', variables('adminAppName'))).defaultHostName)]"
+      "value": "[concat('http://', variables('adminAppExternalHostName'))]"
+    },
+    "adminAppRedirectURL": {
+      "type": "string",
+      "value": "[concat('http://', variables('adminAppExternalHostName'), '/signin-oidc')]"
+    },
+    "appGatewayPublicIPDns": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses/', variables('appGatewayPublicIPName')), '2017-08-01').dnsSettings.fqdn]"
     }
-    
   }
 }

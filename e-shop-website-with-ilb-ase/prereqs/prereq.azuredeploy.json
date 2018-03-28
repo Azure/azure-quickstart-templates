@@ -2,14 +2,14 @@
   "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "aseName": {
+    "name": {
       "type": "string",
       "defaultValue": "<YourName>-eshop-<Date>",
       "metadata": {
         "description": "Name of the App Service Environment."
       }
     },
-    "aseLocation": {
+    "location": {
       "type": "string",
       "allowedValues": [
         "Central US",
@@ -36,29 +36,37 @@
       "metadata": {
         "description": "Location of the App Service Environment."
       }
+    },
+    "dnsSuffix": {
+      "type": "string",
+      "metadata": {
+        "description": "DNS Suffix used for Apps in ILB ASE"
+      }
     }
   },
   "variables": {
-    "location": "[parameters('aseLocation')]",
-    "vnetName": "[concat(parameters('aseName'), '-vnet')]",
-    "aseSubnetName": "[concat(parameters('aseName'), '-subnet')]",
-    "subnetRouteTableName": "[concat(parameters('aseName'), '-route-table')]",
-    "subnetNSGName": "[concat(parameters('aseName'), '-nsg')]"
+    "location": "[parameters('location')]",
+    "vnetName": "[concat(parameters('name'), '-vnet')]",
+    "aseSubnetName": "[concat(parameters('name'), '-subnet')]",
+    "subnetRouteTableName": "[concat(parameters('name'), '-route-table')]",
+    "subnetNSGName": "[concat(parameters('name'), '-nsg')]"
   },
   "resources": [
     {
-      "apiVersion": "2015-08-01",
+      "apiVersion": "2015-02-01",
       "type": "Microsoft.Web/hostingEnvironments",
-      "name": "[parameters('aseName')]",
-      "location": "[parameters('aseLocation')]",
+      "name": "[parameters('name')]",
+      "location": "[parameters('location')]",
       "kind": "ASEV2",
       "properties": {
-        "name": "[parameters('aseName')]",
-        "location": "[parameters('aseLocation')]",
+        "name": "[parameters('name')]",
+        "location": "[parameters('location')]",
         "virtualNetwork": {
           "Id": "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
           "Subnet": "[variables('aseSubnetName')]"
-        }
+        },
+        "dnsSuffix": "[parameters('dnsSuffix')]",
+        "internalLoadBalancingMode": 3
       },
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
@@ -120,7 +128,7 @@
       "properties": {
         "routes": [
           {
-            "name": "[concat(parameters('aseName'), '-route')]",
+            "name": "[concat(parameters('name'), '-route')]",
             "properties": {
               "addressPrefix": "0.0.0.0/0",
               "nextHopType": "Internet"
@@ -384,11 +392,15 @@
   "outputs": {
     "existingASEName": {
       "type": "string",
-      "value": "[parameters('aseName')]"
+      "value": "[parameters('name')]"
     },
     "existingASELocation": {
       "type": "string",
-      "value": "[parameters('aseLocation')]"
+      "value": "[parameters('location')]"
+    },
+    "existingASEDNSSuffix": {
+      "type": "string",
+      "value": "[parameters('dnsSuffix')]"
     }
   }
 }
