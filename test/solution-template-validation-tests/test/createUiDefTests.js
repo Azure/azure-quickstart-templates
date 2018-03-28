@@ -76,10 +76,11 @@ describe('createUiDefinition.json file - ', () => {
     /** Get all textbox objects */
     var textboxObjects = util.getObjects(createUiDefFileJSONObject, 'type', 'microsoft.common.textbox');
 
-    /** Each text box control MUST hve a regex constraint. */
+    /** Each text box control MUST hve a regex constraint, and the value should not be an empty string. */
     it.each(textboxObjects, 'text box control %s must have a regex constraint', ['name'], function(element, next) {
         element.should.have.property('constraints');
         expect(element.constraints, getErrorMessage(element)).to.have.property('regex');
+        element.constraints.regex.replace(/\s/g, '').length.should.withMessage('regex value on this text box control should not be an empty string').be.above(0);
         next();
     });
 
