@@ -108,7 +108,7 @@ if ($UploadArtifacts) {
 
     $TemplateArgs.Add('TemplateFile', $OptionalParameters[$ArtifactsLocationName] + (Get-ChildItem $TemplateFile).Name + $OptionalParameters[$ArtifactsLocationSasTokenName])
 
-    $OptionalParameters[$ArtifactsLocationSasTokenName] = ConvertTo-SecureString $OptionalParameters[$ArtifactsLocationSasTokenName] -AsPlainText -Force
+    #$OptionalParameters[$ArtifactsLocationSasTokenName] = ConvertTo-SecureString $OptionalParameters[$ArtifactsLocationSasTokenName] -AsPlainText -Force
 
 }
 else {
