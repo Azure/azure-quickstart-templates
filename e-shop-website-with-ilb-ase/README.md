@@ -84,7 +84,7 @@ It takes about 70 minutes to create a new App Service Environment in Azure.
 
    - Check **I agree to the terms and conditions stated above**.
 
-   > **Note**: keeps these values. The will be used to deploy the other resources later.
+   > **Note**: keeps these values. They will be used to deploy the other resources later.
 
 3. Click **Purchase**.
 
@@ -116,7 +116,7 @@ Create a new App Registration in AAD:
    | ------------------------------ | --------------- | ----------------------------- |
    | Windows Azure Active Directory | Delegated       | Sign in and read user profile |
 
-Copy the **Application Id** and save it in a text file. You will need it later to specify the values for the **Azure Ad Client Id** parameter in the ARM Template.
+Copy the **Application Id** and save it in a text file. You will need it later to specify the value for the **Azure Ad Client Id** parameter in the ARM Template.
 
 ### Deploy the Other Azure Resources
 
@@ -201,18 +201,18 @@ Copy the value of **Internal Local Balancer IP address** and save it in a text f
 
 1. Add the two A records below in the record management of the internal domain:
 
-   | Host  | Type | Value                                    | TTL  |
-   | ----- | ---- | ---------------------------------------- | ---- |
-   | *     | A    | <ASE Internal Local Balancer IP address> | 600  |
-   | *.scm | A    | <ASE Internal Local Balancer IP address> | 600  |
+   | Host  | Type | Value                                        | TTL  |
+   | ----- | ---- | -------------------------------------------- | ---- |
+   | *     | A    | *\<ASE Internal Local Balancer IP address\>* | 600  |
+   | *.scm | A    | *\<ASE Internal Local Balancer IP address\>* | 600  |
 
 2. Add the three CNAME records below in the record management of the external domain:
 
-   | Host               | Type  | Value                        | TTL  |
-   | ------------------ | ----- | ---------------------------- | ---- |
-   | <ASE Name>-web     | CNAME | <App Gateway Public IP Fqdn> | 600  |
-   | <ASE Name>-content | CNAME | <App Gateway Public IP Fqdn> | 600  |
-   | <ASE Name>-admin   | CNAME | <App Gateway Public IP Fqdn> | 600  |
+   | Host                   | Type  | Value                            | TTL  |
+   | ---------------------- | ----- | -------------------------------- | ---- |
+   | *\<ASE Name\>*-web     | CNAME | *\<App Gateway Public IP FQDN\>* | 600  |
+   | *\<ASE Name\>*-content | CNAME | *\<App Gateway Public IP FQDN\>* | 600  |
+   | *\<ASE Name\>*-admin   | CNAME | *\<App Gateway Public IP FQDN\>* | 600  |
 
 ### Add Reply URL to the Admin Web App
 
