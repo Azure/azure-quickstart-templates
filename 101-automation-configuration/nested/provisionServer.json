@@ -115,25 +115,54 @@
         "apiVersion": "2017-12-01",
         "location": "[parameters('location')]",
         "dependsOn": [
-          "[parameters('VMName')]"
+          "[concat('Microsoft.Compute/virtualMachines/', parameters('VMName'))]"
         ],
         "properties": {
           "publisher": "Microsoft.Powershell",
           "type": "DSC",
           "typeHandlerVersion": "2.75",
           "autoUpgradeMinorVersion": true,
-          "settings": {
-            "RegistrationUrl": "[reference(resourceId('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))).registrationUrl]",
-            "NodeConfigurationName": "[parameters('nodeConfigurationName')]",
-            "ConfigurationMode": "ApplyandAutoCorrect",
-            "RebootNodeIfNeeded": true,
-            "ActionAfterReboot": "ContinueConfiguration"
-          },
           "protectedSettings": {
-              "registrationKey": {
-                "userName": "notused",
-                "Password": "[listKeys(resourceId('Microsoft.Automation/automationAccounts/', parameters('automationAccountName')), '2018-01-15').Keys[0].value]"
-              }
+            "Items": {
+                "registrationKeyPrivate": "[listKeys(resourceId('Microsoft.Automation/automationAccounts/', parameters('automationAccountName')), '2018-01-15').Keys[0].value]"
+            }
+          },
+          "settings": {
+            "Properties": [
+                  {
+                    "Name": "RegistrationKey",
+                    "Value": {
+                        "UserName": "PLACEHOLDER_DONOTUSE",
+                        "Password": "PrivateSettingsRef:registrationKeyPrivate"
+                    },
+                    "TypeName": "System.Management.Automation.PSCredential"
+                },
+                  {
+                      "Name": "RegistrationUrl",
+                      "Value": "[reference(concat('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))).registrationUrl]",
+                      "TypeName": "System.String"
+                  },
+                  {
+                      "Name": "NodeConfigurationName",
+                      "Value": "[parameters('nodeConfigurationName')]",
+                      "TypeName": "System.String"
+                  },
+                  {
+                    "Name": "ConfigurationMode",
+                    "Value": "ApplyandAutoCorrect",
+                    "TypeName": "System.String"
+                  },
+                  {
+                    "Name": "RebootNodeIfNeeded",
+                    "Value": true,
+                    "TypeName": "System.Boolean"
+                  },
+                  {
+                    "Name": "ActionAfterReboot",
+                    "Value": "ContinueConfiguration",
+                    "TypeName": "System.String"
+                  }
+            ]
           }
         }
       }
