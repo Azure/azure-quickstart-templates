@@ -8,7 +8,12 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template creates an Azure Cosmos DB API account with the provided database account name and the API type, and the offer type set to `Standard`.
+This template creates an Azure Cosmos DB API account with the provided database account name and the API type, and the offer type set to `Standard`. The API type can be one of `Cassandra`, `Gremlin`, `MongoDB`, `SQL`, or `Table`, for example:
 
-By not setting the optional consistency level parameter `consistencyLevel`, the account will be created with the default consistency level of `Session`.
-To set the consistency level to another value, see [101-create-documentdb-account-consistencypolicy](https://github.com/Azure/azure-quickstart-templates/tree/master/101-documentdb-account-consistencypolicy-create).
+```json
+    "apiType": {
+      "value": "Cassandra"
+    },
+```
+
+By not setting the optional consistency level parameter `consistencyLevel`, the account will be created with the default consistency level of `Session`. To set the consistency level to another value, see [101-create-documentdb-account-consistencypolicy](https://github.com/Azure/azure-quickstart-templates/tree/master/101-documentdb-account-consistencypolicy-create).
