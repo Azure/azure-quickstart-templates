@@ -128,6 +128,7 @@ bosh create-env ~/example_manifests/bosh.yml \\
   -o ~/example_manifests/custom-environment.yml \\
   -o ~/example_manifests/use-azure-dns.yml \\
   -o ~/example_manifests/jumpbox-user.yml \\
+  -o ~/example_manifests/keep-failed-or-unreachable-vms.yml \\
   -v director_name=azure \\
   -v internal_cidr=10.0.0.0/24 \\
   -v internal_gw=10.0.0.1 \\
