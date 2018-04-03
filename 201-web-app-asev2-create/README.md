@@ -7,6 +7,4 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-Template creates an App Service Environment v2 in your existing virtual network.
-
 For more details on App Service Environments, see the [Introduction to App Service Environments](https://docs.microsoft.com/en-us/azure/app-service/app-service-environment/intro).
