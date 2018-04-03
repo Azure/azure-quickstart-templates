@@ -2,26 +2,12 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "prefix": {
-      "type": "string",
-      "metadata": {
-        "description": "A unique value to identify this deployment"
-      },
-      "defaultValue": "[take(guid(resourceGroup().id),3)]"
-    },
     "location": {
       "type": "string",
       "metadata": {
         "description": "The Azure location to deploy all resources"
       },
       "defaultValue": "[resourceGroup().location]"
-    },
-    "virtualNetworkName": {
-      "type": "string",
-      "metadata": {
-        "description": "The name of the Virtual Network to Create"
-      },
-      "defaultValue": "network"
     },
     "virtualNetworkAddressRange": {
       "type": "string",
@@ -99,9 +85,10 @@
     }
   },
   "variables": {
-    "automationAccountName": "[concat('stateconfiguration',parameters('prefix'))]",
-    "publicIPAddressName": "publicIP",
+    "automationAccountName": "[concat('DSC-',take(guid(resourceGroup().id),5))]",
+    "publicIPAddressName": "PIP",
     "publicIPAddressType": "Dynamic",
+    "virtualNetworkName": "Network",
     "virtualNetworkSubnetName": "Subnet",
     "virtualNetworkSubnets": [
       {
@@ -111,14 +98,13 @@
         }
       }
     ],
-    "VMName": "server",
-    "nicName": "nic",
-    "nicSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), variables('virtualNetworkSubnetName'))]",
+    "VMName": "Server",
+    "nicName": "NIC",
+    "nicSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('virtualNetworkSubnetName'))]",
     "provisionConfigurationURL": "[uri(parameters('_artifactsLocation'), concat('nested/provisionConfiguration.json', parameters('_artifactsLocationSasToken')))]",
     "provisionNetworkURL": "[uri(parameters('_artifactsLocation'), concat('nested/provisionNetwork.json', parameters('_artifactsLocationSasToken')))]",
     "provisionServerUrl": "[uri(parameters('_artifactsLocation'), concat('nested/provisionServer.json', parameters('_artifactsLocationSasToken')))]",
-    "provisionDNSUrl": "[uri(parameters('_artifactsLocation'), concat('nested/provisionDNS.json', parameters('_artifactsLocationSasToken')))]",
-    "storageAccountName": "[take(toLower(concat(parameters('prefix'), uniqueString(resourceGroup().id))),23)]"
+    "provisionDNSUrl": "[uri(parameters('_artifactsLocation'), concat('nested/provisionDNS.json', parameters('_artifactsLocationSasToken')))]"
   },
   "resources": [
     {
@@ -177,7 +163,7 @@
             "value": "[parameters('location')]"
           },
           "virtualNetworkName": {
-            "value": "[parameters('virtualNetworkName')]"
+            "value": "[variables('virtualNetworkName')]"
           },
           "virtualNetworkAddressRange": {
             "value": "[parameters('virtualNetworkAddressRange')]"
@@ -233,9 +219,6 @@
           "adminPassword": {
             "value": "[parameters('adminPassword')]"
           },
-          "storageAccountName": {
-            "value": "[variables('storageAccountName')]"
-          },
           "NicName": {
             "value": "[variables('NicName')]"
           },
@@ -263,7 +246,7 @@
             "value": "[parameters('location')]"
           },
           "virtualNetworkName": {
-            "value": "[parameters('virtualNetworkName')]"
+            "value": "[variables('virtualNetworkName')]"
           },
           "virtualNetworkAddressRange": {
             "value": "[parameters('virtualNetworkAddressRange')]"
