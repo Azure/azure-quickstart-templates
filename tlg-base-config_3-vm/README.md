@@ -11,6 +11,7 @@ This template deploys the **tlg-base-config_3-vm** solution, a Test Lab Guide (T
 to the Internet. This base configuration is the starting point for additional TLGs that can be found [here](http://aka.ms/catlgs).
 The **tlg-base-config_3-vm** solution provisions a Windows Server 2012 R2 Active Directory domain controller using the specified domain name, 
 an application server running Windows Server 2012 R2, and a client VM running Windows 10.
+![alt text](images/tlg-base-config_3-vm.png "Diagram of the base config deployment")
 
 ## Credits
 Thanks to both Simon Davies and Willem Kasdorp, from whom I borrowed various DSC configuration elements.
