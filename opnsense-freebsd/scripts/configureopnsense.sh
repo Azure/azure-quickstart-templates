@@ -1,8 +1,9 @@
 #!/bin/sh
 
-ALTHOSTNAME=${1}
+ARTIFACTSLOCATION=${1}
+ALTHOSTNAME=${2}
 
-sudo fetch https://opnsensetestdisks459.blob.core.windows.net/opnsense/config.xml
+sudo fetch $ARTIFACTSLOCATION/scripts/config.xml
 
 sed -i "" "s/ZZZALTHOSTNAMEZZZ/$ALTHOSTNAME/g" config.xml
 
