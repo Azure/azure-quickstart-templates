@@ -3,7 +3,7 @@
 ARTIFACTSLOCATION=${1}
 ALTHOSTNAME=${2}
 
-sudo fetch $ARTIFACTSLOCATION/scripts/config.xml
+sudo fetch ${ARTIFACTSLOCATION}scripts/config.xml
 
 sed -i "" "s/ZZZALTHOSTNAMEZZZ/$ALTHOSTNAME/g" config.xml
 
