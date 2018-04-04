@@ -1,12 +1,32 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
-    "parameters": {        
+    "parameters": {
+        "modules": {
+            "type": "array",
+            "metadata": {
+                "description": "Enter the Module(s) to install including the Version"
+            },
+            "defaultValue": [
+                {"name": "AzureRM", "version": "5.6.0"},
+                {"name": "AzureAD", "version": "2.0.1.3"},
+                {"name": "Bitbucket.v2", "version": "1.1.2"},
+                {"name": "GetPassword", "version": "1.0.0.0"},
+                {"name": "posh-git", "version": "0.7.1"}
+            ]
+        },
         "publicIPDnsName": {
             "type": "string",
             "metadata": {
                 "description": "Enter a DNS name to resolve to the Public IP Address"
             }
+        },
+        "scriptUrl": {
+            "type": "string",
+            "metadata": {
+            "description": "URL for the PowerShell Script. NOTE: Can be a Github url(raw) to the ps1 file"
+            },
+            "defaultValue": "https://raw.githubusercontent.com/mrptsai/201-vm-vsts-agent/master/scripts/InstallVstsAgent.ps1"
         },
         "vmAdminUser": {
             "type": "string",
@@ -25,97 +45,7 @@
             "type": "string",
             "metadata": {
                 "description": "Specifiy the size of VM required for the VM(s)"
-            },
-            "allowedValues": [
-                "Standard_A0",
-                "Standard_A1",
-                "Standard_A2",
-                "Standard_A3",
-                "Standard_A5",
-                "Standard_A4",
-                "Standard_A6",
-                "Standard_A7",
-                "Basic_A0",
-                "Basic_A1",
-                "Basic_A2",
-                "Basic_A3",
-                "Basic_A4",
-                "Standard_D1_v2",
-                "Standard_D2_v2",
-                "Standard_D3_v2",
-                "Standard_D4_v2",
-                "Standard_D5_v2",
-                "Standard_D11_v2",
-                "Standard_D12_v2",
-                "Standard_D13_v2",
-                "Standard_D14_v2",
-                "Standard_D15_v2",
-                "Standard_D2_v2_Promo",
-                "Standard_D3_v2_Promo",
-                "Standard_D4_v2_Promo",
-                "Standard_D5_v2_Promo",
-                "Standard_D11_v2_Promo",
-                "Standard_D12_v2_Promo",
-                "Standard_D13_v2_Promo",
-                "Standard_D14_v2_Promo",
-                "Standard_A1_v2",
-                "Standard_A2m_v2",
-                "Standard_A2_v2",
-                "Standard_A4m_v2",
-                "Standard_A4_v2",
-                "Standard_A8m_v2",
-                "Standard_A8_v2",
-                "Standard_DS1_v2",
-                "Standard_DS2_v2",
-                "Standard_DS3_v2",
-                "Standard_DS4_v2",
-                "Standard_DS5_v2",
-                "Standard_DS11_v2",
-                "Standard_DS12_v2",
-                "Standard_DS13-2_v2",
-                "Standard_DS13-4_v2",
-                "Standard_DS13_v2",
-                "Standard_DS14-4_v2",
-                "Standard_DS14-8_v2",
-                "Standard_DS14_v2",
-                "Standard_DS2_v2_Promo",
-                "Standard_DS3_v2_Promo",
-                "Standard_DS4_v2_Promo",
-                "Standard_DS5_v2_Promo",
-                "Standard_DS11_v2_Promo",
-                "Standard_DS12_v2_Promo",
-                "Standard_DS13_v2_Promo",
-                "Standard_DS14_v2_Promo",
-                "Standard_D2_v3",
-                "Standard_D4_v3",
-                "Standard_D8_v3",
-                "Standard_D16_v3",
-                "Standard_D32_v3",
-                "Standard_D64_v3",
-                "Standard_D2s_v3",
-                "Standard_D4s_v3",
-                "Standard_D8s_v3",
-                "Standard_D16s_v3",
-                "Standard_D32s_v3",
-                "Standard_D64s_v3",
-                "Standard_DS15_v2",
-                "Standard_D1",
-                "Standard_D2",
-                "Standard_D3",
-                "Standard_D4",
-                "Standard_D11",
-                "Standard_D12",
-                "Standard_D13",
-                "Standard_D14",
-                "Standard_DS1",
-                "Standard_DS2",
-                "Standard_DS3",
-                "Standard_DS4",
-                "Standard_DS11",
-                "Standard_DS12",
-                "Standard_DS13",
-                "Standard_DS14"
-            ],
+            },            
             "defaultValue": "Standard_D1_v2"
         },
         "vstsAccount": {
@@ -144,21 +74,7 @@
             "metadata": {
                 "description": "The Visual Studio Team Services build agent pool for this build agent to join. Use 'Default' if you don't have a separate pool."
             }
-        },
-        "_artifactsLocation": {
-            "type": "string",
-            "metadata": {
-                "description": "Auto-generated container in staging storage account to receive post-build staging folder upload"
-            },
-            "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vm-vsts-agent"
-        },
-        "_artifactsLocationSasToken": {
-            "type": "securestring",
-            "metadata": {
-                "description": "Auto-generated token to access _artifactsLocation"
-            },
-            "defaultValue": ""
-        }
+        }        
     },
     "variables": {
         "ids": {
@@ -181,32 +97,35 @@
             "vsts": "[concat('agent-', uniqueString(resourceGroup().id))]"
         },
         "powerShell": {
-            "folder": "scripts",
             "script": "InstallVstsAgent.ps1",
-            "parameters": "[concat('-vstsAccount ', parameters('vstsAccount'), ' -personalAccessToken ', parameters('vstsPersonalAccessToken'), ' -AgentName ', variables('names').vsts,' -PoolName ', parameters('vstsPoolName'), ' -AgentCount ', parameters('vstsAgentCount'))]"
-        }
+            "parameters": "[concat('-vstsAccount ', parameters('vstsAccount'), ' -personalAccessToken ', parameters('vstsPersonalAccessToken'), ' -AgentName ', variables('names').vsts,' -PoolName ', parameters('vstsPoolName'), ' -AgentCount ', parameters('vstsAgentCount'), ' -AdminUser ', parameters('vmAdminUser'), ' -Modules ', variables('modules'))]"
+        },
+        "singleQuote": "'",
+        "modules": "[replace(replace(replace(replace(replace(string(parameters('modules')), '[{\"', '@(@{'), '\":\"', concat(' = ', variables('singleQuote'))), '\",\"', concat(variables('singleQuote'), '; ')), '\"},{\"', concat(variables('singleQuote'), '}, @{')), '\"}]', concat(variables('singleQuote'), '})'))]"
     },
     "resources": [
         {
             "name": "[variables('names').avs]",
             "type": "Microsoft.Compute/availabilitySets",
             "location": "[resourceGroup().location]",
-            "apiVersion": "2016-04-30-preview",
+            "apiVersion": "2017-12-01",
             "dependsOn": [],
             "tags": {
                 "displayName": "availabilitySets"
             },
             "properties": {
                 "platformUpdateDomainCount": 5,
-                "platformFaultDomainCount": 2,
-                "managed": true
+                "platformFaultDomainCount": 2
+            },
+            "sku": {
+                "name": "Aligned"
             }
         },
         {
             "name": "[variables('names').pip]",
             "type": "Microsoft.Network/publicIPAddresses",
             "location": "[resourceGroup().location]",
-            "apiVersion": "2017-06-01",
+            "apiVersion": "2017-10-01",
             "dependsOn": [],
             "tags": {
                 "displayName": "publicIP"
@@ -224,7 +143,7 @@
             "name": "[variables('names').vnet.name]",
             "type": "Microsoft.Network/virtualNetworks",
             "location": "[resourceGroup().location]",
-            "apiVersion": "2017-06-01",
+            "apiVersion": "2017-10-01",
             "dependsOn": [],
             "tags": {
                 "displayName": "virtualNetwork"
@@ -249,7 +168,7 @@
             "name": "[variables('names').nic]",
             "type": "Microsoft.Network/networkInterfaces",
             "location": "[resourceGroup().location]",
-            "apiVersion": "2017-06-01",
+            "apiVersion": "2017-10-01",
             "dependsOn": [
                 "[variables('names').pip]",
                 "[variables('names').vnet.name]"
@@ -282,7 +201,7 @@
             "name": "[variables('names').vm]",
             "type": "Microsoft.Compute/virtualMachines",
             "location": "[resourceGroup().location]",
-            "apiVersion": "2016-04-30-preview",
+            "apiVersion": "2017-12-01",
             "dependsOn": [
                 "[variables('names').avs]",
                 "[variables('names').nic]"
@@ -334,24 +253,31 @@
                     "name": "vstsAgent",
                     "type": "extensions",
                     "location": "[resourceGroup().location]",
-                    "apiVersion": "2016-04-30-preview",
+                    "apiVersion": "2017-12-01",
                     "dependsOn": [
                         "[variables('names').vm]"
                     ],
                     "properties": {
                         "publisher": "Microsoft.Compute",
                         "type": "CustomScriptExtension",
-                        "typeHandlerVersion": "1.4",
+                        "typeHandlerVersion": "1.9",
                         "settings": {
                             "fileUris": [
-                                "[concat(parameters('_artifactsLocation'), '/', variables('powerShell').folder, '/', variables('powerShell').script, parameters('_artifactsLocationSasToken'))]"
-                            ],
-                            "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File ', './', variables('powerShell').folder, '/', variables('powerShell').script, ' ', variables('powerShell').parameters)]"
+                                "[parameters('scriptUrl')]"
+                            ]
+                        },
+                        "protectedSettings": {                            
+                            "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Unrestricted -Command \"& {', './', variables('powerShell').script, ' ', variables('powerShell').parameters, '}\"')]"
                         }
                     }
                 }
             ]
         }
     ],
-    "outputs": {}
+    "outputs": {
+        "Modules": {
+            "type" : "string",
+            "value": "[variables('modules')]"  
+        }
+    }
 }
