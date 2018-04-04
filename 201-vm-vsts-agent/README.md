@@ -1,4 +1,4 @@
-# Install Multiple Visual Studio Team Services (VSTS) Agents with latest AzureRM Modules
+# Install Multiple Visual Studio Team Services (VSTS) Agents
 
 With Visual Studio Enterprise you can create applications across devices and services, using an integrated, end-to-end DevOps solution for productivity and coordination across teams of any size. You get the tools you need to design, build, deploy and manage desktop, Windows Store, Windows Phone, and Office apps, as well as mobile and web apps across any device, web site, cloud service, and more. This image contains the recommended prodct install of the originally released (or 'RTW') version of Visual Studio Enterprise 2017 on Windows Server 2016. It allows you to easily and quickly set up a development environment in Azure to build and test applications using Visual Studio.
 
