@@ -119,8 +119,10 @@ else {
 
 $TemplateArgs.Add('TemplateParameterFile', $TemplateParametersFile)
 
-# Create or update the resource group using the specified template file and template parameters file
-New-AzureRmResourceGroup -Name $ResourceGroupName -Location $ResourceGroupLocation -Verbose -Force -ErrorAction Stop 
+# Create the resource group only when it doesn't already exist
+if ((Get-AzureRmresourcegroup -Name $ResourceGroupName -Location $ResourceGroupLocation -Verbose -Force -ErrorAction SilentlyContinue) -eq $null) {
+    New-AzureRmResourceGroup -Name $ResourceGroupName -Location $ResourceGroupLocation -Verbose -Force -ErrorAction Stop
+}
 
 if ($ValidateOnly) {
     $ErrorMessages = Format-ValidationOutput (Test-AzureRmResourceGroupDeployment -ResourceGroupName $ResourceGroupName `
