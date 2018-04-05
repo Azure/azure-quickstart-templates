@@ -1,0 +1,487 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "IoTHub_name": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the IoT Hub instance."
+            }
+        },
+        "LogicApp_name": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Logic App instance."
+            }
+        },
+        "ServiceBus_name": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Service Bus instance."
+            }
+        },
+        "StorageAccount_name": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Storage Account instance."
+            }
+        },
+        "SBQueue_name": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Service Bus Queue instance."
+            }
+        },
+        "WebApp_name": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Web App instance."
+            }
+        }
+    },
+    "variables": {
+        "storageAccountId": "[concat(resourceGroup().id,'/providers/Microsoft.Storage/storageAccounts/', parameters('StorageAccount_name'))]",
+        "sasKeyName": "RootManageSharedAccessKey",
+        "authRulesName": "iothubroutes_IoTHubname",
+        "sbConnectionName": "servicebus",
+        "atConnectionName": "azuretables",
+        "authRuleResourceId": "[resourceId('Microsoft.ServiceBus/namespaces/authorizationRules', parameters('ServiceBus_name'), variables('sasKeyName'))]",
+        "queueAuthRuleResourceId": "[resourceId('Microsoft.ServiceBus/namespaces/queues/authorizationRules', parameters('ServiceBus_name'),parameters('SBQueue_name'), variables('authRulesName'))]",
+        "sbVersion": "2017-04-01",
+        "repoURL": "https://github.com/gcrev93/IoTHM"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Devices/IotHubs",
+            "sku": {
+                "name": "S1",
+                "tier": "Standard",
+                "capacity": 1
+            },
+            "name": "[parameters('IoTHub_name')]",
+            "apiVersion": "2016-02-03",
+            "location": "[resourceGroup().location]",
+            "tags": {},
+            "scale": null,
+            "properties": {
+                "operationsMonitoringProperties": {
+                    "events": {
+                        "None": "None",
+                        "Connections": "None",
+                        "DeviceTelemetry": "None",
+                        "C2DCommands": "None",
+                        "DeviceIdentityOperations": "None",
+                        "FileUploadOperations": "None",
+                        "Routes": "None"
+                    }
+                },
+                "ipFilterRules": [],
+                "eventHubEndpoints": {
+                    "events": {
+                        "retentionTimeInDays": 1,
+                        "partitionCount": 4,
+                        "partitionIds": [
+                            "0",
+                            "1",
+                            "2",
+                            "3"
+                        ],
+                        "path": "[concat(parameters('IoTHub_name'),'iothubmg', parameters('IoTHub_name'))]"
+                    },
+                    "operationsMonitoringEvents": {
+                        "retentionTimeInDays": 1,
+                        "partitionCount": 4,
+                        "partitionIds": [
+                            "0",
+                            "1",
+                            "2",
+                            "3"
+                        ],
+                        "path": "[concat(parameters('IoTHub_name'),'iothubmg-operationmonitoring')]"
+                    }
+                },
+                "routing": {
+                    "endpoints": {
+                        "serviceBusQueues": [
+                            {
+                                "connectionString": "[concat('Endpoint=sb://', parameters('ServiceBus_name'),'.servicebus.windows.net/;SharedAccessKeyName=', variables('authRulesName'),';SharedAccessKey=',listkeys(variables('queueAuthRuleResourceId'), variables('sbVersion')).primaryKey,';EntityPath=',parameters('SBQueue_name'))]",
+                                "name": "ServiceBus",
+                                "subscriptionId": "[subscription().subscriptionId]",
+                                "resourceGroup": "[resourceGroup().name]"
+                            }
+                        ],
+                        "serviceBusTopics": [],
+                        "eventHubs": []
+                    },
+                    "routes": [
+                        {
+                            "name": "Queue",
+                            "source": "DeviceMessages",
+                            "condition": "true",
+                            "endpointNames": [
+                                "ServiceBus"
+                            ],
+                            "isEnabled": true
+                        }
+                    ],
+                    "fallbackRoute": {
+                        "name": "$fallback",
+                        "source": "DeviceMessages",
+                        "condition": "true",
+                        "endpointNames": [
+                            "events"
+                        ],
+                        "isEnabled": true
+                    }
+                },
+                "storageEndpoints": {
+                    "$default": {
+                        "sasTtlAsIso8601": "PT1H",
+                        "connectionString": "",
+                        "containerName": ""
+                    }
+                },
+                "enableFileUploadNotifications": false,
+                "cloudToDevice": {
+                    "maxDeliveryCount": 10,
+                    "defaultTtlAsIso8601": "PT1H",
+                    "feedback": {
+                        "lockDurationAsIso8601": "PT1M",
+                        "ttlAsIso8601": "PT1H",
+                        "maxDeliveryCount": 10
+                    }
+                },
+                "features": "None"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces/queues', parameters('ServiceBus_name'), parameters('SBQueue_name'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Logic/workflows",
+            "name": "[parameters('LogicApp_name')]",
+            "apiVersion": "2016-06-01",
+            "location": "[resourceGroup().location]",
+            "scale": null,
+            "properties": {
+                "state": "Enabled",
+                "definition": {
+                    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "$connections": {
+                            "defaultValue": {},
+                            "type": "Object"
+                        },
+                    "SBQueue_name": {
+                        "defaultValue": "[parameters('SBQueue_name')]",
+                        "type": "string"
+                    },
+                    "StorageAccount_name": {
+                        "defaultValue": "[parameters('StorageAccount_name')]",
+                        "type": "string"
+                    }
+                    },
+                    "triggers": {
+                        "When_a_message_is_received_in_a_queue_(auto-complete)": {
+                            "recurrence": {
+                                "frequency": "Minute",
+                                "interval": 3
+                            },
+                            "type": "ApiConnection",
+                            "inputs": {
+                                "host": {
+                                    "connection": {
+                                        "name": "@parameters('$connections')['servicebus']['connectionId']"
+                                    }
+                                },
+                                "method": "get",
+                                "path": "[concat('/@{encodeURIComponent(parameters(''SBQueue_name''))}/messages/head', '')]",
+                                "queries": {
+                                    "queueType": "Main"
+                                }
+                            }
+                        }
+                    },
+                    "actions": {
+                        "Insert_Entity": {
+                            "runAfter": {
+                                "Parse_JSON": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "ApiConnection",
+                            "inputs": {
+                                "body": {
+                                    "Message": "@{body('Parse_JSON')}",
+                                    "PartitionKey": "@{body('Parse_JSON')?['deviceId']}",
+                                    "RowKey": "@{body('Parse_JSON')?['time']}"
+                                },
+                                "host": {
+                                    "connection": {
+                                        "name": "@parameters('$connections')['azuretables']['connectionId']"
+                                    }
+                                },
+                                "method": "post",
+                                "path": "[concat('/Tables/@{encodeURIComponent(parameters(''StorageAccount_name''))}/entities/')]"
+                            }
+                        },
+                        "Parse_JSON": {
+                            "runAfter": {},
+                            "type": "ParseJson",
+                            "inputs": {
+                                "content": "@base64ToString(triggerBody()?['ContentData'])",
+                                "schema": {
+                                    "properties": {
+                                        "deviceId": {
+                                            "type": "string"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "time": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "outputs": {}
+                },
+                "parameters": {
+                    "$connections": {
+                        "value": {
+                            "azuretables": {
+                                "connectionId": "[resourceId('Microsoft.Web/connections', variables('atConnectionName'))]",
+                                "connectionName": "[variables('atConnectionName')]",
+                                "id": "[concat(subscription().id,'/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/azuretables')]"
+                            },
+                            "servicebus": {
+                                "connectionId": "[resourceId('Microsoft.Web/connections', variables('sbConnectionName'))]",
+                                "connectionName": "[variables('sbConnectionName')]",
+                                "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/servicebus')]"
+                            }
+                        }
+                    }
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/connections', variables('atConnectionName'))]",
+                "[resourceId('Microsoft.Web/connections', variables('sbConnectionName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.ServiceBus/namespaces",
+            "sku": {
+                "name": "Standard",
+                "tier": "Standard",
+                "capacity": 1
+            },
+            "kind": "Messaging",
+            "name": "[parameters('ServiceBus_name')]",
+            "apiVersion": "2015-08-01",
+            "location": "[resourceGroup().location]",
+            "tags": {},
+            "scale": null,
+            "properties": {
+                "provisioningState": "Succeeded",
+                "status": "Active",
+                "serviceBusEndpoint": "[concat('https://', parameters('ServiceBus_name'),'.servicebus.windows.net:443/')]",
+                "enabled": true
+            },
+            "dependsOn": []
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "sku": {
+                "name": "Standard_LRS",
+                "tier": "Standard"
+            },
+            "kind": "Storage",
+            "name": "[parameters('StorageAccount_name')]",
+            "apiVersion": "2016-01-01",
+            "location": "[resourceGroup().location]",
+            "tags": {},
+            "scale": null,
+            "properties": {},
+            "dependsOn": []
+        },
+        {
+            "type": "Microsoft.Web/connections",
+            "name": "[variables('atConnectionName')]",
+            "apiVersion": "2016-06-01",
+            "location": "[resourceGroup().location]",
+            "scale": null,
+            "properties": {
+                "displayName": "[variables('atConnectionName')]",
+                "parameterValues": {
+                    "storageaccount": "[parameters('StorageAccount_name')]",
+                    "sharedkey": "[listKeys(variables('storageAccountId'),'2015-05-01-preview').key1]"
+                },
+                "api": {
+                    "id": "[concat(subscription().id,'/providers/Microsoft.Web/locations/',resourceGroup().location,'/managedApis/', variables('atConnectionName'))]"
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('StorageAccount_name'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Web/connections",
+            "name": "[variables('sbConnectionName')]",
+            "apiVersion": "2016-06-01",
+            "location": "[resourceGroup().location]",
+            "scale": null,
+            "properties": {
+                "displayName": "[variables('sbConnectionName')]",
+                "parameterValues": {
+                    "connectionString": "[listkeys(variables('authRuleResourceId'), variables('sbVersion')).primaryConnectionString]"
+                },
+                "api": {
+                    "id": "[concat(subscription().id,'/providers/Microsoft.Web/locations/',resourceGroup().location,'/managedApis/', variables('sbConnectionName'))]"
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces/queues', parameters('ServiceBus_name'), parameters('SBQueue_name'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Web/sites",
+            "kind": "app",
+            "name": "[parameters('WebApp_name')]",
+            "apiVersion": "2016-08-01",
+            "location": "[resourceGroup().location]",
+            "scale": null,
+            "properties": {
+                "enabled": true,
+                "hostNameSslStates": [
+                    {
+                        "name": "[concat(parameters('WebApp_name'),'iothubmdisplay.azurewebsites.net')]",
+                        "sslState": "Disabled",
+                        "virtualIP": null,
+                        "thumbprint": null,
+                        "toUpdate": null,
+                        "hostType": "Standard"
+                    },
+                    {
+                        "name": "[concat(parameters('WebApp_name'),'iothubmdisplay.scm.azurewebsites.net')]",
+                        "sslState": "Disabled",
+                        "virtualIP": null,
+                        "thumbprint": null,
+                        "toUpdate": null,
+                        "hostType": "Repository"
+                    }
+                ],
+                "reserved": false,
+                "siteConfig": {
+                    "appSettings": [
+                        {
+                            "name": "AZURE_STOR_CONNECTION",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('StorageAccount_name'),';AccountKey=',concat(listKeys(variables('storageAccountId'),'2015-05-01-preview').key1))]"
+                        },
+                        {
+                            "name": "AZURE_TABLE_NAME",
+                            "value": "[parameters('StorageAccount_name')]"
+                        },
+                        {
+                            "name": "WEBSITE_NODE_DEFAULT_VERSION",
+                            "value": "6.5.0"
+                        }
+                    ]
+                },
+                "scmSiteAlsoStopped": false,
+                "hostingEnvironmentProfile": null,
+                "clientAffinityEnabled": true,
+                "clientCertEnabled": false,
+                "hostNamesDisabled": false,
+                "containerSize": 0,
+                "dailyMemoryTimeQuota": 0,
+                "cloningInfo": null
+            },
+            "resources": [
+                {
+                    "apiVersion": "2015-08-01",
+                    "location": "[resourceGroup().location]",
+                    "name": "web",
+                    "type": "sourcecontrols",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/Sites', parameters('WebApp_name'))]"
+                    ],
+                    "properties": {
+                        "RepoUrl": "[variables('repoURL')]",
+                        "branch": "master",
+                        "isManualIntegration": false
+                    }
+                }
+            ],
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('StorageAccount_name'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.ServiceBus/namespaces/AuthorizationRules",
+            "name": "[concat(parameters('ServiceBus_name'), '/', variables('sasKeyName'))]",
+            "apiVersion": "2015-08-01",
+            "scale": null,
+            "properties": {
+                "rights": [
+                    "Listen",
+                    "Manage",
+                    "Send"
+                ]
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces', parameters('ServiceBus_name'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.ServiceBus/namespaces/queues",
+            "name": "[concat(parameters('ServiceBus_name'), '/', parameters('SBQueue_name'))]",
+            "apiVersion": "2015-08-01",
+            "location": "[resourceGroup().location]",
+            "scale": null,
+            "properties": {
+                "maxSizeInMegabytes": 5120,
+                "requiresDuplicateDetection": false,
+                "requiresSession": false,
+                "defaultMessageTimeToLive": "10675199.02:48:05.4775807",
+                "deadLetteringOnMessageExpiration": false,
+                "enableBatchedOperations": true,
+                "isAnonymousAccessible": false,
+                "status": "Active",
+                "supportOrdering": false,
+                "countDetails": {
+                    "activeMessageCount": 0,
+                    "deadLetterMessageCount": 0,
+                    "scheduledMessageCount": 0,
+                    "transferMessageCount": 0,
+                    "transferDeadLetterMessageCount": 0
+                },
+                "autoDeleteOnIdle": "10675199.02:48:05.4775807",
+                "enablePartitioning": true,
+                "enableExpress": false
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces', parameters('ServiceBus_name'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.ServiceBus/namespaces/queues/authorizationRules",
+            "name": "[concat(parameters('ServiceBus_name'), '/', parameters('SBQueue_name'), '/', variables('authRulesName'))]",
+            "apiVersion": "2015-08-01",
+            "location": "[resourceGroup().location]",
+            "scale": null,
+            "properties": {
+                "rights": [
+                    "Send"
+                ]
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces', parameters('ServiceBus_name'))]",
+                "[resourceId('Microsoft.ServiceBus/namespaces/queues', parameters('ServiceBus_name'), parameters('SBQueue_name'))]"
+            ]
+        }
+    ]
+}
