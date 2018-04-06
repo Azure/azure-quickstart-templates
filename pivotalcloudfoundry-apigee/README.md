@@ -95,7 +95,7 @@ Azure Storage Blob Service - Azure Storage Service offers reliable, economical c
 
 Azure Redis Cache Service - Azure Redis Cache is based on the popular open-source Redis cache. It gives you access to a secure, dedicated Redis cache, managed by Microsoft and accessible from any application within Azure. This broker currently publishes a single service and plan for provisioning Azure Redis Cache.
 
-Azure DocumentDB Service - Azure DocumentDB is a NoSQL document database service designed from the ground up to natively support JSON and JavaScript directly inside the database engine.
+Azure Cosmos DB Service - Azure Cosmos DB is a NoSQL document database service designed from the ground up to natively support JSON and JavaScript directly inside the database engine.
 
 Azure Service Bus Service - Azure Service Bus keep apps and devices connected across private and public clouds. This broker currently publishes a single service and plan for provisioning Azure Service Bus Service.
 

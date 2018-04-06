@@ -128,6 +128,7 @@ bosh create-env ~/example_manifests/bosh.yml \\
   -o ~/example_manifests/custom-environment.yml \\
   -o ~/example_manifests/use-azure-dns.yml \\
   -o ~/example_manifests/jumpbox-user.yml \\
+  -o ~/example_manifests/keep-failed-or-unreachable-vms.yml \\
   -v director_name=azure \\
   -v internal_cidr=10.0.0.0/24 \\
   -v internal_gw=10.0.0.1 \\
@@ -219,10 +220,12 @@ if [ "$environment" = "AzureChinaCloud" ]; then
 EOF
 elif [ "$environment" = "AzureStack" ]; then
   cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
+  -o ~/example_manifests/use-compiled-releases.yml \\
   -v system_domain=$(get_setting CLOUD_FOUNDRY_PUBLIC_IP).xip.io
 EOF
 else
   cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
+  -o ~/example_manifests/use-compiled-releases.yml \\
   -o ~/example_manifests/use-azure-storage-blobstore.yml \\
   -v system_domain=$(get_setting CLOUD_FOUNDRY_PUBLIC_IP).xip.io \\
   -v environment=$(get_setting ENVIRONMENT) \\
