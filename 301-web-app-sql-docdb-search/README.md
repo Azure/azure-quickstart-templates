@@ -1,4 +1,4 @@
-# Provision a web app with a SQL Database, DocumentDB and Azure Search
+# Provision a web app with a SQL Database, Azure Cosmos DB and Azure Search
 
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F301-web-app-sql-docdb-search%2Fazuredeploy.json" target="_blank">
