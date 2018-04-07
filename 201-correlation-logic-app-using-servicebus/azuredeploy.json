@@ -1,0 +1,677 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {},
+    "variables": {},
+    "resources": [
+        {
+            "comments": "Generalized from resource: '/subscriptions/fdf3a3a3-c8f5-472f-8367-6a9a4a6c11a9/resourceGroups/CorrelatingMessages/providers/Microsoft.Logic/workflows/BackendLogicApp'.",
+            "type": "Microsoft.Logic/workflows",
+            "name": "BackendLogicApp",
+            "apiVersion": "2017-07-01",
+            "location": "westeurope",
+            "tags": {},
+            "scale": null,
+            "properties": {
+                "state": "Enabled",
+                "definition": {
+                    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "$connections": {
+                            "defaultValue": {},
+                            "type": "Object"
+                        }
+                    },
+                    "triggers": {
+                        "When_a_message_is_received_in_a_topic_subscription_(peek-lock)": {
+                            "recurrence": {
+                                "frequency": "Second",
+                                "interval": 30
+                            },
+                            "type": "ApiConnection",
+                            "inputs": {
+                                "host": {
+                                    "connection": {
+                                        "name": "@parameters('$connections')['servicebus']['connectionId']"
+                                    }
+                                },
+                                "method": "get",
+                                "path": "[concat('/@{encodeURIComponent(encodeURIComponent('messagerouting'))}/subscriptions/@{encodeURIComponent('To', BackendLogicApp,'')}/messages/head/peek')]",
+                                "queries": {
+                                    "sessionId": "Next Available",
+                                    "subscriptionType": "Main"
+                                }
+                            }
+                        }
+                    },
+                    "actions": {
+                        "Complete_the_message_in_a_topic_subscription": {
+                            "runAfter": {
+                                "Send_message": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "ApiConnection",
+                            "inputs": {
+                                "host": {
+                                    "connection": {
+                                        "name": "@parameters('$connections')['servicebus']['connectionId']"
+                                    }
+                                },
+                                "method": "delete",
+                                "path": "[concat('/@{encodeURIComponent(encodeURIComponent('messagerouting'))}/subscriptions/@{encodeURIComponent('To', BackendLogicApp,'')}/messages/complete')]",
+                                "queries": {
+                                    "lockToken": "@triggerBody()?['LockToken']",
+                                    "sessionId": "@triggerBody()?['SessionId']",
+                                    "subscriptionType": "Main"
+                                }
+                            }
+                        },
+                        "HTTP": {
+                            "runAfter": {},
+                            "type": "Http",
+                            "inputs": {
+                                "body": "@base64ToString(triggerBody()?['ContentData'])",
+                                "headers": {
+                                    "Content-Type": "application/json"
+                                },
+                                "method": "POST",
+                                "uri": "https://requestloggerbin.herokuapp.com/bin/8836aee5-6753-43bc-a9a1-d433cdeda50d"
+                            }
+                        },
+                        "Send_message": {
+                            "runAfter": {
+                                "HTTP": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "ApiConnection",
+                            "inputs": {
+                                "body": {
+                                    "ContentData": "@{base64(concat('{','\n','    \"Content\":',body('HTTP'),',','\n','    \"StatusCode\":',outputs('HTTP')['statusCode'],'\n','}'))}",
+                                    "ContentType": "application/json",
+                                    "Properties": {
+                                        "Source": "BackendLogicApp"
+                                    },
+                                    "SessionId": "@triggerBody()?['SessionId']"
+                                },
+                                "host": {
+                                    "connection": {
+                                        "name": "@parameters('$connections')['servicebus']['connectionId']"
+                                    }
+                                },
+                                "method": "post",
+                                "path": "/@{encodeURIComponent(encodeURIComponent('messagerouting'))}/messages",
+                                "queries": {
+                                    "systemProperties": "None"
+                                }
+                            }
+                        }
+                    },
+                    "outputs": {}
+                },
+                "parameters": {
+                    "$connections": {
+                        "value": {
+                            "servicebus": {
+                                "connectionId": "[resourceId('Microsoft.Web/connections', servicebus)]",
+                                "connectionName": "servicebus",
+                                "id": "/subscriptions/fdf3a3a3-c8f5-472f-8367-6a9a4a6c11a9/providers/Microsoft.Web/locations/westeurope/managedApis/servicebus"
+                            }
+                        }
+                    }
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/connections', servicebus)]"
+            ]
+        },
+        {
+            "comments": "Generalized from resource: '/subscriptions/fdf3a3a3-c8f5-472f-8367-6a9a4a6c11a9/resourceGroups/CorrelatingMessages/providers/Microsoft.Logic/workflows/ClientLogicApp'.",
+            "type": "Microsoft.Logic/workflows",
+            "name": "ClientLogicApp",
+            "apiVersion": "2017-07-01",
+            "location": "westeurope",
+            "tags": {},
+            "scale": null,
+            "properties": {
+                "state": "Enabled",
+                "definition": {
+                    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "$connections": {
+                            "defaultValue": {},
+                            "type": "Object"
+                        }
+                    },
+                    "triggers": {
+                        "manual": {
+                            "type": "Request",
+                            "kind": "Http",
+                            "inputs": {
+                                "schema": {
+                                    "properties": {
+                                        "Amount": {
+                                            "type": "string"
+                                        },
+                                        "Customer": {
+                                            "type": "string"
+                                        },
+                                        "Product": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "actions": {
+                        "For_each": {
+                            "foreach": "@body('Get_messages_from_a_topic_subscription_(peek-lock)')",
+                            "actions": {
+                                "Complete_the_message_in_a_topic_subscription": {
+                                    "runAfter": {},
+                                    "type": "ApiConnection",
+                                    "inputs": {
+                                        "host": {
+                                            "connection": {
+                                                "name": "@parameters('$connections')['servicebus']['connectionId']"
+                                            }
+                                        },
+                                        "method": "delete",
+                                        "path": "[concat('/@{encodeURIComponent(encodeURIComponent('messagerouting'))}/subscriptions/@{encodeURIComponent('To', ClientLogicApp,'')}/messages/complete')]",
+                                        "queries": {
+                                            "lockToken": "@items('For_each')?['LockToken']",
+                                            "sessionId": "@items('For_each')?['SessionId']",
+                                            "subscriptionType": "Main"
+                                        }
+                                    }
+                                }
+                            },
+                            "runAfter": {
+                                "Response": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "Foreach"
+                        },
+                        "Get_messages_from_a_topic_subscription_(peek-lock)": {
+                            "runAfter": {
+                                "Send_message": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "ApiConnection",
+                            "inputs": {
+                                "host": {
+                                    "connection": {
+                                        "name": "@parameters('$connections')['servicebus']['connectionId']"
+                                    }
+                                },
+                                "method": "get",
+                                "path": "[concat('/@{encodeURIComponent(encodeURIComponent('messagerouting'))}/subscriptions/@{encodeURIComponent('To', ClientLogicApp,'')}/messages/batch/peek')]",
+                                "queries": {
+                                    "maxMessageCount": 1,
+                                    "sessionId": "@variables('MyUniqueIdentifier')",
+                                    "subscriptionType": "Main"
+                                }
+                            }
+                        },
+                        "Initialize_variable": {
+                            "runAfter": {},
+                            "type": "InitializeVariable",
+                            "inputs": {
+                                "variables": [
+                                    {
+                                        "name": "MyUniqueIdentifier",
+                                        "type": "String",
+                                        "value": "@{guid()}"
+                                    }
+                                ]
+                            }
+                        },
+                        "Parse_JSON": {
+                            "runAfter": {
+                                "Get_messages_from_a_topic_subscription_(peek-lock)": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "ParseJson",
+                            "inputs": {
+                                "content": "@base64ToString(body('Get_messages_from_a_topic_subscription_(peek-lock)')?[0]?['ContentData'])",
+                                "schema": {
+                                    "properties": {
+                                        "Content": {
+                                            "properties": {
+                                                "MyBackendResponse": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "StatusCode": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        },
+                        "Response": {
+                            "runAfter": {
+                                "Parse_JSON": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "Response",
+                            "kind": "Http",
+                            "inputs": {
+                                "body": "@body('Parse_JSON')?['Content']",
+                                "statusCode": "@body('Parse_JSON')?['StatusCode']"
+                            }
+                        },
+                        "Send_message": {
+                            "runAfter": {
+                                "Initialize_variable": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "ApiConnection",
+                            "inputs": {
+                                "body": {
+                                    "ContentData": "@{base64(triggerBody())}",
+                                    "ContentType": "application/json",
+                                    "Properties": {
+                                        "Source": "ClientLogicApp"
+                                    },
+                                    "SessionId": "@variables('MyUniqueIdentifier')"
+                                },
+                                "host": {
+                                    "connection": {
+                                        "name": "@parameters('$connections')['servicebus']['connectionId']"
+                                    }
+                                },
+                                "method": "post",
+                                "path": "/@{encodeURIComponent(encodeURIComponent('messagerouting'))}/messages",
+                                "queries": {
+                                    "systemProperties": "None"
+                                }
+                            }
+                        }
+                    },
+                    "outputs": {}
+                },
+                "parameters": {
+                    "$connections": {
+                        "value": {
+                            "servicebus": {
+                                "connectionId": "[resourceId('Microsoft.Web/connections', servicebus)]",
+                                "connectionName": "servicebus",
+                                "id": "/subscriptions/fdf3a3a3-c8f5-472f-8367-6a9a4a6c11a9/providers/Microsoft.Web/locations/westeurope/managedApis/servicebus"
+                            }
+                        }
+                    }
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/connections', servicebus)]"
+            ]
+        },
+        {
+            "comments": "Generalized from resource: '/subscriptions/fdf3a3a3-c8f5-472f-8367-6a9a4a6c11a9/resourceGroups/CorrelatingMessages/providers/Microsoft.Logic/workflows/TransformationLogicApp'.",
+            "type": "Microsoft.Logic/workflows",
+            "name": "TransformationLogicApp",
+            "apiVersion": "2017-07-01",
+            "location": "westeurope",
+            "tags": {},
+            "scale": null,
+            "properties": {
+                "state": "Enabled",
+                "definition": {
+                    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "$connections": {
+                            "defaultValue": {},
+                            "type": "Object"
+                        }
+                    },
+                    "triggers": {
+                        "When_a_message_is_received_in_a_topic_subscription_(peek-lock)": {
+                            "recurrence": {
+                                "frequency": "Second",
+                                "interval": 30
+                            },
+                            "type": "ApiConnection",
+                            "inputs": {
+                                "host": {
+                                    "connection": {
+                                        "name": "@parameters('$connections')['servicebus']['connectionId']"
+                                    }
+                                },
+                                "method": "get",
+                                "path": "[concat('/@{encodeURIComponent(encodeURIComponent('messagerouting'))}/subscriptions/@{encodeURIComponent('To', TransformationLogicApp,'')}/messages/head/peek')]",
+                                "queries": {
+                                    "sessionId": "Next Available",
+                                    "subscriptionType": "Main"
+                                }
+                            }
+                        }
+                    },
+                    "actions": {
+                        "Complete_the_message_in_a_topic_subscription": {
+                            "runAfter": {
+                                "Send_message": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "ApiConnection",
+                            "inputs": {
+                                "host": {
+                                    "connection": {
+                                        "name": "@parameters('$connections')['servicebus']['connectionId']"
+                                    }
+                                },
+                                "method": "delete",
+                                "path": "[concat('/@{encodeURIComponent(encodeURIComponent('messagerouting'))}/subscriptions/@{encodeURIComponent('To', TransformationLogicApp,'')}/messages/complete')]",
+                                "queries": {
+                                    "lockToken": "@triggerBody()?['LockToken']",
+                                    "sessionId": "@triggerBody()?['SessionId']",
+                                    "subscriptionType": "Main"
+                                }
+                            }
+                        },
+                        "Compose": {
+                            "runAfter": {
+                                "Parse_JSON": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "Compose",
+                            "inputs": {
+                                "AmountOrdered": "@{body('Parse_JSON')?['Amount']}",
+                                "CustomerName": "@{body('Parse_JSON')?['Customer']}",
+                                "OrderedProduct": "@{body('Parse_JSON')?['Product']}"
+                            }
+                        },
+                        "Parse_JSON": {
+                            "runAfter": {},
+                            "type": "ParseJson",
+                            "inputs": {
+                                "content": "@base64ToString(triggerBody()?['ContentData'])",
+                                "schema": {
+                                    "properties": {
+                                        "Amount": {
+                                            "type": "string"
+                                        },
+                                        "Customer": {
+                                            "type": "string"
+                                        },
+                                        "Product": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        },
+                        "Send_message": {
+                            "runAfter": {
+                                "Compose": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "ApiConnection",
+                            "inputs": {
+                                "body": {
+                                    "ContentData": "@{base64(outputs('Compose'))}",
+                                    "ContentType": "application/json",
+                                    "Properties": {
+                                        "Source": "TransformationLogicApp"
+                                    },
+                                    "SessionId": "@triggerBody()?['SessionId']"
+                                },
+                                "host": {
+                                    "connection": {
+                                        "name": "@parameters('$connections')['servicebus']['connectionId']"
+                                    }
+                                },
+                                "method": "post",
+                                "path": "/@{encodeURIComponent(encodeURIComponent('messagerouting'))}/messages",
+                                "queries": {
+                                    "systemProperties": "None"
+                                }
+                            }
+                        }
+                    },
+                    "outputs": {}
+                },
+                "parameters": {
+                    "$connections": {
+                        "value": {
+                            "servicebus": {
+                                "connectionId": "[resourceId('Microsoft.Web/connections', servicebus)]",
+                                "connectionName": "servicebus",
+                                "id": "/subscriptions/fdf3a3a3-c8f5-472f-8367-6a9a4a6c11a9/providers/Microsoft.Web/locations/westeurope/managedApis/servicebus"
+                            }
+                        }
+                    }
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/connections', servicebus)]"
+            ]
+        },
+        {
+            "comments": "Generalized from resource: '/subscriptions/fdf3a3a3-c8f5-472f-8367-6a9a4a6c11a9/resourceGroups/CorrelatingMessages/providers/Microsoft.ServiceBus/namespaces/Router'.",
+            "type": "Microsoft.ServiceBus/namespaces",
+            "sku": {
+                "name": "Standard",
+                "tier": "Standard"
+            },
+            "name": "Router",
+            "apiVersion": "2017-04-01",
+            "location": "West Europe",
+            "tags": {},
+            "scale": null,
+            "properties": {
+                "provisioningState": "Succeeded",
+                "metricId": "[concat('fdf3a3a3-c8f5-472f-8367-6a9a4a6c11a9:router', Router)]",
+                "createdAt": "2018-04-07T12:06:43.41Z",
+                "updatedAt": "2018-04-07T12:07:09.597Z",
+                "serviceBusEndpoint": "[concat('https://', Router,'.servicebus.windows.net:443/')]",
+                "status": "Active"
+            },
+            "dependsOn": []
+        },
+        {
+            "comments": "Generalized from resource: '/subscriptions/fdf3a3a3-c8f5-472f-8367-6a9a4a6c11a9/resourceGroups/CorrelatingMessages/providers/Microsoft.Web/connections/servicebus'.",
+            "type": "Microsoft.Web/connections",
+            "name": "servicebus",
+            "apiVersion": "2016-06-01",
+            "location": "westeurope",
+            "scale": null,
+            "properties": {
+                "displayName": "Router",
+                "customParameterValues": {},
+                "api": {
+                    "id": "[concat('/subscriptions/fdf3a3a3-c8f5-472f-8367-6a9a4a6c11a9/providers/Microsoft.Web/locations/westeurope/managedApis/', servicebus)]"
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "comments": "Generalized from resource: '/subscriptions/fdf3a3a3-c8f5-472f-8367-6a9a4a6c11a9/resourcegroups/CorrelatingMessages/providers/Microsoft.ServiceBus/namespaces/Router/AuthorizationRules/RootManageSharedAccessKey'.",
+            "type": "Microsoft.ServiceBus/namespaces/AuthorizationRules",
+            "name": "[concat(Router, '/', RootManageSharedAccessKey)]",
+            "apiVersion": "2017-04-01",
+            "location": "West Europe",
+            "scale": null,
+            "properties": {
+                "rights": [
+                    "Listen",
+                    "Manage",
+                    "Send"
+                ]
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces', Router)]"
+            ]
+        },
+        {
+            "comments": "Generalized from resource: '/subscriptions/fdf3a3a3-c8f5-472f-8367-6a9a4a6c11a9/resourcegroups/CorrelatingMessages/providers/Microsoft.ServiceBus/namespaces/Router/topics/messagerouting'.",
+            "type": "Microsoft.ServiceBus/namespaces/topics",
+            "name": "[concat(Router, '/', messagerouting)]",
+            "apiVersion": "2017-04-01",
+            "location": "West Europe",
+            "scale": null,
+            "properties": {
+                "defaultMessageTimeToLive": "P14D",
+                "maxSizeInMegabytes": 16384,
+                "requiresDuplicateDetection": false,
+                "duplicateDetectionHistoryTimeWindow": "PT10M",
+                "enableBatchedOperations": true,
+                "status": "Active",
+                "supportOrdering": false,
+                "autoDeleteOnIdle": "P10675199DT2H48M5.4775807S",
+                "enablePartitioning": true,
+                "enableExpress": false
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces', Router)]"
+            ]
+        },
+        {
+            "comments": "Generalized from resource: '/subscriptions/fdf3a3a3-c8f5-472f-8367-6a9a4a6c11a9/resourcegroups/CorrelatingMessages/providers/Microsoft.ServiceBus/namespaces/Router/topics/messagerouting/subscriptions/ToBackendLogicApp'.",
+            "type": "Microsoft.ServiceBus/namespaces/topics/subscriptions",
+            "name": "[concat(Router, '/', messagerouting, '/', ToBackendLogicApp)]",
+            "apiVersion": "2017-04-01",
+            "location": "West Europe",
+            "scale": null,
+            "properties": {
+                "lockDuration": "PT30S",
+                "requiresSession": true,
+                "defaultMessageTimeToLive": "P14D",
+                "deadLetteringOnMessageExpiration": false,
+                "deadLetteringOnFilterEvaluationExceptions": false,
+                "maxDeliveryCount": 10,
+                "status": "Active",
+                "enableBatchedOperations": false,
+                "autoDeleteOnIdle": "P10675199DT2H48M5.4775807S"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces', Router)]",
+                "[resourceId('Microsoft.ServiceBus/namespaces/topics', Router, messagerouting)]"
+            ]
+        },
+        {
+            "comments": "Generalized from resource: '/subscriptions/fdf3a3a3-c8f5-472f-8367-6a9a4a6c11a9/resourcegroups/CorrelatingMessages/providers/Microsoft.ServiceBus/namespaces/Router/topics/messagerouting/subscriptions/ToClientLogicApp'.",
+            "type": "Microsoft.ServiceBus/namespaces/topics/subscriptions",
+            "name": "[concat(Router, '/', messagerouting, '/', ToClientLogicApp)]",
+            "apiVersion": "2017-04-01",
+            "location": "West Europe",
+            "scale": null,
+            "properties": {
+                "lockDuration": "PT30S",
+                "requiresSession": true,
+                "defaultMessageTimeToLive": "P14D",
+                "deadLetteringOnMessageExpiration": false,
+                "deadLetteringOnFilterEvaluationExceptions": false,
+                "maxDeliveryCount": 10,
+                "status": "Active",
+                "enableBatchedOperations": false,
+                "autoDeleteOnIdle": "P10675199DT2H48M5.4775807S"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces', Router)]",
+                "[resourceId('Microsoft.ServiceBus/namespaces/topics', Router, messagerouting)]"
+            ]
+        },
+        {
+            "comments": "Generalized from resource: '/subscriptions/fdf3a3a3-c8f5-472f-8367-6a9a4a6c11a9/resourcegroups/CorrelatingMessages/providers/Microsoft.ServiceBus/namespaces/Router/topics/messagerouting/subscriptions/ToTransformationLogicApp'.",
+            "type": "Microsoft.ServiceBus/namespaces/topics/subscriptions",
+            "name": "[concat(Router, '/', messagerouting, '/', ToTransformationLogicApp)]",
+            "apiVersion": "2017-04-01",
+            "location": "West Europe",
+            "scale": null,
+            "properties": {
+                "lockDuration": "PT30S",
+                "requiresSession": true,
+                "defaultMessageTimeToLive": "P14D",
+                "deadLetteringOnMessageExpiration": false,
+                "deadLetteringOnFilterEvaluationExceptions": false,
+                "maxDeliveryCount": 10,
+                "status": "Active",
+                "enableBatchedOperations": false,
+                "autoDeleteOnIdle": "P10675199DT2H48M5.4775807S"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces', Router)]",
+                "[resourceId('Microsoft.ServiceBus/namespaces/topics', Router, messagerouting)]"
+            ]
+        },
+        {
+            "comments": "Generalized from resource: '/subscriptions/fdf3a3a3-c8f5-472f-8367-6a9a4a6c11a9/resourcegroups/CorrelatingMessages/providers/Microsoft.ServiceBus/namespaces/Router/topics/messagerouting/subscriptions/ToBackendLogicApp/rules/$Default'.",
+            "type": "Microsoft.ServiceBus/namespaces/topics/subscriptions/rules",
+            "name": "[concat(Router, '/', messagerouting, '/', ToBackendLogicApp, '/', $Default)]",
+            "apiVersion": "2017-04-01",
+            "location": "West Europe",
+            "scale": null,
+            "properties": {
+                "action": {},
+                "filterType": "SqlFilter",
+                "sqlFilter": {
+                    "sqlExpression": "Source='TransformationLogicApp'"
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces', Router)]",
+                "[resourceId('Microsoft.ServiceBus/namespaces/topics', Router, messagerouting)]",
+                "[resourceId('Microsoft.ServiceBus/namespaces/topics/subscriptions', Router, messagerouting, ToBackendLogicApp)]"
+            ]
+        },
+        {
+            "comments": "Generalized from resource: '/subscriptions/fdf3a3a3-c8f5-472f-8367-6a9a4a6c11a9/resourcegroups/CorrelatingMessages/providers/Microsoft.ServiceBus/namespaces/Router/topics/messagerouting/subscriptions/ToClientLogicApp/rules/$Default'.",
+            "type": "Microsoft.ServiceBus/namespaces/topics/subscriptions/rules",
+            "name": "[concat(Router, '/', messagerouting, '/', ToClientLogicApp, '/', $Default)]",
+            "apiVersion": "2017-04-01",
+            "location": "West Europe",
+            "scale": null,
+            "properties": {
+                "action": {},
+                "filterType": "SqlFilter",
+                "sqlFilter": {
+                    "sqlExpression": "Source='BackendLogicApp'"
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces', Router)]",
+                "[resourceId('Microsoft.ServiceBus/namespaces/topics', Router, messagerouting)]",
+                "[resourceId('Microsoft.ServiceBus/namespaces/topics/subscriptions', Router, messagerouting, ToClientLogicApp)]"
+            ]
+        },
+        {
+            "comments": "Generalized from resource: '/subscriptions/fdf3a3a3-c8f5-472f-8367-6a9a4a6c11a9/resourcegroups/CorrelatingMessages/providers/Microsoft.ServiceBus/namespaces/Router/topics/messagerouting/subscriptions/ToTransformationLogicApp/rules/$Default'.",
+            "type": "Microsoft.ServiceBus/namespaces/topics/subscriptions/rules",
+            "name": "[concat(Router, '/', messagerouting, '/', ToTransformationLogicApp, '/', $Default)]",
+            "apiVersion": "2017-04-01",
+            "location": "West Europe",
+            "scale": null,
+            "properties": {
+                "action": {},
+                "filterType": "SqlFilter",
+                "sqlFilter": {
+                    "sqlExpression": "Source='ClientLogicApp'"
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces', Router)]",
+                "[resourceId('Microsoft.ServiceBus/namespaces/topics', Router, messagerouting)]",
+                "[resourceId('Microsoft.ServiceBus/namespaces/topics/subscriptions', Router, messagerouting, ToTransformationLogicApp)]"
+            ]
+        }
+    ]
+}
