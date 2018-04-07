@@ -79,7 +79,7 @@
       "metadata": {
         "description": "The base URI where artifacts required by this template are located."
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-vms-with-SelfHostIR/"
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-vms-with-selfhost-integration-runtime/"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -95,6 +95,7 @@
     "storageAccountName": "[take(concat(toLower(variables('prefix')), uniquestring(resourceGroup().id, parameters('IntegrationRuntimeName'))), 24)]",   
     "networkSecurityGroupName": "[concat(parameters('IntegrationRuntimeName'), 'nsg')]",
     "vmTemplateLink": "[concat(parameters('_artifactsLocation'), 'nested/VMtemplate.json',parameters('_artifactsLocationSasToken'))]",
+    "irInstallTemplateLink": "[concat(parameters('_artifactsLocation'), 'nested/IRInstall.json',parameters('_artifactsLocationSasToken'))]",
     "IRtemplateLink": "[concat(parameters('_artifactsLocation'), 'nested/', parameters('existingDataFactoryVersion'), 'IRtemplate.json',parameters('_artifactsLocationSasToken'))]",
     "subnetId": "[resourceId(parameters('existingVnetResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('existingVirtualNetworkName'), parameters('existingSubnetInYourVnet'))]",
     "scriptURL": "[concat(parameters('_artifactsLocation'), 'scripts/gatewayInstall.ps1',parameters('_artifactsLocationSasToken'))]"
@@ -169,7 +170,7 @@
       ],
       "copy": { 
         "name": "vmcopy", 
-        "count": "[parameters('NodeCount')]" 
+        "count": "[parameters('NodeCount')]"
       },
       "properties": {
         "mode": "Incremental",
@@ -178,10 +179,6 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "IRkey":
-          {
-            "value": "[reference(resourceId(parameters('existingDataFactoryResourceGroup'), 'Microsoft.Resources/deployments', 'nestedTemplate')).outputs.IRkey.value]"
-          },
           "virtualMachineName": {
             "value": "[take(concat('vm',copyIndex(),'-', variables('prefix')), 15)]"
           },
@@ -206,6 +203,39 @@
           "storageAccountName":
           {
             "value": "[variables('storageAccountName')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-01-01",
+      "name": "[concat('IRInstalltemplate-', copyIndex())]",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "vmcopy"
+      ],
+      "copy": { 
+        "name": "irinstallcopy", 
+        "count": "[parameters('NodeCount')]",
+        "mode": "serial"
+      },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('irInstallTemplateLink')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "IRkey":
+          {
+            "value": "[reference(resourceId(parameters('existingDataFactoryResourceGroup'), 'Microsoft.Resources/deployments', 'nestedTemplate')).outputs.IRkey.value]"
+          },
+          "virtualMachineName": {
+            "value": "[take(concat('vm',copyIndex(),'-', variables('prefix')), 15)]"
+          },
+          "existingVnetLocation":
+          {
+            "value": "[parameters('existingVnetLocation')]"
           },
           "scriptUrl":
           {
