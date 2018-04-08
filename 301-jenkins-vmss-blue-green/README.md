@@ -10,8 +10,8 @@ preview. It may be changed in future as the Azure infrastructure level support i
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template / guide provision a Jenkins Master on a VM running on Azure; configure a DevOps pipeline to bake
-managed OS image with Tomcat 7 or 8 installed and deploy to VMSS. It is an example to demonstrate how we can use
+This template / guide provisions a Jenkins master on a VM running on Azure, configures a DevOps pipeline to bake
+a managed OS image with Tomcat 7 or 8 installed and deploys it to the VMSS. It is an example to demonstrate how we can use
 Jenkins pipeline to do blue-green deployment on VMSS.
 
 The quickstart template will provision the following in Azure:
@@ -99,7 +99,7 @@ The quickstart template will provision the following in Azure:
    The following details will be displayed in the `Outputs` section:
 
    * `ADMIN_USERNAME`: The admin username for the Jenkins master VM and the VM's in the VMSS's. You need to use the
-      private key paired with the public key you passed in during provision to authenticate with these machines.
+      private key paired with the public key you passed in during the provision to authenticate with these machines.
    * `JENKINS_URL`: The URL for the Jenkins instance.
    * `SSH`: The SSH command to create a tunnel through which you can login and manage the Jenkins instance securely.
    * `TOMCAT_URL`: The URL for the Tomcat service.
@@ -370,10 +370,10 @@ how to deploy to the green environment, do online tests and flip the production 
    az network lb rule update --resource-group "$resource_group" --lb-name "$lb_name" --name tomcat --backend-pool-name green-bepool
    ```
 
-1. Further test to ensure that the production endpoint works with green environment.
+1. Further test to ensure that the production endpoint works with the green environment.
 
    ```bash
    echo "Visit http://$ip"
    ```
 
-1. Now blue environment is the stage environment and we can prepare for the next deployment on blue.
+1. Now the blue environment is the stage environment and we can prepare for the next deployment on blue.
