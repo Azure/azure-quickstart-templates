@@ -25,51 +25,53 @@ Click on the **Deploy to Azure** button below. This will open the Azure Portal (
 ## Parameters
 
 - modules
-  - Enter the Names and Versions of the Modules to be installed in C:\Modules. This Parameter is a Json Array 
- - Default Modules and Versions are the following unless overridden:
+  Enter the Names and Versions of the Modules to be installed in C:\Modules. This Parameter is a Json Array 
+  Default Modules and Versions are the following unless overridden:
    - AzureRM 5.6.0
    - AzureAD 2.0.1.3
    - Bitbucket.v2 1.1.2
    - GetPassword 1.0.0.0
    - posh-git 0.7.1
- - Example:
- ```Json
-[
-	{"name": "AzureRM", "version": "5.6.0"},
-	{"name": "AzureAD", "version": "2.0.1.3"},
-	{"name": "Bitbucket.v2", "version": "1.1.2"},
-	{"name": "GetPassword", "version": "1.0.0.0"},
-	{"name": "posh-git", "version": "0.7.1"}
-]
- ```
+  Example:
+  ```Json
+  [
+    {"name": "AzureRM", "version": "5.6.0"},
+    {"name": "AzureAD", "version": "2.0.1.3"},
+    {"name": "Bitbucket.v2", "version": "1.1.2"},
+    {"name": "GetPassword", "version": "1.0.0.0"},
+    {"name": "posh-git", "version": "0.7.1"}
+  ]
+  ```
 
 - publicIPDnsName
-  - The DNS Name for the Public IP Address. e.g. pipnameexample-dev.
-
-- scriptUrl
-  - URL for the PowerShell Script. NOTE: Can be a Github url (raw) to the ps1 file.
+  The DNS Name for the Public IP Address. e.g. pipnameexample-dev.
 
 - vmAdminUser
-  - The name of the Administrator Account to be used to access the server(s).
+  The name of the Administrator Account to be used to access the server(s).
 
 - vmAdminPassword
-  - The password for the Admin Account. Must be at least 12 characters long.
+  The password for the Admin Account. Must be at least 12 characters long.
 
 - vmSize
-  - The size of VM required.
-  - Default is Standard_D1_v2 unless overridden.
+  The size of VM required.
+  Default is Standard_D1_v2 unless overridden.
 
 - vstsAccount
-  - The Visual Studio Team Services account name, that is, the first part of your VSTS Account e.g. {account}.visualstudio.com
+  The Visual Studio Team Services account name, that is, the first part of your VSTS Account e.g. {account}.visualstudio.com
 
 - vstsAgentCount
-  - The number of Visual Studio Team Services agents to be coonfigured on the Virtual Machine. Default is 3.
+  The number of Visual Studio Team Services agents to be coonfigured on the Virtual Machine. Default is 3.
 
 - vstsPersonalAccessToken
-  - The personal access token (PAT) used to authenticate to VSTS.
+  The personal access token (PAT) used to authenticate to VSTS.
 
 - vstsPoolName
-  - The Visual Studio Team Services build agent pool for this build agent to join. Use 'Default' if you don't have a separate pool.
+  The Visual Studio Team Services build agent pool for this build agent to join. Use 'Default' if you don't have a separate pool.
+
+- _artifactsLocation
+  Storage account name to receive post-build staging folder upload.
+- _artifactsLocationSasToken
+  SAS token to access Storage account name
 
 ## Prerequisites
 
