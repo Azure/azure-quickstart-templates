@@ -182,5 +182,3 @@ for ($index = 0; $index -lt $lunsSplit.Count; $index++)
         }
     }
 }
-
-exit -1
