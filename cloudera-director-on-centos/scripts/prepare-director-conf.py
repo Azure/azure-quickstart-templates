@@ -28,8 +28,11 @@ import sys
 import os
 from optparse import OptionParser
 
+# maintain file naming schema (hyphens)
+setup_default = __import__('setup-default')
+
 # logging starts
-format = "%(asctime)s: %(message)s"
+format = "%(asctime)s %(levelname)s: %(message)s"
 datefmt ='%a %b %d %H:%M:%S %Z %Y'
 logFileName = '/var/log/cloudera-azure-initialize.log'
 logging.basicConfig(format=format, datefmt=datefmt, filename=logFileName, level=logging.INFO)
@@ -113,6 +116,8 @@ def generateKeyToFile(keyFileName, username):
 
 
 def prepareAndImportConf(options):
+    errors = 0
+
     logging.info('Parsing base config ...')
 
     conf = ConfigFactory.parse_file(DEFAULT_BASE_CONF_NAME)
@@ -194,36 +199,65 @@ def prepareAndImportConf(options):
     conf.put('databaseServers.mysqlprod1.user', dbUsername)
     conf.put('databaseServers.mysqlprod1.password', dbPassword)
 
-    logging.info('Modifying config ... Successful')
-
     confLocation = DEFAULT_BASE_DIR + "/" + username + "/" + DEFAULT_CONF_NAME
 
+    logging.info('Modifying config ... Successful')
+
+    env = setup_default.EnvironmentSetup(setup_default.DEFAULT_SERVER_URL,
+                                         dirUsername,
+                                         dirPassword,
+                                         conf)
+
+    logging.info('Importing config to Cloudera Director server ...')
+
+    try:
+        env.run_setup()
+    except setup_default.AuthException as e:
+        errors += 1
+        logging.error("%s: Azure environment creation has been skipped. Validate your "
+                     "credentials in %s and resubmit the configuration to director "
+                     "using 'cloudera-director bootstrap-remote ...'" %\
+                     (e, confLocation))
+    else:
+        logging.info('Importing config to Cloudera Director server ... Successful')
+
     logging.info('Writing modified config to %s ...' % confLocation)
+
+    # don't store any secrets or passwords on disk
+    del conf['provider']['clientSecret']
+    del conf['databaseServers']['mysqlprod1']['password']
+
+    conf.put('provider.#clientSecret', 'clientSecret_REPLACE-ME')
+    conf.put('databaseServers.mysqlprod1.#password', 'password_databaseServers_REPLACE-ME')
 
     with open(confLocation, "w") as text_file:
         text_file.write(tool.HOCONConverter.to_hocon(conf))
 
     logging.info('Writing modified config to %s ... Successful' % confLocation)
 
-    logging.info('Importing config to Cloudera Director server ...')
-
-    command = "python setup-default.py --admin-username '%s' --admin-password '%s' '%s'" % (
-        dirUsername, dirPassword, confLocation)
-    execAndLog(command)
-
-    logging.info('Importing config to Cloudera Director server ... Successful')
+    return errors
 
 
 def main():
     # Parse user options
     logging.info('Prepare and import Azure environment on Cloudera Director server ...')
     options = parse_options()
-    prepareAndImportConf(options)
-    logging.info('Prepare and import Azure environment on Cloudera Director server ... Successful')
+    errors = prepareAndImportConf(options)
+
+    status = 'Successful'
+    if errors > 0:
+      status = 'Completed with errors'
+
+    logging.info("Prepare and import Azure environment on Cloudera Director server ... %s" % status)
     # This line marks the end of all VM extension script run.
     logging.info('---------- VM extension scripts completed ----------')
     return 0
 
 
 if __name__ == "__main__":
+  try:
     sys.exit(main())
+  except Exception as e:
+    logging.exception("Exception while preparing director conf: %s" % e)
+    # re-raise to dump stuff to stderr
+    raise

@@ -100,7 +100,7 @@ log "Installing basic tools ... Successful"
 
 log "Installing Cloudera Director Server, Client, Plugins and dependencies ..."
 
-sudo wget -t 5 http://archive.cloudera.com/director/redhat/6/x86_64/director/cloudera-director.repo -O /etc/yum.repos.d/cloudera-director.repo >> ${LOG_FILE}
+sudo wget -t 5 http://archive.cloudera.com/director/redhat/7/x86_64/director/cloudera-director.repo -O /etc/yum.repos.d/cloudera-director.repo >> ${LOG_FILE}
 
 # install with retry
 n=0
@@ -128,7 +128,7 @@ do
 done
 if [ $n -ge 5 ]; then log "pip install error, exiting..." & exit 1; fi
 
-sudo service cloudera-director-server start
+sudo systemctl start cloudera-director-server
 
 counter=0
 while ! (exec 6<>/dev/tcp/"${HOST_IP}"/7189)
@@ -160,8 +160,10 @@ fi
 
 log "Disabling iptables ..."
 
-sudo chkconfig iptables off
-sudo service iptables stop
+sudo systemctl disable iptables
+sudo systemctl stop iptables
+sudo systemctl disable firewalld
+sudo systemctl stop firewalld
 
 log "Disabling iptables ... Successful"
 
@@ -183,16 +185,16 @@ log "Initializing DNS server ... Successful"
 # Setup MySQL server
 #
 
-log "Initializing MySQL server ..."
+log "Initializing MariaDB server ..."
 
 bash ./initialize-mysql-server.sh "${MYSQL_USER}" "${MYSQL_PASSWORD}" "${LOG_FILE}"
 status=$?
 if [ ${status} -ne 0 ]; then
-  log "Initializing MySQL server ... Failed" & exit status;
+  log "Initializing MariaDB server ... Failed" & exit status;
 fi
 
-log "Initializing MySQL server ... Successful"
+log "Initializing MariaDB server ... Successful"
 
-log "Initializing Director Server, DNS server and MySQL DB server ... Successful"
+log "Initializing Director Server, DNS server and MariaDB server ... Successful"
 
 exit 0

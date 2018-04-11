@@ -182,49 +182,51 @@ then
     exit 1
 fi
 
-sudo service named start
-sudo chkconfig named on
+sudo systemctl start named
+sudo systemctl enable named
 #
 # This host is now running BIND
 #
 
 
 #
-# Add dhclient-exit-hooks to update the DNS search server
+# Add NetworkManager hooks to update the DNS search server
 #
 
-# Taken from https://github.com/cloudera/director-scripts/blob/master/azure-dns-scripts/bootstrap_dns.sh
+# Taken from https://github.com/cloudera/director-scripts/blob/master/azure-dns-scripts/bootstrap_dns_nm.sh
 # cat a here-doc representation of the hooks to the appropriate file
-sudo cat > /etc/dhcp/dhclient-exit-hooks <<"EOF"
+sudo cat > /etc/NetworkManager/dispatcher.d/12-register-dns <<"EOF"
 #!/bin/bash
-printf "\ndhclient-exit-hooks running...\n\treason:%s\n\tinterface:%s\n" "${reason:?}" "${interface:?}"
-# only execute on the primary nic
-if [ "$interface" != "eth0" ]
+# NetworkManager Dispatch script
+# Deployed by Cloudera Director Bootstrap
+#
+# Expected arguments:
+#    $1 - interface
+#    $2 - action
+#
+# See for info: http://linux.die.net/man/8/networkmanager
+
+# only execute on the primary nic when the interface comes up
+if [ "$1" != "eth0" ] || [ "$2" != "up" ]
 then
     exit 0;
 fi
-# when we have a new IP, update the search domain
-if [ "$reason" = BOUND ] || [ "$reason" = RENEW ] ||
-   [ "$reason" = REBIND ] || [ "$reason" = REBOOT ]
-then
 EOF
 # this is a separate here-doc because there's two sets of variable substitution going on, this set
 # needs to be evaluated when written to the file, the two others (with "EOF" surrounded by quotes)
 # should not have variable substitution occur when creating the file.
-sudo cat >> /etc/dhcp/dhclient-exit-hooks <<EOF
-    domain=${INTERNAL_FQDN_SUFFIX}
+sudo cat >> /etc/NetworkManager/dispatcher.d/12-register-dns <<EOF
+domain=${INTERNAL_FQDN_SUFFIX}
 EOF
-sudo cat >> /etc/dhcp/dhclient-exit-hooks <<"EOF"
-    resolvconfupdate=$(mktemp -t resolvconfupdate.XXXXXXXXXX)
-    echo updating resolv.conf
-    grep -iv "search" /etc/resolv.conf > "$resolvconfupdate"
-    echo "search $domain" >> "$resolvconfupdate"
-    cat "$resolvconfupdate" > /etc/resolv.conf
-fi
-#done
+sudo cat >> /etc/NetworkManager/dispatcher.d/12-register-dns <<"EOF"
+resolvconfupdate=$(mktemp -t resolvconfupdate.XXXXXXXXXX)
+echo updating resolv.conf
+grep -iv "search" /etc/resolv.conf > "$resolvconfupdate"
+echo "search $domain" >> "$resolvconfupdate"
+cat "$resolvconfupdate" > /etc/resolv.conf
 exit 0;
 EOF
-sudo chmod 755 /etc/dhcp/dhclient-exit-hooks
+sudo chmod 755 /etc/NetworkManager/dispatcher.d/12-register-dns
 
 #
 # Now it's time to update Azure DNS settings in portal
