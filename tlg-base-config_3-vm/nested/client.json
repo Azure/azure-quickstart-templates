@@ -2,31 +2,13 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "SharedVmConfig": {
+      "type": "object"
+    },
     "vmName": {
       "type": "string"
     },
-    "location": {
-      "type": "string"
-    },
-    "domainUserName": {
-      "type": "string"
-    },
-    "adminUserName": {
-      "type": "string"
-    },
-    "adminPassword": {
-      "type": "securestring"
-    },
-    "cliVMSize": {
-      "type": "string"
-    },
-    "cliNicName": {
-      "type": "string"
-    },
-    "storageAccountNamePrefix": {
-      "type": "string"
-    },
-    "domainName": {
+    "nicName": {
       "type": "string"
     },
     "vhdUri": {
@@ -44,7 +26,7 @@
       "type": "Microsoft.Compute/images",
       "apiVersion": "2016-04-30-preview",
       "name": "[variables('ImageName')]",
-      "location": "[parameters('location')]",
+      "location": "[parameters('SharedVmConfig').location]",
       "properties": {
         "storageProfile": {
           "osDisk": {
@@ -60,18 +42,18 @@
       "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
-      "location": "[parameters('location')]",
+      "location": "[parameters('SharedVmConfig').location]",
       "dependsOn": [
         "[variables('ImageName')]"
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[parameters('cliVMSize')]"
+          "vmSize": "[parameters('SharedVmConfig').vmSize]"
         },
         "osProfile": {
           "computerName": "[parameters('vmName')]",
-          "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminUsername": "[parameters('SharedVmConfig').adminUsername]",
+          "adminPassword": "[parameters('SharedVmConfig').adminPassword]"
         },
         "storageProfile": {
           "imageReference": {
@@ -82,14 +64,14 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',parameters('cliNicName'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',parameters('nicName'))]"
             }
           ]
         },
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": "true",
-            "storageUri": "[reference(concat('Microsoft.Storage/storageAccounts/',parameters('storageAccountNamePrefix')),'2017-06-01').primaryEndpoints.blob]"
+            "storageUri": "[reference(concat('Microsoft.Storage/storageAccounts/',parameters('SharedVmConfig').storageAccountNamePrefix),'2017-06-01').primaryEndpoints.blob]"
           }
         }
     },
@@ -97,7 +79,7 @@
       "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('vmName'),'/JoinDomain')]",
-      "location": "[parameters('location')]",
+      "location": "[parameters('SharedVmConfig').location]",
       "tags": {
         "displayName": "Join Domain"
       },
@@ -107,14 +89,14 @@
         "typeHandlerVersion": "1.3",
         "autoUpgradeMinorVersion": true,
         "settings": {
-          "Name": "[parameters('domainName')]",
+          "Name": "[parameters('SharedVmConfig').domainName]",
           "OUPath": null,
           "Options": "3",
           "Restart": "true",
-          "User": "[parameters('domainUserName')]"
+          "User": "[parameters('SharedVmConfig').domainUserName]"
         },
         "protectedsettings": {
-          "Password": "[parameters('adminPassword')]"
+          "Password": "[parameters('SharedVmConfig').adminPassword]"
         }
       },
       "dependsOn": [
@@ -127,7 +109,7 @@
       "name": "[concat(parameters('vmName'),'/BGInfo')]",
       "apiVersion": "2017-03-30",
       "scale": null,
-      "location": "[parameters('location')]",
+      "location": "[parameters('SharedVmConfig').location]",
       "dependsOn": [
         "[parameters('vmName')]"
       ],
@@ -148,9 +130,9 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('vmName'),'/Antimalware')]",
       "apiVersion": "2017-03-30",
-      "location": "[parameters('location')]",
+      "location": "[parameters('SharedVmConfig').location]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
+        "[parameters('vmName')]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Security",
