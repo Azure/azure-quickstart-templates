@@ -1,19 +1,23 @@
-﻿# tlg-base-config_3-vm
+﻿# TLG (Test Lab Guide) 3 VM Base Configuration
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F100-blank-template%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Ftlg-base-config_3-vm%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F100-blank-template%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Ftlg-base-config_3-vm%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
-This template deploys the **tlg-base-config_3-vm** solution, a Test Lab Guide (TLG) configuration that represents a simplified intranet connected 
+This template deploys the **TLG (Test Lab Guide) 3 VM Base Configuration**, a Test Lab Guide (TLG) configuration that represents a simplified intranet connected 
 to the Internet. This base configuration is the starting point for additional TLGs that can be found [here](http://aka.ms/catlgs).
 
-The **tlg-base-config_3-vm** solution provisions a Windows Server 2012 R2 Active Directory domain controller using the specified domain name, 
-an application server running Windows Server 2012 R2, and optionally a client VM running Windows 10. If you choose to deploy a client VM, you
-must upload a generalized Windows 10 VHD to an Azure storage account and provide the account name. This is because the Windows 10 gallery image 
-is only available in eligible subscriptions (Visual Studio or MSDN). 
+The **TLG (Test Lab Guide) 3 VM Base Configuration** provisions a Windows Server 2012 R2 Active Directory domain controller using the specified domain name, 
+an application server running Windows Server 2012 R2, and optionally a client VM running Windows 10. 
+
+**Note:** If you choose to deploy a client VM, you must upload a generalized Windows 10 VHD to an Azure storage account and provide the account name and SAS token. 
+This is because the Windows 10 gallery image is only available in eligible subscriptions (Visual Studio or MSDN). The path to the VHD should be
+like the following:
+
+     https://<storage account name>.blob.core.windows.net/vhds/<vhdName>.VHD
 * For more information about eligible subscriptions, see https://docs.microsoft.com/en-us/azure/virtual-machines/windows/client-images#subscription-eligibility.
 * For more information about how to prepare a generalized VHD, see https://docs.microsoft.com/en-us/azure/virtual-machines/windows/prepare-for-upload-vhd-image.
 
@@ -47,3 +51,9 @@ the JoinDomain extensions. The asymmetric VM deployment adds a few minutes to th
 * Deployment outputs include public IP address and FQDN for each VM.
 
 `Tags: TLG, Test Lab Guide, Base Configuration`
+___
+Developed by the **MAX Skunkworks Lab**  
+Author: Kelley Vice (kvice@microsoft.com)  
+https://github.com/maxskunkworks
+
+![alt text](images/maxskunkworkslogo-small.jpg "MAX Skunkworks")

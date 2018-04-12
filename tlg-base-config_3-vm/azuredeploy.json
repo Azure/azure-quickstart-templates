@@ -7,14 +7,14 @@
       "metadata": {
         "description": "The name of the deployment, i.e. BaseConfig01. Do not use spaces or special characters other than _ or -. Used to concatenate resource names for the deployment."
       },
-      "defaultValue": "TlgBaseConfig-01"
+      "defaultValue": ""
     },
     "domainName": {
       "type": "string",
       "metadata": {
         "description": "The FQDN of the new AD domain."
       },
-      "defaultValue": "corp.contoso.com"
+      "defaultValue": ""
     },
     "adminUsername": {
       "type": "string",
@@ -38,42 +38,26 @@
       },
       "defaultValue": "No"
     },
-    "clientVhdStorageAccount": {
+    "clientVhdUri": {
       "type": "string",
       "metadata": {
-        "description": "The name of the storage account containing the client VHD. Leave blank if you are not deploying a client VM."
+        "description": "The URI of the storage account containing the client VHD. Leave blank if you are not deploying a client VM."
       },
       "defaultValue": ""
     },
-    "clientVhdStorageAccountSasToken": {
+    "clientVhdUriSasToken": {
       "type": "string",
       "metadata": {
         "description": "The SAS token for the storage account containing the client VHD. Leave blank if you are not deploying a client VM."
       },
       "defaultValue": ""
     },
-    "clientVhdName": {
-      "type": "string",
-      "metadata": {
-        "description": "The name of the client VHD, i.e. 'windows10.vhd'. Leave blank if you are not deploying a client VM."
-      },
-      "defaultValue": ""
-    },
     "vmSize": {
       "type": "string",
-      "allowedValues": [ 
-        "Standard_D1_v2",
-        "Standard_DS1_v2",
-        "Standard_D2_v2",
-        "Standard_DS2_v2",
-        "Standard_D3_v2",
-        "Standard_DS3_v2",
-        "Standard_D4_v2",
-        "Standard_DS4_v2" ],
       "metadata": {
         "description": "Select a VM size for all server VMs in your deployment. If a client VM is deployed, it will use Standard_D2_v2."
       },
-      "defaultValue": "Standard_D2_v2"
+      "defaultValue": ""
     },
     "storageAccountType": {
       "type": "string",
@@ -111,20 +95,18 @@
   "variables": {
 
     "baseVnet": "[concat(parameters('configName'),'-VNET')]",
-    "VnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('baseVnet'))]",
     "shortDomainName": "[first(split(parameters('domainName'),'.'))]",
     "domainUserName": "[concat(variables('shortDomainName'),'\\',parameters('adminUsername'))]",
-    "deployClientBool": "[if(equals(parameters('deployClientVm'),'Yes'),'true','false')]",
+    "assetLocation": "[concat(parameters('_artifactsLocation'),'/DSC')]",
 
     "storage": {
-      "assetLocation": "[concat(parameters('_artifactsLocation'),'/DSC')]",
       "templates": "[concat(parameters('_artifactsLocation'),'/nested')]",
       "storageAccountName": "[concat(uniqueString(resourceGroup().id),'storage')]"
     },
 
     "network": {
       "vnetName": "[variables('baseVnet')]",
-      "subnetRef": "[concat(variables('VnetID'),'/subnets/subnet-01')]",
+      "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('baseVnet'), 'subnet-01')]",
       "subnet": "10.0.0.0/24",
       "nsgName": "[concat(parameters('configName'),'-NSG')]"
     },
@@ -208,7 +190,7 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[concat(variables('storage').storageAccountName,'vhds')]",
-      "apiVersion": "2016-01-01",
+      "apiVersion": "2017-06-01",
       "location": "[resourceGroup().location]",
       "kind": "Storage",
       "comments": "This storage account contains VHDs for VMs in the deployment.",
@@ -219,7 +201,7 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[concat(variables('storage').storageAccountName,'diag')]",
-      "apiVersion": "2016-01-01",
+      "apiVersion": "2017-06-01",
       "location": "[resourceGroup().location]",
       "kind": "Storage",
       "comments": "This storage account contains diagnostics data.",
@@ -228,7 +210,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-06-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('VMs').adPublicIpName]",
       "location": "[resourceGroup().location]",
@@ -241,7 +223,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-06-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('VMs').appPublicIpName]",
       "location": "[resourceGroup().location]",
@@ -254,7 +236,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-06-01",
       "condition": "[equals(parameters('deployClientVm'),'Yes')]",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('VMs').cliPublicIpName]",
@@ -379,7 +361,7 @@
           "location": {
             "value": "[resourceGroup().location]"
           },
-          "adVMName": {
+          "vmName": {
             "value": "[variables('VMs').adVmName]"
           },
           "adVMSize": {
@@ -398,7 +380,7 @@
             "value": "[concat(parameters('configName'),'-AD_NIC')]"
           },
           "adModulesURL": {
-            "value": "[concat(variables('storage').assetLocation,'/CreateADPDC.ps1.zip')]"
+            "value": "[concat(variables('assetLocation'),'/CreateADPDC.ps1.zip')]"
           },
           "adConfigurationFunction": {
             "value": "[variables('VMs').adConfigurationFunction]"
@@ -431,7 +413,7 @@
           "location": {
             "value": "[resourceGroup().location]"
           },
-          "appVMName": {
+          "vmName": {
             "value": "[variables('VMs').appVmName]"
           },
           "appVMSize": {
@@ -478,7 +460,7 @@
           "location": {
             "value": "[resourceGroup().location]"
           },
-          "cliVMName": {
+          "vmName": {
             "value": "[variables('VMs').cliVmName]"
           },
           "cliVMSize": {
@@ -502,11 +484,11 @@
           "domainName": {
             "value": "[parameters('domainName')]"
           },
-          "vhdStorageAccount": {
-            "value": "[parameters('clientVhdStorageAccount')]"
+          "vhdUri": {
+            "value": "[parameters('clientVhdUri')]"
           },
-          "vhdStorageAccountSasToken": {
-            "value": "[parameters('clientVhdStorageAccountSasToken')]"
+          "vhdUriSasToken": {
+            "value": "[parameters('clientVhdUriSasToken')]"
           }
         }
       }

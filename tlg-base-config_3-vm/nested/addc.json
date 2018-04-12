@@ -5,7 +5,7 @@
     "location": {
       "type": "string"
     },
-    "adVMName": {
+    "vmName": {
       "type": "string"
     },
     "adVMSize": {
@@ -36,18 +36,22 @@
       "type": "string"
     }
   },
+  "variables": {
+    "OSDiskName": "[concat(parameters('vmName'),'osdisk')]",
+    "dataDiskName": "[concat(parameters('vmName'),'datadisk')]"
+  },
   "resources": [
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[parameters('adVMName')]",
+      "name": "[parameters('vmName')]",
       "location": "[parameters('location')]",
       "properties": {
         "hardwareProfile": {
           "vmSize": "[parameters('adVMSize')]"
         },
         "osProfile": {
-          "computerName": "[parameters('adVMName')]",
+          "computerName": "[parameters('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]"
         },
@@ -59,9 +63,9 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[concat(parameters('adVMName'),'-osdisk')]",
+            "name": "[concat(parameters('vmName'),'-osdisk')]",
             "vhd": {
-              "uri": "[concat('http://',parameters('storageAccountNamePrefix'),'vhds.blob.core.windows.net/vhds/',parameters('adVMName'),'-osdisk.vhd')]"
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/',parameters('storageAccountNamePrefix')), '2015-06-15').primaryEndpoints.blob,'/vhds/',variables('OSDiskName'),'.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -69,9 +73,9 @@
           "dataDisks": [
             {
               "vhd": {
-                "uri": "[concat('http://',parameters('storageAccountNamePrefix'),'vhds.blob.core.windows.net/vhds/',parameters('adVMName'),'-data-disk1.vhd')]"
+                "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/',parameters('storageAccountNamePrefix')), '2015-06-15').primaryEndpoints.blob,'/vhds/',variables('dataDiskName'),'.vhd')]"
               },
-              "name": "[concat(parameters('adVMName'),'-data-disk1')]",
+              "name": "[concat(parameters('vmName'),'-data-disk1')]",
               "caching": "None",
               "createOption": "Empty",
               "diskSizeGB": "1000",
@@ -89,7 +93,7 @@
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": "true",
-            "storageUri": "[concat('http://',parameters('storageAccountNamePrefix'),'diag.blob.core.windows.net')]"
+            "storageUri": "[reference(concat('Microsoft.Storage/storageAccounts/',parameters('storageAccountNamePrefix')),'2015-06-15').primaryEndpoints.blob]"
           }
         }
       },
@@ -97,11 +101,11 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('adVMName'),'/InstallDomainController')]",
-      "apiVersion": "2015-06-15",
+      "name": "[concat(parameters('vmName'),'/InstallDomainController')]",
+      "apiVersion": "2017-03-30",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', parameters('adVMName'))]"
+        "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Powershell",
@@ -131,12 +135,12 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('adVMName'),'/BGInfo')]",
-      "apiVersion": "2015-06-15",
+      "name": "[concat(parameters('vmName'),'/BGInfo')]",
+      "apiVersion": "2017-03-30",
       "scale": null,
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
-        "[parameters('adVMName')]"
+        "[parameters('vmName')]"
       ],
       "properties": {
         "publisher": "Microsoft.Compute",
@@ -150,11 +154,11 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('adVMName'),'/Antimalware')]",
-      "apiVersion": "2015-05-01-preview",
-      "location": "[resourceGroup().location]",
+      "name": "[concat(parameters('vmName'),'/Antimalware')]",
+      "apiVersion": "2017-03-30",
+      "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('adVMName'))]"
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Security",

@@ -2,7 +2,7 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "appVMName": {
+    "vmName": {
       "type": "string"
     },
     "location": {
@@ -30,18 +30,22 @@
       "type": "string"
     }
   },
+  "variables": {
+    "OSDiskName": "[concat(parameters('vmName'),'osdisk')]",
+    "dataDiskName": "[concat(parameters('vmName'),'datadisk')]"
+  },
   "resources": [
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[parameters('appVMName')]",
+      "name": "[parameters('vmName')]",
       "location": "[parameters('location')]",
       "properties": {
         "hardwareProfile": {
           "vmSize": "[parameters('appVMSize')]"
         },
         "osProfile": {
-          "computerName": "[parameters('appVMName')]",
+          "computerName": "[parameters('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]"
         },
@@ -55,7 +59,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://',parameters('storageAccountNamePrefix'),'vhds.blob.core.windows.net/vhds/',parameters('appVMName'),'-osdisk.vhd')]"
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/',parameters('storageAccountNamePrefix')), '2015-06-15').primaryEndpoints.blob,'/vhds/',variables('OSDiskName'),'.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -63,9 +67,9 @@
           "dataDisks": [
             {
               "vhd": {
-                "uri": "[concat('http://',parameters('storageAccountNamePrefix'),'vhds.blob.core.windows.net/vhds/',parameters('appVMName'),'-data-disk1.vhd')]"
+                "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/',parameters('storageAccountNamePrefix')), '2015-06-15').primaryEndpoints.blob,'/vhds/',variables('dataDiskName'),'.vhd')]"
               },
-              "name": "[concat(parameters('appVMName'),'-data-disk1')]",
+              "name": "[concat(parameters('vmName'),'-data-disk1')]",
               "createOption": "Empty",
               "caching": "None",
               "diskSizeGB": "1000",
@@ -83,16 +87,16 @@
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": "true",
-            "storageUri": "[concat('http://',parameters('storageAccountNamePrefix'),'diag.blob.core.windows.net')]"
+            "storageUri": "[reference(concat('Microsoft.Storage/storageAccounts/',parameters('storageAccountNamePrefix')),'2015-06-15').primaryEndpoints.blob]"
           }
         }
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('appVMName'),'/JoinDomain')]",
-      "location": "[resourceGroup().location]",
+      "name": "[concat(parameters('vmName'),'/JoinDomain')]",
+      "location": "[parameters('location')]",
       "tags": {
         "displayName": "Join Domain"
       },
@@ -113,18 +117,18 @@
         }
       },
       "dependsOn": [
-        "[parameters('appVMName')]"
+        "[parameters('vmName')]"
       ]
     },
     {
 
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('appVMName'),'/BGInfo')]",
-      "apiVersion": "2015-06-15",
+      "name": "[concat(parameters('vmName'),'/BGInfo')]",
+      "apiVersion": "2017-03-30",
       "scale": null,
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
-        "[parameters('appVMName')]"
+        "[parameters('vmName')]"
       ],
       "properties": {
 
@@ -141,11 +145,11 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('appVMName'),'/Antimalware')]",
-      "apiVersion": "2015-05-01-preview",
-      "location": "[resourceGroup().location]",
+      "name": "[concat(parameters('vmName'),'/Antimalware')]",
+      "apiVersion": "2017-03-30",
+      "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('appVMName'))]"
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Security",
