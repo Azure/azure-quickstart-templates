@@ -160,6 +160,7 @@ function Register-Gateway([string] $instanceKey)
 {
     Trace-Log "Register Agent"
 	$filePath = Get-InstalledFilePath
+	Run-Process $filePath "-era 8060"
 	Run-Process $filePath "-k $instanceKey"
     Trace-Log "Agent registration is successful!"
 }
