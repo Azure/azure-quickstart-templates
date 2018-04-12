@@ -24,43 +24,28 @@
       },
       "databaseDTU":{  
          "type":"int",
-         "allowedValues":[  
-            50,
-            100
-         ],
-         "defaultValue":50,
+         "defaultValue":2,
          "metadata":{  
-            "description":"Azure database for MySQL pricing tier : 50 DTU , 100 DTU"
+            "description":"Azure database for MySQL pricing tier"
          }
       },
       "databaseSkuName":{  
          "type":"string",
-         "allowedValues":[  
-            "MYSQLB100",
-            "MYSQLB50"
-         ],
-         "defaultValue":"MYSQLB100",
+         "defaultValue":"GP_Gen4_2",
          "metadata":{  
-            "description":"Azure database for MySQL sku name : MYSQLB100 (Basic 100 DTU tier) or MYSQLB50 (Basic 50 DTU tier)"
+            "description":"Azure database for MySQL sku name "
          }
       },
       "databaseSkuSizeMB":{  
          "type":"int",
-         "allowedValues":[  
-            102400,
-            51200
-         ],
-         "defaultValue":51200,
+         "defaultValue":5120,
          "metadata":{  
             "description":"Azure database for MySQL Sku Size "
          }
       },
       "databaseSkuTier":{  
          "type":"string",
-         "allowedValues":[  
-            "Basic"
-         ],
-         "defaultValue":"Basic",
+         "defaultValue":"GeneralPurpose",
          "metadata":{  
             "description":"Azure database for MySQL pricing tier"
          }
@@ -126,42 +111,47 @@
          "kind":"linux"
       },
       {  
-         "apiVersion":"2016-02-01-privatepreview",
-         "kind":"",
+         "apiVersion":"2017-12-01-preview",
          "location":"[resourceGroup().location]",
          "name":"[variables('serverName')]",
          "properties":{  
             "version":"[parameters('mysqlVersion')]",
             "administratorLogin":"[parameters('administratorLogin')]",
             "administratorLoginPassword":"[parameters('administratorLoginPassword')]",
-            "storageMB":"[parameters('databaseSkuSizeMB')]"
+            "storageProfile":{  
+               "storageMB":"[parameters('databaseSkuSizeMB')]",
+               "backupRetentionDays":"7",
+               "geoRedundantBackup":"Disabled"
+            },
+            "sslEnforcement":"Disabled"
          },
          "sku":{  
             "name":"[parameters('databaseSkuName')]",
             "tier":"[parameters('databaseSkuTier')]",
             "capacity":"[parameters('databaseDTU')]",
             "size":"[parameters('databaseSkuSizeMB')]",
-            "family":"SkuFamily"
+            "family":"Gen4"
          },
          "type":"Microsoft.DBforMySQL/servers",
          "resources":[  
             {  
                "type":"firewallrules",
-               "apiVersion":"2016-02-01-privatepreview",
+               "apiVersion":"2017-12-01-preview",
                "dependsOn":[  
+                  "[concat('Microsoft.DBforMySQL/servers/', variables('serverName'),'/databases/' , variables('databaseName'))]",
                   "[concat('Microsoft.DBforMySQL/servers/', variables('serverName'))]"
                ],
                "location":"[resourceGroup().location]",
-               "name":"[concat(variables('serverName'),'firewall')]",
+               "name":"AllowAzureIPs",
                "properties":{  
                   "startIpAddress":"0.0.0.0",
-                  "endIpAddress":"255.255.255.255"
+                  "endIpAddress":"0.0.0.0"
                }
             },
             {  
                "name":"[variables('databaseName')]",
                "type":"databases",
-               "apiVersion":"2016-02-01-privatepreview",
+               "apiVersion":"2017-12-01-preview",
                "properties":{  
                   "charset":"utf8",
                   "collation":"utf8_general_ci"
