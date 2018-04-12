@@ -30,6 +30,19 @@ function getErrorMessage(obj, file, message) {
 /** Tests for template files in a solution template */
 describe('template files - ', () => {
 
+    /** Tests for $schema property in template files */
+    describe('$schema property tests - ', () => {
+        /** schema property MUST use https  */
+        it('schema property must use https not http', () => {
+            templateFileJSONObjects.forEach(templateJSONObject => {
+                var templateObject = templateJSONObject.value;
+                if (templateObject.$schema) {
+                    templateObject.$schema.should.withMessage('in file:' + templateJSONObject.filename + ',$schema property must use https not http').contain('https');
+                }
+            });
+        });
+    });
+
     /** Tests for parameters in template files */
     describe('parameters tests - ', () => {
 
