@@ -79,7 +79,7 @@ describe('template files - ', () => {
 
         });
 
-        /** The location parameter MUST NOT have allowedValues property and if it has defaultValue property whose value MUST be '[resourceGroup().location]' */
+        /** The location parameter MUST NOT have allowedValues property and if it has defaultValue property, it's value MUST be '[resourceGroup().location]' */
         it('a parameter named "location" must exist and it must have a defaultValue of resourceGroup().location', () => {
             mainTemplateFileJSONObject.should.withMessage('file:mainTemplate.json is missing parameters property').have.property('parameters');
             mainTemplateFileJSONObject.parameters.should.withMessage('file:mainTemplate.json is missing location property in parameters').have.property('location');
