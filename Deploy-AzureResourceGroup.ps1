@@ -120,7 +120,7 @@ else {
 $TemplateArgs.Add('TemplateParameterFile', $TemplateParametersFile)
 
 # Create the resource group only when it doesn't already exist
-if ((Get-AzureRmresourcegroup -Name $ResourceGroupName -Location $ResourceGroupLocation -Verbose -Force -ErrorAction SilentlyContinue) -eq $null) {
+if ((Get-AzureRmresourcegroup -Name $ResourceGroupName -Location $ResourceGroupLocation -Verbose -ErrorAction SilentlyContinue) -eq $null) {
     New-AzureRmResourceGroup -Name $ResourceGroupName -Location $ResourceGroupLocation -Verbose -Force -ErrorAction Stop
 }
 
