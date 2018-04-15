@@ -41,16 +41,6 @@ You can deploy this template directly through the Azure Portal or by using the s
 
 To deploy the template using hte Azure Portal, click the Deploy to Azure button at the top of the article.
 
-To deploy the template via the command line (using Azure PowerShell or the Azure CLI) you can use the scripts shown below.
-
-Execute the script from the root folder and pass in the folder name of the sample (azure-automation-plus-dsc-lab). For example:
-
-```PowerShell
-.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus2' -ArtifactsStagingDirectory 'azure-automation-plus-dsc-lab' -UploadArtifacts
-```
-```bash
-azure-group-deploy.sh -a 'azure-automation-plus-dsc-lab' -l eastus2 -u
-```
 ## Solution overview and deployed resources
 
 This solution creates a consolidated training and demo lab environment for Azure Automation, Desired State Configuration and PowerShell topics.
