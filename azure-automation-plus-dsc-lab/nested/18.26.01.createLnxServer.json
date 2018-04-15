@@ -1,0 +1,112 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "lnxPrefix": {
+      "type": "string"
+    },
+    "azureRegion": {
+      "type": "string"
+    },
+    "adminUserName": {
+      "type": "string"
+    },
+    "adminPassword": {
+      "type": "securestring"
+    },
+    "lnxAvSetId": {
+      "type": "string"
+    },
+    "lnx01nicId": {
+      "type": "string"
+    },
+    "saName": {
+      "type": "string"
+    },
+    "domainName": {
+      "type": "string"
+    }
+  },
+  "variables": {
+    // HardwareProfile
+    "lnx01name": "[concat(parameters('lnxPrefix'),1)]",
+    "lnxVmSize": "Standard_A1_v2",
+    // StorageProfile.ImageReference
+    "imagePublisher": "OpenLogic",
+    "imageOffer": "CentOS",
+    // "imageSku": "Use the expression below to obtain the list of available Skus for Visual Studio"
+    // Get-AzureRmVmImageSku -Location eastus2 -Publisher "OpenLogic" -Offer "CentOS" | Select-Object -Property Skus
+    "imageSku": "7.3",
+    // StorageProfile.osDisk
+    "diskNameOs": "[toLower(concat(variables('lnx01name'),'-syst'))]",
+    "saType": "Standard_LRS",
+    // StorageProfile.dataDisk
+    "diskNameData": "[toLower(concat(variables('lnx01name'),'-data'))]",
+    // DiagnositcsProfile
+    "saUrlSuffix": ".blob.core.windows.net",
+    "diagStorageUri": "[concat('http://',parameters('saName'),variables('saUrlSuffix'))]"
+  },
+  "resources": [
+    {
+      "comments": "14.17.00.createlnxServer",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('lnx01name')]",
+      "apiVersion": "2017-03-30",
+      "location": "[parameters('azureRegion')]",
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('lnxVmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('lnx01name')]",
+          "adminUsername": "[parameters('adminUserName')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[variables('imageSku')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[variables('diskNameOs')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "[variables('saType')]"
+            }
+          },
+          "dataDisks": [
+            {
+              "lun": 0,
+              "name": "[variables('diskNameData')]",
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": 32,
+              "managedDisk": {
+                "storageAccountType": "[variables('saType')]"
+              }
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[parameters('lnx01nicId')]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[variables('diagStorageUri')]"
+          }
+        },
+        "availabilitySet": {
+          "id": "[parameters('lnxAvSetId')]"
+        }
+      }
+    }
+  ]
+}
