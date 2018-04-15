@@ -1,10 +1,10 @@
 # Azure Automation Plus DSC lab
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F100-blank-template%2Fazuredeploy.json" target="_blank">
-<img src="![alt text](images/deploytoazure.png "Deploy to Azure button"/>
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fazure-automation-plus-dsc-lab%2Fazuredeploy.json" target="_blank">
+<img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F100-blank-template%2Fazuredeploy.json" target="_blank">
-<img src="![alt text](images/visualizebutton.png "Visualize resources button"/>
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fazure-automation-plus-dsc-lab%2Fazuredeploy.json" target="_blank">
+<img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
 This template deploys a new lab environment that can be used for training, practice and demonstrations of the following technologies:
@@ -65,19 +65,19 @@ To connect to this lab after it is deployed, RDP to the development/jump server 
 ## After Deploying the Template (Usage)
 
 The recommended outline of training objectives for this lab follows as a basic guide, but you may deviate, ommit, add or re-sequnce these steps as necessary to meet your or your organizations own requirements.
-A. Build the AZRDEV##01 server as a jump/dev DSC pull server using desired state configuration in local push configuration mode.
-B. Build the AZRWEB##01 web server as a web server using push mode remotely from AZRDEV##01.
-C. Build the AZRADS##01 domain controller as a domain controller using push mode remotely from AZRDEV##01.
-D. Build the AZRSQL##01 SQL 2016 server as an SQL server using push mode remotely from AZRDEV##01.
-E. Apply a configuration to AZRWEB##01 using the DSC Pull server AZRDEV##01.
-F. Apply a configuration to AZRADS##01 using the DSC Pull server AZRDEV##01.
-G. Apply a configuration to AZRSQL##01 using the DSC Pull server AZRDEV##01.
-H. Build the AZRWEB##02 web server as a web server using Azure Automation DSC (AA DSC).
-I. Build the AZRADS##02 domain controller as a domain controller using AA DSC.
-J. Build the AZRSQL##02 SQL 2016 server as an SQL server using AA DSC.
-K. Apply a configuration to the AZRLNX##01 Linux CentOS server using the push mode remotely from AZRDEV##01.
-L. Apply a configuration to the AZRLNX##01 Linux CentOS server using AA DSC.
-M. Create a runbook to convert all server private IP addresses from dynamic to static.
+1. Build the AZRDEV##01 server as a jump/dev DSC pull server using desired state configuration in local push configuration mode.
+2. Build the AZRWEB##01 web server as a web server using push mode remotely from AZRDEV##01.
+3. Build the AZRADS##01 domain controller as a domain controller using push mode remotely from AZRDEV##01.
+4. Build the AZRSQL##01 SQL 2016 server as an SQL server using push mode remotely from AZRDEV##01.
+5. Apply a configuration to AZRWEB##01 using the DSC Pull server AZRDEV##01.
+6. Apply a configuration to AZRADS##01 using the DSC Pull server AZRDEV##01.
+7. Apply a configuration to AZRSQL##01 using the DSC Pull server AZRDEV##01.
+8. Build the AZRWEB##02 web server as a web server using Azure Automation DSC (AA DSC).
+9. Build the AZRADS##02 domain controller as a domain controller using AA DSC.
+10. Build the AZRSQL##02 SQL 2016 server as an SQL server using AA DSC.
+11. Apply a configuration to the AZRLNX##01 Linux CentOS server using the push mode remotely from AZRDEV##01.
+12. Apply a configuration to the AZRLNX##01 Linux CentOS server using AA DSC.
+13. Create a runbook to convert all server private IP addresses from dynamic to static.
 
 #### Management
 
