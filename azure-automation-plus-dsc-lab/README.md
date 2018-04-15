@@ -28,6 +28,9 @@ The lab infrastructure includes the following components:
 9. 2 x storage accounts, 1 for automatically staging deployment artifacts and the other for user specified artifacts for DSC.
 10.1 x recovery services vault for VM backup and recovery.
 
+## Lab Environment Diagram
+![alt text](/images/azure-automation-plus-dsc-lab-diagram.png)
+
 ## Prerequisites
 
 Decscription of the prerequistes for the deployment
