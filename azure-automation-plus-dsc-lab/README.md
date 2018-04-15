@@ -88,8 +88,8 @@ To complete the recommended training objectives after this solutin is deployed, 
 
 ## Notes
 
-*-This solution does not include a hybrid connection to an on-premises environment.*
-*-All Windows VMs are domain joined during the deployment.*
+1. *This solution does not include a hybrid connection to an on-premises environment.*
+2. *All Windows VMs are domain joined during the deployment.*
 
 ## Tags
 
