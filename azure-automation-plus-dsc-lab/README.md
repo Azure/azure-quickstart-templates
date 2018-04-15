@@ -29,7 +29,7 @@ The lab infrastructure includes the following components:
 10.1 x recovery services vault for VM backup and recovery.
 
 ## Lab Environment Diagram
-![alt text](/images/azure-automation-plus-dsc-lab-diagram.png)
+![alt text](images/azure-automation-plus-dsc-lab-diagram.png)
 
 ## Prerequisites
 
