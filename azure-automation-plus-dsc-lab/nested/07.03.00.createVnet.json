@@ -1,0 +1,77 @@
+﻿{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vnet": {
+      "type": "object"
+    },
+    "subnetNames": {
+      "type": "array"
+    },
+    "subnetPrefixes": {
+      "type": "array"
+    },
+    "nsgs": {
+      "type": "array"
+    },
+    "nsgId1": {
+      "type": "string"
+    },
+    "nsgId2": {
+      "type": "string"
+    }
+  },
+  "variables": {
+    "nsgIds": [
+      "[parameters('nsgId1')]",
+      "[parameters('nsgid2')]"
+    ],
+    "subnetRefAdds": "[resourceid('Microsoft.Network/virtualNetworks/subnets',parameters('vnet').name,parameters('subnetNames')[0])]",
+    "subnetRefSrvs": "[resourceid('Microsoft.Network/virtualNetworks/subnets',parameters('vnet').name,parameters('subnetNames')[1])]"
+  },
+  "resources": [
+    {
+      "comments": "07.03.00.createVnet",
+      "name": "[parameters('vnet').name]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2017-10-01",
+      "location": "[parameters('vnet').location]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('vnet').addressPrefix]"
+          ]
+        },
+        "copy": [
+          {
+            "name": "subnets",
+            "count": 2,
+            "input": {
+              "name": "[parameters('subnetNames')[copyIndex('subnets')]]",
+              "properties": {
+                "addressPrefix": "[parameters('subnetPrefixes')[copyIndex('subnets')]]",
+                "networkSecurityGroup": {
+                  "id": "[variables('nsgIds')[copyIndex('subnets')]]"
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "outputs": {
+    "subnetAddsId": {
+      "type": "string",
+      "value": "[variables('subnetRefAdds')]"
+    },
+    "subnetSrvsId": {
+      "type": "string",
+      "value": "[variables('subnetRefSrvs')]"
+    },
+    "vnetGuid": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/virtualNetworks',parameters('vnet').name)]"
+    }
+  }
+}
