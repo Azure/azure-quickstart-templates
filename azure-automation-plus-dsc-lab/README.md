@@ -31,6 +31,9 @@ The lab infrastructure includes the following components:
 ## Prerequisites
 
 Decscription of the prerequistes for the deployment
+1. An Azure subscription
+2. A web browser
+3. Internet connection
 
 ## Deploying The Template
 
