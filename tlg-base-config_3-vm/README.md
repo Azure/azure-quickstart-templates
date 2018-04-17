@@ -10,21 +10,14 @@
 This template deploys the **TLG (Test Lab Guide) 3 VM Base Configuration**, a Test Lab Guide (TLG) configuration that represents a simplified intranet connected 
 to the Internet. This base configuration is the starting point for additional TLGs that can be found [here](http://aka.ms/catlgs).
 
-<<<<<<< HEAD
 The **TLG (Test Lab Guide) 3 VM Base Configuration** provisions a Windows Server 2012 R2 Active Directory domain controller using the specified domain name, 
 an application server running Windows Server 2012 R2, and optionally a client VM running Windows 10. 
 
-**Note:** If you choose to deploy a client VM, you must upload a generalized Windows 10 VHD to an Azure storage account and provide the account name and SAS token. 
+**Note:** If you choose to deploy a client VM, you must upload a generalized Windows 10 VHD to an Azure storage account and provide the account name and SAS token in the _clientVhdUri_ parameter. 
 This is because the Windows 10 gallery image is only available in eligible subscriptions (Visual Studio or MSDN). The path to the VHD should be
 like the following:
 
-     https://<storage account name>.blob.core.windows.net/vhds/<vhdName>.VHD
-=======
-The **tlg-base-config_3-vm** solution provisions a Windows Server 2012 R2 Active Directory domain controller using the specified domain name, 
-an application server running Windows Server 2012 R2, and optionally a client VM running Windows 10. 
-
-**Note:** If you choose to deploy a client VM, you must upload a generalized Windows 10 VHD to an Azure storage account and provide the account name. This is because the Windows 10 gallery image is only available in eligible subscriptions (Visual Studio or MSDN). 
->>>>>>> 8a4326a706fd688da755f4470b5b155131ca0379
+     https://<storage account name>.blob.core.windows.net/vhds/<vhdName>.VHD<SAS token>
 * For more information about eligible subscriptions, see https://docs.microsoft.com/en-us/azure/virtual-machines/windows/client-images#subscription-eligibility.
 * For more information about how to prepare a generalized VHD, see https://docs.microsoft.com/en-us/azure/virtual-machines/windows/prepare-for-upload-vhd-image.
 
@@ -44,7 +37,6 @@ The following resources are deployed as part of the solution:
 + **Virtual network**: Virtual network for internal traffic, configured with custom DNS pointing to the ADDC's private IP address
 + **Network interfaces**: 1 NIC per VM
 + **Public IP addresses**: 1 public IP per VM
-+ **Storage accounts**: 2 storage accounts for VHDs and diagnostics respectively
 + **JoinDomain**: Each member VM uses the **JsonADDomainExtension** extension to join the domain.
 + **BGInfo**: The **BGInfo** extension is applied to all VMs.
 + **Antimalware**: The **iaaSAntimalware** extension is applied to all VMs with basic scheduled scan and exclusion settings.
@@ -58,12 +50,9 @@ the JoinDomain extensions. The asymmetric VM deployment adds a few minutes to th
 * Deployment outputs include public IP address and FQDN for each VM.
 
 `Tags: TLG, Test Lab Guide, Base Configuration`
-<<<<<<< HEAD
 ___
 Developed by the **MAX Skunkworks Lab**  
 Author: Kelley Vice (kvice@microsoft.com)  
 https://github.com/maxskunkworks
 
 ![alt text](images/maxskunkworkslogo-small.jpg "MAX Skunkworks")
-=======
->>>>>>> 8a4326a706fd688da755f4470b5b155131ca0379
