@@ -10,6 +10,7 @@ AQUA_CONTAINER_NAME=$6
 AQUA_DB_PASSWORD=$7
 AQUA_LICENSE_TOKEN=$8
 AQUA_ADMIN_PASSWORD=$9
+INSTALL_AQUA=$11
 echo "step end: globals"
 
 echo "AQUA_ADMIN_PASSWORD: $AQUA_ADMIN_PASSWORD"
@@ -44,39 +45,41 @@ else
 fi
 echo "step end: install docker-ce"
 
-#Docker login
-echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin $DOCKER_REGISTRY
-lExitCode=$?
-if [ $lExitCode == "0" ];then
-  echo "Sucessfully logged in to DOCKER_REGISTRY"
-else
-  echo "Failed to login to DOCKER_REGISTRY, exit code : $lExitCode , exiting"
-  exit 1
-fi
+if [ $INSTALL_AQUA == "yes" ];then
+    #Docker login
+    echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin $DOCKER_REGISTRY
+    lExitCode=$?
+    if [ $lExitCode == "0" ];then
+      echo "Sucessfully logged in to DOCKER_REGISTRY"
+    else
+      echo "Failed to login to DOCKER_REGISTRY, exit code : $lExitCode , exiting"
+      exit 1
+    fi
 
-#Run Aqua CASP
-echo "step start: deploy Aqua CSP"
-docker run -d -p 5432:5432 -p 3622:3622 -p 8080:8080 --name $AQUA_CONTAINER_NAME \
-   -e POSTGRES_PASSWORD=${AQUA_DB_PASSWORD} \
-   -e SCALOCK_DBUSER=postgres \
-   -e SCALOCK_DBPASSWORD=${AQUA_DB_PASSWORD} \
-   -e SCALOCK_DBNAME=scalock \
-   -e SCALOCK_DBHOST=$(hostname -i) \
-   -e SCALOCK_AUDIT_DBUSER=postgres \
-   -e SCALOCK_AUDIT_DBPASSWORD=${AQUA_DB_PASSWORD} \
-   -e SCALOCK_AUDIT_DBNAME=slk_audit \
-   -e SCALOCK_AUDIT_DBHOST=$(hostname -i) \
-   -e LICENSE_TOKEN=${AQUA_LICENSE_TOKEN} \
-   -e ADMIN_PASSWORD=${AQUA_ADMIN_PASSWORD} \
-   -v /var/lib/postgresql/data:/var/lib/postgresql/data \
-   -v /var/run/docker.sock:/var/run/docker.sock \
- $AQUA_IMAGE
- 
- lExitCode=$?
-if [ $lExitCode == "0" ];then
-  echo "Sucessfully ran $AQUA_IMAGE"
-else
-  echo "Failed to run $AQUA_IMAGE, exit code : $lExitCode , exiting"
-  exit 1
+    #Run Aqua CASP
+    echo "step start: deploy Aqua CSP"
+    docker run -d -p 5432:5432 -p 3622:3622 -p 8080:8080 --name $AQUA_CONTAINER_NAME \
+       -e POSTGRES_PASSWORD=${AQUA_DB_PASSWORD} \
+       -e SCALOCK_DBUSER=postgres \
+       -e SCALOCK_DBPASSWORD=${AQUA_DB_PASSWORD} \
+       -e SCALOCK_DBNAME=scalock \
+       -e SCALOCK_DBHOST=$(hostname -i) \
+       -e SCALOCK_AUDIT_DBUSER=postgres \
+       -e SCALOCK_AUDIT_DBPASSWORD=${AQUA_DB_PASSWORD} \
+       -e SCALOCK_AUDIT_DBNAME=slk_audit \
+       -e SCALOCK_AUDIT_DBHOST=$(hostname -i) \
+       -e LICENSE_TOKEN=${AQUA_LICENSE_TOKEN} \
+       -e ADMIN_PASSWORD=${AQUA_ADMIN_PASSWORD} \
+       -v /var/lib/postgresql/data:/var/lib/postgresql/data \
+       -v /var/run/docker.sock:/var/run/docker.sock \
+     $AQUA_IMAGE
+     
+     lExitCode=$?
+    if [ $lExitCode == "0" ];then
+      echo "Sucessfully ran $AQUA_IMAGE"
+    else
+      echo "Failed to run $AQUA_IMAGE, exit code : $lExitCode , exiting"
+      exit 1
+    fi
+    echo "step start: deploy Aqua CSP"
 fi
-echo "step start: deploy Aqua CSP"
