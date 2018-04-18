@@ -13,11 +13,10 @@ to the Internet. This base configuration is the starting point for additional TL
 The **TLG (Test Lab Guide) 3 VM Base Configuration** provisions a Windows Server 2012 R2 Active Directory domain controller using the specified domain name, 
 an application server running Windows Server 2012 R2, and optionally a client VM running Windows 10. 
 
-**Note:** If you choose to deploy a client VM, you must upload a generalized Windows 10 VHD to an Azure storage account and provide the account name and SAS token in the _clientVhdUri_ parameter. 
-This is because the Windows 10 gallery image is only available in eligible subscriptions (Visual Studio or MSDN). The path to the VHD should be
-like the following:
+**Note:** If you choose to deploy a client VM, you must upload a generalized Windows 10 VHD to an Azure storage account and provide the account name in the _clientVhdUri_ parameter. Note that SAS tokens are not supported, and the blob container must be configured for public read access.
+Use of a custom client image is required because the Windows 10 gallery image is only available in eligible subscriptions (Visual Studio or MSDN). The path to the VHD should resemble the following example:
 
-     https://<storage account name>.blob.core.windows.net/vhds/<vhdName>.VHD<SAS token>
+     https://<storage account name>.blob.core.windows.net/vhds/<vhdName>.vhd
 * For more information about eligible subscriptions, see https://docs.microsoft.com/en-us/azure/virtual-machines/windows/client-images#subscription-eligibility.
 * For more information about how to prepare a generalized VHD, see https://docs.microsoft.com/en-us/azure/virtual-machines/windows/prepare-for-upload-vhd-image.
 
