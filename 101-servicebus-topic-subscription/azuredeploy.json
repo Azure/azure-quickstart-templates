@@ -1,5 +1,5 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "serviceBusNamespaceName": {
@@ -8,13 +8,7 @@
         "description": "Name of the Service Bus namespace"
       }
     },
-    "serviceBusTopicName1": {
-      "type": "string",
-      "metadata": {
-        "description": "Name of the Topic"
-      }
-    },
-    "serviceBusTopicName2": {
+    "serviceBusTopicName": {
       "type": "string",
       "metadata": {
         "description": "Name of the Topic"
@@ -24,6 +18,30 @@
       "type": "string",
       "metadata": {
         "description": "Name of the Subscription"
+      }
+    },
+    "serviceBusSku": {
+      "type": "string",
+      "allowedValues": [
+        "Basic",
+        "Standard",
+        "Premium"
+      ],
+      "defaultValue": "Standard",
+      "metadata": {
+        "description": "The messaging tier for service Bus namespace"
+      }
+    },
+    "skuCapacity": {
+      "type": "int",
+      "allowedValues": [
+        1,
+        2,
+        4
+      ],
+      "defaultValue": 1,
+      "metadata": {
+        "description": "MessagingUnits for premium namespace"
       }
     }
   },
@@ -38,30 +56,33 @@
       "type": "Microsoft.ServiceBus/namespaces",
       "location": "[resourceGroup().location]",
       "sku": {
-        "name": "Standard",
-        "tier": "Standard"
+        "name": "[parameters('serviceBusSku')]",
+        "tier": "[parameters('serviceBusSku')]",
+        "capacity": "[parameters('skuCapacity')]"
+      },
+      "tags": {
+        "tag1": "value1",
+        "tag2": "value2"
       },
       "resources": [
         {
           "apiVersion": "2017-04-01",
-          "name": "[parameters('serviceBusTopicName1')]",
-          "type": "topics",
+          "name": "[parameters('serviceBusTopicName')]",
+          "type": "Topics",
           "dependsOn": [
             "[concat('Microsoft.ServiceBus/namespaces/', parameters('serviceBusNamespaceName'))]"
           ],
           "properties": {
-            "path": "[parameters('serviceBusTopicName1')]"
-          }
-        },
-        {
-          "apiVersion": "2017-04-01",
-          "name": "[parameters('serviceBusTopicName2')]",
-          "type": "topics",
-          "dependsOn": [
-            "[concat('Microsoft.ServiceBus/namespaces/', parameters('serviceBusNamespaceName'))]"
-          ],
-          "properties": {
-            "path": "[parameters('serviceBusTopicName2')]"
+            "defaultMessageTimeToLive": "P10675199DT2H48M5.4775807S",
+            "maxSizeInMegabytes": 5120,
+            "requiresDuplicateDetection": false,
+            "duplicateDetectionHistoryTimeWindow": "PT10M",
+            "enableBatchedOperations": true,
+            "sizeInBytes": 0,
+            "supportOrdering": true,
+            "autoDeleteOnIdle": "P10675199DT2H48M5.4775807S",
+            "enablePartitioning": false,
+            "enableExpress": false
           },
           "resources": [
             {
@@ -69,12 +90,19 @@
               "name": "[parameters('serviceBusSubscriptionName')]",
               "type": "Subscriptions",
               "dependsOn": [
-                "[parameters('serviceBusTopicName1')]",
-                "[parameters('serviceBusTopicName2')]"
+                "[parameters('serviceBusTopicName')]"
               ],
               "properties": {
-                "forwardTo": "[parameters('serviceBusTopicName1')]",
-                "forwardDeadLetteredMessagesTo": "[parameters('serviceBusTopicName1')]"
+                "lockDuration": "PT1M",
+                "requiresSession": false,
+                "defaultMessageTimeToLive": "P10675199DT2H48M5.4775807S",
+                "deadLetteringOnMessageExpiration": false,
+                "deadLetteringOnFilterEvaluationExceptions": true,
+                "messageCount": 0,
+                "maxDeliveryCount": 10,
+                "status": "Active",
+                "enableBatchedOperations": true,
+                "autoDeleteOnIdle": "P10675199DT2H48M5.4775807S"
               }
             }
           ]
@@ -83,11 +111,11 @@
     }
   ],
   "outputs": {
-    "NamespaceConnectionString": {
+    "NamespaceDefaultConnectionString": {
       "type": "string",
       "value": "[listkeys(variables('authRuleResourceId'), '2017-04-01').primaryConnectionString]"
     },
-    "SharedAccessPolicyPrimaryKey": {
+    "DefaultSharedAccessPolicyPrimaryKey": {
       "type": "string",
       "value": "[listkeys(variables('authRuleResourceId'), '2017-04-01').primaryKey]"
     }

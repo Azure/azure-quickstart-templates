@@ -1,5 +1,5 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "serviceBusNamespaceName": {
@@ -8,7 +8,13 @@
         "description": "Name of the Service Bus namespace"
       }
     },
-    "serviceBusTopicName": {
+    "serviceBusTopicName1": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Topic"
+      }
+    },
+    "serviceBusTopicName2": {
       "type": "string",
       "metadata": {
         "description": "Name of the Topic"
@@ -19,12 +25,35 @@
       "metadata": {
         "description": "Name of the Subscription"
       }
+    },
+    "serviceBusSku": {
+      "type": "string",
+      "allowedValues": [
+        "Basic",
+        "Standard",
+        "Premium"
+      ],
+      "defaultValue": "Standard",
+      "metadata": {
+        "description": "The messaging tier for service Bus namespace"
+      }
+    },
+    "skuCapacity": {
+      "type": "int",
+      "allowedValues": [
+        1,
+        2,
+        4
+      ],
+      "defaultValue": 1,
+      "metadata": {
+        "description": "MessagingUnits for premium namespace"
+      }
     }
   },
   "variables": {
     "defaultSASKeyName": "RootManageSharedAccessKey",
-    "authRuleResourceId": "[resourceId('Microsoft.ServiceBus/namespaces/authorizationRules', parameters('serviceBusNamespaceName'), variables('defaultSASKeyName'))]",
-	"sbVersion": "2017-04-01"
+    "authRuleResourceId": "[resourceId('Microsoft.ServiceBus/namespaces/authorizationRules', parameters('serviceBusNamespaceName'), variables('defaultSASKeyName'))]"
   },
   "resources": [
     {
@@ -33,26 +62,55 @@
       "type": "Microsoft.ServiceBus/namespaces",
       "location": "[resourceGroup().location]",
       "sku": {
-        "name": "Standard"
+        "name": "[parameters('serviceBusSku')]",
+        "tier": "[parameters('serviceBusSku')]",
+        "capacity": "[parameters('skuCapacity')]"
+      },
+      "tags": {
+        "tag1": "value1",
+        "tag2": "value2"
       },
       "resources": [
         {
           "apiVersion": "2017-04-01",
-          "name": "[parameters('serviceBusTopicName')]",
-          "type": "topics",
+          "name": "[parameters('serviceBusTopicName1')]",
+          "type": "Topics",
           "dependsOn": [
             "[concat('Microsoft.ServiceBus/namespaces/', parameters('serviceBusNamespaceName'))]"
           ],
           "properties": {
             "defaultMessageTimeToLive": "P10675199DT2H48M5.4775807S",
-            "maxSizeInMegabytes": "1024",
-            "requiresDuplicateDetection": "false",
+            "maxSizeInMegabytes": 5120,
+            "requiresDuplicateDetection": false,
             "duplicateDetectionHistoryTimeWindow": "PT10M",
-            "enableBatchedOperations": "false",
-            "supportOrdering": "false",
+            "enableBatchedOperations": true,
+            "sizeInBytes": 0,
+            "status": "Active",
+            "supportOrdering": true,
             "autoDeleteOnIdle": "P10675199DT2H48M5.4775807S",
-            "enablePartitioning": "false",
-            "enableExpress": "false"
+            "enablePartitioning": false,
+            "enableExpress": false
+          }
+        },
+        {
+          "apiVersion": "2017-04-01",
+          "name": "[parameters('serviceBusTopicName2')]",
+          "type": "Topics",
+          "dependsOn": [
+            "[concat('Microsoft.ServiceBus/namespaces/', parameters('serviceBusNamespaceName'))]"
+          ],
+          "properties": {
+            "defaultMessageTimeToLive": "P10675199DT2H48M5.4775807S",
+            "maxSizeInMegabytes": 5120,
+            "requiresDuplicateDetection": false,
+            "duplicateDetectionHistoryTimeWindow": "PT10M",
+            "enableBatchedOperations": true,
+            "sizeInBytes": 0,
+            "status": "Active",
+            "supportOrdering": true,
+            "autoDeleteOnIdle": "P10675199DT2H48M5.4775807S",
+            "enablePartitioning": false,
+            "enableExpress": false
           },
           "resources": [
             {
@@ -60,16 +118,22 @@
               "name": "[parameters('serviceBusSubscriptionName')]",
               "type": "Subscriptions",
               "dependsOn": [
-                "[parameters('serviceBusTopicName')]"
+                "[parameters('serviceBusTopicName1')]",
+                "[parameters('serviceBusTopicName2')]"
               ],
               "properties": {
                 "lockDuration": "PT1M",
-                "requiresSession": "false",
+                "requiresSession": false,
                 "defaultMessageTimeToLive": "P10675199DT2H48M5.4775807S",
-                "deadLetteringOnMessageExpiration": "false",
-                "maxDeliveryCount": "10",
-                "enableBatchedOperations": "false",
-                "autoDeleteOnIdle": "P10675199DT2H48M5.4775807S"
+                "deadLetteringOnMessageExpiration": false,
+                "deadLetteringOnFilterEvaluationExceptions": true,
+                "messageCount": 0,
+                "maxDeliveryCount": 10,
+                "status": "Active",
+                "enableBatchedOperations": true,
+                "autoDeleteOnIdle": "P10675199DT2H48M5.4775807S",
+                "forwardTo": "[parameters('serviceBusTopicName1')]",
+                "forwardDeadLetteredMessagesTo": "[parameters('serviceBusTopicName1')]"
               }
             }
           ]
@@ -78,13 +142,13 @@
     }
   ],
   "outputs": {
-    "NamespaceConnectionString": {
+    "NamespaceDefaultConnectionString": {
       "type": "string",
-      "value": "[listkeys(variables('authRuleResourceId'), variables('sbVersion')).primaryConnectionString]"
+      "value": "[listkeys(variables('authRuleResourceId'), '2017-04-01').primaryConnectionString]"
     },
-    "SharedAccessPolicyPrimaryKey": {
+    "DefaultSharedAccessPolicyPrimaryKey": {
       "type": "string",
-      "value": "[listkeys(variables('authRuleResourceId'), variables('sbVersion')).primaryKey]"
+      "value": "[listkeys(variables('authRuleResourceId'), '2017-04-01').primaryKey]"
     }
   }
 }

@@ -8,38 +8,90 @@
         "description": "Name of the Service Bus Namespace"
       }
     },
+    "serviceBusSku": {
+      "type": "string",
+      "allowedValues": [
+        "Basic",
+        "Standard",
+        "Premium"
+      ],
+      "defaultValue": "Standard",
+      "metadata": {
+        "description": "The messaging tier for service Bus namespace"
+      }
+    },
+    "skuCapacity": {
+      "type": "int",
+      "allowedValues": [
+        1,
+        2,
+        4
+      ],
+      "defaultValue": 1,
+      "metadata": {
+        "description": "MessagingUnits for premium namespace"
+      }
+    },
     "serviceBusTopicName": {
       "type": "string",
       "metadata": {
-        "description": "Name of the Service Bus Topic"
+        "description": "Name of Service Bus Topic"
       }
     }
   },
   "variables": {
-    "sbVersion": "2015-08-01"
+    "defaultSASKeyName": "RootManageSharedAccessKey",
+    "authRuleResourceId": "[resourceId('Microsoft.ServiceBus/namespaces/authorizationRules', parameters('serviceBusNamespaceName'), variables('defaultSASKeyName'))]"
   },
   "resources": [
     {
-      "apiVersion": "2015-08-01",
+      "apiVersion": "2017-04-01",
       "name": "[parameters('serviceBusNamespaceName')]",
       "type": "Microsoft.ServiceBus/namespaces",
       "location": "[resourceGroup().location]",
-      "properties": {},
+      "sku": {
+        "name": "[parameters('serviceBusSku')]",
+        "tier": "[parameters('serviceBusSku')]",
+        "capacity": "[parameters('skuCapacity')]"
+      },
+      "tags": {
+        "tag1": "value1",
+        "tag2": "value2"
+      },
       "resources": [
         {
-          "apiVersion": "2015-08-01",
+          "apiVersion": "2017-04-01",
           "name": "[parameters('serviceBusTopicName')]",
           "type": "topics",
           "dependsOn": [
             "[concat('Microsoft.ServiceBus/namespaces/', parameters('serviceBusNamespaceName'))]"
           ],
           "properties": {
-            "path": "[parameters('serviceBusTopicName')]"
+            "defaultMessageTimeToLive": "P10675199DT2H48M5.4775807S",
+            "maxSizeInMegabytes": 5120,
+            "requiresDuplicateDetection": false,
+            "duplicateDetectionHistoryTimeWindow": "PT10M",
+            "enableBatchedOperations": true,
+            "sizeInBytes": 0,
+            "status": "Active",
+            "supportOrdering": true,
+            "autoDeleteOnIdle": "P10675199DT2H48M5.4775807S",
+            "enablePartitioning": false,
+            "enableExpress": false
           },
-          "resources": []
+          "resources": [ ]
         }
       ]
     }
   ],
-  "outputs": {}
+  "outputs": {
+    "NamespaceConnectionString": {
+      "type": "string",
+      "value": "[listkeys(variables('authRuleResourceId'), '2017-04-01').primaryConnectionString]"
+    },
+    "SharedAccessPolicyPrimaryKey": {
+      "type": "string",
+      "value": "[listkeys(variables('authRuleResourceId'), '2017-04-01').primaryKey]"
+    }
+  }
 }

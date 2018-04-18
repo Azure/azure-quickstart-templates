@@ -5,7 +5,25 @@
     "serviceBusNamespaceName": {
       "type": "string",
       "metadata": {
-        "description": "Name of the Service Bus namespace"
+        "description": "Name of Service Bus namespace"
+      }
+    },
+    "namespaceAuthorizationRuleName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of Namespace AuthorizationRule"
+      }
+    },
+    "serviceBusTopicName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of Topic"
+      }
+    },
+    "topicAuthorizationRuleName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of Topic AuthorizationRule"
       }
     },
     "serviceBusSku": {
@@ -31,35 +49,19 @@
       "metadata": {
         "description": "MessagingUnits for premium namespace"
       }
-    },
-    "namespaceAuthorizationRuleName": {
-      "type": "string",
-      "metadata": {
-        "description": "Name of the Namespace AuthorizationRule"
-      }
-    },
-    "serviceBusQueueName": {
-      "type": "string",
-      "metadata": {
-        "description": "Name of the Queue"
-      }
-    },
-    "queueAuthorizationRuleName": {
-      "type": "string",
-      "metadata": {
-        "description": "Name of the Queue AuthorizationRule"
-      }
     }
   },
   "variables": {
     "nsAuthorizationRuleResourceId": "[resourceId('Microsoft.ServiceBus/namespaces/authorizationRules', parameters('serviceBusNamespaceName'), parameters('namespaceAuthorizationRuleName'))]",
-    "queueAuthorizationRuleResourceId": "[resourceId('Microsoft.ServiceBus/namespaces/queues/authorizationRules', parameters('serviceBusNamespaceName'), parameters('serviceBusQueueName'), parameters('queueAuthorizationRuleName'))]"
+    "topicAuthorizationRuleResourceId": "[resourceId('Microsoft.ServiceBus/namespaces/topics/authorizationRules', parameters('serviceBusNamespaceName'),parameters('serviceBusTopicName'), parameters('topicAuthorizationRuleName'))]",
+    "defaultSASKeyName": "RootManageSharedAccessKey",
+    "authRuleResourceId": "[resourceId('Microsoft.ServiceBus/namespaces/authorizationRules', parameters('serviceBusNamespaceName'), variables('defaultSASKeyName'))]"
   },
   "resources": [
     {
       "apiVersion": "2017-04-01",
       "name": "[parameters('serviceBusNamespaceName')]",
-      "type": "Microsoft.ServiceBus/namespaces",
+      "type": "Microsoft.ServiceBus/Namespaces",
       "location": "[resourceGroup().location]",
       "sku": {
         "name": "[parameters('serviceBusSku')]",
@@ -73,47 +75,33 @@
       "resources": [
         {
           "apiVersion": "2017-04-01",
-          "name": "[parameters('namespaceAuthorizationRuleName')]",
-          "type": "Microsoft.ServiceBus/namespaces/authorizationRules",
-          "dependsOn": [ "[concat('Microsoft.ServiceBus/namespaces/', parameters('serviceBusNamespaceName'))]" ],
-          "location": "[resourceGroup().location]",
-          "properties": {
-            "rights": [ "Send" ]
-          }
-        }
-      ],
-      "resources": [
-        {
-          "apiVersion": "2017-04-01",
-          "name": "[parameters('serviceBusQueueName')]",
-          "type": "Queues",
+          "name": "[parameters('serviceBusTopicName')]",
+          "type": "Topics",
           "dependsOn": [
             "[concat('Microsoft.ServiceBus/namespaces/', parameters('serviceBusNamespaceName'))]"
           ],
           "properties": {
-            "lockDuration": "PT5M",
-            "maxSizeInMegabytes": "1024",
-            "requiresDuplicateDetection": "false",
-            "requiresSession": "false",
             "defaultMessageTimeToLive": "P10675199DT2H48M5.4775807S",
-            "deadLetteringOnMessageExpiration": "false",
+            "maxSizeInMegabytes": 5120,
+            "requiresDuplicateDetection": false,
             "duplicateDetectionHistoryTimeWindow": "PT10M",
-            "maxDeliveryCount": "10",
+            "enableBatchedOperations": true,
+            "sizeInBytes": 0,
+            "supportOrdering": true,
             "autoDeleteOnIdle": "P10675199DT2H48M5.4775807S",
-            "enablePartitioning": "false",
-            "enableExpress": "false",
-            "enableBatchedOperations": "false"
+            "enablePartitioning": false,
+            "enableExpress": false
           },
           "resources": [
             {
               "apiVersion": "2017-04-01",
-              "name": "[parameters('queueAuthorizationRuleName')]",
+              "name": "[parameters('topicAuthorizationRuleName')]",
               "type": "AuthorizationRules",
               "dependsOn": [
-                "[parameters('serviceBusQueueName')]"
+                "[parameters('serviceBusTopicName')]"
               ],
               "properties": {
-                "rights": [ "Listen" ]
+                "rights": [ "Send" ]
               }
             }
           ]
@@ -124,7 +112,9 @@
       "apiVersion": "2017-04-01",
       "name": "[concat(parameters('serviceBusNamespaceName'), concat('/', parameters('namespaceAuthorizationRuleName')))]",
       "type": "Microsoft.ServiceBus/namespaces/authorizationRules",
-      "dependsOn": [ "[concat('Microsoft.ServiceBus/namespaces/', parameters('serviceBusNamespaceName'))]" ],
+      "dependsOn": [
+        "[parameters('serviceBusNamespaceName')]"
+      ],
       "properties": {
         "rights": [ "Send" ]
       }
@@ -139,13 +129,21 @@
       "type": "string",
       "value": "[listkeys(variables('nsAuthorizationRuleResourceId'), '2017-04-01').primaryKey]"
     },
-    "QueueConnectionString": {
+    "NamespaceDefaultConnectionString": {
       "type": "string",
-      "value": "[listkeys(variables('queueAuthorizationRuleResourceId'), '2017-04-01').primaryConnectionString]"
+      "value": "[listkeys(variables('authRuleResourceId'), '2017-04-01').primaryConnectionString]"
     },
-    "QueueSharedAccessPolicyPrimaryKey": {
+    "DefaultSharedAccessPolicyPrimaryKey": {
       "type": "string",
-      "value": "[listkeys(variables('queueAuthorizationRuleResourceId'), '2017-04-01').primaryKey]"
+      "value": "[listkeys(variables('authRuleResourceId'), '2017-04-01').primaryKey]"
+    },
+    "TopicConnectionString": {
+      "type": "string",
+      "value": "[listkeys(variables('topicAuthorizationRuleResourceId'), '2017-04-01').primaryConnectionString]"
+    },
+    "TopicSharedAccessPolicyPrimaryKey": {
+      "type": "string",
+      "value": "[listkeys(variables('topicAuthorizationRuleResourceId'), '2017-04-01').primaryKey]"
     }
   }
 }

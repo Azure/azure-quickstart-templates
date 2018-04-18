@@ -1,4 +1,5 @@
 # 201-servicebus-create-topic-and-subscription
+ This template allows you to deploy Service Bus Standard Namespace, Topic and Subscription with auto-forwarding.
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-servicebus-create-topic-and-subscription%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
@@ -8,4 +9,4 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-For information about using this template, see [Create a Service Bus namespace with Topic and Subscription using an ARM template](http://azure.microsoft.com/documentation/articles/service-bus-resource-manager-namespace-topic/).
+For information about using this template, see [Create a Service Bus namespace with Topic and Subscription with auto forwarding using an ARM template](http://azure.microsoft.com/documentation/articles/service-bus-resource-manager-namespace-topic/).
