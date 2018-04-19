@@ -10,6 +10,13 @@
         "description": "The prefix that should be used to create the resource names."
       }
     },
+    "sapSystemCount": {
+      "type": "int",
+      "defaultValue": 1,
+      "metadata": {
+        "description": "The number of SAP systems that will use this file server"
+      }
+    },
     "osType": {
       "type": "string",
       "allowedValues": [
@@ -67,14 +74,14 @@
         "OSType": "Windows"
       },
       "SLES 12": {
-        "sku": "12-SP1",
+        "sku": "12-SP2",
         "offer": "SLES-SAP",
         "publisher": "SUSE",
         "version": "latest",
         "OSType": "Linux"
       },
       "SLES 12 BYOS": {
-        "sku": "12-SP1",
+        "sku": "12-SP2",
         "offer": "SLES-SAP-BYOS",
         "publisher": "SUSE",
         "OSType": "Linux",
@@ -84,25 +91,25 @@
     "internalOSType": "[variables('images')[parameters('osType')].OSType]",
     "csExtension": {
       "Windows": {
-        "script": "[concat(parameters('_artifactsLocation'), '/shared/noop.ps1', parameters('_artifactsLocationSasToken'))]",
-        "scriptCall": "powershell.exe -ExecutionPolicy bypass -File .\\shared\\noop.ps1"
+        "script": "[concat(parameters('_artifactsLocation'), '/scripts/noop.ps1', parameters('_artifactsLocationSasToken'))]",
+        "scriptCall": "powershell.exe -ExecutionPolicy bypass -File noop.ps1"
       },
       "Linux": {
-        "script": "[concat(parameters('_artifactsLocation'), '/shared/noop.sh', parameters('_artifactsLocationSasToken'))]",
+        "script": "[concat(parameters('_artifactsLocation'), '/scripts/noop.sh', parameters('_artifactsLocationSasToken'))]",
         "scriptCall": "sh noop.sh"
       }
     },
     "vmSizes": {
-      "nfsserversize": "Standard_DS2_v2",
-      "nfsservercount": 2,
-      "nfsserverdisks": [
-        {
-          "size": 128
-        }
-      ]
+      "fsserversize": "Standard_DS2_v2",
+      "fsservercount": 2,
+      "fsserverdisksSize": 128
     },
-    "nfsvmCount": "[variables('vmSizes').nfsservercount]",
-    "nfsvmDataDisks": "[variables('vmSizes').nfsserverdisks]",
+    "fsvmCount": "[variables('vmSizes').fsservercount]",
+    "fsvmDataDisksOptions": {
+      "Linux": "[parameters('sapSystemCount')]",
+      "Windows": "[mul(parameters('sapSystemCount'), 2)]"
+    },
+    "fsvmDataDisks": "[variables('fsvmDataDisksOptions')[variables('internalOSType')]]",
     "sidlower": "[toLower(parameters('resourcePrefix'))]",
     "vmName": "[variables('sidlower')]",
     "vnetName": "[concat(variables('sidlower'), '-vnet')]",
@@ -110,41 +117,80 @@
     "nestedDeploymentName": "nestedTemplate",
     "nestedDeploymentNameVNet": "[concat(variables('nestedDeploymentName'), 'vnet')]",
     "nestedDeploymentNamePIP": "[concat(variables('nestedDeploymentName'), 'pip')]",
-    "nestedDeploymentNameCL": "[concat(variables('nestedDeploymentName'), 'nfs')]",
+    "nestedDeploymentNameCL": "[concat(variables('nestedDeploymentName'), 'fs')]",
     "nestedDeploymentNameProf": "[concat(variables('nestedDeploymentName'), 'prof')]",
     "nestedDeploymentNameNIC": "[concat(variables('nestedDeploymentName'), 'nic')]",
-    "nestedDeploymentNameNICCL": "[concat(variables('nestedDeploymentNameNIC'), 'nfs')]",
-    "nestedDeploymentNameLBCL": "[concat(variables('nestedDeploymentName'), 'lbnfs')]",
-    "publicIpNameCL": "[concat(variables('sidlower'), '-pip-nfs')]",
-    "avSetNameCL": "[concat(variables('sidlower'), '-avset-nfs')]",
-    "nestedDeploymentNameNSG": "[concat(variables('nestedDeploymentNameCL'), 'nsg')]",
+    "nestedDeploymentNameNICCL": "[concat(variables('nestedDeploymentNameNIC'), 'fs')]",
+    "nestedDeploymentNameLBCL": "[concat(variables('nestedDeploymentName'), 'lbfs')]",
+    "publicIpNameCL": "[concat(variables('sidlower'), '-pip-fs')]",
+    "avSetNameCL": "[concat(variables('sidlower'), '-avset-fs')]",
     "nsgNameCL": "[concat(variables('sidlower'), '-nsg')]",
     "internalStorageTypeCL": "Premium_LRS",
-    "loadBalancerNameCL": "[concat(variables('sidlower'), '-lb-nfs')]",
-    "vmNameCL": "[concat(variables('vmName'), '-nfs')]",
-    "nicNameCL": "[concat(variables('sidlower'), '-nic-nfs')]",
-    "osDiskType": "image"
+    "loadBalancerNameCL": "[concat(variables('sidlower'), '-lb-fs')]",
+    "vmNameCL": "[concat(variables('vmName'), '-fs')]",
+    "nicNameCL": "[concat(variables('sidlower'), '-nic-fs')]",
+    "osDiskType": "image",
+    "osSecurityAllowAll": [
+      {
+        "name": "ALLOW_ALL",
+        "properties": {
+          "description": "Allow all",
+          "protocol": "*",
+          "sourcePortRange": "*",
+          "destinationPortRange": "*",
+          "sourceAddressPrefix": "*",
+          "destinationAddressPrefix": "*",
+          "access": "Allow",
+          "priority": 150,
+          "direction": "Inbound"
+        }
+      }
+    ],
+    "osSecurityRules": {
+      "Windows": [
+        {
+          "name": "RDP",
+          "properties": {
+            "description": "Allow RDP Subnet",
+            "protocol": "Tcp",
+            "sourcePortRange": "*",
+            "destinationPortRange": "3389",
+            "sourceAddressPrefix": "*",
+            "destinationAddressPrefix": "*",
+            "access": "Allow",
+            "priority": 150,
+            "direction": "Inbound"
+          }
+        }
+      ],
+      "Linux": [
+        {
+          "name": "SSH",
+          "properties": {
+            "description": "Allow SSH Subnet",
+            "protocol": "Tcp",
+            "sourcePortRange": "*",
+            "destinationPortRange": "22",
+            "sourceAddressPrefix": "*",
+            "destinationAddressPrefix": "*",
+            "access": "Allow",
+            "priority": 150,
+            "direction": "Inbound"
+          }
+        }
+      ]
+    },
+    "selectedSecurityRules": "[variables('osSecurityRules')[variables('internalOSType')]]"
   },
   "resources": [
     {
-      "apiVersion": "2017-05-10",
-      "name": "[variables('nestedDeploymentNameNSG')]",
-      "type": "Microsoft.Resources/deployments",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('nsgNameCL')]",
+      "apiVersion": "2018-04-01",
+      "location": "[resourceGroup().location]",
       "condition": "[equals(length(parameters('subnetId')), 0)]",
       "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), '/shared/newnsg.json', parameters('_artifactsLocationSasToken'))]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "nsgName": {
-            "value": "[variables('nsgNameCL')]"
-          },
-          "osType": {
-            "value": "[variables('internalOSType')]"
-          }
-        }
+        "securityRules": "[variables('selectedSecurityRules')]"
       }
     },
     {
@@ -152,13 +198,13 @@
       "name": "[variables('nestedDeploymentNameVnet')]",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameNSG'))]"
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('nsgNameCL'))]"
       ],
       "condition": "[equals(length(parameters('subnetId')), 0)]",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), '/shared/newvnetnsg.json', parameters('_artifactsLocationSasToken'))]",
+          "uri": "[concat(parameters('_artifactsLocation'), '/nestedtemplates/newvnetnsg.json', parameters('_artifactsLocationSasToken'))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -199,13 +245,13 @@
       "type": "Microsoft.Resources/deployments",
       "copy": {
         "name": "pipLoop",
-        "count": "[variables('nfsvmCount')]"
+        "count": "[variables('fsvmCount')]"
       },
       "condition": "[equals(length(parameters('subnetId')), 0)]",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), '/shared/newpip.json', parameters('_artifactsLocationSasToken'))]",
+          "uri": "[concat(parameters('_artifactsLocation'), '/nestedtemplates/newpip.json', parameters('_artifactsLocationSasToken'))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -224,12 +270,12 @@
       "type": "Microsoft.Resources/deployments",
       "copy": {
         "name": "nicConfigCLLoop",
-        "count": "[variables('nfsvmCount')]"
+        "count": "[variables('fsvmCount')]"
       },
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), '/shared/nic-config.json', parameters('_artifactsLocationSasToken'))]",
+          "uri": "[concat(parameters('_artifactsLocation'), '/nestedtemplates/nic-config.json', parameters('_artifactsLocationSasToken'))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -262,7 +308,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), '/shared/loadbalancer.json', parameters('_artifactsLocationSasToken'))]",
+          "uri": "[concat(parameters('_artifactsLocation'), '/nestedtemplates/loadbalancer.json', parameters('_artifactsLocationSasToken'))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -270,22 +316,10 @@
             "value": "[variables('loadBalancerNameCL')]"
           },
           "sapSystemCount": {
-            "value": 1
-          },
-          "stackType": {
-            "value": ""
+            "value": "[parameters('sapSystemCount')]"
           },
           "osType": {
             "value": "[variables('internalOSType')]"
-          },
-          "createXSCS": {
-            "value": false
-          },
-          "createDB": {
-            "value": false
-          },
-          "dbType": {
-            "value": ""
           },
           "subnetId": {
             "value": "[reference(concat(variables('nestedDeploymentNameNICCL'), '-0')).outputs.selectedConfiguration.value.subnet.id]"
@@ -302,14 +336,14 @@
     {
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('nicNameCL'), '-', copyIndex())]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2018-04-01",
       "copy": {
         "name": "nicCLLoop",
-        "count": "[variables('nfsvmCount')]"
+        "count": "[variables('fsvmCount')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNamePIP'), '-', copyIndex())]",
-        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameNICCL'), '-', copyIndex())]",
+        "pipLoop",
+        "nicConfigCLLoop",
         "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameVnet'))]",
         "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameLBCL'))]"
       ],
@@ -330,16 +364,16 @@
     },
     {
       "apiVersion": "2017-05-10",
-      "name": "[concat(variables('nestedDeploymentNameProf'), '-nfs-', copyIndex())]",
+      "name": "[concat(variables('nestedDeploymentNameProf'), '-fs-', copyIndex())]",
       "type": "Microsoft.Resources/deployments",
       "copy": {
         "name": "osDiskPartsCLLoop",
-        "count": "[variables('nfsvmCount')]"
+        "count": "[variables('fsvmCount')]"
       },
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), '/shared/os-disk-parts-md.json', parameters('_artifactsLocationSasToken'))]",
+          "uri": "[concat(parameters('_artifactsLocation'), '/nestedtemplates/os-disk-parts-md.json', parameters('_artifactsLocationSasToken'))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -376,25 +410,25 @@
       "type": "Microsoft.Resources/deployments",
       "copy": {
         "name": "vmCLLoop",
-        "count": "[variables('nfsvmCount')]"
+        "count": "[variables('fsvmCount')]"
       },
       "dependsOn": [
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicNameCL'), '-', copyIndex())]",
         "[concat('Microsoft.Compute/availabilitySets/', variables('avSetNameCL'))]",
-        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameProf'), '-nfs-', copyIndex())]"
+        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameProf'), '-fs-', copyIndex())]"
       ],
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), '/shared/server-md.json', parameters('_artifactsLocationSasToken'))]",
+          "uri": "[concat(parameters('_artifactsLocation'), '/nestedtemplates/server-md.json', parameters('_artifactsLocationSasToken'))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
           "imageReference": {
-            "value": "[reference(concat(variables('nestedDeploymentNameProf'), '-nfs-', copyIndex())).outputs.imageReference.value]"
+            "value": "[reference(concat(variables('nestedDeploymentNameProf'), '-fs-', copyIndex())).outputs.imageReference.value]"
           },
           "osDisk": {
-            "value": "[reference(concat(variables('nestedDeploymentNameProf'), '-nfs-', copyIndex())).outputs.osDisk.value]"
+            "value": "[reference(concat(variables('nestedDeploymentNameProf'), '-fs-', copyIndex())).outputs.osDisk.value]"
           },
           "osDiskType": {
             "value": "[variables('osDiskType')]"
@@ -403,7 +437,7 @@
             "value": "[concat(variables('vmNameCL'), '-', copyIndex())]"
           },
           "vmSize": {
-            "value": "[variables('vmSizes').nfsserversize]"
+            "value": "[variables('vmSizes').fsserversize]"
           },
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
@@ -436,11 +470,11 @@
               "copy": [
                 {
                   "name": "dataDisks",
-                  "count": "[length(variables('nfsvmDataDisks'))]",
+                  "count": "[variables('fsvmDataDisks')]",
                   "input": {
                     "lun": "[copyIndex('dataDisks')]",
                     "createOption": "Empty",
-                    "diskSizeGB": "[variables('nfsvmDataDisks')[copyIndex('dataDisks')].size]"
+                    "diskSizeGB": "[variables('vmSizes').fsserverdisksSize]"
                   }
                 }
               ]
