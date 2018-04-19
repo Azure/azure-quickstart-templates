@@ -10,7 +10,6 @@
     },
     "clusterLoginUserName": {
       "type": "string",
-      "defaultValue": "admin",
       "metadata": {
         "description": "These credentials can be used to submit jobs to the cluster and to log into cluster dashboards."
       }
@@ -23,7 +22,6 @@
     },
     "sshUserName": {
       "type": "string",
-      "defaultValue": "sshuser",
       "metadata": {
         "description": "These credentials can be used to remotely access the cluster."
       }
@@ -39,45 +37,14 @@
     "defaultStorageAccount": {
       "name": "[uniqueString(resourceGroup().id)]",
       "type": "Standard_LRS"
-    },
-    "networkConfig": {
-      "name": "[uniqueString(resourceGroup().id)]",
-      "addressPrefix": "10.0.0.0/16"
-    },
-    "subnetConfig": {
-      "name": "default",
-      "addressPrefix": "10.0.0.0/24"
     }
   },
   "resources": [
     {
-      "name": "[variables('networkConfig').name]",
-      "type": "Microsoft.Network/virtualNetworks",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2017-06-01",
-      "dependsOn": [ ],
-      "tags": { },
-      "properties": {
-        "addressSpace": {
-          "addressPrefixes": [
-            "[variables('networkConfig').addressPrefix]"
-          ]
-        },
-        "subnets": [
-          {
-            "name": "[variables('subnetConfig').name]",
-            "properties": {
-              "addressPrefix": "[variables('subnetConfig').addressPrefix]"
-            }
-          }
-        ]
-      }
-    },
-    {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('defaultStorageAccount').name]",
       "location": "[resourceGroup().location]",
-      "apiVersion": "2016-01-01",
+      "apiVersion": "2017-10-01",
       "sku": {
           "name": "[variables('defaultStorageAccount').type]"
       },
@@ -90,8 +57,7 @@
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-03-01-preview",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/',variables('defaultStorageAccount').name)]",
-        "[concat('Microsoft.Network/virtualNetworks/',variables('networkConfig').name)]"
+        "[concat('Microsoft.Storage/storageAccounts/',variables('defaultStorageAccount').name)]"
       ],
       "tags": { },
       "properties": {
@@ -111,10 +77,10 @@
         "storageProfile": {
           "storageaccounts": [
             {
-              "name": "[replace(replace(concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('defaultStorageAccount').name), '2016-01-01').primaryEndpoints.blob),'https:',''),'/','')]",
+              "name": "[replace(replace(concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('defaultStorageAccount').name), '2017-10-01').primaryEndpoints.blob),'https:',''),'/','')]",
               "isDefault": true,
               "container": "[parameters('clusterName')]",
-              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name), '2016-01-01').keys[0].value]"
+              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name), '2017-10-01').keys[0].value]"
             }
           ]
         },
@@ -131,10 +97,6 @@
                   "username": "[parameters('sshUserName')]",
                   "password": "[parameters('sshPassword')]"
                 }
-              },
-              "virtualNetworkProfile": {
-                "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('networkConfig').name)]",
-                "subnet": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('networkConfig').name), '/subnets/', variables('subnetConfig').name)]"
               }
             },
             {
@@ -153,10 +115,6 @@
                   "username": "[parameters('sshUserName')]",
                   "password": "[parameters('sshPassword')]"
                 }
-              },
-              "virtualNetworkProfile": {
-                "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('networkConfig').name)]",
-                "subnet": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('networkConfig').name), '/subnets/', variables('subnetConfig').name)]"
               }
             },
             {
@@ -170,10 +128,6 @@
                   "username": "[parameters('sshUserName')]",
                   "password": "[parameters('sshPassword')]"
                 }
-              },
-              "virtualNetworkProfile": {
-                "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('networkConfig').name)]",
-                "subnet": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('networkConfig').name), '/subnets/', variables('subnetConfig').name)]"
               }
             }
           ]
@@ -182,10 +136,6 @@
     }
   ],
   "outputs": {
-    "vnet": {
-      "type": "object",
-      "value": "[reference(resourceId('Microsoft.Network/virtualNetworks',variables('networkConfig').name))]"
-    },
     "cluster": {
       "type": "object",
       "value": "[reference(resourceId('Microsoft.HDInsight/clusters',parameters('clusterName')))]"
