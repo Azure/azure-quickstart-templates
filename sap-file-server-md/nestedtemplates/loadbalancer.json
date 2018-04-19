@@ -1,0 +1,183 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "loadBalancerName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the the load balancer"
+            }
+        },
+        "sapSystemCount": {
+            "type": "int",
+            "defaultValue": 1,
+            "metadata": {
+                "description": "The number of SAP systems for which the load balancer should be configured"
+            }
+        },
+        "osType": {
+            "type": "string",
+            "defaultValue": "Windows",
+            "metadata": {
+                "description": "The type of the Operating System"
+            }
+        },
+        "subnetId": {
+            "type": "string",
+            "metadata": {
+                "description": "The id of the subnet you want to use."
+            }
+        },
+        "_artifactsLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+            },
+            "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sap-file-server-md/"
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+            },
+            "defaultValue": ""
+        }
+    },
+    "variables": {
+        "frontendIPConfigurations": {
+            "copy": [
+                {
+                    "name": "frontendIPConfigurations",
+                    "count": "[parameters('sapSystemCount')]",
+                    "input": {
+                        "properties": {
+                            "subnet": {
+                                "id": "[parameters('subnetId')]"
+                            },
+                            "privateIPAllocationMethod": "Dynamic"
+                        },
+                        "name": "[concat('lbFrontendFile', '-', copyIndex('frontendIPConfigurations'))]"
+                    }
+                }
+            ]
+        },
+        "backendAddressPools": {
+            "copy": [
+                {
+                    "name": "backendAddressPools",
+                    "count": "[parameters('sapSystemCount')]",
+                    "input": {
+                        "name": "[concat('lbBackendFile', '-', copyIndex('backendAddressPools'))]"
+                    }
+                }
+            ]
+        },
+        "probes": {
+            "copy": [
+                {
+                    "name": "probes",
+                    "count": "[parameters('sapSystemCount')]",
+                    "input": {
+                        "properties": {
+                            "protocol": "Tcp",
+                            "port": "[add(61000, copyIndex('probes'))]",
+                            "intervalInSeconds": 5,
+                            "numberOfProbes": 2
+                        },
+                        "name": "[concat('lbProbeFile', '-', copyIndex('probes'))]"
+                    }
+                }
+            ]
+        },
+        "nicBackAddressPools": {
+            "copy": [
+                {
+                    "name": "nicBackAddressPools",
+                    "count": "[parameters('sapSystemCount')]",
+                    "input": {
+                        "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools/', parameters('loadBalancerName'), concat('lbBackendFile', '-', copyIndex('nicBackAddressPools')))]"
+                    }
+                }
+            ]
+        },
+        "loadBalancingRulesLinux2049T": {
+            "copy": [
+                {
+                    "name": "loadBalancingRules",
+                    "count": "[parameters('sapSystemCount')]",
+                    "input": {
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations/', parameters('loadBalancerName'), concat('lbFrontendFile', '-', copyIndex('loadBalancingRules')))]"
+                            },
+                            "backendAddressPool": {
+                                "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools/', parameters('loadBalancerName'), concat('lbBackendFile', '-', copyIndex('loadBalancingRules')))]"
+                            },
+                            "probe": {
+                                "id": "[resourceId('Microsoft.Network/loadBalancers/probes/', parameters('loadBalancerName'), concat('lbProbeFile', '-', copyIndex('loadBalancingRules')))]"
+                            },
+                            "protocol": "Tcp",
+                            "frontendPort": 2049,
+                            "backendPort": 2049,
+                            "enableFloatingIP": true,
+                            "idleTimeoutInMinutes": 30
+                        },
+                        "name": "[concat('lbProbeFile2049T', '-', copyIndex('loadBalancingRules'))]"
+                    }
+                }
+            ]
+        },
+        "loadBalancingRulesLinux2049U": {
+            "copy": [
+                {
+                    "name": "loadBalancingRules",
+                    "count": "[parameters('sapSystemCount')]",
+                    "input": {
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations/', parameters('loadBalancerName'), concat('lbFrontendFile', '-', copyIndex('loadBalancingRules')))]"
+                            },
+                            "backendAddressPool": {
+                                "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools/', parameters('loadBalancerName'), concat('lbBackendFile', '-', copyIndex('loadBalancingRules')))]"
+                            },
+                            "probe": {
+                                "id": "[resourceId('Microsoft.Network/loadBalancers/probes/', parameters('loadBalancerName'), concat('lbProbeFile', '-', copyIndex('loadBalancingRules')))]"
+                            },
+                            "protocol": "Udp",
+                            "frontendPort": 2049,
+                            "backendPort": 2049,
+                            "enableFloatingIP": true,
+                            "idleTimeoutInMinutes": 30
+                        },
+                        "name": "[concat('lbProbeFile2049U', '-', copyIndex('loadBalancingRules'))]"
+                    }
+                }
+            ]
+        },
+        "loadBalancingRules": {
+            "Linux": "[concat(variables('loadBalancingRulesLinux2049T').loadBalancingRules, variables('loadBalancingRulesLinux2049U').loadBalancingRules)]",
+            "Windows": []
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/loadBalancers",
+            "name": "[parameters('loadBalancerName')]",
+            "apiVersion": "2018-04-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "frontendIPConfigurations": "[variables('frontendIPConfigurations').frontendIPConfigurations]",
+                "backendAddressPools": "[variables('backendAddressPools').backendAddressPools]",
+                "loadBalancingRules": "[variables('loadBalancingRules')[parameters('osType')]]",
+                "probes": "[variables('probes').probes]"
+            }
+        }
+    ],
+    
+    "outputs": {
+        "nicBackAddressPools": {
+            "value": "[variables('nicBackAddressPools').nicBackAddressPools]",
+            "type": "array"
+        }
+    }
+}
