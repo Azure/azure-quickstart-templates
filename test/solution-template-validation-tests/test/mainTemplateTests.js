@@ -87,7 +87,7 @@ describe('template files - ', () => {
             /** The location parameter can have a defaultValue property, and its value must be '[resourceGroup().location]' */
             var location = mainTemplateFileJSONObject.parameters.location;
             if (location.defaultValue) {
-                location.defaultValue.should.withMessage('in file:mainTemplate.json, the default value of location property MUST be [resourceGroup().location]').be.eql('[resourceGroup().location]');
+                location.defaultValue.toLowerCase().should.withMessage('in file:mainTemplate.json, the default value of location property MUST be [resourceGroup().location]').be.eql('[resourceGroup().location]'.toLowerCase());
             }
             location.should.withMessage('in file:mainTemplate.json, location property MUST NOT have allowedValues property').not.have.property('allowedValues');
         });
@@ -108,28 +108,28 @@ describe('template files - ', () => {
             var resources = Object.keys(templateObject.resources).map(function(key) {
                 return templateObject.resources[key];
             });
-            /** Each resource location should be "location": "[parameters('*')]" or ""[variables('*')]"" */
-            it.each(resources, 'location value of resource %s should be either [parameters(\'*\')] or [variables(\'*\')]', ['name'], function(element, next) {
-                var message = 'in file:' + templateJSONObject.filename + ' should have location set to [parameters(\'location\')] or [variables(\'location\')]';
+            /** Each resource location value should be an expression */
+            it.each(resources, 'location value of resource %s must be an expression', function(element, next) {
+                var message = 'in file:' + templateJSONObject.filename + ' must have location set to be an expression';
                 if (element.location) {
-                    element.location.should.withMessage(getErrorMessage(element, templateJSONObject.filepath, message)).match(/\[parameters\('.+'\)\]|\[variables\('.+'\)\]/);
+                    element.location.toLowerCase().should.withMessage(getErrorMessage(element, templateJSONObject.filepath, message)).match(/\['.+'\]|/);
                 }
                 next();
             });
             /** resourceGroup().location should NOT be present anywhere in template, EXCEPT as a defaultValue */
             it.each(templateObject, 'resourceGroup().location must NOT be be used in the template file ' + templateJSONObject.filename + ', except as a default value for the location parameter. Please correct similar errors in the file', function(element, next) {
-                var templateFileContent = JSON.stringify(templateObject);
-                templateFileContent = templateFileContent.replace(/\"defaultValue\":\s*\"\[resourceGroup\(\)\.location\]\"/,"");
-                var locationString = 'resourceGroup().location';
+                var templateFileContent = JSON.stringify(templateObject).toLowerCase();
+                templateFileContent = templateFileContent.replace(/\"defaultvalue\":\s*\"\[resourcegroup\(\)\.location\]\"/,"");
+                var locationString = 'resourceGroup().location'.toLowerCase();
                 var message = 'in file:' + templateJSONObject.filename + ' should NOT have location set to resourceGroup().location';
                 assert(templateFileContent.includes(locationString) === false, message);
                 next();
             });
             /** providers().apiVersions[n] must not be present for all template files. */
             it.each(templateObject, 'providers().apiVersions must NOT be retrieved using providers().apiVersions[n] in the template file ' + templateJSONObject.filename + '. This function is non-deterministic. Please correct similar errors in the file', function(element, next) {
-                var templateFileContent = JSON.stringify(templateObject);
+                var templateFileContent = JSON.stringify(templateObject).toLowerCase();
                 var message = 'in file:' + templateJSONObject.filename + ' should NOT have api version determined by providers().';
-                assert(templateFileContent.match(/providers\(.*?\)\.apiVersions/) === null, message);
+                assert(templateFileContent.match(/providers\(.*?\)\.apiversions/) === null, message);
                 next();
             });
         });
