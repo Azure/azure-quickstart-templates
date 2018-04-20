@@ -92,15 +92,16 @@ describe('template files - ', () => {
 
         });
 
-        /** The location parameter MUST NOT have allowedValues property and MUST have defaultValue property whose value MUST be '[resourceGroup().location]' */
+        /** The location parameter MUST NOT have allowedValues property and if it has defaultValue property, it's value MUST be '[resourceGroup().location]' */
         it('a parameter named "location" must exist and it must have a defaultValue of resourceGroup().location', () => {
             mainTemplateFileJSONObject.should.withMessage('file:mainTemplate.json is missing parameters property').have.property('parameters');
             mainTemplateFileJSONObject.parameters.should.withMessage('file:mainTemplate.json is missing location property in parameters').have.property('location');
 
-            /** The location parameter must have a defaultValue property, and its value must be '[resourceGroup().location]' */
+            /** The location parameter can have a defaultValue property, and its value must be '[resourceGroup().location]' */
             var location = mainTemplateFileJSONObject.parameters.location;
-            location.should.withMessage('in file:mainTemplate.json, location property MUST have defaultValue').have.property('defaultValue');
-            location.defaultValue.should.withMessage('in file:mainTemplate.json, the default value of location property MUST be [resourceGroup().location]').be.eql('[resourceGroup().location]');
+            if (location.defaultValue) {
+                location.defaultValue.should.withMessage('in file:mainTemplate.json, the default value of location property MUST be [resourceGroup().location]').be.eql('[resourceGroup().location]');
+            }
             location.should.withMessage('in file:mainTemplate.json, location property MUST NOT have allowedValues property').not.have.property('allowedValues');
         });
 
@@ -131,6 +132,7 @@ describe('template files - ', () => {
             /** resourceGroup().location should NOT be present anywhere in template, EXCEPT as a defaultValue */
             it.each(templateObject, 'resourceGroup().location must NOT be be used in the template file ' + templateJSONObject.filename + ', except as a default value for the location parameter. Please correct similar errors in the file', function(element, next) {
                 var templateFileContent = JSON.stringify(templateObject);
+                templateFileContent = templateFileContent.replace(/\"defaultValue\":\s*\"\[resourceGroup\(\)\.location\]\"/,"");
                 var locationString = 'resourceGroup().location';
                 var message = 'in file:' + templateJSONObject.filename + ' should NOT have location set to resourceGroup().location';
                 assert(templateFileContent.includes(locationString) === false, message);
