@@ -41,7 +41,7 @@ function throw_if_empty() {
 function run_util_script() {
   local script_path="$1"
   shift
-  curl --silent "${artifacts_location}/${script_path}${artifacts_location_sas_token}" | sudo bash -s -- "$@"
+  curl --silent "${artifacts_location}${script_path}${artifacts_location_sas_token}" | sudo bash -s -- "$@"
   local return_value=$?
   if [ $return_value -ne 0 ]; then
     >&2 echo "Failed while executing script '$script_path'."
@@ -168,8 +168,8 @@ throw_if_empty --aks_cluster_name $aks_cluster_name
 throw_if_empty --aks_cluster_name $mongodb_uri
 
 #download dependencies
-job_xml=$(curl -s ${artifacts_location}/scripts/jenkins/basic-docker-build-job.xml${artifacts_location_sas_token})
-credentials_xml=$(curl -s ${artifacts_location}/scripts/jenkins/basic-user-pwd-credentials.xml${artifacts_location_sas_token})
+job_xml=$(curl -s ${artifacts_location}scripts/jenkins/basic-docker-build-job.xml${artifacts_location_sas_token})
+credentials_xml=$(curl -s ${artifacts_location}scripts/jenkins/basic-user-pwd-credentials.xml${artifacts_location_sas_token})
 
 #escape xml reserved characters
 escapsed_credentials_id=$(xmlstarlet esc "$credentials_id")
@@ -224,7 +224,7 @@ EOF
   job_xml=${job_xml//'<triggers/>'/${triggers_xml_node}}
 fi
 
-job_xml=${job_xml//'{insert-groovy-script}'/"$(curl -s ${artifacts_location}/scripts/jenkins/basic-docker-build.groovy${artifacts_location_sas_token})"}
+job_xml=${job_xml//'{insert-groovy-script}'/"$(curl -s ${artifacts_location}scripts/jenkins/basic-docker-build.groovy${artifacts_location_sas_token})"}
 echo "${job_xml}" > job.xml
 
 #install the required plugins
