@@ -12,7 +12,7 @@
 # limitations under the License.
 
 #
-# This scripts installs, configures and secures a MySQL server
+# This scripts installs, configures and secures a MariaDB server
 #
 
 MYSQL_USER=$1
@@ -26,43 +26,43 @@ log() {
 }
 
 #
-# Prepare disk for MySQL server
+# Prepare disk for MariaDB server
 #
 
-log "Preparing disk for MySQL server ..."
+log "Preparing disk for MariaDB server ..."
 
 bash ./prepare-mysql-disks.sh >> "${LOG_FILE}" 2>&1
 
 status=$?
 if [ ${status} -ne 0 ]; then
-  log "Preparing disk for MySQL server ... Failed" & exit status;
+  log "Preparing disk for MariaDB server ... Failed" & exit status;
 fi
 
-log "Preparing disk for MySQL server ... Successful"
+log "Preparing disk for MariaDB server ... Successful"
 
 
 #
-# Install MySQL sever and configure it
+# Install MariaDB sever and configure it
 #
 
-log "Installing MySQL server packages ..."
+log "Installing MariaDB server packages ..."
 
 n=0
 until [ ${n} -ge 5 ]
 do
-    sudo sudo yum install -y mysql-server >> "${LOG_FILE}" 2>&1 && break
+    sudo sudo yum install -y mariadb-server >> "${LOG_FILE}" 2>&1 && break
     n=$((n+1))
     sleep ${SLEEP_INTERVAL}
 done
 if [ ${n} -ge 5 ]; then
-  log "Installing MySQL server packages ... Failed" & exit 1;
+  log "Installing MariaDB server packages ... Failed" & exit 1;
 fi
 
-log "Installing MySQL server packages ... Successful"
+log "Installing MariaDB server packages ... Successful"
 
-log "Updating MySQL server configurations ..."
+log "Updating MariaDB server configurations ..."
 
-sudo service mysqld stop
+sudo systemctl stop mariadb
 
 sudo cat > /etc/my.cnf <<EOF
 [mysqld]
@@ -88,7 +88,6 @@ max_connections = 550
 #and chown the specified folder to the mysql user.
 log_bin=/var/lib/mysql/mysql_binary_log
 
-# For MySQL version 5.1.8 or later. Comment out binlog_format for older versions.
 binlog_format = mixed
 
 read_buffer_size = 2M
@@ -106,25 +105,23 @@ innodb_flush_method = O_DIRECT
 innodb_log_file_size = 512M
 
 [mysqld_safe]
-log-error=/var/log/mysqld.log
-pid-file=/var/run/mysqld/mysqld.pid
-
-sql_mode=STRICT_ALL_TABLES
+log-error=/var/log/mariadb/mariadb.log
+pid-file=/var/run/mariadb/mariadb.pid
 EOF
 
-log "Updating MySQL server configurations ... Successful"
+log "Updating MariaDB server configurations ... Successful"
 
 
 #
-# Start MySQL server and make sure it starts properly
+# Start MariaDB server and make sure it starts properly
 #
 
-log "Starting MySQL server ..."
+log "Starting MariaDB server ..."
 
-sudo /sbin/chkconfig mysqld on
-sudo service mysqld start
+sudo systemctl enable mariadb
+sudo systemctl start mariadb
 
-# Wait till MySQL server starts
+# Wait till MariaDB server starts
 i=0
 until [ ${i} -ge 5 ]
 do
@@ -137,15 +134,15 @@ do
 done
 
 if [ ${i} -ge 5 ]; then
-  log "Starting MySQL server ... Failed"
+  log "Starting MariaDB server ... Failed"
   exit 1
 fi
 
-log "Starting MySQL server ... Successful"
+log "Starting MariaDB server ... Successful"
 
 
 #
-# Create User with proper permission for to access MySQL server
+# Create User with proper permission for to access MariaDB server
 #
 
 log "Creating User ${MYSQL_USER} for MySQL server ..."
@@ -160,12 +157,12 @@ log "Creating User ${MYSQL_USER} for MySQL server ... Successful"
 
 
 #
-# Secure MySQL server
+# Secure MariaDB server
 #
 
-log "Securing MySQL server ..."
+log "Securing MariaDB server ..."
 
-SECURE_MYSQL=$(expect -c "
+SECURE_MARIADB=$(expect -c "
 set timeout 10
 spawn mysql_secure_installation
 expect \"Enter current password for root (enter for none):\"
@@ -183,8 +180,8 @@ send \"y\r\"
 expect eof
 ")
 
-echo "$SECURE_MYSQL" >> "${LOG_FILE}" 2>&1
+echo "$SECURE_MARIADB" >> "${LOG_FILE}" 2>&1
 
-log "Securing MySQL server ... Successful"
+log "Securing MariaDB server ... Successful"
 
 exit 0

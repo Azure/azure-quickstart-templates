@@ -14,7 +14,7 @@ log() {
 
 stop_db()
 {
-  sudo service postgresql stop
+  sudo systemctl stop postgresql
 }
 
 fail_or_continue()
@@ -438,8 +438,9 @@ wait_for_db_server_to_start()
 
 log "------- initialize-postgresql.sh starting -------"
 
-sudo service postgresql initdb
-sudo service postgresql start
+postgresql-setup initdb
+sudo systemctl start postgresql
+
 SCM_PWD=$(create_random_password)
 DATA_DIR=/var/lib/pgsql/data
 DB_HOST=$(hostname -f)
@@ -474,8 +475,8 @@ host    all         all         127.0.0.1/32          md5  \ ' $DATA_DIR/pg_hba.
 #echo "listen_addresses = '*'" >> $DATA_DIR/postgresql.conf
 
 #configure the postgresql server to start at boot
-sudo /sbin/chkconfig postgresql on
-sudo service postgresql restart
+sudo systemctl enable postgresql
+sudo systemctl restart postgresql
 
 wait_for_db_server_to_start
 
@@ -496,7 +497,7 @@ create_hive_metastore
 configure_remote_connections
 
 # restart to make sure all configuration take effects
-sudo service postgresql restart
+sudo systemctl restart postgresql
 
 wait_for_db_server_to_start
 

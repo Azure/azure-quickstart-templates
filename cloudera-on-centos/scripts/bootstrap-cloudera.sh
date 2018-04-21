@@ -115,7 +115,7 @@ OIFS=$IFS
 IFS=','
 for x in $NODE_IPS
 do
-  log "Workier IP: $x"
+  log "Worker IP: $x"
   line=$(echo "$x" | sed 's/:/ /' | sed 's/:/ /')
   wip_string+=$(echo "$line" | cut -d ' ' -f 1 | sed 's/$/,/')
   log "current wip_string is: $wip_string"
@@ -126,7 +126,7 @@ log "Worker ip to be supplied to next script: $worker_ip"
 log "BEGIN: Starting detached script to finalize initialization"
 if [ "$INSTALLCDH" == "True" ]
 then
-  if ! sh initialize-cloudera-server.sh "$CLUSTERNAME" "$key" "$mip" "$worker_ip" "$HA" "$ADMINUSER" "$PASSWORD" "$CMUSER" "$CMPASSWORD" "$EMAILADDRESS" "$BUSINESSPHONE" "$FIRSTNAME" "$LASTNAME" "$JOBROLE" "$JOBFUNCTION" "$COMPANY" "$VMSIZE">/dev/null 2>&1
+  if ! sh initialize-cloudera-server.sh "$CLUSTERNAME" "$key" "$mip" "$worker_ip" "$HA" "$ADMINUSER" "$PASSWORD" "$CMUSER" "$CMPASSWORD" "$EMAILADDRESS" "$BUSINESSPHONE" "$FIRSTNAME" "$LASTNAME" "$JOBROLE" "$JOBFUNCTION" "$COMPANY" "$VMSIZE" >/dev/null 2>&1
   then
     log "initialize-cloudera-server.sh returned non-zero exit code"
     log "------- bootstrap-cloudera.sh failed -------"

@@ -138,18 +138,27 @@ cat /etc/selinux/config > /tmp/beforeSelinux.out
 sed -i 's^SELINUX=enforcing^SELINUX=disabled^g' /etc/selinux/config || true
 cat /etc/selinux/config > /tmp/afterSeLinux.out
 
-# Disable iptables
+# centos7 uses firewalld instead of iptables
 log "Disable iptables"
-/etc/init.d/iptables save
-/etc/init.d/iptables stop
-chkconfig iptables off
+firewall-cmd --runtime-to-permanent
+systemctl stop firewalld
+systemctl disable firewalld
+systemctl stop iptables
+systemctl disable iptables
 
-# Install and start NTP
+# use ntp instead of chrony, and tuned can overwrite sysctl.conf
+log "Disable chrony and tuned"
+systemctl stop chronyd
+systemctl disable chronyd
+systemctl stop tuned
+systemctl disable tuned
+
 log "Install and start NTP"
 yum install -y ntp
-service ntpd start
-service ntpd status
-chkconfig ntpd on
+systemctl start ntpd
+systemctl status ntpd
+systemctl enable ntpd
+
 
 # Disable THP
 log "Disable THP"
@@ -180,7 +189,8 @@ myhostname=$(hostname)
 fqdnstring=$(python -c "import socket; print socket.getfqdn('$myhostname')")
 log "Set host FQDN to ${fqdnstring}"
 sed -i "s/.*HOSTNAME.*/HOSTNAME=${fqdnstring}/g" /etc/sysconfig/network
-/etc/init.d/network restart
+
+systemctl restart network
 
 #disable password authentication in ssh
 #sed -i "s/UsePAM\s*yes/UsePAM no/" /etc/ssh/sshd_config
