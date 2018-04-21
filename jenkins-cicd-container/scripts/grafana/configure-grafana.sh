@@ -128,12 +128,12 @@ EOF
 )"
 
 #create dashboard
-dashboard_db=$(curl -s ${ARTIFACTS_LOCATION}/scripts/grafana/dashboard-db.json${ARTIFACTS_LOCATION_SAS_TOKEN})
+dashboard_db=$(curl -s ${ARTIFACTS_LOCATION}scripts/grafana/dashboard-db.json${ARTIFACTS_LOCATION_SAS_TOKEN})
 dashboard_db=${dashboard_db//'{RESOURCE-GROUP-PLACEHOLDER}'/${RESOURCE_GROUP}}
 dashboard_db=${dashboard_db//'{COSMOSDB-NAME-PLACEHOLDER}'/${COMSOSDB_NAME}}
 
 targets=""
-dashboard_aks_target=$(curl -s ${ARTIFACTS_LOCATION}/scripts/grafana/dashboard-aks-target.json${ARTIFACTS_LOCATION_SAS_TOKEN})
+dashboard_aks_target=$(curl -s ${ARTIFACTS_LOCATION}scripts/grafana/dashboard-aks-target.json${ARTIFACTS_LOCATION_SAS_TOKEN})
 for virtual_machine in $virtual_machines
 do
   target=${dashboard_aks_target//'{RESOURCE-GROUP-PLACEHOLDER}'/${aks_resource_group}}
@@ -142,10 +142,10 @@ do
 done
 targets=${targets:1:${#targets}}
 
-dashboard_aks=$(curl -s ${ARTIFACTS_LOCATION}/scripts/grafana/dashboard-aks.json${ARTIFACTS_LOCATION_SAS_TOKEN})
+dashboard_aks=$(curl -s ${ARTIFACTS_LOCATION}scripts/grafana/dashboard-aks.json${ARTIFACTS_LOCATION_SAS_TOKEN})
 dashboard_aks=${dashboard_aks//'"targets": []'/"\"targets\"": [${targets}]}
 
-dashboard=$(curl -s ${ARTIFACTS_LOCATION}/scripts/grafana/dashboard.json${ARTIFACTS_LOCATION_SAS_TOKEN})
+dashboard=$(curl -s ${ARTIFACTS_LOCATION}scripts/grafana/dashboard.json${ARTIFACTS_LOCATION_SAS_TOKEN})
 dashboard=${dashboard//'"rows": []'/"\"rows\"": [${dashboard_db}, ${dashboard_aks}]}
 
 post_json "/api/dashboards/db" "${dashboard}"
