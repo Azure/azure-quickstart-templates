@@ -12,7 +12,11 @@ This template enables encryption on the VM Scale Set of Windows VMs.
 
 AzureDiskEncryption for VMSS is currently in preview. Consuming this feature requires enabling the preview feature on the subscription and setting up a key vault with 'EnabledForDiskEncryption' access policy using the Azure powershell cmdlets below 
 1. Register-AzureRmProviderFeature -FeatureName "UnifiedDiskEncryption" -ProviderNamespace "Microsoft.Compute"
-2. Set-AzureRmKeyVaultAccessPolicy -ResourceGroupName <rgName> -VaultName <vaultName> -EnabledForDiskEncryption"
+2. Wait 10 min till state transitions to 'Registered' . Confirm by running "Get-AzureRmProviderFeature -ProviderNamespace Microsoft.Compute -FeatureName UnifiedDiskEncryption"
+3. Register-AzureRmResourceProvider -ProviderNamespace Microsoft.Compute
+4. Create a KeyVault in the same region and same subscription as the VMSS
+5. Set-AzureRmKeyVaultAccessPolicy -ResourceGroupName <rgName> -VaultName <vaultName> -EnabledForDiskEncryption"
+
 
 __Note: The VMSS encryption preview does not yet support image upgrade or reimage. Do not use this if you will need to upgrade your OS image in an encrypted scale set.__
 
