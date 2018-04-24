@@ -4,7 +4,6 @@
   "parameters": {
     "existingASEName": {
       "type": "string",
-      "defaultValue": "<YourName>-eshop-<Date>",
       "metadata": {
         "description": "Name of the App Service Environment."
       }
@@ -29,7 +28,6 @@
     },
     "sqlServerAdministratorLogin": {
       "type": "string",
-      "defaultValue": "eshop-admin",
       "metadata": {
         "description": "Administrator login name of the Azure SQL Server."
       }
@@ -42,14 +40,12 @@
     },
     "azureAdTenantId": {
       "type": "string",
-      "defaultValue": "",
       "metadata": {
         "description": "Directory ID of the Azure Active Directory used by the Admin App."
       }
     },
     "azureAdClientId": {
       "type": "string",
-      "defaultValue": "",
       "metadata": {
         "description": "Application ID of the Admin App Registration."
       }
@@ -57,6 +53,7 @@
   },
   "variables": {
     "location": "[parameters('existingAseLocation')]",
+    "appInsightsLocation": "East US",
     "vnetName": "[concat(parameters('existingAseName'), '-vnet')]",
     "aseSubnetName": "[concat(parameters('existingAseName'), '-subnet')]",
     "agSubnetName": "app-gateway-subnet",
@@ -90,7 +87,7 @@
   },
   "resources": [
     {
-      "apiVersion": "2018-01-01",
+      "apiVersion": "2018-04-01",
       "type": "Microsoft.Network/virtualNetworks/subnets",
       "name": "[concat(variables('vnetName'), '/', variables('redisCacheSubnetName'))]",
       "properties": {
@@ -98,28 +95,28 @@
       }
     },
     {
-      "apiVersion": "2018-01-01",
+      "apiVersion": "2018-04-01",
       "type": "Microsoft.Network/virtualNetworks/subnets",
       "name": "[concat(variables('vnetName'), '/', variables('agSubnetName'))]",
-      "properties": {
-        "addressPrefix": "192.168.251.64/26"
-      },
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('vnetName'), variables('redisCacheSubnetName'))]"
-      ]
+      ],
+      "properties": {
+        "addressPrefix": "192.168.251.64/26"
+      }
     },
     {
       "apiVersion": "2015-05-01",
       "type": "microsoft.insights/components",
       "name": "[variables('appInsightsName')]",
-      "location": "East US",
+      "location": "[variables('appInsightsLocation')]",
       "properties": {
         "ApplicationId": "[variables('appInsightsName')]",
         "Request_Source": "IbizaWebAppExtensionCreate"
       }
     },
     {
-      "apiVersion": "2016-03-01",
+      "apiVersion": "2017-08-01",
       "type": "Microsoft.Web/serverfarms",
       "name": "[variables('aspName')]",
       "location": "[variables('location')]",
@@ -138,10 +135,17 @@
       }
     },
     {
-      "apiVersion": "2016-03-01",
+      "apiVersion": "2016-08-01",
       "type": "Microsoft.Web/sites",
       "name": "[variables('webAppName')]",
       "location": "[variables('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]",
+        "[resourceId('microsoft.insights/components/', variables('appInsightsName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Cache/Redis/', variables('redisCacheName'))]",
+        "[resourceId('Microsoft.Web/sites/', variables('apiAppName'))]"
+      ],
       "properties": {
         "name": "[variables('webAppName')]",
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]",
@@ -205,32 +209,28 @@
       },
       "resources": [
         {
-          "apiVersion": "2015-08-01",
+          "apiVersion": "2016-08-01",
           "name": "web",
           "type": "sourcecontrols",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites/', variables('webAppName'))]"
+          ],
           "properties": {
             "RepoUrl": "[variables('sourceCodeRepositoryURL')]",
             "branch": "master",
             "IsManualIntegration": true
-          },
-          "dependsOn": [
-            "[resourceId('Microsoft.Web/sites/', variables('webAppName'))]"
-          ]
+          }
         }
-      ],
-      "dependsOn": [
-        "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]",
-        "[resourceId('microsoft.insights/components/', variables('appInsightsName'))]",
-        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
-        "[resourceId('Microsoft.Cache/Redis/', variables('redisCacheName'))]",
-        "[resourceId('Microsoft.Web/sites/', variables('apiAppName'))]"
       ]
     },
     {
-      "apiVersion": "2016-03-01",
+      "apiVersion": "2016-08-01",
       "type": "Microsoft.Web/sites",
       "name": "[variables('contentAppName')]",
       "location": "[variables('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]"
+      ],
       "properties": {
         "name": "[variables('contentAppName')]",
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]",
@@ -251,28 +251,29 @@
       },
       "resources": [
         {
-          "apiVersion": "2015-08-01",
+          "apiVersion": "2016-08-01",
           "name": "web",
           "type": "sourcecontrols",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites/', variables('contentAppName'))]"
+          ],
           "properties": {
             "RepoUrl": "[variables('sourceCodeRepositoryURL')]",
             "branch": "master",
             "IsManualIntegration": true
-          },
-          "dependsOn": [
-            "[resourceId('Microsoft.Web/sites/', variables('contentAppName'))]"
-          ]
+          }
         }
-      ],
-      "dependsOn": [
-        "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]"
       ]
     },
     {
-      "apiVersion": "2016-03-01",
+      "apiVersion": "2016-08-01",
       "type": "Microsoft.Web/sites",
       "name": "[variables('apiAppName')]",
       "location": "[variables('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]",
+        "[resourceId('microsoft.insights/components/', variables('appInsightsName'))]"
+      ],
       "properties": {
         "name": "[variables('apiAppName')]",
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]",
@@ -300,30 +301,31 @@
       },
       "resources": [
         {
-          "apiVersion": "2015-08-01",
+          "apiVersion": "2016-08-01",
           "name": "web",
           "type": "sourcecontrols",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites/', variables('apiAppName'))]",
+            "[resourceId('Microsoft.Web/sites/sourcecontrols/', variables('webAppName'), 'web')]"
+          ],
           "properties": {
             "RepoUrl": "[variables('sourceCodeRepositoryURL')]",
             "branch": "master",
             "IsManualIntegration": true
-          },
-          "dependsOn": [
-            "[resourceId('Microsoft.Web/sites/', variables('apiAppName'))]",
-            "[resourceId('Microsoft.Web/sites/sourcecontrols/', variables('webAppName'), 'web')]"
-          ]
+          }
         }
-      ],
-      "dependsOn": [
-        "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]",
-        "[resourceId('microsoft.insights/components/', variables('appInsightsName'))]"
       ]
     },
     {
-      "apiVersion": "2016-03-01",
+      "apiVersion": "2016-08-01",
       "type": "Microsoft.Web/sites",
       "name": "[variables('adminAppName')]",
       "location": "[variables('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]",
+        "[resourceId('microsoft.insights/components/', variables('appInsightsName'))]",
+        "[resourceId('Microsoft.Web/sites/', variables('apiAppName'))]"
+      ],
       "properties": {
         "name": "[variables('adminAppName')]",
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]",
@@ -364,24 +366,19 @@
       },
       "resources": [
         {
-          "apiVersion": "2015-08-01",
+          "apiVersion": "2016-08-01",
           "name": "web",
           "type": "sourcecontrols",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites/', variables('adminAppName'))]",
+            "[resourceId('Microsoft.Web/sites/sourcecontrols/', variables('apiAppName'), 'web')]"
+          ],
           "properties": {
             "RepoUrl": "[variables('sourceCodeRepositoryURL')]",
             "branch": "master",
             "IsManualIntegration": true
-          },
-          "dependsOn": [
-            "[resourceId('Microsoft.Web/sites/', variables('adminAppName'))]",
-            "[resourceId('Microsoft.Web/sites/sourcecontrols/', variables('apiAppName'), 'web')]"
-          ]
+          }
         }
-      ],
-      "dependsOn": [
-        "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]",
-        "[resourceId('microsoft.insights/components/', variables('appInsightsName'))]",
-        "[resourceId('Microsoft.Web/sites/', variables('apiAppName'))]"
       ]
     },
     {
@@ -396,61 +393,61 @@
       },
       "resources": [
         {
-          "apiVersion": "2014-04-01-preview",
+          "apiVersion": "2015-05-01-preview",
           "type": "databases",
           "location": "[variables('location')]",
           "name": "Catalog",
+          "dependsOn": [
+            "[resourceId('Microsoft.Sql/servers/', variables('sqlServerName'))]"
+          ],
           "properties": {
             "collation": "SQL_Latin1_General_CP1_CI_AS",
             "edition": "Basic",
             "maxSizeBytes": "104857600",
             "zoneRedundant": false
-          },
-          "dependsOn": [
-            "[resourceId('Microsoft.Sql/servers/', variables('sqlServerName'))]"
-          ]
+          }
         },
         {
-          "apiVersion": "2014-04-01-preview",
+          "apiVersion": "2015-05-01-preview",
           "type": "databases",
           "location": "[variables('location')]",
           "name": "Sales",
+          "dependsOn": [
+            "[resourceId('Microsoft.Sql/servers/', variables('sqlServerName'))]"
+          ],
           "properties": {
             "collation": "SQL_Latin1_General_CP1_CI_AS",
             "edition": "Basic",
             "maxSizeBytes": "104857600",
             "zoneRedundant": false
-          },
-          "dependsOn": [
-            "[resourceId('Microsoft.Sql/servers/', variables('sqlServerName'))]"
-          ]
+          }
         },
         {
-          "apiVersion": "2014-04-01-preview",
+          "apiVersion": "2015-05-01-preview",
           "type": "databases",
           "location": "[variables('location')]",
           "name": "Identity",
+          "dependsOn": [
+            "[resourceId('Microsoft.Sql/servers/', variables('sqlServerName'))]"
+          ],
           "properties": {
             "collation": "SQL_Latin1_General_CP1_CI_AS",
             "edition": "Basic",
             "maxSizeBytes": "104857600",
             "zoneRedundant": false
-          },
-          "dependsOn": [
-            "[resourceId('Microsoft.Sql/servers/', variables('sqlServerName'))]"
-          ]
+          }
         },
         {
           "apiVersion": "2015-05-01-preview",
           "type": "virtualNetworkRules",
           "name": "[concat('allow-access-from-', variables('aseSubnetName'))]",
           "scale": null,
-          "properties": {
-            "virtualNetworkSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('vnetName'), variables('aseSubnetName'))]"
-          },
           "dependsOn": [
             "[resourceId('Microsoft.Sql/servers/', variables('sqlServerName'))]"
-          ]
+          ],
+          "properties": {
+            "virtualNetworkSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('vnetName'), variables('aseSubnetName'))]"
+          }
         }
       ]
     },
@@ -477,14 +474,16 @@
           },
           "keySource": "Microsoft.Storage"
         }
-      },
-      "dependsOn": []
+      }
     },
     {
-      "apiVersion": "2017-10-01",
+      "apiVersion": "2018-03-01",
       "type": "Microsoft.Cache/Redis",
       "name": "[variables('redisCacheName')]",
       "location": "[variables('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('vnetName'), variables('redisCacheSubnetName'))]"
+      ],
       "properties": {
         "sku": {
           "name": "Premium",
@@ -495,16 +494,17 @@
         "staticIP": "192.168.251.62",
         "redisConfiguration": {},
         "enableNonSslPort": true
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('vnetName'), variables('redisCacheSubnetName'))]"
-      ]
+      }
     },
     {
-      "apiVersion": "2017-10-01",
+      "apiVersion": "2018-04-01",
       "type": "Microsoft.Network/applicationGateways",
       "name": "[variables('appGatewayName')]",
       "location": "[variables('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('vnetName'), variables('agSubnetName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('appGatewayPublicIPName'))]"
+      ],
       "properties": {
         "sku": {
           "name": "WAF_Medium",
@@ -766,14 +766,10 @@
             }
           ]
         }
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('vnetName'), variables('agSubnetName'))]",
-        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('appGatewayPublicIPName'))]"
-      ]
+      }
     },
     {
-      "apiVersion": "2017-08-01",
+      "apiVersion": "2018-04-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('appGatewayPublicIPName')]",
       "location": "[variables('location')]",
@@ -798,6 +794,9 @@
           "type": "endpoints",
           "name": "[variables('cdnWebAppEndpointName')]",
           "location": "[variables('location')]",
+          "dependsOn": [
+            "[resourceId('microsoft.cdn/profiles/', variables('cdnName'))]"
+          ],
           "properties": {
             "isHttpAllowed": true,
             "isHttpsAllowed": false,
@@ -823,16 +822,17 @@
             "optimizationType": "GeneralWebDelivery",
             "probePath": null,
             "originHostHeader": "[variables('contentAppExternalHostName')]"
-          },
-          "dependsOn": [
-            "[resourceId('microsoft.cdn/profiles/', variables('cdnName'))]"
-          ]
+          }
         },
         {
           "apiVersion": "2017-10-12",
           "type": "endpoints",
           "name": "[variables('cdnStorageEndpointName')]",
           "location": "[variables('location')]",
+          "dependsOn": [
+            "[resourceId('microsoft.cdn/profiles/', variables('cdnName'))]",
+            "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+          ],
           "properties": {
             "isHttpAllowed": true,
             "isHttpsAllowed": true,
@@ -858,11 +858,7 @@
             "optimizationType": "GeneralWebDelivery",
             "probePath": null,
             "originHostHeader": "[concat(variables('storageAccountName'), '.blob.core.windows.net')]"
-          },
-          "dependsOn": [
-            "[resourceId('microsoft.cdn/profiles/', variables('cdnName'))]",
-            "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
-          ]
+          }
         }
       ]
     }
