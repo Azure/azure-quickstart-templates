@@ -168,7 +168,7 @@ After the App Service Environment is deployed, follow the steps below to deploy 
      <img src="http://armviz.io/visualizebutton.png"/>
    </a>
 
-2. Fill in the values on the deployment page:
+3. Fill in the values on the deployment page:
 
    **Basics**:
 
@@ -185,9 +185,9 @@ After the App Service Environment is deployed, follow the steps below to deploy 
 
    * **DNS Suffix**: the external domain name. For example `contoso.com`
 
-   * **SQL Server Administrator Login**:  please keep the default value.
+   * **SQL Server Administrator Login**:  administrator login name of the Azure SQL Server.
 
-     >**Note:** If you want to change it, please make sure your login name meets the following requirements - It's a SQL Identifier, and not a typical system name (like admin, administrator, sa, root, dbmanager, loginmanager, etc.), or a built-in database user or role (like dbo, guest, public, etc.). Make sure your name doesn't contain whitespaces, unicode characters, or nonalphabetic characters, and that it doesn't begin with numbers or symbols.
+     >**Note:** It should meet the following requirements - It's a SQL Identifier, and not a typical system name (like admin, administrator, sa, root, dbmanager, loginmanager, etc.), or a built-in database user or role (like dbo, guest, public, etc.). Make sure your name doesn't contain whitespaces, unicode characters, or nonalphabetic characters, and that it doesn't begin with numbers or symbols.
 
    * **SQL Server Administrator Login Password**: please do use a strong password.
 
