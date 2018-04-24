@@ -1,0 +1,155 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "SharedVmConfig": {
+      "type": "object"
+    },
+    "vmName": {
+      "type": "string"
+    },
+    "nicName": {
+      "type": "string"
+    },
+    "vhdUri": {
+      "type": "string"
+    }
+  },
+  "variables": {
+    "imageName": "[concat(parameters('vmName'),'-image')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/images",
+      "apiVersion": "2017-03-30",
+      "name": "[variables('ImageName')]",
+      "location": "[parameters('SharedVmConfig').location]",
+      "properties": {
+        "storageProfile": {
+          "osDisk": {
+            "osType": "Windows",
+            "osState": "Generalized",
+            "blobUri": "[concat(parameters('vhdUri'))]",
+            "storageAccountType": "Standard_LRS"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2017-03-30",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[parameters('vmName')]",
+      "location": "[parameters('SharedVmConfig').location]",
+      "dependsOn": [
+        "[variables('ImageName')]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('SharedVmConfig').vmSize]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('vmName')]",
+          "adminUsername": "[parameters('SharedVmConfig').adminUsername]",
+          "adminPassword": "[parameters('SharedVmConfig').adminPassword]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "id": "[resourceId('Microsoft.Compute/images/',variables('ImageName'))]"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',parameters('nicName'))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[reference(concat('Microsoft.Storage/storageAccounts/',parameters('SharedVmConfig').storageAccountNamePrefix),'2017-06-01').primaryEndpoints.blob]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2017-03-30",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmName'),'/JoinDomain')]",
+      "location": "[parameters('SharedVmConfig').location]",
+      "tags": {
+        "displayName": "Join Domain"
+      },
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "JsonADDomainExtension",
+        "typeHandlerVersion": "1.3",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "Name": "[parameters('SharedVmConfig').domainName]",
+          "OUPath": null,
+          "Options": "3",
+          "Restart": "true",
+          "User": "[parameters('SharedVmConfig').domainUserName]"
+        },
+        "protectedsettings": {
+          "Password": "[parameters('SharedVmConfig').adminPassword]"
+        }
+      },
+      "dependsOn": [
+        "[parameters('vmName')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmName'),'/BGInfo')]",
+      "apiVersion": "2017-03-30",
+      "scale": null,
+      "location": "[parameters('SharedVmConfig').location]",
+      "dependsOn": [
+        "[parameters('vmName')]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "BGInfo",
+        "typeHandlerVersion": "2.1",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "properties": []
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmName'),'/Antimalware')]",
+      "apiVersion": "2017-03-30",
+      "location": "[parameters('SharedVmConfig').location]",
+      "dependsOn": [
+        "[parameters('vmName')]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Security",
+        "type": "IaaSAntimalware",
+        "typeHandlerVersion": "1.1",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "AntimalwareEnabled": true,
+          "Exclusions": {
+            "Paths": "C:\\Users",
+            "Extensions": ".txt",
+            "Processes": "taskmgr.exe"
+          },
+          "RealtimeProtectionEnabled": "true",
+          "ScheduledScanSettings": {
+            "isEnabled": "true",
+            "scanType": "Quick",
+            "day": "7",
+            "time": "120"
+          }
+        },
+        "protectedSettings": null
+      }
+    }
+  ],
+  "outputs": {}
+}
