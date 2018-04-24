@@ -1,6 +1,6 @@
 # eShop Website with ILB ASE
 
-**Table of content**
+**Table of Contents**
 
 [Architecture](#architecture)
 
@@ -75,7 +75,7 @@ Download the PowerPoint slides [here](/e-shop-website-with-ilb-ase/architecture-
 To experience this sample, you should prepare two domain names:
 
 1. Internal domain name: used by the App Service Environment. For example `contoso-internal.com`.
-2. External domain name: used to internet access Web Apps. For example `contoso.com`.
+2. External domain name: used for internet access to the Web Apps. For example `contoso.com`.
 
 And you should have the permissions to configure them. We will add several A records and CNAME records later.
 
@@ -156,7 +156,7 @@ Copy the **Application Id** and save it in a text file. You will need it later t
 
 ### Deploy the Other Azure Resources
 
-After the App Service Environment deployed, follow the steps below to deploy the other Azure resources.
+After the App Service Environment is deployed, follow the steps below to deploy the other Azure resources.
 
 2. Click the **Deploy to Azure** Button:
 
