@@ -22,12 +22,20 @@
         "description": "Desired admin username to log on to the VM"
       }
     },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Desired passworde to log on to the VM"
-      }
-    },
+    "sshKeyPath": {
+			"type": "string",
+			"minLength": 1,
+			"metadata": {
+				"description": "SSH Public Key Path"
+			}
+		},
+		"sshPublicKey": {
+			"type": "string",
+			"minLength": 1,
+			"metadata": {
+				"description": "SSH Public Key"
+			}
+		},
     "imagePublisher": {
       "type": "string",
       "defaultValue": "OpenLogic",
@@ -93,11 +101,12 @@
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
     "subnet1Ref": "[concat(variables('vnetID'),'/subnets/',parameters('subnetName'))]",
     "mongodbDeploymentTemplateUrl": "[concat(parameters('_artifactsLocation'), 'mongo-install-centos.sh')]",
-    "nicName":"[concat(parameters('vmName'),'-nic1')]"
+    "nicName":"[concat(parameters('vmName'),'-nic1')]",
+    "sshKeyPath": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]"
   },
   "resources": [
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2017-10-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
       "location": "[resourceGroup().location]",
@@ -109,7 +118,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2017-10-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
       "location": "[resourceGroup().location]",
@@ -135,7 +144,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2017-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
       "location": "[resourceGroup().location]",
@@ -147,9 +156,17 @@
           "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
-          "computerName": "[parameters('vmName')]",
+          "computerName": "[parameters('vmname')]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+              "publicKeys": [{
+                "path": "[parameters('sshKeyPath')]",
+                "keyData": "[parameters('sshPublicKey')]"
+              }]
+            }
+          }
         },
         "storageProfile": {
           "imageReference": {
@@ -181,7 +198,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('vmName'),'/installmongo')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2017-12-01",
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
