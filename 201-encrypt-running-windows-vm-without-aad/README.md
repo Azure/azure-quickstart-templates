@@ -12,13 +12,11 @@
 
 This template enables encryption on a running windows VM without needing AAD application. This template assumes that the VM is located in the same region as the resource group. If not, please edit the template to pass appropriate location for the VM sub-resources.
 
-Prerequisites:
-1. Azure Disk Encryption securely stores the encryption secrets in a specified Azure Key Vault. Create a KeyVault in the same subscription and same region as the VM.Use the below PS cmdlet for getting the "keyVaultSecretUrl" and "keyVaultResourceId"
-    Get-AzureRmKeyVault -VaultName $KeyVaultName -ResourceGroupName $rgname
-2. Enable AzureDiskEncryption without AAD feature for your subscription
-    Register-AzureRmProviderFeature -ProviderNamespace "Microsoft.Compute" -FeatureName  "UnifiedDiskEncryptionForVMs"
-    Wait 10 min till state transitions to 'Registered'
-    Register-AzureRmResourceProvider -ProviderNamespace Microsoft.Compute
+Prerequisites: Create a KeyVault in the same subscription and region as the VM and follow below steps
+1. Set-AzureRmKeyVaultAccessPolicy -ResourceGroupName <rgName> -VaultName <vaultName> -EnabledForDiskEncryption
+2. Register-AzureRmProviderFeature -ProviderNamespace "Microsoft.Compute" -FeatureName "UnifiedDiskEncryptionForVMs"
+3. Wait 10 min till state transitions to 'Registered'
+4. Register-AzureRmResourceProvider -ProviderNamespace Microsoft.Compute
 
 Tags: AzureDiskEncryption
 
