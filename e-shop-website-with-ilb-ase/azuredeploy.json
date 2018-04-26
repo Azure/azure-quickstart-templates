@@ -116,6 +116,51 @@
       }
     },
     {
+      "apiVersion": "2017-10-01",
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('storageAccountName')]",
+      "location": "[variables('location')]",
+      "sku": {
+        "name": "Standard_RAGRS"
+      },
+      "kind": "StorageV2",
+      "properties": {
+        "supportsHttpsTrafficOnly": false,
+        "accessTier": "Hot",
+        "encryption": {
+          "services": {
+            "blob": {
+              "enabled": true
+            },
+            "file": {
+              "enabled": true
+            }
+          },
+          "keySource": "Microsoft.Storage"
+        }
+      }
+    },
+    {
+      "apiVersion": "2018-03-01",
+      "type": "Microsoft.Cache/Redis",
+      "name": "[variables('redisCacheName')]",
+      "location": "[variables('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('vnetName'), variables('redisCacheSubnetName'))]"
+      ],
+      "properties": {
+        "sku": {
+          "name": "Premium",
+          "family": "P",
+          "capacity": 1
+        },
+        "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('vnetName'), variables('redisCacheSubnetName'))]",
+        "staticIP": "192.168.251.62",
+        "redisConfiguration": {},
+        "enableNonSslPort": true
+      }
+    },
+    {
       "apiVersion": "2017-08-01",
       "type": "Microsoft.Web/serverfarms",
       "name": "[variables('aspName')]",
@@ -133,96 +178,6 @@
         "tier": "Isolated",
         "name": "I1"
       }
-    },
-    {
-      "apiVersion": "2016-08-01",
-      "type": "Microsoft.Web/sites",
-      "name": "[variables('webAppName')]",
-      "location": "[variables('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]",
-        "[resourceId('microsoft.insights/components/', variables('appInsightsName'))]",
-        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
-        "[resourceId('Microsoft.Cache/Redis/', variables('redisCacheName'))]",
-        "[resourceId('Microsoft.Web/sites/', variables('apiAppName'))]"
-      ],
-      "properties": {
-        "name": "[variables('webAppName')]",
-        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]",
-        "hostingEnvironment": "[parameters('existingAseName')]",
-        "siteConfig": {
-          "alwaysOn": true,
-          "appSettings": [
-            {
-              "name": "ODataServiceBaseUrl",
-              "value": "[concat('http://', variables('apiAppInternalHostName'))]"
-            },
-            {
-              "name": "cdn:url",
-              "value": "[concat('http://', reference(resourceId('microsoft.cdn/profiles/endpoints/', variables('cdnName'), variables('cdnWebAppEndpointName')), '2017-10-12').hostName)]"
-            },
-            {
-              "name": "CatalogBaseUrl",
-              "value": "[concat('https://', variables('cdnStorageEndpointName'), '.azureedge.net')]"
-            },
-            {
-              "name": "ApplicationInsights:InstrumentationKey",
-              "value": "[reference(resourceId('microsoft.insights/components/', variables('appInsightsName')), '2015-05-01').InstrumentationKey]"
-            },
-            {
-              "name": "project",
-              "value": "src/Web/Web.csproj"
-            }
-          ],
-          "connectionstrings": [
-            {
-              "name": "CatalogConnection",
-              "type": "SQLAzure",
-              "connectionString": "[concat('Server=tcp:', variables('sqlServerName'), '.database.windows.net,1433;Initial Catalog=Catalog;Persist Security Info=False;User ID=', parameters('sqlServerAdministratorLogin'), ';Password=', parameters('sqlServerAdministratorLoginPassword'), ';MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]"
-            },
-            {
-              "name": "SalesConnection",
-              "type": "SQLAzure",
-              "connectionString": "[concat('Server=tcp:', variables('sqlServerName'), '.database.windows.net,1433;Initial Catalog=Sales;Persist Security Info=False;User ID=', parameters('sqlServerAdministratorLogin'), ';Password=', parameters('sqlServerAdministratorLoginPassword'), ';MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]"
-            },
-            {
-              "name": "IdentityConnection",
-              "type": "SQLAzure",
-              "connectionString": "[concat('Server=tcp:', variables('sqlServerName'), '.database.windows.net,1433;Initial Catalog=Identity;Persist Security Info=False;User ID=', parameters('sqlServerAdministratorLogin'), ';Password=', parameters('sqlServerAdministratorLoginPassword'), ';MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]"
-            },
-            {
-              "name": "StorageConnection",
-              "type": "Custom",
-              "connectionString": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'),';AccountKey=',listkeys(resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2015-05-01-preview').key1,';')]"
-            },
-            {
-              "name": "RedisConnection",
-              "type": "Custom",
-              "connectionString": "[concat(variables('redisCacheName'), '.redis.cache.windows.net:6380,password=', listKeys(resourceId('Microsoft.Cache/Redis/', variables('redisCacheName')), '2016-04-01').primaryKey, ',ssl=True,abortConnect=False')]"
-            }
-          ]
-        },
-        "hostNames": [
-          "[variables('webAppExternalHostName')]",
-          "[variables('webAppInternalHostName')]"
-        ]
-      },
-      "resources": [
-        {
-          "apiVersion": "2016-08-01",
-          "name": "web",
-          "type": "sourcecontrols",
-          "dependsOn": [
-            "[resourceId('Microsoft.Web/sites/', variables('webAppName'))]",
-            "[resourceId('Microsoft.Web/sites/sourcecontrols/', variables('adminAppName'), 'web')]"
-          ],
-          "properties": {
-            "RepoUrl": "[variables('sourceCodeRepositoryURL')]",
-            "branch": "master",
-            "IsManualIntegration": true
-          }
-        }
-      ]
     },
     {
       "apiVersion": "2016-08-01",
@@ -323,8 +278,7 @@
       "location": "[variables('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]",
-        "[resourceId('microsoft.insights/components/', variables('appInsightsName'))]",
-        "[resourceId('Microsoft.Web/sites/', variables('apiAppName'))]"
+        "[resourceId('microsoft.insights/components/', variables('appInsightsName'))]"
       ],
       "properties": {
         "name": "[variables('adminAppName')]",
@@ -372,6 +326,95 @@
           "dependsOn": [
             "[resourceId('Microsoft.Web/sites/', variables('adminAppName'))]",
             "[resourceId('Microsoft.Web/sites/sourcecontrols/', variables('apiAppName'), 'web')]"
+          ],
+          "properties": {
+            "RepoUrl": "[variables('sourceCodeRepositoryURL')]",
+            "branch": "master",
+            "IsManualIntegration": true
+          }
+        }
+      ]
+    },
+    {
+      "apiVersion": "2016-08-01",
+      "type": "Microsoft.Web/sites",
+      "name": "[variables('webAppName')]",
+      "location": "[variables('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]",
+        "[resourceId('microsoft.insights/components/', variables('appInsightsName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Cache/Redis/', variables('redisCacheName'))]"
+      ],
+      "properties": {
+        "name": "[variables('webAppName')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms/', variables('aspName'))]",
+        "hostingEnvironment": "[parameters('existingAseName')]",
+        "siteConfig": {
+          "alwaysOn": true,
+          "appSettings": [
+            {
+              "name": "ODataServiceBaseUrl",
+              "value": "[concat('http://', variables('apiAppInternalHostName'))]"
+            },
+            {
+              "name": "cdn:url",
+              "value": "[concat('http://', reference(resourceId('microsoft.cdn/profiles/endpoints/', variables('cdnName'), variables('cdnWebAppEndpointName')), '2017-10-12').hostName)]"
+            },
+            {
+              "name": "CatalogBaseUrl",
+              "value": "[concat('https://', variables('cdnStorageEndpointName'), '.azureedge.net')]"
+            },
+            {
+              "name": "ApplicationInsights:InstrumentationKey",
+              "value": "[reference(resourceId('microsoft.insights/components/', variables('appInsightsName')), '2015-05-01').InstrumentationKey]"
+            },
+            {
+              "name": "project",
+              "value": "src/Web/Web.csproj"
+            }
+          ],
+          "connectionstrings": [
+            {
+              "name": "CatalogConnection",
+              "type": "SQLAzure",
+              "connectionString": "[concat('Server=tcp:', variables('sqlServerName'), '.database.windows.net,1433;Initial Catalog=Catalog;Persist Security Info=False;User ID=', parameters('sqlServerAdministratorLogin'), ';Password=', parameters('sqlServerAdministratorLoginPassword'), ';MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]"
+            },
+            {
+              "name": "SalesConnection",
+              "type": "SQLAzure",
+              "connectionString": "[concat('Server=tcp:', variables('sqlServerName'), '.database.windows.net,1433;Initial Catalog=Sales;Persist Security Info=False;User ID=', parameters('sqlServerAdministratorLogin'), ';Password=', parameters('sqlServerAdministratorLoginPassword'), ';MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]"
+            },
+            {
+              "name": "IdentityConnection",
+              "type": "SQLAzure",
+              "connectionString": "[concat('Server=tcp:', variables('sqlServerName'), '.database.windows.net,1433;Initial Catalog=Identity;Persist Security Info=False;User ID=', parameters('sqlServerAdministratorLogin'), ';Password=', parameters('sqlServerAdministratorLoginPassword'), ';MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]"
+            },
+            {
+              "name": "StorageConnection",
+              "type": "Custom",
+              "connectionString": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'),';AccountKey=',listkeys(resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2015-05-01-preview').key1,';')]"
+            },
+            {
+              "name": "RedisConnection",
+              "type": "Custom",
+              "connectionString": "[concat(variables('redisCacheName'), '.redis.cache.windows.net:6380,password=', listKeys(resourceId('Microsoft.Cache/Redis/', variables('redisCacheName')), '2016-04-01').primaryKey, ',ssl=True,abortConnect=False')]"
+            }
+          ]
+        },
+        "hostNames": [
+          "[variables('webAppExternalHostName')]",
+          "[variables('webAppInternalHostName')]"
+        ]
+      },
+      "resources": [
+        {
+          "apiVersion": "2016-08-01",
+          "name": "web",
+          "type": "sourcecontrols",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites/', variables('webAppName'))]",
+            "[resourceId('Microsoft.Web/sites/sourcecontrols/', variables('adminAppName'), 'web')]"
           ],
           "properties": {
             "RepoUrl": "[variables('sourceCodeRepositoryURL')]",
@@ -450,51 +493,6 @@
           }
         }
       ]
-    },
-    {
-      "apiVersion": "2017-10-01",
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('storageAccountName')]",
-      "location": "[variables('location')]",
-      "sku": {
-        "name": "Standard_RAGRS"
-      },
-      "kind": "StorageV2",
-      "properties": {
-        "supportsHttpsTrafficOnly": false,
-        "accessTier": "Hot",
-        "encryption": {
-          "services": {
-            "blob": {
-              "enabled": true
-            },
-            "file": {
-              "enabled": true
-            }
-          },
-          "keySource": "Microsoft.Storage"
-        }
-      }
-    },
-    {
-      "apiVersion": "2018-03-01",
-      "type": "Microsoft.Cache/Redis",
-      "name": "[variables('redisCacheName')]",
-      "location": "[variables('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('vnetName'), variables('redisCacheSubnetName'))]"
-      ],
-      "properties": {
-        "sku": {
-          "name": "Premium",
-          "family": "P",
-          "capacity": 1
-        },
-        "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('vnetName'), variables('redisCacheSubnetName'))]",
-        "staticIP": "192.168.251.62",
-        "redisConfiguration": {},
-        "enableNonSslPort": true
-      }
     },
     {
       "apiVersion": "2018-04-01",
