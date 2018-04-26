@@ -10,7 +10,7 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template enables encryption on a running windows VM without needing AAD application.
+This template enables encryption on a running windows VM without needing an AAD application.
 
 Prerequisites: Create a KeyVault in the same subscription and region as the VM and follow below steps
 1. Set-AzureRmKeyVaultAccessPolicy -ResourceGroupName <rgName> -VaultName <vaultName> -EnabledForDiskEncryption
