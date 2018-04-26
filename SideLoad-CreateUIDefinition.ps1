@@ -28,7 +28,6 @@ try {
 
     New-AzureStorageContainer -Name $StorageContainerName -Context $StorageAccount.Context -ErrorAction SilentlyContinue *>&1
 
-
     Set-AzureStorageBlobContent -Container $StorageContainerName -File "$ArtifactsStagingDirectory\$createUIDefFile"  -Context $storageAccount.Context -Force
         
     $uidefurl = New-AzureStorageBlobSASToken -Container $StorageContainerName -Blob (Split-Path $createUIDefFile -leaf) -Context $storageAccount.Context -FullUri -Permission r   
