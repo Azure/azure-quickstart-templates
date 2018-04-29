@@ -19,7 +19,8 @@ while getopts "a:l:s:f:g" opt; do
         ;;
     esac
 done
-    
+
+#run az login before running the script    
 subscriptionId=$( az account show -o json | jq -r '.id' )
 subscriptionId="${subscriptionId//-/}" 
 subscriptionId="${subscriptionId:0:19}"
@@ -55,31 +56,20 @@ sasToken=$( az storage container generate-sas -n "$artifactsStorageContainerName
 
 blobEndpoint=$( az storage account show -n "$artifactsStorageAccountName" -g "$artifactsResourceGroupName" -o json | jq -r '.primaryEndpoints.blob' )
 createUIDefUrl=$blobEndpoint$artifactsStorageContainerName/$createUIDefFile?$sasToken
-echo $createUIDefUrl
-#if ($Gov) {
 
-#printf %s "$createUIDefUrl" | jq -s -R -r @uri
 createUIDefUrlEncoded=$(printf %s "$createUIDefUrl" | jq -s -R -r @uri)
 
-echo $createUIDefUrlEncoded
-
-target="https://portal.azure.com/#blade/Microsoft_Azure_Compute/CreateMultiVmWizardBlade/internal_bladeCallId/anything/internal_bladeCallerParams/{"initialData":{},"providerConfig":{"createUiDefinition":"$createUIDefUrlEncoded"}}"
-
-echo $target
-#}
-#else {
-
-#$target=@"
-#https://portal.azure.com/#blade/Microsoft_Azure_Compute/CreateMultiVmWizardBlade/internal_bladeCallId/anything/internal_bladeCallerParams/{"initialData":{},"providerConfig":{"createUiDefinition":"$encodedurl"}}
-#"@
-
-#}
-
-
-
-python -mwebbrowser $target
+if [[ $gov ]] 
+then
+target="https://portal.azure.us/#blade/Microsoft_Azure_Compute/CreateMultiVmWizardBlade/internal_bladeCallId/anything/internal_bladeCallerParams/{"\""initialData"\"":{},"\""providerConfig"\"":{"\""createUiDefinition"\"":"\""$createUIDefUrlEncoded"\""}}"
+else
+target="https://portal.azure.com/#blade/Microsoft_Azure_Compute/CreateMultiVmWizardBlade/internal_bladeCallId/anything/internal_bladeCallerParams/{"\""initialData"\"":{},"\""providerConfig"\"":{"\""createUiDefinition"\"":"\""$createUIDefUrlEncoded"\""}}"
+fi
 
 echo "Launch browser with this URL:"
 echo
 echo $target
 echo 
+
+#note chrome will not launch with the encoded url no idea why - copy/paste works (or safari)
+python -mwebbrowser $target
