@@ -73,37 +73,14 @@ describe('createUiDefinition.json file - ', () => {
         createUiDefFileJSONObject.parameters.should.have.property('basics');
     });
 
-    // TODO: Are there nested text box controls that we need to take care of?
-    // get text box controls in basics
-    var basicsTextBox = Object.keys(createUiDefFileJSONObject.parameters.basics).map(function(key) {
-        return createUiDefFileJSONObject.parameters.basics[key];
-    }).filter(function(obj) {
-        if (obj.type) {
-            return obj.type.toLowerCase() == 'microsoft.common.textbox';
-        }
-    });
+    /** Get all textbox objects */
+    var textboxObjects = util.getObjects(createUiDefFileJSONObject, 'type', 'microsoft.common.textbox');
 
-    // get text box controls in steps
-    var steps = Object.keys(createUiDefFileJSONObject.parameters.steps).map(function(key) {
-        return createUiDefFileJSONObject.parameters.steps[key];
-    });
-    var stepsTextBox = [];
-    steps.forEach(step => {
-        if (step.elements) {
-            step.elements.forEach(element => {
-                if (element.type) {
-                    if (element.type.toLowerCase() == 'microsoft.common.textbox') {
-                        stepsTextBox.push(element);
-                    }
-                }
-            });
-        }
-    });
-
-    /** Each text box control MUST hve a regex constraint. */
-    it.each(basicsTextBox.concat(stepsTextBox), 'text box control %s must have a regex constraint', ['name'], function(element, next) {
+    /** Each text box control MUST hve a regex constraint, and the value should not be an empty string. */
+    it.each(textboxObjects, 'text box control %s must have a regex constraint', ['name'], function(element, next) {
         element.should.have.property('constraints');
         expect(element.constraints, getErrorMessage(element)).to.have.property('regex');
+        element.constraints.regex.replace(/\s/g, '').length.should.withMessage('regex value on this text box control should not be an empty string').be.above(0);
         next();
     });
 

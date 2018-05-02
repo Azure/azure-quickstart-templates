@@ -1,5 +1,9 @@
 # Change log for AzureRM template for SharePoint 2016 and 2013 configured with ADFS
 
+## April 4, 2018 update
+
+* Force protocol TLS 1.2 in Invoke-WebRequest to fix TLS/SSL connection error with GitHub in Windows Server 2012 R2
+
 ## Jaunyary 2018 update
 
 * Added network security groups to template, 1 per subnet
