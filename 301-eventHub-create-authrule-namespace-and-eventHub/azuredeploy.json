@@ -5,19 +5,93 @@
     "namespaceName": {
       "type": "string",
       "metadata": {
-        "description": "Name of the EventHub namespace"
+        "description": "Name of EventHub namespace"
+      }
+    },
+    "namespaceAuthorizationRuleName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of Namespace Authorization Rule"
+      }
+    },
+    "isAutoInflateEnabled": {
+      "type": "string",
+      "defaultValue": "True",
+      "allowedValues": [
+        "True",
+        "False"
+      ],
+      "metadata": {
+        "description": "Enable or disable AutoInflate"
+      }
+    },
+    "maximumThroughputUnits": {
+      "type": "int",
+      "defaultValue": 0,
+      "minValue": 0,
+      "maxValue": 20,
+      "metadata": {
+        "description": "Enable or disable AutoInflate"
       }
     },
     "eventHubName": {
       "type": "string",
       "metadata": {
-        "description": "Name of the Event Hub"
+        "description": "Name of Event Hub"
+      }
+    },
+    "messageRetentionInDays": {
+      "type": "int",
+      "defaultValue": 1,
+      "minValue": 1,
+      "maxValue": 7,
+      "metadata": {
+        "description": "How long to retain the data in Event Hub"
+      }
+    },
+    "partitionCount": {
+      "type": "int",
+      "defaultValue": 4,
+      "minValue": 2,
+      "maxValue": 32,
+      "metadata": {
+        "description": "Number of partitions chosen"
+      }
+    },
+    "eventhubAuthorizationRuleName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of Eventhub Authorization Rule"
+      }
+    },
+    "eventhubAuthorizationRuleName1": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of Eventhub Authorization Rule"
       }
     },
     "consumerGroupName": {
       "type": "string",
       "metadata": {
-        "description": "Name of the Consumer Group"
+        "description": "Name of Consumer Group"
+      }
+    },
+    "messageRetentionInDays": {
+      "type": "int",
+      "defaultValue": 1,
+      "minValue": 1,
+      "maxValue": 7,
+      "metadata": {
+        "description": "How long to retain the data in Event Hub"
+      }
+    },
+    "partitionCount": {
+      "type": "int",
+      "defaultValue": 4,
+      "minValue": 2,
+      "maxValue": 32,
+      "metadata": {
+        "description": "Number of partitions chosen"
       }
     }
   },
@@ -27,7 +101,9 @@
     "listenPolicy": "ListenPolicy",
     "defaultSASKeyName": "RootManageSharedAccessKey",
     "authRuleResourceId": "[resourceId('Microsoft.EventHub/namespaces/authorizationRules', parameters('namespaceName'), variables('defaultSASKeyName'))]",
-	"ehVersion": "2017-04-01"
+    "nsAuthorizationRuleId": "[resourceId('Microsoft.EventHub/namespaces/authorizationRules', parameters('namespaceName'), parameters('namespaceAuthorizationRuleName'))]",
+    "ehAuthorizationRuleId1": "[resourceId('Microsoft.EventHub/namespaces/eventhubs/authorizationRules', parameters('namespaceName'),parameters('eventHubName'), parameters('eventhubAuthorizationRuleName'))]",
+    "ehAuthorizationRuleId2": "[resourceId('Microsoft.EventHub/namespaces/eventhubs/authorizationRules', parameters('namespaceName'),parameters('eventHubName'), parameters('eventhubAuthorizationRuleName1'))]"
   },
   "resources": [
     {
@@ -63,16 +139,15 @@
                 "[concat('Microsoft.EventHub/namespaces/', parameters('namespaceName'),'/eventhubs/',parameters('eventHubName'))]"
               ],
               "properties": {
-                "userMetadata": "This is a Test Metadata"
+                "userMetadata": "User Metadata"
               }
             },
             {
               "apiVersion": "2017-04-01",
-              "name": "[variables('managePolicy')]",
+              "name": "[parameters('eventhubAuthorizationRuleName')]",
               "type": "authorizationRules",
               "dependsOn": [
-                "[concat('Microsoft.EventHub/namespaces/', parameters('namespaceName'),'/eventhubs/',parameters('eventHubName'))]",
-                "[concat('Microsoft.EventHub/namespaces/', parameters('namespaceName'),'/eventhubs/',parameters('eventHubName'), '/consumerGroups/', parameters('consumerGroupName'))]"
+                "[concat('Microsoft.EventHub/namespaces/', parameters('namespaceName'),'/eventhubs/',parameters('eventHubName'))]"
               ],
               "properties": {
                 "rights": [
@@ -84,48 +159,68 @@
             },
             {
               "apiVersion": "2017-04-01",
-              "name": "[variables('sendPolicy')]",
+              "name": "[parameters('eventhubAuthorizationRuleName1')]",
               "type": "authorizationRules",
               "dependsOn": [
-                "[concat('Microsoft.EventHub/namespaces/', parameters('namespaceName'),'/eventhubs/',parameters('eventHubName'))]",
-                "[concat('Microsoft.EventHub/namespaces/', parameters('namespaceName'),'/eventhubs/',parameters('eventHubName'), '/authorizationRules/', variables('managePolicy'))]",
-                "[concat('Microsoft.EventHub/namespaces/', parameters('namespaceName'),'/eventhubs/',parameters('eventHubName'), '/consumerGroups/', parameters('consumerGroupName'))]"
+                "[concat('Microsoft.EventHub/namespaces/', parameters('namespaceName'),'/eventhubs/',parameters('eventHubName'))]"
               ],
               "properties": {
                 "rights": [
                   "Send"
                 ]
               }
-            },
-            {
-              "apiVersion": "2017-04-01",
-              "name": "[variables('listenPolicy')]",
-              "type": "authorizationRules",
-              "dependsOn": [
-                "[concat('Microsoft.EventHub/namespaces/', parameters('namespaceName'),'/eventhubs/',parameters('eventHubName'))]",
-                "[concat('Microsoft.EventHub/namespaces/', parameters('namespaceName'),'/eventhubs/',parameters('eventHubName'), '/authorizationRules/', variables('managePolicy'))]",
-                "[concat('Microsoft.EventHub/namespaces/', parameters('namespaceName'),'/eventhubs/',parameters('eventHubName'), '/authorizationRules/', variables('sendPolicy'))]",
-                "[concat('Microsoft.EventHub/namespaces/', parameters('namespaceName'),'/eventhubs/',parameters('eventHubName'), '/consumerGroups/', parameters('consumerGroupName'))]"
-              ],
-              "properties": {
-                "rights": [
-                  "Listen"
-                ]
-              }
             }
           ]
         }
       ]
+    },
+    {
+      "apiVersion": "2017-04-01",
+      "name": "[concat(parameters('namespaceName'), '/', parameters('namespaceAuthorizationRuleName'))]",
+      "type": "Microsoft.EventHub/namespaces/authorizationRules",
+      "dependsOn": [ "[concat('Microsoft.EventHub/namespaces/', parameters('namespaceName'))]" ],
+      "properties": {
+        "rights": [
+          "Send",
+          "Listen",
+          "Manage"
+        ]
+      }
     }
   ],
   "outputs": {
+    "defaultNamespaceConnectionString": {
+      "type": "string",
+      "value": "[listkeys(variables('authRuleResourceId'), '2017-04-01').primaryConnectionString]"
+    },
+    "defaultSharedAccessPolicyPrimaryKey": {
+      "type": "string",
+      "value": "[listkeys(variables('authRuleResourceId'), '2017-04-01').primaryKey]"
+    },
     "NamespaceConnectionString": {
       "type": "string",
-      "value": "[listkeys(variables('authRuleResourceId'), variables('ehVersion')).primaryConnectionString]"
+      "value": "[listkeys(variables('nsAuthorizationRuleId'), '2017-04-01').primaryConnectionString]"
     },
     "SharedAccessPolicyPrimaryKey": {
       "type": "string",
-      "value": "[listkeys(variables('authRuleResourceId'), variables('ehVersion')).primaryKey]"
+      "value": "[listkeys(variables('nsAuthorizationRuleId'), '2017-04-01').primaryKey]"
+    },
+    "EventHubConnectionString": {
+      "type": "string",
+      "value": "[listkeys(variables('ehAuthorizationRuleId1'), '2017-04-01').primaryConnectionString]"
+    },
+    "EventHubSharedAccessPolicyPrimaryKey": {
+      "type": "string",
+      "value": "[listkeys(variables('ehAuthorizationRuleId1'), '2017-04-01').primaryKey]"
+    },
+    "EventHub1ConnectionString": {
+      "type": "string",
+      "value": "[listkeys(variables('ehAuthorizationRuleId2'), '2017-04-01').primaryConnectionString]"
+    },
+    "EventHub1SharedAccessPolicyPrimaryKey": {
+      "type": "string",
+      "value": "[listkeys(variables('ehAuthorizationRuleId2'), '2017-04-01').primaryKey]"
     }
+
   }
 }

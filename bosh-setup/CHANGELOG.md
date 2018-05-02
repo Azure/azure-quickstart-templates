@@ -1,3 +1,21 @@
+# v3.6.0 (2018-04-02)
+
+- Bump [bosh-deployment](https://github.com/cloudfoundry/bosh-deployment/tree/b848368815a2c81c59c8710850e7b56bc4649152)
+- Bump cf-deployment to [v1.23.0](https://github.com/cloudfoundry/cf-deployment/tree/v1.23.0)
+  - Bump stemcell to `3541.10`
+- Enable `keep_unreachable_vms` and `keep_failed_vms` by default
+
+# v3.5.0 (2018-03-05)
+
+- Upgrade Azure CPI version to v35.1.0. Please see new features in [bosh-azure-cpi-release v35.1.0](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v35.1.0)
+- Bump [bosh-deployment](https://github.com/cloudfoundry/bosh-deployment/tree/5360bcf33409007c85e8b46d4ad0ab0535e3bb5b)
+  - Bump director's additional disk
+- Bump cf-deployment to [v1.16.0](https://github.com/cloudfoundry/cf-deployment/tree/v1.16.0)
+  - Bump stemcell to `3541.5`
+  - Bump bosh-cli to `2.0.48`
+  - Bump cf-cli to `6.34.1`
+- Use compiled releases for cf-deployment
+
 # v3.4.0 (2018-01-30)
 
 - Bump cf-deployment to [`v1.9.0`](https://github.com/cloudfoundry/cf-deployment/tree/v1.9.0).

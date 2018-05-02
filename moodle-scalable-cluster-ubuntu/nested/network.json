@@ -11,7 +11,8 @@
     },
     "resources": [
         {
-            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2017-10-01",
             "location": "[resourceGroup().location]",
             "name": "[parameters('moodleCommon').vnetName]",
             "properties": {
@@ -52,11 +53,12 @@
                         }
                     }
                 ]
-            },
-            "type": "Microsoft.Network/virtualNetworks"
+            }
         },
         {
-            "apiVersion": "2015-06-15",
+            "condition": "[parameters('moodleCommon').vnetGwDeploySwitch]",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2017-10-01",
             "location": "[resourceGroup().location]",
             "name": "[parameters('moodleCommon').gatewayPublicIPName]",
             "properties": {
@@ -64,22 +66,24 @@
             },
             "tags": {
                 "displayName": "Virtual network gateway Public IP"
-            },
-            "type": "Microsoft.Network/publicIPAddresses"
+            }
         },
         {
-            "apiVersion": "2015-06-15",
+            "condition": "[parameters('moodleCommon').vnetGwDeploySwitch]",
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "apiVersion": "2017-10-01",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/virtualNetworks', parameters('moodleCommon').vnetName)]"
             ],
             "name": "[concat(parameters('moodleCommon').vnetName, '/', parameters('moodleCommon').gatewaySubnet)]",
             "properties": {
                 "addressPrefix": "[parameters('moodleCommon').gatewaySubnetRange]"
-            },
-            "type": "Microsoft.Network/virtualNetworks/subnets"
+            }
         },
         {
-            "apiVersion": "2015-06-15",
+            "condition": "[parameters('moodleCommon').vnetGwDeploySwitch]",
+            "type": "Microsoft.Network/virtualNetworkGateways",
+            "apiVersion": "2017-10-01",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/publicIPAddresses', parameters('moodleCommon').gatewayPublicIPName)]",
                 "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('moodleCommon').vnetName, parameters('moodleCommon').gatewaySubnet)]"
@@ -110,11 +114,11 @@
                     "capacity": 2
                 },
                 "vpnType": "[parameters('moodleCommon').vpnType]"
-            },
-            "type": "Microsoft.Network/virtualNetworkGateways"
+            }
         },
         {
-            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2017-10-01",
             "location": "[resourceGroup().location]",
             "name": "[parameters('moodleCommon').lbPipName]",
             "properties": {
@@ -125,11 +129,11 @@
             },
             "tags": {
                 "displayName": "Load Balancer Public IP"
-            },
-            "type": "Microsoft.Network/publicIPAddresses"
+            }
         },
         {
-            "apiVersion": "2016-03-30",
+            "type": "Microsoft.Network/loadBalancers",
+            "apiVersion": "2017-10-01",
             "dependsOn": [
                 "[concat('Microsoft.Network/publicIPAddresses/',parameters('moodleCommon').lbPipName)]"
             ],
@@ -168,7 +172,7 @@
                             "probe": {
                                 "id": "[variables('extProbeID')]"
                             },
-                            "protocol": "tcp"
+                            "protocol": "Tcp"
                         }
                     },
                     {
@@ -187,7 +191,7 @@
                             "probe": {
                                 "id": "[variables('extProbeID')]"
                             },
-                            "protocol": "tcp"
+                            "protocol": "Tcp"
                         }
                     }
                 ],
@@ -195,15 +199,14 @@
                     {
                         "name": "[parameters('moodleCommon').extProbe  ]",
                         "properties": {
-                            "intervalInSeconds": "5",
-                            "numberOfProbes": "3",
+                            "intervalInSeconds": 5,
+                            "numberOfProbes": 3,
                             "port": 80,
-                            "protocol": "tcp"
+                            "protocol": "Tcp"
                         }
                     }
                 ]
-            },
-            "type": "Microsoft.Network/loadBalancers"
+            }
         }
     ],
     "variables": {
