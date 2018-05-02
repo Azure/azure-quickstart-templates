@@ -6,4 +6,4 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template allows you to create an HPC Cluster with a custom compute node image. The custom image must be captured from a HPC Pack compute node.
+This template allows you to create an HPC Cluster with a custom compute node image. The OS type of the image can be either Windows or Linux. If the OS type is Windows, the image must be captured from a HPC Pack compute node.
