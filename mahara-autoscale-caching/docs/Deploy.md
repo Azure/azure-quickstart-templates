@@ -1,6 +1,6 @@
 # Deploy Autoscaling Mahara Stack to Azure
 
-After following the steps in this this document you with awill have a
+After following the steps in this document. You will have a
 new Mahara site with caching for speed and scaling frontends to handle
 load. The filesystem behind it is mirrored for high availability and
 optionally backed up through Azure. Filesystem permissions and options
