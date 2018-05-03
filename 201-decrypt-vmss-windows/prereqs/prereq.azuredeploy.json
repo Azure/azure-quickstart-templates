@@ -13,6 +13,25 @@
             "metadata": {
                 "description": "Number of desired VM instances"
             }
+        },
+        "keyVaultName": {
+          "type": "string",
+          "metadata": {
+            "description": "Name of the KeyVault to place the volume encryption key"
+          }
+        },
+        "keyVaultResourceGroup": {
+          "type": "string",
+          "metadata": {
+            "description": "Resource group of the KeyVault"
+          }
+        },
+        "keyEncryptionKeyURL": {
+          "type": "string",
+          "defaultValue": "",
+          "metadata": {
+            "description": "URL of the KeyEncryptionKey used to encrypt the volume encryption key"
+          }
         }
     },
     "variables": {
@@ -22,7 +41,8 @@
         "subnetName": "[concat(variables('namingInfix'), 'subnet')]",
         "loadBalancerName": "[concat(variables('namingInfix'), 'lb')]",
         "natPoolName": "[concat(variables('namingInfix'), 'natpool')]",
-        "bePoolName": "[concat(variables('namingInfix'), 'bepool')]"
+        "bePoolName": "[concat(variables('namingInfix'), 'bepool')]",
+        "keyVaultResourceID": "[resourceId(parameters('keyVaultResourceGroup'), 'Microsoft.KeyVault/vaults/', parameters('keyVaultName'))]"
     },
     "resources": [{
             "type": "Microsoft.Network/virtualNetworks",
@@ -146,6 +166,28 @@
                                 }]
                             }
                         }]
+                    },
+                    "extensionProfile": {
+                      "extensions": [
+                      {
+                        "name": "AzureDiskEncryption",
+                        "properties": {
+                          "publisher": "Microsoft.Azure.Security",
+                          "type": "AzureDiskEncryption",
+                          "typeHandlerVersion": "2.2",
+                          "autoUpgradeMinorVersion": true,
+                          "forceUpdateTag": "[parameters('forceUpdateTag')]",
+                          "settings": {
+                            "EncryptionOperation": "EnableEncryption",
+                            "KeyVaultURL": "[reference(variables('keyVaultResourceId'),'2018-02-14-preview').vaultUri]",
+                            "KeyVaultResourceId": "[variables('keyVaultResourceID')]",
+                            "KeyEncryptionKeyURL": "[parameters('keyEncryptionKeyURL')]",
+                            "KekVaultResourceId": "[variables('keyVaultResourceID')]",
+                            "KeyEncryptionAlgorithm": "RSA-OAEP",
+                            "VolumeType": "All"
+                          }
+                        }
+                      }]
                     }
                 }
             }
