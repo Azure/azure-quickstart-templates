@@ -1,3 +1,10 @@
+# v3.7.0 (2018-05-01)
+
+- Upgrade Azure CPI version to v35.2.0. Please see new features in [bosh-azure-cpi-release v35.2.0](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v35.2.0)
+- Bump cf-deployment to [v1.27.0](https://github.com/cloudfoundry/cf-deployment/tree/v1.27.0)
+- Add `AzureChinaCloudAD` as AzureStack authentication
+- Use Azure CLI to prepare the storage account. Now the template doesn't depend on any python packages.
+
 # v3.6.0 (2018-04-02)
 
 - Bump [bosh-deployment](https://github.com/cloudfoundry/bosh-deployment/tree/b848368815a2c81c59c8710850e7b56bc4649152)
