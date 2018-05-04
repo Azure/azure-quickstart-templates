@@ -14,5 +14,5 @@ __Note: The VMSS encryption preview does not yet support image upgrade or reimag
 AzureDiskEncryption for VMSS is currently in preview. Consuming this feature requires enabling the preview feature on the subscription and setting up a key vault with 'EnabledForDiskEncryption' access policy using the Azure powershell cmdlets below 
 1. Set-AzureRmKeyVaultAccessPolicy -ResourceGroupName <rgName> -VaultName <vaultName> -EnabledForDiskEncryption"
 2. Register-AzureRmProviderFeature -FeatureName "UnifiedDiskEncryption" -ProviderNamespace "Microsoft.Compute"
-3. Wait 10 min till state transitions to 'Registered'
+3. Wait 10 min until state transitions to 'Registered'
 4. Register-AzureRmResourceProvider -ProviderNamespace Microsoft.Compute
