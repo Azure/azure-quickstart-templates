@@ -2,63 +2,63 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "Service Bus Namespace (should be globally unique!)": {
-            "defaultValue": "Router20180407",
+        "serviceBusNamespace": {
+            "defaultValue": "[uniqueString(resourceGroup().id, deployment().name)]",
             "type": "String",
             "metadata": {
                 "description":"The Service Bus namespace name. This value should be globally unique!"
             }
         },
-        "Client Logic App name": {
+        "clientLogicApp": {
             "defaultValue": "ClientLogicApp",
             "type": "String",
             "metadata": {
                 "description":"Name of the client Logic App"
             }
         },
-        "Backend Logic App name": {
+        "backendLogicApp": {
             "defaultValue": "BackendLogicApp",
             "type": "String",
             "metadata": {
                 "description":"Name of the backend Logic App"
             }
         },
-        "Transformation Logic App name": {
+        "transformationLogicApp": {
             "defaultValue": "TransformationLogicApp",
             "type": "String",
             "metadata": {
                 "description":"Name of the transformation Logic App"
             }
         },
-        "Message routing Topic name": {
+        "messageRoutingTopic": {
             "defaultValue": "messagerouting",
             "type": "String",
             "metadata": {
                 "description":"The name of the topic for routing messages."
             }
         },
-        "Client Logic App subscription name": {
+        "clientLogicAppSubscription": {
             "defaultValue": "ToClientLogicApp",
             "type": "String",
             "metadata": {
                 "description":"The name of the topic subscription towards the client Logic App."
             }
         },
-        "Backend Logic App subscription name": {
+        "backendLogicAppSubscription": {
             "defaultValue": "ToBackendLogicApp",
             "type": "String",
             "metadata": {
                 "description":"The name of the topic subscription towards the backend Logic App."
             }
         },
-        "Transformation Logic App subscription name": {
+        "transformationLogicAppSubscription": {
             "defaultValue": "ToTransformationLogicApp",
             "type": "String",
             "metadata": {
                 "description":"The name of the topic subscription towards the transformation Logic App."
             }
         },
-        "Service Bus connection name": {
+        "serviceBusConnection": {
             "defaultValue": "servicebus",
             "type": "String",
             "metadata": {
@@ -69,13 +69,15 @@
     "variables": {},
     "resources": [
         {
-            "comments": "Generalized from resource: '/subscriptions/fdf3a3a3-c8f5-472f-8367-6a9a4a6c11a9/resourceGroups/CorrelatingMessages/providers/Microsoft.Logic/workflows/BackendLogicApp'.",
             "type": "Microsoft.Logic/workflows",
-            "name": "[parameters('Backend Logic App name')]",
+            "name": "[parameters('backendLogicApp')]",
             "apiVersion": "2017-07-01",
-            "location": "westeurope",
+            "location": "[resourceGroup().location]",
             "tags": {},
             "scale": null,
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/connections', parameters('serviceBusConnection'))]"
+            ],
             "properties": {
                 "state": "Enabled",
                 "definition": {
@@ -101,7 +103,7 @@
                                     }
                                 },
                                 "method": "get",
-                                "path": "[concat('/@{encodeURIComponent(encodeURIComponent(''messagerouting''))}/subscriptions/@{encodeURIComponent(''To', parameters('Backend Logic App name'),''')}/messages/head/peek')]",
+                                "path": "[concat('/@{encodeURIComponent(encodeURIComponent(''messagerouting''))}/subscriptions/@{encodeURIComponent(''To', parameters('backendLogicApp'),''')}/messages/head/peek')]",
                                 "queries": {
                                     "sessionId": "Next Available",
                                     "subscriptionType": "Main"
@@ -124,7 +126,7 @@
                                     }
                                 },
                                 "method": "delete",
-                                "path": "[concat('/@{encodeURIComponent(encodeURIComponent(''messagerouting''))}/subscriptions/@{encodeURIComponent(''To', parameters('Backend Logic App name'),''')}/messages/complete')]",
+                                "path": "[concat('/@{encodeURIComponent(encodeURIComponent(''messagerouting''))}/subscriptions/@{encodeURIComponent(''To', parameters('backendLogicApp'),''')}/messages/complete')]",
                                 "queries": {
                                     "lockToken": "@triggerBody()?['LockToken']",
                                     "sessionId": "@triggerBody()?['SessionId']",
@@ -156,7 +158,7 @@
                                     "ContentData": "@{base64(concat('{','\n','    \"Content\":',body('HTTP'),',','\n','    \"StatusCode\":',outputs('HTTP')['statusCode'],'\n','}'))}",
                                     "ContentType": "application/json",
                                     "Properties": {
-                                        "Source": "[parameters('Backend Logic App name')]"
+                                        "Source": "[parameters('backendLogicApp')]"
                                     },
                                     "SessionId": "@triggerBody()?['SessionId']"
                                 },
@@ -179,26 +181,25 @@
                     "$connections": {
                         "value": {
                             "servicebus": {
-                                "connectionId": "[resourceId('Microsoft.Web/connections', parameters('Service Bus connection name'))]",
+                                "connectionId": "[resourceId('Microsoft.Web/connections', parameters('serviceBusConnection'))]",
                                 "connectionName": "servicebus",
-                                "id": "/subscriptions/fdf3a3a3-c8f5-472f-8367-6a9a4a6c11a9/providers/Microsoft.Web/locations/westeurope/managedApis/servicebus"
+                                "id": "[concat('/subscriptions/', subscription().subscriptionId ,'/providers/Microsoft.Web/locations/', resourceGroup().location ,'/managedApis/servicebus')]"
                             }
                         }
                     }
                 }
-            },
-            "dependsOn": [
-                "[resourceId('Microsoft.Web/connections', parameters('Service Bus connection name'))]"
-            ]
+            }
         },
         {
-            "comments": "Generalized from resource: '/subscriptions/fdf3a3a3-c8f5-472f-8367-6a9a4a6c11a9/resourceGroups/CorrelatingMessages/providers/Microsoft.Logic/workflows/ClientLogicApp'.",
             "type": "Microsoft.Logic/workflows",
-            "name": "[parameters('Client Logic App name')]",
+            "name": "[parameters('clientLogicApp')]",
             "apiVersion": "2017-07-01",
-            "location": "westeurope",
+            "location": "[resourceGroup().location]",
             "tags": {},
             "scale": null,
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/connections', parameters('serviceBusConnection'))]"
+            ],
             "properties": {
                 "state": "Enabled",
                 "definition": {
@@ -246,7 +247,7 @@
                                             }
                                         },
                                         "method": "delete",
-                                        "path": "[concat('/@{encodeURIComponent(encodeURIComponent(''messagerouting''))}/subscriptions/@{encodeURIComponent(''To', parameters('Client Logic App name'),''')}/messages/complete')]",
+                                        "path": "[concat('/@{encodeURIComponent(encodeURIComponent(''messagerouting''))}/subscriptions/@{encodeURIComponent(''To', parameters('clientLogicApp'),''')}/messages/complete')]",
                                         "queries": {
                                             "lockToken": "@items('For_each')?['LockToken']",
                                             "sessionId": "@items('For_each')?['SessionId']",
@@ -276,7 +277,7 @@
                                     }
                                 },
                                 "method": "get",
-                                "path": "[concat('/@{encodeURIComponent(encodeURIComponent(''messagerouting''))}/subscriptions/@{encodeURIComponent(''To', parameters('Client Logic App name'),''')}/messages/batch/peek')]",
+                                "path": "[concat('/@{encodeURIComponent(encodeURIComponent(''messagerouting''))}/subscriptions/@{encodeURIComponent(''To', parameters('clientLogicApp'),''')}/messages/batch/peek')]",
                                 "queries": {
                                     "maxMessageCount": 1,
                                     "sessionId": "@variables('MyUniqueIdentifier')",
@@ -349,7 +350,7 @@
                                     "ContentData": "@{base64(triggerBody())}",
                                     "ContentType": "application/json",
                                     "Properties": {
-                                        "Source": "[parameters('Client Logic App name')]"
+                                        "Source": "[parameters('clientLogicApp')]"
                                     },
                                     "SessionId": "@variables('MyUniqueIdentifier')"
                                 },
@@ -372,26 +373,25 @@
                     "$connections": {
                         "value": {
                             "servicebus": {
-                                "connectionId": "[resourceId('Microsoft.Web/connections', parameters('Service Bus connection name'))]",
+                                "connectionId": "[resourceId('Microsoft.Web/connections', parameters('serviceBusConnection'))]",
                                 "connectionName": "servicebus",
-                                "id": "/subscriptions/fdf3a3a3-c8f5-472f-8367-6a9a4a6c11a9/providers/Microsoft.Web/locations/westeurope/managedApis/servicebus"
+                                "id": "[concat('/subscriptions/', subscription().subscriptionId ,'/providers/Microsoft.Web/locations/', resourceGroup().location ,'/managedApis/servicebus')]"
                             }
                         }
                     }
                 }
-            },
-            "dependsOn": [
-                "[resourceId('Microsoft.Web/connections', parameters('Service Bus connection name'))]"
-            ]
+            }
         },
         {
-            "comments": "Generalized from resource: '/subscriptions/fdf3a3a3-c8f5-472f-8367-6a9a4a6c11a9/resourceGroups/CorrelatingMessages/providers/Microsoft.Logic/workflows/TransformationLogicApp'.",
             "type": "Microsoft.Logic/workflows",
-            "name": "[parameters('Transformation Logic App name')]",
+            "name": "[parameters('transformationLogicApp')]",
             "apiVersion": "2017-07-01",
-            "location": "westeurope",
+            "location": "[resourceGroup().location]",
             "tags": {},
             "scale": null,
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/connections', parameters('serviceBusConnection'))]"
+            ],
             "properties": {
                 "state": "Enabled",
                 "definition": {
@@ -417,7 +417,7 @@
                                     }
                                 },
                                 "method": "get",
-                                "path": "[concat('/@{encodeURIComponent(encodeURIComponent(''messagerouting''))}/subscriptions/@{encodeURIComponent(''To', parameters('Transformation Logic App name'),''')}/messages/head/peek')]",
+                                "path": "[concat('/@{encodeURIComponent(encodeURIComponent(''messagerouting''))}/subscriptions/@{encodeURIComponent(''To', parameters('transformationLogicApp'),''')}/messages/head/peek')]",
                                 "queries": {
                                     "sessionId": "Next Available",
                                     "subscriptionType": "Main"
@@ -440,7 +440,7 @@
                                     }
                                 },
                                 "method": "delete",
-                                "path": "[concat('/@{encodeURIComponent(encodeURIComponent(''messagerouting''))}/subscriptions/@{encodeURIComponent(''To', parameters('Transformation Logic App name'),''')}/messages/complete')]",
+                                "path": "[concat('/@{encodeURIComponent(encodeURIComponent(''messagerouting''))}/subscriptions/@{encodeURIComponent(''To', parameters('transformationLogicApp'),''')}/messages/complete')]",
                                 "queries": {
                                     "lockToken": "@triggerBody()?['LockToken']",
                                     "sessionId": "@triggerBody()?['SessionId']",
@@ -494,7 +494,7 @@
                                     "ContentData": "@{base64(outputs('Compose'))}",
                                     "ContentType": "application/json",
                                     "Properties": {
-                                        "Source": "[parameters('Transformation Logic App name')]"
+                                        "Source": "[parameters('transformationLogicApp')]"
                                     },
                                     "SessionId": "@triggerBody()?['SessionId']"
                                 },
@@ -517,80 +517,80 @@
                     "$connections": {
                         "value": {
                             "servicebus": {
-                                "connectionId": "[resourceId('Microsoft.Web/connections', parameters('Service Bus connection name'))]",
+                                "connectionId": "[resourceId('Microsoft.Web/connections', parameters('serviceBusConnection'))]",
                                 "connectionName": "servicebus",
-                                "id": "/subscriptions/fdf3a3a3-c8f5-472f-8367-6a9a4a6c11a9/providers/Microsoft.Web/locations/westeurope/managedApis/servicebus"
+                                "id": "[concat('/subscriptions/', subscription().subscriptionId ,'/providers/Microsoft.Web/locations/', resourceGroup().location ,'/managedApis/servicebus')]"
                             }
                         }
                     }
                 }
-            },
-            "dependsOn": [
-                "[resourceId('Microsoft.Web/connections', parameters('Service Bus connection name'))]"
-            ]
+            }
         },
         {
-            "comments": "Generalized from resource: '/subscriptions/fdf3a3a3-c8f5-472f-8367-6a9a4a6c11a9/resourceGroups/CorrelatingMessages/providers/Microsoft.ServiceBus/namespaces/Router'.",
             "type": "Microsoft.ServiceBus/namespaces",
             "sku": {
                 "name": "Standard",
                 "tier": "Standard"
             },
-            "name": "[parameters('Service Bus Namespace (should be globally unique!)')]",
+            "name": "[parameters('serviceBusNamespace')]",
             "apiVersion": "2017-04-01",
-            "location": "West Europe",
+            "location": "[resourceGroup().location]",
             "tags": {},
             "scale": null,
             "properties": {
-                "metricId": "[concat('fdf3a3a3-c8f5-472f-8367-6a9a4a6c11a9:router', parameters('Service Bus Namespace (should be globally unique!)'))]",
+                "metricId": "[concat(subscription().subscriptionId, ':router', parameters('serviceBusNamespace'))]",
                 "createdAt": "2018-04-07T12:06:43.41Z",
                 "updatedAt": "2018-04-07T12:07:09.597Z",
-                "serviceBusEndpoint": "[concat('https://', parameters('Service Bus Namespace (should be globally unique!)'),'.servicebus.windows.net:443/')]",
+                "serviceBusEndpoint": "[concat('https://', parameters('serviceBusNamespace'),'.servicebus.windows.net:443/')]",
                 "status": "Active"
-            },
-            "dependsOn": []
+            }
         },
         {
-            "comments": "Generalized from resource: '/subscriptions/fdf3a3a3-c8f5-472f-8367-6a9a4a6c11a9/resourceGroups/CorrelatingMessages/providers/Microsoft.Web/connections/servicebus'.",
             "type": "Microsoft.Web/connections",
-            "name": "[parameters('Service Bus connection name')]",
+            "name": "[parameters('serviceBusConnection')]",
             "apiVersion": "2016-06-01",
-            "location": "westeurope",
+            "location": "[resourceGroup().location]",
             "scale": null,
+            "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces/AuthorizationRules', parameters('serviceBusNamespace'), 'RootManageSharedAccessKey')]"
+            ],
             "properties": {
                 "displayName": "Router",
                 "customParameterValues": {},
                 "api": {
-                    "id": "[concat('/subscriptions/fdf3a3a3-c8f5-472f-8367-6a9a4a6c11a9/providers/Microsoft.Web/locations/westeurope/managedApis/', parameters('Service Bus connection name'))]"
+                    "id": "[concat('/subscriptions/',  subscription().subscriptionId, '/providers/Microsoft.Web/locations/', resourceGroup().location , '/managedApis/', parameters('serviceBusConnection'))]"
+                },
+                "parameterValues": {
+                  "connectionString": "[listKeys(resourceId('Microsoft.ServiceBus/namespaces/authorizationRules', parameters('serviceBusNamespace'), 'RootManageSharedAccessKey'), '2015-08-01').primaryConnectionString]"
                 }
-            },
-            "dependsOn": []
+            }
         },
         {
-            "comments": "Generalized from resource: '/subscriptions/fdf3a3a3-c8f5-472f-8367-6a9a4a6c11a9/resourcegroups/CorrelatingMessages/providers/Microsoft.ServiceBus/namespaces/Router/AuthorizationRules/RootManageSharedAccessKey'.",
             "type": "Microsoft.ServiceBus/namespaces/AuthorizationRules",
-            "name": "[concat(parameters('Service Bus Namespace (should be globally unique!)'), '/', 'RootManageSharedAccessKey')]",
+            "name": "[concat(parameters('serviceBusNamespace'), '/', 'RootManageSharedAccessKey')]",
             "apiVersion": "2017-04-01",
-            "location": "West Europe",
+            "location": "[resourceGroup().location]",
             "scale": null,
+            "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces', parameters('serviceBusNamespace'))]"
+            ],
             "properties": {
                 "rights": [
                     "Listen",
                     "Manage",
                     "Send"
                 ]
-            },
-            "dependsOn": [
-                "[resourceId('Microsoft.ServiceBus/namespaces', parameters('Service Bus Namespace (should be globally unique!)'))]"
-            ]
+            }
         },
         {
-            "comments": "Generalized from resource: '/subscriptions/fdf3a3a3-c8f5-472f-8367-6a9a4a6c11a9/resourcegroups/CorrelatingMessages/providers/Microsoft.ServiceBus/namespaces/Router/topics/messagerouting'.",
             "type": "Microsoft.ServiceBus/namespaces/topics",
-            "name": "[concat(parameters('Service Bus Namespace (should be globally unique!)'), '/', parameters('Message routing Topic name'))]",
+            "name": "[concat(parameters('serviceBusNamespace'), '/', parameters('messageRoutingTopic'))]",
             "apiVersion": "2017-04-01",
-            "location": "West Europe",
+            "location": "[resourceGroup().location]",
             "scale": null,
+            "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces', parameters('serviceBusNamespace'))]"
+            ],
             "properties": {
                 "defaultMessageTimeToLive": "P14D",
                 "maxSizeInMegabytes": 1024,
@@ -602,18 +602,18 @@
                 "autoDeleteOnIdle": "P10675199DT2H48M5.4775807S",
                 "enablePartitioning": true,
                 "enableExpress": false
-            },
-            "dependsOn": [
-                "[resourceId('Microsoft.ServiceBus/namespaces', parameters('Service Bus Namespace (should be globally unique!)'))]"
-            ]
+            }
         },
         {
-            "comments": "Generalized from resource: '/subscriptions/fdf3a3a3-c8f5-472f-8367-6a9a4a6c11a9/resourcegroups/CorrelatingMessages/providers/Microsoft.ServiceBus/namespaces/Router/topics/messagerouting/subscriptions/ToBackendLogicApp'.",
             "type": "Microsoft.ServiceBus/namespaces/topics/subscriptions",
-            "name": "[concat(parameters('Service Bus Namespace (should be globally unique!)'), '/', parameters('Message routing Topic name'), '/', parameters('Backend Logic App subscription name'))]",
+            "name": "[concat(parameters('serviceBusNamespace'), '/', parameters('messageRoutingTopic'), '/', parameters('backendLogicAppSubscription'))]",
             "apiVersion": "2017-04-01",
-            "location": "West Europe",
+            "location": "[resourceGroup().location]",
             "scale": null,
+            "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces', parameters('serviceBusNamespace'))]",
+                "[resourceId('Microsoft.ServiceBus/namespaces/topics', parameters('serviceBusNamespace'), parameters('messageRoutingTopic'))]"
+            ],
             "properties": {
                 "lockDuration": "PT30S",
                 "requiresSession": true,
@@ -624,19 +624,18 @@
                 "status": "Active",
                 "enableBatchedOperations": false,
                 "autoDeleteOnIdle": "P10675199DT2H48M5.4775807S"
-            },
-            "dependsOn": [
-                "[resourceId('Microsoft.ServiceBus/namespaces', parameters('Service Bus Namespace (should be globally unique!)'))]",
-                "[resourceId('Microsoft.ServiceBus/namespaces/topics', parameters('Service Bus Namespace (should be globally unique!)'), parameters('Message routing Topic name'))]"
-            ]
+            }
         },
         {
-            "comments": "Generalized from resource: '/subscriptions/fdf3a3a3-c8f5-472f-8367-6a9a4a6c11a9/resourcegroups/CorrelatingMessages/providers/Microsoft.ServiceBus/namespaces/Router/topics/messagerouting/subscriptions/ToClientLogicApp'.",
             "type": "Microsoft.ServiceBus/namespaces/topics/subscriptions",
-            "name": "[concat(parameters('Service Bus Namespace (should be globally unique!)'), '/', parameters('Message routing Topic name'), '/', parameters('Client Logic App subscription name'))]",
+            "name": "[concat(parameters('serviceBusNamespace'), '/', parameters('messageRoutingTopic'), '/', parameters('clientLogicAppSubscription'))]",
             "apiVersion": "2017-04-01",
-            "location": "West Europe",
+            "location": "[resourceGroup().location]",
             "scale": null,
+            "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces', parameters('serviceBusNamespace'))]",
+                "[resourceId('Microsoft.ServiceBus/namespaces/topics', parameters('serviceBusNamespace'), parameters('messageRoutingTopic'))]"
+            ],
             "properties": {
                 "lockDuration": "PT30S",
                 "requiresSession": true,
@@ -647,19 +646,18 @@
                 "status": "Active",
                 "enableBatchedOperations": false,
                 "autoDeleteOnIdle": "P10675199DT2H48M5.4775807S"
-            },
-            "dependsOn": [
-                "[resourceId('Microsoft.ServiceBus/namespaces', parameters('Service Bus Namespace (should be globally unique!)'))]",
-                "[resourceId('Microsoft.ServiceBus/namespaces/topics', parameters('Service Bus Namespace (should be globally unique!)'), parameters('Message routing Topic name'))]"
-            ]
+            }
         },
         {
-            "comments": "Generalized from resource: '/subscriptions/fdf3a3a3-c8f5-472f-8367-6a9a4a6c11a9/resourcegroups/CorrelatingMessages/providers/Microsoft.ServiceBus/namespaces/Router/topics/messagerouting/subscriptions/ToTransformationLogicApp'.",
             "type": "Microsoft.ServiceBus/namespaces/topics/subscriptions",
-            "name": "[concat(parameters('Service Bus Namespace (should be globally unique!)'), '/', parameters('Message routing Topic name'), '/', parameters('Transformation Logic App subscription name'))]",
+            "name": "[concat(parameters('serviceBusNamespace'), '/', parameters('messageRoutingTopic'), '/', parameters('transformationLogicAppSubscription'))]",
             "apiVersion": "2017-04-01",
-            "location": "West Europe",
+            "location": "[resourceGroup().location]",
             "scale": null,
+            "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces', parameters('serviceBusNamespace'))]",
+                "[resourceId('Microsoft.ServiceBus/namespaces/topics', parameters('serviceBusNamespace'), parameters('messageRoutingTopic'))]"
+            ],
             "properties": {
                 "lockDuration": "PT30S",
                 "requiresSession": true,
@@ -670,71 +668,64 @@
                 "status": "Active",
                 "enableBatchedOperations": false,
                 "autoDeleteOnIdle": "P10675199DT2H48M5.4775807S"
-            },
-            "dependsOn": [
-                "[resourceId('Microsoft.ServiceBus/namespaces', parameters('Service Bus Namespace (should be globally unique!)'))]",
-                "[resourceId('Microsoft.ServiceBus/namespaces/topics', parameters('Service Bus Namespace (should be globally unique!)'), parameters('Message routing Topic name'))]"
-            ]
+            }
         },
         {
-            "comments": "Generalized from resource: '/subscriptions/fdf3a3a3-c8f5-472f-8367-6a9a4a6c11a9/resourcegroups/CorrelatingMessages/providers/Microsoft.ServiceBus/namespaces/Router/topics/messagerouting/subscriptions/ToBackendLogicApp/rules/$Default'.",
             "type": "Microsoft.ServiceBus/namespaces/topics/subscriptions/rules",
-            "name": "[concat(parameters('Service Bus Namespace (should be globally unique!)'), '/', parameters('Message routing Topic name'), '/', parameters('Backend Logic App subscription name'), '/', 'RouteToBackendLogicApp')]",
+            "name": "[concat(parameters('serviceBusNamespace'), '/', parameters('messageRoutingTopic'), '/', parameters('backendLogicAppSubscription'), '/', 'RouteToBackendLogicApp')]",
             "apiVersion": "2017-04-01",
-            "location": "West Europe",
+            "location": "[resourceGroup().location]",
             "scale": null,
+            "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces', parameters('serviceBusNamespace'))]",
+                "[resourceId('Microsoft.ServiceBus/namespaces/topics', parameters('serviceBusNamespace'), parameters('messageRoutingTopic'))]",
+                "[resourceId('Microsoft.ServiceBus/namespaces/topics/subscriptions', parameters('serviceBusNamespace'), parameters('messageRoutingTopic'), parameters('backendLogicAppSubscription'))]"
+            ],
             "properties": {
                 "action": {},
                 "filterType": "SqlFilter",
                 "sqlFilter": {
                     "sqlExpression": "Source='TransformationLogicApp'"
                 }
-            },
-            "dependsOn": [
-                "[resourceId('Microsoft.ServiceBus/namespaces', parameters('Service Bus Namespace (should be globally unique!)'))]",
-                "[resourceId('Microsoft.ServiceBus/namespaces/topics', parameters('Service Bus Namespace (should be globally unique!)'), parameters('Message routing Topic name'))]",
-                "[resourceId('Microsoft.ServiceBus/namespaces/topics/subscriptions', parameters('Service Bus Namespace (should be globally unique!)'), parameters('Message routing Topic name'), parameters('Backend Logic App subscription name'))]"
-            ]
+            }
         },
         {
-            "comments": "Generalized from resource: '/subscriptions/fdf3a3a3-c8f5-472f-8367-6a9a4a6c11a9/resourcegroups/CorrelatingMessages/providers/Microsoft.ServiceBus/namespaces/Router/topics/messagerouting/subscriptions/ToClientLogicApp/rules/$Default'.",
             "type": "Microsoft.ServiceBus/namespaces/topics/subscriptions/rules",
-            "name": "[concat(parameters('Service Bus Namespace (should be globally unique!)'), '/', parameters('Message routing Topic name'), '/', parameters('Client Logic App subscription name'), '/', 'RouteToClientLogicApp')]",
+            "name": "[concat(parameters('serviceBusNamespace'), '/', parameters('messageRoutingTopic'), '/', parameters('clientLogicAppSubscription'), '/', 'RouteToClientLogicApp')]",
             "apiVersion": "2017-04-01",
-            "location": "West Europe",
+            "location": "[resourceGroup().location]",
             "scale": null,
+            "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces', parameters('serviceBusNamespace'))]",
+                "[resourceId('Microsoft.ServiceBus/namespaces/topics', parameters('serviceBusNamespace'), parameters('messageRoutingTopic'))]",
+                "[resourceId('Microsoft.ServiceBus/namespaces/topics/subscriptions', parameters('serviceBusNamespace'), parameters('messageRoutingTopic'), parameters('clientLogicAppSubscription'))]"
+            ],
             "properties": {
                 "action": {},
                 "filterType": "SqlFilter",
                 "sqlFilter": {
                     "sqlExpression": "Source='BackendLogicApp'"
                 }
-            },
-            "dependsOn": [
-                "[resourceId('Microsoft.ServiceBus/namespaces', parameters('Service Bus Namespace (should be globally unique!)'))]",
-                "[resourceId('Microsoft.ServiceBus/namespaces/topics', parameters('Service Bus Namespace (should be globally unique!)'), parameters('Message routing Topic name'))]",
-                "[resourceId('Microsoft.ServiceBus/namespaces/topics/subscriptions', parameters('Service Bus Namespace (should be globally unique!)'), parameters('Message routing Topic name'), parameters('Client Logic App subscription name'))]"
-            ]
+            }
         },
         {
-            "comments": "Generalized from resource: '/subscriptions/fdf3a3a3-c8f5-472f-8367-6a9a4a6c11a9/resourcegroups/CorrelatingMessages/providers/Microsoft.ServiceBus/namespaces/Router/topics/messagerouting/subscriptions/ToTransformationLogicApp/rules/$Default'.",
             "type": "Microsoft.ServiceBus/namespaces/topics/subscriptions/rules",
-            "name": "[concat(parameters('Service Bus Namespace (should be globally unique!)'), '/', parameters('Message routing Topic name'), '/', parameters('Transformation Logic App subscription name'), '/', 'RouteToTransformationLogicApp')]",
+            "name": "[concat(parameters('serviceBusNamespace'), '/', parameters('messageRoutingTopic'), '/', parameters('transformationLogicAppSubscription'), '/', 'RouteToTransformationLogicApp')]",
             "apiVersion": "2017-04-01",
-            "location": "West Europe",
+            "location": "[resourceGroup().location]",
             "scale": null,
+            "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces', parameters('serviceBusNamespace'))]",
+                "[resourceId('Microsoft.ServiceBus/namespaces/topics', parameters('serviceBusNamespace'), parameters('messageRoutingTopic'))]",
+                "[resourceId('Microsoft.ServiceBus/namespaces/topics/subscriptions', parameters('serviceBusNamespace'), parameters('messageRoutingTopic'), parameters('transformationLogicAppSubscription'))]"
+            ],
             "properties": {
                 "action": {},
                 "filterType": "SqlFilter",
                 "sqlFilter": {
                     "sqlExpression": "Source='ClientLogicApp'"
                 }
-            },
-            "dependsOn": [
-                "[resourceId('Microsoft.ServiceBus/namespaces', parameters('Service Bus Namespace (should be globally unique!)'))]",
-                "[resourceId('Microsoft.ServiceBus/namespaces/topics', parameters('Service Bus Namespace (should be globally unique!)'), parameters('Message routing Topic name'))]",
-                "[resourceId('Microsoft.ServiceBus/namespaces/topics/subscriptions', parameters('Service Bus Namespace (should be globally unique!)'), parameters('Message routing Topic name'), parameters('Transformation Logic App subscription name'))]"
-            ]
+            }
         }
     ]
 }
