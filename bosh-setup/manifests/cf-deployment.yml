@@ -1,6 +1,6 @@
 ---
 name: cf
-manifest_version: v1.6.0
+manifest_version: v1.27.0
 update:
   canaries: 1
   canary_watch_time: 30000-1200000
@@ -22,7 +22,7 @@ addons:
     properties:
       loggregator:
         tls:
-          ca_cert: "((loggregator_tls_metron.ca))"
+          ca_cert: "((loggregator_ca.certificate))"
           metron:
             cert: "((loggregator_tls_metron.certificate))"
             key: "((loggregator_tls_metron.private_key))"
@@ -84,7 +84,7 @@ instance_groups:
         - "((consul_encrypt_key))"
         agent_cert: "((consul_agent.certificate))"
         agent_key: "((consul_agent.private_key))"
-        ca_cert: "((consul_agent.ca))"
+        ca_cert: "((consul_agent_ca.certificate))"
         server_cert: "((consul_server.certificate))"
         server_key: "((consul_server.private_key))"
 - name: nats
@@ -133,7 +133,7 @@ instance_groups:
       scalablesyslog:
         adapter:
           tls:
-            ca: "((adapter_tls.ca))"
+            ca: "((loggregator_ca.certificate))"
             cert: "((adapter_tls.certificate))"
             key: "((adapter_tls.private_key))"
             cn: ss-adapter
@@ -141,7 +141,7 @@ instance_groups:
             addr: reverse-log-proxy.service.cf.internal:8082
         adapter_rlp:
           tls:
-            ca: "((adapter_rlp_tls.ca))"
+            ca: "((loggregator_ca.certificate))"
             cert: "((adapter_rlp_tls.certificate))"
             key: "((adapter_rlp_tls.private_key))"
             cn: reverselogproxy
@@ -169,11 +169,10 @@ instance_groups:
   - name: mysql
     release: cf-mysql
     properties:
-      network_name: default
       cf_mysql:
         mysql:
           admin_password: "((cf_mysql_mysql_admin_password))"
-          port: 33306
+          port: 13306
           binlog_enabled: false
           cluster_health:
             password: "((cf_mysql_mysql_cluster_health_password))"
@@ -241,15 +240,9 @@ instance_groups:
     release: diego
     properties:
       tls: &cfdot_tls_client_properties
-        ca_certificate: "((diego_rep_client.ca))"
+        ca_certificate: "((service_cf_internal_ca.certificate))"
         certificate: "((diego_rep_client.certificate))"
         private_key: "((diego_rep_client.private_key))"
-      diego:
-        cfdot:
-          bbs: &diego_bbs_client_properties
-            ca_cert: "((diego_bbs_client.ca))"
-            client_cert: "((diego_bbs_client.certificate))"
-            client_key: "((diego_bbs_client.private_key))"
   - name: bbs
     release: diego
     properties:
@@ -266,28 +259,21 @@ instance_groups:
             db_username: diego
             db_password: "((diego_database_password))"
             db_driver: mysql
-          etcd:
-            machines: []
-            ca_cert: nil
-            client_cert: nil
-            client_key: nil
-          ca_cert: "((diego_bbs_server.ca))"
+          ca_cert: "((service_cf_internal_ca.certificate))"
           auctioneer: &diego_auctioneer_client_properties
-            ca_cert: "((diego_auctioneer_client.ca))"
+            ca_cert: "((service_cf_internal_ca.certificate))"
             client_cert: "((diego_auctioneer_client.certificate))"
             client_key: "((diego_auctioneer_client.private_key))"
           server_cert: "((diego_bbs_server.certificate))"
           server_key: "((diego_bbs_server.private_key))"
           rep:
             require_tls: true
-            ca_cert: "((diego_rep_client.ca))"
+            ca_cert: "((service_cf_internal_ca.certificate))"
             client_cert: "((diego_rep_client.certificate))"
             client_key: "((diego_rep_client.private_key))"
-          locket:
-            api_location: "locket.service.cf.internal:8891"
       loggregator: &diego_loggregator_client_properties
         use_v2_api: true
-        ca_cert: "((loggregator_tls_metron.ca))"
+        ca_cert: "((loggregator_ca.certificate))"
         cert: "((loggregator_tls_metron.certificate))"
         key: "((loggregator_tls_metron.private_key))"
   - name: silk-controller
@@ -295,7 +281,7 @@ instance_groups:
     properties:
       cf_networking:
         silk_controller:
-          ca_cert: ((silk_controller.ca))
+          ca_cert: ((silk_ca.certificate))
           server_cert: ((silk_controller.certificate))
           server_key: ((silk_controller.private_key))
           database:
@@ -306,14 +292,14 @@ instance_groups:
             port: 3306
             name: network_connectivity
         silk_daemon:
-          ca_cert: ((silk_daemon.ca))
+          ca_cert: ((silk_ca.certificate))
           client_cert: ((silk_daemon.certificate))
           client_key: ((silk_daemon.private_key))
   - name: locket
     release: diego
     properties:
       tls:
-        ca_cert: "((diego_locket_server.ca))"
+        ca_cert: "((service_cf_internal_ca.certificate))"
         cert: "((diego_locket_server.certificate))"
         key: "((diego_locket_server.private_key))"
       diego:
@@ -327,7 +313,7 @@ instance_groups:
             db_driver: mysql
       loggregator:
         use_v2_api: true
-        ca_cert: "((loggregator_tls_metron.ca))"
+        ca_cert: "((loggregator_ca.certificate))"
         cert: "((loggregator_tls_metron.certificate))"
         key: "((loggregator_tls_metron.private_key))"
 - name: uaa
@@ -356,8 +342,12 @@ instance_groups:
     properties:
       login:
         saml:
-          serviceProviderKey: "((uaa_login_saml.private_key))"
-          serviceProviderCertificate: "((uaa_login_saml.certificate))"
+          activeKeyId: key-1
+          keys:
+            key-1:
+              key: "((uaa_login_saml.private_key))"
+              certificate: "((uaa_login_saml.certificate))"
+              passphrase: ""
       uaa:
         sslCertificate: "((uaa_ssl.certificate))"
         sslPrivateKey: "((uaa_ssl.private_key))"
@@ -489,7 +479,7 @@ instance_groups:
     properties: &statsd_injector_properties
       loggregator:
         tls:
-          ca_cert: "((loggregator_tls_statsdinjector.ca))"
+          ca_cert: "((loggregator_ca.certificate))"
           statsd_injector:
             cert: "((loggregator_tls_statsdinjector.certificate))"
             key: "((loggregator_tls_statsdinjector.private_key))"
@@ -502,6 +492,8 @@ instance_groups:
   vm_type: small
   persistent_disk_type: 100GB
   stemcell: default
+  update:
+    serial: true
   networks:
   - name: default
   jobs:
@@ -584,7 +576,7 @@ instance_groups:
       ssl:
         skip_cert_verify: true
       uaa:
-        ca_cert: "((uaa_ssl.ca))"
+        ca_cert: "((uaa_ca.certificate))"
         clients:
           cc_routing:
             secret: "((uaa_clients_cc-routing_secret))"
@@ -654,7 +646,7 @@ instance_groups:
         buildpacks: &blobstore-properties
           blobstore_type: webdav
           webdav_config:
-            ca_cert: "((blobstore_tls.ca))"
+            ca_cert: "((service_cf_internal_ca.certificate))"
             blobstore_timeout: 5
             password: "((blobstore_admin_users_password))"
             private_endpoint: https://blobstore.service.cf.internal:4443
@@ -664,7 +656,7 @@ instance_groups:
         packages: *blobstore-properties
         droplets: *blobstore-properties
         mutual_tls: &cc_mutual_tls
-          ca_cert: "((cc_tls.ca))"
+          ca_cert: "((service_cf_internal_ca.certificate))"
           public_cert: "((cc_tls.certificate))"
           private_key: "((cc_tls.private_key))"
       ccdb: &ccdb
@@ -721,6 +713,8 @@ instance_groups:
     properties: *statsd_injector_properties
   - name: file_server
     release: diego
+    properties:
+      loggregator: *diego_loggregator_client_properties
   - name: routing-api
     release: routing
     properties:
@@ -739,7 +733,7 @@ instance_groups:
           password: "((routing_api_database_password))"
         locket:
           api_location: "locket.service.cf.internal:8891"
-          ca_cert: "((diego_locket_client.ca))"
+          ca_cert: "((service_cf_internal_ca.certificate))"
           client_cert: "((diego_locket_client.certificate))"
           client_key: "((diego_locket_client.private_key))"
       uaa:
@@ -751,7 +745,7 @@ instance_groups:
       cf_networking:
         policy_server:
           uaa_client_secret: ((uaa_clients_network_policy_secret))
-          uaa_ca: ((uaa_ssl.ca))
+          uaa_ca: ((uaa_ca.certificate))
           database:
             type: mysql
             username: network_policy
@@ -764,7 +758,7 @@ instance_groups:
     properties:
       cf_networking:
         policy_server_internal:
-          ca_cert: ((network_policy_server.ca))
+          ca_cert: ((network_policy_ca.certificate))
           server_cert: ((network_policy_server.certificate))
           server_key: ((network_policy_server.private_key))
   - name: cc_uploader
@@ -773,11 +767,11 @@ instance_groups:
       capi:
         cc_uploader:
           cc:
-            ca_cert: "((cc_bridge_cc_uploader.ca))"
+            ca_cert: "((service_cf_internal_ca.certificate))"
             client_cert: "((cc_bridge_cc_uploader.certificate))"
             client_key: "((cc_bridge_cc_uploader.private_key))"
           mutual_tls:
-            ca_cert: "((cc_bridge_cc_uploader_server.ca))"
+            ca_cert: "((service_cf_internal_ca.certificate))"
             server_cert: "((cc_bridge_cc_uploader_server.certificate))"
             server_key: "((cc_bridge_cc_uploader_server.private_key))"
 - name: cc-worker
@@ -815,7 +809,7 @@ instance_groups:
       ssl:
         skip_cert_verify: true
       uaa:
-        ca_cert: "((uaa_ssl.ca))"
+        ca_cert: "((uaa_ca.certificate))"
         clients:
           cc-service-dashboards:
             secret: "((uaa_clients_cc-service-dashboards_secret))"
@@ -866,7 +860,7 @@ instance_groups:
         clients:
           gorouter:
             secret: "((uaa_clients_gorouter_secret))"
-        ca_cert: "((uaa_ssl.ca))"
+        ca_cert: "((uaa_ca.certificate))"
         ssl:
           port: 8443
 - name: tcp-router
@@ -924,25 +918,23 @@ instance_groups:
     release: diego
     properties:
       tls: *cfdot_tls_client_properties
-      diego:
-        cfdot:
-          bbs: *diego_bbs_client_properties
   - name: auctioneer
     release: diego
     properties:
       diego:
         auctioneer:
-          bbs: *diego_bbs_client_properties
-          ca_cert: "((diego_auctioneer_server.ca))"
+          bbs: &diego_bbs_client_properties
+            ca_cert: "((service_cf_internal_ca.certificate))"
+            client_cert: "((diego_bbs_client.certificate))"
+            client_key: "((diego_bbs_client.private_key))"
+          ca_cert: "((service_cf_internal_ca.certificate))"
           server_cert: "((diego_auctioneer_server.certificate))"
           server_key: "((diego_auctioneer_server.private_key))"
           rep:
             require_tls: true
-            ca_cert: "((diego_rep_client.ca))"
+            ca_cert: "((service_cf_internal_ca.certificate))"
             client_cert: "((diego_rep_client.certificate))"
             client_key: "((diego_rep_client.private_key))"
-          locket:
-            api_location: "locket.service.cf.internal:8891"
       loggregator: *diego_loggregator_client_properties
   - name: cloud_controller_clock
     release: capi
@@ -961,7 +953,7 @@ instance_groups:
       system_domain: "((system_domain))"
       routing_api: *routing_api
       uaa:
-        ca_cert: "((uaa_ssl.ca))"
+        ca_cert: "((uaa_ca.certificate))"
         clients:
           cc-service-dashboards:
             secret: "((uaa_clients_cc-service-dashboards_secret))"
@@ -982,7 +974,7 @@ instance_groups:
             locket:
               api_location: "locket.service.cf.internal:8891"
           cc:
-            ca_cert: "((cc_bridge_tps.ca))"
+            ca_cert: "((service_cf_internal_ca.certificate))"
             client_cert: "((cc_bridge_tps.certificate))"
             client_key: "((cc_bridge_tps.private_key))"
           listener_enabled: false
@@ -995,7 +987,7 @@ instance_groups:
           host_key: "((diego_ssh_proxy_host_key.private_key))"
           uaa_secret: "((uaa_clients_ssh-proxy_secret))"
           uaa:
-            ca_cert: "((uaa_ssl.ca))"
+            ca_cert: "((uaa_ca.certificate))"
             port: 8443
           bbs: *diego_bbs_client_properties
       loggregator: *diego_loggregator_client_properties
@@ -1008,12 +1000,12 @@ instance_groups:
             url: https://cloud-controller-ng.service.cf.internal:9023
           tls:
             client:
-              ca: "((scheduler_client_tls.ca))"
+              ca: "((loggregator_ca.certificate))"
               cert: "((scheduler_client_tls.certificate))"
               key: "((scheduler_client_tls.private_key))"
               adapter_cn: "ss-adapter"
             api:
-              ca: "((scheduler_api_tls.ca))"
+              ca: "((service_cf_internal_ca.certificate))"
               cert: "((scheduler_api_tls.certificate))"
               key: "((scheduler_api_tls.private_key))"
               cn: "cloud-controller-ng.service.cf.internal"
@@ -1021,7 +1013,7 @@ instance_groups:
   azs:
   - z1
   - z2
-  instances: 2
+  instances: 4
   vm_type: minimal
   stemcell: default
   networks:
@@ -1041,13 +1033,15 @@ instance_groups:
               name: doppler
   - name: doppler
     release: loggregator
+    provides:
+      doppler: {as: doppler, shared: true}
     properties:
       doppler:
         disable_announce: true
       loggregator:
         disable_syslog_drains: true
         tls:
-          ca_cert: "((loggregator_tls_doppler.ca))"
+          ca_cert: "((loggregator_ca.certificate))"
           doppler:
             cert: "((loggregator_tls_doppler.certificate))"
             key: "((loggregator_tls_doppler.private_key))"
@@ -1075,6 +1069,9 @@ instance_groups:
           node_name_includes_id: true
   - name: cflinuxfs2-rootfs-setup
     release: cflinuxfs2
+    properties:
+      cflinuxfs2-rootfs:
+        trusted_certs: ((application_ca.certificate))
   - name: garden
     release: garden-runc
     properties:
@@ -1083,41 +1080,38 @@ instance_groups:
         debug_listen_address: 127.0.0.1:17019
         default_container_grace_time: 0
         destroy_containers_on_start: true
-        graph_cleanup_threshold_in_mb: 0
         deny_networks:
         - 0.0.0.0/0
         persistent_image_list:
-        - "/var/vcap/packages/cflinuxfs2/rootfs"
+        - "/var/vcap/packages/cflinuxfs2/rootfs.tar"
         network_plugin: /var/vcap/packages/runc-cni/bin/garden-external-networker
         network_plugin_extra_args:
         - --configFile=/var/vcap/jobs/garden-cni/config/adapter.json
+      grootfs:
+        reserved_space_for_other_jobs_in_mb: 15360
   - name: rep
     release: diego
     properties:
       diego:
+        executor:
+          instance_identity_ca_cert: ((diego_instance_identity_ca.certificate))
+          instance_identity_key: ((diego_instance_identity_ca.private_key))
         rep:
-          bbs: *diego_bbs_client_properties
           preloaded_rootfses:
-          - cflinuxfs2:/var/vcap/packages/cflinuxfs2/rootfs
-          require_tls: true
-          ca_cert: "((diego_rep_agent.ca))"
-          server_cert: "((diego_rep_agent.certificate))"
-          server_key: "((diego_rep_agent.private_key))"
-          enable_legacy_api_endpoints: false
-          locket:
-            api_location: "locket.service.cf.internal:8891"
+          - cflinuxfs2:/var/vcap/packages/cflinuxfs2/rootfs.tar
+      containers:
+        trusted_ca_certificates:
+          - ((application_ca.certificate))
       loggregator: *diego_loggregator_client_properties
       tls:
-        ca_cert: "((diego_rep_agent.ca))"
-        cert: "((diego_rep_agent.certificate))"
-        key: "((diego_rep_agent.private_key))"
+        ca_cert: "((service_cf_internal_ca.certificate))"
+        cert: "((diego_rep_agent_v2.certificate))"
+        key: "((diego_rep_agent_v2.private_key))"
+
   - name: cfdot
     release: diego
     properties:
       tls: *cfdot_tls_client_properties
-      diego:
-        cfdot:
-          bbs: *diego_bbs_client_properties
   - name: route_emitter
     release: diego
     properties:
@@ -1126,7 +1120,7 @@ instance_groups:
         route_emitter:
           local_mode: true
           bbs:
-            ca_cert: "((diego_bbs_client.ca))"
+            ca_cert: "((service_cf_internal_ca.certificate))"
             client_cert: "((diego_bbs_client.certificate))"
             client_key: "((diego_bbs_client.private_key))"
       tcp:
@@ -1143,7 +1137,7 @@ instance_groups:
     properties:
       cf_networking:
         vxlan_policy_agent:
-          ca_cert: ((network_policy_client.ca))
+          ca_cert: ((network_policy_ca.certificate))
           client_cert: ((network_policy_client.certificate))
           client_key: ((network_policy_client.private_key))
   - name: silk-daemon
@@ -1151,7 +1145,7 @@ instance_groups:
     properties:
       cf_networking:
         silk_daemon:
-          ca_cert: ((silk_daemon.ca))
+          ca_cert: ((silk_ca.certificate))
           client_cert: ((silk_daemon.certificate))
           client_key: ((silk_daemon.private_key))
   - name: cni
@@ -1193,7 +1187,7 @@ instance_groups:
           cc_trafficcontroller:
             cert: "((loggregator_tls_cc_tc.certificate))"
             key: "((loggregator_tls_cc_tc.private_key))"
-          ca_cert: "((loggregator_tls_tc.ca))"
+          ca_cert: "((loggregator_ca.certificate))"
           trafficcontroller:
             cert: "((loggregator_tls_tc.certificate))"
             key: "((loggregator_tls_tc.private_key))"
@@ -1206,7 +1200,7 @@ instance_groups:
         internal_service_hostname: "cloud-controller-ng.service.cf.internal"
         tls_port: 9023
         mutual_tls:
-          ca_cert: "((loggregator_tls_cc_tc.ca))"
+          ca_cert: "((service_cf_internal_ca.certificate))"
   - name: reverse_log_proxy
     release: loggregator
     provides:
@@ -1214,7 +1208,7 @@ instance_groups:
     properties:
       loggregator:
         tls:
-          ca_cert: "((loggregator_tls_rlp.ca))"
+          ca_cert: "((loggregator_ca.certificate))"
           reverse_log_proxy:
             cert: "((loggregator_tls_rlp.certificate))"
             key: "((loggregator_tls_rlp.private_key))"
@@ -1425,7 +1419,7 @@ variables:
     common_name: rep client
     extended_key_usage:
     - client_auth
-- name: diego_rep_agent
+- name: diego_rep_agent_v2
   type: certificate
   options:
     ca: service_cf_internal_ca
@@ -1598,101 +1592,112 @@ variables:
     - client_auth
 - name: locket_database_password
   type: password
+- name: application_ca
+  type: certificate
+  options:
+    common_name: appRootCA
+    is_ca: true
+- name: diego_instance_identity_ca
+  type: certificate
+  options:
+    ca: application_ca
+    common_name: instanceIdentityCA
+    is_ca: true
 
 releases:
 - name: binary-buildpack
-  url: https://bosh.io/d/github.com/cloudfoundry/binary-buildpack-release?v=1.0.15
-  version: 1.0.15
-  sha1: 4dc65769e860095822497f37c4a0c6c1fc2794ec
+  url: https://bosh.io/d/github.com/cloudfoundry/binary-buildpack-release?v=1.0.18
+  version: 1.0.18
+  sha1: e903612106b20b6cf969be83dfb2bdd0bb4d9db2
 - name: capi
-  url: https://bosh.io/d/github.com/cloudfoundry/capi-release?v=1.46.0
-  version: 1.46.0
-  sha1: cf3170a2c35fff8960a899d7687351a05a87e2b6
+  url: https://bosh.io/d/github.com/cloudfoundry/capi-release?v=1.53.0
+  version: 1.53.0
+  sha1: 229e33958055b87e980a3147bda5db8583976024
 - name: cf-mysql
-  url: https://bosh.io/d/github.com/cloudfoundry/cf-mysql-release?v=36.10.0
-  version: 36.10.0
-  sha1: dadf405f2305b6f9b625c1e07bd58aa93caf3cbc
+  url: https://bosh.io/d/github.com/cloudfoundry/cf-mysql-release?v=36.12.0
+  version: 36.12.0
+  sha1: 401cd27775423ee6b3a6e53e89010261c17e0c5c
 - name: cf-networking
-  url: https://bosh.io/d/github.com/cloudfoundry/cf-networking-release?v=1.9.0
-  version: 1.9.0
-  sha1: af4770e1c2d62f2fa03aeb48bc66b4da9f846cee
+  url: https://bosh.io/d/github.com/cloudfoundry/cf-networking-release?v=1.13.0
+  version: 1.13.0
+  sha1: 0433fb00ad31c3534e8cea5fa57c572cd7eaff8b
 - name: cf-smoke-tests
-  url: https://bosh.io/d/github.com/cloudfoundry/cf-smoke-tests-release?v=40
-  version: "40"
-  sha1: 97179a05f901e5360178cb6cf8e78dcf9de6d2c2
+  url: https://bosh.io/d/github.com/cloudfoundry/cf-smoke-tests-release?v=40.0.1
+  version: 40.0.1
+  sha1: f4ab8b2f11ec61583c2a0b3f23d25fef12c99e47
 - name: cf-syslog-drain
-  url: https://bosh.io/d/github.com/cloudfoundry/cf-syslog-drain-release?v=5
-  version: "5"
-  sha1: 1accec5b6e6bf132e12cc71a9c2c37f326bff175
+  url: https://bosh.io/d/github.com/cloudfoundry/cf-syslog-drain-release?v=6.1
+  version: "6.1"
+  sha1: 0079a97d721f0802708eb0cd78c58410ef879212
 - name: cflinuxfs2
-  url: https://bosh.io/d/github.com/cloudfoundry/cflinuxfs2-release?v=1.176.0
-  version: 1.176.0
-  sha1: a66aa24c2ffb9016e2a82605673a5962e98c02df
+  url: https://bosh.io/d/github.com/cloudfoundry/cflinuxfs2-release?v=1.200.0
+  version: 1.200.0
+  sha1: c492fdcaede22db21e821aa6f4e9888d1a679b2d
 - name: consul
-  url: https://bosh.io/d/github.com/cloudfoundry-incubator/consul-release?v=191
-  version: "191"
-  sha1: 61b429ae13e0fde0ebdb98fce99e08f7baf60a16
+  url: https://bosh.io/d/github.com/cloudfoundry-incubator/consul-release?v=192
+  version: "192"
+  sha1: 399894e3b4f5d4ba7ea5abe4ab89190ec2d4ad56
 - name: diego
-  url: https://bosh.io/d/github.com/cloudfoundry/diego-release?v=1.32.0
-  version: 1.32.0
-  sha1: f0106a9628c50a4f9b097e061e5bd564fe5ee76b
+  url: https://bosh.io/d/github.com/cloudfoundry/diego-release?v=2.4.0
+  version: 2.4.0
+  sha1: f532a24407d102db1ba11e70c89fa8576463cf71
 - name: dotnet-core-buildpack
-  url: https://bosh.io/d/github.com/cloudfoundry/dotnet-core-buildpack-release?v=1.0.32
-  version: 1.0.32
-  sha1: dead1f05fd12042cf3e2c569830ef04c8d8c7110
+  url: https://bosh.io/d/github.com/cloudfoundry/dotnet-core-buildpack-release?v=2.0.5
+  version: 2.0.5
+  sha1: d3fd382d6a4e170a9b2c0004a16bd5f864a50d00
 - name: garden-runc
-  url: https://bosh.io/d/github.com/cloudfoundry/garden-runc-release?v=1.10.0
-  version: 1.10.0
-  sha1: 9c2ad4a961db49a5349a26d4240b8f8b9b54af88
+  url: https://bosh.io/d/github.com/cloudfoundry/garden-runc-release?v=1.12.1
+  version: 1.12.1
+  sha1: ed353e41eec34c3713d6d80c4cc890afc7291cca
 - name: go-buildpack
-  url: https://bosh.io/d/github.com/cloudfoundry/go-buildpack-release?v=1.8.15
-  version: 1.8.15
-  sha1: 93ae7bd4b4860aeeef5aa1a26aa5210660ee7a5d
+  url: https://bosh.io/d/github.com/cloudfoundry/go-buildpack-release?v=1.8.21
+  version: 1.8.21
+  sha1: 7ed54d5d1449c946eead324089e79faadf87a87a
 - name: java-buildpack
-  url: https://bosh.io/d/github.com/cloudfoundry/java-buildpack-release?v=4.7.1
-  version: 4.7.1
-  sha1: 1f018196f5dc39c956c2181ba56e0c9ca67e69e8
+  url: https://bosh.io/d/github.com/cloudfoundry/java-buildpack-release?v=4.10
+  version: "4.10"
+  sha1: 811866eff83751c12e06eef2af4ac33e91d193fd
 - name: loggregator
-  url: https://bosh.io/d/github.com/cloudfoundry/loggregator-release?v=99
-  version: "99"
-  sha1: 2080e1e0594591dafa716c69f207eb29929bce3d
+  url: https://bosh.io/d/github.com/cloudfoundry/loggregator-release?v=102.1
+  version: "102.1"
+  sha1: 61949aff688e368a11d03daa18855800517666d3
 - name: nats
-  url: https://bosh.io/d/github.com/cloudfoundry/nats-release?v=22
-  version: "22"
-  sha1: 1300071c7cf43f5d299a6eaec6f6bb6cca7eac3b
+  url: https://bosh.io/d/github.com/cloudfoundry/nats-release?v=23
+  version: "23"
+  sha1: d56195a7cc0b7781c9de7bb7479472f16fcc1049
 - name: nodejs-buildpack
-  url: https://bosh.io/d/github.com/cloudfoundry/nodejs-buildpack-release?v=1.6.13
-  version: 1.6.13
-  sha1: b346b726298d55c9442dc33e4ae5596aa17e4c98
+  url: https://bosh.io/d/github.com/cloudfoundry/nodejs-buildpack-release?v=1.6.22
+  version: 1.6.22
+  sha1: 527ca54f9d3fd836a8f689eb0c77b32ea66b98d6
 - name: php-buildpack
-  url: https://bosh.io/d/github.com/cloudfoundry/php-buildpack-release?v=4.3.46
-  version: 4.3.46
-  sha1: 468a05abe050a54a402f82b87f6ee956f63fb3f2
+  url: https://bosh.io/d/github.com/cloudfoundry/php-buildpack-release?v=4.3.51
+  version: 4.3.51
+  sha1: 04a61274396523b7bcdbb1f81b9f022b3166c40c
 - name: python-buildpack
-  url: https://bosh.io/d/github.com/cloudfoundry/python-buildpack-release?v=1.6.4
-  version: 1.6.4
-  sha1: 59cd84a2e6c7e442052f0c583ff847859e325d23
+  url: https://bosh.io/d/github.com/cloudfoundry/python-buildpack-release?v=1.6.12
+  version: 1.6.12
+  sha1: aab24d4fb0a7ec9a746e064ad63d4e84b7b6c779
 - name: routing
-  url: https://bosh.io/d/github.com/cloudfoundry-incubator/cf-routing-release?v=0.169.0
-  version: 0.169.0
-  sha1: 9b90a73fab0ad93a2daa2ea542fdcd68b266a109
+  url: https://bosh.io/d/github.com/cloudfoundry-incubator/cf-routing-release?v=0.175.0
+  version: 0.175.0
+  sha1: 7314e7b070520561aef6fd4026501f3d23c5d67c
 - name: ruby-buildpack
-  url: https://bosh.io/d/github.com/cloudfoundry/ruby-buildpack-release?v=1.7.8
-  version: 1.7.8
-  sha1: c89c0a87ceb81644441ffb1cc2b820bafb3eba8d
+  url: https://bosh.io/d/github.com/cloudfoundry/ruby-buildpack-release?v=1.7.16
+  version: 1.7.16
+  sha1: 1ca144320e7fcdb072603a5aa0d224d73237fd87
 - name: staticfile-buildpack
-  url: https://bosh.io/d/github.com/cloudfoundry/staticfile-buildpack-release?v=1.4.20
-  version: 1.4.20
-  sha1: fa42d85b46a92a676ed2a9591b6980b1edf419c5
+  url: https://bosh.io/d/github.com/cloudfoundry/staticfile-buildpack-release?v=1.4.26
+  version: 1.4.26
+  sha1: 562c696d6457cc946a4771f210f70f5934a48ad0
 - name: statsd-injector
-  url: https://bosh.io/d/github.com/cloudfoundry/statsd-injector-release?v=1.0.30
-  version: 1.0.30
-  sha1: b0f201e0341af9736848514c76149070ea902e41
+  url: https://bosh.io/d/github.com/cloudfoundry/statsd-injector-release?v=1.3.0
+  version: 1.3.0
+  sha1: 5b9357484032e5217cead8f20362f5802c751de0
 - name: uaa
-  url: https://bosh.io/d/github.com/cloudfoundry/uaa-release?v=53.1
-  version: "53.1"
-  sha1: b49b0caaf46d8f94d67979f9e46d9c22907bd451
+  url: https://bosh.io/d/github.com/cloudfoundry/uaa-release?v=57
+  version: "57"
+  sha1: e5dd646db603dbde5568ae25ccd0ec28d2853dc4
 stemcells:
 - alias: default
   os: ubuntu-trusty
-  version: "3468.15"
+  version: "3541.12"

@@ -9,6 +9,7 @@ param(
     [string] $ArtifactsStagingDirectory = ".",
     [string] $createUIDefFile='createUIDefinition.json',
     [string] $storageContainerName='createuidef',
+    [string] $StorageResourceGroupLocation, # this must be specified only when the staging resource group needs to be created - first run or if the account has been deleted
     [switch] $Gov
 )
 
@@ -19,15 +20,15 @@ try {
 
     # Create the storage account if it doesn't already exist
     if ($StorageAccount -eq $null) {
+        if ($StorageResourceGroupLocation -eq "") { throw "The StorageResourceGroupLocation parameter is required on first run in a subscription." }
         $StorageResourceGroupName = 'ARM_Deploy_Staging'
-        New-AzureRmResourceGroup -Location "$ResourceGroupLocation" -Name $StorageResourceGroupName -Force
-        $StorageAccount = New-AzureRmStorageAccount -StorageAccountName $StorageAccountName -Type 'Standard_LRS' -ResourceGroupName $StorageResourceGroupName -Location "$ResourceGroupLocation"
+        New-AzureRmResourceGroup -Location "$StorageResourceGroupLocation" -Name $StorageResourceGroupName -Force
+        $StorageAccount = New-AzureRmStorageAccount -StorageAccountName $StorageAccountName -Type 'Standard_LRS' -ResourceGroupName $StorageResourceGroupName -Location "$StorageResourceGroupLocation"
     }
 
     New-AzureStorageContainer -Name $StorageContainerName -Context $StorageAccount.Context -ErrorAction SilentlyContinue *>&1
 
-
-    Set-AzureStorageBlobContent -Container $StorageContainerName -File $createUIDefFile  -Context $storageAccount.Context -Force
+    Set-AzureStorageBlobContent -Container $StorageContainerName -File "$ArtifactsStagingDirectory\$createUIDefFile"  -Context $storageAccount.Context -Force
         
     $uidefurl = New-AzureStorageBlobSASToken -Container $StorageContainerName -Blob (Split-Path $createUIDefFile -leaf) -Context $storageAccount.Context -FullUri -Permission r   
     $encodedurl = [uri]::EscapeDataString($uidefurl)
@@ -50,7 +51,8 @@ https://portal.azure.com/#blade/Microsoft_Azure_Compute/CreateMultiVmWizardBlade
 Write-Host `n"File: "$uidefurl `n
 Write-Host "Target URL: "$target
 
-start $target
+# launching the default browser doesn't work if the default is Chrome - so force edge here
+Start-Process "microsoft-edge:$target"
 
 }
 catch {
