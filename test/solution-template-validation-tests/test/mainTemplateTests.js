@@ -29,6 +29,29 @@ function getErrorMessage(obj, file, message) {
 
 /** Tests for template files in a solution template */
 describe('template files - ', () => {
+    var expectedSchemaVal = 'https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#';
+
+    /** Tests for $schema property in template files */
+    describe('$schema property tests - ', () => {
+        /** A $schema property should be present in all the template files.
+        It's value MUST be  'https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#' */
+        it('must have a schema property', () => {
+            templateFileJSONObjects.forEach(templateJSONObject => {
+                var templateObject = templateJSONObject.value;
+                templateObject.should.withMessage('$schema property is expected, and it\'s value should be ' + expectedSchemaVal).have.property('$schema', expectedSchemaVal);
+            });
+        });
+
+        /** schema property MUST use https  */
+        it('schema property must use https not http', () => {
+            templateFileJSONObjects.forEach(templateJSONObject => {
+                var templateObject = templateJSONObject.value;
+                if (templateObject.$schema) {
+                    templateObject.$schema.should.withMessage('in file:' + templateJSONObject.filename + ',$schema property must use https not http').contain(expectedSchemaVal);
+                }
+            });
+        });
+    });
 
     /** Tests for parameters in template files */
     describe('parameters tests - ', () => {
