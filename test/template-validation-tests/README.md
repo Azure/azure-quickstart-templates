@@ -16,7 +16,7 @@ This folder contains mocha tests, that runs static checks against a solution tem
 To run all tests
 - npm --folder=/path/to/solutiontemplatefolder run all. For instance,
 ```
-npm --folder=sample--template run all
+npm --folder=sample-template run all
 ```
 
 ## Running json validation tests
