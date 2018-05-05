@@ -41,6 +41,7 @@ $adal =  $dlllist[0].VersionInfo.FileName
 try
 {
 	Add-type -Path $adal
+
 }
 catch
 {

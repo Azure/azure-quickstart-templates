@@ -2,26 +2,14 @@ configuration ConfigureSQLVM
 {
     param
     (
-        [Parameter(Mandatory)]
-        [String]$DNSServer,
-
-        [Parameter(Mandatory)]
-        [String]$DomainFQDN,
-
-        [Parameter(Mandatory)]
-        [System.Management.Automation.PSCredential]$DomainAdminCreds,
-
-        [Parameter(Mandatory)]
-        [System.Management.Automation.PSCredential]$SqlSvcCreds,
-
-        [Parameter(Mandatory)]
-        [System.Management.Automation.PSCredential]$SPSetupCreds,
-
-        [Int] $RetryCount = 30,
-        [Int] $RetryIntervalSec = 30
+        [Parameter(Mandatory)] [String]$DNSServer,
+        [Parameter(Mandatory)] [String]$DomainFQDN,
+        [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$DomainAdminCreds,
+        [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SqlSvcCreds,
+        [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSetupCreds
     )
 
-    Import-DscResource -ModuleName xComputerManagement, xNetworking, xDisk, cDisk, xActiveDirectory, xSQLServer
+    Import-DscResource -ModuleName xComputerManagement, xNetworking, xDisk, cDisk, xActiveDirectory, SqlServerDsc
 
     WaitForSqlSetup
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
@@ -31,6 +19,8 @@ configuration ConfigureSQLVM
     [PSCredential] $SPSCreds = New-Object PSCredential ("${DomainNetbiosName}\$($SPSetupCreds.UserName)", $SPSetupCreds.Password)
     [PSCredential] $SQLCreds = New-Object PSCredential ("${DomainNetbiosName}\$($SqlSvcCreds.UserName)", $SqlSvcCreds.Password)
     $ComputerName = Get-Content env:computername
+    [Int] $RetryCount = 30
+    [Int] $RetryIntervalSec = 30
 
     Node localhost
     {
@@ -43,19 +33,6 @@ configuration ConfigureSQLVM
         #**********************************************************
         # Initialization of VM
         #**********************************************************
-
-        xWaitforDisk Disk2
-        {
-            DiskNumber = 2
-            RetryIntervalSec =$RetryIntervalSec
-            RetryCount = $RetryCount
-        }
-        cDiskNoRestart SQLDataDisk
-        {
-            DiskNumber = 2
-            DriveLetter = "F"
-            DependsOn="[xWaitForDisk]Disk2"
-        }
         xFirewall DatabaseEngineFirewallRule
         {
             Direction = "Inbound"
@@ -72,7 +49,7 @@ configuration ConfigureSQLVM
         {
             Name = "RSAT-AD-PowerShell"
             Ensure = "Present"
-            DependsOn = "[cDiskNoRestart]SQLDataDisk"
+            DependsOn = "[xFirewall]DatabaseEngineFirewallRule"
 
         }
         xDnsServerAddress DnsServerAddress
@@ -128,73 +105,63 @@ configuration ConfigureSQLVM
             DependsOn = "[xComputer]DomainJoin"
         }
 
-        xSQLServerLogin AddDomainAdminLogin
+        SQLServerLogin AddDomainAdminLogin
         {
             Name = "${DomainNetbiosName}\$($DomainAdminCreds.UserName)"
             Ensure = "Present"
-            SQLServer = $ComputerName
-            SQLInstanceName = "MSSQLSERVER"
+            ServerName = $ComputerName
+            InstanceName = "MSSQLSERVER"
             LoginType = "WindowsUser"
             DependsOn = "[xComputer]DomainJoin"
         }
 
-        xSQLServerLogin AddSPSetupLogin
+        SQLServerLogin AddSPSetupLogin
         {
             Name = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
             Ensure = "Present"
-            SQLServer = $ComputerName
-            SQLInstanceName = "MSSQLSERVER"
+            ServerName = $ComputerName
+            InstanceName = "MSSQLSERVER"
             LoginType = "WindowsUser"
             DependsOn = "[xADUser]CreateSPSetupAccount"
         }
 
-        xSQLServerRole GrantSQLRoleSysadmin
+        SQLServerRole GrantSQLRoleSysadmin
         {
             ServerRoleName = "sysadmin"
             MembersToInclude = "${DomainNetbiosName}\$($DomainAdminCreds.UserName)"
             Ensure = "Present"
-            SQLServer = $ComputerName
-            SQLInstanceName = "MSSQLSERVER"
-            DependsOn = "[xSQLServerLogin]AddDomainAdminLogin"
+            ServerName = $ComputerName
+            InstanceName = "MSSQLSERVER"
+            DependsOn = "[SQLServerLogin]AddDomainAdminLogin"
         }
 
-        xSQLServerRole GrantSQLRoleSecurityAdmin
+        SQLServerRole GrantSQLRoleSecurityAdmin
         {
             ServerRoleName = "securityadmin"
             MembersToInclude = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
-            SQLServer = $ComputerName
-            SQLInstanceName = "MSSQLSERVER"
+            ServerName = $ComputerName
+            InstanceName = "MSSQLSERVER"
             Ensure = "Present"
-            DependsOn = "[xSQLServerLogin]AddSPSetupLogin"
+            DependsOn = "[SQLServerLogin]AddSPSetupLogin"
         }
 
-        xSQLServerRole GrantSQLRoleDBCreator
+        SQLServerRole GrantSQLRoleDBCreator
         {
             ServerRoleName = "dbcreator"
             MembersToInclude = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
-            SQLServer = $ComputerName
-            SQLInstanceName = "MSSQLSERVER"
+            ServerName = $ComputerName
+            InstanceName = "MSSQLSERVER"
             Ensure = "Present"
-            DependsOn = "[xSQLServerLogin]AddSPSetupLogin"
+            DependsOn = "[SQLServerLogin]AddSPSetupLogin"
         }
 
-        xSQLServerMaxDop ConfigureMaxDOP
+        SQLServerMaxDop ConfigureMaxDOP
         {
-            SQLServer = $ComputerName
-            SQLInstanceName = "MSSQLSERVER"
+            ServerName = $ComputerName
+            InstanceName = "MSSQLSERVER"
             MaxDop = 1
             DependsOn = "[xComputer]DomainJoin"
         }
-
-        <#
-        xSQLServerSetup ConfigureSQLServer
-        {
-            SetupCredential = $DomainAdminCreds
-            InstanceName = "MSSQLSERVER"
-            SQLUserDBDir = "F:\DATA"
-            SQLUserDBLogDir = "G:\LOG"
-        }
-        #>
     }
 }
 function Get-NetBIOSName
@@ -242,6 +209,7 @@ function WaitForSqlSetup
 <#
 # Azure DSC extension logging: C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.21.0.0
 # Azure DSC extension configuration: C:\Packages\Plugins\Microsoft.Powershell.DSC\2.21.0.0\DSCWork
+Install-Module -Name SqlServerDsc
 
 help ConfigureSQLVM
 $DomainAdminCreds = Get-Credential -Credential "yvand"
