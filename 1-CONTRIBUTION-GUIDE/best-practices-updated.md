@@ -1,6 +1,11 @@
 # Solutions Template Best Practices Guide
 
-This document describes the best practices for reviewing and troubleshooting Azure Resource Manager (ARM) Templates, including Solution Templates. This document is designed to help you design effective templates or troubleshoot existing templates for getting applications certified for the Azure Marketplace and Azure QuickStart templates.   
+This document describes the best practices for reviewing and troubleshooting Azure Resource Manager (ARM) Templates, including Azure Applications for the Azure Marketplaces. This document is intended to help you design effective templates or troubleshoot existing templates for getting applications certified for the Azure Marketplace and Azure QuickStart templates.   
+
+This repository contains all currently available Azure Resource Manager templates contributed by the community. A searchable template index is maintained at https://azure.microsoft.com/en-us/documentation/templates/.
+
+To contribute a sample to this repo, you must read and follow these best practices as well as the guidelines listed in the [**Contribution guide**](/1-CONTRIBUTION-GUIDE/README.md#contribution-guide). 
+
 
 This guide is divided into the following sections:
 * General guidelines for ARM Templates
@@ -14,6 +19,12 @@ This guide is divided into the following sections:
 ## General Guidelines for ARM Templates  
 
 This section describes guidelines and best practices for clear and accurate ARM Templates. Some of these guidelines are suggestions for consistency and accuracy, however, others are required for publishing your templates on Azure. These requirements are called out when applicable.  
+
+### JSON Authoring
+* Ensure that your JSON is properly formatted.  You can use any number of JSON linters available on the internet or simply use a code editor that works with JSON files.  For working with Azure Resource Manager Templates, Visual Studio Code is a free editor that has an [extension](https://marketplace.visualstudio.com/items?itemName=msazurermtools.azurerm-vscode-tools) designed to help author templates.
+
+
+### Sample Application Files
 
 An ARM template must contain, at a minimum, the following files:
 
