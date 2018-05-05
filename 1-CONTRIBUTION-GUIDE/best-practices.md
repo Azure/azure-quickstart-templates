@@ -26,7 +26,7 @@ This section describes guidelines and best practices for clear and accurate ARM 
 
 ### Sample Application Files
 
-An ARM template must contain, at a minimum, the following files:
+An Azure Application or QuickStart sample must contain, at a minimum, the following files:
 
 | Artifact       | Azure Marketplace file         | Azure QuickStarts file | 
 |:---------------------------------------- |:----------------------------------------------------- |:---------------------------------------- |
