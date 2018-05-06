@@ -7,13 +7,13 @@ param (
 if(!$githubTestFilesFolderUri) {
     # default to azure quickstart template uri
     Write-Host "Defaulting to azure quick start uri"
-    $githubTestFilesFolderUri = "https://api.github.com/repos/Azure/azure-quickstart-templates/contents/test/solution-template-validation-tests/test"
+    $githubTestFilesFolderUri = "https://api.github.com/repos/Azure/azure-quickstart-templates/contents/test/template-validation-tests/test"
 }
 
 if(!$githubBuildFilesFolderUri) {
     # default to azure quickstart template uri
     Write-Host "Defaulting to azure quick start uri"
-    $githubBuildFilesFolderUri = "https://api.github.com/repos/Azure/azure-quickstart-templates/contents/test/solution-template-validation-tests/buildfiles"
+    $githubBuildFilesFolderUri = "https://api.github.com/repos/Azure/azure-quickstart-templates/contents/test/template-validation-tests/buildfiles"
 }
 
 Write-Host "Getting contents from $githubTestFilesFolderUri"
@@ -49,11 +49,11 @@ foreach($file in $folderContents)
     Invoke-WebRequest $file.download_url -UseBasicParsing -OutFile $file.name
 }
 
-$packageJsonFile = "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/test/solution-template-validation-tests/package.json"
+$packageJsonFile = "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/test/template-validation-tests/package.json"
 Write-Host "Downloading package.json file from $packageJsonFile"
 Invoke-WebRequest $packageJsonFile -UseBasicParsing -OutFile "package.json"
 
-$npmrcFile = "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/test/solution-template-validation-tests/.npmrc"
+$npmrcFile = "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/test/template-validation-tests/.npmrc"
 Write-Host "Downloading .npmrc file from $npmrcFile"
 Invoke-WebRequest $npmrcFile -UseBasicParsing -OutFile ".npmrc"
 
