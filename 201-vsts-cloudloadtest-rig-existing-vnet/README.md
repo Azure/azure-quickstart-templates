@@ -22,10 +22,12 @@ To learn about how to view and manage registered load agents for your VSTS accou
     "VSTSPersonalAccessToken": "<Get PAT token for VSTS account>",
     "AgentCount": "<number of desired VMs>",
     "AdminUsername":"<Admin user name>",
-    "AdminPassword":"<password>" 
-	"ExistingVNetResourceGroupName": "<Resource group name where the Vnet exists"
-	"ExistingVNetName":"<VNet name>"
-	"SubnetName":"<Subnet under VNet where you want to deployment load agents>"
+    "AdminPassword":"<password>",
+    "ExistingVNetResourceGroupName": "<Resource group name where the Vnet exists",
+    "ExistingVNetName":"<VNet name>",
+    "SubnetName":"<Subnet under VNet where you want to deployment load agents>",
+    "SubnetPrefix": "<Subnet prefix in the virtual network you want to use, e.g. 10.1.2.0/28; make sure it is valid for existing virtual network>",
+    "VmSize": "Virtual Machine Size, e.g. Standard_D4_v2"
 }
 ```
 
