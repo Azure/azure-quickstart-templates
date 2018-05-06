@@ -20,6 +20,7 @@
             "type": "string",
             "allowedValues": [
                 "Developer",
+				"Basic",
                 "Standard",
                 "Premium"
             ],
@@ -38,7 +39,7 @@
         "mutualAuthenticationCertificate": {
             "type": "securestring",
             "metadata": {
-                "description": "Base-64 encoded Mutual authentication PFX certificate."
+                "description": "Mutual authentication PFX certificate."
             }
         },
         "certificatePassword": {
@@ -46,13 +47,7 @@
             "metadata": {
                 "description": "Mutual authentication certificate password."
             }
-        },
-        "eventHubNamespaceConnectionString": {
-            "type": "securestring",
-            "metadata": {
-                "description": "EventHub connection string for logger."
-            }
-        },
+        },        
         "googleClientSecret": {
             "type": "securestring",
             "metadata": {
@@ -88,12 +83,73 @@
             "metadata": {
                 "description": "Product policy XML."
             }
-        }
+        },
+		"namespaceName":{  
+			 "type":"string",
+			 "metadata":{  
+				"description":"Name of the EventHub namespace"
+			 }
+		},
+		"eventHubName":{  
+			"type":"string",
+				"metadata":{  
+				"description":"Name of the Event Hub"
+			}
+		},
+		"consumerGroupName":{  
+			"type":"string",
+				"metadata":{  
+				"description":"Name of the Consumer Group"
+			}
+		}
     },
     "variables": {
-        "apiManagementServiceName": "[concat('apiservice', uniqueString(resourceGroup().id))]"
+        "apiManagementServiceName": "[concat('apiservice', uniqueString(resourceGroup().id))]",
+		"defaultSASKeyName":"RootManageSharedAccessKey",
+		"authRuleResourceId":"[resourceId('Microsoft.EventHub/namespaces/authorizationRules', parameters('namespaceName'), variables('defaultSASKeyName'))]",
+		"ehVersion":"2017-04-01"
     },
     "resources": [
+		{  
+			"apiVersion":"2017-04-01",
+			"name":"[parameters('namespaceName')]",
+			"type":"Microsoft.EventHub/Namespaces",
+			"location":"[resourceGroup().location]",
+			"sku":{  
+			"name":"Standard"
+			},
+			"properties": {
+			"isAutoInflateEnabled": "true",
+			"maximumThroughputUnits": "20"
+			},
+			"resources":[  
+				{  
+				   "apiVersion":"2017-04-01",
+				   "name":"[parameters('eventHubName')]",
+				   "type":"EventHubs",
+				   "dependsOn":[  
+					  "[concat('Microsoft.EventHub/namespaces/', parameters('namespaceName'))]"
+				   ],
+				   "properties":{
+					  "messageRetentionInDays": "7",
+					  "partitionCount": "4"
+				   },
+				   "resources":[  
+					  {  
+						 "apiVersion":"2017-04-01",
+						 "name":"[parameters('consumerGroupName')]",
+						 "type":"ConsumerGroups",
+						 "dependsOn":[  
+							"[parameters('eventHubName')]"
+						 ],
+						 "properties":{
+						 "userMetadata": "This is a Test Metadata"
+						 }
+					  }
+				   ]
+				}
+			]
+		},
         {
             "apiVersion": "2017-03-01",
             "name": "[variables('apiManagementServiceName')]",
@@ -363,8 +419,8 @@
                     "dependsOn": [
                         "[concat('Microsoft.ApiManagement/service/', variables('apiManagementServiceName'))]"
                     ],
-                    "properties": {
-                        "data": "[parameters('mutualAuthenticationCertificate')]",
+                    "properties": {					
+                        "data": "[base64(parameters('mutualAuthenticationCertificate'))]",
                         "password": "[parameters('certificatePassword')]"
                     }
                 },
@@ -411,14 +467,15 @@
                     "type": "loggers",
                     "name": "exampleLogger",
                     "dependsOn": [
-                        "[concat('Microsoft.ApiManagement/service/', variables('apiManagementServiceName'))]"
+                        "[concat('Microsoft.ApiManagement/service/', variables('apiManagementServiceName'))]",
+						"[concat('Microsoft.EventHub/namespaces/', parameters('namespaceName'))]"
                     ],
                     "properties": {
                         "loggerType": "azureEventHub",
                         "description": "Description for example logger",
                         "credentials": {
-                            "name": "exampleEventHubName",
-                            "connectionString": "[parameters('eventHubNamespaceConnectionString')]"
+                            "name": "[parameters('eventHubName')]",
+                            "connectionString": "[listkeys(variables('authRuleResourceId'), variables('ehVersion')).primaryConnectionString]"
                         }
                     }
                 },
