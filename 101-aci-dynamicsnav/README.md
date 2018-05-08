@@ -1,4 +1,4 @@
-# Azure Container Instances
+# MS Dynamics NAV / MS Dynamics 365 Business Central including SQL Server in Azure Container Instances
 
 This template demonstrates how you can run MS Dynamics NAV or a Sandbox of MS Dynamics 365 Business Central in [Azure Container Instances](https://docs.microsoft.com/en-us/azure/container-instances/). To find out more about Dynamics NAV / Business Central inside a Windows Container visit [Github](https://github.com/microsoft/nav-docker)
 
