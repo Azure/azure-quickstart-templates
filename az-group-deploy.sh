@@ -35,12 +35,20 @@ done
 
 if [[ -z $templateFile ]]
 then
-    templateFile="$artifactsStagingDirectory/azuredeploy.json"
+    templateFile="$artifactsStagingDirectory/mainTemplate.json"
+    if [ ! -f $templateFile ]
+    then
+        templateFile="$artifactsStagingDirectory/azuredeploy.json"
+    fi
 fi
 
 if [[ $devMode ]]
 then
     parametersFile="$artifactsStagingDirectory/azuredeploy.parameters.dev.json"
+    if [ ! -f $parametersFile ]
+    then
+        parametersFile="$artifactsStagingDirectory/azuredeploy.parameters.1.json"
+    fi        
 else
     if [[ -z $parametersFile ]]
     then
