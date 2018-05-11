@@ -134,11 +134,52 @@
         "Standard_RAGRS",
         "Premium_LRS"
       ]
+    },
+    "AVsetName": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "avset"
+
+    },
+    "vmDC1Name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "vmDC1AdminUserName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "vmDC1AdminPassword": {
+      "type": "securestring"
+    },
+    "vmDC1WindowsOSVersion": {
+      "type": "string",
+      "defaultValue": "2016-Datacenter",
+      "allowedValues": [
+        "2008-R2-SP1",
+        "2012-Datacenter",
+        "2012-R2-Datacenter",
+        "2016-Datacenter",
+        "Windows-Server-Technical-Preview"
+      ]
+    },
+    "nicPublicDnsName": {
+      "type": "string",
+      "minLength": 1
     }
   },
   "variables": {
      "apiVersion": "2015-06-15",
-     "storagePrivateName": "[concat('stor', uniqueString(resourceGroup().id))]"
+     "storagePrivateName": "[concat('stor', uniqueString(resourceGroup().id))]",
+    "vmDC1ImagePublisher": "MicrosoftWindowsServer",
+    "vmDC1ImageOffer": "WindowsServer",
+    "vmDC1OSDiskName": "vmDC1OSDisk",
+    "vmDC1VmSize": "Standard_D2_v2",
+    "vmDC1VnetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]",
+    "vmDC1SubnetRef": "[concat(variables('vmDC1VnetID'), '/subnets/', parameters('subnet1Name'))]",
+    "vmDC1StorageAccountContainerName": "vhds",
+    "vmDC1NicName": "[concat(parameters('vmDC1Name'), 'NetworkInterface')]",
+    "nicPublicName": "nicPublic"
   },
   "resources": [
     {
@@ -204,6 +245,111 @@
             }
           }
         ]
+      }
+    },
+    {
+      "name": "[parameters('AVsetName')]",
+      "type": "Microsoft.Compute/availabilitySets",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [ ],
+      "tags": {
+        "displayName": "AVset"
+      },
+      "properties": {
+        "platformUpdateDomainCount": 1,
+        "platformFaultDomainCount": 1
+      }
+    },
+    {
+      "name": "[variables('vmDC1NicName')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('nicPublicName'))]"
+      ],
+      "tags": {
+        "displayName": "vmDC1Nic"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('vmDC1SubnetRef')]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('nicPublicName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[parameters('vmDC1Name')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storagePrivateName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('vmDC1NicName'))]"
+      ],
+      "tags": {
+        "displayName": "vmDC1"
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('vmDC1VmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('vmDC1Name')]",
+          "adminUsername": "[parameters('vmDC1AdminUsername')]",
+          "adminPassword": "[parameters('vmDC1AdminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('vmDC1ImagePublisher')]",
+            "offer": "[variables('vmDC1ImageOffer')]",
+            "sku": "[parameters('vmDC1WindowsOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "vmDC1OSDisk",
+            "vhd": {
+              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', variables('storagePrivateName')), '2016-01-01').primaryEndpoints.blob, variables('vmDC1StorageAccountContainerName'), '/', variables('vmDC1OSDiskName'), '.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmDC1NicName'))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "[variables('nicPublicName')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [ ],
+      "tags": {
+        "displayName": "nicPublic"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('nicPublicDnsName')]"
+        }
       }
     }
 
