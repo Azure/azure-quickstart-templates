@@ -1,4 +1,4 @@
-# Solutions Template Best Practices Guide
+# Azure Resource Manager Templates - Best Practices Guide
 
 This document describes the best practices for reviewing and troubleshooting Azure Resource Manager (ARM) Templates, including Azure Applications for the Azure Marketplaces. This document is intended to help you design effective templates or troubleshoot existing templates for getting applications certified for the Azure Marketplace and Azure QuickStart templates.   
 
