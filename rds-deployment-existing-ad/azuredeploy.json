@@ -82,6 +82,13 @@
         "description": "The size of the RDSH VMs"
       },
       "defaultValue": "Standard_A4"
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
@@ -104,7 +111,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIpRef')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
@@ -116,7 +123,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('gatewayIpRef')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
@@ -128,7 +135,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('brokerIpRef')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
@@ -140,7 +147,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "accountType": "[variables('storageAccountType')]"
       }
@@ -149,25 +156,25 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/availabilitySets",
       "name": "gw-availabilityset",
-      "location": "[resourceGroup().location]"
+      "location": "[parameters('location')]"
     },
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/availabilitySets",
       "name": "cb-availabilityset",
-      "location": "[resourceGroup().location]"
+      "location": "[parameters('location')]"
     },
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/availabilitySets",
       "name": "rdsh-availabilityset",
-      "location": "[resourceGroup().location]"
+      "location": "[parameters('location')]"
     },
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/loadBalancers",
       "name": "loadBalancer",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/',variables('publicIpRef'))]"
       ],
@@ -262,7 +269,6 @@
               "enableFloatingIP": false
             }
           }
-
         ]
       }
     },
@@ -270,7 +276,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "gw-nic",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "Microsoft.Network/loadBalancers/loadBalancer"
       ],
@@ -310,7 +316,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "cb-nic",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "Microsoft.Network/loadBalancers/loadBalancer"
       ],
@@ -340,7 +346,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat('rdsh-', copyindex(), '-nic')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "rdsh-nic-loop",
         "count": "[parameters('numberOfRdshInstances')]"
@@ -371,7 +377,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "gw-vm",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
         "[resourceId('Microsoft.Compute/availabilitySets', 'gw-availabilityset')]",
@@ -418,7 +424,7 @@
           "apiVersion": "2015-06-15",
           "type": "Microsoft.Compute/virtualMachines/extensions",
           "name": "gw-vm/gateway",
-          "location": "[resourceGroup().location]",
+          "location": "[parameters('location')]",
           "dependsOn": [
             "[resourceId('Microsoft.Compute/virtualMachines', 'gw-vm')]"
           ],
@@ -451,7 +457,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat('rdsh-', copyindex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "rdsh-vm-loop",
         "count": "[parameters('numberOfRdshInstances')]"
@@ -484,7 +490,6 @@
             "name": "osdisk",
             "vhd": {
               "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')),'2016-01-01').primaryEndpoints.blob,variables('uniqueStorageAccountContainerName'),'/','rdsh-',copyindex(),'-os-disk.vhd')]"
-
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -503,7 +508,7 @@
           "apiVersion": "2015-06-15",
           "type": "Microsoft.Compute/virtualMachines/extensions",
           "name": "[concat('rdsh-', copyindex(),'/sessionhost')]",
-          "location": "[resourceGroup().location]",
+          "location": "[parameters('location')]",
           "dependsOn": [
             "[resourceId('Microsoft.Compute/virtualMachines', concat('rdsh-', copyindex()))]"
           ],
@@ -536,7 +541,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "cb-vm",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
         "[resourceId('Microsoft.Compute/availabilitySets', 'cb-availabilityset')]",
@@ -584,7 +589,7 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "cb-vm/rdsdeployment",
       "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', 'cb-vm')]",
         "Microsoft.Compute/virtualMachines/gw-vm/extensions/gateway",
