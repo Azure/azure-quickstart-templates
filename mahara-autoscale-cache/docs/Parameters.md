@@ -7,6 +7,8 @@ options. This document attempts to document all these parameters,
 however, like all documentation it can sometimes fall behind. For a
 canonical reference you should review the `azuredeploy.json` file.
 
+Note: MS SQL is not currently supported by Mahara.
+
 ## Extracting documentation from azuredeploy.json
 
 To make it a litte easier to read `azuredeploy.json` you might want to
@@ -183,7 +185,7 @@ Database type
 
 Type: string
 
-Possible Values: ["postgres","mysql","mssql"]
+Possible Values: ["postgres","mysql"]
 
 Default: mysql
 
@@ -278,7 +280,7 @@ Default: true
 
 ### installGdprPluginsSwitch
 
-Switch to install Mahara GDPR plugins. Note these require Mahara versions 3.4.2+ or 3.3.5+ and these will be included by default in Mahara 3.5
+Switch to install Mahara GDPR plugins. Note this may not be available in current versions of Mahara
 
 Type: bool
 
@@ -329,50 +331,6 @@ Type: string
 Possible Values: ["17.10_STABLE,17.04_STABLE]
 
 Default: 17_10_STABLE
-
-
-### mssqlDbEdition
-
-MS SQL DB edition
-
-Type: string
-
-Possible Values: ["Basic","Standard"]
-
-Default: Standard
-
-
-### mssqlDbServiceObjectiveName
-
-MS SQL database service object names
-
-Type: string
-
-Possible Values: ["S1","S2","S3","S4","S5","S6","S7","S9"]
-
-Default: S1
-
-
-### mssqlDbSize
-
-MS SQL database size
-
-Type: string
-
-Possible Values: ["100MB","250MB","500MB","1GB","2GB","5GB","10GB","20GB","30GB","40GB","50GB","100GB","250GB","300GB","400GB","500GB","750GB","1024GB"]
-
-Default: 250GB
-
-
-### mssqlVersion
-
-Mssql version
-
-Type: string
-
-Possible Values: ["12.0"]
-
-Default: 12.0
 
 
 ### mysqlPgresSkuHwFamily
