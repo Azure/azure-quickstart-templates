@@ -1,3 +1,8 @@
+# v3.8.0 (2018-05-14)
+
+- Bump cf-deployment to [v1.31.0](https://github.com/cloudfoundry/cf-deployment/tree/v1.31.0)
+- Redirect the logs to both `~/install.log` and standard output.
+
 # v3.7.0 (2018-05-01)
 
 - Upgrade Azure CPI version to v35.2.0. Please see new features in [bosh-azure-cpi-release v35.2.0](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v35.2.0)
