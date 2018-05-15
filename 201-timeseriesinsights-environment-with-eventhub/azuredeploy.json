@@ -112,6 +112,13 @@
       "metadata": {
         "description": "A list of object ids of the users or applications in AAD that should have Contributor access to the environment. The service principal objectId can be obtained by calling the Get-AzureRMADUser or the Get-AzureRMADServicePrincipal cmdlets. Creating an access policy for AAD groups is not yet supported."
       }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
@@ -138,7 +145,7 @@
       "apiVersion": "2017-04-01",
       "name": "[parameters('eventHubNamespaceName')]",
       "type": "Microsoft.EventHub/Namespaces",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "sku": {
         "name": "Standard"
       },
@@ -165,7 +172,7 @@
               "type": "AuthorizationRules",
               "name": "[parameters('eventSourceKeyName')]",
               "apiVersion": "2017-04-01",
-              "location": "[resourceGroup().location]",
+              "location": "[parameters('location')]",
               "dependsOn": [
                 "[parameters('eventHubName')]"
               ],
@@ -194,7 +201,7 @@
       "type": "Microsoft.TimeSeriesInsights/environments",
       "name": "[parameters('environmentName')]",
       "apiVersion": "2017-11-15",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "dataRetentionTime": "[parameters('environmentDataRetentionTime')]"
       },
@@ -208,12 +215,12 @@
           "type": "eventsources",
           "name": "[parameters('eventSourceName')]",
           "apiVersion": "2017-11-15",
-          "location": "[resourceGroup().location]",
+          "location": "[parameters('location')]",
           "kind": "Microsoft.EventHub",
           "properties": {
             "eventSourceResourceId": "[variables('eventSourceResourceId')]",
             "eventHubName": "[parameters('eventHubName')]",
-            "serviceBusNamespace" : "[parameters('eventHubNamespaceName')]",
+            "serviceBusNamespace": "[parameters('eventHubNamespaceName')]",
             "consumerGroupName": "[parameters('consumerGroupName')]",
             "keyName": "[parameters('eventSourceKeyName')]",
             "sharedAccessKey": "[listkeys(variables('authorizationRuleResourceId'), '2017-04-01').primaryKey]",
@@ -232,14 +239,16 @@
       "condition": "[not(empty(parameters('accessPolicyReaderObjectIds')))]",
       "type": "Microsoft.TimeSeriesInsights/environments/accesspolicies",
       "name": "[concat(parameters('environmentName'), '/', 'readerAccessPolicy', copyIndex())]",
-      "copy": { 
-        "name": "accessPolicyReaderCopy", 
+      "copy": {
+        "name": "accessPolicyReaderCopy",
         "count": "[if(empty(parameters('accessPolicyReaderObjectIds')), 1, length(parameters('accessPolicyReaderObjectIds')))]"
       },
       "apiVersion": "2017-11-15",
       "properties": {
         "principalObjectId": "[parameters('accessPolicyReaderObjectIds')[copyIndex()]]",
-        "roles": ["Reader"]
+        "roles": [
+          "Reader"
+        ]
       },
       "dependsOn": [
         "[concat('Microsoft.TimeSeriesInsights/environments/', parameters('environmentName'))]"
@@ -249,14 +258,16 @@
       "condition": "[not(empty(parameters('accessPolicyContributorObjectIds')))]",
       "type": "Microsoft.TimeSeriesInsights/environments/accesspolicies",
       "name": "[concat(parameters('environmentName'), '/', 'contributorAccessPolicy', copyIndex())]",
-      "copy": { 
-        "name": "accessPolicyReaderCopy", 
+      "copy": {
+        "name": "accessPolicyReaderCopy",
         "count": "[if(empty(parameters('accessPolicyContributorObjectIds')), 1, length(parameters('accessPolicyContributorObjectIds')))]"
       },
       "apiVersion": "2017-11-15",
       "properties": {
         "principalObjectId": "[parameters('accessPolicyContributorObjectIds')[copyIndex()]]",
-        "roles": ["Contributor"]
+        "roles": [
+          "Contributor"
+        ]
       },
       "dependsOn": [
         "[concat('Microsoft.TimeSeriesInsights/environments/', parameters('environmentName'))]"
