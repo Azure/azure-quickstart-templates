@@ -14,6 +14,13 @@
       "metadata": {
         "description": "Number of Swarm worker nodes in the cluster."
       }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
@@ -67,7 +74,7 @@
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('newStorageAccountName')]",
       "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "accountType": "[variables('storageAccountType')]"
       }
@@ -76,21 +83,21 @@
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('availabilitySetMasters')]",
       "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {}
     },
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('availabilitySetNodes')]",
       "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {}
     },
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('managementPublicIPAddrName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
@@ -102,7 +109,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('nodesPublicIPAddrName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
@@ -114,7 +121,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[variables('mastersNsgID')]",
         "[variables('nodesNsgID')]"
@@ -152,7 +159,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('mastersNsgName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
           {
@@ -176,7 +183,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('nodesNsgName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
           {
@@ -200,7 +207,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('vmNameMaster'), copyIndex(), '-nic')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "nicLoopMaster",
         "count": "[variables('masterCount')]"
@@ -239,7 +246,7 @@
       "apiVersion": "2015-06-15",
       "name": "[variables('mastersLbName')]",
       "type": "Microsoft.Network/loadBalancers",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('managementPublicIPAddrName'))]"
       ],
@@ -265,7 +272,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/loadBalancers/inboundNatRules",
       "name": "[concat(variables('mastersLbName'), '/', 'SSH-', variables('vmNameMaster'), copyIndex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "lbNatLoopMaster",
         "count": "[variables('masterCount')]"
@@ -287,7 +294,7 @@
       "apiVersion": "2015-06-15",
       "name": "[variables('nodesLbName')]",
       "type": "Microsoft.Network/loadBalancers",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('nodesPublicIPAddrName'))]"
       ],
@@ -313,7 +320,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('vmNameNode'),copyIndex(), '-nic')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "nicLoopNode",
         "count": "[parameters('nodeCount')]"
@@ -345,7 +352,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('vmNameMaster'), copyIndex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "vmLoopMaster",
         "count": "[variables('masterCount')]"
@@ -406,7 +413,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('vmNameNode'), copyIndex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "vmLoopNode",
         "count": "[parameters('nodeCount')]"
@@ -466,7 +473,7 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmNameMaster'), copyIndex(), '/DockerExtension')]",
       "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "extensionLoopMaster",
         "count": "[variables('masterCount')]"
@@ -492,7 +499,7 @@
                 "8302:8302",
                 "8302:8302/udp",
                 "8400:8400"
-             ],
+              ],
               "volumes": [
                 "/data/consul:/data"
               ],
@@ -520,7 +527,7 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmNameNode'), copyIndex(), '/DockerExtension')]",
       "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "extensionLoopNode",
         "count": "[parameters('nodeCount')]"
@@ -536,10 +543,10 @@
         "settings": {
           "docker": {
             "port": "2375",
-	    "options": [
-	      "--cluster-store=consul://10.0.0.4:8500",
-	      "--cluster-advertise=eth0:2375"
-	    ]
+            "options": [
+              "--cluster-store=consul://10.0.0.4:8500",
+              "--cluster-advertise=eth0:2375"
+            ]
           }
         }
       }
