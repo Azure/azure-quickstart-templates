@@ -47,6 +47,13 @@
       "metadata": {
         "description": "discoveryUrl for etcd2 cluster"
       }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
@@ -59,7 +66,6 @@
     "subnet1Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]",
     "vmNamePrefix": "coreos",
     "imageSku": "Stable",
-    "vmStorageAccountContainerName": "vhds",
     "storageAccountType": "Standard_LRS",
     "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
     "unitFile": "[concat('#cloud-config\n\ncoreos:\n  etcd2:\n    discovery: ', parameters('discoveryUrl'),'\n    advertise-client-urls: http://$private_ipv4:2379,http://$private_ipv4:4001\n    initial-advertise-peer-urls: http://$private_ipv4:2380\n    listen-client-urls: http://0.0.0.0:2379,http://0.0.0.0:4001\n    listen-peer-urls: http://$private_ipv4:2380\n  units:\n    - name: etcd2.service\n      command: start\n    - name: fleet.service\n      command: start')]"
@@ -68,7 +74,7 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[parameters('newStorageAccountName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2015-05-01-preview",
       "properties": {
         "accountType": "[variables('storageAccountType')]"
@@ -81,7 +87,7 @@
         "name": "ipLoop",
         "count": "[parameters('numberOfNodes')]"
       },
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2015-05-01-preview",
       "properties": {
         "publicIPAllocationMethod": "[variables('publicIPAddressType')]"
@@ -90,7 +96,7 @@
     {
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2015-05-01-preview",
       "properties": {
         "addressSpace": {
@@ -115,7 +121,7 @@
         "name": "nicLoop",
         "count": "[parameters('numberOfNodes')]"
       },
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', 'publicIP', copyindex())]",
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
@@ -145,7 +151,7 @@
         "name": "vmLoop",
         "count": "[parameters('numberOfNodes')]"
       },
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', 'nic', copyindex())]"

@@ -64,59 +64,66 @@
     },
     "appPackage": {
       "type": "string",
-      "metadata":{
+      "metadata": {
         "description": "The source of the application package to copy using the configuration.sh script it should be inside the _artifacts/app folder"
       },
       "defaultValue": "package.tar.gz"
     },
     "destinationFolder": {
       "type": "string",
-      "metadata":{
-        "description":"path were the appPackage will be copied inside the Linux machine"
+      "metadata": {
+        "description": "path were the appPackage will be copied inside the Linux machine"
       },
       "defaultValue": "/nodeserver"
     },
     "serviceName": {
       "type": "string",
-      "metadata":{
-        "description":"name of the service that needs restart when the new package is copied"
+      "metadata": {
+        "description": "name of the service that needs restart when the new package is copied"
       },
       "defaultValue": "mainsite.service"
     },
-    "customScriptName":{
-      "type":"string",
+    "customScriptName": {
+      "type": "string",
       "metadata": {
         "description": "name of the custom script to be run by bash"
       },
       "defaultValue": "updateapp.sh"
     },
     "_artifactsLocation": {
-        "type": "string",
-        "metadata": {
-            "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
-        },
-        "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vmss-linux-customimage-autoscale"
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vmss-linux-customimage-autoscale"
     },
     "_artifactsLocationSasToken": {
-        "type": "securestring",
-        "metadata": {
-            "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
-        },
-        "defaultValue": ""
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
-      "vmssuniqueName": "[toLower(substring(concat(substring(parameters('vmssName'),0,6), uniqueString(resourceGroup().id)), 0, 9))]",  
-      "vmssaccountType": "Standard_LRS",
-      "vmssnewAccountSuffix": "[concat(replace(variables('vmssuniqueName'),'-',''), 'sa')]",
-      "vmssstorageAccounts": [
+    "vmssuniqueName": "[toLower(substring(concat(substring(parameters('vmssName'),0,6), uniqueString(resourceGroup().id)), 0, 9))]",
+    "vmssaccountType": "Standard_LRS",
+    "vmssnewAccountSuffix": "[concat(replace(variables('vmssuniqueName'),'-',''), 'sa')]",
+    "vmssstorageAccounts": [
       "[concat(uniqueString(concat(variables('vmssnewAccountSuffix'), '0')))]",
       "[concat(uniqueString(concat(variables('vmssnewAccountSuffix'), '1')))]",
       "[concat(uniqueString(concat(variables('vmssnewAccountSuffix'), '2')))]",
       "[concat(uniqueString(concat(variables('vmssnewAccountSuffix'), '3')))]",
       "[concat(uniqueString(concat(variables('vmssnewAccountSuffix'), '4')))]"
-      ],
-      "vmsssaCount": "[length(variables('vmssstorageAccounts'))]",
+    ],
+    "vmsssaCount": "[length(variables('vmssstorageAccounts'))]",
     "addressPrefix": "10.0.0.0/16",
     "subnetPrefix": "10.0.0.0/24",
     "virtualNetworkName": "[concat(variables('vmssuniqueName'), 'vnet')]",
@@ -140,7 +147,7 @@
     {
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2016-03-30",
       "properties": {
         "addressSpace": {
@@ -161,7 +168,7 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[concat(variables('vmssStorageAccounts')[copyIndex()], variables('vmssnewAccountSuffix'))]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2015-06-15",
       "copy": {
         "name": "storageLoop",
@@ -174,7 +181,7 @@
     {
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('pipName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2016-03-30",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
@@ -186,7 +193,7 @@
     {
       "type": "Microsoft.Network/loadBalancers",
       "name": "[variables('lbName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2016-03-30",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('pipName'))]"
@@ -291,7 +298,7 @@
     {
       "type": "Microsoft.Compute/virtualMachineScaleSets",
       "name": "[variables('vmssuniqueName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2015-06-15",
       "dependsOn": [
         "storageLoop",
@@ -380,7 +387,7 @@
       "type": "Microsoft.Insights/autoscaleSettings",
       "apiVersion": "2015-04-01",
       "name": "autoscalesettings",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachineScaleSets/', variables('vmssuniqueName'))]"
       ],
