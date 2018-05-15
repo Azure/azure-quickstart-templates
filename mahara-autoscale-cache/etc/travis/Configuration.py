@@ -28,7 +28,7 @@ class Configuration:
     def identify_ssh_key(self):
         ssh_key = os.getenv('SPSSHKEY')
         if ssh_key is None:
-            with open('azure_moodle_id_rsa.pub', 'r') as sshkey_fd:
+            with open('azure_mahara_id_rsa.pub', 'r') as sshkey_fd:
                 ssh_key = sshkey_fd.read()
         return ssh_key
 
