@@ -181,7 +181,7 @@ EOF
   fi # if [ "$webServerType" = "nginx" -o "$httpsTermination" = "VMSS" ];
 
   # Set up html dir local copy if specified
-  htmlRootDir="/mahara/html/mahara"
+  htmlRootDir="/mahara/html/mahara/htdocs"
   if [ "$htmlLocalCopySwitch" = "True" ]; then
     mkdir -p /var/www/html
     rsync -av --delete /mahara/html/mahara /var/www/html
