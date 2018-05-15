@@ -1,0 +1,58 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "maharaCommon": {
+            "metadata": {
+                "description": "Common Mahara values"
+            },
+            "type": "object"
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "apiVersion": "2017-03-30",
+            "location": "[resourceGroup().location]",
+            "name": "[concat(parameters('maharaCommon').jboxVmName,'/','install_mahara_without_redis')]",
+            "properties": {
+                "autoUpgradeMinorVersion": true,
+                "publisher": "Microsoft.Azure.Extensions",
+                "settings": {
+                    "fileUris": [
+                        "[variables('scriptUri')]",
+                        "[parameters('maharaCommon').commonFunctionsScriptUri]"
+                    ]
+                },
+                "protectedSettings":{
+                    "commandToExecute": "[concat('bash ', parameters('maharaCommon').maharaInstallScriptFilename, ' ', parameters('maharaCommon').maharaVersion, ' ', concat(parameters('maharaCommon').gfsNameRoot, '0'), ' ', 'data', ' ', parameters('maharaCommon').siteURL, ' ', parameters('maharaCommon').dbDNS, ' ', parameters('maharaCommon').maharaDbName, ' ', parameters('maharaCommon').maharaDbUser, ' ', parameters('maharaCommon').maharaDbPass, ' ', parameters('maharaCommon').maharaAdminPass, ' ', concat(parameters('maharaCommon').dbLogin, '@', parameters('maharaCommon').dbServerType, '-', parameters('maharaCommon').resourcesPrefix), ' ', parameters('maharaCommon').dbLoginPassword, ' ', parameters('maharaCommon').storageAccountName, ' ', listKeys(variables('storageAccountId'), '2017-06-01').keys[0].value, ' ', parameters('maharaCommon').maharaDbUserAzure, ' None None ', parameters('maharaCommon').elasticVm1IP, ' ', parameters('maharaCommon').installO365pluginsSwitch, ' ', parameters('maharaCommon').installElasticSearchSwitch, ' ', parameters('maharaCommon').dbServerType, ' ', parameters('maharaCommon').fileServerType, ' ', parameters('maharaCommon').serviceObjective, ' ',  parameters('maharaCommon').skuTier, ' ',  parameters('maharaCommon').msDbSize )]",
+                },
+                "type": "CustomScript",
+                "typeHandlerVersion": "2.0"
+            },
+            "tags": {
+                "displayName": "install_mahara_without_redis"
+            }
+        }
+    ],
+    "variables": {
+        "documentation01": "This sub-template applies a specific post-deployment script to the controller vm",
+        "documentation02": "It expects certain values in the 'common' datastructure.",
+        "documentation03": "    scriptLocation              - web URI",
+        "documentation04": "    maharaInstallScriptFilename - name of script file",
+        "documentation05": "    siteURL                     - URL of the website",
+        "documentation06": "    gfsNameRoot                 - nameroot of gluster farm - note that the code applies a 0 to get to the first node",
+        "documentation07": "    jboxVmName                  - name of the controller/jumpb ox VM",
+        "documentation08": "    dbServerType                - postgres or mysql",
+        "documentation09": "    maharaDbName                - database name for mahara",
+        "documentation10": "    maharaDbUser                - database user for mahara",
+        "documentation11": "    maharaDbPass                - database password for maharaDbUser",
+        "documentation12": "    maharaAdminPass             - password for mahara admin user",
+        "documentation13": "    serviceObjective            - MS SQL porformance tier.",
+        "documentation14": "    skuTier                     - MS SQL edition tier",
+        "documentation15": "    msDbSize                    - MS SQL database size",
+
+        "scriptUri": "[concat(parameters('maharaCommon').scriptLocation,parameters('maharaCommon').maharaInstallScriptFilename,parameters('maharaCommon').artifactsSasToken)]",
+        "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('maharaCommon').storageAccountName)]"
+    }
+}
