@@ -174,13 +174,16 @@
       "metadata": {
         "description": "The job id to compile the configuration"
       }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
-    "computeApi": "2017-03-30",
-    "networkApi": "2017-04-01",
-    "storageApi": "2015-06-15",
-    "insightsApi": "2015-04-01",
     "automationApiVersion": "2015-10-31",
     "storageAccountType": "Standard_LRS",
     "saCount": 5,
@@ -196,10 +199,9 @@
     "vhdContainerName": "[concat(variables('namingInfix'), 'vhd')]",
     "osDiskName": "[concat(variables('namingInfix'), 'osdisk')]",
     "virtualNetworkName": "[concat(variables('namingInfix'), 'vnet')]",
-    "virtualNetworkID": "[resourceId('Microsoft.Network/virtualNetworks/',variables('virtualNetworkName'))]",
     "addressPrefix": "192.168.0.0/16",
     "subnetName": "[concat(variables('namingInfix'), 'subnet')]",
-    "subnetID": "[concat(variables('virtualNetworkID'),'/subnets/',variables('subnetName'))]",
+    "subnetID": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
     "subnetPrefix": "192.168.0.0/24",
     "publicIPAddressName": "[concat(variables('namingInfix'), 'pip')]",
     "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses/',variables('publicIPAddressName'))]",
@@ -240,9 +242,7 @@
         "moduleUri": "https://raw.github.com/Azure/azure-quickstart-templates/master/201-vmss-automation-dsc/xNetworking.zip"
       }
     },
-    "diagnosticsStorageAccountName": "[concat(variables('uniqueStringArray')[0], 'diagsa')]",
-    "diagnosticsStorageAccountResourceGroup": "[resourceGroup().name]",
-    "accountid": "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',variables('diagnosticsStorageAccountResourceGroup'),'/providers/','Microsoft.Storage/storageAccounts/', variables('diagnosticsStorageAccountName'))]"
+    "diagnosticsStorageAccountName": "[concat(variables('uniqueStringArray')[0], 'diagsa')]"
   },
   "resources": [
     {
@@ -314,7 +314,7 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[concat(variables('uniqueStringArray')[copyIndex()], variables('newStorageAccountSuffix'))]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2015-06-15",
       "copy": {
         "name": "storageLoop",
@@ -327,7 +327,7 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('diagnosticsStorageAccountName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2015-06-15",
       "properties": {
         "accountType": "[variables('storageAccountType')]"
@@ -336,7 +336,7 @@
     {
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2017-04-01",
       "properties": {
         "addressSpace": {
@@ -357,7 +357,7 @@
     {
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2017-04-01",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
@@ -369,7 +369,7 @@
     {
       "type": "Microsoft.Network/loadBalancers",
       "name": "[variables('loadBalancerName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2017-04-01",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
@@ -454,7 +454,7 @@
     {
       "type": "Microsoft.Compute/virtualMachineScaleSets",
       "name": "[variables('namingInfix')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2017-03-30",
       "dependsOn": [
         "[concat('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]",
@@ -614,7 +614,7 @@
       "type": "Microsoft.Insights/autoscaleSettings",
       "apiVersion": "2015-04-01",
       "name": "autoscalehost",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachineScaleSets/', parameters('vmSSName'))]"
       ],

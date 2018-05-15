@@ -49,7 +49,7 @@
       "type": "string",
       "defaultValue": "",
       "metadata": {
-        "description": "Specifies an organizational unit (OU) for the domain account. Enter the full distinguished name of the OU in quotation marks. Example: "OU=testOU; DC=domain; DC=Domain; DC=com""
+        "description": "Specifies an organizational unit (OU) for the domain account. Enter the full distinguished name of the OU in quotation marks. Example: \"OU=testOU; DC=domain; DC=Domain; DC=com\""
       }
     },
     "domainJoinOptions": {
@@ -70,6 +70,13 @@
       "metadata": {
         "description": "The password for the administrator account of the new VM and the domain"
       }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
@@ -77,18 +84,16 @@
     "imagePublisher": "MicrosoftWindowsServer",
     "imageOffer": "WindowsServer",
     "windowsOSVersion": "2016-Datacenter",
-    "apiVersion": "2015-06-15",
     "nicName": "[concat(parameters('dnsLabelPrefix'),'Nic')]",
     "publicIPName": "[concat(parameters('dnsLabelPrefix'),'Pip')]",
-    "vnetID": "[resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks', parameters('existingVNETName'))]",
-    "subnetId": "[concat(variables('vnetID'),'/subnets/', parameters('existingSubnetName'))]"
+    "subnetId": "[resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks/subnets', parameters('existingVNETName'), parameters('existingSubnetName'))]"
   },
   "resources": [
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
@@ -100,7 +105,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "accountType": "Standard_LRS"
       }
@@ -109,7 +114,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPName'))]"
       ],
@@ -134,7 +139,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('dnsLabelPrefix')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts',variables('storageAccountName'))]",
         "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
@@ -195,7 +200,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('dnsLabelPrefix'),'/joindomain')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', parameters('dnsLabelPrefix'))]"
       ],

@@ -43,7 +43,7 @@
     },
     "environment": {
       "type": "string",
-      "defaultValue" : "AzureCloud",
+      "defaultValue": "AzureCloud",
       "allowedValues": [
         "AzureCloud"
       ],
@@ -90,6 +90,13 @@
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
@@ -97,7 +104,6 @@
     "storageAccountType": "Standard_RAGRS",
     "vmStorageAccountContainerName": "vhds",
     "storageid": "[resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccountName'))]",
-
     "virtualNetworkName": "vnet",
     "virtualNetworkAddressSpace": "10.0.0.0/16",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
@@ -111,7 +117,6 @@
     "concourseNetworkSecurityGroup": "nsg-concourse",
     "concourseDbRoleName": "admin",
     "concourseDbRolePassword": "admin",
-
     "vmSize": "Standard_D1",
     "nicName": "[parameters('vmName')]",
     "devboxPrivateIPAddress": "10.0.0.100",
@@ -119,7 +124,6 @@
     "imageOffer": "UbuntuServer",
     "ubuntuOSVersion": "14.04.3-LTS",
     "sshKeyPath": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
-
     "baseUriAzureCloud": "[parameters('_artifactsLocation')]",
     "filesToDownloadAzureCloud": [
       "[uri(variables('baseUriAzureCloud'), 'scripts/setup_env')]",
@@ -133,7 +137,6 @@
       "[uri(variables('baseUriAzureCloud'), 'manifests/concourse.yml')]"
     ],
     "filesToDownload": "[variables(concat('filesToDownload', parameters('environment')))]",
-
     "environmentAzureCloud": {
       "serviceHostBase": "core.windows.net",
       "boshReleaseUrl": "https://bosh.io/d/github.com/cloudfoundry/bosh?v=260.3",
@@ -147,7 +150,6 @@
       "gardenReleaseUrl": "https://github.com/concourse/concourse/releases/download/v2.6.0/garden-runc-1.0.4.tgz"
     },
     "environment": "[variables(concat('environment', parameters('environment')))]",
-
     "keepUnreachableVMs": "false"
   },
   "resources": [
@@ -155,7 +157,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('boshNetworkSecurityGroup')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
           {
@@ -221,7 +223,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('devboxNetworkSecurityGroup')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
           {
@@ -245,7 +247,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('concourseNetworkSecurityGroup')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
           {
@@ -353,7 +355,7 @@
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('defaultStorageAccountName')]",
       "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "accountType": "[variables('storageAccountType')]"
       }
@@ -362,7 +364,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat(parameters('vmName'),'-devbox')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
@@ -374,7 +376,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat(parameters('vmName'), '-bosh')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "static"
       }
@@ -383,7 +385,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat(parameters('vmName'), '-concourse')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "static"
       }
@@ -392,7 +394,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -419,7 +421,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', concat(parameters('vmName'), '-devbox'))]",
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
@@ -504,7 +506,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "Microsoft.Resources/deployments/generate-customdata"
       ],
@@ -557,7 +559,7 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('vmName'),'/initdevbox')]",
       "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
       ],

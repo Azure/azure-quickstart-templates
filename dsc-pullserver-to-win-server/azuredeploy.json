@@ -68,6 +68,13 @@
         "description": "The location of resources such as templates and DSC modules that the script is dependent"
       },
       "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/dsc-pullserver-to-win-server/"
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
@@ -77,8 +84,7 @@
     "VirtualNetworkSubnet2Name": "Subnet-2",
     "VirtualNetworkSubnet2Prefix": "10.0.1.0/24",
     "dscPullSrvOSDiskName": "osdisk",
-    "dscPullSrvVnetID": "[resourceId('Microsoft.Network/virtualNetworks', 'dscVirtualNetwork')]",
-    "dscPullSrvSubnetRef": "[concat(variables('dscPullSrvVnetID'), '/subnets/', variables('VirtualNetworkSubnet1Name'))]",
+    "dscPullSrvSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'dscVirtualNetwork', variables('VirtualNetworkSubnet1Name'))]",
     "dscPullSrvStorageAccountContainerName": "vhds",
     "dscPullSrvNicName": "dscNetworkInterface",
     "dscPullIPName": "dscPublicIPAddress",
@@ -92,9 +98,9 @@
     {
       "name": "[parameters('newStorageAccount')]",
       "type": "Microsoft.Storage/storageAccounts",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2015-05-01-preview",
-      "dependsOn": [ ],
+      "dependsOn": [],
       "tags": {
         "displayName": "Storage"
       },
@@ -105,9 +111,9 @@
     {
       "name": "dscVirtualNetwork",
       "type": "Microsoft.Network/virtualNetworks",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2015-05-01-preview",
-      "dependsOn": [ ],
+      "dependsOn": [],
       "tags": {
         "displayName": "VirtualNetwork"
       },
@@ -136,7 +142,7 @@
     {
       "name": "[variables('dscPullSrvNicName')]",
       "type": "Microsoft.Network/networkInterfaces",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2015-05-01-preview",
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', 'dscVirtualNetwork')]"
@@ -165,7 +171,7 @@
     {
       "name": "[parameters('dscPullSrvName')]",
       "type": "Microsoft.Compute/virtualMachines",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2015-05-01-preview",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccount'))]",
@@ -211,7 +217,7 @@
         {
           "name": "deployDSCPullServer",
           "type": "extensions",
-          "location": "[resourceGroup().location]",
+          "location": "[parameters('location')]",
           "apiVersion": "2015-05-01-preview",
           "dependsOn": [
             "[concat('Microsoft.Compute/virtualMachines/', parameters('dscPullSrvName'))]"
@@ -227,9 +233,9 @@
             "settings": {
               "modulesUrl": "[variables('deployDSCPullServerConfigurationFile')]",
               "configurationFunction": "[variables('deployDSCPullServerConfigurationFunction')]",
-              "properties": { }
+              "properties": {}
             },
-            "protectedSettings": { }
+            "protectedSettings": {}
           }
         }
       ]
@@ -237,9 +243,9 @@
     {
       "name": "[variables('dscPullIPName')]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2015-05-01-preview",
-      "dependsOn": [ ],
+      "dependsOn": [],
       "tags": {
         "displayName": "dscPullIP"
       },
