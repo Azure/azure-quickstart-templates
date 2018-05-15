@@ -121,6 +121,13 @@
       "metadata": {
         "description": "The size of the database backend VM."
       }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
@@ -139,7 +146,6 @@
     "publicIPAddressName": "[concat(parameters('uniqueNamePrefix'),'IP')]",
     "publicDBIPAddressName": "[concat(parameters('uniqueNamePrefix'),'DBIP')]",
     "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]",
-    "publicDBIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicDBIPAddressName'))]",
     "publicIPAddressType": "Dynamic",
     "vmStorageAccountContainerName": "vhds",
     "vmName": "[concat(parameters('uniqueNamePrefix'),'VM')]",
@@ -155,18 +161,17 @@
     "lbPoolID": "[concat(variables('lbID'),'/backendAddressPools/LoadBalancerBackend')]",
     "installScriptName": "install_shibboleth_idp.ps1",
     "installScriptUri": "[concat('https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shibboleth-cluster-windows/', variables('installScriptName'))]",
-    "installCommand": "[concat('powershell.exe',' ','-File',' ',variables('installScriptName'),' ',parameters('uniqueNamePrefix'),' ',resourceGroup().location,' ',concat(parameters('uniqueNamePrefix'),'db'),' ',parameters('mySqlIdpUser'),' \"',parameters('mySqlPasswordForIdpUser'),'\"')]",
+    "installCommand": "[concat('powershell.exe',' ','-File',' ',variables('installScriptName'),' ',parameters('uniqueNamePrefix'),' ',parameters('location'),' ',concat(parameters('uniqueNamePrefix'),'db'),' ',parameters('mySqlIdpUser'),' \"',parameters('mySqlPasswordForIdpUser'),'\"')]",
     "installBackendScriptName": "install_backend.ps1",
     "installBackendScriptUri": "[concat('https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shibboleth-cluster-windows/', variables('installBackendScriptName'))]",
-    "installBackendCommand": "[concat('powershell.exe',' ','-File',' ',variables('installBackendScriptName'),' \"',parameters('mySqlPasswordForRootUser'),'\" ',parameters('mySqlIdpUser'),' \"',parameters('mySqlPasswordForIdpUser'),'\"')]",
-    "apiVersion": "2015-06-15"
+    "installBackendCommand": "[concat('powershell.exe',' ','-File',' ',variables('installBackendScriptName'),' \"',parameters('mySqlPasswordForRootUser'),'\" ',parameters('mySqlIdpUser'),' \"',parameters('mySqlPasswordForIdpUser'),'\"')]"
   },
   "resources": [
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('newStorageAccountName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "accountType": "[variables('storageAccountType')]"
       }
@@ -175,14 +180,14 @@
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('availabilitySetName')]",
       "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {}
     },
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
         "dnsSettings": {
@@ -197,7 +202,7 @@
       "dependsOn": [
         "[concat('Microsoft.Network/networkSecurityGroups/', variables('virtualNetworkName'), '-sg')]"
       ],
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -227,7 +232,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('nicName'),copyIndex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/',variables('virtualNetworkName'))]",
         "[concat('Microsoft.Network/loadBalancers/',variables('lbName'))]"
@@ -264,7 +269,7 @@
       "apiVersion": "2015-06-15",
       "name": "[variables('lbName')]",
       "type": "Microsoft.Network/loadBalancers",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/',variables('publicIPAddressName'))]"
       ],
@@ -385,7 +390,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('vmName'),copyIndex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/',variables('newStorageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/',concat(variables('nicName'),copyIndex()))]",
@@ -436,14 +441,14 @@
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[concat(variables('availabilitySetName'),'db')]",
       "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {}
     },
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicDBIPAddressName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
         "dnsSettings": {
@@ -455,7 +460,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('nicName'),'db')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/',variables('publicDBIPAddressName'))]",
         "[concat('Microsoft.Network/virtualNetworks/',variables('virtualNetworkName'))]",
@@ -485,7 +490,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[concat(variables('virtualNetworkName'), '-sg')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
           {
@@ -551,7 +556,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('vmName'),'db')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/',variables('newStorageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/',variables('nicName'),'db')]",
@@ -598,7 +603,7 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmName'),'db','/CustomScriptExtension')]",
       "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/',concat(variables('vmName'),'db'))]"
       ],
@@ -621,7 +626,7 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmName'),copyIndex(),'/CustomScriptExtension')]",
       "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/',concat(variables('vmName'),copyIndex()))]"
       ],
