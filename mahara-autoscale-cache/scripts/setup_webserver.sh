@@ -185,7 +185,7 @@ EOF
   if [ "$htmlLocalCopySwitch" = "True" ]; then
     mkdir -p /var/www/html
     rsync -av --delete /mahara/html/mahara /var/www/html
-    htmlRootDir="/var/www/html/mahara"
+    htmlRootDir="/var/www/html/mahara/htdocs"
     setup_html_local_copy_cron_job
   fi
 
@@ -301,7 +301,7 @@ EOF
 	ServerAdmin webmaster@localhost
 	DocumentRoot ${htmlRootDir}
 
-	<Directory /mahara/html/mahara/htdocs>
+	<Directory ${htmlRootDir}>
 		Options FollowSymLinks
 		AllowOverride All
 		Require all granted
