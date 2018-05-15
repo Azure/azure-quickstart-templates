@@ -339,7 +339,7 @@ server {
           fastcgi_buffers 16 16k;
           fastcgi_buffer_size 32k;
           fastcgi_param   SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
-          fastcgi_pass unix:/run/php/php${PhpVer}-fpm.sock;
+          fastcgi_pass unix:/run/php/php7.0-fpm.sock;
           fastcgi_read_timeout 3600;
           fastcgi_index index.php;
           include fastcgi_params;
@@ -403,7 +403,7 @@ EOF
 [www]
 user = www-data
 group = www-data
-listen = /run/php/php${PhpVer}-fpm.sock
+listen = /run/php/php7.0-fpm.sock
 listen.owner = www-data
 listen.group = www-data
 pm = dynamic
@@ -737,7 +737,7 @@ EOF
 
    # Turning off services we don't need the jumpbox running
    service nginx stop
-   service php${PhpVer}-fpm stop
+   service php7.0-fpm stop
    service varnish stop
    service varnishncsa stop
    service varnishlog stop
