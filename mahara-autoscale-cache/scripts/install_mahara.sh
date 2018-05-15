@@ -96,10 +96,12 @@
       mysqlIP=$dbIP
       mysqladminlogin=$dbadminlogin
       mysqladminpass=$dbadminpass
-    elif [ "$dbServerType" = "mssql" ]; then
-      mssqlIP=$dbIP
-      mssqladminlogin=$dbadminlogin
-      mssqladminpass=$dbadminpass
+
+    # MS SQL is not currently supported by Mahara
+    #elif [ "$dbServerType" = "mssql" ]; then
+    #  mssqlIP=$dbIP
+    #  mssqladminlogin=$dbadminlogin
+    #  mssqladminpass=$dbadminpass
 
     elif [ "$dbServerType" = "postgres" ]; then
       postgresIP=$dbIP
