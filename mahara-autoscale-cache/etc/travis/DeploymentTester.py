@@ -40,15 +40,15 @@ class DeploymentTester:
             print('\n\nBasic CI tests successful.')
             return
         self.deploy()
-        self.moodle_smoke_test()
-        self.moodle_admin_login()
+        self.mahara_smoke_test()
+        self.mahara_admin_login()
         print('\n\nFull CI tests successful!')
 
     def check_configuration(self):
         print('\nChecking configuration...')
         if not self.config.is_valid():
             print('No Azure deployment info given, skipping test deployment and exiting.')
-            print('Further information: https://github.com/Azure/Moodle#automated-testing-travis-ci')
+            print('Further information: https://github.com/Azure/Mahara#automated-testing-travis-ci')
             sys.exit()
         artifacts_location = self.config.deployment_properties['parameters']['_artifactsLocation']
         print('- Detected "_artifactsLocation": ' + artifacts_location['value'])
@@ -116,8 +116,8 @@ class DeploymentTester:
             self.deployment[key] = value['value']
             print("- Found: " + key)
 
-    def moodle_smoke_test(self):
-        print("\nMoodle Smoke Test...")
+    def mahara_smoke_test(self):
+        print("\nMahara Smoke Test...")
         url = 'https://' + self.deployment['siteURL']
         curl = Curl()
         curl.setopt(pycurl.URL, url)
@@ -131,15 +131,15 @@ class DeploymentTester:
             sys.exit(1)
         print('(ok: {})'.format(status))
 
-    def moodle_admin_login(self):
-        print("\nLogging in into Moodle as 'admin'...")
-        response = self.moodle_admin_login_curl()
+    def mahara_admin_login(self):
+        print("\nLogging in into Mahara as 'admin'...")
+        response = self.mahara_admin_login_curl()
         if 'Admin User' not in response:
             print("*** FAILED: 'Admin User' keyword not found ***")
             sys.exit(1)
         print('(it worked)')
 
-    def moodle_admin_login_curl(self):
+    def mahara_admin_login_curl(self):
         fd, path = tempfile.mkstemp()
         try:
             response = BytesIO()
@@ -151,7 +151,7 @@ class DeploymentTester:
             curl.setopt(pycurl.POST, True)
             curl.setopt(pycurl.COOKIEJAR, path)
             curl.setopt(pycurl.COOKIEFILE, path)
-            post = urllib.parse.urlencode({'username': 'admin', 'password': self.deployment['moodleAdminPassword']})
+            post = urllib.parse.urlencode({'username': 'admin', 'password': self.deployment['maharaAdminPassword']})
             curl.setopt(pycurl.POSTFIELDS, post)
             curl.setopt(pycurl.FOLLOWLOCATION, True)
             curl.perform()
