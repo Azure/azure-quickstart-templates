@@ -147,7 +147,7 @@ The following example shows how to use the reference function for the `storageUr
 "diagnosticsProfile": {
   "bootDiagnostics": {
     "enabled": true,
-      "storageUri": "[reference(variables('diagStorageAccountName')), '2017-10-01').primaryEndpoints['blob']]"
+      "storageUri": "[reference(variables('diagStorageAccountName'), '2017-10-01').primaryEndpoints['blob']]"
       }
 }
 ```
