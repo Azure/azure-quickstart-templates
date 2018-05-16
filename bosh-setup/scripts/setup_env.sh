@@ -2,65 +2,60 @@
 
 source utils.sh
 
-echo "Start to update package lists from repositories..."
-retryop "apt-get update"
-
-echo "Start to install prerequisites..." 
-retryop "apt-get -y install build-essential zlibc zlib1g-dev ruby ruby-dev openssl libxslt-dev libxml2-dev libssl-dev libreadline6 libreadline6-dev libyaml-dev libsqlite3-dev sqlite3 python-dev python-pip jq"
-
 set -e
 
-tenant_id=$1
-client_id=$2
-base64_encoded_client_secret_or_certificate=$3
+echo "Installing jq"
+retryop "apt-get update && apt-get install -y jq"
+
 custom_data_file="/var/lib/cloud/instance/user-data.txt"
 settings=$(cat ${custom_data_file})
-
 function get_setting() {
   key=$1
   local value=$(echo $settings | jq ".$key" -r)
   echo $value
 }
 
-function install_bosh_cli() {
-  echo "Start to install bosh-cli v2..."
-  bosh_cli_url=$1
-  wget $bosh_cli_url
-  chmod +x ./bosh-cli-*
-  sudo mv ./bosh-cli-* /usr/local/bin/bosh
-}
-
+# Service Principal
+environment=$(get_setting ENVIRONMENT)
+service_principal_type=$(get_setting SERVICE_PRINCIPAL_TYPE)
+tenant_id=$1
+client_id=$2
+base64_encoded_client_secret_or_certificate=$3
 function client_secret_or_certificate() {
   echo ${base64_encoded_client_secret_or_certificate} | base64 --decode
 }
 
-environment=$(get_setting ENVIRONMENT)
-service_principal_type=$(get_setting SERVICE_PRINCIPAL_TYPE)
+# https://bosh.io/docs/cli-v2-install/#additional-dependencies
+echo "Installing OS specified dependencies for bosh create-env command"
+retryop "apt-get update && apt-get install -y build-essential zlibc zlib1g-dev ruby ruby-dev openssl libxslt-dev libxml2-dev libssl-dev libreadline6 libreadline6-dev libyaml-dev libsqlite3-dev sqlite3"
 
-set +e
+echo "Installing BOSH CLI"
+bosh_cli_url=$(get_setting BOSH_CLI_URL)
+wget $bosh_cli_url
+chmod +x ./bosh-cli-*
+mv ./bosh-cli-* /usr/local/bin/bosh
 
-echo "Start to install python packages..."
-pkg_list="setuptools==32.3.1 azure==2.0.0rc1"
-if [ "$environment" = "AzureChinaCloud" ]; then
-  for pkg in $pkg_list; do
-    retryop "pip install $pkg --index-url https://mirror.azure.cn/pypi/simple/ --default-timeout=60"
-  done
-else
-  for pkg in $pkg_list; do
-    retryop "pip install $pkg"
-  done
-fi
-
-set -e
+# https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-apt?view=azure-cli-latest#install
+echo "Installing Azure CLI"
+AZ_REPO=$(lsb_release -cs)
+echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | tee /etc/apt/sources.list.d/azure-cli.list
+apt-key adv --keyserver packages.microsoft.com --recv-keys 52E16F86FEE04B979B07E28DB02C46DF417A0893
+retryop "apt-get install apt-transport-https"
+retryop "apt-get update && apt-get install azure-cli"
 
 echo "Creating the containers (bosh and stemcell) and the table (stemcells) in the default storage account"
 default_storage_account=$(get_setting DEFAULT_STORAGE_ACCOUNT_NAME)
 default_storage_access_key=$(get_setting DEFAULT_STORAGE_ACCESS_KEY)
 endpoint_suffix=$(get_setting SERVICE_HOST_BASE)
-python prepare_storage_account.py ${default_storage_account} ${default_storage_access_key} ${endpoint_suffix} ${environment}
-
-bosh_cli_url=$(get_setting BOSH_CLI_URL)
-install_bosh_cli $bosh_cli_url
+connection_string="DefaultEndpointsProtocol=https;AccountName=${default_storage_account};AccountKey=${default_storage_access_key};EndpointSuffix=${endpoint_suffix}"
+if [ "$environment" = "AzureStack" ]; then
+  cat /var/lib/waagent/Certificates.pem >> /etc/ssl/certs/ca-certificates.crt
+  export REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+  az cloud update --profile 2017-03-09-profile
+fi
+az storage container create --name bosh --connection-string ${connection_string}
+az storage container create --name stemcell --public-access blob --connection-string ${connection_string}
+az storage table create --name stemcells --connection-string ${connection_string}
 
 username=$(get_setting ADMIN_USER_NAME)
 home_dir="/home/$username"

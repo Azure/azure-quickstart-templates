@@ -56,20 +56,27 @@
       ]
     },
     "solaceVMR_URI": {
-        "type": "string",
-        "metadata": {
-            "description": "The URI location of the Solace VMR Docker container tarball"
-        }
+      "type": "string",
+      "metadata": {
+        "description": "The URI location of the Solace VMR Docker container tarball"
+      }
     },
     "deploymentModel": {
       "type": "string",
       "metadata": {
-          "description": "Deploy three node ha cluster or single node"
+        "description": "Deploy three node ha cluster or single node"
       },
       "allowedValues": [
         "HighAvailability",
         "SingleNode"
       ]
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
@@ -86,7 +93,6 @@
     "publicIPAddressName": "myPublicIPD",
     "publicIPAddressType": "Dynamic",
     "vmStorageAccountVHDsName": "vhds",
-    "vmStorageAccountContainersName": "containers",
     "vmName": "SolaceVMR",
     "addressPrefix": "10.0.0.0/16",
     "subnetPrefix": "10.0.0.0/24",
@@ -94,12 +100,13 @@
     "storageAccountType": "Standard_LRS",
     "subnetName": "Subnet",
     "virtualNetworkName": "MyVNETD",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
-    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
     "deploymentModelHighAvailability": {
       "numberOfNodes": 3
     },
-    "deploymentModelSingleNode": { "numberOfNodes": 1 },
+    "deploymentModelSingleNode": {
+      "numberOfNodes": 1
+    },
     "numberOfInstances": "[variables(concat('deploymentModel', parameters('deploymentModel'))).numberOfNodes]"
   },
   "resources": [
@@ -127,7 +134,7 @@
       "apiVersion": "2016-03-30",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat(variables('publicIPAddressName'), copyindex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "interfaceLoop",
         "count": "[variables('numberOfInstances')]"
@@ -143,26 +150,28 @@
       "apiVersion": "2016-03-30",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
-          "addressSpace": {
-          "addressPrefixes": [ "[variables('addressPrefix')]" ]
-          },
-          "subnets": [
-              {
-                  "name": "[variables('subnetName')]",
-                  "properties": {
-                      "addressPrefix": "[variables('subnetPrefix')]"
-                  }
-              }
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
           ]
-        } 
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetPrefix')]"
+            }
+          }
+        ]
+      }
     },
     {
       "apiVersion": "2016-03-30",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('nicName'), copyindex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "nicLoop",
         "count": "[variables('numberOfInstances')]"
@@ -197,24 +206,24 @@
         "name": "[variables('storageAccountType')]"
       },
       "kind": "Storage",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {}
     },
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('availabilitySetName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
-          "platformFaultDomainCount": "[variables('platformFaultDomainCount')]",
-          "platformUpdateDomainCount": "[variables('platformUpdateDomainCount')]"
+        "platformFaultDomainCount": "[variables('platformFaultDomainCount')]",
+        "platformUpdateDomainCount": "[variables('platformUpdateDomainCount')]"
       }
     },
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('vmName'), copyindex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "virtualMachineLoop",
         "count": "[variables('numberOfInstances')]"
@@ -262,7 +271,7 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmName'), copyindex(), '/DockerExtension')]",
       "apiVersion": "2016-03-30",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "DockerLoop",
         "count": "[variables('numberOfInstances')]"
@@ -275,14 +284,14 @@
         "type": "DockerExtension",
         "typeHandlerVersion": "1.0",
         "autoUpgradeMinorVersion": true,
-        "settings": { }
+        "settings": {}
       }
     },
     {
       "apiVersion": "2016-03-30",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmName'), copyindex(), '/configureVMRContainer')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "SolaceLoop",
         "count": "[variables('numberOfInstances')]"
@@ -301,8 +310,8 @@
             "[concat(variables('scriptUrl'), 'scripts/', variables('solaceInstallScriptName'))]",
             "[concat(variables('scriptUrl'), 'scripts/semp_query.sh')]"
           ],
-          "commandToExecute": "[concat('bash ', variables('solaceInstallScriptName'), ' -c ', copyindex(), ' -i ', variables('nodeAddressPrefix'), ' -n ', variables('numberOfInstances'), ' -p ', parameters('adminPassword'))]"   
-        } 
+          "commandToExecute": "[concat('bash ', variables('solaceInstallScriptName'), ' -c ', copyindex(), ' -i ', variables('nodeAddressPrefix'), ' -n ', variables('numberOfInstances'), ' -p ', parameters('adminPassword'))]"
+        }
       }
     }
   ]
