@@ -94,6 +94,13 @@
         "description": "The type of the Storage Account created"
       },
       "defaultValue": "Premium_LRS"
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
@@ -109,10 +116,8 @@
     "sqlSrvDBName": "[concat(parameters('envPrefixName'), 'sqlSrv14')]",
     "sqlVmSize": "[parameters('sqlVMSize')]",
     "sqlSrvDBOsDiskName": "[concat(parameters('envPrefixName'), 'DBSrvOS')]",
-    "sqlSrvDBDataDiskName": "[concat(parameters('envPrefixName'), 'DBSrvData')]",
-    "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
     "sqlSrvDBNicName": "[concat(variables('sqlSrvDBName'), 'Nic')]",
-    "sqlSvrDBSubnetRef": "[concat(variables('vnetId'), '/subnets/', 'DBSubnetName')]",
+    "sqlSvrDBSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), 'DBSubnetName')]",
     "sqlPublicIP": "[concat(parameters('envPrefixName'), 'SqlPip')]",
     "sqlPublicIPRef": "[resourceId('Microsoft.Network/publicIPAddresses', variables('sqlPublicIP'))]",
     "sqlImagePublisher": "MicrosoftSQLServer",
@@ -122,13 +127,12 @@
     "webSrvVMSize": "[parameters('webSrvVMSize')]",
     "webSrvOSDiks": "[concat(parameters('envPrefixName'), 'WebSrvOS')]",
     "webSrvNicName": "[concat(variables('webSrvName'), 'Nic')]",
-    "webSrvSubnetRef": "[concat(variables('vnetId'), '/subnets/', 'FESubnetName')]",
+    "webSrvSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), 'FESubnetName')]",
     "webSrvPublicIP": "[concat(parameters('envPrefixName'), 'websrvpip')]",
     "webSrvAvailabilitySetName": "[concat(parameters('envPrefixName'), 'webSrvAS')]",
     "webSrvNumbOfInstances": "[parameters('numberOfWebSrvs')]",
     "webSrvDnsNameforLBIP": "[concat(toLower(variables('webSrvName')), 'lb')]",
     "webLbName": "[concat(variables('webSrvName'), 'lb')]",
-    "webLblbID": "[resourceId('Microsoft.Network/loadBalancers',variables('webLbName'))]",
     "webLblb_PIP_Id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('webSrvPublicIP'))]",
     "webLbId": "[resourceId('Microsoft.Network/loadBalancers',variables('webLbName'))]",
     "frontEndIPConfigID": "[concat(variables('webLbId'),'/frontendIPConfigurations/LoadBalancerFrontEnd')]",
@@ -143,7 +147,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('feNSGName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "tags": {
         "displayName": "FrontEndNSG"
       },
@@ -184,7 +188,7 @@
       "type": "Microsoft.Network/networkSecurityGroups",
       "apiVersion": "2015-06-15",
       "name": "[variables('dbNSGName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "tags": {
         "displayName": "BackEndNSG"
       },
@@ -253,7 +257,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/networkSecurityGroups/', variables('feNSGName'))]",
         "[concat('Microsoft.Network/networkSecurityGroups/', variables('dbNSGName'))]"
@@ -292,7 +296,7 @@
     {
       "name": "[variables('storageName')]",
       "type": "Microsoft.Storage/storageAccounts",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2015-06-15",
       "dependsOn": [],
       "tags": {
@@ -305,7 +309,7 @@
     {
       "name": "[variables('sqlPublicIP')]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2015-06-15",
       "tags": {
         "displayName": "SqlPIP"
@@ -318,7 +322,7 @@
     {
       "name": "[variables('sqlSrvDBNicName')]",
       "type": "Microsoft.Network/networkInterfaces",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2015-06-15",
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
@@ -346,7 +350,7 @@
     {
       "name": "[concat(parameters('envPrefixName'), 'sqlSrv14')]",
       "type": "Microsoft.Compute/virtualMachines",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2015-06-15",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('storageName'))]",
@@ -394,7 +398,7 @@
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('webSrvAvailabilitySetName')]",
       "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "tags": {
         "displayName": "WebSrvAvailabilitySet"
       },
@@ -403,7 +407,7 @@
     {
       "name": "[variables('webSrvPublicIP')]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2015-06-15",
       "tags": {
         "displayName": "WebSrvPIP for LB"
@@ -420,7 +424,7 @@
       "apiVersion": "2015-06-15",
       "name": "[variables('webLbName')]",
       "type": "Microsoft.Network/loadBalancers",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "tags": {
         "displayName": "Web LB"
       },
@@ -506,7 +510,7 @@
     {
       "name": "[concat(variables('webSrvNicName'), copyindex())]",
       "type": "Microsoft.Network/networkInterfaces",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2015-06-15",
       "copy": {
         "name": "nicLoop",
@@ -546,7 +550,7 @@
     {
       "name": "[concat(variables('webSrvName'), copyindex())]",
       "type": "Microsoft.Compute/virtualMachines",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2015-06-15",
       "copy": {
         "name": "webSrvMachineLoop",
@@ -601,7 +605,7 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('webSrvName'), copyindex(),'/', variables('vmExtensionName'))]",
       "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "webSrvMachineLoop",
         "count": "[variables('webSrvNumbOfInstances')]"

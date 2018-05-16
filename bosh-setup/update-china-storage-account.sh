@@ -22,9 +22,9 @@ done
 bosh_cli_version="2.0.48"
 bosh_cli_name="bosh-cli-${bosh_cli_version}-linux-amd64"
 wget https://s3.amazonaws.com/bosh-cli-artifacts/${bosh_cli_name} -O /tmp/${bosh_cli_name}
-azure storage blob upload /tmp/${bosh_cli_name} ${container_name} bosh-cli/${bosh_cli_name}
+azure storage blob upload /tmp/${bosh_cli_name} ${container_name} bosh-cli/${bosh_cli_name} --quiet
 
 cf_cli_version="6.34.1"
 cf_cli_name="cf-cli-installer_${cf_cli_version}_x86-64.deb"
 wget https://s3-us-west-1.amazonaws.com/cf-cli-releases/releases/v${cf_cli_version}/${cf_cli_name} -O /tmp/${cf_cli_name}
-azure storage blob upload /tmp/${cf_cli_name} ${container_name} cf-cli/${cf_cli_name}
+azure storage blob upload /tmp/${cf_cli_name} ${container_name} cf-cli/${cf_cli_name} --quiet

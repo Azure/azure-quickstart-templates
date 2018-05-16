@@ -229,7 +229,7 @@
       "type": "string"
     },
     "location": {
-      "defaultValue": "",
+      "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "Sets the location for all resources in the cluster"
       },
@@ -366,13 +366,11 @@
     "agentCustomScript": "[concat('/usr/bin/nohup /bin/bash -c \"/bin/bash /opt/azure/containers/',variables('configureClusterScriptFile'), ' ',variables('clusterInstallParameters'),' >> /var/log/azure/cluster-bootstrap.log 2>&1 &\" &')]",
     "agentEndpointDNSNamePrefix": "[tolower(parameters('agentEndpointDNSNamePrefix'))]",
     "agentIPAddressName": "[concat(variables('orchestratorName'), '-agent-ip-', variables('agentEndpointDNSNamePrefix'), '-', variables('nameSuffix'))]",
-    "agentIndex": 0,
     "agentLbBackendPoolName": "[concat(variables('orchestratorName'), '-agent-', variables('nameSuffix'))]",
     "agentLbID": "[resourceId('Microsoft.Network/loadBalancers',variables('agentLbName'))]",
     "agentLbIPConfigID": "[concat(variables('agentLbID'),'/frontendIPConfigurations/', variables('agentLbIPConfigName'))]",
     "agentLbIPConfigName": "[concat(variables('orchestratorName'), '-agent-', variables('nameSuffix'))]",
     "agentLbName": "[concat(variables('orchestratorName'), '-agent-', variables('nameSuffix'))]",
-    "agentMaxVMs": 100,
     "agentRunCmd": "[concat('runcmd:\n -  [ /bin/bash, /opt/azure/containers/install-cluster.sh ]\n\n')]",
     "agentRunCmdFile": "[concat(' -  content: |\n        #!/bin/bash\n        ','sudo mkdir -p /var/log/azure\n        ',variables('agentCustomScript'),'\n    path: /opt/azure/containers/install-cluster.sh\n    permissions: \"0744\"\n')]",
     "agentStorageAccountOffset": "[mul(variables('maxStorageAccountsPerAgent'),0)]",
@@ -381,15 +379,13 @@
     "agentSubnetName": "[concat(variables('orchestratorName'), '-agentsubnet')]",
     "agentVMNamePrefix": "[concat(variables('orchestratorName'), '-agent-', variables('nameSuffix'))]",
     "agentVMSize": "[parameters('agentVMSize')]",
-    "agentVnetSubnetID": "[concat(variables('vnetID'),'/subnets/',variables('agentSubnetName'))]",
-    "apiVersionDefault": "2016-03-30",
+    "agentVnetSubnetID": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('agentSubnetName'))]",
     "apiVersionStorage": "2015-06-15",
     "clusterInstallParameters": "[concat(variables('masterCount'), ' ',variables('masterVMNamePrefix'), ' ',variables('masterFirstAddrOctet4'), ' ',variables('adminUsername'),' ',variables('postInstallScriptURI'),' ',variables('masterFirstAddrPrefix'))]",
     "configureClusterScriptFile": "configure-swarmmode-cluster.sh",
-    "dataStorageAccountPrefixSeed": 97,
     "location": "[variables('locations')[mod(add(2,length(parameters('location'))),add(1,length(parameters('location'))))]]",
     "locations": [
-      "[resourceGroup().location]",
+      "[parameters('location')]",
       "[parameters('location')]"
     ],
     "masterAvailabilitySet": "[concat(variables('orchestratorName'), '-master-availabilitySet-', variables('nameSuffix'))]",
@@ -443,7 +439,7 @@
     "masterSubnetName": "[concat(variables('orchestratorName'), '-masterSubnet')]",
     "masterVMNamePrefix": "[concat(variables('orchestratorName'), '-master-', variables('nameSuffix'), '-')]",
     "masterVMSize": "[parameters('masterVMSize')]",
-    "masterVnetSubnetID": "[concat(variables('vnetID'),'/subnets/',variables('masterSubnetName'))]",
+    "masterVnetSubnetID": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('masterSubnetName'))]",
     "maxStorageAccountsPerAgent": "[div(variables('maxVMsPerPool'),variables('maxVMsPerStorageAccount'))]",
     "maxVMsPerPool": 100,
     "maxVMsPerStorageAccount": 20,
@@ -744,9 +740,7 @@
       "Standard_NV6": {
         "storageAccountType": "Standard_LRS"
       }
-    },
-    "vmsPerStorageAccount": 20,
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]"
+    }
   },
   "resources": [
     {
@@ -904,7 +898,7 @@
         "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountPrefixes')[mod(add(2,variables('agentStorageAccountOffset')),variables('storageAccountPrefixesCount'))],variables('storageAccountPrefixes')[div(add(2,variables('agentStorageAccountOffset')),variables('storageAccountPrefixesCount'))],variables('agentAccountName'))]",
         "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountPrefixes')[mod(add(3,variables('agentStorageAccountOffset')),variables('storageAccountPrefixesCount'))],variables('storageAccountPrefixes')[div(add(3,variables('agentStorageAccountOffset')),variables('storageAccountPrefixesCount'))],variables('agentAccountName'))]",
         "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountPrefixes')[mod(add(4,variables('agentStorageAccountOffset')),variables('storageAccountPrefixesCount'))],variables('storageAccountPrefixes')[div(add(4,variables('agentStorageAccountOffset')),variables('storageAccountPrefixesCount'))],variables('agentAccountName'))]",
-        "[variables('vnetID')]",
+        "[variables('virtualNetworkName')]",
         "[variables('agentLbID')]"
       ],
       "location": "[variables('location')]",
@@ -1119,7 +1113,7 @@
         "name": "nicLoopNode"
       },
       "dependsOn": [
-        "[variables('vnetID')]",
+        "[variables('virtualNetworkName')]",
         "[variables('masterLbID')]",
         "[concat(variables('masterSshPort22InboundNatRuleIdPrefix'),'0')]",
         "[concat(variables('masterSshInboundNatRuleIdPrefix'),copyIndex())]"
