@@ -375,20 +375,6 @@ The following code shows an example.
   ```  
  
 ## Outputs
-* All generated publicIPAddresses should have an outputs section that provides the details of the IP address and fully qualified domain created.  
-  The following code shows an example.
-  ```json
-  "outputs": {
-    "fqdn": {
-	  "type": "string",
-	  "value": "[reference(variables('publicIpAddressResourceId'),'2018-04-01').dnsSettings.fqdn]"
-  },
-  "ipaddress": {
-      "type": "string",
-	  "value": "[reference(variables('publicIpAddressResourceId'),'2018-04-01').dnsSettings.fqdn]"
-	}
-  }
-  ```	
 
 ## Samples That Require Existing Resources (Pre-reqs)
 
