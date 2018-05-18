@@ -87,7 +87,7 @@ $client.DownloadFile($source,$destination)
 
 # Download and install Shibboleth IDP
 echo "Downloading Shibboleth..."
-$source = "https://shibboleth.net/downloads/identity-provider/latest/shibboleth-identity-provider-3.3.2.zip"
+$source = "https://shibboleth.net/downloads/identity-provider/3.3.2/shibboleth-identity-provider-3.3.2.zip"
 $destination = "C:\Temp\shibboleth-identity-provider-3.3.2.zip"
 $client = new-object System.Net.WebClient 
 $client.DownloadFile($source,$destination)
