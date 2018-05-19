@@ -42,11 +42,9 @@
     }
   },
   "variables": {
-    "storageAccountName": "[concat(uniquestring(resourceGroup().id),'storage')]",
-    "windowsOSVersion": "Windows-Server-Technical-Preview",
-    "imagePublisher": "MicrosoftWindowsServer",
+    "windowsOSVersion": "2016-Datacenter-with-Containers",
+    "imagePublisher": "MicrosoftWIndowsServer",
     "imageOffer": "WindowsServer",
-    "OSDiskName": "[concat(parameters('VMName'),'_osdisk')]",
     "nicName": "[concat(parameters('VMName'),'_nic')]",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "[concat(parameters('VMName'),'_subnet')]",
@@ -55,8 +53,6 @@
     "storageAccountType": "Standard_LRS",
     "publicIPAddressName": "[concat(parameters('VMName'),'_pubip')]",
     "publicIPAddressType": "Dynamic",
-    "vmStorageAccountContainerName": "vhds",
-    "apiVersion": "2015-05-01-preview",
     "virtualNetworkName": "[concat(parameters('VMName'),'_vnet')]",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
   },
@@ -111,18 +107,6 @@
             }
           }
         ]
-      }
-    },
-    {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('storageAccountName')]",
-      "apiVersion": "2015-05-01-preview",
-      "location": "[parameters('location')]",
-      "tags": {
-        "displayName": "StorageAccount"
-      },
-      "properties": {
-        "accountType": "[variables('storageAccountType')]"
       }
     },
     {
@@ -200,7 +184,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('VMName')]",
       "location": "[parameters('location')]",
@@ -208,7 +192,6 @@
         "displayName": "VirtualMachine"
       },
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
       ],
       "properties": {
@@ -228,12 +211,12 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), variables('apiVersion')).primaryEndpoints.blob, variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
-            },
+            "name": "[concat(parameters('VMName'), '_OSDisk')]",
             "caching": "ReadWrite",
-            "createOption": "FromImage"
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "[variables('storageAccountType')]"
+            }
           }
         },
         "networkProfile": {
@@ -243,33 +226,7 @@
             }
           ]
         }
-      },
-      "resources": [
-        {
-          "name": "containerConfiguration",
-          "type": "extensions",
-          "location": "[parameters('location')]",
-          "apiVersion": "2015-06-15",
-          "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', parameters('VMName'))]"
-          ],
-          "tags": {
-            "displayName": "containerConfiguration"
-          },
-          "properties": {
-            "publisher": "Microsoft.Compute",
-            "type": "CustomScriptExtension",
-            "typeHandlerVersion": "1.2",
-            "autoUpgradeMinorVersion": true,
-            "settings": {
-              "fileUris": [
-                "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/windows-server-containers-preview/azure-containers.ps1"
-              ],
-              "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File azure-containers.ps1 -adminuser ',parameters('adminUsername'))]"
-            }
-          }
-        }
-      ]
+      }
     }
   ]
 }
