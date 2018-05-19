@@ -209,9 +209,9 @@ if [ "$environment" = "AzureChinaCloud" ]; then
   -v blobstore_storage_account_name=$(get_setting DEFAULT_STORAGE_ACCOUNT_NAME) \\
   -v blobstore_storage_access_key=$(get_setting DEFAULT_STORAGE_ACCESS_KEY) \\
   -v app_package_directory_key=cc-packages \\
-  -v buildpack_directory_key=cc-buildpack \\
-  -v droplet_directory_key=cc-droplet \\
-  -v resource_directory_key=cc-resource
+  -v buildpack_directory_key=cc-buildpacks \\
+  -v droplet_directory_key=cc-droplets \\
+  -v resource_directory_key=cc-resources
 EOF
 elif [ "$environment" = "AzureStack" ]; then
   cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
@@ -227,9 +227,9 @@ else
   -v blobstore_storage_account_name=$(get_setting DEFAULT_STORAGE_ACCOUNT_NAME) \\
   -v blobstore_storage_access_key=$(get_setting DEFAULT_STORAGE_ACCESS_KEY) \\
   -v app_package_directory_key=cc-packages \\
-  -v buildpack_directory_key=cc-buildpack \\
-  -v droplet_directory_key=cc-droplet \\
-  -v resource_directory_key=cc-resource
+  -v buildpack_directory_key=cc-buildpacks \\
+  -v droplet_directory_key=cc-droplets \\
+  -v resource_directory_key=cc-resources
 EOF
 fi 
 chmod 777 $home_dir/deploy_cloud_foundry.sh
