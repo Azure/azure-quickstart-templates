@@ -53,7 +53,6 @@
     searchType=${29}
     azureSearchKey=${30}
     azureSearchNameHost=${31}
-    tikaVmIP=${32}
 
     echo $maharaVersion        >> /tmp/vars.txt
     echo $glusterNode          >> /tmp/vars.txt
@@ -87,7 +86,6 @@
     echo $searchType >> /tmp/vars.txt
     echo $azureSearchKey >> /tmp/vars.txt
     echo $azureSearchNameHost >> /tmp/vars.txt
-    echo $tikaVmIP >> /tmp/vars.txt
 
     . ./helper_functions.sh
     check_fileServerType_param $fileServerType
