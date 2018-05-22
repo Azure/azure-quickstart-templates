@@ -34,7 +34,7 @@ autoscaled VMs and network cost.
 Try the following button if you'd like to deploy our templates for small-to-mid-size workload (about up to 1000 concurrent users).
 All configurations are fixed and you just need to pass your ssh public key to the template
 for logging in to the deployed VMs. This deployment will use NFS (no high availability) and MySQL (8 vCores),
-without other options like elastic search or redis cache. The cost of this deployment can be estimated at
+without other options like elastic search. The cost of this deployment can be estimated at
 [this Azure Pricing Calculator link](https://azure.com/e/fd794268d0bf421aa17c626fb88f25bc). Note the displayed cost in
 in the calculator is the minimum cost. The actual cost will be bigger with potentially
 autoscaled VMs and network cost.
@@ -45,7 +45,7 @@ autoscaled VMs and network cost.
 
 Try the following button if you'd like to deploy our templates for large workload (more than 2000 concurrent users).
 All configurations are fixed and you just need to pass your ssh public key to the template
-for logging in to the deployed VMs. This deployment will use Gluster (for high availability, requiring 2 VMs), MySQL (16 vCores) and redis cache,
+for logging in to the deployed VMs. This deployment will use Gluster (for high availability, requiring 2 VMs), MySQL (16 vCores),
 without other options like elastic search. The cost of this deployment can be estimated at
 [this Azure Pricing Calculator link](https://azure.com/e/078f7294ab6544e8911ddc2ee28850d7). Note the displayed cost in
 in the calculator is the minimum cost. The actual cost will be bigger with potentially
@@ -60,7 +60,7 @@ for best performance. Note that this deployment will incur significant cost.
 All configurations are fixed and you just need to pass your ssh public key to the template
 for logging in to the deployed VMs. This maximal deployment will use Gluster (for
 high availability, adding 2 VMs for a Gluster cluster), MySQL with highest SKU,
-redis cache, elastic search (3 VMs), and pretty large storage sizes (both data
+elastic search (3 VMs), and pretty large storage sizes (both data
 disks and DB). The cost of this deployment can be estimated
 at [this Azure Pricing Calculator link](https://azure.com/e/e0f959b93ed84eb891dcc44f7883f5b5). Note the displayed cost in
 in the calculator is the minimum cost of this deployment. The actual cost will be bigger with potentially
@@ -76,7 +76,6 @@ This template set deploys the following infrastructure:
 - Controller instance running cron and handling syslog for the autoscaled site
 - Load balancer to balance across the autoscaled instances
 - [Azure Database for MySQL](https://azure.microsoft.com/en-us/services/mysql/) or [Azure Database for PostgreSQL](https://azure.microsoft.com/en-us/services/postgresql/) or [Azure SQL Database](https://azure.microsoft.com/en-us/services/sql-database/) 
-- [Azure Redis Cache](https://azure.microsoft.com/en-us/services/cache/) instance for Mahara caching (optional)
 - ObjectFS in [Azure Blob Storage](https://azure.microsoft.com/en-us/services/storage/blobs/) (Mahara sitedata)
 - Three Elasticsearch VMs for search indexing in Mahara (optional)
 - Dual Gluster nodes for high availability access to Mahara files
@@ -87,13 +86,10 @@ The template also optionally installs a handful of useful plugins that allow Mah
 
 ## Useful Mahara plugins for integrating Mahara with Azure Services
 There below is a listing of useful plugins allow Mahara to be integrated with select Azure services: 
-- [Azure Search Plugin*](https://github.com/catalyst/mahara-search_azure) for [Azure Search](https://azure.microsoft.com/en-us/services/logic-apps/)
-- [Trigger Plugin](https://github.com/catalyst/mahara-tool_trigger) and [Restful Webservice Plugin](https://github.com/catalyst/mahara-webservice_restful) for [Azure Logic Apps](https://azure.microsoft.com/en-us/services/logic-apps/) (requires use of [Mahara Connector](https://github.com/catalyst/azure-connector_mahara) now in development)
-- [Object File System Plugin*](https://github.com/catalyst/mahara-tool_objectfs) for [Azure Blob Storage](https://azure.microsoft.com/en-us/services/storage/blobs/)
-- [Office 365 and Azure Active Directory Plugins for Mahara*](https://github.com/Microsoft/o365-mahara) for [Azure Active Directory](https://azure.microsoft.com/en-us/services/active-directory/)
-- [Elasticsearch Plugin*](https://github.com/catalyst/mahara-search_elastic)
+- [Object File System Extension*](https://github.com/catalyst/mahara-module_objectfs) for [Azure Blob Storage](https://azure.microsoft.com/en-us/services/storage/blobs/)
+- [Elasticsearch Extension*](http://manual.mahara.org/en/17.10/administration/extensions.html#search-elasticsearch)
 
-At the current time this template allows the optional installation of all of the plugins above with an * next to them. Please note these plugins can be installed at any time post deployment via Mahara's own [plugin directory](https://mahara.org/plugins/). You can find a list of all Azure relevant plugins in the Mahara plugin directory [here](https://mahara.org/plugins/browse.php?list=set&id=91). You might also choose to follow this list via RSS.
+At the current time this template allows the optional installation of all of the plugins above with an * next to them. Please note these plugins can be configured at any time post deployment, see Mahara's [plugin wiki](https://wiki.mahara.org/wiki/Plugins). 
 
 ## Mahara as a Managed Application
 You can learn more about how you can offer Mahara as a Managed Application on the Azure Marketplace or on an IT Service Catalog [here](https://github.com/Azure/Mahara/tree/master/managedApplication). This is a great read if you are offering Mahara hosting services today for your customers. 
@@ -106,12 +102,10 @@ The following sections describe observations about the current template that you
 
 **Search.** Azure supports running an Elasticsearch cluster, however it does not offer a fully-managed Elasticsearch service, so for those looking for a fully-managed Search service [Azure Search](https://azure.microsoft.com/en-us/services/logic-apps/) is recommended. 
 
-**Caching.** While enabling Redis cache can improve performance can be improved for a large Mahara site we have not seen it be very effective for small-to-medium size sites.
-
 **Regions.** Note that not all resources types (such as databases) may be available in your region. You should check the list of [Azure Products by Region](https://azure.microsoft.com/en-us/global-infrastructure/services/) to for local availabiliy. 
 
 ## Common questions about this Template
-1.  **Is this template Mahara as IaaS or PaaS?**  While the current template leverages PaaS services such as Redis, MySQL, Postgres, MS SQL etc. the current template offers Mahara as IaaS. Given limitations to Mahara our focus is IaaS for the time being however we would love to be informed of your experience running Mahara as PaaS on Azure (i.e. using [Azure Container Service](https://azure.microsoft.com/en-us/services/container-service/) or [Azure App Service](https://azure.microsoft.com/en-us/services/container-service/)). 
+1.  **Is this template Mahara as IaaS or PaaS?**  While the current template leverages PaaS services such as MySQL, Postgres, MS SQL etc. the current template offers Mahara as IaaS. Given limitations to Mahara our focus is IaaS for the time being however we would love to be informed of your experience running Mahara as PaaS on Azure (i.e. using [Azure Container Service](https://azure.microsoft.com/en-us/services/container-service/) or [Azure App Service](https://azure.microsoft.com/en-us/services/container-service/)). 
 
 2.  **The current template uses Ubuntu. Will other Operating Systems such as CentOS or Windows Server be supported in the future?** Unfortunately we only have plans to support Ubuntu at this time. It is highly unlikely that this will change.
 

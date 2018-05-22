@@ -37,22 +37,20 @@
     wabsacctname=${13}
     wabsacctkey=${14}
     azuremaharadbuser=${15}
-    redisDns=${16}
-    redisAuth=${17}
-    elasticVm1IP=${18}
-    installO365pluginsSwitch=${19}
-    dbServerType=${20}
-    fileServerType=${21}
-    mssqlDbServiceObjectiveName=${22}
-    mssqlDbEdition=${23}
-    mssqlDbSize=${24}
-    installObjectFsSwitch=${25}
-    installGdprPluginsSwitch=${26}
-    thumbprintSslCert=${27}
-    thumbprintCaCert=${28}
-    searchType=${29}
-    azureSearchKey=${30}
-    azureSearchNameHost=${31}
+    elasticVm1IP=${16}
+    installO365pluginsSwitch=${17}
+    dbServerType=${18}
+    fileServerType=${19}
+    mssqlDbServiceObjectiveName=${20}
+    mssqlDbEdition=${21}
+    mssqlDbSize=${22}
+    installObjectFsSwitch=${23}
+    installGdprPluginsSwitch=${24}
+    thumbprintSslCert=${25}
+    thumbprintCaCert=${26}
+    searchType=${27}
+    azureSearchKey=${28}
+    azureSearchNameHost=${29}
 
     echo $maharaVersion        >> /tmp/vars.txt
     echo $glusterNode          >> /tmp/vars.txt
@@ -69,8 +67,6 @@
     echo $wabsacctname         >> /tmp/vars.txt
     echo $wabsacctkey          >> /tmp/vars.txt
     echo $azuremaharadbuser    >> /tmp/vars.txt
-    echo $redisDns             >> /tmp/vars.txt
-    echo $redisAuth            >> /tmp/vars.txt
     echo $elasticVm1IP         >> /tmp/vars.txt
     echo $installO365pluginsSwitch    >> /tmp/vars.txt
     echo $installElasticSearchSwitch  >> /tmp/vars.txt
@@ -191,7 +187,7 @@
 
     # Mahara requirements
     sudo apt-get -y update > /dev/null
-    sudo apt-get install -y --force-yes graphviz aspell php-common php-soap php-json php-redis > /tmp/apt6.log
+    sudo apt-get install -y --force-yes graphviz aspell php-common php-soap php-json > /tmp/apt6.log
     sudo apt-get install -y --force-yes php-mbstring php-bcmath php-gd php-mysql php-xmlrpc php-intl php-xml php-bz2 >> /tmp/apt6.log
     sudo apt-get install -y --force-yes npm nodejs-legacy
     if [ $dbServerType = "mysql" ]; then

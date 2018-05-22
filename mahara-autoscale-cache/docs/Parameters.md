@@ -399,17 +399,6 @@ Possible Values: ["9.5","9.6"]
 Default: 9.6
 
 
-### redisDeploySwitch
-
-Switch to deploy a redis cache or not
-
-Type: bool
-
-Possible Values: null
-
-Default: true
-
-
 ### searchType
 
 Options of Mahara Global Search
