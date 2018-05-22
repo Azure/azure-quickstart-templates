@@ -40,13 +40,10 @@
     elasticVm1IP=${16}
     dbServerType=${17}
     fileServerType=${18}
-    mssqlDbServiceObjectiveName=${19}
-    mssqlDbEdition=${20}
-    mssqlDbSize=${21}
-    installObjectFsSwitch=${22}
-    thumbprintSslCert=${23}
-    thumbprintCaCert=${24}
-    searchType=${25}
+    installObjectFsSwitch=${19}
+    thumbprintSslCert=${20}
+    thumbprintCaCert=${21}
+    searchType=${22}
 
     echo $maharaVersion        >> /tmp/vars.txt
     echo $glusterNode          >> /tmp/vars.txt
@@ -67,9 +64,6 @@
     echo $installElasticSearchSwitch  >> /tmp/vars.txt
     echo $dbServerType                >> /tmp/vars.txt
     echo $fileServerType              >> /tmp/vars.txt
-    echo $mssqlDbServiceObjectiveName >> /tmp/vars.txt
-    echo $mssqlDbEdition	>> /tmp/vars.txt
-    echo $mssqlDbSize	>> /tmp/vars.txt
     echo $installObjectFsSwitch >> /tmp/vars.txt
     echo $thumbprintSslCert >> /tmp/vars.txt
     echo $thumbprintCaCert >> /tmp/vars.txt
@@ -82,12 +76,6 @@
       mysqlIP=$dbIP
       mysqladminlogin=$dbadminlogin
       mysqladminpass=$dbadminpass
-
-    # MS SQL is not currently supported by Mahara
-    #elif [ "$dbServerType" = "mssql" ]; then
-    #  mssqlIP=$dbIP
-    #  mssqladminlogin=$dbadminlogin
-    #  mssqladminpass=$dbadminpass
 
     elif [ "$dbServerType" = "postgres" ]; then
       postgresIP=$dbIP
@@ -653,12 +641,6 @@ EOF
 
         echo "mysql -h $mysqlIP -u $mysqladminlogin -p${mysqladminpass} -e \"CREATE DATABASE ${maharadbname};\"" >> /tmp/debug
         echo "mysql -h $mysqlIP -u $mysqladminlogin -p${mysqladminpass} -e \"GRANT ALL ON ${maharadbname}.* TO ${maharadbuser} IDENTIFIED BY '${maharadbpass}';\"" >> /tmp/debug
-    elif [ $dbServerType = "mssql" ]; then
-        /opt/mssql-tools/bin/sqlcmd -S $mssqlIP -U $mssqladminlogin -P ${mssqladminpass} -Q "CREATE DATABASE ${maharadbname} ( MAXSIZE = $mssqlDbSize, EDITION = '$mssqlDbEdition', SERVICE_OBJECTIVE = '$mssqlDbServiceObjectiveName' )"
-        /opt/mssql-tools/bin/sqlcmd -S $mssqlIP -U $mssqladminlogin -P ${mssqladminpass} -Q "CREATE LOGIN ${maharadbuser} with password = '${maharadbpass}'" 
-        /opt/mssql-tools/bin/sqlcmd -S $mssqlIP -U $mssqladminlogin -P ${mssqladminpass} -d ${maharadbname} -Q "CREATE USER ${maharadbuser} FROM LOGIN ${maharadbuser}"
-        /opt/mssql-tools/bin/sqlcmd -S $mssqlIP -U $mssqladminlogin -P ${mssqladminpass} -d ${maharadbname} -Q "exec sp_addrolemember 'db_owner','${maharadbuser}'" 
-        
     else
         # Create postgres db
         echo "${postgresIP}:5432:postgres:${pgadminlogin}:${pgadminpass}" > /root/.pgpass
