@@ -38,19 +38,15 @@
     wabsacctkey=${14}
     azuremaharadbuser=${15}
     elasticVm1IP=${16}
-    installO365pluginsSwitch=${17}
-    dbServerType=${18}
-    fileServerType=${19}
-    mssqlDbServiceObjectiveName=${20}
-    mssqlDbEdition=${21}
-    mssqlDbSize=${22}
-    installObjectFsSwitch=${23}
-    installGdprPluginsSwitch=${24}
-    thumbprintSslCert=${25}
-    thumbprintCaCert=${26}
-    searchType=${27}
-    azureSearchKey=${28}
-    azureSearchNameHost=${29}
+    dbServerType=${17}
+    fileServerType=${18}
+    mssqlDbServiceObjectiveName=${19}
+    mssqlDbEdition=${20}
+    mssqlDbSize=${21}
+    installObjectFsSwitch=${22}
+    thumbprintSslCert=${23}
+    thumbprintCaCert=${24}
+    searchType=${25}
 
     echo $maharaVersion        >> /tmp/vars.txt
     echo $glusterNode          >> /tmp/vars.txt
@@ -68,7 +64,6 @@
     echo $wabsacctkey          >> /tmp/vars.txt
     echo $azuremaharadbuser    >> /tmp/vars.txt
     echo $elasticVm1IP         >> /tmp/vars.txt
-    echo $installO365pluginsSwitch    >> /tmp/vars.txt
     echo $installElasticSearchSwitch  >> /tmp/vars.txt
     echo $dbServerType                >> /tmp/vars.txt
     echo $fileServerType              >> /tmp/vars.txt
@@ -76,12 +71,9 @@
     echo $mssqlDbEdition	>> /tmp/vars.txt
     echo $mssqlDbSize	>> /tmp/vars.txt
     echo $installObjectFsSwitch >> /tmp/vars.txt
-    echo $installGdprPluginsSwitch >> /tmp/vars.txt
     echo $thumbprintSslCert >> /tmp/vars.txt
     echo $thumbprintCaCert >> /tmp/vars.txt
     echo $searchType >> /tmp/vars.txt
-    echo $azureSearchKey >> /tmp/vars.txt
-    echo $azureSearchNameHost >> /tmp/vars.txt
 
     . ./helper_functions.sh
     check_fileServerType_param $fileServerType

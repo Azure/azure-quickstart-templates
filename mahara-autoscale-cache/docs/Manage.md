@@ -16,7 +16,7 @@
 	## Updating Mahara code/settings
 
 	Your controller Virtual Machine has Mahara code and data stored in
-	`/mahara`. The site code is stored in `/mahara/html/mahara/`. This
+	`/mahara`. The site code is stored in `/mahara/html/htdocs/mahara/`. This
 	data is replicated across dual gluster nodes to provide high
 	availability. This directory is also mounted to your autoscaled
 	frontends so all changes to files on the controller VM are immediately
