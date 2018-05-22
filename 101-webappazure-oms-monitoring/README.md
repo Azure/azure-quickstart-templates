@@ -27,8 +27,8 @@ Perform the following steps to configure the Azure Web Apps Analytics solution f
 
 1. Enable the Azure Web Apps Analytics solution from<BR> <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-webappazure-oms-monitoring%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
-</a>
-2. [Enable Azure resource metrics logging to Log Analytics using PowerShell](https://blogs.technet.microsoft.com/msoms/2017/01/17/enable-azure-resource-metrics-logging-using-powershell).
+</a><BR>
+2. [Enable Azure resource metrics logging to Log Analytics using PowerShell](https://docs.microsoft.com/en-us/azure/log-analytics/log-analytics-collect-azurepass-posh).
 
 The Azure Web Apps Analytics solution collects two set of metrics from Azure:
 
