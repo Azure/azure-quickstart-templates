@@ -277,29 +277,6 @@ Possible Values: null
 
 Default: true
 
-
-### installGdprPluginsSwitch
-
-Switch to install Mahara GDPR plugins. Note this may not be available in current versions of Mahara
-
-Type: bool
-
-Possible Values: null
-
-Default: false
-
-
-### installO365pluginsSwitch
-
-Switch to install Mahara Office 365 plugins
-
-Type: bool
-
-Possible Values: null
-
-Default: false
-
-
 ### installObjectFsSwitch
 
 Switch to install Mahara Object FS plugins (with Azure Blob storage)
