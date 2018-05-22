@@ -91,50 +91,6 @@ Possible Values: null
 Default: false
 
 
-### azureSearchSku
-
-The search service level you want to create
-
-Type: string
-
-Possible Values: ["free", "basic", "standard", "standard2", "standard3"]
-
-Default: basic
-
-
-### azureSearchReplicaCount
-
-Replicas distribute search workloads across the service. You need 2 or more to support high availability (applies to Basic and Standard only)
-
-Type: int
-
-Possible Values: null 
-
-Default: 3
-
-
-### azureSearchPartitionCount
-
-Partitions allow for scaling of document count as well as faster indexing by sharding your index over multiple Azure Search units
-
-Type: int
-
-Possible Values: [1,2,3,4,6,12]
-
-Default: 1
-
-
-### azureSearchHostingMode
-
-Applicable only for azureSearchSku set to standard3. You can set this property to enable a single, high density partition that allows up to 1000 indexes, which is much higher than the maximum indexes allowed for any other azureSearchSku.
-
-Type: string
-
-Possible Values: ["default", "highDensity"]
-
-Default: default
- 
-
 ### caCertKeyVaultURL
 
 Azure Key Vault URL for your stored CA (Certificate Authority) cert. This value can be obtained from keyvault.sh output if you used the script to store your CA cert in your Key Vault. This parameter is ignored if the keyVaultResourceId parameter is blank.
