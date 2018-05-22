@@ -40,10 +40,9 @@
     elasticVm1IP=${16}
     dbServerType=${17}
     fileServerType=${18}
-    installObjectFsSwitch=${19}
-    thumbprintSslCert=${20}
-    thumbprintCaCert=${21}
-    searchType=${22}
+    thumbprintSslCert=${19}
+    thumbprintCaCert=${20}
+    searchType=${21}
 
     echo $maharaVersion        >> /tmp/vars.txt
     echo $glusterNode          >> /tmp/vars.txt
@@ -64,7 +63,6 @@
     echo $installElasticSearchSwitch  >> /tmp/vars.txt
     echo $dbServerType                >> /tmp/vars.txt
     echo $fileServerType              >> /tmp/vars.txt
-    echo $installObjectFsSwitch >> /tmp/vars.txt
     echo $thumbprintSslCert >> /tmp/vars.txt
     echo $thumbprintCaCert >> /tmp/vars.txt
     echo $searchType >> /tmp/vars.txt
@@ -128,29 +126,6 @@
     sudo apt-get -y install apt-transport-https >> /tmp/apt4.log
     sudo apt-get -y update > /dev/null
     sudo apt-get -y install azure-cli >> /tmp/apt4.log
-
-    az storage container create \
-        --name objectfs \
-        --account-name $wabsacctname \
-        --account-key $wabsacctkey \
-        --public-access off \
-        --fail-on-exist >> /tmp/wabs.log
-
-    az storage container policy create \
-        --account-name $wabsacctname \
-        --account-key $wabsacctkey \
-        --container-name objectfs \
-        --name readwrite \
-        --start $(date --date="1 day ago" +%F) \
-        --expiry $(date --date="2199-01-01" +%F) \
-        --permissions rw >> /tmp/wabs.log
-
-    sas=$(az storage container generate-sas \
-        --account-name $wabsacctname \
-        --account-key $wabsacctkey \
-        --name objectfs \
-        --policy readwrite \
-        --output tsv)
 
     if [ $fileServerType = "gluster" ]; then
         # mount gluster files system

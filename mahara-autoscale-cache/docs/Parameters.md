@@ -233,17 +233,6 @@ Possible Values: null
 
 Default: true
 
-### installObjectFsSwitch
-
-Switch to install Mahara Object FS plugins (with Azure Blob storage)
-
-Type: bool
-
-Possible Values: null
-
-Default: false
-
-
 ### keyVaultResourceId
 
 Azure Resource Manager resource ID of the Key Vault in case you stored your SSL cert in an Azure Key Vault (Note that this Key Vault must have been pre-created on the same Azure region where this template is being deployed). Leave this blank if you didn't. Resource ID example: /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/xxx/providers/Microsoft.KeyVault/vaults/yyy. This value can be obtained from keyvault.sh output if you used the script to store your SSL cert in your Key Vault.
