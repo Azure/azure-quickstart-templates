@@ -2,7 +2,7 @@
 # Deploy and Manage a Scalable Mahara Cluster on Azure
 
 This repo contains guides and [Azure Resource Manager](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-overview) templates designed to help you deploy and manage a highly available and scalable
-[Mahara](https://mahara.com) cluster on Azure. In addition, the repo contains other useful information relevant to running Mahara on Azure such as a listing of Azure-relevant Mahara plugins and information on how to offer Mahara as a Managed Application on the Azure Marketplace or on an IT Service Catalog. 
+[Mahara](https://mahara.org) cluster on Azure. In addition, the repo contains other useful information relevant to running Mahara on Azure such as a listing of Azure-relevant Mahara plugins and information on how to offer Mahara as a Managed Application on the Azure Marketplace or on an IT Service Catalog. 
 
 If you have Azure account you can deploy Mahara via the [Azure portal](https://portal.azure.com) using the button below, or you can [deploy Mahara via the
 CLI](docs/Deploy.md). Please note that while you can use an [Azure free account](https://azure.microsoft.com/en-us/free/) to get started depending on which template configuration you choose you will likely be required to upgrade to a paid account.
