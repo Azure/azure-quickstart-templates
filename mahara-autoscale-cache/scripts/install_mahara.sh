@@ -648,7 +648,9 @@ EOF
         psql -h $postgresIP -U $pgadminlogin -c "CREATE DATABASE ${maharadbname};" postgres
         psql -h $postgresIP -U $pgadminlogin -c "CREATE USER ${maharadbuser} WITH PASSWORD '${maharadbpass}';" postgres
         psql -h $postgresIP -U $pgadminlogin -c "GRANT ALL ON DATABASE ${maharadbname} TO ${maharadbuser};" postgres
-        rm -f /root/.pgpass
+        if [ "$searchType" -ne "elastic" ]; do
+           rm -f /root/.pgpass
+        fi
     fi
 
     # Master config for syslog
@@ -683,18 +685,26 @@ URLSECRET=`${PWGEN} 8 1`
 \$cfg->wwwroot  = 'https://$siteFQDN';
 \$cfg->passwordsaltmain = '$SALT';
 \$cfg->productionmode = true;
-\$cfg->plugin_search_elasticsearch_indexname = 'mahara';
-\$cfg->plugin_search_elasticsearch_host = '$elasticVm1IP';
 \$cfg->sslproxy = true;
 \$cfg->sendemail = true;
 \$cfg->urlsecret = '$URLSECRET';
 \$cfg->directorypermissions = 0750;
 
 EOF
+
 cd /tmp; sudo -u www-data /usr/bin/php /mahara/html/mahara/htdocs/admin/cli/install.php --adminpassword="$adminpass" --adminemail=admin@"$siteFQDN" --sitename='Mahara Portfolio' || true
 
+if [ $searchType -eq "elastic" ]
+   echo "\$cfg->plugin_search_elasticsearch_indexname = 'mahara\;" >> /mahara/html/mahara/htdocs/config.php
+   echo "\$cfg->plugin_search_elasticsearch_host = '$elasticVm1IP';" >> /mahara/html/mahara/htdocs/config.php
+        
+   if [ $dbServerType = "mysql" ]; then
+       mysql -h $mysqlIP -u $mysqladminlogin -p${mysqladminpass}  ${maharadbname} -e "update config set value = 'elastic' where field = 'searchplugin';"
 
-
+   else
+       psql -h $postgresIP -U $pgadminlogin -d ${maharadbname} -c "update config set value = 'elastic' where field = 'searchplugin';" postgres
+      rm -f /root/.pgpass
+   fi
 
     echo -e "\n\rDone! Installation completed!\n\r"
 
