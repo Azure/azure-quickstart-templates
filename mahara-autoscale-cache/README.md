@@ -184,7 +184,7 @@ Once the environment variables are defined, Travis CI will run the template vali
 
 This project welcomes contributions and suggestions. Our goal is to
 work on Azure specific tooling for deploying and managing the open
-source [Mahara](http://mahara.org) learning management system on
+source [Mahara](http://mahara.org) portfolio  management system on
 Azure. We do not work on Mahara itself here, instead we work upstream
 as appropriate.
 
