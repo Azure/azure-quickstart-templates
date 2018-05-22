@@ -243,5 +243,5 @@ implication, estoppel or otherwise.
 
   1. [Deploy a Mahara Cluster](docs/Deploy.md)
   1. [Obtain Deployment Details about a Mahara Cluster](docs/Get-Install-Data.md)
-  1. [Delete a Mahara Cluster](docs/Delete.md)
+  1. [Delete a Mahara Cluster](docs/Cleanup.md)
 
