@@ -648,7 +648,8 @@ EOF
         psql -h $postgresIP -U $pgadminlogin -c "CREATE DATABASE ${maharadbname};" postgres
         psql -h $postgresIP -U $pgadminlogin -c "CREATE USER ${maharadbuser} WITH PASSWORD '${maharadbpass}';" postgres
         psql -h $postgresIP -U $pgadminlogin -c "GRANT ALL ON DATABASE ${maharadbname} TO ${maharadbuser};" postgres
-        if [ "$searchType" -ne "elastic" ]; then
+        # Need to preserve pg auth file for updating database later, if elasticsearch option was set.
+        if [ $searchType = "internal" ]; then
            rm -f /root/.pgpass
         fi
     fi
@@ -694,7 +695,7 @@ EOF
 
 cd /tmp; sudo -u www-data /usr/bin/php /mahara/html/mahara/htdocs/admin/cli/install.php --adminpassword="$adminpass" --adminemail=admin@"$siteFQDN" --sitename='Mahara Portfolio' || true
 
-if [ $searchType -eq "elastic" ]; then
+if [ $searchType = "elastic" ]; then
    echo "\$cfg->plugin_search_elasticsearch_indexname = 'mahara\;" >> /mahara/html/mahara/htdocs/config.php
    echo "\$cfg->plugin_search_elasticsearch_host = '$elasticVm1IP';" >> /mahara/html/mahara/htdocs/config.php
         
