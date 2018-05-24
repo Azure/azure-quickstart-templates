@@ -1,0 +1,506 @@
+﻿{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmssName": {
+      "type": "String",
+      "defaultValue": "cloudmelonvmss",
+      "metadata": {
+        "description": "String used as a base for naming resources. Must be 3-10 characters in length and globally unique across Azure Stack. A hash is prepended to this string for some resources, and resource-specific information is appended."
+      }
+    },
+    "masterNodeCount": {
+      "type": "int",
+      "maxValue": 50,
+      "metadata": {
+        "description": "Number of master node in VMSS; if singlePlacementGroup is true (the default), then this value must be 100 or less; if singlePlacementGroup is false, then ths value must be 50 or less"
+      }
+    },
+    "masterNodeSku": {
+      "defaultValue": "Standard_A1",
+      "type": "String",
+      "metadata": {
+        "description": "Size of VMs in the VM Scale Set for master node."
+      }
+    },
+    "dataNodeSku": {
+      "defaultValue": "Standard_D4S_v3",
+      "type": "String",
+      "metadata": {
+        "description": "Size of VMs in the VM Scale Set for data node."
+      }
+    },
+    "dataNodeCount": {
+      "type": "int",
+      "maxValue": 100,
+      "metadata": {
+        "description": "Number of data nodes in VMSS; if singlePlacementGroup is true (the default), then this value must be 100 or less; if singlePlacementGroup is false, then ths value must be 100 or less"
+      }
+    },      
+    "adminUsername": {
+      "type": "String",
+      "defaultValue": "cloudmelon",
+      "metadata": {
+        "description": "Admin username on all VMs."
+      }
+    },
+    "adminPassword": {
+      "type": "SecureString",
+      "defaultValue": "cloudmelon@2018",
+      "metadata": {
+        "description": "Admin password on all VMs."
+      }
+    },
+    "osImagePublisher": {
+      "type": "string",
+      "defaultValue": "OpenLogic",
+      "metadata": {
+        "description": "Maps to the publisher in the Azure Stack Platform Image Repository manifest file."
+      }
+    },
+    "osImageOffer": {
+      "type": "string",
+      "defaultValue": "CentOS",
+      "metadata": {
+        "description": "Maps to the Offer in the Azure Stack Platform Image Repository manifest file."
+      }
+    },
+    "osImageSku": {
+      "type": "string",
+      "defaultValue": "7.4",
+      "metadata": {
+        "description": "The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version. Default value: 14.04.3-LTS"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "https://github.com/cloudmelon/cloudmelonazurearm/tree/master/vmss-linux-master-slave-extension"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    }
+  },
+  "variables": {
+    "location": "[resourceGroup().location]",
+    "storageAccountName": "[toLower(concat('SA', parameters('vmssName')))]",
+    "storageAccountContainerName": "[toLower(concat('SC',parameters('vmssName')))]",
+    "storageAccountType": "Standard_LRS",
+    "OSDiskName": "osdisk",
+    "vnetName":"[concat('vnet-', parameters('vmssName'))]",
+    "subnetMaster":"[concat('mastersubnet-', parameters('vmssName'))]",
+    "subnetData":"[concat('datasubnet-', parameters('vmssName'))]",
+    "masterPublicIPAddressName": "[toLower(concat('pip-master', parameters('vmssName')))]",
+    "dataPublicIPAddressName": "[toLower(concat('pip-data', parameters('vmssName')))]",
+    "vmssDomainName": "[toLower(concat('pubdns', parameters('vmssName')))]",
+    "masterNodeLoadBalancerName": "[concat('LB-MasterN', parameters('vmssName'))]",
+    "dataNodeLoadBalancerName": "[concat('LB-DataN', parameters('vmssName'))]",
+    "masterNodeLoadBalancerFrontEndName": "[concat('LBFrontEnd', parameters('vmssName'))]",
+    "dataNodeLoadBalancerFrontEndName": "[concat('LBFrontEnd', parameters('vmssName'))]",
+    "masterNodeLoadBalancerBackEndName": "[concat('LBBackEnd',parameters('vmssName'))]",
+    "dataNodeLoadBalancerBackEndName": "[concat('LBBackEnd',parameters('vmssName'))]",
+    "masterNodeLoadBalancerProbeName": "[concat('LBHttpProbe', parameters('vmssName'))]",
+    "dataNodeLoadBalancerProbeName": "[concat('LBHttpProbe', parameters('vmssName'))]",
+    "masterNodeLoadBalancerNatPoolName": "[concat('LBNatPool', parameters('vmssName'))]",
+    "dataNodeLoadBalancerNatPoolName": "[concat('LBNatPool', parameters('vmssName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('storageAccountName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[variables('location')]",
+      "properties": {
+        "accountType": "[variables('storageAccountType')]"
+      }
+    },
+    {
+      "apiVersion": "2017-04-01",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('vnetName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/16"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetMaster')]",
+            "properties": {
+              "addressPrefix": "10.0.0.0/24"
+            }
+          },
+          {
+            "name": "[variables('subnetData')]",
+            "properties": {
+              "addressPrefix": "10.0.1.0/24"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('masterPublicIPAddressName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[variables('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[concat(variables('vmssDomainName'),'-master-node')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('dataPublicIPAddressName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[variables('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[concat(variables('vmssDomainName'),'-data-node')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/loadBalancers",
+      "name": "[variables('masterNodeLoadBalancerName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[variables('location')]",
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "[variables('masterNodeLoadBalancerFrontEndName')]",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('masterPublicIPAddressName'))]"
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "[variables('masterNodeLoadBalancerBackendName')]"
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "name": "roundRobinLBRule",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('masterNodeLoadBalancerName')), '/frontendIPConfigurations/', variables('masterNodeLoadBalancerFrontEndName'))]"
+              },
+              "backendAddressPool": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('masterNodeLoadBalancerName')), '/backendAddressPools/', variables('masterNodeLoadBalancerBackendName'))]"
+              },
+              "protocol": "tcp",
+              "frontendPort": 80,
+              "backendPort": 80,
+              "enableFloatingIP": false,
+              "idleTimeoutInMinutes": 5,
+              "probe": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('masterNodeLoadBalancerName')), '/probes/', variables('masterNodeLoadBalancerProbeName'))]"
+              }
+            }
+          }
+        ],
+        "probes": [
+          {
+            "name": "[variables('masterNodeLoadBalancerProbeName')]",
+            "properties": {
+              "protocol": "tcp",
+              "port": 80,
+              "intervalInSeconds": "5",
+              "numberOfProbes": "2"
+            }
+          }
+        ],
+        "inboundNatPools": [
+          {
+            "name": "[variables('masterNodeLoadBalancerNatPoolName')]",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('masterNodeLoadBalancerName')), '/frontendIPConfigurations/', variables('masterNodeLoadBalancerFrontEndName'))]"
+              },
+              "protocol": "tcp",
+              "frontendPortRangeStart": "50000",
+              "frontendPortRangeEnd": "50019",
+              "backendPort": "3389"
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('masterPublicIPAddressName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/loadBalancers",
+      "name": "[variables('dataNodeLoadBalancerName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[variables('location')]",
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "[variables('dataNodeLoadBalancerFrontEndName')]",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('dataPublicIPAddressName'))]"
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "[variables('dataNodeLoadBalancerBackendName')]"
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "name": "roundRobinLBRule",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('dataNodeLoadBalancerName')), '/frontendIPConfigurations/', variables('dataNodeLoadBalancerFrontEndName'))]"
+              },
+              "backendAddressPool": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('dataNodeLoadBalancerName')), '/backendAddressPools/', variables('dataNodeLoadBalancerBackendName'))]"
+              },
+              "protocol": "tcp",
+              "frontendPort": 80,
+              "backendPort": 80,
+              "enableFloatingIP": false,
+              "idleTimeoutInMinutes": 5,
+              "probe": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('dataNodeLoadBalancerName')), '/probes/', variables('dataNodeLoadBalancerProbeName'))]"
+              }
+            }
+          }
+        ],
+        "probes": [
+          {
+            "name": "[variables('dataNodeLoadBalancerProbeName')]",
+            "properties": {
+              "protocol": "tcp",
+              "port": 80,
+              "intervalInSeconds": "5",
+              "numberOfProbes": "2"
+            }
+          }
+        ],
+        "inboundNatPools": [
+          {
+            "name": "[variables('dataNodeLoadBalancerNatPoolName')]",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('dataNodeLoadBalancerName')), '/frontendIPConfigurations/', variables('dataNodeLoadBalancerFrontEndName'))]"
+              },
+              "protocol": "tcp",
+              "frontendPortRangeStart": "50000",
+              "frontendPortRangeEnd": "50019",
+              "backendPort": "3389"
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('dataPublicIPAddressName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachineScaleSets",
+      "sku": {
+        "name": "[parameters('masterNodeSku')]",
+        "tier": "Standard",
+        "capacity": "[parameters('masterNodeCount')]"
+      },
+      "name": "[concat(parameters('vmssName'), '-master-node')]",
+      "apiVersion": "2016-03-30",
+      "location": "[variables('location')]",
+      "properties": {
+        "upgradePolicy": {
+          "mode": "Manual"
+        },
+        "virtualMachineProfile": {
+          "storageProfile": {
+            "osDisk": {
+              "vhdContainers": [
+                "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob, variables('storageAccountContainerName'))]"
+              ],
+              "name": "[variables('OSDiskName')]",
+              "caching": "ReadOnly",
+              "createOption": "FromImage"
+            },
+            "imageReference": {
+              "publisher": "[parameters('osImagePublisher')]",
+              "offer": "[parameters('osImageOffer')]",
+              "sku": "[parameters('osImageSku')]",
+              "version": "latest"
+            }
+          },
+          "osProfile": {
+            "computerNamePrefix": "[parameters('vmssName')]",
+            "adminUsername": "[parameters('adminUsername')]",
+            "adminPassword": "[parameters('adminPassword')]"
+          },
+          "networkProfile": {
+            "networkInterfaceConfigurations": [
+              {
+                "name": "nic",
+                "properties": {
+                  "primary": "true",
+                  "ipConfigurations": [
+                    {
+                      "name": "ipconfig",
+                      "properties": {
+                        "subnet": {
+                          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('subnetMaster'))]"
+                        },
+                        "loadBalancerBackendAddressPools": [
+                          {
+                            "id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('masterNodeLoadBalancerName'), '/backendAddressPools/', variables('masterNodeLoadBalancerBackEndName'))]"
+                          }
+                        ],
+                        "loadBalancerInboundNatPools": [
+                          {
+                            "id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('masterNodeLoadBalancerName'), '/inboundNatPools/', variables('masterNodeLoadBalancerNatPoolName'))]"
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "extensionProfile": {
+            "extensions": [
+              {
+                "type": "Microsoft.Compute/virtualMachines/extensions",
+                "name": "[concat(parameters('vmssName'),'-LinuxCustomScriptExtension')]",
+                "properties": {
+                  "publisher": "Microsoft.OSTCExtensions",
+                  "type": "CustomScriptForLinux",
+                  "typeHandlerVersion": "1.3",
+                  "autoUpgradeMinorVersion": true,
+                  "settings": {
+                    "fileUris": [ "https://cloudmelongithub.blob.core.windows.net/cloudmelonarmmasterslave/testcloudmelonscript01.sh" ],
+                    "commandToExecute": "chmod +x testcloudmelonscript01.sh ./testcloudmelonscript01.sh "
+                  }
+                }
+              }
+            ]
+          }
+        }
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
+        "[resourceId('Microsoft.Network/loadBalancers', variables('masterNodeLoadBalancerName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachineScaleSets",
+      "sku": {
+        "name": "[parameters('dataNodeSku')]",
+        "tier": "Standard",
+        "capacity": "[parameters('dataNodeCount')]"
+      },
+      "name":"[concat(parameters('vmssName'), '-data-node')]",
+      "apiVersion": "2016-03-30",
+      "location": "[variables('location')]",
+      "properties": {
+        "upgradePolicy": {
+          "mode": "Manual"
+        },
+        "virtualMachineProfile": {
+          "storageProfile": {
+            "osDisk": {
+              "vhdContainers": [
+                "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob, variables('storageAccountContainerName'))]"
+              ],
+              "name": "[variables('OSDiskName')]",
+              "caching": "ReadOnly",
+              "createOption": "FromImage"
+            },
+            "imageReference": {
+              "publisher": "[parameters('osImagePublisher')]",
+              "offer": "[parameters('osImageOffer')]",
+              "sku": "[parameters('osImageSku')]",
+              "version": "latest"
+            }
+          },
+          "osProfile": {
+            "computerNamePrefix": "[parameters('vmssName')]",
+            "adminUsername": "[parameters('adminUsername')]",
+            "adminPassword": "[parameters('adminPassword')]"
+          },
+          "networkProfile": {
+            "networkInterfaceConfigurations": [
+              {
+                "name": "nic",
+                "properties": {
+                  "primary": "true",
+                  "ipConfigurations": [
+                    {
+                      "name": "ipconfig",
+                      "properties": {
+                        "subnet": {
+                          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('subnetData'))]"
+                        },
+                        "loadBalancerBackendAddressPools": [
+                          {
+                            "id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('dataNodeLoadBalancerName'), '/backendAddressPools/', variables('dataNodeLoadBalancerBackEndName'))]"
+                          }
+                        ],
+                        "loadBalancerInboundNatPools": [
+                          {
+                            "id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('dataNodeLoadBalancerName'), '/inboundNatPools/', variables('dataNodeLoadBalancerNatPoolName'))]"
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "extensionProfile": {
+            "extensions": [
+              {
+                "type": "Microsoft.Compute/virtualMachines/extensions",
+                "name": "[concat(parameters('vmssName'),'-LinuxCustomScriptExtension')]",
+                "properties": {
+                  "publisher": "Microsoft.OSTCExtensions",
+                  "type": "CustomScriptForLinux",
+                  "typeHandlerVersion": "1.3",
+                  "autoUpgradeMinorVersion": true,
+                  "settings": {
+                    "fileUris": [ "https://cloudmelongithub.blob.core.windows.net/cloudmelonarmmasterslave/testcloudmelonscript02.sh" ],
+                    "commandToExecute": "chmod +x testcloudmelonscript02.sh ./testcloudmelonscript02.sh "
+                  }
+                }
+              }
+            ]
+          }
+        }
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
+        "[resourceId('Microsoft.Network/loadBalancers', variables('dataNodeLoadBalancerName'))]"
+      ]
+    }
+  ]
+}
+
+
+
