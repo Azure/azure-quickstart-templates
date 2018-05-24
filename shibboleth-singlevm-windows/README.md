@@ -13,8 +13,9 @@ In order to support SSL, this template creates a self signed certificate as a pa
 # Test Setup
 Here are the steps you can follow to create a testing setup including Shibboleth IDP deployed using this template, along with an ADLDS test server and a test SP available online.
 
-## Install ADLDS
-Install ADLDS as per the instructions described on https://blogs.msdn.microsoft.com/microsoftrservertigerteam/2017/04/10/step-by-step-guide-to-setup-ldaps-on-windows-server/. You would need following settings of the ADLDS instance to configure Shibboleth.
+# Install ADLDS
+Install ADLDS as per the instructions described on https://blogs.msdn.microsoft.com/microsoftrservertigerteam/2017/04/10/step-by-step-guide-to-setup-ldaps-on-windows-server/. You would need following settings (with sample values) of the ADLDS instance to configure Shibboleth.
+ 	
 	- Public IP - 125.524.52.54
 	- Bind DN - example - john@testorg.com
 	- Bind DN credentials - example - JohnZSQ12*(
