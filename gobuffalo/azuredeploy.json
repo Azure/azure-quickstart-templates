@@ -1,0 +1,115 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "imageName" : {
+        "type": "String",
+        "defaultValue": "appsvc/sample-hello-world:latest"
+      },
+      "name": {
+        "type": "String",
+        "defaultValue": "[concat('site', uniqueString(resourceGroup().id, deployment().name))]"
+      },
+      "database": {
+        "type": "String",
+        "defaultValue": "none",
+        "allowedValues": [
+            "none",
+            "postgre"
+        ]
+      },
+      "databaseName": {
+        "type": "String",
+        "defaultValue": "buffalo_development"
+      },
+      "databaseAdministratorLogin": {
+          "type": "String",
+          "defaultValue": "[concat('admin', parameters('name'))]"
+      },
+      "databaseAdministratorLoginPassword": {
+        "type": "SecureString",
+        "defaultValue": ""
+      }
+    },
+    "variables": {
+      "hostingPlanName": "[concat('hostingPlan-', parameters('name'))]",
+      "postgreName": "[concat(parameters('name'), '-postgre')]",
+      "postgreConnection": "[concat('postgres://', parameters('databaseAdministratorLogin'), ':', parameters('databaseAdministratorLoginPassword'), '@', variables('postgrename'), '.postgres.database.azure.com/', parameters('databaseName'), '?sslmode=required')]"
+    },
+    "resources": [
+      {
+        "type": "Microsoft.Web/sites",
+        "name": "[parameters('name')]",
+        "apiVersion": "2016-03-01",
+        "location": "[resourceGroup().location]",
+        "tags": {
+          "[concat('hidden-related:', subscription().id, '/resourcegroups/', resourceGroup().name, '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]": "empty",
+          "gobuffalo": "empty"
+        },
+        "properties": {
+          "name": "[parameters('name')]",
+          "siteConfig": {
+            "appSettings": [
+              {
+                "name": "WEBSITES_ENABLE_APP_SERVICE_STORAGE",
+                "value": "false"
+              }
+            ],
+            "connectionStrings":[
+              {
+                "name":"DATABASE_URL",
+                "connectionString": "[if(equals(parameters('database'), 'postgre'), variables('postgreConnection'), 'not applicable')]",
+                "type":"custom"
+              }
+            ],
+            "appCommandLine": "",
+            "linuxFxVersion": "[concat('DOCKER|', parameters('imageName'))]"
+          },
+          "serverFarmId": "[concat(subscription().id, '/resourcegroups/', resourceGroup().name, '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]",
+          "hostingEnvironment": ""
+        },
+        "dependsOn": [
+          "[variables('hostingPlanName')]",
+          "[variables('postgreName')]"
+        ]
+      },
+      {
+        "type": "Microsoft.Web/serverfarms",
+        "sku": {
+          "Tier": "Basic",
+          "Name": "B1"
+        },
+        "kind": "linux",
+        "name": "[variables('hostingPlanName')]",
+        "apiVersion": "2016-09-01",
+        "location": "[resourceGroup().location]",
+        "properties": {
+          "name": "[variables('hostingPlanName')]",
+          "workerSizeId": "0",
+          "reserved": true,
+          "numberOfWorkers": "1",
+          "hostingEnvironment": ""
+        }
+      },
+      {
+          "condition":"[equals(parameters('database'), 'postgre')]",
+          "type": "Microsoft.DBforPostgreSQL/servers",
+          "sku": {
+              "name": "B_Gen5_1",
+              "family": "Gen5",
+              "capacity": "",
+              "size": "5120",
+              "tier":"Basic"
+          },
+          "kind":"",
+          "name":"[variables('postgreName')]",
+          "apiVersion": "2017-12-01-preview",
+          "location":"[resourceGroup().location]",
+          "properties": {
+              "version": "9.6",
+              "administratorLogin": "[parameters('databaseAdministratorLogin')]",
+              "administratorLoginPassword": "[parameters('databaseAdministratorLoginPassword')]"
+          }
+      }
+    ]
+  }
