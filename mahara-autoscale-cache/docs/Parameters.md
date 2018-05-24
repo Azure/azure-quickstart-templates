@@ -327,7 +327,7 @@ Options of Mahara Global Search
 
 Type: string
 
-Possible Values: ["none", "azure", "elastic"]
+Possible Values: ["none", "elastic"]
 
 Default: none
 

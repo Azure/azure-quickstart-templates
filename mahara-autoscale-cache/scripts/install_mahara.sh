@@ -624,7 +624,7 @@ EOF
         psql -h $postgresIP -U $pgadminlogin -c "CREATE USER ${maharadbuser} WITH PASSWORD '${maharadbpass}';" postgres
         psql -h $postgresIP -U $pgadminlogin -c "GRANT ALL ON DATABASE ${maharadbname} TO ${maharadbuser};" postgres
         # Need to preserve pg auth file for updating database later, if elasticsearch option was set.
-        if [ $searchType = "internal" ]; then
+        if [ $searchType = "none" ]; then
            rm -f /root/.pgpass
         fi
     fi
