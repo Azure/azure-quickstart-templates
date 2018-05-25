@@ -1,4 +1,3 @@
-
 # *Deploy and manage a Scalable Mahara Cluster on Azure*
 
 After deploying, these templates will provide you with a new Mahara site with caching for speed and scaling frontends to handle PHP load. The filesystem behind it is mirrored for high availability. Filesystem permissions and options have been tuned to make Mahara more secure than the default install
