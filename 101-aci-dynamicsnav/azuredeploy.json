@@ -9,6 +9,13 @@
       },
       "defaultValue": "acinavcontainergroup"
     },
+    "dnsPrefix": {
+      "type": "string",
+      "maxLength": 50,
+      "metadata": {
+          "description": "The DNS label for the public IP address. It must be lowercase. It should match the following regular expression, or it will raise an error: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$"
+      }
+    },
     "navRelease": {
       "type": "string",
       "metadata": {
@@ -62,13 +69,14 @@
     }
   },
   "variables": {
-    "image": "[parameters('navRelease')]"
+    "image": "[parameters('navRelease')]",
+    "publicdnsname": "[concat(parameters('dnsPrefix'),'.',resourceGroup().location,'.azurecontainer.io')]"
   },
   "resources": [
     {
       "name": "[parameters('name')]",
       "type": "Microsoft.ContainerInstance/containerGroups",
-      "apiVersion": "2017-10-01-preview",
+      "apiVersion": "2018-02-01-preview",
       "location": "[parameters('location')]",
       "properties": {
         "containers": [
@@ -87,35 +95,39 @@
                 {
                   "name": "password",
                   "value": "[parameters('password')]"
+                },
+                { 
+                  "name": "PublicDnsName",
+                  "value": "[variables('publicdnsname')]"
                 }
               ],
               "image": "[variables('image')]",
               "ports": [
                 {
-                  "protocol": "tcp",
-                  "port": "443"
+                  "protocol": "TCP",
+                  "port": 443
                 },
                 {
-                  "protocol": "tcp",
-                  "port": "80"
+                  "protocol": "TCP",
+                  "port": 80
                 },
                 {
-                  "protocol": "tcp",
-                  "port": "7049"
+                  "protocol": "TCP",
+                  "port": 7049
                 },
                 {
-                  "protocol": "tcp",
-                  "port": "8080"
+                  "protocol": "TCP",
+                  "port": 8080
                 },
                 {
-                  "protocol": "tcp",
-                  "port": "1433"
+                  "protocol": "TCP",
+                  "port": 1433
                 }
               ],
               "resources": {
                 "requests": {
                   "cpu": "[parameters('cpuCores')]",
-                  "memoryInGb": "[parameters('memoryInGb')]"
+                  "memoryInGB": "[parameters('memoryInGb')]"
                 }
               }
             }
@@ -126,34 +138,35 @@
           "type": "Public",
           "ports": [
             {
-              "protocol": "tcp",
-              "port": "443"
+              "protocol": "TCP",
+              "port": 443
             },
             {
-              "protocol": "tcp",
-              "port": "80"
+              "protocol": "TCP",
+              "port": 80
             },
             {
-              "protocol": "tcp",
-              "port": "7049"
+              "protocol": "TCP",
+              "port": 7049
             },
             {
-              "protocol": "tcp",
-              "port": "8080"
+              "protocol": "TCP",
+              "port": 8080
             },
             {
-              "protocol": "tcp",
-              "port": "1433"
+              "protocol": "TCP",
+              "port": 1433
             }
-          ]
+          ],
+          "dnsNameLabel": "[parameters('dnsPrefix')]"
         }
       }
     }
   ],
   "outputs": {
-    "containerIPv4Address": {
+    "containerIPAddressFqdn": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups/', parameters('name'))).ipAddress.ip]"
+      "value": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups/', parameters('name'))).ipAddress.fqdn]"
     }
   }
 }
