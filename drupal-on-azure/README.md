@@ -6,7 +6,17 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
+# Drupal template 
 
 This is a set of templates and automation scripts that can be used to automatically provision an environment in Azure, install Drupal 7 and install it.
 
-Feel free to post qeustions and enjoy!
+
+### How to Deploy
+You can deploy the template with Azure Portal, or PowerShell, or Azure cross platform command line tools.
+
+### Parameters to provide while deploying
+* You need to provide website name and hostig plan name
+* You need to provide the repo url and branch for Drupal installation
+
+### How to access the Drupal Site
+* You can access the site using the website name you provide as the paramater while deploying the template. 
