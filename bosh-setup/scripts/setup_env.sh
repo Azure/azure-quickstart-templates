@@ -202,36 +202,29 @@ bosh -n -d cf deploy ~/example_manifests/cf-deployment.yml \\
 EOF
 if [ "$environment" = "AzureChinaCloud" ]; then
   cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
-  -o ~/example_manifests/use-azure-storage-blobstore.yml \\
   -o ~/example_manifests/use-mirror-releases-for-cf.yml \\
-  -v system_domain=$(get_setting CLOUD_FOUNDRY_PUBLIC_IP).xip.io \\
-  -v environment=$(get_setting ENVIRONMENT) \\
-  -v blobstore_storage_account_name=$(get_setting DEFAULT_STORAGE_ACCOUNT_NAME) \\
-  -v blobstore_storage_access_key=$(get_setting DEFAULT_STORAGE_ACCESS_KEY) \\
-  -v app_package_directory_key=cc-packages \\
-  -v buildpack_directory_key=cc-buildpacks \\
-  -v droplet_directory_key=cc-droplets \\
-  -v resource_directory_key=cc-resources
-EOF
-elif [ "$environment" = "AzureStack" ]; then
-  cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
-  -o ~/example_manifests/use-compiled-releases.yml \\
-  -v system_domain=$(get_setting CLOUD_FOUNDRY_PUBLIC_IP).xip.io
+  -o ~/example_manifests/use-mirror-compiled-releases.yml \\
 EOF
 else
   cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
   -o ~/example_manifests/use-compiled-releases.yml \\
+EOF
+fi
+if [ "$environment" != "AzureStack" ]; then
+  cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
   -o ~/example_manifests/use-azure-storage-blobstore.yml \\
-  -v system_domain=$(get_setting CLOUD_FOUNDRY_PUBLIC_IP).xip.io \\
   -v environment=$(get_setting ENVIRONMENT) \\
   -v blobstore_storage_account_name=$(get_setting DEFAULT_STORAGE_ACCOUNT_NAME) \\
   -v blobstore_storage_access_key=$(get_setting DEFAULT_STORAGE_ACCESS_KEY) \\
   -v app_package_directory_key=cc-packages \\
   -v buildpack_directory_key=cc-buildpacks \\
   -v droplet_directory_key=cc-droplets \\
-  -v resource_directory_key=cc-resources
+  -v resource_directory_key=cc-resources \\
 EOF
-fi 
+fi
+cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
+  -v system_domain=$(get_setting CLOUD_FOUNDRY_PUBLIC_IP).xip.io
+EOF
 chmod 777 $home_dir/deploy_cloud_foundry.sh
 
 cat >> "$home_dir/connect_director_vm.sh" << EOF
