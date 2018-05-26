@@ -9,9 +9,8 @@
 # OpenCanvas template 
 
 This template deploys a OpenCanvas to the ubuntu VM 16.04
-
-- Deploys on a Ubuntu VM 16.04
-- The template installs postgres9.5 version and a new database is created
+* Deploys on a Ubuntu VM 16.04
+* The template installs postgres9.5 version and a new database is created
 
 
 ### How to Deploy
