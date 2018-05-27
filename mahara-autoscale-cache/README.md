@@ -44,7 +44,7 @@ Alternatively, you can configure all of your variables in the "azuredeploy.param
 
 Note that `siteURL` is a special case in the `azuredeploy.parameters.json` files. If you do not define a value for `siteURL` or if you leave it as the default "www.example.org" this value will be overwritten by the template to be a calculated value for the public load balancers of your deployment. This allows you to experiment with this Mahara template without configuring a new domain name whilst still enabling Mahara to be configured with a production URL when appropriate. See the next section for instructions on retrieving the generated DNS name if necesary
 
-Depending on what tiers you selected for VMs and the database you will be looking at roughly 1 to 1 and a half hours for a full deploy. See below for selectable parameters.
+Depending on what tiers you selected for VMs and the database you will be looking at roughly 1 to 2 hours for a full deploy. See below for selectable parameters.
 
 ## *Using the created stack*
 
