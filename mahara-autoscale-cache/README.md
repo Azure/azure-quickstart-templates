@@ -20,12 +20,12 @@ This template set deploys the following infrastructure:
 
 ![network_diagram](images/stack_diagram.png "Diagram of deployed stack")
 
-# *Deployment steps*
+## *Deployment steps*
 
 You can click the "deploy to Azure" button at the beginning of this document or alternatively perform a deploy from the command line:
 
 
-# *Command line deploys*
+### *Command line deploys*
 
 Once you've checked out the templates from git, you'll want to use the [Azure CLI tool](https://docs.microsoft.com/en-us/cli/azure/overview?view=azure-cli-latest) to deploy them. First off you'll want to create a group with these:
 
@@ -46,7 +46,7 @@ Note that `siteURL` is a special case in the `azuredeploy.parameters.json` files
 
 Depending on what tiers you selected for VMs and the database you will be looking at roughly 1 to 1 and a half hours for a full deploy. See below for selectable parameters.
 
-# *Using the created stack*
+## *Using the created stack*
 
 In testing, stacks typically took between 1 and 1 and a half hours to finish, depending on spec. Once this is done, you will receive JSON data with outputs needed to continue setup. You can also retrieve these from the portal or the CLI, more information below. The available parameters are:
 
