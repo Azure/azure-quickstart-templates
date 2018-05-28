@@ -675,10 +675,10 @@ if [ $searchType = "elastic" ]; then
    echo "\$cfg->plugin_search_elasticsearch_host = '$elasticVm1IP';" >> /mahara/html/mahara/htdocs/config.php
         
    if [ $dbServerType = "mysql" ]; then
-       mysql -h $mysqlIP -u $mysqladminlogin -p${mysqladminpass}  ${maharadbname} -e "update config set value = 'elastic' where field = 'searchplugin';"
+       mysql -h $mysqlIP -u $mysqladminlogin -p${mysqladminpass}  ${maharadbname} -e "update config set value = 'elasticsearch' where field = 'searchplugin';"
 
    else
-       psql -h $postgresIP -U $pgadminlogin -d ${maharadbname} -c "update config set value = 'elastic' where field = 'searchplugin';" postgres
+       psql -h $postgresIP -U $pgadminlogin -d ${maharadbname} -c "update config set value = 'elasticsearch' where field = 'searchplugin';" postgres
       rm -f /root/.pgpass
    fi
 fi
