@@ -15,8 +15,10 @@ This template set deploys the following infrastructure:
 - Controller instance running cron and handling syslog for the autoscaled site
 - Load balancer to balance across the autoscaled instances
 - [Azure Database for MySQL](https://azure.microsoft.com/en-us/services/mysql/) or [Azure Database for PostgreSQL](https://azure.microsoft.com/en-us/services/postgresql/) 
-- Three Elasticsearch VMs for search indexing in Mahara (optional)
+- Three Elasticsearch VMs for search indexing in Mahara (optional)*
 - Dual Gluster nodes for high availability access to Mahara files
+
+* Note: You will need to login into Mahara as 'admin' and configure the artefacts you want indexed after the installation has completed.
 
 ![network_diagram](images/stack_diagram.png "Diagram of deployed stack")
 
