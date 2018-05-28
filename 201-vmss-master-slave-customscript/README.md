@@ -2,10 +2,10 @@
 
 This template allows you to deploy a VM Scale Set of Linux VMs and create a new virtual network at the same time. These VMs have a custom script extension for customization and are behind a load balancer with NAT rules for rdp connections. This allows to specify the master node number and data node number, adapt to any master / slave architecture
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vmss-master-slave-customscript/azuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https://github.com/cloudmelon/azure-quickstart-templates/blob/master/201-vmss-master-slave-customscript/azuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vmss-master-slave-customscript/azuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https://github.com/cloudmelon/azure-quickstart-templates/blob/master/201-vmss-master-slave-customscript/azuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
