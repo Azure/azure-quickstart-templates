@@ -671,7 +671,7 @@ EOF
 cd /tmp; sudo -u www-data /usr/bin/php /mahara/html/mahara/htdocs/admin/cli/install.php --adminpassword="$adminpass" --adminemail=admin@"$siteFQDN" --sitename='Mahara Portfolio' || true
 
 if [ $searchType = "elastic" ]; then
-   echo "\$cfg->plugin_search_elasticsearch_indexname = 'mahara\;" >> /mahara/html/mahara/htdocs/config.php
+   echo "\$cfg->plugin_search_elasticsearch_indexname = 'mahara';" >> /mahara/html/mahara/htdocs/config.php
    echo "\$cfg->plugin_search_elasticsearch_host = '$elasticVm1IP';" >> /mahara/html/mahara/htdocs/config.php
         
    if [ $dbServerType = "mysql" ]; then
