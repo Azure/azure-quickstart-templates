@@ -28,9 +28,10 @@
         "Windows Server 2012 Datacenter",
         "Windows Server 2012 R2 Datacenter",
         "Windows Server 2016 Datacenter",
-        "SLES 12",
-        "SLES 12 BYOS",
-        "RHEL 7.2"
+        "SLES",
+        "SLES BYOS",
+        "RHEL",
+        "Oracle Linux"
       ],
       "defaultValue": "Windows Server 2012 R2 Datacenter",
       "metadata": {
@@ -68,6 +69,13 @@
       "minLength": 12,
       "metadata": {
         "description": "Password for the Virtual Machine."
+      }
+    },    
+    "sshKeyData": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Public SSH key for the virtual machines."
       }
     },
     "subnetId": {
@@ -121,7 +129,7 @@
         "Plan": {},
         "UsePlan": false
       },
-      "SLES 12": {
+      "SLES": {
         "sku": "12-SP1",
         "offer": "SLES-SAP",
         "publisher": "SUSE",
@@ -130,7 +138,7 @@
         "Plan": {},
         "UsePlan": false
       },
-      "SLES 12 BYOS": {
+      "SLES BYOS": {
         "sku": "12-SP1",
         "offer": "SLES-SAP-BYOS",
         "publisher": "SUSE",
@@ -139,7 +147,7 @@
         "Plan": {},
         "UsePlan": false
       },
-      "RHEL 7.2": {
+      "RHEL": {
         "sku": "7.2",
         "offer": "RHEL",
         "publisher": "RedHat",
@@ -148,7 +156,7 @@
         "Plan": {},
         "UsePlan": false
       },
-      "Oracle Linux 7.2": {
+      "Oracle Linux": {
         "sku": "7.2",
         "offer": "Oracle-Linux",
         "publisher": "Oracle",
@@ -161,11 +169,11 @@
     "internalOSType": "[variables('images')[parameters('osType')].OSType]",
     "csExtension": {
       "Windows": {
-        "script": "[concat(parameters('_artifactsLocation'), '/shared/noop.ps1', parameters('_artifactsLocationSasToken'))]",
+        "script": "[concat(parameters('_artifactsLocation'), '/scripts/noop.ps1', parameters('_artifactsLocationSasToken'))]",
         "scriptCall": "powershell.exe -ExecutionPolicy bypass -File noop.ps1"
       },
       "Linux": {
-        "script": "[concat(parameters('_artifactsLocation'), '/shared/noop.sh', parameters('_artifactsLocationSasToken'))]",
+        "script": "[concat(parameters('_artifactsLocation'), '/scripts/noop.sh', parameters('_artifactsLocationSasToken'))]",
         "scriptCall": "sh noop.sh"
       }
     },
@@ -436,6 +444,41 @@
     "avSetNameXSCS": "[concat(variables('sidlower'), '-avset-xscs')]",
     "nestedDeploymentNameNSG": "[concat(variables('nestedDeploymentNameXSCS'), 'nsg')]",
     "nsgNameXSCS": "[concat(variables('sidlower'), '-nsg')]",
+    "osSecurityRules": {
+      "Windows": [
+        {
+          "name": "RDP",
+          "properties": {
+            "description": "Allow RDP Subnet",
+            "protocol": "Tcp",
+            "sourcePortRange": "*",
+            "destinationPortRange": "3389",
+            "sourceAddressPrefix": "*",
+            "destinationAddressPrefix": "*",
+            "access": "Allow",
+            "priority": 100,
+            "direction": "Inbound"
+          }
+        }
+      ],
+      "Linux": [
+        {
+          "name": "SSH",
+          "properties": {
+            "description": "Allow SSH Subnet",
+            "protocol": "Tcp",
+            "sourcePortRange": "*",
+            "destinationPortRange": "22",
+            "sourceAddressPrefix": "*",
+            "destinationAddressPrefix": "*",
+            "access": "Allow",
+            "priority": 100,
+            "direction": "Inbound"
+          }
+        }
+      ]
+    },
+    "selectedSecurityRules": "[variables('osSecurityRules')[variables('internalOSType')]]",
     "loadBalancerNameXSCS": "[concat(variables('sidlower'), '-lb-xscs')]",
     "vmNameXSCS": "[concat(variables('vmName'), '-xscs')]",
     "nicNameXSCS": "[concat(variables('sidlower'), '-nic-xscs')]",
@@ -443,57 +486,41 @@
   },
   "resources": [
     {
-      "apiVersion": "2017-05-10",
-      "name": "[variables('nestedDeploymentNameNSG')]",
-      "type": "Microsoft.Resources/deployments",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[concat(variables('nsgNameXSCS'))]",
+      "apiVersion": "2018-04-01",
+      "location": "[resourceGroup().location]",
       "condition": "[equals(length(parameters('subnetId')), 0)]",
       "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), '/shared/newnsg.json', parameters('_artifactsLocationSasToken'))]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "nsgName": {
-            "value": "[variables('nsgNameXSCS')]"
-          },
-          "osType": {
-            "value": "[variables('internalOSType')]"
-          }
-        }
+        "securityRules": "[variables('selectedSecurityRules')]"
       }
-    },
+    },    
     {
-      "apiVersion": "2017-05-10",
-      "name": "[variables('nestedDeploymentNameVnet')]",
-      "type": "Microsoft.Resources/deployments",
-      "condition": "[equals(length(parameters('subnetId')), 0)]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('vnetName')]",
+      "apiVersion": "2018-04-01",
+      "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameNSG'))]"
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('nsgNameXSCS'))]"
       ],
+      "condition": "[equals(length(parameters('subnetId')), 0)]",
       "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), '/shared/newvnetnsg.json', parameters('_artifactsLocationSasToken'))]",
-          "contentVersion": "1.0.0.0"
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/16"
+          ]
         },
-        "parameters": {
-          "vnetName": {
-            "value": "[variables('vnetName')]"
-          },
-          "addressPrefix": {
-            "value": "10.0.0.0/16"
-          },
-          "subnetName": {
-            "value": "[variables('subnetName')]"
-          },
-          "subnetPrefix": {
-            "value": "10.0.0.0/24"
-          },
-          "nsgName": {
-            "value": "[variables('nsgNameXSCS')]"
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "10.0.0.0/24",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgNameXSCS'))]"
+              }
+            }
           }
-        }
+        ]
       }
     },
     {
@@ -510,41 +537,34 @@
       }
     },
     {
-      "apiVersion": "2017-05-10",
-      "name": "[concat(variables('nestedDeploymentNamePIP'), '-', copyIndex())]",
-      "type": "Microsoft.Resources/deployments",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(variables('publicIpNameXSCS'), '-', copyIndex())]",
+      "apiVersion": "2018-04-01",
+      "condition": "[equals(length(parameters('subnetId')), 0)]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
+      ],
+      "location": "[resourceGroup().location]",
       "copy": {
-        "name": "pipLoop",
+        "name": "dbpipLoop",
         "count": "[variables('xscsvmCount')]"
       },
-      "condition": "[equals(length(parameters('subnetId')), 0)]",
       "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), '/shared/newpip.json', parameters('_artifactsLocationSasToken'))]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "publicIpName": {
-            "value": "[concat(variables('publicIpNameXSCS'), '-', copyIndex())]"
-          },
-          "publicIPAddressType": {
-            "value": "Dynamic"
-          }
-        }
+        "publicIPAllocationMethod": "Dynamic"
       }
     },
     {
       "apiVersion": "2017-05-10",
       "name": "[variables('nestedDeploymentNameLBXSCS')]",
       "type": "Microsoft.Resources/deployments",
+      "condition": "[greater(variables('xscsvmCount'), 1)]",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameVnet'))]"
+        "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
       ],
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), '/shared/loadbalancer.json', parameters('_artifactsLocationSasToken'))]",
+          "uri": "[concat(parameters('_artifactsLocation'), '/nestedtemplates/loadbalancer.json', parameters('_artifactsLocationSasToken'))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -579,36 +599,6 @@
       }
     },
     {
-      "apiVersion": "2017-05-10",
-      "name": "[concat(variables('nestedDeploymentNameNICXSCS'), '-', copyIndex())]",
-      "type": "Microsoft.Resources/deployments",
-      "copy": {
-        "name": "nicConfigXSCSLoop",
-        "count": "[variables('xscsvmCount')]"
-      },
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), '/shared/nic-config.json', parameters('_artifactsLocationSasToken'))]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "vnetName": {
-            "value": "[variables('vnetName')]"
-          },
-          "subnetName": {
-            "value": "[variables('subnetName')]"
-          },
-          "publicIpName": {
-            "value": "[concat(variables('publicIpNameXSCS'), '-', copyIndex())]"
-          },
-          "subnetId": {
-            "value": "[parameters('subnetId')]"
-          }
-        }
-      }
-    },
-    {
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('nicNameXSCS'), '-', copyIndex())]",
       "apiVersion": "2017-06-01",
@@ -618,8 +608,7 @@
       },
       "dependsOn": [
         "pipLoop",
-        "nicConfigXSCSLoop",
-        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameVnet'))]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
         "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameLBXSCS'))]"
       ],
       "location": "[resourceGroup().location]",
@@ -629,90 +618,37 @@
             "name": "ipconfig1",
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
-              "publicIPAddress": "[reference(concat(variables('nestedDeploymentNameNICXSCS'), '-', copyIndex())).outputs.selectedConfiguration.value.publicIPAddress]",
-              "subnet": "[reference(concat(variables('nestedDeploymentNameNICXSCS'), '-', copyIndex())).outputs.selectedConfiguration.value.subnet]",
+              "publicIPAddress": "[if(equals(length(parameters('subnetId')), 0), json(concat('{\"id\": \"', resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIpNameDB'), '-', copyIndex())) ,'\"}')), json('null'))]",
+              "subnet": {
+                "id": "[variables('selectedSubnetId')]"
+              },
               "loadBalancerBackendAddressPools": "[reference(variables('nestedDeploymentNameLBXSCS')).outputs.nicBackAddressPools.value]"
             }
           }
         ]
       }
     },
+    
     {
-      "apiVersion": "2017-05-10",
-      "name": "[concat(variables('nestedDeploymentNameProf'), '-xscs-', copyIndex())]",
+      "apiVersion": "2018-02-01",
+      "name": "[concat(deployment().name, '-os-', copyIndex())]",
       "type": "Microsoft.Resources/deployments",
       "copy": {
-        "name": "osDiskPartsXSCSLoop",
-        "count": "[variables('xscsvmCount')]"
+        "name": "osprofloop",
+        "count": "[variables('vmNameXSCS')]"
       },
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), '/shared/os-disk-parts-md.json', parameters('_artifactsLocationSasToken'))]",
+          "uri": "[concat(parameters('_artifactsLocation'), '/nestedtemplates/osprofile.json', parameters('_artifactsLocationSasToken'))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "imageSku": {
-            "value": "[variables('images')[parameters('osType')].sku]"
-          },
-          "imagePublisher": {
-            "value": "[variables('images')[parameters('osType')].publisher]"
-          },
-          "imageOffer": {
-            "value": "[variables('images')[parameters('osType')].offer]"
-          },
-          "imageVersion": {
-            "value": "[variables('images')[parameters('osType')].version]"
-          },
-          "osDiskType": {
-            "value": "[variables('osDiskType')]"
-          },
           "osType": {
             "value": "[variables('internalOSType')]"
           },
-          "vmName": {
+          "computerName": {
             "value": "[concat(variables('vmNameXSCS'), '-', copyIndex())]"
-          },
-          "storageType": {
-            "value": "Premium_LRS"
-          }
-        }
-      }
-    },
-    {
-      "apiVersion": "2017-05-10",
-      "name": "[concat(variables('nestedDeploymentNameXSCS'), '-', copyIndex())]",
-      "type": "Microsoft.Resources/deployments",
-      "copy": {
-        "name": "vmXSCSLoop",
-        "count": "[variables('xscsvmCount')]"
-      },
-      "dependsOn": [
-        "nicXSCSLoop",
-        "[concat('Microsoft.Compute/availabilitySets/', variables('avSetNameXSCS'))]",
-        "osDiskPartsXSCSLoop"
-      ],
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), '/shared/server-md.json', parameters('_artifactsLocationSasToken'))]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "imageReference": {
-            "value": "[reference(concat(variables('nestedDeploymentNameProf'), '-xscs-', copyIndex())).outputs.imageReference.value]"
-          },
-          "osDisk": {
-            "value": "[reference(concat(variables('nestedDeploymentNameProf'), '-xscs-', copyIndex())).outputs.osDisk.value]"
-          },
-          "osDiskType": {
-            "value": "[variables('osDiskType')]"
-          },
-          "vmName": {
-            "value": "[concat(variables('vmNameXSCS'), '-', copyIndex())]"
-          },
-          "vmSize": {
-            "value": "[variables('xscsvmSize')]"
           },
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
@@ -720,44 +656,69 @@
           "adminPassword": {
             "value": "[parameters('adminPassword')]"
           },
-          "csExtensionScript": {
-            "value": "[variables('csExtensionScript')]"
-          },
-          "csExtensionscriptCall": {
-            "value": "[variables('csExtensionscriptCall')]"
-          },
-          "csExtensionscriptArgs": {
-            "value": ""
-          },
-          "avSetObj": {
-            "value": {
-              "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('avSetNameXSCS'))]"
-            }
-          },
-          "useAVSet": {
-            "value": true
-          },
-          "nicName": {
-            "value": "[concat(variables('nicNameXSCS'), '-', copyIndex())]"
-          },
-          "dataDisksObj": {
-            "value": {
-              "copy": [
-                {
-                  "name": "dataDisks",
-                  "count": "[length(variables('xscsdataDiskSizes'))]",
-                  "input": {
-                    "lun": "[copyIndex('dataDisks')]",
-                    "createOption": "Empty",
-                    "diskSizeGB": "[variables('xscsdataDiskSizes')[copyIndex('dataDisks')].size]"
-                  }
-                }
-              ]
-            }
-          },
-          "osType": {
-            "value": "[variables('internalOSType')]"
+          "sshKeyData": {
+            "value": "[parameters('sshKeyData')]"
           }
+        }
+      }
+    },
+
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(variables('vmNameXSCS'), '-', copyIndex())]",
+      "copy": {
+        "name": "xscsVMLoop",
+        "count": "[variables('vmNameXSCS')]"
+      },
+      "dependsOn": [
+        "osprofloop",
+        "nicXSCSLoop",
+        "[concat('Microsoft.Compute/availabilitySets/', variables('avSetNameXSCS'))]"
+      ],
+      "apiVersion": "2017-12-01",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('avSetNameXSCS'))]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[variables('xscsvmSize')]"
+        },
+        "osProfile": "[reference(concat(deployment().name, '-os-', copyIndex())).outputs.profile.value]",
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('images')[parameters('osType')].publisher]",
+            "offer": "[variables('images')[parameters('osType')].offer]",
+            "sku": "[variables('images')[parameters('osType')].sku]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(variables('vmNameXSCS'), '-', copyIndex(), '-osdisk')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage",
+            "diskSizeGB": "[variables('images')[parameters('osType')].osDiskSize]",
+            "managedDisk": {
+              "storageAccountType": "Premium_LRS"
+            }
+          },
+          "copy": [
+            {
+              "name": "dataDisks",
+              "count": "[length(variables('xscsdataDiskSizes'))]",
+              "input": {
+                "lun": "[copyIndex('dataDisks')]",
+                "createOption": "Empty",
+                "diskSizeGB": "[variables('xscsdataDiskSizes')[copyIndex('dataDisks')].size]"
+              }
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicNameXSCS'), '-', copyIndex()))]"
+            }
+          ]
         }
       }
     }
