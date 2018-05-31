@@ -6,64 +6,66 @@ admin_email=$4
 admin_pass=$5
 admin_acct_name=$6
 lms_stat_coll=$7
-admin_username=$8
-echo "==========sudo update============"
+smtp_type=$8
+smtp_port=$9
+smtp_pass=${10}
+echo "sudo update"
 sudo apt-get --assume-yes update
-echo "======Postgres========"
+echo "Postgres"
 sudo apt-get --assume-yes install postgresql-9.5
 sudo -u postgres createdb canvas_production --owner=postgres
-echo "======Changing the postgres user password=========="
+echo "Changing the postgres user password"
 sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD '$postpass';"
-echo "====git install==========="
+echo "git install"
 sudo apt-get install git-core
-echo "======clone canvas======="
+echo "clone canvas"
 git clone https://github.com/instructure/canvas-lms.git canvas
 cd canvas
 git checkout stable
 git branch --set-upstream-to origin/stable
 cd ../
-echo "=======making canvas dir in var folder========"
+echo "making canvas dir in var folder"
 sudo mkdir -p /var/canvas
 sudo chown -R $USER /var/canvas
 cd canvas
-echo "=====copying files======"
+echo "copying files"
 cp -av . /var/canvas
 cd /var/canvas
-echo "======External dependencies====="
+echo "External dependencies"
 sudo apt-get install software-properties-common
 sudo add-apt-repository -y ppa:brightbox/ruby-ng
 sudo apt-get --assume-yes update
-echo "=======Ruby installation=========="
+echo "Ruby installation"
 sudo apt-get --assume-yes install ruby2.4 ruby2.4-dev zlib1g-dev libxml2-dev \
                        libsqlite3-dev postgresql libpq-dev \
                        libxmlsec1-dev curl make g++
-echo "======Node JS========="
+echo "Node JS"
 curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
 sudo apt-get --assume-yes install nodejs
-echo "=======postgres create======="
+echo "postgres create"
 sudo -u postgres createuser $USER
 sudo -u postgres psql -c "alter user $USER with superuser" postgres
-echo "====Bundler and Canvas dependencies======"
+echo "Bundler and Canvas dependencies"
 sudo gem install bundler --version 1.13.6
 bundle install --path vendor/bundle
-echo "=======Yarn Installation====="
+echo "Yarn Installation"
 curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
 echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
-sudo apt-get update && sudo apt-get install yarn 
+sudo apt-get update && sudo apt-get install yarn=1.6.0-1 
 sudo apt-get install python
-echo "=====changing version to the latest in package====="
+echo "changing version to the latest in package"
 sed -e "s/1.5.1/1.6.0/" package.json > pa_test.json
 mv pa_test.json package.json
-echo "====Yarn Installation===="
-yarn install 
+echo "Yarn Installation"
+yarn install
 echo "Copying the config files for changing"
 for config in amazon_s3 database \
   delayed_jobs domain file_store outgoing_mail security external_migration; \
   do cp config/$config.yml.example config/$config.yml; done
-echo "=========Creating a dynamic setting file======="
+echo "Creating a dynamic setting file"
 cp config/dynamic_settings.yml.example config/dynamic_settings.yml
 #vim config/dynamic_settings.yml #Comment this line as we cant edit it.
-echo "======database file======"
+echo "database file"
 cp config/database.yml.example config/database.yml
 sed -e "s/database: canvas_development/database: canvas_production/" config/database.yml > config/database_new.yml
 mv config/database_new.yml config/database.yml
@@ -71,17 +73,27 @@ sed -e "s/username: canvas/username: postgres/" config/database.yml > config/dat
 mv config/database_new.yml config/database.yml
 sed -e "s/password: your_password/password: $postpass/" config/database.yml > config/database_new.yml
 mv config/database_new.yml config/database.yml
-echo "========Outgoing email-tobe done===="
+echo "Outgoing email"
 cp config/outgoing_mail.yml.example config/outgoing_mail.yml
-echo "=====domain changes=========="
+sed -e "s/smtp.example.com/$smtp_type/" config/outgoing_mail.yml > config/outgoing_mail_new.yml
+mv config/outgoing_mail_new.yml config/outgoing_mail.yml
+sed -e "s/example.com/$hname/" config/outgoing_mail.yml > config/outgoing_mail_new.yml
+mv config/outgoing_mail_new.yml config/outgoing_mail.yml
+sed -e 's/"user"/"'"$smtp_email"'"/' config/outgoing_mail.yml > config/outgoing_mail_new.yml
+mv config/outgoing_mail_new.yml config/outgoing_mail.yml
+sed -e "s/25/$smtp_port/" config/outgoing_mail.yml > config/outgoing_mail_new.yml
+mv config/outgoing_mail_new.yml config/outgoing_mail.yml
+sed -e 's/"password"/"'"$smtp_pass"'"/' config/outgoing_mail.yml > config/outgoing_mail_new.yml
+mv config/outgoing_mail_new.yml config/outgoing_mail.yml
+echo "domain changes"
 cp config/domain.yml.example config/domain.yml 
 sed -e "s/canvas.example.com/$hname/" config/domain.yml > config/domain_new.yml
 mv config/domain_new.yml config/domain.yml
-echo "========Security Changes=========="
+echo "Security Changes"
 cp config/security.yml.example config/security.yml
 sed -e "s/encryption_key: 12345/encryption_key: facdd3a131ddd8988b14f6e4e01039c93cfa0160/" config/security.yml > config/security_new.yml
 mv config/security_new.yml config/security.yml
-echo "====Public Assests======"
+echo "Public Assests"
 mkdir -p log tmp/pids public/assets app/stylesheets/brandable_css_brands
 touch app/stylesheets/_brandable_variables_defaults_autogenerated.scss
 touch Gemfile.lock
@@ -89,13 +101,13 @@ touch log/production.log
 sudo chown -R $USER config/environment.rb log tmp public/assets \
                               app/stylesheets/_brandable_variables_defaults_autogenerated.scss \
                               app/stylesheets/brandable_css_brands Gemfile.lock config.ru
-echo "====Yarn Installation====="
+echo "Yarn Installation"
 yarn install
 cd /var/canvas
-echo "=======Complie Assests======"
+echo "Complie Assests"
 sudo RAILS_ENV=production bundle exec rake canvas:compile_assets
 sudo chown -R $USER public/dist/brandable_css
-echo "======loading initial database====="
+echo "loading initial database"
 cd /var/canvas
 RAILS_ENV=production bundle exec rake db:initial_setup
 export CANVAS_LMS_ADMIN_EMAIL="$admin_email"
@@ -105,13 +117,13 @@ export CANVAS_LMS_STATS_COLLECTION="$lms_stat_coll"
 RAILS_ENV=production bundle exec rake db:initial_setup 
 sudo chown $USER config/*.yml
 sudo chmod 400 config/*.yml
-echo "=====Install Passenger====="
+echo "Install Passenger"
 sudo apt-get --assume-yes install passenger libapache2-mod-passenger apache2 
 sudo a2enmod rewrite
 sudo a2enmod passenger
 sudo a2enmod ssl
 sudo service apache2 restart
-echo "=====CANVAS CONF FILE==========="
+echo "CANVAS CONF FILE"
 cat > canvas.conf << EOF
 <VirtualHost *:80>
   ServerName canvas.example.com
@@ -162,15 +174,15 @@ sed -e "s/youremail@example.com/$smtp_email/" canvas.conf > canvas_new.conf
 mv canvas_new.conf canvas.conf
 sudo mv canvas.conf /etc/apache2/sites-available/ 
 sudo a2ensite canvas
-echo "========APACHE RESTART======"
+echo "APACHE RESTART"
 sudo service apache2 restart
 cd /var/canvas
-echo "====INSTALL REDIS SERVER====="
+echo "INSTALL REDIS SERVER"
 sudo apt-add-repository -y ppa:chris-lea/redis-server
 sudo apt-get --assume-yes update
 sudo apt-get --assume-yes install redis-server
 sudo systemctl start redis
-echo "====CACHE STORE======="
+echo "CACHE STORE"
 cd /var/canvas/
 cp config/cache_store.yml.example config/cache_store.yml
 sed -e '/development/ s/^#*/#/' -i config/cache_store.yml
@@ -184,7 +196,7 @@ production:
 EOF
 sudo chown $USER config/cache_store.yml
 sudo chmod 400 config/cache_store.yml
-echo "=====REDIS====="
+echo "REDIS"
 cd /var/canvas/
 cp config/redis.yml.example config/redis.yml #redis localhost
 cat >> config/redis.yml << EOF
@@ -194,12 +206,12 @@ production:
 EOF
 sudo chown $USER config/redis.yml
 sudo chmod 400 config/redis.yml
-echo "======Canvas demon jobs======"
+echo "Canvas demon jobs"
 sudo ln -s /var/canvas/script/canvas_init /etc/init.d/canvas_init
-echo "==========Canvas init start====="
+echo "Canvas init start"
 sudo update-rc.d canvas_init defaults
 sudo /etc/init.d/canvas_init start
-echo "===Restart apache2======"
+echo "Restart apache2"
 sudo /etc/init.d/apache2 restart
-echo "====START RAILS SERVER===="
+echo "START RAILS SERVER"
 bundle exec rails server &
