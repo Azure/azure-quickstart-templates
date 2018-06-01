@@ -33,13 +33,25 @@
         "description": "Size of the VM"
       }
     },
-    "existingVirtualNetworkName": {
+    "vNetNewOrExisting": {
       "type": "string",
+      "defaultValue": "new",
+      "allowedValues": [
+        "new",
+        "existing"
+      ],
+      "metadata": {
+        "description": "Specify whether to create a new or existing virtual network for the VM."
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "newVnet",
       "metadata": {
         "description": "Name of the existing VNET"
       }
     },
-    "existingVirtualNetworkResourceGroup": {
+    "virtualNetworkResourceGroup": {
       "type": "string",
       "defaultValue": "[resourceGroup().name]",
       "metadata": {
@@ -48,6 +60,7 @@
     },
     "subnetName": {
       "type": "string",
+      "defaultValue": "subnet-1",
       "metadata": {
         "description": "Name of the subnet in the virtual network you want to use"
       }
@@ -69,13 +82,35 @@
   },
   "variables": {
     "diagStorageAccountName": "[concat(uniquestring(resourceGroup().id), 'specvm')]",
-    "subnetRef": "[resourceId(parameters('existingVirtualNetworkResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', parameters('existingVirtualNetworkName'),  parameters('subnetName'))]",
+    "subnetRef": "[resourceId(parameters('virtualNetworkResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'),  parameters('subnetName'))]",
     "nicName": "nic",
     "publicIPAddressName": "publicIp",
-    "diskName": "specialized-image"
+    "diskName": "[concat(parameters('vmName'), '-disk')]"
   },
   "resources": [
     {
+      "condition": "[equals(parameters('vNetNewOrExisting'), 'new')]",
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[parameters('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/16"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('subnetName')]",
+            "properties": {
+              "addressPrefix": "10.0.0.0/24"
+            }
+          }
+        ]
+      }
+    },
+{
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('diagStorageAccountName')]",
       "apiVersion": "2018-02-01",
