@@ -1,5 +1,5 @@
-$domain = "ramshibboleth"
-$location = "eastus"
+$domain = $args[0]
+$location = $args[1]
 
 # Utility methods
 Add-Type -AssemblyName System.IO.Compression.FileSystem
