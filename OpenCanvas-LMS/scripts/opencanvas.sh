@@ -6,9 +6,9 @@ admin_email=$4
 admin_pass=$5
 admin_acct_name=$6
 lms_stat_coll=$7
-smtp_type=$8
-smtp_port=$9
-smtp_pass=${10}
+#smtp_type=$8
+#smtp_port=$9
+#smtp_pass=${10}
 echo "sudo update"
 sudo apt-get --assume-yes update
 echo "Postgres"
@@ -75,16 +75,6 @@ sed -e "s/password: your_password/password: $postpass/" config/database.yml > co
 mv config/database_new.yml config/database.yml
 echo "Outgoing email"
 cp config/outgoing_mail.yml.example config/outgoing_mail.yml
-sed -e "s/smtp.example.com/$smtp_type/" config/outgoing_mail.yml > config/outgoing_mail_new.yml
-mv config/outgoing_mail_new.yml config/outgoing_mail.yml
-sed -e "s/example.com/$hname/" config/outgoing_mail.yml > config/outgoing_mail_new.yml
-mv config/outgoing_mail_new.yml config/outgoing_mail.yml
-sed -e 's/"user"/"'"$smtp_email"'"/' config/outgoing_mail.yml > config/outgoing_mail_new.yml
-mv config/outgoing_mail_new.yml config/outgoing_mail.yml
-sed -e "s/25/$smtp_port/" config/outgoing_mail.yml > config/outgoing_mail_new.yml
-mv config/outgoing_mail_new.yml config/outgoing_mail.yml
-sed -e 's/"password"/"'"$smtp_pass"'"/' config/outgoing_mail.yml > config/outgoing_mail_new.yml
-mv config/outgoing_mail_new.yml config/outgoing_mail.yml
 echo "domain changes"
 cp config/domain.yml.example config/domain.yml 
 sed -e "s/canvas.example.com/$hname/" config/domain.yml > config/domain_new.yml
