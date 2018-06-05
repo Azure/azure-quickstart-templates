@@ -32,6 +32,7 @@ for eg: ssh username@domainname.
 * loc: /var/canvas/config/outgoing_mail.yml
 
 ## Development:
+<pre><code>
   - address: "smtp.example.com"
   - port: "25"
   - user_name: "user"
@@ -39,9 +40,11 @@ for eg: ssh username@domainname.
   - authentication: "plain" # plain, login, or cram_md5
   - domain: "example.com"
   - outgoing_address: "canvas@example.com"
-  - default_name: "Instructure Canvas"
+  - default_name: "Instructure Canvas" 
+  </code></pre>
   
 ## Production:
+  <pre><code>
   - address: "smtp.example.com"
   - port: "25"
   - user_name: "user"
@@ -50,6 +53,7 @@ for eg: ssh username@domainname.
   - domain: "example.com"
   - outgoing_address: "canvas@example.com"
   - default_name: "Instructure Canvas"
+  </code></pre>
 
 ### How to access the OpenCanvas Site
 * You can access the site using the domain/host name you provide as the paramater while deploying the template. 
