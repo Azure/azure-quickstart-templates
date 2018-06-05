@@ -22,6 +22,35 @@ You can deploy the template with Azure Portal, or PowerShell, or Azure cross pla
 * The domainname have to be provided while deploying
 * The email to use for mail services(smtp services)
 
+### Configure smtp settings in outgoing_mail.yml file
+
+We need to configure our smtp settings in outgoing_mail.yml file
+
+* ssh to the canvas server through GIT bash with the hostname  and credentials that are provided while deployment.
+for eg: ssh username@domainname.
+* Edit the outgoing_mail.yml file in config folder with your smtp server settings.
+* loc: /var/canvas/config/outgoing_mail.yml
+
+development:
+  address: "smtp.example.com"
+  port: "25"
+  user_name: "user"
+  password: "password"
+  authentication: "plain" # plain, login, or cram_md5
+  domain: "example.com"
+  outgoing_address: "canvas@example.com"
+  default_name: "Instructure Canvas"
+  
+production:
+  address: "smtp.example.com"
+  port: "25"
+  user_name: "user"
+  password: "password"
+  authentication: "plain" # plain, login, or cram_md5
+  domain: "example.com"
+  outgoing_address: "canvas@example.com"
+  default_name: "Instructure Canvas"
+
 ### How to access the OpenCanvas Site
 * You can access the site using the domain/host name you provide as the paramater while deploying the template. 
 
