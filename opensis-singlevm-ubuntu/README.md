@@ -5,4 +5,4 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template deploys OpenSIS Community Edition as a LAMP application on Ubuntu. It creates a single Ubuntu VM, does a silent install of MySQL, Apache and PHP on it, and then deploys OpenSIS Community Edition.  After the deployment is successful, you can go to /opensis-ce to start congfiguring OpenSIS.
+This template deploys OpenSIS Community Edition as a LAMP application on Ubuntu. It creates a single Ubuntu VM, does a silent install of MySQL, Apache and PHP on it, and then deploys OpenSIS Community Edition.  After the deployment is successful, you can go to /opensis to start congfiguring OpenSIS.

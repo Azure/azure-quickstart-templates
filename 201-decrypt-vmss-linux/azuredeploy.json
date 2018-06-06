@@ -1,0 +1,63 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmssName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of VMSS to be decrypted"
+      },
+      "maxLength": 61
+    },	
+    "volumeType": {
+      "type": "string",
+      "defaultValue": "Data",
+      "metadata": {
+        "description": "Type of the volume to perform encryption operation (Linux VMSS Preview only supports Data)"
+      }
+    },
+    "forceUpdateTag": {
+      "type": "string",
+      "defaultValue": "1.0",
+      "metadata": {
+        "description": "Pass in an unique value like a GUID everytime the operation needs to be force run"
+      }
+    }	
+  },
+  "variables": {
+    "computeApiVersion": "2017-03-30",
+    "extensionName": "AzureDiskEncryptionForLinux",
+    "extensionVersion": "1.1",
+    "encryptionOperation": "DisableEncryption"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/virtualMachineScaleSets",
+      "name": "[parameters('vmssName')]",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "[variables('computeApiVersion')]",
+      "properties": {
+        "virtualMachineProfile": {
+          "extensionProfile": {
+            "extensions": [
+              {
+                "name": "[variables('extensionName')]",
+                "properties": {
+                  "publisher": "Microsoft.Azure.Security",
+				  "type": "[variables('extensionName')]",
+                  "typeHandlerVersion": "[variables('extensionVersion')]",
+                  "autoUpgradeMinorVersion": true,
+                  "forceUpdateTag": "[parameters('forceUpdateTag')]",
+                  "settings": {
+                    "VolumeType": "[parameters('volumeType')]",
+                    "EncryptionOperation": "[variables('encryptionOperation')]"
+                  }
+                }
+              }
+            ]
+          }		  
+        }
+      }
+    }
+  ]
+}

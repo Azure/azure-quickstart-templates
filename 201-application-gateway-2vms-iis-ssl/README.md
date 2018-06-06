@@ -56,7 +56,7 @@ In order to use the certificates in the template, they need to be base-64 encode
 ```
 [System.Convert]::ToBase64String([System.IO.File]::ReadAllBytes("C:\frontend.pfx")) > "C:\frontend.txt"
 [System.Convert]::ToBase64String([System.IO.File]::ReadAllBytes("C:\backend.pfx")) > "C:\backend.txt"
-[System.Convert]::ToBase64String([System.IO.File]::ReadAllBytes("C:\backend-public.pfx")) > "C:\backend-public.txt"
+[System.Convert]::ToBase64String([System.IO.File]::ReadAllBytes("C:\backend-public.cer")) > "C:\backend-public.txt"
 ```
 
 ## Deployment steps

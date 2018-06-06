@@ -17,7 +17,7 @@ Here are the steps you can follow to create a testing setup including Shibboleth
 
 Create a deployment of Shibboleth IDP using this template and SSH into the VM deployed.
 
-## Update ldap.properties inside /opt/conf directory as per the LDAP configuration. 
+## Update ldap.properties inside /opt/shibboleth-idp/conf directory as per the LDAP configuration. 
     Following are the settings for Online LDAP Test Server installation hosted at http://www.forumsys.com/tutorials/integration-how-to/ldap/online-ldap-test-server/
 	- set idp.authn.LDAP.authenticator = bindSearchAuthenticator
 	- set idp.authn.LDAP.ldapURL = ldap://ldap.forumsys.com:389
@@ -32,7 +32,7 @@ Create a deployment of Shibboleth IDP using this template and SSH into the VM de
 ## Create metadata xml file for service provider. 
     Note: http://testshib.org is used as Service provider and Shibboleth is used as IDP.
 	- Download metadata file from - https://www.testshib.org/metadata/testshib-providers.xml inside /opt/conf directory
-	- Configure the metadata provider inside /opt/conf/metadata-providers.xml file as follows
+	- Configure the metadata provider inside /opt/shibboleth-idp/conf/metadata-providers.xml file as follows
 	<!-- TestShib -->
 	<MetadataProvider id="HTTPMetadataTESTSHIB"
                   xsi:type="FileBackedHTTPMetadataProvider"
@@ -42,7 +42,7 @@ Create a deployment of Shibboleth IDP using this template and SSH into the VM de
 		
 ## Set LDAP attribute resolver
 	- Set LDAP Attribute Resolver as default attribute resolver. The default configuration for LDAP attribute resolver is present inside attribute-resolver-ldap.xml  We just have to replace existing attribute-resolver.xml with attribute-resolver-ldap.xml
-	- These files are present in /opt/conf/ directory
+	- These files are present in /opt/shibboleth-idp/conf/ directory
 	- Following commands rename attribute-resolver-ldap.xml to attribute-resolver.xml
 
 	sudo mv attribute-resolver.xml attribute-resolver-orig.xml
@@ -73,7 +73,7 @@ Create a deployment of Shibboleth IDP using this template and SSH into the VM de
 		</resolver:DataConnector>
 	
 ## Configure attribute filter
-	- After defining attributes you still have to specify which ones you release to service providers. This can be configured using attribute-filter.xml inside /opt/conf directory
+	- After defining attributes you still have to specify which ones you release to service providers. This can be configured using attribute-filter.xml inside /opt/shibboleth-idp/conf directory
 	- We set it so that basic attribute like eduPersonPrincipalName, uid and email are sent to all service providers.
 	- <AttributeFilterPolicy id="example1">
         <PolicyRequirementRule xsi:type="ANY" />
@@ -88,4 +88,4 @@ Create a deployment of Shibboleth IDP using this template and SSH into the VM de
 	
 ## Test your installation
     - Follow the steps on http://testshib.org to test the shibboleth installation as IDP
-    - Log files for Shibboleth reside inside /opt/logs directory. The log files can be helpful for debugging any issues that show up during the login process.
+    - Log files for Shibboleth reside inside /opt/shibboleth-idp/logs directory. The log files can be helpful for debugging any issues that show up during the login process.
