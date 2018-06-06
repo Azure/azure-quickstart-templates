@@ -7,9 +7,7 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template allows you to deploy jsreport, a neat and elegant library / service for drawing PDF Reports using HTML and handlebars Templates. You can pick from a variety of recipes aka Algorithms to generate PDF’s using engines like PhantomPDF, Electron,Chromium,WkhtmltoPDF etc.., This Template will create a Linux App Service + StorageAccount, Pull the Jsreports 2.1.0-full version build from Docker Registry and Configure Authentication and Embed All the settings required to connect to a Storage Account in order to Persist the Templates.
-
-The default credentials to log into jsreport service will be 'username:admin,password:password'
+This template allows you to deploy jsreport, an elegant service for drawing PDF Reports using HTML and handlebars Templates. You can pick from a variety of recipes aka algorithms to generate PDF using engines like PhantomPDF, Electron,Chromium,WkhtmltoPDF etc. This Template will create a Linux App Service, StorageAccount and shall pull jsreport 2.1.0-full version from Docker Registry, configure authentication and embed all the settings required to connect to a Storage Account in order to Persist the templates.
 
 You can read my blog to know more about the usage of this template [Here](https://medium.com/@rajkumarb/continuous-integration-for-js-reports-on-azure-appservice-part-1-2a81aa55e06) 
 
