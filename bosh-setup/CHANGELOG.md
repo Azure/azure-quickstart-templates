@@ -1,3 +1,68 @@
+# v3.9.0 (2018-05-26)
+
+- Bump cf-deployment to [v1.36.0](https://github.com/cloudfoundry/cf-deployment/tree/v1.36.0)
+- Update the signing key for installing azure-cli
+- Use compiled packages for Azure China Cloud
+
+# v3.8.0 (2018-05-14)
+
+- Bump cf-deployment to [v1.31.0](https://github.com/cloudfoundry/cf-deployment/tree/v1.31.0)
+- Redirect the logs to both `~/install.log` and standard output.
+
+# v3.7.0 (2018-05-01)
+
+- Upgrade Azure CPI version to v35.2.0. Please see new features in [bosh-azure-cpi-release v35.2.0](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v35.2.0)
+- Bump cf-deployment to [v1.27.0](https://github.com/cloudfoundry/cf-deployment/tree/v1.27.0)
+- Add `AzureChinaCloudAD` as AzureStack authentication
+- Use Azure CLI to prepare the storage account. Now the template doesn't depend on any python packages.
+
+# v3.6.0 (2018-04-02)
+
+- Bump [bosh-deployment](https://github.com/cloudfoundry/bosh-deployment/tree/b848368815a2c81c59c8710850e7b56bc4649152)
+- Bump cf-deployment to [v1.23.0](https://github.com/cloudfoundry/cf-deployment/tree/v1.23.0)
+  - Bump stemcell to `3541.10`
+- Enable `keep_unreachable_vms` and `keep_failed_vms` by default
+
+# v3.5.0 (2018-03-05)
+
+- Upgrade Azure CPI version to v35.1.0. Please see new features in [bosh-azure-cpi-release v35.1.0](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v35.1.0)
+- Bump [bosh-deployment](https://github.com/cloudfoundry/bosh-deployment/tree/5360bcf33409007c85e8b46d4ad0ab0535e3bb5b)
+  - Bump director's additional disk
+- Bump cf-deployment to [v1.16.0](https://github.com/cloudfoundry/cf-deployment/tree/v1.16.0)
+  - Bump stemcell to `3541.5`
+  - Bump bosh-cli to `2.0.48`
+  - Bump cf-cli to `6.34.1`
+- Use compiled releases for cf-deployment
+
+# v3.4.0 (2018-01-30)
+
+- Bump cf-deployment to [`v1.9.0`](https://github.com/cloudfoundry/cf-deployment/tree/v1.9.0).
+- Bump bosh release to `264.7.0`
+- Bump stemcell in bosh-deployment to `3468.21`
+- Bump stemcell in cf-deployment to `3468.19`
+
+# v3.3.0 (2018-01-09)
+
+- Upgrade Azure CPI version to v35.0.0. Please see new features in [bosh-azure-cpi-release v35.0.0](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v35.0.0)
+- Bump cf-deployment to [`v1.6.0`](https://github.com/cloudfoundry/cf-deployment/tree/v1.6.0).
+- Support [Availability Zones](https://docs.microsoft.com/en-us/azure/availability-zones/az-overview).
+- Set the default value of `autoDeployCloudFoundry` to `disabled`
+
+# v3.2.0 (2017-12-20)
+
+- Bump [bosh-deployment](https://github.com/cloudfoundry/bosh-deployment/blob/218e6d5030d89ca9f31c50b8b308e2a78d2a0997/bosh.yml) and [cf-deployment](https://github.com/cloudfoundry/cf-deployment/blob/v1.4.0/cf-deployment.yml).
+- Upgrade Azure CPI version to v34. Please see new features in [bosh-azure-cpi-release v34](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v34)
+
+# v3.1.0 (2017-12-12)
+
+- Bump [bosh-deployment](https://github.com/cloudfoundry/bosh-deployment/blob/ad5e958d15973269345909349fc00378abae4ba7/bosh.yml) and [cf-deployment](https://github.com/cloudfoundry/cf-deployment/blob/v1.3.1/cf-deployment.yml).
+- Upgrade Azure CPI version to v33 except AzureStack. Please see new features in [bosh-azure-cpi-release v33](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v33)
+
+# v3.0.0 (2017-11-23)
+
+- The template is using [BOSH CLI v2](https://bosh.io/docs/cli-v2.html), [bosh-deployment](https://github.com/cloudfoundry/bosh-deployment/blob/cb8e7f60145738e103eb2dc0ad3372288986dc0c/bosh.yml) and [cf-deployment](https://github.com/cloudfoundry/cf-deployment/blob/v1.0.0/cf-deployment.yml).
+- Upgrade Azure CPI version to v29. Please see new features in [bosh-azure-cpi-release v29](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v29)
+
 # v2.8.0 (2017-8-11)
 
 - Upgrade Azure CPI version to v26. Please see new features in [bosh-azure-cpi-release v26](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v26)

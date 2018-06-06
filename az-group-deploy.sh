@@ -1,5 +1,5 @@
 #!/bin/bash -e
-while getopts "a:l:g:s:f:e:uv" opt; do
+while getopts "a:l:g:s:f:e:uvd" opt; do
     case $opt in
         a)
             artifactsStagingDirectory=$OPTARG #the folder or sample to deploy
@@ -25,6 +25,9 @@ while getopts "a:l:g:s:f:e:uv" opt; do
         v)
             validateOnly='true'
         ;;
+        d)
+            devMode='true'
+        ;;
     esac
 done
     
@@ -32,12 +35,28 @@ done
 
 if [[ -z $templateFile ]]
 then
-    templateFile="$artifactsStagingDirectory/azuredeploy.json"
+    templateFile="$artifactsStagingDirectory/mainTemplate.json"
+    if [ ! -f $templateFile ]
+    then
+        templateFile="$artifactsStagingDirectory/azuredeploy.json"
+    fi
 fi
-if [[ -z $parametersFile ]]
+
+if [[ $devMode ]]
 then
-    parametersFile="$artifactsStagingDirectory/azuredeploy.parameters.json"
+    parametersFile="$artifactsStagingDirectory/azuredeploy.parameters.dev.json"
+    if [ ! -f $parametersFile ]
+    then
+        parametersFile="$artifactsStagingDirectory/azuredeploy.parameters.1.json"
+    fi        
+else
+    if [[ -z $parametersFile ]]
+    then
+        parametersFile="$artifactsStagingDirectory/azuredeploy.parameters.json"
+    fi
 fi
+
+echo "Using parameters file: "$parametersFile
 
 templateName="$( basename "${templateFile%.*}" )"
 templateDirectory="$( dirname "$templateFile")"
@@ -67,7 +86,8 @@ then
             az storage account create -l "$location" --sku "Standard_LRS" -g "$artifactsResourceGroupName" -n "$artifactsStorageAccountName" 2>/dev/null
         fi
     else
-        artifactsResourceGroupName=$( az storage account list -o json | jq -r '.[] | select(.name == '\"$s\"') .resourceGroup' )
+        artifactsStorageAccountName=$storageAccountName
+        artifactsResourceGroupName=$( az storage account list -o json | jq -r '.[] | select(.name == '\"$storageAccountName\"') .resourceGroup' )
         if [[ -z $artifactsResourceGroupName ]] 
         then
             echo "Cannot find storageAccount: "$storageAccountName
@@ -103,7 +123,12 @@ then
 
 fi
 
-az group create -n "$resourceGroupName" -l "$location"
+# Create the resource group only if it doesn't already exist
+targetResourceGroup=$( az group list -o json | jq -r '.[] | select(.name == '\"$resourceGroupName\"')'.name )
+if [[ -z $targetResourceGroup ]] 
+then
+    az group create -n "$resourceGroupName" -l "$location"
+fi   
 
 # Remove line endings from parameter JSON so it can be passed in to the CLI as a single line
 parameterJson=$( echo "$parameterJson" | jq -c '.' )

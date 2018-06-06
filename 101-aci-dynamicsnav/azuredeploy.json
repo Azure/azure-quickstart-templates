@@ -1,0 +1,172 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "name": {
+      "type": "string",
+      "metadata": {
+        "description": "Name for the container group"
+      },
+      "defaultValue": "acinavcontainergroup"
+    },
+    "dnsPrefix": {
+      "type": "string",
+      "maxLength": 50,
+      "metadata": {
+          "description": "The DNS label for the public IP address. It must be lowercase. It should match the following regular expression, or it will raise an error: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$"
+      }
+    },
+    "navRelease": {
+      "type": "string",
+      "metadata": {
+        "description": "Before the colon: dynamics-nav for NAV or bcsandbox for Business Central. After the colon: Identifier for the specific release like 2018-cu4-de for NAV or de for BC. Possible values can be found at https://hub.docker.com/r/microsoft/dynamics-nav/tags/ or https://hub.docker.com/r/microsoft/bcsandbox/tags/"
+      },
+      "defaultValue": "microsoft/bcsandbox:us"
+    },
+    "username": {
+      "type": "string",
+      "metadata": {
+        "description": "Username for your NAV super user"
+      }
+    },
+    "password": {
+      "type": "string",
+      "metadata": {
+        "description": "Password for your NAV/BC super user and your sa user on the database"
+      }
+    },
+    "cpuCores": {
+      "type": "string",
+      "metadata": {
+        "description": "The number of CPU cores to allocate to the container"
+      },
+      "defaultValue": "2.0"
+    },
+    "memoryInGb": {
+      "type": "string",
+      "metadata": {
+        "description": "The amount of memory to allocate to the container in gigabytes. Provide a minimum of 2 as he container will include SQL Server and NAV NST"
+      },
+      "defaultValue": "2.0"
+    },
+    "acceptEula": {
+      "type": "string",
+      "metadata": {
+        "description": "Change to 'Y' to accept the end user license agreement available at https://go.microsoft.com/fwlink/?linkid=861843. This is necessary to successfully run the container"
+      },
+      "defaultValue": "N",
+      "allowedValues": [
+        "Y",
+        "N"
+      ]
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "image": "[parameters('navRelease')]",
+    "publicdnsname": "[concat(parameters('dnsPrefix'),'.',resourceGroup().location,'.azurecontainer.io')]"
+  },
+  "resources": [
+    {
+      "name": "[parameters('name')]",
+      "type": "Microsoft.ContainerInstance/containerGroups",
+      "apiVersion": "2018-02-01-preview",
+      "location": "[parameters('location')]",
+      "properties": {
+        "containers": [
+          {
+            "name": "[parameters('name')]",
+            "properties": {
+              "environmentVariables": [
+                {
+                  "name": "ACCEPT_EULA",
+                  "value": "[parameters('acceptEula')]"
+                },
+                {
+                  "name": "username",
+                  "value": "[parameters('username')]"
+                },
+                {
+                  "name": "password",
+                  "value": "[parameters('password')]"
+                },
+                { 
+                  "name": "PublicDnsName",
+                  "value": "[variables('publicdnsname')]"
+                }
+              ],
+              "image": "[variables('image')]",
+              "ports": [
+                {
+                  "protocol": "TCP",
+                  "port": 443
+                },
+                {
+                  "protocol": "TCP",
+                  "port": 80
+                },
+                {
+                  "protocol": "TCP",
+                  "port": 7049
+                },
+                {
+                  "protocol": "TCP",
+                  "port": 8080
+                },
+                {
+                  "protocol": "TCP",
+                  "port": 1433
+                }
+              ],
+              "resources": {
+                "requests": {
+                  "cpu": "[parameters('cpuCores')]",
+                  "memoryInGB": "[parameters('memoryInGb')]"
+                }
+              }
+            }
+          }
+        ],
+        "osType": "Windows",
+        "ipAddress": {
+          "type": "Public",
+          "ports": [
+            {
+              "protocol": "TCP",
+              "port": 443
+            },
+            {
+              "protocol": "TCP",
+              "port": 80
+            },
+            {
+              "protocol": "TCP",
+              "port": 7049
+            },
+            {
+              "protocol": "TCP",
+              "port": 8080
+            },
+            {
+              "protocol": "TCP",
+              "port": 1433
+            }
+          ],
+          "dnsNameLabel": "[parameters('dnsPrefix')]"
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "containerIPAddressFqdn": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups/', parameters('name'))).ipAddress.fqdn]"
+    }
+  }
+}

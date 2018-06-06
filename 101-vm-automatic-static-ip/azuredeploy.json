@@ -20,7 +20,7 @@
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-vm-automatic-static-ip/"
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-vm-automatic-static-ip"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -28,52 +28,52 @@
         "description": "The sasToken required to access baseURL.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
       },
       "defaultValue": ""
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
     "vmName": "myVM",
-    "imagePublisher": "Canonical",
-    "imageOffer": "UbuntuServer",
-    "ubuntuOSVersion": "14.04.5-LTS",
     "nicName": "[concat(variables('vmName'), '-nic')]",
-    "vmSize": "Standard_A1",
     "virtualNetworkName": "vnet-myVnet",
-    "addressPrefix": "10.0.0.0/16",
-    "subnetName": "Subnet",
-    "subnetPrefix": "10.0.0.0/24",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
-    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
+    "subnetName": "default",
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
     "updateip_templateUri": "[concat(parameters('_artifactsLocation'), '/nested/update-nic.json', parameters('_artifactsLocationSasToken'))]"
   },
   "resources": [
     {
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2018-03-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
-            "[variables('addressPrefix')]"
+            "10.0.0.0/16"
           ]
         },
         "subnets": [
           {
             "name": "[variables('subnetName')]",
             "properties": {
-              "addressPrefix": "[variables('subnetPrefix')]"
+              "addressPrefix": "10.0.0.0/24"
             }
           }
         ]
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2018-03-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[variables('virtualNetworkName')]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -90,19 +90,16 @@
       }
     },
     {
-      "apiVersion": "2016-04-30-preview",
+      "apiVersion": "2017-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
-      "location": "[resourceGroup().location]",
-      "tags": {
-        "Role": "Web"
-      },
+      "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+        "updateIp"
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[variables('vmSize')]"
+          "vmSize": "Standard_A1"
         },
         "osProfile": {
           "computerName": "[variables('vmName')]",
@@ -111,9 +108,9 @@
         },
         "storageProfile": {
           "imageReference": {
-            "publisher": "[variables('imagePublisher')]",
-            "offer": "[variables('imageOffer')]",
-            "sku": "[variables('ubuntuOSVersion')]",
+            "publisher": "Canonical",
+            "offer": "UbuntuServer",
+            "sku": "16.04.0-LTS",
             "version": "latest"
           }
         },
@@ -128,10 +125,10 @@
     },
     {
       "type": "Microsoft.Resources/deployments",
-      "name": "[concat('updateip')]",
-      "apiVersion": "2015-01-01",
+      "name": "updateIp",
+      "apiVersion": "2017-08-01",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+        "[variables('nicName')]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -155,8 +152,8 @@
   ],
   "outputs": {
     "privateIp": {
-        "type": "string",
-        "value": "[reference(variables('nicName')).ipConfigurations[0].properties.privateIPAddress]"
+      "type": "string",
+      "value": "[reference(variables('nicName')).ipConfigurations[0].properties.privateIPAddress]"
     }
   }
 }

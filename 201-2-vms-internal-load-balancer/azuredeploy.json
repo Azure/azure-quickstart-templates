@@ -85,14 +85,20 @@
       "metadata": {
         "description": "This is the allowed list of VM sizes"
       }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
     "availabilitySetName": "AvSet",
     "storageAccountType": "Standard_LRS",
     "subnetName": "backendSubnet",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
-    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables ('subnetName'))]",
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), variables ('subnetName'))]",
     "numberOfInstances": 2,
     "lbID": "[resourceId('Microsoft.Network/loadBalancers',parameters('loadBalancerName'))]"
   },
@@ -101,7 +107,7 @@
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[parameters('storageAccountName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "accountType": "[variables('storageAccountType')]"
       }
@@ -110,7 +116,7 @@
       "apiVersion": "2016-04-30-preview",
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('availabilitySetName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "platformFaultDomainCount": 2,
         "platformUpdateDomainCount": 2,
@@ -121,7 +127,7 @@
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[parameters('virtualNetworkName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -142,7 +148,7 @@
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(parameters('networkInterfaceName'), copyindex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "nicLoop",
         "count": "[variables('numberOfInstances')]"
@@ -174,9 +180,9 @@
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/loadBalancers",
       "name": "[parameters('loadBalancerName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
-        "[variables('vnetID')]"
+        "[parameters('virtualNetworkName')]"
       ],
       "properties": {
         "frontendIPConfigurations": [
@@ -237,7 +243,7 @@
         "name": "virtualMachineLoop",
         "count": "[variables('numberOfInstances')]"
       },
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', parameters('networkInterfaceName'), copyindex())]",
