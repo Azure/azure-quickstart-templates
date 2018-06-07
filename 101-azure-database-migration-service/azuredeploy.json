@@ -1,0 +1,650 @@
+
+{
+ "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+ "contentVersion": "1.0.0.0",
+ "parameters":
+ {
+  "DMSServiceName":
+  {
+   "defaultValue": "AzureDataMigrationTemplateService",
+   "type": "String",
+   "metadata":
+   {
+    "description": "Name of the Azure Data Migration service."
+   }
+  },
+  "sourceServerName":
+  {
+   "defaultValue": "SourceServer1",
+   "type": "String",
+   "metadata":
+   {
+    "description": "Name to use for the Source Server."
+   }
+  },
+  "createPublicIP":
+  {
+   "defaultValue": "false",
+   "type": "bool",
+   "metadata":
+   {
+    "description": "Do you want to create a public IP address for the source server?"
+   }
+  },
+  "sourceWindowsAdminUserName":
+  {
+   "defaultValue": "sourceAdminUserName",
+   "type": "String",
+   "metadata":
+   {
+    "description": "Windows Authentication user name for the source server"
+   }
+  },
+  "sourceWindowsAdminPassword":
+  {
+   "type": "securestring",
+   "metadata":
+   {
+    "description": "Windows Authentication password for the source server"
+   }
+  },
+  "sourceSqlAuthenticationPassword":
+  {
+   "type": "securestring",
+   "metadata":
+   {
+    "description": "Sql Authentication password for the source server (User name will be same as Windows Auth)"
+   }
+  },
+  "targetServerNamePrefix":
+  {
+   "defaultValue": "targetsqldbservername",
+   "type": "String",
+   "metadata":
+   {
+    "description": "Name to use for the Target Azure SQL DB Server."
+   }
+  },
+  "targetSqlDbAdministratorLogin":
+  {
+   "defaultValue": "targetSqlDbAdminUserName",
+   "type": "String",
+   "metadata":
+   {
+    "description": "Administrator User name for the Target Azure SQL DB Server."
+   }
+  },
+  "targetSqlDbAdministratorPassword":
+  {
+   "type": "SecureString",
+   "metadata":
+   {
+    "description": "Administrator Password for the Target Azure SQL DB Server."
+   }
+  }
+ },
+ "variables":
+ {
+  "scriptLocation": "./AddDatabaseToSqlServer.ps1 ",
+  "scriptFiles": ["https://datamigrationwebpi.blob.core.windows.net/templatefiles/AddDatabaseToSqlServer.ps1", "https://datamigrationwebpi.blob.core.windows.net/templatefiles/AdventureWorks2016.bak"],
+  "scriptParameters": "[concat('-userName ', parameters('sourceWindowsAdminUserName'), ' -password \"', parameters('sourceWindowsAdminPassword'))]",
+  "storageAccountNamePrefix": "storage",
+  "storageAccountName": "[toLower(concat(variables('storageAccountNamePrefix'), uniqueString(resourceGroup().id)))]",
+  "sourceNicName": "SourceNIC-1",
+  "publicIPSourceServer": "SourceServer1-ip",
+  "sourceServerNSG": "SourceServer1-nsg",
+  "adVNet": "AzureDataMigrationServiceTemplateRG-vnet",
+  "defaultSubnetName": "default",
+  "databaseName": "TargetDatabaseName1",
+  "storageKeyType": "SharedAccessKey"
+ },
+ "resources": [
+  {
+   "type": "Microsoft.Compute/virtualMachines",
+   "name": "[parameters('sourceServerName')]",
+   "apiVersion": "2017-12-01",
+   "location": "[resourceGroup().location]",
+   "scale": null,
+   "properties":
+   {
+    "hardwareProfile":
+    {
+     "vmSize": "Standard_D2_v2"
+    },
+    "storageProfile":
+    {
+     "imageReference":
+     {
+      "publisher": "MicrosoftSQLServer",
+      "offer": "SQL2016SP1-WS2016",
+      "sku": "Standard",
+      "version": "latest"
+     },
+     "osDisk":
+     {
+      "osType": "Windows",
+      "name": "[concat(parameters('sourceServerName'),'_OsDisk_1_d05cc07cf42346948bcfd0ccd7c86041')]",
+      "createOption": "FromImage",
+      "caching": "ReadWrite",
+      "managedDisk":
+      {
+       "storageAccountType": "Standard_LRS"
+      },
+      "diskSizeGB": 127
+     },
+     "dataDisks": [
+      {
+       "lun": 0,
+       "name": "[concat(parameters('sourceServerName'),'_disk-1')]",
+       "createOption": "Empty",
+       "caching": "ReadOnly",
+       "managedDisk":
+       {
+        "storageAccountType": "Standard_LRS"
+       },
+       "diskSizeGB": 1023
+      }
+     ]
+    },
+    "osProfile":
+    {
+     "computerName": "[parameters('sourceServerName')]",
+     "adminUsername": "[parameters('sourceWindowsAdminUserName')]",
+     "adminPassword": "[parameters('sourceWindowsAdminPassword')]",
+     "windowsConfiguration":
+     {
+      "provisionVMAgent": true,
+      "enableAutomaticUpdates": true
+     },
+     "secrets": []
+    },
+    "networkProfile":
+    {
+     "networkInterfaces": [
+      {
+       "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('sourceNicName'))]"
+      }
+     ]
+    },
+    "diagnosticsProfile":
+    {
+     "bootDiagnostics":
+     {
+      "enabled": true,
+      "storageUri": "[concat('https', '://', variables('storageAccountName'), '.blob.core.windows.net', '/')]"
+     }
+    }
+   },
+   "dependsOn": [
+    "[resourceId('Microsoft.Network/networkInterfaces', variables('sourceNicName'))]",
+    "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+   ]
+  },
+  {
+   "type": "Microsoft.DataMigration/services",
+   "sku":
+   {
+    "name": "GeneralPurpose_4vCores",
+    "tier": "General Purpose",
+    "size": "4 vCores"
+   },
+   "name": "[parameters('DMSServiceName')]",
+   "apiVersion": "2017-11-15-privatepreview",
+   "location": "[resourceGroup().location]",
+   "scale": null,
+   "properties":
+   {
+    "virtualSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('adVNet'), variables('defaultSubnetName'))]"
+   },
+   "dependsOn": [
+    "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('adVNet'), variables('defaultSubnetName'))]"
+   ]
+  },
+  {
+   "type": "Microsoft.Network/networkInterfaces",
+   "name": "[variables('sourceNicName')]",
+   "apiVersion": "2018-02-01",
+   "location": "[resourceGroup().location]",
+   "scale": null,
+   "properties":
+   {
+    "resourceGuid": "e87fe560-3dcc-4441-84ce-57cb88d0db75",
+    "ipConfigurations": [
+     {
+      "name": "ipconfig",
+      "etag": "W/\"6b39ce85-161b-4d1b-a8e1-d0d6abf7345e\"",
+      "properties":
+      {
+       "privateIPAllocationMethod": "Dynamic",
+       "subnet":
+       {
+        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('adVNet'), variables('defaultSubnetName'))]"
+       },
+       "primary": true,
+       "privateIPAddressVersion": "IPv4"
+      }
+     }
+    ],
+    "enableAcceleratedNetworking": false,
+    "enableIPForwarding": false
+   },
+   "dependsOn": [
+    "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('adVNet'), variables('defaultSubnetName'))]"
+   ]
+  },
+  {
+   "type": "Microsoft.Network/networkSecurityGroups",
+   "name": "[variables('sourceServerNSG')]",
+   "apiVersion": "2018-02-01",
+   "location": "[resourceGroup().location]",
+   "scale": null,
+   "properties":
+   {
+    "resourceGuid": "e4b7200e-628e-4e0c-8780-7541566433b5",
+    "securityRules": [],
+    "defaultSecurityRules": [
+     {
+      "name": "AllowVnetInBound",
+      "etag": "W/\"98010d0b-327f-4e0a-a928-e5a98d145ee4\"",
+      "properties":
+      {
+       "description": "Allow inbound traffic from all VMs in VNET",
+       "protocol": "*",
+       "sourcePortRange": "*",
+       "destinationPortRange": "*",
+       "sourceAddressPrefix": "VirtualNetwork",
+       "destinationAddressPrefix": "VirtualNetwork",
+       "access": "Allow",
+       "priority": 65000,
+       "direction": "Inbound",
+       "sourcePortRanges": [],
+       "destinationPortRanges": [],
+       "sourceAddressPrefixes": [],
+       "destinationAddressPrefixes": []
+      }
+     },
+     {
+      "name": "AllowAzureLoadBalancerInBound",
+      "etag": "W/\"98010d0b-327f-4e0a-a928-e5a98d145ee4\"",
+      "properties":
+      {
+       "description": "Allow inbound traffic from azure load balancer",
+       "protocol": "*",
+       "sourcePortRange": "*",
+       "destinationPortRange": "*",
+       "sourceAddressPrefix": "AzureLoadBalancer",
+       "destinationAddressPrefix": "*",
+       "access": "Allow",
+       "priority": 65001,
+       "direction": "Inbound",
+       "sourcePortRanges": [],
+       "destinationPortRanges": [],
+       "sourceAddressPrefixes": [],
+       "destinationAddressPrefixes": []
+      }
+     },
+     {
+      "name": "DenyAllInBound",
+      "etag": "W/\"98010d0b-327f-4e0a-a928-e5a98d145ee4\"",
+      "properties":
+      {
+       "description": "Deny all inbound traffic",
+       "protocol": "*",
+       "sourcePortRange": "*",
+       "destinationPortRange": "*",
+       "sourceAddressPrefix": "*",
+       "destinationAddressPrefix": "*",
+       "access": "Deny",
+       "priority": 65500,
+       "direction": "Inbound",
+       "sourcePortRanges": [],
+       "destinationPortRanges": [],
+       "sourceAddressPrefixes": [],
+       "destinationAddressPrefixes": []
+      }
+     },
+     {
+      "name": "AllowVnetOutBound",
+      "etag": "W/\"98010d0b-327f-4e0a-a928-e5a98d145ee4\"",
+      "properties":
+      {
+       "description": "Allow outbound traffic from all VMs to all VMs in VNET",
+       "protocol": "*",
+       "sourcePortRange": "*",
+       "destinationPortRange": "*",
+       "sourceAddressPrefix": "VirtualNetwork",
+       "destinationAddressPrefix": "VirtualNetwork",
+       "access": "Allow",
+       "priority": 65000,
+       "direction": "Outbound",
+       "sourcePortRanges": [],
+       "destinationPortRanges": [],
+       "sourceAddressPrefixes": [],
+       "destinationAddressPrefixes": []
+      }
+     },
+     {
+      "name": "AllowInternetOutBound",
+      "etag": "W/\"98010d0b-327f-4e0a-a928-e5a98d145ee4\"",
+      "properties":
+      {
+       "description": "Allow outbound traffic from all VMs to Internet",
+       "protocol": "*",
+       "sourcePortRange": "*",
+       "destinationPortRange": "*",
+       "sourceAddressPrefix": "*",
+       "destinationAddressPrefix": "Internet",
+       "access": "Allow",
+       "priority": 65001,
+       "direction": "Outbound",
+       "sourcePortRanges": [],
+       "destinationPortRanges": [],
+       "sourceAddressPrefixes": [],
+       "destinationAddressPrefixes": []
+      }
+     },
+     {
+      "name": "DenyAllOutBound",
+      "etag": "W/\"98010d0b-327f-4e0a-a928-e5a98d145ee4\"",
+      "properties":
+      {
+       "description": "Deny all outbound traffic",
+       "protocol": "*",
+       "sourcePortRange": "*",
+       "destinationPortRange": "*",
+       "sourceAddressPrefix": "*",
+       "destinationAddressPrefix": "*",
+       "access": "Deny",
+       "priority": 65500,
+       "direction": "Outbound",
+       "sourcePortRanges": [],
+       "destinationPortRanges": [],
+       "sourceAddressPrefixes": [],
+       "destinationAddressPrefixes": []
+      }
+     }
+    ]
+   },
+   "dependsOn": []
+  },
+  {
+   "condition": "[equals(parameters('createPublicIP'), bool('true'))]",
+   "type": "Microsoft.Network/publicIPAddresses",
+   "sku":
+   {
+    "name": "Basic",
+    "tier": "Regional"
+   },
+   "name": "[variables('publicIPSourceServer')]",
+   "apiVersion": "2018-02-01",
+   "location": "[resourceGroup().location]",
+   "scale": null,
+   "properties":
+   {
+    "resourceGuid": "6fce4d1b-5701-444d-8027-76beb7902d27",
+    "publicIPAddressVersion": "IPv4",
+    "publicIPAllocationMethod": "Dynamic",
+    "idleTimeoutInMinutes": 4,
+    "ipTags": []
+   },
+   "dependsOn": []
+  },
+  {
+   "type": "Microsoft.Network/virtualNetworks",
+   "name": "[variables('adVNet')]",
+   "apiVersion": "2018-02-01",
+   "location": "[resourceGroup().location]",
+   "scale": null,
+   "properties":
+   {
+    "resourceGuid": "d31e1aaa-6bdd-49d2-9c37-259d1abe1471",
+    "addressSpace":
+    {
+     "addressPrefixes": [
+      "10.2.0.0/24"
+     ]
+    },
+    "subnets": [
+     {
+      "name": "default",
+      "etag": "W/\"66e1a968-6ffa-4188-8d1f-7220da31c536\"",
+      "properties":
+      {
+       "addressPrefix": "10.2.0.0/24"
+      }
+     }
+    ],
+    "virtualNetworkPeerings": [],
+    "enableDdosProtection": false,
+    "enableVmProtection": false
+   },
+   "dependsOn": []
+  },
+  {
+   "type": "Microsoft.Storage/storageAccounts",
+   "sku":
+   {
+    "name": "Standard_LRS",
+    "tier": "Standard"
+   },
+   "kind": "Storage",
+   "name": "[variables('storageAccountName')]",
+   "apiVersion": "2017-10-01",
+   "location": "[resourceGroup().location]",
+   "tags": {},
+   "scale": null,
+   "properties":
+   {
+    "networkAcls":
+    {
+     "bypass": "AzureServices",
+     "virtualNetworkRules": [],
+     "ipRules": [],
+     "defaultAction": "Allow"
+    },
+    "supportsHttpsTrafficOnly": false,
+    "encryption":
+    {
+     "services":
+     {
+      "file":
+      {
+       "enabled": true
+      },
+      "blob":
+      {
+       "enabled": true
+      }
+     },
+     "keySource": "Microsoft.Storage"
+    }
+   },
+   "dependsOn": []
+  },
+  {
+   "apiVersion": "2015-06-15",
+   "type": "Microsoft.Compute/virtualMachines/extensions",
+   "name": "[concat(parameters('sourceServerName'), '/SqlIaasExtension')]",
+   "location": "[resourceGroup().location]",
+   "dependsOn": [
+    "[concat('Microsoft.Compute/virtualMachines/', parameters('sourceServerName'))]"
+   ],
+   "properties":
+   {
+    "type": "SqlIaaSAgent",
+    "publisher": "Microsoft.SqlServer.Management",
+    "typeHandlerVersion": "1.2",
+    "autoUpgradeMinorVersion": "true",
+    "settings":
+    {
+     "AutoTelemetrySettings":
+     {
+      "Region": "[resourceGroup().location]"
+     },
+     "AutoPatchingSettings":
+     {
+      "PatchCategory": "WindowsMandatoryUpdates",
+      "Enable": false,
+      "DayOfWeek": "Sunday",
+      "MaintenanceWindowStartingHour": "2",
+      "MaintenanceWindowDuration": "60"
+     },
+     "KeyVaultCredentialSettings":
+     {
+      "Enable": false,
+      "CredentialName": ""
+     },
+     "ServerConfigurationsManagementSettings":
+     {
+      "SQLConnectivityUpdateSettings":
+      {
+       "ConnectivityType": "Private",
+       "Port": "1433"
+      },
+      "SQLWorkloadTypeUpdateSettings":
+      {
+       "SQLWorkloadType": "OLTP"
+      },
+      "SQLStorageUpdateSettings":
+      {
+       "DiskCount": "1",
+       "NumberOfColumns": "8",
+       "StartingDeviceID": "2",
+       "DiskConfigurationType": "NEW"
+      },
+      "AdditionalFeaturesServerConfigurations":
+      {
+       "IsRServicesEnabled": "false"
+      }
+     }
+    },
+    "protectedSettings":
+    {
+     "SQLAuthUpdateUserName": "[parameters('sourceWindowsAdminUserName')]",
+     "SQLAuthUpdatePassword": "[parameters('sourceSqlAuthenticationPassword')]"
+    }
+   }
+  },
+  {
+   "type": "Microsoft.DataMigration/services/projects",
+   "name": "[concat(parameters('DMSServiceName'), '/', 'SqlToSqlDbMigrationProject')]",
+   "apiVersion": "2017-11-15-privatepreview",
+   "location": "[resourceGroup().location]",
+   "scale": null,
+   "properties":
+   {
+    "sourcePlatform": "SQL",
+    "targetPlatform": "SQLDB"
+   },
+   "dependsOn": [
+    "[resourceId('Microsoft.DataMigration/services', parameters('DMSServiceName'))]"
+   ]
+  },
+  {
+   "type": "Microsoft.Network/virtualNetworks/subnets",
+   "name": "[concat(variables('adVNet'), '/', variables('defaultSubnetName'))]",
+   "apiVersion": "2018-02-01",
+   "scale": null,
+   "properties":
+   {
+    "addressPrefix": "10.2.0.0/24"
+   },
+   "dependsOn": [
+    "[resourceId('Microsoft.Network/virtualNetworks', variables('adVNet'))]"
+   ]
+  },
+  {
+   "type": "Microsoft.Sql/servers",
+   "name": "[concat(parameters('targetServerNamePrefix'), uniqueString(resourceGroup().id))]",
+   "apiVersion": "2015-05-01-preview",
+   "location": "[resourceGroup().location]",
+   "properties":
+   {
+    "administratorLogin": "[parameters('targetSqlDbAdministratorLogin')]",
+    "administratorLoginPassword": "[parameters('targetSqlDbAdministratorPassword')]",
+    "version": "12.0"
+   },
+   "resources": [
+    {
+     "type": "databases",
+     "sku":
+     {
+      "name": "Basic",
+      "tier": "Basic"
+     },
+     "name": "[variables('databaseName')]",
+     "apiVersion": "2017-10-01-preview",
+     "location": "[resourceGroup().location]",
+     "properties":
+     {
+      "collation": "SQL_Latin1_General_CP1_CI_AS",
+      "maxSizeBytes": 2147483648,
+      "zoneRedundant": "false"
+     },
+     "resources": [
+      {
+       "name": "Import",
+       "type": "extensions",
+       "apiVersion": "2014-04-01-preview",
+       "dependsOn":
+       [
+        "[concat('Microsoft.Sql/servers/', concat(parameters('targetServerNamePrefix'), uniqueString(resourceGroup().id)), '/databases/', variables('databaseName'))]"
+       ],
+       "properties":
+       {
+        "storageKey": "?st=2018-06-06T10%3A11%3A00Z&se=2018-07-07T10%3A11%3A00Z&sp=rl&sv=2017-04-17&sr=c&sig=tROP%2Bm7QkyF9d2ubMhe2g%2BcioyKnnhBF9UrMGfTRpjw%3D",
+        "storageKeyType": "[variables('storageKeyType')]",
+        "storageUri": "https://datamigrationwebpi.blob.core.windows.net/templatebacpac/AdventureWorks2016.bacpac",
+        "administratorLogin": "[parameters('targetSqlDbAdministratorLogin')]",
+        "administratorLoginPassword": "[parameters('targetSqlDbAdministratorPassword')]",
+        "operationMode": "Import"
+       }
+      }
+     ],
+     "dependsOn": [
+      "[concat('Microsoft.Sql/servers/', concat(parameters('targetServerNamePrefix'), uniqueString(resourceGroup().id)))]"
+     ]
+    },
+    {
+     "type": "firewallrules",
+     "name": "AllowAllWindowsAzureIps",
+     "apiVersion": "2014-04-01-preview",
+     "location": "[resourceGroup().location]",
+     "properties":
+     {
+      "endIpAddress": "0.0.0.0",
+      "startIpAddress": "0.0.0.0"
+     },
+     "dependsOn": [
+      "[concat('Microsoft.Sql/servers/', concat(parameters('targetServerNamePrefix'), uniqueString(resourceGroup().id)))]"
+     ]
+    }
+   ]
+  },
+  {
+   "apiVersion": "2015-06-15",
+   "type": "Microsoft.Compute/virtualMachines/extensions",
+   "name": "[concat(parameters('sourceServerName'), '/', 'CustomScriptExtension')]",
+   "location": "[resourceGroup().location]",
+   "dependsOn": [
+    "[concat('Microsoft.Compute/virtualMachines/', parameters('sourceServerName'))]",
+    "[concat('Microsoft.Compute/virtualMachines/', concat(parameters('sourceServerName'),'/extensions/SqlIaasExtension'))]"
+   ],
+   "properties":
+   {
+    "publisher": "Microsoft.Compute",
+    "type": "CustomScriptExtension",
+    "typeHandlerVersion": "1.9",
+    "autoUpgradeMinorVersion": true,
+    "settings":
+    {
+     "fileUris": "[variables('scriptFiles')]"
+    },
+    "protectedSettings":
+    {
+     "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('scriptLocation'), ' ', variables('scriptParameters'))]"
+    }
+   }
+  }
+ ]
+}
