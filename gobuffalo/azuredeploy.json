@@ -21,7 +21,8 @@
         "defaultValue": "none",
         "allowedValues": [
             "none",
-            "postgresql"
+            "postgresql",
+            "mysql"
         ],
         "metadata": {
           "description": "The flavor of database that should be deployed alongside this application."
@@ -52,6 +53,7 @@
     "variables": {
       "hostingPlanName": "[concat('hostingPlan-', parameters('name'))]",
       "postgresqlName": "[concat(parameters('name'), '-postgresql')]",
+      "mysqlName": "[concat(parameters('name'), '-mysql')]",
       "postgresqlConnection": "[concat('postgres://', parameters('databaseAdministratorLogin'), ':', parameters('databaseAdministratorLoginPassword'), '@', variables('postgresqlname'), '.postgres.database.azure.com/', parameters('databaseName'), '?sslmode=required')]"
     },
     "resources": [
@@ -88,7 +90,8 @@
         },
         "dependsOn": [
           "[variables('hostingPlanName')]",
-          "[variables('postgresqlName')]"
+          "[variables('postgresqlName')]",
+          "[variables('mysqlName')]"
         ]
       },
       {
@@ -128,6 +131,31 @@
               "administratorLogin": "[parameters('databaseAdministratorLogin')]",
               "administratorLoginPassword": "[parameters('databaseAdministratorLoginPassword')]"
           }
+      },
+      {
+        "condition":"[equals(parameters('database'), 'mysql')]",
+        "type": "Microsoft.DBforMySQL/servers",
+        "sku": {
+          "name":"B_Gen5_2",
+          "tier": "Basic",
+          "capacity": 2,
+          "size": 5120,
+          "family": "Gen5"
+        },
+        "kind": "",
+        "name": "[variables('mysqlName')]",
+        "apiVersion": "2017-12-01-preview",
+        "location": "[resourceGroup().location]",
+        "properties": {
+          "version": "5.7",
+          "administratorLogin": "[parameters('databaseAdministratorLogin')]",
+          "administratorLoginPassword": "[parameters('databaseAdministratorLoginPassword')]",
+          "storageProfile": {
+            "storageMB": 5120,
+            "backupRetentionDays": 7,
+            "geoRedundantBackup": "Disabled"
+          }
+        }
       }
     ]
   }
