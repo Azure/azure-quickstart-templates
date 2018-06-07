@@ -212,14 +212,15 @@ EOF
 fi
 if [ "$environment" != "AzureStack" ]; then
   cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
-  -o ~/example_manifests/use-azure-storage-blobstore.yml \\
-  -v environment=$(get_setting ENVIRONMENT) \\
-  -v blobstore_storage_account_name=$(get_setting DEFAULT_STORAGE_ACCOUNT_NAME) \\
-  -v blobstore_storage_access_key=$(get_setting DEFAULT_STORAGE_ACCESS_KEY) \\
+  -o ~/example_manifests/use-external-blobstore.yml \\
   -v app_package_directory_key=cc-packages \\
   -v buildpack_directory_key=cc-buildpacks \\
   -v droplet_directory_key=cc-droplets \\
   -v resource_directory_key=cc-resources \\
+  -o ~/example_manifests/use-azure-storage-blobstore.yml \\
+  -v environment=$(get_setting ENVIRONMENT) \\
+  -v blobstore_storage_account_name=$(get_setting DEFAULT_STORAGE_ACCOUNT_NAME) \\
+  -v blobstore_storage_access_key=$(get_setting DEFAULT_STORAGE_ACCESS_KEY) \\
 EOF
 fi
 cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
