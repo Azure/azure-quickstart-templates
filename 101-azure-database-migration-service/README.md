@@ -8,3 +8,4 @@ The above template will deploy a resource group with the below resources in your
 
 Using the above resources you can connect to source and target servers select the databases to migrate and run an end-to-end migration.
 
+
