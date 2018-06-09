@@ -19,6 +19,7 @@ pushd manifests
     compiled_release=${array[-1]}
     wget ${compiled_release_url} -O /tmp/${compiled_release}
     azure storage blob upload /tmp/${compiled_release} ${container_name} cf-deployment-compiled-releases/${compiled_release}
+    rm /tmp/${compiled_release}
   done
 popd
 
