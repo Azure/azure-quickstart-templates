@@ -1,0 +1,137 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "devPrefix": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "adminUserName": {
+      "type": "string"
+    },
+    "adminPassword": {
+      "type": "securestring"
+    },
+    "devAvSetId": {
+      "type": "string"
+    },
+    "dev01nicId": {
+      "type": "string"
+    },
+    "saName": {
+      "type": "string"
+    },
+    "domainName": {
+      "type": "string"
+    },
+    "domainToJoin": {
+      "type": "string"
+    },
+    "domainJoinOptions": {
+      "type": "string"
+    }
+  },
+  "variables": {
+    "dev01name": "[concat(parameters('devPrefix'),1)]",
+    "devVmSize": "Standard_D1_v2",
+    "imagePublisher": "MicrosoftVisualStudio",
+    "imageOffer": "VisualStudio",
+    "imageSku": "VS-2017-Comm-Latest-WS2016",
+    "diskNameOs": "[toLower(concat(variables('dev01name'),'-syst'))]",
+    "saType": "Standard_LRS",
+    "diskNameData": "[toLower(concat(variables('dev01name'),'-data'))]"
+  },
+  "resources": [
+    {
+      "comments": "14.17.00.createDevServer",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('dev01name')]",
+      "apiVersion": "2017-03-30",
+      "location": "[parameters('location')]",
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('devVmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('dev01name')]",
+          "adminUsername": "[parameters('adminUserName')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[variables('imageSku')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[variables('diskNameOs')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "[variables('saType')]"
+            }
+          },
+          "dataDisks": [
+            {
+              "lun": 0,
+              "name": "[variables('diskNameData')]",
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": 32,
+              "managedDisk": {
+                "storageAccountType": "[variables('saType')]"
+              }
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[parameters('dev01nicId')]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+              "storageUri": "[reference(parameters('saName'), '2017-10-01').primaryEndpoints['blob']]"
+              }
+        },
+        "availabilitySet": {
+          "id": "[parameters('devAvSetId')]"
+        }
+      }
+    },
+    {
+      "comments": "14.17.01.joinDomainDevServer",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('dev01name'),'/joindomain')]",
+      "apiVersion": "2017-12-01",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "JsonADDomainExtension"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/',variables('dev01name'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "JsonADDomainExtension",
+        "typeHandlerVersion": "1.3",
+        "autoUpgradeMinorVersion": "true",
+        "settings": {
+          "Name": "[parameters('domainName')]",
+          "User": "[concat(parameters('adminUserName'),'@',parameters('domainName'))]",
+          "Restart": "true",
+          "Options": "[parameters('domainJoinOptions')]"
+        },
+        "protectedSettings": {
+          "Password": "[parameters('adminPassword')]"
+        }
+      }
+    }
+  ]
+}

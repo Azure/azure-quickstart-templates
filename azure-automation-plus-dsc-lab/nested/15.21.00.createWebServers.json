@@ -1,0 +1,140 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "webPrefix": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "adminUserName": {
+      "type": "string"
+    },
+    "adminPassword": {
+      "type": "securestring"
+    },
+    "webAvSetId": {
+      "type": "string"
+    },
+    "webNicIds": {
+      "type": "array"
+    },
+    "saName": {
+      "type": "string"
+    },
+    "domainName": {
+      "type": "string"
+    },
+    "domainJoinOptions": {
+      "type": "string"
+    }
+  },
+  "variables": {
+    "webVmSize": "Standard_A1_v2",
+    "webServerInstances": 2,
+    "imagePublisher": "MicrosoftWindowsServer",
+    "imageOffer": "WindowsServer",
+    "imageSku": "2016-Datacenter-Server-Core-smalldisk",
+    "saType": "Standard_LRS"
+  },
+  "resources": [
+    {
+      "comments": "15.21.00.createWebServers",
+      "name": "[concat(parameters('webPrefix'), copyIndex(1))]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "copy": {
+        "name": "webServersCopy",
+        "count": "[variables('webServerInstances')]"
+      },
+      "apiVersion": "2017-03-30",
+      "location": "[parameters('location')]",
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('webVmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[concat(parameters('webPrefix'), copyIndex(1))]",
+          "adminUsername": "[parameters('adminUserName')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[variables('imageSku')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(parameters('webPrefix'), copyIndex(1), '-syst')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "[variables('saType')]"
+            }
+          },
+          "dataDisks": [
+            {
+              "lun": 0,
+              "name": "[concat(parameters('webPrefix'), copyIndex(1), '-data')]",
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": 32,
+              "managedDisk": {
+                "storageAccountType": "[variables('saType')]"
+              }
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[parameters('webNicIds')[copyIndex()]]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+              "storageUri": "[reference(parameters('saName'), '2017-10-01').primaryEndpoints['blob']]"
+              }
+        },
+        "availabilitySet": {
+          "id": "[parameters('webAvSetId')]"
+        }
+      }
+    },
+    {
+      "comments": "15.21.01.joinDomainWebServers",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('webPrefix'),copyIndex(1),'/joindomain')]",
+      "copy": {
+        "name": "webServersDomainJoinCopy",
+        "count": "[variables('webServerInstances')]"
+      },
+      "apiVersion": "2017-12-01",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "JsonADDomainExtension"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/',parameters('webPrefix'),copyIndex(1))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "JsonADDomainExtension",
+        "typeHandlerVersion": "1.3",
+        "autoUpgradeMinorVersion": "true",
+        "settings": {
+          "Name": "[parameters('domainName')]",
+          "User": "[concat(parameters('adminUserName'),'@',parameters('domainName'))]",
+          "Restart": "true",
+          "Options": "[parameters('domainJoinOptions')]"
+        },
+        "protectedSettings": {
+          "Password": "[parameters('adminPassword')]"
+        }
+      }
+    }
+  ]
+}
