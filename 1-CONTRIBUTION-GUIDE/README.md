@@ -150,6 +150,12 @@ To ensure your template passes, special placeholder values are required when dep
 
 Quickstart CI engine provides few pre-created azure components which can be used by templates for automated validation. This includes a key vault with sample SSL certificate stored, specialized and generalized Windows Server VHD's, a custom domain and SSL cert data for Azure App Service templates and more.
 
+**Virtual Network Related placeholders:**
++ **GEN-VNET-NAME** - the name of the virtual network
++ **GEN-VNET-RESOURCEGROUP-NAME** - the name of the resource group for the virtual network
++ **GEN-SUBNET1-NAME** - the name of subnet-1
+
+
 **Key Vault Related placeholders:**
 + **GEN-KEYVAULT-NAME** - the name of the keyvault
 + **GEN-KEYVAULT-RESOURCEGROUP-NAME** - the name of the resource group for the keyvault
@@ -164,7 +170,7 @@ Quickstart CI engine provides few pre-created azure components which can be used
 + **GEN-SF-CERT-THUMBPRINT** - the thumbprint of the sample service fabric certificate stored in keyvault
 
 
-** Existing VHD related placeholders:**
+**Existing VHD related placeholders:**
 + **GEN-SPECIALIZED-WINVHD-URI** - URI of a specialized Windows VHD stored in an existing storage account
 + **GEN-GENERALIZED-WINVHD-URI** - URI of a generalized Windows VHD stored in an existing storage account
 + **GEN-GENERALIZED-WINVHD-FILENAME** - the filename of the existing VHD
@@ -173,7 +179,7 @@ Quickstart CI engine provides few pre-created azure components which can be used
 + **GEN-VHDRESOURCEGROUP-NAME** - Name of resource group in which the existing storage account having VHD's resides
 
 
-** Custom Domain & SSL Cert related placeholders:**
+**Custom Domain & SSL Cert related placeholders:**
 + **GEN-CUSTOM-WEBAPP-NAME** - placeholder for the name of azure app service where you'd want to attach custom domain
 + **GEN-CUSTOM-FQDN-NAME** - sample custom domain which can be added to an App Service
 + **GEN-CUSTOM-DOMAIN-SSLCERT-THUMBPRINT** - SSL cert thumbprint for the custom domain used in the custom FQDN
