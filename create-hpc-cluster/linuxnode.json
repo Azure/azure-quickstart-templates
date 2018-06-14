@@ -2,12 +2,6 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "apiVersion": {
-      "type": "string",
-      "metadata": {
-        "description": "The API version"
-      }
-    },
     "nicName": {
       "type": "string",
       "metadata": {
@@ -32,10 +26,11 @@
         "description": "The VM role size"
       }
     },
-    "storageAccountName": {
+    "storageAccountType": {
       "type": "string",
+      "allowedValues": [ "Standard_LRS", "Premium_LRS" ],
       "metadata": {
-        "description": "The storage account name to store the VHD of the VM"
+        "description": "The storage account type for the disks of the VM"
       }
     },
     "imgPublisher": {
@@ -76,8 +71,9 @@
     },
     "availabilitySetName": {
       "type": "string",
+      "defaultValue": "",
       "metadata": {
-        "description": "The availability set name"
+        "description": "The availability set name to join if specified"
       }
     },
     "customData": {
@@ -120,10 +116,13 @@
     }
   },
   "variables": {
-    "osDiskUri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/', toLower(parameters('vmName')), '-os', uniqueString(parameters('subnetId')), '.vhd')]"
+    "availabilitySet": {
+      "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySetName'))]"
+    }
   },
   "resources": [
     {
+      "apiVersion": "2017-10-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[parameters('nicName')]",
       "location": "[parameters('location')]",
@@ -142,6 +141,7 @@
       }
     },
     {
+      "apiVersion": "2017-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
       "location": "[parameters('location')]",
@@ -149,9 +149,7 @@
         "[concat('Microsoft.Network/networkInterfaces/', parameters('nicName'))]"
       ],
       "properties": {
-        "availabilitySet": {
-          "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySetName'))]"
-        },
+        "availabilitySet": "[if(empty(parameters('availabilitySetName')), json('null'), variables('availabilitySet'))]",
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
         },
@@ -161,7 +159,7 @@
           "adminPassword": "[parameters('adminPassword')]",
           "customData": "[parameters('customData')]",
           "linuxConfiguration": {
-            "disablePasswordAuthentication": "false"
+            "disablePasswordAuthentication": false
           }
         },
         "storageProfile": {
@@ -172,12 +170,12 @@
             "version": "[parameters('imgVersion')]"
           },
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[variables('osDiskUri')]"
-            },
+            "name": "[concat(parameters('vmName'), '-osdisk')]",
             "caching": "ReadOnly",
-            "createOption": "FromImage"
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "[parameters('storageAccountType')]"
+            }
           }
         },
         "networkProfile": {
@@ -190,9 +188,9 @@
       },
       "resources": [
         {
+          "apiVersion": "2017-12-01",
           "type": "Microsoft.Compute/virtualMachines/extensions",
           "name": "[concat(parameters('vmName'), '/installHPCNodeAgent')]",
-          "apiVersion": "[parameters('apiVersion')]",
           "location": "[parameters('location')]",
           "dependsOn": [
             "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
