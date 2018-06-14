@@ -10,11 +10,23 @@ set -e
 # The template version should be same as variables('templateVersion') in azuredeploy.json
 template_version="$1"
 container_name="bosh-setup"
+
+pushd manifests
+  compiled_release_urls=$(grep "storage.googleapis.com" use-compiled-releases.yml | awk '{print $2}')
+  for compiled_release_url in ${compiled_release_urls}
+  do
+    IFS='/ ' read -r -a array <<< "$compiled_release_url"
+    compiled_release=${array[-1]}
+    wget ${compiled_release_url} -O /tmp/${compiled_release}
+    azure storage blob upload /tmp/${compiled_release} ${container_name} cf-deployment-compiled-releases/${compiled_release}
+  done
+popd
+
 directories="scripts manifests"
 for directory in $directories; do
   for file in $directory/*; do
     if [[ -f $file ]]; then
-      azure storage blob upload $file ${container_name} ${template_version}/$file
+      azure storage blob upload $file ${container_name} ${template_version}/$file --quiet
     fi
   done
 done
