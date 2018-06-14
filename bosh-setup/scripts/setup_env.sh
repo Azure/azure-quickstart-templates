@@ -41,7 +41,7 @@ AZ_REPO=$(lsb_release -cs)
 echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | tee /etc/apt/sources.list.d/azure-cli.list
 curl -L https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
 retryop "apt-get install apt-transport-https"
-retryop "apt-get update && apt-get install azure-cli"
+retryop "apt-get update && apt-get install azure-cli=2.0.33-1~$AZ_REPO"
 
 echo "Creating the containers (bosh and stemcell) and the table (stemcells) in the default storage account"
 default_storage_account=$(get_setting DEFAULT_STORAGE_ACCOUNT_NAME)
@@ -212,14 +212,15 @@ EOF
 fi
 if [ "$environment" != "AzureStack" ]; then
   cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
-  -o ~/example_manifests/use-azure-storage-blobstore.yml \\
-  -v environment=$(get_setting ENVIRONMENT) \\
-  -v blobstore_storage_account_name=$(get_setting DEFAULT_STORAGE_ACCOUNT_NAME) \\
-  -v blobstore_storage_access_key=$(get_setting DEFAULT_STORAGE_ACCESS_KEY) \\
+  -o ~/example_manifests/use-external-blobstore.yml \\
   -v app_package_directory_key=cc-packages \\
   -v buildpack_directory_key=cc-buildpacks \\
   -v droplet_directory_key=cc-droplets \\
   -v resource_directory_key=cc-resources \\
+  -o ~/example_manifests/use-azure-storage-blobstore.yml \\
+  -v environment=$(get_setting ENVIRONMENT) \\
+  -v blobstore_storage_account_name=$(get_setting DEFAULT_STORAGE_ACCOUNT_NAME) \\
+  -v blobstore_storage_access_key=$(get_setting DEFAULT_STORAGE_ACCESS_KEY) \\
 EOF
 fi
 cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
