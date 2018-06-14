@@ -71,7 +71,7 @@ describe('template files - ', () => {
                         // get default value if one exists
                         var defaultVal = templateObject.parameters[parameter].defaultValue;
                         if (defaultVal && defaultVal.length > 0) {
-                            expect(templateObject.parameters[parameter], 'in file:' + templateJSONObject.filename + parameter + ' should not have defaultValue').to.not.have.property('defaultValue');
+                            expect(templateObject.parameters[parameter], 'in file:' + templateJSONObject.filename + ' "' + parameter + '" should not have defaultValue').to.not.have.property('defaultValue');
                         }
                     }
                 });
