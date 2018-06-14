@@ -113,10 +113,11 @@ chmod 666 $REMOTESTATEFILE
 chown -R $USERNAME:$USERNAME /home/$USERNAME/tfTemplate
 
 # Set these variables in the profile
-echo "export ARM_SUBSCRIPTION_ID=\"$SUBSCRIPTION_ID\""      >> $PROFILEFILE
-echo "export ARM_USE_MSI=true"                              >> $PROFILEFILE
-echo "export ARM_MSI_ENDPOINT=\"http://localhost:50342\""   >> $PROFILEFILE
-echo "export ARM_TENANT_ID=\"$TENANT_ID\""                  >> $PROFILEFILE
+echo "export ARM_SUBSCRIPTION_ID=\"$SUBSCRIPTION_ID\""                                     >> $PROFILEFILE
+echo "export ARM_CLIENT_ID=\"$MSI_PRINCIPAL_ID\""                                          >> $PROFILEFILE
+echo "export ARM_USE_MSI=true"                                                             >> $PROFILEFILE
+echo "export ARM_MSI_ENDPOINT=\"http://169.254.169.254/metadata/identity/oauth2/token\""   >> $PROFILEFILE
+echo "export ARM_TENANT_ID=\"$TENANT_ID\""                                                 >> $PROFILEFILE
 
 # Add contributor permissions to the MSI for entire subscription
 touch $TFENVFILE
@@ -128,7 +129,7 @@ chown $USERNAME:$USERNAME $TFENVFILE
 
 # create the container for remote state
 logger -t devvm "Creating the container for remote state"
-az login --msi
+az login --identity
 az storage container create -n terraform-state --account-name $STORAGE_ACCOUNT_NAME --account-key $STORAGE_ACCOUNT_KEY
 logger -t devvm "Container for remote state created: $?"
 
