@@ -2,9 +2,13 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "storageAccountType": {
+    "diskType": {
       "type": "string",
       "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Premium_LRS"
+      ],
       "metadata": {
         "description": "Storage Account type"
       }
@@ -17,7 +21,7 @@
     },
     "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_D2",
+      "defaultValue": "Standard_D2_v2",
       "metadata": {
         "description": "Size of the VM"
       }
@@ -38,7 +42,7 @@
     },
     "imageSKU": {
       "type": "string",
-      "defaultValue": "14.04.2-LTS",
+      "defaultValue": "14.04.5-LTS",
       "metadata": {
         "description": "Image SKU"
       }
@@ -71,7 +75,6 @@
     }
   },
   "variables": {
-    "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'zk')]",
     "availabilitySetName": "zookeeperAvSet",
     "virtualNetworkName": "zookeeperVNET",
     "vnetAddressPrefix": "10.0.0.0/16",
@@ -87,20 +90,17 @@
   },
   "resources": [
     {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('storageAccountName')]",
-      "apiVersion": "2015-05-01-preview",
-      "location": "[parameters('location')]",
-      "properties": {
-        "accountType": "[parameters('storageAccountType')]"
-      }
-    },
-    {
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/availabilitySets",
-      "name": "[variables('availabilitySetName')]",
-      "apiVersion": "2015-05-01-preview",
       "location": "[parameters('location')]",
-      "properties": {}
+      "name": "[variables('availabilitySetName')]",
+      "properties": {
+        "PlatformUpdateDomainCount": 20,
+        "PlatformFaultDomainCount": 2
+      },
+      "sku": {
+        "name": "Aligned"
+      }
     },
     {
       "apiVersion": "2015-05-01-preview",
@@ -168,7 +168,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(parameters('vmName'), copyIndex())]",
       "location": "[parameters('location')]",
@@ -177,7 +177,6 @@
         "count": "[parameters('scaleNumber')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex())]",
         "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
       ],
@@ -201,12 +200,12 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2016-01-01').primaryEndpoints.blob, 'vhds/', 'osdisk', copyIndex(), '.vhd')]"
-            },
+            "name": "[concat(parameters('vmName'), copyIndex(),'_OSDisk')]",
             "caching": "ReadWrite",
-            "createOption": "FromImage"
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "[parameters('diskType')]"
+            }
           }
         },
         "networkProfile": {
