@@ -24,7 +24,8 @@ Perform the following steps to configure the Azure Network Security Group analyt
 1. Enable the Azure Network Security Group analytics solution from<BR> <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Foms-azurensg-solution%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a><BR>
-2. Follow [steps](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-network-nsg-manage-log) to Enable diagnostics logging for the Network Security Group.
+2. Follow steps to Enable diagnostics logging for the Network Security Group:
+(https://docs.microsoft.com/en-us/azure/virtual-network/virtual-network-nsg-manage-log) 
 
 After you configure the solution, data should start flowing to your workspace within 15 minutes.
 
