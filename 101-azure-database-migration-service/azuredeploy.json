@@ -1,93 +1,74 @@
-
 {
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
-    "parameters":
-    {
-		"location":
-		{
-			"defaultValue": "[resourceGroup().location]",
-			"type": "String",
-			"metadata":
-			{
-				"description": "Location where the resources will be deployed."
-			}
-		},
-        "createPublicIP":
-        {
-            "defaultValue": false,
+    "parameters": {
+        "location": {
+            "defaultValue": "[resourceGroup().location]",
+            "type": "string",
+            "metadata": {
+                "description": "Location where the resources will be deployed."
+            }
+        },
+        "createPublicIP": {
+            "defaultValue": true,
             "type": "bool",
-            "metadata":
-            {
+            "metadata": {
                 "description": "Do you want to create a public IP address for the source server?"
             }
         },
-        "sourceWindowsAdminUserName":
-        {
-            "type": "String",
-            "metadata":
-            {
+        "sourceWindowsAdminUserName": {
+            "type": "string",
+            "metadata": {
                 "description": "Windows Authentication user name for the source server"
             }
         },
-        "sourceWindowsAdminPassword":
-        {
+        "sourceWindowsAdminPassword": {
             "type": "securestring",
-            "metadata":
-            {
+            "metadata": {
                 "description": "Windows Authentication password for the source server"
             }
         },
-        "sourceSqlAuthenticationPassword":
-        {
+        "sourceSqlAuthenticationPassword": {
             "type": "securestring",
-            "metadata":
-            {
+            "metadata": {
                 "description": "Sql Authentication password for the source server (User name will be same as Windows Auth)"
             }
         },
-        "targetSqlDbAdministratorLogin":
-        {
-            "type": "String",
-            "metadata":
-            {
+        "targetSqlDbAdministratorLogin": {
+            "type": "string",
+            "metadata": {
                 "description": "Administrator User name for the Target Azure SQL DB Server."
             }
         },
-        "targetSqlDbAdministratorPassword":
-        {
-            "type": "SecureString",
-            "metadata":
-            {
+        "targetSqlDbAdministratorPassword": {
+            "type": "securestring",
+            "metadata": {
                 "description": "Administrator Password for the Target Azure SQL DB Server."
             }
         },
-	    "_artifactsLocation": 
-		{
-		    "type": "string",
-		    "metadata": {
-			    "description": "The base URI where artifacts required by this template are located including a trailing '/'"
-		    },
-		    "defaultValue": "https://datamigrationwebpi.blob.core.windows.net/templatefiles/"
-	    },
-	    "_artifactsLocationSasToken": 
-		{
-		    "type": "securestring",
-		    "metadata": {
-			    "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
-		    },
-		    "defaultValue": ""
-	    }
+        "_artifactsLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+            },
+            "defaultValue": "https://datamigrationwebpi.blob.core.windows.net/templatefiles/"
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+            },
+            "defaultValue": "?"
+        }
     },
-    "variables":
-    {
-	    "DMSServiceName": "[concat('DMS', uniqueString(resourceGroup().id))]",
-		"sourceServerName": "[take(concat('Source', uniqueString(resourceGroup().id)), 15)]",
-		"targetServerName": "[concat('targetservername', uniqueString(resourceGroup().id))]",
+    "variables": {
+        "DMSServiceName": "[concat('DMS', uniqueString(resourceGroup().id))]",
+        "sourceServerName": "[take(concat('Source', uniqueString(resourceGroup().id)), 15)]",
+        "targetServerName": "[concat('targetservername', uniqueString(resourceGroup().id))]",
         "scriptLocation": "AddDatabaseToSqlServer.ps1 ",
-		"bakFileLocation": "AdventureWorks2016.bak",
-		"bacpacFileLocation": "AdventureWorks2016.bacpac",
-        "scriptFiles": "[createarray(concat('https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-azure-database-migration-service/', variables('scriptLocation')), concat('https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-azure-database-migration-service/', variables('bakFileLocation')))]",
+        "bakFileLocation": "AdventureWorks2016.bak",
+        "bacpacFileLocation": "AdventureWorks2016.bacpac",
+        "scriptFiles": "[createarray(concat(parameters('_artifactsLocation'), variables('scriptLocation')), concat(parameters('_artifactsLocation'), variables('bakFileLocation')))]",
         "scriptParameters": "[concat('-userName ', parameters('sourceWindowsAdminUserName'), ' -password \"', parameters('sourceWindowsAdminPassword'))]",
         "storageAccountNamePrefix": "storage",
         "storageAccountName": "[toLower(concat(variables('storageAccountNamePrefix'), uniqueString(resourceGroup().id)))]",
@@ -105,28 +86,22 @@
             "name": "[variables('sourceServerName')]",
             "apiVersion": "2017-12-01",
             "location": "[parameters('location')]",
-            "properties":
-            {
-                "hardwareProfile":
-                {
+            "properties": {
+                "hardwareProfile": {
                     "vmSize": "Standard_D2_v2"
                 },
-                "storageProfile":
-                {
-                    "imageReference":
-                    {
+                "storageProfile": {
+                    "imageReference": {
                         "publisher": "MicrosoftSQLServer",
                         "offer": "SQL2016SP1-WS2016",
                         "sku": "Standard",
                         "version": "latest"
                     },
-                    "osDisk":
-                    {
+                    "osDisk": {
                         "osType": "Windows",
                         "createOption": "FromImage",
                         "caching": "ReadWrite",
-                        "managedDisk":
-                        {
+                        "managedDisk": {
                             "storageAccountType": "Standard_LRS"
                         },
                         "diskSizeGB": 127
@@ -137,42 +112,113 @@
                             "name": "[concat(variables('sourceServerName'),'_disk-1')]",
                             "createOption": "Empty",
                             "caching": "ReadOnly",
-                            "managedDisk":
-                            {
+                            "managedDisk": {
                                 "storageAccountType": "Standard_LRS"
                             },
                             "diskSizeGB": 1023
                         }
                     ]
                 },
-                "osProfile":
-                {
+                "osProfile": {
                     "computerName": "[variables('sourceServerName')]",
                     "adminUsername": "[parameters('sourceWindowsAdminUserName')]",
                     "adminPassword": "[parameters('sourceWindowsAdminPassword')]",
-                    "windowsConfiguration":
-                    {
+                    "windowsConfiguration": {
                         "provisionVMAgent": true,
                         "enableAutomaticUpdates": true
                     }
                 },
-                "networkProfile":
-                {
+                "networkProfile": {
                     "networkInterfaces": [
                         {
                             "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('sourceNicName'))]"
                         }
                     ]
                 },
-                "diagnosticsProfile":
-                {
-                    "bootDiagnostics":
-                    {
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
                         "enabled": true,
                         "storageUri": "[reference(variables('storageAccountName'), '2017-10-01').primaryEndpoints['blob']]"
                     }
                 }
             },
+            "resources": [
+                {
+                    "apiVersion": "2017-12-01",
+                    "type": "extensions",
+                    "name": "SqlIaasExtension",
+                    "location": "[parameters('location')]",
+                    "dependsOn": [
+                        "[concat('Microsoft.Compute/virtualMachines/', variables('sourceServerName'))]"
+                    ],
+                    "properties": {
+                        "type": "SqlIaaSAgent",
+                        "publisher": "Microsoft.SqlServer.Management",
+                        "typeHandlerVersion": "1.2",
+                        "autoUpgradeMinorVersion": "true",
+                        "settings": {
+                            "AutoTelemetrySettings": {
+                                "Region": "[parameters('location')]"
+                            },
+                            "AutoPatchingSettings": {
+                                "PatchCategory": "WindowsMandatoryUpdates",
+                                "Enable": false,
+                                "DayOfWeek": "Sunday",
+                                "MaintenanceWindowStartingHour": "2",
+                                "MaintenanceWindowDuration": "60"
+                            },
+                            "KeyVaultCredentialSettings": {
+                                "Enable": false,
+                                "CredentialName": ""
+                            },
+                            "ServerConfigurationsManagementSettings": {
+                                "SQLConnectivityUpdateSettings": {
+                                    "ConnectivityType": "Private",
+                                    "Port": "1433"
+                                },
+                                "SQLWorkloadTypeUpdateSettings": {
+                                    "SQLWorkloadType": "OLTP"
+                                },
+                                "SQLStorageUpdateSettings": {
+                                    "DiskCount": "1",
+                                    "NumberOfColumns": "8",
+                                    "StartingDeviceID": "2",
+                                    "DiskConfigurationType": "NEW"
+                                },
+                                "AdditionalFeaturesServerConfigurations": {
+                                    "IsRServicesEnabled": "false"
+                                }
+                            }
+                        },
+                        "protectedSettings": {
+                            "SQLAuthUpdateUserName": "[parameters('sourceWindowsAdminUserName')]",
+                            "SQLAuthUpdatePassword": "[parameters('sourceSqlAuthenticationPassword')]"
+                        }
+                    }
+                },
+                {
+                    "apiVersion": "2017-12-01",
+                    "type": "extensions",
+                    "name": "CustomScriptExtension",
+                    "location": "[parameters('location')]",
+                    "dependsOn": [
+                        "[concat('Microsoft.Compute/virtualMachines/', variables('sourceServerName'))]",
+                        "[concat('Microsoft.Compute/virtualMachines/', concat(variables('sourceServerName'),'/extensions/SqlIaasExtension'))]"
+                    ],
+                    "properties": {
+                        "publisher": "Microsoft.Compute",
+                        "type": "CustomScriptExtension",
+                        "typeHandlerVersion": "1.9",
+                        "autoUpgradeMinorVersion": true,
+                        "settings": {
+                            "fileUris": "[variables('scriptFiles')]"
+                        },
+                        "protectedSettings": {
+                            "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', './', variables('scriptLocation'), ' ', variables('scriptParameters'))]"
+                        }
+                    }
+                }
+            ],
             "dependsOn": [
                 "[resourceId('Microsoft.Network/networkInterfaces', variables('sourceNicName'))]",
                 "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
@@ -180,8 +226,7 @@
         },
         {
             "type": "Microsoft.DataMigration/services",
-            "sku":
-            {
+            "sku": {
                 "name": "GeneralPurpose_4vCores",
                 "tier": "General Purpose",
                 "size": "4 vCores"
@@ -189,10 +234,24 @@
             "name": "[variables('DMSServiceName')]",
             "apiVersion": "2017-11-15-privatepreview",
             "location": "[parameters('location')]",
-            "properties":
-            {
+            "properties": {
                 "virtualSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('adVNet'), variables('defaultSubnetName'))]"
             },
+            "resources": [
+                {
+                    "type": "projects",
+                    "name": "SqlToSqlDbMigrationProject",
+                    "apiVersion": "2017-11-15-privatepreview",
+                    "location": "[parameters('location')]",
+                    "properties": {
+                        "sourcePlatform": "SQL",
+                        "targetPlatform": "SQLDB"
+                    },
+                    "dependsOn": [
+                        "[resourceId('Microsoft.DataMigration/services', variables('DMSServiceName'))]"
+                    ]
+                }
+            ],
             "dependsOn": [
                 "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('adVNet'), variables('defaultSubnetName'))]"
             ]
@@ -202,16 +261,13 @@
             "name": "[variables('sourceNicName')]",
             "apiVersion": "2018-02-01",
             "location": "[parameters('location')]",
-            "properties":
-            {
+            "properties": {
                 "ipConfigurations": [
                     {
                         "name": "ipconfig",
-                        "properties":
-                        {
+                        "properties": {
                             "privateIPAllocationMethod": "Dynamic",
-                            "subnet":
-                            {
+                            "subnet": {
                                 "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('adVNet'), variables('defaultSubnetName'))]"
                             },
                             "primary": true,
@@ -231,13 +287,11 @@
             "name": "[variables('sourceServerNSG')]",
             "apiVersion": "2018-02-01",
             "location": "[parameters('location')]",
-            "properties":
-            {
+            "properties": {
                 "defaultSecurityRules": [
                     {
                         "name": "AllowVnetInBound",
-                        "properties":
-                        {
+                        "properties": {
                             "description": "Allow inbound traffic from all VMs in VNET",
                             "protocol": "*",
                             "sourcePortRange": "*",
@@ -251,8 +305,7 @@
                     },
                     {
                         "name": "AllowAzureLoadBalancerInBound",
-                        "properties":
-                        {
+                        "properties": {
                             "description": "Allow inbound traffic from azure load balancer",
                             "protocol": "*",
                             "sourcePortRange": "*",
@@ -266,8 +319,7 @@
                     },
                     {
                         "name": "DenyAllInBound",
-                        "properties":
-                        {
+                        "properties": {
                             "description": "Deny all inbound traffic",
                             "protocol": "*",
                             "sourcePortRange": "*",
@@ -281,8 +333,7 @@
                     },
                     {
                         "name": "AllowVnetOutBound",
-                        "properties":
-                        {
+                        "properties": {
                             "description": "Allow outbound traffic from all VMs to all VMs in VNET",
                             "protocol": "*",
                             "sourcePortRange": "*",
@@ -296,8 +347,7 @@
                     },
                     {
                         "name": "AllowInternetOutBound",
-                        "properties":
-                        {
+                        "properties": {
                             "description": "Allow outbound traffic from all VMs to Internet",
                             "protocol": "*",
                             "sourcePortRange": "*",
@@ -311,8 +361,7 @@
                     },
                     {
                         "name": "DenyAllOutBound",
-                        "properties":
-                        {
+                        "properties": {
                             "description": "Deny all outbound traffic",
                             "protocol": "*",
                             "sourcePortRange": "*",
@@ -330,16 +379,14 @@
         {
             "condition": "[parameters('createPublicIP')]",
             "type": "Microsoft.Network/publicIPAddresses",
-            "sku":
-            {
+            "sku": {
                 "name": "Basic",
                 "tier": "Regional"
             },
             "name": "[variables('publicIPSourceServer')]",
             "apiVersion": "2018-02-01",
             "location": "[parameters('location')]",
-            "properties":
-            {
+            "properties": {
                 "publicIPAddressVersion": "IPv4",
                 "publicIPAllocationMethod": "Dynamic",
                 "idleTimeoutInMinutes": 4
@@ -350,10 +397,8 @@
             "name": "[variables('adVNet')]",
             "apiVersion": "2018-02-01",
             "location": "[parameters('location')]",
-            "properties":
-            {
-                "addressSpace":
-                {
+            "properties": {
+                "addressSpace": {
                     "addressPrefixes": [
                         "10.2.0.0/24"
                     ]
@@ -361,20 +406,31 @@
                 "subnets": [
                     {
                         "name": "default",
-                        "properties":
-                        {
+                        "properties": {
                             "addressPrefix": "10.2.0.0/24"
                         }
                     }
                 ],
                 "enableDdosProtection": false,
                 "enableVmProtection": false
-            }
+            },
+            "resources": [
+                {
+                    "type": "subnets",
+                    "name": "[variables('defaultSubnetName')]",
+                    "apiVersion": "2018-02-01",
+                    "properties": {
+                        "addressPrefix": "10.2.0.0/24"
+                    },
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Network/virtualNetworks', variables('adVNet'))]"
+                    ]
+                }
+            ]
         },
         {
             "type": "Microsoft.Storage/storageAccounts",
-            "sku":
-            {
+            "sku": {
                 "name": "Standard_LRS",
                 "tier": "Standard"
             },
@@ -382,24 +438,18 @@
             "name": "[variables('storageAccountName')]",
             "apiVersion": "2017-10-01",
             "location": "[parameters('location')]",
-            "properties":
-            {
-                "networkAcls":
-                {
+            "properties": {
+                "networkAcls": {
                     "bypass": "AzureServices",
                     "defaultAction": "Allow"
                 },
                 "supportsHttpsTrafficOnly": false,
-                "encryption":
-                {
-                    "services":
-                    {
-                        "file":
-                        {
+                "encryption": {
+                    "services": {
+                        "file": {
                             "enabled": true
                         },
-                        "blob":
-                        {
+                        "blob": {
                             "enabled": true
                         }
                     },
@@ -408,102 +458,11 @@
             }
         },
         {
-            "apiVersion": "2015-06-15",
-            "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "[concat(variables('sourceServerName'), '/SqlIaasExtension')]",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/', variables('sourceServerName'))]"
-            ],
-            "properties":
-            {
-                "type": "SqlIaaSAgent",
-                "publisher": "Microsoft.SqlServer.Management",
-                "typeHandlerVersion": "1.2",
-                "autoUpgradeMinorVersion": "true",
-                "settings":
-                {
-                    "AutoTelemetrySettings":
-                    {
-                        "Region": "[parameters('location')]"
-                    },
-                    "AutoPatchingSettings":
-                    {
-                        "PatchCategory": "WindowsMandatoryUpdates",
-                        "Enable": false,
-                        "DayOfWeek": "Sunday",
-                        "MaintenanceWindowStartingHour": "2",
-                        "MaintenanceWindowDuration": "60"
-                    },
-                    "KeyVaultCredentialSettings":
-                    {
-                        "Enable": false,
-                        "CredentialName": ""
-                    },
-                    "ServerConfigurationsManagementSettings":
-                    {
-                        "SQLConnectivityUpdateSettings":
-                        {
-                            "ConnectivityType": "Private",
-                            "Port": "1433"
-                        },
-                        "SQLWorkloadTypeUpdateSettings":
-                        {
-                            "SQLWorkloadType": "OLTP"
-                        },
-                        "SQLStorageUpdateSettings":
-                        {
-                            "DiskCount": "1",
-                            "NumberOfColumns": "8",
-                            "StartingDeviceID": "2",
-                            "DiskConfigurationType": "NEW"
-                        },
-                        "AdditionalFeaturesServerConfigurations":
-                        {
-                            "IsRServicesEnabled": "false"
-                        }
-                    }
-                },
-                "protectedSettings":
-                {
-                    "SQLAuthUpdateUserName": "[parameters('sourceWindowsAdminUserName')]",
-                    "SQLAuthUpdatePassword": "[parameters('sourceSqlAuthenticationPassword')]"
-                }
-            }
-        },
-        {
-            "type": "Microsoft.DataMigration/services/projects",
-            "name": "[concat(variables('DMSServiceName'), '/', 'SqlToSqlDbMigrationProject')]",
-            "apiVersion": "2017-11-15-privatepreview",
-            "location": "[parameters('location')]",
-            "properties":
-            {
-                "sourcePlatform": "SQL",
-                "targetPlatform": "SQLDB"
-            },
-            "dependsOn": [
-                "[resourceId('Microsoft.DataMigration/services', variables('DMSServiceName'))]"
-            ]
-        },
-        {
-            "type": "Microsoft.Network/virtualNetworks/subnets",
-            "name": "[concat(variables('adVNet'), '/', variables('defaultSubnetName'))]",
-            "apiVersion": "2018-02-01",
-            "properties":
-            {
-                "addressPrefix": "10.2.0.0/24"
-            },
-            "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualNetworks', variables('adVNet'))]"
-            ]
-        },
-        {
             "type": "Microsoft.Sql/servers",
             "name": "[concat(variables('targetServerName'))]",
             "apiVersion": "2015-05-01-preview",
             "location": "[parameters('location')]",
-            "properties":
-            {
+            "properties": {
                 "administratorLogin": "[parameters('targetSqlDbAdministratorLogin')]",
                 "administratorLoginPassword": "[parameters('targetSqlDbAdministratorPassword')]",
                 "version": "12.0"
@@ -511,16 +470,14 @@
             "resources": [
                 {
                     "type": "databases",
-                    "sku":
-                    {
+                    "sku": {
                         "name": "Basic",
                         "tier": "Basic"
                     },
                     "name": "[variables('databaseName')]",
                     "apiVersion": "2017-10-01-preview",
                     "location": "[parameters('location')]",
-                    "properties":
-                    {
+                    "properties": {
                         "collation": "SQL_Latin1_General_CP1_CI_AS",
                         "maxSizeBytes": 2147483648,
                         "zoneRedundant": "false"
@@ -530,13 +487,11 @@
                             "name": "Import",
                             "type": "extensions",
                             "apiVersion": "2014-04-01-preview",
-                            "dependsOn":
-                            [
+                            "dependsOn": [
                                 "[concat('Microsoft.Sql/servers/', concat(variables('targetServerName')), '/databases/', variables('databaseName'))]"
                             ],
-                            "properties":
-                            {
-                                "storageKey": "?",
+                            "properties": {
+                                "storageKey": "[parameters('_artifactsLocationSasToken')]",
                                 "storageKeyType": "[variables('storageKeyType')]",
                                 "storageUri": "[uri(parameters('_artifactsLocation'), variables('bacpacFileLocation'))]",
                                 "administratorLogin": "[parameters('targetSqlDbAdministratorLogin')]",
@@ -554,8 +509,7 @@
                     "name": "AllowAllWindowsAzureIps",
                     "apiVersion": "2014-04-01-preview",
                     "location": "[parameters('location')]",
-                    "properties":
-                    {
+                    "properties": {
                         "endIpAddress": "0.0.0.0",
                         "startIpAddress": "0.0.0.0"
                     },
@@ -564,31 +518,6 @@
                     ]
                 }
             ]
-        },
-        {
-            "apiVersion": "2015-06-15",
-            "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "[concat(variables('sourceServerName'), '/', 'CustomScriptExtension')]",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/', variables('sourceServerName'))]",
-                "[concat('Microsoft.Compute/virtualMachines/', concat(variables('sourceServerName'),'/extensions/SqlIaasExtension'))]"
-            ],
-            "properties":
-            {
-                "publisher": "Microsoft.Compute",
-                "type": "CustomScriptExtension",
-                "typeHandlerVersion": "1.9",
-                "autoUpgradeMinorVersion": true,
-                "settings":
-                {
-                    "fileUris": "[variables('scriptFiles')]"
-                },
-                "protectedSettings":
-                {
-                    "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', './', variables('scriptLocation'), ' ', variables('scriptParameters'))]"
-                }
-            }
         }
     ]
 }
