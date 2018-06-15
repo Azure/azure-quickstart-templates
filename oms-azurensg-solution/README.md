@@ -9,7 +9,7 @@
 
 This template deploys **Azure Network Security Group analytics solution** on an Azure Log Analytics workspace. 
 
-Note: The Microsoft recommended solution is [Traffic Analytics](https://docs.microsoft.com/azure/networking/network-monitoring-overview#traffic-analytics) 
+Note: The Microsoft recommended solution for Network Analytics is [Traffic Analytics](https://docs.microsoft.com/azure/networking/network-monitoring-overview#traffic-analytics) 
 
 `Tags: Azure Network Security Group, OMS Log Analytics, Monitoring`
 
