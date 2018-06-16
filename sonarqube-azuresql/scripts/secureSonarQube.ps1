@@ -21,13 +21,13 @@ if($installationType -eq 'Secure')
     cinst urlrewrite -y --force
     cinst iis-arr -y --force
     #Update web site binding
-    $existingCertificate =Get-ChildItem cert:\LocalMachine\CA | Where-Object subject -eq 'CN=sonarqube'
+    $existingCertificate =Get-ChildItem cert:\LocalMachine\CA | Where-Object subject -eq 'CN=$serverName'
     if($existingCertificate -eq $null)
         {
             Import-Module WebAdministration
             Set-Location IIS:\SslBindings
             New-WebBinding -Name $websiteName -IP "*" -Port 443 -Protocol https
-            $c = New-SelfSignedCertificate -DnsName "sonarqube" -CertStoreLocation "cert:\LocalMachine\My"
+            $c = New-SelfSignedCertificate -DnsName "$serverName" -CertStoreLocation "cert:\LocalMachine\My"
             $c | New-Item 0.0.0.0!443
             #Remove HTTP binding 
             Get-WebBinding -Port 8080 -Name $websiteName | Remove-WebBinding
