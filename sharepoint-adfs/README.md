@@ -22,6 +22,4 @@ Each VM has its own public IP address and is in a subnet protected with a Networ
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-> **Notes:**  
-> With the default sizes of virtual machines, provisioning of the template takes about 1h15 to complete.  
-> The password complexity check in the form is not accurate and may validate a password that will be rejected by Azure when it provisions the VMs. Make sure to **use at least 2 special characters for the passwords**.
+With the default sizes of virtual machines, provisioning of the template takes about 1h15 to complete.
