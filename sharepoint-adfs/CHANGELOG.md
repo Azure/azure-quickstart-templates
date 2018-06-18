@@ -1,5 +1,25 @@
 # Change log for AzureRM template for SharePoint 2016 and 2013 configured with ADFS
 
+## June 2018 update
+
+* Removed SharePoint farm account from local administrators group since this is no longer necessary since SharePointDsc 2.3
+* Removed the manual modification to use TLS 1.2 in resource xRemoteFile and set registry keys in DSC template instead
+* SQL Server DatabaseEngine now runs with the SQL service account instead of the machine account
+* Refresh GPOs to ensure CA root cert is present in "cert:\LocalMachine\Root\" before issuing a certificate request
+* Moved all service accounts names from parameters to variables in order to simplify the form of template deployment
+* Updated SharePointDsc to 2.3
+* Updated SqlServerDsc to 11.2
+* Updated ComputerManagementDsc to 5.0
+* Updated xCredSSP to 1.3
+* Updated xNetworking to 5.7
+* Updated xWebAdministration from 1.16 to 1.20
+* Updated xPSDesiredStateConfiguration from 8.0 to 8.2
+* Updated xDnsServer from 1.8 to 1.10
+* Updated from xCertificate 2.8 to CertificateDsc 4.0
+* Updated from xAdcsDeployment 1.1 to ActiveDirectoryCSDsc 2.0
+* Updated xPendingReboot from 0.3 to 0.4
+* Replaced xDisk and cDisk by StorageDsc 4.0
+
 ## April 4, 2018 update
 
 * Force protocol TLS 1.2 in Invoke-WebRequest to fix TLS/SSL connection error with GitHub in Windows Server 2012 R2
