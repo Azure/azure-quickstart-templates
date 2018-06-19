@@ -276,7 +276,7 @@
   - Upgrade bosh_cli version to 1.3169.0
   - Upgrade bosh-init version to 0.0.81
   - Upgrade API version to the latest 2015-06-15
-  - Upgrade to Ubuntu Server 14.04.3 LTS
+  - Upgrade to Ubuntu Server 14.04.5 LTS
   - Upgrade the default "storageAccountType" into Standard_RAGRS
   - Upgrade the version of CustomScript Extension to 1.4
     - Download the scripts and manifests via fileUris
