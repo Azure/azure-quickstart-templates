@@ -31,10 +31,11 @@ installUtils() {
 
     #Create azure share if it doesn't already exist
     log "Installing AzureCLI and Mounting Azure Files Share" /tmp/nfinstall.log
-    echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ wheezy main" | \
-        sudo tee /etc/apt/sources.list.d/azure-cli.list
+    AZ_REPO=$(lsb_release -cs)
+    echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | \
+     tee /etc/apt/sources.list.d/azure-cli.list
 
-    apt-key adv --keyserver packages.microsoft.com --recv-keys 417A0893 | tee -a /tmp/nfinstall.log
+    curl -L https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add - | tee -a /tmp/nfinstall.log
     apt-get -y update | tee /tmp/nfinstall.log
     apt-get install azure-cli -y | tee -a /tmp/nfinstall.log
 
