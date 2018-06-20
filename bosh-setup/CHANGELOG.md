@@ -1,3 +1,17 @@
+# v3.10.0 (2018-06-13)
+
+- Upgrade Azure CPI version to v35.3.0. Please see new features in [bosh-azure-cpi-release v35.3.0](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v35.3.0)
+- Bump [bosh-deployment](https://github.com/cloudfoundry/bosh-deployment/tree/1102ce016d4772dcb69c26ae4f301e023503953b)
+- Bump cf-deployment to [v1.40.0](https://github.com/cloudfoundry/cf-deployment/tree/v1.40.0)
+- Use the ops file [use-external-blobstore.yml](https://raw.githubusercontent.com/cloudfoundry/cf-deployment/v2-fast/operations/use-external-blobstore.yml)
+- Fixed the version of Azure CLI
+
+# v3.9.0 (2018-05-26)
+
+- Bump cf-deployment to [v1.36.0](https://github.com/cloudfoundry/cf-deployment/tree/v1.36.0)
+- Update the signing key for installing azure-cli
+- Use compiled packages for Azure China Cloud
+
 # v3.8.0 (2018-05-14)
 
 - Bump cf-deployment to [v1.31.0](https://github.com/cloudfoundry/cf-deployment/tree/v1.31.0)
@@ -262,7 +276,7 @@
   - Upgrade bosh_cli version to 1.3169.0
   - Upgrade bosh-init version to 0.0.81
   - Upgrade API version to the latest 2015-06-15
-  - Upgrade to Ubuntu Server 14.04.3 LTS
+  - Upgrade to Ubuntu Server 14.04.5 LTS
   - Upgrade the default "storageAccountType" into Standard_RAGRS
   - Upgrade the version of CustomScript Extension to 1.4
     - Download the scripts and manifests via fileUris

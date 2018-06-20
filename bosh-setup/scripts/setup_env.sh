@@ -39,9 +39,9 @@ mv ./bosh-cli-* /usr/local/bin/bosh
 echo "Installing Azure CLI"
 AZ_REPO=$(lsb_release -cs)
 echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | tee /etc/apt/sources.list.d/azure-cli.list
-apt-key adv --keyserver packages.microsoft.com --recv-keys 52E16F86FEE04B979B07E28DB02C46DF417A0893
+curl -L https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
 retryop "apt-get install apt-transport-https"
-retryop "apt-get update && apt-get install azure-cli"
+retryop "apt-get update && apt-get install azure-cli=2.0.33-1~$AZ_REPO"
 
 echo "Creating the containers (bosh and stemcell) and the table (stemcells) in the default storage account"
 default_storage_account=$(get_setting DEFAULT_STORAGE_ACCOUNT_NAME)
@@ -202,36 +202,30 @@ bosh -n -d cf deploy ~/example_manifests/cf-deployment.yml \\
 EOF
 if [ "$environment" = "AzureChinaCloud" ]; then
   cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
-  -o ~/example_manifests/use-azure-storage-blobstore.yml \\
   -o ~/example_manifests/use-mirror-releases-for-cf.yml \\
-  -v system_domain=$(get_setting CLOUD_FOUNDRY_PUBLIC_IP).xip.io \\
-  -v environment=$(get_setting ENVIRONMENT) \\
-  -v blobstore_storage_account_name=$(get_setting DEFAULT_STORAGE_ACCOUNT_NAME) \\
-  -v blobstore_storage_access_key=$(get_setting DEFAULT_STORAGE_ACCESS_KEY) \\
-  -v app_package_directory_key=cc-packages \\
-  -v buildpack_directory_key=cc-buildpack \\
-  -v droplet_directory_key=cc-droplet \\
-  -v resource_directory_key=cc-resource
-EOF
-elif [ "$environment" = "AzureStack" ]; then
-  cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
-  -o ~/example_manifests/use-compiled-releases.yml \\
-  -v system_domain=$(get_setting CLOUD_FOUNDRY_PUBLIC_IP).xip.io
+  -o ~/example_manifests/use-mirror-compiled-releases.yml \\
 EOF
 else
   cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
   -o ~/example_manifests/use-compiled-releases.yml \\
+EOF
+fi
+if [ "$environment" != "AzureStack" ]; then
+  cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
+  -o ~/example_manifests/use-external-blobstore.yml \\
+  -v app_package_directory_key=cc-packages \\
+  -v buildpack_directory_key=cc-buildpacks \\
+  -v droplet_directory_key=cc-droplets \\
+  -v resource_directory_key=cc-resources \\
   -o ~/example_manifests/use-azure-storage-blobstore.yml \\
-  -v system_domain=$(get_setting CLOUD_FOUNDRY_PUBLIC_IP).xip.io \\
   -v environment=$(get_setting ENVIRONMENT) \\
   -v blobstore_storage_account_name=$(get_setting DEFAULT_STORAGE_ACCOUNT_NAME) \\
   -v blobstore_storage_access_key=$(get_setting DEFAULT_STORAGE_ACCESS_KEY) \\
-  -v app_package_directory_key=cc-packages \\
-  -v buildpack_directory_key=cc-buildpack \\
-  -v droplet_directory_key=cc-droplet \\
-  -v resource_directory_key=cc-resource
 EOF
-fi 
+fi
+cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
+  -v system_domain=$(get_setting CLOUD_FOUNDRY_PUBLIC_IP).xip.io
+EOF
 chmod 777 $home_dir/deploy_cloud_foundry.sh
 
 cat >> "$home_dir/connect_director_vm.sh" << EOF
