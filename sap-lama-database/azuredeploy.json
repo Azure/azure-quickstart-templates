@@ -103,6 +103,13 @@
                 "description": ""
             }
         },
+        "sapadmPassword": {
+            "type": "securestring",
+            "minLength": "6",
+            "metadata": {
+                "description": "Password for the sapadm account."
+            }
+        },
         "_artifactsLocation": {
             "type": "string",
             "metadata": {
@@ -704,7 +711,8 @@
                     "privateIPAllocationMethod": "Dynamic",
                     "subnet": {
                         "id": "[parameters('subnetId')]"
-                    }
+                    },
+                    "primary": true
                 }
             }
         ],
@@ -716,7 +724,8 @@
                         "privateIPAllocationMethod": "Dynamic",
                         "subnet": {
                             "id": "[parameters('subnetId')]"
-                        }
+                        },
+                        "primary": false
                     }
                 },
                 {
@@ -725,7 +734,8 @@
                         "privateIPAllocationMethod": "Dynamic",
                         "subnet": {
                             "id": "[parameters('subnetId')]"
-                        }
+                        },
+                        "primary": false
                     }
                 }
             ],
@@ -827,7 +837,7 @@
                 "type": "[variables('cseExtName')]",
                 "typeHandlerVersion": "[variables('cseExtVersion')]",
                 "autoUpgradeMinorVersion": true,
-                "settings": {
+                "protectedSettings": {
                     "fileUris": [
                         "[variables('csExtensionScript')]"
                     ],
@@ -836,25 +846,43 @@
             }
         },
         {
-            "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "[concat(variables('vmName'), '/', variables('cseExtNameHostAgent'))]",
-            "apiVersion": "2017-12-01",
-            "location": "[resourceGroup().location]",
+            "apiVersion": "2018-02-01",
+            "name": "[concat(deployment().name, '-installsaphostagent')]",
+            "type": "Microsoft.Resources/deployments",
             "dependsOn": [
                 "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), '/extensions/', variables('cseExtName'))]"
             ],
             "properties": {
-                "publisher": "[variables('cseExtPublisher')]",
-                "type": "[variables('cseExtName')]",
-                "typeHandlerVersion": "[variables('cseExtVersion')]",
-                "autoUpgradeMinorVersion": true,
-                "settings": {
-                    "fileUris": [
-                        "[parameters('sapcarLocation')]",
-                        "[parameters('sapHostAgentArchiveLocation')]",
-                        "[parameters('sapacExtLocation')]"
-                    ],
-                    "commandToExecute": "[concat('./sapcar -xvf SAPHOSTAGENT.SAR -R hostagent; pushd hostagent; ./saphostexec -install -gid 79; popd; /usr/sap/hostctrl/exe/sapacosprep -a InstallAcExt -m SAPACEXT.SAR')]"
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(parameters('_artifactsLocation'), '/nestedtemplates/installHostAgent.json', parameters('_artifactsLocationSasToken'))]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "vmName": {
+                        "value": "[variables('vmName')]"
+                    },
+                    "cseExtName": {
+                        "value": "[variables('cseExtName')]"
+                    },
+                    "cseExtPublisher": {
+                        "value": "[variables('cseExtPublisher')]"
+                    },
+                    "cseExtVersion": {
+                        "value": "[variables('cseExtVersion')]"
+                    },
+                    "sapcarLocation": {
+                        "value": "[parameters('sapcarLocation')]"
+                    },
+                    "sapHostAgentArchiveLocation": {
+                        "value": "[parameters('sapHostAgentArchiveLocation')]"
+                    },
+                    "sapacExtLocation": {
+                        "value": "[parameters('sapacExtLocation')]"
+                    },
+                    "sapadmPassword": {
+                        "value": "[parameters('sapadmPassword')]"
+                    }
                 }
             }
         }
