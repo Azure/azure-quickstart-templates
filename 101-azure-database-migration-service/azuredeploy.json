@@ -131,7 +131,7 @@
                 "networkProfile": {
                     "networkInterfaces": [
                         {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('sourceNicName'))]"
+                            "id": "[if(parameters('createPublicIP'), resourceId('Microsoft.Network/networkInterfaces', concat(variables('sourceNicName'), 'public')), resourceId('Microsoft.Network/networkInterfaces', concat(variables('sourceNicName'), 'private')))]"
                         }
                     ]
                 },
@@ -220,8 +220,8 @@
                 }
             ],
             "dependsOn": [
-                "[resourceId('Microsoft.Network/networkInterfaces', variables('sourceNicName'))]",
-                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+                "[if(parameters('createPublicIP'), resourceId('Microsoft.Network/networkInterfaces', concat(variables('sourceNicName'), 'public')), resourceId('Microsoft.Network/networkInterfaces', concat(variables('sourceNicName'), 'private')))]",
+                "[if(parameters('createPublicIP'), resourceId('Microsoft.Network/networkInterfaces', concat(variables('sourceNicName'), 'public')), resourceId('Microsoft.Network/networkInterfaces', concat(variables('sourceNicName'), 'private')))]"
             ]
         },
         {
@@ -257,8 +257,39 @@
             ]
         },
         {
+            "condition": "[parameters('createPublicIP')]",
             "type": "Microsoft.Network/networkInterfaces",
-            "name": "[variables('sourceNicName')]",
+            "name": "[concat(variables('sourceNicName'), 'public')]",
+            "apiVersion": "2018-02-01",
+            "location": "[parameters('location')]",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig",
+                        "properties": {
+                            "publicIPAddress": {
+                                "id": "[resourceId ('Microsoft.Network/publicIPAddresses/', variables('publicIPSourceServer'))]"
+                            },
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('adVNet'), variables('defaultSubnetName'))]"
+                            },
+                            "primary": true,
+                            "privateIPAddressVersion": "IPv4"
+                        }
+                    }
+                ],
+                "enableAcceleratedNetworking": false,
+                "enableIPForwarding": false
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('adVNet'), variables('defaultSubnetName'))]"
+            ]
+        },
+        {
+            "condition": "[not(parameters('createPublicIP'))]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[concat(variables('sourceNicName'), 'private')]",
             "apiVersion": "2018-02-01",
             "location": "[parameters('location')]",
             "properties": {
