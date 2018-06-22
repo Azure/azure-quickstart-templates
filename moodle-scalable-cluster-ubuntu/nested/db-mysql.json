@@ -1,0 +1,97 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "moodleCommon": {
+            "metadata": {
+                "description": "Common Moodle values"
+            },
+            "type": "object"
+        },
+        "lbPubIp": {
+            "metadata": {
+                "description": "Public IP address of the deployed load balancer"
+            },
+            "type": "string"
+        },
+        "ctlrPubIp": {
+            "metadata": {
+                "description": "Public IP address of the deployed controller VM"
+            },
+            "type": "string"
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.DBforMySQL/servers",
+            "apiVersion": "2017-12-01",
+            "kind": "",
+            "location": "[parameters('moodleCommon').location]",
+            "name": "[parameters('moodleCommon').serverName]",
+            "properties": {
+                "administratorLogin": "[parameters('moodleCommon').dbLogin]",
+                "administratorLoginPassword": "[parameters('moodleCommon').dbLoginPassword]",
+                "sslEnforcement": "[parameters('moodleCommon').sslEnforcement]",
+                "storageProfile": {
+                    "storageMB": "[mul(parameters('moodleCommon').mysqlPgresStgSizeGB, 1024)]",
+                    "backupRetentionDays": "35",
+                    "geoRedundantBackup": "Enabled"
+                },
+                "version": "[parameters('moodleCommon').mysqlVersion]"
+            },
+            "sku": {
+                "capacity": "[parameters('moodleCommon').mysqlPgresVcores]",
+                "name": "[parameters('moodleCommon').mysqlPgresSkuName]",
+                "tier": "[parameters('moodleCommon').mysqlPgresSkuTier]",
+                "family": "[parameters('moodleCommon').mysqlPgresSkuHwFamily]"
+            },
+            "resources": [
+                {
+                    "apiVersion": "2017-12-01",
+                    "dependsOn": [
+                        "[concat('Microsoft.DBforMySQL/servers/', parameters('moodleCommon').serverName)]"
+                    ],
+                    "location": "[parameters('moodleCommon').location]",
+                    "name": "mysql-firewall-allow-lb",
+                    "properties": {
+                        "startIpAddress": "[parameters('lbPubIp')]",
+                        "endIpAddress": "[parameters('lbPubIp')]"
+                    },
+                    "type": "firewallRules"
+                },
+                {
+                    "apiVersion": "2017-12-01",
+                    "dependsOn": [
+                        "[concat('Microsoft.DBforMySQL/servers/', parameters('moodleCommon').serverName)]"
+                    ],
+                    "location": "[parameters('moodleCommon').location]",
+                    "name": "mysql-firewall-allow-ctlr",
+                    "properties": {
+                        "startIpAddress": "[parameters('ctlrPubIp')]",
+                        "endIpAddress": "[parameters('ctlrPubIp')]"
+                    },
+                    "type": "firewallRules"
+                }
+            ]
+        }
+    ],
+    "outputs": {
+        "dbFQDN": {
+            "type": "string",
+            "value": "[reference(parameters('moodleCommon').serverName).fullyQualifiedDomainName]"
+        }
+    },
+    "variables": {
+        "documentation1": "This sub-template creates a mysql server.  It expects certain values in the 'common' datastructure.",
+        "documentation10": " serverName                 - Mysql server name",
+        "documentation11": " mysqlVersion               - Mysql version",
+        "documentation2": " administratorLogin          - mysql admin username",
+        "documentation3": " administratorLoginPassword  - mysql admin password",
+        "documentation4": " location                    - Mysql server location",
+        "documentation5": " mysqlPgresVcores            - Mysql database trasaction units",
+        "documentation7": " mysqlPgresSkuName           - Mysql sku name",
+        "documentation8": " mysqlPgresStgSizeGB         - Mysql sku size in mb",
+        "documentation9": " mysqlPgresSkuTier           - Mysql sku tier",
+        "documentationA": " mysqlPgresSkuHwFamily       - Mysql sku hardware family"
+    }
+}

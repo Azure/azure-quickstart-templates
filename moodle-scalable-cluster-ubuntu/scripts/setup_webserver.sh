@@ -22,25 +22,29 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-glusterNode=$1
-glusterVolume=$2 
-siteFQDN=$3
-syslogserver=$4
-webServerType=$5
-fileServerType=$6
-storageAccountName=$7
-storageAccountKey=$8
-nfsVmName=$9
+glusterNode=${1}
+glusterVolume=${2}
+siteFQDN=${3}
+httpsTermination=${4}
+syslogserver=${5}
+webServerType=${6}
+fileServerType=${7}
+storageAccountName=${8}
+storageAccountKey=${9}
+nfsVmName=${10}
+htmlLocalCopySwitch=${11}
 
 echo $glusterNode    >> /tmp/vars.txt
 echo $glusterVolume  >> /tmp/vars.txt
 echo $siteFQDN >> /tmp/vars.txt
+echo $httpsTermination >> /tmp/vars.txt
 echo $syslogserver >> /tmp/vars.txt
 echo $webServerType >> /tmp/vars.txt
 echo $fileServerType >> /tmp/vars.txt
 echo $storageAccountName >> /tmp/vars.txt
 echo $storageAccountKey >> /tmp/vars.txt
 echo $nfsVmName >> /tmp/vars.txt
+echo $htmlLocalCopySwitch >> /tmp/vars.txt
 
 . ./helper_functions.sh
 check_fileServerType_param $fileServerType
@@ -60,12 +64,16 @@ check_fileServerType_param $fileServerType
     sudo add-apt-repository ppa:gluster/glusterfs-3.8 -y
     sudo apt-get -y update
     sudo apt-get -y install glusterfs-client
-  else # "azurefiles"
+  elif [ "$fileServerType" = "azurefiles" ]; then
     sudo apt-get -y install cifs-utils
   fi
 
   # install the base stack
-  sudo apt-get -y install nginx varnish php php-cli php-curl php-zip
+  sudo apt-get -y install varnish php php-cli php-curl php-zip php-pear php-mbstring php-dev mcrypt
+
+  if [ "$webServerType" = "nginx" -o "$httpsTermination" = "VMSS" ]; then
+    sudo apt-get -y install nginx
+  fi
 
   if [ "$webServerType" = "apache" ]; then
     # install apache pacakges
@@ -77,6 +85,7 @@ check_fileServerType_param $fileServerType
 
   # Moodle requirements
   sudo apt-get install -y graphviz aspell php-soap php-json php-redis php-bcmath php-gd php-pgsql php-mysql php-xmlrpc php-intl php-xml php-bz2
+  install_php_sql_driver
 
   if [ $fileServerType = "gluster" ]; then
     # Mount gluster fs for /moodle
@@ -104,8 +113,9 @@ local2.*   @${syslogserver}:514
 EOF
   service syslog restart
 
-  # Build nginx config
-  cat <<EOF > /etc/nginx/nginx.conf
+  if [ "$webServerType" = "nginx" -o "$httpsTermination" = "VMSS" ]; then
+    # Build nginx config
+    cat <<EOF > /etc/nginx/nginx.conf
 user www-data;
 worker_processes 2;
 pid /run/nginx.pid;
@@ -146,13 +156,18 @@ http {
   gzip_buffers 16 8k;
   gzip_http_version 1.1;
   gzip_types text/plain text/css application/json application/x-javascript text/xml application/xml application/xml+rss text/javascript;
-
+EOF
+    if [ "$httpsTermination" != "None" ]; then
+      cat <<EOF >> /etc/nginx/nginx.conf
   map \$http_x_forwarded_proto \$fastcgi_https {                                                                                          
     default \$https;                                                                                                                   
     http '';                                                                                                                          
     https on;                                                                                                                         
-  }   
+  }
+EOF
+    fi
 
+    cat <<EOF >> /etc/nginx/nginx.conf
   log_format moodle_combined '\$remote_addr - \$upstream_http_x_moodleuser [\$time_local] '
                              '"\$request" \$status \$body_bytes_sent '
                              '"\$http_referer" "\$http_user_agent"';
@@ -162,12 +177,23 @@ http {
   include /etc/nginx/sites-enabled/*;
 }
 EOF
+  fi # if [ "$webServerType" = "nginx" -o "$httpsTermination" = "VMSS" ];
 
-  # Configure nginx/https
-  cat <<EOF >> /etc/nginx/sites-enabled/${siteFQDN}.conf
+  # Set up html dir local copy if specified
+  htmlRootDir="/moodle/html/moodle"
+  if [ "$htmlLocalCopySwitch" = "True" ]; then
+    mkdir -p /var/www/html
+    rsync -av --delete /moodle/html/moodle /var/www/html
+    htmlRootDir="/var/www/html/moodle"
+    setup_html_local_copy_cron_job
+  fi
+
+  if [ "$httpsTermination" = "VMSS" ]; then
+    # Configure nginx/https
+    cat <<EOF >> /etc/nginx/sites-enabled/${siteFQDN}.conf
 server {
         listen 443 ssl;
-        root /moodle/html/moodle;
+        root ${htmlRootDir};
 	index index.php index.html index.htm;
 
         ssl on;
@@ -202,13 +228,14 @@ server {
         }
 }
 EOF
+  fi
 
   if [ "$webServerType" = "nginx" ]; then
     cat <<EOF >> /etc/nginx/sites-enabled/${siteFQDN}.conf
 server {
         listen 81 default;
         server_name ${siteFQDN};
-        root /moodle/html/moodle;
+        root ${htmlRootDir};
 	index index.php index.html index.htm;
 
         # Log to syslog
@@ -222,15 +249,17 @@ server {
         set_real_ip_from    192.168.0.0/16;
         real_ip_header      X-Forwarded-For;
         real_ip_recursive   on;
-
-
+EOF
+    if [ "$httpsTermination" != "None" ]; then
+      cat <<EOF >> /etc/nginx/sites-enabled/${siteFQDN}.conf
         # Redirect to https
         if (\$http_x_forwarded_proto != https) {
                 return 301 https://\$server_name\$request_uri;
         }
         rewrite ^/(.*\.php)(/)(.*)$ /\$1?file=/\$3 last;
-
-
+EOF
+    fi
+    cat <<EOF >> /etc/nginx/sites-enabled/${siteFQDN}.conf
         # Filter out php-fpm status page
         location ~ ^/server-status {
             return 404;
@@ -257,7 +286,7 @@ server {
 }
 
 EOF
-  fi
+  fi # if [ "$webServerType" = "nginx" ];
 
   if [ "$webServerType" = "apache" ]; then
     # Configure Apache/php
@@ -269,21 +298,25 @@ EOF
 	ServerName ${siteFQDN}
 
 	ServerAdmin webmaster@localhost
-	DocumentRoot /moodle/html/moodle
+	DocumentRoot ${htmlRootDir}
 
-	<Directory /moodle/html/moodle>
+	<Directory ${htmlRootDir}>
 		Options FollowSymLinks
 		AllowOverride All
 		Require all granted
 	</Directory>
-
+EOF
+    if [ "$httpsTermination" != "None" ]; then
+      cat <<EOF >> /etc/apache2/sites-enabled/${siteFQDN}.conf
     # Redirect unencrypted direct connections to HTTPS
     <IfModule mod_rewrite.c>
       RewriteEngine on
       RewriteCond %{HTTP:X-Forwarded-Proto} !https [NC]
       RewriteRule ^ https://%{SERVER_NAME}%{REQUEST_URI} [L,R=301]
     </IFModule>
-
+EOF
+    fi
+    cat <<EOF >> /etc/apache2/sites-enabled/${siteFQDN}.conf
     # Log X-Forwarded-For IP address instead of varnish (127.0.0.1)
     SetEnvIf X-Forwarded-For "^.*\..*\..*\..*" forwarded
     LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" combined
@@ -294,7 +327,7 @@ EOF
 
 </VirtualHost>
 EOF
-  fi
+  fi # if [ "$webServerType" = "apache" ];
 
    # php config 
    if [ "$webServerType" = "apache" ]; then
@@ -322,8 +355,10 @@ EOF
      rm -f /etc/apache2/sites-enabled/000-default.conf
    fi
 
-   # restart Nginx
-   sudo service nginx restart 
+   if [ "$webServerType" = "nginx" -o "$httpsTermination" = "VMSS" ]; then
+     # restart Nginx
+     sudo service nginx restart 
+   fi
 
    if [ "$webServerType" = "nginx" ]; then
      # fpm config - overload this 

@@ -1,239 +1,322 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-  "contentVersion": "1.0.0.0",
-  "parameters": {
-    "moodleCommon": {
-      "metadata": {
-        "description": "Common Moodle values"
-      },
-      "type": "object"
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "moodleCommon": {
+            "metadata": {
+                "description": "Common Moodle values"
+            },
+            "type": "object"
+        }
     },
-    "location": {
-      "type": "string",
-      "defaultValue": "[resourceGroup().location]",
-      "metadata": {
-        "description": "Location for all resources."
-      }
+    "resources": [
+        {
+            "condition": "[equals(parameters('moodleCommon').customVnetId, '')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2017-05-10",
+            "name": "vnetTemplate",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "moodleCommon": {
+                        "value": "[parameters('moodleCommon')]"
+                    }
+                },
+                "templateLink": {
+                    "uri": "[concat(parameters('moodleCommon').baseTemplateUrl,'network-vnet.json',parameters('moodleCommon').artifactsSasToken)]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2017-05-10",
+            "dependsOn": [
+                "Microsoft.Resources/deployments/vnetTemplate"
+            ],
+            "name": "subnetTemplate",
+            "subscriptionId": "[variables('vnetSub')]",
+            "resourceGroup": "[variables('vnetRg')]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "moodleCommon": {
+                        "value": "[parameters('moodleCommon')]"
+                    },
+                    "vnetName": {
+                        "value": "[variables('vnetName')]"
+                    }
+                },
+                "templateLink": {
+                    "uri": "[concat(parameters('moodleCommon').baseTemplateUrl,'network-subnets.json',parameters('moodleCommon').artifactsSasToken)]"
+                }
+            }
+        },
+        {
+            "condition": "[parameters('moodleCommon').vnetGwDeploySwitch]",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2017-10-01",
+            "location": "[parameters('moodleCommon').location]",
+            "name": "[parameters('moodleCommon').gatewayPublicIPName]",
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic"
+            },
+            "tags": {
+                "displayName": "Virtual network gateway Public IP"
+            }
+        },
+        {
+            "condition": "[parameters('moodleCommon').vnetGwDeploySwitch]",
+            "type": "Microsoft.Network/virtualNetworkGateways",
+            "apiVersion": "2017-10-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', parameters('moodleCommon').gatewayPublicIPName)]",
+                "Microsoft.Resources/deployments/subnetTemplate"
+            ],
+            "location": "[parameters('moodleCommon').location]",
+            "name": "[parameters('moodleCommon').gatewayName]",
+            "properties": {
+                "activeActive": false,
+                "enableBgp": false,
+                "gatewayType": "[parameters('moodleCommon').gatewayType]",
+                "ipConfigurations": [
+                    {
+                        "name": "vnet-Gateway-Config",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('moodleCommon').gatewayPublicIPName)]"
+                            },
+                            "subnet": {
+                                "id": "[variables('subnetIdGateway')]"
+                            }
+                        }
+                    }
+                ],
+                "sku": {
+                    "name": "VpnGw1",
+                    "tier": "VpnGw1",
+                    "capacity": 2
+                },
+                "vpnType": "[parameters('moodleCommon').vpnType]"
+            }
+        },
+        {
+            "condition": "[not(equals(parameters('moodleCommon').httpsTermination, 'AppGw'))]",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2017-10-01",
+            "location": "[parameters('moodleCommon').location]",
+            "name": "[parameters('moodleCommon').lbPipName]",
+            "properties": {
+                "dnsSettings": {
+                    "domainNameLabel": "[parameters('moodleCommon').lbName]"
+                },
+                "publicIPAllocationMethod": "Static"
+            },
+            "tags": {
+                "displayName": "Load Balancer Public IP"
+            }
+        },
+        {
+            "condition": "[equals(parameters('moodleCommon').httpsTermination, 'AppGw')]",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2017-10-01",
+            "location": "[parameters('moodleCommon').location]",
+            "name": "[parameters('moodleCommon').appGwPipName]",
+            "properties": {
+                "dnsSettings": {
+                    "domainNameLabel": "[parameters('moodleCommon').appGwName]"
+                },
+                "publicIPAllocationMethod": "Dynamic"
+            },
+            "tags": {
+                "displayName": "App Gateway Public IP (must be dynamic)"
+            }
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2017-10-01",
+            "location": "[parameters('moodleCommon').location]",
+            "name": "[parameters('moodleCommon').ctlrPipName]",
+            "properties": {
+                "dnsSettings": {
+                    "domainNameLabel": "[parameters('moodleCommon').ctlrPipName]"
+                },
+                "publicIPAllocationMethod": "Static"
+            },
+            "tags": {
+                "displayName": "Controller VM Public IP"
+            }
+        },
+        {
+            "condition": "[not(equals(parameters('moodleCommon').httpsTermination, 'AppGw'))]",
+            "type": "Microsoft.Network/loadBalancers",
+            "apiVersion": "2017-10-01",
+            "dependsOn": [
+                "[concat('Microsoft.Network/publicIPAddresses/',parameters('moodleCommon').lbPipName)]"
+            ],
+            "location": "[parameters('moodleCommon').location]",
+            "name": "[parameters('moodleCommon').lbName]",
+            "properties": {
+                "backendAddressPools": [
+                    {
+                        "name": "[parameters('moodleCommon').extBeName ]"
+                    }
+                ],
+                "frontendIPConfigurations": [
+                    {
+                        "name": "[parameters('moodleCommon').extFeName ]",
+                        "properties": {
+                            "publicIPAddress": {
+                                "id": "[variables('lbPipID')]"
+                            }
+                        }
+                    }
+                ],
+                "loadBalancingRules": [
+                    {
+                        "name": "Http",
+                        "properties": {
+                            "backendAddressPool": {
+                                "id": "[variables('extBeID')]"
+                            },
+                            "backendPort": 80,
+                            "enableFloatingIP": false,
+                            "frontendIPConfiguration": {
+                                "id": "[variables('extFeID')]"
+                            },
+                            "frontendPort": 80,
+                            "idleTimeoutInMinutes": 5,
+                            "probe": {
+                                "id": "[variables('extProbeID')]"
+                            },
+                            "protocol": "Tcp"
+                        }
+                    },
+                    {
+                        "name": "Https",
+                        "properties": {
+                            "backendAddressPool": {
+                                "id": "[variables('extBeID')]"
+                            },
+                            "backendPort": 443,
+                            "enableFloatingIP": false,
+                            "frontendIPConfiguration": {
+                                "id": "[variables('extFeID')]"
+                            },
+                            "frontendPort": 443,
+                            "idleTimeoutInMinutes": 5,
+                            "probe": {
+                                "id": "[variables('extProbeID')]"
+                            },
+                            "protocol": "Tcp"
+                        }
+                    }
+                ],
+                "probes": [
+                    {
+                        "name": "[parameters('moodleCommon').extProbe  ]",
+                        "properties": {
+                            "intervalInSeconds": 5,
+                            "numberOfProbes": 3,
+                            "port": 80,
+                            "protocol": "Tcp"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "condition": "[equals(parameters('moodleCommon').httpsTermination, 'AppGw')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2017-05-10",
+            "dependsOn": [
+                "Microsoft.Resources/deployments/subnetTemplate",
+                "[concat('Microsoft.Network/publicIPAddresses/',parameters('moodleCommon').lbPipName)]"
+            ],
+            "name": "appGwTemplate",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "moodleCommon": {
+                        "value": "[parameters('moodleCommon')]"
+                    },
+                    "subnetIdAppGw": {
+                        "value": "[variables('subnetIdAppGw')]"
+                    },
+                    "sslCertData": {
+                        "reference": {
+                            "keyVault": {
+                                "id": "[parameters('moodleCommon').appGwSslCertKeyVaultResourceId]"
+                            },
+                            "secretName": "[parameters('moodleCommon').appGwSslCertKeyVaultSecretName]"
+                        }
+                    }
+                },
+                "templateLink": {
+                    "uri": "[concat(parameters('moodleCommon').baseTemplateUrl,'appgw.json',parameters('moodleCommon').artifactsSasToken)]"
+                }
+            }
+        }
+    ],
+    "variables": {
+        "documentation01": "This sub-template creates a virtual network with a number of subnets and then creates the moodle load-balancer (or an Azure Application Gateway) with public IP/dns",
+        "extBeID": "[concat(variables('extLbID'),'/backendAddressPools/',parameters('moodleCommon').extBeName)]",
+        "extFeID": "[concat(variables('extLbID'),'/frontendIPConfigurations/',parameters('moodleCommon').extFeName)]",
+        "extLbID": "[resourceId('Microsoft.Network/loadBalancers',parameters('moodleCommon').lbName)]",
+        "extProbeID": "[concat(variables('extLbID'),'/probes/',parameters('moodleCommon').extProbe)]",
+        "lbPipID": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('moodleCommon').lbPipName)]",
+        "ctlrPipID": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('moodleCommon').ctlrPipName)]",
+        "customVnetIdArr":              "[split(parameters('moodleCommon').customVnetId, '/')]",
+        "vnetSub":                      "[if(equals(parameters('moodleCommon').customVnetId, ''), subscription().subscriptionId, variables('customVnetIdArr')[2])]",
+        "vnetRg":                       "[if(equals(parameters('moodleCommon').customVnetId, ''), resourceGroup().name, variables('customVnetIdArr')[4])]",
+        "vnetName":                     "[if(equals(parameters('moodleCommon').customVnetId, ''), parameters('moodleCommon').vnetName, variables('customVnetIdArr')[8])]",
+        "customVnetSubnetIdWeb":        "[concat(parameters('moodleCommon').customVnetId, '/subnets/', parameters('moodleCommon').subnetWeb)]",
+        "customVnetSubnetIdSan":        "[concat(parameters('moodleCommon').customVnetId, '/subnets/', parameters('moodleCommon').subnetSan)]",
+        "customVnetSubnetIdRedis":      "[concat(parameters('moodleCommon').customVnetId, '/subnets/', parameters('moodleCommon').subnetRedis)]",
+        "customVnetSubnetIdElastic":    "[concat(parameters('moodleCommon').customVnetId, '/subnets/', parameters('moodleCommon').subnetElastic)]",
+        "customVnetSubnetIdTika":       "[concat(parameters('moodleCommon').customVnetId, '/subnets/', parameters('moodleCommon').subnetTika)]",
+        "customVnetSubnetIdGateway":    "[concat(parameters('moodleCommon').customVnetId, '/subnets/', parameters('moodleCommon').subnetGateway)]",
+        "customVnetSubnetIdAppGw":      "[concat(parameters('moodleCommon').customVnetId, '/subnets/', parameters('moodleCommon').subnetAppGw)]",
+        "subnetIdWeb":      "[if(equals(parameters('moodleCommon').customVnetId, ''), resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), parameters('moodleCommon').subnetWeb), variables('customVnetSubnetIdWeb'))]",
+        "subnetIdSan":      "[if(equals(parameters('moodleCommon').customVnetId, ''), resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), parameters('moodleCommon').subnetSan), variables('customVnetSubnetIdSan'))]",
+        "subnetIdRedis":    "[if(equals(parameters('moodleCommon').customVnetId, ''), resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), parameters('moodleCommon').subnetRedis), variables('customVnetSubnetIdRedis'))]",
+        "subnetIdElastic":  "[if(equals(parameters('moodleCommon').customVnetId, ''), resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), parameters('moodleCommon').subnetElastic), variables('customVnetSubnetIdElastic'))]",
+        "subnetIdTika":     "[if(equals(parameters('moodleCommon').customVnetId, ''), resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), parameters('moodleCommon').subnetTika), variables('customVnetSubnetIdTika'))]",
+        "subnetIdGateway":  "[if(equals(parameters('moodleCommon').customVnetId, ''), resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), parameters('moodleCommon').subnetGateway), variables('customVnetSubnetIdGateway'))]",
+        "subnetIdAppGw":    "[if(equals(parameters('moodleCommon').customVnetId, ''), resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), parameters('moodleCommon').subnetAppGw), variables('customVnetSubnetIdAppGw'))]"
+    },
+    "outputs": {
+        "lbPubIp": {
+            "value": "[if(equals(parameters('moodleCommon').httpsTermination, 'AppGw'), '0.0.0.0', reference(parameters('moodleCommon').lbPipName, '2017-10-01').ipAddress)]",
+            "type": "string"
+        },
+        "ctlrPubIp": {
+            "value": "[reference(parameters('moodleCommon').ctlrPipName, '2017-10-01').ipAddress]",
+            "type": "string"
+        },
+        "ctlrPubIpId": {
+            "value": "[variables('ctlrPipID')]",
+            "type": "string"
+        },
+        "subnetIdWeb": {
+            "value": "[variables('subnetIdWeb')]",
+            "type": "string"
+        },
+        "subnetIdSan": {
+            "value": "[variables('subnetIdSan')]",
+            "type": "string"
+        },
+        "subnetIdRedis": {
+            "value": "[variables('subnetIdRedis')]",
+            "type": "string"
+        },
+        "subnetIdElastic": {
+            "value": "[variables('subnetIdElastic')]",
+            "type": "string"
+        },
+        "subnetIdTika": {
+            "value": "[variables('subnetIdTika')]",
+            "type": "string"
+        }
     }
-  },
-  "resources": [
-    {
-      "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2017-10-01",
-      "location": "[parameters('location')]",
-      "name": "[parameters('moodleCommon').vnetName]",
-      "properties": {
-        "addressSpace": {
-          "addressPrefixes": [
-            "[concat(parameters('moodleCommon').vNetAddressSpace,'/16')]"
-          ]
-        },
-        "subnets": [
-          {
-            "name": "[parameters('moodleCommon').subnetWeb]",
-            "properties": {
-              "addressPrefix": "[parameters('moodleCommon').subnetWebRange]"
-            }
-          },
-          {
-            "name": "[parameters('moodleCommon').subnetSan]",
-            "properties": {
-              "addressPrefix": "[parameters('moodleCommon').subnetSanRange]"
-            }
-          },
-          {
-            "name": "[parameters('moodleCommon').subnetRedis]",
-            "properties": {
-              "addressPrefix": "[parameters('moodleCommon').subnetRedisRange]"
-            }
-          },
-          {
-            "name": "[parameters('moodleCommon').subnetElastic]",
-            "properties": {
-              "addressPrefix": "[parameters('moodleCommon').subnetElasticRange]"
-            }
-          },
-          {
-            "name": "[parameters('moodleCommon').gatewaySubnet]",
-            "properties": {
-              "addressPrefix": "[parameters('moodleCommon').gatewaySubnetRange]"
-            }
-          }
-        ]
-      }
-    },
-    {
-      "condition": "[parameters('moodleCommon').vnetGwDeploySwitch]",
-      "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2017-10-01",
-      "location": "[parameters('location')]",
-      "name": "[parameters('moodleCommon').gatewayPublicIPName]",
-      "properties": {
-        "publicIPAllocationMethod": "Dynamic"
-      },
-      "tags": {
-        "displayName": "Virtual network gateway Public IP"
-      }
-    },
-    {
-      "condition": "[parameters('moodleCommon').vnetGwDeploySwitch]",
-      "type": "Microsoft.Network/virtualNetworks/subnets",
-      "apiVersion": "2017-10-01",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', parameters('moodleCommon').vnetName)]"
-      ],
-      "name": "[concat(parameters('moodleCommon').vnetName, '/', parameters('moodleCommon').gatewaySubnet)]",
-      "properties": {
-        "addressPrefix": "[parameters('moodleCommon').gatewaySubnetRange]"
-      }
-    },
-    {
-      "condition": "[parameters('moodleCommon').vnetGwDeploySwitch]",
-      "type": "Microsoft.Network/virtualNetworkGateways",
-      "apiVersion": "2017-10-01",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses', parameters('moodleCommon').gatewayPublicIPName)]",
-        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('moodleCommon').vnetName, parameters('moodleCommon').gatewaySubnet)]"
-      ],
-      "location": "[parameters('location')]",
-      "name": "[parameters('moodleCommon').gatewayName]",
-      "properties": {
-        "activeActive": false,
-        "enableBgp": false,
-        "gatewayType": "[parameters('moodleCommon').gatewayType]",
-        "ipConfigurations": [
-          {
-            "name": "vnet-Gateway-Config",
-            "properties": {
-              "privateIPAllocationMethod": "Dynamic",
-              "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('moodleCommon').gatewayPublicIPName)]"
-              },
-              "subnet": {
-                "id": "[variables('gatewaySubnetRef')]"
-              }
-            }
-          }
-        ],
-        "sku": {
-          "name": "VpnGw1",
-          "tier": "VpnGw1",
-          "capacity": 2
-        },
-        "vpnType": "[parameters('moodleCommon').vpnType]"
-      }
-    },
-    {
-      "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2017-10-01",
-      "location": "[parameters('location')]",
-      "name": "[parameters('moodleCommon').lbPipName]",
-      "properties": {
-        "dnsSettings": {
-          "domainNameLabel": "[parameters('moodleCommon').lbName]"
-        },
-        "publicIPAllocationMethod": "Static"
-      },
-      "tags": {
-        "displayName": "Load Balancer Public IP"
-      }
-    },
-    {
-      "type": "Microsoft.Network/loadBalancers",
-      "apiVersion": "2017-10-01",
-      "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/',parameters('moodleCommon').lbPipName)]"
-      ],
-      "location": "[parameters('location')]",
-      "name": "[parameters('moodleCommon').lbName]",
-      "properties": {
-        "backendAddressPools": [
-          {
-            "name": "[parameters('moodleCommon').extBeName ]"
-          }
-        ],
-        "frontendIPConfigurations": [
-          {
-            "name": "[parameters('moodleCommon').extFeName ]",
-            "properties": {
-              "publicIPAddress": {
-                "id": "[variables('pipID')]"
-              }
-            }
-          }
-        ],
-        "loadBalancingRules": [
-          {
-            "name": "Http",
-            "properties": {
-              "backendAddressPool": {
-                "id": "[variables('extBeID')]"
-              },
-              "backendPort": 80,
-              "enableFloatingIP": false,
-              "frontendIPConfiguration": {
-                "id": "[variables('extFeID')]"
-              },
-              "frontendPort": 80,
-              "idleTimeoutInMinutes": 5,
-              "probe": {
-                "id": "[variables('extProbeID')]"
-              },
-              "protocol": "Tcp"
-            }
-          },
-          {
-            "name": "Https",
-            "properties": {
-              "backendAddressPool": {
-                "id": "[variables('extBeID')]"
-              },
-              "backendPort": 443,
-              "enableFloatingIP": false,
-              "frontendIPConfiguration": {
-                "id": "[variables('extFeID')]"
-              },
-              "frontendPort": 443,
-              "idleTimeoutInMinutes": 5,
-              "probe": {
-                "id": "[variables('extProbeID')]"
-              },
-              "protocol": "Tcp"
-            }
-          }
-        ],
-        "probes": [
-          {
-            "name": "[parameters('moodleCommon').extProbe  ]",
-            "properties": {
-              "intervalInSeconds": 5,
-              "numberOfProbes": 3,
-              "port": 80,
-              "protocol": "Tcp"
-            }
-          }
-        ]
-      }
-    }
-  ],
-  "variables": {
-    "documentation01": "This sub-template creates a virtual network with three subnets and then creates the moodle load-balancer with public IP/dns",
-    "documentation02": "It expects certain values in the 'common' datastructure.",
-    "documentation03": "    vnetName         - name of virtual network",
-    "documentation04": "    vNetAddressSpace - base of address of 16 bit address range",
-    "documentation05": "    subnetWeb        - name of subnet inside virtual network - will be assigned the .0.0/24 range",
-    "documentation06": "    subnetSan        - name of subnet inside virtual network - will be assigned the .1.0/24 range",
-    "documentation07": "    subnetRedis      - name of subnet inside virtual network - will be assigned the .3.0/24 range",
-    "documentation08": "    subnetElastic    - name of subnet inside virtual network - will be assigned the .4.0/24 range",
-    "documentation09": "    gatewaySubnet    - name of subnet inside virtual network - will be assigned the .2.0/24 range",
-    "documentation10": "    lbPipName        - name of public IP",
-    "documentation11": "    lbName           - name of Moodl load balancer",
-    "extBeID": "[concat(variables('extLbID'),'/backendAddressPools/',parameters('moodleCommon').extBeName)]",
-    "extFeID": "[concat(variables('extLbID'),'/frontendIPConfigurations/',parameters('moodleCommon').extFeName)]",
-    "extLbID": "[resourceId('Microsoft.Network/loadBalancers',parameters('moodleCommon').lbName)]",
-    "extNatPoolID": "[concat(variables('extLbID'),'/inboundNatPools/',parameters('moodleCommon').extNatPool)]",
-    "extProbeID": "[concat(variables('extLbID'),'/probes/',parameters('moodleCommon').extProbe)]",
-    "gatewaySubnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('moodleCommon').vnetName),'/subnets/',parameters('moodleCommon').gatewaySubnet)]",
-    "pipID": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('moodleCommon').lbPipName)]"
-  }
 }
