@@ -81,7 +81,7 @@ For Username and Password, the "Admin User" and "Admin Password" you supplied in
 <img src="https://github.com/cealsair/MicroProfileThorntailOnAzure/blob/master/images/18_OpenShiftConsole.png" width="800">
 
 Once youlogin into the Openshift Console, you shoud have a preconfigured project listed on the right hand side of the console
-![Sample application](images/dukes_sample_app.png)
+(images/dukes_sample_app.png)
 
 Click on Applications, select Deployments and from the table on the right click on dukes,select the #1 Deployment and you will be able to see the number of instances/pods that are running of the application, status, creation date,configuration, etc.
 
