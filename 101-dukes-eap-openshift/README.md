@@ -84,14 +84,19 @@ For Username and Password, the "Admin User" and "Admin Password" you supplied in
 
 <img src="https://github.com/cealsair/MicroProfileThorntailOnAzure/blob/master/images/18_OpenShiftConsole.png" width="800">
 
-Once youlogin into the Openshift Console, you shoud have a preconfigured project listed on the right hand side of the console
-(images/dukes_sample_app.png)
+Once you login into the Openshift Console, you shoud have a preconfigured project listed on the right hand side of the console
+
 <img src="https://github.com/MyriamFentanes/azure-quickstart-templates/blob/master/101-dukes-eap-openshift/images/dukes_sample_app.png"/>
+
 Click on Applications, select Deployments and from the table on the right click on dukes,select the #1 Deployment and you will be able to see the number of instances/pods that are running of the application, status, creation date,configuration, etc.
 
+<img src="https://github.com/MyriamFentanes/azure-quickstart-templates/blob/master/101-dukes-eap-openshift/images/dukes_pod.png"/>
 
 To access the webapp go to Applicaitons and select Routes. Routes is the way Openshift Container Platform exposes services at a host name, you shoud see the url for dukes. CLick on it and goto the context dukes.
 
+<img src="https://github.com/MyriamFentanes/azure-quickstart-templates/blob/master/101-dukes-eap-openshift/images/dukes_route.png"/>
 
-You should see the webapp dukes. You have just installed Openshift Container Paltform, Red Hat Enterprise Application Paltform and a webapp called dukes. 
+You should see the webapp dukes. You have just installed Openshift Container Platform, Red Hat Enterprise Application Paltform and a webapp called dukes. 
+
+<img src="https://github.com/MyriamFentanes/azure-quickstart-templates/blob/master/101-dukes-eap-openshift/images/dukes_hello_world.png"/>
 
