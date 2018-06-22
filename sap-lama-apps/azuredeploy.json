@@ -1,0 +1,421 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "computerName": {
+            "type": "string",
+            "minLength": 3,
+            "metadata": {
+                "description": ""
+            }
+        },
+        "osType": {
+            "type": "string",
+            "allowedValues": [
+                "Windows Server 2012 Datacenter",
+                "Windows Server 2012 R2 Datacenter",
+                "Windows Server 2016 Datacenter",
+                "SLES 12",
+                "RHEL 7",
+                "Oracle Linux 7"
+            ],
+            "defaultValue": "Windows Server 2012 R2 Datacenter",
+            "metadata": {
+                "description": "The type of the operating system you want to deploy."
+            }
+        },
+        "sapSystemSize": {
+            "type": "string",
+            "allowedValues": [
+                "Demo",
+                "Small < 2.000 SAPS",
+                "Medium < 9.000 SAPS",
+                "Large < 18.000 SAPS",
+                "X-Large < 40.000 SAPS"
+            ],
+            "defaultValue": "Small < 2.000 SAPS",
+            "metadata": {
+                "description": "The size of the SAP System you want to deploy."
+            }
+        },
+        "adminUsername": {
+            "type": "string",
+            "metadata": {
+                "description": "Username for the Virtual Machine."
+            }
+        },
+        "adminPassword": {
+            "type": "securestring",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Password for the Virtual Machine."
+            }
+        },
+        "sshKeyData": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Public SSH key for the virtual machines."
+            }
+        },
+        "subnetId": {
+            "type": "string",
+            "metadata": {
+                "description": "The id of the subnet you want to use."
+            }
+        },
+        "deployEmptyTarget": {
+            "type": "string",
+            "defaultValue": "false",
+            "metadata": {
+                "description": ""
+            }
+        },
+        "sapcarLocation": {
+            "type": "string",
+            "metadata": {
+                "description": ""
+            }
+        },
+        "sapHostAgentArchiveLocation": {
+            "type": "string",
+            "metadata": {
+                "description": ""
+            }
+        },
+        "sapacExtLocation": {
+            "type": "string",
+            "metadata": {
+                "description": ""
+            }
+        },
+        "sapadmPassword": {
+            "type": "securestring",
+            "minLength": "6",
+            "metadata": {
+                "description": "Password for the sapadm account."
+            }
+        },
+        "sapadmId": {
+            "type": "string",
+            "defaultValue": "790",
+            "metadata": {
+                "description": ""
+            }
+        },
+        "sapsysGid": {
+            "type": "string",
+            "defaultValue": "79",
+            "metadata": {
+                "description": ""
+            }
+        },
+        "_artifactsLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+            },
+            "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sap-2-tier-marketplace-image-md/"
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+            },
+            "defaultValue": ""
+        }
+    },
+    "variables": {
+        "bDeployEmptyTarget": "[bool(parameters('deployEmptyTarget'))]",
+        "images": {
+            "Windows Server 2012 Datacenter": {
+                "sku": "2012-Datacenter",
+                "offer": "WindowsServer",
+                "publisher": "MicrosoftWindowsServer",
+                "OSType": "Windows",
+                "osDiskSize": 128
+            },
+            "Windows Server 2012 R2 Datacenter": {
+                "sku": "2012-R2-Datacenter",
+                "offer": "WindowsServer",
+                "publisher": "MicrosoftWindowsServer",
+                "OSType": "Windows",
+                "osDiskSize": 128
+            },
+            "Windows Server 2016 Datacenter": {
+                "sku": "2016-Datacenter",
+                "offer": "WindowsServer",
+                "publisher": "MicrosoftWindowsServer",
+                "OSType": "Windows",
+                "osDiskSize": 128
+            },
+            "SLES 12": {
+                "sku": "12-SP3",
+                "offer": "SLES-SAP",
+                "publisher": "SUSE",
+                "OSType": "Linux",
+                "osDiskSize": 128
+            },
+            "RHEL 7": {
+                "sku": "7.3",
+                "offer": "RHEL",
+                "publisher": "RedHat",
+                "OSType": "Linux",
+                "osDiskSize": 128
+            },
+            "Oracle Linux 7": {
+                "sku": "7.3",
+                "offer": "Oracle-Linux",
+                "publisher": "Oracle",
+                "OSType": "Linux",
+                "osDiskSize": 128
+            }
+        },
+        "internalOSType": "[variables('images')[parameters('osType')].OSType]",
+        "osConfigs": {
+            "Windows": {
+                "Publisher": "Microsoft.Compute",
+                "Name": "CustomScriptExtension",
+                "Version": "1.7",
+                "script": "[concat(parameters('_artifactsLocation'), '/scripts/diskConfig.ps1', parameters('_artifactsLocationSasToken'))]",
+                "scriptCall": "powershell.exe -ExecutionPolicy bypass -File diskConfig.ps1",
+                "disks": [
+                ],
+                "scriptArguments": ""
+            },
+            "Linux": {
+                "Publisher": "Microsoft.Azure.Extensions",
+                "Name": "CustomScript",
+                "Version": "2.0",
+                "script": "[concat(parameters('_artifactsLocation'), '/scripts/diskConfig.sh', parameters('_artifactsLocationSasToken'))]",
+                "scriptCall": "sh diskConfig.sh",
+                "disks": [
+                ],
+                "scriptArguments": ""
+            }
+        },
+        "cseExtPublisher": "[variables('osConfigs')[variables('internalOSType')].Publisher]",
+        "cseExtName": "[variables('osConfigs')[variables('internalOSType')].Name]",
+        "cseExtVersion": "[variables('osConfigs')[variables('internalOSType')].Version]",
+        "csExtensionScript": "[variables('osConfigs')[variables('internalOSType')].script]",
+        "csExtensionscriptCall": "[variables('osConfigs')[variables('internalOSType')].scriptCall]",
+        "sizes": {
+            "Demo": {
+                "Linux": {
+                    "vmSize": "Standard_E2s_v3",
+                    "useFastNetwork": false
+                },
+                "Windows": {
+                    "vmSize": "Standard_E2s_v3",
+                    "useFastNetwork": false
+                }
+            },
+            "Small < 2.000 SAPS": {
+                "Linux": {
+                    "vmSize": "Standard_E2s_v3",
+                    "useFastNetwork": false
+                },
+                "Windows": {
+                    "vmSize": "Standard_E2s_v3",
+                    "useFastNetwork": false
+                }
+            },
+            "Medium < 9.000 SAPS": {
+                "Linux": {
+                    "vmSize": "Standard_E2s_v3",
+                    "useFastNetwork": false
+                },
+                "Windows": {
+                    "vmSize": "Standard_E2s_v3",
+                    "useFastNetwork": false
+                }
+            },
+            "Large < 18.000 SAPS": {
+                "Linux": {
+                    "vmSize": "Standard_E4s_v3",
+                    "useFastNetwork": true
+                },
+                "Windows": {
+                    "vmSize": "Standard_E4s_v3",
+                    "useFastNetwork": true
+                }
+            },
+            "X-Large < 40.000 SAPS": {
+                "Linux": {
+                    "vmSize": "Standard_E4s_v3",
+                    "useFastNetwork": true
+                },
+                "Windows": {
+                    "vmSize": "Standard_E4s_v3",
+                    "useFastNetwork": true
+                }
+            }
+        },
+        "vmName": "[parameters('computerName')]",
+        "nicName": "[concat(variables('vmName'), '-nic')]",
+        "basicIPConfig": [
+            {
+                "name": "ipconfig-vm",
+                "properties": {
+                    "privateIPAllocationMethod": "Dynamic",
+                    "subnet": {
+                        "id": "[parameters('subnetId')]"
+                    },
+                    "primary": true
+                }
+            }
+        ],
+        "databaseIPConfig": {
+            "Linux": [
+                {
+                    "name": "ipconfig-di",
+                    "properties": {
+                        "privateIPAllocationMethod": "Dynamic",
+                        "subnet": {
+                            "id": "[parameters('subnetId')]"
+                        },
+                        "primary": false
+                    }
+                }
+            ],
+            "Windows": [
+                {
+                    "name": "ipconfig-di",
+                    "properties": {
+                        "privateIPAllocationMethod": "Dynamic",
+                        "subnet": {
+                            "id": "[parameters('subnetId')]"
+                        },
+                        "primary": false
+                    }
+                }
+            ]
+        },
+        "selectedIPConfig": "[concat(variables('basicIPConfig'), if(variables('bDeployEmptyTarget'), json('[]'), variables('databaseIPConfig')[variables('internalOSType')]))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[variables('nicName')]",
+            "apiVersion": "2017-06-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "ipConfigurations": "[variables('selectedIPConfig')]"
+            }
+        },
+        {
+            "apiVersion": "2018-02-01",
+            "name": "[concat(deployment().name, '-os')]",
+            "type": "Microsoft.Resources/deployments",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(parameters('_artifactsLocation'), '/nestedtemplates/osprofile.json', parameters('_artifactsLocationSasToken'))]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "osType": {
+                        "value": "[variables('internalOSType')]"
+                    },
+                    "computerName": {
+                        "value": "[variables('vmName')]"
+                    },
+                    "adminUsername": {
+                        "value": "[parameters('adminUsername')]"
+                    },
+                    "adminPassword": {
+                        "value": "[parameters('adminPassword')]"
+                    },
+                    "sshKeyData": {
+                        "value": "[parameters('sshKeyData')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[concat(variables('vmName'))]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]",
+                "[concat('Microsoft.Resources/deployments/', deployment().name, '-os')]"
+            ],
+            "apiVersion": "2017-12-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[variables('sizes')[parameters('sapSystemSize')][variables('internalOSType')].vmSize]"
+                },
+                "osProfile": "[reference(concat(deployment().name, '-os')).outputs.profile.value]",
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[variables('images')[parameters('osType')].publisher]",
+                        "offer": "[variables('images')[parameters('osType')].offer]",
+                        "sku": "[variables('images')[parameters('osType')].sku]",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "[concat(variables('vmName'), '-osdisk')]",
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage",
+                        "diskSizeGB": "[variables('images')[parameters('osType')].osDiskSize]",
+                        "managedDisk": {
+                            "storageAccountType": "Premium_LRS"
+                        }
+                    },
+                    "dataDisks": "[if(variables('bDeployEmptyTarget'), json('[]'), variables('osConfigs')[variables('internalOSType')].disks)]"
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "apiVersion": "2018-02-01",
+            "name": "[concat(deployment().name, '-installsaphostagent')]",
+            "type": "Microsoft.Resources/deployments",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(parameters('_artifactsLocation'), '/nestedtemplates/installHostAgent.json', parameters('_artifactsLocationSasToken'))]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "vmName": {
+                        "value": "[variables('vmName')]"
+                    },
+                    "cseExtName": {
+                        "value": "[variables('cseExtName')]"
+                    },
+                    "cseExtPublisher": {
+                        "value": "[variables('cseExtPublisher')]"
+                    },
+                    "cseExtVersion": {
+                        "value": "[variables('cseExtVersion')]"
+                    },
+                    "sapcarLocation": {
+                        "value": "[parameters('sapcarLocation')]"
+                    },
+                    "sapHostAgentArchiveLocation": {
+                        "value": "[parameters('sapHostAgentArchiveLocation')]"
+                    },
+                    "sapacExtLocation": {
+                        "value": "[parameters('sapacExtLocation')]"
+                    },
+                    "sapadmPassword": {
+                        "value": "[parameters('sapadmPassword')]"
+                    },
+                    "sapadmId": {
+                        "value": "[parameters('sapadmId')]"
+                    },
+                    "sapsysGid": {
+                        "value": "[parameters('sapsysGid')]"
+                    }
+                }
+            }
+        }
+    ]
+}
