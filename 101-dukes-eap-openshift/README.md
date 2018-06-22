@@ -4,9 +4,13 @@
 
 1. Create a Single VM OpenShift deployment using the Azure Portal
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FMyriamFentanes%2FEAPonAllinOneOCPonAzure%2Fmaster%2Fallinone.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2F101-dukes-eap-openshift%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2F101-dukes-eap-openshift%2Fazuredeploy.json" target="_blank">
+    <img src="http://armviz.io/visualizebutton.png"/>
+</a>
+
 
 ------
 
@@ -82,7 +86,7 @@ For Username and Password, the "Admin User" and "Admin Password" you supplied in
 
 Once youlogin into the Openshift Console, you shoud have a preconfigured project listed on the right hand side of the console
 (images/dukes_sample_app.png)
-
+<img src="https://github.com/MyriamFentanes/azure-quickstart-templates/blob/master/101-dukes-eap-openshift/images/dukes_sample_app.png"/>
 Click on Applications, select Deployments and from the table on the right click on dukes,select the #1 Deployment and you will be able to see the number of instances/pods that are running of the application, status, creation date,configuration, etc.
 
 
