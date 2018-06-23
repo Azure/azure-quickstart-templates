@@ -125,13 +125,36 @@ function createlvm()
     if [ -n "$devicePath" ];
     then
       log " Device Path is $devicePath"
-      # http://superuser.com/questions/332252/creating-and-formating-a-partition-using-a-bash-script
-      $(echo -e "n\np\n1\n\n\nw" | fdisk $devicePath) > /dev/null
-      local partPath="$devicePath""1"
-      $(mkfs -t xfs $partPath) > /dev/null
-      $(mkdir -p $mountPathLoc)
 
-      addtofstab $partPath $mountPathLoc
+      for ((j=0; j<mountPathCount; j++))
+      do
+        local mountPathLoc=${mountPathA[$j]}
+        local sizeLoc=${sizeA[$j]}
+        log "Creating partition for $mountPathLoc with size $sizeLoc"
+
+        #https://stackoverflow.com/questions/12313384/how-to-view-unallocated-free-space-on-a-hard-disk-through-terminal
+        local freeMB=$(parted /dev/sdc unit MB print free | grep 'Free Space' | tail -n1 | awk '{print $3}')
+        
+        if [[ $freeMB =~ ([0-9]*) ]];
+        then
+          local partNumber=$(expr $j + 1)
+          local freeInt=${BASH_REMATCH[1]}
+          local countMiB=$(echo "$freeInt * $sizeLoc / 100" | bc)
+          local fdiskSize="+"$countMiB"M"
+          if [ "$sizeLoc" = "100" ]; 
+          then
+            local fdiskSize=""
+          fi
+          log "Creating partition $partNumber for $mountPathLoc with size info $fdiskSize"
+          # http://superuser.com/questions/332252/creating-and-formating-a-partition-using-a-bash-script
+          $(echo -e "n\n\n\n\n"$fdiskSize"\nw" | fdisk $devicePath) > /dev/null
+          local partPath="$devicePath""$partNumber"
+          $(mkfs -t xfs $partPath) > /dev/null
+          $(mkdir -p $mountPathLoc)
+
+          addtofstab $partPath $mountPathLoc
+        fi
+      done
     else
       log "no device path for LUN $lun"
       exit -1;
