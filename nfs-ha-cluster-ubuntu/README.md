@@ -8,15 +8,25 @@ This template allows you to create a highly available NFS cluster on Azure with 
 
 ## Usage
 
+### Template Parameters
+
 There are many parameters this template requires. Some notable and important ones are as follows:
 
-- `subnetId`: This is where the highly available NFS cluster will be deployed. You need to give the Azure resource ID of an already existing Azure subnet where the cluster should be deployed.
+- `subnetId`: This is where the highly available NFS cluster will be deployed. You need to give the Azure resource ID of an already existing Azure subnet where the cluster should be deployed. You may find that the template accept `default` as this parameter's value, but that's only for the Azure quickstart templates repo's CI validation purpose (because for CI, we can't provide an already existing vnet, so we have to create one on the fly, and `default` will do just that---however, the IP ranges are fixed to `10.0.0.0/16` for the vnet and `10.0.0.0/24` for the subnet, so you shouldn't really rely on this unless your desired IP ranges match these hard-coded ones).
 - `node0IPAddr` and `node1IPAddr`: The 2 VMs will have to be assigned static IP addresses for the high availability configuration in the deployed VMs. You need to specify those statically assigned IP addresses (that belong to the subnet specified above) as these parameters.
 - `lbFrontEndIpAddr`: The NFS service on the cluster will be accessed through this IP address, so you need to specify an IP address here (that belongs to the subnet specified above).
 - `nfsClientsIPRange`: The NFS-exported directory (currently fixed to `{lbFrontEndIpAddr}:/drbd/data`) will be available only to the NFS clients from this IP address range (e.g., `10.0.0.0/24`), so you need to provide one here.
 - `dataDiskCountPerVM`: The number of data disks in each VM. If this is bigger than one, all the data disks will pool into a RAID-0 (striped) disk array.
 
 Other template parameters are typical VM deployment ones.
+
+### Validating the Deployed Cluster
+
+To test the deployed cluster, you'll need an SSH-accessible VM on the subnet that corresponds to the `nfsClientsIPRange` IP range. Note that the 2 VMs in the deployed NFS-HA cluster are not assigned any public IP addresses and the load balancer is strictly internal, so the 2 VMs are not SSH-accessible from anywhere else other than VMs on the same subnet. That's why you'll need another VM on the subnet if you'd like to SSH into either of the 2 deployed VMs. Note that you don't need to be able to SSH into any of the 2 deployed VMs to test the NFS functionality. If the `subnetId`'s IP range is the same (or a subnet of) `nfsClientsIPRange`, you should be able to SSH into the 2 deployed VMs as well, but otherwise, you can only test the NFS functionality from a VM on the `nfsClientsIPRange` IP range. To test the NFS functionality, you should be able to see the exported NFS directory on such a test VM by issuing `showmount -e {lbFrontEndIpAddr}` and then mount it using `sudo mkdir -p /mnt/nfs; sudo mount -t nfs {lbFrontEndIpAddr}:/drbd/data /mnt/nfs`. Don't forget to `sudo umount /mnt/nfs` before finishing testing.
+
+### Using the Templates in Your Own Templates
+
+If you need or want to create a highly available NFS cluster in your own templates, you can do so by deploying the templates in this directory. However, you can just copy the `nested/nfs-ha.json` and the `nested/nfs-ha-vm.json` template files only to your own nested templates directory and deployed the `nested/nfs-ha.json` directly, instead of copying and deployging the `azuredeploy.json` in this directory. That's because the `azuredeploy.json` in this directory is just a shell mainly for the Azure quickstart repo's CI (that requires a subnet to be provided, so one needs to be created in CI using the `azuredeploy.json` and `nested/nfs-ha-vnet-default.json`) In your own templates, a subnet should be created in advance and its resource ID should be provided as a template parameter. See the [Moodle-on-Azure](https://github.com/Azure/Moodle) [template](https://github.com/Azure/Moodle/blob/master/azuredeploy.json) (search for `nfsHaTemplate` deployment).
 
 ## Brief Explanation
 
