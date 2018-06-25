@@ -51,11 +51,9 @@ bundle install --path vendor/bundle
 echo "Yarn Installation"
 curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
 echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
-sudo apt-get update && sudo apt-get install yarn=1.6.0-1 
+sudo apt-get update && sudo apt-get install yarn 
 sudo apt-get install python
-echo "changing version to the latest in package"
-sed -e "s/1.5.1/1.6.0/" package.json > pa_test.json
-mv pa_test.json package.json
+
 echo "Yarn Installation"
 yarn install
 echo "Copying the config files for changing"
