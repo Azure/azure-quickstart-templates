@@ -1,0 +1,350 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "adminUsername": {
+            "type": "string",
+            "metadata": {
+                "description": "Username for Windows machine."
+            }
+        },
+        "adminPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Password for Windows machine."
+            }
+        },
+        "tableau_admin_username":{
+            "type": "string",
+            "metadata": {
+                "description": "Tableau Server administrator username."
+            }
+        },
+        "tableau_admin_password":{
+            "type": "securestring",
+            "metadata": {
+                "description": "Tableau Server administrator password."
+            }
+        },
+        "registration_first_name":{
+            "type": "string",
+            "metadata": {
+                "description": "First name to use for registering Tableau Server"
+            }
+        },
+        "registration_last_name":{
+            "type": "string",
+            "metadata": {
+                "description": "Last name to use for registering Tableau Server"
+            }
+        },
+        "registration_email":{
+            "type": "string",
+            "metadata": {
+                "description": "Email address to use for registering Tableau Server"
+            }
+        },
+        "registration_company":{
+            "type":"string",
+            "metadata": {
+                "description": "Company name to use for registering Tableau Server"
+            }
+        },
+        "registration_title":{
+            "type":"string",
+            "metadata": {
+                "description": "Job title to use for registering Tableau Server"
+            }
+        },
+        "registration_department":{
+            "type":"string",
+            "metadata": {
+                "description": "Department name to use for registering Tableau Server"
+            }
+        },
+        "registration_industry":{
+            "type":"string",
+            "metadata": {
+                "description": "Industry name to use for registering Tableau Server"
+            }
+        },
+        "registration_phone":{
+            "type":"string",
+            "metadata": {
+                "description": "Phone number to use for registering Tableau Server"
+            }
+        },
+        "registration_city":{
+            "type":"string",
+            "metadata": {
+                "description": "Your current City - to use for registering Tableau Server"
+            }
+        },
+        "registration_state":{
+            "type":"string",
+            "metadata": {
+                "description": "Your current State - to use for registering Tableau Server"
+            }
+        },
+        "registration_zip":{
+            "type":"string",
+            "metadata": {
+                "description": "Your current zip - to use for registering Tableau Server"
+            }
+        },
+        "registration_country":{
+            "type":"string",
+            "metadata": {
+                "description": "Your current Country - to use for registering Tableau Server"
+            }
+        },
+        "location":{
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata":{
+                "description": "Azure location where you would like to deploy Tableau Server"
+            }
+        },
+        "license_key":{
+            "type": "string",
+            "defaultValue": "trial",
+            "metadata": {
+                "description": "Enter Tableau Server License key.  ** If you would like to run a 2-week free trial please enter 'trial'"
+            }
+        },
+        "_artifactsLocation": {
+          "type": "string",
+          "metadata": {
+              "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+          },
+          "defaultValue": "[deployment().properties.templateLink.uri]"
+        },
+        "_artifactsLocationSasToken":{
+            "type":"securestring",
+            "metadata": {
+                "description": "No Sas token required."
+            },
+            "defaultValue":""
+        }
+    },
+    "variables": {
+        "publicIpAddressType" : "Static",
+        "publicIpAddressSku" : "Standard",
+        "virtualMachineSize": "Standard_D16s_v3",
+        "publicIpAddressName" : "tableau_server_IP",
+        "subnetName": "tableau_server_SN",
+        "subnetRef": "[concat(variables('vnetId'), '/subnets/', variables('subnetName'))]",
+        "networkSecurityGroupName" : "tableau_server_NSG",
+        "networkInterfaceName": "tableau_server_NI",
+        "virtualNetworkName": "tableau_server_VN",
+        "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
+        "virtualMachineName": "TableauServerVM",
+        "addressPrefix" : "10.0.0.0/16",
+        "subnetAddressPrefix": "10.0.0.0/24",
+        "enableDdosProtection": false,
+        "ServerInstallerURL": "https://raw.githubusercontent.com/tableau/server-install-script-samples/master/windows/tabadmin/ScriptedInstaller.py"
+    },
+    "resources": [
+        {
+            "apiVersion": "2017-05-10",
+            "name": "pid-e78b95a3-81e6-4ac8-af97-65443904dffd",
+            "type": "Microsoft.Resources/deployments",
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "resources": []
+                }
+            }
+        },
+        {
+            "apiVersion":"2018-02-01",
+            "name": "[variables('virtualNetworkName')]",
+            "type": "Microsoft.Network/virtualNetworks",
+            "location": "[parameters('location')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('addressPrefix')]"
+                    ]
+                },
+                "subnets" : [
+                    {
+                        "name": "[variables('subnetName')]",
+                        "properties": {
+                            "addressPrefix": "[variables('subnetAddressPrefix')]"
+                        }
+                    }
+                ],
+                "enableDdosProtection": "[variables('enableDdosProtection')]"
+            }
+        },
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(variables('virtualMachineName'), '/', 'config-app')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                    "[concat('Microsoft.Compute/virtualMachines/', variables('virtualMachineName'))]"
+                ],
+            "tags": {
+                "displayName": "config-app"
+            },
+            "properties": {
+                "publisher": "Microsoft.Compute",
+                "type": "CustomScriptExtension",
+                "typeHandlerVersion": "1.9",
+                "autoUpgradeMinorVersion": true,
+                "settings" : {
+                    "fileUris": [
+                        "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/tableau-server-windows-1node/scripts/config_script.ps1"
+                    ]
+                },
+                "protectedSettings" : {
+                    "commandToExecute": "[concat('powershell -ExecutionPolicy Bypass -File config_script.ps1 -ts_admin_un ',parameters('tableau_admin_username'),' -ts_admin_pw ',parameters('tableau_admin_password'),' -reg_first_name ',parameters('registration_first_name'),' -reg_last_name ', parameters('registration_last_name'),' -reg_email ',parameters('registration_email'),' -reg_company ',parameters('registration_company'),' -reg_title ',parameters('registration_title'),' -reg_department ',parameters('registration_department'),' -reg_industry ',parameters('registration_industry'),' -reg_phone ',parameters('registration_phone'),' -reg_city ',parameters('registration_city'),' -reg_state ',parameters('registration_state'),' -reg_zip ',parameters('registration_zip'),' -reg_country ',parameters('registration_country'),' -license_key ',parameters('license_key'), ' -install_script_url ',variables('ServerInstallerURL'))]"
+                }
+            }
+        },
+        {
+            "name": "[variables('virtualMachineName')]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2017-03-30",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkInterfaces/', variables('networkInterfaceName'))]"
+            ],
+            "properties": {
+                "osProfile": {
+                    "computerName": "[variables('virtualMachineName')]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]",
+                    "windowsConfiguration": {
+                        "provisionVmAgent": "true"
+                    }
+                },
+                "hardwareProfile": {
+                    "vmSize": "[variables('virtualMachineSize')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "MicrosoftWindowsServer",
+                        "offer": "WindowsServer",
+                        "sku": "2016-Datacenter",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "createOption": "fromImage",
+                        "managedDisk": {
+                            "storageAccountType": "Standard_LRS"
+                        }
+                    },
+                    "dataDisks": []
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "name": "[variables('networkInterfaceName')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2016-09-01",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/publicIpAddresses/', variables('publicIpAddressName'))]",
+                "[concat('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroupName'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "subnet": {
+                                "id": "[variables('subnetRef')]"
+                            },
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIpAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIpAddresses', variables('publicIpAddressName'))]"
+                            }
+                        }
+                    }
+                ],
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+                }
+            }
+        },
+        {
+            "name": "[variables('publicIpAddressName')]",
+            "type": "Microsoft.Network/publicIpAddresses",
+            "apiVersion": "2017-08-01",
+            "location": "[parameters('location')]",
+            "properties": {
+                "publicIpAllocationMethod": "[variables('publicIpAddressType')]"
+            },
+            "sku": {
+                "name": "[variables('publicIpAddressSku')]"
+            }
+        },
+        {
+            "name": "[variables('networkSecurityGroupName')]",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2017-06-01",
+            "location": "[parameters('location')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "default-allow-rdp",
+                        "properties": {
+                            "priority": 1000,
+                            "protocol": "TCP",
+                            "access": "Allow",
+                            "direction": "Inbound",
+                            "sourceAddressPrefix": "*",
+                            "sourcePortRange": "*",
+                            "destinationAddressPrefix": "*",
+                            "destinationPortRange": "3389"
+                        }
+                    },
+                    {
+                        "name": "allow-80-traffic-inbound",
+                        "properties":{
+                            "priority": 1010,
+                            "protocol": "*",
+                            "access": "Allow",
+                            "direction": "Inbound",
+                            "sourceAddressPrefix": "*",
+                            "sourcePortRange": "*",
+                            "destinationAddressPrefix": "*",
+                            "destinationPortRange": "80"
+                        }
+                    },
+                    {
+                        "name": "allow-80-traffic-outbound",
+                        "properties":{
+                            "priority": 1010,
+                            "protocol": "*",
+                            "access": "Allow",
+                            "direction": "Outbound",
+                            "sourceAddressPrefix": "*",
+                            "sourcePortRange": "*",
+                            "destinationAddressPrefix": "*",
+                            "destinationPortRange": "80"
+                        }
+                    }
+                ]
+            }
+        }
+    ],
+    "outputs": {
+        "Tableau Server admin username": {
+            "type": "string",
+            "value": "[parameters('adminUsername')]"
+        }
+    }
+}
