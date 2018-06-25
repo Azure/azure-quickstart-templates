@@ -54,7 +54,8 @@
       "hostingPlanName": "[concat('hostingPlan-', parameters('name'))]",
       "postgresqlName": "[concat(parameters('name'), '-postgresql')]",
       "mysqlName": "[concat(parameters('name'), '-mysql')]",
-      "postgresqlConnection": "[concat('postgres://', parameters('databaseAdministratorLogin'), ':', parameters('databaseAdministratorLoginPassword'), '@', variables('postgresqlname'), '.postgres.database.azure.com/', parameters('databaseName'), '?sslmode=required')]"
+      "postgresqlConnection": "[concat('postgres://', parameters('databaseAdministratorLogin'), '@', variables('postgresqlName'),':', parameters('databaseAdministratorLoginPassword'), '@', variables('postgresqlname'), '.postgres.database.azure.com:5432/', parameters('databaseName'))]",
+      "mysqlConnection": "[concat('mysql://', parameters('databaseAdministratorLogin'), '@', variables('mysqlName'), ':', parameters('databaseAdministratorLoginPassword'), '@tcp(', variables('mysqlName'), '.mysql.database.azure.com:3306)/', parameters('databaseName'), '?allowNativePasswords=true')]"
     },
     "resources": [
       {
@@ -78,8 +79,8 @@
             "connectionStrings":[
               {
                 "name":"DATABASE_URL",
-                "connectionString": "[if(equals(parameters('database'), 'postgresql'), variables('postgresqlConnection'), 'not applicable')]",
-                "type":"custom"
+                "connectionString": "[if(equals(parameters('database'), 'postgresql'), variables('postgresqlConnection'), if(equals(parameters('database'), 'mysql'), variables('mysqlConnection'),'not applicable'))]",
+                "type":"[if(equals(parameters('database'), 'mysql'), 'mysql', 'custom')]"
               }
             ],
             "appCommandLine": "",
@@ -129,8 +130,25 @@
           "properties": {
               "version": "9.6",
               "administratorLogin": "[parameters('databaseAdministratorLogin')]",
-              "administratorLoginPassword": "[parameters('databaseAdministratorLoginPassword')]"
-          }
+              "administratorLoginPassword": "[parameters('databaseAdministratorLoginPassword')]",
+              "sslEnforcement": "Disabled"
+          },
+          "resources": [
+            {
+              "condition":"[equals(parameters('database'), 'postgresql')]",
+              "type":"firewallRules",
+              "apiVersion": "2017-12-01-preview",
+              "dependsOn": [
+                "[variables('postgresqlName')]"
+              ],
+              "location": "[resourceGroup().location]",
+              "name": "AllowAzureIPs",
+              "properties": {
+                "startIpAddress": "0.0.0.0",
+                "endIpAddress": "0.0.0.0"
+              }
+            }
+          ]
       },
       {
         "condition":"[equals(parameters('database'), 'mysql')]",
@@ -154,8 +172,25 @@
             "storageMB": 5120,
             "backupRetentionDays": 7,
             "geoRedundantBackup": "Disabled"
+          },
+          "sslEnforcement": "Disabled"
+        },
+        "resources": [
+          {
+            "condition":"[equals(parameters('database'), 'mysql')]",
+            "type":"firewallRules",
+            "apiVersion": "2017-12-01-preview",
+            "dependsOn": [
+              "[variables('mysqlName')]"
+            ],
+            "location": "[resourceGroup().location]",
+            "name": "AllowAzureIPs",
+            "properties": {
+              "startIpAddress": "0.0.0.0",
+              "endIpAddress": "0.0.0.0"
+            }
           }
-        }
+        ]
       }
     ]
   }
