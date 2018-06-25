@@ -104,7 +104,7 @@ If you want to customize your `bosh-setup` template, you can modify the followin
 | concourseDbRolePassword | admin |
 | vmSize | Standard_D1 |
 | devboxPrivateIPAddress | 10.0.0.100 |
-| ubuntuOSVersion | 14.04.3-LTS |
+| ubuntuOSVersion | 14.04.5-LTS |
 | keepUnreachableVMs | false |
 
 >**NOTE:**
