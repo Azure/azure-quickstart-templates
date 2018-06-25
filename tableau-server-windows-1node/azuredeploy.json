@@ -111,12 +111,26 @@
             "metadata": {
                 "description": "Enter Tableau Server License key.  ** If you would like to run a 2-week free trial please enter 'trial'"
             }
+        },
+        "_artifactsLocation": {
+          "type": "string",
+          "metadata": {
+              "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+          },
+          "defaultValue": "[deployment().properties.templateLink.uri]"
+        },
+        "_artifactsLocationSasToken":{
+            "type":"securestring",
+            "metadata": {
+                "description": "No Sas token required."
+            },
+            "defaultValue":""
         }
     },
     "variables": {
         "publicIpAddressType" : "Static",
         "publicIpAddressSku" : "Standard",
-        "virtualMachineSize": "Standard_D16_v3",
+        "virtualMachineSize": "Standard_D16s_v3",
         "publicIpAddressName" : "tableau_server_IP",
         "subnetName": "tableau_server_SN",
         "subnetRef": "[concat(variables('vnetId'), '/subnets/', variables('subnetName'))]",
@@ -131,6 +145,19 @@
         "ServerInstallerURL": "https://raw.githubusercontent.com/tableau/server-install-script-samples/master/windows/tabadmin/ScriptedInstaller.py"
     },
     "resources": [
+        {
+            "apiVersion": "2017-05-10",
+            "name": "pid-e78b95a3-81e6-4ac8-af97-65443904dffd",
+            "type": "Microsoft.Resources/deployments",
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "resources": []
+                }
+            }
+        },
         {
             "apiVersion":"2018-02-01",
             "name": "[variables('virtualNetworkName')]",
@@ -169,10 +196,12 @@
                 "type": "CustomScriptExtension",
                 "typeHandlerVersion": "1.9",
                 "autoUpgradeMinorVersion": true,
-                "protectedSettings" : {
+                "settings" : {
                     "fileUris": [
-                        "https://raw.githubusercontent.com/maddyloo/tableau-server-windows-1node/master/scripts/config_script.ps1"
-                    ],
+                        "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/tableau-server-windows-1node/scripts/config_script.ps1"
+                    ]
+                },
+                "protectedSettings" : {
                     "commandToExecute": "[concat('powershell -ExecutionPolicy Bypass -File config_script.ps1 -ts_admin_un ',parameters('tableau_admin_username'),' -ts_admin_pw ',parameters('tableau_admin_password'),' -reg_first_name ',parameters('registration_first_name'),' -reg_last_name ', parameters('registration_last_name'),' -reg_email ',parameters('registration_email'),' -reg_company ',parameters('registration_company'),' -reg_title ',parameters('registration_title'),' -reg_department ',parameters('registration_department'),' -reg_industry ',parameters('registration_industry'),' -reg_phone ',parameters('registration_phone'),' -reg_city ',parameters('registration_city'),' -reg_state ',parameters('registration_state'),' -reg_zip ',parameters('registration_zip'),' -reg_country ',parameters('registration_country'),' -license_key ',parameters('license_key'), ' -install_script_url ',variables('ServerInstallerURL'))]"
                 }
             }
@@ -313,7 +342,7 @@
         }
     ],
     "outputs": {
-        "adminUsername": {
+        "Tableau Server admin username": {
             "type": "string",
             "value": "[parameters('adminUsername')]"
         }

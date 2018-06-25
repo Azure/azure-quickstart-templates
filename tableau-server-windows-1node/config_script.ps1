@@ -56,7 +56,7 @@ Invoke-WebRequest -Uri $install_script_url -OutFile "C:/tabsetup/ScriptedInstall
 Invoke-WebRequest -Uri "https://www.python.org/ftp/python/2.7.12/python-2.7.12.msi" -OutFile "C:/tabsetup/python-2.7.12.msi"
 
 ## 5. Download Tableau Server 2018.1 .exe
-Invoke-WebRequest -Uri $install_script_url -Outfile "C:/tabsetup/tableau-server-installer.exe"
+Invoke-WebRequest -Uri "https://downloads.tableau.com/esdalt/2018.1.0/TableauServer-64bit-2018-1-0.exe" -Outfile "C:/tabsetup/tableau-server-installer.exe"
 
 ## COMMANDS
 
