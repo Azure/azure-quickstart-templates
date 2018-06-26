@@ -12,26 +12,11 @@ function addtofstab()
   log "addtofstab"
   partPath=$1
   mount=$2
+  log " not adding fstab entry"
+  log " manual mount with 'mount $partPath $mount'"
+  $(mount $partPath $mount)
   
-  local blkid=$(/sbin/blkid $partPath)
-  
-  if [[ $blkid =~  UUID=\"(.{36})\" ]]
-  then
-  
-    log "Adding fstab entry"
-    local uuid=${BASH_REMATCH[1]};
-    local mountCmd=""
-    log "adding fstab entry"
-    mountCmd="/dev/disk/by-uuid/$uuid $mount xfs  defaults,nofail  0  2"
-    echo "$mountCmd" >> /etc/fstab
-    $(mount $partPath $mount)
-  
-  else
-    log "no UUID found"
-    exit -1;
-  fi
-  
-  log "addtofstab done"
+  log " addtofstab done"
 }
 
 function getdevicepath()
@@ -161,7 +146,7 @@ function createlvm()
         mkfs.xfs $partPath -f
         mkdir -p $mountPathLoc
 
-        #addtofstab $partPath $mountPathLoc
+        addtofstab $partPath $mountPathLoc
         
         startPercent=$endPercent        
       done
