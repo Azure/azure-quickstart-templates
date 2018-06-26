@@ -125,35 +125,45 @@ function createlvm()
     if [ -n "$devicePath" ];
     then
       log " Device Path is $devicePath"
+      
+      local partedOut=$(parted $devicePath print -s | grep 'Partition Table' | awk '{print $3}')
+      if [ "$partedOut" = "unknown" ];
+      then
+        log "   no partition table found - creating gpt"
+        parted $devicePath mklabel gpt -s
+      else
+        log "  disk $devicePath already has a partition table - stopping to prevent data loss"
+        exit -1
+      fi
+
+      local startPercent=0
 
       for ((j=0; j<mountPathCount; j++))
       do
         local mountPathLoc=${mountPathA[$j]}
         local sizeLoc=${sizeA[$j]}
-        log "Creating partition for $mountPathLoc with size $sizeLoc"
-
-        #https://stackoverflow.com/questions/12313384/how-to-view-unallocated-free-space-on-a-hard-disk-through-terminal
-        local freeMB=$(parted /dev/sdc unit MB print free | grep 'Free Space' | tail -n1 | awk '{print $3}')
-        
-        if [[ $freeMB =~ ([0-9]*) ]];
+        local partNumber=$(expr $j + 1)
+        local endPercent=$( echo "((100 - $startPercent) * $sizeLoc / 100) + $startPercent" | bc)
+        if [ "$sizeLoc" = "100" ]; 
         then
-          local partNumber=$(expr $j + 1)
-          local freeInt=${BASH_REMATCH[1]}
-          local countMiB=$(echo "$freeInt * $sizeLoc / 100" | bc)
-          local fdiskSize="+"$countMiB"M"
-          if [ "$sizeLoc" = "100" ]; 
-          then
-            local fdiskSize=""
-          fi
-          log "Creating partition $partNumber for $mountPathLoc with size info $fdiskSize"
-          # http://superuser.com/questions/332252/creating-and-formating-a-partition-using-a-bash-script
-          $(echo -e "n\n\n\n\n"$fdiskSize"\nw" | fdisk $devicePath) > /dev/null
-          local partPath="$devicePath""$partNumber"
-          $(mkfs -t xfs $partPath) > /dev/null
-          $(mkdir -p $mountPathLoc)
-
-          addtofstab $partPath $mountPathLoc
+          local endPercent=100
         fi
+
+        log "  Creating partition $partNumber for $mountPathLoc with size info $fdiskSize start $startPercent% end $endPercent%"
+        parted $devicePath mkpart primary xfs $startPercent% $endPercent% -s
+
+        log "  partition created - rereading partition table"
+        partprobe $devicePath
+        udevadm settle
+        
+        local partPath="$devicePath""$partNumber"
+        log "  creating file system"
+        mkfs.xfs $partPath -f
+        mkdir -p $mountPathLoc
+
+        #addtofstab $partPath $mountPathLoc
+        
+        startPercent=$endPercent        
       done
     else
       log "no device path for LUN $lun"
