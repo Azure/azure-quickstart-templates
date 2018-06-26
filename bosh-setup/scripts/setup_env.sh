@@ -174,6 +174,10 @@ EOF
 fi
 chmod 777 $home_dir/deploy_bosh.sh
 
+system_domain=$(get_setting SYSTEM_DOMAIN)
+if [ "${system_domain}" = "NotConfigured" ]; then
+  system_domain="$(get_setting CLOUD_FOUNDRY_PUBLIC_IP).xip.io"
+fi
 cat > "$home_dir/deploy_cloud_foundry.sh" << EOF
 export BOSH_ENVIRONMENT=10.0.0.4
 export BOSH_CLIENT=admin
@@ -224,7 +228,7 @@ if [ "$environment" != "AzureStack" ]; then
 EOF
 fi
 cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
-  -v system_domain=$(get_setting CLOUD_FOUNDRY_PUBLIC_IP).xip.io
+  -v system_domain=${system_domain}
 EOF
 chmod 777 $home_dir/deploy_cloud_foundry.sh
 
@@ -255,7 +259,7 @@ cat >> "$home_dir/login_cloud_foundry.sh" << EOF
 
 cf_admin_password="\$(bosh int ~/cf-deployment-vars.yml --path /cf_admin_password)"
 
-cf login -a https://api.$(get_setting CLOUD_FOUNDRY_PUBLIC_IP).xip.io -u admin -p "\${cf_admin_password}" --skip-ssl-validation
+cf login -a https://api.${system_domain} -u admin -p "\${cf_admin_password}" --skip-ssl-validation
 EOF
 chmod 777 $home_dir/login_cloud_foundry.sh
 
