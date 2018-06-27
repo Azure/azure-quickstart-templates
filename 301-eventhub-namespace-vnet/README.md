@@ -8,4 +8,4 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-For information about using this template, see [Create a Event Hubs Virtual Network rule for a Namespace]()
+For information about using this template, see [Create a Event Hubs Virtual Network rule for a Namespace](https://docs.microsoft.com/en-us/azure/event-hubs/event-hubs-service-endpoints)
