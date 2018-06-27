@@ -51,14 +51,14 @@
             "metadata": {
                 "description": "The base URI where artifacts required by this template are located including a trailing '/'"
             },
-            "defaultValue": "https://datamigrationwebpi.blob.core.windows.net/templatefiles/"
+            "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-azure-database-migration-service/"
         },
         "_artifactsLocationSasToken": {
             "type": "securestring",
             "metadata": {
                 "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
             },
-            "defaultValue": "?"
+            "defaultValue": ""
         }
     },
     "variables": {
@@ -78,7 +78,10 @@
         "adVNet": "AzureDataMigrationServiceTemplateRG-vnet",
         "defaultSubnetName": "default",
         "databaseName": "TargetDatabaseName1",
-        "storageKeyType": "SharedAccessKey"
+        "storageKeyType": "SharedAccessKey",
+        "publicIpAddressId": {
+            "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIPAddresses', variables('publicIPSourceServer'))]"
+        }
     },
     "resources": [
         {
@@ -86,6 +89,9 @@
             "name": "[variables('sourceServerName')]",
             "apiVersion": "2017-12-01",
             "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces', variables('sourceNicName'))]"
+            ],
             "properties": {
                 "hardwareProfile": {
                     "vmSize": "Standard_D2_v2"
@@ -131,7 +137,7 @@
                 "networkProfile": {
                     "networkInterfaces": [
                         {
-                            "id": "[if(parameters('createPublicIP'), resourceId('Microsoft.Network/networkInterfaces', concat(variables('sourceNicName'), 'public')), resourceId('Microsoft.Network/networkInterfaces', concat(variables('sourceNicName'), 'private')))]"
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('sourceNicName')))]"
                         }
                     ]
                 },
@@ -218,10 +224,6 @@
                         }
                     }
                 }
-            ],
-            "dependsOn": [
-                "[if(parameters('createPublicIP'), resourceId('Microsoft.Network/networkInterfaces', concat(variables('sourceNicName'), 'public')), resourceId('Microsoft.Network/networkInterfaces', concat(variables('sourceNicName'), 'private')))]",
-                "[if(parameters('createPublicIP'), resourceId('Microsoft.Network/networkInterfaces', concat(variables('sourceNicName'), 'public')), resourceId('Microsoft.Network/networkInterfaces', concat(variables('sourceNicName'), 'private')))]"
             ]
         },
         {
@@ -257,41 +259,13 @@
             ]
         },
         {
-            "condition": "[parameters('createPublicIP')]",
             "type": "Microsoft.Network/networkInterfaces",
-            "name": "[concat(variables('sourceNicName'), 'public')]",
+            "name": "[variables('sourceNicName')]",
             "apiVersion": "2018-02-01",
             "location": "[parameters('location')]",
-            "properties": {
-                "ipConfigurations": [
-                    {
-                        "name": "ipconfig",
-                        "properties": {
-                            "publicIPAddress": {
-                                "id": "[resourceId ('Microsoft.Network/publicIPAddresses/', variables('publicIPSourceServer'))]"
-                            },
-                            "privateIPAllocationMethod": "Dynamic",
-                            "subnet": {
-                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('adVNet'), variables('defaultSubnetName'))]"
-                            },
-                            "primary": true,
-                            "privateIPAddressVersion": "IPv4"
-                        }
-                    }
-                ],
-                "enableAcceleratedNetworking": false,
-                "enableIPForwarding": false
-            },
             "dependsOn": [
                 "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('adVNet'), variables('defaultSubnetName'))]"
-            ]
-        },
-        {
-            "condition": "[not(parameters('createPublicIP'))]",
-            "type": "Microsoft.Network/networkInterfaces",
-            "name": "[concat(variables('sourceNicName'), 'private')]",
-            "apiVersion": "2018-02-01",
-            "location": "[parameters('location')]",
+            ],
             "properties": {
                 "ipConfigurations": [
                     {
@@ -301,6 +275,7 @@
                             "subnet": {
                                 "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('adVNet'), variables('defaultSubnetName'))]"
                             },
+                            "publicIPAddress": "[if(parameters('createPublicIP'), variables('publicIpAddressId'), json('null'))]",
                             "primary": true,
                             "privateIPAddressVersion": "IPv4"
                         }
@@ -308,10 +283,7 @@
                 ],
                 "enableAcceleratedNetworking": false,
                 "enableIPForwarding": false
-            },
-            "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('adVNet'), variables('defaultSubnetName'))]"
-            ]
+            }
         },
         {
             "type": "Microsoft.Network/networkSecurityGroups",
@@ -450,12 +422,12 @@
                     "type": "subnets",
                     "name": "[variables('defaultSubnetName')]",
                     "apiVersion": "2018-02-01",
-                    "properties": {
-                        "addressPrefix": "10.2.0.0/24"
-                    },
                     "dependsOn": [
                         "[resourceId('Microsoft.Network/virtualNetworks', variables('adVNet'))]"
-                    ]
+                    ],
+                    "properties": {
+                        "addressPrefix": "10.2.0.0/24"
+                    }
                 }
             ]
         },
@@ -508,6 +480,9 @@
                     "name": "[variables('databaseName')]",
                     "apiVersion": "2017-10-01-preview",
                     "location": "[parameters('location')]",
+                    "dependsOn": [
+                        "[concat('Microsoft.Sql/servers/', concat(variables('targetServerName')))]"
+                    ],
                     "properties": {
                         "collation": "SQL_Latin1_General_CP1_CI_AS",
                         "maxSizeBytes": 2147483648,
@@ -522,17 +497,14 @@
                                 "[concat('Microsoft.Sql/servers/', concat(variables('targetServerName')), '/databases/', variables('databaseName'))]"
                             ],
                             "properties": {
-                                "storageKey": "[parameters('_artifactsLocationSasToken')]",
+                                "storageKey": "?",
                                 "storageKeyType": "[variables('storageKeyType')]",
-                                "storageUri": "[uri(parameters('_artifactsLocation'), variables('bacpacFileLocation'))]",
+                                "storageUri": "https://templatebotstorage.blob.core.windows.net/bacpacs/AdventureWorks2016.bacpac",
                                 "administratorLogin": "[parameters('targetSqlDbAdministratorLogin')]",
                                 "administratorLoginPassword": "[parameters('targetSqlDbAdministratorPassword')]",
                                 "operationMode": "Import"
                             }
                         }
-                    ],
-                    "dependsOn": [
-                        "[concat('Microsoft.Sql/servers/', concat(variables('targetServerName')))]"
                     ]
                 },
                 {
@@ -540,13 +512,13 @@
                     "name": "AllowAllWindowsAzureIps",
                     "apiVersion": "2014-04-01-preview",
                     "location": "[parameters('location')]",
+                    "dependsOn": [
+                        "[concat('Microsoft.Sql/servers/', concat(variables('targetServerName')))]"
+                    ],
                     "properties": {
                         "endIpAddress": "0.0.0.0",
                         "startIpAddress": "0.0.0.0"
-                    },
-                    "dependsOn": [
-                        "[concat('Microsoft.Sql/servers/', concat(variables('targetServerName')))]"
-                    ]
+                    }
                 }
             ]
         }
