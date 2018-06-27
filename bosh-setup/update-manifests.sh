@@ -13,6 +13,7 @@ pushd manifests
   # cf-deployment
   wget https://raw.githubusercontent.com/cloudfoundry/cf-deployment/master/cf-deployment.yml -O cf-deployment.yml
   wget https://raw.githubusercontent.com/cloudfoundry/cf-deployment/master/operations/azure.yml -O azure.yml
+  wget https://raw.githubusercontent.com/cloudfoundry/cf-deployment/master/operations/use-external-blobstore.yml -O use-external-blobstore.yml
   wget https://raw.githubusercontent.com/cloudfoundry/cf-deployment/master/operations/use-azure-storage-blobstore.yml -O use-azure-storage-blobstore.yml
   wget https://raw.githubusercontent.com/cloudfoundry/cf-deployment/master/operations/scale-to-one-az.yml -O scale-to-one-az.yml
   wget https://raw.githubusercontent.com/cloudfoundry/cf-deployment/master/operations/use-compiled-releases.yml -O use-compiled-releases.yml
