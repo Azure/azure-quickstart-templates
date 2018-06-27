@@ -41,7 +41,7 @@ AZ_REPO=$(lsb_release -cs)
 echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | tee /etc/apt/sources.list.d/azure-cli.list
 curl -L https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
 retryop "apt-get install apt-transport-https"
-retryop "apt-get update && apt-get install azure-cli"
+retryop "apt-get update && apt-get install azure-cli=2.0.33-1~$AZ_REPO"
 
 echo "Creating the containers (bosh and stemcell) and the table (stemcells) in the default storage account"
 default_storage_account=$(get_setting DEFAULT_STORAGE_ACCOUNT_NAME)
@@ -174,6 +174,10 @@ EOF
 fi
 chmod 777 $home_dir/deploy_bosh.sh
 
+system_domain=$(get_setting SYSTEM_DOMAIN)
+if [ "${system_domain}" = "NotConfigured" ]; then
+  system_domain="$(get_setting CLOUD_FOUNDRY_PUBLIC_IP).xip.io"
+fi
 cat > "$home_dir/deploy_cloud_foundry.sh" << EOF
 export BOSH_ENVIRONMENT=10.0.0.4
 export BOSH_CLIENT=admin
@@ -212,18 +216,19 @@ EOF
 fi
 if [ "$environment" != "AzureStack" ]; then
   cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
-  -o ~/example_manifests/use-azure-storage-blobstore.yml \\
-  -v environment=$(get_setting ENVIRONMENT) \\
-  -v blobstore_storage_account_name=$(get_setting DEFAULT_STORAGE_ACCOUNT_NAME) \\
-  -v blobstore_storage_access_key=$(get_setting DEFAULT_STORAGE_ACCESS_KEY) \\
+  -o ~/example_manifests/use-external-blobstore.yml \\
   -v app_package_directory_key=cc-packages \\
   -v buildpack_directory_key=cc-buildpacks \\
   -v droplet_directory_key=cc-droplets \\
   -v resource_directory_key=cc-resources \\
+  -o ~/example_manifests/use-azure-storage-blobstore.yml \\
+  -v environment=$(get_setting ENVIRONMENT) \\
+  -v blobstore_storage_account_name=$(get_setting DEFAULT_STORAGE_ACCOUNT_NAME) \\
+  -v blobstore_storage_access_key=$(get_setting DEFAULT_STORAGE_ACCESS_KEY) \\
 EOF
 fi
 cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
-  -v system_domain=$(get_setting CLOUD_FOUNDRY_PUBLIC_IP).xip.io
+  -v system_domain=${system_domain}
 EOF
 chmod 777 $home_dir/deploy_cloud_foundry.sh
 
@@ -254,7 +259,7 @@ cat >> "$home_dir/login_cloud_foundry.sh" << EOF
 
 cf_admin_password="\$(bosh int ~/cf-deployment-vars.yml --path /cf_admin_password)"
 
-cf login -a https://api.$(get_setting CLOUD_FOUNDRY_PUBLIC_IP).xip.io -u admin -p "\${cf_admin_password}" --skip-ssl-validation
+cf login -a https://api.${system_domain} -u admin -p "\${cf_admin_password}" --skip-ssl-validation
 EOF
 chmod 777 $home_dir/login_cloud_foundry.sh
 
