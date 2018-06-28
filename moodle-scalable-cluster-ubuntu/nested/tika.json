@@ -1,0 +1,150 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "moodleCommon": {
+            "metadata": {
+                "description": "Common Moodle values"
+            },
+            "type": "object"
+        },
+        "subnetIdTika": {
+            "metadata": {
+                "description": "Azure resource ID of the subnet where this Tika VM is to be deployed"
+            },
+            "type": "string"
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2017-10-01",
+            "location": "[parameters('moodleCommon').location]",
+            "name": "[parameters('moodleCommon').tikaNicName]",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipcfg-tika",
+                        "properties": {
+                            "privateIPAllocationMethod": "Static",
+                            "privateIPAddress": "[parameters('moodleCommon').tikaVmIP]",
+                            "subnet": {
+                                "id": "[parameters('subnetIdTika')]"
+                            }
+                        }
+                    }
+                ]
+            },
+            "tags": {
+                "displayName": "Tika NIC"
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2017-03-30",
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkInterfaces/', parameters('moodleCommon').tikaNicName)]"
+            ],
+            "location": "[parameters('moodleCommon').location]",
+            "name": "[parameters('moodleCommon').tikaVmName]",
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('moodleCommon').tikaVmSku]"
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[variables('nicRef')]"
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "adminUsername": "[parameters('moodleCommon').sshUsername]",
+                    "computerName": "[parameters('moodleCommon').tikaVmName]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "path": "[concat('/home/', parameters('moodleCommon').sshUsername, '/.ssh/authorized_keys')]",
+                                    "keyData": "[parameters('moodleCommon').sshPublicKey]"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "storageProfile": {
+                    "dataDisks": [],
+                    "imageReference": "[parameters('moodleCommon').osType]",
+                    "osDisk": {
+                        "createOption": "FromImage",
+                        "managedDisk": {
+                            "storageAccountType": "Standard_LRS"
+                        },
+                        "name": "[parameters('moodleCommon').tikaVmName]"
+                    }
+                }
+            },
+            "tags": {
+                "displayName": "Tika Service Virtual Machine"
+            }
+        },
+        {
+            "condition": "[parameters('moodleCommon').applyScriptsSwitch]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2017-05-10",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('moodleCommon').tikaVmName)]"
+            ],
+            "name": "[concat(parameters('moodleCommon').tikaVmName,'-ScriptProcessor')]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "moodleCommon": {
+                        "value": "[parameters('moodleCommon')]"
+                    }
+
+                },
+                "templateLink": {
+                    "uri": "[concat(parameters('moodleCommon').baseTemplateUrl,'tikaconfig.json',parameters('moodleCommon').artifactsSasToken)]"
+                }
+            }
+        },
+        {
+            "condition": "[parameters('moodleCommon').azureBackupSwitch]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2017-05-10",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/',parameters('moodleCommon').tikaVmName)]"
+            ],
+            "name": "[concat(parameters('moodleCommon').tikaVmName,'-Backup')]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "moodleCommon": {
+                        "value": "[parameters('moodleCommon')]"
+                    },
+                    "vmName": {
+                        "value": "[parameters('moodleCommon').tikaVmName]"
+                    }
+                },
+                "templateLink": {
+                    "uri": "[concat(parameters('moodleCommon').baseTemplateUrl,'recoveryservicesEnlist.json',parameters('moodleCommon').artifactsSasToken)]"
+                }
+            }
+        }
+    ],
+    "variables": {
+        "documentation01": "This sub-template drives the tika service which is used as the access-point for moodle VM's when using tika search or azure search",
+        "documentation02": "It expects certain values in the 'common' datastructure.",
+        "documentation03": "    vnetName               - name of the virtual network",
+        "documentation04": "    subnetTika             - name of subnet for tika (and vm scale set)",
+        "documentation06": "    tikaNicName            - name of the tika vm network interface",
+        "documentation11": "    tikaVmName             - name of the tika vm",
+        "documentation12": "    tikaVmIP               - IP of the tika vm",
+        "documentation15": "This sub-template calls other sub-templates",
+        "documentation16": "    tikaconfig             - conditionally applies post-deployment script on the VM",
+        "documentation17": "    recoveryservicesEnlist - conditionally enlists the VM into the backup regimen",
+        "nicRef": "[resourceId('Microsoft.Network/networkInterfaces', parameters('moodleCommon').tikaNicName)]"
+    }
+}

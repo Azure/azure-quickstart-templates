@@ -1,0 +1,130 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "moodleCommon": {
+            "metadata": {
+                "description": "Common Moodle values"
+            },
+            "type": "object"
+        },
+        "subnetIdAppGw": {
+            "metadata": {
+                "description": "Azure resource ID of the subnet where this App Gw should be deployed"
+            },
+            "type": "string"
+        },
+        "sslCertData": {
+            "metadata": {
+                "description": "Base64-encoded PFX (no password protected) file content for the SSL cert to be used on the App Gateway for SSL termination. Should be passed from an Azure Key Vault."
+            },
+            "type": "securestring"
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/applicationGateways",
+            "name": "[parameters('moodleCommon').appGwName]",
+            "location": "[parameters('moodleCommon').location]",
+            "apiVersion": "2018-02-01",
+            "properties": {
+                "sku": {
+                    "name": "[parameters('moodleCommon').appGwSkuName]",
+                    "tier": "[parameters('moodleCommon').appGwSkuTier]",
+                    "capacity": "[parameters('moodleCommon').appGwSkuCapacity]"
+                },
+                "gatewayIPConfigurations": [
+                    {
+                        "name": "appGwIpConfig",
+                        "properties": {
+                            "subnet": {
+                                "id": "[parameters('subnetIdAppGw')]"
+                            }
+                        }
+                    }
+                ],
+                "frontendIPConfigurations": [
+                    {
+                        "name": "appGwFrontendIP",
+                        "properties": {
+                            "publicIPAddress": {
+                                "id": "[variables('appGwPublicIPAddressID')]"
+                            }
+                        }
+                    }
+                ],
+                "frontendPorts": [
+                    {
+                        "name": "appGwFrontendPort",
+                        "properties": {
+                            "port": 443
+                        }
+                    }
+                ],
+                "backendAddressPools": [
+                    {
+                        "name": "[variables('appGwBePoolName')]"
+                    }
+                ],
+                "backendHttpSettingsCollection": [
+                    {
+                        "name": "appGwBackendHttpSettings",
+                        "properties": {
+                            "port": 80,
+                            "protocol": "Http",
+                            "cookieBasedAffinity": "Disabled"
+                        }
+                    }
+                ],
+                "sslCertificates": [
+                    {
+                        "name": "appGatewaySslCert",
+                        "properties": {
+                            "data": "[parameters('sslCertData')]"
+                        }
+                    }
+                ],
+                "httpListeners": [
+                    {
+                        "name": "appGwHttpListener",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "Id": "[concat(variables('appGwID'), '/frontendIPConfigurations/appGwFrontendIP')]"
+                            },
+                            "frontendPort": {
+                                "Id": "[concat(variables('appGwID'), '/frontendPorts/appGwFrontendPort')]"
+                            },
+                            "protocol": "Https",
+                            "sslCertificate": {
+                                "Id": "[concat(variables('appGwID'), '/sslCertificates/appGatewaySslCert')]"
+                            }
+                        }
+                    }
+                ],
+                "requestRoutingRules": [
+                    {
+                        "Name": "rule1",
+                        "properties": {
+                            "ruleType": "Basic",
+                            "httpListener": {
+                                "id": "[concat(variables('appGwID'), '/httpListeners/appGwHttpListener')]"
+                            },
+                            "backendAddressPool": {
+                                "id": "[concat(variables('appGwID'), '/backendAddressPools/', variables('appGwBePoolName'))]"
+                            },
+                            "backendHttpSettings": {
+                                "id": "[concat(variables('appGwID'), '/backendHttpSettingsCollection/appGwBackendHttpSettings')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ],
+    "variables": {
+        "documentation1": "This sub-template creates an Azure Application Gateway for SSL offloading. It expects certain values in the 'common' datastructure.",
+        "appGwBePoolName": "[parameters('moodleCommon').appGwBePoolName]",
+        "appGwPublicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('moodleCommon').appGwPipName)]",
+        "appGwID": "[resourceId('Microsoft.Network/applicationGateways', parameters('moodleCommon').appGwName)]"
+    }
+}

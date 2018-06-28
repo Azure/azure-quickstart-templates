@@ -1,0 +1,80 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01-preview/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "moodleCommon": {
+            "metadata": {
+                "description": "Common Moodle values"
+            },
+            "type": "object"
+        },
+        "lbPubIp": {
+            "metadata": {
+                "description": "Public IP address of the deployed load balancer"
+            },
+            "type": "string"
+        },
+        "ctlrPubIp": {
+            "metadata": {
+                "description": "Public IP address of the deployed controller VM"
+            },
+            "type": "string"
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Sql/servers",
+            "apiVersion": "2015-05-01-preview",
+            "kind": "",
+            "location": "[parameters('moodleCommon').location]",
+            "name": "[parameters('moodleCommon').serverName]",
+            "properties": {
+                "administratorLogin": "[parameters('moodleCommon').dbLogin]",
+                "administratorLoginPassword": "[parameters('moodleCommon').dbLoginPassword]",
+                "version": "[parameters('moodleCommon').mssqlVersion]"
+            },
+            "resources": [
+                {
+                    "apiVersion": "2014-04-01",
+                    "dependsOn": [
+                        "[concat('Microsoft.Sql/servers/', parameters('moodleCommon').serverName)]"
+                    ],
+                    "location": "[parameters('moodleCommon').location]",
+                    "name": "mssql-firewall-allow-lb",
+                    "properties": {
+                        "startIpAddress": "[parameters('lbPubIp')]",
+                        "endIpAddress": "[parameters('lbPubIp')]"
+                    },
+                    "type": "firewallRules"
+                },
+                {
+                    "apiVersion": "2014-04-01",
+                    "dependsOn": [
+                        "[concat('Microsoft.Sql/servers/', parameters('moodleCommon').serverName)]"
+                    ],
+                    "location": "[parameters('moodleCommon').location]",
+                    "name": "mssql-firewall-allow-ctlr",
+                    "properties": {
+                        "startIpAddress": "[parameters('ctlrPubIp')]",
+                        "endIpAddress": "[parameters('ctlrPubIp')]"
+                    },
+                    "type": "firewallRules"
+                }
+            ]
+        }
+    ],
+    "outputs": {
+        "dbFQDN": {
+            "type": "string",
+            "value": "[reference(parameters('moodleCommon').serverName).fullyQualifiedDomainName]"
+        }
+    },
+    "variables": {
+        "documentation1": "This sub-template creates a mssql server.  It expects certain values in the 'common' datastructure.",
+        "documentation10": " serverName                 - Mssql server name",
+        "documentation11": " mssqlVersion               - Mssql version",
+        "documentation2": " administratorLogin          - Mssql admin username",
+        "documentation3": " administratorLoginPassword  - Mssql admin password",
+        "documentation4": " location                    - Mssql server location"
+    }
+}

@@ -1,0 +1,106 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "moodleCommon": {
+            "metadata": {
+                "description": "Common Moodle values"
+            },
+            "type": "object"
+        },
+        "vnetName": {
+            "metadata": {
+                "description": "The name of the vnet where subnets should be created"
+            },
+            "type": "string"
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "apiVersion": "2017-10-01",
+            "name": "[concat(parameters('vnetName'), '/', parameters('moodleCommon').subnetWeb)]",
+            "location": "[parameters('moodleCommon').location]",
+            "properties": {
+                "addressPrefix": "[parameters('moodleCommon').subnetWebRange]"
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "apiVersion": "2017-10-01",
+            "name": "[concat(parameters('vnetName'), '/', parameters('moodleCommon').subnetSan)]",
+            "location": "[parameters('moodleCommon').location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('moodleCommon').subnetWeb)]"
+            ],
+            "properties": {
+                "addressPrefix": "[parameters('moodleCommon').subnetSanRange]"
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "apiVersion": "2017-10-01",
+            "name": "[concat(parameters('vnetName'), '/', parameters('moodleCommon').subnetRedis)]",
+            "location": "[parameters('moodleCommon').location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('moodleCommon').subnetSan)]"
+            ],
+            "properties": {
+                "addressPrefix": "[parameters('moodleCommon').subnetRedisRange]"
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "apiVersion": "2017-10-01",
+            "name": "[concat(parameters('vnetName'), '/', parameters('moodleCommon').subnetElastic)]",
+            "location": "[parameters('moodleCommon').location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('moodleCommon').subnetRedis)]"
+            ],
+            "properties": {
+                "addressPrefix": "[parameters('moodleCommon').subnetElasticRange]"
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "apiVersion": "2017-10-01",
+            "name": "[concat(parameters('vnetName'), '/', parameters('moodleCommon').subnetTika)]",
+            "location": "[parameters('moodleCommon').location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('moodleCommon').subnetElastic)]"
+            ],
+            "properties": {
+                "addressPrefix": "[parameters('moodleCommon').subnetTikaRange]"
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "apiVersion": "2017-10-01",
+            "name": "[concat(parameters('vnetName'), '/', parameters('moodleCommon').subnetGateway)]",
+            "location": "[parameters('moodleCommon').location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('moodleCommon').subnetTika)]"
+            ],
+            "properties": {
+                "addressPrefix": "[parameters('moodleCommon').subnetGatewayRange]"
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "apiVersion": "2017-10-01",
+            "name": "[concat(parameters('vnetName'), '/', parameters('moodleCommon').subnetAppGw)]",
+            "location": "[parameters('moodleCommon').location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('moodleCommon').subnetGateway)]"
+            ],
+            "properties": {
+                "addressPrefix": "[parameters('moodleCommon').subnetAppGwRange]"
+            }
+        }
+    ],
+    "variables": {
+        "documentation01": "This sub-template creates various subnets needed for various components of the cluster.",
+        "documentation02": "This needs to be done on a separate nested template, in order to allow to create subnets on a customer's BYO-vnet, which may be on a different subscription and/or on a different resource group.",
+        "documentation03": "The subnets are created one-by-one (using the dependsOn's), to avoid ARM's 'Another operation on this or dependent resource is in progress' failures"
+    }
+}
