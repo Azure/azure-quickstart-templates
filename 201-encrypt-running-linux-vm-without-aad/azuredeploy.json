@@ -1,13 +1,12 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "vmName": {
       "type": "string",
       "metadata": {
-        "description": "Name of VM to be encrypted"
-      },
-      "maxLength": 61
+        "description": "Name of the virtual machine"
+      }
     },
     "keyVaultName": {
       "type": "string",
@@ -28,13 +27,6 @@
         "description": "URL of the KeyEncryptionKey used to encrypt the volume encryption key"
       }
     },
-    "keyEncryptionAlgorithm": {
-      "type": "string",
-	  "defaultValue": "RSA-OAEP",	  
-      "metadata": {
-        "description": "keyEncryptionAlgorithm used to wrap volume encryption key using KeyEncryptionKeyURL"
-      }
-    },	
     "volumeType": {
       "type": "string",
       "defaultValue": "All",
@@ -48,21 +40,28 @@
       "metadata": {
         "description": "Pass in an unique value like a GUID everytime the operation needs to be force run"
       }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
     "extensionName": "AzureDiskEncryptionForLinux",
     "extensionVersion": "1.1",
     "encryptionOperation": "EnableEncryption",
-    "keyVaultURL": "[concat('https://', parameters('keyVaultName'), '.vault.azure.net/')]",
-    "keyVaultResourceID": "[concat(subscription().id,'/resourceGroups/',parameters('keyVaultResourceGroup'),'/providers/Microsoft.KeyVault/vaults/', parameters('keyVaultName'))]"
+    "keyEncryptionAlgorithm": "RSA-OAEP",
+    "keyVaultResourceID": "[resourceId(parameters('keyVaultResourceGroup'), 'Microsoft.KeyVault/vaults/', parameters('keyVaultName'))]"
   },
   "resources": [
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('vmName'),'/', variables('extensionName'))]",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2017-12-01",
+      "location": "[parameters('location')]",
+      "apiVersion": "2017-03-30",
       "properties": {
         "publisher": "Microsoft.Azure.Security",
         "type": "[variables('extensionName')]",
@@ -71,11 +70,11 @@
         "forceUpdateTag": "[parameters('forceUpdateTag')]",
         "settings": {
             "EncryptionOperation": "[variables('encryptionOperation')]",
-            "KeyVaultURL": "[variables('keyVaultURL')]",
+	    "KeyVaultURL": "[reference(variables('keyVaultResourceId'),'2016-10-01').vaultUri]",
             "KeyVaultResourceId": "[variables('keyVaultResourceID')]",
             "KeyEncryptionKeyURL": "[parameters('keyEncryptionKeyURL')]",
             "KekVaultResourceId": "[if(empty(parameters('keyEncryptionKeyURL')),'',variables('keyVaultResourceID'))]",
-            "KeyEncryptionAlgorithm": "[parameters('keyEncryptionAlgorithm')]",
+	    "KeyEncryptionAlgorithm": "[variables('keyEncryptionAlgorithm')]",
             "VolumeType": "[parameters('volumeType')]"
         }                  
       }
