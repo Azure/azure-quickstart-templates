@@ -6,6 +6,7 @@ configuration ConfigureFEVM
         [Parameter(Mandatory)] [String]$DomainFQDN,
         [Parameter(Mandatory)] [String]$DCName,
         [Parameter(Mandatory)] [String]$SQLName,
+        [Parameter(Mandatory)] [String]$SQLAlias,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$DomainAdminCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSetupCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPFarmCreds,
@@ -14,7 +15,7 @@ configuration ConfigureFEVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPPassphraseCreds
     )
 
-    Import-DscResource -ModuleName xComputerManagement, xDisk, cDisk, xNetworking, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, xCertificate
+    Import-DscResource -ModuleName ComputerManagementDsc, StorageDsc, xNetworking, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, CertificateDsc, SqlServerDsc
 
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
@@ -29,6 +30,7 @@ configuration ConfigureFEVM
     [Int] $RetryCount = 30
     [Int] $RetryIntervalSec = 30
     [String] $ComputerName = Get-Content env:computername
+    [String] $AppDomainIntranetFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps-Intranet")
 
     Node localhost
     {
@@ -41,10 +43,10 @@ configuration ConfigureFEVM
         #**********************************************************
         # Initialization of VM
         #**********************************************************
-        xWaitforDisk WaitForDataDisk   { DiskNumber = 2; RetryIntervalSec = $RetryIntervalSec; RetryCount = $RetryCount }
-        cDiskNoRestart PrepareDataDisk { DiskNumber = 2; DriveLetter = "F" ; DependsOn   = "[xWaitforDisk]WaitForDataDisk" }
-        WindowsFeature ADPS     { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; DependsOn = "[cDiskNoRestart]PrepareDataDisk" }
-        WindowsFeature DnsTools { Name = "RSAT-DNS-Server";    Ensure = "Present"; DependsOn = "[cDiskNoRestart]PrepareDataDisk"  }
+        WaitforDisk WaitForDataDisk   { DiskId = 2; RetryIntervalSec = $RetryIntervalSec; RetryCount = $RetryCount }
+        Disk PrepareDataDisk          { DiskId = 2; DriveLetter = "F" ; DependsOn   = "[WaitforDisk]WaitForDataDisk" }
+        WindowsFeature ADPS     { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; DependsOn = "[Disk]PrepareDataDisk" }
+        WindowsFeature DnsTools { Name = "RSAT-DNS-Server";    Ensure = "Present"; DependsOn = "[Disk]PrepareDataDisk"  }
         xDnsServerAddress DnsServerAddress
         {
             Address        = $DNSServer
@@ -68,7 +70,7 @@ configuration ConfigureFEVM
             DependsOn            = "[xCredSSP]CredSSPClient"
         }
 
-        xComputer DomainJoin
+        Computer DomainJoin
         {
             Name       = $ComputerName
             DomainName = $DomainFQDN
@@ -108,7 +110,7 @@ configuration ConfigureFEVM
                     return $false
                 }
             }
-            DependsOn="[xComputer]DomainJoin"
+            DependsOn="[Computer]DomainJoin"
         }
 
         #**********************************************************
@@ -121,25 +123,36 @@ configuration ConfigureFEVM
             ValueData = "1"
             ValueType = "Dword"
             Ensure    = "Present"
-            DependsOn ="[xComputer]DomainJoin"
+            DependsOn ="[Computer]DomainJoin"
         }
 
-        xWebAppPool RemoveDotNet2Pool         { Name = ".NET v2.0";            Ensure = "Absent"; DependsOn = "[xComputer]DomainJoin"}
-        xWebAppPool RemoveDotNet2ClassicPool  { Name = ".NET v2.0 Classic";    Ensure = "Absent"; DependsOn = "[xComputer]DomainJoin"}
-        xWebAppPool RemoveDotNet45Pool        { Name = ".NET v4.5";            Ensure = "Absent"; DependsOn = "[xComputer]DomainJoin"}
-        xWebAppPool RemoveDotNet45ClassicPool { Name = ".NET v4.5 Classic";    Ensure = "Absent"; DependsOn = "[xComputer]DomainJoin"}
-        xWebAppPool RemoveClassicDotNetPool   { Name = "Classic .NET AppPool"; Ensure = "Absent"; DependsOn = "[xComputer]DomainJoin"}
-        xWebAppPool RemoveDefaultAppPool      { Name = "DefaultAppPool";       Ensure = "Absent"; DependsOn = "[xComputer]DomainJoin"}
-        xWebSite    RemoveDefaultWebSite      { Name = "Default Web Site";     Ensure = "Absent"; PhysicalPath = "C:\inetpub\wwwroot"; DependsOn = "[xComputer]DomainJoin"}
+        xWebAppPool RemoveDotNet2Pool         { Name = ".NET v2.0";            Ensure = "Absent"; DependsOn = "[Computer]DomainJoin"}
+        xWebAppPool RemoveDotNet2ClassicPool  { Name = ".NET v2.0 Classic";    Ensure = "Absent"; DependsOn = "[Computer]DomainJoin"}
+        xWebAppPool RemoveDotNet45Pool        { Name = ".NET v4.5";            Ensure = "Absent"; DependsOn = "[Computer]DomainJoin"}
+        xWebAppPool RemoveDotNet45ClassicPool { Name = ".NET v4.5 Classic";    Ensure = "Absent"; DependsOn = "[Computer]DomainJoin"}
+        xWebAppPool RemoveClassicDotNetPool   { Name = "Classic .NET AppPool"; Ensure = "Absent"; DependsOn = "[Computer]DomainJoin"}
+        xWebAppPool RemoveDefaultAppPool      { Name = "DefaultAppPool";       Ensure = "Absent"; DependsOn = "[Computer]DomainJoin"}
+        xWebSite    RemoveDefaultWebSite      { Name = "Default Web Site";     Ensure = "Absent"; PhysicalPath = "C:\inetpub\wwwroot"; DependsOn = "[Computer]DomainJoin"}
 
         Group AddSPSetupAccountToAdminGroup
         {
-            GroupName            ='Administrators'
+            GroupName            = 'Administrators'
             Ensure               = 'Present'
             MembersToInclude     = $SPSetupCredsQualified.UserName
             Credential           = $DomainAdminCredsQualified
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[xComputer]DomainJoin"
+            DependsOn            = "[Computer]DomainJoin"
+        }
+
+        SqlAlias AddSqlAlias
+        {
+            Ensure               = "Present"
+            Name                 = $SQLAlias
+            ServerName           = $SQLName
+            Protocol             = "TCP"
+            TcpPort              = 1433
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[Computer]DomainJoin"
         }
 
         #********************************************************************
@@ -150,7 +163,7 @@ configuration ConfigureFEVM
             SetScript =
             {
                 $retrySleep = $using:RetryIntervalSec
-                $server = $using:SQLName
+                $server = $using:SQLAlias
                 $db= $using:SPDBPrefix + "Content_80"
                 $retry = $true
                 while ($retry) {
@@ -170,7 +183,7 @@ configuration ConfigureFEVM
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[xComputer]DomainJoin"
+            DependsOn            = "[Computer]DomainJoin"
         }
 
         <# Should not join farm before Intranet zone is created on first server, otherwise web application may not provision correctly in FE
@@ -226,7 +239,7 @@ configuration ConfigureFEVM
         #**********************************************************
         SPFarm JoinSPFarm
         {
-            DatabaseServer            = $SQLName
+            DatabaseServer            = $SQLAlias
             FarmConfigDatabaseName    = $SPDBPrefix + "Config"
             Passphrase                = $SPPassphraseCreds
             FarmAccount               = $SPFarmCredsQualified
@@ -262,7 +275,20 @@ configuration ConfigureFEVM
             DependsOn            = "[SPFarm]JoinSPFarm"
         }
 
-        xCertReq SPSSiteCert
+        # Update GPO to ensure the root certificate of the CA is present in "cert:\LocalMachine\Root\" before issuing a certificate request, otherwise request would fail
+        xScript UpdateGPOToTrustRootCACert
+        {
+            SetScript =
+            {
+                gpupdate.exe /force
+            }
+            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false }
+            DependsOn            = "[Computer]DomainJoin"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+        }
+
+        CertReq SPSSiteCert
         {
             CARootName             = "$DomainNetbiosName-$DCName-CA"
             CAServerFQDN           = "$DCName.$DomainFQDN"
@@ -276,7 +302,7 @@ configuration ConfigureFEVM
             CertificateTemplate    = 'WebServer'
             AutoRenew              = $true
             Credential             = $DomainAdminCredsQualified
-            DependsOn              = "[SPFarm]JoinSPFarm"
+            DependsOn              = "[SPFarm]JoinSPFarm", "[xScript]UpdateGPOToTrustRootCACert"
         }
 
         xScript SetHTTPSCertificate
@@ -318,7 +344,7 @@ configuration ConfigureFEVM
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[xCertReq]SPSSiteCert"
+            DependsOn            = "[CertReq]SPSSiteCert"
         }
     }
 }
@@ -347,6 +373,24 @@ function Get-NetBIOSName
     }
 }
 
+function Get-AppDomain
+{
+    [OutputType([string])]
+    param(
+        [string]$DomainFQDN,
+        [string]$Suffix
+    )
+
+    $appDomain = [String]::Empty
+    if ($DomainFQDN.Contains('.')) {
+        $domainParts = $DomainFQDN.Split('.')
+        $appDomain = $domainParts[0]
+        $appDomain += "$Suffix."
+        $appDomain += $domainParts[1]
+    }
+    return $appDomain
+}
+
 function Get-SPDSCInstalledProductVersion
 {
     $pathToSearch = "C:\Program Files\Common Files\microsoft shared\Web Server Extensions\*\ISAPI\Microsoft.SharePoint.dll"
@@ -373,8 +417,9 @@ $DNSServer = "10.0.1.4"
 $DomainFQDN = "contoso.local"
 $DCName = "DC"
 $SQLName = "SQL"
+$SQLAlias = "SQLAlias"
 
-ConfigureFEVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.74.0.0\DSCWork\ConfigureFEVM.0\ConfigureFEVM"
+ConfigureFEVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -SQLAlias $SQLAlias -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.74.0.0\DSCWork\ConfigureFEVM.0\ConfigureFEVM"
 Set-DscLocalConfigurationManager -Path "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.74.0.0\DSCWork\ConfigureFEVM.0\ConfigureFEVM"
 Start-DscConfiguration -Path "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.74.0.0\DSCWork\ConfigureFEVM.0\ConfigureFEVM" -Wait -Verbose -Force
 
