@@ -162,7 +162,7 @@ The following example shows how to use the reference function for the `storageUr
 ```
 * Other values in a template configured with a public endpoint, must use the reference function.  
 
-* All resources should use the `parameters('location')` expression for the `location` property for all resources.  Other expressions may be used for resources that need to be placed in alternate locations, for example a geo-redundant application.  Location values must never be hard-coded or use `resourceGroup().location` directly for the location property.Recommended definition in 'parameters' element as the following : 
+* All resources should use the `parameters('location')` expression for the `location` property for all resources.  Other expressions may be used for resources that need to be placed in alternate locations, for example a geo-redundant application.  Location values must never be hard-coded or use `resourceGroup().location` directly for the location property.  Required parameter definition: 
 
 ```json
     "location": {
