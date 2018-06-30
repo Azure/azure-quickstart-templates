@@ -4,7 +4,7 @@
   "parameters": {
     "vnetName": {
       "type": "string",
-      "defaultValue": "VNet1",
+      "defaultValue": "MyNewVNet",
       "metadata": {
         "description": "Name of new Azure VNet where you can deploy Sql Managed Instances and resources that use them"
       }
@@ -13,14 +13,14 @@
       "type": "string",
       "defaultValue": "10.0.0.0/16",
       "metadata": {
-        "description": "VNet address range (VNet prefix)"
+        "description": "VNet IPaddress range (VNet prefix)"
       }
     },
     "defaultSubnetName": {
       "type": "string",
       "defaultValue": "Default",
       "metadata": {
-        "description": "Name of default subnet for VNet (used to deploy VMs, web, and other client apps - no Managed Instances)"
+        "description": "Name of default subnet for VNet (used to deploy VMs, web, and other client apps - no Managed Instances). You can delete this subnet later if you don't need it."
       }
     },
     "defaultSubnetPrefix": {
@@ -41,14 +41,14 @@
       "type": "string",
       "defaultValue": "10.0.1.0/24",
       "metadata": {
-        "description": "Address range in the subnet dedicated to Managed Instances"
+        "description": "IP Address range in the subnet dedicated to Managed Instances"
       }
     },
-    "routeTablesToSqlInstanceManagementSrevice": {
+    "routeTableToSqlInstanceManagementService": {
       "type": "string",
       "defaultValue": "RouteToSqlInstanceManagementService",
       "metadata": {
-        "description": "Name of route table that enables access to management service"
+        "description": "Name of route table that enables access to Azure Management Service"
       }
     },
     "location": {
@@ -82,30 +82,33 @@
           {
             "name": "[parameters('managedInstanceSubnetName')]",
             "properties": {
-              "addressPrefix": "[parameters('managedInstanceSubnetPrefix')]"
+              "addressPrefix": "[parameters('managedInstanceSubnetPrefix')]",
+              "routeTable": {
+                "id": "[resourceId('Microsoft.Network/routeTables', parameters('routeTableToSqlInstanceManagementService'))]"
+              }
             }
           }
         ]
-      }
+      },
+      "dependsOn": ["[resourceId('Microsoft.Network/routeTables', parameters('routeTableToSqlInstanceManagementService'))]"]
     },
     {
         "type": "Microsoft.Network/routeTables",
-        "name": "[parameters('routeTablesToSqlInstanceManagementSrevice')]",
+        "name": "[parameters('routeTableToSqlInstanceManagementService')]",
         "apiVersion": "2018-02-01",
         "location": "[parameters('location')]",
         "properties": {
             "disableBgpRoutePropagation": false,
             "routes": [
                 {
-                    "name": "[parameters('routeTablesToSqlInstanceManagementSrevice')]",
+                    "name": "[parameters('routeTableToSqlInstanceManagementService')]",
                     "properties": {
                         "addressPrefix": "0.0.0.0/0",
                         "nextHopType": "Internet"
                     }
                 }
             ]
-        },
-        "dependsOn": ["[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"]
+        }
     }
   ]
 }
