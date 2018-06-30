@@ -6,6 +6,9 @@ pushd manifests
   # bosh-deployment
   wget https://raw.githubusercontent.com/cloudfoundry/bosh-deployment/master/bosh.yml -O bosh.yml
   wget https://raw.githubusercontent.com/cloudfoundry/bosh-deployment/master/jumpbox-user.yml -O jumpbox-user.yml
+  wget https://raw.githubusercontent.com/cloudfoundry/bosh-deployment/master/uaa.yml -O uaa.yml
+  wget https://raw.githubusercontent.com/cloudfoundry/bosh-deployment/master/credhub.yml -O credhub.yml
+  wget https://raw.githubusercontent.com/cloudfoundry/bosh-deployment/master/runtime-configs/dns.yml -O dns.yml
   wget https://raw.githubusercontent.com/cloudfoundry/bosh-deployment/master/azure/cpi.yml -O cpi.yml
   wget https://raw.githubusercontent.com/cloudfoundry/bosh-deployment/master/azure/custom-environment.yml -O custom-environment.yml
   wget https://raw.githubusercontent.com/cloudfoundry/bosh-deployment/master/azure/use-managed-disks.yml -O use-managed-disks.yml
