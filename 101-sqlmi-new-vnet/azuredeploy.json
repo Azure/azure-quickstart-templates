@@ -2,6 +2,9 @@
     "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
     "contentVersion": "1.0.0.1",
     "parameters": {
+        "managedInstanceName": {
+            "type": "string"
+        },
         "administratorLogin": {
             "type": "string",
             "defaultValue": "cloudSA"
@@ -9,12 +12,9 @@
         "administratorLoginPassword": {
             "type": "securestring"
         },
-        "managedInstanceName": {
-            "type": "string"
-        },
         "virtualNetworkName": {
             "type": "string",
-            "defaultValue": "[concat('vnet-', parameters('managedInstanceName'))]"
+            "defaultValue": ""
         },
         "addressPrefix": {
             "type": "string",
@@ -30,7 +30,7 @@
         },
         "routeTableName": {
             "type": "string",
-            "defaultValue": "[concat('rt-', parameters('managedInstanceName'))]"
+            "defaultValue": ""
         },
         "skuName": {
             "type": "string",
@@ -58,18 +58,20 @@
         },
         "location": {
             "type": "string",
-            "defaultValue": "[resourceGroup().location]",
-            "metadata": {
-            "description": "Location for all resources."
+            "defaultValue": ""
         }
-    }
+    },
+    "variables": {
+        "virtualNetworkName": "[if(equals(parameters('virtualNetworkName'),''), concat('vnet-', parameters('managedInstanceName')), parameters('virtualNetworkName'))]",
+        "routeTableName": "[if(equals(parameters('routeTableName'),''), concat('rt-', parameters('managedInstanceName')), parameters('routeTableName'))]",
+        "location": "[if(equals(parameters('location'),''), resourceGroup().location, parameters('location'))]"
     },
     "resources": [
         {
             "type": "Microsoft.Network/routeTables",
-            "name": "[parameters('routeTableName')]",
+            "name": "[variables('routeTableName')]",
             "apiVersion": "2018-02-01",
-            "location": "[parameters('location')]",
+            "location": "[variables('location')]",
             "properties": {
                 "disableBgpRoutePropagation": false,
                 "routes": [
@@ -84,13 +86,13 @@
             }
         },
         {
-            "name": "[parameters('virtualNetworkName')]",
+            "name": "[variables('virtualNetworkName')]",
             "type": "Microsoft.Network/virtualNetworks",
             "apiVersion": "2018-02-01",
             "dependsOn":[
-                "[parameters('routeTableName')]"
+                "[variables('routeTableName')]"
             ],
-            "location": "[parameters('location')]",
+            "location": "[variables('location')]",
             "properties": {
                 "addressSpace": {
                     "addressPrefixes": [
@@ -103,12 +105,37 @@
                         "properties": {
                             "addressPrefix": "[parameters('subnetPrefix')]",
                             "routeTable": {
-                                "id": "[resourceId('Microsoft.Network/routeTables', parameters('routeTableName'))]"
+                                "id": "[resourceId('Microsoft.Network/routeTables', variables('routeTableName'))]"
                             }
                         }
                     }
                 ]
             }
+        },      
+        {
+            "apiVersion": "2015-05-01-preview",
+            "dependsOn":[
+                "[variables('virtualNetworkName')]"
+            ],
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "location": "[variables('location')]",
+            "name": "[parameters('managedInstanceName')]",
+            "sku": {
+                "name": "[parameters('skuName')]",
+                "tier": "[parameters('skuEdition')]"
+            },
+            "properties": {
+                "administratorLogin": "[parameters('administratorLogin')]",
+                "administratorLoginPassword": "[parameters('administratorLoginPassword')]",
+                "subnetId": "[concat(resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'),'subnets', parameters('subnetName'))]",
+                "storageSizeInGB": "[parameters('storageSizeInGB')]",
+                "vCores": "[parameters('vCores')]",
+                "licenseType": "[parameters('licenseType')]",
+                "hardwareFamily": "[parameters('hardwareFamily')]"
+            },
+            "type": "Microsoft.Sql/managedInstances"
         }
     ]
 }
