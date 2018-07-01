@@ -6,9 +6,9 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template creates a new VNet and deploys a **SQL MI** inside. For more information, visit: https://docs.microsoft.com/en-us/azure/sql-database/sql-database-managed-instance
+This template creates a new VNet and deploys a **SQL MI** inside. For **SQL MI** overview visit: https://docs.microsoft.com/en-us/azure/sql-database/sql-database-managed-instance
 
 ## Important
-SQL MI is still in gated public preview. That means that before deploying this template you have to whitelist your subscription as explained here: https://docs.microsoft.com/en-us/azure/sql-database/sql-database-managed-instance-create-tutorial-portal#whitelist-your-subscription 
+**SQL MI** is still in gated public preview. Before deploying this template you have to whitelist your subscription as explained here: https://docs.microsoft.com/en-us/azure/sql-database/sql-database-managed-instance-create-tutorial-portal#whitelist-your-subscription 
 
 
