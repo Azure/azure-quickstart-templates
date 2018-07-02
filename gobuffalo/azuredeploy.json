@@ -2,6 +2,13 @@
     "$schema": "https://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+      "location" : {
+        "type": "String",
+        "defaultValue": "[resourceGroup().location]",
+        "metadata": {
+          "description": "The Azure Region which should be targeted while provisioning the infrastructure described in this template."
+        }
+      },
       "imageName" : {
         "type": "String",
         "defaultValue": "appsvc/sample-hello-world:latest",
@@ -18,7 +25,7 @@
       },
       "database": {
         "type": "String",
-        "defaultValue": "none",
+        "defaultValue": "postgresql",
         "allowedValues": [
             "none",
             "postgresql",
@@ -44,7 +51,7 @@
       },
       "databaseAdministratorLoginPassword": {
         "type": "SecureString",
-        "defaultValue": "",
+        "defaultValue": "[concat('MSFT+Buffalo-', uniqueString(deployment().name))]",
         "metadata": {
           "description": "The password for the administrator of the database to be created."
         }
@@ -62,7 +69,7 @@
         "type": "Microsoft.Web/sites",
         "name": "[parameters('name')]",
         "apiVersion": "2016-03-01",
-        "location": "[resourceGroup().location]",
+        "location": "[parameters('location')]",
         "tags": {
           "[concat('hidden-related:', subscription().id, '/resourcegroups/', resourceGroup().name, '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]": "empty",
           "gobuffalo": "empty"
@@ -86,7 +93,7 @@
             "appCommandLine": "",
             "linuxFxVersion": "[concat('DOCKER|', parameters('imageName'))]"
           },
-          "serverFarmId": "[concat(subscription().id, '/resourcegroups/', resourceGroup().name, '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]",
+          "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
           "hostingEnvironment": ""
         },
         "dependsOn": [
@@ -104,7 +111,7 @@
         "kind": "linux",
         "name": "[variables('hostingPlanName')]",
         "apiVersion": "2016-09-01",
-        "location": "[resourceGroup().location]",
+        "location": "[parameters('location')]",
         "properties": {
           "name": "[variables('hostingPlanName')]",
           "workerSizeId": "0",
@@ -126,7 +133,7 @@
           "kind":"",
           "name":"[variables('postgresqlName')]",
           "apiVersion": "2017-12-01-preview",
-          "location":"[resourceGroup().location]",
+          "location":"[parameters('location')]",
           "properties": {
               "version": "9.6",
               "administratorLogin": "[parameters('databaseAdministratorLogin')]",
@@ -141,7 +148,7 @@
               "dependsOn": [
                 "[variables('postgresqlName')]"
               ],
-              "location": "[resourceGroup().location]",
+              "location": "[parameters('location')]",
               "name": "AllowAzureIPs",
               "properties": {
                 "startIpAddress": "0.0.0.0",
@@ -163,7 +170,7 @@
         "kind": "",
         "name": "[variables('mysqlName')]",
         "apiVersion": "2017-12-01-preview",
-        "location": "[resourceGroup().location]",
+        "location": "[parameters('location')]",
         "properties": {
           "version": "5.7",
           "administratorLogin": "[parameters('databaseAdministratorLogin')]",
@@ -183,7 +190,7 @@
             "dependsOn": [
               "[variables('mysqlName')]"
             ],
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "name": "AllowAzureIPs",
             "properties": {
               "startIpAddress": "0.0.0.0",
