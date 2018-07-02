@@ -12,7 +12,7 @@ This template allows you to create a highly available NFS cluster on Azure with 
 
 There are many parameters this template requires. Some notable and important ones are as follows:
 
-- `subnetId`: This is where the highly available NFS cluster will be deployed. You need to give the Azure resource ID of an already existing Azure subnet where the cluster should be deployed. You may find that the template accept `default` as this parameter's value, but that's only for the Azure quickstart templates repo's CI validation purpose (because for CI, we can't provide an already existing vnet, so we have to create one on the fly, and `default` will do just that---however, the IP ranges are fixed to `10.0.0.0/16` for the vnet and `10.0.0.0/24` for the subnet, so you shouldn't really rely on this unless your desired IP ranges match these hard-coded ones).
+- `subnetId`: This is where the highly available NFS cluster will be deployed. You need to give the Azure resource ID of an already existing Azure subnet where the cluster should be deployed.
 - `node0IPAddr` and `node1IPAddr`: The 2 VMs will have to be assigned static IP addresses for the high availability configuration in the deployed VMs. You need to specify those statically assigned IP addresses (that belong to the subnet specified above) as these parameters.
 - `lbFrontEndIpAddr`: The NFS service on the cluster will be accessed through this IP address, so you need to specify an IP address here (that belongs to the subnet specified above).
 - `nfsClientsIPRange`: The NFS-exported directory (currently fixed to `{lbFrontEndIpAddr}:/drbd/data`) will be available only to the NFS clients from this IP address range (e.g., `10.0.0.0/24`), so you need to provide one here.
