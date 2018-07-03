@@ -1,3 +1,11 @@
+# v4.0.0 (2018-06-23)
+
+- Use cf-deployment [v2.2.0](https://github.com/cloudfoundry/cf-deployment/tree/v2.2.0)
+- Use bosh-deployment [v1.0.0](https://github.com/cloudfoundry/bosh-deployment/tree/v1.0.0)
+- Use standard load balancer by default
+- Add a new parameter to specify cloud foundry system domain
+- Use Azure CLI v2 when uploading artifacts in Azure China
+
 # v3.10.0 (2018-06-13)
 
 - Upgrade Azure CPI version to v35.3.0. Please see new features in [bosh-azure-cpi-release v35.3.0](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v35.3.0)
