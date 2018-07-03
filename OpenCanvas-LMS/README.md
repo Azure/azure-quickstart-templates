@@ -21,7 +21,6 @@ You can click the "deploy to Azure" button at the beginning of this document.
 + **adminVMUsername**: Provide admin VM username
 + **adminVMPassword**: Provide admin VM password
 + **dnsNameForPublicIP**: Provide unique name for public IP
-+ **vmName**: Provide virtual machine name
 + **smtpEmail**: Provide SMTP email for mail configuration
 + **postgresPassword**: Provide postgres password
 + **adminLoginEmail**: Provide admin login email for OpenCanvas LMS
