@@ -44,16 +44,40 @@
       },
       "databaseAdministratorLogin": {
           "type": "String",
-          "defaultValue": "[concat('admin', parameters('name'))]",
           "metadata": {
             "description": "The user handle for the administrator of the database to be created."
           }
       },
       "databaseAdministratorLoginPassword": {
         "type": "SecureString",
-        "defaultValue": "[concat('MSFT+Buffalo-', uniqueString(deployment().name))]",
         "metadata": {
           "description": "The password for the administrator of the database to be created."
+        }
+      },
+      "dockerRegistryAccess": {
+        "type": "String",
+        "defaultValue": "public",
+        "allowedValues": [
+          "public",
+          "private"
+        ]
+      },
+      "dockerRegistryServerURL": {
+        "type": "String",
+        "metadata": {
+          "description": "The url of the Docker registry which hosts the repository being used to host the image for your site."
+        }
+      },
+      "dockerRegistryServerUsername": {
+        "type": "String",
+        "metadata": {
+          "description": "The user handle used to authenticate against the private Docker registry, if applicable."
+        }
+      },
+      "dockerRegistryServerPassword": {
+        "type": "SecureString",
+        "metadata": {
+          "description": "The password used to authenticate against the private Docker registry, if applicable."
         }
       }
     },
@@ -62,7 +86,28 @@
       "postgresqlName": "[concat(parameters('name'), '-postgresql')]",
       "mysqlName": "[concat(parameters('name'), '-mysql')]",
       "postgresqlConnection": "[concat('postgres://', parameters('databaseAdministratorLogin'), '@', variables('postgresqlName'),':', parameters('databaseAdministratorLoginPassword'), '@', variables('postgresqlname'), '.postgres.database.azure.com:5432/', parameters('databaseName'))]",
-      "mysqlConnection": "[concat('mysql://', parameters('databaseAdministratorLogin'), '@', variables('mysqlName'), ':', parameters('databaseAdministratorLoginPassword'), '@tcp(', variables('mysqlName'), '.mysql.database.azure.com:3306)/', parameters('databaseName'), '?allowNativePasswords=true')]"
+      "mysqlConnection": "[concat('mysql://', parameters('databaseAdministratorLogin'), '@', variables('mysqlName'), ':', parameters('databaseAdministratorLoginPassword'), '@tcp(', variables('mysqlName'), '.mysql.database.azure.com:3306)/', parameters('databaseName'), '?allowNativePasswords=true')]",
+      "appSettingsPublicRegistry": [{
+        "name": "WEBSITES_ENABLE_APP_SERVICE_STORAGE",
+        "value": "false"
+      }],
+      "appSettingsPrivateRegistry": [
+        {
+          "name": "WEBSITES_ENABLE_APP_SERVICE_STORAGE",
+          "value": "false"
+        },
+        {
+          "name": "DOCKER_REGISTRY_SERVER_URL",
+          "value": "[parameters('dockerRegistryServerURL')]"
+        },
+        {
+          "name": "DOCKER_REGISTRY_SERVER_USERNAME",
+          "value": "[parameters('dockerRegistryServerUsername')]"
+        },
+        {
+          "name": "DOCKER_REGISTRY_SERVER_PASSWORD",
+          "value": "[parameters('dockerRegistryServerPassword')]"
+        }]
     },
     "resources": [
       {
@@ -77,12 +122,7 @@
         "properties": {
           "name": "[parameters('name')]",
           "siteConfig": {
-            "appSettings": [
-              {
-                "name": "WEBSITES_ENABLE_APP_SERVICE_STORAGE",
-                "value": "false"
-              }
-            ],
+            "appSettings": "[if(equals(parameters('dockerRegistryAccess'), 'private'), variables('appSettingsPrivateRegistry'), variables('appSettingsPublicRegistry'))]",
             "connectionStrings":[
               {
                 "name":"DATABASE_URL",
