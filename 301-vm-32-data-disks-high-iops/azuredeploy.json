@@ -19,17 +19,63 @@
       }
     },
     "sizeOfEachDataDiskInGB": {
-      "type": "string",
-      "defaultValue": "1023",
+      "type": "int",
+      "defaultValue": 1024,
+      "allowedValues": [
+        32,
+        64,
+        128,
+        256,
+        512,
+        1024,
+        2048,
+        4095
+      ],
       "metadata": {
-        "description": "There will be 32 data disks created of this size and then striped. The total capacity will be 32x whatever you specify here"
+        "description": "The size of the datadisks to be striped. The total capacity will be this size multiplied by the number of data disks you specify."
       }
+    },
+    "numberOfDisks": {
+      "type": "int",
+      "defaultValue": 32,
+      "allowedValues": [
+        8,
+        16,
+        32
+      ],
+      "metadata": {
+        "description": "The number of data disks to include in the storage pool."
+      }
+
     },
     "dnsName": {
       "type": "string",
       "defaultValue": "[concat('vm-data-disks-', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "DNS name for the Public IP"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D16s_v3",
+      "allowedValues": [
+        "Standard_D16s_v3",
+        "Standard_D32s_v3",
+        "Standard_D64s_v3"
+      ],
+      "metadata": {
+        "description": "VM Size, the list of sizes here all support premium and standard storage up to 32 data disks."
+      }
+    },
+    "storageType": {
+      "type": "string",
+      "defaultValue": "Premium_LRS",
+      "allowedValues": [
+        "Premium_LRS",
+        "Standard_LRS"
+      ],
+      "metadata": {
+        "description": "Storage SKU type"
       }
     },
     "_artifactsLocation": {
@@ -52,7 +98,6 @@
     "imagePublisher": "MicrosoftWindowsServer",
     "imageOffer": "WindowsServer",
     "imageSKU": "2016-Datacenter",
-    "vmSize": "Standard_D14",
     "virtualNetworkName": "highIopsVNET",
     "nicName": "highIopsNIC",
     "addressPrefix": "10.0.0.0/16",
@@ -126,7 +171,7 @@
       }
     },
     {
-      "apiVersion": "2017-03-30", 
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
@@ -135,7 +180,7 @@
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[variables('vmSize')]"
+          "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
           "computerName": "[variables('vmName')]",
@@ -151,17 +196,23 @@
           },
           "osDisk": {
             "caching": "ReadWrite",
-            "createOption": "FromImage"
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "[parameters('storageType')]"
+            }
           },
           "copy": [
             {
               "name": "dataDisks",
-              "count": 32,
+              "count": "[parameters('numberOfDisks')]",
               "input": {
                 "diskSizeGB": "[parameters('sizeOfEachDataDiskInGB')]",
                 "lun": "[copyIndex('dataDisks')]",
                 "name": "[concat(variables('vmName'), '_DataDisk', copyIndex('dataDisks'))]",
-                "createOption": "Empty"
+                "createOption": "Empty",
+                "managedDisk": {
+                  "storageAccountType": "[parameters('storageType')]"
+                }
               }
             }
           ]
