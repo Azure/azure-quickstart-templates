@@ -7,14 +7,14 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template allows you to create an Azure networking environment required to deploy [Azure SQL Database Managed Instances](https://docs.microsoft.com/en-us/azure/sql-database/sql-database-managed-instance) - fully managed SQL Server Database Engine hosted in Azure cloud.
+This template allows you to create an Azure networking environment required to deploy [Azure SQL Database Managed Instances](https://docs.microsoft.com/en-us/azure/sql-database/sql-database-managed-instance) - fully managed SQL Server Database Engine hosted in the Azure cloud.
 
 `Tags: Azure, SqlDb, Managed Instance, VNet`
 
 ## Solution overview and deployed resources
 
-This deployment will create configured Azure Virtual Network with two subnets - one that will be dedicated to your SQL Managed Instances,
-and the another one where you can place other resources (for example VMs, App Service environments, etc.) This is a properly
+This deployment will create a configured Azure Virtual Network with two subnets - one that will be dedicated to your SQL Managed Instances,
+and the another one where you can place other resources (for example VMs, App Service environments, etc.). This is a properly
 configured networking environment where you can deploy Azure SQL Database Managed Instances.
 
 ## Deployment steps
