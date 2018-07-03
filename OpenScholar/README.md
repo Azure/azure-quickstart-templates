@@ -6,21 +6,25 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-# OpenScholar template 
+## OpenScholar template 
 
 This template deploys a OpenScholar to the ubuntu VM 16.04
 * Deploys on a Ubuntu VM 16.04
 * The template installs Drupal and MySQL
 
 
-### How to Deploy
-You can deploy the template with Azure Portal, or PowerShell, or Azure cross platform command line tools.
+### Deployment steps
+
+You can click the "deploy to Azure" button at the beginning of this document.
 
 ### Parameters to provide while deploying
-* You need to provide admin username and password for the OpenScholar admin.
-* You need to provide the database and password for the MY SQL.
 
-### INSTALLATION OF OPENSCHOLAR DRUPAL
++ **adminVMUsername**: Provide admin VM username
++ **adminVMPassword**: Provide admin VM password
++ **databaseName**: Provide database name for openscholar
++ **mysqlPassword**: Provide SMTP email for mail configuration
+
+### Configuration of Openscholar 
 
 * Once the script is run, we need to install the drupal from the domain we have created.
 * Access the domain that is created.
