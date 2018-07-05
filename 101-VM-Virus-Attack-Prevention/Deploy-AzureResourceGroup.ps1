@@ -67,7 +67,7 @@ if(!$SkipArtifactsUpload){
 Write-Verbose "Generating common deployment parameters"
 $commonTemplateParameters = New-Object -TypeName Hashtable # Will be used to pass common parameters to the template.
 $artifactsLocation = '_artifactsLocation'
-$artifactsLocationSasToken = 'locationSasToken'
+$artifactsLocationSasToken = '_artifactsLocationSasToken'
 
 $commonTemplateParameters[$artifactsLocation] = $storageAccount.Context.BlobEndPoint + $storageContainerName
 $commonTemplateParameters[$artifactsLocationSasToken] = New-AzureStorageContainerSASToken -Container $storageContainerName -Context $storageAccount.Context -Permission r -ExpiryTime (Get-Date).AddHours(4)
@@ -76,7 +76,7 @@ $tmp = [System.IO.Path]::GetTempFileName()
 
 $parametersObj = Get-Content -Path $TemplateParametersFile | ConvertFrom-Json
 $parametersObj.parameters._artifactsLocation.value = $commonTemplateParameters[$artifactsLocation]
-$parametersObj.parameters.locationSasToken.value = $commonTemplateParameters[$artifactsLocationSasToken]
+$parametersObj.parameters._artifactsLocationSasToken.value = $commonTemplateParameters[$artifactsLocationSasToken]
 ( $parametersObj | ConvertTo-Json -Depth 10 ) -replace "\\u0027", "'" | Out-File $tmp
 
 #Initiate resource group deployment
