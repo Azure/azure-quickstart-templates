@@ -3,7 +3,7 @@ param (
     # Enter resourcegroup name
     [Parameter(Mandatory = $false)]
     [string]
-    $ResourceGropuName = "001-VM-Virus-Attack-Prevention",
+    $ResourceGroupName = "001-VM-Virus-Attack-Prevention",
 
     # Enter AAD Username password as securestring.
     [Parameter(Mandatory = $false)]
@@ -15,7 +15,7 @@ $ErrorActionPreference = 'Stop'
 
 try {
     Write-Verbose "Deleting ResourceGroups"
-    Remove-AzureRmResourceGroup -Name $ResourceGropuName -Force
+    Remove-AzureRmResourceGroup -Name $ResourceGroupName -Force
 }
 catch {
     Throw $_

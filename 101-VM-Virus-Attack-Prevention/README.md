@@ -43,11 +43,6 @@ Access to Azure subscription to deploy following resources
 <a name="deployment"></a>
 # Deploy
 
-1. Go to Edge Browser and Open [Azure Cloud Shell](https://shell.azure.com/)
-1. Change directory to CloudDrive directory 
-
-   `cd $Home\clouddrive `
-
 1. Clone the Azure quickstart repository.
    `git clone https://github.com/Azure/azure-quickstart-templates.git`
 
@@ -59,9 +54,8 @@ Access to Azure subscription to deploy following resources
 
    `.\Deploy-AzureResourceGroup.ps1 -Verbose`
 
-    If you are running the deployment for the second time and don't want to upload the artifacts just pass SkipArtifactsUpload switch.
+   Script will ask to enter password to be used for VM.
 
-   `.\Deploy-AzureResourceGroup.ps1 -Verbose -SkipArtifactsUpload`
 <a name="attack"></a>
 # Perform Attack 
 
@@ -150,6 +144,10 @@ You will notice events related to Quarantined items. It might take few minutes f
 Run following command to clear all the resources deployed during the demo.
 
 `.\scripts\cleanup.ps1 -Verbose`
+
+Pass resource group name if you are not using the default one.
+
+`.\scripts\cleanup.ps1 -ResourceGroupName <resource group name> -Verbose`
 
 Verification steps -
 1. Login to Azure Portal / Subscription
