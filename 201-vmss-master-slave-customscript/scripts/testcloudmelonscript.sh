@@ -1,6 +1,6 @@
 #!/bin/bash
 
-sudo yum install -y epel-release ansible  
+sudo touch /test.txt
 
 echo "installation V2 ok" >
 
