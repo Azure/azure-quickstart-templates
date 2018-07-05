@@ -1,6 +1,8 @@
 #!/bin/bash
 
+#install ansible 
 sudo yum install -y epel-release ansible  
 
-echo "installation V2 ok" >
+#success message
+echo "installation ok" >
 
