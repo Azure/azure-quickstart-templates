@@ -1,0 +1,444 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "namePrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "The prefix name for all resources."
+      }
+    },
+    "administratorLogin": {
+      "type": "string",
+      "metadata": {
+        "description": "The admin login name for the database."
+      }
+    },
+    "administratorLoginPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The admin password for the database, it must meet the complexity requirements."
+      }
+    },
+    "repositoryUrl": {
+      "type": "string",
+      "defaultValue": "https://github.com/Azure/azure-quickstart-templates",
+      "metadata": {
+        "description": "GitHub repository URL for the source code."
+      }
+    },
+    "branch": {
+      "type": "string",
+      "defaultValue": "master",
+      "metadata": {
+        "description": "GitHub repository branch for the source code."
+      }
+    }
+  },
+  "variables": {
+    "namePrefixLower": "[toLower(parameters('namePrefix'))]",
+    "hostPlanName": "[concat(parameters('namePrefix'), uniqueString(resourceGroup().id), 'Plan')]",
+    "webSiteName": "[concat(parameters('namePrefix'), uniqueString(resourceGroup().id), 'Web')]",
+    "cdnWebName": "[concat(parameters('namePrefix'), uniqueString(resourceGroup().id), 'CDNWeb')]",
+    "appInsightName": "[concat(parameters('namePrefix'), uniqueString(resourceGroup().id), 'AppInsight')]",
+    "sqlServerName": "[concat(variables('namePrefixLower'), uniqueString(resourceGroup().id), 'sqlserver')]",
+    "redisCacheName": "[concat(parameters('namePrefix'), uniqueString(resourceGroup().id), 'RedisCache')]",
+    "cdnProfileName": "[concat(parameters('namePrefix'), uniqueString(resourceGroup().id), 'CDNProfile')]",
+    "cdnEndpointName": "[concat(parameters('namePrefix'), uniqueString(resourceGroup().id), 'CDNEndpoint')]",
+    "cdnEndpointOriginName": "[concat(parameters('namePrefix'), uniqueString(resourceGroup().id), 'CDNOrigin')]",
+    "storageAccountName": "[concat(variables('namePrefixLower'), uniqueString(resourceGroup().id))]",
+    "funcAppName": "[concat(parameters('namePrefix'), uniqueString(resourceGroup().id), 'OrderProcessing')]",
+    "_solutionFolder": "201-web-app-ecommerce-solution"
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-05-01",
+      "name": "[variables('appInsightName')]",
+      "type": "Microsoft.Insights/components",
+      "kind": "web",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "ApplicationId": "[variables('appInsightName')]"
+      }
+    },
+    {
+      "apiVersion": "2016-09-01",
+      "name": "[variables('hostPlanName')]",
+      "type": "Microsoft.Web/serverfarms",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "HostingPlan"
+      },
+      "sku": {
+        "name": "B1",
+        "tier": "Basic",
+        "size": "B1",
+        "family": "B",
+        "capacity": 1
+      },
+      "properties": {
+        "name": "[variables('hostPlanName')]"
+      }
+    },
+    {
+      "apiVersion": "2016-08-01",
+      "name": "[variables('cdnWebName')]",
+      "type": "Microsoft.Web/sites",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "WebsiteCDN"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverFarms/', variables('hostPlanName'))]"
+      ],
+      "properties": {
+        "name": "[variables('cdnWebName')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostPlanName'))]"
+      },
+      "resources": [
+        {
+          "apiVersion": "2016-08-01",
+          "type": "config",
+          "name": "appsettings",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/Sites/', variables('cdnWebName'))]"
+          ],
+          "properties": {
+            "SourceCodeRepositoryUrl": "[parameters('repositoryUrl')]",
+            "project": "[concat(variables('_solutionFolder'), '/src/CDNWeb/CDNWeb.csproj')]"
+          }
+        },
+        {
+          "apiVersion": "2016-08-01",
+          "name": "web",
+          "type": "sourcecontrols",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites/', variables('cdnWebName'))]",
+            "[resourceId('Microsoft.Web/sites/config', variables('cdnWebName'), 'appsettings')]"
+          ],
+          "properties": {
+            "RepoUrl": "[parameters('repositoryUrl')]",
+            "branch": "[parameters('branch')]",
+            "IsManualIntegration": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "[variables('cdnProfileName')]",
+      "type": "Microsoft.Cdn/profiles",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2017-04-02",
+      "tags": {
+        "displayName": "CdnProfile"
+      },
+      "sku": {
+        "name": "Standard_Verizon"
+      },
+      "properties": {},
+      "resources": [
+        {
+          "name": "[variables('cdnEndpointName')]",
+          "type": "endpoints",
+          "apiVersion": "2017-04-02",
+          "location": "[resourceGroup().location]",
+          "tags": {
+            "displayName": "CdnEndpoints"
+          },
+          "scale": null,
+          "properties": {
+            "originHostHeader": "[reference(variables('cdnWebName')).hostNames[0]]",
+            "isHttpAllowed": true,
+            "isHttpsAllowed": true,
+            "queryStringCachingBehavior": "IgnoreQueryString",
+            "origins": [
+              {
+                "name": "[variables('cdnEndpointOriginName')]",
+                "properties": {
+                  "hostName": "[reference(variables('cdnWebName')).hostNames[0]]",
+                  "httpPort": 80,
+                  "httpsPort": 443
+                }
+              }
+            ],
+            "contentTypesToCompress": [],
+            "isCompressionEnabled": false
+          },
+          "dependsOn": [
+            "[resourceId('Microsoft.Cdn/profiles', variables('cdnProfileName'))]",
+            "[resourceId('Microsoft.Web/sites', variables('cdnWebName'))]"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "[variables('redisCacheName')]",
+      "type": "Microsoft.Cache/Redis",
+      "apiVersion": "2017-10-01",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "RedisCache"
+      },
+      "scale": null,
+      "properties": {
+        "redisVersion": "3.2.7",
+        "sku": {
+          "name": "Standard",
+          "family": "C",
+          "capacity": 1
+        },
+        "enableNonSslPort": false,
+        "redisConfiguration": {
+          "maxclients": "1000",
+          "maxmemory-reserved": "50",
+          "maxfragmentationmemory-reserved": "50",
+          "maxmemory-delta": "50"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2017-10-01",
+      "sku": {
+        "name": "Standard_RAGRS",
+        "tier": "Standard"
+      },
+      "kind": "Storage",
+      "name": "[variables('storageAccountName')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "StorageAccounts"
+      },
+      "scale": null,
+      "properties": {
+        "encryption": {
+          "keySource": "Microsoft.Storage",
+          "services": {
+            "blob": {
+              "enabled": true
+            },
+            "file": {
+              "enabled": true
+            }
+          }
+        },
+        "networkAcls": {
+          "bypass": "AzureServices",
+          "defaultAction": "Allow",
+          "ipRules": [],
+          "virtualNetworkRules": []
+        },
+        "supportsHttpsTrafficOnly": false
+      }
+    },
+    {
+      "name": "[variables('sqlServerName')]",
+      "type": "Microsoft.Sql/servers",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-05-01-preview",
+      "tags": {
+        "displayName": "SqlServer"
+      },
+      "properties": {
+        "administratorLogin": "[parameters('administratorLogin')]",
+        "administratorLoginPassword": "[parameters('administratorLoginPassword')]"
+      },
+      "resources": [
+        {
+          "name": "eShopCatalogDb",
+          "type": "databases",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2015-05-01-preview",
+          "tags": {
+            "displayName": "Database"
+          },
+          "dependsOn": [
+            "[resourceId('Microsoft.Sql/servers/', variables('sqlServerName'))]"
+          ],
+          "properties": {
+            "edition": "Basic",
+            "maxSizeBytes": "2147483648"
+          }
+        },
+        {
+          "name": "eShopIdentity",
+          "type": "databases",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2015-05-01-preview",
+          "tags": {
+            "displayName": "Database"
+          },
+          "dependsOn": [
+            "[resourceId('Microsoft.Sql/servers/', variables('sqlServerName'))]"
+          ],
+          "properties": {
+            "edition": "Basic",
+            "maxSizeBytes": "2147483648"
+          }
+        },
+        {
+          "type": "firewallrules",
+          "apiVersion": "2015-05-01-preview",
+          "location": "[resourceGroup().location]",
+          "name": "AllowAllWindowsAzureIps",
+          "dependsOn": [
+            "[resourceId('Microsoft.Sql/servers/', variables('sqlServerName'))]"
+          ],
+          "properties": {
+            "endIpAddress": "0.0.0.0",
+            "startIpAddress": "0.0.0.0"
+          }
+        }
+      ]
+    },
+    {
+      "apiVersion": "2016-08-01",
+      "name": "[variables('webSiteName')]",
+      "type": "Microsoft.Web/sites",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "Website"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverFarms/', variables('hostPlanName'))]",
+        "[resourceId('Microsoft.Web/Sites/', variables('cdnWebName'))]",
+        "[resourceId('Microsoft.Cache/Redis/', variables('redisCacheName'))]",
+        "[resourceId('Microsoft.Sql/servers/', variables('sqlServerName'))]",
+        "[resourceId('Microsoft.Cdn/profiles/endpoints', variables('cdnProfileName'), variables('cdnEndpointName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Insights/components', variables('appInsightName'))]"
+      ],
+      "properties": {
+        "name": "[variables('webSiteName')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostPlanName'))]"
+      },
+      "resources": [
+        {
+          "apiVersion": "2016-08-01",
+          "type": "config",
+          "name": "connectionstrings",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/Sites/', variables('webSiteName'))]"
+          ],
+          "properties": {
+            "CatalogConnection": {
+              "value": "[concat('Server=tcp:', reference(concat('Microsoft.Sql/servers/', variables('sqlServerName'))).fullyQualifiedDomainName, ',1433;Database=eShopCatalogDb;User Id=', parameters('administratorLogin'), '@', variables('sqlServerName'), ';Password=', parameters('administratorLoginPassword'), ';')]",
+              "type": "SQLAzure"
+            },
+            "IdentityConnection": {
+              "value": "[concat('Server=tcp:', reference(concat('Microsoft.Sql/servers/', variables('sqlServerName'))).fullyQualifiedDomainName, ',1433;Database=eShopIdentity;User Id=', parameters('administratorLogin'), '@', variables('sqlServerName'), ';Password=', parameters('administratorLoginPassword'), ';')]",
+              "type": "SQLAzure"
+            },
+            "StorageConnection": {
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'),';AccountKey=',concat(listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')),'2017-06-01').keys[0].value))]",
+              "type": "Custom"
+            }
+          }
+        },
+        {
+          "apiVersion": "2016-08-01",
+          "type": "config",
+          "name": "appsettings",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/Sites/', variables('webSiteName'))]"
+          ],
+          "properties": {
+            "CDNRoot": "[concat('https://', reference(resourceId('Microsoft.Cdn/profiles/endpoints', variables('cdnProfileName'), variables('cdnEndpointName'))).hostName)]",
+            "CacheConnection": "[concat(reference(resourceId('Microsoft.Cache/redis', variables('redisCacheName'))).hostName, ':', reference(resourceId('Microsoft.Cache/redis', variables('redisCacheName'))).sslPort, ',password=', listkeys(resourceId('Microsoft.Cache/redis', variables('redisCacheName')), providers('Microsoft.Cache', 'redis').apiVersions[0]).primaryKey, ',ssl=True,abortConnect=False,syncTimeout=2000,allowAdmin=true')]",
+            "ApplicationInsights:InstrumentationKey": "[reference(resourceId('Microsoft.Insights/components', variables('appInsightName')), '2014-04-01').InstrumentationKey]",
+            "SourceCodeRepositoryUrl": "[parameters('repositoryUrl')]",
+            "project": "[concat(variables('_solutionFolder'), '/src/Web/Web.csproj')]"
+          }
+        },
+        {
+          "apiVersion": "2016-08-01",
+          "name": "web",
+          "type": "sourcecontrols",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites/', variables('webSiteName'))]",
+            "[resourceId('Microsoft.Web/sites/config', variables('webSiteName'), 'appsettings')]",
+            "[resourceId('Microsoft.Web/sites/config', variables('webSiteName'), 'connectionstrings')]"
+          ],
+          "properties": {
+            "RepoUrl": "[parameters('repositoryUrl')]",
+            "branch": "[parameters('branch')]",
+            "IsManualIntegration": true
+          }
+        }
+      ]
+    },
+    {
+      "apiVersion": "2016-08-01",
+      "name": "[variables('funcAppName')]",
+      "type": "Microsoft.Web/sites",
+      "location": "[resourceGroup().location]",
+      "kind": "functionapp",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverFarms', variables('hostPlanName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+      ],
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostPlanName'))]",
+        "siteConfig": {
+          "AlwaysOn": true,
+          "appSettings": [
+            {
+              "name": "FUNCTIONS_EXTENSION_VERSION",
+              "value": "~1"
+            },
+            {
+              "name": "Project",
+              "value": "[concat(variables('_solutionFolder'), '/src/FunctionApp')]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "apiVersion": "2016-08-01",
+          "name": "appsettings",
+          "type": "config",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/Sites/', variables('funcAppName'))]",
+            "[resourceId('Microsoft.Web/Sites/sourcecontrols', variables('funcAppName'), 'web')]",
+            "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+          ],
+          "properties": {
+            "AzureWebJobsStorage": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'),';AccountKey=',concat(listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')),'2017-06-01').keys[0].value))]",
+            "AzureWebJobsDashboard": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'),';AccountKey=',concat(listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')),'2017-06-01').keys[0].value))]",
+            "StorageConnection": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'),';AccountKey=',concat(listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')),'2017-06-01').keys[0].value))]"
+          }
+        },
+        {
+          "apiVersion": "2016-08-01",
+          "type": "config",
+          "name": "connectionstrings",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/Sites/', variables('funcAppName'))]",
+            "[resourceId('Microsoft.Web/Sites/sourcecontrols', variables('funcAppName'), 'web')]",
+            "[resourceId('Microsoft.Sql/servers/', variables('sqlServerName'))]"
+          ],
+          "properties": {
+            "CatalogConnection": {
+              "value": "[concat('Server=tcp:', reference(concat('Microsoft.Sql/servers/', variables('sqlServerName'))).fullyQualifiedDomainName, ',1433;Database=eShopCatalogDb;User Id=', parameters('administratorLogin'), '@', variables('sqlServerName'), ';Password=', parameters('administratorLoginPassword'), ';')]",
+              "type": "SQLAzure"
+            }
+          }
+        },
+        {
+          "apiVersion": "2016-08-01",
+          "name": "web",
+          "type": "sourcecontrols",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/Sites/', variables('funcAppName'))]"
+          ],
+          "properties": {
+            "RepoUrl": "[parameters('repositoryUrl')]",
+            "branch": "[parameters('branch')]",
+            "IsManualIntegration": true
+          }
+        }
+      ]
+    }
+  ]
+}
