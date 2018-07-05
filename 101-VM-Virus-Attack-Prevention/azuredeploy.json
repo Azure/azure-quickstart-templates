@@ -4,12 +4,14 @@
     "parameters": {
       "_artifactsLocation": {
         "type": "string",
+        "defaultValue": "[deployment().properties.templateLink.uri]",
         "metadata": {
           "description": "this will be the location for artifacts"
         }
       },
-      "_artifactsLocationSasToken": {
+      "locationSasToken": {
         "type": "securestring",
+        "defaultValue": "",
         "metadata": {
           "description": "this will be the sas key to access artifacts"
         }
@@ -22,7 +24,7 @@
           "Southeast Asia",
           "Australia Southeast"
         ],
-        "defaultValue": "East US",
+        "defaultValue": "[resourceGroup().location]",
         "metadata": {
           "description": "your resources will be create in this location"
         }
@@ -108,6 +110,7 @@
       }
     },
     "variables": {
+      "_artifactsLocationSasToken": "[parameters('locationSasToken')]",
       "omsWorkspaceName": "[concat('Virus-Attack','-',uniqueString(subscription().id))]",
       "omsSolutions": [
         "Security",
@@ -144,7 +147,13 @@
       "vmNames": [
         "[concat(parameters('vmNamePrefix'),'-without-ep')]",
         "[concat(parameters('vmNamePrefix'),'-with-ep')]"
-      ]
+      ],
+      "omsTemplateUri": "[uri(parameters('_artifactsLocation'),concat('/nested/microsoft.loganalytics/workspaces.json',variables('_artifactsLocationSasToken')))]",
+      "vnetTemplateUri": "[uri(parameters('_artifactsLocation'),concat('/nested/microsoft.network/virtualnetworks.json',variables('_artifactsLocationSasToken')))]",
+      "nsgTemplateUri": "[uri(parameters('_artifactsLocation'),concat('/nested/microsoft.network/nsg.json',variables('_artifactsLocationSasToken')))]",
+      "pipTemplateUri": "[uri(parameters('_artifactsLocation'),concat('/nested/microsoft.network/publicipaddress.json',variables('_artifactsLocationSasToken')))]",
+      "nicTemplateUri": "[uri(parameters('_artifactsLocation'),concat('/nested/microsoft.network/nic-with-pip.json',variables('_artifactsLocationSasToken')))]",
+      "vmTemplateUri": "[uri(parameters('_artifactsLocation'),concat('/nested/microsoft.compute/vm.windows.json',variables('_artifactsLocationSasToken')))]"
     },
     "resources": [
       {
@@ -154,7 +163,7 @@
         "properties": {
           "mode": "Incremental",
           "templateLink": {
-            "uri": "[concat(parameters('_artifactsLocation'),'/nested/microsoft.loganalytics/workspaces.json',parameters('_artifactsLocationSasToken'))]"
+            "uri": "[variables('omsTemplateUri')]"
           },
           "parameters": {
             "omsWorkspaceName": {
@@ -182,7 +191,7 @@
         "properties": {
           "mode": "Incremental",
           "templateLink": {
-            "uri": "[concat(parameters('_artifactsLocation'),'/nested/microsoft.network/virtualnetworks.json',parameters('_artifactsLocationSasToken'))]"
+            "uri": "[variables('vnetTemplateUri')]"
           },
           "parameters": {
             "vnetName": {
@@ -210,7 +219,7 @@
         "properties": {
           "mode": "Incremental",
           "templateLink": {
-            "uri": "[concat(parameters('_artifactsLocation'),'/nested/microsoft.network/nsg.json',parameters('_artifactsLocationSasToken'))]"
+            "uri": "[variables('nsgTemplateUri')]"
           },
           "parameters": {
             "nsgName": {
@@ -239,7 +248,7 @@
         "properties": {
           "mode": "Incremental",
           "templateLink": {
-            "uri": "[concat(parameters('_artifactsLocation'),'/nested/microsoft.network/publicipaddress.json',parameters('_artifactsLocationSasToken'))]"
+            "uri": "[variables('pipTemplateUri')]"
           },
           "parameters": {
             "publicIPAddressName": {
@@ -273,7 +282,7 @@
         "properties": {
           "mode": "Incremental",
           "templateLink": {
-            "uri": "[concat(parameters('_artifactsLocation'),'/nested/microsoft.network/nic-with-pip.json',parameters('_artifactsLocationSasToken'))]"
+            "uri": "[variables('nicTemplateUri')]"
           },
           "parameters": {
             "nicName": {
@@ -311,7 +320,7 @@
         "properties": {
           "mode": "Incremental",
           "templateLink": {
-            "uri": "[concat(parameters('_artifactsLocation'),'/nested/microsoft.compute/vm.windows.json',parameters('_artifactsLocationSasToken'))]"
+            "uri": "[variables('vmTemplateUri')]"
           },
           "parameters": {
             "vmName": {
@@ -376,6 +385,7 @@
           "publisher": "Microsoft.Azure.Security",
           "type": "IaaSAntimalware",
           "typeHandlerVersion": "1.1",
+          "autoUpgradeMinorVersion": true,
           "settings": {
             "AntimalwareEnabled": "true",
             "Exclusions": {
