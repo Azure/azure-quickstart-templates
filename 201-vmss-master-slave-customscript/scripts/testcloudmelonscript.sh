@@ -2,5 +2,5 @@
 
 sudo yum install -y epel-release ansible  
 
-echo "installation V2 ok" > /home/testcloudadmin/log.txt
+echo "installation V2 ok" >
 
