@@ -1,6 +1,8 @@
 #!/bin/bash
 
-sudo touch /test.txt
+#create file
+sudo touch /azure.txt
 
-echo "installation V2 ok" >
+#success message
+echo "installation ok" >
 
