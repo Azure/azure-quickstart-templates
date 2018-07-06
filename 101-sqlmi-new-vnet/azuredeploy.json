@@ -10,7 +10,6 @@
         },
         "administratorLogin": {
             "type": "string",
-            "defaultValue": "cloudSA",
             "metadata": {
                 "description": "Enter user name."
             }
@@ -23,14 +22,14 @@
         },
         "location": {
             "type": "string",
-            "defaultValue": "",
+            "defaultValue": "[resourceGroup().location]",
             "metadata": {
                 "description": "Enter location. If you leave this field blank resource group location would be used."
             }
         },
         "virtualNetworkName": {
             "type": "string",
-            "defaultValue": "",
+            "defaultValue": "SQLMI-VNET",
             "metadata": {
                 "description": "Enter virtual network name. If you leave this field blank name will be created by the template."
             }
@@ -44,7 +43,7 @@
         },
         "subnetName": {
             "type": "string",
-            "defaultValue": "managedInstance",
+            "defaultValue": "ManagedInstance",
             "metadata": {
                 "description": "Enter subnet name."
             }
@@ -56,23 +55,22 @@
                 "description": "Enter subnet address prefix."
             }
         },
-        "routeTableName": {
-            "type": "string",
-            "defaultValue": "",
-            "metadata": {
-                "description": "Enter route table name. If you leave this field blank name will be created by the template."
-            }
-        },
         "skuName": {
             "type": "string",
+            "allowedValues":[
+                "GP_Gen4",
+                "GP_Gen5"
+            ],
             "defaultValue": "GP_Gen4",
             "metadata": {
                 "description": "Enter sku name."
             }
         },
         "storageSizeInGB": {
-            "type": "int",
-            "defaultValue": 32,
+            "type": "int",         
+            "defaultValue": 256,
+            "minValue": 8,
+            "maxValue": 8192,
             "metadata": {
                 "description": "Enter storage size."
             }
@@ -80,6 +78,13 @@
         "vCores": {
             "type": "int",
             "defaultValue": 16,
+            "allowedValues":[
+                8,
+                16,
+                24,
+                32,
+                40
+            ],              
             "metadata": {
                 "description": "Enter number of vCores."
             }
@@ -87,22 +92,24 @@
         "licenseType": {
             "type": "string",
             "defaultValue": "BasePrice",
+            "allowedValues":[
+                "BasePrice",
+                "LicenseIncluded"
+            ],             
             "metadata": {
                 "description": "Enter license type."
             }
         }
     },
     "variables": {
-        "virtualNetworkName": "[if(equals(parameters('virtualNetworkName'),''), concat('vnet-', parameters('managedInstanceName')), parameters('virtualNetworkName'))]",
-        "routeTableName": "[if(equals(parameters('routeTableName'),''), concat('rt-', parameters('managedInstanceName')), parameters('routeTableName'))]",
-        "location": "[if(equals(parameters('location'),''), resourceGroup().location, parameters('location'))]"
+        "routeTableName": "[concat('SQLMI-', parameters('managedInstanceName'), '-Route-Table')]"
     },
     "resources": [
         {
             "type": "Microsoft.Network/routeTables",
             "name": "[variables('routeTableName')]",
             "apiVersion": "2018-02-01",
-            "location": "[variables('location')]",
+            "location": "[parameters('location')]",
             "properties": {
                 "disableBgpRoutePropagation": false,
                 "routes": [
@@ -123,7 +130,7 @@
             "dependsOn":[
                 "[variables('routeTableName')]"
             ],
-            "location": "[variables('location')]",
+            "location": "[parameters('location')]",
             "properties": {
                 "addressSpace": {
                     "addressPrefixes": [
@@ -144,6 +151,7 @@
             }
         },      
         {
+            "type": "Microsoft.Sql/managedInstances",
             "apiVersion": "2015-05-01-preview",
             "dependsOn":[
                 "[variables('virtualNetworkName')]"
@@ -151,7 +159,7 @@
             "identity": {
                 "type": "SystemAssigned"
             },
-            "location": "[variables('location')]",
+            "location": "[parameters('location')]",
             "name": "[parameters('managedInstanceName')]",
             "sku": {
                 "name": "[parameters('skuName')]"
@@ -159,12 +167,11 @@
             "properties": {
                 "administratorLogin": "[parameters('administratorLogin')]",
                 "administratorLoginPassword": "[parameters('administratorLoginPassword')]",
-                "subnetId": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName')),'/subnets/', parameters('subnetName'))]",
+                "subnetId": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'), '/subnets/', parameters('subnetName'))]",
                 "storageSizeInGB": "[parameters('storageSizeInGB')]",
                 "vCores": "[parameters('vCores')]",
                 "licenseType": "[parameters('licenseType')]"
-            },
-            "type": "Microsoft.Sql/managedInstances"
+            }
         }
     ]
 }
