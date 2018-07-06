@@ -17,6 +17,7 @@
 6. [Detect Attack](#detect)
 7. [Respond/Mitigate](#mitigate)
 8. [Teardown Deployment](#teardown)
+9. [Configuration validation](#config)
 
 <a name="objectives"></a>
 # Objective of the POC 
@@ -128,7 +129,33 @@ You will notice events related to Quarantined items. It might take few minutes f
 
 
     
+<<<<<<< HEAD
 References -
+=======
+<a name="teardown"></a>
+## Teardown Deployment 
+
+Run following command to clear all the resources deployed during the demo.
+
+`.\scripts\cleanup.ps1 -Verbose`
+
+Pass resource group name if you are not using the default one.
+
+`.\scripts\cleanup.ps1 -ResourceGroupName <resource group name> -Verbose`
+
+Verification steps -
+1. Login to Azure Portal / Subscription
+2. Check if the ResourceGroup is deleted.
+
+<a name="config"></a>
+## Configuration Validation
+* You can validate the specific configurations like Enabling Antivirus, Adding Antimalware Extension , Auto-updates on VM. These are covered as various controls along with Audit and Remediation procedure in Cloudneeti
+
+* Cloudneeti is available on the Azure marketplace. Try out the free test drive here https://aka.ms/Cloudneeti 
+
+
+##### References -
+>>>>>>> fd20699d61b32339e69ef221a7e9828d4b5b58ce
 
 http://www.eicar.org/
 
