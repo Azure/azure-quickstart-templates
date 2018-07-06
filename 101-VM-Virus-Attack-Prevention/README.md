@@ -1,5 +1,11 @@
 # Virus attack on Virtual Machines Scenario
 
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-VM-Virus-Attack-Prevention%2Fazuredeploy.json" target="_blank">
+    <img src="http://azuredeploy.net/deploybutton.png"/> 
+</a>
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-VM-Virus-Attack-Prevention%2Fazuredeploy.json" target="_blank">
+    <img src="http://armviz.io/visualizebutton.png"/> 
+</a>
 
 
 # Table of Contents
@@ -39,22 +45,6 @@ Subsequently logs will take 10-15 mins to reflect in OMS.
 Access to Azure subscription to deploy following resources 
 1. Virtual Machine
 2. OMS (Monitoring)
-
-<a name="deployment"></a>
-# Deploy
-
-1. Clone the Azure quickstart repository.
-   `git clone https://github.com/Azure/azure-quickstart-templates.git`
-
-1. Change directory to azure-security-scenarios
- 
-   `cd .\101-VM-Virus-Attack-Prevention\`
-
-1. Run the following command to start the deployment.
-
-   `.\Deploy-AzureResourceGroup.ps1 -Verbose`
-
-   Script will ask to enter password to be used for VM.
 
 <a name="attack"></a>
 # Perform Attack 
@@ -138,23 +128,6 @@ You will notice events related to Quarantined items. It might take few minutes f
 
 
     
-<a name="teardown"></a>
-## Teardown Deployment 
-
-Run following command to clear all the resources deployed during the demo.
-
-`.\scripts\cleanup.ps1 -Verbose`
-
-Pass resource group name if you are not using the default one.
-
-`.\scripts\cleanup.ps1 -ResourceGroupName <resource group name> -Verbose`
-
-Verification steps -
-1. Login to Azure Portal / Subscription
-2. Check if the ResourceGroup is deleted.
-
-
-
 References -
 
 http://www.eicar.org/
@@ -162,16 +135,3 @@ http://www.eicar.org/
 https://docs.microsoft.com/en-us/azure/security/azure-security-antimalware
 
 https://docs.microsoft.com/en-us/azure/operations-management-suite/operations-management-suite-overview
-
-
-## Disclaimer
-
-MIT License 
-
-Copyright (c) 2018 Avyan Consulting Corp.
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: 
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. 
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
