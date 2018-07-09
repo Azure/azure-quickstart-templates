@@ -12,11 +12,6 @@
 
 This template disables encryption on a running windows VM which was encrypted without using AAD application.
 
-Prerequisites: 
-1. Register-AzureRmProviderFeature -ProviderNamespace "Microsoft.Compute" -FeatureName "UnifiedDiskEncryptionForVMs"
-2. Wait 10 min till state transitions to 'Registered'
-3. Register-AzureRmResourceProvider -ProviderNamespace Microsoft.Compute
-
 Tags: AzureDiskEncryption
 
 References:
