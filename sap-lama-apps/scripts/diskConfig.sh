@@ -12,26 +12,11 @@ function addtofstab()
   log "addtofstab"
   partPath=$1
   mount=$2
+  log " not adding fstab entry"
+  log " manual mount with 'mount $partPath $mount'"
+  $(mount $partPath $mount)
   
-  local blkid=$(/sbin/blkid $partPath)
-  
-  if [[ $blkid =~  UUID=\"(.{36})\" ]]
-  then
-  
-    log "Adding fstab entry"
-    local uuid=${BASH_REMATCH[1]};
-    local mountCmd=""
-    log "adding fstab entry"
-    mountCmd="/dev/disk/by-uuid/$uuid $mount xfs  defaults,nofail  0  2"
-    echo "$mountCmd" >> /etc/fstab
-    $(mount $partPath $mount)
-  
-  else
-    log "no UUID found"
-    exit -1;
-  fi
-  
-  log "addtofstab done"
+  log " addtofstab done"
 }
 
 function getdevicepath()
@@ -125,13 +110,46 @@ function createlvm()
     if [ -n "$devicePath" ];
     then
       log " Device Path is $devicePath"
-      # http://superuser.com/questions/332252/creating-and-formating-a-partition-using-a-bash-script
-      $(echo -e "n\np\n1\n\n\nw" | fdisk $devicePath) > /dev/null
-      local partPath="$devicePath""1"
-      $(mkfs -t xfs $partPath) > /dev/null
-      $(mkdir -p $mountPathLoc)
+      
+      local partedOut=$(parted $devicePath print -s | grep 'Partition Table' | awk '{print $3}')
+      if [ "$partedOut" = "unknown" ];
+      then
+        log "   no partition table found - creating gpt"
+        parted $devicePath mklabel gpt -s
+      else
+        log "  disk $devicePath already has a partition table - stopping to prevent data loss"
+        exit -1
+      fi
 
-      addtofstab $partPath $mountPathLoc
+      local startPercent=0
+
+      for ((j=0; j<mountPathCount; j++))
+      do
+        local mountPathLoc=${mountPathA[$j]}
+        local sizeLoc=${sizeA[$j]}
+        local partNumber=$(expr $j + 1)
+        local endPercent=$( echo "((100 - $startPercent) * $sizeLoc / 100) + $startPercent" | bc)
+        if [ "$sizeLoc" = "100" ]; 
+        then
+          local endPercent=100
+        fi
+
+        log "  Creating partition $partNumber for $mountPathLoc with size info $fdiskSize start $startPercent% end $endPercent%"
+        parted $devicePath mkpart primary xfs $startPercent% $endPercent% -s
+
+        log "  partition created - rereading partition table"
+        partprobe $devicePath
+        udevadm settle
+        
+        local partPath="$devicePath""$partNumber"
+        log "  creating file system"
+        mkfs.xfs $partPath -f
+        mkdir -p $mountPathLoc
+
+        addtofstab $partPath $mountPathLoc
+        
+        startPercent=$endPercent        
+      done
     else
       log "no device path for LUN $lun"
       exit -1;
