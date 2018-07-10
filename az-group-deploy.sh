@@ -8,7 +8,7 @@ while getopts "a:l:g:s:f:e:uvd" opt; do
             location=$OPTARG #location for the deployed resource group
         ;;
         g)
-            resourceGroupName=$OPTARG
+            resourceGroupName=$OPTARG #name of the resource group to create
         ;;
         u)
             uploadArtifacts='true' #set this switch to upload/stage artifacs
