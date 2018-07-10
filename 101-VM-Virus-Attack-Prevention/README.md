@@ -1,9 +1,9 @@
 # Virus attack on Virtual Machines Scenario
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-VM-Virus-Attack-Prevention%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAvyanConsultingCorp%2FVM-Virus-Attack-Prevention%2Fmaster%2F101-VM-Virus-Attack-Prevention%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/> 
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-VM-Virus-Attack-Prevention%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAvyanConsultingCorp%2FVM-Virus-Attack-Prevention%2Fmaster%2F101-VM-Virus-Attack-Prevention%2Fazuredeploy.json"" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/> 
 </a>
 
@@ -12,12 +12,10 @@
 1. [Objectives](#objectives)
 2. [Overview](#overview)
 3. [Pre-requisites](#prerequisites)
-4. [Deploy](#deployment)
-5. [Perform Attack](#attack)
+4. [Perform Attack](#attack)
+5. [Respond/Mitigate](#mitigate)
 6. [Detect Attack](#detect)
-7. [Respond/Mitigate](#mitigate)
-8. [Teardown Deployment](#teardown)
-9. [Configuration validation](#config)
+7. [Configuration validation](#config)
 
 <a name="objectives"></a>
 # Objective of the POC 
@@ -87,6 +85,7 @@ Azure Security Center gives you recommendations and also allows you to perform r
 3. Select your VM with name "vm-without-ep" and Click on Install on VM. This will install endpoint protection on the VM
 ![](images/install-endpoint-protection.png)
 
+<a name="detect"></a>
 # Attack & Detection
 
 Anti-malware Extension (Endpoint Protection) might take 5-10 mins to get installed on a VM. Hence, you will use another VM with name "vm-with-ep" which already has Anti-malware extension installed further for our Demo using loginid and pwd (The VM login username and password is in deployment powershell output)
