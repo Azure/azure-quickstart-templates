@@ -51,13 +51,27 @@ Access to Azure subscription to deploy following resources
 
 1. Deploy using "Deploy to Azure" button at the top 
 
-2. Execute following command to generate secure string password for SQL server login
+Following steps are required to update SQL Server firewall settings and load data into database. 
+
+1. Clone Azure quickstart templates repository using
+
+    `git clone https://github.com/Azure/azure-quickstart-templates.git`
+
+2. Open Windows PowerShell (Run as Administrator) and navigate to 101-XSS-Attack-Prevention directory for XSS attack scenario
+ 
+    `cd .\azure-quickstart-templates\101-XSS-Attack-Prevention\`
+    
+3. Login to Azure by passing subscription id to execute script.
+
+    `Login-AzureRmAccount -SubscriptionId "<subscription id>" `
+
+4. Execute following command to generate secure string password (password given during deployment of the scenario) for SQL server login
 
     `$pass= "<SQL server admin password>" |  ConvertTo-SecureString -AsPlainText -Force`
 
-2. Execute following command to configure SQL Server Firewall and load data into database using secure string password generated in above step
+5. Execute following command to configure SQL Server Firewall and load data into database using secure string password generated in above step
 
-    `.\DSC\sqlserver.ps1 -ResourceGruopName "<ResourceGroupName>" -SqlAdminUser "<SqlAdminUser>" -SqlAdminPassword $pass -Verbose`
+    `.\DSC\sqlserver.ps1 -ResourceGroupName "<ResourceGroupName>" -SqlAdminUser "<SqlAdminUser>" -SqlAdminPassword $pass -Verbose`
 
 <a name="attack"></a>
 # Perform Attack 
@@ -97,7 +111,10 @@ Attack on web app with
     
 <a name="detect"></a>    
 # Detect
-To detect the attack execute following query in Azure Log Analytics
+To detect the attack execute following query in Azure Log Analytics 
+<p/>
+<u>Note</u>: first time it takes few hours for OMS to pull logs for detection and prevention events. For subsequent requests it takes 10-15 mins to reflect in OMS, so if you don't get any search results, please try again after sometime.
+<p/>
 1. Go to Azure Portal --> navigate to Log Analytics in same resource group  
 
 ![](images/xss-common-oms-location.png) 
@@ -106,26 +123,26 @@ To detect the attack execute following query in Azure Log Analytics
 
     ```AzureDiagnostics | where Message  contains "xss" and action_s contains "detected"```
 
-    ![](images/xss-oms-log-ana-location.png) 
+![](images/xss-oms-log-ana-location.png) 
     
 3. Following details gets logged. 
 
-    ![](images/xss-log-analytics-det.png) 
+![](images/xss-log-analytics-det.png) 
     
 <a name="mitigate"></a>
 # Mitigate 
 
   * Update Web application firewall mode to Prevention for application gateway. This will take 5-10 mins. Hence we will connect the application using Application Gateway (WAF- Prevention mode) 
 
-    ![](images/xss-appgateway-waf-prev.png)    
+![](images/xss-appgateway-waf-prev.png)    
     
   
 
 ## Detection after Mitigation 
 
-* Execute the step 6 and 7  to perform XSS attack, Application Gateway will prevent access
+* Execute the step 4,5, 6 and 7 to perform XSS attack with Application Gateway having WAF Enabled and Firewall in Prevention. Application Gateway will prevent access as below
 
-    ![](images/403-forbidden-access-denied.png)  
+![](images/403-forbidden-access-denied.png)  
 
  
 * To detect the prevention of attack execute following query in Azure Log Analytics
@@ -133,7 +150,7 @@ To detect the attack execute following query in Azure Log Analytics
 
     AzureDiagnostics | where Message  contains "xss" and action_s contains "blocked"
     
-    ![](images/xss-log-analytics-blocked.png)  
+![](images/xss-log-analytics-blocked.png)  
 
 
 You will notice events related to detection and prevention items. First time it takes few hours for OMS to pull logs for detection and prevention events. For subsequent requests it takes 10-15 mins to reflect in OMS, so if you don't get any search results, please try again after sometime.
@@ -141,7 +158,7 @@ You will notice events related to detection and prevention items. First time it 
 
 <a name="config"></a>
 ## Configuration Validation
-* Cross site scripting (XSS) is a common attack vector that injects malicious code into a vulnerable web application. A successful cross site scripting attack can have devastating consequences for an online business’s reputation and its relationship with its clients. Detection and remediation can be easily done using advanced controls along with Audit and Remediation procedure in Cloudneeti.
+* Cross site scripting (XSS) is a common attack vector that injects malicious code into a vulnerable web application. A successful cross site scripting attack can have devastating consequences for an online businessâ€™s reputation and its relationship with its clients. Automatic detection and remediation procedure of such vulnerabilities can be easily done using the controls available in Cloudneeti.
 
 * Cloudneeti is available on the Azure marketplace. Try out the free test drive here https://aka.ms/Cloudneeti 
 
