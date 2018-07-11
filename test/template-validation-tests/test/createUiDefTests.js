@@ -87,7 +87,7 @@ describe('createUiDefinition.json file - ', () => {
     /** A 'location' must be specified in outputs.
     The value should match '[location()]' */
     it('location must be in outputs, and should match [location()]', () => {
-        createUiDefFileJSONObject.parameters.outputs.should.withMessage('location property missing in outputs').have.property('location');
+        createUiDefFileJSONObject.parameters.outputs.should.withMessage('location property missing in outputs').have.property('Location');
         createUiDefFileJSONObject.parameters.outputs.location.toLowerCase().should.withMessage('location value should be [location()]').be.eql('[location()]');
     });
 });
