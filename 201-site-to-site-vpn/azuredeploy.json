@@ -112,6 +112,13 @@
         "description": "Name of the sample VM to create"
       }
     },
+    "vmImageSKU":{
+      "type": "string",
+      "defaultValue": "14.04.5-LTS",
+      "metadata": {
+        "description": "VM Image SKU"
+      }
+    },
     "vmSize": {
       "type": "string",
       "defaultValue": "Standard_A1",
@@ -172,16 +179,13 @@
   "variables": {
     "imagePublisher": "Canonical",
     "imageOffer": "UbuntuServer",
-    "imageSKU": "14.04.2-LTS",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
-    "gatewaySubnetRef": "[concat(variables('vnetID'),'/subnets/','GatewaySubnet')]",
-    "subnetRef": "[concat(variables('vnetID'),'/subnets/',parameters('subnetName'))]",
+    "imageSKU": "[parameters('vmImageSKU')]",
+    "gatewaySubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), 'GatewaySubnet')]",
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
     "nicName": "[concat(parameters('vmName'), '-nic')]",
-    "vmStorageAccountContainerName": "vhds",
-    "OSDiskName": "osDisk",
     "vmPublicIPName": "[concat(parameters('vmName'), '-publicIP')]",
-    "api-version": "2015-06-15",
-    "storage-api-version": "2015-05-01-preview"
+    "OSDiskName": "osdisk",
+    "vmStorageAccountContainerName":"vhds"
   },
   "resources": [
     {
@@ -265,7 +269,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "name": "[parameters('newStorageAccountName')]",
       "location": "[resourceGroup().location]",
       "type": "Microsoft.Storage/storageAccounts",
@@ -359,12 +363,11 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "osdisk1",
+            "createOption": "FromImage",
+            "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
-            },
-            "caching": "ReadWrite",
-            "createOption": "FromImage"
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob, variables('vmStorageAccountContainerName'),'/', variables('OSDiskName'), '.vhd')]"
+            }
           }
         },
         "networkProfile": {
