@@ -120,7 +120,7 @@ describe('template files - ', () => {
             it.each(templateObject, 'resourceGroup().location must NOT be be used in the template file ' + templateJSONObject.filename + ', except as a default value for the location parameter. Please correct similar errors in the file', function(element, next) {
                 var templateFileContent = JSON.stringify(templateObject).toLowerCase();
                 templateFileContent = templateFileContent.replace(/\"defaultvalue\":\s*\"\[resourcegroup\(\)\.location\]\"/,"");
-                var locationString = 'resourceGroup().location'.toLowerCase();
+                var locationString = 'resourcegroup().location';
                 var message = 'in file:' + templateJSONObject.filename + ' should NOT have location set to resourceGroup().location';
                 assert(templateFileContent.includes(locationString) === false, message);
                 next();
