@@ -70,6 +70,13 @@
       "metadata": {
         "description": "Globally unique DNS prefix for the Public IPs used to access the Virtual Machines"
       }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
@@ -92,14 +99,13 @@
     },
     "availabilitySetPlatformFaultDomainCount": "2",
     "availabilitySetPlatformUpdateDomainCount": "5",
-    "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', variables('myVNETName'))]",
-    "subnetRef": "[concat(variables('vnetId'), '/subnets/', variables('myVNETSubnet1Name'))]"
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('myVNETName'),  variables('myVNETSubnet1Name'))]"
   },
   "resources": [
     {
       "name": "[variables('myVNETName')]",
       "type": "Microsoft.Network/virtualNetworks",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2016-03-30",
       "dependsOn": [],
       "tags": {
@@ -124,7 +130,7 @@
     {
       "name": "[variables('diagnosticStorageAccountName')]",
       "type": "Microsoft.Storage/storageAccounts",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2016-01-01",
       "sku": {
         "name": "Standard_LRS"
@@ -139,7 +145,7 @@
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[parameters('availabilitySetName')]",
       "apiVersion": "2017-03-30",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "platformFaultDomainCount": "[variables('availabilitySetPlatformFaultDomainCount')]",
         "platformUpdateDomainCount": "[variables('availabilitySetPlatformUpdateDomainCount')]"
@@ -152,7 +158,7 @@
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(parameters('virtualMachineNamePrefix'), copyIndex(1))]",
       "apiVersion": "2017-03-30",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "VMcopy",
         "count": "[parameters('virtualMachineCount')]"
@@ -200,7 +206,6 @@
           "bootDiagnostics": {
             "enabled": true,
             "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('diagnosticStorageAccountName')), '2016-01-01').primaryEndpoints.blob]"
-
           }
         }
       },
@@ -214,7 +219,7 @@
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(parameters('virtualMachineNamePrefix'), copyIndex(1), '-NIC1')]",
       "apiVersion": "2016-03-30",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "NICCopy",
         "count": "[parameters('virtualMachineCount')]"
@@ -228,11 +233,11 @@
               "publicIPAddress": {
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('virtualMachineNamePrefix'), copyIndex(1), '-PIP1'))]"
               },
-                "subnet": {
-                  "id": "[variables('subnetRef')]"
-                }
+              "subnet": {
+                "id": "[variables('subnetRef')]"
               }
             }
+          }
         ],
         "dnsSettings": {
           "dnsServers": []
@@ -248,7 +253,7 @@
       "apiVersion": "2016-03-30",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat(parameters('virtualMachineNamePrefix'), copyIndex(1), '-PIP1')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "PIPCopy",
         "count": "[parameters('virtualMachineCount')]"
@@ -264,5 +269,5 @@
       }
     }
   ],
-    "outputs": {}
-  }
+  "outputs": {}
+}

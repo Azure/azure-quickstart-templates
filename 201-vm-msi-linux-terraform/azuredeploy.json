@@ -60,6 +60,13 @@
         "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
       },
       "defaultValue": ""
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
@@ -86,20 +93,19 @@
         ]
       }
     },
-    "contributor" : "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', '8e3af657-a8ff-443c-a75c-2fe8c4bcb635')]",
+    "contributor": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', '8e3af657-a8ff-443c-a75c-2fe8c4bcb635')]",
     "installParm1": "[concat(' -u ', parameters('adminUsername'))]",
     "installParm2": "[concat(' -s ', subscription().subscriptionId)]",
     "installParm3": "[concat(' -a ', variables('stateStorageAccountName'))]",
     "installParm4": "[if(equals(parameters('desktopInstall'), bool('true')), concat(' -d ', parameters('desktopInstall')), '')]",
     "installParm5": "[concat(' -t ', subscription().tenantId)]"
-
-   },
+  },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('infraStorageAccountName')]",
       "apiVersion": "2017-10-01",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "sku": {
         "name": "Standard_LRS"
       },
@@ -110,7 +116,7 @@
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('stateStorageAccountName')]",
       "apiVersion": "2017-10-01",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "sku": {
         "name": "Standard_LRS"
       },
@@ -121,7 +127,7 @@
       "apiVersion": "2017-11-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
@@ -133,7 +139,7 @@
       "apiVersion": "2017-11-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -154,7 +160,7 @@
       "name": "[variables('networkSecurityGroupName')]",
       "type": "Microsoft.Network/networkSecurityGroups",
       "apiVersion": "2017-11-01",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
           {
@@ -191,7 +197,7 @@
       "apiVersion": "2017-11-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
         "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
@@ -220,7 +226,7 @@
       "apiVersion": "2017-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "identity": {
         "type": "SystemAssigned"
       },
@@ -261,7 +267,7 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmName'),'/MSILinuxExtension')]",
       "apiVersion": "2017-12-01",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
       ],
@@ -283,7 +289,7 @@
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines/extensions/', variables('vmName'),'MSILinuxExtension')]"
       ],
-        "properties": {
+      "properties": {
         "roleDefinitionId": "[variables('contributor')]",
         "principalId": "[reference(concat(resourceId('Microsoft.Compute/virtualMachines/', variables('vmName')),'/providers/Microsoft.ManagedIdentity/Identities/default'),'2015-08-31-PREVIEW').principalId]",
         "scope": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name)]"
@@ -293,7 +299,7 @@
       "name": "[concat(variables('vmName'),'/customscriptextension')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "apiVersion": "2017-03-30",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Authorization/roleAssignments', guid(resourceGroup().id))]"
       ],

@@ -16,6 +16,12 @@ Once the deployment is complete you can increase the resources provided to Sonar
 #### Note:  
 This Beta release deploys a secure SonarQube installation by default, howevere we invoke a **self-signed** which you will have to replace with a trusted one for production use.
 
+Once the deployment finishes:
+* Please RDP to the machine
+* Download Java JDK 8 from Oracle http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html
+* Install JDK (follow the wizard)
+* Restart the SonarQube Service by Open “Services” and restart the server normally
+
 ##### Production Certificate
 Because CAs provide the various SSL certificate types at different price points, you should start by deciding what type of SSL certificate to buy. To secure a single domain name (**www.contoso.com**), you just need a basic certificate. To secure multiple domain names (**contoso.com** and **www.contoso.com** and **sonarqube.contoso.com**), you need either a wildcard certificate or a certificate with Subject Alternate Name (subjectAltName).+
 

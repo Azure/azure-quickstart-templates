@@ -8,7 +8,7 @@ while getopts "a:l:g:s:f:e:uvd" opt; do
             location=$OPTARG #location for the deployed resource group
         ;;
         g)
-            resourceGroupName=$OPTARG
+            resourceGroupName=$OPTARG #name of the resource group to create
         ;;
         u)
             uploadArtifacts='true' #set this switch to upload/stage artifacs
@@ -31,16 +31,24 @@ while getopts "a:l:g:s:f:e:uvd" opt; do
     esac
 done
     
-[[ $# -eq 0 || -z $artifactsStagingDirectory || -z $location ]] && { echo "Usage: $0 <-a foldername> <-l location> [-e parameters-file] [-g resource-group-name] [-u] [-s storageAccountName] [-v]"; exit 1; }
+[[ $# -eq 0 || -z $artifactsStagingDirectory || -z $location ]] && { echo "Usage: $0 <-a foldername> <-l location> [-e parameters-file] [-g resource-group-name] [-u] [-s storageAccountName] [-t templateFile] [-e parametersFile] [-v] [-d]"; exit 1; }
 
 if [[ -z $templateFile ]]
 then
-    templateFile="$artifactsStagingDirectory/azuredeploy.json"
+    templateFile="$artifactsStagingDirectory/mainTemplate.json"
+    if [ ! -f $templateFile ]
+    then
+        templateFile="$artifactsStagingDirectory/azuredeploy.json"
+    fi
 fi
 
 if [[ $devMode ]]
 then
     parametersFile="$artifactsStagingDirectory/azuredeploy.parameters.dev.json"
+    if [ ! -f $parametersFile ]
+    then
+        parametersFile="$artifactsStagingDirectory/azuredeploy.parameters.1.json"
+    fi        
 else
     if [[ -z $parametersFile ]]
     then

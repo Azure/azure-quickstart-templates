@@ -110,7 +110,7 @@
       "defaultValue": "GEN-UNIQUE",
       "type": "string",
       "minLength": 1,
-     "metadata": {
+      "metadata": {
         "description": "Application prefix name, should be <= 10 characters"
       }
     },
@@ -202,6 +202,13 @@
       "metadata": {
         "description": "Path match string for Path Rule 2"
       }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
@@ -217,16 +224,11 @@
     "region1-web-vm-nic": "[concat(variables('app-prefix'), '-web-vm-nic-rg1-')]",
     "region1-web-vm-pip": "[concat(variables('app-prefix'), '-web-vm-pip-rg1-')]",
     "region1-web-vmsprefix": "[concat(variables('app-prefix'),'webvmrg1')]",
-    "region2-vnet-id": "[resourceId('Microsoft.Network/virtualNetworks', concat(variables('region-vnet-name'),'1'))]",
     "region2-web-vm-nic": "[concat(variables('app-prefix'), '-web-vm-nic-rg2-')]",
     "region2-web-vm-pip": "[concat(variables('app-prefix'), '-web-vm-pip-rg2-')]",
     "region2-web-vmsprefix": "[concat(variables('app-prefix'),'webvmrg2')]",
-    "region-appGW-backendIp-default": "[concat(variables('region1-web-vmsprefix'),'0.',resourceGroup().location,'.cloudapp.azure.com')]",
-    "region-appGW-backendIp-ForPathRule1": "[concat(variables('region1-web-vmsprefix'),'1.',resourceGroup().location,'.cloudapp.azure.com')]",
-    "region-appGW-backendIp-ForPathRule2": "[concat(variables('region1-web-vmsprefix'),'1.',resourceGroup().location,'.cloudapp.azure.com')]",
     "region-appgw-name": "region-appgw-",
     "region-appgw-pip": "region-appgw-pip-",
-    "region-appGW-subnetRef": "[concat(variables('region1-vnet-id'),'/subnets/',variables('vnet-appGW-subnet'))]",
     "region-availabilitySet": "region_AvSet",
     "region-storage-account": "[concat('rg', uniqueString(resourceGroup().id))]",
     "region-tm-test-vm": "[concat(variables('app-prefix'),'-tm-vm-rg')]",
@@ -235,7 +237,6 @@
     "region-vnet-name": "region-multitierlb-vnet",
     "region-web-ilb-pip": "[concat(parameters('loadbalancer-dns-prefix'),'rg')]",
     "region-web-lb": "[concat(parameters('loadbalancer-dns-prefix'),'rg')]",
-    "vhdStorageType": "Standard_LRS",
     "vnet-appGW-subnet": "appGatewaySubnet",
     "vnet-front-end-subnet": "front-end-subnet",
     "vnet-lb-subnet": "lb-subnet"
@@ -268,7 +269,9 @@
       "tags": {
         "displayName": "vnetloop"
       },
-      "dependsOn": [ "storage-accounts-loop" ],
+      "dependsOn": [
+        "storage-accounts-loop"
+      ],
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -344,7 +347,6 @@
             "properties": {
               "publicIPAddress": {
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(variables('region-web-ilb-pip'),copyIndex()))]"
-
               }
             }
           }
@@ -363,7 +365,6 @@
               "intervalInSeconds": 15,
               "numberOfProbes": 2
             }
-
           }
         ],
         "loadBalancingRules": [
@@ -384,10 +385,8 @@
               "backendPort": 80,
               "idleTimeoutInMinutes": 15
             }
-
           }
         ]
-
       },
       "copy": {
         "name": "region-web-lb-loop",
@@ -479,7 +478,7 @@
             "version": "latest"
           },
           "osDisk": {
-              "createOption": "FromImage",
+            "createOption": "FromImage",
             "caching": "ReadWrite"
           },
           "dataDisks": []
@@ -498,7 +497,6 @@
           "networkInterfaces": [
             {
               "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('region-tm-vm-nic'), copyindex()))]"
-
             }
           ]
         }
@@ -516,11 +514,11 @@
       "tags": {
         "displayName": "Region-availabilitySets"
       },
-	"properties": {
-	    "platformFaultDomainCount": 2,
-	    "platformUpdateDomainCount": 2,
-	    "managed" : true
-	},
+      "properties": {
+        "platformFaultDomainCount": 2,
+        "platformUpdateDomainCount": 2,
+        "managed": true
+      },
       "copy": {
         "name": "web-vms-availabilitysets-Loop",
         "count": 2
@@ -840,7 +838,6 @@
               "backendAddresses": [
                 {
                   "fqdn": "[reference(concat('Microsoft.Network/publicIPAddresses/',variables('region1-web-vm-pip'), '0')).dnsSettings.fqdn]"
-
                 }
               ],
               "requestRoutingRules": [
@@ -853,9 +850,7 @@
           {
             "name": "appGatewayBackendPool2",
             "properties": {
-              "backendAddresses": [
-
-              ],
+              "backendAddresses": [],
               "requestRoutingRules": [
                 {
                   "Id": "[concat(resourceId('Microsoft.Network/applicationGateways',concat(variables('region-appgw-name'),copyIndex())), '/requestRoutingRules/rule1')]"
