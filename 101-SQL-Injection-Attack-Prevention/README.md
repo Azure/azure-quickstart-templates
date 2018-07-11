@@ -57,13 +57,29 @@ Access to Azure subscription to deploy following resources
 
 1. Deploy using "Deploy to Azure" button at the top 
 
-2. Execute following command to generate secure string password for SQL server login
+Following steps are required to update SQL Server firewall settings and load data into database. 
 
-    `$pass= "<SQL server admin password>" | Convertto-securestring -asplaintext -force`
+1. Clone Azure quickstart templates repository using
 
-2. Execute following command to configure SQL Server Firewall and load data into database using secure string password generated in above step
+    `git clone https://github.com/Azure/azure-quickstart-templates.git`
 
-    `.\DSC\sqlserver.ps1 -ResourceGruopName "<ResourceGroupName>" -SqlAdminUser "<SqlAdminUser>" -SqlAdminPassword $pass -Verbose`
+3. Open Windows PowerShell (Run as Administrator) and navigate to 101-SQL-Injection-Attack-Prevention directory 
+ 
+    `cd .\azure-quickstart-templates\101-SQL-Injection-Attack-Prevention\`
+
+3. Login to Azure by passing subscription id to execute script.
+
+    `Login-AzureRmAccount -SubscriptionId "<subscription id>" `
+
+4. Execute following command to generate secure string password (password given during deployment of the scenario) for SQL server login
+
+    `$pass= "<SQL server admin password>" |  ConvertTo-SecureString -AsPlainText -Force`
+
+5. Execute following command to configure SQL Server Firewall and load data into database using secure string password generated in above step
+
+    `.\DSC\sqlserver.ps1 -ResourceGroupName "<ResourceGroupName>" -SqlAdminUser "<SqlAdminUser>" -SqlAdminPassword $pass -Verbose`
+
+
 
 
 <a name="attack"></a>
@@ -101,6 +117,9 @@ Attack on web app with
 # Detect  
 ###  Detection using OMS
 To detect the attack execute following query in Azure Log Analytics
+<p/>
+<u>Note</u>: first time it takes few hours for OMS to pull logs for detection and prevention events. For subsequent requests it takes 10-15 mins to reflect in OMS, so if you don't get any search results, please try again after sometime.
+<p/>
 1. Go to Azure Portal --> navigate to Log Analytics in same resource group 
 
 ![](images/sql-inj-common-oms-location.png) 
@@ -142,8 +161,8 @@ Once Auditing & Threat Detection is database is enabled for SQL database, Azure 
   
 
 ## Detection after Mitigation
+* Execute the step 4,5, 6 and 7 to perform SQL Injection attack with Application Gateway having WAF Enabled and Firewall in Prevention
 
-* Execute the step 7 to perform SQL Injection attack, Application Gateway will prevent access
 
     ![](images/403-forbidden-access-denied.png)  
 
@@ -160,7 +179,7 @@ Once Auditing & Threat Detection is database is enabled for SQL database, Azure 
     
 <a name="config"></a>
 ## Configuration Validation
-* The impact SQL injection can have on a business is far reaching. A successful attack may result in the unauthorized viewing of user lists, the deletion of entire tables and, in certain cases, the attacker gaining administrative rights to a database, all of which are highly detrimental to a business. Detection and remediation can be easily done using advanced controls along with Audit and Remediation procedure in Cloudneeti.
+* The impact SQL injection can have on a business is far reaching. A successful attack may result in the unauthorized viewing of user lists, the deletion of entire tables and, in certain cases, the attacker gaining administrative rights to a database, all of which are highly detrimental to a business. Automatic detection and remediation procedure of such vulnerabilities can be easily done using the controls available in Cloudneeti.
 
 * Cloudneeti is available on the Azure marketplace. Try out the free test drive here https://aka.ms/Cloudneeti 
 
