@@ -2,6 +2,14 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "sapSystemId": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3,
+            "metadata": {
+                "description": ""
+            }
+        },
         "computerName": {
             "type": "string",
             "minLength": 3,
@@ -180,8 +188,14 @@
                 "script": "[concat(parameters('_artifactsLocation'), '/scripts/diskConfig.ps1', parameters('_artifactsLocationSasToken'))]",
                 "scriptCall": "powershell.exe -ExecutionPolicy bypass -File diskConfig.ps1",
                 "disks": [
+                    {
+                        "lun": 0,
+                        "caching": "ReadOnly",
+                        "createOption": "Empty",
+                        "diskSizeGB": 128
+                    }
                 ],
-                "scriptArguments": ""
+                "scriptArguments": "[concat('-luns \"0\" -names \"sap\" -paths \"C:\\usr\\sap', parameters('sapSystemId'), '\"  -sizes \"100\"')]"
             },
             "Linux": {
                 "Publisher": "Microsoft.Azure.Extensions",
@@ -189,8 +203,7 @@
                 "Version": "2.0",
                 "script": "[concat(parameters('_artifactsLocation'), '/scripts/diskConfig.sh', parameters('_artifactsLocationSasToken'))]",
                 "scriptCall": "sh diskConfig.sh",
-                "disks": [
-                ],
+                "disks": [],
                 "scriptArguments": ""
             }
         },
@@ -374,11 +387,35 @@
             }
         },
         {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(variables('vmName'), '/', variables('cseExtName'))]",
+            "apiVersion": "2017-12-01",
+            "location": "[resourceGroup().location]",
+            "condition": "[and( not(variables('bDeployEmptyTarget')), equals(variables('internalOSType'), 'Windows'))]",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+            ],
+            "properties": {
+                "publisher": "[variables('cseExtPublisher')]",
+                "type": "[variables('cseExtName')]",
+                "typeHandlerVersion": "[variables('cseExtVersion')]",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "fileUris": [
+                        "[variables('csExtensionScript')]"
+                    ]
+                },
+                "protectedSettings": {
+                    "commandToExecute": "[concat(variables('csExtensionscriptCall'), ' ', variables('osConfigs')[variables('internalOSType')].scriptArguments)]"
+                }
+            }
+        },
+        {
             "apiVersion": "2018-02-01",
             "name": "[concat(deployment().name, '-installsaphostagent')]",
             "type": "Microsoft.Resources/deployments",
             "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+                "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), '/extensions/', variables('cseExtName'))]"
             ],
             "properties": {
                 "mode": "Incremental",
