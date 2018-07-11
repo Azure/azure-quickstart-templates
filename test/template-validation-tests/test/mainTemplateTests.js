@@ -33,6 +33,10 @@ describe('template files - ', () => {
     /** Tests for parameters in template files */
     describe('parameters tests - ', () => {
 
+        var mainTemplateFileContent = JSON.stringify(mainTemplateFileJSONObject).toLowerCase();
+
+        mainTemplateFileJSONObject = JSON.parse(mainTemplateFileContent);
+
         /** maintemplate.json should have a parameters property */
         it('maintemplate.json should have a "parameters" property', () => {
             mainTemplateFileJSONObject.should.have.property('parameters');
@@ -45,19 +49,18 @@ describe('template files - ', () => {
         // get the corresponding create ui def
         var createUiDefJSONObject = util.getCreateUiDefFile(currentDir).jsonObject;
 
+        var createUiDefJSONStr = JSON.stringify(createUiDefJSONObject).toLowerCase();
+
+        createUiDefJSONObject = JSON.parse(createUiDefJSONStr);
+
         // get output keys in main template
         var outputsInCreateUiDef = Object.keys(createUiDefJSONObject.parameters.outputs);
-
-        // convert to lowercase
-        for (var i in outputsInCreateUiDef) {
-            outputsInCreateUiDef[i] = outputsInCreateUiDef[i].toLowerCase();
-        }
 
         var parametersInMainTemplate = Object.keys(mainTemplateFileJSONObject.parameters);
         /** Validate each parameter that does not have a defaultValue in mainTemplate, has a value in outputs */
         it.each(parametersInMainTemplate, 'parameter %s that does not have a defaultValue in file mainTemplate.json, must have a corresponding output in createUiDefinition.json', ['element'], function(element, next){
             if (typeof(mainTemplateFileJSONObject.parameters[element].defaultValue) === 'undefined') {
-                outputsInCreateUiDef.should.withMessage('in file:mainTemplate.json, outputs in createUiDefinition is missing the parameter ' + element).contain(element.toLowerCase());
+                outputsInCreateUiDef.should.withMessage('in file:mainTemplate.json, outputs in createUiDefinition is missing the parameter ' + element).contain(element);
             }
             next();
         });
@@ -67,11 +70,11 @@ describe('template files - ', () => {
             templateFileJSONObjects.forEach(templateJSONObject => {
                 var templateObject = templateJSONObject.value;
                 Object.keys(templateObject.parameters).forEach(parameter => {
-                    if (templateObject.parameters[parameter].type.toLowerCase() == 'securestring') {
+                    if (templateObject.parameters[parameter].type == 'securestring') {
                         // get default value if one exists
                         var defaultVal = templateObject.parameters[parameter].defaultValue;
                         if (defaultVal && defaultVal.length > 0) {
-                            expect(templateObject.parameters[parameter], 'in file:' + templateJSONObject.filename + ' "' + parameter + '" should not have defaultValue').to.not.have.property('defaultValue');
+                            expect(templateObject.parameters[parameter], 'in file:' + templateJSONObject.filename + ' "' + parameter + '" should not have defaultValue').to.not.have.property('defaultvalue');
                         }
                     }
                 });
@@ -87,15 +90,14 @@ describe('template files - ', () => {
             /** The location parameter can have a defaultValue property, and its value must be '[resourceGroup().location]' */
             var location = mainTemplateFileJSONObject.parameters.location;
             if (location.defaultValue) {
-                location.defaultValue.toLowerCase().should.withMessage('in file:mainTemplate.json, the default value of location property MUST be [resourceGroup().location]').be.eql('[resourceGroup().location]'.toLowerCase());
+                location.defaultValue.should.withMessage('in file:mainTemplate.json, the default value of location property MUST be [resourceGroup().location]').be.eql('[resourcegroup().location]');
             }
-            location.should.withMessage('in file:mainTemplate.json, location property MUST NOT have allowedValues property').not.have.property('allowedValues');
+            location.should.withMessage('in file:mainTemplate.json, location property MUST NOT have allowedValues property').not.have.property('allowedvalues');
         });
 
         /** Validate each parameter should be used in main template */
-        var mainTemplateFileContent = JSON.stringify(mainTemplateFileJSONObject).toLowerCase();
         it.each(parametersInMainTemplate, 'parameter %s must be used in file mainTemplate.json', ['element'], function(element, next) {
-            var paramString = 'parameters(\'' + element.toLowerCase() + '\')';
+            var paramString = 'parameters(\'' + element + '\')';
             assert(mainTemplateFileContent.includes(paramString) === true, 'unused parameter "' + element + '" in file mainTemplate.json');
             next();
         });
@@ -112,7 +114,7 @@ describe('template files - ', () => {
             it.each(resources, 'location value of resource %s must be an expression', function(element, next) {
                 var message = 'in file:' + templateJSONObject.filename + ' must have location set to be an expression';
                 if (element.location) {
-                    element.location.toLowerCase().should.withMessage(getErrorMessage(element, templateJSONObject.filepath, message)).match(/\['.+'\]|/);
+                    element.location.should.withMessage(getErrorMessage(element, templateJSONObject.filepath, message)).match(/\['.+'\]|/);
                 }
                 next();
             });
