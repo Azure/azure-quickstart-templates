@@ -8,34 +8,6 @@
         "description": "virtual network name"
       }
     },
-    "vnetAddressPrefix": {
-      "type": "string",
-      "defaultValue": "10.0.0.0/16",
-      "metadata": {
-        "description": "virtual network address range"
-      }
-    },
-    "serversSubnetPrefix": {
-      "type": "string",
-      "defaultValue": "10.0.2.0/24",
-      "metadata": {
-        "description": "Subnet prefix"
-      }
-    },
-    "azureFirewallSubnetPrefix": {
-      "type": "string",
-      "defaultValue": "10.0.1.0/24",
-      "metadata": {
-        "description": "AzureFirewallSubnet prefix"
-      }
-    },
-    "jumpboxSubnetPrefix": {
-      "type": "string",
-      "defaultValue": "10.0.0.0/24",
-      "metadata": {
-        "description": "Subnet prefix"
-      }
-    },
     "adminUsername": {
       "type": "string",
       "metadata": {
@@ -57,6 +29,11 @@
     }
   },
   "variables": {
+    "vnetAddressPrefix": "10.0.0.0/16",
+    "serversSubnetPrefix": "10.0.2.0/24",
+    "azureFirewallSubnetPrefix": "10.0.1.0/24",
+    "jumpboxSubnetPrefix": "10.0.0.0/24",
+    "nextHopIP": "10.0.1.4",
     "azureFirewallSubnetName": "AzureFirewallSubnet",
     "jumpBoxSubnetName": "JumpboxSubnet",
     "serversSubnetName": "ServersSubnet",
@@ -68,8 +45,6 @@
     "serverSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), variables('serversSubnetName'))]",
     "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'sajumpbox')]",
     "azfwRouteTableName": "AzfwRouteTable",
-    "nextHopIPPrefixStrLength": "[lastIndexOf(parameters('azureFirewallSubnetPrefix'), '.')]",
-    "nextHopIP": "[concat(substring(parameters('azureFirewallSubnetPrefix'), 0, variables('nextHopIPPrefixStrLength')), '.', '4')]",
     "firewallName": "firewall1",
     "publicIPName": "publicIP1",
     "azureFirewallSubnetId":  "[resourceId('Microsoft.Network/virtualNetworks/subnets',parameters('virtualNetworkName'), variables('azureFirewallSubnetName'))]",
@@ -88,7 +63,6 @@
       "properties": {}
     },
     {
-      "comments": "Here the nextHopIP is the 4th IP in the AzureFirewallSubnet. For simplicity we assume a /24 subnet and pick <AzureFirewallSubnetPrefix>.4. If this is not the case then the UDR's next hop will have to be manually modifed to point to AzureFirewall private IP as described in https://go.microsoft.com/fwlink/?linkid=2004027",
       "type": "Microsoft.Network/routeTables",
       "name": "[variables('azfwRouteTableName')]",
       "apiVersion": "2018-02-01",
@@ -121,26 +95,26 @@
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
-            "[parameters('vnetAddressPrefix')]"
+            "[variables('vnetAddressPrefix')]"
           ]
         },
         "subnets": [
           {
             "name": "[variables('jumpBoxSubnetName')]",
             "properties": {
-              "addressPrefix": "[parameters('jumpboxSubnetPrefix')]"
+              "addressPrefix": "[variables('jumpboxSubnetPrefix')]"
             }
           },
           {
             "name": "[variables('azureFirewallSubnetName')]",
             "properties": {
-              "addressPrefix": "[parameters('azureFirewallSubnetPrefix')]"
+              "addressPrefix": "[variables('azureFirewallSubnetPrefix')]"
             }
           },
           {
             "name": "[variables('serversSubnetName')]",
             "properties": {
-              "addressPrefix": "[parameters('serversSubnetPrefix')]",
+              "addressPrefix": "[variables('serversSubnetPrefix')]",
               "routeTable": {
                 "id": "[resourceId('Microsoft.Network/routeTables', variables('azfwRouteTableName'))]"
               }
