@@ -32,6 +32,17 @@
                 "description": "The type of the operating system you want to deploy."
             }
         },
+        "dbtype": {
+            "type": "string",
+            "allowedValues": [
+                "SQL",
+                "OTHER"
+            ],
+            "defaultValue": "OTHER",
+            "metadata": {
+                "description": "The type of the database. If you select SQL Server, you can provide the path to the ODBC driver which is then automatically installed."
+            }
+        },
         "sapSystemSize": {
             "type": "string",
             "allowedValues": [
@@ -92,6 +103,12 @@
             }
         },
         "sapacExtLocation": {
+            "type": "string",
+            "metadata": {
+                "description": ""
+            }
+        },
+        "odbcDriverLocation": {
             "type": "string",
             "metadata": {
                 "description": ""
@@ -412,10 +429,42 @@
         },
         {
             "apiVersion": "2018-02-01",
+            "name": "[concat(deployment().name, '-odbc')]",
+            "type": "Microsoft.Resources/deployments",
+            "condition": "[equals(parameters('dbType'), 'SQL')]",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), '/extensions/', variables('cseExtName'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(parameters('_artifactsLocation'), '/nestedtemplates/runCommand.json', parameters('_artifactsLocationSasToken'))]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "vmName": {
+                        "value": "[variables('vmName')]"
+                    },
+                    "command": {
+                        "value": "%SystemRoot%\\System32\\msiexec.exe /i msodbcsql.msi /quiet /norestart /log c:\\windows\\sql4sap.msi.log IACCEPTMSODBCSQLLICENSETERMS=YES MSIRESTARTMANAGERCONTROL=Disable"
+                    },
+                    "files": {
+                        "value": [
+                            "[parameters('odbcDriverLocation')]"
+                        ]
+                    },
+                    "osType": {
+                        "value": "[variables('internalOSType')]"
+                    }
+                }
+            }
+        },
+        {
+            "apiVersion": "2018-02-01",
             "name": "[concat(deployment().name, '-installsaphostagent')]",
             "type": "Microsoft.Resources/deployments",
             "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), '/extensions/', variables('cseExtName'))]"
+                "[concat('Microsoft.Resources/deployments/', concat(deployment().name, '-odbc'))]"
             ],
             "properties": {
                 "mode": "Incremental",
