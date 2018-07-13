@@ -14,62 +14,16 @@ This template allows you to deploy a VM Scale Set of Linux VMs and create a new 
 
 To enable Accelerated Networking feature ( SR-IOV ) which is a free feature, using the following example : 
 
-In network profile of VMSS , set "enableAcceleratedNetworking" to true,
+In network profile of VMSS , set "enableAcceleratedNetworking" to true, to have more information, please go to https://docs.microsoft.com/en-us/azure/virtual-network/create-vm-accelerated-networking-cli
+
+
+If availability zone is available in your region,  adding the following in your template to improve the availability of your VMSS :
 ```
-     "networkProfile": {
-            "networkInterfaceConfigurations": [
-              {
-                "name": "nic",
-                "properties": {
-                  "primary": "true",
-                  "enableAcceleratedNetworking": true,
-                  "ipConfigurations": [
-                    {
-                      "name": "ipconfig",
-                      "properties": {
-                        "subnet": {
-                          "id": "[resourceId(...)]"
-                        },
-                        "loadBalancerBackendAddressPools": [
-                          {
-                            "id": "[resourceId(...)]"
-                          }
-                        ],
-                        "loadBalancerInboundNatPools": [
-                          {
-                            "id": "[resourceId(...)]"
-                          }
-                        ]
-                      }
-                    }
-                  ]
-                }
-              }
-            ]
-          }
-
-```
-
-To have more information, please go to https://docs.microsoft.com/en-us/azure/virtual-network/create-vm-accelerated-networking-cli
-
-
-If availability zone is available in your region,  using the following example to improve the availability of your VMSS :
-```
- {   "type": "Microsoft.Compute/virtualMachineScaleSets",
-      "sku": {
-        "name": "[parameters('dataNodeSku')]",
-        "tier": "Standard",
-        "capacity": "[parameters('dataNodeCount')]"
-      },
-      "name":"[concat(parameters('vmssName'), '-data-node')]",
-      "apiVersion": "2018-04-01",
-      "location": "[parameters('location')]",
       "zones": [
         "1",
         "2",
         "3"
-      ],
-....
+      ]
 }
 
 ```
