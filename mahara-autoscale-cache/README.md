@@ -30,7 +30,7 @@ You can click the "deploy to Azure" button at the beginning of this document.
 
 In testing, stacks typically took between 1 and 1 and a half hours to finish, depending on spec. Once this is done, you will receive JSON data with outputs needed to continue setup. You can also retrieve these from the portal or the CLI, more information below. The available parameters are:
 
-- siteURL: If you provided a `siteURL' parameter when deploying this will be set to the supplied value. Otherwise it will be the same as the loadBalancerDNS, see below.
+- siteURL: If you provided a `siteURL` parameter when deploying this will be set to the supplied value. Otherwise it will be the same as the loadBalancerDNS, see below.
 - loadBalancerDNS: This is the address of your load balancer. If you provided a `siteURL` parameter when deploying you'll need to add a DNS entry CNAMEs to this.
 - maharaAdminPassword: The password for the "admin" user in your Mahara install.
 - controllerinstanceIP: This is the address of the controller. You will need to SSH into this to make changes to your Mahara code or view logs.
