@@ -123,7 +123,7 @@ Standard instances have a minimum storage requirement of 128GB. All database sto
 
 ### *Controller instance sizing*
 
-The controller handles both syslog and cron duties. Depending on how big you Mahara cron runs are this may not be sufficent. If cron jobs are very delayed and cron processess are building up on the controller then an upgrade in tier is needed.
+The controller handles both syslog and cron duties. Depending on how big you Mahara cron runs are this may not be sufficent. If cron jobs are delayed and cron processess are building up on the controller then an upgrade in tier is needed.
 
 ### *Frontend instances*
 
