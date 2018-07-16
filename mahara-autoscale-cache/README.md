@@ -1,6 +1,6 @@
 # *Deploy and manage a Scalable Mahara Cluster on Azure*
 
-After deploying, these templates will provide you with a new Mahara site with caching for speed and scaling frontends to handle PHP load. The filesystem behind it is mirrored for high availability. Filesystem permissions and options have been tuned to make Mahara more secure than the default install
+After deploying, these templates will provide you with a new Mahara site with caching for speed and scaling frontends to handle PHP load. The filesystem behind it is mirrored for high availability. Filesystem permissions and options have been tuned to make Mahara more secure than the default install.
 
 [![Deploy to Azure Minimally](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com/Azure/azure-quickstart-templates/master/mahara-autoscale-cache/azuredeploy.json) [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com/Azure/azure-quickstart-templates/master/mahara-autoscale-cache/azuredeploy.json)
 
@@ -18,41 +18,19 @@ This template set deploys the following infrastructure:
 - Three Elasticsearch VMs for search indexing in Mahara (optional)*
 - Dual Gluster nodes for high availability access to Mahara files
 
-* Note: You will need to login into Mahara as 'admin' and configure the artefacts you want indexed after the installation has completed.
+* Note: You will need to login into Mahara as 'admin' and configure the artifacts you want indexed after the installation has completed.
 
 ![network_diagram](images/stack_diagram.png "Diagram of deployed stack")
 
 ## *Deployment steps*
 
-You can click the "deploy to Azure" button at the beginning of this document or alternatively perform a deploy from the command line:
-
-
-### *Command line deploys*
-
-Once you've checked out the templates from git, you'll want to use the [Azure CLI tool](https://docs.microsoft.com/en-us/cli/azure/overview?view=azure-cli-latest) to deploy them. First off you'll want to create a group with these:
-
-`az group create --name <stackname> --location <location>`
-
-Note that some location in Azure might not support features or certain VM tiers.
-
-Next you'll want to either deploy and enter in all the parameters manually:
-
-`az group deployment create --name mahara-autoscale --resource-group <stackname> --template-file azuredeploy.json`
-
-Alternatively, you can configure all of your variables in the "azuredeploy.parameters.json" file and run:
-
-`az group deployment create --name mahara-autoscale --resource-group <stackname> --template-file azuredeploy.json --parameters azuredeploy.parameters.json`
-
-
-Note that `siteURL` is a special case in the `azuredeploy.parameters.json` files. If you do not define a value for `siteURL` or if you leave it as the default "www.example.org" this value will be overwritten by the template to be a calculated value for the public load balancers of your deployment. This allows you to experiment with this Mahara template without configuring a new domain name whilst still enabling Mahara to be configured with a production URL when appropriate. See the next section for instructions on retrieving the generated DNS name if necesary
-
-Depending on what tiers you selected for VMs and the database you will be looking at roughly 1 to 2 hours for a full deploy. See below for selectable parameters.
+You can click the "deploy to Azure" button at the beginning of this document. Depending on what tiers you selected for VMs and the database you will be looking at roughly 1 to 2 hours for a full deploy. See below for selectable parameters.
 
 ## *Using the created stack*
 
 In testing, stacks typically took between 1 and 1 and a half hours to finish, depending on spec. Once this is done, you will receive JSON data with outputs needed to continue setup. You can also retrieve these from the portal or the CLI, more information below. The available parameters are:
 
-- siteURL: If you provided a `siteURL' parameter when deploying this will be set to the supplied value. Otherwise it will be the same as the loadBalancerDNS, see below.
+- siteURL: If you provided a `siteURL` parameter when deploying this will be set to the supplied value. Otherwise it will be the same as the loadBalancerDNS, see below.
 - loadBalancerDNS: This is the address of your load balancer. If you provided a `siteURL` parameter when deploying you'll need to add a DNS entry CNAMEs to this.
 - maharaAdminPassword: The password for the "admin" user in your Mahara install.
 - controllerinstanceIP: This is the address of the controller. You will need to SSH into this to make changes to your Mahara code or view logs.
@@ -139,7 +117,7 @@ As of the time of writing, Azure supports "Basic" and "Standard" tiers for datab
 
 This value also limits the maximum number of connections, as defined here: https://docs.microsoft.com/en-us/azure/mysql/concepts-limits
 
-As the Mahara database will handle cron processes as well as the website, any public facing websites with than 10 users will likely require upgrading to 100. Once the site reaches 30+ user it will require upgrading to Standard for more compute units. This depends entirely on the individual site. As MySQL databases cannot change (or be restored to a different tier) once deployed it is a good idea to slightly overspec your database.
+As the Mahara database will handle cron processes as well as the website, any public facing websites with than 10 users will likely require upgrading to 100. Once the site reaches 30+ users it will require upgrading to Standard for more compute units. This depends entirely on the individual site. As MySQL databases cannot change (or be restored to a different tier) once deployed it is a good idea to slightly overspec your database.
 
 Standard instances have a minimum storage requirement of 128000MB. All database storage, regardless of tier, has a hard upper limit of 1 terrabyte. After 128GB you gain additional iops for each GB, so if you're expecting a heavy amount of traffic you will want to oversize your storage. The current maximum iops with a 1TB disk is 3000.
 
