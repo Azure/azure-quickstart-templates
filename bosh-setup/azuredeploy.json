@@ -27,6 +27,17 @@
         "description": "Please copy the content of your SSH RSA public key and paste it here. You can use \"ssh-keygen -t rsa -b 2048\" to generate your SSH key pairs."
       }
     },
+    "storageAccountKind": {
+      "type": "string",
+      "defaultValue": "v1",
+      "allowedValues": [
+        "v1",
+        "v2"
+      ],
+      "metadata": {
+        "description": "Storage Account Kind. Choose v1 for Storage (general purpose v1) and v2 for StorageV2 (general purpose v2)"
+      }
+    },
     "_artifactsLocation": {
       "type": "string",
       "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/bosh-setup/",
@@ -202,10 +213,8 @@
     }
   },
   "variables": {
-    "defaultStorageAccountName": "[concat(uniqueString(resourceGroup().id), 'cfdefaultsa')]",
-    "storageAccountType": "Standard_LRS",
+    "storageAccountTemplate": "[concat('nestedtemplates/storage-account-', parameters('storageAccountKind'), '.json')]",
     "vmStorageAccountContainerName": "vhds",
-    "storageid": "[resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccountName'))]",
     "virtualNetworkName": "boshvnet-crp",
     "virtualNetworkAddressSpace": "10.0.0.0/16",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
@@ -505,12 +514,16 @@
       }
     },
     {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('defaultStorageAccountName')]",
-      "apiVersion": "2015-06-15",
-      "location": "[parameters('location')]",
+      "name": "create-storage-account",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
       "properties": {
-        "accountType": "[variables('storageAccountType')]"
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(variables('baseUriAzureCloud'), variables('storageAccountTemplate'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {}
       }
     },
     {
@@ -608,7 +621,7 @@
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2015-01-01",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('defaultStorageAccountName'))]",
+        "Microsoft.Resources/deployments/create-storage-account",
         "Microsoft.Resources/deployments/create-load-balancer"
       ],
       "properties": {
@@ -631,8 +644,8 @@
               "NSG_NAME_FOR_CLOUD_FOUNDRY": "[variables('cfNetworkSecurityGroup')]",
               "SUBSCRIPTION_ID": "[subscription().subscriptionId]",
               "RESOURCE_GROUP_NAME": "[resourceGroup().name]",
-              "DEFAULT_STORAGE_ACCOUNT_NAME": "[variables('defaultStorageAccountName')]",
-              "DEFAULT_STORAGE_ACCESS_KEY": "[listKeys(variables('storageid'), '2015-06-15').key1]",
+              "DEFAULT_STORAGE_ACCOUNT_NAME": "[reference('Microsoft.Resources/deployments/create-storage-account').outputs.storageAccountName.value]",
+              "DEFAULT_STORAGE_ACCESS_KEY":  "[reference('Microsoft.Resources/deployments/create-storage-account').outputs.storageAccountKey.value]",
               "ADMIN_USER_NAME": "[parameters('adminUsername')]",
               "ENVIRONMENT": "[parameters('environment')]",
               "SERVICE_HOST_BASE": "[variables('environment').serviceHostBase]",
@@ -695,7 +708,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('defaultStorageAccountName')), '2015-06-15').primaryEndpoints.blob, variables('vmStorageAccountContainerName'), '/', parameters('vmName'), '-osdisk.vhd')]"
+              "uri": "[concat(reference('Microsoft.Resources/deployments/create-storage-account').outputs.blobEndpoint.value, variables('vmStorageAccountContainerName'), '/', parameters('vmName'), '-osdisk.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
