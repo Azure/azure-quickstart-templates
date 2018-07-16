@@ -24,29 +24,7 @@ This template set deploys the following infrastructure:
 
 ## *Deployment steps*
 
-You can click the "deploy to Azure" button at the beginning of this document or alternatively perform a deploy from the command line:
-
-
-### *Command line deploys*
-
-Once you've checked out the templates from git, you'll want to use the [Azure CLI tool](https://docs.microsoft.com/en-us/cli/azure/overview?view=azure-cli-latest) to deploy them. First off you'll want to create a group with these:
-
-`az group create --name <stackname> --location <location>`
-
-Note that some location in Azure might not support features or certain VM tiers.
-
-Next you'll want to either deploy and enter in all the parameters manually:
-
-`az group deployment create --name mahara-autoscale --resource-group <stackname> --template-file azuredeploy.json`
-
-Alternatively, you can configure all of your variables in the "azuredeploy.parameters.json" file and run:
-
-`az group deployment create --name mahara-autoscale --resource-group <stackname> --template-file azuredeploy.json --parameters azuredeploy.parameters.json`
-
-
-Note that `siteURL` is a special case in the `azuredeploy.parameters.json` files. If you do not define a value for `siteURL` or if you leave it as the default "www.example.org" this value will be overwritten by the template to be a calculated value for the public load balancers of your deployment. This allows you to experiment with this Mahara template without configuring a new domain name whilst still enabling Mahara to be configured with a production URL when appropriate. See the next section for instructions on retrieving the generated DNS name if necesary
-
-Depending on what tiers you selected for VMs and the database you will be looking at roughly 1 to 2 hours for a full deploy. See below for selectable parameters.
+You can click the "deploy to Azure" button at the beginning of this document.
 
 ## *Using the created stack*
 
