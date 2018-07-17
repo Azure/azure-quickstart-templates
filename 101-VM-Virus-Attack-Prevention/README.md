@@ -19,7 +19,7 @@
 
 <a name="objectives"></a>
 # Objective of the POC 
-Showcase a Virus attack on a Virtual Machine detection & prevention.
+This playbook demonstrates a mock virus attack against an unprotected VM resource using a benign test virus file designed to trigger antimalware tools.  After enabling the configuration to protect the VM, the attack will be reattempted to show the protection against virus attack.
 
 <a name="overview"></a>
 # Overview
