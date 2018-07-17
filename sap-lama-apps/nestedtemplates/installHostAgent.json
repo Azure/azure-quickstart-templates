@@ -44,9 +44,15 @@
                 "description": ""
             }
         },
+        "vcRedistLocation": {
+            "type": "string",
+            "metadata": {
+                "description": ""
+            }
+        },
         "sapadmPassword": {
             "type": "securestring",
-            "minLength": "6",
+            "minLength": 6,
             "metadata": {
                 "description": "Password for the sapadm account."
             }
@@ -71,13 +77,27 @@
                 "description": ""
             }
         }
-    },    
+    },
     "variables": {
         "commands": {
             "Linux": "[concat('groupadd -g ', parameters('sapsysGid') , ' sapsys; useradd -u ', parameters('sapadmId') , ' -g ', parameters('sapsysGid') , ' sapadm; ./sapcar -xvf SAPHOSTAGENT.SAR -R hostagent; pushd hostagent; ./saphostexec -install; popd; /usr/sap/hostctrl/exe/sapacosprep -a InstallAcExt -m SAPACEXT.SAR; echo ''sapadm:', parameters('sapadmPassword'), ''' | chpasswd')]",
-            "Windows": "[concat('.\\sapcar.exe -xvf SAPHOSTAGENT.SAR -R hostagent & pushd hostagent & echo ', parameters('sapadmPassword') , '| .\\saphostexec.exe -install & popd & \"C:\\Program Files\\SAP\\hostctrl\\exe\\sapacosprep.exe\" -a InstallAcExt -m SAPACEXT.SAR')]"
+            "Windows": "[concat('.\\vcredist_x64.exe /q /norestart /log vcredistinstall.log & .\\sapcar.exe -xvf SAPHOSTAGENT.SAR -R hostagent & pushd hostagent & echo ', parameters('sapadmPassword') , '| .\\saphostexec.exe -install & popd & \"C:\\Program Files\\SAP\\hostctrl\\exe\\sapacosprep.exe\" -a InstallAcExt -m SAPACEXT.SAR')]"
         },
-        "command": "[variables('commands')[parameters('osType')]]"
+        "files": {
+            "Linux": [
+                "[parameters('sapcarLocation')]",
+                "[parameters('sapHostAgentArchiveLocation')]",
+                "[parameters('sapacExtLocation')]"
+            ],
+            "Windows": [
+                "[parameters('sapcarLocation')]",
+                "[parameters('sapHostAgentArchiveLocation')]",
+                "[parameters('sapacExtLocation')]",
+                "[parameters('vcRedistLocation')]"
+            ]
+        },
+        "command": "[variables('commands')[parameters('osType')]]",
+        "fileArray": "[variables('files')[parameters('osType')]]"
     },
     "resources": [
         {
@@ -91,11 +111,7 @@
                 "typeHandlerVersion": "[parameters('cseExtVersion')]",
                 "autoUpgradeMinorVersion": true,
                 "settings": {
-                    "fileUris": [
-                        "[parameters('sapcarLocation')]",
-                        "[parameters('sapHostAgentArchiveLocation')]",
-                        "[parameters('sapacExtLocation')]"
-                    ]
+                    "fileUris": "[variables('fileArray')]"
                 },
                 "protectedSettings": {
                     "commandToExecute": "[variables('command')]"
