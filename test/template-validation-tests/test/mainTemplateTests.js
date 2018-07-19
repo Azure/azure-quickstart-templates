@@ -108,11 +108,11 @@ describe('template files - ', () => {
             var resources = Object.keys(templateObject.resources).map(function(key) {
                 return templateObject.resources[key];
             });
-            /** Each resource location should be "location": "[parameters('*')]" or ""[variables('*')]"" */
-            it.each(resources, 'location value of resource %s should be either [parameters(\'*\')] or [variables(\'*\')]', ['name'], function(element, next) {
-                var message = 'in file:' + templateJSONObject.filename + ' should have location set to [parameters(\'location\')] or [variables(\'location\')]';
+            /** Each resource location should be "location": "[*]" */
+            it.each(resources, 'location value of resource %s should be an expression', ['name'], function(element, next) {
+                var message = 'in file:' + templateJSONObject.filename + ' should have location set to an expression';
                 if (element.location) {
-                    element.location.should.withMessage(getErrorMessage(element, templateJSONObject.filepath, message)).match(/\[parameters\('.+'\)\]|\[variables\('.+'\)\]/);
+                    element.location.should.withMessage(getErrorMessage(element, templateJSONObject.filepath, message)).match(/\[.+\]/);
                 }
                 next();
             });
