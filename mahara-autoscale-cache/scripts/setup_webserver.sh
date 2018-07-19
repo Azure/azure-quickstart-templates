@@ -33,6 +33,7 @@ storageAccountName=${8}
 storageAccountKey=${9}
 nfsVmName=${10}
 htmlLocalCopySwitch=${11}
+azFQDN=${12}
 
 echo $glusterNode    >> /tmp/vars.txt
 echo $glusterVolume  >> /tmp/vars.txt
@@ -45,8 +46,11 @@ echo $storageAccountName >> /tmp/vars.txt
 echo $storageAccountKey >> /tmp/vars.txt
 echo $nfsVmName >> /tmp/vars.txt
 echo $htmlLocalCopySwitch >> /tmp/vars.txt
+echo $azFQDN >> /tmp/vars.txt
 
 . ./helper_functions.sh
+
+configure_site_url ${siteFQDN} ${azFQDN}
 
 check_fileServerType_param $fileServerType
 

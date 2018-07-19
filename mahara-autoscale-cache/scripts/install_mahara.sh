@@ -43,6 +43,7 @@
     thumbprintSslCert=${19}
     thumbprintCaCert=${20}
     searchType=${21}
+    azFQDN=${22}
 
     echo $maharaVersion        >> /tmp/vars.txt
     echo $glusterNode          >> /tmp/vars.txt
@@ -66,9 +67,12 @@
     echo $thumbprintSslCert >> /tmp/vars.txt
     echo $thumbprintCaCert >> /tmp/vars.txt
     echo $searchType >> /tmp/vars.txt
+    echo $azFQDN >> /tmp/vars.txt
+
 
     . ./helper_functions.sh
     check_fileServerType_param $fileServerType
+    configure_site_url ${siteFQDN} ${azFQDN}
 
     if [ "$dbServerType" = "mysql" ]; then
       mysqlIP=$dbIP

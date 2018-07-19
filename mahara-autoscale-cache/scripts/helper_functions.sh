@@ -169,6 +169,18 @@ function configure_nfs_server_and_export {
     fi
 }
 
+#This function will set Mahara's siteurl variable
+#to either the user supplied URL or will default
+#to the Azure LB public dns
+function configure_site_url {
+    local SITE_URL=${1}
+    local AZ_FQDN=${2}
+    if [ "${SITE_URL}" = "www.example.com" ]; then
+       siteFQDN=${AZ_FQDN}
+    fi
+}
+	
+
 function configure_nfs_client_and_mount {
     local NFS_SERVER=${1}     # E.g., controller-vm-ab12cd
     local NFS_DIR=${2}        # E.g., /mahara
