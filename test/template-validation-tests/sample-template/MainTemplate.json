@@ -68,6 +68,7 @@
         }
     },
     "variables": {
+        "location": "[resourceGroup().location]",
         "templateAPIVersion": "2015-01-01",
         "virtualNetworkSetupURL": "[uri(deployment().properties.templateLink.uri,concat('vnet-',parameters('vnetNewOrExisting'),'.json'))]",
         "sqlConnectivityType": "Private",
@@ -78,7 +79,8 @@
         "sqlAutopatchingWindowDuration": "60",
         "networkSecurityGroupName": "[concat(parameters('machineName'),'-nsg')]"
     },
-    "resources": [{
+    "resources": [
+        {
             "name": "virtualNetworkSetup",
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2015-01-01",
@@ -124,9 +126,10 @@
             "name": "[variables('networkSecurityGroupName')]",
             "type": "Microsoft.Network/networkSecurityGroups",
             "apiVersion": "2016-09-01",
-            "location": "[parameters('location')]",
+            "location": "[variables('location')]",
             "properties": {
-                "securityRules": [{
+                "securityRules": [
+                    {
                         "name": "default-allow-rdp",
                         "properties": {
                             "priority": 1000,
@@ -185,25 +188,27 @@
             "apiVersion": "2016-09-01",
             "type": "Microsoft.Network/networkInterfaces",
             "name": "[concat(parameters('machineName'),'-nic')]",
-            "location": "[parameters('location')]",
+            "location": "[resourceGroup().location]",
             "dependsOn": [
                 "virtualNetworkSetup",
                 "[concat('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroupName'))]",
                 "[concat('Microsoft.Network/publicIPAddresses/', parameters('publicIPAddressName'))]"
             ],
             "properties": {
-                "ipConfigurations": [{
-                    "name": "ipconfig1",
-                    "properties": {
-                        "privateIPAllocationMethod": "Dynamic",
-                        "publicIpAddress": {
-                            "id": "[resourceId('Microsoft.Network/publicIpAddresses', parameters('publicIpAddressName'))]"
-                        },
-                        "subnet": {
-                            "id": "[reference('Microsoft.Resources/deployments/virtualNetworkSetup', variables('templateAPIVersion')).outputs.SubnetRef.value]"
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIpAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIpAddresses', parameters('publicIpAddressName'))]"
+                            },
+                            "subnet": {
+                                "id": "[reference('Microsoft.Resources/deployments/virtualNetworkSetup', variables('templateAPIVersion')).outputs.SubnetRef.value]"
+                            }
                         }
                     }
-                }],
+                ],
                 "networkSecurityGroup": {
                     "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
                 }
@@ -248,9 +253,11 @@
                     }
                 },
                 "networkProfile": {
-                    "networkInterfaces": [{
-                        "id": "[resourceId('Microsoft.Network/networkInterfaces/', concat(parameters('machineName'),'-nic'))]"
-                    }]
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces/', concat(parameters('machineName'),'-nic'))]"
+                        }
+                    ]
                 }
             }
         },
@@ -315,6 +322,14 @@
                     "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -file createlicensefile.ps1 ',parameters('licensekey'))]"
                 }
             }
+        },
+        {
+            "comments": "used for global location test",
+            "type": "Microsoft.Network/dnszones",
+            "name": "dnszone1",
+            "apiVersion": "2016-04-01",
+            "location": "global",
+            "properties": {}
         }
     ]
 }
