@@ -2,11 +2,19 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "sapSystemId": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3,
+            "metadata": {
+                "description": "SAP System ID."
+            }
+        },
         "computerName": {
             "type": "string",
             "minLength": 3,
             "metadata": {
-                "description": ""
+                "description": "The computer name. This parameter is also used as virtual machine name. It is required if you want to deploy this template using SAP LaMa."
             }
         },
         "osType": {
@@ -61,66 +69,80 @@
             "type": "securestring",
             "defaultValue": "",
             "metadata": {
-                "description": "Password for the Virtual Machine."
+                "description": "Password for the virtual machine. You either have to provide this parameter or sshKeyData (Linux only). Mandatory for Windows"
             }
         },
         "sshKeyData": {
             "type": "string",
             "defaultValue": "",
             "metadata": {
-                "description": "Public SSH key for the virtual machines."
+                "description": "Public SSH key for the virtual machines. You either have to provide this parameter or adminPassword (Linux only)."
             }
         },
         "subnetId": {
             "type": "string",
+            "defaultValue": "",
             "metadata": {
                 "description": "The id of the subnet you want to use."
             }
         },
         "deployEmptyTarget": {
-            "type": "string",
-            "defaultValue": "false",
+            "type": "bool",
+            "defaultValue": false,
             "metadata": {
-                "description": ""
+                "description": "You can deploy an empty target if you want to use the virtual machine as a target for an instance relocate or similar. In this case, no additional disks or IP configurations are attached."
             }
         },
         "sapcarLocation": {
             "type": "string",
             "metadata": {
-                "description": ""
+                "description": "The location for the sapcar application that matches the operating system you deploy. sapcar is used to extract the archives you provide in other parameters."
             }
         },
         "sapHostAgentArchiveLocation": {
             "type": "string",
             "metadata": {
-                "description": ""
+                "description": "The location of the SAP Host Agent archive. SAP Host Agent is deployed as part of this template depoyment."
             }
         },
         "sapacExtLocation": {
             "type": "string",
             "metadata": {
-                "description": ""
+                "description": "The location of the SAP Adaptive Extensions. SAP Note 2343511 lists the minimum patch level required for Azure."
+            }
+        },
+        "vcRedistLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "The location of the VC Runtime that is required to install the SAP Adaptive Extensions. This parameter is only required for Windows."
             }
         },
         "sapadmPassword": {
             "type": "securestring",
-            "minLength": "6",
+            "minLength": 6,
             "metadata": {
                 "description": "Password for the sapadm account."
             }
         },
         "sapadmId": {
-            "type": "string",
-            "defaultValue": "790",
+            "type": "int",
+            "defaultValue": 790,
             "metadata": {
-                "description": ""
+                "description": "The Linux User Id of the sapadm user. Not required for Windows."
             }
         },
         "sapsysGid": {
-            "type": "string",
-            "defaultValue": "79",
+            "type": "int",
+            "defaultValue": 79,
             "metadata": {
-                "description": ""
+                "description": "The Linux group id of the sapsys group. Not required for Windows."
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location for all resources."
             }
         },
         "_artifactsLocation": {
@@ -128,7 +150,7 @@
             "metadata": {
                 "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
             },
-            "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sap-2-tier-marketplace-image-md/"
+            "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sap-lama-database/"
         },
         "_artifactsLocationSasToken": {
             "type": "securestring",
@@ -139,7 +161,6 @@
         }
     },
     "variables": {
-        "bDeployEmptyTarget": "[bool(parameters('deployEmptyTarget'))]",
         "images": {
             "Windows Server 2012 Datacenter": {
                 "sku": "2012-Datacenter",
@@ -710,13 +731,22 @@
         },
         "vmName": "[parameters('computerName')]",
         "nicName": "[concat(variables('vmName'), '-nic')]",
+        "sidlower": "[toLower(parameters('sapSystemId'))]",
+        "vnetName": "[concat(variables('sidlower'), '-vnet')]",
+        "nsgName": "[concat(variables('sidlower'), '-nsg')]",
+        "subnetName": "Subnet",
+        "subnets": {
+            "true": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('subnetName'))]",
+            "false": "[parameters('subnetId')]"
+        },
+        "selectedSubnetId": "[variables('subnets')[string(equals(length(parameters('subnetId')), 0))]]",
         "basicIPConfig": [
             {
                 "name": "ipconfig-vm",
                 "properties": {
                     "privateIPAllocationMethod": "Dynamic",
                     "subnet": {
-                        "id": "[parameters('subnetId')]"
+                        "id": "[variables('selectedSubnetId')]"
                     },
                     "primary": true
                 }
@@ -729,7 +759,7 @@
                     "properties": {
                         "privateIPAllocationMethod": "Dynamic",
                         "subnet": {
-                            "id": "[parameters('subnetId')]"
+                            "id": "[variables('selectedSubnetId')]"
                         },
                         "primary": false
                     }
@@ -739,7 +769,7 @@
                     "properties": {
                         "privateIPAllocationMethod": "Dynamic",
                         "subnet": {
-                            "id": "[parameters('subnetId')]"
+                            "id": "[variables('selectedSubnetId')]"
                         },
                         "primary": false
                     }
@@ -751,21 +781,97 @@
                     "properties": {
                         "privateIPAllocationMethod": "Dynamic",
                         "subnet": {
-                            "id": "[parameters('subnetId')]"
+                            "id": "[variables('selectedSubnetId')]"
                         },
                         "primary": false
                     }
                 }
             ]
         },
-        "selectedIPConfig": "[concat(variables('basicIPConfig'), if(variables('bDeployEmptyTarget'), json('[]'), variables('databaseIPConfig')[parameters('dbtype')]))]"
+        "selectedIPConfig": "[concat(variables('basicIPConfig'), if(parameters('deployEmptyTarget'), json('[]'), variables('databaseIPConfig')[parameters('dbtype')]))]",
+        "osSecurityRules": {
+            "Windows": [
+                {
+                    "name": "RDP",
+                    "properties": {
+                        "description": "Allow RDP Subnet",
+                        "protocol": "Tcp",
+                        "sourcePortRange": "*",
+                        "destinationPortRange": "3389",
+                        "sourceAddressPrefix": "*",
+                        "destinationAddressPrefix": "*",
+                        "access": "Allow",
+                        "priority": 100,
+                        "direction": "Inbound"
+                    }
+                }
+            ],
+            "Linux": [
+                {
+                    "name": "SSH",
+                    "properties": {
+                        "description": "Allow SSH Subnet",
+                        "protocol": "Tcp",
+                        "sourcePortRange": "*",
+                        "destinationPortRange": "22",
+                        "sourceAddressPrefix": "*",
+                        "destinationAddressPrefix": "*",
+                        "access": "Allow",
+                        "priority": 100,
+                        "direction": "Inbound"
+                    }
+                }
+            ]
+        },
+        "selectedSecurityRules": "[variables('osSecurityRules')[variables('internalOSType')]]"
     },
     "resources": [
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[concat(variables('nsgName'))]",
+            "apiVersion": "2018-04-01",
+            "location": "[parameters('location')]",
+            "condition": "[equals(length(parameters('subnetId')), 0)]",
+            "properties": {
+                "securityRules": "[variables('selectedSecurityRules')]"
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[variables('vnetName')]",
+            "apiVersion": "2018-04-01",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]"
+            ],
+            "condition": "[equals(length(parameters('subnetId')), 0)]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "10.0.0.0/16"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('subnetName')]",
+                        "properties": {
+                            "addressPrefix": "10.0.0.0/24",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
         {
             "type": "Microsoft.Network/networkInterfaces",
             "name": "[variables('nicName')]",
             "apiVersion": "2017-06-01",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
+            ],
             "properties": {
                 "ipConfigurations": "[variables('selectedIPConfig')]"
             }
@@ -807,7 +913,7 @@
                 "[concat('Microsoft.Resources/deployments/', deployment().name, '-os')]"
             ],
             "apiVersion": "2017-12-01",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "properties": {
                 "hardwareProfile": {
                     "vmSize": "[variables('sizes')[parameters('sapSystemSize')][parameters('dbType')].vmSize]"
@@ -829,7 +935,7 @@
                             "storageAccountType": "Premium_LRS"
                         }
                     },
-                    "dataDisks": "[if(variables('bDeployEmptyTarget'), json('[]'), variables('sizes')[parameters('sapSystemSize')][parameters('dbType')].disks)]"
+                    "dataDisks": "[if(parameters('deployEmptyTarget'), json('[]'), variables('sizes')[parameters('sapSystemSize')][parameters('dbType')].disks)]"
                 },
                 "networkProfile": {
                     "networkInterfaces": [
@@ -844,8 +950,8 @@
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "name": "[concat(variables('vmName'), '/', variables('cseExtName'))]",
             "apiVersion": "2017-12-01",
-            "location": "[resourceGroup().location]",
-            "condition": "[not(variables('bDeployEmptyTarget'))]",
+            "location": "[parameters('location')]",
+            "condition": "[not(parameters('deployEmptyTarget'))]",
             "dependsOn": [
                 "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
             ],
@@ -898,6 +1004,9 @@
                     },
                     "sapacExtLocation": {
                         "value": "[parameters('sapacExtLocation')]"
+                    },
+                    "vcRedistLocation": {
+                        "value": "[parameters('vcRedistLocation')]"
                     },
                     "sapadmPassword": {
                         "value": "[parameters('sapadmPassword')]"
