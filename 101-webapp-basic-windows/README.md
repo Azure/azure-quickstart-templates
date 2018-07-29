@@ -8,7 +8,7 @@
 </a>
 
 ## Description
-This template allows you to This template allows you to deploy a app service plan and a basic Windows web app. 
+This template allows you to deploy a app service plan and a basic Windows web app. 
 
 
 
