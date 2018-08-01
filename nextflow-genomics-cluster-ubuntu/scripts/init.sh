@@ -19,7 +19,7 @@ ADDITIONAL_INSTALL_SCRIPT_ARGUMENT=${10}
 log () {
     echo "-------------------------" | tee -a "$2"
     date -Is | tee -a "$2"
-    echo $1 | tee -a "$2"
+    echo "$1" | tee -a "$2"
     echo "-------------------------" | tee -a "$2"
 }
 
@@ -31,10 +31,11 @@ installUtils() {
 
     #Create azure share if it doesn't already exist
     log "Installing AzureCLI and Mounting Azure Files Share" /tmp/nfinstall.log
-    echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ wheezy main" | \
-        sudo tee /etc/apt/sources.list.d/azure-cli.list
+    AZ_REPO=$(lsb_release -cs)
+    echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | \
+     tee /etc/apt/sources.list.d/azure-cli.list
 
-    apt-key adv --keyserver packages.microsoft.com --recv-keys 417A0893 | tee -a /tmp/nfinstall.log
+    curl -L https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add - | tee -a /tmp/nfinstall.log
     apt-get -y update | tee /tmp/nfinstall.log
     apt-get install azure-cli -y | tee -a /tmp/nfinstall.log
 
@@ -127,13 +128,12 @@ setupNfs() {
 copyLogsToCifsShareForDebugging() {
     log "Get machine metadata and copy logs to share"
 
-    apt-get install jq curl -y | tee -a /tmp/nfinstall.log
+    apt-get install curl -y | tee -a /tmp/nfinstall.log
 
-    #Write instance details into share log folder for debugging
-    METADATA=$(curl -H Metadata:true http://169.254.169.254/metadata/instance?api-version=2017-04-02)
-     # shellcheck disable=SC2116
-     # shellcheck disable=SC2086
-    NODENAME=$(echo $METADATA | jq -r '.compute.name')
+    #Get node name and other instance metadata and write details into share log folder for debugging
+    #see https://docs.microsoft.com/en-us/azure/virtual-machines/windows/instance-metadata-service
+    METADATA=$(curl -H Metadata:true "http://169.254.169.254/metadata/instance?api-version=2017-04-02")
+    NODENAME=$(curl -H Metadata:true "http://169.254.169.254/metadata/instance/compute/name?api-version=2017-04-02&format=text")
 
     #Create a log folder for each node
     mkdir -p "$CIFS_SHAREPATH/logs/$NODENAME" | tee -a /tmp/nfinstall.log
@@ -197,7 +197,7 @@ setNextflowEnvironmentVars() {
         echo export "NXF_AZ_NFSPATH=$NFS_SHAREPATH"
     } >> /etc/environment
 
-    #Use asure epherical instance drive for tmp
+    #Use azure epherical instance drive for tmp
     mkdir -p /mnt/nextflow_temp
     echo export NXF_TEMP=/mnt/nextflow_temp >> /etc/environment
 

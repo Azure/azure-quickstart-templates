@@ -123,11 +123,17 @@
       "metadata": {
         "description": "Public facing IP Type."
       }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
     "scriptsBaseUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/ansible-advancedlinux/",
-    "apiVersion": "2015-06-15",
     "vmStorageAccountContainerName": "vhds",
     "createRAID": "true",
     "availabilitySetName": "ANS01",
@@ -192,7 +198,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -219,7 +225,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[variables('vnetRef')]"
       ],
@@ -234,7 +240,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/loadBalancers",
       "name": "[variables('loadBalancerName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[variables('publicIPRef')]"
       ],
@@ -273,18 +279,21 @@
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('availabilitySetName')]",
-      "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
-      "properties": {
-        "PlatformFaultDomainCount": "[variables('faultDomainCount')]",
-        "PlatformUpdateDomainCount": "[variables('updateDomainCount')]"
-      }
+      "apiVersion": "2017-12-01"  ,
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Aligned"
+          },
+        "properties": { 
+            "platformFaultDomainCount": "[variables('faultDomainCount')]", 
+            "platformUpdateDomainCount": "[variables('updateDomainCount')]" 
+        }
     },
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('newStorageAccountName')]",
       "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "accountType": "[parameters('storageAccountType')]"
       }
@@ -293,7 +302,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('vmNICNamePattern'),copyIndex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "NICSLoop",
         "count": "[parameters('numberOfVMS')]"
@@ -323,10 +332,10 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30", 
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('vmNamePattern'),copyIndex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "tags": {
         "ServerRole": "[parameters('serversRole')]",
         "ServerEnvironment": "[parameters('serversPurpose')]"
@@ -356,55 +365,40 @@
           "imageReference": {
             "publisher": "Canonical",
             "offer": "UbuntuServer",
-            "sku": "14.04.3-LTS",
+            "sku": "14.04.5-LTS",
             "version": "latest"
           },
           "osDisk": {
-            "name": "[concat(variables('vmNamePattern'),copyIndex(), '-OS')]",
-            "vhd": {
-              "uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('vmNamePattern'),copyIndex(),'-OS.vhd')]"
-            },
-            "caching": "ReadWrite",
+            "name": "[concat(variables('vmNamePattern'),copyIndex(),'_OSDisk')]",
+             "caching": "ReadWrite",
             "createOption": "FromImage"
           },
           "dataDisks": [
             {
-              "name": "[concat(variables('vmNamePattern'),copyIndex(), '-Data_1')]",
+              "name": "[concat(variables('vmNamePattern'),copyIndex(),'_DataDisk1')]",
               "diskSizeGB": "[parameters('vmSizeDataDisks')]",
               "lun": 0,
-              "vhd": {
-                "uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('vmNamePattern'),copyIndex(),'-Data_1.vhd')]"
-              },
               "caching": "ReadOnly",
               "createOption": "Empty"
             },
             {
-              "name": "[concat(variables('vmNamePattern'),copyIndex(), '-Data_2')]",
+              "name": "[concat(variables('vmNamePattern'),copyIndex(),'_DataDisk2')]",
               "diskSizeGB": "[parameters('vmSizeDataDisks')]",
               "lun": 1,
-              "vhd": {
-                "uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('vmNamePattern'),copyIndex(),'-Data_2.vhd')]"
-              },
-              "caching": "ReadOnly",
+             "caching": "ReadOnly",
               "createOption": "Empty"
             },
             {
-              "name": "[concat(variables('vmNamePattern'),copyIndex(), '-Data_3')]",
+              "name": "[concat(variables('vmNamePattern'),copyIndex(),'_DataDisk3')]",
               "diskSizeGB": "[parameters('vmSizeDataDisks')]",
               "lun": 2,
-              "vhd": {
-                "uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('vmNamePattern'),copyIndex(),'-Data_3.vhd')]"
-              },
               "caching": "ReadOnly",
               "createOption": "Empty"
             },
             {
-              "name": "[concat(variables('vmNamePattern'),copyIndex(), '-Data_4')]",
+              "name": "[concat(variables('vmNamePattern'),copyIndex(),'_DataDisk4')]",
               "diskSizeGB": "[parameters('vmSizeDataDisks')]",
               "lun": 3,
-              "vhd": {
-                "uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('vmNamePattern'),copyIndex(),'-Data_4.vhd')]"
-              },
               "caching": "ReadOnly",
               "createOption": "Empty"
             }
@@ -423,7 +417,7 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmNamePattern'),copyIndex(),'/configuressh')]",
       "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "VMExtensionsLoop",
         "count": "[parameters('numberOfVms')]"
@@ -450,7 +444,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "AnsibleController",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[variables('vnetRef')]",
         "[variables('loadBalancerRef')]"
@@ -476,10 +470,10 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "AnsibleController",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "tags": {
         "ServerRole": "AnsibleController",
         "ServerEnvironment": "[parameters('serversPurpose')]"
@@ -517,14 +511,11 @@
           "imageReference": {
             "publisher": "Canonical",
             "offer": "UbuntuServer",
-            "sku": "14.04.3-LTS",
+            "sku": "14.04.5-LTS",
             "version": "latest"
           },
           "osDisk": {
-            "name": "AnsibleController-OS",
-            "vhd": {
-              "uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/AnsibleController-OS.vhd')]"
-            },
+            "name": "[concat('AnsibleController','_OSDisk')]",  
             "caching": "ReadWrite",
             "createOption": "FromImage"
           },
@@ -543,7 +534,7 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "AnsibleController/installAnsible",
       "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "VMExtensionsLoop"
       ],
@@ -566,7 +557,7 @@
   ],
   "outputs": {
     "sshResourceURL": {
-      "value": "[concat('SSH Url to Ansible Controller:',parameters('adminUsername'),'@', reference(variables('publicIPRef'),providers('Microsoft.Network', 'publicIPAddresses').apiVersions[0]).dnsSettings.fqdn,' -p ',variables('sshNatRuleFrontEndPort'))]",
+      "value": "[concat('SSH Url to Ansible Controller:',parameters('adminUsername'),'@', reference(variables('publicIPRef'),'2015-06-15').dnsSettings.fqdn,' -p ',variables('sshNatRuleFrontEndPort'))]",
       "type": "string"
     }
   }
