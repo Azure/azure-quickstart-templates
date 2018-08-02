@@ -65,8 +65,8 @@
       }
     },
     "adminPassword": {
-      "type": "securestring",
-      "minLength": 12,
+      "type": "securestring",      
+      "defaultValue": "",
       "metadata": {
         "description": "Password for the Virtual Machine."
       }
@@ -83,6 +83,13 @@
       "defaultValue": "",
       "metadata": {
         "description": "The id of the subnet you want to use."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
       }
     },
     "_artifactsLocation": {
@@ -148,7 +155,7 @@
         "UsePlan": false
       },
       "RHEL 7": {
-        "sku": "7.3",
+        "sku": "7.4",
         "offer": "RHEL",
         "publisher": "RedHat",
         "version": "latest",
@@ -255,16 +262,9 @@
     },
     "selectedSubnetId": "[variables('subnets')[string(equals(length(parameters('subnetId')), 0))]]",
     "nestedDeploymentName": "nestedTemplate",
-    "nestedDeploymentNameVNet": "[concat(variables('nestedDeploymentName'), 'vnet')]",
-    "nestedDeploymentNamePIP": "[concat(variables('nestedDeploymentName'), 'pip')]",
-    "nestedDeploymentNameXSCS": "[concat(variables('nestedDeploymentName'), 'xscs')]",
-    "nestedDeploymentNameProf": "[concat(variables('nestedDeploymentName'), 'prof')]",
-    "nestedDeploymentNameNIC": "[concat(variables('nestedDeploymentName'), 'nic')]",
-    "nestedDeploymentNameNICXSCS": "[concat(variables('nestedDeploymentNameNIC'), 'xscs')]",
     "nestedDeploymentNameLBXSCS": "[concat(variables('nestedDeploymentName'), 'lbxscs')]",
     "publicIpNameXSCS": "[concat(variables('sidlower'), '-pip-xscs')]",
     "avSetNameXSCS": "[concat(variables('sidlower'), '-avset-xscs')]",
-    "nestedDeploymentNameNSG": "[concat(variables('nestedDeploymentNameXSCS'), 'nsg')]",
     "nsgNameXSCS": "[concat(variables('sidlower'), '-nsg')]",
     "osSecurityRules": {
       "Windows": [
@@ -303,15 +303,14 @@
     "selectedSecurityRules": "[variables('osSecurityRules')[variables('internalOSType')]]",
     "loadBalancerNameXSCS": "[concat(variables('sidlower'), '-lb-xscs')]",
     "vmNameXSCS": "[concat(variables('vmName'), '-xscs')]",
-    "nicNameXSCS": "[concat(variables('sidlower'), '-nic-xscs')]",
-    "osDiskType": "image"
+    "nicNameXSCS": "[concat(variables('sidlower'), '-nic-xscs')]"
   },
   "resources": [
     {
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[concat(variables('nsgNameXSCS'))]",
       "apiVersion": "2018-04-01",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "condition": "[equals(length(parameters('subnetId')), 0)]",
       "properties": {
         "securityRules": "[variables('selectedSecurityRules')]"
@@ -321,7 +320,7 @@
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('vnetName')]",
       "apiVersion": "2018-04-01",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/networkSecurityGroups/', variables('nsgNameXSCS'))]"
       ],
@@ -349,7 +348,7 @@
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('avSetNameXSCS')]",
       "apiVersion": "2017-03-30",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "sku": {
         "name": "Aligned"
       },
@@ -366,7 +365,7 @@
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
       ],
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "pipLoop",
         "count": "[variables('xscsvmCount')]"
@@ -411,6 +410,9 @@
           "subnetId": {
             "value": "[variables('selectedSubnetId')]"
           },
+          "location": {
+            "value": "[parameters('location')]"
+          },
           "_artifactsLocation": {
             "value": "[parameters('_artifactsLocation')]"
           },
@@ -433,14 +435,14 @@
         "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
         "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameLBXSCS'))]"
       ],
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "ipConfigurations": [
           {
             "name": "ipconfig1",
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
-              "publicIPAddress": "[if(equals(length(parameters('subnetId')), 0), json(concat('{\"id\": \"', resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIpNameDB'), '-', copyIndex())) ,'\"}')), json('null'))]",
+              "publicIPAddress": "[if(equals(length(parameters('subnetId')), 0), json(concat('{\"id\": \"', resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIpNameXSCS'), '-', copyIndex())) ,'\"}')), json('null'))]",
               "subnet": {
                 "id": "[variables('selectedSubnetId')]"
               },
@@ -498,7 +500,7 @@
         "[concat('Microsoft.Compute/availabilitySets/', variables('avSetNameXSCS'))]"
       ],
       "apiVersion": "2017-12-01",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "availabilitySet": {
           "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('avSetNameXSCS'))]"
