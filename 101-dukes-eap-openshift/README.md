@@ -78,11 +78,11 @@ Now, click on the "Microsoft.Template" link to display the contents of the templ
 
 At this point, copy the string from the "OPENSHIFTCONSOLE" field, open a browser window and paste the string in the Address field. If your browser warns you about the site being insecure, go ahead and continue to the insecure site.  At this point, you should see the login prompt to log in to the all-in-one OpenShift Origin cluster:
 
-<img src="https://github.com/cealsair/MicroProfileThorntailOnAzure/blob/master/images/17_OpenShiftConsoleLogin.png" width="800">
+<img src="https://github.com/MyriamFentanes/azure-quickstart-templates/blob/master/101-dukes-eap-openshift/images/openShiftConsoleLogin.png" width="800">
 
 For Username and Password, the "Admin User" and "Admin Password" you supplied in the template above. Click on "Log In" and you should see:
 
-<img src="https://github.com/cealsair/MicroProfileThorntailOnAzure/blob/master/images/18_OpenShiftConsole.png" width="800">
+<img src="https://github.com/MyriamFentanes/azure-quickstart-templates/blob/master/101-dukes-eap-openshift/images/openShiftConsole.png" width="800">
 
 Once you login into the Openshift Console, you shoud have a preconfigured project listed on the right hand side of the console
 
