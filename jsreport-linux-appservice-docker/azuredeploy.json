@@ -1,0 +1,110 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "appName": {
+      "defaultValue": "[concat('jsreportsapp',uniqueString(resourceGroup().id))]",
+      "type": "string",
+      "metadata": {
+        "description": "Name of the WebApp Running jsreport"
+      }
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "The location where the cloud resources will be provisioned"
+      }
+    },
+    "storageaccountsku": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_ZRS",
+        "Standard_GRS",
+        "Standard_RAGRS",
+        "Premium_LRS"
+      ],
+      "metadata": {
+        "description": "Describes the Storage Account Type"
+      }
+    }
+  },
+  "variables": {
+    "servicePlanName": "[concat('serviceplan',uniqueString(resourceGroup().id))]",
+    "StorageName": "[concat('jsreports', uniqueString(resourceGroup().id))]",
+    "storageAccountApiVersion": "2015-06-15",
+    "storageId": "[resourceId('Microsoft.Storage/storageAccounts', variables('StorageName'))]",
+    "storageConnectionStringPrefix":
+      "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('StorageName'),';EndpointSuffix=core.windows.net',';AccountKey=')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "name": "[variables('servicePlanName')]",
+      "apiVersion": "2016-09-01",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "S1",
+        "capacity": 1
+      },
+      "kind": "docker",
+      "properties": {
+        "workerSizeId": 0,
+        "reserved": true,
+        "hostingEnvironment": ""
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "name": "[parameters('appName')]",
+      "apiVersion": "2016-08-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "name": "[parameters('appName')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('servicePlanName'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('servicePlanName'))]"
+      ],
+      "resources": [
+        {
+          "name": "appsettings",
+          "type": "config",
+          "apiVersion": "2016-08-01",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites', parameters('appName'))]"
+          ],
+          "tags": {
+            "displayName": "appSettings"
+          },
+          "properties": {
+            "DOCKER_CUSTOM_IMAGE_NAME": "jsreport/jsreport:2.1.0-full",
+            "extensions_authentication_admin_password": "password",
+            "extensions_authentication_admin_username": "admin",
+            "extensions_authentication_cookieSession_secret": "dasd321as56d1sd5s61vdv32",
+            "extensions_fsStore_persistence_provider": "azure-storage",
+            "extensions_fsStoreAzureStoragePersistence_accountName": "[variables('StorageName')]",
+            "extensions_fsStoreAzureStoragePersistence_accountKey": "[listkeys(variables('storageId'), '2017-10-01').keys]",
+            "extensions_fsStoreAzureSbSync_connectionString": "[concat(variables('storageConnectionStringPrefix'), listkeys(variables('storageId'), '2017-10-01').keys)]"
+          }
+        }
+      ]
+    },
+    {
+      "name": "[variables('StorageName')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "location": "[parameters('location')]",
+      "apiVersion": "2017-10-01",
+      "sku": {
+        "name": "[parameters('storageaccountsku')]"
+      },
+      "dependsOn": [
+      ],
+      "tags": {
+        "displayName": "[variables('StorageName')]"
+      },
+      "kind": "Storage"
+    }
+  ]
+}
