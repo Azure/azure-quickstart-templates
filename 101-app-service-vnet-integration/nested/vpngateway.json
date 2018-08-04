@@ -1,0 +1,91 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "environmentName": {
+            "type": "string"
+        },
+        "vnetName": {
+            "type": "string"
+        },
+        "gatewaySubnetName": {
+            "type": "string"
+        }
+    },
+    "variables": {
+        "vnetGatewayName": "[concat(parameters('environmentName'), '-vnetGateway')]",
+        "vnetGatewayPIPName": "[concat(parameters('environmentName'), '-vnetGateway-pip')]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2018-02-01",
+            "name": "[variables('vnetGatewayPIPName')]",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Basic",
+                "tier": "Regional"
+            },
+            "properties": {
+                "publicIPAddressVersion": "IPv4",
+                "publicIPAllocationMethod": "Dynamic",
+                "idleTimeoutInMinutes": 4,
+                "ipTags": []
+            }
+        },
+        {
+            "apiVersion": "2017-10-01",
+            "type": "Microsoft.Network/virtualNetworkGateways",
+            "name": "[variables('vnetGatewayName')]",
+            "location": "[resourceGroup().location]",
+            "properties":{
+                "ipConfigurations": [
+                    {
+                      "properties": {
+                        "subnet": {
+                          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('gatewaySubnetName'))]"
+                        },
+                        "publicIPAddress": {
+                          "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vnetGatewayPIPName'))]"
+                        }
+                      },
+                      "name": "[concat(variables('vnetGatewayName'), '-ipcfg')]"
+                    }
+                  ],
+                "sku": {
+                "name": "VpnGw1",
+                "tier": "VpnGw1",
+                "capacity": 2
+                },
+                "vpnType": "RouteBased",
+                "vpnClientConfiguration":
+                {
+                    "vpnClientAddressPool":
+                    {
+                        "addressPrefixes":
+                        [
+                            "172.255.1.0/24"
+                        ]
+                    }
+                }        
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', variables('vnetGatewayPIPName'))]"
+            ]
+        }
+    ],
+    "outputs": {
+        "subnetId": {
+            "type": "string",
+            "value": "[reference(resourceId('Microsoft.Network/virtualNetworkGateways', variables('vnetGatewayName'))).ipConfigurations[0].properties.subnet.id]"
+        },
+        "pIp": {
+            "type": "string",
+            "value": "[reference(resourceId('Microsoft.Network/virtualNetworkGateways', variables('vnetGatewayName'))).ipConfigurations[0].properties.publicIPAddress.id]"
+        },
+        "ipConfigName": {
+            "type": "string",
+            "value": "[reference(resourceId('Microsoft.Network/virtualNetworkGateways', variables('vnetGatewayName'))).ipConfigurations[0].name]"
+        }
+    }
+}

@@ -1,0 +1,177 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+      "_artifactsLocation": {
+          "type": "string",
+          "metadata": {
+              "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+          },
+          "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/"
+      },
+      "_artifactsLocationSasToken": {
+          "type": "securestring",
+          "metadata": {
+              "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+          },
+          "defaultValue": ""
+      },
+      "environmentName": {
+        "type": "string",
+        "metadata": {
+          "description": "The root name of the environment. Each resource name is derived from it."
+        },
+        "defaultValue": "appservicevnetint"
+      }
+  },
+  "variables": {
+      "baseTemplateUrl": "[concat(parameters('_artifactsLocation'), '101-app-service-vnet-integration/nested/')]",
+      "servicePlanName": "[concat(parameters('environmentName'),'-splan')]",
+      "webAppName": "[concat(parameters('environmentName'),'-webApp')]",
+      "vnetName": "[concat(parameters('environmentName'), '-vnet')]",
+      "vnetGatewayName": "[concat(parameters('environmentName'), '-vnetGateway')]",
+      "vnetConnectionName": "[concat(parameters('environmentName'), '-connectionName')]",
+      "subnetName": "default",
+      "gatewaySubnetName": "GatewaySubnet",
+      "nsgName": "[concat(parameters('environmentName'), '-nsg')]"
+  },
+  "resources": [
+      {
+          "apiVersion": "2018-02-01",
+          "type": "Microsoft.Network/networkSecurityGroups",
+          "name": "[variables('nsgName')]",
+          "location": "[resourceGroup().location]"
+      },
+      {
+          "apiVersion": "2018-02-01",
+          "type": "Microsoft.Network/virtualNetworks",
+          "name": "[variables('vnetName')]",
+          "location": "[resourceGroup().location]",
+          "properties": {
+              "addressSpace": {
+                  "addressPrefixes": [
+                      "10.1.0.0/16"
+                  ]
+              },
+              "subnets":[
+                  {
+                      "name": "[variables('subnetName')]",
+                      "properties": {
+                          "addressPrefix": "10.1.0.0/24",
+                          "networkSecurityGroup":{
+                              "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+                          }
+                      }
+                  },
+                  {
+                      "name": "[variables('gatewaySubnetName')]",
+                      "properties": {
+                          "addressPrefix": "10.1.1.0/24"
+                      }
+                  }
+              ]
+          },
+          "dependsOn": [
+              "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+          ]
+      },
+      {
+          "comments": "The App Service Plan where the Web App will be deployed. As we use VNET integration, the SKU must be S1 or greater",
+          "type": "Microsoft.Web/serverfarms",
+          "apiVersion": "2016-09-01",
+          "name":"[variables('servicePlanName')]",
+          "location": "[resourceGroup().location]",
+          "properties":{
+              "name":"[variables('servicePlanName')]"
+          },
+          "sku":{
+              "name": "S1"
+          }
+      },
+      {
+          "type": "Microsoft.Resources/deployments",
+          "apiVersion": "2017-05-10",
+          "name": "vpngateway",
+          "properties": {
+              "mode": "Incremental",
+              "parameters": {
+                  "environmentName": {
+                      "value": "[parameters('environmentName')]"
+                  },
+                  "vnetName": {
+                      "value": "[variables('vnetName')]"
+                  },
+                  "gatewaySubnetName": {
+                      "value": "[variables('gatewaySubnetName')]"
+                  }
+              },
+              "templateLink": {
+                  "uri": "[concat(variables('baseTemplateUrl'), 'vpngateway.json', parameters('_artifactsLocationSasToken'))]"
+              }
+          },
+          "dependsOn": [
+              "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+          ]
+      },
+      {
+          "comments": "The Web App where the application will be deployed. The VNET integration is set up by declaring a sub-resource of type virtualNetworkConnections",
+          "apiVersion": "2016-08-01",
+          "name":"[variables('webAppName')]",
+          "type": "Microsoft.Web/sites",
+          "location":"[resourceGroup().location]",
+          "dependsOn": [
+              "[resourceId('Microsoft.Web/serverfarms',variables('servicePlanName'))]"
+          ],
+          "properties":{
+              "serverFarmId": "[resourceId('Microsoft.Web/serverfarms',variables('servicePlanName'))]"
+          },
+          "resources":
+          [
+              {
+                  "apiVersion": "2016-08-01",
+                  "name": "[variables('vnetConnectionName')]",
+                  "type": "virtualNetworkConnections",
+                  "location":"[resourceGroup().location]",
+                  "properties":{
+                      "vnetResourceId": "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+                  },
+                  "dependsOn": [
+                      "[resourceId('Microsoft.Web/sites', variables('webAppName'))]",
+                      "Microsoft.Resources/deployments/vpngateway"
+                  ]
+              }
+          ]
+      },
+      {
+          "type": "Microsoft.Resources/deployments",
+          "apiVersion": "2017-05-10",
+          "name": "vpnCertificateTemplate",
+          "properties": {
+              "mode": "Incremental",
+              "parameters": {
+                  "vnetGatewayName": {
+                      "value": "[variables('vnetGatewayName')]"
+                  },
+                  "publicCertData": {
+                      "value": "[reference(resourceId('Microsoft.Web/sites/virtualNetworkConnections',variables('webAppName'), variables('vnetConnectionName'))).certBlob]"
+                  },
+                  "subnetId": {
+                      "value": "[reference('vpngateway').outputs.subnetId.value]"
+                  },
+                  "pIp": {
+                      "value": "[reference('vpngateway').outputs.pIp.value]"
+                  },
+                  "ipConfigName": {
+                      "value": "[reference('vpngateway').outputs.ipConfigName.value]"
+                  }
+              },
+              "templateLink": {
+                  "uri": "[concat(variables('baseTemplateUrl'), 'vpncertificate.json', parameters('_artifactsLocationSasToken'))]"
+              }
+          },
+          "dependsOn": [
+              "[resourceId('Microsoft.Web/sites/virtualNetworkConnections',variables('webAppName'), variables('vnetConnectionName'))]"
+          ]
+      }
+  ]
+}
