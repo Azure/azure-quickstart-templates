@@ -1,0 +1,142 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "webappName": {
+      "type": "string",
+      "defaultValue": "uniqueString()",
+      "minLength": 1,
+      "metadata": {
+        "description": "The name of the web application"
+      }
+    },
+    "appInsightsName": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "uniqueString()",
+      "metadata": {
+        "description": "The name of the application insights instance"
+      }
+    },
+    "location": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "westeurope",
+      "metadata": {
+        "description": "The location for the resources"
+      }
+    },
+    "hostingPlanName": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "uniqueString()",
+      "metadata": {
+        "description": "The name of the hosting plan for the web application"
+      }
+    },
+    "skuName": {
+      "type": "string",
+      "defaultValue": "F1",
+      "metadata": {
+        "description": "The hosting plan's pricing tier and capacity. Check details at https://azure.microsoft.com/en-us/pricing/details/app-service/"
+      }
+    },
+    "owner": {
+      "type": "string",
+      "defaultValue": "owner",
+      "metadata": {
+        "description": "The owner of the application"
+      }
+    },
+    "skuCapacity": {
+      "type": "int",
+      "defaultValue": 1,
+      "minValue": 1,
+      "metadata": {
+        "description": "The hosting plan's instance count"
+      }
+    }
+  },
+  "variables": {
+  },
+  "resources": [
+    {
+      "apiVersion": "2017-08-01",
+      "name": "[parameters('hostingPlanName')]",
+      "type": "Microsoft.Web/serverfarms",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "Hosting Plan",
+        "usage": "Hosting",
+        "category": "Hosting",
+        "owner": "[parameters('owner')]"
+      },
+      "sku": {
+        "name": "[parameters('skuName')]",
+        "capacity": "[parameters('skuCapacity')]"
+      },
+      "properties": {
+        "name": "[parameters('hostingPlanName')]"
+      }
+    },
+    {
+      "apiVersion": "2016-08-01",
+      "name": "[parameters('webappName')]",
+      "type": "Microsoft.Web/sites",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "Web Application",
+        "usage": "Web Application",
+        "category": "Application",
+        "owner": "[parameters('owner')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]",
+        "[resourceId('microsoft.insights/components/', parameters('appInsightsName'))]"
+      ],
+      "properties": {
+        "name": "[parameters('webappName')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName'))]"
+      },
+      "resources": [
+        {
+          "apiVersion": "2016-08-01",
+          "name": "appsettings",
+          "type": "config",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/Sites', parameters('webappName'))]",
+            "Microsoft.ApplicationInsights.AzureWebSites"
+          ],
+          "properties": {
+            "APPINSIGHTS_INSTRUMENTATIONKEY": "[reference(concat('microsoft.insights/components/', parameters('appInsightsName'))).InstrumentationKey]"
+          }
+        },
+        {
+          "apiVersion": "2016-08-01",
+          "name": "Microsoft.ApplicationInsights.AzureWebSites",
+          "type": "siteextensions",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/Sites', parameters('webappName'))]"
+          ],
+          "properties": {
+          }
+        }
+      ]
+    },
+    {
+      "apiVersion": "2015-05-01",
+      "name": "[parameters('appInsightsName')]",
+      "type": "Microsoft.Insights/components",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "Application Insights",
+        "usage": "Monitoring",
+        "category": "Monitoring",
+        "owner": "[parameters('owner')]"
+      },
+      "properties": {
+        "applicationId": "[parameters('appInsightsName')]"
+      }
+    }
+  ]
+}
