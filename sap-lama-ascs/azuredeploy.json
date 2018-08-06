@@ -6,6 +6,7 @@
             "type": "string",
             "minLength": 3,
             "maxLength": 3,
+            "defaultValue": "DEQ",
             "metadata": {
                 "description": "SAP System ID."
             }
@@ -13,6 +14,7 @@
         "computerName": {
             "type": "string",
             "minLength": 3,
+            "defaultValue": "deq-xscs-0",
             "metadata": {
                 "description": "The computer name. This parameter is also used as virtual machine name. It is required if you want to deploy this template using SAP LaMa."
             }
@@ -27,7 +29,7 @@
                 "RHEL 7",
                 "Oracle Linux 7"
             ],
-            "defaultValue": "Windows Server 2012 R2 Datacenter",
+            "defaultValue": "Windows Server 2016 Datacenter",
             "metadata": {
                 "description": "The type of the operating system you want to deploy."
             }
@@ -52,18 +54,21 @@
                 "description": "Username for the Virtual Machine."
             }
         },
-        "adminPassword": {
-            "type": "securestring",
-            "defaultValue": "",
+        "authenticationType": {
+            "type": "string",
+            "defaultValue": "password",
+            "allowedValues": [
+                "password",
+                "sshPublicKey"
+            ],
             "metadata": {
-                "description": "Password for the virtual machine. You either have to provide this parameter or sshKeyData (Linux only). Mandatory for Windows"
+                "description": "Type of authentication to use on the Virtual Machine."
             }
         },
-        "sshKeyData": {
-            "type": "string",
-            "defaultValue": "",
+        "adminPasswordOrKey": {
+            "type": "securestring",
             "metadata": {
-                "description": "Public SSH key for the virtual machines. You either have to provide this parameter or adminPassword (Linux only)."
+                "description": "Password or ssh key for the Virtual Machine."
             }
         },
         "subnetId": {
@@ -110,7 +115,7 @@
         },
         "sapadmPassword": {
             "type": "securestring",
-            "defaultValue": "",            
+            "defaultValue": "",
             "metadata": {
                 "description": "Password for the sapadm account."
             }
@@ -197,12 +202,23 @@
             }
         },
         "internalOSType": "[variables('images')[parameters('osType')].OSType]",
+        "linuxConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+                "publicKeys": [
+                    {
+                        "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+                        "keyData": "[parameters('adminPasswordOrKey')]"
+                    }
+                ]
+            }
+        },
         "osConfigs": {
             "Windows": {
                 "Publisher": "Microsoft.Compute",
                 "Name": "CustomScriptExtension",
                 "Version": "1.7",
-                "script": "[concat(parameters('_artifactsLocation'), '/scripts/diskConfig.ps1', parameters('_artifactsLocationSasToken'))]",
+                "script": "[uri(parameters('_artifactsLocation'), concat('/scripts/diskConfig.ps1', parameters('_artifactsLocationSasToken')))]",
                 "scriptCall": "powershell.exe -ExecutionPolicy bypass -File diskConfig.ps1",
                 "disks": [
                     {
@@ -218,7 +234,7 @@
                 "Publisher": "Microsoft.Azure.Extensions",
                 "Name": "CustomScript",
                 "Version": "2.0",
-                "script": "[concat(parameters('_artifactsLocation'), '/scripts/diskConfig.sh', parameters('_artifactsLocationSasToken'))]",
+                "script": "[uri(parameters('_artifactsLocation'), concat('/scripts/diskConfig.sh', parameters('_artifactsLocationSasToken')))]",
                 "scriptCall": "sh diskConfig.sh",
                 "disks": [
                     {
@@ -426,40 +442,10 @@
             }
         },
         {
-            "apiVersion": "2018-02-01",
-            "name": "[concat(deployment().name, '-os')]",
-            "type": "Microsoft.Resources/deployments",
-            "properties": {
-                "mode": "Incremental",
-                "templateLink": {
-                    "uri": "[concat(parameters('_artifactsLocation'), '/nestedtemplates/osprofile.json', parameters('_artifactsLocationSasToken'))]",
-                    "contentVersion": "1.0.0.0"
-                },
-                "parameters": {
-                    "osType": {
-                        "value": "[variables('internalOSType')]"
-                    },
-                    "computerName": {
-                        "value": "[variables('vmName')]"
-                    },
-                    "adminUsername": {
-                        "value": "[parameters('adminUsername')]"
-                    },
-                    "adminPassword": {
-                        "value": "[parameters('adminPassword')]"
-                    },
-                    "sshKeyData": {
-                        "value": "[parameters('sshKeyData')]"
-                    }
-                }
-            }
-        },
-        {
             "type": "Microsoft.Compute/virtualMachines",
             "name": "[concat(variables('vmName'))]",
             "dependsOn": [
-                "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]",
-                "[concat('Microsoft.Resources/deployments/', deployment().name, '-os')]"
+                "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
             ],
             "apiVersion": "2017-12-01",
             "location": "[parameters('location')]",
@@ -467,7 +453,12 @@
                 "hardwareProfile": {
                     "vmSize": "[variables('sizes')[parameters('sapSystemSize')][variables('internalOSType')].vmSize]"
                 },
-                "osProfile": "[reference(concat(deployment().name, '-os')).outputs.profile.value]",
+                "osProfile": {
+                    "computerName": "[parameters('computerName')]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPasswordOrKey')]",
+                    "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+                },
                 "storageProfile": {
                     "imageReference": {
                         "publisher": "[variables('images')[parameters('osType')].publisher]",
@@ -530,7 +521,7 @@
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[concat(parameters('_artifactsLocation'), '/nestedtemplates/installHostAgent.json', parameters('_artifactsLocationSasToken'))]",
+                    "uri": "[uri(parameters('_artifactsLocation'), concat('/nestedtemplates/installHostAgent.json', parameters('_artifactsLocationSasToken')))]",
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
@@ -569,6 +560,9 @@
                     },
                     "osType": {
                         "value": "[variables('internalOSType')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
                     }
                 }
             }
