@@ -19,7 +19,7 @@ exports.getFiles = function getFiles(folder, fileType, filelist, recursive) {
         if (fs.statSync(path.join(folder, file)).isDirectory() && recursive) {
             filelist = getFiles(path.join(folder, file), fileType, filelist, recursive);
         } else {
-            if (file.toLowerCase().endsWith(fileType)) {
+            if (file.toLowerCase() === fileType) {
                 filelist.push(path.join(folder, file));
             }
         }
