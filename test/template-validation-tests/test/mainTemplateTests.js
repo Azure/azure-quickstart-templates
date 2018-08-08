@@ -17,6 +17,11 @@ var createUiDefFile = util.getCreateUiDefFile(folder).file;
 var templateFiles = util.getTemplateFiles(folder).files;
 var templateFileJSONObjects = util.getTemplateFiles(folder).fileJSONObjects;
 
+console.log('Testing template files...');
+templateFiles.forEach(function(file) {
+        console.log(file);
+});
+
 chai.use(function(_chai, _) {
     _chai.Assertion.addMethod('withMessage', function(msg) {
         _.flag(this, 'message', msg);
