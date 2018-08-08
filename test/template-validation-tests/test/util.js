@@ -13,13 +13,16 @@ exports.getFiles = function getFiles(folder, fileType, filelist, recursive) {
     if (folder == './') {
         folder = __dirname + '/../';
     }
+    if (folder.toLowerCase().endsWith('__macosx')) { //skip Mac zip folder
+        return filelist;
+    }
     var files = fs.readdirSync(folder);
     filelist = filelist || [];
     files.forEach(function(file) {
         if (fs.statSync(path.join(folder, file)).isDirectory() && recursive) {
             filelist = getFiles(path.join(folder, file), fileType, filelist, recursive);
         } else {
-            if (file.toLowerCase() === fileType) {
+            if (file.toLowerCase().endsWith(fileType)) {
                 filelist.push(path.join(folder, file));
             }
         }
