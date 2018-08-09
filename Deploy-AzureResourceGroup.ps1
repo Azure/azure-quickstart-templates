@@ -60,7 +60,7 @@ $TemplateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combin
 $TemplateJSON = Get-Content $TemplateFile -Raw | ConvertFrom-Json
 
 #if the switch is set or the standard parameter is present in the template, upload all artifacts
-if ($UploadArtifacts -Or $TemplateJSON.parameters._artifactsLocation -ne $null) {
+if ($UploadArtifacts -Or $TemplateJSON.parameters -contains '_artifactsLocation') {
     # Convert relative paths to absolute paths if needed
     $ArtifactStagingDirectory = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $ArtifactStagingDirectory))
     $DSCSourceFolder = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $DSCSourceFolder))
