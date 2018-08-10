@@ -1,6 +1,6 @@
 # Azure template for instantiating and deploying a standalone Red Hat JBoss EAP on OCP on Azure
 
-**NOTE: This template creates an ephemeral instance of OpenShift Container Platform. You are responsible for backing up any data that you want to save while using this instance**
+**NOTE: This template creates an ephemeral instance of OpenShift Container Platform and Red Hat JBoss EAP. You are responsible for backing up any data that you want to save while using this instance**
 
 1. Create a Single VM OpenShift deployment using the Azure Portal
 
@@ -29,7 +29,7 @@ Select "Create new" resource group if one does not currently exist. Enter "ocp" 
 The geographic location in which to deploy OpenShift Container Platform.
 
 #### Admin User
-Supply a username which will be used for both SSH access and for the OpenShift Container Platform web console.
+Supply a username which will be used for SSH access,OpenShift Container Platform web console, JBoss EAP Admin .
 
 #### Admin Password
 Supply a password which will be used for the Openshift Container Platform web console.
