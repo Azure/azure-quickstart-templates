@@ -1,6 +1,6 @@
 ---
 name: cf
-manifest_version: v2.2.0
+manifest_version: v3.0.0
 update:
   canaries: 1
   canary_watch_time: 30000-1200000
@@ -33,6 +33,187 @@ addons:
   jobs:
   - name: bpm
     release: bpm
+- name: bosh-dns-aliases
+  include:
+    stemcell:
+    - os: ubuntu-trusty
+    - os: windows2012R2
+    - os: windows2016
+  jobs:
+  - name: bosh-dns-aliases
+    release: bosh-dns-aliases
+    properties:
+      aliases:
+      - domain: '_.cell.service.cf.internal'
+        targets:
+        - query: '_'
+          instance_group: diego-cell
+          deployment: cf
+          network: default
+          domain: bosh
+        - query: '_'
+          instance_group: windows-cell
+          deployment: cf
+          network: default
+          domain: bosh
+        - query: '_'
+          instance_group: windows2016-cell
+          deployment: cf
+          network: default
+          domain: bosh
+        - query: '_'
+          instance_group: isolated-diego-cell
+          deployment: cf
+          network: default
+          domain: bosh
+      - domain: auctioneer.service.cf.internal
+        targets:
+        - query: '*'
+          instance_group: scheduler
+          deployment: cf
+          network: default
+          domain: bosh
+      - domain: bbs.service.cf.internal
+        targets:
+        - query: 'q-s4'
+          instance_group: diego-api
+          deployment: cf
+          network: default
+          domain: bosh
+      - domain: bits.service.cf.internal
+        targets:
+        - query: '*'
+          instance_group: bits
+          deployment: cf
+          network: default
+          domain: bosh
+      - domain: blobstore.service.cf.internal
+        targets:
+        - query: '*'
+          instance_group: singleton-blobstore
+          deployment: cf
+          network: default
+          domain: bosh
+      - domain: cc-uploader.service.cf.internal
+        targets:
+        - query: '*'
+          instance_group: api
+          deployment: cf
+          network: default
+          domain: bosh
+      - domain: cloud-controller-ng.service.cf.internal
+        targets:
+        - query: '*'
+          instance_group: api
+          deployment: cf
+          network: default
+          domain: bosh
+      - domain: consul.service.cf.internal
+        targets:
+        - query: '*'
+          instance_group: consul
+          deployment: cf
+          network: default
+          domain: bosh
+      - domain: credhub.service.cf.internal
+        targets:
+        - query: '*'
+          instance_group: credhub
+          deployment: cf
+          network: default
+          domain: bosh
+      - domain: doppler.service.cf.internal
+        targets:
+        - query: '*'
+          instance_group: doppler
+          deployment: cf
+          network: default
+          domain: bosh
+      - domain: file-server.service.cf.internal
+        targets:
+        - query: '*'
+          instance_group: api
+          deployment: cf
+          network: default
+          domain: bosh
+      - domain: gorouter.service.cf.internal
+        targets:
+        - query: '*'
+          instance_group: router
+          deployment: cf
+          network: default
+          domain: bosh
+      - domain: locket.service.cf.internal
+        targets:
+        - query: '*'
+          instance_group: diego-api
+          deployment: cf
+          network: default
+          domain: bosh
+      - domain: loggregator-trafficcontroller.service.cf.internal
+        targets:
+        - query: '*'
+          instance_group: log-api
+          deployment: cf
+          network: default
+          domain: bosh
+      - domain: policy-server.service.cf.internal
+        targets:
+        - query: '*'
+          instance_group: api
+          deployment: cf
+          network: default
+          domain: bosh
+      - domain: reverse-log-proxy.service.cf.internal
+        targets:
+        - query: '*'
+          instance_group: log-api
+          deployment: cf
+          network: default
+          domain: bosh
+      - domain: routing-api.service.cf.internal
+        targets:
+        - query: '*'
+          instance_group: api
+          deployment: cf
+          network: default
+          domain: bosh
+      - domain: silk-controller.service.cf.internal
+        targets:
+        - query: '*'
+          instance_group: diego-api
+          deployment: cf
+          network: default
+          domain: bosh
+      - domain: sql-db.service.cf.internal
+        targets:
+        - query: '*'
+          instance_group: database
+          deployment: cf
+          network: default
+          domain: bosh
+      - domain: ssh-proxy.service.cf.internal
+        targets:
+        - query: '*'
+          instance_group: scheduler
+          deployment: cf
+          network: default
+          domain: bosh
+      - domain: tps.service.cf.internal
+        targets:
+        - query: '*'
+          instance_group: scheduler
+          deployment: cf
+          network: default
+          domain: bosh
+      - domain: uaa.service.cf.internal
+        targets:
+        - query: '*'
+          instance_group: uaa
+          deployment: cf
+          network: default
+          domain: bosh
+
 instance_groups:
 - name: smoke-tests
   lifecycle: errand
@@ -173,6 +354,14 @@ instance_groups:
       consul_common: {from: consul_common_link}
       consul_server: nil
       consul_client: {from: consul_client_link}
+    properties:
+      consul:
+        agent:
+          services:
+            sql-db:
+              check:
+                http: "http://localhost:1936"
+                interval: 3s
   - name: mysql
     release: cf-mysql
     properties:
@@ -215,8 +404,6 @@ instance_groups:
       cf_mysql:
         proxy:
           api_password: "((cf_mysql_proxy_api_password))"
-          consul_enabled: true
-          consul_service_name: "sql-db"
 - name: diego-api
   migrated_from:
   - name: diego-bbs
@@ -649,6 +836,10 @@ instance_groups:
         - name: binary_buildpack
           package: binary-buildpack
         db_encryption_key: "((cc_db_encryption_key))"
+        database_encryption: &cc-database-encryption
+          current_key_label: "encryption_key_0"
+          keys:
+            encryption_key_0: "((cc_db_encryption_key))"
         bulk_api_password: "((cc_bulk_api_password))"
         internal_api_password: "((cc_internal_api_password))"
         staging_upload_user: staging_user
@@ -703,7 +894,7 @@ instance_groups:
       route_registrar:
         routes:
         - name: api
-          registration_interval: 20s
+          registration_interval: 10s
           port: 9022
           tags:
             component: CloudController
@@ -712,7 +903,7 @@ instance_groups:
           health_check:
             name: api-health-check
             script_path: "/var/vcap/jobs/cloud_controller_ng/bin/cloud_controller_ng_health_check"
-            timeout: 3s
+            timeout: 6s
         - name: policy-server
           port: 4002
           registration_interval: 20s
@@ -801,6 +992,7 @@ instance_groups:
     properties:
       cc:
         db_encryption_key: "((cc_db_encryption_key))"
+        database_encryption: *cc-database-encryption
         internal_api_password: "((cc_internal_api_password))"
         staging_upload_user: staging_user
         staging_upload_password: "((cc_staging_upload_password))"
@@ -947,6 +1139,7 @@ instance_groups:
     properties:
       cc:
         db_encryption_key: "((cc_db_encryption_key))"
+        database_encryption: *cc-database-encryption
         internal_api_password: "((cc_internal_api_password))"
         staging_upload_user: staging_user
         staging_upload_password: "((cc_staging_upload_password))"
@@ -1050,6 +1243,145 @@ instance_groups:
           doppler:
             cert: "((loggregator_tls_doppler.certificate))"
             key: "((loggregator_tls_doppler.private_key))"
+  - name: log-cache
+    provides:
+      log-cache: {shared: true}
+    properties:
+      egress_port: 8080
+      health_addr: localhost:6060
+      tls:
+        ca_cert: ((log_cache.ca))
+        cert: ((log_cache.certificate))
+        key: ((log_cache.private_key))
+    release: log-cache
+  - name: log-cache-gateway
+    properties:
+      gateway_addr: localhost:8081
+    release: log-cache
+  - name: log-cache-group-reader
+    properties:
+      port: 8084
+    release: log-cache
+  - consumes:
+      reverse_log_proxy:
+        from: reverse_log_proxy
+    name: log-cache-nozzle
+    properties:
+      logs_provider:
+        tls:
+          ca_cert: ((logs_provider.ca))
+          cert: ((logs_provider.certificate))
+          key: ((logs_provider.private_key))
+    release: log-cache
+  - name: log-cache-expvar-forwarder
+    properties:
+      counters:
+        # Log Cache
+      - name: egress
+        source_id: log-cache
+        addr: http://localhost:6060/debug/vars
+        template: "{{.LogCache.Egress}}"
+      - name: ingress
+        source_id: log-cache
+        addr: http://localhost:6060/debug/vars
+        template: "{{.LogCache.Ingress}}"
+      - name: expired
+        source_id: log-cache
+        addr: http://localhost:6060/debug/vars
+        template: "{{.LogCache.Expired}}"
+      - name: dropped
+        source_id: log-cache
+        addr: http://localhost:6060/debug/vars
+        template: "{{.LogCache.Dropped}}"
+      - name: promql-timeout
+        source_id: log-cache
+        addr: http://localhost:6060/debug/vars
+        template: "{{.LogCache.PromQLTimeout}}"
+
+        # Nozzle
+      - name: egress
+        source_id: log-cache-nozzle
+        addr: http://localhost:6061/debug/vars
+        template: "{{.Nozzle.Egress}}"
+      - name: ingress
+        source_id: log-cache-nozzle
+        addr: http://localhost:6061/debug/vars
+        template: "{{.Nozzle.Ingress}}"
+      - name: err
+        source_id: log-cache-nozzle
+        addr: http://localhost:6061/debug/vars
+        template: "{{.Nozzle.Err}}"
+      - name: dropped
+        source_id: log-cache-nozzle
+        addr: http://localhost:6061/debug/vars
+        template: "{{.Nozzle.Dropped}}"
+      gauges:
+        # Log Cache
+      - name: cache-period
+        source_id: log-cache
+        addr: http://localhost:6060/debug/vars
+        template: "{{.LogCache.CachePeriod}}"
+      - name: store-size
+        source_id: log-cache
+        addr: http://localhost:6060/debug/vars
+        template: "{{.LogCache.StoreSize}}"
+      - name: total-system-memory
+        source_id: log-cache
+        addr: http://localhost:6060/debug/vars
+        template: "{{.LogCache.TotalSystemMemory}}"
+      - name: available-system-memory
+        source_id: log-cache
+        addr: http://localhost:6060/debug/vars
+        template: "{{.LogCache.AvailableSystemMemory}}"
+
+        # CF Auth Proxy
+      - name: last-uaa-latency
+        source_id: log-cache-cf-auth-proxy
+        addr: http://localhost:6065/debug/vars
+        template: "{{.CFAuthProxy.LastUAALatency}}"
+      - name: last-capi-v3-apps-latency
+        source_id: log-cache-cf-auth-proxy
+        addr: http://localhost:6065/debug/vars
+        template: "{{.CFAuthProxy.LastCAPIV3AppsLatency}}"
+      - name: last-capi-v2-list-service-instances-latency
+        source_id: log-cache-cf-auth-proxy
+        addr: http://localhost:6065/debug/vars
+        template: "{{.CFAuthProxy.LastCAPIV2ListServiceInstancesLatency}}"
+      - name: last-capi-v4-log-access-latency
+        source_id: log-cache-cf-auth-proxy
+        addr: http://localhost:6065/debug/vars
+        template: "{{.CFAuthProxy.LastCAPIV4LogAccessLatency}}"
+      - name: last-capi-v2-service-instances-latency
+        source_id: log-cache-cf-auth-proxy
+        addr: http://localhost:6065/debug/vars
+        template: "{{.CFAuthProxy.LastCAPIV2ServiceInstancesLatency}}"
+    release: log-cache
+  - name: route_registrar
+    properties:
+      route_registrar:
+        routes:
+        - name: log-cache-reverse-proxy
+          port: 8083
+          registration_interval: 20s
+          uris:
+          - log-cache.((system_domain))
+          - '*.log-cache.((system_domain))'
+    release: routing
+  - name: log-cache-cf-auth-proxy
+    properties:
+      cc:
+        ca_cert: ((log_cache_tls_cc_auth_proxy.ca))
+        capi_internal_addr: https://cloud-controller-ng.service.cf.internal:9023
+        cert: ((log_cache_tls_cc_auth_proxy.certificate))
+        common_name: cloud-controller-ng.service.cf.internal
+        key: ((log_cache_tls_cc_auth_proxy.private_key))
+      proxy_port: 8083
+      uaa:
+        ca_cert: ((uaa_ca.certificate))
+        client_id: doppler
+        client_secret: ((uaa_clients_doppler_secret))
+        internal_addr: https://uaa.service.cf.internal:8443
+    release: log-cache
 - name: diego-cell
   azs:
   - z1
@@ -1113,7 +1445,6 @@ instance_groups:
         ca_cert: "((service_cf_internal_ca.certificate))"
         cert: "((diego_rep_agent_v2.certificate))"
         key: "((diego_rep_agent_v2.private_key))"
-
   - name: cfdot
     release: diego
     properties:
@@ -1155,6 +1486,10 @@ instance_groups:
       client_key: ((silk_daemon.private_key))
   - name: silk-cni
     release: silk
+    properties:
+      dns_servers:
+      - 169.254.0.2
+
 - name: log-api
   azs:
   - z1
@@ -1521,6 +1856,38 @@ variables:
     common_name: ss-scheduler
     extended_key_usage:
     - client_auth
+- name: logs_provider
+  options:
+    ca: loggregator_ca
+    common_name: log-cache
+    extended_key_usage:
+    - client_auth
+    - server_auth
+  type: certificate
+- name: log_cache_ca
+  options:
+    common_name: log-cache
+    is_ca: true
+  type: certificate
+- name: log_cache
+  options:
+    alternative_names:
+    - log_cache
+    - log-cache
+    - logcache
+    ca: log_cache_ca
+    common_name: log-cache
+    extended_key_usage:
+    - client_auth
+    - server_auth
+  type: certificate
+- name: log_cache_tls_cc_auth_proxy
+  options:
+    ca: service_cf_internal_ca
+    common_name: log-cache
+    extended_key_usage:
+    - client_auth
+  type: certificate
 - name: router_ca
   type: certificate
   options:
@@ -1617,106 +1984,114 @@ releases:
   version: 1.0.21
   sha1: 4721a43418533ac13d7d5e9ca179b8aec42218cb
 - name: bpm
-  url: https://bosh.io/d/github.com/cloudfoundry-incubator/bpm-release?v=0.6.0
-  version: 0.6.0
-  sha1: 4f0f239abdc801d71de9063625aa56e3c42634b5
+  url: https://bosh.io/d/github.com/cloudfoundry-incubator/bpm-release?v=0.9.0
+  version: 0.9.0
+  sha1: 0cb3242063c95271c95b62de3a6d07072aff0b29
 - name: capi
-  url: https://bosh.io/d/github.com/cloudfoundry/capi-release?v=1.60.0
-  version: 1.60.0
-  sha1: cdd58103ab9a862f5afa358ac276a7ed7a50ea80
+  url: https://bosh.io/d/github.com/cloudfoundry/capi-release?v=1.62.0
+  version: 1.62.0
+  sha1: 09814ba79fc571b169a3b65d434b63a4ee19362f
 - name: cf-mysql
-  url: https://bosh.io/d/github.com/cloudfoundry/cf-mysql-release?v=36.14.0
-  version: 36.14.0
-  sha1: 383f70fd4d776bf91d9043d8fd9ad79516cc8478
+  url: https://bosh.io/d/github.com/cloudfoundry/cf-mysql-release?v=36.15.0
+  version: 36.15.0
+  sha1: 0764d9d6aae7cefd10019437ed83e7715e614633
 - name: cf-networking
-  url: https://bosh.io/d/github.com/cloudfoundry/cf-networking-release?v=2.6.0
-  version: 2.6.0
-  sha1: 3ac51937ca9857f493597d7e42848e5ac6713905
+  url: https://bosh.io/d/github.com/cloudfoundry/cf-networking-release?v=2.10.0
+  version: 2.10.0
+  sha1: 993a47bc0b97460833ee0be3823b72c87d06ba84
 - name: cf-smoke-tests
   url: https://bosh.io/d/github.com/cloudfoundry/cf-smoke-tests-release?v=40.0.5
   version: 40.0.5
   sha1: 6f6081d24490a82c5b9fea73283e0cfe21cbf207
 - name: cf-syslog-drain
-  url: https://bosh.io/d/github.com/cloudfoundry/cf-syslog-drain-release?v=6.5
-  version: "6.5"
-  sha1: 2764d9ad86e71b354dc127238895c0db8352d5eb
+  url: https://bosh.io/d/github.com/cloudfoundry/cf-syslog-drain-release?v=7.0
+  version: "7.0"
+  sha1: 5b633a277044f78f333b68da54f804b2384d889d
 - name: cflinuxfs2
-  url: https://bosh.io/d/github.com/cloudfoundry/cflinuxfs2-release?v=1.220.0
-  version: 1.220.0
-  sha1: 81053100162c14f2c77b7d433d40628b236902ed
+  url: https://bosh.io/d/github.com/cloudfoundry/cflinuxfs2-release?v=1.227.0
+  version: 1.227.0
+  sha1: 7d407ac592eed31ce5d857fd7eb03bbc9dd00965
 - name: consul
-  url: https://bosh.io/d/github.com/cloudfoundry-incubator/consul-release?v=194
-  version: "194"
-  sha1: 085921377ca2ad804060f2e6d1143f81dc490736
+  url: https://bosh.io/d/github.com/cloudfoundry-incubator/consul-release?v=195
+  version: "195"
+  sha1: 53529e3a9646d82087a65f215138ae45b9ba7b6c
 - name: diego
-  url: https://bosh.io/d/github.com/cloudfoundry/diego-release?v=2.10.0
-  version: 2.10.0
-  sha1: c97fe435f9435f18469841de84ac9d27aea4edbf
+  url: https://bosh.io/d/github.com/cloudfoundry/diego-release?v=2.13.0
+  version: 2.13.0
+  sha1: 8d7c9be689e8638fdc626336dcb6e6560d190587
 - name: dotnet-core-buildpack
-  url: https://bosh.io/d/github.com/cloudfoundry/dotnet-core-buildpack-release?v=2.0.7
-  version: 2.0.7
-  sha1: a4d00973773e6cf30daa0a9004e4e52555f84317
+  url: https://bosh.io/d/github.com/cloudfoundry/dotnet-core-buildpack-release?v=2.1.3
+  version: 2.1.3
+  sha1: ab2cbdcc2d335ff64e37382e4095a31d972c72ed
 - name: garden-runc
-  url: https://bosh.io/d/github.com/cloudfoundry/garden-runc-release?v=1.15.0
-  version: 1.15.0
-  sha1: 274a619fe1588c157e6fa147b29ae2652f1fa73d
+  url: https://bosh.io/d/github.com/cloudfoundry/garden-runc-release?v=1.15.1
+  version: 1.15.1
+  sha1: bdac2dc7debc2e9b4b9e32f009cb93ac281e5480
 - name: go-buildpack
-  url: https://bosh.io/d/github.com/cloudfoundry/go-buildpack-release?v=1.8.23
-  version: 1.8.23
-  sha1: 937b84449f7203266f9cb5f44941cc96a2b9d05a
+  url: https://bosh.io/d/github.com/cloudfoundry/go-buildpack-release?v=1.8.25
+  version: 1.8.25
+  sha1: 086c1a8eb48c5ce23dbbb45b6284a354d6617d92
 - name: java-buildpack
-  url: https://bosh.io/d/github.com/cloudfoundry/java-buildpack-release?v=4.12
-  version: "4.12"
-  sha1: 4932d769feb5987fdd6fcc60c9c132746e14dade
+  url: https://bosh.io/d/github.com/cloudfoundry/java-buildpack-release?v=4.13.1
+  version: 4.13.1
+  sha1: a8377ea64b32f82e03d5bf3d624333f868f7ebfd
 - name: loggregator
-  url: https://bosh.io/d/github.com/cloudfoundry/loggregator-release?v=102.2
-  version: "102.2"
-  sha1: 1ff4ad235be2720ed119cbb775f6ffdb712e53ea
+  url: https://bosh.io/d/github.com/cloudfoundry/loggregator-release?v=103.0
+  version: "103.0"
+  sha1: 41fe210afef030a9bae37795fdd7c5e5ca779ea3
 - name: nats
-  url: https://bosh.io/d/github.com/cloudfoundry/nats-release?v=24
-  version: "24"
-  sha1: 65d8efc68d86a03d0f51562e16763075c37e419d
+  url: https://bosh.io/d/github.com/cloudfoundry/nats-release?v=25
+  version: "25"
+  sha1: a83d5ae37125e48284fd50b099befac1de419a8a
 - name: nodejs-buildpack
-  url: https://bosh.io/d/github.com/cloudfoundry/nodejs-buildpack-release?v=1.6.25
-  version: 1.6.25
-  sha1: 70b7cf1267ef2df2ce5d6bff54ac312e2f441813
+  url: https://bosh.io/d/github.com/cloudfoundry/nodejs-buildpack-release?v=1.6.28
+  version: 1.6.28
+  sha1: f6ff883edc1020df9d47cf56b7e6ac050488606d
 - name: php-buildpack
-  url: https://bosh.io/d/github.com/cloudfoundry/php-buildpack-release?v=4.3.56
-  version: 4.3.56
-  sha1: 29db7c0ad6fb939d43dff16af19263a0b534d3a2
+  url: https://bosh.io/d/github.com/cloudfoundry/php-buildpack-release?v=4.3.57
+  version: 4.3.57
+  sha1: 63c6a31a73b90472b6ac91c488469f3562ab5897
 - name: python-buildpack
-  url: https://bosh.io/d/github.com/cloudfoundry/python-buildpack-release?v=1.6.17
-  version: 1.6.17
-  sha1: 8dec8296ad14ddbee0a5335e1397644f115037a5
+  url: https://bosh.io/d/github.com/cloudfoundry/python-buildpack-release?v=1.6.18
+  version: 1.6.18
+  sha1: d6d4feeca58222fd5750f5a7e9dca97f91fe6867
 - name: routing
   url: https://bosh.io/d/github.com/cloudfoundry-incubator/cf-routing-release?v=0.179.0
   version: 0.179.0
   sha1: 203061d0438ed76f25573080f9d1f73f06de5851
 - name: ruby-buildpack
-  url: https://bosh.io/d/github.com/cloudfoundry/ruby-buildpack-release?v=1.7.19
-  version: 1.7.19
-  sha1: 07d3353f5ab9af26be10790f0a440dee2ae7a643
+  url: https://bosh.io/d/github.com/cloudfoundry/ruby-buildpack-release?v=1.7.21
+  version: 1.7.21
+  sha1: 081a7ed4f12e2b79149d82e732390e4280dcbb10
 - name: silk
-  url: https://bosh.io/d/github.com/cloudfoundry/silk-release?v=2.6.0
-  version: 2.6.0
-  sha1: 6ac4d519bf906a594fa36166dc5b118b44bf4359
+  url: https://bosh.io/d/github.com/cloudfoundry/silk-release?v=2.10.0
+  version: 2.10.0
+  sha1: f039c0eab50d8007ab28b2defa2b386a9042fefa
 - name: staticfile-buildpack
-  url: https://bosh.io/d/github.com/cloudfoundry/staticfile-buildpack-release?v=1.4.28
-  version: 1.4.28
-  sha1: ba9d9e68cf41029e2aec6a6acd3e5d578f6dd298
+  url: https://bosh.io/d/github.com/cloudfoundry/staticfile-buildpack-release?v=1.4.29
+  version: 1.4.29
+  sha1: 1b2dc05817e90c17cb0336837d262ed07b5b351a
 - name: statsd-injector
   url: https://bosh.io/d/github.com/cloudfoundry/statsd-injector-release?v=1.3.0
   version: 1.3.0
   sha1: 5b9357484032e5217cead8f20362f5802c751de0
 - name: uaa
-  url: https://bosh.io/d/github.com/cloudfoundry/uaa-release?v=60
-  version: "60"
-  sha1: a7c14357ae484e89e547f4f207fb8de36d2b0966
+  url: https://bosh.io/d/github.com/cloudfoundry/uaa-release?v=60.2
+  version: "60.2"
+  sha1: 667af417997467681fddf13c78e5a11c6f4a9d15
 - name: loggregator-agent
-  url: https://bosh.io/d/github.com/cloudfoundry/loggregator-agent-release?v=1.0
-  version: "1.0"
-  sha1: aa70e3bc95e25fe86ab00f3b698216a24a44c9d5
+  url: https://bosh.io/d/github.com/cloudfoundry/loggregator-agent-release?v=2.0
+  version: "2.0"
+  sha1: df91c31c15da68c7b2905645b20b93a930627d46
+- name: log-cache
+  url: https://bosh.io/d/github.com/cloudfoundry/log-cache-release?v=1.3.0
+  version: 1.3.0
+  sha1: 2fee0f51c4093091d33eb117202f7476f1a4ebcf
+- name: bosh-dns-aliases
+  url: https://bosh.io/d/github.com/cloudfoundry/bosh-dns-aliases-release?v=0.0.2
+  version: 0.0.2
+  sha1: 630ff814e5cf38b44c57eda68c60f48462b4b9a8
 stemcells:
 - alias: default
   os: ubuntu-trusty
-  version: "3586.24"
+  version: "3586.26"
