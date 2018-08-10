@@ -92,7 +92,7 @@ Click on Applications, select Deployments and from the table on the right click 
 
 <img src="https://github.com/MyriamFentanes/azure-quickstart-templates/blob/master/101-dukes-eap-openshift/images/dukes_pod.png"/>
 
-To access the webapp go to Applicaitons and select Routes. Routes is the way Openshift Container Platform exposes services at a host name, you shoud see the url for dukes. CLick on it and goto the context dukes.
+To access the webapp go to Applicaitons and select Routes. Routes is the way Openshift Container Platform exposes services at a host name, you shoud see the url for dukes. Click on it and goto the context dukes.
 
 <img src="https://github.com/MyriamFentanes/azure-quickstart-templates/blob/master/101-dukes-eap-openshift/images/dukes_route.png"/>
 
