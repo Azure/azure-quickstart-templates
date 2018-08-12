@@ -56,6 +56,7 @@ Once all of these values are set, then check the box to "Agree to the terms and 
 **Acknowledgements: Thanks to the following individuals for the base template: Daniel Falkner, Glenn West, Harold Wong, and Ivan McKinley**
 
 2. Deploy OpenShift Openshift Container Platform template to Azure
+
 A notification will pop up in the top right notifying you of the deployment:
 
 <img src="https://github.com/MyriamFentanes/azure-quickstart-templates/blob/master/101-dukes-eap-openshift/images/ocpDeployInProgress.png" width="500">
