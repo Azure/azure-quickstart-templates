@@ -15,13 +15,16 @@ You could also do this deployment automatically by running the following PowerSh
 ```powershell
 
 $scriptUrl = 'https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-sqlmi-new-vnet-w-point-to-site-vpn/scripts/deploy.ps1'
+
+$subscriptionId = '<subscriptionId>'
+$resourceGroupName = '<resourceGroupName>'
 $managedInstanceName = '<managedInstanceName>'
-$administratorLogin = 'cloudSA'
+$administratorLogin = '<login>'
 $administratorLoginPassword = '<password>'
-$certificateNamePrefix = 'MyCertificate'
+$certificateNamePrefix = '<certificateNamePrefix>'
 
 Invoke-Command -ScriptBlock ([Scriptblock]::Create((New-Object System.Net.WebClient).DownloadString($scriptUrl))) `
-    -ArgumentList $managedInstanceName, $administratorLogin, $administratorLoginPassword, $certificateNamePrefix
+    -ArgumentList $subscriptionId, $resourceGroupName, $managedInstanceName, $administratorLogin, $administratorLoginPassword, $certificateNamePrefix
 
 ```
 
