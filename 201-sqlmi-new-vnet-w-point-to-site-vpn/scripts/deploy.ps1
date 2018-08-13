@@ -4,6 +4,7 @@ $managedInstanceName = $args[2]
 $administratorLogin = $args[3]
 $administratorLoginPassword = $args[4]
 $certificateNamePrefix = $args[5]
+$scriptUrlBase = $args[6]
 
 function Ensure-Login () 
 {
