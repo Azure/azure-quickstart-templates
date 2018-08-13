@@ -14,7 +14,7 @@ You could also do this deployment automatically by running the following PowerSh
 
 ```powershell
 
-$scriptUrl = 'https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-sqlmi-new-vnet-w-point-to-site-vpn/scripts/deploy.ps1'
+$scriptUrlBase = 'https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-sqlmi-new-vnet-w-point-to-site-vpn'
 
 $subscriptionId = '<subscriptionId>'
 $resourceGroupName = '<resourceGroupName>'
@@ -23,8 +23,8 @@ $administratorLogin = '<login>'
 $administratorLoginPassword = '<password>'
 $certificateNamePrefix = '<certificateNamePrefix>'
 
-Invoke-Command -ScriptBlock ([Scriptblock]::Create((New-Object System.Net.WebClient).DownloadString($scriptUrl))) `
-    -ArgumentList $subscriptionId, $resourceGroupName, $managedInstanceName, $administratorLogin, $administratorLoginPassword, $certificateNamePrefix
+Invoke-Command -ScriptBlock ([Scriptblock]::Create((New-Object System.Net.WebClient).DownloadString($scriptUrlBase+'/scripts/deploy.ps1'))) `
+    -ArgumentList $subscriptionId, $resourceGroupName, $managedInstanceName, $administratorLogin, $administratorLoginPassword, $certificateNamePrefix, $scriptUrlBase
 
 ```
 
