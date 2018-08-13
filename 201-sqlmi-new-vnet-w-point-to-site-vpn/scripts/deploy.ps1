@@ -31,11 +31,11 @@ $certificate = New-SelfSignedCertificate -Type Custom -KeySpec Signature `
 
 $certificateThumbprint = $certificate.Thumbprint
 
-New-SelfSignedCertificate -Type Custom -DnsName ($certificateNamePrefix+"ChildP2S") -KeySpec Signature `
-    -Subject ("CN=$certificateNamePrefix"+"ChildP2S") -KeyExportPolicy Exportable `
+New-SelfSignedCertificate -Type Custom -DnsName ($certificateNamePrefix+"P2SChild") -KeySpec Signature `
+    -Subject ("CN=$certificateNamePrefix"+"P2SChild") -KeyExportPolicy Exportable `
     -HashAlgorithm sha256 -KeyLength 2048 `
     -CertStoreLocation "Cert:\CurrentUser\My" `
-    -Signer $cert -TextExtension @("2.5.29.37={text}1.3.6.1.5.5.7.3.2")  
+    -Signer $cert -TextExtension @("2.5.29.37={text}1.3.6.1.5.5.7.3.2") | Out-null
 
 $publicRootCertData = [Convert]::ToBase64String((Get-Item cert:\currentuser\my\$certificateThumbprint).RawData)
 
