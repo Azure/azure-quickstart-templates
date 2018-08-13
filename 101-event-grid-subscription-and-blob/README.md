@@ -6,6 +6,6 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template creates an Event Grid custom topic and webhook subscription on Azure. Template was authored by John Downs.
+This template creates Azure Blob Storage account and then creates an Event Grid subscription to that Blob.
 
 `Tags: eventgrid`
