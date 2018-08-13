@@ -1,14 +1,29 @@
-# Azure Sql Database Managed Instance (SQL MI) with JumpBox Creation inside New Virtual Network
+# Azure Sql Database Managed Instance (SQL MI) with Virtual network gateway configured for point-to-site connection inside the new virtual network
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-sqlmi-new-vnet-w-point-to-site-vpn%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fmaster%2Fazure-quickstart-templates%2Fmaster%2F201-sqlmi-new-vnet-w-point-to-site-vpn%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-sqlmi-new-vnet-w-point-to-site-vpn%2Fazuredeploy.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
 This template creates a new VNet and deploys a **SQL MI** and a Virtual network gateway inside. Virtual network gateway will be configured for point-to-site connections.
 
 To deploy this template user needs to provide public self-signed root certificate data. For detailed information on this and setting up certificates for point-to-site VPN visit the documentation: https://docs.microsoft.com/en-us/azure/vpn-gateway/vpn-gateway-certificates-point-to-site
+
+You could also do this deployment automatically by running the following PowerShell script
+
+```powershell
+
+$scriptUrl = 'https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-sqlmi-new-vnet-w-point-to-site-vpn/scripts/deploy.ps1'
+$managedInstanceName = '<managedInstanceName>'
+$administratorLogin = 'cloudSA'
+$administratorLoginPassword = '<password>'
+$certificateNamePrefix = 'MyCertificate'
+
+Invoke-Command -ScriptBlock ([Scriptblock]::Create((New-Object System.Net.WebClient).DownloadString($scriptUrl))) `
+    -ArgumentList $managedInstanceName, $administratorLogin, $administratorLoginPassword, $certificateNamePrefix
+
+```
 
 For **SQL MI** overview visit: https://docs.microsoft.com/en-us/azure/sql-database/sql-database-managed-instance
 
