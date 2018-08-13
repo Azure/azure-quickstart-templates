@@ -1,7 +1,27 @@
-$managedInstanceName = args[0]
-$administratorLogin = args[1]
-$administratorLoginPassword = args[2]
-$certificateNamePrefix = args[3]
+$subscriptionId = $args[0]
+$resourceGroupName = $args[1]
+$managedInstanceName = $args[2]
+$administratorLogin = $args[3]
+$administratorLoginPassword = $args[4]
+$certificateNamePrefix = $args[5]
+
+function Ensure-Login () 
+{
+    $context = Get-AzureRmContext
+    If($context.Subscription -eq $null)
+    {
+        Login-AzureRmAccount | Out-null
+    }
+}
+
+Ensure-Login
+
+$context = Get-AzureRmContext
+If($context.Subscription.Id -ne $subscriptionId)
+{
+    #TODO check if subscription exists
+    Select-AzureRmSubscription -SubscriptionId $subscriptionId  | Out-null
+}
 
 $certificate = New-SelfSignedCertificate -Type Custom -KeySpec Signature `
     -Subject ("CN=$certificateNamePrefix"+"P2SRoot") -KeyExportPolicy Exportable `
