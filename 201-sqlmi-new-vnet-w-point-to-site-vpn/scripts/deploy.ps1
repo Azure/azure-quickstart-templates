@@ -21,7 +21,8 @@ Ensure-Login
 $context = Get-AzureRmContext
 If($context.Subscription.Id -ne $subscriptionId)
 {
-    #TODO check if subscription exists
+    # select subscription
+    Write-Host "Selecting subscription '$subscriptionId'";
     Select-AzureRmSubscription -SubscriptionId $subscriptionId  | Out-null
 }
 
@@ -47,5 +48,23 @@ $templateParameters = @{
     administratorLoginPassword = $administratorLoginPassword
     publicRootCertData = $publicRootCertData
 }
+
+#Create or check for existing resource group
+$resourceGroup = Get-AzureRmResourceGroup -Name $resourceGroupName -ErrorAction SilentlyContinue
+if(!$resourceGroup)
+{
+    Write-Host "Resource group '$resourceGroupName' does not exist. To create a new resource group, please enter a location.";
+    if(!$resourceGroupLocation) {
+        $resourceGroupLocation = Read-Host "resourceGroupLocation";
+    }
+    Write-Host "Creating resource group '$resourceGroupName' in location '$resourceGroupLocation'";
+    New-AzureRmResourceGroup -Name $resourceGroupName -Location $resourceGroupLocation
+}
+else{
+    Write-Host "Using existing resource group '$resourceGroupName'";
+}
+
+# Start the deployment
+Write-Host "Starting deployment...";
 
 New-AzureRmResourceGroupDeployment -ResourceGroupName $resourceGroupName -TemplateUri ($scriptUrlBase+'/azuredeploy.json') -TemplateParameterObject $templateParameters
