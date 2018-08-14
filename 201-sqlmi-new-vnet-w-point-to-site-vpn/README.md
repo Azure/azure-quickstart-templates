@@ -16,7 +16,7 @@ You could also do this deployment automatically by running the following PowerSh
 
 $scriptUrlBase = 'https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-sqlmi-new-vnet-w-point-to-site-vpn'
 
-$parameters = {
+$parameters = @{
     subscriptionId = '<subscriptionId>'
     resourceGroupName = '<resourceGroupName>'
     location = '<location>'
