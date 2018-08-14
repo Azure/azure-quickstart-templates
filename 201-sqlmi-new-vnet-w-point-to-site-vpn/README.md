@@ -27,7 +27,7 @@ $parameters = @{
     certificateNamePrefix = '<certificateNamePrefix>'
     }
 
-Invoke-Command -ScriptBlock ([Scriptblock]::Create((New-Object System.Net.WebClient).DownloadString($parameters.scriptUrlBase+'/scripts/deploy.ps1'))) -ArgumentList $parameters, $scriptUrlBase
+Invoke-Command -ScriptBlock ([Scriptblock]::Create((New-Object System.Net.WebClient).DownloadString($scriptUrlBase+'/scripts/deploy.ps1'))) -ArgumentList $parameters, $scriptUrlBase
 
 ```
 
