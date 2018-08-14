@@ -12,6 +12,7 @@ require('it-each')({ testPerIteration: true });
 var folder = process.env.npm_config_folder || filesFolder;
 var mainTemplateFileJSONObject = util.getMainTemplateFile(folder).jsonObject;
 var mainTemplateFile = util.getMainTemplateFile(folder).file;
+var mainTemplateFileName = "maintemplate.json";
 var createUiDefFileJSONObject = util.getCreateUiDefFile(folder).jsonObject;
 var createUiDefFile = util.getCreateUiDefFile(folder).file;
 var templateFiles = util.getTemplateFiles(folder).files;
@@ -122,16 +123,21 @@ describe('template files - ', () => {
                 next();
             });
             /** resourceGroup().location should NOT be present anywhere in template, EXCEPT as a defaultValue */
-            it.each(templateObject, 'resourceGroup().location must NOT be be used in the template file ' + templateJSONObject.filename + ', except as a default value for the location parameter. Please correct similar errors in the file', function(element, next) {
+            it.each(templateObject, 'resourceGroup().location must NOT be be used in the template file ' + templateJSONObject.filename + ', except as a default value for the location parameter.', function(element, next) {
                 var templateFileContent = JSON.stringify(templateObject);
-                templateFileContent = templateFileContent.replace(/\"defaultValue\":\s*\"\[resourceGroup\(\)\.location\]\"/,"");
+
+                // skip this if the file is NOT mainTemplate - so we know that location is being passed to nested templates...
+                if (templateJSONObject.filename.toLowerCase() != (folder + '\\maintemplate.json')) {
+                    templateFileContent = templateFileContent.replace(/\"defaultValue\":\s*\"\[resourceGroup\(\)\.location\]\"/,"");
+                }
+
                 var locationString = 'resourceGroup().location';
                 var message = 'in file:' + templateJSONObject.filename + ' should NOT have location set to resourceGroup().location';
                 assert(templateFileContent.includes(locationString) === false, message);
                 next();
             });
             /** providers().apiVersions[n] must not be present for all template files. */
-            it.each(templateObject, 'providers().apiVersions must NOT be retrieved using providers().apiVersions[n] in the template file ' + templateJSONObject.filename + '. This function is non-deterministic. Please correct similar errors in the file', function(element, next) {
+            it.each(templateObject, 'apiVersions must NOT be retrieved using providers().apiVersions[n] in the template file ' + templateJSONObject.filename + '. This function is non-deterministic.', function(element, next) {
                 var templateFileContent = JSON.stringify(templateObject);
                 var message = 'in file:' + templateJSONObject.filename + ' should NOT have api version determined by providers().';
                 assert(templateFileContent.match(/providers\(.*?\)\.apiVersions/) === null, message);
