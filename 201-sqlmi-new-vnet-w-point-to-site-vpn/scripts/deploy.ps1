@@ -40,4 +40,12 @@ New-SelfSignedCertificate -Type Custom -DnsName ($certificateNamePrefix+"P2SChil
 
 $publicRootCertData = [Convert]::ToBase64String((Get-Item cert:\currentuser\my\$certificateThumbprint).RawData)
 
-Write-Host $publicRootCertData
+$templateParameters = @{
+    location = $location
+    managedInstanceName = $managedInstanceName
+    administratorLogin  = $administratorLogin
+    administratorLoginPassword = $administratorLoginPassword
+    publicRootCertData = $publicRootCertData
+}
+
+New-AzureRmResourceGroupDeployment -ResourceGroupName $resourceGroupName -TemplateUri ($scriptUrlBase+'/azuredeploy.json') -TemplateParameterObject $templateParameters
