@@ -7,7 +7,7 @@
 Param(
     [string] [Parameter(Mandatory=$true)] $ArtifactStagingDirectory,
     [string] [Parameter(Mandatory=$true)] $ResourceGroupLocation,
-    [string] $ResourceGroupName = $ArtifactStagingDirectory.replace('.\',''), #remove .\ if present
+    [string] $ResourceGroupName = (Split-Path $ArtifactStagingDirectory -Leaf),
     [switch] $UploadArtifacts,
     [string] $StorageAccountName,
     [string] $StorageContainerName = $ResourceGroupName.ToLowerInvariant() + '-stageartifacts',
@@ -40,6 +40,7 @@ if(!(Test-Path $TemplateFile)) {
     $TemplateFile =  $ArtifactStagingDirectory + '\azuredeploy.json'
 }
 
+#try a few different default options for param files when the -dev switch is use
 if ($Dev) {
     $TemplateParametersFile = $TemplateParametersFile.Replace('azuredeploy.parameters.json', 'azuredeploy.parameters.dev.json')
     if (!(Test-Path $TemplateParametersFile)) {
@@ -56,7 +57,10 @@ if (!$ValidateOnly) {
 $TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $TemplateFile))
 $TemplateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $TemplateParametersFile))
 
-if ($UploadArtifacts) {
+$TemplateJSON = Get-Content $TemplateFile -Raw | ConvertFrom-Json
+
+#if the switch is set or the standard parameter is present in the template, upload all artifacts
+if ($UploadArtifacts -Or (Get-Member -InputObject $TemplateJSON.parameters -Name _artifactsLocation -MemberType Properties) -ne $null) {
     # Convert relative paths to absolute paths if needed
     $ArtifactStagingDirectory = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $ArtifactStagingDirectory))
     $DSCSourceFolder = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $DSCSourceFolder))
@@ -104,7 +108,11 @@ if ($UploadArtifacts) {
 
     $ArtifactFilePaths = Get-ChildItem $ArtifactStagingDirectory -Recurse -File | ForEach-Object -Process {$_.FullName}
     foreach ($SourcePath in $ArtifactFilePaths) {
-       Set-AzureStorageBlobContent -File $SourcePath -Blob $SourcePath.Substring($ArtifactStagingDirectory.length + 1) -Container $StorageContainerName -Context $StorageAccount.Context -Force
+        
+        if ($SourcePath -like "$DSCSourceFolder*" -and $SourcePath -like "*.zip" -or !($SourcePath -like "$DSCSourceFolder*")) { #When using DSC, just copy the DSC archive, not all the modules and source files
+            Set-AzureStorageBlobContent -File $SourcePath -Blob $SourcePath.Substring($ArtifactStagingDirectory.length + 1) -Container $StorageContainerName -Context $StorageAccount.Context -Force
+            #Write-host $SourcePath
+        }
     }
     # Generate a 4 hour SAS token for the artifacts location if one was not provided in the parameters file
     if ($OptionalParameters[$ArtifactsLocationSasTokenName] -eq $null) {
