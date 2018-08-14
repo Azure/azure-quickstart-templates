@@ -1,6 +1,6 @@
 ---
 name: cf
-manifest_version: v3.0.0
+manifest_version: v4.0.0
 update:
   canaries: 1
   canary_watch_time: 30000-1200000
@@ -68,7 +68,7 @@ addons:
           domain: bosh
       - domain: auctioneer.service.cf.internal
         targets:
-        - query: '*'
+        - query: 'q-s4'
           instance_group: scheduler
           deployment: cf
           network: default
@@ -380,6 +380,9 @@ instance_groups:
           - name: cloud_controller
             username: cloud_controller
             password: "((cc_database_password))"
+          - name: credhub
+            password: ((credhub_database_password))
+            username: credhub
           - name: diego
             username: diego
             password: "((diego_database_password))"
@@ -440,9 +443,12 @@ instance_groups:
   - name: bbs
     release: diego
     properties:
+      bpm:
+        enabled: true
       diego:
         bbs:
           active_key_label: key-2016-06
+          detect_consul_cell_registrations: false
           encryption_keys:
           - label: key-2016-06
             passphrase: "((diego_bbs_encryption_keys_passphrase))"
@@ -460,6 +466,7 @@ instance_groups:
             client_key: "((diego_auctioneer_client.private_key))"
           server_cert: "((diego_bbs_server.certificate))"
           server_key: "((diego_bbs_server.private_key))"
+          skip_consul_lock: true
           rep:
             require_tls: true
             ca_cert: "((service_cf_internal_ca.certificate))"
@@ -470,6 +477,9 @@ instance_groups:
         ca_cert: "((loggregator_ca.certificate))"
         cert: "((loggregator_tls_agent.certificate))"
         key: "((loggregator_tls_agent.private_key))"
+      logging:
+        format:
+          timestamp: "rfc3339"
   - name: silk-controller
     release: silk
     properties:
@@ -490,6 +500,8 @@ instance_groups:
   - name: locket
     release: diego
     properties:
+      bpm:
+        enabled: true
       tls:
         ca_cert: "((service_cf_internal_ca.certificate))"
         cert: "((diego_locket_server.certificate))"
@@ -508,6 +520,9 @@ instance_groups:
         ca_cert: "((loggregator_ca.certificate))"
         cert: "((loggregator_tls_agent.certificate))"
         key: "((loggregator_tls_agent.private_key))"
+      logging:
+        format:
+          timestamp: "rfc3339"
 - name: uaa
   azs:
   - z1
@@ -532,6 +547,8 @@ instance_groups:
   - name: uaa
     release: uaa
     properties:
+      bpm:
+        enabled: true
       encryption:
         active_key_label: default_key
         encryption_keys:
@@ -611,6 +628,10 @@ instance_groups:
             authorities: scim.userids
             authorized-grant-types: client_credentials
             secret: "((uaa_clients_cloud_controller_username_lookup_secret))"
+          credhub_admin_client:
+            authorities: credhub.read,credhub.write
+            authorized-grant-types: client_credentials
+            secret: ((credhub_admin_client_secret))
           doppler:
             authorities: uaa.resource
             override: true
@@ -708,6 +729,8 @@ instance_groups:
   - name: blobstore
     release: capi
     properties:
+      bpm:
+        enabled: true
       system_domain: "((system_domain))"
       blobstore:
         admin_users:
@@ -761,6 +784,8 @@ instance_groups:
     provides:
       cloud_controller: {as: cloud_controller, shared: true}
     properties:
+      bpm:
+        enabled: true
       router:
         route_services_secret: "((router_route_services_secret))"
       system_domain: "((system_domain))"
@@ -770,6 +795,8 @@ instance_groups:
         host_key_fingerprint: "((diego_ssh_proxy_host_key.public_key_fingerprint))"
       routing_api: &routing_api
         enabled: true
+      credhub_api:
+        ca_cert: ((credhub_ca.certificate))
       ssl:
         skip_cert_verify: true
       uaa:
@@ -818,21 +845,21 @@ instance_groups:
         install_buildpacks:
         ## Order is important here
         - name: staticfile_buildpack
-          package: staticfile-buildpack
+          package: staticfile-buildpack-cflinuxfs2
         - name: java_buildpack
-          package: java-buildpack
+          package: java-buildpack-cflinuxfs2
         - name: ruby_buildpack
-          package: ruby-buildpack
+          package: ruby-buildpack-cflinuxfs2
         - name: dotnet_core_buildpack
-          package: dotnet-core-buildpack
+          package: dotnet-core-buildpack-cflinuxfs2
         - name: nodejs_buildpack
-          package: nodejs-buildpack
+          package: nodejs-buildpack-cflinuxfs2
         - name: go_buildpack
-          package: go-buildpack
+          package: go-buildpack-cflinuxfs2
         - name: python_buildpack
-          package: python-buildpack
+          package: python-buildpack-cflinuxfs2
         - name: php_buildpack
-          package: php-buildpack
+          package: php-buildpack-cflinuxfs2
         - name: binary_buildpack
           package: binary-buildpack
         db_encryption_key: "((cc_db_encryption_key))"
@@ -860,6 +887,10 @@ instance_groups:
           ca_cert: "((service_cf_internal_ca.certificate))"
           public_cert: "((cc_tls.certificate))"
           private_key: "((cc_tls.private_key))"
+        public_tls:
+          ca_cert: "((service_cf_internal_ca.certificate))"
+          certificate: "((cc_public_tls.certificate))"
+          private_key: "((cc_public_tls.private_key))"
       ccdb: &ccdb
         databases:
         - name: cloud_controller
@@ -896,6 +927,8 @@ instance_groups:
         - name: api
           registration_interval: 10s
           port: 9022
+          tls_port: 9024
+          server_cert_domain_san: "api.((system_domain))"
           tags:
             component: CloudController
           uris:
@@ -915,11 +948,14 @@ instance_groups:
   - name: file_server
     release: diego
     properties:
+      bpm:
+        enabled: true
       loggregator: *diego_loggregator_client_properties
   - name: routing-api
     release: routing
     properties:
       routing_api:
+        skip_consul_lock: true
         system_domain: "((system_domain))"
         router_groups:
         - name: default-tcp
@@ -940,6 +976,9 @@ instance_groups:
       uaa:
         ca_cert: "((uaa_ca.certificate))"
         tls_port: 8443
+      logging:
+        format:
+          timestamp: "rfc3339"
   - name: policy-server
     release: cf-networking
     properties:
@@ -961,6 +1000,8 @@ instance_groups:
   - name: cc_uploader
     release: capi
     properties:
+      bpm:
+        enabled: true
       capi:
         cc_uploader:
           cc:
@@ -990,6 +1031,8 @@ instance_groups:
   - name: cloud_controller_worker
     release: capi
     properties:
+      bpm:
+        enabled: true
       cc:
         db_encryption_key: "((cc_db_encryption_key))"
         database_encryption: *cc-database-encryption
@@ -1046,6 +1089,13 @@ instance_groups:
         tls_pem:
         - cert_chain: "((router_ssl.certificate))"
           private_key: "((router_ssl.private_key))"
+        ca_certs: |
+          ((application_ca.certificate))
+          ((service_cf_internal_ca.certificate))
+        backends:
+          enable_tls: true
+          cert_chain: ((gorouter_backend_tls.certificate))
+          private_key: ((gorouter_backend_tls.private_key))
         status:
           password: "((router_status_password))"
           user: router-status
@@ -1119,6 +1169,8 @@ instance_groups:
   - name: auctioneer
     release: diego
     properties:
+      bpm:
+        enabled: true
       diego:
         auctioneer:
           bbs: &diego_bbs_client_properties
@@ -1126,17 +1178,23 @@ instance_groups:
             client_cert: "((diego_bbs_client.certificate))"
             client_key: "((diego_bbs_client.private_key))"
           ca_cert: "((service_cf_internal_ca.certificate))"
-          server_cert: "((diego_auctioneer_server.certificate))"
-          server_key: "((diego_auctioneer_server.private_key))"
           rep:
             require_tls: true
             ca_cert: "((service_cf_internal_ca.certificate))"
             client_cert: "((diego_rep_client.certificate))"
             client_key: "((diego_rep_client.private_key))"
+          server_cert: "((diego_auctioneer_server.certificate))"
+          server_key: "((diego_auctioneer_server.private_key))"
+          skip_consul_lock: true
       loggregator: *diego_loggregator_client_properties
+      logging:
+        format:
+          timestamp: "rfc3339"
   - name: cloud_controller_clock
     release: capi
     properties:
+      bpm:
+        enabled: true
       cc:
         db_encryption_key: "((cc_db_encryption_key))"
         database_encryption: *cc-database-encryption
@@ -1166,12 +1224,15 @@ instance_groups:
   - name: tps
     release: capi
     properties:
+      bpm:
+        enabled: true
       capi:
         tps:
           bbs: *diego_bbs_client_properties
           watcher:
             locket:
               api_location: "locket.service.cf.internal:8891"
+            skip_consul_lock: true
           cc:
             ca_cert: "((service_cf_internal_ca.certificate))"
             client_cert: "((cc_bridge_tps.certificate))"
@@ -1180,6 +1241,8 @@ instance_groups:
   - name: ssh_proxy
     release: diego
     properties:
+      bpm:
+        enabled: true
       diego:
         ssh_proxy:
           enable_cf_auth: true
@@ -1189,6 +1252,9 @@ instance_groups:
             ca_cert: "((uaa_ca.certificate))"
           bbs: *diego_bbs_client_properties
       loggregator: *diego_loggregator_client_properties
+      logging:
+        format:
+          timestamp: "rfc3339"
   - name: scheduler
     release: cf-syslog-drain
     properties:
@@ -1207,6 +1273,22 @@ instance_groups:
               cert: "((scheduler_api_tls.certificate))"
               key: "((scheduler_api_tls.private_key))"
               cn: "cloud-controller-ng.service.cf.internal"
+  - name: log-cache-scheduler
+    release: log-cache
+  - name: log-cache-expvar-forwarder
+    release: log-cache
+    properties:
+      counters: []
+      gauges: []
+      maps:
+      - name: worker-assignments
+        source_id: log-cache-scheduler
+        addr: http://localhost:6064/debug/vars
+        template: "{{.WorkerAssignments | jsonMap}}"
+      - name: worker-health
+        source_id: log-cache-scheduler
+        addr: http://localhost:6064/debug/vars
+        template: "{{.WorkerHealth | jsonMap}}"
 - name: doppler
   azs:
   - z1
@@ -1263,8 +1345,7 @@ instance_groups:
       port: 8084
     release: log-cache
   - consumes:
-      reverse_log_proxy:
-        from: reverse_log_proxy
+      reverse_log_proxy: {from: reverse_log_proxy}
     name: log-cache-nozzle
     properties:
       logs_provider:
@@ -1275,6 +1356,7 @@ instance_groups:
     release: log-cache
   - name: log-cache-expvar-forwarder
     properties:
+      maps: []
       counters:
         # Log Cache
       - name: egress
@@ -1408,7 +1490,10 @@ instance_groups:
     release: cflinuxfs2
     properties:
       cflinuxfs2-rootfs:
-        trusted_certs: ((application_ca.certificate))
+        trusted_certs: |
+          ((application_ca.certificate))
+          ((credhub_ca.certificate))
+          ((uaa_ca.certificate))
   - name: garden
     release: garden-runc
     properties:
@@ -1426,9 +1511,14 @@ instance_groups:
         - --configFile=/var/vcap/jobs/garden-cni/config/adapter.json
       grootfs:
         reserved_space_for_other_jobs_in_mb: 15360
+      logging:
+        format:
+          timestamp: "rfc3339"
   - name: rep
     release: diego
     properties:
+      bpm:
+        enabled: true
       diego:
         executor:
           instance_identity_ca_cert: ((diego_instance_identity_ca.certificate))
@@ -1439,12 +1529,17 @@ instance_groups:
       containers:
         trusted_ca_certificates:
           - ((application_ca.certificate))
+          - ((credhub_ca.certificate))
+          - ((uaa_ca.certificate))
       enable_declarative_healthcheck: true
       loggregator: *diego_loggregator_client_properties
       tls:
         ca_cert: "((service_cf_internal_ca.certificate))"
         cert: "((diego_rep_agent_v2.certificate))"
         key: "((diego_rep_agent_v2.private_key))"
+      logging:
+        format:
+          timestamp: "rfc3339"
   - name: cfdot
     release: diego
     properties:
@@ -1452,6 +1547,8 @@ instance_groups:
   - name: route_emitter
     release: diego
     properties:
+      bpm:
+        enabled: true
       loggregator: *diego_loggregator_client_properties
       diego:
         route_emitter:
@@ -1465,6 +1562,9 @@ instance_groups:
       uaa:
         ca_cert: "((uaa_ca.certificate))"
         client_secret: "((uaa_clients_tcp_emitter_secret))"
+      logging:
+        format:
+          timestamp: "rfc3339"
   - name: garden-cni
     release: cf-networking
     properties:
@@ -1489,7 +1589,6 @@ instance_groups:
     properties:
       dns_servers:
       - 169.254.0.2
-
 - name: log-api
   azs:
   - z1
@@ -1568,6 +1667,80 @@ instance_groups:
           uris:
           - doppler.((system_domain))
           - "*.doppler.((system_domain))"
+- name: credhub
+  azs: [z1, z2]
+  instances: 2
+  networks:
+  - name: default
+  stemcell: default
+  vm_type: minimal
+  jobs:
+  - consumes:
+      consul_client:
+        from: consul_client_link
+      consul_common:
+        from: consul_common_link
+      consul_server: nil
+    name: consul_agent
+    properties:
+      consul:
+        agent:
+          services:
+            credhub: {}
+    release: consul
+  - name: credhub
+    properties:
+      credhub:
+        authentication:
+          mutual_tls:
+            trusted_cas:
+            - ((application_ca.certificate))
+          uaa:
+            ca_certs:
+            - ((uaa_ca.certificate))
+            url: https://uaa.service.cf.internal:8443
+            verification_key: ((uaa_jwt_signing_key.public_key))
+        authorization:
+          acls:
+            enabled: true
+          permissions:
+          - path: /*
+            actors: ["uaa-client:credhub_admin_client"]
+            operations: [read, write, delete, read_acl, write_acl]
+          - path: /*
+            actors: ["uaa-client:cc_service_key_client"]
+            operations: [read]
+        data_storage:
+          database: credhub
+          host: sql-db.service.cf.internal
+          password: ((credhub_database_password))
+          port: 3306
+          require_tls: false
+          type: mysql
+          username: credhub
+        encryption:
+          keys:
+          - active: true
+            key_properties:
+              encryption_password: ((credhub_encryption_password))
+            provider_name: internal-provider
+          providers:
+          - name: internal-provider
+            type: internal
+        tls: ((credhub_tls))
+    release: credhub
+- name: rotate-cc-database-key
+  instances: 1
+  azs: [z1]
+  lifecycle: errand
+  vm_type: minimal
+  stemcell: default
+  networks:
+  - name: default
+  jobs:
+  - name: rotate_cc_database_key
+    release: capi
+    properties: {}
 
 variables:
 - name: blobstore_admin_users_password
@@ -1594,6 +1767,8 @@ variables:
   type: password
 - name: cc_database_password
   type: password
+- name: credhub_database_password
+  type: password
 - name: diego_database_password
   type: password
 - name: uaa_database_password
@@ -1603,8 +1778,6 @@ variables:
 - name: network_policy_database_password
   type: password
 - name: network_connectivity_database_password
-  type: password
-- name: uaa_clients_network_policy_secret
   type: password
 - name: uaa_default_encryption_passphrase
   type: password
@@ -1674,6 +1847,8 @@ variables:
   type: password
 - name: uaa_clients_gorouter_secret
   type: password
+- name: uaa_clients_network_policy_secret
+  type: password
 - name: uaa_clients_ssh-proxy_secret
   type: password
 - name: uaa_clients_tcp_router_secret
@@ -1681,6 +1856,10 @@ variables:
 - name: diego_bbs_encryption_keys_passphrase
   type: password
 - name: consul_encrypt_key
+  type: password
+- name: credhub_encryption_password
+  type: password
+- name: credhub_admin_client_secret
   type: password
 - name: diego_ssh_proxy_host_key
   type: ssh
@@ -1926,6 +2105,14 @@ variables:
     extended_key_usage:
     - client_auth
     - server_auth
+- name: cc_public_tls
+  type: certificate
+  options:
+    ca: service_cf_internal_ca
+    common_name: "api.((system_domain))"
+    alternative_names:
+    - "api.((system_domain))"
+    - cloud-controller-ng.service.cf.internal
 - name: cc_bridge_tps
   type: certificate
   options:
@@ -1977,6 +2164,28 @@ variables:
     ca: application_ca
     common_name: instanceIdentityCA
     is_ca: true
+- name: gorouter_backend_tls
+  type: certificate
+  options:
+    ca: service_cf_internal_ca
+    extended_key_usage:
+    - client_auth
+    common_name: gorouter_backend_tls
+    alternative_names:
+    - gorouter.service.cf.internal
+- name: credhub_ca
+  type: certificate
+  options:
+    common_name: credhubServerCa
+    is_ca: true
+- name: credhub_tls
+  type: certificate
+  options:
+    ca: credhub_ca
+    common_name: credhub.((system_domain))
+    alternative_names:
+    - credhub.service.cf.internal
+    - credhub.((system_domain))
 
 releases:
 - name: binary-buildpack
@@ -1984,93 +2193,97 @@ releases:
   version: 1.0.21
   sha1: 4721a43418533ac13d7d5e9ca179b8aec42218cb
 - name: bpm
-  url: https://bosh.io/d/github.com/cloudfoundry-incubator/bpm-release?v=0.9.0
-  version: 0.9.0
-  sha1: 0cb3242063c95271c95b62de3a6d07072aff0b29
+  url: https://bosh.io/d/github.com/cloudfoundry-incubator/bpm-release?v=0.12.2
+  version: 0.12.2
+  sha1: f2edbf3d1417a253205338c9941ca989cd2f8331
 - name: capi
-  url: https://bosh.io/d/github.com/cloudfoundry/capi-release?v=1.62.0
-  version: 1.62.0
-  sha1: 09814ba79fc571b169a3b65d434b63a4ee19362f
+  url: https://bosh.io/d/github.com/cloudfoundry/capi-release?v=1.67.0
+  version: 1.67.0
+  sha1: 62494245b713bdfe748382827bf6872f7e96cb9d
 - name: cf-mysql
   url: https://bosh.io/d/github.com/cloudfoundry/cf-mysql-release?v=36.15.0
   version: 36.15.0
   sha1: 0764d9d6aae7cefd10019437ed83e7715e614633
 - name: cf-networking
-  url: https://bosh.io/d/github.com/cloudfoundry/cf-networking-release?v=2.10.0
-  version: 2.10.0
-  sha1: 993a47bc0b97460833ee0be3823b72c87d06ba84
+  url: https://bosh.io/d/github.com/cloudfoundry/cf-networking-release?v=2.14.0
+  version: 2.14.0
+  sha1: 71e9ea9b4c2857de006ec1ee04efbb64adae0f33
 - name: cf-smoke-tests
-  url: https://bosh.io/d/github.com/cloudfoundry/cf-smoke-tests-release?v=40.0.5
-  version: 40.0.5
-  sha1: 6f6081d24490a82c5b9fea73283e0cfe21cbf207
+  url: https://bosh.io/d/github.com/cloudfoundry/cf-smoke-tests-release?v=40.0.6
+  version: 40.0.6
+  sha1: df727e63fb046c694098527845a2a0294b257635
 - name: cf-syslog-drain
   url: https://bosh.io/d/github.com/cloudfoundry/cf-syslog-drain-release?v=7.0
   version: "7.0"
   sha1: 5b633a277044f78f333b68da54f804b2384d889d
 - name: cflinuxfs2
-  url: https://bosh.io/d/github.com/cloudfoundry/cflinuxfs2-release?v=1.227.0
-  version: 1.227.0
-  sha1: 7d407ac592eed31ce5d857fd7eb03bbc9dd00965
+  url: https://bosh.io/d/github.com/cloudfoundry/cflinuxfs2-release?v=1.234.0
+  version: 1.234.0
+  sha1: 65fe28f5f036d4a333e6d47c6942465629b714ec
 - name: consul
   url: https://bosh.io/d/github.com/cloudfoundry-incubator/consul-release?v=195
   version: "195"
   sha1: 53529e3a9646d82087a65f215138ae45b9ba7b6c
+- name: credhub
+  url: https://bosh.io/d/github.com/pivotal-cf/credhub-release?v=1.9.5
+  version: 1.9.5
+  sha1: 2390e855f092b0fb9c58f9cb88853ea938e87a3e
 - name: diego
-  url: https://bosh.io/d/github.com/cloudfoundry/diego-release?v=2.13.0
-  version: 2.13.0
-  sha1: 8d7c9be689e8638fdc626336dcb6e6560d190587
+  url: https://bosh.io/d/github.com/cloudfoundry/diego-release?v=2.16.0
+  version: 2.16.0
+  sha1: dec82d771afd83e1d8e85f512e6a619b371e7f19
 - name: dotnet-core-buildpack
-  url: https://bosh.io/d/github.com/cloudfoundry/dotnet-core-buildpack-release?v=2.1.3
-  version: 2.1.3
-  sha1: ab2cbdcc2d335ff64e37382e4095a31d972c72ed
+  url: https://bosh.io/d/github.com/cloudfoundry/dotnet-core-buildpack-release?v=2.1.4
+  version: 2.1.4
+  sha1: dc92805765ed73604d5c542d736aea7bffed8b11
 - name: garden-runc
-  url: https://bosh.io/d/github.com/cloudfoundry/garden-runc-release?v=1.15.1
-  version: 1.15.1
-  sha1: bdac2dc7debc2e9b4b9e32f009cb93ac281e5480
+  url: https://bosh.io/d/github.com/cloudfoundry/garden-runc-release?v=1.16.3
+  version: 1.16.3
+  sha1: 2a7c813e7e4d862e19334addf022916fb6b91eb0
 - name: go-buildpack
-  url: https://bosh.io/d/github.com/cloudfoundry/go-buildpack-release?v=1.8.25
-  version: 1.8.25
-  sha1: 086c1a8eb48c5ce23dbbb45b6284a354d6617d92
+  url: https://bosh.io/d/github.com/cloudfoundry/go-buildpack-release?v=1.8.26
+  version: 1.8.26
+  sha1: 2a11862007592ba34e768e7b9544a9698de59a17
 - name: java-buildpack
-  url: https://bosh.io/d/github.com/cloudfoundry/java-buildpack-release?v=4.13.1
-  version: 4.13.1
-  sha1: a8377ea64b32f82e03d5bf3d624333f868f7ebfd
+  url: https://bosh.io/d/github.com/cloudfoundry/java-buildpack-release?v=4.15
+  version: "4.15"
+  sha1: 78face238cf11ea5b1f13eebb7b7befcddb365dc
 - name: loggregator
-  url: https://bosh.io/d/github.com/cloudfoundry/loggregator-release?v=103.0
-  version: "103.0"
-  sha1: 41fe210afef030a9bae37795fdd7c5e5ca779ea3
+  url: https://bosh.io/d/github.com/cloudfoundry/loggregator-release?v=103.1
+  version: "103.1"
+  sha1: 4377aac0179f1e9944ba5b936d59ef0427163f7b
 - name: nats
   url: https://bosh.io/d/github.com/cloudfoundry/nats-release?v=25
   version: "25"
   sha1: a83d5ae37125e48284fd50b099befac1de419a8a
 - name: nodejs-buildpack
-  url: https://bosh.io/d/github.com/cloudfoundry/nodejs-buildpack-release?v=1.6.28
-  version: 1.6.28
-  sha1: f6ff883edc1020df9d47cf56b7e6ac050488606d
+  url: https://bosh.io/d/github.com/cloudfoundry/nodejs-buildpack-release?v=1.6.30
+  version: 1.6.30
+  sha1: b9d2d4f516a95a3f6de179a829dec4deaa155828
 - name: php-buildpack
-  url: https://bosh.io/d/github.com/cloudfoundry/php-buildpack-release?v=4.3.57
-  version: 4.3.57
-  sha1: 63c6a31a73b90472b6ac91c488469f3562ab5897
+  url: https://bosh.io/d/github.com/cloudfoundry/php-buildpack-release?v=4.3.59
+  version: 4.3.59
+  sha1: f1c6ebf8538aa6de07055cf919246caad695eb3a
 - name: python-buildpack
-  url: https://bosh.io/d/github.com/cloudfoundry/python-buildpack-release?v=1.6.18
-  version: 1.6.18
-  sha1: d6d4feeca58222fd5750f5a7e9dca97f91fe6867
+  url: https://bosh.io/d/github.com/cloudfoundry/python-buildpack-release?v=1.6.20
+  version: 1.6.20
+  sha1: db9ab75edf8d96172d3f15a07799f8faf15b24d7
 - name: routing
-  url: https://bosh.io/d/github.com/cloudfoundry-incubator/cf-routing-release?v=0.179.0
-  version: 0.179.0
-  sha1: 203061d0438ed76f25573080f9d1f73f06de5851
+  url: https://bosh.io/d/github.com/cloudfoundry-incubator/cf-routing-release?v=0.180.0
+  version: 0.180.0
+  sha1: 990c2c319e6063573eec18dbeb7c3631a382db7d
 - name: ruby-buildpack
-  url: https://bosh.io/d/github.com/cloudfoundry/ruby-buildpack-release?v=1.7.21
-  version: 1.7.21
-  sha1: 081a7ed4f12e2b79149d82e732390e4280dcbb10
+  url: https://bosh.io/d/github.com/cloudfoundry/ruby-buildpack-release?v=1.7.22
+  version: 1.7.22
+  sha1: 8b2baf552d6f51933fbf37ccacbabbcbd9c7ae6d
 - name: silk
-  url: https://bosh.io/d/github.com/cloudfoundry/silk-release?v=2.10.0
-  version: 2.10.0
-  sha1: f039c0eab50d8007ab28b2defa2b386a9042fefa
+  url: https://bosh.io/d/github.com/cloudfoundry/silk-release?v=2.14.0
+  version: 2.14.0
+  sha1: 48bce6d6bbb1123c279ce4e979a94f9535d5661a
 - name: staticfile-buildpack
-  url: https://bosh.io/d/github.com/cloudfoundry/staticfile-buildpack-release?v=1.4.29
-  version: 1.4.29
-  sha1: 1b2dc05817e90c17cb0336837d262ed07b5b351a
+  url: https://bosh.io/d/github.com/cloudfoundry/staticfile-buildpack-release?v=1.4.31
+  version: 1.4.31
+  sha1: 7371d1b2b4c1e677e8364ce5e1bc325158796b38
 - name: statsd-injector
   url: https://bosh.io/d/github.com/cloudfoundry/statsd-injector-release?v=1.3.0
   version: 1.3.0
@@ -2084,14 +2297,14 @@ releases:
   version: "2.0"
   sha1: df91c31c15da68c7b2905645b20b93a930627d46
 - name: log-cache
-  url: https://bosh.io/d/github.com/cloudfoundry/log-cache-release?v=1.3.0
-  version: 1.3.0
-  sha1: 2fee0f51c4093091d33eb117202f7476f1a4ebcf
+  url: https://bosh.io/d/github.com/cloudfoundry/log-cache-release?v=1.4.4
+  version: 1.4.4
+  sha1: 34a97ff98e9fbd2b167b4a0f6b7773fe120995f7
 - name: bosh-dns-aliases
-  url: https://bosh.io/d/github.com/cloudfoundry/bosh-dns-aliases-release?v=0.0.2
-  version: 0.0.2
-  sha1: 630ff814e5cf38b44c57eda68c60f48462b4b9a8
+  url: https://bosh.io/d/github.com/cloudfoundry/bosh-dns-aliases-release?v=0.0.3
+  version: 0.0.3
+  sha1: b0d0a0350ed87f1ded58b2ebb469acea0e026ccc
 stemcells:
 - alias: default
   os: ubuntu-trusty
-  version: "3586.26"
+  version: "3586.40"
