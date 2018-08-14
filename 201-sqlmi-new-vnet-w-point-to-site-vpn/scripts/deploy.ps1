@@ -1,10 +1,10 @@
 $parameters = $args[0]
 $scriptUrlBase = $args[1]
 
-$subscriptionId = $parameters.subscriptionId
-$resourceGroupName = $parameters.resourceGroupName
-$certificateNamePrefix = $parameters.certificateNamePrefix
-$location = $parameters.location
+$subscriptionId = $parameters['subscriptionId']
+$resourceGroupName = $parameters['resourceGroupName']
+$certificateNamePrefix = $parameters['certificateNamePrefix']
+$location = $parameters['location']
 
 function Ensure-Login () 
 {
@@ -40,7 +40,7 @@ New-SelfSignedCertificate -Type Custom -DnsName ($certificateNamePrefix+"P2SChil
 
 $publicRootCertData = [Convert]::ToBase64String((Get-Item cert:\currentuser\my\$certificateThumbprint).RawData)
 
-$parameters.publicRootCertData = $publicRootCertData
+$parameters['publicRootCertData'] = $publicRootCertData
 
 #Create or check for existing resource group
 $resourceGroup = Get-AzureRmResourceGroup -Name $resourceGroupName -ErrorAction SilentlyContinue
