@@ -18,13 +18,15 @@ $scriptUrlBase = 'https://raw.githubusercontent.com/Azure/azure-quickstart-templ
 
 $subscriptionId = '<subscriptionId>'
 $resourceGroupName = '<resourceGroupName>'
+$location = '<location>'
+
 $managedInstanceName = '<managedInstanceName>'
 $administratorLogin = '<login>'
 $administratorLoginPassword = '<password>'
 $certificateNamePrefix = '<certificateNamePrefix>'
 
 Invoke-Command -ScriptBlock ([Scriptblock]::Create((New-Object System.Net.WebClient).DownloadString($scriptUrlBase+'/scripts/deploy.ps1'))) `
-    -ArgumentList $subscriptionId, $resourceGroupName, $managedInstanceName, $administratorLogin, $administratorLoginPassword, $certificateNamePrefix, $scriptUrlBase
+    -ArgumentList $subscriptionId, $resourceGroupName, $location, $managedInstanceName, $administratorLogin, $administratorLoginPassword, $certificateNamePrefix, $scriptUrlBase
 
 ```
 
