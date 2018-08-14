@@ -53,12 +53,9 @@ $templateParameters = @{
 $resourceGroup = Get-AzureRmResourceGroup -Name $resourceGroupName -ErrorAction SilentlyContinue
 if(!$resourceGroup)
 {
-    Write-Host "Resource group '$resourceGroupName' does not exist. To create a new resource group, please enter a location.";
-    if(!$resourceGroupLocation) {
-        $resourceGroupLocation = Read-Host "resourceGroupLocation";
-    }
-    Write-Host "Creating resource group '$resourceGroupName' in location '$resourceGroupLocation'";
-    New-AzureRmResourceGroup -Name $resourceGroupName -Location $resourceGroupLocation
+    Write-Host "Resource group '$resourceGroupName' does not exist.;
+    Write-Host "Creating resource group '$resourceGroupName' in location '$location'";
+    New-AzureRmResourceGroup -Name $resourceGroupName -Location $location
 }
 else{
     Write-Host "Using existing resource group '$resourceGroupName'";
