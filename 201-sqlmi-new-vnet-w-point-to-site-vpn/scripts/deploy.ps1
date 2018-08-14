@@ -24,7 +24,7 @@ If($context.Subscription.Id -ne $subscriptionId)
     Select-AzureRmSubscription -SubscriptionId $subscriptionId  | Out-null
 }
 
-$certificate = New-SelfSignedCertificate -Type Custom -DnsName ($certificateNamePrefix+"P2SRoot") -KeySpec Signature `
+$certificate = New-SelfSignedCertificate -Type Custom -KeySpec Signature `
     -Subject ("CN=$certificateNamePrefix"+"P2SRoot") -KeyExportPolicy Exportable `
     -HashAlgorithm sha256 -KeyLength 2048 `
     -CertStoreLocation "Cert:\CurrentUser\My" -KeyUsageProperty Sign -KeyUsage CertSign
