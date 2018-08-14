@@ -6,6 +6,10 @@ $resourceGroupName = $parameters['resourceGroupName']
 $certificateNamePrefix = $parameters['certificateNamePrefix']
 $location = $parameters['location']
 
+$parameters.Remove('subscriptionId')
+$parameters.Remove('resourceGroupName')
+$parameters.Remove('certificateNamePrefix')
+
 function Ensure-Login () 
 {
     $context = Get-AzureRmContext
