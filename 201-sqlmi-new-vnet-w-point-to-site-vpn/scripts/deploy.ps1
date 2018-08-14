@@ -1,10 +1,11 @@
 $subscriptionId = $args[0]
 $resourceGroupName = $args[1]
-$managedInstanceName = $args[2]
-$administratorLogin = $args[3]
-$administratorLoginPassword = $args[4]
-$certificateNamePrefix = $args[5]
-$scriptUrlBase = $args[6]
+$location = $args[2]
+$managedInstanceName = $args[3]
+$administratorLogin = $args[4]
+$administratorLoginPassword = $args[5]
+$certificateNamePrefix = $args[6]
+$scriptUrlBase = $args[7]
 
 function Ensure-Login () 
 {
@@ -35,7 +36,7 @@ New-SelfSignedCertificate -Type Custom -DnsName ($certificateNamePrefix+"P2SChil
     -Subject ("CN=$certificateNamePrefix"+"P2SChild") -KeyExportPolicy Exportable `
     -HashAlgorithm sha256 -KeyLength 2048 `
     -CertStoreLocation "Cert:\CurrentUser\My" `
-    -Signer $cert -TextExtension @("2.5.29.37={text}1.3.6.1.5.5.7.3.2") | Out-null
+    -Signer $certificate -TextExtension @("2.5.29.37={text}1.3.6.1.5.5.7.3.2") | Out-null
 
 $publicRootCertData = [Convert]::ToBase64String((Get-Item cert:\currentuser\my\$certificateThumbprint).RawData)
 
