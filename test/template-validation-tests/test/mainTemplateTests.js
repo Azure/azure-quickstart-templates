@@ -23,9 +23,6 @@ templateFiles.forEach(function(file) {
         console.log(file);
 });
 
-console.log(mainTemplateFile.file);
-console.log(mainTemplateFileJSONObject.file);
-
 chai.use(function(_chai, _) {
     _chai.Assertion.addMethod('withMessage', function(msg) {
         _.flag(this, 'message', msg);
@@ -126,18 +123,13 @@ describe('template files - ', () => {
                 next();
             });
             /** resourceGroup().location should NOT be present anywhere in template, EXCEPT as a defaultValue */
-            it.each(templateObject, 'resourceGroup().location must NOT be be used in the template file ' + templateJSONObject.filename + ', except as a default value for the location parameter. Please correct similar errors in the file', function(element, next) {
+            it.each(templateObject, 'resourceGroup().location must NOT be be used in the template file ' + templateJSONObject.filename + ', except as a default value for the location parameter.', function(element, next) {
                 var templateFileContent = JSON.stringify(templateObject);
 
-
-
-                console.log(templateJSONObject.filename.toLowerCase() + ' --- ' + folder + '/' + mainTemplateFileName);
+                // skip this if the file is NOT mainTemplate - so we know that location is being passed to nested templates...
                 if (templateJSONObject.filename.toLowerCase() != (folder + '\\maintemplate.json')) {
-                    console.log('>>>match on mainTemplate and template file');
+                    templateFileContent = templateFileContent.replace(/\"defaultValue\":\s*\"\[resourceGroup\(\)\.location\]\"/,"");
                 }
-                // skip this if it's mainTemplate - so we know that location is being passed to nested templates...
-                templateFileContent = templateFileContent.replace(/\"defaultValue\":\s*\"\[resourceGroup\(\)\.location\]\"/,"");
-
 
                 var locationString = 'resourceGroup().location';
                 var message = 'in file:' + templateJSONObject.filename + ' should NOT have location set to resourceGroup().location';
@@ -145,7 +137,7 @@ describe('template files - ', () => {
                 next();
             });
             /** providers().apiVersions[n] must not be present for all template files. */
-            it.each(templateObject, 'providers().apiVersions must NOT be retrieved using providers().apiVersions[n] in the template file ' + templateJSONObject.filename + '. This function is non-deterministic. Please correct similar errors in the file', function(element, next) {
+            it.each(templateObject, 'apiVersions must NOT be retrieved using providers().apiVersions[n] in the template file ' + templateJSONObject.filename + '. This function is non-deterministic.', function(element, next) {
                 var templateFileContent = JSON.stringify(templateObject);
                 var message = 'in file:' + templateJSONObject.filename + ' should NOT have api version determined by providers().';
                 assert(templateFileContent.match(/providers\(.*?\)\.apiVersions/) === null, message);
