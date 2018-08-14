@@ -61,6 +61,7 @@ else{
     Write-Host "Using existing resource group '$resourceGroupName'";
 }
 
+
 # Start the deployment
 Write-Host "Starting deployment...";
 
