@@ -9,15 +9,15 @@ configuration ConfigureSQLVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSetupCreds
     )
 
-    Import-DscResource -ModuleName xComputerManagement, xNetworking, xDisk, cDisk, xActiveDirectory, SqlServerDsc
+    Import-DscResource -ModuleName ComputerManagementDsc, xNetworking, xActiveDirectory, SqlServerDsc, xPSDesiredStateConfiguration
 
     WaitForSqlSetup
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
     $InterfaceAlias = $($Interface.Name)
-    [PSCredential] $DomainCreds = New-Object PSCredential ("${DomainNetbiosName}\$($DomainAdminCreds.UserName)", $DomainAdminCreds.Password)
-    [PSCredential] $SPSCreds = New-Object PSCredential ("${DomainNetbiosName}\$($SPSetupCreds.UserName)", $SPSetupCreds.Password)
-    [PSCredential] $SQLCreds = New-Object PSCredential ("${DomainNetbiosName}\$($SqlSvcCreds.UserName)", $SqlSvcCreds.Password)
+    [PSCredential] $DomainAdminCredsQualified = New-Object PSCredential ("${DomainNetbiosName}\$($DomainAdminCreds.UserName)", $DomainAdminCreds.Password)
+    [PSCredential] $SPSetupCredsQualified = New-Object PSCredential ("${DomainNetbiosName}\$($SPSetupCreds.UserName)", $SPSetupCreds.Password)
+    [PSCredential] $SQLCredsQualified = New-Object PSCredential ("${DomainNetbiosName}\$($SqlSvcCreds.UserName)", $SqlSvcCreds.Password)
     $ComputerName = Get-Content env:computername
     [Int] $RetryCount = 30
     [Int] $RetryIntervalSec = 30
@@ -45,13 +45,14 @@ configuration ConfigureSQLVM
             LocalPort = "1433"
             Ensure = "Present"
         }
+
         WindowsFeature ADPS
         {
             Name = "RSAT-AD-PowerShell"
             Ensure = "Present"
             DependsOn = "[xFirewall]DatabaseEngineFirewallRule"
-
         }
+
         xDnsServerAddress DnsServerAddress
         {
             Address        = $DNSServer
@@ -66,17 +67,17 @@ configuration ConfigureSQLVM
         xWaitForADDomain DscForestWait
         {
             DomainName = $DomainFQDN
-            DomainUserCredential= $DomainCreds
+            DomainUserCredential= $DomainAdminCredsQualified
             RetryCount = $RetryCount
             RetryIntervalSec = $RetryIntervalSec
             DependsOn = "[xDnsServerAddress]DnsServerAddress"
         }
 
-        xComputer DomainJoin
+        Computer DomainJoin
         {
             Name = $ComputerName
             DomainName = $DomainFQDN
-            Credential = $DomainCreds
+            Credential = $DomainAdminCredsQualified
             DependsOn = "[xWaitForADDomain]DscForestWait"
         }
 
@@ -85,24 +86,52 @@ configuration ConfigureSQLVM
         #**********************************************************
         xADUser CreateSqlSvcAccount
         {
-            DomainAdministratorCredential = $DomainCreds
+            DomainAdministratorCredential = $DomainAdminCredsQualified
             DomainName = $DomainFQDN
             UserName = $SqlSvcCreds.UserName
-            Password = $SQLCreds
+            Password = $SQLCredsQualified
             PasswordNeverExpires = $true
             Ensure = "Present"
-            DependsOn = "[xComputer]DomainJoin"
+            DependsOn = "[Computer]DomainJoin"
+        }
+
+        xADServicePrincipalName UpdateSqlSPN1
+        {
+            Ensure               = "Present"
+            ServicePrincipalName = "MSSQLSvc/$ComputerName.$($DomainFQDN):1433"
+            Account              = $SqlSvcCreds.UserName
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[xADUser]CreateSqlSvcAccount"
+        }
+
+        xADServicePrincipalName UpdateSqlSPN2
+        {
+            Ensure               = "Present"
+            ServicePrincipalName = "MSSQLSvc/$ComputerName.$DomainFQDN"
+            Account              = $SqlSvcCreds.UserName
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[xADUser]CreateSqlSvcAccount"
+        }
+
+        SqlServiceAccount SetSqlInstanceServiceAccount
+        {
+            ServerName     = $ComputerName
+            InstanceName   = "MSSQLSERVER"
+            ServiceType    = "DatabaseEngine"
+            ServiceAccount = $SQLCredsQualified
+            RestartService = $true
+            DependsOn      = "[xADServicePrincipalName]UpdateSqlSPN1", "[xADServicePrincipalName]UpdateSqlSPN2"
         }
 
         xADUser CreateSPSetupAccount
         {
-            DomainAdministratorCredential = $DomainCreds
+            DomainAdministratorCredential = $DomainAdminCredsQualified
             DomainName = $DomainFQDN
             UserName = $SPSetupCreds.UserName
-            Password = $SPSCreds
+            Password = $SPSetupCredsQualified
             PasswordNeverExpires = $true
             Ensure = "Present"
-            DependsOn = "[xComputer]DomainJoin"
+            DependsOn = "[Computer]DomainJoin"
         }
 
         SQLServerLogin AddDomainAdminLogin
@@ -112,7 +141,7 @@ configuration ConfigureSQLVM
             ServerName = $ComputerName
             InstanceName = "MSSQLSERVER"
             LoginType = "WindowsUser"
-            DependsOn = "[xComputer]DomainJoin"
+            DependsOn = "[Computer]DomainJoin"
         }
 
         SQLServerLogin AddSPSetupLogin
@@ -157,13 +186,14 @@ configuration ConfigureSQLVM
 
         SQLServerMaxDop ConfigureMaxDOP
         {
-            ServerName = $ComputerName
+            ServerName   = $ComputerName
             InstanceName = "MSSQLSERVER"
-            MaxDop = 1
-            DependsOn = "[xComputer]DomainJoin"
+            MaxDop       = 1
+            DependsOn    = "[Computer]DomainJoin"
         }
     }
 }
+
 function Get-NetBIOSName
 {
     [OutputType([string])]
@@ -187,6 +217,7 @@ function Get-NetBIOSName
         }
     }
 }
+
 function WaitForSqlSetup
 {
     # Wait for SQL Server Setup to finish before proceeding.
