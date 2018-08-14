@@ -57,7 +57,8 @@ if(!$resourceGroup)
     Write-Host "Creating resource group '$resourceGroupName' in location '$location'";
     New-AzureRmResourceGroup -Name $resourceGroupName -Location $location
 }
-else{
+else
+{
     Write-Host "Using existing resource group '$resourceGroupName'";
 }
 
