@@ -12,6 +12,7 @@ require('it-each')({ testPerIteration: true });
 var folder = process.env.npm_config_folder || filesFolder;
 var mainTemplateFileJSONObject = util.getMainTemplateFile(folder).jsonObject;
 var mainTemplateFile = util.getMainTemplateFile(folder).file;
+var mainTemplateFileName = "maintemplate.json";
 var createUiDefFileJSONObject = util.getCreateUiDefFile(folder).jsonObject;
 var createUiDefFile = util.getCreateUiDefFile(folder).file;
 var templateFiles = util.getTemplateFiles(folder).files;
@@ -21,6 +22,9 @@ console.log('Testing template files...');
 templateFiles.forEach(function(file) {
         console.log(file);
 });
+
+console.log(mainTemplateFile.file);
+console.log(mainTemplateFileJSONObject.file);
 
 chai.use(function(_chai, _) {
     _chai.Assertion.addMethod('withMessage', function(msg) {
@@ -124,7 +128,17 @@ describe('template files - ', () => {
             /** resourceGroup().location should NOT be present anywhere in template, EXCEPT as a defaultValue */
             it.each(templateObject, 'resourceGroup().location must NOT be be used in the template file ' + templateJSONObject.filename + ', except as a default value for the location parameter. Please correct similar errors in the file', function(element, next) {
                 var templateFileContent = JSON.stringify(templateObject);
+
+
+
+                console.log(templateJSONObject.filename.toLowerCase() + ' --- ' + folder + '/' + mainTemplateFileName);
+                if (templateJSONObject.filename.toLowerCase() != (folder + '\\maintemplate.json')) {
+                    console.log('>>>match on mainTemplate and template file');
+                }
+                // skip this if it's mainTemplate - so we know that location is being passed to nested templates...
                 templateFileContent = templateFileContent.replace(/\"defaultValue\":\s*\"\[resourceGroup\(\)\.location\]\"/,"");
+
+
                 var locationString = 'resourceGroup().location';
                 var message = 'in file:' + templateJSONObject.filename + ' should NOT have location set to resourceGroup().location';
                 assert(templateFileContent.includes(locationString) === false, message);
