@@ -16,7 +16,7 @@ var jsonFiles = util.getFiles(folder, '.json');
 describe('json files in folder - ', () => {
     // TODO: test ALL json files in subfolders are also returned here
     it.each(jsonFiles, '%s must be a valid json', ['element'], function(element, next) {
-        var fileString = fs.readFileSync(path.resolve(folder, element), {
+        var fileString = fs.readFileSync(path.resolve(element), {
             encoding: 'utf8'
         }).trim();
         try {
