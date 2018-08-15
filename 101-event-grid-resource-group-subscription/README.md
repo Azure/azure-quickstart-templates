@@ -8,4 +8,6 @@
 
 This template creates an Azure Event Grid subscription to a resource group. It uses a WebHook to receive the events. Deploy the template to a resource group to subscribe to events for that resource group.
 
+The parameters file includes an endpoint URL, but this URL is for not intended for your use. You should create your own endpoint and use that URL. To create a site that collects event messages, see [Create a message endpoint](https://docs.microsoft.com/azure/event-grid/custom-event-quickstart#create-a-message-endpoint). 
+
 `Tags: eventgrid`
