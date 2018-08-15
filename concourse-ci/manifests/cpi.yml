@@ -1,0 +1,105 @@
+---
+- type: replace
+  path: /releases/-
+  value:
+    name: bosh-azure-cpi
+    version: "35.0.0"
+    url: https://bosh.io/d/github.com/cloudfoundry-incubator/bosh-azure-cpi-release?v=35.0.0
+    sha1: 0365a53fb68b647a7250c28a1c852a394ab0d79a
+
+- type: replace
+  path: /resource_pools/name=vms/stemcell?
+  value:
+    url: https://bosh.io/d/stemcells/bosh-azure-hyperv-ubuntu-trusty-go_agent?v=3541.10
+    sha1: 60a6561e0bfe48d92acd40e38708d061799103f4
+
+# Configure sizes
+- type: replace
+  path: /resource_pools/name=vms/cloud_properties?
+  value:
+    instance_type: Standard_D1_v2
+
+- type: replace
+  path: /networks/name=default/subnets/0/cloud_properties?
+  value:
+    virtual_network_name: ((vnet_name))
+    subnet_name: ((subnet_name))
+
+# Enable registry job
+- type: replace
+  path: /instance_groups/name=bosh/jobs/-
+  value:
+    name: registry
+    release: bosh
+
+- type: replace
+  path: /instance_groups/name=bosh/properties/registry?
+  value:
+    address: ((internal_ip))
+    host: ((internal_ip))
+    db: # todo remove
+      host: 127.0.0.1
+      user: postgres
+      password: ((postgres_password))
+      database: bosh
+      adapter: postgres
+    http:
+      user: registry
+      password: ((registry_password))
+      port: 25777
+    username: registry
+    password: ((registry_password))
+    port: 25777
+
+# Add CPI job
+- type: replace
+  path: /instance_groups/name=bosh/jobs/-
+  value: &cpi_job
+    name: azure_cpi
+    release: bosh-azure-cpi
+
+- type: replace
+  path: /instance_groups/name=bosh/properties/director/cpi_job?
+  value: azure_cpi
+
+- type: replace
+  path: /cloud_provider/template?
+  value: *cpi_job
+
+- type: replace
+  path: /instance_groups/name=bosh/properties/azure?
+  value: &cpi_conf
+    environment: AzureCloud
+    subscription_id: ((subscription_id))
+    tenant_id: ((tenant_id))
+    client_id: ((client_id))
+    client_secret: ((client_secret))
+    resource_group_name: ((resource_group_name))
+    storage_account_name: ((storage_account_name))
+    default_security_group: ((default_security_group))
+    ssh_user: vcap
+    ssh_public_key: ((ssh.public_key))
+
+- type: replace
+  path: /cloud_provider/ssh_tunnel?
+  value:
+    host: ((internal_ip))
+    port: 22
+    user: vcap
+    private_key: ((ssh.private_key))
+
+- type: replace
+  path: /cloud_provider/properties/azure?
+  value: *cpi_conf
+
+- type: replace
+  path: /variables/-
+  value:
+    name: ssh
+    type: ssh
+
+- type: replace
+  path: /variables/-
+  value:
+    name: registry_password
+    type: password
