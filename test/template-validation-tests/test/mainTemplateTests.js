@@ -126,8 +126,8 @@ describe('template files - ', () => {
             it.each(templateObject, 'resourceGroup().location must NOT be be used in the template file ' + templateJSONObject.filename + ', except as a default value for the location parameter.', function(element, next) {
                 var templateFileContent = JSON.stringify(templateObject);
 
-                // skip this if the file is NOT mainTemplate - so we know that location is being passed to nested templates...
-                if (templateJSONObject.filename.toLowerCase() != (folder + '\\maintemplate.json')) {
+                // if this is mainTemplate.json, a defaultValue of resourceGroup().location is OK, so remove it before searching for it
+                if (templateJSONObject.filename.toLowerCase() == (folder + '\\maintemplate.json')) {
                     templateFileContent = templateFileContent.replace(/\"defaultValue\":\s*\"\[resourceGroup\(\)\.location\]\"/,"");
                 }
 
