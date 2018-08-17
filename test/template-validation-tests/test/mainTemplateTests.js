@@ -114,11 +114,11 @@ describe('template files - ', () => {
             var resources = Object.keys(templateObject.resources).map(function(key) {
                 return templateObject.resources[key];
             });
-            /** Each resource location should be "location": "[*]" */
-            it.each(resources, 'location value of resource %s should be an expression', ['name'], function(element, next) {
+            /** Each resource location should be and expression "location": "[*]" or "global" */
+            it.each(resources, 'location value of resource %s should be an expression or "global"', ['name'], function(element, next) {
                 var message = 'in file:' + templateJSONObject.filename + ' should have location set to an expression';
                 if (element.location) {
-                    element.location.should.withMessage(getErrorMessage(element, templateJSONObject.filepath, message)).match(/\[.+\]/);
+                    element.location.should.withMessage(getErrorMessage(element, templateJSONObject.filepath, message)).match(/\[.+\]|global/);
                 }
                 next();
             });
