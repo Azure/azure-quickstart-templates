@@ -267,7 +267,8 @@ The following code shows an example:
           "metadata": {
               "description": "The base URI where artifacts required by this template are located including a trailing '/'"
           },
-          "defaultValue": "[deployment().properties.templateLink.uri]"
+          "defaultValue": "[deployment().properties.templateLink.uri]",  //use this for the Azure marketplace
+          "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/[name of sample folder]" // use this for a Quickstart in this repo (we're working on fixing this...)
       },
       "_artifactsLocationSasToken": {
           "type": "securestring",

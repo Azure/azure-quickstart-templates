@@ -10,11 +10,10 @@ var should = chai.should();
 
 var folder = process.env.npm_config_folder || filesFolder;
 
-var jsonFiles = util.getFiles(folder, '.json');
+var jsonFiles = util.getFiles(folder, '.json', jsonFiles, true);
 
 /** Validates all json files in the given folder are valid. */
 describe('json files in folder - ', () => {
-    // TODO: test ALL json files in subfolders are also returned here
     it.each(jsonFiles, '%s must be a valid json', ['element'], function(element, next) {
         var fileString = fs.readFileSync(path.resolve(element), {
             encoding: 'utf8'

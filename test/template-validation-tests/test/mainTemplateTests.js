@@ -12,13 +12,19 @@ require('it-each')({ testPerIteration: true });
 var folder = process.env.npm_config_folder || filesFolder;
 var mainTemplateFileJSONObject = util.getMainTemplateFile(folder).jsonObject;
 var mainTemplateFile = util.getMainTemplateFile(folder).file;
+var mainTemplateFileName = "maintemplate.json";
 var createUiDefFileJSONObject = util.getCreateUiDefFile(folder).jsonObject;
 var createUiDefFile = util.getCreateUiDefFile(folder).file;
 var templateFiles = util.getTemplateFiles(folder).files;
 var templateFileJSONObjects = util.getTemplateFiles(folder).fileJSONObjects;
 
-chai.use(function(_chai, _) {
-    _chai.Assertion.addMethod('withMessage', function(msg) {
+console.log('Testing template files...');
+templateFiles.forEach(function (file) {
+    console.log(file);
+});
+
+chai.use(function (_chai, _) {
+    _chai.Assertion.addMethod('withMessage', function (msg) {
         _.flag(this, 'message', msg);
     });
 });
@@ -55,8 +61,8 @@ describe('template files - ', () => {
 
         var parametersInMainTemplate = Object.keys(mainTemplateFileJSONObject.parameters);
         /** Validate each parameter that does not have a defaultValue in mainTemplate, has a value in outputs */
-        it.each(parametersInMainTemplate, 'parameter %s that does not have a defaultValue in file mainTemplate.json, must have a corresponding output in createUiDefinition.json', ['element'], function(element, next){
-            if (typeof(mainTemplateFileJSONObject.parameters[element].defaultValue) === 'undefined') {
+        it.each(parametersInMainTemplate, 'parameter %s that does not have a defaultValue in file mainTemplate.json, must have a corresponding output in createUiDefinition.json', ['element'], function (element, next) {
+            if (typeof (mainTemplateFileJSONObject.parameters[element].defaultValue) === 'undefined') {
                 outputsInCreateUiDef.should.withMessage('in file:mainTemplate.json, outputs in createUiDefinition is missing the parameter ' + element).contain(element.toLowerCase());
             }
             next();
@@ -94,7 +100,7 @@ describe('template files - ', () => {
 
         /** Validate each parameter should be used in main template */
         var mainTemplateFileContent = JSON.stringify(mainTemplateFileJSONObject).toLowerCase();
-        it.each(parametersInMainTemplate, 'parameter %s must be used in file mainTemplate.json', ['element'], function(element, next) {
+        it.each(parametersInMainTemplate, 'parameter %s must be used in file mainTemplate.json', ['element'], function (element, next) {
             var paramString = 'parameters(\'' + element.toLowerCase() + '\')';
             assert(mainTemplateFileContent.includes(paramString) === true, 'unused parameter "' + element + '" in file mainTemplate.json');
             next();
@@ -105,32 +111,65 @@ describe('template files - ', () => {
         templateFileJSONObjects.forEach(templateJSONObject => {
             var templateObject = templateJSONObject.value;
             templateObject.should.have.property('resources');
-            var resources = Object.keys(templateObject.resources).map(function(key) {
+            var resources = Object.keys(templateObject.resources).map(function (key) {
                 return templateObject.resources[key];
             });
-            /** Each resource location should be "location": "[*]" */
-            it.each(resources, 'location value of resource %s should be an expression', ['name'], function(element, next) {
+            /** Each resource location should be and expression "location": "[*]" or "global" */
+            it.each(resources, 'location value of resource %s should be an expression or "global"', ['name'], function (element, next) {
                 var message = 'in file:' + templateJSONObject.filename + ' should have location set to an expression';
                 if (element.location) {
-                    element.location.should.withMessage(getErrorMessage(element, templateJSONObject.filepath, message)).match(/\[.+\]/);
+                    element.location.should.withMessage(getErrorMessage(element, templateJSONObject.filepath, message)).match(/\[.+\]|global/);
                 }
                 next();
             });
             /** resourceGroup().location should NOT be present anywhere in template, EXCEPT as a defaultValue */
-            it.each(templateObject, 'resourceGroup().location must NOT be be used in the template file ' + templateJSONObject.filename + ', except as a default value for the location parameter. Please correct similar errors in the file', function(element, next) {
+            it.each(templateObject, 'resourceGroup().location must NOT be be used in the template file ' + templateJSONObject.filename + ', except as a default value for the location parameter.', function (element, next) {
                 var templateFileContent = JSON.stringify(templateObject);
-                templateFileContent = templateFileContent.replace(/\"defaultValue\":\s*\"\[resourceGroup\(\)\.location\]\"/,"");
+
+                // if this is mainTemplate.json, a defaultValue of resourceGroup().location is OK, so remove it before searching for it
+                if (templateJSONObject.filename.toLowerCase() == (folder + '\\maintemplate.json')) {
+                    templateFileContent = templateFileContent.replace(/\"defaultValue\":\s*\"\[resourceGroup\(\)\.location\]\"/, "");
+                }
+
                 var locationString = 'resourceGroup().location';
                 var message = 'in file:' + templateJSONObject.filename + ' should NOT have location set to resourceGroup().location';
                 assert(templateFileContent.includes(locationString) === false, message);
                 next();
             });
             /** providers().apiVersions[n] must not be present for all template files. */
-            it.each(templateObject, 'providers().apiVersions must NOT be retrieved using providers().apiVersions[n] in the template file ' + templateJSONObject.filename + '. This function is non-deterministic. Please correct similar errors in the file', function(element, next) {
+            it.each(templateObject, 'apiVersions must NOT be retrieved using providers().apiVersions[n] in the template file ' + templateJSONObject.filename + '. This function is non-deterministic.', function (element, next) {
                 var templateFileContent = JSON.stringify(templateObject);
                 var message = 'in file:' + templateJSONObject.filename + ' should NOT have api version determined by providers().';
                 assert(templateFileContent.match(/providers\(.*?\)\.apiVersions/) === null, message);
                 next();
+
+            });
+            /** VM Image ref should not contain preview */
+            // NOTE: Property names are case sensitive in the test though they are not in ARM - the test will fail if different casing is used in the template
+
+            /** TODO: need to account for use of variables and parameters in the property value
+                If the value is a simple variable we can resolve easily
+                If the value is a parameter, get the defaultValue */
+                
+            it('VM Image ref must not contain "-preview"', () => {
+                var templateObject = templateJSONObject.value;
+                Object.keys(templateObject.resources).forEach(resource => {
+                    var resourceType = templateObject.resources[resource].type.toLowerCase();
+                    if (resourceType === 'microsoft.compute/virtualmachines') {
+                        console.log('VM');
+                        var previewString = "-preview";
+                        var offer = templateObject.resources[resource].properties.storageProfile.imageReference.offer.toLowerCase();
+                        var message = 'in file:' + templateJSONObject.filename + ' VM must NOT use a preview image: ' + offer;
+                        assert(offer.includes(previewString) === false, message);
+                    }
+                    if (resourceType === 'microsoft.compute/virtualmachinescalesets') {
+                        console.log('VMSS');
+                        var previewString = "-preview";
+                        var offer = templateObject.resources[resource].properties.virtualMachineProfile.storageProfile.imageReference.offer.toLowerCase();
+                        var message = 'in file:' + templateJSONObject.filename + ' VMSS must NOT use a preview image: ' + offer;
+                        assert(offer.includes(previewString) === false, message);
+                    }
+                });
             });
         });
     });
