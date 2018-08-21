@@ -2,69 +2,140 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "storageAccountName": {
-      "type": "string",
-      "metadata": {
-        "description": "Unique DNS Label for the Storage Account where the Virtual Machine's disks will be placed."
-      }
-    },
     "adminUsername": {
       "type": "string",
       "metadata": {
-        "description": "Username for the Virtual Machine."
+        "description": "Username for the Virtual Machine(s). Do not use special characters."
       }
     },
     "adminPassword": {
       "type": "securestring",
       "metadata": {
-        "description": "Password for the Virtual Machine."
+        "description": "Password for the Virtual Machine(s) and for the 'admin' SolOS CLI user."
       }
     },
     "securityGroupName": {
       "type": "string",
-      "defaultValue": "vmr-security",
+      "defaultValue": "solace-security",
       "metadata": {
-        "description": "Security group defined to support VMR default message vpn ports"
+        "description": "Security group defined to support PubSub+ message broker system level and default message vpn ports."
       }
     },
-    "dnsLabelForPublicIP": {
+    "workspaceName": {
       "type": "string",
+      "defaultValue": "",
       "metadata": {
-        "description": "Unique DNS Label for the Public IP used to access the Virtual Machine."
+        "description": "Unique OMS Workspace Name for Log Analytics. Leave this field empty to not deploy an OMS Workspace."
       }
     },
-    "centOSVersion": {
+    "workspaceRegion": {
       "type": "string",
-      "defaultValue": "7.2",
+      "defaultValue": "East US",
       "metadata": {
-        "description": "The Centos version for deploying the Docker containers. This will pick a fully patched image of this given Centos version. Allowed values: 7.2, 7.3"
+        "description": "OMS Workspace Region for Log Analytics. Not used if Workspace Name is empty."
+      },
+      "allowedValues": [
+        "East US",
+        "West Europe",
+        "Southeast Asia",
+        "Australia Southeast",
+        "Japan East",
+        "UK South",
+        "Central India",
+        "Canada Central"
+      ]
+    },
+    "dnsLabelForLbIp": {
+      "type": "string",
+      "metadata": {
+        "description": "Unique DNS Label for the Public IP used to access the Load Balancer."
+      }
+    },
+    "dnsLabelForVmIp": {
+      "type": "string",
+      "metadata": {
+        "description": "Unique DNS Label for the Public IP used to access the Virtual Machine(s). Do not use '-'"
+      }
+    },
+    "centosVersion": {
+      "type": "string",
+      "defaultValue": "7.4",
+      "metadata": {
+        "description": "The CentOS version for deploying the Docker containers. This will pick a fully patched image of this given CentOS version. Allowed values: 7.2, 7.3, 7.4"
       },
       "allowedValues": [
         "7.2",
-        "7.3"
+        "7.3",
+        "7.4"
       ]
     },
-    "vmSize": {
+    "messageRoutingVmSize": {
       "type": "string",
       "defaultValue": "Standard_D2_v2",
       "metadata": {
-        "description": "The size of the VM. Requires at lest 2 cores and 4GB of memory. Allowed values: DS2_V2, F2S"
+        "description": "The size of the Solace Message Routing Node VM. Requires at least 2 cores and 4GB of memory. Allowed values: D2_v2, DS2_v2, D2_v3, D2s_v3"
       },
       "allowedValues": [
+        "Standard_D1_v2",
         "Standard_D2_v2",
-        "Standard_F2s"
+        "Standard_D3_v2",
+        "Standard_D4_v2",
+        "Standard_D5_v2",
+        "Standard_D2_v3",
+        "Standard_D4_v3",
+        "Standard_D8_v3",
+        "Standard_D16_v3",
+        "Standard_DS1_v2",
+        "Standard_DS2_v2",
+        "Standard_DS3_v2",
+        "Standard_DS4_v2",
+        "Standard_DS5_v2",
+        "Standard_D2s_v3",
+        "Standard_D4s_v3",
+        "Standard_D8s_v3",
+        "Standard_D16s_v3"
       ]
     },
-    "solaceVMR_URI": {
+    "monitorVmSize": {
       "type": "string",
+      "defaultValue": "Standard_D1_v2",
       "metadata": {
-        "description": "The URI location of the Solace VMR Docker container tarball"
+        "description": "The size of the Solace Monitor Node VM. Requires at least 1 core and 1GB of memory. Allowed values: D1_v2, DS1_v2, D2_v2, DS2_v2, D2_v3, D2s_v3"
+      },
+      "allowedValues": [
+        "Standard_D1_v2",
+        "Standard_DS1_v2",
+        "Standard_D2_v2",
+        "Standard_DS2_v2",
+        "Standard_D2_v3",
+        "Standard_D2s_v3"
+      ]
+    },
+    "dataDiskSize": {
+      "type": "string",
+      "defaultValue": "0",
+      "metadata": {
+        "description": "The size of the data disk in GB for diagnostics and message spooling on the Solace Message Routing Nodes. Allowed values: 0, 20, 40, 80, 160"
+      },
+      "allowedValues": [
+        "0",
+        "20",
+        "40",
+        "80",
+        "160"
+      ]
+    },
+    "solaceDockerImageReference": {
+      "type": "string",
+      "defaultValue": "solace/solace-pubsub-standard:latest",
+      "metadata": {
+          "description": "Solace PubSub+ message broker docker image reference: a docker registry name with optional tag or a download URL. The download URL can be obtained from http://dev.solace.com/downloads/ or it can be a url to a remotely hosted load version"
       }
     },
     "deploymentModel": {
       "type": "string",
       "metadata": {
-        "description": "Deploy three node ha cluster or single node"
+        "description": "Deploy three node HA cluster or single node"
       },
       "allowedValues": [
         "HighAvailability",
@@ -86,38 +157,71 @@
     "imagePublisher": "OpenLogic",
     "imageOffer": "Centos",
     "OSDiskName": "osdiskfordockersimple",
+    "dataDiskName": "datadiskfordockersimple",
     "nicName": "myVMNicD",
     "scriptUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/solace-message-router/",
-    "sharedTemplatename": "shared-resources.json",
-    "solaceInstallScriptName": "deploy_vmr.sh",
+    "nestedUrl": "[concat(variables('baseUrl'), 'nestedtemplates/')]",
+    "scriptsUrl": "[concat(variables('baseUrl'), 'scripts/')]",
+    "solaceSecurityName": "SolaceSecurity.Template",
+    "securitySharedTemplateName": "security-shared-resources.json",
+    "solaceLoadBalancerName": "SolaceLoadBalancer.Template",
+    "loadBalancerSharedTemplateName": "loadbalancer-shared-resources.json",
+    "solaceWorkspaceName": "SolaceWorkspace.Template",
+    "workspaceEnabledSharedTemplateName": "workspace-enabled-shared-resources.json",
+    "workspaceDisabledSharedTemplateName": "workspace-disabled-shared-resources.json",
+    "solaceInstallScriptName": "deploy_solace.sh",
+    "sempQueryScriptName": "semp_query.sh",
     "publicIPAddressName": "myPublicIPD",
+    "publicIPAddressNameLB": "myLBPublicIPD",
     "publicIPAddressType": "Dynamic",
-    "vmStorageAccountVHDsName": "vhds",
-    "vmName": "SolaceVMR",
     "addressPrefix": "10.0.0.0/16",
     "subnetPrefix": "10.0.0.0/24",
-    "nodeAddressPrefix": "10.0.0.10",
-    "storageAccountType": "Standard_LRS",
     "subnetName": "Subnet",
     "virtualNetworkName": "MyVNETD",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
-    "deploymentModelHighAvailability": {
-      "numberOfNodes": 3
-    },
+    "deploymentModelHighAvailability": { "numberOfNodes": 3 },
     "deploymentModelSingleNode": {
       "numberOfNodes": 1
     },
-    "numberOfInstances": "[variables(concat('deploymentModel', parameters('deploymentModel'))).numberOfNodes]"
+    "numberOfInstances": "[variables(concat('deploymentModel', parameters('deploymentModel'))).numberOfNodes]",
+    "monitorNodeIndex": 2,
+    "lbName" : "myLB",
+    "lbID": "[resourceId('Microsoft.Network/loadBalancers',variables('lbName'))]",
+    "lbPoolName": "solace-ha-group",
+    "lbPoolID": "[concat(variables('lbID'),'/backendAddressPools/',variables('lbPoolName'))]",
+    "dataDisksChoices": {
+      "0": [
+        {
+          "name": "[concat(parameters('dnsLabelForVmIp'), 0, '_DataDisk')]",
+          "diskSizeGB": "[parameters('dataDiskSize')]",
+          "lun": 0,
+          "caching": "ReadWrite",
+          "createOption": "Empty"
+        }
+      ],
+      "1": [
+        {
+          "name": "[concat(parameters('dnsLabelForVmIp'), 1, '_DataDisk')]",
+          "diskSizeGB": "[parameters('dataDiskSize')]",
+          "lun": 0,
+          "caching": "ReadWrite",
+          "createOption": "Empty"
+        }
+      ],
+      "2": [ ]
+    },
+    "adminPasswordDir" : "/mnt/resource/secrets",
+    "adminPasswordFile" : "[concat(variables('adminPasswordDir'),'/solOSpasswd')]"
   },
   "resources": [
     {
       "apiVersion": "2015-01-01",
       "type": "Microsoft.Resources/deployments",
-      "name": "SolaceSecurity.Template",
+      "name": "[variables('solaceSecurityName')]",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('scriptUrl'), variables('sharedTemplatename'))]",
+          "uri": "[concat(variables('nestedUrl'), variables('securitySharedTemplateName'))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -126,6 +230,55 @@
           },
           "subnetPrefix": {
             "value": "[variables('subnetPrefix')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-01-01",
+      "type": "Microsoft.Resources/deployments",
+      "name": "[variables('solaceLoadBalancerName')]",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('nestedUrl'), variables('loadBalancerSharedTemplateName'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "dnsLabelForLbIp": {
+            "value": "[parameters('dnsLabelForLbIp')]"
+          },
+          "publicIPAddressNameLB": {
+            "value": "[variables('publicIPAddressNameLB')]"
+          },
+          "publicIPAddressType": {
+            "value": "[variables('publicIPAddressType')]"
+          },
+          "lbName": {
+            "value": "[variables('lbName')]"
+          },
+          "lbPoolName": {
+            "value": "[variables('lbPoolName')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-01-01",
+      "type": "Microsoft.Resources/deployments",
+      "name": "[variables('solaceWorkspaceName')]",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[if(empty(parameters('workspaceName')), concat(variables('nestedUrl'), variables('workspaceDisabledSharedTemplateName')), concat(variables('nestedUrl'), variables('workspaceEnabledSharedTemplateName')))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "workspaceName": {
+            "value": "[parameters('workspaceName')]"
+          },
+          "workspaceRegion": {
+            "value": "[parameters('workspaceRegion')]"
           }
         }
       }
@@ -142,7 +295,7 @@
       "properties": {
         "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
         "dnsSettings": {
-          "domainNameLabel": "[concat(parameters('dnsLabelForPublicIP'), copyindex())]"
+          "domainNameLabel": "[concat(parameters('dnsLabelForVmIp'), copyindex())]"
         }
       }
     },
@@ -151,6 +304,9 @@
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', variables('solaceSecurityName'))]"
+      ],
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -161,7 +317,10 @@
           {
             "name": "[variables('subnetName')]",
             "properties": {
-              "addressPrefix": "[variables('subnetPrefix')]"
+              "addressPrefix": "[variables('subnetPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('securityGroupName'))]"
+              }
             }
           }
         ]
@@ -178,36 +337,33 @@
       },
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'), copyindex())]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "[concat('Microsoft.Resources/deployments/', variables('solaceLoadBalancerName'))]"
       ],
       "properties": {
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('securityGroupName'))]"
+        },
         "ipConfigurations": [
           {
             "name": "ipconfig1",
             "properties": {
-              "privateIPAllocationMethod": "Static",
-              "privateIPAddress": "[concat(variables('nodeAddressPrefix'), copyindex())]",
+              "privateIPAllocationMethod": "Dynamic",
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(variables('publicIPAddressName'), copyindex()))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIPAddressName'), copyindex()))]"
               },
               "subnet": {
                 "id": "[variables('subnetRef')]"
-              }
+              },
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[variables('lbPoolID')]"
+                }
+              ]
             }
           }
         ]
       }
-    },
-    {
-      "name": "[parameters('storageAccountName')]",
-      "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2016-01-01",
-      "sku": {
-        "name": "[variables('storageAccountType')]"
-      },
-      "kind": "Storage",
-      "location": "[parameters('location')]",
-      "properties": {}
     },
     {
       "apiVersion": "2017-12-01",
@@ -225,23 +381,25 @@
     {
       "apiVersion":"2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[concat(variables('vmName'), copyindex())]",
+      "name": "[concat(parameters('dnsLabelForVmIp'), copyindex())]",
       "location": "[parameters('location')]",
       "copy": {
         "name": "virtualMachineLoop",
         "count": "[variables('numberOfInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', concat(variables('nicName'), copyindex()))]",
         "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
       ],
       "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetName'))]"
+        },
         "hardwareProfile": {
-          "vmSize": "[parameters('vmSize')]"
+          "vmSize": "[if(equals(copyindex(), variables('monitorNodeIndex')), parameters('monitorVmSize'), parameters('messageRoutingVmSize'))]"
         },
         "osProfile": {
-          "computerName": "[concat(variables('vmName'), copyindex())]",
+          "computerName": "[concat(parameters('dnsLabelForVmIp'), copyindex())]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]"
         },
@@ -249,14 +407,15 @@
           "imageReference": {
             "publisher": "[variables('imagePublisher')]",
             "offer": "[variables('imageOffer')]",
-            "sku": "[parameters('centOSVersion')]",
+            "sku": "[parameters('centosVersion')]",
             "version": "latest"
           },
           "osDisk": {
-            "name": "[concat(variables('vmName'), copyindex(),'_OSDisk')]",   
+            "name": "[concat(parameters('dnsLabelForVmIp'), copyindex(), '_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
-          }
+          },
+          "dataDisks": "[variables('dataDisksChoices')[if(or(equals(parameters('dataDiskSize'), '0'), equals(copyindex(), variables('monitorNodeIndex'))), '2', string(copyindex()))]]"
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -268,16 +427,16 @@
       }
     },
     {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('vmName'), copyindex(), '/DockerExtension')]",
       "apiVersion": "2016-03-30",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('dnsLabelForVmIp'), copyindex(), '/DockerExtension')]",
       "location": "[parameters('location')]",
       "copy": {
         "name": "DockerLoop",
         "count": "[variables('numberOfInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), copyindex())]"
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('dnsLabelForVmIp'), copyindex())]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
@@ -288,16 +447,42 @@
       }
     },
     {
+      "condition": "[not(empty(parameters('workspaceName')))]",
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('dnsLabelForVmIp'), copyindex(), '/OmsAgentExtension')]",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "OmsAgentLoop",
+        "count": "[variables('numberOfInstances')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('dnsLabelForVmIp'), copyindex(), '/extensions/DockerExtension')]",
+        "[concat('Microsoft.Resources/deployments/', variables('solaceWorkspaceName'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.EnterpriseCloud.Monitoring",
+        "type": "OmsAgentForLinux",
+        "typeHandlerVersion": "1.4",
+        "settings": {
+          "workspaceId": "[reference(variables('solaceWorkspaceName')).outputs.workspaceId.value]"
+        },
+        "protectedSettings": {
+          "workspaceKey": "[reference(variables('solaceWorkspaceName')).outputs.workspaceKey.value]"
+        }
+      }
+    },
+    {
       "apiVersion": "2016-03-30",
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('vmName'), copyindex(), '/configureVMRContainer')]",
+      "name": "[concat(parameters('dnsLabelForVmIp'), copyindex(), '/configureSolaceContainer')]",
       "location": "[parameters('location')]",
       "copy": {
         "name": "SolaceLoop",
         "count": "[variables('numberOfInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), copyindex(), '/extensions/DockerExtension')]"
+        "[if(empty(parameters('workspaceName')), concat('Microsoft.Compute/virtualMachines/', parameters('dnsLabelForVmIp'), copyindex(), '/extensions/DockerExtension'), concat('Microsoft.Compute/virtualMachines/', parameters('dnsLabelForVmIp'), copyindex(), '/extensions/OmsAgentExtension'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
@@ -306,12 +491,13 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[parameters('solaceVMR_URI')]",
-            "[concat(variables('scriptUrl'), 'scripts/', variables('solaceInstallScriptName'))]",
-            "[concat(variables('scriptUrl'), 'scripts/semp_query.sh')]"
-          ],
-          "commandToExecute": "[concat('bash ', variables('solaceInstallScriptName'), ' -c ', copyindex(), ' -i ', variables('nodeAddressPrefix'), ' -n ', variables('numberOfInstances'), ' -p ', parameters('adminPassword'))]"
-        }
+            "[concat(variables('scriptsUrl'), variables('solaceInstallScriptName'))]",
+            "[concat(variables('scriptsUrl'), variables('sempQueryScriptName'))]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat('mkdir -p -m 600 ', variables('adminPasswordDir'), '; echo ', parameters('adminPassword'), ' > ', variables('adminPasswordFile'), '; bash ', variables('solaceInstallScriptName'), ' -c ', copyindex(), ' -d ', parameters('dnsLabelForVmIp'), ' -n ', variables('numberOfInstances'), ' -p ', variables('adminPasswordFile'), ' -s ', if(equals(copyindex(), variables('monitorNodeIndex')), '0', parameters('dataDiskSize')), if(empty(parameters('workspaceName')), '', concat(' -w ', reference(variables('solaceWorkspaceName')).outputs.workspaceId.value)), ' -u ', parameters('solaceDockerImageReference'))]"
+         }
       }
     }
   ]
