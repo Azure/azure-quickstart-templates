@@ -36,7 +36,7 @@ for directory in $directories; do
   done
 done
 
-bosh_cli_version="2.0.48"
+bosh_cli_version="5.1.2"
 bosh_cli_name="bosh-cli-${bosh_cli_version}-linux-amd64"
 wget https://s3.amazonaws.com/bosh-cli-artifacts/${bosh_cli_name} -O /tmp/${bosh_cli_name}
 az storage blob upload -f /tmp/${bosh_cli_name} -c ${container_name} -n bosh-cli/${bosh_cli_name}
