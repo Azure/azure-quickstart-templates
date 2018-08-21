@@ -12,14 +12,18 @@ template_version="$1"
 container_name="bosh-setup"
 
 pushd manifests
-  compiled_release_urls=$(grep "storage.googleapis.com" use-compiled-releases.yml | awk '{print $2}')
-  for compiled_release_url in ${compiled_release_urls}
+  file_names="use-compiled-releases.yml use-compiled-releases-xenial-stemcell.yml"
+  for file_name in ${file_names}
   do
-    IFS='/ ' read -r -a array <<< "$compiled_release_url"
-    compiled_release=${array[-1]}
-    wget ${compiled_release_url} -O /tmp/${compiled_release}
-    az storage blob upload -f /tmp/${compiled_release} -c ${container_name} -n cf-deployment-compiled-releases/${compiled_release}
-    rm /tmp/${compiled_release}
+    compiled_release_urls=$(grep "storage.googleapis.com" ${file_name} | awk '{print $2}')
+    for compiled_release_url in ${compiled_release_urls}
+    do
+      IFS='/ ' read -r -a array <<< "$compiled_release_url"
+      compiled_release=${array[-1]}
+      wget ${compiled_release_url} -O /tmp/${compiled_release}
+      az storage blob upload -f /tmp/${compiled_release} -c ${container_name} -n cf-deployment-compiled-releases/${compiled_release}
+      rm /tmp/${compiled_release}
+    done
   done
 popd
 

@@ -1,3 +1,13 @@
+# v4.1.0 (2018-08-02)
+
+- Use cf-deployment [v3.0.0](https://github.com/cloudfoundry/cf-deployment/tree/v3.0.0)
+- Update runtime-config for BOSH DNS
+- Deploy UAA and credhub in BOSH director
+- Use General Purpose v2 storage account
+- Support ubuntu-xenial stemcell
+- Add load balancing rule for UDP port for standard LB
+- Use `Standard_D11_v2` for compilation VMs
+
 # v4.0.0 (2018-06-23)
 
 - Use cf-deployment [v2.2.0](https://github.com/cloudfoundry/cf-deployment/tree/v2.2.0)

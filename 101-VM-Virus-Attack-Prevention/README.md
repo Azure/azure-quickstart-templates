@@ -19,7 +19,7 @@
 
 <a name="objectives"></a>
 # Objective of the POC 
-Showcase a Virus attack on a Virtual Machine detection & prevention.
+This playbook demonstrates a mock virus attack against an unprotected VM resource using a benign test virus file designed to trigger antimalware tools.  After enabling the configuration to protect the VM, the attack will be reattempted to show the protection against virus attack.
 
 <a name="overview"></a>
 # Overview
@@ -143,3 +143,14 @@ http://www.eicar.org/
 https://docs.microsoft.com/en-us/azure/security/azure-security-antimalware
 
 https://docs.microsoft.com/en-us/azure/operations-management-suite/operations-management-suite-overview
+
+## Disclaimer & Acknowledgements 
+
+Avyan Consulting Corp conceptualized and developed the software in guidance and consultations with Microsoft Azure Security Engineering teams.
+ 
+AVYAN MAKE NO WARRANTIES, EXPRESS, IMPLIED, OR STATUTORY, AS TO THE INFORMATION IN THIS DOCUMENT. This document is provided “as-is.” Information and views expressed in this document, including URL and other Internet website references, may change without notice. Customers reading this document bear the risk of using it. This document does not provide customers with any legal rights to any intellectual property in any AVYAN or MICROSOFT product or solutions. Customers may copy and use this document for internal reference purposes.
+ 
+### Note:
+*	Certain recommendations in this solution may result in increased data, network, or compute resource usage in Azure. The solution may increase a customer’s Azure license or subscription costs.
+*	The solution in this document is intended as reference samples and must not be used as-is for production purposes. Recommending that the customer’s consult with their internal SOC / Operations teams for using specific or all parts of the solutions.
+*	All customer names, transaction records, and any related data on this page are fictitious, created for the purpose of this architecture, and provided for illustration only. No real association or connection is intended, and none should be inferred. 
