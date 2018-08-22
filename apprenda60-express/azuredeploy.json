@@ -26,12 +26,6 @@
         "description": "This is the password of the platform administrator. This will be used to log in."
       }
     },
-    "newStorageAccountName": {
-      "type": "string",
-      "metadata": {
-        "description": "This is the name of the storage account the user will place their VMs."
-      }
-    },
     "adminUsername": {
       "type": "string",
       "metadata": {
@@ -42,18 +36,6 @@
       "type": "securestring",
       "metadata": {
         "description": "This is the password of the administrative account."
-      }
-    },
-    "storageAccountType": {
-      "type": "string",
-      "defaultValue": "Standard_LRS",
-      "allowedValues": [
-        "Standard_LRS",
-        "Standard_GRS",
-        "Standard_ZRS"
-      ],
-      "metadata": {
-        "description": "Storage Account type"
       }
     },
     "vmSize": {
@@ -91,15 +73,6 @@
     "scriptArgs": "[concat('-platformAdminFirstName ',parameters('platformAdminFirstName'),' -platformAdminLastName ',parameters('platformAdminLastName'),' -platformAdminEmailAddress ',parameters('platformAdminEmailAddress'),' -platformAdminPassword ', parameters('platformAdminPassword'))]"
   },
   "resources": [
-    {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[parameters('newStorageAccountName')]",
-      "apiVersion": "2015-05-01-preview",
-      "location": "[resourceGroup().location]",
-      "properties": {
-        "accountType": "[parameters('storageAccountType')]"
-      }
-    },
     {
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/publicIPAddresses",
@@ -160,12 +133,11 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('platformNode')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
       ],
       "properties": {
@@ -185,10 +157,7 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "apprendaosdisk",
-            "vhd": {
-              "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/', 'apprendaosdisk.vhd')]"
-            },
+            "name": "[concat(variables('platformNode'),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
