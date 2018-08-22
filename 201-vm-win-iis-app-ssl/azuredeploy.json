@@ -2,20 +2,6 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "appStorageType": {
-      "type": "string",
-      "defaultValue": "Standard_LRS",
-      "allowedValues": [
-        "Standard_LRS",
-        "Standard_ZRS",
-        "Standard_GRS",
-        "Standard_RAGRS",
-        "Premium_LRS"
-      ],
-      "metadata": {
-        "description": "Set this value for the storage account type"
-      }
-    },
     "appVMName": {
       "type": "string",
       "minLength": 1,
@@ -146,21 +132,16 @@
     "appVnetSubnet1Prefix": "10.0.0.0/24",
     "appVnetSubnet2Name": "DatabaseSubNet",
     "appVnetSubnet2Prefix": "10.0.1.0/24",
-    "appStorageName": "[concat('appstorage', uniqueString(resourceGroup().id))]",
     "appVMImagePublisher": "MicrosoftWindowsServer",
     "appVMImageOffer": "WindowsServer",
-    "appVMOSDiskName": "appVMOSDisk",
     "appVMVmSize": "[parameters('appVMVmSize')]",
     "appVMVnetID": "[resourceId('Microsoft.Network/virtualNetworks', 'appVnet')]",
     "appVMresourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), variables('appVMVnetID'), '/subnets/', variables('appVnetSubnet1Name'))]",
-    "appVMStorageAccountContainerName": "vhds",
     "appVMNicName": "[concat(parameters('appVMName'), 'NetworkInterface')]",
     "appPublicIPName": "appPublicIP",
     "appDSCArchiveFolder": "dsc",
     "appDSCArchiveFileName": "appDSC.zip",
-    "dataDisk1VhdName": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('appStorageName')), '2015-06-15').primaryEndpoints.blob, 'vhds','/','dataDisk1.vhd')]",
-    "dataDisk2VhdName": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('appStorageName')), '2015-06-15').primaryEndpoints.blob, 'vhds','/','dataDisk2.vhd')]",
-    "appDSCSqlArchiveFolder": "dsc",
+      "appDSCSqlArchiveFolder": "dsc",
     "appDSCSqlArchiveFileName": "appDSCSql.zip"
   },
   "resources": [
@@ -252,20 +233,7 @@
         ]
       }
     },
-    {
-      "name": "[variables('appStorageName')]",
-      "type": "Microsoft.Storage/storageAccounts",
-      "location": "[parameters('location')]",
-      "apiVersion": "2015-06-15",
-      "dependsOn": [],
-      "tags": {
-        "displayName": "appStorage"
-      },
-      "properties": {
-        "accountType": "[parameters('appStorageType')]"
-      }
-    },
-    {
+   {
       "name": "[variables('appVMNicName')]",
       "type": "Microsoft.Network/networkInterfaces",
       "location": "[parameters('location')]",
@@ -298,9 +266,8 @@
       "name": "[parameters('appVMName')]",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[parameters('location')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts', variables('appStorageName'))]",
         "[resourceId('Microsoft.Network/networkInterfaces', variables('appVMNicName'))]"
       ],
       "tags": {
@@ -336,10 +303,7 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "appVMOSDisk",
-            "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('appStorageName')), '2015-06-15').primaryEndpoints.blob, variables('appVMStorageAccountContainerName'),'/',variables('appVMOSDiskName'),'.vhd')]"
-            },
+            "name": "[concat(parameters('appVMName'),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
