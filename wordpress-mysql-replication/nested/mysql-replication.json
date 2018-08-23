@@ -45,13 +45,6 @@
         "description": "size for the VMs"
       }
     },
-    "storageAccountType": {
-      "type": "string",
-      "defaultValue": "Standard_LRS",
-      "metadata": {
-        "description": "Storage account type for the cluster"
-      }
-    },
     "vnetNewOrExisting": {
       "type": "string",
       "defaultValue": "new",
@@ -199,12 +192,6 @@
         "description": "public IP name for MySQL loadbalancer"
       }
     },
-    "storageAccountName": {
-      "type": "string",
-      "metadata": {
-        "description": "storage account name"
-      }
-    },
     "location": {
       "type": "string",
       "defaultValue": "[resourceGroup().location]",
@@ -268,15 +255,6 @@
       }
     },
     {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[parameters('storageAccountName')]",
-      "apiVersion": "2015-06-15",
-      "location": "[parameters('location')]",
-      "properties": {
-        "accountType": "[parameters('storageAccountType')]"
-      }
-    },
-    {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('lbPublicIPName')]",
@@ -291,9 +269,15 @@
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('availabilitySetName')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-12-01",
       "location": "[parameters('location')]",
-      "properties": {}
+      "sku": {
+        "name": "Aligned"
+        },
+        "properties": { 
+        "platformFaultDomainCount": 2,
+        "platformUpdateDomainCount": 5
+        }
     },
     {
       "apiVersion": "2015-06-15",
@@ -342,7 +326,7 @@
     {
       "name": "[concat(parameters('dnsName'), copyIndex())]",
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "location": "[parameters('location')]",
       "copy": {
         "name": "vmLoop",
@@ -350,7 +334,6 @@
       },
       "dependsOn": [
         "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]",
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex())]"
       ],
       "properties": {
@@ -373,30 +356,21 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName')), variables('resourceAPIVersion')).primaryEndpoints.blob, 'vhds/', parameters('dnsName'), copyIndex(), 'osdisk.vhd')]"
-            },
+            "name": "[concat(parameters('dnsName'), copyIndex(),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           },
           "dataDisks": [
             {
-              "name": "datadisk1",
+              "name": "[concat(parameters('dnsName'), copyIndex(),'_DataDisk1')]",
               "diskSizeGB": "1000",
               "lun": 0,
-              "vhd": {
-                "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName')), variables('resourceAPIVersion')).primaryEndpoints.blob, 'vhds/', parameters('dnsName'), copyIndex(), 'dataDisk1.vhd')]"
-              },
               "createOption": "Empty"
             },
             {
-              "name": "datadisk2",
+              "name": "[concat(parameters('dnsName'), copyIndex(),'_DataDisk2')]",
               "diskSizeGB": "1000",
               "lun": 1,
-              "vhd": {
-                "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName')), variables('resourceAPIVersion')).primaryEndpoints.blob, 'vhds/', parameters('dnsName'), copyIndex(), 'dataDisk2.vhd')]"
-              },
               "createOption": "Empty"
             }
           ]
