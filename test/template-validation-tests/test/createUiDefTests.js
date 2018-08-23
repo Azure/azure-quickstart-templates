@@ -12,6 +12,8 @@ require('it-each')({ testPerIteration: true });
 var folder = process.env.npm_config_folder || filesFolder;
 
 var createUiDefFileJSONObject = util.getCreateUiDefFile(folder).jsonObject;
+var createUiDefFileJSONContent = JSON.stringify(createUiDefFileJSONObject).toLowerCase();
+createUiDefFileJSONObject = JSON.parse(createUiDefFileJSONContent);
 var createUiDefFile = util.getCreateUiDefFile(folder).file;
 var mainTemplateFileJSONObject = util.getMainTemplateFile(folder).jsonObject;
 var parametersInTemplate = Object.keys(mainTemplateFileJSONObject.parameters);
@@ -44,14 +46,14 @@ describe('createUiDefinition.json file - ', () => {
     /** A $handler property should be present in the file.
     It's value MUST be 'Microsoft.Compute.MultiVm' */
     it('handler property value should be \'Microsoft.Compute.MultiVm\'', () => {
-        createUiDefFileJSONObject.should.withMessage('handler property is expected, and it\'s value should be \'Microsoft.Compute.MultiVm\'').have.property('handler', 'Microsoft.Compute.MultiVm');
+        createUiDefFileJSONObject.should.withMessage('handler property is expected, and it\'s value should be \'Microsoft.Compute.MultiVm\'').have.property('handler', 'microsoft.compute.multivm');
     });
 
     /** A $version property should be present in the file.
      The value for $version should match the version in $schema. */
     it('version property value must match schema version', () => {
         assert(typeof(createUiDefFileJSONObject.$schema) !== 'undefined', '$schema property is missing in createUiDefinition.json');
-        var createUiDefSchemaVersion = createUiDefFileJSONObject.$schema.match('schema.management.azure.com/schemas/(.*)/CreateUIDefinition')[1]
+        var createUiDefSchemaVersion = createUiDefFileJSONObject.$schema.match('schema.management.azure.com/schemas/(.*)/createuidefinition')[1]
         createUiDefFileJSONObject.should.have.property('version', createUiDefSchemaVersion);
     });
 
@@ -64,7 +66,7 @@ describe('createUiDefinition.json file - ', () => {
     /** Each output MUST be present in parameters section of maintemplate.json. */
     var outputsInCreateUiDef = Object.keys(createUiDefFileJSONObject.parameters.outputs);
     it.each(outputsInCreateUiDef, 'output %s must be present in mainTemplate parameters', ['element'], function(element, next) {
-        parametersInTemplate.should.contain(element.toLowerCase());
+        parametersInTemplate.should.contain(element);
         next();
     });
 
@@ -88,6 +90,6 @@ describe('createUiDefinition.json file - ', () => {
     The value should match '[location()]' */
     it('location must be in outputs, and should match [location()]', () => {
         createUiDefFileJSONObject.parameters.outputs.should.withMessage('location property missing in outputs').have.property('location');
-        createUiDefFileJSONObject.parameters.outputs.location.toLowerCase().should.withMessage('location value should be [location()]').be.eql('[location()]');
+        createUiDefFileJSONObject.parameters.outputs.location.should.withMessage('location value should be [location()]').be.eql('[location()]');
     });
 });
