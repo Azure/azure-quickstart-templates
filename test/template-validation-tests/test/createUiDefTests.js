@@ -35,12 +35,13 @@ function getErrorMessage(obj) {
 
 /** Tests for createUiDefinition.json file in a solution template */
 describe('createUiDefinition.json file - ', () => {
-    var expectedSchemaVal = 'https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#';
+    //TODO: JSON schema uris are case sensitive, we toLower for simplicity.  If casing is off, it will be caught by the validateJson tests when schema validation is done (future)
+    var expectedSchemaVal = 'https://schema.management.azure.com/schemas/0.1.2-preview/createuidefinition.multivm.json#';
 
     /** A $schema property should be present in the file.
     It's value MUST be  'https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#' */
     it('must have a schema property', () => {
-        createUiDefFileJSONObject.should.withMessage('$schema property is expected, and it\'s value should be ' + expectedSchemaVal).have.property('$schema', expectedSchemaVal);
+        createUiDefFileJSONObject.should.withMessage('$schema property is expected, and it\'s value must be https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#').have.property('$schema', expectedSchemaVal);
     });
 
     /** A $handler property should be present in the file.

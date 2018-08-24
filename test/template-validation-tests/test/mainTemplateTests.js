@@ -152,7 +152,12 @@ describe('template files - ', () => {
 
             /** TODO: need to account for use of variables and parameters in the property value
                 If the value is a simple variable we can resolve easily
-                If the value is a parameter, get the defaultValue */
+                If the value is a parameter, get the defaultValue 
+                Note that the variable may be at the imageReference level, not the offer level... that's why we're currently checking
+                templateObject.resources[resource].properties.storageProfile.imageReference.toLowerCase();
+                instead of
+                templateObject.resources[resource].properties.storageProfile.imageReference.offer.toLowerCase();
+            */
                 
             it('VM Image ref must not contain "-preview"', () => {
                 var templateObject = templateJSONObject.value;
@@ -161,14 +166,14 @@ describe('template files - ', () => {
                     if (resourceType === 'microsoft.compute/virtualmachines') {
                         console.log('VM');
                         var previewString = "-preview";
-                        var offer = templateObject.resources[resource].properties.storageProfile.imageReference.offer.toLowerCase();
+                        var offer = JSON.stringify(templateObject.resources[resource].properties.storageProfile.imageReference).toLowerCase();
                         var message = 'in file:' + templateJSONObject.filename + ' VM must NOT use a preview image: ' + offer;
                         assert(offer.includes(previewString) === false, message);
                     }
                     if (resourceType === 'microsoft.compute/virtualmachinescalesets') {
                         console.log('VMSS');
                         var previewString = "-preview";
-                        var offer = templateObject.resources[resource].properties.virtualMachineProfile.storageProfile.imageReference.offer.toLowerCase();
+                        var offer = JSON.stringify(templateObject.resources[resource].properties.virtualMachineProfile.storageProfile.imageReference).toLowerCase();
                         var message = 'in file:' + templateJSONObject.filename + ' VMSS must NOT use a preview image: ' + offer;
                         assert(offer.includes(previewString) === false, message);
                     }
