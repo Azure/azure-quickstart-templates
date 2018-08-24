@@ -37,7 +37,6 @@ subscription-manager repos --disable="*" --enable="rhel-7-server-rpms" --enable=
 yum install -y wget git net-tools bind-utils yum-utils iptables-services bridge-utils bash-completion kexec-tools sos psacct httpd-tools pyOpenSSL ansible atomic-openshift-utils
 mkdir -p /usr/share/ansible
 cd /usr/share/ansible/
-htpasswd -c -b /etc/origin/master/htpasswd ${AUSERNAME} ${PASSWORD}
 
 cat <<EOF > /etc/ansible/hosts
 [OSEv3:children]
