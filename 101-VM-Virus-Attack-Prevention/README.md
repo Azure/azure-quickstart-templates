@@ -16,6 +16,7 @@
 5. [Respond/Mitigate](#mitigate)
 6. [Detect Attack](#detect)
 7. [Configuration validation](#config)
+8. [References](#references)
 
 <a name="objectives"></a>
 # Objective of the POC 
@@ -23,7 +24,9 @@ This playbook demonstrates a mock virus attack against an unprotected VM resourc
 
 <a name="overview"></a>
 # Overview
-It showcases following use cases
+
+It showcases the following use cases:
+
 1. Perform Virus attack on a Virtual Machine --> 
 
     * VM without Endpoint Protection
@@ -32,23 +35,24 @@ It showcases following use cases
 
     * VM with Endpoint Protection
 
-
 # Important Notes <a name="notes"></a>
-Although the deployment takes 10-15mins, the log aggregation by OMS take a few hours to get configured in the backend. You may not see attack/mitigation logs for detection and prevention events during the aggregation time window.   
-Subsequently logs will take 10-15 mins to reflect in OMS.
-<p>Current powershell version in Azure cloudshell is in preview mode.</p>
+Although the deployment takes 10-15mins, the log aggregation by Log Analytics take a few hours to get configured in the backend. You may not see attack/mitigation logs for detection and prevention events during the aggregation time window.   
+Subsequently logs will take 10-15 mins to reflect in Log Analtyics.
 
+Also note, the PowerShell experience in Azure Cloud Shell now runs PowerShell Core 6 in a Linux environment. With this change, there may be some differences in the [PowerShell experience in Cloud Shell](https://docs.microsoft.com/en-us/azure/cloud-shell/cloud-shell-windows-users) compared to what is expected in a Windows PowerShell experience.
 
 <a name="prerequisites"></a>
 # Prerequisites
-Access to Azure subscription to deploy following resources 
+
+Access to an Azure subscription to deploy following resources 
+
 1. Virtual Machine
-2. OMS (Monitoring)
+2. Log Analytics workspace (Monitoring)
 
 <a name="attack"></a>
 # Perform Attack 
 
-Attack on VM without an Endpoint Protection.
+## Attack on VM without an Endpoint Protection
 
 1. Go to Azure Portal --> Select Resource Groups services --> Select Resource Group - "prefix-virus-attack-on-vm-workload"
 
@@ -56,19 +60,19 @@ Attack on VM without an Endpoint Protection.
 
 ![](images/vm-wo-endpoint-protection.PNG)
 
-    
-
 3. On Properties Page --> Click Connect to Download RDP file --> Save and Open RDP file.
 ![](images/access-vm-0.png)
 
 4. Enter login details (The VM login username and password is in deployment powershell output)
 
 5. Open Server Manager and Disable Internet Explorer Enhanced Security Configuration.
+
 ![](images/disable-internet-explorer-enhanced-security-configuration.png)
 
 6. Open Internet Explorer and Download (https://secure.eicar.org/eicar.com.txt)
 
 7. If IE blocks downloading, Go to View Downloads --> Right Click on File and Select Download Unsafe File.
+
 ![](images/download-test-virus-file.png)
 
 8. You will notice that Virus file gets downloads successfully on VM indicating attack was successful.
@@ -88,21 +92,25 @@ Azure Security Center gives you recommendations and also allows you to perform r
 <a name="detect"></a>
 # Attack & Detection
 
-Anti-malware Extension (Endpoint Protection) might take 5-10 mins to get installed on a VM. Hence, you will use another VM with name "vm-with-ep" which already has Anti-malware extension installed further for our Demo using loginid and pwd (The VM login username and password is in deployment powershell output)
+The Anti-malware Extension (Endpoint Protection) might take 5-10 mins to get installed on a VM. Hence, you will use another VM with name "vm-with-ep" which already has the Anti-malware extension installed further for our Demo using loginid and pwd (The VM login username and password is in deployment powershell output)
 
-To perform attack open Internet Explorer and Download (https://secure.eicar.org/eicar.com.txt)
+To perform an attack, open Internet Explorer and download a smaple EICAR file from [https://secure.eicar.org/eicar.com.txt](https://secure.eicar.org/eicar.com.txt).
 
-However, this time when you try to download Eicar virus file, it will be immediately detected and will be quarantined by endpoint protection.
+However, this time when you try to download EICAR virus file, it will be immediately detected and will be quarantined by endpoint protection.
+
 ![](images/virus-attack-on-vm-1.png)
 
 ## Detection using Endpoint protection client
 
-When you try to access SCEP, you will get restricted access error. 
+When you try to access SCEP, you will get a restricted access error. 
+
 ![](images/restricted-access-on-endpoint-protection.PNG)
 
-To access endpoint protection client, you need to clean SCEP Policy on Windows workstation or server.
+To access the endpoint protection client, you need to clean SCEP Policy on the Windows workstation or server.
+
 1. Open **Powershell**
-1. Go to 
+
+1. Go to **C:\\Program Files\\Microsoft Security Client\\**
 
    `cd "C:\Program Files\Microsoft Security Client"`
 
@@ -111,38 +119,38 @@ To access endpoint protection client, you need to clean SCEP Policy on Windows w
    `.\ConfigSecurityPolicy.exe .\CleanUpPolicy.xml`
 
 1. Now, Go to Start --> Type **System Center Endpoint Protection** --> Go to **History** tab on SCEP Client window.
+
 1. You will notice Eicar Test Virus file under Quarantined items.
+
 ![](images/scep-history.PNG)
 
-## Detection using centralised OMS.
+## Detection using centralised Log Analytics.
 
 1. Go to **Azure Portal** --> navigate to resource group **<case no>-virus-attack-on-vm**
+    
 ![](images/log-analytics.png)
 
 1. Go to **Log analytics** --> Click on **Log Search** --> Type query `search "eicar"`
+
 ![](images/log-search.png)
 
-   ![](images/search-eicar.png)
+![](images/search-eicar.png)
 
-You will notice events related to Quarantined items. It might take few minutes for OMS to pull logs from virtual machine, so if you don't get any search results, please try again after sometime.
-
+You will notice events related to Quarantined items. It might take few minutes for Log Analytics to display logs from your virtual machine, so if you don't get any search results, please try again after a few minutes.
 
 <a name="config"></a>
 ## Configuration Validation
-* You can validate the specific configurations like Enabling Antivirus, Adding Antimalware Extension , Auto-updates on VM. These are covered as various controls along with Audit and Remediation procedure in Cloudneeti
 
-* Cloudneeti is available on the Azure marketplace. Try out the free test drive here https://aka.ms/Cloudneeti 
+* You can validate the specific configurations like Enabling Antivirus, Adding Antimalware Extension , Auto-updates on your VM. These are covered as various controls along with Audit and Remediation procedure in Cloudneeti
 
-References -
+* Cloudneeti is available on the Azure marketplace. Try out the free test drive at https://aka.ms/Cloudneeti.
 
+<a name="references"></a>
+# References
 
-##### References -
-
-http://www.eicar.org/
-
-https://docs.microsoft.com/en-us/azure/security/azure-security-antimalware
-
-https://docs.microsoft.com/en-us/azure/operations-management-suite/operations-management-suite-overview
+* http://www.eicar.org/
+* https://docs.microsoft.com/en-us/azure/security/azure-security-antimalware
+* https://docs.microsoft.com/en-us/azure/operations-management-suite/operations-management-suite-overview
 
 ## Disclaimer & Acknowledgements 
 
