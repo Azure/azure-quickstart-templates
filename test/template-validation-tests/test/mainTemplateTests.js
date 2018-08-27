@@ -39,6 +39,10 @@ describe('template files - ', () => {
     /** Tests for parameters in template files */
     describe('parameters tests - ', () => {
 
+        var mainTemplateFileContent = JSON.stringify(mainTemplateFileJSONObject).toLowerCase();
+
+        mainTemplateFileJSONObject = JSON.parse(mainTemplateFileContent);
+
         /** maintemplate.json should have a parameters property */
         it('maintemplate.json should have a "parameters" property', () => {
             mainTemplateFileJSONObject.should.have.property('parameters');
@@ -51,19 +55,18 @@ describe('template files - ', () => {
         // get the corresponding create ui def
         var createUiDefJSONObject = util.getCreateUiDefFile(currentDir).jsonObject;
 
+        var createUiDefJSONStr = JSON.stringify(createUiDefJSONObject).toLowerCase();
+
+        createUiDefJSONObject = JSON.parse(createUiDefJSONStr);
+
         // get output keys in main template
         var outputsInCreateUiDef = Object.keys(createUiDefJSONObject.parameters.outputs);
 
-        // convert to lowercase
-        for (var i in outputsInCreateUiDef) {
-            outputsInCreateUiDef[i] = outputsInCreateUiDef[i].toLowerCase();
-        }
-
         var parametersInMainTemplate = Object.keys(mainTemplateFileJSONObject.parameters);
         /** Validate each parameter that does not have a defaultValue in mainTemplate, has a value in outputs */
-        it.each(parametersInMainTemplate, 'parameter %s that does not have a defaultValue in file mainTemplate.json, must have a corresponding output in createUiDefinition.json', ['element'], function (element, next) {
-            if (typeof (mainTemplateFileJSONObject.parameters[element].defaultValue) === 'undefined') {
-                outputsInCreateUiDef.should.withMessage('in file:mainTemplate.json, outputs in createUiDefinition is missing the parameter ' + element).contain(element.toLowerCase());
+        it.each(parametersInMainTemplate, 'parameter %s that does not have a defaultValue in file mainTemplate.json, must have a corresponding output in createUiDefinition.json', ['element'], function(element, next){
+            if (typeof(mainTemplateFileJSONObject.parameters[element].defaultValue) === 'undefined') {
+                outputsInCreateUiDef.should.withMessage('in file:mainTemplate.json, outputs in createUiDefinition is missing the parameter ' + element).contain(element);
             }
             next();
         });
@@ -73,11 +76,11 @@ describe('template files - ', () => {
             templateFileJSONObjects.forEach(templateJSONObject => {
                 var templateObject = templateJSONObject.value;
                 Object.keys(templateObject.parameters).forEach(parameter => {
-                    if (templateObject.parameters[parameter].type.toLowerCase() == 'securestring') {
+                    if (templateObject.parameters[parameter].type == 'securestring') {
                         // get default value if one exists
                         var defaultVal = templateObject.parameters[parameter].defaultValue;
                         if (defaultVal && defaultVal.length > 0) {
-                            expect(templateObject.parameters[parameter], 'in file:' + templateJSONObject.filename + ' "' + parameter + '" should not have defaultValue').to.not.have.property('defaultValue');
+                            expect(templateObject.parameters[parameter], 'in file:' + templateJSONObject.filename + ' "' + parameter + '" should not have defaultValue').to.not.have.property('defaultvalue');
                         }
                     }
                 });
@@ -93,15 +96,14 @@ describe('template files - ', () => {
             /** The location parameter can have a defaultValue property, and its value must be '[resourceGroup().location]' */
             var location = mainTemplateFileJSONObject.parameters.location;
             if (location.defaultValue) {
-                location.defaultValue.should.withMessage('in file:mainTemplate.json, the default value of location property MUST be [resourceGroup().location]').be.eql('[resourceGroup().location]');
+                location.defaultValue.should.withMessage('in file:mainTemplate.json, the default value of location property MUST be [resourceGroup().location]').be.eql('[resourcegroup().location]');
             }
-            location.should.withMessage('in file:mainTemplate.json, location property MUST NOT have allowedValues property').not.have.property('allowedValues');
+            location.should.withMessage('in file:mainTemplate.json, location property MUST NOT have allowedValues property').not.have.property('allowedvalues');
         });
 
         /** Validate each parameter should be used in main template */
-        var mainTemplateFileContent = JSON.stringify(mainTemplateFileJSONObject).toLowerCase();
-        it.each(parametersInMainTemplate, 'parameter %s must be used in file mainTemplate.json', ['element'], function (element, next) {
-            var paramString = 'parameters(\'' + element.toLowerCase() + '\')';
+        it.each(parametersInMainTemplate, 'parameter %s must be used in file mainTemplate.json', ['element'], function(element, next) {
+            var paramString = 'parameters(\'' + element + '\')';
             assert(mainTemplateFileContent.includes(paramString) === true, 'unused parameter "' + element + '" in file mainTemplate.json');
             next();
         });
@@ -114,7 +116,7 @@ describe('template files - ', () => {
             var resources = Object.keys(templateObject.resources).map(function (key) {
                 return templateObject.resources[key];
             });
-            /** Each resource location should be and expression "location": "[*]" or "global" */
+            /** Each resource location should be an expression "location": "[*]" or "global" */
             it.each(resources, 'location value of resource %s should be an expression or "global"', ['name'], function (element, next) {
                 var message = 'in file:' + templateJSONObject.filename + ' should have location set to an expression';
                 if (element.location) {
@@ -124,11 +126,11 @@ describe('template files - ', () => {
             });
             /** resourceGroup().location should NOT be present anywhere in template, EXCEPT as a defaultValue */
             it.each(templateObject, 'resourceGroup().location must NOT be be used in the template file ' + templateJSONObject.filename + ', except as a default value for the location parameter.', function (element, next) {
-                var templateFileContent = JSON.stringify(templateObject);
+                var templateFileContent = JSON.stringify(templateObject).toLowerCase();
 
                 // if this is mainTemplate.json, a defaultValue of resourceGroup().location is OK, so remove it before searching for it
                 if (templateJSONObject.filename.toLowerCase() == (folder + '\\maintemplate.json')) {
-                    templateFileContent = templateFileContent.replace(/\"defaultValue\":\s*\"\[resourceGroup\(\)\.location\]\"/, "");
+                    templateFileContent = templateFileContent.replace(/\"defaultvalue\":\s*\"\[resourcegroup\(\)\.location\]\"/, "");
                 }
 
                 var locationString = 'resourceGroup().location';
@@ -137,10 +139,11 @@ describe('template files - ', () => {
                 next();
             });
             /** providers().apiVersions[n] must not be present for all template files. */
+
             it.each(templateObject, 'apiVersions must NOT be retrieved using providers().apiVersions[n] in the template file ' + templateJSONObject.filename + '. This function is non-deterministic.', function (element, next) {
-                var templateFileContent = JSON.stringify(templateObject);
+                var templateFileContent = JSON.stringify(templateObject).toLowerCase();
                 var message = 'in file:' + templateJSONObject.filename + ' should NOT have api version determined by providers().';
-                assert(templateFileContent.match(/providers\(.*?\)\.apiVersions/) === null, message);
+                assert(templateFileContent.match(/providers\(.*?\)\.apiversions/) === null, message);
                 next();
 
             });
@@ -149,7 +152,12 @@ describe('template files - ', () => {
 
             /** TODO: need to account for use of variables and parameters in the property value
                 If the value is a simple variable we can resolve easily
-                If the value is a parameter, get the defaultValue */
+                If the value is a parameter, get the defaultValue 
+                Note that the variable may be at the imageReference level, not the offer level... that's why we're currently checking
+                templateObject.resources[resource].properties.storageProfile.imageReference.toLowerCase();
+                instead of
+                templateObject.resources[resource].properties.storageProfile.imageReference.offer.toLowerCase();
+            */
                 
             it('VM Image ref must not contain "-preview"', () => {
                 var templateObject = templateJSONObject.value;
@@ -158,14 +166,14 @@ describe('template files - ', () => {
                     if (resourceType === 'microsoft.compute/virtualmachines') {
                         console.log('VM');
                         var previewString = "-preview";
-                        var offer = templateObject.resources[resource].properties.storageProfile.imageReference.offer.toLowerCase();
+                        var offer = JSON.stringify(templateObject.resources[resource].properties.storageProfile.imageReference).toLowerCase();
                         var message = 'in file:' + templateJSONObject.filename + ' VM must NOT use a preview image: ' + offer;
                         assert(offer.includes(previewString) === false, message);
                     }
                     if (resourceType === 'microsoft.compute/virtualmachinescalesets') {
                         console.log('VMSS');
                         var previewString = "-preview";
-                        var offer = templateObject.resources[resource].properties.virtualMachineProfile.storageProfile.imageReference.offer.toLowerCase();
+                        var offer = JSON.stringify(templateObject.resources[resource].properties.virtualMachineProfile.storageProfile.imageReference).toLowerCase();
                         var message = 'in file:' + templateJSONObject.filename + ' VMSS must NOT use a preview image: ' + offer;
                         assert(offer.includes(previewString) === false, message);
                     }
