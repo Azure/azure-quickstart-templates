@@ -47,7 +47,9 @@
       "name": "[concat(parameters('clusterName'),'-vnet')]",
       "addressSpacePrefix": "10.0.0.0/16",
       "subnetName": "subnet1",
-      "subnetPrefix": "10.0.0.0/24"
+      "subnetPrefix": "10.0.0.0/24",
+      "id": "[resourceId('Microsoft.Network/virtualNetworks', concat(parameters('clusterName'),'-vnet'))]",
+      "subnet": "[concat(resourceId('Microsoft.Network/virtualNetworks', concat(parameters('clusterName'),'-vnet')), '/subnets/subnet1')]"
     },
     "networkSecurityGroup": {
       "name": "[concat(parameters('clusterName'),'-nsg')]"
@@ -62,7 +64,7 @@
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('networkSecurityGroup').name]",
       "location": "[parameters('location')]",
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2017-06-01",
       "properties": {
         "securityRules": [
           {
@@ -135,14 +137,14 @@
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
-            "[variables('vnet').addressSpacePrefix]"
+            "[variables('vNet').addressSpacePrefix]"
           ]
         },
         "subnets": [
           {
-            "name": "[variables('vnet').subnetName]",
+            "name": "[variables('vNet').subnetName]",
             "properties": {
-              "addressPrefix": "[variables('vnet').subnetPrefix]",
+              "addressPrefix": "[variables('vNet').subnetPrefix]",
               "networkSecurityGroup": {
                 "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroup').name)]"
               }
@@ -171,6 +173,7 @@
         "[concat('Microsoft.Storage/storageAccounts/',variables('defaultStorageAccount').name)]",
         "[concat('Microsoft.Network/virtualNetworks/',variables('vNet').name)]"
       ],
+      "tags": {},
       "properties": {
         "clusterVersion": "3.6",
         "osType": "Linux",
@@ -207,6 +210,10 @@
                   "username": "[parameters('sshUserName')]",
                   "password": "[parameters('sshPassword')]"
                 }
+              },
+             "virtualNetworkProfile": {
+                "id": "[variables('vNet').id]",
+                "subnet": "[variables('vNet').subnet]"
               }
             },
             {
@@ -220,11 +227,29 @@
                   "username": "[parameters('sshUserName')]",
                   "password": "[parameters('sshPassword')]"
                 }
+              },
+              "virtualNetworkProfile": {
+                "id": "[variables('vNet').id]",
+                "subnet": "[variables('vNet').subnet]"
               }
             }
           ]
         }
       }
     }
-  ]
+  ],
+  "outputs": {
+    "storage": {
+      "type": "object",
+      "value": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name))]"
+    },
+    "vnet": {
+      "type": "object",
+      "value": "[reference(resourceId('Microsoft.Network/virtualNetworks',variables('vNet').name))]"
+    },
+    "cluster": {
+      "type": "object",
+      "value": "[reference(resourceId('Microsoft.HDInsight/clusters',parameters('clusterName')))]"
+    }
+  }
 }
