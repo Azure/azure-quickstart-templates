@@ -89,19 +89,19 @@ openshift_logging_install_logging=false
 openshift_logging_use_ops=false
 
 [masters]
-${RESOURCEGROUP} openshift_hostname=${RESOURCEGROUP} ansible_connection=local
+${RESOURCEGROUP} openshift_hostname=${WILDCARDZONE} ansible_connection=local
 
 [etcd]
 ${RESOURCEGROUP} ansible_connection=local
 
 [nodes]
-${RESOURCEGROUP} openshift_hostname=${RESOURCEGROUP} openshift_node_labels="{'role':'master','region':'app','region': 'infra'}" openshift_schedulable=true ansible_connection=local
+${RESOURCEGROUP} openshift_hostname=${WILDCARDZONE} openshift_node_labels="{'role':'master','region':'app','region': 'infra'}" openshift_schedulable=true ansible_connection=local
 EOF
 
 ansible-playbook -i /etc/ansible/hosts /usr/share/ansible/openshift-ansible/playbooks/prerequisites.yml
 ansible-playbook -i /etc/ansible/hosts /usr/share/ansible/openshift-ansible/playbooks/deploy_cluster.yml
 htpasswd -c -b /etc/origin/master/htpasswd ${AUSERNAME} ${PASSWORD}
-oc login -u ${AUSERNAME} -p ${PASSWORD} --insecure-skip-tls-verify ${RESOURCEGROUP}.${FULLDOMAIN}:8443
+oc login -u ${AUSERNAME} -p ${PASSWORD} --insecure-skip-tls-verify ${WILDCARDZONE}.${FULLDOMAIN}:8443
 oc new-project dukes --display-name="My first webapp called dukes" --description="This is a demo web project to test EAP on OCP"
 oc new-app openshift/jboss-eap71-openshift:1.2~https://github.com/MyriamFentanes/dukes.git
 oc expose svc/dukes --hostname ""
