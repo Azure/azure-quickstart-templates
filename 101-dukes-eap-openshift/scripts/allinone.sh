@@ -99,13 +99,13 @@ openshift_logging_install_logging=false
 openshift_logging_use_ops=false
 
 [masters]
-${RESOURCEGROUP} openshift_hostname=${WILDCARDZONE} ansible_connection=local
+${RESOURCEGROUP} openshift_hostname=${RESOURCEGROUP} ansible_connection=local
 
 [etcd]
 ${RESOURCEGROUP} ansible_connection=local
 
 [nodes]
-${RESOURCEGROUP} openshift_hostname=${WILDCARDZONE} openshift_node_labels="{'role':'master','region':'app','region': 'infra'}" openshift_schedulable=true ansible_connection=local
+${RESOURCEGROUP} openshift_hostname=${RESOURCEGROUP} openshift_node_labels="{'role':'master','region':'app','region': 'infra'}" openshift_schedulable=true ansible_connection=local
 EOF
 
 ansible-playbook -i /etc/ansible/hosts /usr/share/ansible/openshift-ansible/playbooks/prerequisites.yml
