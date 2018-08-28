@@ -61,10 +61,14 @@ ansible_become=true
 openshift_disable_check=memory_availability,disk_availability,docker_storage,package_version,docker_image_availability,package_availability
 openshift_master_default_subdomain=${WILDCARDNIP}
 osm_default_subdomain=${WILDCARDNIP}
-openshift_public_hostname=${RESOURCEGROUP}.${FULLDOMAIN}
+
+#openshift_public_hostname=${RESOURCEGROUP}.${FULLDOMAIN}
+openshift_public_hostname=${WILDCARDZONE}.${FULLDOMAIN}
 container_runtime_docker_storage_setup_device=/dev/sdc
-openshift_master_cluster_hostname=${RESOURCEGROUP}.${FULLDOMAIN}
-openshift_master_cluster_public_hostname=${RESOURCEGROUP}.${FULLDOMAIN}
+#openshift_master_cluster_hostname=${RESOURCEGROUP}.${FULLDOMAIN}
+openshift_master_cluster_hostname=${WILDCARDZONE}.${FULLDOMAIN}
+#openshift_master_cluster_public_hostname=${RESOURCEGROUP}.${FULLDOMAIN}
+openshift_master_cluster_public_hostname=${WILDCARDZONE}.${FULLDOMAIN}
 openshift_enable_service_catalog=false
 openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}]
 openshift_master_manage_htpasswd=false
