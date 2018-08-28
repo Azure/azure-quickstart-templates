@@ -20,11 +20,21 @@ export FULLDOMAIN=${THEHOSTNAME#*.*}
 export WILDCARDFQDN=${WILDCARDZONE}.${FULLDOMAIN}
 export WILDCARDIP=`dig +short ${WILDCARDFQDN}`
 export WILDCARDNIP=${WILDCARDIP}.nip.io
-echo "Show wildcard info"
-echo $WILDCARDFQDN
-echo $WILDCARDIP
-echo $WILDCARDNIP
-echo $RHSMMODE
+touch /tmp/envVars.out
+echo "Show wildcard info" >> /tmp/envVars.out
+echo "WILDCARDFQDN " $WILDCARDFQDN >> /tmp/envVars.out
+echo "WILDCARDIP " $WILDCARDIP >> /tmp/envVars.out
+echo "WILDCARDNIP " $WILDCARDNIP >> /tmp/envVars.out
+echo "RHSMMODE " $RHSMMODE >> /tmp/envVars.out
+echo "RESOURCEGROUP " $RESOURCEGROUP >> /tmp/envVars.out
+echo "WILDCARDZONE " $WILDCARDZONE >> /tmp/envVars.out
+echo "AUSERNAME " $AUSERNAME >> /tmp/envVars.out
+echo "PASSWORD " $PASSWORD >> /tmp/envVars.out
+echo "THEHOSTNAME " $THEHOSTNAME >> /tmp/envVars.out
+echo "RHSM_USER " $RHSM_USER >> /tmp/envVars.out
+echo "RHSM_PASSWORD " $RHSM_PASSWORD >> /tmp/envVars.out
+echo "RHSM_POOL " $RHSM_POOL >> /tmp/envVars.out
+echo "FULLDOMAIN " $FULLDOMAIN >> /tmp/envVars.out
 
 domain=$(grep search /etc/resolv.conf | awk '{print $2}')
 
