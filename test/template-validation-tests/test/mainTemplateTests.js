@@ -133,7 +133,7 @@ describe('template files - ', () => {
                     templateFileContent = templateFileContent.replace(/\"defaultvalue\":\s*\"\[resourcegroup\(\)\.location\]\"/, "");
                 }
 
-                var locationString = 'resourceGroup().location';
+                var locationString = 'resourcegroup().location';
                 var message = 'in file:' + templateJSONObject.filename + ' should NOT have location set to resourceGroup().location';
                 assert(templateFileContent.includes(locationString) === false, message);
                 next();
