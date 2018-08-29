@@ -45,21 +45,18 @@ $retry=0
 $success=$false
 
 # Get a token for ARM
-
 $headers=@{Metadata="true";}
-$resource="https://management.azure.com/"
-$postBody=@{authority="https://login.microsoftonline.com/$TenantId"; resource="$resource"}
+$resource=[uri]::EscapeDataString("https://management.azure.com/")
+$uri='http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=' + $resource
 
 # Retry till we can get a token, this is only needed until we can sequence extensions in VMSS
-
 do
     {
         try
         {
            Write-Verbose "Getting Token Retry $retry"
-
-           $reponse=Invoke-WebRequest -Uri http://localhost:50342/oauth2/token -Method POST -Body $postBody -UseBasicParsing -Headers $headers
-           $result=ConvertFrom-Json -InputObject $reponse.Content
+           $response = Invoke-WebRequest -Uri $uri -Headers $headers -UseBasicParsing
+           $result=ConvertFrom-Json -InputObject $response.Content
            $success=$true
         }
         catch
