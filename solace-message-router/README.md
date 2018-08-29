@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/SolaceProducts/solace-azure-quickstart-template.svg?branch=master)](https://travis-ci.org/SolaceProducts/solace-azure-quickstart-template)
+
 # How to Deploy Standalone or HA Clusters of Solace PubSub+ Software Message Brokers onto Azure
 
 The Solace PubSub+ software message broker meets the needs of big data, cloud migration, and Internet-of-Things initiatives, and enables microservices and event-driven architecture. Capabilities include topic-based publish/subscribe, request/reply, message queues/queueing, and data streaming for IoT devices and mobile/web apps. The message broker supports open APIs and standard protocols including AMQP, JMS, MQTT, REST, and WebSocket. As well, it can be deployed in on-premise datacenters, natively within private and public clouds, and across complex hybrid cloud environments.
@@ -48,29 +50,36 @@ Hit the "Deploy to Azure" button, and in the deployment template add the link to
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-You need to fill in the following fields:
+You need to fill in the following fields (* marks the mandatory ones):
 
 | Field                      | Value                                                                          |
 |----------------------------|--------------------------------------------------------------------------------|
 | **BASICS**                 |  |
-| Subscription               | Provide your subscription to use. |
-| Resource Group             | A new group, or an existing group that will be available from the pull-down menu once "Use existing" is selected. |
-| Location                   | Specify a location for the resource group where metadata about the resources is stored. Select the region most suitable to you. |
+| Subscription*              | Provide your subscription to use. |
+| Resource Group*            | A new group, or an existing group that will be available from the pull-down menu once "Use existing" is selected. |
+| Location*                  | Specify a location for the resource group where metadata about the resources is stored. Select the region most suitable to you. |
 | **SETTINGS**               |  |
-| Admin Username             | Username for the virtual Machine(s). Do not use special characters. |
-| Admin Password             | Password for the virtual Machine(s) and for the 'admin' management user. Azure sets rules on passwords, observe the online feedback. |
+| Admin Username*            | Username for the virtual Machine(s) hosting the Solace message router instance(s). Do not use special characters. |
+| Admin Password*            | Password for the virtual Machine(s) and for the 'admin' management user. Azure sets rules on passwords, observe the online feedback. |
 | Security Group Name        | New or existing security group, where message broker default ports will be made publicly available. |
 | Workspace Name             | New or existing OMS Log Analytics workspace, where logs and diagnostics are monitored. Leave this field empty to not deploy an OMS Workspace. |
 | Workspace Region           | Select region to deploy OMS Log Analytics workspace. Not used if Workspace Name is empty. |
-| DNS Label for LB IP        | Used for the public DNS name of the Load Balancer. |
-| DNS Label for VM IP        | Used for the public DNS name of each Virtual Machine. |
+| DNS Label for LB IP*       | Used for the public DNS name of the Load Balancer. |
+| DNS Label for VM IP        | Used for the public DNS name of each Virtual Machine. The default offers to generate a unique name. |
 | CentOS Version             | The CentOS version for deploying the Docker containers. Use CentOS 7.2, 7.3, or 7.4. |
 | Message Routing VM Size     | The size of the VM for the message routing nodes. Use Standard_D2_v2, Standard_DS2_v2, Standard_D2_v3, or Standard_D2s_v3. Note that not all regions support all these VM sizes. |
 | Monitor VM Size            | The size of the VM for the monitoring node. Use Standard_D2_v2, Standard_DS2_v2, Standard_D2_v3, or Standard_D2s_v3. Note that not all regions support all these VM sizes. |
 | Data Disk Size             | The size of the data disk in GB for diagnostics and message spooling on the message brokers. Use 0, 20, 40, 80, or 160. |
-| Solace Docker image reference | A reference to the Solace PubSub+ message broker Docker image, from step 1. Either the image name with optional tag in an accessible Docker registry or a download URL. The download URL can be obtained from http://dev.solace.com/downloads/ or it can be a URL to a remotely hosted image version. The default value is `solace/solace-pubsub-standard:latest` |
-| Deployment Model           | High Availability or Single Node. |
+| Solace Message Broker Docker image reference | A reference to the Solace PubSub+ message broker Docker image, from step 1. Either the image name with optional tag in an accessible Docker registry or a download URL. The download URL can be obtained from http://dev.solace.com/downloads/ or it can be a URL to a remotely hosted image version. The default value is `solace/solace-pubsub-standard:latest` |
+| Deployment Model*          | High Availability or Single Node. |
+| Existing Virtual Network Name | Only used if deploying into an existing virtual network and subnet. Specify the Existing Virtual Network Name together with the Existing Subnet Name, otherwise leave it at default blank. |
+| Existing Subnet Name       | Only used if deploying into an existing virtual network and subnet. Specify the Existing Virtual Network Name together with the Existing Subnet Name, otherwise leave it at default blank. |
+| VNnet Address Prefix       | The virtual network's address range in CIDR notation where the Solace message broker will be deployed. |
+| Subnet Prefix              | The subnet's address range in CIDR notation where the Solace message broker will be deployed. It must be contained by the address space of the virtual network. The address range of a subnet which is in use can't be edited. |
 | Location                   | The location where all the resources are stored. The default is the same location as the resource group. |
+| Number Of Fault Domains    | The number of fault domains to be used for the deployment. For the maximum number fault domains available to your location refer to https://github.com/MicrosoftDocs/azure-docs/blob/master/includes/managed-disks-common-fault-domain-region-list.md |
+| _artifactsLocation         | The base URI where artifacts required by this template are located. Leave it at default unless deploying from your own location. |
+| _artifactsLocationSasToken | The Shared Access Signatures (SAS) token if required for the artifacts location, otherwise leave it at default blank. |
 
 After completing the template fields and accepting the legal terms, you need to purchase the deployment. The cost will only be related to the Azure instance and storage costs.
 
