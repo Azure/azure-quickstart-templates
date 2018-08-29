@@ -6,12 +6,6 @@ else
     CONTAINER_NAME=$(echo "$CONTAINER_NAME"|tr '[:upper:]' '[:lower:]')
 fi
 
-# The default port for the MSI extension is 50342
-
-if [ -z $PORT ]; then
-    PORT=50342
-fi
-
 for var in STORAGE_ACCOUNT RESOURCE_GROUP 
 do
 
@@ -23,11 +17,9 @@ do
 done
 
 # login using msi 
-
-az login --msi --msi-port ${PORT}
+az login --identity
 
 # create a file and upload it to storage account using a key obtained via the logged in MSI , the MSI must have permission to perfrm these operations
-
 storage_account_key=`az storage account keys list -n ${STORAGE_ACCOUNT} -g ${RESOURCE_GROUP}|jq '.[0].value'`
 
 if [ `az storage container exists -n ${CONTAINER_NAME} --account-name ${STORAGE_ACCOUNT} --account-key ${storage_account_key} |jq '.exists'` = 'false' ]; then
