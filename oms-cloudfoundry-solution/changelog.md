@@ -1,5 +1,10 @@
 # Change Log
 
+## 2018.6
+
+* Adopt to April 2018 Azure Monitor pricing model
+* Use lower case of severity for alerts
+
 ## 2018.1
 
 * Upgrade all alerts to KQL and remove workaround due to language limitation

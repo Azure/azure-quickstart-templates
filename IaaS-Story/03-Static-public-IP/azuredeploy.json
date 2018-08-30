@@ -30,25 +30,6 @@
         "description": "CIDR address prefix for the front end subnet."
       }
     },
-    "storageAccountNamePrefix": {
-      "type": "string",
-      "maxLength": 11,
-      "metadata": {
-        "description": "Name prefix for standard storage account (max 11 characters)."
-      }
-    },
-    "stdStorageType": {
-      "type": "string",
-      "defaultValue": "Standard_LRS",
-      "allowedValues": [
-        "Standard_LRS",
-        "Standard_GRS",
-        "Standard_ZRS"
-      ],
-      "metadata": {
-        "description": "Storage type."
-      }
-    },
     "osType": {
       "type": "string",
       "defaultValue": "Windows",
@@ -98,7 +79,7 @@
         "vmSize": "Standard_A1",
         "publisher": "Canonical",
         "offer": "UbuntuServer",
-        "sku": "14.04.2-LTS",
+        "sku": "14.04.5-LTS",
         "version": "latest",
         "vmName": "WEB1",
         "osdisk": "osdiskweb",
@@ -109,23 +90,10 @@
     },
     "vmStorageAccountContainerName": "vhds",
     "frontEndSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', parameters('vnetName'),parameters('frontEndSubnetName'))]",
-    "webVMSetting": "[variables('webVMSettings')[parameters('osType')]]",
-    "stdStorageName": "[replace(replace(tolower(concat(parameters('storageAccountNamePrefix'), uniquestring(resourceGroup().id))), '-',''),'.','')]"
+    "webVMSetting": "[variables('webVMSettings')[parameters('osType')]]"
   },
   "resources": [
-    {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('stdStorageName')]",
-      "location": "[parameters('location')]",
-      "tags": {
-        "displayName": "Storage Account - Simple"
-      },
-      "properties": {
-        "accountType": "[parameters('stdStorageType')]"
-      }
-    },
-    {
+     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[parameters('vnetName')]",
@@ -192,13 +160,12 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('webVMSetting').vmName]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('webVMSetting').nicName)]",
-        "[concat('Microsoft.Storage/storageAccounts/', variables('stdStorageName'))]"
+        "[concat('Microsoft.Network/networkInterfaces/', variables('webVMSetting').nicName)]"
       ],
       "tags": {
         "displayName": "VM - Web"
@@ -220,10 +187,7 @@
             "version": "[variables('webVMSetting').version]"
           },
           "osDisk": {
-            "name": "[variables('webVMSetting').osdisk]",
-            "vhd": {
-              "uri": "[concat('http://', variables('stdStorageName'), '.blob.core.windows.net/', variables('vmStorageAccountContainerName'), '/', variables('webVMSetting').osdisk,'.vhd')]"
-            },
+            "name": "[concat(variables('webVMSetting').vmName,'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
