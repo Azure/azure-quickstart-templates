@@ -125,7 +125,7 @@ describe('template files - ', () => {
                 next();
             });
             /** resourceGroup().location should NOT be present anywhere in template, EXCEPT as a defaultValue */
-            it.each(templateObject, 'resourceGroup().location must NOT be be used in the template file ' + templateJSONObject.filename + ', except as a default value for the location parameter.', function (element, next) {
+            it.each(templateObject, 'resourceGroup().location must NOT be be used in the template file ' + templateJSONObject.filename + '.', function (element, next) {
                 var templateFileContent = JSON.stringify(templateObject).toLowerCase();
 
                 // if this is mainTemplate.json, a defaultValue of resourceGroup().location is OK, so remove it before searching for it
