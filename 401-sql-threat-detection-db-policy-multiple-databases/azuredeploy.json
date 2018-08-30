@@ -1,0 +1,81 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "serverName": {
+      "type": "string"
+    },
+    "databaseNames": {
+      "type": "array"
+    },
+    "adminUser": {
+      "type": "string"
+    },
+    "adminPassword": {
+      "type": "securestring"
+    },
+    "emailAddresses": {
+      "type": "array"
+    }
+  },
+  "variables": {
+    "databaseServerName": "[toLower(parameters('serverName'))]",
+    "databaseNames": "[parameters('databaseNames')]",
+    "databaseServerLocation": "westus",
+    "databaseServerAdminLogin": "[parameters('adminUser')]",
+    "databaseServerAdminLoginPassword": "[parameters('adminPassword')]",
+    "emailAddresses": "[parameters('emailAddresses')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Sql/servers",
+      "apiVersion": "2015-05-01-preview",
+      "location": "[variables('databaseServerLocation')]",
+      "name": "[variables('databaseServerName')]",
+      "properties": {
+        "administratorLogin": "[variables('databaseServerAdminLogin')]",
+        "administratorLoginPassword": "[variables('databaseServerAdminLoginPassword')]",
+        "version": "12.0"
+      },
+      "tags": {
+        "DisplayName": "[variables('databaseServerName')]"
+      }
+    },
+    {
+      "apiVersion": "2017-03-01-preview",
+      "type": "Microsoft.Sql/servers/databases",
+      "sku": {
+        "name": "S0",
+        "tier": "Standard"
+      },
+      "kind": "v12.0,user",
+      "location": "[variables('databaseServerLocation')]",
+      "name": "[concat(string(variables('databaseServerName')), '/', string(variables('databaseNames')[copyIndex()]))]",
+      "dependsOn": [
+        "[concat('Microsoft.Sql/servers/', variables('databaseServerName'))]"
+      ],
+      "tags": {
+        "DisplayName": "[variables('databaseServerName')]"
+      },
+      "copy": {
+        "name": "databaseCopy",
+        "count": "[length(variables('databaseNames'))]"
+      },
+      "resources": [
+        {
+          "apiVersion": "2014-04-01-preview",
+          "type": "securityAlertPolicies",
+          "name": "default",
+          "dependsOn": [
+            "[concat('Microsoft.Sql/servers/', variables('databaseServerName'), '/databases/', variables('databaseNames')[copyIndex()])]"
+          ],
+          "properties": {
+            "state": "Enabled",
+            "emailAddresses": "[variables('emailAddresses')[copyIndex()]]",
+            "emailAccountAdmins": "Enabled"
+          }
+        }
+      ]
+    }
+  ]
+}
