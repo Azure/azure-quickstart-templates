@@ -18,7 +18,7 @@ This Beta release deploys a secure SonarQube installation by default, howevere w
 
 Once the deployment finishes:
 * Please RDP to the machine
-* Download Java JDK from Oracle http://www.oracle.com/technetwork/java/javase/downloads/jdk10-downloads-4416644.html
+* Download Java JDK 8 from Oracle http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html
 * Install JDK (follow the wizard)
 * Restart the SonarQube Service by Open “Services” and restart the server normally
 

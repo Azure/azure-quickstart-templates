@@ -37,12 +37,6 @@
         "description": "SQL Server Virtual Machine Administrator Password"
       }
     },
-    "storageAccountName": {
-      "type": "string",
-      "metadata": {
-        "description": "SQL Server Virtual Machine Storage Account Name"
-      }
-    },
     "storageAccountType": {
       "type": "string",
       "metadata": {
@@ -191,11 +185,10 @@
     {
       "name": "[parameters('virtualMachineName')]",
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', parameters('networkInterfaceName'))]",
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]"
+        "[concat('Microsoft.Network/networkInterfaces/', parameters('networkInterfaceName'))]"
       ],
       "properties": {
         "osProfile": {
@@ -217,28 +210,20 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[parameters('virtualMachineName')]",
-            "vhd": {
-              "uri": "[concat(concat(reference(resourceId(resourceGroup().Name, 'Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2015-06-15').primaryEndpoints['blob'], 'vhds/'), parameters('virtualMachineName'), '201624135551.vhd')]"
-            },
-            "createOption": "FromImage"
+            "name": "[concat(parameters('virtualMachineName'), '_OSDisk')]",  
+            "createOption": "FromImage",
+            "storageAccountType": "[parameters('storageAccountType')]"
           },
           "dataDisks": [
             {
-              "name": "[concat(parameters('virtualMachineName'), '-disk-1')]",
-              "vhd": {
-                "uri": "[concat(concat(reference(resourceId(resourceGroup().Name, 'Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2015-06-15').primaryEndpoints['blob'], 'vhds/'), parameters('virtualMachineName'), '-disk-1-201624135551', '.vhd')]"
-              },
+              "name": "[concat(parameters('virtualMachineName'), '_DataDisk-1')]",
               "createOption": "Empty",
               "lun": 0,
               "diskSizeGB": 1023,
               "caching": "ReadOnly"
             },
             {
-              "name": "[concat(parameters('virtualMachineName'), '-disk-2')]",
-              "vhd": {
-                "uri": "[concat(concat(reference(resourceId(resourceGroup().Name, 'Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2015-06-15').primaryEndpoints['blob'], 'vhds/'), parameters('virtualMachineName'), '-disk-2-201624135551', '.vhd')]"
-              },
+              "name": "[concat(parameters('virtualMachineName'), '_DataDisk-2')]",
               "createOption": "Empty",
               "lun": 1,
               "diskSizeGB": 1023,
@@ -289,7 +274,7 @@
     {
       "type": "Microsoft.Resources/deployments",
       "name": "prepareSqlVmDeployment",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2018-05-01",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'), '/extensions/SqlIaasExtension')]"
       ],
@@ -339,15 +324,6 @@
             "value": "PrepareSqlServerSa.ps1\\PrepareSqlServerSa"
           }
         }
-      }
-    },
-    {
-      "name": "[parameters('storageAccountName')]",
-      "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2015-06-15",
-      "location": "[parameters('location')]",
-      "properties": {
-        "accountType": "[parameters('storageAccountType')]"
       }
     },
     {
