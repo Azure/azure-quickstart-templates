@@ -7,6 +7,10 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
+
+
 This template allows you to deploy a SQL database server and a SQL database with Advanced Threat Protection enabled on the server.
+
 Threat Detection is part of the SQL Advanced Threat Protection (ATP) offering and provides a layer of security that responds to potential threats over SQL servers and databases.
+
 For more information on Threat Detection: https://docs.microsoft.com/en-us/azure/sql-database/sql-database-threat-detection
