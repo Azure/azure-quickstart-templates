@@ -7,6 +7,10 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
+
+
 This template allows you to deploy a SQL database server and SQL databases with Threat Detection enabled, configured with same/different email addresses for alerts.
+
 Threat Detection is part of the SQL Advanced Threat Protection (ATP) offering and provides a layer of security that responds to potential threats over SQL servers and databases.
+
 For more information on Threat Detection, see the [official documentation]( https://docs.microsoft.com/en-us/azure/sql-database/sql-database-threat-detection).
