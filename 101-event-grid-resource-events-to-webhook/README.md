@@ -3,20 +3,8 @@
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-This template creates Event Grid subscription for either a resource group or Azure subscription. It sends the events to a WebHook.
+This template creates Event Grid subscription for either a resource group or Azure subscription. It sends the events to a WebHook. For information about deploying the template at the subscription level, see [Deploy resources to an Azure subscription](https://docs.microsoft.com/azure/azure-resource-manager/deploy-to-subscription).
 
 You need a WebHook endpoint for receiving the events. If you have one, pass that URI as the `endpoint` parameter. If you do not have an existing endpoint, the template in the **prereqs** folder deploys a web app that displays the event messages. Deploy this template to your subscription. Pass that URI in the format `https://<your-site>/api/updates/` For more information, see [Create a message endpoint](https://docs.microsoft.com/azure/event-grid/custom-event-quickstart#create-a-message-endpoint).
-
-To subscribe to events for an Azure subscription, deploy with the following command:
-
-```
-az deployment create -n <deployment-name> -l <location> --template-file azuredeploy.json --parameters @azuredeploy.parameters.json
-```
-
-To subscribe to events for a resource group, deploy with the following command:
-
-```
-az group deployment create --resource-group <resource-group-for-subscription> --template-file azuredeploy.json --parameters @azuredeploy.parameters.json
-```
 
 `Tags: eventgrid`
