@@ -14,12 +14,6 @@
         "description": "Administrator password used when provisioning virtual machines"
       }
     },
-    "storageAccountName": {
-      "type": "string",
-      "metadata": {
-        "description": "Unique namespace for the Storage Account where the Virtual Machine's disks will be placed"
-      }
-    },
     "virtualNetworkName": {
       "type": "string",
       "defaultValue": "myVNET",
@@ -79,7 +73,7 @@
   "variables": {
     "imagePublisher": "Canonical",
     "imageOffer": "UbuntuServer",
-    "imageSKU": "14.04.2-LTS",
+    "imageSKU": "14.04.5-LTS",
     "vmStorageAccountContainerName": "vhd",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
     "computerNamePrefix": "NagiosCoreSrv",
@@ -110,15 +104,6 @@
     "apiVersion": "2015-06-15"
   },
   "resources": [
-    {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[parameters('storageAccountName')]",
-      "apiVersion": "2015-06-15",
-      "location": "[parameters('location')]",
-      "properties": {
-        "accountType": "Standard_LRS"
-      }
-    },
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/virtualNetworks",
@@ -215,7 +200,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat('nagiosSrv', copyindex())]",
       "location": "[parameters('location')]",
@@ -224,8 +209,7 @@
         "count": "[variables('numberOfInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', 'nic', copyindex())]",
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]"
+        "[concat('Microsoft.Network/networkInterfaces/', 'nic', copyindex())]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -244,10 +228,7 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat('https://',parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/osdisk.vhd')]"
-            },
+            "name": "[concat('nagiosSrv', copyindex(),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
