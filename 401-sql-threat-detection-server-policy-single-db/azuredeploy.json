@@ -1,0 +1,70 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "serverName": {
+      "type": "string"
+    },
+    "databaseName": {
+      "type": "string"
+    },
+    "adminUser": {
+      "type": "string"
+    },
+    "adminPassword": {
+      "type": "securestring"
+    },
+    "emailAddresses": {
+      "type": "array"
+    }
+  },
+  "variables": {
+    "databaseServerName": "[toLower(parameters('serverName'))]",
+    "databaseName": "[parameters('databaseName')]",
+    "databaseServerLocation": "westus",
+    "databaseServerAdminLogin": "[parameters('adminUser')]",
+    "databaseServerAdminLoginPassword": "[parameters('adminPassword')]",
+    "emailAddresses": "[parameters('emailAddresses')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Sql/servers",
+      "apiVersion": "2015-05-01-preview",
+      "location": "[variables('databaseServerLocation')]",
+      "name": "[variables('databaseServerName')]",
+      "properties": {
+        "administratorLogin": "[variables('databaseServerAdminLogin')]",
+        "administratorLoginPassword": "[variables('databaseServerAdminLoginPassword')]",
+        "version": "12.0"
+      },
+      "tags": {
+        "DisplayName": "[variables('databaseServerName')]"
+      },
+      "resources": [
+        {
+          "apiVersion": "2017-03-01-preview",
+          "type": "securityAlertPolicies",
+          "name": "DefaultSecurityAlert",
+          "dependsOn": [
+            "[variables('databaseServerName')]"
+          ],
+          "properties": {
+            "state": "Enabled",
+            "emailAddresses": "[variables('emailAddresses')]",
+            "emailAccountAdmins": true
+          }
+        },
+        {
+          "apiVersion": "2014-04-01-preview",
+          "type": "Microsoft.Sql/servers/databases",
+          "location": "[variables('databaseServerLocation')]",
+          "name": "[concat(string(variables('databaseServerName')), '/', string(variables('databaseName')))]",
+          "dependsOn": [ "[concat('Microsoft.Sql/servers/', variables('databaseServerName'))]" ],
+          "tags": {
+            "DisplayName": "[variables('databaseServerName')]"
+          }
+        }
+      ]
+    }
+  ]
+}
