@@ -212,12 +212,6 @@
         "description": "The URL to the disk image in blob that will be used to create all VMs"
       }
     },
-    "vhdContainer": {
-      "type": "string",
-      "metadata": {
-        "description": "This is the container URL that will hold all VHDs for the VMs"
-      }
-    },
     "location": {
       "type": "string",
       "defaultValue": "[resourceGroup().location]",
@@ -262,9 +256,25 @@
     "clientInstallationCLI": "powershell -ExecutionPolicy Unrestricted -file private_client_vm_setup.ps1",
     "networkSecurityGroupName": "NSGMJS",
     "imageUri": "[parameters('imageUri')]",
-    "vhdContainer": "[parameters('vhdContainer')]"
+    "imageName": "myCustomImage" 
   },
   "resources": [
+    {	
+      "type": "Microsoft.Compute/images",
+      "apiVersion": "2017-03-30",
+      "name": "[variables('imageName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+      "storageProfile": {
+      "osDisk": {
+      "osType": "Windows",
+      "osState": "Generalized",
+      "blobUri": "[variables('imageUri')]",
+      "storageAccountType": "Standard_LRS"
+            }
+        }
+      }
+    },
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkSecurityGroups",
@@ -373,16 +383,9 @@
           "adminPassword": "[parameters('adminPassword')]"
         },
         "storageProfile": {
-          "osDisk": {
-            "osType": "Windows",
-            "name": "[concat(variables('clientVMName'),'_OSDisk')]", 
-            "createOption": "FromImage",
-            "image": {
-              "uri": "[variables('imageUri')]"
-            },
-          
-            "caching": "ReadWrite"
-          }
+          "imageReference": { 
+             "id": "[resourceId('Microsoft.Compute/images', variables('imageName'))]" 
+          } 
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -456,17 +459,9 @@
         },
         "storageProfile": {
           "osDisk": {
-            "osType": "Windows",
-           
-
-           "name": "[concat(variables('masterVMName'),'_OSDisk')]", 
-            "createOption": "FromImage",
-            "image": {
-              "uri": "[variables('imageUri')]"
-            },
-            
-            "caching": "ReadWrite"
-          }
+            "imageReference": { 
+              "id": "[resourceId('Microsoft.Compute/images', variables('imageName'))]" 
+           }
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -476,6 +471,7 @@
           ]
         }
       }
+    }
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
@@ -547,16 +543,9 @@
           "adminPassword": "[parameters('adminPassword')]"
         },
         "storageProfile": {
-          "osDisk": {
-            "osType": "Windows",
-            "name": "[concat(variables('workerVMName'), copyindex(),'_OSDisk')]", 
-            "createOption": "FromImage",
-            "image": {
-              "uri": "[variables('imageUri')]"
-            },
-           
-            "caching": "ReadWrite"
-          }
+          "imageReference": { 
+            "id": "[resourceId('Microsoft.Compute/images', variables('imageName'))]" 
+         }
         },
         "networkProfile": {
           "networkInterfaces": [
