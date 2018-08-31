@@ -154,6 +154,12 @@ elif [ "${service_principal_type}" == "Certificate" ]; then
 EOF
 fi
 
+if [ "$environment" = "AzureStack" ]; then
+  cat >> "$home_dir/deploy_bosh.sh" << EOF
+  -o ~/example_manifests/use-trusted-certs.yml \\
+EOF
+fi
+
 if [ "$environment" = "AzureChinaCloud" ]; then
   cat >> "$home_dir/deploy_bosh.sh" << EOF
   -o ~/example_manifests/use-managed-disks.yml \\
@@ -239,8 +245,7 @@ EOF
   fi
 fi
 
-if [ "$environment" != "AzureStack" ]; then
-  cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
+cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
   -o ~/example_manifests/use-external-blobstore.yml \\
   -v app_package_directory_key=cc-packages \\
   -v buildpack_directory_key=cc-buildpacks \\
@@ -250,6 +255,11 @@ if [ "$environment" != "AzureStack" ]; then
   -v environment=$(get_setting ENVIRONMENT) \\
   -v blobstore_storage_account_name=$(get_setting DEFAULT_STORAGE_ACCOUNT_NAME) \\
   -v blobstore_storage_access_key=$(get_setting DEFAULT_STORAGE_ACCESS_KEY) \\
+EOF
+if [ "$environment" = "AzureStack" ]; then
+  cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
+  -o ~/example_manifests/use-azure-stack-storage-blobstore.yml \\
+  -v blobstore_storage_dns_suffix=${endpoint_suffix} \\
 EOF
 fi
 cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
