@@ -2,12 +2,6 @@
   "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "storageAccount": {
-      "type": "string",
-      "metadata": {
-        "description": "Storage account name for the cluster"
-      }
-    },
     "dnsName": {
       "type": "string",
       "metadata": {
@@ -31,13 +25,6 @@
       "defaultValue": "Standard_A1",
       "metadata": {
         "description": "size for the VMs"
-      }
-    },
-    "storageAccountType": {
-      "type": "string",
-      "defaultValue": "Standard_LRS",
-      "metadata": {
-        "description": "Storage account type for the cluster"
       }
     },
     "virtualNetworkName": {
@@ -271,30 +258,12 @@
     "vmExtensionName": "[concat(parameters('vmNamePrefix'), '-ext')]",
     "pxcClusterAddress": "[concat(parameters('vmIP1'), ',', parameters('vmIP2'), ',', parameters('vmIP3'))]",
     "customScriptCommandCommon": "[concat(parameters('customScriptCommandToExecute'), ' ', variables('pxcClusterAddress'), ' ')]",
-    "vhdContainer1": "[concat('http://',parameters('storageAccount'),'.blob.core.windows.net/avhds/')]",
-    "dataDisk1VhdName1": "[concat(variables('vhdContainer1'),variables('vmName1'),'dataDisk1.vhd')]",
-    "dataDisk2VhdName1": "[concat(variables('vhdContainer1'),variables('vmName1'),'dataDisk2.vhd')]",
-    "customScriptParamVm1": "[concat(parameters('vmIP1'), ' bootstrap-pxc ', parameters('mysqlConfigFilePath'))]",
+     "customScriptParamVm1": "[concat(parameters('vmIP1'), ' bootstrap-pxc ', parameters('mysqlConfigFilePath'))]",
     "vmExtensionName1": "[concat(variables('vmName1'),'/', variables('vmExtensionName'))]",
-    "vhdContainer2": "[concat('http://',parameters('storageAccount'),'.blob.core.windows.net/kvhds/')]",
-    "dataDisk1VhdName2": "[concat(variables('vhdContainer2'),variables('vmName2'),'dataDisk1.vhd')]",
-    "dataDisk2VhdName2": "[concat(variables('vhdContainer2'),variables('vmName2'),'dataDisk2.vhd')]",
-    "customScriptParamVm2": "[concat(parameters('vmIP2'), ' start ', parameters('mysqlConfigFilePath'))]",
-    "vhdContainer3": "[concat('http://',parameters('storageAccount'),'.blob.core.windows.net/zvhds/')]",
-    "dataDisk1VhdName3": "[concat(variables('vhdContainer3'),variables('vmName3'),'dataDisk1.vhd')]",
-    "dataDisk2VhdName3": "[concat(variables('vhdContainer3'),variables('vmName3'),'dataDisk2.vhd')]",
+      "customScriptParamVm2": "[concat(parameters('vmIP2'), ' start ', parameters('mysqlConfigFilePath'))]",
     "customScriptParamVm3": "[concat(parameters('vmIP3'), ' start ', parameters('mysqlConfigFilePath'))]"
   },
   "resources": [
-    {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[parameters('storageAccount')]",
-      "apiVersion": "2015-06-15",
-      "location": "[parameters('location')]",
-      "properties": {
-        "accountType": "[parameters('storageAccountType')]"
-      }
-    },
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
@@ -310,9 +279,15 @@
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('availabilitySetName')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-12-01",
       "location": "[parameters('location')]",
-      "properties": {}
+      "sku": {
+        "name": "Aligned"
+        },
+        "properties": { 
+        "platformFaultDomainCount": 2,
+        "platformUpdateDomainCount": 5
+        }
     },
     {
       "apiVersion": "2015-06-15",
@@ -440,11 +415,10 @@
     {
       "name": "[variables('vmName1')]",
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]",
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccount'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName1'))]"
       ],
       "properties": {
@@ -467,30 +441,21 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat(variables('vhdContainer1'), 'osdisk.vhd')]"
-            },
+            "name":"[concat(variables('vmName1'),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           },
           "dataDisks": [
             {
-              "name": "datadisk1",
+              "name": "[concat(variables('vmName1'),'_DataDisk1')]",
               "diskSizeGB": "1000",
               "lun": 0,
-              "vhd": {
-                "uri": "[variables('dataDisk1VhdName1')]"
-              },
               "createOption": "Empty"
             },
             {
-              "name": "datadisk2",
+              "name": "[concat(variables('vmName1'),'_DataDisk2')]",
               "diskSizeGB": "1000",
               "lun": 1,
-              "vhd": {
-                "uri": "[variables('dataDisk2VhdName1')]"
-              },
               "createOption": "Empty"
             }
           ]
@@ -530,11 +495,10 @@
     {
       "name": "[variables('vmName2')]",
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]",
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccount'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName2'))]"
       ],
       "properties": {
@@ -557,30 +521,21 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat(variables('vhdContainer2'), 'osdisk.vhd')]"
-            },
+            "name": "[concat(variables('vmName2'),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           },
           "dataDisks": [
             {
-              "name": "datadisk1",
+              "name": "[concat(variables('vmName2'),'_DataDisk1')]",
               "diskSizeGB": "1000",
               "lun": 0,
-              "vhd": {
-                "uri": "[variables('dataDisk1VhdName2')]"
-              },
               "createOption": "Empty"
             },
             {
-              "name": "datadisk2",
+              "name": "[concat(variables('vmName2'),'_DataDisk2')]",
               "diskSizeGB": "1000",
               "lun": 1,
-              "vhd": {
-                "uri": "[variables('dataDisk2VhdName2')]"
-              },
               "createOption": "Empty"
             }
           ]
@@ -621,11 +576,10 @@
     {
       "name": "[variables('vmName3')]",
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]",
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccount'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName3'))]"
       ],
       "properties": {
@@ -648,30 +602,21 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat(variables('vhdContainer3'), 'osdisk.vhd')]"
-            },
+            "name": "[concat(variables('vmName3'),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           },
           "dataDisks": [
             {
-              "name": "datadisk1",
+              "name": "[concat(variables('vmName3'),'_DataDisk1')]",
               "diskSizeGB": "1000",
               "lun": 0,
-              "vhd": {
-                "uri": "[variables('dataDisk1VhdName3')]"
-              },
               "createOption": "Empty"
             },
             {
-              "name": "datadisk2",
+              "name": "[concat(variables('vmName3'),'_DataDisk2')]",
               "diskSizeGB": "1000",
               "lun": 1,
-              "vhd": {
-                "uri": "[variables('dataDisk2VhdName3')]"
-              },
               "createOption": "Empty"
             }
           ]
