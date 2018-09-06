@@ -14,15 +14,6 @@
     "adminPassword": {
       "type": "securestring"
     },
-    "diagStorageAccountName": {
-      "type": "string"
-    },
-    "storageAccountType": {
-      "type": "string"
-    },
-    "dataStorageAccountName": {
-      "type": "string"
-    },
     "vNetId": {
       "type": "string"
     },
@@ -53,26 +44,9 @@
     }
   },
   "variables": {
-    "vmStorageAccountContainerName": "vhds",
-    "OSDiskName": "sql-vm-osdisk",
     "psToolkitScriptName": "InstallNetAppPS.ps1"
   },
   "resources": [
-    {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[parameters('dataStorageAccountName')]",
-      "apiVersion": "2017-06-01",
-      "location": "[parameters('location')]",
-      "tags": {
-        "quickstartName": "[parameters('quickstartTags').name]",
-        "provider": "[parameters('NetAppTags').provider]"
-      },
-      "sku": {
-        "name": "[parameters('storageAccountType')]"
-      },
-      "kind": "Storage",
-      "properties": {}
-    },
     {
       "apiVersion": "2016-03-30",
       "type": "Microsoft.Network/networkInterfaces",
@@ -98,7 +72,7 @@
       }
     },
     {
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('sqlVmName')]",
       "location": "[parameters('location')]",
@@ -107,8 +81,7 @@
         "quickstartName": "[parameters('quickstartTags').name]",
         "provider": "[parameters('NetAppTags').provider]"
       },
-      "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('dataStorageAccountName'))]",
+      "dependsOn": [ 
         "[concat('Microsoft.Network/networkInterfaces/', parameters('sqlVmNicName'))]"
       ],
       "properties": {
@@ -128,10 +101,7 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', parameters('dataStorageAccountName')), '2015-06-15').primaryEndpoints.blob, variables('vmStorageAccountContainerName'), '/',variables('OSDiskName'),'.vhd')]"
-            },
+            "name": "[concat(parameters('sqlVmName'),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           },
@@ -149,7 +119,7 @@
         {
           "type": "Microsoft.Compute/virtualMachines/extensions",
           "name": "[concat(parameters('sqlVmName'),'/','sqlNetAppOTCConnect')]",
-          "apiVersion": "2016-03-30",
+          "apiVersion": "2017-03-30",
           "location": "[parameters('location')]",
           "dependsOn": [
             "[concat('Microsoft.Compute/virtualMachines/',parameters('sqlVmName'))]"
