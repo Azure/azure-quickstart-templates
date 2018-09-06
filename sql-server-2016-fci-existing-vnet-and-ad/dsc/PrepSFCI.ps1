@@ -115,7 +115,7 @@ configuration PrepSFCI
             LocalPort   = ("445", "1433", "37000", "37001")
             Protocol    = "TCP"
             Description = "Firewall Rule for SQL"
-            DependsOn   = "[xSQLServerFailoverClusterSetup]PrepareMSSQLSERVER"
+            DependsOn   = "[xSQLServerSetup]PrepareMSSQLSERVER"
         }
 
         xPendingReboot Reboot2
