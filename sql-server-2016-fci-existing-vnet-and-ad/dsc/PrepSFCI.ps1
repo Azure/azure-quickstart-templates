@@ -10,6 +10,9 @@ configuration PrepSFCI
 
         [Parameter(Mandatory)]
         [System.Management.Automation.PSCredential]$svcCreds,
+
+        [Parameter(Mandatory)]
+        [String]$SQLClusterName,
         
         [String]$DomainNetbiosName = (Get-NetBIOSName -DomainName $DomainName),
 
@@ -83,18 +86,21 @@ configuration PrepSFCI
             DependsOn = "[Script]CleanSQL"
         }
 
-        xSQLServerFailoverClusterSetup PrepareMSSQLSERVER
+        xSQLServerSetup PrepareMSSQLSERVER
         {
             DependsOn                  = "[xPendingReboot]Reboot1"
-            Action                     = "Prepare"
-            SourcePath                 = "C:\"
-            SourceFolder               = "SQLServerFull"
-            UpdateSource               = ""
-            SetupCredential            = $DomainCreds
-            Features                   = "SQLENGINE,AS"
-            InstanceName               = "MSSQLSERVER"
-            FailoverClusterNetworkName = "SQLFCI"
+            Action                     = 'PrepareFailoverCluster'
+            ForceReboot                = $false
+            UpdateEnabled              = 'False'
+            SourcePath                 = 'C:\SQLServerFull'
+            SourceCredential           = $DomainCreds
+            InstanceName               = 'MSSQLSERVER'
+            Features                   = 'SQLENGINE,AS'
             SQLSvcAccount              = $ServiceCreds
+            AgtSvcAccount              = $ServiceCreds
+            ASSvcAccount               = $ServiceCreds
+            FailoverClusterNetworkName = $SQLClusterName
+            PsDscRunAsCredential       = $DomainCreds
         }
 
         xFirewall SQLFirewall

@@ -175,18 +175,21 @@ configuration ConfigSFCI
             DependsOn  = "[xPendingReboot]Reboot1"
         }
 
-        xSQLServerFailoverClusterSetup PrepareMSSQLSERVER
+        xSQLServerSetup PrepareMSSQLSERVER
         {
             DependsOn                  = "[Script]MoveClusterGroups2"
-            Action                     = "Prepare"
-            SourcePath                 = "C:\"
-            SourceFolder               = "SQLServerFull"
-            UpdateSource               = ""
-            SetupCredential            = $DomainCreds
-            Features                   = "SQLENGINE,AS"
-            InstanceName               = "MSSQLSERVER"
-            FailoverClusterNetworkName = "SQLFCI"
+            Action                     = 'PrepareFailoverCluster'
+            ForceReboot                = $false
+            UpdateEnabled              = 'False'
+            SourcePath                 = 'C:\SQLServerFull'
+            SourceCredential           = $DomainCreds
+            InstanceName               = 'MSSQLSERVER'
+            Features                   = 'SQLENGINE,AS'
             SQLSvcAccount              = $ServiceCreds
+            AgtSvcAccount              = $ServiceCreds
+            ASSvcAccount               = $ServiceCreds
+            FailoverClusterNetworkName = $SQLClusterName
+            PsDscRunAsCredential       = $DomainCreds
         }
 
         xFirewall SQLFirewall
@@ -217,28 +220,41 @@ configuration ConfigSFCI
             DependsOn  = "[xPendingReboot]Reboot2"
         }
 
-        xSQLServerFailoverClusterSetup CompleteMSSQLSERVER
+        xSQLServerSetup CompleteMSSQLSERVER
         {
             DependsOn                  = "[Script]MoveClusterGroups3"
-            Action                     = "Complete"
-            SourcePath                 = "C:\"
-            SourceFolder               = "SQLServerFull"
-            UpdateSource               = ""
-            SetupCredential            = $DomainCreds
-            Features                   = "SQLENGINE,AS"
-            InstanceName               = "MSSQLSERVER"
-            FailoverClusterNetworkName = $SQLClusterName
-            InstallSQLDataDir          = "S:\SQLDB"
-            ASDataDir                  = "S:\OLAP\Data"
-            ASLogDir                   = "S:\OLAP\Log"
-            ASBackupDir                = "S:\OLAP\Backup"
-            ASTempDir                  = "S:\OLAP\Temp"
-            ASConfigDir                = "S:\OLAP\Config"
-            FailoverClusterIPAddress   = $clusterIP
+            Action                     = "CompleteFailoverCluster"
+            ForceReboot                = $false
+            UpdateEnabled              = 'False'
+            SourcePath                 = 'c:\SQLServerFull'
+            SourceCredential           = $DomainCreds
+            InstanceName               = 'MSSQLSERVER'
+            Features                   = 'SQLENGINE,AS'
+            InstallSharedDir           = 'C:\Program Files\Microsoft SQL Server'
+            InstallSharedWOWDir        = 'C:\Program Files (x86)\Microsoft SQL Server'
+            InstanceDir                = 'C:\Program Files\Microsoft SQL Server'
             SQLSvcAccount              = $ServiceCreds
+            AgtSvcAccount              = $ServiceCreds
             SQLSysAdminAccounts        = $AdminUserNames
+            ASSvcAccount               = $ServiceCreds
             ASSysAdminAccounts         = $AdminUserNames
-            PsDscRunAsCredential       = $DomainCreds
+
+            # Drive D: must be a shared disk.
+            InstallSQLDataDir          = 'S:\MSSQL\Data'
+            SQLUserDBDir               = 'S:\MSSQL\Data'
+            SQLUserDBLogDir            = 'S:\MSSQL\Log'
+            SQLTempDBDir               = 'S:\MSSQL\Temp'
+            SQLTempDBLogDir            = 'S:\MSSQL\Temp'
+            SQLBackupDir               = 'S:\MSSQL\Backup'
+            ASConfigDir                = 'S:\AS\Config'
+            ASDataDir                  = 'S:\AS\Data'
+            ASLogDir                   = 'S:\AS\Log'
+            ASBackupDir                = 'S:\AS\Backup'
+            ASTempDir                  = 'S:\AS\Temp'
+            FailoverClusterNetworkName = $SQLClusterName
+            FailoverClusterIPAddress   = $clusterIP
+            FailoverClusterGroupName   = $SQLClusterName
+            PsDscRunAsCredential       = $SqlInstallCredential
         }
 
         Script FixProbe {
