@@ -55,7 +55,6 @@
       }
     ],
     "imageReferenceCount": "[length(variables('imageReferences'))]",
-    "OSDiskName": "[concat(variables('prefix'),'disk')]",
     "nicName": "[concat(variables('prefix'),'nic')]",
     "virtualNetworkName": "[concat(variables('prefix'),'vnet')]",
     "addressPrefix": "192.168.0.0/16",
@@ -64,8 +63,6 @@
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
     "publicIPAddressName": "[concat(variables('prefix'),'publicip')]",
     "publicIPAddressType": "Dynamic",
-    "storageAccountName": "[concat(variables('prefix'),'sto')]",
-    "vmStorageAccountContainerName": "vhds",
     "vmName": "[concat(variables('prefix'),'vm')]",
     "vmSize": "Standard_D2_v2",
     "storageAccountType": "Standard_LRS",
@@ -73,15 +70,6 @@
     "VMStart": 1
   },
   "resources": [
-    {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('storageAccountName')]",
-      "apiVersion": "2015-06-15",
-      "location": "[variables('location')]",
-      "properties": {
-        "accountType": "[variables('storageAccountType')]"
-      }
-    },
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/virtualNetworks",
@@ -150,7 +138,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "copy": {
         "name": "vmCountCopy",
@@ -159,8 +147,7 @@
       "name": "[concat(variables('vmName'),copyIndex(variables('VMStart')))]",
       "location": "[variables('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex(variables('VMStart')))]",
-        "[variables('storageAccountName')]"
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex(variables('VMStart')))]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -173,10 +160,7 @@
         },
         "storageProfile": {
           "osDisk": {
-            "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/',variables('storageAccountName')), '2015-06-15').primaryEndpoints.blob,variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),copyIndex(variables('VMStart')),'.vhd')]"
-            },
-            "name": "osdisk",
+            "name": "[concat(variables('vmName'),copyIndex(variables('VMStart')),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           },
@@ -201,11 +185,7 @@
       "type": "string",
       "value": "[resourceGroup().name]"
     },
-    "storageAccountName": {
-      "type": "string",
-      "value": "[variables('storageAccountName')]"
-    },
-    "virtualNetworkName": {
+      "virtualNetworkName": {
       "type": "string",
       "value": "[variables('virtualNetworkName')]"
     }
