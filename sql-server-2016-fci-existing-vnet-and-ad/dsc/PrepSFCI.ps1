@@ -93,7 +93,6 @@ configuration PrepSFCI
             ForceReboot                = $false
             UpdateEnabled              = 'False'
             SourcePath                 = 'C:\SQLServerFull'
-            SourceCredential           = $DomainCreds
             InstanceName               = 'MSSQLSERVER'
             Features                   = 'SQLENGINE,AS'
             SQLSvcAccount              = $ServiceCreds

@@ -182,7 +182,6 @@ configuration ConfigSFCI
             ForceReboot                = $false
             UpdateEnabled              = 'False'
             SourcePath                 = 'C:\SQLServerFull'
-            SourceCredential           = $DomainCreds
             InstanceName               = 'MSSQLSERVER'
             Features                   = 'SQLENGINE,AS'
             SQLSvcAccount              = $ServiceCreds
@@ -227,7 +226,6 @@ configuration ConfigSFCI
             ForceReboot                = $false
             UpdateEnabled              = 'False'
             SourcePath                 = 'c:\SQLServerFull'
-            SourceCredential           = $DomainCreds
             InstanceName               = 'MSSQLSERVER'
             Features                   = 'SQLENGINE,AS'
             InstallSharedDir           = 'C:\Program Files\Microsoft SQL Server'
