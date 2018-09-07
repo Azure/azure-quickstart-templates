@@ -56,21 +56,21 @@ Azure Subscription with ability to launch VMs.
 
 1. Create a CloudLens free trial account at https://ixia.cloud/free-trial?isQuickstart=true by following the on-screen instructions.
 2. Activate your free trial account by visiting the link provided in the email.
-3. Login to CloudLens. A project will be automatically created for you with all the required infrastructure: one group for source instances and one group for tool instances, a connection between the two groups. The groups are automatically configured with filters that match the agents that will be started later by the Quick Start deployment.
+3. Login to CloudLens. A project will be automatically created for you with all the required infrastructure: one group for source instances and one group for tool instances, a connection between the two groups. The groups are automatically configured with filters that match the agents that will be started later by the Quick Start template.
 4. Select the project by clicking the tile having the name “QUICKSTART_PROJECT”.
-5. On the project page click on SHOW PROJECT KEY to display the project key and copy it, since it's required to deploy the temaplte.
+5. On the project page click on SHOW PROJECT KEY to display the project key and copy it, since you will need it to deploy the template.
 
 #### Step 2. Launch the Quick Start
 
 Create your CloudLens environment on Azure in a few simple steps:
-- Launch the Template by click on Deploy to Azure button.
-- Fill in all the required parameter values. Accept the terms and condition and click on Purchase.
+- Launch the Template by click on 'Deploy to Azure' button.
+- Fill in all the required parameter values. Accept the terms and conditions and click on 'Purchase'.
 
-#### Step 2. Play with the environment
+#### Step 3. Play with the environment
 
-After the deployment :
-- Check the CloudLens portal to see if the agents have connected and are port of the 2 groups.
-- Login in the Suricata web ui (https://<suricata-vm-ip>) with scirius/scirius
+After the deployment is ready (~ 10-15 minutes):
+- Check the CloudLens portal to see if the agents have connected and are part of the 2 groups (should say '1 instance' under each group).
+- Login in the Suricata web ui (https://<suricata-vm-ip>) with scirius/scirius. If you get a 502 Bad Gateway error, it means  Suricata is still installing.
 - Check the alerts
 
 ## Support
