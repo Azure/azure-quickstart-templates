@@ -1,3 +1,11 @@
+# v5.0.0 (2018-08-31)
+
+- Upgrade Azure CPI version to v35.4.0. Please see new features in [bosh-azure-cpi-release v35.4.0](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v35.4.0)
+- Use cf-deployment [v4.0.0](https://github.com/cloudfoundry/cf-deployment/tree/v4.0.0)
+- Bump bosh-deployment
+- Use Azure Storage as blobstore in Azure Stack
+- Bump bosh-cli to 5.1.2
+
 # v4.1.0 (2018-08-02)
 
 - Use cf-deployment [v3.0.0](https://github.com/cloudfoundry/cf-deployment/tree/v3.0.0)

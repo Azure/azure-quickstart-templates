@@ -42,16 +42,17 @@
         "description": "Diskspace size of the VM"
       }
     },
+    "existingVirtualNetworkResourceGroup":{  
+      "type":"string",
+      "defaultValue":"[resourceGroup().name]",
+      "metadata":{  
+         "description":"Name of the existing VNET resource group"
+      }
+   },
     "existingVirtualNetworkName": {
       "type": "string",
       "metadata": {
         "description": "Name of the existing VNET"
-      }
-    },
-    "existingVirtualNetworkResourceGroup": {
-      "type": "string",
-      "metadata": {
-        "description": "Name of the existing VNET resource group"
       }
     },
     "subnetName": {
@@ -83,7 +84,7 @@
   "variables": {
     "diagStorageAccountName": "[concat(uniquestring(resourceGroup().id), 'specvm')]",
     "publicIPAddressType": "Dynamic",
-    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('existingVirtualNetworkName'),  parameters('subnetName'))]",
+    "subnetRef": "[resourceId(parameters('existingVirtualNetworkResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', parameters('existingVirtualNetworkName'),  parameters('subnetName'))]",
     "nicName": "[parameters('vmName')]",
     "publicIPAddressName": "[parameters('vmName')]"
   },
@@ -91,7 +92,7 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('diagStorageAccountName')]",
-      "apiVersion": "2016-01-01",
+      "apiVersion": "2018-02-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Standard_GRS"
@@ -145,8 +146,21 @@
         ]
       }
     },
-    {
-      "apiVersion": "2015-06-15",
+    {  
+      "type":"Microsoft.Compute/disks",
+      "apiVersion":"2017-03-30",
+      "name":"[concat(parameters('vmName'), '_OSdisk')]",
+      "location":"[parameters('location')]",
+      "properties":{  
+         "creationData":{  
+            "createOption":"Import",
+            "sourceUri":"[parameters('osDiskVhdUri')]"
+         },
+         "osType":"[parameters('osType')]"
+      }
+   },   
+   {
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
       "location": "[parameters('location')]",
@@ -154,7 +168,8 @@
         "displayName": "VirtualMachine"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]",
+        "[concat(parameters('vmName'), '_OSdisk')]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -162,12 +177,11 @@
         },
         "storageProfile": {
           "osDisk": {
-            "name": "[concat(parameters('vmName'),'-osDisk')]",
             "osType": "[parameters('osType')]",
             "caching": "ReadWrite",
-            "vhd": {
-              "uri": "[parameters('osDiskVhdUri')]"
-            },
+            "managedDisk":{  
+              "id":"[resourceId('Microsoft.Compute/disks', concat(parameters('vmName'), '_OSdisk'))]"
+           },
             "createOption": "Attach",
             "diskSizeGB": "[parameters('vmDiskSizeGB')]"
           }
@@ -181,7 +195,7 @@
         },
         "diagnosticsProfile": {
           "bootDiagnostics": {
-            "enabled": "true",
+            "enabled":  true ,
             "storageUri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('diagStorageAccountName')), '2016-01-01').primaryEndpoints.blob)]"
           }
         }
