@@ -11,4 +11,4 @@ cd Amsterdam
 sudo python setup.py install
 sudo docker run -v /:/host -v /var/run/docker.sock:/var/run/docker.sock --privileged --name cloudlens-agent -d --restart=on-failure --net=host ixiacom/cloudlens-agent --accept_eula yes --apikey $1 --custom_tags Name="CloudLens Quick Start Tool Instance"
 sudo amsterdam -d ams -i cloudlens0 setup
-sudo amsterdam -d ams start
+screen -dmS start_suricata sudo amsterdam -d ams start
