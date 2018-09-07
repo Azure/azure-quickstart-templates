@@ -102,16 +102,33 @@
     "vnetName": "[concat(parameters('domainName'), '.vn')]",
     "hostName": "[concat(parameters('domainName'), '.vm')]",
     "templateURLBase": "https://raw.githubusercontent.com/xtremedata/azure-quickstart-templates/master/xtremedata-dbx-cluster-centos",
-    "adminUsername": "azure-user"
+    "adminUsername": "azure-user",
+    "imageName": "myCustomImage"
   },
   "resources": [
-    {
+        {
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountName')]",
       "location": "[parameters('location')]",
       "properties": {
         "accountType": "[variables('storageAccountType')]"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/images",
+      "apiVersion": "2017-03-30",
+      "name": "[variables('imageName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "storageProfile": {
+          "osDisk": {
+            "osType": "Linux",
+            "osState": "Generalized",
+            "blobUri": "[variables('osImage')]",
+            "storageAccountType": "Standard_LRS"
+          }
+        }
       }
     },
     {
@@ -188,7 +205,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('hostName'),'-imghlpr')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2017-03-30",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
@@ -210,9 +227,6 @@
           "imageReference": "[variables('imageReferenceCentOS')]",
           "osDisk": {
             "name": "osdisk",
-            "vhd": {
-              "uri": "[concat('http://', variables('storageAccountName'), '.blob.core.windows.net/vhds/', variables('hostName'),'-imghlpr-osdisk.vhd')]"
-            },
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -298,12 +312,13 @@
     {
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('hostName'),'-',copyindex())]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2017-03-30",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', 'nic', copyindex())]",
-        "[concat('Microsoft.Compute/virtualMachines/',variables('hostName'),'-imghlpr','/extensions/imghlpr')]"
+        "[concat('Microsoft.Compute/virtualMachines/',variables('hostName'),'-imghlpr','/extensions/imghlpr')]",
+        "[concat('Microsoft.Compute/images/', variables('imageName'))]"
       ],
       "copy": {
         "name": "vmLoop",
@@ -322,76 +337,49 @@
           "adminPassword": "[parameters('adminPassword')]"
         },
         "storageProfile": {
-          "osDisk": {
-            "name": "osdisk",
-            "osType": "linux",
-            "image": {
-              "uri": "[variables('osImage')]"
-            },
-            "vhd": {
-              "uri": "[concat('http://', variables('storageAccountName'), '.blob.core.windows.net/vhds/', variables('hostName'),'-',copyindex(), '-osdisk.vhd')]"
-            },
-            "caching": "ReadWrite",
-            "createOption": "FromImage"
+          "imageReference": {
+            "id": "[resourceId('Microsoft.Compute/images', variables('imageName'))]"
           },
-          "dataDisks": [
+         "dataDisks": [
             {
-              "name": "datadisk0",
+              "name": "[concat(variables('hostName'),'-',copyindex(),'_DataDisk1')]",
               "diskSizeGB": "[variables('dataDiskSize')]",
               "lun": 0,
-              "vhd": {
-                "uri": "[concat('http://', variables('storageAccountName'), '.blob.core.windows.net/vhds/', variables('hostName'),'-',copyindex(), '-datadisk0.vhd')]"
-              },
               "caching": "None",
               "createOption": "Empty"
             },
             {
-              "name": "datadisk1",
+              "name": "[concat(variables('hostName'),'-',copyindex(),'_DataDisk2')]",
               "diskSizeGB": "[variables('dataDiskSize')]",
               "lun": 1,
-              "vhd": {
-                "uri": "[concat('http://', variables('storageAccountName'), '.blob.core.windows.net/vhds/', variables('hostName'),'-',copyindex(), '-datadisk1.vhd')]"
-              },
               "caching": "None",
               "createOption": "Empty"
             },
             {
-              "name": "datadisk2",
+              "name": "[concat(variables('hostName'),'-',copyindex(),'_DataDisk3')]",
               "diskSizeGB": "[variables('dataDiskSize')]",
               "lun": 2,
-              "vhd": {
-                "uri": "[concat('http://', variables('storageAccountName'), '.blob.core.windows.net/vhds/', variables('hostName'),'-',copyindex(), '-datadisk2.vhd')]"
-              },
               "caching": "None",
               "createOption": "Empty"
             },
             {
-              "name": "datadisk3",
+              "name": "[concat(variables('hostName'),'-',copyindex(),'_DataDisk4')]",
               "diskSizeGB": "[variables('dataDiskSize')]",
               "lun": 3,
-              "vhd": {
-                "uri": "[concat('http://', variables('storageAccountName'), '.blob.core.windows.net/vhds/', variables('hostName'),'-',copyindex(), '-datadisk3.vhd')]"
-              },
               "caching": "None",
               "createOption": "Empty"
             },
             {
-              "name": "datadisk4",
+              "name": "[concat(variables('hostName'),'-',copyindex(),'_DataDisk5')]",
               "diskSizeGB": "[variables('dataDiskSize')]",
               "lun": 4,
-              "vhd": {
-                "uri": "[concat('http://', variables('storageAccountName'), '.blob.core.windows.net/vhds/', variables('hostName'),'-',copyindex(), '-datadisk4.vhd')]"
-              },
               "caching": "None",
               "createOption": "Empty"
             },
             {
-              "name": "datadisk5",
+              "name":"[concat(variables('hostName'),'-',copyindex(),'_DataDisk6')]",
               "diskSizeGB": "[variables('dataDiskSize')]",
               "lun": 5,
-              "vhd": {
-                "uri": "[concat('http://', variables('storageAccountName'), '.blob.core.windows.net/vhds/', variables('hostName'),'-',copyindex(), '-datadisk5.vhd')]"
-              },
               "caching": "None",
               "createOption": "Empty"
             }
