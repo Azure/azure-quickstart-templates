@@ -54,7 +54,7 @@ if [ "$environment" = "AzureStack" ]; then
   az cloud update --profile 2017-03-09-profile
 fi
 az storage container create --name bosh --connection-string ${connection_string}
-az storage container create --name stemcell --public-access blob --connection-string ${connection_string}
+az storage container create --name stemcell --connection-string ${connection_string}
 az storage table create --name stemcells --connection-string ${connection_string}
 
 username=$(get_setting ADMIN_USER_NAME)
