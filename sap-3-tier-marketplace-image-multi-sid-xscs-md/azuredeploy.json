@@ -4,6 +4,7 @@
   "parameters": {
     "resourcePrefix": {
       "type": "string",
+      "defaultValue": "MULTI",
       "maxLength": 6,
       "minLength": 3,
       "metadata": {
@@ -33,7 +34,7 @@
         "RHEL 7",
         "Oracle Linux 7"
       ],
-      "defaultValue": "Windows Server 2012 R2 Datacenter",
+      "defaultValue": "Windows Server 2016 Datacenter",
       "metadata": {
         "description": "The type of the operating system you want to deploy."
       }
@@ -64,18 +65,21 @@
         "description": "Username for the Virtual Machine."
       }
     },
-    "adminPassword": {
-      "type": "securestring",      
-      "defaultValue": "",
-      "metadata": {
-        "description": "Password for the Virtual Machine."
-      }
-    },    
-    "sshKeyData": {
+    "authenticationType": {
       "type": "string",
-      "defaultValue": "",
+      "defaultValue": "password",
+      "allowedValues": [
+        "password",
+        "sshPublicKey"
+      ],
       "metadata": {
-        "description": "Public SSH key for the virtual machines."
+        "description": "Type of authentication to use on the Virtual Machine."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password or ssh key for the Virtual Machine."
       }
     },
     "subnetId": {
@@ -174,18 +178,17 @@
       }
     },
     "internalOSType": "[variables('images')[parameters('osType')].OSType]",
-    "csExtension": {
-      "Windows": {
-        "script": "[concat(parameters('_artifactsLocation'), '/scripts/noop.ps1', parameters('_artifactsLocationSasToken'))]",
-        "scriptCall": "powershell.exe -ExecutionPolicy bypass -File noop.ps1"
-      },
-      "Linux": {
-        "script": "[concat(parameters('_artifactsLocation'), '/scripts/noop.sh', parameters('_artifactsLocationSasToken'))]",
-        "scriptCall": "sh noop.sh"
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
       }
     },
-    "csExtensionScript": "[variables('csExtension')[variables('internalOSType')].script]",
-    "csExtensionscriptCall": "[variables('csExtension')[variables('internalOSType')].scriptCall]",
     "systemCountSizes": {
       "1": {
         "Size": "Small"
@@ -251,7 +254,7 @@
       }
     },
     "xscsvmSize": "[variables('vmSizes')[ variables('systemCountSizes')[string(parameters('sapSystemCount'))].Size ] [parameters('systemAvailability')].xscsserversize]",
-    "xscsvmCount": "[variables('vmSizes')[ variables('systemCountSizes')[string(parameters('sapSystemCount'))].Size ] [parameters('systemAvailability')].xscsservercount]",    
+    "xscsvmCount": "[variables('vmSizes')[ variables('systemCountSizes')[string(parameters('sapSystemCount'))].Size ] [parameters('systemAvailability')].xscsservercount]",
     "sidlower": "[toLower(parameters('resourcePrefix'))]",
     "vmName": "[variables('sidlower')]",
     "vnetName": "[concat(variables('sidlower'), '-vnet')]",
@@ -261,8 +264,7 @@
       "false": "[parameters('subnetId')]"
     },
     "selectedSubnetId": "[variables('subnets')[string(equals(length(parameters('subnetId')), 0))]]",
-    "nestedDeploymentName": "nestedTemplate",
-    "nestedDeploymentNameLBXSCS": "[concat(variables('nestedDeploymentName'), 'lbxscs')]",
+    "nestedDeploymentNameLBXSCS": "[concat(deployment().name, '-lbxscs')]",
     "publicIpNameXSCS": "[concat(variables('sidlower'), '-pip-xscs')]",
     "avSetNameXSCS": "[concat(variables('sidlower'), '-avset-xscs')]",
     "nsgNameXSCS": "[concat(variables('sidlower'), '-nsg')]",
@@ -315,7 +317,7 @@
       "properties": {
         "securityRules": "[variables('selectedSecurityRules')]"
       }
-    },    
+    },
     {
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('vnetName')]",
@@ -385,7 +387,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), '/nestedtemplates/loadbalancer.json', parameters('_artifactsLocationSasToken'))]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/loadbalancer.json', parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -452,41 +454,6 @@
         ]
       }
     },
-    
-    {
-      "apiVersion": "2018-02-01",
-      "name": "[concat(deployment().name, '-os-', copyIndex())]",
-      "type": "Microsoft.Resources/deployments",
-      "copy": {
-        "name": "osprofloop",
-        "count": "[variables('xscsvmCount')]"
-      },
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), '/nestedtemplates/osprofile.json', parameters('_artifactsLocationSasToken'))]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "osType": {
-            "value": "[variables('internalOSType')]"
-          },
-          "computerName": {
-            "value": "[concat(variables('vmNameXSCS'), '-', copyIndex())]"
-          },
-          "adminUsername": {
-            "value": "[parameters('adminUsername')]"
-          },
-          "adminPassword": {
-            "value": "[parameters('adminPassword')]"
-          },
-          "sshKeyData": {
-            "value": "[parameters('sshKeyData')]"
-          }
-        }
-      }
-    },
-
     {
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('vmNameXSCS'), '-', copyIndex())]",
@@ -508,7 +475,12 @@
         "hardwareProfile": {
           "vmSize": "[variables('xscsvmSize')]"
         },
-        "osProfile": "[reference(concat(deployment().name, '-os-', copyIndex())).outputs.profile.value]",
+        "osProfile": {
+          "computerName": "[concat(variables('vmNameXSCS'), '-', copyIndex())]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+        },
         "storageProfile": {
           "imageReference": {
             "publisher": "[variables('images')[parameters('osType')].publisher]",
