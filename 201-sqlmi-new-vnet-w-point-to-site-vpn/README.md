@@ -60,7 +60,6 @@ You can click the "Deploy to Azure" button at the beginning of this document or 
 
 
 ## Important
-**SQL MI** is still in gated public preview. Before deploying this template you have to whitelist your subscription as explained here: https://docs.microsoft.com/en-us/azure/sql-database/sql-database-managed-instance-create-tutorial-portal#whitelist-your-subscription. 
 
 Usual deployment time is 3-6h but during the public preview deployment might take up to 48h. The reason why provisioning takes some time is that the Managed Instance virtual cluster that hosts the instance is created. Each subsequent instance creation takes just about a few minutes.
 
