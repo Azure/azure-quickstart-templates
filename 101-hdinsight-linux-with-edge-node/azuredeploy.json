@@ -35,32 +35,39 @@
       }
     },
     "_artifactsLocation": {
-          "type": "string",
-          "metadata": {
-              "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
-          },
-          "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-hdinsight-linux-with-edge-node"
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-hdinsight-linux-with-edge-node"
+    },
     "_artifactsLocationSasToken": {
-          "type": "securestring",
-          "metadata": {
-              "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
-          },
-          "defaultValue": ""
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
       },
-    "installScriptActionFolder":{
+      "defaultValue": ""
+    },
+    "installScriptActionFolder": {
       "type": "string",
       "metadata": {
         "description": "A script action you can run on the empty node to install or configure additiona software."
       },
       "defaultValue": "scripts"
     },
-    "installScriptAction":{
+    "installScriptAction": {
       "type": "string",
       "metadata": {
         "description": "A script action you can run on the empty node to install or configure additiona software."
       },
       "defaultValue": "EmptyNodeSetup.sh"
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
@@ -73,22 +80,22 @@
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('clusterStorageAccountName')]",
       "apiVersion": "2016-01-01",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "sku": {
-          "name": "[variables('storageAccountType')]"
+        "name": "[variables('storageAccountType')]"
       },
-      "kind": "Storage", 
+      "kind": "Storage",
       "properties": {}
     },
     {
       "name": "[parameters('clusterName')]",
       "type": "Microsoft.HDInsight/clusters",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2015-03-01-preview",
-      "dependsOn": [ "[concat('Microsoft.Storage/storageAccounts/',variables('clusterStorageAccountName'))]" ],
-      "tags": {
-
-      },
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/',variables('clusterStorageAccountName'))]"
+      ],
+      "tags": {},
       "properties": {
         "clusterVersion": "3.6",
         "osType": "Linux",
@@ -145,30 +152,38 @@
       }
     },
     {
-        "name": "[concat(parameters('clusterName'),'/', variables('applicationName'))]",
-        "type": "Microsoft.HDInsight/clusters/applications",
-        "apiVersion": "2015-03-01-preview",
-        "dependsOn": [ "[concat('Microsoft.HDInsight/clusters/',parameters('clusterName'))]" ],
-        "properties": {
-            "marketPlaceIdentifier": "EmptyNode",
-            "computeProfile": {
-                "roles": [{
-                    "name": "edgenode",
-                    "targetInstanceCount": 1,
-                    "hardwareProfile": {
-                        "vmSize": "Standard_D3_v2"
-                    }
-                }]
-            },
-            "installScriptActions": [{
-                "name": "[concat('emptynode','-' ,uniquestring(variables('applicationName')))]",
-                "uri": "[concat(parameters('_artifactsLocation'), '/', parameters('installScriptActionFolder'), '/', parameters('installScriptAction'), parameters('_artifactsLocationSasToken'))]",
-                "roles": ["edgenode"]
-            }],
-            "uninstallScriptActions": [],
-            "httpsEndpoints": [],
-            "applicationType": "CustomApplication"
-        }
+      "name": "[concat(parameters('clusterName'),'/', variables('applicationName'))]",
+      "type": "Microsoft.HDInsight/clusters/applications",
+      "apiVersion": "2015-03-01-preview",
+      "dependsOn": [
+        "[concat('Microsoft.HDInsight/clusters/',parameters('clusterName'))]"
+      ],
+      "properties": {
+        "marketPlaceIdentifier": "EmptyNode",
+        "computeProfile": {
+          "roles": [
+            {
+              "name": "edgenode",
+              "targetInstanceCount": 1,
+              "hardwareProfile": {
+                "vmSize": "Standard_D3_v2"
+              }
+            }
+          ]
+        },
+        "installScriptActions": [
+          {
+            "name": "[concat('emptynode','-' ,uniquestring(variables('applicationName')))]",
+            "uri": "[concat(parameters('_artifactsLocation'), '/', parameters('installScriptActionFolder'), '/', parameters('installScriptAction'), parameters('_artifactsLocationSasToken'))]",
+            "roles": [
+              "edgenode"
+            ]
+          }
+        ],
+        "uninstallScriptActions": [],
+        "httpsEndpoints": [],
+        "applicationType": "CustomApplication"
+      }
     }
   ],
   "outputs": {

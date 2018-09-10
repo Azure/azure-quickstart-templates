@@ -14,7 +14,7 @@ Before deploying the template you must have the following
 
 When you deploy this Azure Resource Template, you will create a logical gateway in your data factory and the following resources
 - Azure Virtual Machine 
-- Azure Storage (for VM system image and boot diagnostic)
+- Azure Storage Account (for boot diagnostic)
 - Public IP Address
 - Network Interface
 - Network Sercurity Group
