@@ -82,17 +82,17 @@
                                 "Version": 0,
                                 "Configuration": {
                                     "General": {
-                                        "title": "Backup Jobs Breakdown",
+                                        "title": "Backup Jobs Breakdown (Non Log)",
                                         "newGroup": false,
                                         "icon": "",
                                         "useIcon": false
                                     },
                                     "Header": {
-                                        "Title": "Backup Jobs Breakdown",
+                                        "Title": "Backup Jobs Breakdown (Non Log)",
                                         "Subtitle": ""
                                     },
                                     "Donut": {
-                                        "Query": "AzureDiagnostics | where Category == \"AzureBackupReport\"  | where OperationName == \"Job\"  | where JobOperation_s == \"Backup\"  | summarize AggregatedValue = dcount(JobUniqueId_g) by JobStatus_s | order by AggregatedValue desc ",
+                                        "Query": "AzureDiagnostics | where Category == \"AzureBackupReport\" | where OperationName == \"Job\" | extend JobOperationSubType_s = columnifexists(\"JobOperationSubType_s\", \"\") | where JobOperation_s == \"Backup\" and JobOperationSubType_s != \"Log\" and JobOperationSubType_s != \"Recovery point_Log\" | summarize AggregatedValue = dcount(JobUniqueId_g) by JobStatus_s | order by AggregatedValue desc",
                                         "CenterLegend": {
                                             "Text": "Total",
                                             "Operation": "Sum",
@@ -114,10 +114,11 @@
                                                     "color": "#ba141a"
                                                 }
                                             ]
-                                        }
+                                        },
+                                        "NavigationSelect": {}
                                     },
                                     "List": {
-                                        "Query": "let Events = AzureDiagnostics  | where Category == \"AzureBackupReport\" ;  Events  | where OperationName == \"Job\" and JobOperation_s == \"Backup\" and JobStatus_s == \"Failed\"  | project ProtectedServerUniqueId_s, JobStatus_s, Resource   | join kind=inner (Events   | where OperationName == \"ProtectedServer\"  | where ProtectedServerFriendlyName_s != \"\"   | distinct ProtectedServerUniqueId_s, ProtectedServerFriendlyName_s   | project ProtectedServerUniqueId_s, ProtectedServerFriendlyName_s) on ProtectedServerUniqueId_s  | project ProtectedServerFriendlyName_s, JobStatus_s, Resource  | extend Vault= Resource   | summarize count() by ProtectedServerFriendlyName_s, JobStatus_s, Vault",
+                                        "Query": "let Events = AzureDiagnostics | where Category == \"AzureBackupReport\" ; Events | extend JobOperationSubType_s = columnifexists(\"JobOperationSubType_s\", \"\") | where OperationName == \"Job\" and JobOperation_s == \"Backup\" and JobStatus_s == \"Failed\" and JobOperationSubType_s != \"Log\" and JobOperationSubType_s != \"Recovery point_Log\" | project BackupItemUniqueId_s, JobStatus_s, Resource | join kind=inner (     Events     | where OperationName == \"BackupItem\"     | distinct BackupItemUniqueId_s, BackupItemFriendlyName_s     | project BackupItemUniqueId_s , BackupItemFriendlyName_s ) on BackupItemUniqueId_s | project BackupItemFriendlyName_s, JobStatus_s, Resource | extend Vault= Resource | summarize count() by BackupItemFriendlyName_s, JobStatus_s, Vault | order by count_ desc",
                                         "HideGraph": true,
                                         "enableSparklines": false,
                                         "operation": "Summary",
@@ -150,7 +151,92 @@
                                             ]
                                         },
                                         "NameDSVSeparator": "",
-                                        "NavigationQuery": "  let Events = AzureDiagnostics     | where Category == \"AzureBackupReport\" ;    Events      | where OperationName == \"Job\" and JobOperation_s == \"Backup\" and JobStatus_s == \"Failed\"      | project ProtectedServerUniqueId_s, JobStatus_s, Resource, JobFailureCode_s, JobStartDateTime_s, JobDurationInSecs_s, BackupStorageDestination_s, DataTransferredInMB_s, State_s          | join kind=inner      (Events        | where OperationName == \"ProtectedServer\"        | distinct ProtectedServerUniqueId_s, ProtectedServerFriendlyName_s         | project ProtectedServerUniqueId_s, ProtectedServerFriendlyName_s)        on ProtectedServerUniqueId_s         | project ProtectedServerFriendlyName_s, JobStatus_s, Resource, JobFailureCode_s, JobStartDateTime_s, JobDurationInSecs_s, BackupStorageDestination_s, DataTransferredInMB_s , State_s        | extend Vault= Resource          | where {selected item}"
+                                        "NavigationQuery": "let Events = AzureDiagnostics | where Category == \"AzureBackupReport\" ; Events | extend JobOperationSubType_s = columnifexists(\"JobOperationSubType_s\", \"\") | where OperationName == \"Job\" and JobOperation_s == \"Backup\" and JobStatus_s == \"Failed\" and JobOperationSubType_s != \"Log\" and JobOperationSubType_s != \"Recovery point_Log\" | project BackupItemUniqueId_s, ProtectedContainerUniqueId_s, JobStatus_s, Resource, JobFailureCode_s | join kind=inner (     Events     | where OperationName == \"BackupItem\"     | distinct BackupItemUniqueId_s, BackupItemFriendlyName_s, BackupItemName_s, BackupItemType_s     | project BackupItemUniqueId_s , BackupItemFriendlyName_s, BackupItemName_s, BackupItemType_s ) on BackupItemUniqueId_s | join kind=leftouter (     Events     | where OperationName == \"ProtectedContainer\"     | distinct ProtectedContainerUniqueId_s, ProtectedContainerFriendlyName_s     | project ProtectedContainerUniqueId_s , ProtectedContainerFriendlyName_s ) on ProtectedContainerUniqueId_s | project BackupItemFriendlyName_s, BackupItemName_s, ProtectedContainerFriendlyName_s, BackupItemType_s, JobStatus_s, Resource, JobFailureCode_s | extend Vault= Resource | where {selected item}",
+                                        "NavigationSelect": {
+                                            "NavigationQuery": "let Events = AzureDiagnostics | where Category == \"AzureBackupReport\" ; Events | extend JobOperationSubType_s = columnifexists(\"JobOperationSubType_s\", \"\") | where OperationName == \"Job\" and JobOperation_s == \"Backup\" and JobStatus_s == \"Failed\" and JobOperationSubType_s != \"Log\" and JobOperationSubType_s != \"Recovery point_Log\" | project BackupItemUniqueId_s, ProtectedContainerUniqueId_s, JobStatus_s, Resource, JobFailureCode_s | join kind=inner (     Events     | where OperationName == \"BackupItem\"     | distinct BackupItemUniqueId_s, BackupItemFriendlyName_s, BackupItemName_s, BackupItemType_s     | project BackupItemUniqueId_s , BackupItemFriendlyName_s, BackupItemName_s, BackupItemType_s ) on BackupItemUniqueId_s | join kind=leftouter (     Events     | where OperationName == \"ProtectedContainer\"     | distinct ProtectedContainerUniqueId_s, ProtectedContainerFriendlyName_s     | project ProtectedContainerUniqueId_s , ProtectedContainerFriendlyName_s ) on ProtectedContainerUniqueId_s | project BackupItemFriendlyName_s, BackupItemName_s, ProtectedContainerFriendlyName_s, BackupItemType_s, JobStatus_s, Resource, JobFailureCode_s | extend Vault= Resource | where {selected item}"
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "Id": "SingleQueryDonutBuilderBladeV1",
+                                "Type": "Blade",
+                                "Version": 0,
+                                "Configuration": {
+                                    "General": {
+                                        "title": "Backup Jobs BreakDown (Log)",
+                                        "newGroup": false,
+                                        "icon": "",
+                                        "useIcon": false
+                                    },
+                                    "Header": {
+                                        "Title": "Backup Jobs Breakdown (Log)",
+                                        "Subtitle": ""
+                                    },
+                                    "Donut": {
+                                        "Query": "AzureDiagnostics | where Category == \"AzureBackupReport\" | where OperationName == \"Job\" | extend JobOperationSubType_s = columnifexists(\"JobOperationSubType_s\", \"\") | where JobOperation_s == \"Backup\" and (JobOperationSubType_s == \"Log\" or JobOperationSubType_s == \"Recovery point_Log\") | summarize AggregatedValue = dcount(JobUniqueId_g) by JobStatus_s | order by AggregatedValue desc",
+                                        "CenterLegend": {
+                                            "Text": "Total",
+                                            "Operation": "Sum",
+                                            "ArcsToSelect": []
+                                        },
+                                        "Options": {
+                                            "colors": [
+                                                "#00188f",
+                                                "#0072c6",
+                                                "#00bcf2"
+                                            ],
+                                            "valueColorMapping": [
+                                                {
+                                                    "value": "Completed",
+                                                    "color": "#55d455"
+                                                },
+                                                {
+                                                    "value": "Failed",
+                                                    "color": "#dd5900"
+                                                }
+                                            ]
+                                        },
+                                        "NavigationSelect": {}
+                                    },
+                                    "List": {
+                                        "Query": "let Events = AzureDiagnostics | where Category == \"AzureBackupReport\" ; Events | extend JobOperationSubType_s = columnifexists(\"JobOperationSubType_s\", \"\") | where OperationName == \"Job\" and JobOperation_s == \"Backup\" and JobStatus_s == \"Failed\" and (JobOperationSubType_s == \"Log\" or JobOperationSubType_s == \"Recovery point_Log\") | project BackupItemUniqueId_s, JobStatus_s, Resource | join kind=inner (     Events     | where OperationName == \"BackupItem\"     | distinct BackupItemUniqueId_s, BackupItemFriendlyName_s     | project BackupItemUniqueId_s , BackupItemFriendlyName_s ) on BackupItemUniqueId_s | project BackupItemFriendlyName_s , JobStatus_s, Resource | extend Vault= Resource | summarize count() by BackupItemFriendlyName_s, JobStatus_s, Vault | order by count_ desc",
+                                        "HideGraph": true,
+                                        "enableSparklines": false,
+                                        "operation": "Summary",
+                                        "ColumnsTitle": {
+                                            "Name": "Datasources",
+                                            "Value": "Count"
+                                        },
+                                        "Color": "#0072c6",
+                                        "thresholds": {
+                                            "isEnabled": false,
+                                            "values": [
+                                                {
+                                                    "name": "Normal",
+                                                    "threshold": "Default",
+                                                    "color": "#009e49",
+                                                    "isDefault": true
+                                                },
+                                                {
+                                                    "name": "Warning",
+                                                    "threshold": "60",
+                                                    "color": "#fcd116",
+                                                    "isDefault": false
+                                                },
+                                                {
+                                                    "name": "Error",
+                                                    "threshold": "90",
+                                                    "color": "#ba141a",
+                                                    "isDefault": false
+                                                }
+                                            ]
+                                        },
+                                        "NameDSVSeparator": "",
+                                        "NavigationQuery": "let Events = AzureDiagnostics | where Category == \"AzureBackupReport\" ; Events | extend JobOperationSubType_s = columnifexists(\"JobOperationSubType_s\", \"\") | where OperationName == \"Job\" and JobOperation_s == \"Backup\" and JobStatus_s == \"Failed\" and (JobOperationSubType_s == \"Log\" or JobOperationSubType_s == \"Recovery point_Log\") | project BackupItemUniqueId_s, ProtectedContainerUniqueId_s, JobStatus_s, Resource, JobFailureCode_s | join kind=inner (     Events     | where OperationName == \"BackupItem\"     | distinct BackupItemUniqueId_s, BackupItemFriendlyName_s, BackupItemName_s, BackupItemType_s     | project BackupItemUniqueId_s , BackupItemFriendlyName_s, BackupItemName_s, BackupItemType_s ) on BackupItemUniqueId_s | join kind=leftouter (     Events     | where OperationName == \"ProtectedContainer\"     | distinct ProtectedContainerUniqueId_s, ProtectedContainerFriendlyName_s     | project ProtectedContainerUniqueId_s , ProtectedContainerFriendlyName_s ) on ProtectedContainerUniqueId_s | project BackupItemFriendlyName_s, BackupItemName_s, ProtectedContainerFriendlyName_s, BackupItemType_s, JobStatus_s, Resource, JobFailureCode_s | extend Vault= Resource | where {selected item}",
+                                        "NavigationSelect": {
+                                            "NavigationQuery": "let Events = AzureDiagnostics | where Category == \"AzureBackupReport\" ; Events | extend JobOperationSubType_s = columnifexists(\"JobOperationSubType_s\", \"\") | where OperationName == \"Job\" and JobOperation_s == \"Backup\" and JobStatus_s == \"Failed\" and (JobOperationSubType_s == \"Log\" or JobOperationSubType_s == \"Recovery point_Log\") | project BackupItemUniqueId_s, ProtectedContainerUniqueId_s, JobStatus_s, Resource, JobFailureCode_s | join kind=inner (     Events     | where OperationName == \"BackupItem\"     | distinct BackupItemUniqueId_s, BackupItemFriendlyName_s, BackupItemName_s, BackupItemType_s     | project BackupItemUniqueId_s , BackupItemFriendlyName_s, BackupItemName_s, BackupItemType_s ) on BackupItemUniqueId_s | join kind=leftouter (     Events     | where OperationName == \"ProtectedContainer\"     | distinct ProtectedContainerUniqueId_s, ProtectedContainerFriendlyName_s     | project ProtectedContainerUniqueId_s , ProtectedContainerFriendlyName_s ) on ProtectedContainerUniqueId_s | project BackupItemFriendlyName_s, BackupItemName_s, ProtectedContainerFriendlyName_s, BackupItemType_s, JobStatus_s, Resource, JobFailureCode_s | extend Vault= Resource | where {selected item}"
+                                        }
                                     }
                                 }
                             },
@@ -196,10 +282,11 @@
                                                     "color": "#ba141a"
                                                 }
                                             ]
-                                        }
+                                        },
+                                        "NavigationSelect": {}
                                     },
                                     "List": {
-                                        "Query": "let Events = AzureDiagnostics  | where Category == \"AzureBackupReport\" ;  Events  | where OperationName == \"Job\" and JobOperation_s == \"Restore\" and JobStatus_s == \"Failed\"  | project ProtectedServerUniqueId_s, JobStatus_s, Resource   | join kind=inner  (Events   | where OperationName == \"ProtectedServer\" | where ProtectedServerFriendlyName_s != \"\"    | distinct ProtectedServerUniqueId_s, ProtectedServerFriendlyName_s   | project ProtectedServerUniqueId_s, ProtectedServerFriendlyName_s)  on ProtectedServerUniqueId_s  | project ProtectedServerFriendlyName_s, JobStatus_s, Resource  | extend Vault= Resource   | summarize count() by ProtectedServerFriendlyName_s, JobStatus_s, Vault",
+                                        "Query": "let Events = AzureDiagnostics | where Category == \"AzureBackupReport\" ; Events | where OperationName == \"Job\" and JobOperation_s == \"Restore\" and JobStatus_s == \"Failed\" | project BackupItemUniqueId_s, JobStatus_s, Resource | join kind=inner (     Events     | where OperationName == \"BackupItem\"     | distinct BackupItemUniqueId_s, BackupItemFriendlyName_s     | project BackupItemUniqueId_s , BackupItemFriendlyName_s ) on BackupItemUniqueId_s | project BackupItemFriendlyName_s , JobStatus_s, Resource | extend Vault= Resource | summarize count() by BackupItemFriendlyName_s, JobStatus_s, Vault | order by count_ desc",
                                         "HideGraph": true,
                                         "enableSparklines": false,
                                         "operation": "Summary",
@@ -232,72 +319,10 @@
                                             ]
                                         },
                                         "NameDSVSeparator": "",
-                                        "NavigationQuery": "let Events = AzureDiagnostics  | where Category == \"AzureBackupReport\" ; Events  | where OperationName == \"Job\" and JobOperation_s == \"Restore\" and JobStatus_s == \"Failed\"  | project ProtectedServerUniqueId_s, JobStatus_s, Resource, JobFailureCode_s, JobStartDateTime_s, JobDurationInSecs_s    | join kind=inner (Events   | where OperationName == \"ProtectedServer\"   | distinct ProtectedServerUniqueId_s, ProtectedServerFriendlyName_s   | project ProtectedServerUniqueId_s, ProtectedServerFriendlyName_s) on ProtectedServerUniqueId_s  | project ProtectedServerFriendlyName_s, JobStatus_s, Resource, JobFailureCode_s, JobStartDateTime_s, JobDurationInSecs_s  | extend Vault= Resource   | where {selected item}"
-                                    }
-                                }
-                            },
-                            {
-                                "Id": "LineChartBuilderBlade",
-                                "Type": "Blade",
-                                "Version": 0,
-                                "Configuration": {
-                                    "General": {
-                                        "title": "Cloud Storage in GB",
-                                        "newGroup": false,
-                                        "icon": "",
-                                        "useIcon": false
-                                    },
-                                    "Header": {
-                                        "Title": "Cloud storage in GB",
-                                        "Subtitle": ""
-                                    },
-                                    "LineChart": {
-                                        "Query": "AzureDiagnostics   | where Category == \"AzureBackupReport\"   | where CloudStorageInBytes_s != \"\"  | extend CloudStorageInGB = todouble(CloudStorageInBytes_s) / 1073741824  | summarize sum(CloudStorageInGB) by bin(ingestion_time(), 1d)",
-                                        "yAxis": {
-                                            "isLogarithmic": false,
-                                            "units": {
-                                                "baseUnitType": "",
-                                                "baseUnit": "",
-                                                "displayUnit": ""
-                                            },
-                                            "customLabel": "Cloud Storage (GB)"
+                                        "NavigationQuery": "let Events = AzureDiagnostics | where Category == \"AzureBackupReport\" ; Events | where OperationName == \"Job\" and JobOperation_s == \"Restore\" and JobStatus_s == \"Failed\" | project BackupItemUniqueId_s, ProtectedContainerUniqueId_s, JobStatus_s, Resource, JobFailureCode_s | join kind=inner (     Events     | where OperationName == \"BackupItem\"     | distinct BackupItemUniqueId_s, BackupItemFriendlyName_s, BackupItemName_s, BackupItemType_s     | project BackupItemUniqueId_s , BackupItemFriendlyName_s, BackupItemName_s, BackupItemType_s ) on BackupItemUniqueId_s | join kind=leftouter (     Events     | where OperationName == \"ProtectedContainer\"     | distinct ProtectedContainerUniqueId_s, ProtectedContainerFriendlyName_s     | project ProtectedContainerUniqueId_s , ProtectedContainerFriendlyName_s ) on ProtectedContainerUniqueId_s | project BackupItemFriendlyName_s, BackupItemName_s, ProtectedContainerFriendlyName_s, BackupItemType_s, JobStatus_s, Resource, JobFailureCode_s | extend Vault= Resource | where {selected item}",
+                                        "NavigationSelect": {
+                                            "NavigationQuery": "let Events = AzureDiagnostics | where Category == \"AzureBackupReport\" ; Events | where OperationName == \"Job\" and JobOperation_s == \"Restore\" and JobStatus_s == \"Failed\" | project BackupItemUniqueId_s, ProtectedContainerUniqueId_s, JobStatus_s, Resource, JobFailureCode_s | join kind=inner (     Events     | where OperationName == \"BackupItem\"     | distinct BackupItemUniqueId_s, BackupItemFriendlyName_s, BackupItemName_s, BackupItemType_s     | project BackupItemUniqueId_s , BackupItemFriendlyName_s, BackupItemName_s, BackupItemType_s ) on BackupItemUniqueId_s | join kind=leftouter (     Events     | where OperationName == \"ProtectedContainer\"     | distinct ProtectedContainerUniqueId_s, ProtectedContainerFriendlyName_s     | project ProtectedContainerUniqueId_s , ProtectedContainerFriendlyName_s ) on ProtectedContainerUniqueId_s | project BackupItemFriendlyName_s, BackupItemName_s, ProtectedContainerFriendlyName_s, BackupItemType_s, JobStatus_s, Resource, JobFailureCode_s | extend Vault= Resource | where {selected item}"
                                         }
-                                    },
-                                    "List": {
-                                        "Query": "let Events = AzureDiagnostics    | where Category == \"AzureBackupReport\" ;    Events    | where OperationName == \"Storage\"    | project ProtectedServerUniqueId_s, Resource, CloudStorageInBytes_s, TimeGenerated      | join kind=inner    (Events      | where OperationName == \"ProtectedServer\"   | where ProtectedServerFriendlyName_s !=\"\"    | distinct ProtectedServerUniqueId_s, ProtectedServerFriendlyName_s      | project ProtectedServerUniqueId_s, ProtectedServerFriendlyName_s)     on ProtectedServerUniqueId_s     | project ProtectedServerFriendlyName_s, Resource, CloudStorageInBytes_s, TimeGenerated         | extend Vault= Resource      | extend CloudStorageInGB = todouble(CloudStorageInBytes_s) / 1073741824      | where TimeGenerated > ago(1d)   | top 5 by CloudStorageInGB desc  |project ProtectedServerFriendlyName_s, CloudStorageInGB ",
-                                        "HideGraph": false,
-                                        "enableSparklines": false,
-                                        "operation": "Summary",
-                                        "ColumnsTitle": {
-                                            "Name": "Top 5 Data Sources",
-                                            "Value": "Cloud Data in GB"
-                                        },
-                                        "Color": "#eb3c00",
-                                        "thresholds": {
-                                            "isEnabled": false,
-                                            "values": [
-                                                {
-                                                    "name": "Normal",
-                                                    "threshold": "Default",
-                                                    "color": "#009e49",
-                                                    "isDefault": true
-                                                },
-                                                {
-                                                    "name": "Warning",
-                                                    "threshold": "60",
-                                                    "color": "#fcd116",
-                                                    "isDefault": false
-                                                },
-                                                {
-                                                    "name": "Error",
-                                                    "threshold": "90",
-                                                    "color": "#ba141a",
-                                                    "isDefault": false
-                                                }
-                                            ]
-                                        },
-                                        "NameDSVSeparator": "",
-                                        "NavigationQuery": "let Events = AzureDiagnostics    | where Category == \"AzureBackupReport\" ;    Events    | where OperationName == \"Storage\"    | project ProtectedServerUniqueId_s, Resource, CloudStorageInBytes_s    | join kind=inner    (Events      | where OperationName == \"ProtectedServer\"      | distinct ProtectedServerUniqueId_s, ProtectedServerFriendlyName_s      | project ProtectedServerUniqueId_s, ProtectedServerFriendlyName_s)   on ProtectedServerUniqueId_s      | project ProtectedServerFriendlyName_s, Resource, CloudStorageInBytes_s          | extend CloudStorageInGB = todouble(CloudStorageInBytes_s) / 1073741824       | project ProtectedServerFriendlyName_s, CloudStorageInGB | order by CloudStorageInGB desc | where {selected item}"
                                     }
                                 }
                             },
@@ -337,12 +362,17 @@
                                                 {
                                                     "value": "Warning",
                                                     "color": "#fff100"
+                                                },
+                                                {
+                                                    "value": "Information",
+                                                    "color": "#55d455"
                                                 }
                                             ]
-                                        }
+                                        },
+                                        "NavigationSelect": {}
                                     },
                                     "List": {
-                                        "Query": "let Events = AzureDiagnostics  | where Category == \"AzureBackupReport\" ;  Events    | where OperationName == \"Alert\"     | project AlertSeverity_s , ProtectedServerUniqueId_s, JobStatus_s, Resource     | join kind=inner   (Events      | where OperationName == \"ProtectedServer\"  | where ProtectedServerFriendlyName_s != \"\"       | distinct ProtectedServerUniqueId_s, ProtectedServerFriendlyName_s      | project ProtectedServerUniqueId_s, ProtectedServerFriendlyName_s)     on ProtectedServerUniqueId_s     | project ProtectedServerFriendlyName_s, JobStatus_s, Resource, AlertSeverity_s      | extend Vault= Resource      | summarize count() by ProtectedServerFriendlyName_s, Vault, AlertSeverity_s",
+                                        "Query": "let Events = AzureDiagnostics | where Category == \"AzureBackupReport\"; Events | where OperationName == \"Alert\" | project AlertSeverity_s , BackupItemUniqueId_s, JobStatus_s, Resource | join kind=inner (Events | where OperationName == \"BackupItem\" | distinct BackupItemUniqueId_s, BackupItemFriendlyName_s | project BackupItemUniqueId_s, BackupItemFriendlyName_s) on BackupItemUniqueId_s | project BackupItemFriendlyName_s, JobStatus_s, Resource, AlertSeverity_s | extend Vault= Resource       | summarize count() by BackupItemFriendlyName_s, Vault, AlertSeverity_s | order by count_ desc",
                                         "HideGraph": true,
                                         "enableSparklines": false,
                                         "operation": "Summary",
@@ -375,33 +405,53 @@
                                             ]
                                         },
                                         "NameDSVSeparator": "",
-                                        "NavigationQuery": "let Events = AzureDiagnostics   | where Category == \"AzureBackupReport\" ;   Events    | where OperationName == \"Alert\"     | project ProtectedServerUniqueId_s, JobStatus_s, Resource, AlertOccurrenceDateTime_s, AlertSeverity_s, AlertStatus_s, AlertType_s, AlertUniqueId_s, VaultUniqueId_s, SubscriptionId         | join kind=inner (Events      | where OperationName == \"ProtectedServer\"      | distinct ProtectedServerUniqueId_s, ProtectedServerFriendlyName_s      | project ProtectedServerUniqueId_s, ProtectedServerFriendlyName_s)    on ProtectedServerUniqueId_s     | project ProtectedServerFriendlyName_s, JobStatus_s, Resource, AlertOccurrenceDateTime_s, AlertSeverity_s, AlertStatus_s, AlertType_s, AlertUniqueId_s, VaultUniqueId_s, SubscriptionId         | extend Vault= Resource      | where {selected item}"
+                                        "NavigationQuery": "let Events = AzureDiagnostics | where Category == \"AzureBackupReport\" ; Events | where OperationName == \"Alert\" | project BackupItemUniqueId_s, JobStatus_s, Resource,  AlertOccurrenceDateTime_s, AlertSeverity_s, AlertStatus_s,  AlertType_s, AlertUniqueId_s, VaultUniqueId_s, SubscriptionId | join kind=inner (     Events     | where OperationName == \"BackupItem\"     | distinct BackupItemUniqueId_s, BackupItemFriendlyName_s     | project BackupItemUniqueId_s, BackupItemFriendlyName_s ) on BackupItemUniqueId_s | project BackupItemFriendlyName_s, JobStatus_s, Resource,  AlertOccurrenceDateTime_s, AlertSeverity_s, AlertStatus_s,  AlertType_s, AlertUniqueId_s, VaultUniqueId_s, SubscriptionId | extend Vault= Resource | where {selected item}",
+                                        "NavigationSelect": {
+                                            "NavigationQuery": "let Events = AzureDiagnostics | where Category == \"AzureBackupReport\" ; Events | where OperationName == \"Alert\" | project BackupItemUniqueId_s, JobStatus_s, Resource,  AlertOccurrenceDateTime_s, AlertSeverity_s, AlertStatus_s,  AlertType_s, AlertUniqueId_s, VaultUniqueId_s, SubscriptionId | join kind=inner (     Events     | where OperationName == \"BackupItem\"     | distinct BackupItemUniqueId_s, BackupItemFriendlyName_s     | project BackupItemUniqueId_s, BackupItemFriendlyName_s ) on BackupItemUniqueId_s | project BackupItemFriendlyName_s, JobStatus_s, Resource,  AlertOccurrenceDateTime_s, AlertSeverity_s, AlertStatus_s,  AlertType_s, AlertUniqueId_s, VaultUniqueId_s, SubscriptionId | extend Vault= Resource | where {selected item}"
+                                        }
                                     }
                                 }
                             },
                             {
-                                "Id": "NumberTileListBuilderBlade",
+                                "Id": "SingleQueryDonutBuilderBladeV1",
                                 "Type": "Blade",
                                 "Version": 0,
                                 "Configuration": {
                                     "General": {
-                                        "title": "Active Backup Items protected",
+                                        "title": "Active Datasources Protected",
                                         "newGroup": false,
                                         "icon": "",
                                         "useIcon": false
                                     },
-                                    "Tile": {
-                                        "Query": "let Events = AzureDiagnostics   | where Category == \"AzureBackupReport\" ;   Events   | where OperationName == \"Job\"    | project ProtectedServerUniqueId_s, Resource, BackupItemFriendlyName_s     | join kind=inner   (Events    | where OperationName == \"ProtectedServer\"    | distinct ProtectedServerUniqueId_s, ProtectedServerFriendlyName_s    | project ProtectedServerUniqueId_s, ProtectedServerFriendlyName_s)   on ProtectedServerUniqueId_s   | project ProtectedServerFriendlyName_s, Resource, BackupItemFriendlyName_s    | extend Vault= Resource   | summarize dcount(ProtectedServerFriendlyName_s)",
-                                        "Legend": "Backup Items Protected"
+                                    "Header": {
+                                        "Title": "Active Datasources Protected",
+                                        "Subtitle": ""
+                                    },
+                                    "Donut": {
+                                        "Query": "let Events = AzureDiagnostics   | where Category == \"AzureBackupReport\" ;   Events   | where OperationName == \"Job\"    | project BackupItemUniqueId_s , Resource | join kind=inner   (Events    | where OperationName == \"BackupItem\"    | distinct BackupItemUniqueId_s, BackupItemFriendlyName_s, BackupItemType_s    | project BackupItemUniqueId_s, BackupItemFriendlyName_s, BackupItemType_s)   on BackupItemUniqueId_s   | project BackupItemFriendlyName_s, Resource, BackupItemType_s | summarize dcount(BackupItemFriendlyName_s) by BackupItemType_s ",
+                                        "CenterLegend": {
+                                            "Text": "Total",
+                                            "Operation": "Sum",
+                                            "ArcsToSelect": []
+                                        },
+                                        "Options": {
+                                            "colors": [
+                                                "#ff8c00",
+                                                "#55d455",
+                                                "#6dc2e9"
+                                            ],
+                                            "valueColorMapping": []
+                                        },
+                                        "NavigationSelect": {}
                                     },
                                     "List": {
-                                        "Query": "let Events = AzureDiagnostics   | where Category == \"AzureBackupReport\" ;   Events   | where OperationName == \"Job\" and JobStatus_s == \"Completed\"     | project ProtectedServerUniqueId_s, JobStatus_s, Resource    | join kind=inner  (Events    | where OperationName == \"ProtectedServer\"  | where ProtectedServerFriendlyName_s != \"\"    | distinct ProtectedServerUniqueId_s, ProtectedServerFriendlyName_s    | project ProtectedServerUniqueId_s, ProtectedServerFriendlyName_s)   on ProtectedServerUniqueId_s   | project ProtectedServerFriendlyName_s, JobStatus_s, Resource   | extend Vault= Resource    | summarize count() by ProtectedServerFriendlyName_s  | order by count_ desc ",
+                                        "Query": "let Events = AzureDiagnostics   | where Category == \"AzureBackupReport\" ;   Events   | where OperationName == \"Job\" | project BackupItemUniqueId_s , JobStatus_s, Resource    | join kind=inner  (Events    | where OperationName == \"BackupItem\"  | distinct BackupItemUniqueId_s, BackupItemFriendlyName_s    | project BackupItemUniqueId_s, BackupItemFriendlyName_s )   on BackupItemUniqueId_s   | project BackupItemFriendlyName_s , JobStatus_s, Resource   | extend Vault= Resource | summarize count() by BackupItemFriendlyName_s | order by count_ desc",
                                         "HideGraph": false,
                                         "enableSparklines": false,
                                         "operation": "Summary",
                                         "ColumnsTitle": {
-                                            "Name": "Backup Items Protected",
-                                            "Value": "Number of backups"
+                                            "Name": "Datasources",
+                                            "Value": "No of Jobs run"
                                         },
                                         "Color": "#ff8c00",
                                         "thresholds": {
@@ -428,7 +478,79 @@
                                             ]
                                         },
                                         "NameDSVSeparator": "",
-                                        "NavigationQuery": "let Events = AzureDiagnostics  | where Category == \"AzureBackupReport\" ;  Events  | where OperationName == \"Job\" and JobStatus_s == \"Completed\"   | project ProtectedServerUniqueId_s, JobStatus_s, Resource, JobStartDateTime_s, JobDurationInSecs_s     | join kind=inner (Events   | where OperationName == \"ProtectedServer\"   | distinct ProtectedServerUniqueId_s, ProtectedServerFriendlyName_s   | project ProtectedServerUniqueId_s, ProtectedServerFriendlyName_s)  on ProtectedServerUniqueId_s  | project ProtectedServerFriendlyName_s, JobStatus_s, Resource, ProtectedServerUniqueId_s, JobStartDateTime_s, JobDurationInSecs_s     | where {selected item}"
+                                        "NavigationQuery": "let Events = AzureDiagnostics | where Category == \"AzureBackupReport\" ; Events | where OperationName == \"Job\" | project BackupItemUniqueId_s, ProtectedContainerUniqueId_s, JobOperation_s ,JobStatus_s, Resource, JobFailureCode_s | join kind=inner (     Events     | where OperationName == \"BackupItem\"     | distinct BackupItemUniqueId_s, BackupItemFriendlyName_s, BackupItemName_s, BackupItemType_s     | project BackupItemUniqueId_s , BackupItemFriendlyName_s, BackupItemName_s, BackupItemType_s ) on BackupItemUniqueId_s | join kind=leftouter (     Events     | where OperationName == \"ProtectedContainer\"     | distinct ProtectedContainerUniqueId_s, ProtectedContainerFriendlyName_s     | project ProtectedContainerUniqueId_s , ProtectedContainerFriendlyName_s ) on ProtectedContainerUniqueId_s | project BackupItemFriendlyName_s, BackupItemName_s, BackupItemType_s, ProtectedContainerFriendlyName_s, JobOperation_s, JobStatus_s, Resource, JobFailureCode_s | extend Vault= Resource | where {selected item}",
+                                        "NavigationSelect": {
+                                            "NavigationQuery": "let Events = AzureDiagnostics | where Category == \"AzureBackupReport\" ; Events | where OperationName == \"Job\" | project BackupItemUniqueId_s, ProtectedContainerUniqueId_s, JobOperation_s ,JobStatus_s, Resource, JobFailureCode_s | join kind=inner (     Events     | where OperationName == \"BackupItem\"     | distinct BackupItemUniqueId_s, BackupItemFriendlyName_s, BackupItemName_s, BackupItemType_s     | project BackupItemUniqueId_s , BackupItemFriendlyName_s, BackupItemName_s, BackupItemType_s ) on BackupItemUniqueId_s | join kind=leftouter (     Events     | where OperationName == \"ProtectedContainer\"     | distinct ProtectedContainerUniqueId_s, ProtectedContainerFriendlyName_s     | project ProtectedContainerUniqueId_s , ProtectedContainerFriendlyName_s ) on ProtectedContainerUniqueId_s | project BackupItemFriendlyName_s, BackupItemName_s, BackupItemType_s, ProtectedContainerFriendlyName_s, JobOperation_s, JobStatus_s, Resource, JobFailureCode_s | extend Vault= Resource | where {selected item}"
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "Id": "LineChartBuilderBlade",
+                                "Type": "Blade",
+                                "Version": 0,
+                                "Configuration": {
+                                    "General": {
+                                        "title": "Cloud Storage in GB",
+                                        "newGroup": false,
+                                        "icon": "",
+                                        "useIcon": false
+                                    },
+                                    "Header": {
+                                        "Title": "Cloud storage in GB",
+                                        "Subtitle": ""
+                                    },
+                                    "LineChart": {
+                                        "Query": "AzureDiagnostics        | where Category == \"AzureBackupReport\"        | where StorageConsumedInMBs_s != \"\"       | extend CloudStorageInGB = todouble(StorageConsumedInMBs_s) / 1024       | summarize sum(CloudStorageInGB) by bin(ingestion_time(), 1d)     | order by ingestion_time() desc",
+                                        "yAxis": {
+                                            "isLogarithmic": false,
+                                            "units": {
+                                                "baseUnitType": "",
+                                                "baseUnit": "",
+                                                "displayUnit": ""
+                                            },
+                                            "customLabel": "Cloud Storage (GB)"
+                                        },
+                                        "NavigationSelect": {}
+                                    },
+                                    "List": {
+                                        "Query": "let Events = AzureDiagnostics    | where Category == \"AzureBackupReport\";    Events    | where OperationName == \"StorageAssociation\" | where TimeGenerated > ago(1d)    | project BackupItemUniqueId_s, Resource, StorageConsumedInMBs_s, TimeGenerated | distinct BackupItemUniqueId_s, Resource, StorageConsumedInMBs_s      | join kind=inner   ( Events          | where OperationName == \"BackupItem\"          | distinct BackupItemUniqueId_s, BackupItemFriendlyName_s          | project BackupItemUniqueId_s, BackupItemFriendlyName_s)     on BackupItemUniqueId_s     | project BackupItemUniqueId_s, BackupItemFriendlyName_s, Resource, StorageConsumedInMBs_s        | extend Vault= Resource,  CloudStorageInGB = todouble(StorageConsumedInMBs_s) / 1024     | project BackupItemFriendlyName_s, CloudStorageInGB | top 5 by CloudStorageInGB desc",
+                                        "HideGraph": false,
+                                        "enableSparklines": false,
+                                        "operation": "Summary",
+                                        "ColumnsTitle": {
+                                            "Name": "Top 5 Data Sources",
+                                            "Value": "Cloud Data in GB"
+                                        },
+                                        "Color": "#eb3c00",
+                                        "thresholds": {
+                                            "isEnabled": false,
+                                            "values": [
+                                                {
+                                                    "name": "Normal",
+                                                    "threshold": "Default",
+                                                    "color": "#009e49",
+                                                    "isDefault": true
+                                                },
+                                                {
+                                                    "name": "Warning",
+                                                    "threshold": "60",
+                                                    "color": "#fcd116",
+                                                    "isDefault": false
+                                                },
+                                                {
+                                                    "name": "Error",
+                                                    "threshold": "90",
+                                                    "color": "#ba141a",
+                                                    "isDefault": false
+                                                }
+                                            ]
+                                        },
+                                        "NameDSVSeparator": "",
+                                        "NavigationQuery": "search {selected item} | sort by TimeGenerated desc",
+                                        "NavigationSelect": {
+                                            "NavigationQuery": "search {selected item} | sort by TimeGenerated desc"
+                                        }
                                     }
                                 }
                             }
@@ -437,9 +559,10 @@
                             "Id": "SingleQueryDonutBuilderTileV1",
                             "Type": "OverviewTile",
                             "Version": 2,
+                           "Version": 2,
                             "Configuration": {
                                 "Donut": {
-                                    "Query": "AzureDiagnostics | where Category == \"AzureBackupReport\"  and TimeGenerated > ago(7d)   | where OperationName == \"Job\"  | where JobOperation_s == \"Backup\"  | summarize AggregatedValue = dcount(JobUniqueId_g) by JobStatus_s | order by AggregatedValue desc ",
+                                    "Query": "AzureDiagnostics | where Category == \"AzureBackupReport\" | where OperationName == \"Job\" | extend JobOperationSubType_s = columnifexists(\"JobOperationSubType_s\", \"\") | where JobOperation_s == \"Backup\" and JobOperationSubType_s != \"Log\" and JobOperationSubType_s != \"Recovery point_Log\" | summarize AggregatedValue = dcount(JobUniqueId_g) by JobStatus_s | order by AggregatedValue desc",
                                     "CenterLegend": {
                                         "Text": "Total",
                                         "Operation": "Sum",
