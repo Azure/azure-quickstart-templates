@@ -1,7 +1,6 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
-
   "parameters": {
     "virtualNetworkName": {
       "type": "string",
@@ -33,7 +32,6 @@
         "description": "The IP address for the new VM"
       }
     },
-
     "adminUsername": {
       "type": "string",
       "metadata": {
@@ -64,19 +62,21 @@
       "metadata": {
         "description": "Windows Server Version"
       }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
-    "adSubnetRef": "[concat(variables('vnetID'),'/subnets/',parameters('SubnetName'))]",
-
+    "adSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', parameters('virtualNetworkName'),parameters('SubnetName'))]",
     "vmPublicIPName": "[concat(parameters('vmName'),'PublicIP')]",
     "vmNicName": "[concat(parameters('vmName'),'Nic')]",
-    "vmNicId": "[resourceId('Microsoft.Network/networkInterfaces',variables('vmNicName'))]",
-    "vmIPConfigID": "[concat(variables('vmNicId'),'/ipConfigurations/ipconfig1')]",
     "vmDataDisk": "[concat(parameters('vmName'),'-managed-DataDisk1')]",
     "vmOSDisk": "[concat(parameters('vmName'),'-managed-OSDisk')]",
-
     "vmDataDiskSize": 10,
     "imagePublisher": "MicrosoftWindowsServer",
     "imageOffer": "WindowsServer"
@@ -85,7 +85,7 @@
     {
       "name": "[variables('vmPublicIPName')]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2015-06-15",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
@@ -94,12 +94,11 @@
         }
       }
     },
-
     {
       "name": "[variables('vmNicName')]",
       "type": "Microsoft.Network/networkInterfaces",
       "apiVersion": "2016-10-01",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('vmPublicIPName'))]"
       ],
@@ -125,7 +124,7 @@
       "name": "[parameters('vmName')]",
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2017-03-30",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces',variables('vmNicName'))]"
       ],
@@ -176,7 +175,7 @@
           "apiVersion": "2015-06-15",
           "type": "Microsoft.Compute/virtualMachines/extensions",
           "name": "[concat(parameters('vmName'),'/vmEnablePSScript')]",
-          "location": "[resourceGroup().location]",
+          "location": "[parameters('location')]",
           "dependsOn": [
             "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
           ],
@@ -193,5 +192,5 @@
       ]
     }
   ],
-  "outputs": { }
+  "outputs": {}
 }

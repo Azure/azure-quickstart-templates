@@ -16,9 +16,9 @@
     },
     "sqlImageOffer": {
       "type": "string",
-      "defaultValue": "SQL2014-WS2012R2",
+      "defaultValue": "SQL2016-WS2012R2",
       "allowedValues": [
-        "SQL2014-WS2012R2"
+        "SQL2016-WS2012R2"
       ],
       "metadata": {
         "description": "SQL Server Gallery Image Offer"
@@ -26,7 +26,7 @@
     },
     "sqlImageSku": {
       "type": "string",
-      "defaultValue": "Standard",
+      "defaultValue": "Enterprise",
       "allowedValues": [
         "Enterprise",
         "Standard",
@@ -104,20 +104,26 @@
       "metadata": {
         "description": "DNS name for the VM"
       }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
     "vmnic": "[concat(parameters('vmName'), 'devnic')]",
     "vmosdisk": "[concat(parameters('vmName'), 'osdisk')]",
-    "virtualNetworkID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('vnetName'))]",
-    "vnetSubNetID": "[concat(variables('virtualNetworkID'),'/subnets/',parameters('subnetName'))]"
+    "vnetSubNetID": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnetName'))]"
   },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[parameters('storageName')]",
       "apiVersion": "2015-05-01-preview",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "accountType": "[parameters('storageType')]"
       }
@@ -126,7 +132,7 @@
       "type": "Microsoft.Network/publicIPAddresses",
       "apiVersion": "2015-05-01-preview",
       "name": "[parameters('publicDnsName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
@@ -138,7 +144,7 @@
       "type": "Microsoft.Network/virtualNetworks",
       "apiVersion": "2015-05-01-preview",
       "name": "[parameters('vnetName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -159,7 +165,7 @@
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('vmnic')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', parameters('publicDnsName'))]",
         "[concat('Microsoft.Network/virtualNetworks/', parameters('vnetName'))]"
@@ -183,9 +189,9 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2017-03-30",
       "name": "[parameters('vmName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', parameters('storageName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('vmnic'))]"
@@ -208,9 +214,6 @@
           },
           "osDisk": {
             "name": "[variables('vmosdisk')]",
-            "vhd": {
-              "uri": "[concat('http://',parameters('storageName'),'.blob.core.windows.net/vhds/', variables('vmosdisk'),'.vhd')]"
-            },
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }

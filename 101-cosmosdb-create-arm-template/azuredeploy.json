@@ -1,0 +1,67 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "apiType": {
+      "type": "string",
+      "metadata": {
+        "description": "The Azure Cosmos DB API type, by default Cassandra; otherwise one of Gremlin, MongoDB, SQL, or Table"
+      },
+      "allowedValues": [
+        "Cassandra",
+        "Gremlin",
+        "MongoDB",
+        "SQL",
+        "Table"
+      ],
+      "defaultValue": "Cassandra"
+    },
+    "databaseAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "The Azure Cosmos DB account name."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "offerType": "Standard"
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-04-08",
+      "type": "Microsoft.DocumentDB/databaseAccounts",
+      "kind": "[if(equals(parameters('apiType'), 'MongoDB'), 'MongoDB', 'GlobalDocumentDB')]",
+      "name": "[parameters('databaseAccountName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "name": "[parameters('databaseAccountName')]",
+        "databaseAccountOfferType": "[variables('offerType')]",
+        "locations": [
+          {
+            "locationName": "[parameters('location')]",
+            "failoverPriority": 0
+          },
+          {
+            "locationName": "[parameters('location')]",
+            "failoverPriority": 1
+          }
+        ],
+        "capabilities": [
+          {
+            "name": "[if(equals(parameters('apiType'), 'Cassandra'), 'EnableCassandra', if(equals(parameters('apiType'), 'Gremlin'), 'EnableGremlin', if(equals(parameters('apiType'), 'MongoDB'), '', if(equals(parameters('apiType'), 'SQL'), '', if(equals(parameters('apiType'), 'Table'), 'EnableTable', '')))))]"
+          }
+        ]
+      },
+      "tags": {
+        "defaultExperience": "[if(equals(parameters('apiType'), 'Cassandra'), 'Cassandra', if(equals(parameters('apiType'), 'Gremlin'), 'Graph', if(equals(parameters('apiType'), 'MongoDB'), 'MongoDB', if(equals(parameters('apiType'), 'SQL'), 'DocumentDB', if(equals(parameters('apiType'), 'Table'), 'Table', '')))))]"
+      }
+    }
+  ]
+}
