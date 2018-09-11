@@ -11,14 +11,12 @@
         "adminUsername": {
             "type": "string",
             "metadata": {
-                "type": "username",
                 "description": "User name for the Virtual Machine."
             }
         },
         "adminPassword": {
             "type": "securestring",
             "metadata": {
-                "type": "password",
                 "description": "Password for the Virtual Machine."
             }
         },
@@ -84,11 +82,11 @@
         "ubuntuOSVersion": "16.04.0-LTS",
         "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
         "toolPublicIPAddressName": "suricatsPublicIP",
-        "toolStorageAccountName": "[concat(uniquestring(resourceGroup().id), 'tooldisk')]",
+        "toolStorageAccountName": "[concat('tooldisk', uniquestring(resourceGroup().id))]",
         "toolDnsLabelPrefix": "[concat('suricata-',uniquestring(resourceGroup().id))]",
         "toolNicName": "SuricataVMNic",
         "tapPublicIPAddressName": "cloudlensPublicIP",
-        "tapStorageAccountName": "[concat(uniquestring(resourceGroup().id), 'tapdisk')]",
+        "tapStorageAccountName": "[concat('tapdisk', uniquestring(resourceGroup().id))]",
         "tapDnsLabelPrefix": "[concat('cloudlens-',uniquestring(resourceGroup().id))]",
         "tapNicName": "CloudLensVMNic"
     },
@@ -96,7 +94,7 @@
         {
             "type": "Microsoft.Storage/storageAccounts",
             "name": "[variables('toolStorageAccountName')]",
-            "apiVersion": "2017-06-01",
+            "apiVersion": "2018-02-01",
             "location": "[parameters('location')]",
             "sku": {
                 "name": "[variables('storageAccountType')]"
@@ -107,7 +105,7 @@
         {
             "type": "Microsoft.Storage/storageAccounts",
             "name": "[variables('tapStorageAccountName')]",
-            "apiVersion": "2017-06-01",
+            "apiVersion": "2018-02-01",
             "location": "[parameters('location')]",
             "sku": {
                 "name": "[variables('storageAccountType')]"
@@ -258,7 +256,7 @@
                 "diagnosticsProfile": {
                     "bootDiagnostics": {
                         "enabled": true,
-                        "storageUri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('toolStorageAccountName')), '2016-01-01').primaryEndpoints.blob)]"
+                        "storageUri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('toolStorageAccountName')), '2018-02-01').primaryEndpoints.blob)]"
                     }
                 }
             }
@@ -309,7 +307,7 @@
                 "diagnosticsProfile": {
                     "bootDiagnostics": {
                         "enabled": true,
-                        "storageUri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('tapStorageAccountName')), '2016-01-01').primaryEndpoints.blob)]"
+                        "storageUri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('tapStorageAccountName')), '2018-02-01').primaryEndpoints.blob)]"
                     }
                 }
             }
@@ -317,8 +315,8 @@
         {
             "name": "[concat(parameters('toolVmName'), '/config')]",
             "type": "Microsoft.Compute/virtualMachines/extensions",
-            "location": "[resourceGroup().location]",
-            "apiVersion": "2015-06-15",
+            "location": "[parameters('location')]",
+            "apiVersion": "2017-03-30",
             "dependsOn": [
                 "[resourceId('Microsoft.Compute/virtualMachines/', parameters('toolVmName'))]"
             ],
@@ -332,7 +330,7 @@
                     "timestamp": 123456789
                 },
                 "protectedSettings": {
-                    "fileUris": ["[concat(parameters('_artifactsLocation'), 'scripts/setup-suricata.sh')]"],
+                    "fileUris": ["[concat(parameters('_artifactsLocation'), 'scripts/setup-suricata.sh', parameters('_artifactsLocationSasToken'))]"],
                     "commandToExecute": "[concat('./setup-suricata.sh',  ' ', parameters('cloudlensProjectKey'))]"
                 }
             }
@@ -340,8 +338,8 @@
         {
             "name": "[concat(parameters('tapVmName'), '/config')]",
             "type": "Microsoft.Compute/virtualMachines/extensions",
-            "location": "[resourceGroup().location]",
-            "apiVersion": "2015-06-15",
+            "location": "[parameters('location')]",
+            "apiVersion": "2017-03-30",
             "dependsOn": [
                 "[resourceId('Microsoft.Compute/virtualMachines/', parameters('tapVmName'))]"
             ],
@@ -355,7 +353,7 @@
                     "timestamp": 123456789
                 },
                 "protectedSettings": {
-                    "fileUris": ["[concat(parameters('_artifactsLocation'), 'scripts/setup-tap.sh')]"],
+                    "fileUris": ["[concat(parameters('_artifactsLocation'), 'scripts/setup-tap.sh', parameters('_artifactsLocationSasToken'))]"],
                     "commandToExecute": "[concat('./setup-tap.sh',  ' ', parameters('cloudlensProjectKey'))]"
                 }
             }
