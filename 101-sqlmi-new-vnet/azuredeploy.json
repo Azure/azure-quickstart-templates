@@ -106,9 +106,132 @@
         }
     },
     "variables": {
+        "networkSecurityGroupName": "[concat('SQLMI-', parameters('managedInstanceName'), '-NSG')]",
         "routeTableName": "[concat('SQLMI-', parameters('managedInstanceName'), '-Route-Table')]"
     },
     "resources": [
+        {
+            "apiVersion": "2017-10-01",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[variables('networkSecurityGroupName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+              "securityRules": [
+                {
+                  "name": "allow_management_inbound",
+                  "properties": {
+                    "description": "Allow inbound management traffic",
+                    "protocol": "Tcp",
+                    "sourcePortRange": "*",
+                    "destinationPortRanges": ["9000", "9003", "1438", "1440", "1452"],
+                    "sourceAddressPrefix": "*",
+                    "destinationAddressPrefix": "*",
+                    "access": "Allow",
+                    "priority": 100,
+                    "direction": "Inbound"
+                  }
+                },
+                {
+                    "name": "allow_misubnet_inbound",
+                    "properties": {
+                      "description": "Allow inbound traffic inside the subnet",
+                      "protocol": "*",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "*",
+                      "sourceAddressPrefix": "[parameters('subnetPrefix')]",
+                      "destinationAddressPrefix": "*",
+                      "access": "Allow",
+                      "priority": 200,
+                      "direction": "Inbound"
+                    }
+                  },
+                  {
+                    "name": "allow_health_probe_inbound",
+                    "properties": {
+                      "description": "Allow health probe",
+                      "protocol": "*",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "*",
+                      "sourceAddressPrefix": "AzureLoadBalancer",
+                      "destinationAddressPrefix": "*",
+                      "access": "Allow",
+                      "priority": 300,
+                      "direction": "Inbound"
+                    }
+                  },
+                  {
+                    "name": "allow_tds_inbound",
+                    "properties": {
+                      "description": "Allow access to data",
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "1433",
+                      "sourceAddressPrefix": "VirtualNetwork",
+                      "destinationAddressPrefix": "*",
+                      "access": "Allow",
+                      "priority": 1000,
+                      "direction": "Inbound"
+                    }
+                  },
+                  {
+                    "name": "deny_all_inbound",
+                    "properties": {
+                      "description": "Deny all other inbound traffic",
+                      "protocol": "*",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "*",
+                      "sourceAddressPrefix": "*",
+                      "destinationAddressPrefix": "*",
+                      "access": "Deny",
+                      "priority": 4096,
+                      "direction": "Inbound"
+                    }
+                  },
+                  {
+                    "name": "allow_management_outbound",
+                    "properties": {
+                      "description": "Allow outbound management traffic",
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRanges": ["80", "443", "12000"],
+                      "sourceAddressPrefix": "*",
+                      "destinationAddressPrefix": "*",
+                      "access": "Allow",
+                      "priority": 100,
+                      "direction": "Outbound"
+                    }
+                  },
+                  {
+                    "name": "allow_misubnet_outbound",
+                    "properties": {
+                      "description": "Allow outbound traffic inside the subnet",
+                      "protocol": "*",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "*",
+                      "sourceAddressPrefix": "*",
+                      "destinationAddressPrefix": "[parameters('subnetPrefix')]",
+                      "access": "Allow",
+                      "priority": 200,
+                      "direction": "Outbound"
+                    }
+                  },                  
+                  {
+                    "name": "deny_all_outbound",
+                    "properties": {
+                      "description": "Deny all other outbound traffic",
+                      "protocol": "*",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "*",
+                      "sourceAddressPrefix": "*",
+                      "destinationAddressPrefix": "*",
+                      "access": "Deny",
+                      "priority": 4096,
+                      "direction": "Outbound"
+                    }
+                  }
+              ]
+            }
+        },
         {
             "type": "Microsoft.Network/routeTables",
             "name": "[variables('routeTableName')]",
@@ -132,7 +255,8 @@
             "type": "Microsoft.Network/virtualNetworks",
             "apiVersion": "2018-02-01",
             "dependsOn":[
-                "[variables('routeTableName')]"
+                "[variables('routeTableName')]",
+                "[variables('networkSecurityGroupName')]"
             ],
             "location": "[parameters('location')]",
             "properties": {
@@ -148,7 +272,10 @@
                             "addressPrefix": "[parameters('subnetPrefix')]",
                             "routeTable": {
                                 "id": "[resourceId('Microsoft.Network/routeTables', variables('routeTableName'))]"
-                            }
+                            },
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+                            }                            
                         }
                     }
                 ]
