@@ -119,7 +119,6 @@ while getopts :i:b:v:r:k:u:p:x:n:alh optname; do
 		;;		
 	a) # Arbiter indicator
 		IS_ARBITER=true
-		JOURNAL_ENABLED=false
 		;;		
 	l) # Last member indicator
 		IS_LAST_MEMBER=true
