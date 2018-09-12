@@ -31,6 +31,7 @@
 
 PACKAGE_URL=http://repo.mongodb.org/apt/ubuntu
 PACKAGE_NAME=mongodb-org
+PACKAGE_VERSION="4.0.2"
 REPLICA_SET_KEY_DATA=""
 REPLICA_SET_NAME=""
 REPLICA_SET_KEY_FILE="/etc/mongo-replicaset-key"
@@ -53,6 +54,7 @@ help()
 	echo "Options:"
 	echo "		-i Installation package URL"
 	echo "		-b Installation package name"
+	echo "		-v Installation package version"
 	echo "		-r Replica set name"
 	echo "		-k Replica set key"
 	echo "		-u System administrator's user name"
@@ -93,6 +95,9 @@ while getopts :i:b:r:k:u:p:x:n:alh optname; do
 		;;
 	b) # Installation package name
 		PACKAGE_NAME=${OPTARG}
+		;;
+	v) # Installation package version
+		PACKAGE_VERSION=${OPTARG}
 		;;
 	r) # Replica set name
 		REPLICA_SET_NAME=${OPTARG}
@@ -177,8 +182,8 @@ install_mongodb()
 	log "Downloading MongoDB package $PACKAGE_NAME from $PACKAGE_URL"
 
 	# Configure mongodb.list file with the correct location
-	apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 7F0CEB10
-	echo "deb ${PACKAGE_URL} "$(lsb_release -sc)"/mongodb-org/3.0 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-3.0.list
+	apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 9DA31620334BD75D9DCB49F368818C72E52529D4
+	echo "deb ${PACKAGE_URL} "$(lsb_release -sc)"/mongodb-org/4.0 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-4.0.list
 
 	# Install updates
 	apt-get -y update
@@ -189,8 +194,8 @@ install_mongodb()
 	fi
 	
 	#Install Mongo DB
-	log "Installing MongoDB package $PACKAGE_NAME"
-	apt-get -y install $PACKAGE_NAME
+	log "Installing MongoDB package $PACKAGE_NAME=$PACKAGE_VERSION"
+	apt-get -y install $PACKAGE_NAME=$PACKAGE_VERSION
 	
 	# Stop Mongod as it may be auto-started during the above step (which is not desirable)
 	stop_mongodb
@@ -289,6 +294,7 @@ processManagement:
     fork: true
     pidFilePath: "/var/run/mongodb/mongod.pid"
 net:
+	bindIpAll: true
     port: $MONGODB_PORT
 security:
     #keyFile: ""
