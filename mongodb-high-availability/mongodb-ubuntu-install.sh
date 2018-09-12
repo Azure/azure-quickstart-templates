@@ -237,7 +237,7 @@ configure_replicaset()
 		log "Initiating a replica set $REPLICA_SET_NAME with $INSTANCE_COUNT members"
 	
 		# Initiate a replica set
-		mongo master -u $ADMIN_USER_NAME -p $ADMIN_USER_PASSWORD --host 127.0.0.1 --eval "printjson(rs.initiate())"
+		mongo --authenticationDatabase "admin" -u $ADMIN_USER_NAME -p $ADMIN_USER_PASSWORD --host 127.0.0.1 --eval "printjson(rs.initiate())"
 		
 		# Add all members except this node as it will be included into the replica set after the above command completes
 		for (( n=0 ; n<($INSTANCE_COUNT-1) ; n++)) 
@@ -245,12 +245,12 @@ configure_replicaset()
 			MEMBER_HOST="${NODE_IP_PREFIX}${n}:${MONGODB_PORT}"
 			
 			log "Adding member $MEMBER_HOST to replica set $REPLICA_SET_NAME" 
-			mongo master -u $ADMIN_USER_NAME -p $ADMIN_USER_PASSWORD --host 127.0.0.1 --eval "printjson(rs.add('${MEMBER_HOST}'))"
+			mongo --authenticationDatabase "admin" -u $ADMIN_USER_NAME -p $ADMIN_USER_PASSWORD --host 127.0.0.1 --eval "printjson(rs.add('${MEMBER_HOST}'))"
 		done
 		
 		# Print the current replica set configuration
-		mongo master -u $ADMIN_USER_NAME -p $ADMIN_USER_PASSWORD --host 127.0.0.1 --eval "printjson(rs.conf())"	
-		mongo master -u $ADMIN_USER_NAME -p $ADMIN_USER_PASSWORD --host 127.0.0.1 --eval "printjson(rs.status())"	
+		mongo --authenticationDatabase "admin" -u $ADMIN_USER_NAME -p $ADMIN_USER_PASSWORD --host 127.0.0.1 --eval "printjson(rs.conf())"	
+		mongo --authenticationDatabase "admin" -u $ADMIN_USER_NAME -p $ADMIN_USER_PASSWORD --host 127.0.0.1 --eval "printjson(rs.status())"	
 	fi
 	
 	# Register an arbiter node with the replica set
@@ -263,7 +263,7 @@ configure_replicaset()
 		CURRENT_NODE_IP=${CURRENT_NODE_IPS[@]}
 
 		log "Adding an arbiter ${HOSTNAME} ($CURRENT_NODE_IP) node to the replica set $REPLICA_SET_NAME"
-		mongo master -u $ADMIN_USER_NAME -p $ADMIN_USER_PASSWORD --host $PRIMARY_MEMBER_HOST --eval "printjson(rs.addArb('${CURRENT_NODE_IP}'))"
+		mongo --authenticationDatabase "admin" -u $ADMIN_USER_NAME -p $ADMIN_USER_PASSWORD --host $PRIMARY_MEMBER_HOST --eval "printjson(rs.addArb('${CURRENT_NODE_IP}'))"
 	fi
 }
 
@@ -310,7 +310,7 @@ EOF
 
 	# Fixing an issue where the mongod will not start after reboot where when /run is tmpfs the /var/run/mongodb directory will be deleted at reboot
 	# After reboot, mongod wouldn't start since the pidFilePath is defined as /var/run/mongodb/mongod.pid in the configuration and path doesn't exist
-	sed -i "s|pre-start script|pre-start script\n  if [ ! -d /var/run/mongodb ]; then\n    mkdir -p /var/run/mongodb \&\& touch /var/run/mongodb/mongod.pid \&\& chmod 777 /var/run/mongodb/mongod.pid\n  fi\n|" /etc/init/mongod.conf
+	sed -i "s|pre-start script|pre-start script\n  if [ ! -d /var/run/mongodb ]; then\n    mkdir -p /var/run/mongodb \&\& touch /var/run/mongodb/mongod.pid \&\& chmod 777 /var/run/mongodb/mongod.pid \&\& chown mongodb:mongodb /var/run/mongodb/mongod.pid\n  fi\n|" /etc/init/mongod.conf
 
 
 }
@@ -343,7 +343,7 @@ configure_db_users()
 {
 	# Create a system administrator
 	log "Creating a system administrator"
-	mongo master --host 127.0.0.1 --eval "db.createUser({user: '${ADMIN_USER_NAME}', pwd: '${ADMIN_USER_PASSWORD}', roles:[{ role: 'userAdminAnyDatabase', db: 'admin' }, { role: 'clusterAdmin', db: 'admin' }, { role: 'readWriteAnyDatabase', db: 'admin' }, { role: 'dbAdminAnyDatabase', db: 'admin' } ]})"
+	mongo admin --host 127.0.0.1 --eval "db.createUser({user: '${ADMIN_USER_NAME}', pwd: '${ADMIN_USER_PASSWORD}', roles:[{ role: 'userAdminAnyDatabase', db: 'admin' }, { role: 'clusterAdmin', db: 'admin' }, { role: 'readWriteAnyDatabase', db: 'admin' }, { role: 'dbAdminAnyDatabase', db: 'admin' } ]})"
 }
 
 # Step 1
