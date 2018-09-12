@@ -114,16 +114,6 @@
   },
   "variables": {
     "vmssuniqueName": "[toLower(substring(concat(substring(parameters('vmssName'),0,6), uniqueString(resourceGroup().id)), 0, 9))]",
-    "vmssaccountType": "Standard_LRS",
-    "vmssnewAccountSuffix": "[concat(replace(variables('vmssuniqueName'),'-',''), 'sa')]",
-    "vmssstorageAccounts": [
-      "[concat(uniqueString(concat(variables('vmssnewAccountSuffix'), '0')))]",
-      "[concat(uniqueString(concat(variables('vmssnewAccountSuffix'), '1')))]",
-      "[concat(uniqueString(concat(variables('vmssnewAccountSuffix'), '2')))]",
-      "[concat(uniqueString(concat(variables('vmssnewAccountSuffix'), '3')))]",
-      "[concat(uniqueString(concat(variables('vmssnewAccountSuffix'), '4')))]"
-    ],
-    "vmsssaCount": "[length(variables('vmssstorageAccounts'))]",
     "addressPrefix": "10.0.0.0/16",
     "subnetPrefix": "10.0.0.0/24",
     "virtualNetworkName": "[concat(variables('vmssuniqueName'), 'vnet')]",
@@ -141,9 +131,26 @@
     "ipConfigName": "[concat(variables('vmssuniqueName'), 'ipconfig')]",
     "httpProbeName": "httpProbe",
     "httpsProbeName": "httpsProbe",
-    "quote": "'"
+    "quote": "'",
+    "imageName": "myCustomImage"
   },
   "resources": [
+    {  
+      "type":"Microsoft.Compute/images",
+      "apiVersion":"2017-03-30",
+      "name":"[variables('imageName')]",
+      "location":"[resourceGroup().location]",
+      "properties":{  
+         "storageProfile":{  
+            "osDisk":{  
+               "osType":"Linux",
+               "osState":"Generalized",
+               "blobUri":"[parameters('sourceImageVhdUri')]",
+               "storageAccountType":"Standard_LRS"
+            }
+         }
+      }
+   },
     {
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
@@ -163,19 +170,6 @@
             }
           }
         ]
-      }
-    },
-    {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[concat(variables('vmssStorageAccounts')[copyIndex()], variables('vmssnewAccountSuffix'))]",
-      "location": "[parameters('location')]",
-      "apiVersion": "2015-06-15",
-      "copy": {
-        "name": "storageLoop",
-        "count": "[variables('vmsssaCount')]"
-      },
-      "properties": {
-        "accountType": "[variables('vmssaccountType')]"
       }
     },
     {
@@ -299,10 +293,10 @@
       "type": "Microsoft.Compute/virtualMachineScaleSets",
       "name": "[variables('vmssuniqueName')]",
       "location": "[parameters('location')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "dependsOn": [
-        "storageLoop",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "[concat('Microsoft.Compute/images/',variables('imageName'))]"
       ],
       "sku": {
         "name": "[parameters('vmSku')]",
@@ -315,14 +309,8 @@
         },
         "virtualMachineProfile": {
           "storageProfile": {
-            "osDisk": {
-              "name": "vmssosdisk",
-              "caching": "ReadWrite",
-              "createOption": "FromImage",
-              "osType": "Linux",
-              "image": {
-                "uri": "[parameters('sourceImageVhdUri')]"
-              }
+            "imageReference": {
+              "id": "[resourceId('Microsoft.Compute/images', variables('imageName'))]"
             }
           },
           "osProfile": {

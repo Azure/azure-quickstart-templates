@@ -5,8 +5,8 @@
     "vmSize": {
       "type": "string",
       "allowedValues": [
-        "Standard_A1",
-        "Standard_A2",
+        "Standard_A1_v2",
+        "Standard_A2_v2",
         "Standard_A3",
         "Standard_A4",
         "Standard_D1_v2",
@@ -15,7 +15,7 @@
         "Standard_D4_v2"
       ],
       "metadata": {
-        "description": "Size of vm"
+        "description": "The size of Azure VM"
       }
     },
     "username": {
@@ -72,13 +72,10 @@
     }
   },
   "variables": {
-    "extensionName": "CustomScript",
     "scenarioPrefix": "customscriptLinux",
-    "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'standardsa')]",
     "imagePublisher": "Canonical",
     "imageOffer": "UbuntuServer",
-    "ubuntuOSVersion": "14.04.2-LTS",
-    "OSDiskName": "[concat(variables('scenarioPrefix'),'OSDisk')]",
+    "ubuntuOSVersion": "16.04-LTS",
     "nicName": "[concat(variables('scenarioPrefix'),'Nic')]",
     "vnetAddressPrefix": "10.0.0.0/16",
     "subnetName": "[concat(variables('scenarioPrefix'),'Subnet')]",
@@ -93,18 +90,9 @@
   },
   "resources": [
     {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('storageAccountName')]",
-      "apiVersion": "2015-06-15",
-      "location": "[parameters('location')]",
-      "properties": {
-        "accountType": "[variables('storageAccountType')]"
-      }
-    },
-    {
-      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
+      "apiVersion": "2018-04-01",
       "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
@@ -114,9 +102,9 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
+      "apiVersion": "2018-04-01",
       "location": "[parameters('location')]",
       "properties": {
         "addressSpace": {
@@ -135,9 +123,9 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
+      "apiVersion": "2018-06-01",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
@@ -161,12 +149,11 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
+      "apiVersion": "2017-03-30",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
       ],
       "properties": {
@@ -179,6 +166,10 @@
           "adminPassword": "[parameters('password')]"
         },
         "storageProfile": {
+          "osDisk": {
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+         },
           "imageReference": {
             "publisher": "[variables('imagePublisher')]",
             "offer": "[variables('imageOffer')]",
@@ -186,10 +177,7 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "osdisk1",
-            "vhd": {
-              "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
-            },
+            "name": "[concat(variables('vmName'),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -197,7 +185,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
             }
           ]
         }
@@ -205,8 +193,8 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('vmName'),'/', variables('extensionName'))]",
-      "apiVersion": "2015-06-15",
+      "name": "[concat(variables('vmName'),'/','extensions')]",
+      "apiVersion": "2017-03-30",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
