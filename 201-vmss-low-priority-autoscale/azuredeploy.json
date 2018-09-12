@@ -44,6 +44,7 @@
       "addressPrefix": "10.0.0.0/16",
       "subnetPrefix": "10.0.0.0/24",
       "virtualNetworkName": "[concat(variables('namingInfix'), 'vnet')]",
+      "networkSecurityGroupName": "[concat(variables('namingInfix'), 'nsg')]",
       "publicIPAddressName": "[concat(variables('namingInfix'), 'pip')]",
       "subnetName": "[concat(variables('namingInfix'), 'subnet')]",
       "loadBalancerName": "[concat(variables('namingInfix'), 'lb')]",
@@ -69,6 +70,72 @@
       "insightsApiVersion": "2015-04-01"
     },
     "resources": [
+        {
+          "type": "Microsoft.Network/networkSecurityGroups",
+          "apiVersion": "2017-10-01",
+          "name": "[variables('networkSecurityGroupName')]",
+          "location": "[variables('location')]",
+          "properties": {
+              "securityRules": [
+                  {
+                      "name": "remoteConnection",
+                      "properties": {
+                          "description": "Allow RDP traffic",
+                          "protocol": "Tcp",
+                          "sourcePortRange": "*",
+                          "destinationPortRange": "22",
+                          "sourceAddressPrefix": "*",
+                          "destinationAddressPrefix": "*",
+                          "access": "Allow",
+                          "priority": 101,
+                          "direction": "Inbound"
+                      }
+                  },
+                  {
+                      "name": "webTraffic",
+                      "properties": {
+                          "description": "Allow web traffic",
+                          "protocol": "Tcp",
+                          "sourcePortRange": "80",
+                          "destinationPortRange": "80",
+                          "sourceAddressPrefix": "*",
+                          "destinationAddressPrefix": "*",
+                          "access": "Allow",
+                          "priority": 100,
+                          "direction": "Inbound"
+                      }
+                  },
+                  {
+                    "name": "unblock_all_tcp_outrule",
+                    "properties": {
+                        "description": "unblock_all_tcp_outrule",
+                        "protocol": "Tcp",
+                        "sourcePortRange": "0-65535",
+                        "destinationPortRange": "0-65535",
+                        "sourceAddressPrefix": "0.0.0.0/0",
+                        "destinationAddressPrefix": "0.0.0.0/0",
+                        "access": "Allow",
+                        "priority": 123,
+                        "direction": "Outbound"
+                    }
+                },
+                {
+                    "name": "unblock_all_udp_ports",
+                    "properties": {
+                        "description": "Unblock_all_udp_ports",
+                        "protocol": "Udp",
+                        "sourcePortRange": "0-65535",
+                        "destinationPortRange": "0-65535",
+                        "sourceAddressPrefix": "0.0.0.0/0",
+                        "destinationAddressPrefix": "0.0.0.0/0",
+                        "access": "Allow",
+                        "priority": 125,
+                        "direction": "Inbound"
+                    }
+                }
+              ]
+          }
+      },
       {
         "type": "Microsoft.Network/virtualNetworks",
         "name": "[variables('virtualNetworkName')]",
@@ -94,19 +161,25 @@
         "type": "Microsoft.Network/publicIPAddresses",
         "name": "[variables('publicIPAddressName')]",
         "location": "[variables('location')]",
-        "apiVersion": "2017-04-01",
+        "apiVersion": "2017-08-01",
+        "sku": {
+            "name": "Standard"
+        },
         "properties": {
-          "publicIPAllocationMethod": "Dynamic",
-          "dnsSettings": {
-            "domainNameLabel": "[variables('namingInfix')]"
-          }
-        }
+            "publicIPAllocationMethod": "Static",
+            "dnsSettings": {
+                "domainNameLabel": "[variables('namingInfix')]"
+            }
+        }  
       },
       {
         "type": "Microsoft.Network/loadBalancers",
         "name": "[variables('loadBalancerName')]",
         "location": "[variables('location')]",
-        "apiVersion": "2017-04-01",
+        "apiVersion": "2017-08-01",
+        "sku": {
+          "name": "Standard"
+        },
         "dependsOn": [
           "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
         ],
@@ -138,7 +211,7 @@
                 "frontendPortRangeEnd": "[variables('natEndPort')]",
                 "backendPort": "[variables('natBackendPort')]"
               }
-            }         
+            }                 
           ],
           "loadBalancingRules": [
             {
@@ -152,24 +225,24 @@
                 },
                 "protocol": "Tcp",
                 "frontendPort": 80,
-                "backendPort": 9000,
+                "backendPort":80,
                 "probe": {
-                  "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName')), '/probes/httpProbe')]"
+                  "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName')), '/probes/tcpProbe')]"
                 }
               }
             }
           ],
           "probes": [
             {
-              "name": "httpProbe",
+              "name": "tcpProbe",
               "properties": {
-                "protocol": "Tcp",
-                "port": 9000
+                "protocol": "tcp",
+                "port": 80,
+                "intervalInSeconds": 5,
+                "numberOfProbes": 2
               }
             }
           ]
-  
-  
         }
       },
       {
@@ -191,6 +264,7 @@
           "upgradePolicy": {
             "mode": "Manual"
           },
+          "singlePlacementGroup": "false",
           "virtualMachineProfile": {
             "storageProfile": {
               "osDisk": {
