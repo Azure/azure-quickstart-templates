@@ -188,7 +188,7 @@ configuration ConfigSFCI
             AgtSvcAccount              = $ServiceCreds
             ASSvcAccount               = $ServiceCreds
             FailoverClusterNetworkName = $SQLClusterName
-            PsDscRunAsCredential       = $DomainCreds
+            #PsDscRunAsCredential       = $DomainCreds
         }
 
         xFirewall SQLFirewall
@@ -252,7 +252,7 @@ configuration ConfigSFCI
             FailoverClusterNetworkName = $SQLClusterName
             FailoverClusterIPAddress   = $clusterIP
             FailoverClusterGroupName   = $SQLClusterName
-            PsDscRunAsCredential       = $SqlInstallCredential
+            #PsDscRunAsCredential       = $SqlInstallCredential
         }
 
         Script FixProbe {

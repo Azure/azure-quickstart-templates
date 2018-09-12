@@ -99,7 +99,7 @@ configuration PrepSFCI
             AgtSvcAccount              = $ServiceCreds
             ASSvcAccount               = $ServiceCreds
             FailoverClusterNetworkName = $SQLClusterName
-            PsDscRunAsCredential       = $DomainCreds
+            #PsDscRunAsCredential       = $DomainCreds
         }
 
         xFirewall SQLFirewall
