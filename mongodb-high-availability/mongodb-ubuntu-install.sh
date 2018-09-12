@@ -280,10 +280,6 @@ configure_mongodb()
 	chown -R mongodb:mongodb "$MONGODB_DATA/log"
 	chmod 755 "$MONGODB_DATA"
 	
-	mkdir /var/run/mongodb
-	touch /var/run/mongodb/mongod.pid
-	chmod 777 /var/run/mongodb/mongod.pid
-	
 	tee /etc/mongod.conf > /dev/null <<EOF
 systemLog:
     destination: file
