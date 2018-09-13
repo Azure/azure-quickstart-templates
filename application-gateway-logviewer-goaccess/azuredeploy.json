@@ -3,8 +3,7 @@
   "contentVersion": "1.0.0.0",
   "parameters": {    
     "adminUsername": {
-      "type": "string",
-      "defaultValue": "ubuntu",
+      "type": "string",      
       "metadata": {
         "description": "Username you want to use for the VM the template creates"
       }
@@ -15,8 +14,15 @@
         "description": "Password you want to use to log in to the VM"
       }
     },
-    "dnsNameForPublicIP": {
+    "vmSize": {
       "type": "string",
+      "allowedValues": [ "Standard_A2_v2", "Standard_A4m_v2", "Standard_A8m_v2", "Standard_D2_v2", "Standard_D4_v2", "Standard_D5_v2", "Standard_D2_v3", "Standard_D8_v3", "Standard_D32_v3"],
+      "metadata": {
+        "description": "Size of the VM"
+      }
+    },
+    "dnsNameForPublicIP": {
+      "type": "string",      
       "metadata": {
         "description": "The DNS name (prefix) you want to use for the VM to map against its public IP"
       }
@@ -40,39 +46,50 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+          "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      },  
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/application-gateway-logviewer-goaccess"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+          "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+      },
+      "defaultValue": ""
     }
   },
   "variables": {
-    "imagePublisher": "Canonical",
-    "imageOffer": "UbuntuServer",
+    "vmName": "[parameters('dnsNameForPublicIP')]",
     "nicName": "[concat(parameters('dnsNameForPublicIP'), '_vmnic')]",
     "addressPrefix": "10.0.0.0/16",
-    "subnetName": "Subnet",
-    "subnetPrefix": "10.0.0.0/24",   
-    "publicIPAddressName": "[concat(parameters('dnsNameForPublicIP'), '_publicip')]",
-    "publicIPAddressType": "Dynamic",    
-    "vmName": "[parameters('dnsNameForPublicIP')]",
-    "vmSize": "Standard_D2_v2",
+    "subnetPrefix": "10.0.0.0/24",  
+    "subnetName": "DefaultSubnet",
+    "publicIPAddressName": "[concat(parameters('dnsNameForPublicIP'), '_publicip')]",    
     "virtualNetworkName": "[concat(parameters('dnsNameForPublicIP'), '_vnet')]",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
+    "scriptFileUri": "[uri(parameters('_artifactsLocation'), concat('/scripts/setup_vm.sh', parameters('_artifactsLocationSasToken')))]",
     "appGwAccessLogsBlobSasUriVar": "[concat('\"', parameters('appGwAccessLogsBlobSasUri'), '\"')]",
     "filterRegexForAppGwAccessLogsVar": "[concat('\"|', parameters('filterRegexForAppGwAccessLogs'), '|\"')]"
   },
-  "resources": [    
+  "resources": [
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2018-08-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
       "location": "[parameters('location')]",
       "properties": {
-        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
           "domainNameLabel": "[parameters('dnsNameForPublicIP')]"
         }
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2018-08-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
@@ -93,7 +110,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2018-08-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
@@ -119,7 +136,7 @@
       }
     },
     {
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2018-06-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
@@ -128,7 +145,7 @@
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[variables('vmSize')]"
+          "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
           "computerName": "[variables('vmName')]",
@@ -137,8 +154,8 @@
         },
         "storageProfile": {
           "imageReference": {
-            "publisher": "[variables('imagePublisher')]",
-            "offer": "[variables('imageOffer')]",
+            "publisher": "Canonical",
+            "offer": "UbuntuServer",
             "sku": "18.04-LTS",
             "version": "latest"
           },
@@ -146,7 +163,15 @@
             "name": "[concat(variables('vmName'),'_osdisk')]", 
             "caching": "ReadWrite",
             "createOption": "FromImage"
-          }
+          },
+          "dataDisks": [
+            {
+              "name": "[concat(variables('vmName'),'_datadisk1')]",
+              "diskSizeGB": 1023,
+              "lun": 0,
+              "createOption": "Empty"
+            }
+          ]
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -160,7 +185,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmName'),'/newuserscript')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2018-06-01",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
@@ -172,12 +197,21 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [            
-            "https://appgwloganalyzergoaccess.blob.core.windows.net/loganalyzerservice/scripts/setup_vm.sh?st=2018-09-12T07%3A09%3A54Z&se=2050-09-13T07%3A09%3A00Z&sp=rl&sv=2018-03-28&sr=b&sig=y57URB%2FiGrAawyHhDb6waznnyHvSrOsAHEcF4cu9BFw%3D",
-            "https://appgwloganalyzergoaccess.blob.core.windows.net/loganalyzerservice/build/AppGatewayLogProcessor.zip?st=2018-09-12T06%3A56%3A42Z&se=2050-09-13T06%3A56%3A00Z&sp=rl&sv=2018-03-28&sr=b&sig=c9x6svGOKJOHvHEwCDzM9BSrO5FwPRMIDhuQ4m1OeWQ%3D"
+            "[variables('scriptFileUri')]"
           ],
           "commandToExecute": "[concat('sh setup_vm.sh ' , variables('appGwAccessLogsBlobSasUriVar'), ' ', variables('filterRegexForAppGwAccessLogsVar'))]"
         }
       }
     }
-  ]
+  ],
+  "outputs": {
+    "goAccessReportUrl": {
+      "type": "string",
+      "value": "[concat(reference(variables('publicIPAddressName')).dnsSettings.fqdn, '/report.html')]"
+    },
+    "sshCommand": {
+      "type": "string",
+      "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(variables('publicIPAddressName')).dnsSettings.fqdn)]"
+    }
+  }
 }

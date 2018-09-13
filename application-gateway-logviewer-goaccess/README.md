@@ -7,7 +7,7 @@
 
 <h2>Introduction</h2>
 This template configures the <a href="https://goaccess.io">GoAccess log analyzer</a> for Azure Application Gateway access logs. Using GoAccess, users can quickly analyze and view their Application Gateway statistics in real time using their browser through generated HTML reports.
- 
+
 The template creates an Ubuntu VM under your (customer) subscription, installs Apache HTTP web server as well as the GoAccess log analyzer, and then connects the VM with the customer’s Blob container to periodically fetch incremental access logs of Application Gateway. GoAccess will parse the access logs and display rich statistics on traffic.
 
 By default, GoAccess installed by this template will parse and display traffic stats for the past 3 days’ worth of logs, if present. 
@@ -58,26 +58,3 @@ For any issues with running this template, please file an issue in GitHub under 
 At this time no SLA is offered for support – this is strictly for use as-is, but we will do our best in responding to issues raised. 
 
 For any feature requests or general help with GoAccess itself, please file an issue in GitHub under the GoAccess repository: <u>https://github.com/allinurl/goaccess/issues</u>
-
-<h2>Licensing</h2>
-
-<h3>GoAccess</h3>
-GoAccess is distributed under the MIT License.
-
-Copyright © 2018 Microsoft Azure Application Gateway team
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-<h3>Apache HTTP Web Server</h3>
-Apache HTTP Web Server is distributed under the Apache 2.0 License.
-
-Copyright 2018 Microsoft Azure Application Gateway team
-
-Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.You may obtain a copy of the License at
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
