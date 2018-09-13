@@ -200,6 +200,7 @@ configuration ConfigSFCI
             InstanceName = "MSSQLSERVER"
             FailoverClusterNetworkName = "SQLFCI"
             SQLSvcAccount = $ServiceCreds
+            PsDscRunAsCredential = $DomainCreds
         }
 
         xFirewall SQLFirewall
