@@ -56,8 +56,7 @@ You can click the "Deploy to Azure" button at the beginning of this document or 
 |Min vCores|8|8|8|8|
 |Max vCores|24|80|32|80|
 |Min storage size|32|32|32|32|
-|Max storage size|8192|8192|1024|<ul style='list-style-type: none'><li>1024 GB for 8, 16 vCores</li><li>2048 GB for 24 vCores</li><li>4096 GB for 32, 40, 64, 80 vCores</ul>|
-
+|Max storage size|8192|8192|1024|1024 GB for 8, 16 vCores<br/>2048 GB for 24 vCores<br/>4096 GB for 32, 40, 64, 80 vCores|
 
 ## Important
 
