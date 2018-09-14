@@ -56,12 +56,11 @@ You can click the "Deploy to Azure" button at the beginning of this document or 
 |Min vCores|8|8|8|8|
 |Max vCores|24|80|32|80|
 |Min storage size|32|32|32|32|
-|Max storage size|8192|8192|1024|<ul><li>1024 GB for 8, 16 vCores</li><li>2048 GB for 24 vCores</li><li>4096 GB for 32, 40, 64, 80 vCores</ul>|
-
+|Max storage size|8192|8192|1024|1024 GB for 8, 16 vCores<br/>2048 GB for 24 vCores<br/>4096 GB for 32, 40, 64, 80 vCores|
 
 ## Important
 
-During the public preview deployment might take up to 48h (average time is 3-6h). This is because virtual cluster that hosts the instances needs some time to deploy. Each subsequent instance creation in the same virtual cluster takes just about a few minutes.
+During the public preview deployment might take up to 6h. This is because virtual cluster that hosts the instances needs some time to deploy. Each subsequent instance creation in the same virtual cluster takes just about a few minutes.
 
 After the last Managed Instance is deprovisioned, cluster stays a live for up to 24h. This is to avoid waiting for a new cluster to be provisioned in case that customer just wants to recreate the instance. During that period of time Resource Group and virtual network could not be deleted. This is a known issue and Managed Instance team is working on resolving it.
 
