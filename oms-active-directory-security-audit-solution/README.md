@@ -43,6 +43,8 @@ Locate your existing OMS Log Analytics Workspace and note the name of the worksp
 ![alt text](images/WorkplaceInfo.png "Workspace Information")
 
 ### You can now deploy the template
+[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Foms-active-directory-security-audit-solution.json)
+
 This will send you to the Azure Portal with some default values for the template parameters. Ensure that the parameters reflects your setup so that you are deploying this into the existing Resource Group containing the Log Analytics Workspace and the Automation account.
 It is important that you type the exact values for your workspace name and resource group name, and points to the regions where these resources are deployed.
 
