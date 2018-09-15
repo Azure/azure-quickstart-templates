@@ -36,12 +36,12 @@ for directory in $directories; do
   done
 done
 
-bosh_cli_version="5.1.2"
+bosh_cli_version="5.2.2"
 bosh_cli_name="bosh-cli-${bosh_cli_version}-linux-amd64"
 wget https://s3.amazonaws.com/bosh-cli-artifacts/${bosh_cli_name} -O /tmp/${bosh_cli_name}
 az storage blob upload -f /tmp/${bosh_cli_name} -c ${container_name} -n bosh-cli/${bosh_cli_name}
 
-cf_cli_version="6.34.1"
+cf_cli_version="6.39.0"
 cf_cli_name="cf-cli-installer_${cf_cli_version}_x86-64.deb"
 wget https://s3-us-west-1.amazonaws.com/cf-cli-releases/releases/v${cf_cli_version}/${cf_cli_name} -O /tmp/${cf_cli_name}
 az storage blob upload -f /tmp/${cf_cli_name} -c ${container_name} -n cf-cli/${cf_cli_name}
