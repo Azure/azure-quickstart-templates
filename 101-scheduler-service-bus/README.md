@@ -6,6 +6,8 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
+The template is intended to illustrate how an ARM template can completely manage the provisioning of an automatic process to post a queue message to a Service Bus queue, without any application code or PowerShell coding required.
+
 This template creates:
  * An Service Bus namespace, queue, and write-only SAS policy;
  * An Azure Scheduler job collection and job that will post a message into the Service Bus queue at a regular interval. By default, this is every minute.
