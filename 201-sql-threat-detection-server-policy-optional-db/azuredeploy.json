@@ -9,6 +9,16 @@
         "description": "Name for the SQL server"
       }
     },
+    "shouldDeployDb": {
+      "type": "string",
+      "allowedValues": [
+        "Yes",
+        "No"
+      ],
+      "metadata": {
+        "description": "Select whether an Azure SQL Database should be deployed under the server."
+      }
+    },
     "databaseName": {
       "type": "string",
       "defaultValue": "[concat('db-', uniqueString(resourceGroup().id, deployment().name), '-1')]",
@@ -49,13 +59,13 @@
   "variables": {
     "databaseServerName": "[toLower(parameters('serverName'))]",
     "databaseName": "[parameters('databaseName')]",
+    "shouldDeployDb": "[parameters('shouldDeployDb')]",
     "databaseServerLocation": "[parameters('location')]",
     "databaseServerAdminLogin": "[parameters('adminUser')]",
     "databaseServerAdminLoginPassword": "[parameters('adminPassword')]",
     "emailAddresses": "[parameters('emailAddresses')]"
   },
-  "resources": [
-    {
+  "resources": [{
       "type": "Microsoft.Sql/servers",
       "apiVersion": "2015-05-01-preview",
       "location": "[variables('databaseServerLocation')]",
@@ -68,23 +78,22 @@
       "tags": {
         "DisplayName": "[variables('databaseServerName')]"
       },
-      "resources": [
-        {
-          "apiVersion": "2017-03-01-preview",
-          "type": "securityAlertPolicies",
-          "name": "DefaultSecurityAlert",
-          "dependsOn": [
-            "[variables('databaseServerName')]"
-          ],
-          "properties": {
-            "state": "Enabled",
-            "emailAddresses": "[variables('emailAddresses')]",
-            "emailAccountAdmins": true
-          }
+      "resources": [{
+        "apiVersion": "2017-03-01-preview",
+        "type": "securityAlertPolicies",
+        "name": "DefaultSecurityAlert",
+        "dependsOn": [
+          "[variables('databaseServerName')]"
+        ],
+        "properties": {
+          "state": "Enabled",
+          "emailAddresses": "[variables('emailAddresses')]",
+          "emailAccountAdmins": true
         }
-      ]
+      }]
     },
     {
+      "condition": "[equals(variables('shouldDeployDb'), 'Yes')]",
       "apiVersion": "2017-10-01-preview",
       "type": "Microsoft.Sql/servers/databases",
       "location": "[variables('databaseServerLocation')]",
