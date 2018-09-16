@@ -119,6 +119,7 @@ bosh create-env ~/example_manifests/bosh.yml \\
   --state=state.json \\
   --vars-store=~/bosh-deployment-vars.yml \\
   -o ~/example_manifests/cpi.yml \\
+  -o ~/example_manifests/use-location.yml \\
   -o ~/example_manifests/custom-cpi-release.yml \\
   -o ~/example_manifests/custom-environment.yml \\
   -o ~/example_manifests/use-azure-dns.yml \\
@@ -134,6 +135,7 @@ bosh create-env ~/example_manifests/bosh.yml \\
   -v cpi_release_sha1=$(get_setting BOSH_AZURE_CPI_RELEASE_SHA1) \\
   -v director_vm_instance_type=$(get_setting BOSH_VM_SIZE) \\
   -v resource_group_name=$(get_setting RESOURCE_GROUP_NAME) \\
+  -v location=$(get_setting LOCATION) \\
   -v vnet_name=$(get_setting VNET_NAME) \\
   -v subnet_name=$(get_setting SUBNET_NAME_FOR_BOSH) \\
   -v default_security_group=$(get_setting NSG_NAME_FOR_BOSH) \\
