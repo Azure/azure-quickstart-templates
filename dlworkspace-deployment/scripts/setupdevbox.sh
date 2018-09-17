@@ -39,14 +39,14 @@ git checkout ARMTemplate
 
 # Create configuration files, config.yaml, and cluster.yaml
 cd /home/$username/dlworkspace/src/ClusterBootstrap
-../ARM/createconfig.py genconfig --outfile /home/$username/dlworkspace/src/ClusterBootstrap/config.yaml --admin_username $username $@
+../ARM/createconfig.py genconfig --outfile /home/$username/dlworkspace/src/ClusterBootstrap/config.yaml --admin_username $username "$@"
 ./az_tools.py --default_admin_username $username --noaz genconfig
 
 # Generate SSH keys
 ./deploy.py -y build
 
 # Copy ssh keys
-../ARM/createconfig.py sshkey --admin_username $username $@
+../ARM/createconfig.py sshkey --admin_username $username "$@"
 
 # change owner to $username
 chown -R $username /home/$username/dlworkspace
