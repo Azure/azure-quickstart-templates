@@ -10,5 +10,5 @@ For deploying this template from the CLI you can run the following command from 
 </i>
 
 ```bash
-az deployment create -l southcentralus --template-file ./azuredeploy.json --debug --parameters roleAssignmentName={random seed}
+az deployment create -l southcentralus --template-file ./azuredeploy.json --parameters roleAssignmentName={random seed}
 ```
