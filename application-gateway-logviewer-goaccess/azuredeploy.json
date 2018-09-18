@@ -73,6 +73,7 @@
     "networkSecurityGroupName": "[concat(parameters('dnsNameForPublicIP'), '_nsg')]",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
     "scriptFileUri": "[uri(parameters('_artifactsLocation'), concat('scripts/setup_vm.sh', parameters('_artifactsLocationSasToken')))]",
+    "appGatewayLogProcessorArtifactUri": "[uri(parameters('_artifactsLocation'), concat('scripts/AppGatewayLogProcessor.zip', parameters('_artifactsLocationSasToken')))]",
     "appGwAccessLogsBlobSasUriVar": "[concat('\"', parameters('appGwAccessLogsBlobSasUri'), '\"')]",
     "filterRegexForAppGwAccessLogsVar": "[concat('\"|', parameters('filterRegexForAppGwAccessLogs'), '|\"')]"
   },
@@ -243,14 +244,20 @@
           "osDisk": {
             "name": "[concat(variables('vmName'),'_osdisk')]", 
             "caching": "ReadWrite",
-            "createOption": "FromImage"
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "StandardSSD_LRS"
+            }
           },
           "dataDisks": [
             {
               "name": "[concat(variables('vmName'),'_datadisk1')]",
               "diskSizeGB": 1023,
               "lun": 0,
-              "createOption": "Empty"
+              "createOption": "Empty",
+              "managedDisk": {
+                "storageAccountType": "StandardSSD_LRS"
+              }
             }
           ]
         },
@@ -278,7 +285,8 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [            
-            "[variables('scriptFileUri')]"
+            "[variables('scriptFileUri')]",
+            "[variables('appGatewayLogProcessorArtifactUri')]"
           ],
           "commandToExecute": "[concat('sh setup_vm.sh ' , variables('appGwAccessLogsBlobSasUriVar'), ' ', variables('filterRegexForAppGwAccessLogsVar'))]"
         }

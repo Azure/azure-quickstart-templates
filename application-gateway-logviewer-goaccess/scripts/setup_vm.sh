@@ -26,10 +26,10 @@ apt-get -y install libcurl3 unzip
 apt-get -y install aspnetcore-runtime-2.1
 
 # Install Log Processor Application
-wget -q -O AppGatewayLogProcessor.zip "https://appgwloganalyzergoaccess.blob.core.windows.net/loganalyzerservice/build/AppGatewayLogProcessor.zip?st=2018-09-12T06%3A56%3A42Z&se=2050-09-13T06%3A56%3A00Z&sp=rl&sv=2018-03-28&sr=b&sig=c9x6svGOKJOHvHEwCDzM9BSrO5FwPRMIDhuQ4m1OeWQ%3D"
 systemctl stop appgatewaylogprocessor
+systemctl stop goaccess
 mkdir -p /var/log/azure/Microsoft.Azure.Networking.ApplicationGateway.LogProcessor
-touch /var/log/azure/Microsoft.Azure.Networking.ApplicationGateway.LogProcessor/access_log.log
+touch /var/log/azure/Microsoft.Azure.Networking.ApplicationGateway.LogProcessor/access.log
 mkdir -p /usr/share/appgatewaylogprocessor
 unzip -o AppGatewayLogProcessor.zip -d /usr/share/appgatewaylogprocessor/
 sh /usr/share/appgatewaylogprocessor/files/scripts/setup_application.sh
@@ -40,19 +40,28 @@ chmod 644 /usr/share/appgatewaylogprocessor/blobsasuri.key
 echo $2 >> /usr/share/appgatewaylogprocessor/appgwlogsbloburlregex
 chmod 644 /usr/share/appgatewaylogprocessor/appgwlogsbloburlregex
 
-# Install the Application Gateway Log Processor Service
+# Install the Application Gateway Log Processor & GoAccess Service
 cp /usr/share/appgatewaylogprocessor/files/appgatewaylogprocessor.service /etc/systemd/system/appgatewaylogprocessor.service
-systemctl daemon-reload;sudo systemctl enable appgatewaylogprocessor.service
+cp /usr/share/appgatewaylogprocessor/files/goaccess.service /etc/systemd/system/goaccess.service
+systemctl daemon-reload
+sudo systemctl enable appgatewaylogprocessor.service
+sudo systemctl enable goaccess.service
 
 # Start the Application Gateway Log Processor
-#dotnet /usr/share/appgatewaylogprocessor/AppGatewayLogProcessor.dll &
 systemctl start appgatewaylogprocessor
 
 # Install Apache2 and GoAccess
-apt-get -y install apache2 goaccess
+apt-get -y install libncursesw5-dev gcc make libgeoip-dev libtokyocabinet-dev build-essential
+apt-get -y install apache2
+wget -q -O goaccess-1.2.tar.gz https://tar.goaccess.io/goaccess-1.2.tar.gz
+tar -xzvf goaccess-1.2.tar.gz
+cd goaccess-1.2/
+./configure --enable-utf8 --enable-geoip=legacy
+make
+make install
 
 # restart Apache
 apachectl restart
 
 # Start GoAccess
-goaccess /var/log/azure/Microsoft.Azure.Networking.ApplicationGateway.LogProcessor/access_log.log -o /var/www/html/report.html --real-time-html --port=8080 --log-format='"%^": "%dT%t+%^","%^": {%^=>%^, %^=>"%h", %^=>%^, %^=>"%m", %^=>"%U", %^=>"%q", %^=>"%u", %^=>"%s", %^=>"%H", %^=>"%b", %^=>%^, %^=>"%T", %^=>%^},' --time-format='%T' --date-format='%Y-%m-%d' &
+systemctl start goaccess
