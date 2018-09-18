@@ -52,7 +52,7 @@ It is important that you type the exact values for your workspace name and resou
 
 The ingestion will start 5-10 minutes post deployment.
 
-## Summery
+## Summary
 If you enabled auditing on domain controllers, it will generate a far amount of security data which you can use to search for events such as failed login or locked users. But searching this using native event viewer is not easy. OMS log analytics can be used to search these events and it will provide the information in rich presentable manner. 
 AD Security Audit solution is designed with number of these important use cases most customer face day in today's business. It will help you to identify 
 *	User’s login to the domain with a time range
