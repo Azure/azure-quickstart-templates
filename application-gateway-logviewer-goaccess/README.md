@@ -62,3 +62,9 @@ For any issues with running this template, please file an issue in GitHub under 
 At this time no SLA is offered for support – this is strictly for use as-is, but we will do our best in responding to issues raised. 
 
 For any feature requests or general help with GoAccess itself, please file an issue in GitHub under the GoAccess repository: <u>https://github.com/allinurl/goaccess/issues</u>
+
+<h2>License</h2>
+
+GoAccess is distributed under the MIT License. For details of the licensing terms, please refer to the <a href="https://github.com/allinurl/goaccess/blob/master/COPYING">GoAccess License</a> terms.
+
+Apache HTTP Web Server is distributed under the Apache 2.0 License. For details of the licensing terms, please refer to <a href="http://www.apache.org/licenses/LICENSE-2.0">the Apache 2.0 License</a> terms.
