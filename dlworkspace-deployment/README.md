@@ -11,8 +11,8 @@
 
 Deep Learning Workspace (DLWorkspace) is an open source toolkit that allows AI scientists to spin up an AI cluster in turn-key fashion. This template will spin up a DLWorkspace cluster in Azure. Once setup, the DLWorkspace cluster in Azure provides web UI and/or restful API that allows AI scientist to run job (interactive exploration, training, inferencing, data analystics) on the cluster with resource allocated by DL Workspace cluster for each job (e.g., a single node job with a couple of GPUs with GPU Direct connection, or a distributed job with multiple GPUs per node). DLWorkspace also provides unified job template and operating environment that allows AI scientists to easily share their job and setting among themselves and with outside community. DLWorkspace out-of-box supports all major deep learning toolkits (TensorFlow, CNTK, Caffe, MxNet, etc..).
 
-After deployment, the dev machine created will be available via SSH, and will be named "<clustername>-dev.<clusterlocation>.cloudapp.azure.com".
+After deployment, the dev machine created will be available via SSH, and will be named "\<clustername\>-dev.\<clusterlocation\>.cloudapp.azure.com".
 
-After deployment, the webportal will be available via http, and will be available at "http://<clustername>-infra01.<clusterlocation>.cloudapp.azure.com".
+After deployment, the webportal will be available via http, and will be available at "http://\<clustername\>-infra01.\<clusterlocation\>.cloudapp.azure.com".
 
 For more information about the DLWorkspace toolkit, visit https://github.com/Microsoft/DLWorkspace/tree/master
