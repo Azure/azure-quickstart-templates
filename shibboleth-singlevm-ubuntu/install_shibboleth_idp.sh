@@ -39,10 +39,10 @@ SCOPE=$(hostname -f)
 cd /usr/share
 
 # install Shibboleth
-wget http://shibboleth.net/downloads/identity-provider/3.2.1/shibboleth-identity-provider-3.2.1.zip -O shibboleth.zip
+wget http://shibboleth.net/downloads/identity-provider/3.3.2/shibboleth-identity-provider-3.3.2.zip -O shibboleth.zip
 unzip shibboleth.zip
 
-cd shibboleth-identity-provider-3.2.1
+cd shibboleth-identity-provider-3.3.2
 chmod -R +x bin
 
 echo "idp.sealer.password = $(openssl rand -base64 12)" >credentials.properties
@@ -87,7 +87,7 @@ chown -R tomcat8 /opt/shibboleth-idp
 
 cd /opt/shibboleth-idp/edit-webapp/WEB-INF/lib
 
-echo "==============>Adding JSTL to Tomcat7"
+echo "==============>Adding JSTL to Tomcat8"
 
 wget https://build.shibboleth.net/nexus/service/local/repositories/thirdparty/content/javax/servlet/jstl/1.2/jstl-1.2.jar
 chmod 777 jstl-1.2.jar
@@ -100,7 +100,7 @@ sed -i -e 's,https://'"$SITENAME"'/idp/profile/SAML2/Redirect/SSO,https://'"$SIT
 
 echo "<Context docBase=\"/opt/shibboleth-idp/war/idp.war\" privileged=\"true\" antiResourceLocking=\"false\" antijarLocking=\"false\" unpackWar=\"false\" swallowOutput=\"true\" />" > /var/lib/tomcat8/conf/Catalina/localhost/idp.xml
 
-mv  /usr/share/shibboleth-identity-provider-3.2.1/credentials.properties $INSTALLDIR/conf
+mv  /usr/share/shibboleth-identity-provider-3.3.2/credentials.properties $INSTALLDIR/conf
 
 cd /opt/shibboleth-idp
 echo -e "\nCreating self-signed certificate..."

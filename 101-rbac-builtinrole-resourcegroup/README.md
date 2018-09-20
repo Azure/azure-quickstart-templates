@@ -13,7 +13,7 @@ This template assigns Owner, Reader or Contributor access to an existing resourc
 
 **Use following powershell command to get Principal ID associated with a user using their email id. Please note, principal id maps to the id inside the directory and can point to a user, service principal, or security group. The ObjectId is the principal ID.
 
-    PS C:\> Get-AzureADUser -mail <email id>
+    PS C:\> Get-AzureRmADUser -mail <email id>
     
     DisplayName                    Type                           ObjectId
     -----------                    ----                           --------
@@ -22,7 +22,7 @@ This template assigns Owner, Reader or Contributor access to an existing resourc
 
 **Use following powershell command to learn about RoleDefinitions. Please note, the template already uses appropriate roleDefinition Id. The applicable RoleDefinition names are avialable in the parameter dropdown. 
 
-    PS C:\> Get-AzureRoleDefinition | fl
+    PS C:\> Get-AzureRmRoleDefinition | fl
 
     Name       : Contributor
     Id         : /subscriptions/ xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c
