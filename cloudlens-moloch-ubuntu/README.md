@@ -70,8 +70,8 @@ Create your CloudLens environment on Azure in a few simple steps:
 
 After the deployment is ready (~ 6 minutes):
 - Check the CloudLens portal to see if the agents have connected and are part of the 2 groups (should say '1 instance' under each group).
-- Login in the Moloch web ui (https://<moloch-vm-ip>:8005) with admin/moloch.
-- Generate some traffic from the tapping vm (download something with wget)
+- Login in the Moloch web ui (https://{moloch-vm-ip}:8005) with admin/moloch.
+- Generate some network traffic from the tapping vm
 - Check the Moloch Web UI
 
 ## Support
