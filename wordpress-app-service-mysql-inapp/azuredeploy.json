@@ -1,0 +1,116 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "sku": {
+      "type": "string",
+      "metadata": {
+        "description": "wordpress site name"
+      },
+      "allowedValues": [
+        "F1",
+        "B1",
+        "S1"
+      ],
+      "defaultValue": "F1"
+    },
+    "repoUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "GitHub repo to deploy to App Service"
+      },
+      "defaultValue": "https://github.com/azureappserviceoss/wordpress-azure"
+    },
+    "branch": {
+      "type": "string",
+      "metadata": {
+        "description": "GitHub repo branch to deploy to App Service"
+      },
+      "defaultValue": "master"
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "hostingPlanName": "[concat(uniquestring(resourceGroup().id),'hostingplan')]",
+    "siteName": "[concat(uniquestring(resourceGroup().id),'website')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "sku": {
+        "name": "[parameters('sku')]",
+        "capacity": 1
+      },
+      "name": "[variables('hostingPlanName')]",
+      "apiVersion": "2016-09-01",
+      "location": "[parameters('location')]",
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "name": "[variables('siteName')]",
+      "apiVersion": "2016-08-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "name": "[variables('siteName')]",
+        "serverFarmId": "[variables('hostingPlanName')]",
+        "siteConfig": {
+          "localMySqlEnabled": true,
+          "appSettings": [
+            {
+              "name": "WEBSITE_MYSQL_ENABLED",
+              "value": "1"
+            },
+            {
+              "name": "WEBSITE_MYSQL_GENERAL_LOG",
+              "value": "0"
+            },
+            {
+              "name": "WEBSITE_MYSQL_SLOW_QUERY_LOG",
+              "value": "0"
+            },
+            {
+              "name": "WEBSITE_MYSQL_ARGUMENTS",
+              "value": "--max_allowed_packet=16M"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "type": "sourcecontrols",
+          "name": "web",
+          "apiVersion": "2016-08-01",
+          "properties": {
+            "RepoUrl": "[parameters('repoUrl')]",
+            "branch": "[parameters('branch')]",
+            "IsManualIntegration": true
+          },
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/Sites', variables('siteName'))]"
+          ]
+        },
+        {
+          "type": "config",
+          "name": "web",
+          "apiVersion": "2016-08-01",
+          "properties": {
+            "phpVersion": "7.0"
+          },
+          "dependsOn": [
+            "[concat('Microsoft.Web/sites/', variables('siteName'))]"
+          ]
+        }
+      ],
+      "dependsOn": [
+        "[concat('Microsoft.Web/serverFarms/', variables('hostingPlanName'))]"
+      ]
+    }
+  ]
+}

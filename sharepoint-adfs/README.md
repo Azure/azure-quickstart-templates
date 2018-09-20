@@ -2,11 +2,18 @@
 
 ## Description
 
-This template deploys 3 new Azure VMs, each with its own public IP address and subnet:
+This template deploys SharePoint 2013 or 2016 with following configuration:
 
-* A new AD Domain Controller with a root certificate authority (AD CS) and AD FS configured
-* A SQL Server 2016
-* A single server running a SharePoint 2016 or 2013 farm configured with 1 web application and 2 zones. Default zone is using Windows authentication and Intranet zone is using federated authentication with ADFS. Latest version of claims provider [LDAPCP](http://ldapcp.com/) is installed and configured. Some service applications and site collections are also provisionned.
+* 1 web application with 2 zones: Default zone uses Windows and Intranet zone uses ADFS. A couple of site collections are created
+* User Profiles and Addins service applications are provisioned
+* 2 extra DNS zones are created to support SharePoint apps, and app domains are set in all zones of the web application.
+* Latest version of claims provider [LDAPCP](https://ldapcp.com/) is installed and configured
+* A certificate authority (ADCS) is provisioned on the DC and is used for all certificates issued (ADFS and the HTTPS site in Intranet zone)
+* ADFS is configured on the DC with a relying party for SharePoint web application
+* A font-end can be optionnally added to the farm
+* Super user / super reader are set
+
+Each VM has its own public IP address and is in a subnet protected with a Network Security Group.
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsharepoint-adfs%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
@@ -15,14 +22,4 @@ This template deploys 3 new Azure VMs, each with its own public IP address and s
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-With the default sizes of virtual machines, provisioning of the template takes about 1h30 - 1h45 to complete.
-
-## Known issues or limitations
-
-### On SQL VM
-
-* SQL DSC module currently doesn't allow to change location of log/data files, so all SQL data/log files are created in their default folders in C drive.
-
-### On SharePoint VM
-
-* Download of 2016-12 CU from download.microsoft.com randomly fails, causing the whole SharePoint configuration to fail, so it is disabled until a reliable solution is found.
+With the default sizes of virtual machines, provisioning of the template takes about 1h15 to complete.

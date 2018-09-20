@@ -392,12 +392,11 @@ function Cleanup-Variables {
 #Authenticate to Azure with SPN section
 "Logging in to Azure..."
 $ArmConn = Get-AutomationConnection -Name AzureRunAsConnection 
-$AsmConn = Get-AutomationConnection -Name AzureClassicRunAsConnection  
 
-if([string]::IsNullOrEmpty($SubscriptionidFilter))
+if ($ArmConn  -eq $null)
 {
-	$subscriptionid=$ArmConn.SubscriptionId
-}Else{$subscriptionid=$SubscriptionidFilter}
+	throw "Could not retrieve connection asset AzureRunAsConnection,  Ensure that runas account  exists in the Automation account."
+}
 
 # retry
 $retry = 6
@@ -418,26 +417,19 @@ do
 		Start-Sleep -s 60        
 	}
 } while (-not $syncOk -and $retry -ge 0)
-
 "Selecting Azure subscription..."
 $SelectedAzureSub = Select-AzureRmSubscription -SubscriptionId $ArmConn.SubscriptionId -TenantId $ArmConn.tenantid 
-
-
 #Creating headers for REST ARM Interface
-
+$subscriptionid=$ArmConn.SubscriptionId
 "Azure rm profile path  $((get-module -Name AzureRM.Profile).path) "
-
 $path=(get-module -Name AzureRM.Profile).path
 $path=Split-Path $path
-
 $dlllist=Get-ChildItem -Path $path  -Filter Microsoft.IdentityModel.Clients.ActiveDirectory.dll  -Recurse
 $adal =  $dlllist[0].VersionInfo.FileName
-
 try
 {
 	Add-type -Path $adal
 	[reflection.assembly]::LoadWithPartialName( "Microsoft.IdentityModel.Clients.ActiveDirectory" )
-
 }
 catch
 {
@@ -445,63 +437,67 @@ catch
 	$StackTrace = $_.Exception.StackTrace
 	Write-Warning "Error during sync: $ErrorMessage, stack: $StackTrace. "
 }
-
-
 #Create authentication token using the Certificate for ARM connection
-
 $certs= Get-ChildItem -Path Cert:\Currentuser\my -Recurse | Where{$_.Thumbprint -eq $ArmConn.CertificateThumbprint}
-
 #$certs
 [System.Security.Cryptography.X509Certificates.X509Certificate2]$mycert=$certs[0]
-
 #Write-output "$mycert will be used to acquire token"
-
 $CliCert=new-object   Microsoft.IdentityModel.Clients.ActiveDirectory.ClientAssertionCertificate($ArmConn.ApplicationId,$mycert)
 $AuthContext = new-object Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext("https://login.windows.net/$($ArmConn.tenantid)")
-
 $result = $AuthContext.AcquireToken("https://management.core.windows.net/",$CliCert)
 $header = "Bearer " + $result.AccessToken
-
 $headers = @{"Authorization"=$header;"Accept"="application/json"}
-
 $body=$null
 $HTTPVerb="GET"
 $subscriptionInfoUri = "https://management.azure.com/subscriptions/"+$subscriptionid+"?api-version=2016-02-01"
-$subscriptionInfo = Invoke-RestMethod -Uri $subscriptionInfoUri -Headers $headers -Method Get -UseBasicParsing # -ContentType "application/xml"
-#$subscriptionInfo=$subscriptionInfo.value
+$subscriptionInfo = Invoke-RestMethod -Uri $subscriptionInfoUri -Headers $headers -Method Get -UseBasicParsing
 IF($subscriptionInfo)
 {
 	"Successfully connected to Azure ARM REST"
 }
 
+#try to authenticate with ASM
 
-#Authenticating to ASM 
+if ($getAsmHeader) {
+    
+	try
+    {
+        $AsmConn = Get-AutomationConnection -Name AzureClassicRunAsConnection -ea 0
+       
+    }
+    Catch
+    {
+        if ($AsmConn -eq $null) {
+            Write-Warning "Could not retrieve connection asset AzureClassicRunAsConnection. Ensure that runas account exist and valid in the Automation account."
+            $getAsmHeader=$false
+        }
+    }
+     if ($AsmConn -eq $null) {
+        Write-Warning "Could not retrieve connection asset AzureClassicRunAsConnection. Ensure that runas account exist and valid in the Automation account. Quota usage infomration for classic accounts will no tbe collected"
+        $getAsmHeader=$false
+    }Else{
 
+        $CertificateAssetName = $AsmConn.CertificateAssetName
+        $AzureCert = Get-AutomationCertificate -Name $CertificateAssetName
+        if ($AzureCert -eq $null)
+        {
+            Write-Warning  "Could not retrieve certificate asset: $CertificateAssetName. Ensure that this asset exists and valid  in the Automation account."
+            $getAsmHeader=$false
+        }
+        Else{
 
-if ($AsmConn  -eq $null)
-{
-	throw "Could not retrieve connection asset: $($AsmConn.CertificateAssetName) Ensure that this asset exists in the Automation account."
+        "Logging into Azure Service Manager"
+        Write-Verbose "Authenticating to Azure with certificate." -Verbose
+        Set-AzureSubscription -SubscriptionName $AsmConn.SubscriptionName -SubscriptionId $AsmConn.SubscriptionId -Certificate $AzureCert
+        Select-AzureSubscription -SubscriptionId $AsmConn.SubscriptionId
+        #finally create the headers for ASM REST 
+        $headerasm = @{"x-ms-version"="2013-08-01"}
+        }
+    }
+
 }
 
-$CertificateAssetName = $AsmConn.CertificateAssetName
 
-$AzureCert = Get-AutomationCertificate -Name $CertificateAssetName
-if ($AzureCert -eq $null)
-{
-	throw "Could not retrieve certificate asset: $CertificateAssetName. Ensure that this asset exists in the Automation account."
-}
-
-if ($getAsmHeader)
-{
-	"Logging into Azure Service Manager"
-	Write-Verbose "Authenticating to Azure with certificate." -Verbose
-
-	Set-AzureSubscription -SubscriptionName $AsmConn.SubscriptionName -SubscriptionId $AsmConn.SubscriptionId -Certificate $AzureCert
-	Select-AzureSubscription -SubscriptionId $AsmConn.SubscriptionId
-
-#finally create the headers for ASM REST 
-	$headerasm = @{"x-ms-version"="2013-08-01"}
-}
 
 #get subscriptionlist
 
