@@ -22,7 +22,7 @@
 
 ## Solution Overview
 
-This Quick Start deployment guide provides step-by-step instructions for deploying suricata and CloudLens in the Azure Cloud.
+This Quick Start deployment guide provides step-by-step instructions for deploying Suricata and CloudLens in the Azure Cloud.
 
 This Quick Start is for users who need to identify malicious activity, insider threats and data leakage within your Azure vms.
 
