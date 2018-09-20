@@ -9,4 +9,4 @@
 
 This template creates a Virtual WAN, a Virtual Hub, a VPN Gateway in the Virtual hub, a VpnSite and a Vpn Connection beteween the VpnSite and the Vpn Gateway. All the resources are created in the same region as the resource group by default. Modify parameters file to change default values.
 
-In order to deploy this template, you need to get your subscription whitelisted till Virtual WAN Feature is generally available. Please send a request to azurevirtualwan@microsoft.com to get your subscription whitelisted.
+In order to deploy this template, you will need to get your subscription whitelisted until the Virtual WAN Feature is generally available. Please send a request to azurevirtualwan@microsoft.com to get your subscription whitelisted.
