@@ -1,9 +1,9 @@
-# Security with Suricata and CloudLens
+# Network Visibility with Moloch and CloudLens
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcloudlens-suricata-ubuntu%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcloudlens-moloch-ubuntu%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcloudlens-suricata-ubuntu%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcloudlens-moloch-ubuntu%2Fazuredeploy.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
@@ -22,9 +22,9 @@
 
 ## Solution Overview
 
-This Quick Start deployment guide provides step-by-step instructions for deploying Suricata and CloudLens in the Azure Cloud.
+This Quick Start deployment guide provides step-by-step instructions for deploying Moloch and CloudLens in the Azure Cloud.
 
-This Quick Start is for users who need to identify malicious activity, insider threats and data leakage within your Azure vms.
+This Quick Start is for users who need to gain more visibility into their Azure VNets.
 
 ## Solution Architecture
 
@@ -32,10 +32,10 @@ This template will deploy:
 
 - Two storage accounts
 -	One Virtual Network
--	2 Public IP’s, one for the tapping vm and one for the Suricata IDS
+-	2 Public IP’s, one for the tapping vm and one for the Moloch tool
 -	Two UbuntuServer 16.04.0-LTS VMs
 
-![Deployment Solution Architecture](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/cloudlens-suricata-ubuntu/images/architecture.png?raw=true)
+![Deployment Solution Architecture](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/cloudlens-moloch-ubuntu/images/architecture.png?raw=true)
 
 ## Licenses and Costs
 
@@ -70,8 +70,9 @@ Create your CloudLens environment on Azure in a few simple steps:
 
 After the deployment is ready (~ 6 minutes):
 - Check the CloudLens portal to see if the agents have connected and are part of the 2 groups (should say '1 instance' under each group).
-- Login in the Suricata web ui (https://{suricata-vm-ip}) with scirius/scirius. If you get a 502 Bad Gateway error, it means  Suricata is still installing.
-- Check the alerts
+- Login in the Moloch web ui (https://{moloch-vm-ip}:8005) with admin/moloch.
+- Generate some network traffic from the tapping vm
+- Check the Moloch Web UI (wait for about a minute for the sessions view to update)
 
 ## Support
 
