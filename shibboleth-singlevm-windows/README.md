@@ -11,22 +11,31 @@ This template deploys Shibboleth Identity Provider on Windows. It creates a sing
 In order to support SSL, this template creates a self signed certificate as a part of the installation script. This allows the template to be deployed without having to create your own certificate. In production deployments, you will need to create and use your own certificate instead of the self signed certificate.
 
 # Test Setup
-Here are the steps you can follow to create a testing setup including Shibboleth IDP deployed using this template, along with an OpenLDAP test server and a test SP available online.
+Here are the steps you can follow to create a testing setup including Shibboleth IDP deployed using this template, along with an ADLDS test server and a test SP available online.
+
+# Install ADLDS
+Install ADLDS as per the instructions described on https://blogs.msdn.microsoft.com/microsoftrservertigerteam/2017/04/10/step-by-step-guide-to-setup-ldaps-on-windows-server/. You would need following settings (with sample values) of the ADLDS instance to configure Shibboleth.
+ 	
+	- Public IP - 125.524.52.54
+	- Bind DN - example - john@testorg.com
+	- Bind DN credentials - example - JohnZSQ12*(
+	- Base DN - cn=Users,DC=testorg,DC=com
 
 ## Deploy Shibboleth IDP using this template.
 
 Create a deployment of Shibboleth IDP using this template and RDP into the VM deployed.
 
-## Update ldap.properties inside /opt/conf directory as per the LDAP configuration. 
-    Following are the settings for Online LDAP Test Server installation hosted at http://www.forumsys.com/tutorials/integration-how-to/ldap/online-ldap-test-server/
-	- set idp.authn.LDAP.authenticator = bindSearchAuthenticator
-	- set idp.authn.LDAP.ldapURL = ldap://ldap.forumsys.com:389
+## Update ldap.properties inside /opt/conf directory as per the ADLDS configuration. 
+    - set idp.authn.LDAP.authenticator = adAuthenticator
+	- set idp.authn.LDAP.ldapURL = ldap://125.524.52.54:389
+	- set idp.authn.LDAP.returnAttributes= mail,uid,passwordExpirationTime,loginGraceRemaining
 	- set idp.authn.LDAP.useStartTLS = false
 	- set idp.authn.LDAP.useSSL = false
-	- set idp.authn.LDAP.baseDN = dc=example,dc=com
-	- set idp.authn.LDAP.bindDN = cn=read-only-admin,dc=example,dc=com
-	- set idp.authn.LDAP.bindDNCredential = password
-	- set idp.authn.LDAP.dnFormat = uid=%s,dc=example,dc=com
+	- set idp.authn.LDAP.baseDN = cn=Users,DC=testorg,DC=com
+	- set idp.authn.LDAP.userFilter= (sAMAccountName={user})
+	- set idp.authn.LDAP.bindDN = john@testorg.com
+	- set idp.authn.LDAP.bindDNCredential = JohnZSQ12*(
+	- set idp.authn.LDAP.dnFormat = %s@testorg.com
 	- Comment out idp.authn.LDAP.sslConfig & Comment out idp.authn.LDAP.trustCertificates as SSL is not used here
 
 ## Create metadata xml file for service provider. 
@@ -43,33 +52,30 @@ Create a deployment of Shibboleth IDP using this template and RDP into the VM de
 ## Set LDAP attribute resolver
 	- Set LDAP Attribute Resolver as default attribute resolver. The default configuration for LDAP attribute resolver is present inside attribute-resolver-ldap.xml  We just have to replace existing attribute-resolver.xml with attribute-resolver-ldap.xml
 	- These files are present in /opt/conf/ directory
-	- Following commands rename attribute-resolver-ldap.xml to attribute-resolver.xml
+	- Rename attribute-resolver.xml attribute-resolver-orig.xml
+	- Rename attribute-resolver-ldap.xml attribute-resolver.xml
 
-	sudo mv attribute-resolver.xml attribute-resolver-orig.xml
-	sudo cp attribute-resolver-ldap.xml attribute-resolver.xml
-	sudo vi attribute-resolver.xml
 
 ## Configure attribute-resolver
 	- Configure the mapping of LDAP attributes with Shibboleth attributes
  	- These instructions would vary as per LDAP installation. Following are specific to forumsys ldap
 	- Set sourceAttributeId attribute of Attribute with id=eduPersonPrincipalName to uid 
-	<resolver:AttributeDefinition id="eduPersonPrincipalName" xsi:type="ad:Prescoped" sourceAttributeID="uid">
+	<resolver:AttributeDefinition id="eduPersonPrincipalName" xsi:type="ad:Prescoped" sourceAttributeID="mail">
         <resolver:Dependency ref="myLDAP" />
         <resolver:AttributeEncoder xsi:type="enc:SAML1ScopedString" name="urn:mace:dir:attribute-def:eduPersonPrincipalName" encodeType="false" />
         <resolver:AttributeEncoder xsi:type="enc:SAML2ScopedString" name="urn:oid:1.3.6.1.4.1.5923.1.1.1.6" friendlyName="eduPersonPrincipalName" encodeType="false" />
     </resolver:AttributeDefinition>
 	- In the bottom of same xml we need to configure data connector settings for LDAP. Again these settings vary as per LDAP setup.
 		<resolver:DataConnector id="myLDAP" xsi:type="dc:LDAPDirectory"
-				ldapURL="%{idp.attribute.resolver.LDAP.ldapURL}"
-				baseDN="%{idp.attribute.resolver.LDAP.baseDN}" 
-				principal="%{idp.attribute.resolver.LDAP.bindDN}"
-				principalCredential="%{idp.attribute.resolver.LDAP.bindDNCredential}">
+				ldapURL="ldap://125.524.52.54:389"
+				baseDN="cn=Users,DC=testorg,DC=com" 
+				principal="john@testorg.com"
+				principalCredential="JohnZSQ12*(">
 			<dc:FilterTemplate>
 				<![CDATA[
 					%{idp.attribute.resolver.LDAP.searchFilter}
 				]]>
 			</dc:FilterTemplate>
-			<dc:ReturnAttributes>%{idp.attribute.resolver.LDAP.returnAttributes}</dc:ReturnAttributes>
 		</resolver:DataConnector>
 	
 ## Configure attribute filter
@@ -84,8 +90,9 @@ Create a deployment of Shibboleth IDP using this template and RDP into the VM de
 	- idp.consent.userStorageKeyAttribute
 
 ## Restart the servlet container 
-  - cd C:\apache-tomcat-7.0.67\bin\
-  - Start-Process .\startup.bat
+  - cd C:\apache-tomcat-8.5.31\bin\
+  - shutdown.bat
+  - startup.bat
 
 ## Test your installation
     - Follow the steps on http://testshib.org to test the shibboleth installation as IDP
