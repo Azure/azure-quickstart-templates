@@ -47,7 +47,6 @@
   },
   "variables": {
     "resourceGroupLocation": "[parameters('location')]",
-    "vmStorageAccountContainerName": "vhd",
     "storageAccountName": "[concat(uniquestring(resourceGroup().id),'storageac')]",
     "sparkMasterMachineName": "sparkmaster",
     "sparkSlaveMachineName": "sparkslave",
@@ -68,10 +67,9 @@
     {
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('sparkMasterMachineName')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "location": "[variables('resourceGroupLocation')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
         "[resourceId('Microsoft.Network/networkInterfaces', variables('sparkMasterNetworkInterfaceName'))]"
       ],
       "properties": {
@@ -89,15 +87,12 @@
           "imageReference": {
             "publisher": "SUSE",
             "offer": "SLES",
-            "sku": "12-SP1",
+            "sku": "12-SP2",
             "version": "latest"
           },
           "osDisk": {
-            "name": "[variables('sparkMasterMachineName')]",
+            "name": "[concat(variables('sparkMasterMachineName'),'_OSDisk')]",
             "createOption": "FromImage",
-            "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2016-01-01').primaryEndpoints.blob, variables('vmStorageAccountContainerName'),'/','osdisks', '1' ,'.vhd')]"
-            },
             "caching": "ReadWrite"
           }
         },
@@ -138,14 +133,13 @@
     {
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('sparkSlaveMachineName'), copyindex() )]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "location": "[variables('resourceGroupLocation')]",
       "copy": {
         "name": "VMLoop",
         "count": "[parameters('numberOfSlaves')]"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
         "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('sparkSlaveNetworkInterfaceName'), copyindex() ) )]"
       ],
       "properties": {
@@ -163,15 +157,12 @@
           "imageReference": {
             "publisher": "SUSE",
             "offer": "SLES",
-            "sku": "12-SP1",
+            "sku": "12-SP2",
             "version": "latest"
           },
           "osDisk": {
-            "name": "[concat(variables('sparkSlaveMachineName'), copyindex() )]",
+            "name": "[concat(variables('sparkSlaveMachineName'), copyindex() ,'_OSDisk')]",
             "createOption": "FromImage",
-            "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2016-01-01').primaryEndpoints.blob, variables('vmStorageAccountContainerName'),'/','osdisks_', 'slave', copyindex() ,'.vhd')]"
-            },
             "caching": "ReadWrite"
           }
         },

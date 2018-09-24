@@ -42,7 +42,9 @@ Clicking on the solution would let you explore Alerts, backups, restores, Cloud 
 
 ![alt text](images/KeyBackupJobsParameters.jpg "OMS Monitoring solution for Azure backup alerts, backups, restores")
 
-![alt text](images/ActiveStorageParams.JPG "OMS Monitoring solution for Azure backup cloud storage distribution, active data sources")
+![alt text](images/ActiveDatasources.png "OMS Monitoring solution for Azure backup active data sources distribution")
+
+![alt text](images/CloudStorageInGB.png "OMS Monitoring solution for Azure backup cloud storage distribution")
 
 You can click on each tile to get more details about the queries used to create it and you can configure it as per your requirement. Clicking further on values appearing in the tiles will lead you to Log analytics screen where you can raise alerts for configurable event thresholds and automate actions to be performed when those thresholds are met/crossed.
 

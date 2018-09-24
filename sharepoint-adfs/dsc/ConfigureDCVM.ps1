@@ -8,7 +8,7 @@
         [Parameter(Mandatory)] [String]$PrivateIP
     )
 
-    Import-DscResource -ModuleName xActiveDirectory, xDisk, xNetworking, cDisk, xPSDesiredStateConfiguration, xAdcsDeployment, xCertificate, xPendingReboot, cADFS, xDnsServer
+    Import-DscResource -ModuleName xActiveDirectory, xNetworking, xPSDesiredStateConfiguration, ActiveDirectoryCSDsc, CertificateDsc, xPendingReboot, cADFS, xDnsServer
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     [System.Management.Automation.PSCredential] $DomainCredsNetbios = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
     [System.Management.Automation.PSCredential] $AdfsSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($AdfsSvcCreds.UserName)", $AdfsSvcCreds.Password)
@@ -109,7 +109,7 @@
         #**********************************************************
         WindowsFeature AddCertAuthority       { Name = "ADCS-Cert-Authority"; Ensure = "Present"; DependsOn = "[xPendingReboot]Reboot1" }
         WindowsFeature AddADCSManagementTools { Name = "RSAT-ADCS-Mgmt";      Ensure = "Present"; DependsOn = "[xPendingReboot]Reboot1" }
-        xADCSCertificationAuthority ADCS
+        ADCSCertificationAuthority ADCS
         {
             Ensure = "Present"
             Credential = $DomainCredsNetbios
@@ -120,34 +120,15 @@
         #**********************************************************
         # Configure AD FS
         #**********************************************************
-        xWaitForCertificateServices WaitAfterADCSProvisioning
+        WaitForCertificateServices WaitAfterADCSProvisioning
         {
             CAServerFQDN = "$ComputerName.$DomainFQDN"
             CARootName = "$DomainNetbiosName-$ComputerName-CA"
-            DependsOn = '[xADCSCertificationAuthority]ADCS'
+            DependsOn = '[ADCSCertificationAuthority]ADCS'
             PsDscRunAsCredential = $DomainCredsNetbios
         }
-        <#xScript WaitAfterADCSProvisioning
-        {
-            SetScript = 
-            {
-                # Add a timer to mitigate issue https://github.com/PowerShell/xCertificate/issues/73
-                Start-Sleep -s 30
-            }
-            GetScript =  
-            {
-                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-                return @{ "Result" = "false" }
-            }
-            TestScript = 
-            {
-                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-               return $false
-            }
-            DependsOn = '[xADCSCertificationAuthority]ADCS'
-        }#>
 
-        xCertReq ADFSSiteCert
+        CertReq ADFSSiteCert
         {
             CARootName                = "$DomainNetbiosName-$ComputerName-CA"
             CAServerFQDN              = "$ComputerName.$DomainFQDN"
@@ -162,10 +143,10 @@
             AutoRenew                 = $true
             SubjectAltName            = "dns=certauth.$ADFSSiteName.$DomainFQDN&dns=$ADFSSiteName.$DomainFQDN"
             Credential                = $DomainCredsNetbios
-            DependsOn = '[xWaitForCertificateServices]WaitAfterADCSProvisioning'
+            DependsOn = '[WaitForCertificateServices]WaitAfterADCSProvisioning'
         }
 
-        xCertReq ADFSSigningCert
+        CertReq ADFSSigningCert
         {
             CARootName                = "$DomainNetbiosName-$ComputerName-CA"
             CAServerFQDN              = "$ComputerName.$DomainFQDN"
@@ -179,10 +160,10 @@
             CertificateTemplate       = 'WebServer'
             AutoRenew                 = $true
             Credential                = $DomainCredsNetbios
-            DependsOn = '[xWaitForCertificateServices]WaitAfterADCSProvisioning'
+            DependsOn = '[WaitForCertificateServices]WaitAfterADCSProvisioning'
         }
 
-        xCertReq ADFSDecryptionCert
+        CertReq ADFSDecryptionCert
         {
             CARootName                = "$DomainNetbiosName-$ComputerName-CA"
             CAServerFQDN              = "$ComputerName.$DomainFQDN"
@@ -196,7 +177,7 @@
             CertificateTemplate       = 'WebServer'
             AutoRenew                 = $true
             Credential                = $DomainCredsNetbios
-            DependsOn = '[xWaitForCertificateServices]WaitAfterADCSProvisioning'
+            DependsOn = '[WaitForCertificateServices]WaitAfterADCSProvisioning'
         }
 
         xADUser CreateAdfsSvcAccount
@@ -208,7 +189,7 @@
             Ensure = "Present"
             PasswordAuthentication = 'Negotiate'
             PasswordNeverExpires = $true
-            DependsOn = "[xCertReq]ADFSSiteCert", "[xCertReq]ADFSSigningCert", "[xCertReq]ADFSDecryptionCert"
+            DependsOn = "[CertReq]ADFSSiteCert", "[CertReq]ADFSSigningCert", "[CertReq]ADFSDecryptionCert"
         }
 
         Group AddAdfsSvcAccountToDomainAdminsGroup

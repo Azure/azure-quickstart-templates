@@ -95,9 +95,26 @@
     }
   },
   "variables": {
+    "imageName": "myCustomImage", 
     "osDiskUri": "[uri(parameters('sourceImageVhdUri'), concat(toLower(parameters('vmName')), '-', uniqueString(parameters('subnetId'), toLower(parameters('vmName'))), '.vhd'))]"
   },
   "resources": [
+    {	
+      "type": "Microsoft.Compute/images",
+      "apiVersion": "2017-03-30",
+      "name": "[variables('imageName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+      "storageProfile": {
+              "osDisk": {
+                  "osType": "Windows",
+                  "osState": "Generalized",
+                  "blobUri": "[parameters('sourceImageVhdUri')]",
+                  "storageAccountType": "Standard_LRS"
+          }
+        }
+      }
+    }, 
     {
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[parameters('nicName')]",
@@ -118,6 +135,7 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2017-03-30",
       "name": "[parameters('vmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
@@ -137,18 +155,9 @@
           "customData": "[parameters('customData')]"
         },
         "storageProfile": {
-          "osDisk": {
-            "name": "[parameters('vmName')]",
-            "osType": "windows",
-            "caching": "ReadOnly",
-            "image": {
-              "uri": "[parameters('sourceImageVhdUri')]"
-            },
-            "createOption": "FromImage",
-            "vhd": {
-              "uri": "[variables('osDiskUri')]"
-            }
-          }
+          "imageReference": { 
+            "id": "[resourceId('Microsoft.Compute/images', variables('imageName'))]" 
+          } 
         },
         "networkProfile": {
           "networkInterfaces": [
