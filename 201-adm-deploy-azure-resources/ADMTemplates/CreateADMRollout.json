@@ -1,0 +1,149 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"namePrefix": {
+			"type": "string",
+			"metadata": {
+				"description": "A prefix for the ADM resource names."
+			}
+		},
+		"azureResourcelocation": {
+			"type": "string",
+			"defaultValue": "[resourceGroup().location]",
+			"metadata": {
+				"description": "The location to deploy the artifactSource resource."
+			}
+		},
+		"artifactSourceSASLocation": {
+			"type": "string",
+			"metadata": {
+				"description": "The SAS URI to the root directory where templates and parameters files are stored for deployment."
+			}
+		},
+		"binaryArtifactRoot": {
+			"type": "string",
+			"defaultValue": "binaries/1.0.0.0",
+			"metadata": {
+				"description": "The mutable portion of the SAS URI which adjusts as build/version/date numbers change"
+			}
+		},
+		"managedIdentityID": {
+			"type": "string",
+			"metadata": {
+				"description": "The user-assigned managed identity."
+			}
+		}
+	},
+	"variables": {
+		"rollout": {
+			"name": "[concat(parameters('namePrefix'),'Rollout')]"
+		},
+		"rolloutArtifactSource": {
+			"name": "[concat(parameters('namePrefix'), 'ArtifactSourceRollout')]"
+		},
+		"serviceTopology": {
+			"name": "[concat(parameters('namePrefix'),'ServiceTopology')]",
+			"serviceWUS": {
+				"name": "[concat(parameters('namePrefix'),'ServiceWUS')]",
+				"serviceUnit1": {
+					"name": "[concat(parameters('namePrefix'),'ServiceWUSWeb')]"
+				},
+				"serviceUnit2": {
+					"name": "[concat(parameters('namePrefix'),'ServiceWUSStorage')]"
+				}
+			},
+			"serviceEUS": {
+				"name": "[concat(parameters('namePrefix'),'ServiceEUS')]",
+				"serviceUnit1": {
+					"name": "[concat(parameters('namePrefix'),'ServiceEUSWeb')]"
+				},
+				"serviceUnit2": {
+					"name": "[concat(parameters('namePrefix'),'ServiceEUSStorage')]"
+				}
+			}
+		}
+	},
+	"resources": [
+		{
+			"type": "Microsoft.DeploymentManager/artifactSources",
+			"name": "[variables('rolloutArtifactSource').name]",
+			"location": "[parameters('azureResourceLocation')]",
+			"apiVersion": "2018-09-01-preview",
+			"properties": {
+				"sourceType": "AzureStorage",
+				"artifactRoot": "[parameters('binaryArtifactRoot')]",
+				"authentication": {
+					"type": "SAS",
+					"properties": {
+						"sasUri": "[parameters('artifactSourceSASLocation')]"
+					}
+				}
+			}
+		},
+		{
+			"type": "Microsoft.DeploymentManager/steps",
+			"name": "waitStep",
+			"location": "[parameters('azureResourceLocation')]",
+			"apiVersion": "2018-09-01-preview",
+			"properties": {
+				"stepType": "wait",
+				"attributes": {
+					"duration": "PT1M"
+				}
+			}
+		},
+		{
+			"type": "Microsoft.DeploymentManager/rollouts",
+			"name": "[variables('rollout').name]",
+			"location": "[parameters('azureResourcelocation')]",
+			"apiVersion": "2018-09-01-preview",
+			"Identity": {
+				"type": "userAssigned",
+				"identityIds": [
+					"[parameters('managedIdentityID')]"
+				]
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.DeploymentManager/artifactSources', variables('rolloutArtifactSource').name)]"
+			],
+			"properties": {
+				"buildVersion": "1.0.0.0",
+				"artifactSourceId": "[resourceId('Microsoft.DeploymentManager/artifactSources', variables('rolloutArtifactSource').name)]",
+				"targetServiceTopologyId": "[resourceId('Microsoft.DeploymentManager/serviceTopologies', variables('serviceTopology').name)]",
+				"stepGroups": [
+					{
+						"name": "stepGroup1",
+						"preDeploymentSteps": [],
+						"deploymentTargetId": "[resourceId('Microsoft.DeploymentManager/serviceTopologies/services/serviceUnits', variables('serviceTopology').name, variables('serviceTopology').serviceWUS.name,  variables('serviceTopology').serviceWUS.serviceUnit2.name)]",
+						"postDeploymentSteps": []
+					},
+					{
+						"name": "stepGroup2",
+						"dependsOnStepGroup": ["stepGroup1"],
+						"preDeploymentSteps": [],
+						"deploymentTargetId": "[resourceId('Microsoft.DeploymentManager/serviceTopologies/services/serviceUnits', variables('serviceTopology').name, variables('serviceTopology').serviceWUS.name,  variables('serviceTopology').serviceWUS.serviceUnit1.name)]",
+						"postDeploymentSteps": [
+							{
+								"stepId": "[resourceId('Microsoft.DeploymentManager/steps/', 'waitStep')]"
+							}
+						]
+					},
+					{
+						"name": "stepGroup3",
+						"preDeploymentSteps": [],
+						"deploymentTargetId": "[resourceId('Microsoft.DeploymentManager/serviceTopologies/services/serviceUnits', variables('serviceTopology').name, variables('serviceTopology').serviceEUS.name,  variables('serviceTopology').serviceEUS.serviceUnit2.name)]",
+						"postDeploymentSteps": []
+					},
+					{
+						"name": "stepGroup4",
+						"dependsOnStepGroup": ["stepGroup3"],
+						"preDeploymentSteps": [],
+						"deploymentTargetId": "[resourceId('Microsoft.DeploymentManager/serviceTopologies/services/serviceUnits', variables('serviceTopology').name, variables('serviceTopology').serviceEUS.name,  variables('serviceTopology').serviceEUS.serviceUnit1.name)]",
+						"postDeploymentSteps": []
+					}
+				]
+			}
+		}
+	]
+}

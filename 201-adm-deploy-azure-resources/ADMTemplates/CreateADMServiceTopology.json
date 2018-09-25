@@ -1,0 +1,228 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"namePrefix": {
+			"type": "string",
+			"metadata": {
+				"description": "A prefix for the ADM resource names."
+			}
+		},
+		"azureResourceLocation": {
+			"type": "string",
+			"defaultValue": "[resourceGroup().location]",
+			"metadata": {
+				"description": "The location to deploy the artifactSource resource."
+			}
+		},
+		"artifactSourceSASLocation": {
+			"type": "string",
+			"metadata": {
+				"description": "The SAS URI to the root directory where templates and parameters files are stored for deployment."
+			}
+		},
+		"templateArtifactRoot": {
+			"type": "string",
+			"defaultValue": "templates/1.0.0.0",
+			"metadata": {
+				"description": "The mutable portion of the SAS URI which adjusts as build/version/date numbers change"
+			}
+		},
+		"targetSubscriptionID": {
+			"type": "string",
+			"metadata": {
+				"description": "The subscription ID to which the resources are going to be deployed and billed."
+			}
+		}
+	},
+	"variables": {
+		"serviceTopology": {
+			"name": "[concat(parameters('namePrefix'),'ServiceTopology')]"
+		},
+		"topologyArtifactSource": {
+			"name": "[concat(parameters('namePrefix'), 'ArtifactSource')]"
+		},
+		"serviceWUS": {
+			"name": "[concat(parameters('namePrefix'),'ServiceWUS')]",
+			"location": "WestUS",
+			"targetResourceGroupName": "[concat(parameters('namePrefix'),'ServiceWUSrg')]",
+			"serviceUnit1": {
+				"name": "[concat(parameters('namePrefix'),'ServiceWUSWeb')]",
+				"templateRelativePath": "ServiceWUS/CreateWebApplication.json",
+				"parametersRelativePath": "ServiceWUS/CreateWebApplicationParameters.json"
+			},
+			"serviceUnit2": {
+				"name": "[concat(parameters('namePrefix'),'ServiceWUSStorage')]",
+				"templateRelativePath": "ServiceWUS/CreateStorageAccount.json",
+				"parametersRelativePath": "ServiceWUS/CreateStorageAccountParameters.json"
+			}
+		},
+		"ServiceEUS": {
+			"name": "[concat(parameters('namePrefix'),'ServiceEUS')]",
+			"location": "EastUS",
+			"targetResourceGroupName": "[concat(parameters('namePrefix'),'ServiceEUSrg')]",
+			"serviceUnit1": {
+				"name": "[concat(parameters('namePrefix'),'ServiceEUSWeb')]",
+				"templateRelativePath": "ServiceEUS/CreateWebApplication.json",
+				"parametersRelativePath": "ServiceEUS/CreateWebApplicationParameters.json"
+			},
+			"serviceUnit2": {
+				"name": "[concat(parameters('namePrefix'),'ServiceEUSStorage')]",
+				"templateRelativePath": "ServiceEUS/CreateStorageAccount.json",
+				"parametersRelativePath": "ServiceEUS/CreateStorageAccountParameters.json"
+			}
+		}
+	},
+	"resources": [
+		{
+			"type": "Microsoft.DeploymentManager/artifactSources",
+			"name": "[variables('topologyArtifactSource').name]",
+			"location": "[parameters('azureResourceLocation')]",
+			"apiVersion": "2018-09-01-preview",
+			"properties": {
+				"sourceType": "AzureStorage",
+				"artifactRoot": "[parameters('templateArtifactRoot')]",
+				"authentication": {
+					"type": "SAS",
+					"properties": {
+						"sasUri": "[parameters('artifactSourceSASLocation')]"
+					}
+				}
+			}
+		},
+		{
+			"type": "Microsoft.DeploymentManager/serviceTopologies",
+			"name": "[variables('serviceTopology').name]",
+			"location": "[parameters('azureResourceLocation')]",
+			"apiVersion": "2018-09-01-preview",
+			"properties": {
+				"artifactSourceId": "[resourceId('Microsoft.DeploymentManager/artifactSources', variables('topologyArtifactSource').name)]"
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.DeploymentManager/artifactSources', variables('topologyArtifactSource').name)]"
+			],
+			"resources": [
+				{
+					"type": "services",
+					"name": "[variables('serviceWUS').name]",
+					"location": "[parameters('azureResourceLocation')]",
+					"apiVersion": "2018-09-01-preview",
+					"dependsOn": [
+						"[resourceId('Microsoft.DeploymentManager/artifactSources', variables('topologyArtifactSource').name)]",
+						"[resourceId('Microsoft.DeploymentManager/serviceTopologies', variables('serviceTopology').name)]"
+					],
+					"properties": {
+						"targetSubscriptionId": "[parameters('targetSubscriptionID')]",
+						"targetLocation": "[variables('ServiceWUS').location]"
+					},
+					"resources": [
+						{
+							"type": "serviceUnits",
+							"name": "[variables('ServiceWUS').serviceUnit1.name]",
+							"location": "[parameters('azureResourceLocation')]",
+							"apiVersion": "2018-09-01-preview",
+							"dependsOn": [
+								"[resourceId('Microsoft.DeploymentManager/artifactSources', variables('topologyArtifactSource').name)]",
+								"[resourceId('Microsoft.DeploymentManager/serviceTopologies', variables('serviceTopology').name)]",
+								"[resourceId('Microsoft.DeploymentManager/serviceTopologies/services', variables('serviceTopology').name, variables('ServiceWUS').name)]"
+							],
+							"tags": {
+								"serviceType": "Service West US Web App"
+							},
+							"properties": {
+								"targetResourceGroup": "[variables('ServiceWUS').targetResourceGroupName]",
+								"deploymentMode": "Incremental",
+								"artifacts": {
+									"templateArtifactSourceRelativePath": "[variables('ServiceWUS').serviceUnit1.templateRelativePath]",
+									"parametersArtifactSourceRelativePath": "[variables('ServiceWUS').serviceUnit1.parametersRelativePath]"
+								}
+							}
+						},
+						{
+							"type": "serviceUnits",
+							"name": "[variables('ServiceWUS').serviceUnit2.name]",
+							"location": "[parameters('azureResourceLocation')]",
+							"apiVersion": "2018-09-01-preview",
+							"dependsOn": [
+								"[resourceId('Microsoft.DeploymentManager/artifactSources', variables('topologyArtifactSource').name)]",
+								"[resourceId('Microsoft.DeploymentManager/serviceTopologies', variables('serviceTopology').name)]",
+								"[resourceId('Microsoft.DeploymentManager/serviceTopologies/services', variables('serviceTopology').name, variables('ServiceWUS').name)]"
+							],
+							"tags": {
+								"serviceType": "Service West US Storage Account"
+							},
+							"properties": {
+								"targetResourceGroup": "[variables('ServiceWUS').targetResourceGroupName]",
+								"deploymentMode": "Incremental",
+								"artifacts": {
+									"templateArtifactSourceRelativePath": "[variables('ServiceWUS').serviceUnit2.templateRelativePath]",
+									"parametersArtifactSourceRelativePath": "[variables('ServiceWUS').serviceUnit2.parametersRelativePath]"
+								}
+							}
+						}
+					]
+				},
+				{
+					"type": "services",
+					"name": "[variables('ServiceEUS').name]",
+					"location": "[parameters('azureResourceLocation')]",
+					"apiVersion": "2018-09-01-preview",
+					"dependsOn": [
+						"[resourceId('Microsoft.DeploymentManager/artifactSources', variables('topologyArtifactSource').name)]",
+						"[resourceId('Microsoft.DeploymentManager/serviceTopologies', variables('serviceTopology').name)]"
+					],
+					"properties": {
+						"targetSubscriptionId": "[parameters('targetSubscriptionID')]",
+						"targetLocation": "[variables('ServiceEUS').location]"
+					},
+					"resources": [
+						{
+							"type": "serviceUnits",
+							"name": "[variables('ServiceEUS').serviceUnit1.name]",
+							"location": "[parameters('azureResourceLocation')]",
+							"apiVersion": "2018-09-01-preview",
+							"dependsOn": [
+								"[resourceId('Microsoft.DeploymentManager/artifactSources', variables('topologyArtifactSource').name)]",
+								"[resourceId('Microsoft.DeploymentManager/serviceTopologies', variables('serviceTopology').name)]",
+								"[resourceId('Microsoft.DeploymentManager/serviceTopologies/services', variables('serviceTopology').name, variables('ServiceEUS').name)]"
+							],
+							"tags": {
+								"serviceType": "Service East US Web App"
+							},
+							"properties": {
+								"targetResourceGroup": "[variables('ServiceEUS').targetResourceGroupName]",
+								"deploymentMode": "Incremental",
+								"artifacts": {
+									"templateArtifactSourceRelativePath": "[variables('ServiceEUS').serviceUnit1.templateRelativePath]",
+									"parametersArtifactSourceRelativePath": "[variables('ServiceEUS').serviceUnit1.parametersRelativePath]"
+								}
+							}
+						},
+						{
+							"type": "serviceUnits",
+							"name": "[variables('ServiceEUS').serviceUnit2.name]",
+							"location": "[parameters('azureResourceLocation')]",
+							"apiVersion": "2018-09-01-preview",
+							"tags": {
+								"serviceType": "Service East US Storage Account"
+							},
+							"dependsOn": [
+								"[resourceId('Microsoft.DeploymentManager/artifactSources', variables('topologyArtifactSource').name)]",
+								"[resourceId('Microsoft.DeploymentManager/serviceTopologies', variables('serviceTopology').name)]",
+								"[resourceId('Microsoft.DeploymentManager/serviceTopologies/services', variables('serviceTopology').name, variables('ServiceEUS').name)]"
+							],
+							"properties": {
+								"targetResourceGroup": "[variables('ServiceEUS').targetResourceGroupName]",
+								"deploymentMode": "Incremental",
+								"artifacts": {
+									"templateArtifactSourceRelativePath": "[variables('ServiceEUS').serviceUnit2.templateRelativePath]",
+									"parametersArtifactSourceRelativePath": "[variables('ServiceEUS').serviceUnit2.parametersRelativePath]"
+								}
+							}
+						}
+					]
+				}
+			]
+		}
+	]
+}
