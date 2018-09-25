@@ -1,0 +1,74 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "domainName": {
+            "type": "string",
+            "metadata": {
+                "description": "Qualified domain name of active directory"
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location for all resources."
+            }
+        }
+    },
+    "variables": {
+        "virtualNetworkName": "[tolower(concat('aadds-',parameters('domainName'),'-vnet'))]",
+        "subnetName": "[tolower(concat('aadds-',parameters('domainName'),'-subnet'))]",
+        "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
+        "virtualNetworkId": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[variables('virtualNetworkName')]",
+            "apiVersion": "2017-06-01",
+            "location": "[parameters('location')]",
+            "comments": "This will build a Virtual Network.",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "10.3.0.0/16"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('subnetName')]",
+                        "properties": {
+                            "addressPrefix": "10.3.0.0/27"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.AAD/DomainServices",
+            "name": "[parameters('domainName')]",
+            "apiVersion": "2017-06-01",
+            "location": "[parameters('location')]",
+            "comments": "This will build a Azure AD Domain Services.",
+            "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+            ],
+            "properties": {
+                "domainName": "[parameters('domainName')]",
+                "vnetSiteID": {
+                    "id": "[variables('virtualNetworkId')]"
+                },
+                "subnetId": {
+                    "id": "[variables('subnetId')]"
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "addsId": {
+            "value": "[resourceId('Microsoft.AAD/DomainServices', parameters('domainName'))]",
+            "type": "string"
+        }
+    }
+}
