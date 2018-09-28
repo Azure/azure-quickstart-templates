@@ -182,7 +182,42 @@ else
   -o ~/example_manifests/use-managed-disks.yml
 EOF
 fi
+
+cat >> "$home_dir/deploy_bosh.sh" << EOF
+
+cat >> "$home_dir/.profile" << EndOfFile
+# BOSH CLI
+export BOSH_ENVIRONMENT=10.0.0.4
+export BOSH_CLIENT=admin
+export BOSH_CLIENT_SECRET="\$(bosh int ~/bosh-deployment-vars.yml --path /admin_password)"
+export BOSH_CA_CERT="\$(bosh int ~/bosh-deployment-vars.yml --path /director_ssl/ca)"
+EndOfFile
+source $home_dir/.profile
+EOF
+
 chmod 777 $home_dir/deploy_bosh.sh
+
+cat > "$home_dir/login_bosh.sh" << EOF
+#!/usr/bin/env bash
+
+export BOSH_ENVIRONMENT=10.0.0.4
+export BOSH_CLIENT=admin
+export BOSH_CLIENT_SECRET="\$(bosh int ~/bosh-deployment-vars.yml --path /admin_password)"
+export BOSH_CA_CERT="\$(bosh int ~/bosh-deployment-vars.yml --path /director_ssl/ca)"
+
+bosh alias-env azure
+bosh -e azure login
+EOF
+chmod 777 $home_dir/login_bosh.sh
+
+cat > "$home_dir/connect_director_vm.sh" << EOF
+#!/usr/bin/env bash
+
+bosh int ~/bosh-deployment-vars.yml --path /jumpbox_ssh/private_key > jumpbox.key
+chmod 600 jumpbox.key
+ssh jumpbox@10.0.0.4 -i jumpbox.key
+EOF
+chmod 777 $home_dir/connect_director_vm.sh
 
 system_domain=$(get_setting SYSTEM_DOMAIN)
 if [ "${system_domain}" = "NotConfigured" ]; then
@@ -251,28 +286,6 @@ cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
 EOF
 chmod 777 $home_dir/deploy_cloud_foundry.sh
 
-cat > "$home_dir/connect_director_vm.sh" << EOF
-#!/usr/bin/env bash
-
-bosh int ~/bosh-deployment-vars.yml --path /jumpbox_ssh/private_key > jumpbox.key
-chmod 600 jumpbox.key
-ssh jumpbox@10.0.0.4 -i jumpbox.key
-EOF
-chmod 777 $home_dir/connect_director_vm.sh
-
-cat > "$home_dir/login_bosh.sh" << EOF
-#!/usr/bin/env bash
-
-export BOSH_ENVIRONMENT=10.0.0.4
-export BOSH_CLIENT=admin
-export BOSH_CLIENT_SECRET="\$(bosh int ~/bosh-deployment-vars.yml --path /admin_password)"
-export BOSH_CA_CERT="\$(bosh int ~/bosh-deployment-vars.yml --path /director_ssl/ca)"
-
-bosh alias-env azure
-bosh -e azure login
-EOF
-chmod 777 $home_dir/login_bosh.sh
-
 cat > "$home_dir/login_cloud_foundry.sh" << EOF
 #!/usr/bin/env bash
 
@@ -295,14 +308,6 @@ fi
 echo "Starting to deploy BOSH director..."
 su - $username -c "./deploy_bosh.sh"
 echo "The BOSH director is deployed successfully. Please check run.log."
-
-cat >> "$home_dir/.profile" << EOF
-# BOSH CLI
-export BOSH_ENVIRONMENT=10.0.0.4
-export BOSH_CLIENT=admin
-export BOSH_CLIENT_SECRET="\$(bosh int ~/bosh-deployment-vars.yml --path /admin_password)"
-export BOSH_CA_CERT="\$(bosh int ~/bosh-deployment-vars.yml --path /director_ssl/ca)"
-EOF
 
 auto_deploy_cf=$(get_setting AUTO_DEPLOY_CLOUD_FOUNDRY)
 if [ "$auto_deploy_cf" != "enabled" ]; then
