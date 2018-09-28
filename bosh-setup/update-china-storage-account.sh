@@ -12,7 +12,7 @@ template_version="$1"
 container_name="bosh-setup"
 
 pushd manifests
-  file_names="use-compiled-releases.yml use-compiled-releases-xenial-stemcell.yml"
+  file_names="use-compiled-releases.yml"
   for file_name in ${file_names}
   do
     compiled_release_urls=$(grep "storage.googleapis.com" ${file_name} | awk '{print $2}')

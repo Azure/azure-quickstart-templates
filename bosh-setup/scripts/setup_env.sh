@@ -219,32 +219,14 @@ bosh -n -d cf deploy ~/example_manifests/cf-deployment.yml \\
   -o ~/example_manifests/scale-to-one-az.yml \\
 EOF
 
-stemcell_os_version=$(get_setting STEMCELL_OS_VERSION)
 if [ "$environment" = "AzureChinaCloud" ]; then
   cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
-  -o ~/example_manifests/use-mirror-releases-for-cf.yml \\
-EOF
-  if [ "${stemcell_os_version}" = "Trusty" ]; then
-    cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
   -o ~/example_manifests/use-mirror-compiled-releases.yml \\
 EOF
-  else
-    cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
-  -o ~/example_manifests/use-xenial-stemcell.yml \\
-  -o ~/example_manifests/use-mirror-compiled-releases-xenial-stemcell.yml \\
-EOF
-  fi
 else
-  if [ "${stemcell_os_version}" = "Trusty" ]; then
-    cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
+  cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
   -o ~/example_manifests/use-compiled-releases.yml \\
 EOF
-  else
-    cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
-  -o ~/example_manifests/use-xenial-stemcell.yml \\
-  -o ~/example_manifests/use-compiled-releases-xenial-stemcell.yml \\
-EOF
-  fi
 fi
 
 cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF

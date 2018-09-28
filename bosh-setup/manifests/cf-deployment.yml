@@ -1,6 +1,6 @@
 ---
 name: cf
-manifest_version: v4.3.0
+manifest_version: v5.1.0
 update:
   canaries: 1
   canary_watch_time: 30000-1200000
@@ -11,7 +11,7 @@ addons:
 - name: loggregator_agent
   include:
     stemcell:
-    - os: ubuntu-trusty
+    - os: ubuntu-xenial
   exclude:
     jobs:
     - name: smoke_tests
@@ -29,7 +29,7 @@ addons:
 - name: bpm
   include:
     stemcell:
-    - os: ubuntu-trusty
+    - os: ubuntu-xenial
   jobs:
   - name: bpm
     release: bpm
@@ -48,6 +48,11 @@ addons:
           domain: bosh
         - query: '_'
           instance_group: windows-cell
+          deployment: cf
+          network: default
+          domain: bosh
+        - query: '_'
+          instance_group: windows2012R2-cell
           deployment: cf
           network: default
           domain: bosh
@@ -100,13 +105,6 @@ addons:
         targets:
         - query: '*'
           instance_group: api
-          deployment: cf
-          network: default
-          domain: bosh
-      - domain: consul.service.cf.internal
-        targets:
-        - query: '*'
-          instance_group: consul
           deployment: cf
           network: default
           domain: bosh
@@ -234,42 +232,8 @@ instance_groups:
         space: cf_smoke_tests_space
         cf_dial_timeout_in_seconds: 300
         skip_ssl_validation: true
-- name: consul
-  azs:
-  - z1
-  - z2
-  - z3
-  instances: 3
-  persistent_disk_type: 5GB
-  vm_type: minimal
-  stemcell: default
-  update:
-    serial: true
-  networks:
-  - name: default
-  jobs:
-  - name: consul_agent
-    release: consul
-    consumes:
-      consul_common: {from: consul_common_link}
-      consul_server: {from: consul_server_link}
-      consul_client: {from: consul_client_link}
-    provides:
-      consul_common: {as: consul_common_link, shared: true}
-      consul_server: {as: consul_server_link, shared: true}
-      consul_client: {as: consul_client_link, shared: true}
-    properties:
-      consul:
-        agent:
-          mode: server
-          domain: cf.internal
-        encrypt_keys:
-        - "((consul_encrypt_key))"
-        agent_cert: "((consul_agent.certificate))"
-        agent_key: "((consul_agent.private_key))"
-        ca_cert: "((consul_agent_ca.certificate))"
-        server_cert: "((consul_server.certificate))"
-        server_key: "((consul_server.private_key))"
+  - name: cf-cli-6-linux
+    release: cf-cli
 - name: nats
   azs:
   - z1
@@ -280,12 +244,6 @@ instance_groups:
   networks:
   - name: default
   jobs:
-  - name: consul_agent
-    release: consul
-    consumes:
-      consul_common: {from: consul_common_link}
-      consul_server: nil
-      consul_client: {from: consul_client_link}
   - name: nats
     release: nats
     provides:
@@ -304,12 +262,6 @@ instance_groups:
   networks:
   - name: default
   jobs:
-  - name: consul_agent
-    release: consul
-    consumes:
-      consul_common: {from: consul_common_link}
-      consul_server: nil
-      consul_client: {from: consul_client_link}
   - name: adapter
     release: cf-syslog-drain
     properties:
@@ -343,20 +295,6 @@ instance_groups:
   networks:
   - name: default
   jobs:
-  - name: consul_agent
-    release: consul
-    consumes:
-      consul_common: {from: consul_common_link}
-      consul_server: nil
-      consul_client: {from: consul_client_link}
-    properties:
-      consul:
-        agent:
-          services:
-            sql-db:
-              check:
-                http: "http://localhost:1936"
-                interval: 3s
   - name: mysql
     release: cf-mysql
     properties:
@@ -416,18 +354,6 @@ instance_groups:
   networks:
   - name: default
   jobs:
-  - name: consul_agent
-    release: consul
-    consumes:
-      consul_common: {from: consul_common_link}
-      consul_server: nil
-      consul_client: {from: consul_client_link}
-    properties:
-      consul:
-        agent:
-          services:
-            silk-controller:
-              name: silk-controller
   - name: cfdot
     release: diego
     properties:
@@ -467,6 +393,7 @@ instance_groups:
             ca_cert: "((service_cf_internal_ca.certificate))"
             client_cert: "((diego_rep_client.certificate))"
             client_key: "((diego_rep_client.private_key))"
+      enable_consul_service_registration: false
       loggregator: &diego_loggregator_client_properties
         use_v2_api: true
         ca_cert: "((loggregator_ca.certificate))"
@@ -510,6 +437,7 @@ instance_groups:
             db_username: locket
             db_password: "((locket_database_password))"
             db_driver: mysql
+      enable_consul_service_registration: false
       loggregator:
         use_v2_api: true
         ca_cert: "((loggregator_ca.certificate))"
@@ -528,17 +456,6 @@ instance_groups:
   networks:
   - name: default
   jobs:
-  - name: consul_agent
-    release: consul
-    consumes:
-      consul_common: {from: consul_common_link}
-      consul_server: nil
-      consul_client: {from: consul_client_link}
-    properties:
-      consul:
-        agent:
-          services:
-            uaa: {}
   - name: uaa
     release: uaa
     properties:
@@ -710,17 +627,6 @@ instance_groups:
   networks:
   - name: default
   jobs:
-  - name: consul_agent
-    release: consul
-    consumes:
-      consul_common: {from: consul_common_link}
-      consul_server: nil
-      consul_client: {from: consul_client_link}
-    properties:
-      consul:
-        agent:
-          services:
-            blobstore: {}
   - name: blobstore
     release: capi
     properties:
@@ -760,20 +666,6 @@ instance_groups:
   networks:
   - name: default
   jobs:
-  - name: consul_agent
-    release: consul
-    consumes:
-      consul_common: {from: consul_common_link}
-      consul_server: nil
-      consul_client: {from: consul_client_link}
-    properties:
-      consul:
-        agent:
-          services:
-            cloud_controller_ng: {}
-            routing-api: {}
-            policy-server-internal:
-              name: policy-server
   - name: cloud_controller_ng
     release: capi
     provides:
@@ -945,6 +837,7 @@ instance_groups:
     properties:
       bpm:
         enabled: true
+      enable_consul_service_registration: false
       logging:
         format:
           timestamp: "rfc3339"
@@ -1017,12 +910,6 @@ instance_groups:
   networks:
   - name: default
   jobs:
-  - name: consul_agent
-    release: consul
-    consumes:
-      consul_common: {from: consul_common_link}
-      consul_server: nil
-      consul_client: {from: consul_client_link}
   - name: cloud_controller_worker
     release: capi
     properties:
@@ -1065,17 +952,6 @@ instance_groups:
   networks:
   - name: default
   jobs:
-  - name: consul_agent
-    release: consul
-    consumes:
-      consul_common: {from: consul_common_link}
-      consul_server: nil
-      consul_client: {from: consul_client_link}
-    properties:
-      consul:
-        agent:
-          services:
-            gorouter: {}
   - name: gorouter
     release: routing
     properties:
@@ -1118,12 +994,6 @@ instance_groups:
   networks:
   - name: default
   jobs:
-  - name: consul_agent
-    release: consul
-    consumes:
-      consul_common: {from: consul_common_link}
-      consul_server: nil
-      consul_client: {from: consul_client_link}
   - name: tcp_router
     release: routing
     properties:
@@ -1151,12 +1021,6 @@ instance_groups:
   networks:
   - name: default
   jobs:
-  - name: consul_agent
-    release: consul
-    consumes:
-      consul_common: {from: consul_common_link}
-      consul_server: nil
-      consul_client: {from: consul_client_link}
   - name: cfdot
     release: diego
     properties:
@@ -1181,6 +1045,7 @@ instance_groups:
           server_cert: "((diego_auctioneer_server.certificate))"
           server_key: "((diego_auctioneer_server.private_key))"
           skip_consul_lock: true
+      enable_consul_service_registration: false
       loggregator: *diego_loggregator_client_properties
       logging:
         format:
@@ -1246,6 +1111,7 @@ instance_groups:
           uaa:
             ca_cert: "((uaa_ca.certificate))"
           bbs: *diego_bbs_client_properties
+      enable_consul_service_registration: false
       loggregator: *diego_loggregator_client_properties
       logging:
         format:
@@ -1294,18 +1160,6 @@ instance_groups:
   networks:
   - name: default
   jobs:
-  - name: consul_agent
-    release: consul
-    consumes:
-      consul_common: {from: consul_common_link}
-      consul_server: nil
-      consul_client: {from: consul_client_link}
-    properties:
-      consul:
-        agent:
-          services:
-            doppler:
-              name: doppler
   - name: doppler
     release: loggregator
     provides:
@@ -1331,10 +1185,6 @@ instance_groups:
   - name: log-cache-gateway
     properties:
       gateway_addr: localhost:8081
-    release: log-cache
-  - name: log-cache-group-reader
-    properties:
-      port: 8084
     release: log-cache
   - consumes:
       reverse_log_proxy: {from: reverse_log_proxy}
@@ -1468,16 +1318,6 @@ instance_groups:
   networks:
   - name: default
   jobs:
-  - name: consul_agent
-    release: consul
-    consumes:
-      consul_common: {from: consul_common_link}
-      consul_server: nil
-      consul_client: {from: consul_client_link}
-    properties:
-      consul:
-        agent:
-          node_name_includes_id: true
   - name: cflinuxfs2-rootfs-setup
     release: cflinuxfs2
     properties:
@@ -1523,6 +1363,7 @@ instance_groups:
           - ((application_ca.certificate))
           - ((credhub_ca.certificate))
           - ((uaa_ca.certificate))
+      enable_consul_service_registration: false
       enable_declarative_healthcheck: true
       loggregator: *diego_loggregator_client_properties
       tls:
@@ -1593,18 +1434,6 @@ instance_groups:
   networks:
   - name: default
   jobs:
-  - name: consul_agent
-    release: consul
-    consumes:
-      consul_common: {from: consul_common_link}
-      consul_server: nil
-      consul_client: {from: consul_client_link}
-    properties:
-      consul:
-        agent:
-          services:
-            loggregator_trafficcontroller: {}
-            reverse_log_proxy: {}
   - name: loggregator_trafficcontroller
     release: loggregator
     consumes:
@@ -1643,6 +1472,26 @@ instance_groups:
           reverse_log_proxy:
             cert: "((loggregator_tls_rlp.certificate))"
             key: "((loggregator_tls_rlp.private_key))"
+  - name: reverse_log_proxy_gateway
+    release: loggregator
+    properties:
+      http:
+        address: "0.0.0.0:8088"
+      logs_provider:
+        ca_cert: "((loggregator_ca.certificate))"
+        client_cert: "((loggregator_rlp_gateway.certificate))"
+        client_key: "((loggregator_rlp_gateway.private_key))"
+      cc:
+        capi_internal_addr: https://cloud-controller-ng.service.cf.internal:9023
+        ca_cert: ((service_cf_internal_ca.certificate))
+        cert: ((loggregator_rlp_gateway_tls_cc.certificate))
+        key: ((loggregator_rlp_gateway_tls_cc.private_key))
+        common_name: cloud-controller-ng.service.cf.internal
+      uaa:
+        ca_cert: ((uaa_ca.certificate))
+        client_id: doppler
+        client_secret: ((uaa_clients_doppler_secret))
+        internal_addr: https://uaa.service.cf.internal:8443
   - name: route_registrar
     release: routing
     properties:
@@ -1659,6 +1508,12 @@ instance_groups:
           uris:
           - doppler.((system_domain))
           - "*.doppler.((system_domain))"
+        - name: rlp-gateway
+          port: 8088
+          registration_interval: 20s
+          uris:
+          - log-stream.((system_domain))
+          - "*.log-stream.((system_domain))"
 - name: credhub
   azs: [z1, z2]
   instances: 2
@@ -1667,19 +1522,6 @@ instance_groups:
   stemcell: default
   vm_type: minimal
   jobs:
-  - consumes:
-      consul_client:
-        from: consul_client_link
-      consul_common:
-        from: consul_common_link
-      consul_server: nil
-    name: consul_agent
-    properties:
-      consul:
-        agent:
-          services:
-            credhub: {}
-    release: consul
   - name: credhub
     properties:
       credhub:
@@ -1847,8 +1689,6 @@ variables:
   type: password
 - name: diego_bbs_encryption_keys_passphrase
   type: password
-- name: consul_encrypt_key
-  type: password
 - name: credhub_encryption_password
   type: password
 - name: credhub_admin_client_secret
@@ -1867,29 +1707,6 @@ variables:
   options:
     ca: service_cf_internal_ca
     common_name: blobstore.service.cf.internal
-- name: consul_agent_ca
-  type: certificate
-  options:
-    is_ca: true
-    common_name: consulCA
-- name: consul_agent
-  type: certificate
-  options:
-    ca: consul_agent_ca
-    common_name: consul_agent
-    extended_key_usage:
-    - client_auth
-    - server_auth
-    alternative_names:
-    - 127.0.0.1
-- name: consul_server
-  type: certificate
-  options:
-    ca: consul_agent_ca
-    common_name: server.dc1.cf.internal
-    extended_key_usage:
-    - client_auth
-    - server_auth
 - name: diego_auctioneer_client
   type: certificate
   options:
@@ -1988,6 +1805,13 @@ variables:
     common_name: trafficcontroller
     extended_key_usage:
     - client_auth
+- name: loggregator_rlp_gateway_tls_cc
+  type: certificate
+  options:
+    ca: service_cf_internal_ca
+    common_name: rlp-gateway
+    extended_key_usage:
+    - client_auth
 - name: loggregator_tls_rlp
   type: certificate
   options:
@@ -1996,6 +1820,13 @@ variables:
     extended_key_usage:
     - client_auth
     - server_auth
+- name: loggregator_rlp_gateway
+  type: certificate
+  options:
+    ca: loggregator_ca
+    common_name: rlp_gateway
+    extended_key_usage:
+    - client_auth
 - name: adapter_rlp_tls
   type: certificate
   options:
@@ -2181,122 +2012,122 @@ variables:
 
 releases:
 - name: binary-buildpack
-  url: https://bosh.io/d/github.com/cloudfoundry/binary-buildpack-release?v=1.0.25
-  version: 1.0.25
-  sha1: 45cb3c91ff51f84d653f7271c3deb140f2349a10
+  url: https://bosh.io/d/github.com/cloudfoundry/binary-buildpack-release?v=1.0.27
+  version: 1.0.27
+  sha1: f0022e0632d31d5bbb0e0a5e424244bad83158a1
 - name: bpm
   url: https://bosh.io/d/github.com/cloudfoundry-incubator/bpm-release?v=0.12.3
   version: 0.12.3
   sha1: 313664d2e6d8485ffa0683979a401f7722f63a50
 - name: capi
-  url: https://bosh.io/d/github.com/cloudfoundry/capi-release?v=1.68.0
-  version: 1.68.0
-  sha1: aa8c77c7726e772960fa5c193c3dff532dae1223
+  url: https://bosh.io/d/github.com/cloudfoundry/capi-release?v=1.70.0
+  version: 1.70.0
+  sha1: bf66504c6479cff3754fb1e114e7ea45767db04c
 - name: cf-mysql
   url: https://bosh.io/d/github.com/cloudfoundry/cf-mysql-release?v=36.15.0
   version: 36.15.0
   sha1: 0764d9d6aae7cefd10019437ed83e7715e614633
 - name: cf-networking
-  url: https://bosh.io/d/github.com/cloudfoundry/cf-networking-release?v=2.15.0
-  version: 2.15.0
-  sha1: 6b0e8d572ff0696831110ba4443d32b1c80fbf93
+  url: https://bosh.io/d/github.com/cloudfoundry/cf-networking-release?v=2.16.0
+  version: 2.16.0
+  sha1: 9f34333f6a41c66b39fdde1971b03ed466a248d3
 - name: cf-smoke-tests
-  url: https://bosh.io/d/github.com/cloudfoundry/cf-smoke-tests-release?v=40.0.8
-  version: 40.0.8
-  sha1: e431589ced2b13f8be286704b4e35cecc35c2aea
+  url: https://bosh.io/d/github.com/cloudfoundry/cf-smoke-tests-release?v=40.0.9
+  version: 40.0.9
+  sha1: be3df152b4767115222d63b6081e5e00b6b34f37
 - name: cf-syslog-drain
   url: https://bosh.io/d/github.com/cloudfoundry/cf-syslog-drain-release?v=7.1
   version: "7.1"
   sha1: 7e9648f44c6513ea5cb84531c9c5d1ae0730f202
 - name: cflinuxfs2
-  url: https://bosh.io/d/github.com/cloudfoundry/cflinuxfs2-release?v=1.235.0
-  version: 1.235.0
-  sha1: 1ed4e65bdb8ec4ba58060705f47c157663c23cfa
-- name: consul
-  url: https://bosh.io/d/github.com/cloudfoundry-incubator/consul-release?v=196
-  version: "196"
-  sha1: 84f149761929e59699d6ac3892b0cd806652c7b8
+  url: https://bosh.io/d/github.com/cloudfoundry/cflinuxfs2-release?v=1.239.0
+  version: 1.239.0
+  sha1: e40f352b0beae8a453014e479eb6aafbbeb53483
 - name: credhub
-  url: https://bosh.io/d/github.com/pivotal-cf/credhub-release?v=1.9.5
-  version: 1.9.5
-  sha1: 2390e855f092b0fb9c58f9cb88853ea938e87a3e
+  url: https://bosh.io/d/github.com/pivotal-cf/credhub-release?v=2.0.2
+  version: 2.0.2
+  sha1: 490f7a1e521dd8fbb5ed1426d1148f6586e7e8c3
 - name: diego
-  url: https://bosh.io/d/github.com/cloudfoundry/diego-release?v=2.17.0
-  version: 2.17.0
-  sha1: cb67d79a28a90abafc0a46bd3dfb5bcfd9433868
+  url: https://bosh.io/d/github.com/cloudfoundry/diego-release?v=2.18.0
+  version: 2.18.0
+  sha1: 3e93b8a9f850fc3e5b77e2c9869f27d2c6d2b32c
 - name: dotnet-core-buildpack
-  url: https://bosh.io/d/github.com/cloudfoundry/dotnet-core-buildpack-release?v=2.1.4
-  version: 2.1.4
-  sha1: dc92805765ed73604d5c542d736aea7bffed8b11
+  url: https://bosh.io/d/github.com/cloudfoundry/dotnet-core-buildpack-release?v=2.1.5
+  version: 2.1.5
+  sha1: 188dace870c94749a3abc21cb538c08e0f4f3d8c
 - name: garden-runc
-  url: https://bosh.io/d/github.com/cloudfoundry/garden-runc-release?v=1.16.4
-  version: 1.16.4
-  sha1: dd02cad84283fdc282005b78624864e5976de209
+  url: https://bosh.io/d/github.com/cloudfoundry/garden-runc-release?v=1.16.6
+  version: 1.16.6
+  sha1: 46e4ef9a4140d3e0910d94cbc1969cd70259ebf7
 - name: go-buildpack
-  url: https://bosh.io/d/github.com/cloudfoundry/go-buildpack-release?v=1.8.26
-  version: 1.8.26
-  sha1: 2a11862007592ba34e768e7b9544a9698de59a17
+  url: https://bosh.io/d/github.com/cloudfoundry/go-buildpack-release?v=1.8.27
+  version: 1.8.27
+  sha1: b83d8ddb3ab7b182a62e510c224ca4d08ba11f34
 - name: java-buildpack
-  url: https://bosh.io/d/github.com/cloudfoundry/java-buildpack-release?v=4.15
-  version: "4.15"
-  sha1: 78face238cf11ea5b1f13eebb7b7befcddb365dc
+  url: https://bosh.io/d/github.com/cloudfoundry/java-buildpack-release?v=4.16
+  version: "4.16"
+  sha1: cf1554804db4d3462110d7569a2e567711072c00
 - name: loggregator
-  url: https://bosh.io/d/github.com/cloudfoundry/loggregator-release?v=103.2
-  version: "103.2"
-  sha1: 1e247c2657fc36194d2e755291097e98a77145b7
+  url: https://bosh.io/d/github.com/cloudfoundry/loggregator-release?v=104.0
+  version: "104.0"
+  sha1: fc9f722ab0d321427942ed36dae70a49f084f9cf
 - name: nats
   url: https://bosh.io/d/github.com/cloudfoundry/nats-release?v=26
   version: "26"
   sha1: 2f2c27acdfff81f3519968921686522518ab5783
 - name: nodejs-buildpack
-  url: https://bosh.io/d/github.com/cloudfoundry/nodejs-buildpack-release?v=1.6.30
-  version: 1.6.30
-  sha1: b9d2d4f516a95a3f6de179a829dec4deaa155828
+  url: https://bosh.io/d/github.com/cloudfoundry/nodejs-buildpack-release?v=1.6.32
+  version: 1.6.32
+  sha1: 69c02ed7bfcc145447222b7366d6ad41c07d86e5
 - name: php-buildpack
-  url: https://bosh.io/d/github.com/cloudfoundry/php-buildpack-release?v=4.3.59
-  version: 4.3.59
-  sha1: f1c6ebf8538aa6de07055cf919246caad695eb3a
+  url: https://bosh.io/d/github.com/cloudfoundry/php-buildpack-release?v=4.3.61
+  version: 4.3.61
+  sha1: 9c5f9f040135fda81da44c6e1b0a1da878b04bfb
 - name: python-buildpack
-  url: https://bosh.io/d/github.com/cloudfoundry/python-buildpack-release?v=1.6.20
-  version: 1.6.20
-  sha1: db9ab75edf8d96172d3f15a07799f8faf15b24d7
+  url: https://bosh.io/d/github.com/cloudfoundry/python-buildpack-release?v=1.6.21
+  version: 1.6.21
+  sha1: 03b8618c5940889529e0aa6c129436e17c2a28d3
 - name: routing
-  url: https://bosh.io/d/github.com/cloudfoundry-incubator/cf-routing-release?v=0.180.0
-  version: 0.180.0
-  sha1: 990c2c319e6063573eec18dbeb7c3631a382db7d
+  url: https://bosh.io/d/github.com/cloudfoundry-incubator/cf-routing-release?v=0.182.0
+  version: 0.182.0
+  sha1: 6e341a527a0dd2c920b54dea82156ae9bc0b29eb
 - name: ruby-buildpack
-  url: https://bosh.io/d/github.com/cloudfoundry/ruby-buildpack-release?v=1.7.22
-  version: 1.7.22
-  sha1: 8b2baf552d6f51933fbf37ccacbabbcbd9c7ae6d
+  url: https://bosh.io/d/github.com/cloudfoundry/ruby-buildpack-release?v=1.7.23
+  version: 1.7.23
+  sha1: 6c413b233bb6ecdcd4f52f1b7ac96e2493812b34
 - name: silk
-  url: https://bosh.io/d/github.com/cloudfoundry/silk-release?v=2.15.0
-  version: 2.15.0
-  sha1: 596995b6e92806f5693acf9e091fc5673fe00e02
+  url: https://bosh.io/d/github.com/cloudfoundry/silk-release?v=2.16.0
+  version: 2.16.0
+  sha1: 022d325d412c6af04c426a5c9f8f69556d38a291
 - name: staticfile-buildpack
-  url: https://bosh.io/d/github.com/cloudfoundry/staticfile-buildpack-release?v=1.4.31
-  version: 1.4.31
-  sha1: 7371d1b2b4c1e677e8364ce5e1bc325158796b38
+  url: https://bosh.io/d/github.com/cloudfoundry/staticfile-buildpack-release?v=1.4.32
+  version: 1.4.32
+  sha1: 5851241b881f3315383fe4d2a50ca89fe2a5d331
 - name: statsd-injector
-  url: https://bosh.io/d/github.com/cloudfoundry/statsd-injector-release?v=1.3.0
-  version: 1.3.0
-  sha1: 5b9357484032e5217cead8f20362f5802c751de0
+  url: https://bosh.io/d/github.com/cloudfoundry/statsd-injector-release?v=1.4.0
+  version: 1.4.0
+  sha1: 25c1c7d6217709d5217d32f70a48f203b79d3a16
 - name: uaa
-  url: https://bosh.io/d/github.com/cloudfoundry/uaa-release?v=61.0
-  version: "61.0"
-  sha1: f919a8037334adfc4e219f06ea4335dc28bf1245
+  url: https://bosh.io/d/github.com/cloudfoundry/uaa-release?v=62.0
+  version: "62.0"
+  sha1: 4423bb02d1be2d3c2f212465f4598c9eb62a4b63
 - name: loggregator-agent
-  url: https://bosh.io/d/github.com/cloudfoundry/loggregator-agent-release?v=2.2
-  version: "2.2"
-  sha1: c998634337c826f95247b6da4f1772dcac8bb2b1
+  url: https://bosh.io/d/github.com/cloudfoundry/loggregator-agent-release?v=2.3
+  version: "2.3"
+  sha1: 7532818b5d518b87b57cf36ddc2bf81758f606f9
 - name: log-cache
-  url: https://bosh.io/d/github.com/cloudfoundry/log-cache-release?v=1.4.4
-  version: 1.4.4
-  sha1: 34a97ff98e9fbd2b167b4a0f6b7773fe120995f7
+  url: https://bosh.io/d/github.com/cloudfoundry/log-cache-release?v=1.4.7
+  version: 1.4.7
+  sha1: 7e3ac326e621c2f6ded5f1c21b77bb8b39c2dd19
 - name: bosh-dns-aliases
   url: https://bosh.io/d/github.com/cloudfoundry/bosh-dns-aliases-release?v=0.0.3
   version: 0.0.3
   sha1: b0d0a0350ed87f1ded58b2ebb469acea0e026ccc
+- name: cf-cli
+  url: https://bosh.io/d/github.com/bosh-packages/cf-cli-release?v=1.8.0
+  version: 1.8.0
+  sha1: 15d0718bc82ff9394efd2c9798873a39bf7eba06
 stemcells:
 - alias: default
-  os: ubuntu-trusty
-  version: "3586.42"
+  os: ubuntu-xenial
+  version: "97.19"
