@@ -13,6 +13,7 @@ $Params = @{
     WebAppResourceGroup = "rg";
     UserEmail = "MyUserName"; 
     Password = "MyPassword";
+    regionId = "Japan East";
 }
 
 $TemplateURI = "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-automation-with-modules-and-runbook-execution/azuredeploy.json"
