@@ -36,17 +36,17 @@ connectivity limitation anymore.
 
 The Domain Controllers are placed in an Availability Set to maximize 
 uptime. Each domain has its own Availability set. 
-The VMs are provisioned with managed disks. The disk type (Standard or Premium)
-is derived from the VM size. If the name contains "DS", a Premium (SSD) 
-disk used. Otherwise, a Standard (HDD) type is used.
+The VMs are provisioned with managed disks. 
 
 Most template parameters have sensible defaults. You will get a forest 
 root of _contoso.com_, a child domain called _child.contoso.com_, two 
 DCs in each domain, a small IP space of 10.0.0.0/22 (meaning 10.0.0.0 up 
 to 10.0.3.255), etc. Each VM will have the AD-related management tools installed.
 By default, the VMs are of type DS1_v2, meaning 3.5 GB of 
-memory, one core and SSD storage. This is plenty for a simple Active 
-Directory. The only thing you really need to do is to supply an admin 
+memory and one CPU core. This is plenty for a simple Active 
+Directory. The disk type defaults to Standard SSD, which is low latency but also
+low IOPS. This is fine for Active Directory.
+The only thing you really need to do is to supply an administrator name and 
 password. Make sure it is 8 characters or more, and complex. You know 
 the drill. 
 
@@ -113,7 +113,7 @@ developing or maintaining my own:
 
 * xActivedirectory
 * xNetworking
-* xDisk
+* xStorage
 * cDisk
 
 If you look into the DSC Configurations that I use you will see that I 
@@ -147,9 +147,11 @@ New features:
 
 New Features:
 
-* Added B-series VM.
-* Added Standard SSD disks (now default), and made the choice for disk type explicit. 
+* Added B-series (burstable) VM, very suitable to run DCs cheaply. 
+* Added Standard SSD disks (now default), and made the choice for disk type explicit. This type is well suited for typical DC performance. 
+* Added the possibilty to deploy to a location different to that of the Resource Group.
+* general cleanup: updated all APIs to the most recent ones, updated DSC modules to the latest.
 
-Willem Kasdorp, 9-21-2018.
+Willem Kasdorp, 9-30-2018.
 
 `Tags: active directory,forest,domain,DSC`
