@@ -37,7 +37,7 @@ $agentTempFolderName = Join-Path $env:temp ([System.IO.Path]::GetRandomFileName(
 New-Item -ItemType Directory -Force -Path $agentTempFolderName
 Write-Verbose "Temporary Agent download folder: $agentTempFolderName" -verbose
 
-$serverUrl = "https://$VSTSAccount.visualstudio.com"
+$serverUrl = "https://dev.azure.com/$VSTSAccount"
 Write-Verbose "Server URL: $serverUrl" -verbose
 
 $retryCount = 3
