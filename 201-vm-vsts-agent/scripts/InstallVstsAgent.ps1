@@ -37,7 +37,7 @@ $agentTempFolderName = Join-Path $env:temp ([System.IO.Path]::GetRandomFileName(
 New-Item -ItemType Directory -Force -Path $agentTempFolderName
 Write-Verbose "Temporary Agent download folder: $agentTempFolderName" -verbose
 
-$serverUrl = "https://$VSTSAccount.visualstudio.com"
+$serverUrl = "https://dev.azure.com/$VSTSAccount"
 Write-Verbose "Server URL: $serverUrl" -verbose
 
 $retryCount = 3
@@ -52,7 +52,7 @@ do
     $latestRelease = Invoke-RestMethod -Uri "https://api.github.com/repos/Microsoft/vsts-agent/releases"
 	$latestRelease = $latestRelease | Where-Object assets -ne $null | Sort-Object created_at -Descending | Select-Object -First 1
     $assetsURL = ($latestRelease.assets).browser_download_url
-    $latestReleaseDownloadUrl = ((Invoke-RestMethod -Uri $assetsURL) -match 'win').downloadurl
+    $latestReleaseDownloadUrl = ((Invoke-RestMethod -Uri $assetsURL) -match 'win-x64').downloadurl
     Invoke-WebRequest -Uri $latestReleaseDownloadUrl -Method Get -OutFile "$agentTempFolderName\agent.zip"
     Write-Verbose "Downloaded agent successfully on attempt $retries" -verbose
     break
