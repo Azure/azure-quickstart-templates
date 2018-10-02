@@ -4,13 +4,14 @@ Add-AzureRmAccount
 
 #Select your subscription if you have more than one
 #Select-AzureSubscription -SubscriptionName "My Subscription Name"
-
+$JobGUID = [System.Guid]::NewGuid().toString()
 #Set the parameter values for the template
 #provide webapp name for which you want to set app settings as appId and key to access and manage resources through it.
 #provide resource group name of the web app
 $Params = @{
     WebAppName = "webappname";
-    WebAppResourceGroup = "rg";
+    jobId = $JobGUID;
+    WebAppResourceGroup = "WebAppResourceGroup";
     UserEmail = "MyUserName"; 
     Password = "MyPassword";
     regionId = "Japan East";
