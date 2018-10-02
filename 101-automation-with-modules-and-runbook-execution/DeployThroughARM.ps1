@@ -15,6 +15,7 @@ $Params = @{
     UserEmail = "MyUserName"; 
     Password = "MyPassword";
     regionId = "Japan East";
+    SubscriptionName = "MySubsName";
 }
 
 $TemplateURI = "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-automation-with-modules-and-runbook-execution/azuredeploy.json"
