@@ -8,7 +8,7 @@
         "description": "Name of the Virtual Machine"
       }
     },
-    "existingStorageAccountName": {
+    "bootDiagnosticsStorageAccountName": {
       "type": "string",
       "metadata": {
         "description": "Storage account name"
@@ -66,35 +66,54 @@
     }
   },
   "variables": {
-    "storageUri": "[toLower(concat('http://',parameters('existingStorageAccountName'),'.blob.core.windows.net'))]",
-    "nicName": "[toLower(concat('nic',parameters('vmName')))]"
+    "nicName": "[toLower(concat('nic',parameters('vmName')))]",
+    "storageAccountType": "Standard_LRS",
+    "diskSzie": "128",
+    "diskName": "[concat(parameters('vmName'), '-disk1')]"
   },
   "resources": [
+    {  
+      "apiVersion":"2017-03-30",
+      "type":"Microsoft.Compute/disks",
+      "name":"[variables('diskName')]",
+      "location":"[parameters('location')]",
+      "properties":{  
+         "creationData":{  
+            "createOption":"Import",
+            "sourceUri":"[parameters('osVhdUri')]"
+         },
+         "accountType":"[variables('storageAccountType')]",
+         "diskSizeGB":"[variables('diskSzie')]",
+         "encryptionSettings":{  
+            "enabled":true,
+            "diskEncryptionKey":{  
+               "sourceVault":{  
+                  "id":"[parameters('keyVaultResourceID')]"
+               },
+               "secretUrl":"[parameters('keyVaultSecretUrl')]"
+            }
+         }
+      }
+   },
     {
       "apiVersion": "2016-04-30-preview",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
       "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('diskName')]"
+      ],
       "properties": {
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
         },
         "storageProfile": {
           "osDisk": {
-            "name": "[parameters('vmName')]",
             "osType": "[parameters('osType')]",
-            "vhd": {
-              "uri": "[parameters('osVhdUri')]"
-            },
             "caching": "ReadWrite",
             "createOption": "Attach",
-            "encryptionSettings": {
-              "diskEncryptionKey": {
-                "sourceVault": {
-                  "id": "[parameters('keyVaultResourceID')]"
-                },
-                "secretUrl": "[parameters('keyVaultSecretUrl')]"
-              }
+            "managedDisk": {
+              "id": "[resourceId('Microsoft.Compute/disks', variables('diskName'))]"
             }
           }
         },
@@ -108,7 +127,7 @@
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": true,
-            "storageUri": "[variables('storageUri')]"
+            "storageUri": "[reference(parameters('bootDiagnosticsStorageAccountName')).primaryEndpoints.blob]"
           }
         }
       }
