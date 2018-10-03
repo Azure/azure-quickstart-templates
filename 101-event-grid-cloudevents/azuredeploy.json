@@ -9,6 +9,12 @@
       },
       "defaultValue": "[resourceGroup().location]"
     },
+    "logicAppName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of Logic App"
+      }
+    },
     "eventGridTopicName": {
       "type": "string",
       "metadata": {
@@ -53,12 +59,6 @@
       ],
       "defaultValue": "Webhook"
     },
-    "eventGridSubscriptionEndpointUrl": {
-      "type": "string",
-      "metadata": {
-        "description": "Event Grid Subscription endpoint URL"
-      }
-    },
     "eventGridSubscriptionIncludedEventTypes": {
       "type": "string",
       "metadata": {
@@ -75,19 +75,27 @@
     }
   },
   "variables": {
+    "logicApp": {
+      "name": "[parameters('logicAppName')]",
+      "apiVersion": "2017-07-01",
+      "resourceId": "[resourceId('Microsoft.Logic/workflows', parameters('logicAppName'))]",
+      "location": "[parameters('location')]",
+      "triggerId": "[resourceId('Microsoft.Logic/workflows/triggers', parameters('logicAppName'), 'manual')]"
+    },
     "eventGridTopic": {
       "name": "[parameters('eventGridTopicName')]",
+      "apiVersion": "2018-05-01-preview",
       "resourceId": "[resourceId('Microsoft.EventGrid/topics', parameters('eventGridTopicName'))]",
       "location": "[parameters('location')]",
       "schema": "[parameters('eventGridTopicSchema')]"
     },
     "eventGridSubscription": {
       "name": "[parameters('eventGridSubscriptionName')]",
+      "apiVersion": "2018-05-01-preview",
       "location": "[parameters('location')]",
       "deliverySchema": "[parameters('eventGridSubscriptionDeliverySchema')]",
       "endpoint": {
-        "type": "[parameters('eventGridSubscriptionEndpointType')]",
-        "url": "[parameters('eventGridSubscriptionEndpointUrl')]"
+        "type": "[parameters('eventGridSubscriptionEndpointType')]"
       },
       "filter": {
         "includedEventTypes": "[split(parameters('eventGridSubscriptionIncludedEventTypes'), ',')]",
@@ -104,8 +112,36 @@
   },
   "resources": [
     {
+      "comments": "### RESOURCE - LOGIC APP - EVENT HANDLER ###",
+      "apiVersion": "[variables('logicApp').apiVersion]",
+      "type": "Microsoft.Logic/workflows",
+      "name": "[variables('logicApp').name]",
+      "location": "[variables('logicApp').location]",
+      "tags": "[variables('tags')]",
+      "properties": {
+        "state": "Enabled",
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {},
+          "triggers": {
+            "manual": {
+              "type": "Request",
+              "kind": "Http",
+              "inputs": {
+                "method": "POST",
+                "schema": {}
+              }
+            }
+          },
+          "actions": {},
+          "outputs": {}
+        }
+      }
+    },
+    {
       "comments": "### RESOURCE - CUSTOM EVENT GRID TOPIC ###",
-      "apiVersion": "2018-05-01-preview",
+      "apiVersion": "[variables('eventGridTopic').apiVersion]",
       "type": "Microsoft.EventGrid/topics",
       "name": "[variables('eventGridTopic').name]",
       "location": "[variables('eventGridTopic').location]",
@@ -116,12 +152,13 @@
     },
     {
       "comments": "### RESOURCE - EVENT GRID SUBSCRIPTION ###",
-      "apiVersion": "2018-05-01-preview",
+      "apiVersion": "[variables('eventGridSubscription').apiVersion]",
       "type": "Microsoft.EventGrid/topics/providers/eventSubscriptions",
       "name": "[concat(variables('eventGridTopic').name, '/Microsoft.EventGrid/', variables('eventGridSubscription').name)]",
       "location": "[variables('eventGridSubscription').location]",
       "tags": "[variables('tags')]",
       "dependsOn": [
+        "[variables('logicApp').name]",
         "[variables('eventGridTopic').name]"
       ],
       "properties": {
@@ -129,7 +166,7 @@
         "destination": {
           "endpointType": "[variables('eventGridSubscription').endpoint.type]",
           "properties": {
-            "endpointUrl": "[variables('eventGridSubscription').endpoint.url]"
+            "endpointUrl": "[listCallbackUrl(variables('logicApp').triggerId, variables('logicApp').apiVersion).value]"
           }
         },
         "filter": {
@@ -146,7 +183,7 @@
     },
     "eventGridTopicSasKey": {
       "type": "string",
-      "value": "[listKeys(variables('eventGridTopic').resourceId, '2018-05-01-preview').key1]"
+      "value": "[listKeys(variables('eventGridTopic').resourceId, variables('eventGridTopic').apiVersion).key1]"
     }
   }
 }
