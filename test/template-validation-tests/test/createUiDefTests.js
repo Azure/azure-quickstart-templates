@@ -29,9 +29,10 @@ chai.use(function(_chai, _) {
     });
 });
 
-function getErrorMessage(obj) {
-    return 'json object with \'name\' at line number ' + util.getPosition(obj, createUiDefFile) + ' is missing the regex property under constraints';
+function getErrorMessage(obj, message) {
+    return 'json object with \'name\' at line number ' + util.getPosition(obj, createUiDefFile) + ' ' + message;
 }
+
 
 /** Tests for createUiDefinition.json file in a solution template */
 describe('createUiDefinition.json file - ', () => {
@@ -82,8 +83,21 @@ describe('createUiDefinition.json file - ', () => {
     /** Each text box control MUST hve a regex constraint, and the value should not be an empty string. */
     it.each(textboxObjects, 'text box control %s must have a regex constraint', ['name'], function(element, next) {
         element.should.have.property('constraints');
-        expect(element.constraints, getErrorMessage(element)).to.have.property('regex');
+        var message = element.name + ' should have regex property on constraints object';
+        expect(element.constraints, getErrorMessage(element, message)).to.have.property('regex');
         element.constraints.regex.replace(/\s/g, '').length.should.withMessage('regex value on this text box control should not be an empty string').be.above(0);
+        next();
+    });
+
+    /** Get all textbox objects */
+    var textboxObjects = util.getObjects(createUiDefFileJSONObject, 'type', 'microsoft.common.textbox');
+
+    /** Each text box control MUST hve a validationMessage constraint, and the value should not be an empty string. */
+    it.each(textboxObjects, 'text box control %s must have a validationMessage', ['name'], function(element, next) {
+        element.should.have.property('constraints');
+        var message = element.name + ' should have validationMessage property on constraints object';
+        expect(element.constraints, getErrorMessage(element, message)).to.have.property('validationmessage');
+        element.constraints.validationmessage.replace(/\s/g, '').length.should.withMessage('validationMessage value on this text box control should not be an empty string').be.above(0);
         next();
     });
 
