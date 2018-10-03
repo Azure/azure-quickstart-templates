@@ -6,6 +6,6 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template creates a custom Event Grid topic and webhook subscription having [CloudEvents](https://cloudevents.io) schema on Azure. Template was authored by [Justin Yoo](https://twitter.com/justinchronicle).
+This template creates a custom Event Grid topic, webhook subscription having [CloudEvents](https://cloudevents.io) schema, and a Logic App as an event handler on Azure. Template was authored by [Justin Yoo](https://twitter.com/justinchronicle).
 
 `Tags: eventgrid`
