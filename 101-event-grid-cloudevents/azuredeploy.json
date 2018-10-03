@@ -1,0 +1,152 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "The region where resources are deployed"
+      },
+      "defaultValue": "[resourceGroup().location]"
+    },
+    "eventGridTopicName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of Event Grid Topic"
+      }
+    },
+    "eventGridTopicSchema": {
+      "type": "string",
+      "metadata": {
+        "description": "Event Grid Topic schema"
+      },
+      "allowedValues": [
+        "EventGridSchema",
+        "CloudEventV01Schema"
+      ],
+      "defaultValue": "CloudEventV01Schema"
+    },
+    "eventGridSubscriptionName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of Event Grid Subscription"
+      }
+    },
+    "eventGridSubscriptionDeliverySchema": {
+      "type": "string",
+      "metadata": {
+        "description": "Event Grid Subscription delivery schema"
+      },
+      "allowedValues": [
+        "EventGridSchema",
+        "CloudEventV01Schema"
+      ],
+      "defaultValue": "CloudEventV01Schema"
+    },
+    "eventGridSubscriptionEndpointType": {
+      "type": "string",
+      "metadata": {
+        "description": "Event Grid Subscription endpoint type"
+      },
+      "allowedValues": [
+        "Webhook"
+      ],
+      "defaultValue": "Webhook"
+    },
+    "eventGridSubscriptionEndpointUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "Event Grid Subscription endpoint URL"
+      }
+    },
+    "eventGridSubscriptionIncludedEventTypes": {
+      "type": "string",
+      "metadata": {
+        "description": "Comma delimited list of filters for Event Grid Subscription"
+      },
+      "defaultValue": "All"
+    },
+    "eventGridSubscriptionIsSubjectCaseSensitive": {
+      "type": "bool",
+      "metadata": {
+        "description": "Value indicating whether the filter subjectBeginsWith and subjectEndsWith are case sensitive or not"
+      },
+      "defaultValue": false
+    }
+  },
+  "variables": {
+    "eventGridTopic": {
+      "name": "[parameters('eventGridTopicName')]",
+      "resourceId": "[resourceId('Microsoft.EventGrid/topics', parameters('eventGridTopicName'))]",
+      "location": "[parameters('location')]",
+      "schema": "[parameters('eventGridTopicSchema')]"
+    },
+    "eventGridSubscription": {
+      "name": "[parameters('eventGridSubscriptionName')]",
+      "location": "[parameters('location')]",
+      "deliverySchema": "[parameters('eventGridSubscriptionDeliverySchema')]",
+      "endpoint": {
+        "type": "[parameters('eventGridSubscriptionEndpointType')]",
+        "url": "[parameters('eventGridSubscriptionEndpointUrl')]"
+      },
+      "filter": {
+        "includedEventTypes": "[split(parameters('eventGridSubscriptionIncludedEventTypes'), ',')]",
+        "isSubjectCaseSensitive": "[parameters('eventGridSubscriptionIsSubjectCaseSensitive')]"
+      }
+    },
+    "tags": {
+      "author": "Justin Yoo",
+      "profile": "https://twitter.com/justinchronicle",
+      "projectUrl": "https://github.com/Azure/azure-quickstart-templates",
+      "repositoryUrl": "https://github.com/Azure/azure-quickstart-templates",
+      "license": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/LICENSE"
+    }
+  },
+  "resources": [
+    {
+      "comments": "### RESOURCE - CUSTOM EVENT GRID TOPIC ###",
+      "apiVersion": "2018-05-01-preview",
+      "type": "Microsoft.EventGrid/topics",
+      "name": "[variables('eventGridTopic').name]",
+      "location": "[variables('eventGridTopic').location]",
+      "tags": "[variables('tags')]",
+      "properties": {
+        "inputSchema": "[variables('eventGridTopic').schema]"
+      }
+    },
+    {
+      "comments": "### RESOURCE - EVENT GRID SUBSCRIPTION ###",
+      "apiVersion": "2018-05-01-preview",
+      "type": "Microsoft.EventGrid/topics/providers/eventSubscriptions",
+      "name": "[concat(variables('eventGridTopic').name, '/Microsoft.EventGrid/', variables('eventGridSubscription').name)]",
+      "location": "[variables('eventGridSubscription').location]",
+      "tags": "[variables('tags')]",
+      "dependsOn": [
+        "[variables('eventGridTopic').name]"
+      ],
+      "properties": {
+        "eventDeliverySchema": "[variables('eventGridSubscription').deliverySchema]",
+        "destination": {
+          "endpointType": "[variables('eventGridSubscription').endpoint.type]",
+          "properties": {
+            "endpointUrl": "[variables('eventGridSubscription').endpoint.url]"
+          }
+        },
+        "filter": {
+          "includedEventTypes": "[variables('eventGridSubscription').filter.includedEventTypes]",
+          "isSubjectCaseSensitive": "[variables('eventGridSubscription').filter.isSubjectCaseSensitive]"
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "eventGridTopicEndpointUrl": {
+      "type": "string",
+      "value": "[reference(variables('eventGridTopic').name).endpoint]"
+    },
+    "eventGridTopicSasKey": {
+      "type": "string",
+      "value": "[listKeys(variables('eventGridTopic').resourceId, '2018-05-01-preview').key1]"
+    }
+  }
+}
