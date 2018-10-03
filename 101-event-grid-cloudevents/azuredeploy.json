@@ -7,104 +7,84 @@
       "metadata": {
         "description": "The region where resources are deployed"
       },
+      "allowedValues": [
+        "australiaeast",
+        "australiasoutheast",
+        "brazilsouth",
+        "canadacentral",
+        "canadaeast",
+        "centralindia",
+        "centralus",
+        "eastasia",
+        "eastus2",
+        "eastus",
+        "japaneast",
+        "japanwest",
+        "northcentralus",
+        "northeurope",
+        "southcentralus",
+        "southindia",
+        "southeastasia",
+        "uksouth",
+        "ukwest",
+        "westcentralus",
+        "westeurope",
+        "westindia",
+        "westus2",
+        "westus",
+        "[resourceGroup().location]"
+      ],
       "defaultValue": "[resourceGroup().location]"
     },
     "logicAppName": {
       "type": "string",
       "metadata": {
         "description": "Name of Logic App"
-      }
+      },
+      "defaultValue": "[concat('logicapp-', uniqueString(resourceGroup().id))]"
     },
     "eventGridTopicName": {
       "type": "string",
       "metadata": {
         "description": "Name of Event Grid Topic"
-      }
-    },
-    "eventGridTopicSchema": {
-      "type": "string",
-      "metadata": {
-        "description": "Event Grid Topic schema"
       },
-      "allowedValues": [
-        "EventGridSchema",
-        "CloudEventV01Schema"
-      ],
-      "defaultValue": "CloudEventV01Schema"
+      "defaultValue": "[concat('eventgridtopic-', uniqueString(resourceGroup().id))]"
     },
     "eventGridSubscriptionName": {
       "type": "string",
       "metadata": {
         "description": "Name of Event Grid Subscription"
-      }
-    },
-    "eventGridSubscriptionDeliverySchema": {
-      "type": "string",
-      "metadata": {
-        "description": "Event Grid Subscription delivery schema"
       },
-      "allowedValues": [
-        "EventGridSchema",
-        "CloudEventV01Schema"
-      ],
-      "defaultValue": "CloudEventV01Schema"
-    },
-    "eventGridSubscriptionEndpointType": {
-      "type": "string",
-      "metadata": {
-        "description": "Event Grid Subscription endpoint type"
-      },
-      "allowedValues": [
-        "Webhook"
-      ],
-      "defaultValue": "Webhook"
+      "defaultValue": "[concat('eventgridsubscription-', uniqueString(resourceGroup().id))]"
     },
     "eventGridSubscriptionIncludedEventTypes": {
       "type": "string",
       "metadata": {
-        "description": "Comma delimited list of filters for Event Grid Subscription"
+        "description": "Comma delimited list of filters for Event Grid Subscription. Default value is 'All' and other event types depend on how Event Grid Topic defines"
       },
       "defaultValue": "All"
-    },
-    "eventGridSubscriptionIsSubjectCaseSensitive": {
-      "type": "bool",
-      "metadata": {
-        "description": "Value indicating whether the filter subjectBeginsWith and subjectEndsWith are case sensitive or not"
-      },
-      "defaultValue": false
     }
   },
   "variables": {
     "logicApp": {
       "name": "[parameters('logicAppName')]",
-      "apiVersion": "2017-07-01",
       "resourceId": "[resourceId('Microsoft.Logic/workflows', parameters('logicAppName'))]",
       "location": "[parameters('location')]",
       "triggerId": "[resourceId('Microsoft.Logic/workflows/triggers', parameters('logicAppName'), 'manual')]"
     },
     "eventGridTopic": {
       "name": "[parameters('eventGridTopicName')]",
-      "apiVersion": "2018-05-01-preview",
       "resourceId": "[resourceId('Microsoft.EventGrid/topics', parameters('eventGridTopicName'))]",
-      "location": "[parameters('location')]",
-      "schema": "[parameters('eventGridTopicSchema')]"
+      "location": "[parameters('location')]"
     },
     "eventGridSubscription": {
       "name": "[parameters('eventGridSubscriptionName')]",
-      "apiVersion": "2018-05-01-preview",
       "location": "[parameters('location')]",
-      "deliverySchema": "[parameters('eventGridSubscriptionDeliverySchema')]",
-      "endpoint": {
-        "type": "[parameters('eventGridSubscriptionEndpointType')]"
-      },
       "filter": {
-        "includedEventTypes": "[split(parameters('eventGridSubscriptionIncludedEventTypes'), ',')]",
-        "isSubjectCaseSensitive": "[parameters('eventGridSubscriptionIsSubjectCaseSensitive')]"
+        "includedEventTypes": "[split(parameters('eventGridSubscriptionIncludedEventTypes'), ',')]"
       }
     },
     "tags": {
-      "author": "Justin Yoo",
-      "profile": "https://twitter.com/justinchronicle",
       "projectUrl": "https://github.com/Azure/azure-quickstart-templates",
       "repositoryUrl": "https://github.com/Azure/azure-quickstart-templates",
       "license": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/LICENSE"
@@ -113,7 +93,7 @@
   "resources": [
     {
       "comments": "### RESOURCE - LOGIC APP - EVENT HANDLER ###",
-      "apiVersion": "[variables('logicApp').apiVersion]",
+      "apiVersion": "2017-07-01",
       "type": "Microsoft.Logic/workflows",
       "name": "[variables('logicApp').name]",
       "location": "[variables('logicApp').location]",
@@ -141,18 +121,18 @@
     },
     {
       "comments": "### RESOURCE - CUSTOM EVENT GRID TOPIC ###",
-      "apiVersion": "[variables('eventGridTopic').apiVersion]",
+      "apiVersion": "2018-05-01-preview",
       "type": "Microsoft.EventGrid/topics",
       "name": "[variables('eventGridTopic').name]",
       "location": "[variables('eventGridTopic').location]",
       "tags": "[variables('tags')]",
       "properties": {
-        "inputSchema": "[variables('eventGridTopic').schema]"
+        "inputSchema": "CloudEventV01Schema"
       }
     },
     {
       "comments": "### RESOURCE - EVENT GRID SUBSCRIPTION ###",
-      "apiVersion": "[variables('eventGridSubscription').apiVersion]",
+      "apiVersion": "2018-05-01-preview",
       "type": "Microsoft.EventGrid/topics/providers/eventSubscriptions",
       "name": "[concat(variables('eventGridTopic').name, '/Microsoft.EventGrid/', variables('eventGridSubscription').name)]",
       "location": "[variables('eventGridSubscription').location]",
@@ -162,16 +142,16 @@
         "[variables('eventGridTopic').name]"
       ],
       "properties": {
-        "eventDeliverySchema": "[variables('eventGridSubscription').deliverySchema]",
+        "eventDeliverySchema": "CloudEventV01Schema",
         "destination": {
-          "endpointType": "[variables('eventGridSubscription').endpoint.type]",
+          "endpointType": "Webhook",
           "properties": {
-            "endpointUrl": "[listCallbackUrl(variables('logicApp').triggerId, variables('logicApp').apiVersion).value]"
+            "endpointUrl": "[listCallbackUrl(variables('logicApp').triggerId, '2017-07-01').value]"
           }
         },
         "filter": {
           "includedEventTypes": "[variables('eventGridSubscription').filter.includedEventTypes]",
-          "isSubjectCaseSensitive": "[variables('eventGridSubscription').filter.isSubjectCaseSensitive]"
+          "isSubjectCaseSensitive": false
         }
       }
     }
@@ -183,7 +163,7 @@
     },
     "eventGridTopicSasKey": {
       "type": "string",
-      "value": "[listKeys(variables('eventGridTopic').resourceId, variables('eventGridTopic').apiVersion).key1]"
+      "value": "[listKeys(variables('eventGridTopic').resourceId, '2018-05-01-preview').key1]"
     }
   }
 }
