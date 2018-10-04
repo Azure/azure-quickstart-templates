@@ -1,0 +1,316 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "virtualMachineName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the VM"
+            }
+        },
+        "adminUsername": {
+            "type": "string",
+            "metadata": {
+                "description": "The admin user name of the VM"
+            }
+        },
+        "adminPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The admin password of the VM"
+            }
+        },
+        "virtualMachineSize": {
+            "type": "string",
+            "allowedValues": [
+                "Standard_D2s_v3",
+				"Standard_D4s_v3",
+				"Standard_D8s_v3",
+				"Standard_D16s_v3",
+				"Standard_D32s_v3",
+				"Standard_D64s_v3",
+				"Standard_E2s_v3",
+				"Standard_E4s_v3",
+				"Standard_E8s_v3",
+				"Standard_E16s_v3",
+				"Standard_E32s_v3",
+                "Standard_E64s_v3",
+                "Standard_E64is_v3"
+            ],
+            "metadata": {
+                "description": "The virtual machine size. Enter a VM from the list supported at Preview."
+            }
+        },
+        "operatingSystem": {
+            "type": "string",
+            "defaultValue": "WindowsServer2016",
+            "allowedValues": [
+                "WindowsServer2016",
+                "WindowsServer2012R2",
+                "Ubuntu1804",
+                "Sles1203",
+                "FreeBSD",
+                "CentOS",
+                "CoreOS",
+                "RHEL",
+                "RHEL73",
+                "Debian",
+                "OpenSUSE",
+                "Oracle"
+            ],
+            "metadata": {
+                "description": "The Operating System of the VM."
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "eastus2",
+            "allowedValues": [
+                "eastus2"
+            ],            
+            "metadata": {
+                "description": "Location for all resources."
+            }
+        },
+        "zone": {
+            "type": "int"
+        },
+        "dataDisksCount": {
+          "type": "int",
+          "defaultValue": 1
+        },
+        "dataDiskSizeInGB": {
+          "type": "int",
+          "defaultValue": 4
+        },
+        "dataDiskIOPSReadWrite": {
+          "type": "int",
+          "defaultValue": 1200
+        },
+        "dataDiskMBpsReadWrite": {
+          "type": "int",
+          "defaultValue": 40
+        }
+    },
+    "variables": {
+        "virtualNetworkName": "[concat(toLower(parameters('virtualMachineName')),'-vnet')]",
+        "subnetName": "[concat(toLower(parameters('virtualMachineName')),'-subnet')]",
+        "OSDiskName": "[concat(toLower(parameters('virtualMachineName')),'OSDisk')]",
+        "operatingSystemValues": {
+            "WindowsServer2012R2": {
+              "PublisherValue": "MicrosoftWindowsServer",
+              "OfferValue": "WindowsServer",
+              "SkuValue": "2012-R2-Datacenter"
+            },
+            "WindowsServer2016": {
+              "PublisherValue": "MicrosoftWindowsServer",
+              "OfferValue": "WindowsServer",
+              "SkuValue": "2016-Datacenter"
+            },
+            "UBUNTU1804": {
+              "PublisherValue": "Canonical",
+              "OfferValue": "UbuntuServer",
+              "SkuValue": "18.04-LTS"
+            },
+            "Oracle": {
+                "PublisherValue": "Oracle",
+                "OfferValue": "Oracle-Database-Ee",
+                "SkuValue": "12.1.0.2"
+              },                     
+            "SLES1203": {
+                "PublisherValue": "SUSE",
+                "OfferValue": "SLES",
+                "SkuValue": "12-SP3"
+              },         
+            "CentOS": {
+              "PublisherValue": "OpenLogic",
+              "OfferValue": "CentOS",
+              "SkuValue": "7.1"
+            },
+            "RHEL73": {
+                "PublisherValue": "RedHat",
+                "OfferValue": "RHEL",
+                "SkuValue": "7.3"
+            },  
+            "RHEL": {
+                "PublisherValue": "RedHat",
+                "OfferValue": "RHEL",
+                "SkuValue": "7-RAW"
+            },                      
+            "CoreOS": {
+                "PublisherValue": "OpenLogic",
+                "OfferValue": "CentOS",
+                "SkuValue": "7.3"
+            },      
+            "Debian": {
+                "PublisherValue": "credativ",
+                "OfferValue": "Debian",
+                "SkuValue": "8"
+            },                
+            "openSUSE": {
+                "PublisherValue": "SUSE",
+                "OfferValue": "openSUSE-Leap",
+                "SkuValue": "42.3"
+            },          
+            "FreeBSD": {
+              "PublisherValue": "MicrosoftOSTC",
+              "OfferValue": "FreeBSD",
+              "SkuValue": "11.1"
+            }            
+        },        
+        "addressPrefix": "10.2.3.0/24",
+        "subnetPrefix": "10.2.3.0/24",
+        "publicIPAddressType": "Dynamic",
+        "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
+        "networkInterfaceName": "[toLower(parameters('virtualMachineName'))]",
+        "publicIpAddressName": "[concat(toLower(parameters('virtualMachineName')),'-ip')]"
+    },
+    "resources": [
+        {
+            "name": "[concat(parameters('virtualMachineName'),'-dataDisk',copyIndex())]",    
+            "type": "Microsoft.Compute/disks",
+            "apiVersion": "2018-06-01",
+            "zones": ["[parameters('zone')]"],
+            "location": "[parameters('location')]",
+            "copy": {
+                "name": "diskLoop",
+                "count": "[parameters('dataDisksCount')]"
+              },
+            "sku": {
+                "name": "UltraSSD_LRS"
+            },
+            "properties": {
+                "creationData": {
+                    "createOption": "Empty"
+                },
+                "diskSizeGB": "[parameters('dataDiskSizeInGB')]",
+                "diskIOPSReadWrite": "[parameters('dataDiskIOPSReadWrite')]",
+                "diskMBpsReadWrite": "[parameters('dataDiskMBpsReadWrite')]"
+            }       
+        },
+        {
+            "apiVersion": "2018-02-01",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "sku": {
+                "name": "Basic",
+                "tier": "Regional"
+            },
+            "name": "[variables('publicIpAddressName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "publicIPAddressVersion": "IPv4",
+                "publicIPAllocationMethod": "[variables('publicIPAddressType')]"
+            },
+            "zones": ["[parameters('zone')]"]
+        },
+        {
+            "apiVersion": "2018-02-01",
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[variables('virtualNetworkName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('addressPrefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('subnetName')]",
+                        "properties": {
+                            "addressPrefix": "[variables('subnetPrefix')]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2018-02-01",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[variables('networkInterfaceName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIpAddressName'))]",
+                "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIpAddressName'))]"
+                            },
+                            "subnet": {
+                                "id": "[variables('subnetRef')]"
+                            }
+                        }
+                    }
+                ],
+                "enableAcceleratedNetworking": false
+            }
+        },
+        {
+            "apiVersion": "2018-06-01",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[parameters('virtualMachineName')]",
+            "zones": ["[parameters('zone')]"],
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkInterfaces/', variables('networkInterfaceName'))]",
+                "diskLoop"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('virtualMachineSize')]"
+                },
+                "additionalCapabilities" : {
+                    "ultraSSDEnabled" : "true"
+                },                                    
+                "osProfile": {
+                    "computername": "[parameters('virtualMachineName')]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]"
+                },
+                "storageProfile": {
+                    "osDisk": {
+                        "name": "[variables('OSDiskName')]",
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage",
+                        "managedDisk": {
+                            "storageAccountType": "Premium_LRS"
+                        }
+                    },
+                    "imageReference": {
+                        "publisher": "[variables('operatingSystemValues')[parameters('operatingSystem')].PublisherValue]",
+                        "offer": "[variables('operatingSystemValues')[parameters('operatingSystem')].OfferValue]",
+                        "sku": "[variables('operatingSystemValues')[parameters('operatingSystem')].SkuValue]",
+                        "version": "latest"
+                    },
+                    "copy": [
+                        {
+                            "name": "dataDisks",
+                            "count": "[parameters('dataDisksCount')]",
+                            "input": {
+                                "name": "[concat(parameters('virtualMachineName'),'-dataDisk',copyIndex('dataDisks'))]",
+                                "lun": "[copyIndex('dataDisks')]",
+                                "createOption": "attach",
+                                "managedDisk": {
+                                    "id": "[resourceId('Microsoft.Compute/disks/', concat(parameters('virtualMachineName'),'-dataDisk',copyIndex('dataDisks')))]"
+                                }
+                            }
+                        }
+                    ]
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('networkInterfaceName'))]"
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}
