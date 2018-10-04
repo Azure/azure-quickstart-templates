@@ -115,7 +115,12 @@ then
 
 fi
 
-az group create -n "$resourceGroupName" -l "$location"
+# Create the resource group only if it doesn't already exist
+targetResourceGroup=$( az group list -o json | jq -r '.[] | select(.name == '\"$resourceGroupName\"')'.name )
+if [[ -z $targetResourceGroup ]] 
+then
+    az group create -n "$resourceGroupName" -l "$location"
+fi   
 
 # Remove line endings from parameter JSON so it can be passed in to the CLI as a single line
 parameterJson=$( echo "$parameterJson" | jq -c '.' )

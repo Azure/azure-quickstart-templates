@@ -11,23 +11,25 @@
     },
     "resources": [
         {
-            "apiVersion": "[variables('storageApiVersion')]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2017-06-01",
             "location": "[resourceGroup().location]",
             "name": "[parameters('moodleCommon').vmssdStorageAccounttName]",
-            "properties": {
-                "accountType": "Standard_LRS"
-            },
-            "type": "Microsoft.Storage/storageAccounts"
+            "kind": "Storage",
+            "sku": {
+                "name": "Standard_LRS"
+            }
         },
         {
-            "apiVersion": "2016-04-30-preview",
+            "type": "Microsoft.Compute/virtualMachineScaleSets",
+            "apiVersion": "2017-03-30",
             "dependsOn": [
                 "[concat('Microsoft.Storage/storageAccounts/', parameters('moodleCommon').vmssdStorageAccounttName)]"
             ],
             "location": "[resourceGroup().location]",
             "name": "[parameters('moodleCommon').vmssName]",
             "properties": {
-                "overprovision": "true",
+                "overprovision": true,
                 "upgradePolicy": {
                     "mode": "Manual"
                 },
@@ -35,36 +37,21 @@
                     "extensionProfile": {
                         "extensions": [
                             {
-                                "name": "LinuxDiagnostic",
-                                "properties": {
-                                    "autoUpgradeMinorVersion": true,
-                                    "protectedSettings": {
-                                        "storageAccountEndPoint": "https://core.windows.net",
-                                        "storageAccountKey": "[listkeys(variables('dstorID'), variables('storageApiVersion')).key1]",
-                                        "storageAccountName": "[parameters('moodleCommon').vmssdStorageAccounttName]"
-                                    },
-                                    "publisher": "Microsoft.OSTCExtensions",
-                                    "settings": {
-                                        "storageAccount": "[parameters('moodleCommon').vmssdStorageAccounttName]",
-                                        "xmlCfg": "[base64(concat(variables('wadCfgxStart'), variables('vmssID'), variables('wadCfgxEnd')))]"
-                                    },
-                                    "type": "LinuxDiagnostic",
-                                    "typeHandlerVersion": "2.3"
-                                }
-                            },
-                            {
                                 "name": "setup_moodle",
                                 "properties": {
                                     "autoUpgradeMinorVersion": true,
-                                    "publisher": "Microsoft.OSTCExtensions",
+                                    "publisher": "Microsoft.Azure.Extensions",
                                     "settings": {
-                                        "commandToExecute": "[variables('cmdExec')]",
                                         "fileUris": [
-                                            "[variables('scriptUri')]"
+                                            "[variables('scriptUri')]",
+                                            "[parameters('moodleCommon').commonFunctionsScriptUri]"
                                         ]
                                     },
-                                    "type": "CustomScriptForLinux",
-                                    "typeHandlerVersion": "1.4"
+                                    "protectedSettings":{
+                                        "commandToExecute": "[concat('bash ',parameters('moodleCommon').webServerSetupScriptFilename,' ',parameters('moodleCommon').gfsNameRoot,'0', ' ','data', ' ', parameters('moodleCommon').siteURL, ' ', concat('jumpbox-vm-',parameters('moodleCommon').resourcesPrefix), ' ', parameters('moodleCommon').webServerType, ' ', parameters('moodleCommon').fileServerType, ' ', parameters('moodleCommon').storageAccountName, ' ', listKeys(variables('storageAccountId'), '2017-06-01').keys[0].value, ' ', parameters('moodleCommon').jboxVmName)]"
+                                    },
+                                    "type": "CustomScript",
+                                    "typeHandlerVersion": "2.0"
                                 }
                             }
                         ]
@@ -89,7 +76,7 @@
                                             }
                                         }
                                     ],
-                                    "primary": "true"
+                                    "primary": true
                                 }
                             }
                         ]
@@ -128,10 +115,10 @@
             },
             "tags": {
                 "displayName": "webfarm"
-            },
-            "type": "Microsoft.Compute/virtualMachineScaleSets"
+            }
         },
         {
+            "type": "Microsoft.Insights/autoscaleSettings",
             "apiVersion": "2015-04-01",
             "dependsOn": [
                 "[concat('Microsoft.Compute/virtualMachineScaleSets/', parameters('moodleCommon').vmssName)]"
@@ -152,7 +139,7 @@
                         "rules": [
                             {
                                 "metricTrigger": {
-                                    "metricName": "\\Processor\\PercentProcessorTime",
+                                    "metricName": "Percentage CPU",
                                     "metricNamespace": "",
                                     "metricResourceUri": "[variables('vmssID')]",
                                     "operator": "GreaterThan",
@@ -171,7 +158,7 @@
                             },
                             {
                                 "metricTrigger": {
-                                    "metricName": "\\Processor\\PercentProcessorTime",
+                                    "metricName": "Percentage CPU",
                                     "metricNamespace": "",
                                     "metricResourceUri": "[variables('vmssID')]",
                                     "operator": "LessThan",
@@ -192,26 +179,20 @@
                     }
                 ],
                 "targetResourceUri": "[variables('vmssID')]"
-            },
-            "type": "Microsoft.Insights/autoscaleSettings"
+            }
         }
     ],
     "variables": {
-        "cmdExec": "[concat('bash ',parameters('moodleCommon').moodleSetupScriptFilename,' ',parameters('moodleCommon').gfsNameRoot,'0', ' ','data', ' ', parameters('moodleCommon').siteURL, ' ', concat('jumpbox-vm-',parameters('moodleCommon').resourcesPrefix))]",
         "dstorID": "[resourceId('Microsoft.Storage/storageAccounts',parameters('moodleCommon').vmssdStorageAccounttName)]",
         "extBeID": "[concat(variables('extLbID'),'/backendAddressPools/',parameters('moodleCommon').extBeName)]",
         "extFeID": "[concat(variables('extLbID'),'/frontendIPConfigurations/',parameters('moodleCommon').extFeName)]",
         "extLbID": "[resourceId('Microsoft.Network/loadBalancers',parameters('moodleCommon').lbName)]",
         "extProbeID": "[concat(variables('extLbID'),'/probes/',parameters('moodleCommon').extProbe  )]",
         "pipID": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('moodleCommon').lbPipName)]",
-        "scriptUri": "[concat(parameters('moodleCommon').ScriptLocation,parameters('moodleCommon').moodleSetupScriptFilename)]",
-        "storageApiVersion": "2015-06-15",
+        "scriptUri": "[concat(parameters('moodleCommon').scriptLocation,parameters('moodleCommon').webServerSetupScriptFilename,parameters('moodleCommon').artifactsSasToken)]",
         "subnetWebRef": "[concat(resourceId('Microsoft.Network/virtualNetworks',parameters('moodleCommon').vnetName),'/subnets/',parameters('moodleCommon').subnetWeb)]",
+        "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('moodleCommon').storageAccountName)]",
         "vmssID": "[resourceId('Microsoft.Compute/virtualMachineScaleSets',parameters('moodleCommon').vmssName)]",
-        "wadCfgxEnd": "[concat('\"><MetricAggregation scheduledTransferPeriod=\"PT1H\"/><MetricAggregation scheduledTransferPeriod=\"PT1M\"/></Metrics></DiagnosticMonitorConfiguration></WadCfg>')]",
-        "wadCfgxStart": "[concat(variables('wadLogs'),variables('wadPerfCounter'),'<Metrics resourceId=\"')]",
-        "wadLogs": "<WadCfg><DiagnosticMonitorConfiguration>",
-        "wadPerfCounter": "<PerformanceCounters scheduledTransferPeriod=\"PT1M\"><PerformanceCounterConfiguration counterSpecifier=\"\\Processor\\PercentProcessorTime\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"CPU percentage guest OS\" locale=\"en-us\"/></PerformanceCounterConfiguration></PerformanceCounters>",
         "webvmss1NIC": "[concat('Microsoft.Compute/virtualMachineScaleSets/', parameters('moodleCommon').vmssName, '/virtualMachines/0/networkInterfaces/vmssnic')]"
     },
     "outputs": {
