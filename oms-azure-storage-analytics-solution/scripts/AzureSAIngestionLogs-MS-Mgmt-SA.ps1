@@ -5,7 +5,6 @@
 
 
 
-$ErrorActionPreference = "Stop"
 
 Write-Output "RB Initial Memory  : $([System.gc]::gettotalmemory('forcefullcollection') /1MB) MB" 
 
@@ -25,6 +24,7 @@ $customerID = Get-AutomationVariable -Name 'AzureSAIngestion-OPSINSIGHTS_WS_ID-M
 
 #For shared key use either the primary or seconday Connected Sources client authentication key   
 $sharedKey = Get-AutomationVariable -Name 'AzureSAIngestion-OPSINSIGHTS_WS_KEY-MS-Mgmt-SA'
+
 #define API Versions for REST API  Calls
 
 
@@ -370,8 +370,6 @@ function Cleanup-Variables {
 
 #endregion
 
-
-
 #region Login to Azure Using both ARM , ASM and REST
 #Authenticate to Azure with SPN section
 "Logging in to Azure..."
@@ -413,8 +411,7 @@ $adal =  $dlllist[0].VersionInfo.FileName
 try
 {
 	Add-type -Path $adal
-	[reflection.assembly]::LoadWithPartialName( "Microsoft.IdentityModel.Clients.ActiveDirectory" )
-}
+	}
 catch
 {
 	$ErrorMessage = $_.Exception.Message
@@ -515,7 +512,6 @@ IF ($collectionFromAllSubscriptions -and $Subscriptions.count -gt 1 ) {
 #endregion
 
 
-
 #region Get Storage account list
 
 "$(GEt-date) - Get ARM storage Accounts "
@@ -583,49 +579,6 @@ if ($colParamsforChild.count -eq 0) {
 $sa = $null
 $logTracker = @()
 $blobdate = (Get-date).AddHours(-1).ToUniversalTime().ToString("yyyy/MM/dd/HH00")
-
-#region parallel with RS 
-
-
-$hash['Host'] = $host
-$hash['subscriptionInfo'] = $subscriptionInfo
-$hash['ArmConn'] = $ArmConn
-$hash['AsmConn'] = $AsmConn
-$hash['headers'] = $headers
-$hash['headerasm'] = $headers
-$hash['AzureCert'] = $AzureCert
-$hash['Timestampfield'] = $Timestampfield
-
-$hash['customerID'] = $customerID
-$hash['syncInterval'] = $syncInterval
-$hash['sharedKey'] = $sharedKey 
-$hash['Logname'] = $logname
-
-$hash['ApiVerSaAsm'] = $ApiVerSaAsm
-$hash['ApiVerSaArm'] = $ApiVerSaArm
-$hash['ApiStorage'] = $ApiStorage
-$hash['AAAccount'] = $AAAccount
-$hash['AAResourceGroup'] = $AAResourceGroup
-
-$hash['debuglog'] = $true
-
-$hash['logTracker'] = @()
-
-
-
-$SAInfo = @()
-$hash.'SAInfo' = $sainfo
-
-
-
-$Throttle = [int][System.Environment]::ProcessorCount + 1  #threads
-
-$sessionstate = [system.management.automation.runspaces.initialsessionstate]::CreateDefault()
-$runspacepool = [runspacefactory]::CreateRunspacePool(1, $Throttle, $sessionstate, $Host)
-$runspacepool.Open() 
-[System.Collections.ArrayList]$Jobs = @()
-
-#script to cache storage account keys 
 $scriptBlock = {
 
     Param ($hash, [array]$Sa, $rsid)
@@ -1067,221 +1020,224 @@ $Starttimer = get-date
 
 
 
-$colParamsforChild|foreach {
 
-    $splitmetrics = $null
-    $splitmetrics = $_
-    $Job = [powershell]::Create().AddScript($ScriptBlock).AddArgument($hash).AddArgument($splitmetrics).Addargument($i)
-    $Job.RunspacePool = $RunspacePool
-    $Jobs += New-Object PSObject -Property @{
-        RunNum = $i
-        Pipe   = $Job
-        Result = $Job.BeginInvoke()
+   
+
+foreach ($sa in @($colParamsforChild)) {
+
+
+
+
+    $prikey = $storageaccount = $rg = $type = $null
+    $storageaccount = $sa.Split(';')[0]
+    $rg = $sa.Split(';')[1]
+    $type = $sa.Split(';')[2]
+    $tier = $sa.Split(';')[3]
+    $kind = $sa.Split(';')[4]
+
+
+    If ($type -eq 'ARM') {
+        $Uri = "https://management.azure.com/subscriptions/{3}/resourceGroups/{2}/providers/Microsoft.Storage/storageAccounts/{1}/listKeys?api-version={0}" -f $ApiVerSaArm, $storageaccount, $rg, $SubscriptionId 
+        $keyresp = Invoke-WebRequest -Uri $uri -Method POST  -Headers $headers -UseBasicParsing
+        $keys = ConvertFrom-Json -InputObject $keyresp.Content
+        $prikey = $keys.keys[0].value
+
 
     }
-	
-    $i++
-}
-
-write-output  "$(get-date)  , started $i Runspaces "
-Write-Output "After dispatching runspaces $([System.gc]::gettotalmemory('forcefullcollection') /1MB) MB"
-$jobsClone = $jobs.clone()
-Write-Output "Waiting.."
+    Elseif ($type -eq 'Classic') {
+        $Uri = "https://management.azure.com/subscriptions/{3}/resourceGroups/{2}/providers/Microsoft.ClassicStorage/storageAccounts/{1}/listKeys?api-version={0}" -f $ApiVerSaAsm, $storageaccount, $rg, $SubscriptionId 
+        $keyresp = Invoke-WebRequest -Uri $uri -Method POST  -Headers $headers -UseBasicParsing
+        $keys = ConvertFrom-Json -InputObject $keyresp.Content
+        $prikey = $keys.primaryKey
 
 
+    }
+    Else {
+		
+        "Could not detect storage account type, $storageaccount will not be processed"
+        Continue
+		
 
-$s = 1
-Do {
+    }
 
-    Write-Output "  $(@($jobs.result.iscompleted|where{$_  -match 'False'}).count)  jobs remaining"
+    #check if metrics are enabled
+    IF ($kind -eq 'BlobStorage') {
+        $svclist = @('blob', 'table')
+    }
+    Else {
+        $svclist = @('blob', 'table', 'queue')
+    }
 
-    foreach ($jobobj in $JobsClone) {
 
-        if ($Jobobj.result.IsCompleted -eq $true) {
-            $jobobj.Pipe.Endinvoke($jobobj.Result)
-            $jobobj.pipe.dispose()
-            $jobs.Remove($jobobj)
+    $logging = $false
+
+    Foreach ($svc in $svclist) {
+
+
+		
+        [uri]$uriSvcProp = "https://{0}.{1}.core.windows.net/?restype=service&comp=properties	" -f $storageaccount, $svc
+
+        IF ($svc -eq 'table') {
+            [xml]$SvcPropResp = invoke-StorageREST -sharedKey $prikey -method GET -resource $storageaccount -uri $uriSvcProp -svc Table
+			
         }
-    }
+        else {
+            [xml]$SvcPropResp = invoke-StorageREST -sharedKey $prikey -method GET -resource $storageaccount -uri $uriSvcProp 
+			
+        }
 
+        IF ($SvcPropResp.StorageServiceProperties.Logging.Read -eq 'true' -or $SvcPropResp.StorageServiceProperties.Logging.Write -eq 'true' -or $SvcPropResp.StorageServiceProperties.Logging.Delete -eq 'true') {
+            $msg = "Logging is enabled for {0} in {1}" -f $svc, $storageaccount
+            Write-output "$(get-date) , $msg"
 
-    IF ($([System.gc]::gettotalmemory('forcefullcollection') / 1MB) -gt 200) {
-        [gc]::Collect()
-    }
-
-
-    IF ($s % 10 -eq 0) {
-        Write-Output "Job $s - Mem: $([System.gc]::gettotalmemory('forcefullcollection') /1MB) MB"
-    }  
-    $s++
-	
-    Start-Sleep -Seconds 15
-
-
-} While ( @($jobs.result.iscompleted|where {$_ -match 'False'}).count -gt 0)
-Write-output "All jobs completed!"
-
-
-
-$jobs|foreach {$_.Pipe.Dispose()}
-Remove-Variable Jobs -Force -Scope Global
-Remove-Variable Job -Force -Scope Global
-Remove-Variable Jobobj -Force -Scope Global
-Remove-Variable Jobsclone -Force -Scope Global
-
-$runspacepool.Close()
-
-[gc]::Collect()
-
-#save Script Variables
-
-$startupVariables = ””
-
-new-variable -force -name startupVariables -value ( Get-Variable |
-
-    % { $_.Name } )
-
-Write-Output "Memory After Initial pool for keys : $([System.gc]::gettotalmemory('forcefullcollection') /1MB) MB" 
-
-
-
-
-$sa = $null
-$logTracker = @()
-$blobdate = (Get-date).AddHours(-1).ToUniversalTime().ToString("yyyy/MM/dd/HH00")
-
-$s = 1
-
-#testing
-write-output $hash.SAInfo|select Logging , storageaccount
-
-
-foreach ($sa in @($hash.SAInfo|Where {$_.Logging -eq 'True' -and $_.key -ne $null})) {
-
-    $prikey = $sa.key
-    $storageaccount = $sa.StorageAccount
-    $rg = $sa.rg
-    $type = $sa.Type
-    $tier = $sa.Tier
-    $kind = $sa.Kind
-
-
-
-
-
-    $logArray = @()
+            $logging = $true
+                
+                $logArray = @()
     $Logcount = 0
     $LogSize = 0
 
     Foreach ($svc in @('blob', 'table', 'queue')) {
 
-        $blobs = @()
-        $prefix = $svc + "/" + $blobdate
+                $blobs = @()
+                $prefix = $svc + "/" + $blobdate
 		
-        [uri]$uriLBlobs = "https://{0}.blob.core.windows.net/`$logs`?restype=container&comp=list&prefix={1}&maxresults=1000" -f $storageaccount, $prefix
-        [xml]$fresponse = invoke-StorageREST -sharedKey $prikey -method GET -resource $storageaccount -uri $uriLBlobs
+                [uri]$uriLBlobs = "https://{0}.blob.core.windows.net/`$logs`?restype=container&comp=list&prefix={1}&maxresults=1000" -f $storageaccount, $prefix
+                [xml]$fresponse = invoke-StorageREST -sharedKey $prikey -method GET -resource $storageaccount -uri $uriLBlobs
 		
-        $content = $null
-        $content = $fresponse.EnumerationResults
-        $blobs += $content.Blobs.blob
-
-        REmove-Variable -Name fresponse
-		
-        IF (![string]::IsNullOrEmpty($content.NextMarker)) {
-            do {
-                [uri]$uriLogs2 = "https://{0}.blob.core.windows.net/`$logs`?restype=container&comp=list&maxresults=1000&marker={1}" -f $storageaccount, $content.NextMarker
-
                 $content = $null
-                [xml]$Logresp2 = invoke-StorageREST -sharedKey $prikey -method GET -resource $storageaccount -uri $uriLogs2 
+                $content = $fresponse.EnumerationResults
+                $blobs += $content.Blobs.blob
 
-                $content = $Logresp2.EnumerationResults
-
-                $blobs += $content.Blobs.Blob
-                # $blobsall+=$blobs
-
-                $uriLogs2 = $null
-
-            }While (![string]::IsNullOrEmpty($content.NextMarker))
-        }
-
+                REmove-Variable -Name fresponse
 		
-        $fresponse = $logresp2 = $null
+                IF (![string]::IsNullOrEmpty($content.NextMarker)) {
+                    do {
+                        [uri]$uriLogs2 = "https://{0}.blob.core.windows.net/`$logs`?restype=container&comp=list&maxresults=1000&marker={1}" -f $storageaccount, $content.NextMarker
 
+                        $content = $null
+                        [xml]$Logresp2 = invoke-StorageREST -sharedKey $prikey -method GET -resource $storageaccount -uri $uriLogs2 
 
-        IF ($blobs) {
-            Foreach ($blob in $blobs) {
+                        $content = $Logresp2.EnumerationResults
 
-                [uri]$uriLogs3 = "https://{0}.blob.core.windows.net/`$logs/{1}" -f $storageaccount, $blob.Name
+                        $blobs += $content.Blobs.Blob
+                        # $blobsall+=$blobs
 
-                $content = $null
-                $auditlog = invoke-StorageREST -sharedKey $prikey -method GET -resource $storageaccount -uri $uriLogs3 -download $true 
+                        $uriLogs2 = $null
 
-                if (Test-Path $auditlog) {
-                    $file = New-Object System.IO.StreamReader -Arg $auditlog
-					
-                    while ($line = $file.ReadLine()) {
-						
-
-                        $splitline = [regex]::Split( $line , ';(?=(?:[^"]|"[^"]*")*$)' )
-
-                        $logArray += New-Object PSObject -Property @{
-                            Timestamp          = $splitline[1]
-                            MetricName         = 'AuditLogs'
-                            StorageAccount     = $storageaccount
-                            StorageService     = $splitline[10]
-                            Operation          = $splitline[2]
-                            Status             = $splitline[3]
-                            StatusCode         = $splitline[4]
-                            E2ELatency         = [int]$splitline[5]
-                            ServerLatency      = [int]$splitline[6]
-                            AuthenticationType = $splitline[7]	 
-                            Requesteraccount   = $splitline[8]
-                            Resource           = $splitline[12].Replace('"', '')
-                            RequesterIP        = $splitline[15].Split(':')[0]
-                            UserAgent          = $splitline[27].Replace('"', '')
-                            SubscriptionId     = $ArmConn.SubscriptionId;
-                            AzureSubscription  = $subscriptionInfo.displayName;
-                        }
-						
-                    }
-                    $file.close()
-
-                    $file = get-item $auditlog 
-                    $Logcount++
-                    $LogSize += [Math]::Round($file.Length / 1024, 0)
-                    Remove-Item  $auditlog -Force
-
-
-                    #push data into oms if specific thresholds are reached 
-                    IF ($logArray.count -gt 5000 -or $([System.gc]::gettotalmemory('forcefullcollection') / 1MB) -gt 150) {
-                        write-output "$($logArray.count)  logs consumed $([System.gc]::gettotalmemory('forcefullcollection') /1MB) , uploading data  to OMS"
-
-                        $jsonlogs = ConvertTo-Json -InputObject $logArray
-                        $logarray = @()
-
-                        Post-OMSData -customerId $customerId -sharedKey $sharedKey -body ([System.Text.Encoding]::UTF8.GetBytes($jsonlogs)) -logType $logname
-
-                        remove-variable jsonlogs -force 
-                        [gc]::Collect()
-						
-                    }
-
-
-
+                    }While (![string]::IsNullOrEmpty($content.NextMarker))
                 }
+
+		
+                $fresponse = $logresp2 = $null
+
+
+                IF ($blobs) {
+                    Foreach ($blob in $blobs) {
+
+                        [uri]$uriLogs3 = "https://{0}.blob.core.windows.net/`$logs/{1}" -f $storageaccount, $blob.Name
+
+                        $content = $null
+                        $auditlog = invoke-StorageREST -sharedKey $prikey -method GET -resource $storageaccount -uri $uriLogs3 -download $true 
+
+                        if (Test-Path $auditlog) {
+
+                          $filestream=$null
+                          $file=$null
+                          $line=$null
+                          $splitline=$null
+                          $fileinfo=$null
+ 
+                             $fileStream= new-object System.IO.FileStream ($auditlog,[System.IO.FileMode]::Open, [System.IO.FileAccess]::Read,[System.IO.FileShare]::ReadWrite)
+                            $file = New-Object System.IO.StreamReader -Arg $auditlog
+					        $fileinfo =get-item -Path $auditlog
+                            Write-Output  "$(get-date) - $($fileinfo.NAme)  Size: $($fileinfo.Length)"
+                            while ($line = $file.ReadLine()) {
+						
+
+                                $splitline = [regex]::Split( $line , ';(?=(?:[^"]|"[^"]*")*$)' )
+
+                                $logArray += New-Object PSObject -Property @{
+                                    Timestamp          = $splitline[1]
+                                    MetricName         = 'AuditLogs'
+                                    StorageAccount     = $storageaccount
+                                    StorageService     = $splitline[10]
+                                    Operation          = $splitline[2]
+                                    Status             = $splitline[3]
+                                    StatusCode         = $splitline[4]
+                                    E2ELatency         = [int]$splitline[5]
+                                    ServerLatency      = [int]$splitline[6]
+                                    AuthenticationType = $splitline[7]	 
+                                    Requesteraccount   = $splitline[8]
+                                    Resource           = $splitline[12].Replace('"', '')
+                                    RequesterIP        = $splitline[15].Split(':')[0]
+                                    UserAgent          = $splitline[27].Replace('"', '')
+                                    SubscriptionId     = $ArmConn.SubscriptionId;
+                                    AzureSubscription  = $subscriptionInfo.displayName;
+                                }
+						
+                            }
+                             $filestream.Close()
+                            $filestream.Dispose()
+                             $file.close()
+                            $file.Dispose()
+
+
+                          
+                            $Logcount++
+                            $LogSize += [Math]::Round($fileinfo.Length / 1024, 0)
+
+                          
+                            Remove-Item  $auditlog -Force -ErrorAction Continue
+
+
+                            #push data into oms if specific thresholds are reached 
+                            IF ($logArray.count -gt 5000 -or $([System.gc]::gettotalmemory('forcefullcollection') / 1MB) -gt 150) {
+                                write-output "$($logArray.count)  logs consumed $([System.gc]::gettotalmemory('forcefullcollection') /1MB) , uploading data  to OMS"
+
+                                $jsonlogs = ConvertTo-Json -InputObject $logArray
+                                $logarray = @()
+
+                                Post-OMSData -customerId $customerId -sharedKey $sharedKey -body ([System.Text.Encoding]::UTF8.GetBytes($jsonlogs)) -logType $logname
+
+                                remove-variable jsonlogs -force 
+                                [gc]::Collect()
+						
+                            }
+
+
+
+                        }
 				
+                    }
+                    $auditlog = $file = $null
+                }
+                write-output "$($blobs.count)  log file processed for $storageaccount. $($logarray.count) records wil be uploaded"
             }
-            $auditlog = $file = $null
-        }
-        write-output "$($blobs.count)  log file processed for $storageaccount. $($logarray.count) records wil be uploaded"
-    }
-    Remove-Variable -Name Blobs
-    $logTracker += New-Object PSObject -Property @{
-        StorageAccount = $storageaccount
-        Logcount       = $Logcount
-        LogSizeinKB    = $LogSize            
-    }
+            Remove-Variable -Name Blobs
+            $logTracker += New-Object PSObject -Property @{
+                StorageAccount = $storageaccount
+                Logcount       = $Logcount
+                LogSizeinKB    = $LogSize            
+            }
 	
+
+			
+
+			
+        }
+        Else {
+            $msg = "Logging is not  enabled for {0} in {1}" -f $svc, $storageaccount
+
+        }
+
+
+    }
+
+
+
+
+
+    
 }
 
 
@@ -1312,15 +1268,11 @@ If ($logArray) {
         $jsonlogs = ConvertTo-Json -InputObject $logArray
 
         Post-OMSData -customerId $customerId -sharedKey $sharedKey -body ([System.Text.Encoding]::UTF8.GetBytes($jsonlogs)) -logType $logname
-
+        Write-output "posting $($logArray.count) items "
     }
 }
 
-
-IF ($s % 10 -eq 0) {
-    Write-Output "Job $s - SA $storageaccount -Logsize : $logsize - Mem: $([System.gc]::gettotalmemory('forcefullcollection') /1MB) MB"
-}  
-$s++
+write-output $logTracker
 
 
 Remove-Variable -Name  logArray -ea 0
@@ -1329,7 +1281,6 @@ Remove-Variable -Name  auditlog -ea 0
 Remove-Variable -Name  jsonlogs  -ea 0
 [gc]::Collect()
 
-# Write-Output "After $storageaccount OMS upload : $([System.gc]::gettotalmemory('forcefullcollection') /1MB) MB"
 
 
 

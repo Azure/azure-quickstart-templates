@@ -330,8 +330,7 @@ $adal =  $dlllist[0].VersionInfo.FileName
 try
 {
 	Add-type -Path $adal
-	[reflection.assembly]::LoadWithPartialName( "Microsoft.IdentityModel.Clients.ActiveDirectory" )
-}
+	}
 catch
 {
 	$ErrorMessage = $_.Exception.Message
