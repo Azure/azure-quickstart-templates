@@ -66,13 +66,13 @@ To make sure your template is added to Azure.com index, please follow these guid
  + Guidelines on the README.md file below.
 4. The deployment template file must be named **azuredeploy.json**.
 5. There should be a parameters file named **azuredeploy.parameters.json**. 
- + Use defaultValues in the azuredeploy.json template whenever there is a value that will work for all users.  The parameters file, should contain only [GEN*](###Parameters-File-Placeholders) values for generating values for a test deployment.  Do NOT use values that require changes by the user for a successful deployment (e.g. changeme).
+ + Use defaultValues in the azuredeploy.json template whenever there is a value that will work for all users.  The parameters file, should contain only [GEN*](#parameters-file-placeholders) values for generating values for a test deployment.  Do NOT use values that require changes by the user for a successful deployment (e.g. changeme).
 6. The template folder must contain a **metadata.json** file to allow the template to be indexed on [Azure.com](http://azure.microsoft.com/). 
  + Guidelines on the metadata.json file below.
 7. The custom scripts that are needed for successful template execution must be placed in a folder called **scripts**.
 8. Linked templates must be placed in a folder called **nested**.
 9. Images used in the README.md must be placed in a folder called **images**. 
-10. Any resources that need to be setup outside the template should be named prefixed with existing (e.g. existingVNET, existingDiagnosticsStorageAccount and provision using a [prereqs](###Template-Pre-requisites) template.
+10. Any resources that need to be setup outside the template should be named prefixed with existing (e.g. existingVNET, existingDiagnosticsStorageAccount and provision using a [prereqs](#template-pre-requisites) template.
 
 ![alt text](/1-CONTRIBUTION-GUIDE/images/namingConvention.png "Files, folders and naming conventions")
  
