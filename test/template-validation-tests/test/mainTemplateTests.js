@@ -78,7 +78,7 @@ describe('template files - ', () => {
                 Object.keys(templateObject.parameters).forEach(parameter => {
                     if (templateObject.parameters[parameter].type == 'securestring') {
                         // get default value if one exists
-                        var defaultval = templateObject.parameters[parameter].defaultvalue;
+                        var defaultval = templateObject.parameters[parameter].defaultValue;
                         if (defaultval && defaultval.length > 0) {
                             expect(templateObject.parameters[parameter], 'in file:' + templateJSONObject.filename + ' "' + parameter + '" should not have defaultValue').to.not.have.property('defaultvalue');
                         }
