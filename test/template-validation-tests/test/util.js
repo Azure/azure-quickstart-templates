@@ -13,7 +13,7 @@ exports.getFiles = function getFiles(folder, fileType, filelist, recursive) {
     if (folder == './') {
         folder = __dirname + '/../';
     }
-    if (folder.toLowerCase().endsWith('__macosx') || folder.toLowerCase().euqals('source.temp')) { //skip Mac zip folder or temp folder for AMA
+    if (folder.toLowerCase().endsWith('__macosx') || folder.toLowerCase().equals('source.temp')) { //skip Mac zip folder or temp folder for AMA
         return filelist;
     }
     var files = fs.readdirSync(folder);
