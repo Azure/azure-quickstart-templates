@@ -90,8 +90,10 @@ echo "Prepare Bosh deployment script"
 cat > "deploy_bosh.sh" << EOF
 #!/usr/bin/env bash
 set -e
+
 export BOSH_LOG_LEVEL="debug"
 export BOSH_LOG_PATH="./run.log"
+
 bosh create-env ~/example_manifests/bosh.yml \\
   --state=state.json \\
   --vars-store=~/bosh-deployment-vars.yml \\
@@ -101,6 +103,16 @@ bosh create-env ~/example_manifests/bosh.yml \\
   -o ~/example_manifests/use-azure-dns.yml \\
   -o ~/example_manifests/jumpbox-user.yml \\
   -o ~/example_manifests/use-managed-disks.yml \\
+  -o ~/example_manifests/keep-failed-or-unreachable-vms.yml \\
+EOF
+
+if [ $environment = "AzureChinaCloud" ]; then
+  cat >> "deploy_bosh.sh" <<EOF
+  -o ~/example_manifests/use-mirror-releases-for-bosh.yml \\
+EOF
+fi
+
+cat >> "deploy_bosh.sh" << EOF
   -v director_name=azure \\
   -v internal_cidr=$(get_setting SUBNET_ADDRESS_RANGE_FOR_BOSH) \\
   -v internal_gw=$(get_setting SUBNET_GATEWAY_FOR_BOSH) \\
@@ -116,20 +128,25 @@ bosh create-env ~/example_manifests/bosh.yml \\
   -v subscription_id=$(get_setting SUBSCRIPTION_ID) \\
   -v tenant_id=${tenant_id} \\
   -v client_id=${client_id} \\
-  -v client_secret=${client_secret} \\
+  -v client_secret=${client_secret}
+
+cat >> $home_dir/.profile << EndOfFile
+export BOSH_ENVIRONMENT=$(get_setting INTERNAL_IP_FOR_BOSH)
+export BOSH_CLIENT=admin
+export BOSH_CLIENT_SECRET="\$(bosh int ~/bosh-deployment-vars.yml --path /admin_password)"
+export BOSH_CA_CERT="\$(bosh int ~/bosh-deployment-vars.yml --path /director_ssl/ca)"
+EndOfFile
 EOF
 
-if [ $(get_setting KEEP_UNREACHABLE_VMS) = "true" ]; then
-  cat >> "deploy_bosh.sh" <<EOF
-  -o ~/example_manifests/keep-failed-or-unreachable-vms.yml \\
-EOF
-fi
 chmod +x deploy_bosh.sh
 cp deploy_bosh.sh $home_dir
 
 echo "Prepare Concourse deployment script"
 concourse_worker_disk_size_in_mb=$(($(get_setting CONCOURSE_WORKER_DISK_SIZE)*1024))
 cat > "deploy_concourse.sh" <<EOF
+#!/usr/bin/env bash
+set -e
+
 export BOSH_ENVIRONMENT=$(get_setting INTERNAL_IP_FOR_BOSH)
 export BOSH_CLIENT=admin
 export BOSH_CLIENT_SECRET="\$(bosh int ~/bosh-deployment-vars.yml --path /admin_password)"
@@ -138,7 +155,7 @@ export BOSH_CA_CERT="\$(bosh int ~/bosh-deployment-vars.yml --path /director_ssl
 bosh alias-env azure
 bosh -e azure login
 
-bosh -n update-cloud-config ~/example_manifests/cloud.yml \\
+bosh -n update-cloud-config ~/example_manifests/cloud-config.yml \\
   -v internal_cidr=$(get_setting SUBNET_ADDRESS_RANGE_FOR_CONCOURSE) \\
   -v internal_gw=$(get_setting SUBNET_GATEWAY_FOR_CONCOURSE) \\
   -v vnet_name=$(get_setting VNET_NAME) \\
@@ -148,7 +165,15 @@ bosh -n update-cloud-config ~/example_manifests/cloud.yml \\
 
 bosh upload-stemcell --sha1=$(get_setting STEMCELL_SHA1) $(get_setting STEMCELL_URL)
 bosh -e azure -n deploy -d concourse ~/example_manifests/concourse.yml \\
-  -l ~/example_manifests/versions.yml \\
+EOF
+
+if [ $environment = "AzureChinaCloud" ]; then
+  cat >> "deploy_concourse.sh" <<EOF
+  -o ~/example_manifests/use-mirror-releases-for-concourse.yml \\
+EOF
+fi
+
+cat >> "deploy_concourse.sh" <<EOF
   --vars-store=~/concourse-deployment-vars.yml \\
   -v deployment_name=concourse \\
   -v network_name=concourse \\
@@ -160,18 +185,20 @@ bosh -e azure -n deploy -d concourse ~/example_manifests/concourse.yml \\
   -v basic_auth_password='$(escape_password $(get_setting CONCOURSE_PASSWORD))' \\
   -v web_ip=$(get_setting CONCOURSE_PUBLIC_IP) \\
   -v external_url="http://$(get_setting CONCOURSE_PUBLIC_IP):8080"
-
 EOF
+
 chmod +x deploy_concourse.sh
 cp deploy_concourse.sh $home_dir
 
 echo "Prepare logging in bosh script"
 cat > "login_bosh.sh" <<EOF
 #!/usr/bin/env bash
+
 export BOSH_ENVIRONMENT=10.0.0.4
 export BOSH_CLIENT=admin
 export BOSH_CLIENT_SECRET="\$(bosh int ~/bosh-deployment-vars.yml --path /admin_password)"
 export BOSH_CA_CERT="\$(bosh int ~/bosh-deployment-vars.yml --path /director_ssl/ca)"
+
 bosh alias-env azure
 bosh -e azure login
 EOF
