@@ -2,19 +2,33 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "vmName": {
+    "jumpboxVmName": {
       "type": "string",
       "metadata": {
-        "description": "Name of the vm, will be used as DNS Name for the Public IP used to access the Virtual Machine"
+        "description": "Name of the jumpbox VM, will be used as DNS Name for the Public IP used to access the Virtual Machine"
       }
     },
-    "adminUsername": {
+    "jumpboxUbuntuOSVersion": {
+      "type": "string",
+      "defaultValue": "16.04-LTS",
+      "metadata": {
+        "description": "OS version of Ubuntu"
+      }
+    },
+    "jumpboxVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D1_v2",
+      "metadata": {
+        "description": "Please check if the region support this VM size https://azure.microsoft.com/en-us/regions/#services. For more information about virtual machine sizes, see https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-linux-sizes/"
+      }
+    },
+    "jumpboxUsername": {
       "type": "string",
       "metadata": {
         "description": "User name for the Virtual Machine"
       }
     },
-    "sshKeyData": {
+    "jumpboxSshKeyData": {
       "type": "string",
       "metadata": {
         "description": "Please copy the content of your SSH RSA public key and paste it here. You can use \"ssh-keygen -t rsa -b 2048\" to generate your SSH key pairs."
@@ -45,10 +59,11 @@
       "type": "string",
       "defaultValue": "AzureCloud",
       "allowedValues": [
-        "AzureCloud"
+        "AzureCloud",
+        "AzureChinaCloud"
       ],
       "metadata": {
-        "description": "Different environments in Azure. Only AzureCloud is supported for now"
+        "description": "Different environments in Azure. Supported values: AzureCloud, AzureChinaCloud"
       }
     },
     "tenantID": {
@@ -136,39 +151,45 @@
     "devboxNetworkSecurityGroup": "nsg-devbox",
     "boshNetworkSecurityGroup": "nsg-bosh",
     "concourseNetworkSecurityGroup": "nsg-concourse",
-    "vmSize": "Standard_D1",
-    "nicName": "[parameters('vmName')]",
+    "nicName": "[parameters('jumpboxVmName')]",
     "devboxPrivateIPAddress": "10.0.0.100",
     "imagePublisher": "Canonical",
     "imageOffer": "UbuntuServer",
-    "ubuntuOSVersion": "14.04.5-LTS",
-    "sshKeyPath": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+    "sshKeyPath": "[concat('/home/', parameters('jumpboxUsername'), '/.ssh/authorized_keys')]",
     "baseUriAzureCloud": "[parameters('_artifactsLocation')]",
-    "filesToDownloadAzureCloud": [
+    "baseUriAzureChinaCloud": "https://cloudfoundry.blob.core.chinacloudapi.cn/bosh-setup/",
+    "filesToDownload": [
       "[uri(variables('baseUriAzureCloud'), 'scripts/setup_env.sh')]",
       "[uri(variables('baseUriAzureCloud'), 'manifests/bosh.yml')]",
-      "[uri(variables('baseUriAzureCloud'), 'manifests/cloud.yml')]",
-      "[uri(variables('baseUriAzureCloud'), 'manifests/concourse.yml')]",
-      "[uri(variables('baseUriAzureCloud'), 'manifests/versions.yml')]",
       "[uri(variables('baseUriAzureCloud'), 'manifests/cpi.yml')]",
       "[uri(variables('baseUriAzureCloud'), 'manifests/custom-cpi-release.yml')]",
       "[uri(variables('baseUriAzureCloud'), 'manifests/custom-environment.yml')]",
-      "[uri(variables('baseUriAzureCloud'), 'manifests/use-azure-dns.yml')]",
       "[uri(variables('baseUriAzureCloud'), 'manifests/use-managed-disks.yml')]",
+      "[uri(variables('baseUriAzureCloud'), 'manifests/use-azure-dns.yml')]",
       "[uri(variables('baseUriAzureCloud'), 'manifests/jumpbox-user.yml')]",
-      "[uri(variables('baseUriAzureCloud'), 'manifests/keep-failed-or-unreachable-vms.yml')]"
+      "[uri(variables('baseUriAzureCloud'), 'manifests/keep-failed-or-unreachable-vms.yml')]",
+      "[uri(variables('baseUriAzureCloud'), 'manifests/cloud-config.yml')]",
+      "[uri(variables('baseUriAzureCloud'), 'manifests/concourse.yml')]",
+      "[uri(variables('baseUriAzureCloud'), 'manifests/use-mirror-releases-for-bosh.yml')]",
+      "[uri(variables('baseUriAzureCloud'), 'manifests/use-mirror-releases-for-concourse.yml')]"
     ],
-    "filesToDownload": "[variables(concat('filesToDownload', parameters('environment')))]",
     "environmentAzureCloud": {
       "serviceHostBase": "core.windows.net",
-      "boshAzureCPIReleaseUrl": "https://bosh.io/d/github.com/cloudfoundry-incubator/bosh-azure-cpi-release?v=35.2.0",
-      "boshAzureCPIReleaseSha1": "d581c4181d31846e05e59054a15e09621f1e90b1",
-      "stemcellUrl": "https://s3.amazonaws.com/bosh-core-stemcells/azure/bosh-stemcell-3586.24-azure-hyperv-ubuntu-trusty-go_agent.tgz",
-      "stemcellSha1": "ddafd98aad041bc2a92fae0168ab98f2adec331e",
-      "boshCLIUrl": "https://s3.amazonaws.com/bosh-cli-artifacts/bosh-cli-3.0.1-linux-amd64"
+      "boshCliUrl": "https://s3.amazonaws.com/bosh-cli-artifacts/bosh-cli-5.1.2-linux-amd64",
+      "boshAzureCPIReleaseUrl": "https://bosh.io/d/github.com/cloudfoundry-incubator/bosh-azure-cpi-release?v=35.4.0",
+      "boshAzureCPIReleaseSha1": "372c0220e2e38ca9201135eccb52ff912f2d0538",
+      "stemcellUrl": "https://bosh.io/d/stemcells/bosh-azure-hyperv-ubuntu-xenial-go_agent?v=97.12",
+      "stemcellSha1": "a04ddc9b87dfb8431838df706a7b0d5ddaf2db4d"
     },
-    "environment": "[variables(concat('environment', parameters('environment')))]",
-    "keepUnreachableVMs": "false"
+    "environmentAzureChinaCloud": {
+      "serviceHostBase": "core.chinacloudapi.cn",
+      "boshCliUrl": "[uri(variables('baseUriAzureChinaCloud'), 'bosh-cli/bosh-cli-5.1.2-linux-amd64')]",
+      "boshAzureCPIReleaseUrl": "https://mirror.azure.cn/bosh/bosh-azure-cpi-release/bosh-azure-cpi-release-35.4.0.tgz",
+      "boshAzureCPIReleaseSha1": "372c0220e2e38ca9201135eccb52ff912f2d0538",
+      "stemcellUrl": "[uri(variables('baseUriAzureChinaCloud'), 'bosh-azure-stemcells/bosh-stemcell-97.12-azure-hyperv-ubuntu-xenial-go_agent.tgz')]",
+      "stemcellSha1": "a04ddc9b87dfb8431838df706a7b0d5ddaf2db4d"
+    },
+    "environment": "[variables(concat('environment', parameters('environment')))]"
   },
   "resources": [
     {
@@ -381,19 +402,19 @@
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[concat(parameters('vmName'),'-devbox')]",
+      "name": "[concat(parameters('jumpboxVmName'),'-devbox')]",
       "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
-          "domainNameLabel": "[concat(toLower(parameters('vmName')), '-', uniqueString(resourceGroup().id))]"
+          "domainNameLabel": "[concat(toLower(parameters('jumpboxVmName')), '-', uniqueString(resourceGroup().id))]"
         }
       }
     },
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[concat(parameters('vmName'), '-concourse')]",
+      "name": "[concat(parameters('jumpboxVmName'), '-concourse')]",
       "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "static"
@@ -432,7 +453,7 @@
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', concat(parameters('vmName'), '-devbox'))]",
+        "[concat('Microsoft.Network/publicIPAddresses/', concat(parameters('jumpboxVmName'), '-devbox'))]",
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
         "[concat('Microsoft.Network/networkSecurityGroups/', variables('devboxNetworkSecurityGroup'))]"
       ],
@@ -447,7 +468,7 @@
               "privateIPAllocationMethod": "Static",
               "privateIPAddress": "[variables('devboxPrivateIPAddress')]",
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('vmName'), '-devbox'))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('jumpboxVmName'), '-devbox'))]"
               },
               "subnet": {
                 "id": "[variables('subnetRefForBosh')]"
@@ -483,14 +504,14 @@
               "SUBNET_NAME_FOR_CONCOURSE": "[variables('subnetNameForConcourse')]",
               "SUBNET_ADDRESS_RANGE_FOR_CONCOURSE": "[variables('subnetAddressRangeForConcourse')]",
               "SUBNET_GATEWAY_FOR_CONCOURSE": "[variables('subnetgatewayForConcourse')]",
-              "CONCOURSE_PUBLIC_IP": "[reference(concat(parameters('vmName'),'-concourse')).ipAddress]",
+              "CONCOURSE_PUBLIC_IP": "[reference(concat(parameters('jumpboxVmName'),'-concourse')).ipAddress]",
               "NSG_NAME_FOR_BOSH": "[variables('boshNetworkSecurityGroup')]",
               "NSG_NAME_FOR_CONCOURSE": "[variables('concourseNetworkSecurityGroup')]",
               "SUBSCRIPTION_ID": "[subscription().subscriptionId]",
               "RESOURCE_GROUP_NAME": "[resourceGroup().name]",
               "DEFAULT_STORAGE_ACCOUNT_NAME": "[variables('defaultStorageAccountName')]",
               "STORAGE_ACCESS_KEY": "[listKeys(variables('storageid'), '2015-06-15').key1]",
-              "ADMIN_USER_NAME": "[parameters('adminUsername')]",
+              "ADMIN_USER_NAME": "[parameters('jumpboxUsername')]",
               "ENVIRONMENT": "[parameters('environment')]",
               "SERVICE_HOST_BASE": "[variables('environment').serviceHostBase]",
               "BOSH_AZURE_CPI_RELEASE_URL": "[variables('environment').boshAzureCPIReleaseUrl]",
@@ -498,7 +519,6 @@
               "STEMCELL_URL": "[variables('environment').stemcellUrl]",
               "STEMCELL_SHA1": "[variables('environment').stemcellSha1]",
               "BOSH_CLI_URL": "[variables('environment').boshCLIUrl]",
-              "KEEP_UNREACHABLE_VMS": "[variables('keepUnreachableVMs')]",
               "AUTO_DEPLOY_BOSH": "[parameters('autoDeployBosh')]",
               "AUTO_DEPLOY_CONCOURSE": "[parameters('autoDeployConcourse')]",
               "CONCOURSE_USERNAME": "[parameters('concourseUsername')]",
@@ -512,25 +532,25 @@
     {
       "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[parameters('vmName')]",
+      "name": "[parameters('jumpboxVmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
         "Microsoft.Resources/deployments/generate-customdata"
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[variables('vmSize')]"
+          "vmSize": "[parameters('jumpboxVmSize')]"
         },
         "osProfile": {
-          "computerName": "[parameters('vmName')]",
-          "adminUsername": "[parameters('adminUsername')]",
+          "computerName": "[parameters('jumpboxVmName')]",
+          "adminUsername": "[parameters('jumpboxUsername')]",
           "linuxConfiguration": {
             "disablePasswordAuthentication": true,
             "ssh": {
               "publicKeys": [
                 {
                   "path": "[variables('sshKeyPath')]",
-                  "keyData": "[parameters('sshKeyData')]"
+                  "keyData": "[parameters('jumpboxSshKeyData')]"
                 }
               ]
             }
@@ -541,11 +561,11 @@
           "imageReference": {
             "publisher": "[variables('imagePublisher')]",
             "offer": "[variables('imageOffer')]",
-            "sku": "[variables('ubuntuOSVersion')]",
+            "sku": "[parameters('jumpboxUbuntuOSVersion')]",
             "version": "latest"
           },
           "osDisk": {
-            "name": "[concat(parameters('vmName'),'_OSDisk')]",
+            "name": "[concat(parameters('jumpboxVmName'),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -561,11 +581,11 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('vmName'),'/initdevbox')]",
+      "name": "[concat(parameters('jumpboxVmName'),'/initdevbox')]",
       "apiVersion": "2015-06-15",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('jumpboxVmName'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
@@ -576,7 +596,7 @@
           "fileUris": "[variables('filesToDownload')]"
         },
         "protectedSettings": {
-	  "commandToExecute": "[concat('bash -l -c \"./setup_env.sh', ' ', parameters('tenantID'), ' ', parameters('clientID'), ' ', parameters('clientSecret'), ' 2>&1 | tee /home/', parameters('adminUsername'), '/install.log\"')]"
+	  "commandToExecute": "[concat('bash -l -c \"./setup_env.sh', ' ', parameters('tenantID'), ' ', parameters('clientID'), ' ', parameters('clientSecret'), ' 2>&1 | tee /home/', parameters('jumpboxUsername'), '/install.log\"')]"
         }
       }
     }
@@ -584,11 +604,11 @@
   "outputs": {
     "sshDevBox": {
       "type": "string",
-      "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(concat('Microsoft.Network/publicIPAddresses/', parameters('vmName'), '-devbox')).dnsSettings.fqdn)]"
+      "value": "[concat('ssh ', parameters('jumpboxUsername'), '@', reference(concat('Microsoft.Network/publicIPAddresses/', parameters('jumpboxVmName'), '-devbox')).dnsSettings.fqdn)]"
     },
     "concourseEndpoint": {
       "type": "string",
-      "value": "[concat('http://', reference(concat(parameters('vmName'), '-concourse')).ipAddress, ':8080')]"
+      "value": "[concat('http://', reference(concat(parameters('jumpboxVmName'), '-concourse')).ipAddress, ':8080')]"
     }
   }
 }
