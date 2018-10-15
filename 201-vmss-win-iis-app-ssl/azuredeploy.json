@@ -209,6 +209,13 @@
       "metadata": {
         "description": "name of the domain the certificate is created for"
       }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
@@ -219,16 +226,12 @@
     "appVnetSubnet2Prefix": "10.0.1.0/24",
     "appVMImagePublisher": "MicrosoftWindowsServer",
     "appVMImageOffer": "WindowsServer",
-    "appVMOSDiskName": "appVMOSDisk",
     "frontEndVMSize": "[parameters('frontEndVMSize')]",
     "serviceVMSize": "[parameters('serviceVMSize')]",
-    "appVMVnetID": "[resourceId('Microsoft.Network/virtualNetworks', 'appVnet')]",
-    "appVMSubnetRef": "[concat(variables('appVMVnetID'), '/subnets/', variables('appVnetSubnet1Name'))]",
-    "serviceVMSubnetRef": "[concat(variables('appVMVnetID'), '/subnets/', variables('appVnetSubnet1Name'))]",
+    "appVMSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('appVnetSubnet1Name'))]",
+    "serviceVMSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('appVnetSubnet1Name'))]",
     "appPublicIPName": "appPublicIP",
     "servicePublicIPName": "servicePublicIP",
-    "appDSCArchiveFolder": "dsc",
-    "appDSCArchiveFileName": "appDSC.zip",
     "frontEndVMSSName": "[parameters('frontEndVMSSName')]",
     "serviceVMSSName": "[parameters('serviceVMSSName')]",
     "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('appPublicIPName'))]",
@@ -247,24 +250,16 @@
     "lbFEServiceIPConfigID": "[concat(variables('lbServiceID'),'/frontendIPConfigurations/',variables('lbFEServiceName'))]",
     "lbBEAddressPoolID": "[concat(variables('lbID'),'/backendAddressPools/',variables('lbBEAddressPool'))]",
     "lbBEServiceAddressPoolID": "[concat(variables('lbServiceID'),'/backendAddressPools/',variables('lbBEServiceAddressPool'))]",
-    "lbWebProbeID": "[concat(variables('lbID'),'/probes/',variables('lbWebProbeName'))]",
     "lbWebServiceProbeID": "[concat(variables('lbServiceID'),'/probes/',variables('lbWebServiceProbeName'))]",
-    "frontEndDSCConfigurationFunction": "frontEndDSCConfiguration.ps1\\Main",
     "frontEndDSCVMSSArchiveFolder": "dsc",
     "frontEndDSCVMSSArchiveFileName": "frontEndDSCVMSS.zip",
-    "serviceDSCConfigurationFunction": "serviceDSCConfiguration.ps1\\Main",
     "serviceDSCVMSSArchiveFolder": "dsc",
     "serviceDSCVMSSArchiveFileName": "serviceDSCVMSS.zip",
-    "wadProcessorMetricName": "\\Processor(_Total)\\% Processor Time",
-    "namingInfixFrontEnd": "[toLower(substring(concat(parameters('frontEndVMSSName'), uniqueString(resourceGroup().id)), 0, 9))]",
-    "longNamingInfixFrontEnd": "[toLower(parameters('frontEndVMSSName'))]",
     "natPoolNameFrontEnd": "natpoolfe",
-    "bePoolNameFrontEnd": "bepoolfe",
     "natStartPortFrontEnd": 50000,
     "natEndPortFrontEnd": 50119,
     "natBackendPortFrontEnd": 3389,
     "natPoolNameService": "natpoolsvc",
-    "bePoolNameService": "bepoolsvc",
     "natStartPortService": 51000,
     "natEndPortService": 51119,
     "natBackendPortService": 3389,
@@ -274,9 +269,6 @@
     "lbServiceInboundNatPoolId": "[concat(variables('lbServiceID'), '/inboundNatPools/', variables('natPoolNameService'))]",
     "wadProcessorMetricName2": "Percentage CPU",
     "wadProcessorMetricName3": "Percentage CPU",
-    "wadMemoryMetricName1": "Percentage Memory",
-    "profileName": "testCDNProfile",
-    "endpointName": "[concat('testCDNEP', uniqueString(resourceGroup().id))]",
     "lbWebHttpsProbeName": "loadBalancerWebHttpsProbe",
     "lbWebHttpsProbeID": "[concat(variables('lbID'),'/probes/',variables('lbWebHttpsProbeName'))]"
   },
@@ -285,7 +277,7 @@
       "apiVersion": "2015-06-15",
       "name": "[variables('lbName')]",
       "type": "Microsoft.Network/loadBalancers",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/',variables('appPublicIPName'))]"
       ],
@@ -386,7 +378,7 @@
       "apiVersion": "2015-06-15",
       "name": "[variables('lbServiceName')]",
       "type": "Microsoft.Network/loadBalancers",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/',variables('servicePublicIPName'))]"
       ],
@@ -459,7 +451,7 @@
       "type": "Microsoft.Compute/virtualMachineScaleSets",
       "apiVersion": "2016-04-30-preview",
       "name": "[variables('frontEndVMSSName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "tags": {
         "vmsstag1": "Rev VMSS FE"
       },
@@ -577,7 +569,7 @@
       "type": "Microsoft.Compute/virtualMachineScaleSets",
       "apiVersion": "2016-04-30-preview",
       "name": "[variables('serviceVMSSName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "tags": {
         "vmsstag1": "rev Service"
       },
@@ -680,7 +672,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "appNetworkSecurityGroup",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
           {
@@ -731,7 +723,7 @@
     {
       "name": "appVnet",
       "type": "Microsoft.Network/virtualNetworks",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2015-06-15",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkSecurityGroups', 'appNetworkSecurityGroup')]"
@@ -770,7 +762,7 @@
     {
       "name": "[variables('appPublicIPName')]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2015-06-15",
       "dependsOn": [],
       "tags": {
@@ -786,7 +778,7 @@
     {
       "name": "[variables('servicePublicIPName')]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2015-06-15",
       "dependsOn": [],
       "tags": {
@@ -804,7 +796,7 @@
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachineScaleSets', variables('frontEndVMSSName'))]"
       ],
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "name": "[concat(variables('frontEndVMSSName'), 'autoscale')]",
       "properties": {
         "name": "[concat(variables('frontEndVMSSName'), 'autoscale')]",
@@ -869,7 +861,7 @@
     {
       "name": "[concat(variables('serviceVMSSName'), 'autoscale')]",
       "type": "Microsoft.Insights/autoscaleSettings",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2015-04-01",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachineScaleSets', variables('serviceVMSSName'))]"
