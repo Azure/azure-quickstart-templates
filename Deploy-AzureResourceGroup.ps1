@@ -7,11 +7,11 @@
 Param(
     [string] [Parameter(Mandatory=$true)] $ArtifactStagingDirectory,
     [string] [Parameter(Mandatory=$true)] $ResourceGroupLocation,
-    [string] $ResourceGroupName = $ArtifactStagingDirectory.replace('.\',''), #remove .\ if present
+    [string] $ResourceGroupName = (Split-Path $ArtifactStagingDirectory -Leaf),
     [switch] $UploadArtifacts,
     [string] $StorageAccountName,
     [string] $StorageContainerName = $ResourceGroupName.ToLowerInvariant() + '-stageartifacts',
-    [string] $TemplateFile = $ArtifactStagingDirectory + '\azuredeploy.json',
+    [string] $TemplateFile = $ArtifactStagingDirectory + '\mainTemplate.json',
     [string] $TemplateParametersFile = $ArtifactStagingDirectory + '.\azuredeploy.parameters.json',
     [string] $DSCSourceFolder = $ArtifactStagingDirectory + '.\DSC',
     [switch] $ValidateOnly,
@@ -35,6 +35,12 @@ function Format-ValidationOutput {
 $OptionalParameters = New-Object -TypeName Hashtable
 $TemplateArgs = New-Object -TypeName Hashtable
 
+# if the template file isn't found, try the another default
+if(!(Test-Path $TemplateFile)) { 
+    $TemplateFile =  $ArtifactStagingDirectory + '\azuredeploy.json'
+}
+
+#try a few different default options for param files when the -dev switch is use
 if ($Dev) {
     $TemplateParametersFile = $TemplateParametersFile.Replace('azuredeploy.parameters.json', 'azuredeploy.parameters.dev.json')
     if (!(Test-Path $TemplateParametersFile)) {
@@ -51,7 +57,10 @@ if (!$ValidateOnly) {
 $TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $TemplateFile))
 $TemplateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $TemplateParametersFile))
 
-if ($UploadArtifacts) {
+$TemplateJSON = Get-Content $TemplateFile -Raw | ConvertFrom-Json
+
+#if the switch is set or the standard parameter is present in the template, upload all artifacts
+if ($UploadArtifacts -Or (Get-Member -InputObject $TemplateJSON.parameters -Name _artifactsLocation -MemberType Properties) -ne $null) {
     # Convert relative paths to absolute paths if needed
     $ArtifactStagingDirectory = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $ArtifactStagingDirectory))
     $DSCSourceFolder = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $DSCSourceFolder))
@@ -99,7 +108,11 @@ if ($UploadArtifacts) {
 
     $ArtifactFilePaths = Get-ChildItem $ArtifactStagingDirectory -Recurse -File | ForEach-Object -Process {$_.FullName}
     foreach ($SourcePath in $ArtifactFilePaths) {
-       Set-AzureStorageBlobContent -File $SourcePath -Blob $SourcePath.Substring($ArtifactStagingDirectory.length + 1) -Container $StorageContainerName -Context $StorageAccount.Context -Force
+        
+        if ($SourcePath -like "$DSCSourceFolder*" -and $SourcePath -like "*.zip" -or !($SourcePath -like "$DSCSourceFolder*")) { #When using DSC, just copy the DSC archive, not all the modules and source files
+            Set-AzureStorageBlobContent -File $SourcePath -Blob $SourcePath.Substring($ArtifactStagingDirectory.length + 1) -Container $StorageContainerName -Context $StorageAccount.Context -Force
+            #Write-host $SourcePath
+        }
     }
     # Generate a 4 hour SAS token for the artifacts location if one was not provided in the parameters file
     if ($OptionalParameters[$ArtifactsLocationSasTokenName] -eq $null) {
@@ -108,7 +121,7 @@ if ($UploadArtifacts) {
 
     $TemplateArgs.Add('TemplateFile', $OptionalParameters[$ArtifactsLocationName] + (Get-ChildItem $TemplateFile).Name + $OptionalParameters[$ArtifactsLocationSasTokenName])
 
-    #$OptionalParameters[$ArtifactsLocationSasTokenName] = ConvertTo-SecureString $OptionalParameters[$ArtifactsLocationSasTokenName] -AsPlainText -Force
+    $OptionalParameters[$ArtifactsLocationSasTokenName] = ConvertTo-SecureString $OptionalParameters[$ArtifactsLocationSasTokenName] -AsPlainText -Force
 
 }
 else {
@@ -120,7 +133,7 @@ else {
 $TemplateArgs.Add('TemplateParameterFile', $TemplateParametersFile)
 
 # Create the resource group only when it doesn't already exist
-if ((Get-AzureRmresourcegroup -Name $ResourceGroupName -Location $ResourceGroupLocation -Verbose -Force -ErrorAction SilentlyContinue) -eq $null) {
+if ((Get-AzureRmresourcegroup -Name $ResourceGroupName -Location $ResourceGroupLocation -Verbose -ErrorAction SilentlyContinue) -eq $null) {
     New-AzureRmResourceGroup -Name $ResourceGroupName -Location $ResourceGroupLocation -Verbose -Force -ErrorAction Stop
 }
 
