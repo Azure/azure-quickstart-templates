@@ -10,7 +10,7 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template can help you setup the development environment to deploy [BOSH](http://bosh.io/) and [Cloud Foundry](https://www.cloudfoundry.org/) on Azure.
+This template can help you setup the development environment to deploy [BOSH](http://bosh.io/) and [Cloud Foundry](https://www.cloudfoundry.org/) on Azure Cloud, Azure China Cloud, Azure Germany Cloud, Azure USGovernment Cloud and Azure Stack.
 
 You can follow the guide [**HERE**](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/blob/master/docs/guidance.md) to deploy Cloud Foundry on Azure.
 

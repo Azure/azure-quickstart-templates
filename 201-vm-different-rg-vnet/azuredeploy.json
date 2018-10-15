@@ -43,13 +43,15 @@
     },
     "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_A0",
+      "defaultValue": "Standard_A1_v2",
       "allowedValues": [
-        "Standard_A0",
-        "Standard_A1",
-        "Standard_A2",
-        "Standard_A3",
-        "Standard_A4"
+        "Standard_A1_v2",
+        "Standard_A2m_v2",
+        "Standard_A2_v2",
+        "Standard_A4m_v2",
+        "Standard_A4_v2",
+        "Standard_A8m_v2",
+        "Standard_A8_v2"
       ],
       "metadata": {
         "description": "Size of the VM"
@@ -71,7 +73,13 @@
     },
     "imageSKU": {
       "type": "string",
-      "defaultValue": "12.04.2-LTS",
+      "defaultValue": "12.04.5-LTS",
+      "allowedValues": [
+        "12.04.5-LTS",
+        "14.04.5-LTS",
+        "16.04-LTS",
+        "18.04-LTS"
+      ],
       "metadata": {
         "description": "Image SKU"
       }
@@ -111,6 +119,13 @@
       "metadata": {
         "description": "Network Interface Name"
       }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
@@ -122,7 +137,7 @@
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[parameters('newStorageAccountName')]",
       "apiVersion": "2015-05-01-preview",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "accountType": "[parameters('storageAccountType')]"
       }
@@ -131,7 +146,7 @@
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[parameters('publicIPName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "[parameters('publicIPAddressType')]"
       }
@@ -140,7 +155,7 @@
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[parameters('nicName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', parameters('publicIPName'))]"
       ],
@@ -162,10 +177,10 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', parameters('nicName'))]"
@@ -187,12 +202,12 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/','osdisk.vhd')]"
-            },
+            "name": "[concat(parameters('vmName'),'_OSDisk')]",
             "caching": "ReadWrite",
-            "createOption": "FromImage"
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "Standard_LRS"
+            }
           }
         },
         "networkProfile": {
@@ -204,7 +219,7 @@
         },
         "diagnosticsProfile": {
           "bootDiagnostics": {
-            "enabled": "true",
+            "enabled": true,
             "storageUri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net')]"
           }
         }

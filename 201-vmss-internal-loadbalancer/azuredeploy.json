@@ -1,10 +1,10 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "vmSku": {
       "type": "string",
-      "defaultValue": "Standard_A1",
+      "defaultValue": "Standard_A1_v2",
       "metadata": {
         "description": "Size of VMs in the VM Scale Set."
       }
@@ -45,6 +45,13 @@
       "metadata": {
         "description": "Admin password on all VMs."
       }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
@@ -61,13 +68,10 @@
     "addressPrefix": "10.0.0.0/16",
     "subnetPrefix": "10.0.0.0/24",
     "virtualNetworkName": "[concat(variables('namingInfix'), 'vnet')]",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
     "subnetName": "[concat(variables('namingInfix'), 'subnet')]",
-    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
     "publicIPAddressName": "[concat(variables('namingInfix'), 'pip')]",
-    "jumpboxName": "[concat(variables('namingInfix'), 'vm')]",
     "loadBalancerName": "[concat(variables('namingInfix'), 'lb')]",
-    "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]",
     "lbID": "[resourceId('Microsoft.Network/loadBalancers',variables('loadBalancerName'))]",
     "natPoolName": "[concat(variables('namingInfix'), 'natpool')]",
     "bePoolName": "[concat(variables('namingInfix'), 'bepool')]",
@@ -83,17 +87,14 @@
       "sku": "[parameters('ubuntuOSVersion')]",
       "version": "latest"
     },
-    "imageReference": "[variables('osType')]",
-    "computeApiVersion": "2017-03-30",
-    "networkApiVersion": "2017-04-01",
-    "storageApiVersion": "2015-06-15"
+    "imageReference": "[variables('osType')]"
   },
   "resources": [
     {
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2017-04-01",
+      "location": "[parameters('location')]",
+      "apiVersion": "2018-04-01",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -113,17 +114,18 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('jumpBoxSAName')]",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2015-06-15",
-      "properties": {
-        "accountType": "[variables('storageAccountType')]"
-      }
+      "location": "[parameters('location')]",
+      "apiVersion": "2018-02-01",
+      "sku": {
+        "name": "[variables('storageAccountType')]"
+      },
+      "kind": "Storage"
     },
     {
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('jumpBoxNicName')]",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2017-04-01",
+      "location": "[parameters('location')]",
+      "apiVersion": "2018-06-01",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
@@ -148,8 +150,8 @@
     {
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2017-04-01",
+      "location": "[parameters('location')]",
+      "apiVersion": "2018-06-01",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
@@ -160,8 +162,8 @@
     {
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('jumpBoxName')]",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2017-03-30",
+      "location": "[parameters('location')]",
+      "apiVersion": "2018-06-01",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('jumpBoxSAName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('jumpBoxNicName'))]"
@@ -178,10 +180,7 @@
         "storageProfile": {
           "imageReference": "[variables('imageReference')]",
           "osDisk": {
-            "name": "[variables('jumpBoxOSDiskName')]",
-            "vhd": {
-              "uri": "[concat('http://',variables('jumpBoxSAName'),'.blob.core.windows.net/',variables('jumpBoxVHDContainerName'),'/',variables('jumpBoxOSDiskName'),'.vhd')]"
-            },
+            "name": "[concat(variables('jumpBoxOSDiskName'),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -204,8 +203,8 @@
     {
       "type": "Microsoft.Network/loadBalancers",
       "name": "[variables('loadBalancerName')]",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2017-04-01",
+      "location": "[parameters('location')]",
+      "apiVersion": "2018-06-01",
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
       ],
@@ -244,8 +243,8 @@
     {
       "type": "Microsoft.Compute/virtualMachineScaleSets",
       "name": "[variables('namingInfix')]",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2017-03-30",
+      "location": "[parameters('location')]",
+      "apiVersion": "2018-06-01",
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
         "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]"
