@@ -44,51 +44,43 @@
     },
     "forceUpdateTag": {
       "type": "string",
-      "defaultValue": "1.0",
+      "defaultValue": "[uniqueString(resourceGroup().id, deployment().name)]",
       "metadata": {
         "description": "Pass in an unique value like a GUID everytime the operation needs to be force run"
+      }
+    },
+    "resizeOSDisk": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Should the OS partition be resized to occupy full OS VHD before splitting system volume"
       }
     }
   },
   "variables": {
-    "computeApiVersion": "2017-03-30", 
-    "extensionName": "AzureDiskEncryption",
-    "extensionVersion": "2.1",
-    "encryptionOperation": "EnableEncryption",
-    "keyVaultURL": "[concat('https://', parameters('keyVaultName'), '.vault.azure.net/')]",
-    "keyVaultResourceID": "[concat(subscription().id,'/resourceGroups/',parameters('keyVaultResourceGroup'),'/providers/Microsoft.KeyVault/vaults/', parameters('keyVaultName'))]"
+    "keyVaultResourceID": "[resourceId(parameters('keyVaultResourceGroup'), 'Microsoft.KeyVault/vaults/', parameters('keyVaultName'))]"
   },
   "resources": [
     {
-      "type": "Microsoft.Compute/virtualMachineScaleSets",
-      "name": "[parameters('vmssName')]",
+      "type": "Microsoft.Compute/virtualMachineScaleSets/extensions",
+      "name": "[concat(parameters('vmssName'),'/', 'AzureDiskEncryption')]",
       "location": "[resourceGroup().location]",
-      "apiVersion": "[variables('computeApiVersion')]",
+      "apiVersion": "2017-03-30",
       "properties": {
-        "virtualMachineProfile": {
-          "extensionProfile": {
-            "extensions": [
-              {
-                "name": "[variables('extensionName')]",
-                "properties": {
-                  "publisher": "Microsoft.Azure.Security",
-                  "type": "[variables('extensionName')]",
-                  "typeHandlerVersion": "[variables('extensionVersion')]",
-                  "autoUpgradeMinorVersion": true,
-                  "forceUpdateTag": "[parameters('forceUpdateTag')]",
-                  "settings": {
-                    "EncryptionOperation": "[variables('encryptionOperation')]",
-				    "KeyVaultURL": "[variables('keyVaultURL')]",
-                    "KeyVaultResourceId": "[variables('keyVaultResourceID')]",
-                    "KeyEncryptionKeyURL": "[parameters('keyEncryptionKeyURL')]",
-                    "KekVaultResourceId": "[variables('keyVaultResourceID')]",					
-                    "KeyEncryptionAlgorithm": "[parameters('keyEncryptionAlgorithm')]",
-                    "VolumeType": "[parameters('volumeType')]"
-                  }                  
-                }
-              }
-            ]
-          }
+        "publisher": "Microsoft.Azure.Security",
+        "type": "AzureDiskEncryption",
+        "typeHandlerVersion": "2.2",
+        "autoUpgradeMinorVersion": true,
+        "forceUpdateTag": "[parameters('forceUpdateTag')]",
+        "settings": {
+          "EncryptionOperation": "EnableEncryption",
+          "KeyVaultURL": "[reference(variables('keyVaultResourceId'),'2018-02-14-preview').vaultUri]",
+          "KeyVaultResourceId": "[variables('keyVaultResourceID')]",
+          "KeyEncryptionKeyURL": "[parameters('keyEncryptionKeyURL')]",
+          "KekVaultResourceId": "[variables('keyVaultResourceID')]",
+          "KeyEncryptionAlgorithm": "[parameters('keyEncryptionAlgorithm')]",
+          "VolumeType": "[parameters('volumeType')]",
+          "ResizeOSDisk": "[parameters('resizeOSDisk')]"
         }
       }
     }
