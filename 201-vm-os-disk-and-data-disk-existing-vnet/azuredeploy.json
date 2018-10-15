@@ -42,12 +42,13 @@
         "description": "Name of the existing VNET"
       }
     },
-    "existingVirtualNetworkResourceGroup": {
-      "type": "string",
-      "metadata": {
-        "description": "Name of the existing VNET resource group"
+    "existingVirtualNetworkResourceGroup":{  
+      "type":"string",
+      "defaultValue":"[resourceGroup().name]",
+      "metadata":{  
+         "description":"Name of the existing VNET resource group"
       }
-    },
+   },
     "subnetName": {
       "type": "string",
       "metadata": {
@@ -65,13 +66,13 @@
   "variables": {
     "diagStorageAccountName": "[concat(parameters('vmName'), 'diag')]",
     "publicIPAddressType": "Dynamic",
-    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('existingVirtualNetworkName'),  parameters('subnetName'))]",
+    "subnetRef": "[resourceId(parameters('existingVirtualNetworkResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', parameters('existingVirtualNetworkName'),  parameters('subnetName'))]",
     "nicName": "[concat(parameters('vmName'), '-nic1')]",
     "publicIPAddressName": "[concat(parameters('vmName'), '-pip')]"
   },
   "resources": [
     {
-      "apiVersion": "2016-01-01",
+      "apiVersion": "2018-02-01",
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('diagStorageAccountName')]",
       "location": "[parameters('location')]",
@@ -122,7 +123,32 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/disks",
+      "apiVersion": "2017-03-30",
+      "name": "[concat(parameters('vmName'), '_OSdisk')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "creationData": {
+          "createOption": "Import",
+          "sourceUri": "[parameters('osDiskVhdUri')]"
+        },
+        "osType": "[parameters('osType')]"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/disks",
+      "apiVersion": "2017-03-30",
+      "name": "[concat(parameters('vmName'), '_Datadisk')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "creationData": {
+          "createOption": "Import",
+          "sourceUri": "[parameters('dataDisk0VhdUri')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
       "location": "[parameters('location')]",
@@ -130,7 +156,9 @@
         "displayName": "VirtualMachine"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]",
+        "[concat(parameters('vmName'), '_OSdisk')]",
+        "[concat(parameters('vmName'), '_Datadisk')]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -138,20 +166,18 @@
         },
         "storageProfile": {
           "osDisk": {
-            "name": "[concat(parameters('vmName'),'-osDisk')]",
             "osType": "[parameters('osType')]",
             "caching": "ReadWrite",
-            "vhd": {
-              "uri": "[parameters('osDiskVhdUri')]"
-            },
-            "createOption": "Attach"
+            "createOption": "Attach",
+            "managedDisk": {
+              "id": "[resourceId('Microsoft.Compute/disks', concat(parameters('vmName'), '_OSdisk'))]"
+            }
           },
           "dataDisks": [
             {
-              "name": "[concat(parameters('vmName'),'-dataDisk0')]",
               "lun": 0,
-              "vhd": {
-                "uri": "[parameters('dataDisk0VhdUri')]"
+              "managedDisk": {
+                "id": "[resourceId('Microsoft.Compute/disks', concat(parameters('vmName'), '_Datadisk'))]"
               },
               "caching": "ReadOnly",
               "createOption": "Attach"
@@ -167,7 +193,7 @@
         },
         "diagnosticsProfile": {
           "bootDiagnostics": {
-            "enabled": "true",
+            "enabled":  true ,
             "storageUri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('diagStorageAccountName')), '2016-01-01').primaryEndpoints.blob)]"
           }
         }
