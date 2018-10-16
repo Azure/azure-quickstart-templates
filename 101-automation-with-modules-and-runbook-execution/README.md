@@ -1,4 +1,4 @@
-# Azure Automation account with updating automation modules and runbook to register new application in active directory with a key
+# Automation account with modules updation and runbook execution to register Azure AD App
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-automation-with-modules-and-runbook-execution%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
