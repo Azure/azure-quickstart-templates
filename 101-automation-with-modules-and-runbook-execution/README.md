@@ -18,8 +18,8 @@ see the [Azure Automation Documentation](https://docs.microsoft.com/en-us/azure/
 
 ## What is new in this template
 
-This template creates an automation account after it imports and updates the azurerm.profile, azurerm.resources and azurerm.website from powershell gallery into the created automation account. When these modules are updated, a runbook from storage account is scheduled and executed.
- This runbook creates an application into the active directory and updates the web application settings, the web applicaion may be used to access and manage the azure resources that does not support access through managed service identity.
+This template creates an automation account, imports and updates the AzureRM.Profile, AzureRM.Resources and AzureRM.Website from powershell gallery. When these modules are updated, a runbook from storage account is scheduled and executed.
+ This runbook creates an application into the active directory and updates the web application settings, the web applicaion may be used to access and manage the Azure resources that do not support access through managed service identity.
 
  Notice that no custom scripts or chained-together ARM templates are required in this example.
 
@@ -27,8 +27,8 @@ This template does not use any other nested template, it directly uses the follo
 
 ## What is unique about this concept
 
-This templates describes how we can update the needed modules automatically that we need to schedule and run a runbook.
- It does not uses runasaccount to authenticate runbook to execute runbook code. It asks azure portal email and password from the user and uses these credentials to authenticate the runbook.
-The runbook is powershell runbook having powershell script to register an application into active directory and automatically updating the settings of a web application (can be used in other application).
+This templates describes how we can update the required modules to schedule and run a runbook, automatically.
+ It does not use RunAsAccount to authenticate runbook to execute runbook. It asks Azure portal email and password from the user and uses these credentials to authenticate the runbook.
+This is powershell runbook that registers an application into active directory and automatically updates the settings of a web application.
 
-This template is useful if someone want to deploy any application to azure marketplace as managed application and want to manage azure resource using some application(it may be rest api code or any sdk) with dynamically creating the service principal.
+This template is useful if you want to deploy any web application to Azure marketplace as managed application and want to manage Azure resources using this application(it may be rest api code or any sdk) with dynamically creating the service principal.
