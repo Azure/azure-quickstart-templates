@@ -37,7 +37,8 @@
     }
   },
   "variables": {
-    "availabilitySetName": "[concat(parameters('uniquePrefix'), 'av')]"
+    "availabilitySetName": "[concat(parameters('uniquePrefix'), 'av')]",
+    "imageName": "myCustomImage"
   },
   "resources": [
     {
@@ -64,7 +65,23 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Compute/images", 
+      "apiVersion": "2017-03-30", 
+      "name": "[variables('imageName')]", 
+      "location": "[resourceGroup().location]", 
+      "properties": { 
+        "storageProfile": { 
+          "osDisk": { 
+            "osType": "[parameters('OSType')]",
+            "osState": "Generalized", 
+            "blobUri": "[parameters('sourceImageURI')]",
+            "storageAccountType": "Standard_LRS" 
+          } 
+        } 
+      }
+    },
+    {
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat('vm', parameters('clusterName'), padLeft(copyIndex(), 2, '0'))]",
       "location": "[resourceGroup().location]",
@@ -73,7 +90,8 @@
         "count": "[parameters('instanceCountPerSA')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', 'nic', parameters('clusterName'), padLeft(copyindex(), 2, '0'))]"
+        "[concat('Microsoft.Network/networkInterfaces/', 'nic', parameters('clusterName'), padLeft(copyindex(), 2, '0'))]",
+        "[variables('imageName')]"
       ],
       "properties": {
         "availabilitySet": {
@@ -88,17 +106,8 @@
           "adminPassword": "[parameters('adminPassword')]"
         },
         "storageProfile": {
-          "osDisk": {
-            "name": "[concat(parameters('clusterName'),'-osDisk')]",
-            "osType": "[parameters('OSType')]",
-            "caching": "ReadWrite",
-            "createOption": "FromImage",
-            "image": {
-              "uri": "[parameters('sourceImageURI')]"
-            },
-            "vhd": {
-              "uri": "[concat(parameters('baseVHDURI'),'osdisk', parameters('clusterName'), padLeft(copyIndex(), 2, '0'), '.vhd')]"
-            }
+          "imageReference": { 
+            "id": "[resourceId('Microsoft.Compute/images', variables('imageName'))]" 
           }
         },
         "networkProfile": {

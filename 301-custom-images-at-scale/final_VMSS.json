@@ -43,11 +43,28 @@
     }
   },
   "variables": {
+    "imageName": "myCustomImage"
   },
   "resources": [
     {
+      "type": "Microsoft.Compute/images", 
+      "apiVersion": "2017-03-30", 
+      "name": "[variables('imageName')]", 
+      "location": "[resourceGroup().location]", 
+      "properties": { 
+        "storageProfile": { 
+          "osDisk": { 
+            "osType": "[parameters('OSType')]",
+            "osState": "Generalized", 
+            "blobUri": "[concat('https://',uniqueString(concat(resourceGroup().id, parameters('uniquePrefix'), copyIndex())), parameters('uniquePrefix'),'.blob.core.windows.net/vhds/',parameters('blobName'))]",
+            "storageAccountType": "Standard_LRS" 
+          } 
+        } 
+      }
+    },
+    {
       "type": "Microsoft.Compute/virtualMachineScaleSets",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "name": "[concat(parameters('uniquePrefix'), padLeft(copyindex(), 2, '0'))]",
       "location": "[resourceGroup().location]",
       "copy": {
@@ -65,14 +82,8 @@
         },
         "virtualMachineProfile": {
           "storageProfile": {
-            "osDisk": {
-              "name": "vmssosdisk",
-              "caching": "ReadOnly",
-              "createOption": "FromImage",
-              "osType": "[parameters('OSType')]",
-              "image": {
-                "uri": "[concat('https://',uniqueString(concat(resourceGroup().id, parameters('uniquePrefix'), copyIndex())), parameters('uniquePrefix'),'.blob.core.windows.net/vhds/',parameters('blobName'))]"
-              }
+            "imageReference": { 
+              "id": "[resourceId('Microsoft.Compute/images', variables('imageName'))]" 
             }
           },
           "osProfile": {
