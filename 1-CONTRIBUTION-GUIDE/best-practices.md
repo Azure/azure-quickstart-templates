@@ -283,8 +283,8 @@ The following code shows an example:
 After the parameters are added to the template all URIs can be created using the `uri()` function.
 ```json
 "variables": {
-        "scriptFileUri": "[uri(parameters('_artifactsLocation'), concat('scripts/configuration.sh', parameters('_artifactsLocationSasToken')))]",
-        "nestedtemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/jumpbox.json', parameters('_artifactsLocationSasToken')))]"
+        "scriptFileUri": "[uri(parameters('_artifactsLocation'), concat('scripts/configuration.sh?', parameters('_artifactsLocationSasToken')))]",
+        "nestedtemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/jumpbox.json?', parameters('_artifactsLocationSasToken')))]"
     },
 ```
 
