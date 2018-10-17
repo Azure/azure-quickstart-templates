@@ -110,7 +110,7 @@ then
 
     blobEndpoint=$( az storage account show -n "$artifactsStorageAccountName" -g "$artifactsResourceGroupName" -o json | jq -r '.primaryEndpoints.blob' )
 
-    parameterJson=$( echo "$parameterJson"  | jq "{_artifactsLocation: {value: "\"$blobEndpoint$artifactsStorageContainerName"\"}, _artifactsLocationSasToken: {value: \"?"$sasToken"\"}} + ." )
+    parameterJson=$( echo "$parameterJson"  | jq "{_artifactsLocation: {value: "\"$blobEndpoint$artifactsStorageContainerName/"\"}, _artifactsLocationSasToken: {value: \"?"$sasToken"\"}} + ." )
 
     artifactsStagingDirectory=$( echo "$artifactsStagingDirectory" | sed 's/\/*$//')
     artifactsStagingDirectoryLen=$((${#artifactsStagingDirectory} + 1))
