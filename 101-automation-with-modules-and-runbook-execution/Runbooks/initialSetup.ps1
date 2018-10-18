@@ -12,7 +12,7 @@
 [String] $AutomationAccountName,
 
 [parameter(Mandatory = $true)]
-[String] $SubscriptionName,
+[String] $SubscriptionId,
 
 [parameter(Mandatory = $true)]
 [String] $WebAppName
@@ -41,6 +41,7 @@ $cred = new-object -typename System.Management.Automation.PSCredential `
 Login-AzureRmAccount -Credential $cred
 
 Select-AzureRmSubscription -SubscriptionName $SubscriptionName
+Select-AzureRmSubscription -SubscriptionId $SubscriptionId
 
 #Login to runbook end
 
