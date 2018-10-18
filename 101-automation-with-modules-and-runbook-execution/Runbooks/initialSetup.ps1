@@ -40,7 +40,7 @@ $cred = new-object -typename System.Management.Automation.PSCredential `
       -argumentlist $UserName, $pass
 Login-AzureRmAccount -Credential $cred
 
-Select-AzureRmSubscription -SubscriptionName $SubscriptionName
+#Select-AzureRmSubscription -SubscriptionName $SubscriptionName
 Select-AzureRmSubscription -SubscriptionId $SubscriptionId
 
 #Login to runbook end
