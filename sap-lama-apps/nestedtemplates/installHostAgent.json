@@ -26,29 +26,46 @@
                 "description": "The version of the Custom Script Extension"
             }
         },
-        "sapcarLocation": {
-            "type": "string",
-            "metadata": {
-                "description": "The location for the sapcar application that matches the operating system you deploy. sapcar is used to extract the archives you provide in other parameters."
-            }
-        },
-        "sapHostAgentArchiveLocation": {
-            "type": "string",
-            "metadata": {
-                "description": "The location of the SAP Host Agent archive. SAP Host Agent is deployed as part of this template depoyment."
-            }
-        },
-        "sapacExtLocation": {
-            "type": "string",
-            "metadata": {
-                "description": "The location of the SAP Adaptive Extensions. SAP Note 2343511 lists the minimum patch level required for Azure."
-            }
-        },
-        "vcRedistLocation": {
+        "sapArtifactsLocation": {
             "type": "string",
             "defaultValue": "",
             "metadata": {
-                "description": "The location of the VC Runtime that is required to install the SAP Adaptive Extensions. This parameter is only required for Windows."
+                "description": "The location of the SAR archives. The location should contain archives for SAPCAR, SAP Host Agent, SAPACEXT,  Microsoft Visual C++ Redistributable and the Microsoft ODBC driver for SQL Server."
+            }
+        },
+        "sapArtifactsLocationSasToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The sasToken required to access sapArtifactsLocation."
+            },
+            "defaultValue": ""
+        },
+        "sapcarFilename": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "The filename for the sapcar application that matches the operating system you deploy. sapcar is used to extract the archives you provide in other parameters."
+            }
+        },
+        "sapHostAgentArchiveFilename": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "The filename of the SAP Host Agent archive. SAP Host Agent is deployed as part of this template depoyment."
+            }
+        },
+        "sapacExtArchiveFilename": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "The filename of the SAP Adaptive Extensions. SAP Note 2343511 lists the minimum patch level required for Azure."
+            }
+        },
+        "vcRedistFilename": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "The filename of the VC Runtime that is required to install the SAP Adaptive Extensions. This parameter is only required for Windows."
             }
         },
         "sapadmPassword": {
@@ -91,20 +108,20 @@
     },
     "variables": {
         "commands": {
-            "Linux": "[concat('groupadd -g ', parameters('sapsysGid') , ' sapsys; useradd -u ', parameters('sapadmId') , ' -g ', parameters('sapsysGid') , ' sapadm; ./sapcar -xvf SAPHOSTAGENT.SAR -R hostagent; pushd hostagent; ./saphostexec -install; popd; /usr/sap/hostctrl/exe/sapacosprep -a InstallAcExt -m SAPACEXT.SAR; echo ''sapadm:', parameters('sapadmPassword'), ''' | chpasswd')]",
-            "Windows": "[concat('.\\vcredist_x64.exe /q /norestart /log vcredistinstall.log & .\\sapcar.exe -xvf SAPHOSTAGENT.SAR -R hostagent & pushd hostagent & echo ', parameters('sapadmPassword') , '| .\\saphostexec.exe -install & popd & \"C:\\Program Files\\SAP\\hostctrl\\exe\\sapacosprep.exe\" -a InstallAcExt -m SAPACEXT.SAR')]"
+            "Linux": "[concat('groupadd -g ', parameters('sapsysGid') , ' sapsys; useradd -u ', parameters('sapadmId') , ' -g ', parameters('sapsysGid') , ' sapadm; ./', parameters('sapcarFilename'), ' -xvf ', parameters('sapHostAgentArchiveFilename'), ' -R hostagent; pushd hostagent; ./saphostexec -install; popd; /usr/sap/hostctrl/exe/sapacosprep -a InstallAcExt -m ', parameters('sapacExtArchiveFilename'), '; echo ''sapadm:', parameters('sapadmPassword'), ''' | chpasswd')]",
+            "Windows": "[concat('.\\', parameters('vcRedistFilename'), ' /q /norestart /log vcredistinstall.log & .\\', parameters('sapcarFilename'), ' -xvf ', parameters('sapHostAgentArchiveFilename'), ' -R hostagent & pushd hostagent & echo ', parameters('sapadmPassword') , '| .\\saphostexec.exe -install & popd & \"C:\\Program Files\\SAP\\hostctrl\\exe\\sapacosprep.exe\" -a InstallAcExt -m ', parameters('sapacExtArchiveFilename'), '')]"
         },
         "files": {
             "Linux": [
-                "[parameters('sapcarLocation')]",
-                "[parameters('sapHostAgentArchiveLocation')]",
-                "[parameters('sapacExtLocation')]"
+                "[uri(parameters('sapArtifactsLocation'), concat(parameters('sapcarFilename'), parameters('sapArtifactsLocationSasToken')))]",
+                "[uri(parameters('sapArtifactsLocation'), concat(parameters('sapHostAgentArchiveFilename'), parameters('sapArtifactsLocationSasToken')))]",
+                "[uri(parameters('sapArtifactsLocation'), concat(parameters('sapacExtArchiveFilename'), parameters('sapArtifactsLocationSasToken')))]"
             ],
             "Windows": [
-                "[parameters('sapcarLocation')]",
-                "[parameters('sapHostAgentArchiveLocation')]",
-                "[parameters('sapacExtLocation')]",
-                "[parameters('vcRedistLocation')]"
+                "[uri(parameters('sapArtifactsLocation'), concat(parameters('sapcarFilename'), parameters('sapArtifactsLocationSasToken')))]",
+                "[uri(parameters('sapArtifactsLocation'), concat(parameters('sapHostAgentArchiveFilename'), parameters('sapArtifactsLocationSasToken')))]",
+                "[uri(parameters('sapArtifactsLocation'), concat(parameters('sapacExtArchiveFilename'), parameters('sapArtifactsLocationSasToken')))]",
+                "[uri(parameters('sapArtifactsLocation'), concat(parameters('vcRedistFilename'), parameters('sapArtifactsLocationSasToken')))]"
             ]
         },
         "command": "[variables('commands')[parameters('osType')]]",
