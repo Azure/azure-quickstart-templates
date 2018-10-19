@@ -59,8 +59,10 @@ $TemplateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combin
 
 $TemplateJSON = Get-Content $TemplateFile -Raw | ConvertFrom-Json
 
+$ArtifactsLocationParameter = $TemplateJson | Select-Object -expand 'parameters' -ErrorAction Ignore | Select-Object -Expand '_artifactsLocation' -ErrorAction Ignore
+
 #if the switch is set or the standard parameter is present in the template, upload all artifacts
-if ($UploadArtifacts -Or (Get-Member -InputObject $TemplateJSON.parameters -Name _artifactsLocation -MemberType Properties) -ne $null) {
+if ($UploadArtifacts -Or $ArtifactsLocationParameter -ne $null) {
     # Convert relative paths to absolute paths if needed
     $ArtifactStagingDirectory = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $ArtifactStagingDirectory))
     $DSCSourceFolder = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $DSCSourceFolder))
@@ -98,10 +100,19 @@ if ($UploadArtifacts -Or (Get-Member -InputObject $TemplateJSON.parameters -Name
         $StorageAccount = New-AzureRmStorageAccount -StorageAccountName $StorageAccountName -Type 'Standard_LRS' -ResourceGroupName $StorageResourceGroupName -Location "$ResourceGroupLocation"
     }
 
+    $ArtifactStagingLocation = $StorageAccount.Context.BlobEndPoint + $StorageContainerName + "/"   
+
     # Generate the value for artifacts location if it is not provided in the parameter file
     if ($OptionalParameters[$ArtifactsLocationName] -eq $null) {
-        $OptionalParameters[$ArtifactsLocationName] = $StorageAccount.Context.BlobEndPoint + $StorageContainerName + "/"
-    }
+        #if the defaultValue for _artifactsLocation is using the template location, use the defaultValue, otherwise set it to the staging location
+        $defaultValue = $ArtifactsLocationParameter | Select-Object -Expand 'defaultValue' -ErrorAction Ignore
+        if($defaultValue -like '*deployment().properties.templateLink.uri*') {
+            $OptionalParameters.Remove($ArtifactsLocationName)
+        }
+        else {
+            $OptionalParameters[$ArtifactsLocationName] = $ArtifactStagingLocation   
+        }
+    } 
 
     # Copy files from the local storage staging location to the storage account container
     New-AzureStorageContainer -Name $StorageContainerName -Context $StorageAccount.Context -ErrorAction SilentlyContinue *>&1
@@ -119,7 +130,7 @@ if ($UploadArtifacts -Or (Get-Member -InputObject $TemplateJSON.parameters -Name
         $OptionalParameters[$ArtifactsLocationSasTokenName] = (New-AzureStorageContainerSASToken -Container $StorageContainerName -Context $StorageAccount.Context -Permission r -ExpiryTime (Get-Date).AddHours(4))
     }
 
-    $TemplateArgs.Add('TemplateFile', $OptionalParameters[$ArtifactsLocationName] + (Get-ChildItem $TemplateFile).Name + $OptionalParameters[$ArtifactsLocationSasTokenName])
+    $TemplateArgs.Add('TemplateFile', $ArtifactStagingLocation + (Get-ChildItem $TemplateFile).Name + $OptionalParameters[$ArtifactsLocationSasTokenName])
 
     $OptionalParameters[$ArtifactsLocationSasTokenName] = ConvertTo-SecureString $OptionalParameters[$ArtifactsLocationSasTokenName] -AsPlainText -Force
 
