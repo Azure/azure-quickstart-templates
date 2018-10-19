@@ -20,7 +20,7 @@ while getopts "a:l:s:f:g" opt; do
     esac
 done
 
-#you must be logged into azure beofer running this script - run "az login"
+#you must be logged into azure before running this script - run "az login"
 subscriptionId=$( az account show -o json | jq -r '.id' )
 subscriptionId="${subscriptionId//-/}" 
 subscriptionId="${subscriptionId:0:19}"
