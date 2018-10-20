@@ -2,11 +2,31 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "keyVaultName": {
+      "type": "string",
+      "metadata": {
+        "description": "keyvault name"
+      }
+    },
+    "keyVaultbasestring": {
+      "type": "string",
+      "metadata": {
+        "description": "keyvault secret base 64 string"
+      }
+    },
+    "objectId": {
+      "type": "string"
+    }
   },
   "variables": {
     "storagename": "[concat('storage', uniqueString(resourceGroup().id))]",
     "batchname": "[concat('batch', uniqueString(resourceGroup().id))]",
-    "locationname": "[resourceGroup().location]"
+    "locationname": "[resourceGroup().location]",
+    "keyvaultname": "[concat('keyvault', uniqueString(resourceGroup().id))]",
+    "tenantId": "[subscription().tenantId]",
+    "MyCert1": "MyCert1",
+    "MyCert1pwd": "MyCert1pwd"
+
   },
   "resources": [
     {
@@ -34,12 +54,169 @@
         "[resourceId('Microsoft.Storage/storageAccounts', variables('storagename'))]"
       ]
 
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults",
+      "name": "[variables('keyvaultname')]",
+      "apiVersion": "2016-10-01",
+      "location": "[variables('locationname')]",
+      "tags": {
+        "creationdate": "utcnow()"
+      },
+      "scale": null,
+      "properties": {
+        "sku": {
+          "family": "A",
+          "name": "standard"
+        },
+        "tenantId": "[variables('tenantId')]",
+        "accessPolicies": [
+          {
+            "tenantId": "[variables('tenantId')]",
+            "objectId":  "[parameters('objectId')]",
+            "permissions": {
+              "keys": [
+                "get",
+                "list",
+                "update",
+                "create",
+                "import",
+                "delete",
+                "recover",
+                "backup",
+                "restore"
+              ],
+              "secrets": [
+                "get",
+                "list",
+                "set",
+                "delete",
+                "recover",
+                "backup",
+                "restore"
+              ],
+              "certificates": [
+                "get",
+                "list",
+                "update",
+                "create",
+                "import",
+                "delete",
+                "recover",
+                "managecontacts",
+                "manageissuers",
+                "getissuers",
+                "listissuers",
+                "setissuers",
+                "deleteissuers"
+              ],
+              "storage": []
+            }
+          },
+          {
+            "tenantId": "[variables('tenantId')]",
+            "objectId": "[parameters('objectId')]",
+            "permissions": {
+              "keys": [
+                "get",
+                "list",
+                "update",
+                "create",
+                "import",
+                "delete",
+                "recover",
+                "backup",
+                "restore"
+              ],
+              "secrets": [
+                "get",
+                "list",
+                "set",
+                "delete",
+                "recover",
+                "backup",
+                "restore"
+              ],
+              "certificates": [
+                "get",
+                "list",
+                "update",
+                "create",
+                "import",
+                "delete",
+                "recover",
+                "managecontacts",
+                "manageissuers",
+                "getissuers",
+                "listissuers",
+                "setissuers",
+                "deleteissuers"
+              ],
+              "storage": []
+            }
+          }
+        ],
+        "enabledForDeployment": true,
+        "enabledForDiskEncryption": true,
+        "enabledForTemplateDeployment": true
+      },
+      "dependsOn": []
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "name": "[concat(parameters('keyVaultName'), '/', variables('MyCert1'))]",
+      "apiVersion": "2016-10-01",
+      "location": "southeastasia",
+      "tags": {},
+      "scale": null,
+      "properties": {
+        "contentType": "application/x-pkcs12",
+        "value": "[parameters('keyVaultbasestring')]",
+        "attributes": {
+          "enabled": true
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "name": "[concat(parameters('keyVaultName'), '/', variables('MyCert1pwd'))]",
+      "apiVersion": "2016-10-01",
+      "location": "southeastasia",
+      "scale": null,
+      "properties": {
+        "value": "manishsharmaQ11@",
+        "attributes": {
+          "enabled": true
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+      ]
     }
   ],
   "outputs": {
     "batchservice": {
       "type": "string",
       "value": "[variables('batchname')]"
+    },
+    "keyVaultName": {
+      "type": "string",
+      "value": "[parameters('keyVaultName')]"
+    },
+    "MyCert1": {
+      "type": "string",
+      "value": "[concat(parameters('keyVaultName'), '/', variables('MyCert1'))]"
+    },
+    "MyCert1pwd": {
+      "type": "string",
+      "value": "[concat(parameters('keyVaultName'), '/', variables('MyCert1pwd'))]"
+    },
+    "keyVaultId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
     }
   }
-}
+  }
