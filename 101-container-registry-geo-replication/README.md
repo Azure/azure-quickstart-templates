@@ -1,4 +1,4 @@
-# Solution name
+# Azure Container Registry with Geo-replication
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-container-registry-geo-replication%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
@@ -7,33 +7,16 @@
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
-To deploy this template using the scripts from the root of this repo:
-
-```PowerShell
-.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactsStagingDirectory '101-container-registry-geo-replication'
-```
-```bash
-azure-group-deploy.sh -a '101-container-registry-geo-replication' -l eastus -u
-```
-
 This template deploys an Azure Container Registry with [Geo Replication enabled](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-geo-replication). Azure Container Registry is a PaaS offer for creating your own Docker image registry.
 
 `Tags: Azure Container Registry, Docker`
 
 ## Solution overview and deployed resources
 
-This is an overview of the solution
-
 The following resources are deployed as part of the solution. Note the Azure Container Registry is set to **Premium** sku which is required to support Geo-Replication.
 
 + **Azure Container Registry**: Docker image registry
 + **Geo-Replicated registry**:  Docker image registry replication
-
-## Deployment steps
-
-You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
-
-## Usage
 
 ## Login to your registry
 
