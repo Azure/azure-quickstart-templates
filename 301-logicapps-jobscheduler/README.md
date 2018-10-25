@@ -109,6 +109,8 @@ There is also an error handler that can be called when the **Job** actions fail.
 
 The Logic App template Cancel Run By Correlation Id can be used in tandem with this solution to cancel running timer jobs. This template can be found in the list of templates shown when creating a new logic app.
 
+Logic Apps has a [Log Analytics solution pack](https://docs.microsoft.com/azure/logic-apps/logic-apps-monitor-your-logic-apps-oms) that can be used to monitor and get insisghts of the logic apps.
+
 ## Notes
 
 Learn more about Logic Apps
