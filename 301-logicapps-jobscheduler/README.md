@@ -103,13 +103,13 @@ By default the timer job will call an HTTP endpoint. Update the timer job logic 
 
 There is also an error handler that can be called when the **Job** actions fail.
 
-+ To configure error handling, in the TimerJob logic app addi actions to the **On Error** scope. The actions in the **On Error** scope will execute if one of the actions in the **Job** scope failed to execute.
++ To configure error handling, in the TimerJob logic app, add actions to the **On Error** scope. The actions in the **On Error** scope will execute if one of the actions in the **Job** scope failed to execute.
 
 ### Management
 
 The Logic App template Cancel Run By Correlation Id can be used in tandem with this solution to cancel running timer jobs. This template can be found in the list of templates shown when creating a new logic app.
 
-Logic Apps has a [Log Analytics solution pack](https://docs.microsoft.com/azure/logic-apps/logic-apps-monitor-your-logic-apps-oms) that can be used to monitor and get insisghts of the logic apps.
+Logic Apps has a [Log Analytics solution pack](https://docs.microsoft.com/azure/logic-apps/logic-apps-monitor-your-logic-apps-oms) that can be used to monitor and get insisghts of the logic apps runs.
 
 ## Notes
 
