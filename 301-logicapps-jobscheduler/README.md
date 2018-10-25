@@ -13,7 +13,7 @@ This template deploys a **Logic App job scheduler**. The **Logic App job schedul
 
 ## Solution overview and deployed resources
 
-The CreateTimerJob logic app acts as an API that will allow you to create a new timer job instance on a schedule passed in as input to the request. Each time you call CreateTimerJob it will create a new instance of a TimerJob.
+The CreateTimerJob logic app acts as an API that will allow you to create a new timer job instance on a schedule passed in as input to the request. Each time you call CreateTimerJob it will create a new instance of a TimerJob. Each of the timer job instances will continue to run on the prescribed schedule contninuosly or until the limit (end time or count) passed in is met.
 
 Since these are instances of a logic app, not logic apps definitions/resources, you can create as many of these timer job instances as you like.
 
@@ -23,12 +23,12 @@ The following resources are deployed as part of the solution:
 
 Logic Apps provides serverless event triggered workflows that integrate disparate services inside and outside of Azure as well as on-prem.
 
-+ **CreateTimerJobLogicApp**: Logic App definition that acts as an API to create new timer jobs based on a provided recurring schedule.
-+ **TimerJobLogicApp**: Executes the prescribed job on the schedule provided.
++ **CreateTimerJob LogicApp**: Logic App definition that acts as an API to create new timer jobs based on a provided recurring schedule.
++ **TimerJob LogicApp**: Executes the prescribed job on the schedule provided.
 
 ## Prerequisites
 
-By default the timer job will call an HTTP endpoint. Update the timer job logic app by replacing the HTTP action in the Job scope to the action, or set of actions, you want to perform as the timer job.
+None.
 
 ## Deployment steps
 
@@ -36,7 +36,7 @@ You can click the "deploy to Azure" button at the beginning of this document or 
 
 ## Usage
 
-To get the URL to call:
+To get the URL to call and create a new timer job:
 
 + Open the CreateTimerJob logic app
 + Expand the When a HTTP request is received trigger action
@@ -92,14 +92,18 @@ To create a new TimerJob instance, use Postman to make a POST call and send it a
 + When both endTime and count are used the first limit criteria encountered will complete the timer job
 
 ### Headers
-Make sure you include the following header:
+Since we are passing a JSON payload make sure you include the following header as part of the request:
 
 + Content-Type: application/json
 
-Each of the timer job instances will continue to run on the prescribed schedule contninuosly or until the limit (end time or count) passed in is met.
-
 ### Customize
-In the TimerJob logic app change the HTTP action in the **Job** scope to be whatever you action(s) want your job to execute on the prescribed schedule. There is also an error handler that can be configured by adding actions to the **On Error** scope. The actions in the **On Error** scope will be executed if one of the actions in the **Job** scope failed to execute.
+By default the timer job will call an HTTP endpoint. Update the timer job logic app by replacing the HTTP action in the Job scope to the action, or set of actions, you want to perform as the timer job.
+
++ In the TimerJob logic app change the HTTP action in the **Job** scope to be whatever you action(s) want your job to execute on the prescribed schedule.
+
+There is also an error handler that can be called when the **Job** actions fail.
+
++ To configure error handling, in the TimerJob logic app addi actions to the **On Error** scope. The actions in the **On Error** scope will execute if one of the actions in the **Job** scope failed to execute.
 
 ### Management
 
