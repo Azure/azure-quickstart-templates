@@ -13,24 +13,9 @@ This template deploys a **Logic App job scheduler**. The **Logic App job schedul
 
 ## Solution overview and deployed resources
 
-The CreateTimerJob logic app acts as an API that will allow you to create a new timer job instance on a schedule passed in as input to the request. If you call CreateTimeJob again, that can be with a different schedule, it will create a new instance of TimerJob. 
+The CreateTimerJob logic app acts as an API that will allow you to create a new timer job instance on a schedule passed in as input to the request. Each time you call CreateTimerJob, that can each have a different schedule, it will create a new instance of a TimerJob.
 
-You can use Postman (or another Logic App) to try calling CreateTimerJob and send it a payload similar to the following:
-{
-   "timerjobid": "MyCorrelationId", // Correlate runs and find running jobs by this id
-   "startTime": "2018-09-30T06:10:49.9712118Z", // Optional. Allows a timer job to start in the future.
-   "jobRecurrence":{
-       "frequency":"minute", // Can be one of second, minute, hour, week, month
-       "interval": 1, // Interval for provided frequency
-       "count": 2, // Optional. Limit property that indicates how many times this job should run
-       "endTime": "2018-12-31T08:08:00.000Z" //Optional. Limit property that indicates when this timer job should stop running
-   }
-}
-
-Each of the timer job instances will continue to run on the prescribed schedule contninuosly or until the limit (end time or count) passed in is met.
-Since these are instances, not logic apps definitions/resources, then you can create as many of these timer job instances as you like.
-
-In the TimerJob logic app change the HTTP action to be whatever you action want your job to execute on the prescribed schedule.
+Since these are instances of a logic app, not logic apps definitions/resources, you can create as many of these timer job instances as you like.
 
 The following resources are deployed as part of the solution
 
@@ -51,6 +36,56 @@ You can click the "deploy to Azure" button at the beginning of this document or 
 
 ## Usage
 
+You can use Postman (or another Logic App) to try calling CreateTimerJob and send it a payload similar to the following to create a new TimerJob instance:
+
+```
+{
+   "timerjobid": "MyCorrelationId",
+   "startTime": "2018-09-30T06:10:49.9712118Z",
+   "jobRecurrence":{
+       "frequency":"minute",
+       "interval": 1,
+       "count": 2
+   }
+}
+```
+
+***timerjobid***
+
++ Correlate runs and find running jobs by this id
+
+***startTime***
+
++ Optional
++ Allows a timer job to start in the future
+
+***jobRecurrence***
+
++ Object that defines the job recurrence
+
+***frequency***
+
++ Can be one of second, minute, hour, week, month
+
+***interval***
+
++ Interval for given frequency
+
+***count***
+
++ Optional
++ Limit property that indicates how many times this job should run
+
+***endTime***
+
++ Optional
++ Limit property that indicates when this timer job should stop running
++ Example: "2018-12-31T08:08:00.000Z"
++ When both endTime and count are used the first limit criteria encountered will complete the timer job
+
+Each of the timer job instances will continue to run on the prescribed schedule contninuosly or until the limit (end time or count) passed in is met.
+
+In the TimerJob logic app change the HTTP action to be whatever you action want your job to execute on the prescribed schedule.
 
 #### Management
 
@@ -58,4 +93,7 @@ The Logic App template Cancel Run By Correlation Id can be used in tandem with t
 
 ## Notes
 
-Solution notes
+Learn more about Logic Apps
+
++ **[Azure Logic Apps](https://docs.microsoft.com/azure/logic-apps/logic-apps-overview)**
++ **See [Scheduling in Logic Apps](https://docs.microsoft.com/azure/connectors/connectors-native-recurrence#trigger-details) to better understand recurrence**
