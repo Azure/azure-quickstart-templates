@@ -19,7 +19,7 @@ In order to deploy this template, you need to have the following resources:  <br
 By default, 'Microsoft.Azure.WebSites' Resource Provider (RP) doesn't have access to the Key Vault specified in the template hence you need to authorize it by executing 
 the following PowerShell commands before deploying the template:  <br />
 
-```
+```PowerShell
 Login-AzureRmAccount
 Set-AzureRmContext -SubscriptionId AZURE_SUBSCRIPTION_ID
 Set-AzureRmKeyVaultAccessPolicy -VaultName KEY_VAULT_NAME -ServicePrincipalName abfa0a7c-a6b6-4736-8310-5855508787cd -PermissionsToSecrets get
@@ -35,7 +35,7 @@ https://azure.microsoft.com/en-us/documentation/articles/web-sites-custom-domain
 
 PowerShell script to upload certificate into a Key Vault Secret:
 
-```    
+```PowerShell
 $pfxFilePath = "PFX_CERTIFICATE_FILE_PATH" # Change this path
 $pwd = "PFX_CERTIFICATE_PASSWORD"  # Change this password
 $flag = [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable
