@@ -12,11 +12,7 @@
 [String] $AutomationAccountName,
 
 [parameter(Mandatory = $true)]
-[String] $SubscriptionId,
-
-[parameter(Mandatory = $true)]
-[String] $WebAppName
-
+[String] $SubscriptionId
 )
 
 #$UserName= ""
@@ -49,24 +45,5 @@ Select-AzureRmSubscription -SubscriptionId $SubscriptionId
 
 $adApp = New-AzureRmADApplication -DisplayName "mytestapp" -HomePage "http://mytestapp.com" -IdentifierUris "http://mytestapp.com"  -Password $passAzureAd
 
-
 #add an application to active directory end
-
-#set appsettings of web application to access data factory from appId and Key start
-
-$webApp = Get-AzureRmWebApp -ResourceGroupName $ResourceGroupName -Name $WebAppName
-$appSettings = $webapp.SiteConfig.AppSettings
-$newAppSettings = @{}
-
-ForEach ($item in $appSettings) {
-$newAppSettings[$item.Name] = $item.Value
-}
-
-$newAppSettings['ApplicationId'] = $adApp.ApplicationId.ToString()
-$newAppSettings['Password'] = $adPass
-
-Set-AzureRmWebApp -AppSettings $newAppSettings -Name $WebAppName -ResourceGroupName $ResourceGroupName
-
-
-#set appsettings of web application to access data factory from appId and Key end
 
