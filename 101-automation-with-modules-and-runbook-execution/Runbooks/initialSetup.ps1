@@ -6,9 +6,6 @@
 [String] $Password,
 
 [parameter(Mandatory = $true)]
-[String] $ResourceGroupName,
-
-[parameter(Mandatory = $true)]
 [String] $AutomationAccountName,
 
 [parameter(Mandatory = $true)]
