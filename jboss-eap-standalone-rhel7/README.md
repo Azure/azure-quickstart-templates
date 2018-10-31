@@ -1,7 +1,7 @@
 
 # Red Hat Middleware Azure Quickstart templates
 
-Bookmark [aka.ms/OpenShift](http://aka.ms/jboss) for future reference.
+Bookmark [aka.ms/JBoss](http://aka.ms/jboss) for future reference.
 
 This project contains the Azure Quickstart templates for Red Hat Middleware products.  They are:
 
