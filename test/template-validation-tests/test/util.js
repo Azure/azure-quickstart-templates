@@ -8,41 +8,57 @@ var _this = this;
 var createUiDefFileName = "createuidefinition.json";
 var mainTemplateFileName = "maintemplate.json";
 
-exports.getFiles = function getFiles(folder, fileType) {
+// Get files in the root folder and in the nested folder if recursive is set true, otherwise only get files in the root folder
+exports.getFiles = function getFiles(folder, fileType, filelist, recursive) {
     if (folder == './') {
         folder = __dirname + '/../';
     }
-    if (fileType) {
-        return fs.readdirSync(folder).filter(function(file) {
-            return file.toLowerCase().endsWith(fileType);
-        });
-    } else {
-        return fs.readdirSync(folder);
+    if (folder.toLowerCase().endsWith('__macosx') || folder.toLowerCase().endsWith('source.temp')) { //skip Mac zip folder or temp folder for AMA
+        return filelist;
     }
+    var files = fs.readdirSync(folder);
+    filelist = filelist || [];
+    files.forEach(function(file) {
+        if (fs.statSync(path.join(folder, file)).isDirectory() && recursive) {
+            filelist = getFiles(path.join(folder, file), fileType, filelist, recursive);
+        } else {
+            if (file.toLowerCase().endsWith(fileType)) {
+                filelist.push(path.join(folder, file));
+            }
+        }
+    });
+    return filelist;
 };
 
 // Get create ui def file
 exports.getCreateUiDefFile = function getCreateUiDefFile(folder) {
-    var createUiDefFiles = _this.getFiles(folder, createUiDefFileName);
+    var createUiDefFiles = [];
+    createUiDefFiles = _this.getFiles(folder, createUiDefFileName, createUiDefFiles, true);
     createUiDefFiles.length.should.equals(1, 'Only one createUiDefinition.json file should exist, but found ' + createUiDefFiles.length + ' file(s) in path ' + folder);
-    var fileString = fs.readFileSync(path.resolve(folder, createUiDefFiles[0]), {
+    var fileString = fs.readFileSync(path.resolve(createUiDefFiles[0]), {
         encoding: 'utf8'
     }).trim();
     return {
-        file: path.resolve(folder, createUiDefFiles[0]),
+        file: path.resolve(createUiDefFiles[0]),
         jsonObject: JSON.parse(fileString)
     };
 };
 
 // Get main template file
 exports.getMainTemplateFile = function getMainTemplateFile(folder) {
-    var mainTemplateFiles = _this.getFiles(folder, mainTemplateFileName);
-    mainTemplateFiles.length.should.equals(1, 'Only one mainTemplate.json file should exist, but found ' + mainTemplateFiles.length + ' file(s)');
-    var fileString = fs.readFileSync(path.resolve(folder, mainTemplateFiles[0]), {
+    var mainTemplateFiles = [];
+    mainTemplateFiles = _this.getFiles(folder, mainTemplateFileName, mainTemplateFiles, true);
+    var rootMainTemplateFiles = [];
+    rootMainTemplateFiles = _this.getFiles(folder, mainTemplateFileName, rootMainTemplateFiles, false);
+    /** There must be one mainTemplate.json in the root folder. */
+    rootMainTemplateFiles.length.should.equals(1, 'Only one mainTemplate.json file should exist in the root folder, but found ' + mainTemplateFiles.length + ' file(s)');
+    /** There cannot be more than one mainTemplate.json in the root folder and nested folders. */
+    mainTemplateFiles.length.should.equals(1, 'Only one mainTemplate.json file should exist, but found ' + mainTemplateFiles.length + ' file(s) in path ' + path.resolve(folder));
+    var fileString = fs.readFileSync(path.resolve(mainTemplateFiles[0]), {
         encoding: 'utf8'
     }).trim();
     return {
-        file: path.resolve(folder, mainTemplateFiles[0]),
+        file: path.resolve(mainTemplateFiles[0]),
         jsonObject: JSON.parse(fileString)
     };
 };
@@ -64,21 +80,22 @@ exports.getObjects = function getObjects(obj, key, val) {
 
 // Get template files
 exports.getTemplateFiles = function getTemplateFiles(folder) {
-    var templateFiles = _this.getFiles(folder, '.json');
+    var templateFiles = [];
+    templateFiles = _this.getFiles(folder, '.json', templateFiles, true);
     var files = [];
     var fileJSONObjects = [];
     templateFiles.forEach(f => {
         if (f.toLowerCase().indexOf(createUiDefFileName) == -1) {
-            var fileString = fs.readFileSync(path.resolve(folder, f), {
+            var fileString = fs.readFileSync(path.resolve(f), {
                 encoding: 'utf8'
             }).trim();
             var jsonObject = JSON.parse(fileString);
             if (jsonObject.$schema && jsonObject.$schema.match('schema.management.azure.com/schemas/(.*)/deploymentTemplate.json')) {
-                files.push(path.resolve(folder, f));
+                files.push(path.resolve(f));
                 fileJSONObjects.push({
                     filename: f,
                     value: jsonObject,
-                    filepath: path.resolve(folder, f)
+                    filepath: path.resolve(f)
                 });
             }
         }

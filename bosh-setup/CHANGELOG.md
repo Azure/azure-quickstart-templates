@@ -1,3 +1,29 @@
+# v5.0.0 (2018-08-31)
+
+- Upgrade Azure CPI version to v35.4.0. Please see new features in [bosh-azure-cpi-release v35.4.0](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v35.4.0)
+- Use cf-deployment [v4.0.0](https://github.com/cloudfoundry/cf-deployment/tree/v4.0.0)
+- Bump bosh-deployment
+- Use Azure Storage as blobstore in Azure Stack
+- Bump bosh-cli to 5.1.2
+
+# v4.1.0 (2018-08-02)
+
+- Use cf-deployment [v3.0.0](https://github.com/cloudfoundry/cf-deployment/tree/v3.0.0)
+- Update runtime-config for BOSH DNS
+- Deploy UAA and credhub in BOSH director
+- Use General Purpose v2 storage account
+- Support ubuntu-xenial stemcell
+- Add load balancing rule for UDP port for standard LB
+- Use `Standard_D11_v2` for compilation VMs
+
+# v4.0.0 (2018-06-23)
+
+- Use cf-deployment [v2.2.0](https://github.com/cloudfoundry/cf-deployment/tree/v2.2.0)
+- Use bosh-deployment [v1.0.0](https://github.com/cloudfoundry/bosh-deployment/tree/v1.0.0)
+- Use standard load balancer by default
+- Add a new parameter to specify cloud foundry system domain
+- Use Azure CLI v2 when uploading artifacts in Azure China
+
 # v3.10.0 (2018-06-13)
 
 - Upgrade Azure CPI version to v35.3.0. Please see new features in [bosh-azure-cpi-release v35.3.0](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v35.3.0)
@@ -276,7 +302,7 @@
   - Upgrade bosh_cli version to 1.3169.0
   - Upgrade bosh-init version to 0.0.81
   - Upgrade API version to the latest 2015-06-15
-  - Upgrade to Ubuntu Server 14.04.5 LTS
+  - Upgrade to Ubuntu Server 14.04.3 LTS
   - Upgrade the default "storageAccountType" into Standard_RAGRS
   - Upgrade the version of CustomScript Extension to 1.4
     - Download the scripts and manifests via fileUris
