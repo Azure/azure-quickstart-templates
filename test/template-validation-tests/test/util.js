@@ -88,9 +88,9 @@ exports.getTemplateFiles = function getTemplateFiles(folder) {
         if (f.toLowerCase().indexOf(createUiDefFileName) == -1) {
             var fileString = fs.readFileSync(path.resolve(f), {
                 encoding: 'utf8'
-            }).trim();
+            }).trim().toLowerCase();
             var jsonObject = JSON.parse(fileString);
-            if (jsonObject.$schema && jsonObject.$schema.match('schema.management.azure.com/schemas/(.*)/deploymentTemplate.json')) {
+            if (jsonObject.$schema && jsonObject.$schema.match('schema.management.azure.com/schemas/(.*)/deploymenttemplate.json')) {
                 files.push(path.resolve(f));
                 fileJSONObjects.push({
                     filename: f,
