@@ -1,0 +1,375 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminUsername": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "User name for the Virtual Machine and OpenShift Webconsole."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "User password for the OpenShift Webconsole"
+      }
+    },
+    "dnsLabelPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "DNS Label for the Public IP. Must be lowercase. It should match with the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ or it will raise an error."
+      }
+    },
+    "rhsmUser": {
+      "type": "string",
+      "metadata": {
+        "description": "Red Hat Subscription Manager User"
+      }
+    },
+    "rhsmPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Red Hat Subsciption Manager Password"
+      }
+    },
+    "rhsmPool": {
+      "type": "string",
+      "metadata": {
+        "description": "Red Hat Subscription Manager Pool(Must contain OpenShift entitlement)."
+      }
+    },
+    "sshKeyData": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH RSA public key file as a string."
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D4_v3",
+      "allowedValues": [
+        "Standard_D4_v3",
+        "Standard_D8_v3",
+        "Standard_DS4_v2",
+        "Standard_DS4_v3",
+        "Standard_DS8_v3",
+        "Standard_DS16_v3"
+      ],
+      "metadata": {
+        "description": "The size of the Virtual Machine."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/MyriamFentanes/azure-quickstart-templates/master/101-dukes-eap-openshift"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "ScriptFolder": "scripts",
+    "ScriptFileName": "allinone.sh",
+    "gituser": "openshift",
+    "branch": "master",
+    "version": "3.7",
+    "baseTemplateUrl": "https://raw.githubusercontent.com/MyriamFentanes/azure-quickstart-templates/master/101-dukes-eap-openshift",
+    "location": "[resourceGroup().location]",
+    "virtualNetworkName": "openshiftVnet",
+    "addressPrefix": "10.0.0.0/16",
+    "vhdStorageType": "Premium_LRS",
+    "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
+    "rhel": {
+      "publisher": "Redhat",
+      "offer": "RHEL",
+      "sku": "7-RAW",
+      "version": "latest"
+    },
+    "baseVMachineTemplateUriOneVm": "[concat(variables('baseTemplateUrl'), 'onevm.json')]",
+    "vmSizesMap": {
+      "storageAccountType": "Premium_LRS"
+    },
+    "Standard_D4_v3": {
+      "storageAccountType": "Premium_LRS"
+    },
+    "Standard_D8_v3": {
+      "storageAccountType": "Premium_LRS"
+    },
+    "Standard_DS4_v2": {
+      "storageAccountType": "Premium_LRS"
+    },
+    "Standard_DS4_v3": {
+      "storageAccountType": "Premium_LRS"
+    },
+    "Standard_DS8_v3": {
+      "storageAccountType": "Premium_LRS"
+    },
+    "Standard_DS16_v3": {
+      "storageAccountType": "Premium_LRS"
+    },
+    "apiVersion": "2015-06-15",
+    "apiVersionCompute": "2015-06-15",
+    "apiVersionNetwork": "2016-03-30",
+    "tmApiVersion": "2015-11-01",
+    "apiVersionStorage": "2016-01-01",
+    "apiVersionLinkTemplate": "2015-01-01",
+    "nicName": "OneVmNic",
+    "publicIPAddressName": "onevmPublicIP",
+    "publicIPAddressType": "Dynamic",
+    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('virtualNetworkName'))]",
+    "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
+    "publicIpRef": "[concat('Microsoft.Network/publicIPAddresses/',variables('publicIPAddressName'))]",
+    "sQuote": "\""
+  },
+  "resources": [
+    {
+      "apiVersion": "2017-03-30",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[resourceGroup().name]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[resourceGroup().name]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": "true",
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[variables('sshKeyPath')]",
+                  "keyData": "[parameters('sshKeyData')]"
+                }
+              ]
+            }
+          }
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "RedHat",
+            "offer": "RHEL",
+            "sku": "7-RAW",
+            "version": "latest"
+          },
+          "osDisk": {
+            "caching": "ReadWrite",
+            "name": "osdisk",
+            "createOption": "FromImage",
+            "diskSizeGB": "128"
+          },
+          "dataDisks": [
+            {
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": "128",
+              "lun": 0,
+              "name": "datadisk0"
+            },
+            {
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": "128",
+              "lun": 1,
+              "name": "datadisk1"
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "apiVersion": "2017-04-01",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+              },
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2017-04-01",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publicIPAllocationMethod": "Static",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('dnsLabelPrefix')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[variables('location')]",
+      "tags": {
+        "displayName": "VirtualNetwork"
+      },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('virtualNetworkName')]",
+            "properties": {
+              "addressPrefix": "[variables('addressPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(resourceGroup().name,'/installcustomscript')]",
+      "apiVersion": "[variables('apiVersion')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "VirtualMachineCustomScriptExtension"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', resourceGroup().name)]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[concat(parameters('_artifactsLocation'), '/', variables('ScriptFolder'), '/', variables('ScriptFileName'))]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "[ concat('bash allinone.sh ',' ', resourceGroup().name, ' ', parameters('dnsLabelPrefix'), ' ',  parameters('adminUsername'), ' ', parameters('adminPassword'), ' ', reference(variables('publicIPAddressName')).dnsSettings.fqdn, ' ', parameters('rhsmUser'), ' ', parameters('rhsmPassword'), ' ', parameters('rhsmPool'), ' ', reference('onevmPublicIP').ipAddress, variables('sQuote'), parameters('sshKeyData'), variables('sQuote'))]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[concat(resourceGroup().name, 'nsg')]",
+      "tags": {
+        "displayName": "NetworkSecurityGroup"
+      },
+      "apiVersion": "[variables('apiVersion')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-openshift-router-https",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 2000,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "default-allow-openshift-router-http",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 2001,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "default-allow-openshift-master",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "8443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 2002,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "default-allow-ssh",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 2003,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "outputs": {
+    "sshCommand": {
+      "type": "string",
+      "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(variables('publicIPAddressName')).dnsSettings.fqdn)]"
+    },
+    "OpenshiftConsole": {
+      "type": "string",
+      "value": "[concat('https://', reference(variables('publicIPAddressName')).dnsSettings.fqdn, ':8443')]"
+    },
+    "publicIP": {
+      "type": "string",
+      "value": "[reference('onevmPublicIP').ipAddress]"
+    }
+  }
+}
