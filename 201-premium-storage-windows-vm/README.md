@@ -7,4 +7,4 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template allows you to deploy a Premium Windows VM using a few different options for the Windows version, using the latest patched version.
+This template allows you to deploy a premium Windows VM using a few different options for the Windows version, using the latest patched version.
