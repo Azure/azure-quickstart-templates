@@ -13,7 +13,7 @@ exports.getFiles = function getFiles(folder, fileType, filelist, recursive) {
     if (folder == './') {
         folder = __dirname + '/../';
     }
-    if (folder.toLowerCase().endsWith('__macosx')) { //skip Mac zip folder
+    if (folder.toLowerCase().endsWith('__macosx') || folder.toLowerCase().endsWith('source.temp')) { //skip Mac zip folder or temp folder for AMA
         return filelist;
     }
     var files = fs.readdirSync(folder);
@@ -88,9 +88,9 @@ exports.getTemplateFiles = function getTemplateFiles(folder) {
         if (f.toLowerCase().indexOf(createUiDefFileName) == -1) {
             var fileString = fs.readFileSync(path.resolve(f), {
                 encoding: 'utf8'
-            }).trim();
+            }).trim().toLowerCase();
             var jsonObject = JSON.parse(fileString);
-            if (jsonObject.$schema && jsonObject.$schema.match('schema.management.azure.com/schemas/(.*)/deploymentTemplate.json')) {
+            if (jsonObject.$schema && jsonObject.$schema.match('schema.management.azure.com/schemas/(.*)/deploymenttemplate.json')) {
                 files.push(path.resolve(f));
                 fileJSONObjects.push({
                     filename: f,

@@ -7,6 +7,6 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template creates a VNET with a Gateway subnet. It then creates a public IP which is used to create a VPN Gateway in the VNET. Finally it configures a DynamicRouting gateway with Point-to-Site configuration incluing VPN client address pool, client root certificates and revoked certificates and then creates the Gateway.
+This template creates a VNet with a Gateway subnet. It then creates a public IP which is used to create a VPN Gateway in the VNet. Finally it configures a Dynamic Routing gateway with Point-to-Site configuration including VPN client address pool, client root certificates and revoked certificates and then creates the Gateway.
 
 Modify parameters file to change default values.
