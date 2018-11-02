@@ -1,0 +1,162 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "storageAccountPrefix": {
+            "type": "string",
+            "metadata": {
+                "description": "Storage account naming prefix"
+            }
+        },
+        "storageAccountType": {
+            "type": "string",
+            "defaultValue": "Standard_LRS",
+            "allowedValues": [
+                "Standard_LRS",
+                "Standard_GRS"
+            ],
+            "metadata": {
+                "description": "Storage account type"
+            }
+        },
+        "fileShareName": {
+            "type": "string",
+            "defaultValue": "sftpfileshare",
+            "metadata": {
+                "description": "Name of file share to be created"
+            }
+        },
+        "sftpUser": {
+            "type": "string",
+            "defaultValue": "sftp",
+            "metadata": {
+                "description": "Username to use for SFTP access"
+            }
+        },
+        "sftpPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Password to use for SFTP access"
+            }
+        }
+    },
+    "variables": {
+        "cliContainerName": "create-share",
+        "cliContainerGroupName": "create-share-group",
+        "cliContainerImage": "microsoft/azure-cli:latest",
+        "sftpContainerName": "sftp",
+        "sftpContainerGroupName": "sftp-group",
+        "sftpContainerImage": "atmoz/sftp:latest",
+        "sftpEnvVariable": "[concat(parameters('sftpUser'), ':', parameters('sftpPassword'), ':1001')]",
+        "storageAccountName": "[concat(parameters('storageAccountPrefix'), uniqueString(resourceGroup().id))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Resources/deployments",
+            "name": "18f281fe-d1e1-502c-8b87-d945383dc75b",
+            "apiVersion": "2015-01-01",
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "resources": []
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "name": "create-share-deployment",
+            "apiVersion": "2015-01-01",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[uri(deployment().properties.templateLink.uri), 'nested/createFileShare.json')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "storageAccountName": {
+                        "value": "[variables('storageAccountName')]"
+                    },
+                    "storageAccountType": {
+                        "value": "[parameters('storageAccountType')]"
+                    },
+                    "fileShareName": {
+                        "value": "[parameters('fileShareName')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.ContainerInstance/containerGroups",
+            "name": "[variables('sftpContainerGroupName')]",
+            "apiVersion": "2018-04-01",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "create-share-deployment"
+            ],
+            "properties": {
+                "containers": [
+                    {
+                        "name": "[variables('sftpContainerName')]",
+                        "properties": {
+                            "image": "[variables('sftpContainerImage')]",
+                            "environmentVariables": [
+                                {
+                                    "name": "SFTP_USERS",
+                                    "value": "[variables('sftpEnvVariable')]"
+                                }
+                            ],
+                            "resources": {
+                                "requests": {
+                                    "cpu": 1,
+                                    "memoryInGB": 1
+                                }
+                            },
+                            "ports": [
+                                {
+                                    "port": 22
+                                }
+                            ],
+                            "volumeMounts": [
+                                {
+                                    "mountPath": "[concat('/home/', parameters('sftpUser'), '/upload')]",
+                                    "name": "sftpvolume",
+                                    "readOnly": false
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "osType": "Linux",
+                "ipAddress": {
+                    "type": "Public",
+                    "ports": [
+                        {
+                            "protocol": "TCP",
+                            "port": 22
+                        }
+                    ]
+                },
+                "restartPolicy": "OnFailure",
+                "volumes": [
+                    {
+                        "name": "sftpvolume",
+                        "azureFile": {
+                            "readOnly": false,
+                            "shareName": "[parameters('fileShareName')]",
+                            "storageAccountName": "[variables('storageAccountName')]",
+                            "storageAccountKey": "[reference('stg-deployment').outputs.storageKey.value]"
+                        }
+                    }
+                ]
+            }
+        }
+    ],
+    "outputs": {
+        "containerIPv4Address": {
+            "type": "string",
+            "value": "[reference(concat('Microsoft.ContainerInstance/containerGroups/', variables('sftpContainerGroupName'))).ipAddress.ip]"
+        }
+    }
+}
