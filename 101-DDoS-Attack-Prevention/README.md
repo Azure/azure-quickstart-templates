@@ -78,7 +78,7 @@ Microsoft have partnered with [BreakingPoint Cloud](https://www.ixiacom.com/prod
 
       ![](images/ddos-standard-plan-1.png)
     
-    b. Enter details 
+    b. Enter details and click Create
 
       ![](images/ddos-standard-plan-2.png)
 

@@ -17,7 +17,7 @@ minecraft_group=minecraft
 UUID_URL=https://api.mojang.com/users/profiles/minecraft/$1
 
 # screen scrape the server jar location from the Minecraft server download page
-SERVER_JAR_URL=`curl https://minecraft.net/en-us/download/server | grep 'Download <a' | cut -d '"' -f2`
+SERVER_JAR_URL=`curl -L https://minecraft.net/en-us/download/server/ | grep 'Download <a' | cut -d '"' -f2`
 server_jar=server.jar
 
 # add and update repos
