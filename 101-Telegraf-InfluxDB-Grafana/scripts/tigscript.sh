@@ -20,7 +20,6 @@ then
   then
         rm -rf Configfiles.*
 	rm -rf /home/Configfiles
-	echo "directory delete"
   fi  
 fi
 wget $configfile
