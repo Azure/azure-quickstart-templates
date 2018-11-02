@@ -110,7 +110,14 @@ then
 
     blobEndpoint=$( az storage account show -n "$artifactsStorageAccountName" -g "$artifactsResourceGroupName" -o json | jq -r '.primaryEndpoints.blob' )
 
-    parameterJson=$( echo "$parameterJson"  | jq "{_artifactsLocation: {value: "\"$blobEndpoint$artifactsStorageContainerName"\"}, _artifactsLocationSasToken: {value: \"?"$sasToken"\"}} + ." )
+    defaultValue=$( cat "$templateFile" | jq '.parameters._artifactsLocation.defaultValue' )
+    
+    if [[ $defaultValue != *").properties.templateLink.uri"* ]] # this should really include deployment(). but VS Code has a bug so working around that
+    then #if the template is not using the templateLink.uri, then add the storage location to the parameters
+        parameterJson=$( echo "$parameterJson"  | jq "{_artifactsLocation: {value: "\"$blobEndpoint$artifactsStorageContainerName/"\"}} + ." )
+    fi
+
+    parameterJson=$( echo "$parameterJson"  | jq "{_artifactsLocationSasToken: {value: \"?"$sasToken"\"}} + ." )
 
     artifactsStagingDirectory=$( echo "$artifactsStagingDirectory" | sed 's/\/*$//')
     artifactsStagingDirectoryLen=$((${#artifactsStagingDirectory} + 1))

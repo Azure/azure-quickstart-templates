@@ -7,7 +7,7 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template creates a virtual network with 3 subnets (server subnet, jumpbox subet and AzureFirewall subnet), a jumpbox VM with public IP and RDP access,
+This template creates a virtual network with 3 subnets (server subnet, jumpbox subnet and AzureFirewall subnet), a jumpbox VM with public IP and RDP access,
 A server VM with only a private IP, UDR route to point to AzureFirewall for the ServerSubnet and an AzureFirewall with 1 sample application rule and 1 sample network rule.
 Azure Firewall is a managed cloud-based network security service that protects your Azure Virtual Network resources.
 It is a fully stateful firewall as a service with built-in high availability and unrestricted cloud scalability.
