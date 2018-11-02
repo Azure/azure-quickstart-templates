@@ -2,11 +2,10 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "LogicAppLocation": {
+    "location": {
       "type": "string",
       "minLength": 1,
       "allowedValues": [
-        "[resourceGroup().location]",
         "eastasia",
         "southeastasia",
         "centralus",
@@ -32,7 +31,6 @@
         "westcentralus",
         "westus2"
       ],
-      "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "Location for all resources."
       }
@@ -57,6 +55,16 @@
   "variables": {},
   "resources": [
     {
+      "name": "[parameters('CreateTimerJobLogicAppName')]",
+      "type": "Microsoft.Logic/workflows",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "LogicApp"
+      },
+      "apiVersion": "2017-07-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Logic/workflows', parameters('TimerJobLogicAppName'))]"
+      ],
       "properties": {
         "state": "Enabled",
         "definition": {
@@ -324,19 +332,16 @@
           "outputs": {}
         },
         "parameters": {}
-      },
-      "name": "[parameters('CreateTimerJobLogicAppName')]",
+      }
+    },
+    {
+      "name": "[parameters('TimerJobLogicAppName')]",
       "type": "Microsoft.Logic/workflows",
-      "location": "[parameters('LogicAppLocation')]",
+      "location": "[parameters('location')]",
       "tags": {
         "displayName": "LogicApp"
       },
       "apiVersion": "2017-07-01",
-      "dependsOn": [
-        "[resourceId('Microsoft.Logic/workflows', parameters('TimerJobLogicAppName'))]"
-      ]
-    },
-    {
       "properties": {
         "state": "Enabled",
         "definition": {
@@ -432,19 +437,15 @@
           "outputs": {}
         },
         "parameters": {}
-      },
-      "name": "[parameters('TimerJobLogicAppName')]",
-      "type": "Microsoft.Logic/workflows",
-      "location": "[parameters('LogicAppLocation')]",
-      "tags": {
-        "displayName": "LogicApp"
-      },
-      "apiVersion": "2017-07-01"
+      }
     },
     {
       "apiVersion": "2018-08-01",
       "name": "nestedTemplate",
       "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "[resourceId('Microsoft.Logic/workflows', parameters('CreateTimerJobLogicAppName'))]"
+      ],
       "properties": {
         "mode": "Incremental",
         "template": {
@@ -452,6 +453,13 @@
           "contentVersion": "1.0.0.0",
           "resources": [
             {
+              "name": "[parameters('TimerJobLogicAppName')]",
+              "type": "Microsoft.Logic/workflows",
+              "location": "[parameters('location')]",
+              "tags": {
+                "displayName": "LogicApp"
+              },
+              "apiVersion": "2017-07-01",
               "properties": {
                 "state": "Enabled",
                 "definition": {
@@ -707,21 +715,11 @@
                   "outputs": {}
                 },
                 "parameters": {}
-              },
-              "name": "[parameters('TimerJobLogicAppName')]",
-              "type": "Microsoft.Logic/workflows",
-              "location": "[parameters('LogicAppLocation')]",
-              "tags": {
-                "displayName": "LogicApp"
-              },
-              "apiVersion": "2017-07-01"
+              }
             }
           ]
         }
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Logic/workflows', parameters('CreateTimerJobLogicAppName'))]"
-      ]
+      }
     }
   ],
   "outputs": {}
