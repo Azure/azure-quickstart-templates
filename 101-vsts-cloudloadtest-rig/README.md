@@ -15,8 +15,8 @@ Sample parameter values are as follows:
 
 ```json
 {
-    "VSTSAccountName": "<Azure DevOps Services account name with which the rig will be configured>",
-    "VSTSPersonalAccessToken": "<get pat token for Azure DevOps Services account>",
+    "AzureDevOpsServicesAccount": "<Azure DevOps Services account name with which the rig will be configured>",
+    "AzureDevOpsPersonalAccessToken": "<get pat token for Azure DevOps Services account>",
     "AgentCount": "<number of VMs you want to provision>",
     "AdminUsername": "<admin user name>",
     "AdminPassword": "<admin user password>",

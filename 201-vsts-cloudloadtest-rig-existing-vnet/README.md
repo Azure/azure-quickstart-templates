@@ -18,8 +18,8 @@ To learn about how to view and manage registered load agents for your Azure DevO
 
 ```json
 {
-    "VSTSAccountName": "<Azure DevOps Services account name using for CLT>",
-    "VSTSPersonalAccessToken": "<Get PAT token for Azure DevOps Services account>",
+    "AzureDevOpsServicesAccount": "<Azure DevOps Services account name using for CLT>",
+    "AzureDevOpsPersonalAccessToken": "<Get PAT token for Azure DevOps Services account>",
     "AgentCount": "<number of desired VMs>",
     "AdminUsername":"<Admin user name>",
     "AdminPassword":"<password>" 
