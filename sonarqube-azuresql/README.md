@@ -76,7 +76,7 @@ The deployment in Azure can take up to 30 minutes. At the end of the deployment,
 Once the deployment and configuration have finished you will be able to access your SonarQube by entering its public address into a browser. The address format is:
 
 http://[sq\_PublicIP\_DnsPrefix].[AzureRegion].cloudapp.azure.com:9000  
-**Ex:** http://my-sonarqube.eastus.cloudapp.azure.com:9000
+**Ex:** http://my-sonarqube.eastus.cloudapp.azure.com:9000  
 **Ex: Secure** https://my-sonarqube.eastus.cloudapp.azure.com
 
 * * *
