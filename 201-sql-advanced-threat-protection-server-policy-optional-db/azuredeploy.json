@@ -71,33 +71,20 @@
     "databaseServerLocation": "[parameters('location')]",
     "databaseServerAdminLogin": "[parameters('adminUser')]",
     "databaseServerAdminLoginPassword": "[parameters('adminPassword')]",
-	"storageAccountsResourceGroup": "[resourceGroup().name]",
     "emailAddresses": "[parameters('emailAddresses')]",
-	"subscriptionId": "[subscription().subscriptionId]",
-    "locationCode": "[substring(parameters('location'), 0, 3)]",
-    "storageName": "[parameters('storageName')]",
-    "createStorageAccountDeploymentName": "[concat('sqlServerATPStorageAccount-', variables('locationCode'))]"
+    "storageName": "[parameters('storageName')]"
   },
   "resources": [
-     {
-       "apiVersion": "2017-05-10",
-       "name": "[variables('createStorageAccountDeploymentName')]",
-       "type": "Microsoft.Resources/deployments",
-       "resourceGroup": "[variables('storageAccountsResourceGroup')]",
+      {
+       "type": "Microsoft.Storage/storageAccounts",
+       "name": "[parameters('storageName')]",
+       "apiVersion": "2016-01-01",
+       "location": "[resourceGroup().location]",
+       "sku": {
+         "name": "Standard_LRS"
+       },
+       "kind": "Storage",
        "properties": {
-         "mode": "Incremental",
-         "parameters": {
-           "location": {
-             "value": "[parameters('location')]"
-           },
-           "storageName": {
-             "value": "[variables('storageName')]"
-           }
-         },
-         "templateLink": {
-           "uri": "https://raw.githubusercontent.com/talhers/azure-quickstart-templates/master/201-sql-advanced-threat-protection-server-policy-optional-db/createStorage.template.json",
-           "contentVersion": "1.0.0.0"
-         }
        }
      },
      {
@@ -132,11 +119,12 @@
         "type": "vulnerabilityAssessments",
         "apiVersion": "2018-06-01-preview",
 		"dependsOn": [
-          "[variables('databaseServerName')]"
+          "[variables('databaseServerName')]",
+		  "[concat('Microsoft.Storage/storageAccounts/', parameters('storageName'))]"
         ],
         "properties": {
-          "storageContainerPath": "[concat(reference(variables('createStorageAccountDeploymentName')).outputs.storageAccountEndPoint.value,'vulnerability-assessment/')]",
-          "storageAccountAccessKey": "[reference(variables('createStorageAccountDeploymentName')).outputs.storageAccountKey.value]",
+          "storageContainerPath": "[concat('https://', parameters('storageName'), '.blob.core.windows.net/vulnerability-assessment')]",
+          "storageAccountAccessKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]",
           "recurringScans": {
             "isEnabled": true,
             "emailSubscriptionAdmins": true,
