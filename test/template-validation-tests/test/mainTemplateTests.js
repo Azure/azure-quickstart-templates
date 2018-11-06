@@ -166,14 +166,14 @@ describe('template files - ', () => {
                     if (resourceType === 'microsoft.compute/virtualmachines') {
                         console.log('VM');
                         var previewString = "-preview";
-                        var offer = JSON.stringify(templateObject.resources[resource].properties.storageProfile.imageReference).toLowerCase();
+                        var offer = JSON.stringify(templateObject.resources[resource].properties.storageprofile.imagereference).toLowerCase();
                         var message = 'in file:' + templateJSONObject.filename + ' VM must NOT use a preview image: ' + offer;
                         assert(offer.includes(previewString) === false, message);
                     }
                     if (resourceType === 'microsoft.compute/virtualmachinescalesets') {
                         console.log('VMSS');
                         var previewString = "-preview";
-                        var offer = JSON.stringify(templateObject.resources[resource].properties.virtualMachineProfile.storageProfile.imageReference).toLowerCase();
+                        var offer = JSON.stringify(templateObject.resources[resource].properties.virtualmachineprofile.storageprofile.imagereference).toLowerCase();
                         var message = 'in file:' + templateJSONObject.filename + ' VMSS must NOT use a preview image: ' + offer;
                         assert(offer.includes(previewString) === false, message);
                     }
