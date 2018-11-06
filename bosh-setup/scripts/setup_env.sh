@@ -241,13 +241,24 @@ bosh -n update-cloud-config ~/example_manifests/cloud-config.yml \\
   -v subnet_name=$(get_setting SUBNET_NAME_FOR_CLOUD_FOUNDRY) \\
   -v security_group=$(get_setting NSG_NAME_FOR_CLOUD_FOUNDRY) \\
   -v load_balancer_name=$(get_setting LOAD_BALANCER_NAME)
-
-bosh -n update-runtime-config ~/example_manifests/dns.yml --name=dns
-
-bosh upload-stemcell --sha1=$(get_setting STEMCELL_SHA1) $(get_setting STEMCELL_URL)
 EOF
 
+if [ "$environment" = "AzureChinaCloud" ]; then
+  cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
+bosh -n update-runtime-config ~/example_manifests/dns.yml \\
+  -o ~/example_manifests/use-mirror-bosh-dns-release.yml \\
+  --name=dns
+EOF
+else
+  cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
+bosh -n update-runtime-config ~/example_manifests/dns.yml \\
+  --name=dns
+EOF
+fi
+
 cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
+bosh upload-stemcell --sha1=$(get_setting STEMCELL_SHA1) $(get_setting STEMCELL_URL)
+
 bosh -n -d cf deploy ~/example_manifests/cf-deployment.yml \\
   --vars-store=~/cf-deployment-vars.yml \\
   -o ~/example_manifests/azure.yml \\

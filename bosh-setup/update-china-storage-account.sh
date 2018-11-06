@@ -11,18 +11,53 @@ set -e
 template_version="$1"
 container_name="bosh-setup"
 
+# Upload CPI release
+release_name="bosh-azure-cpi-release-35.5.0.tgz"
+wget https://bosh.io/d/github.com/cloudfoundry/bosh-azure-cpi-release?v=35.5.0 -O /tmp/${release_name}
+az storage blob upload -f /tmp/${release_name} -c ${container_name} -n cpi-releases/${release_name}
+rm /tmp/${release_name}
+
+# Upload Stemcell
+stemcell_name="bosh-stemcell-170.3-azure-hyperv-ubuntu-xenial-go_agent.tgz"
+wget https://s3.amazonaws.com/bosh-core-stemcells/azure/${stemcell_name} -O /tmp/${stemcell_name}
+az storage blob upload -f /tmp/${stemcell_name} -c ${container_name} -n bosh-azure-stemcells/${stemcell_name}
+rm /tmp/${stemcell_name}
+
+# Upload DNS release
+release_name="bosh-dns-release-1.10.0.tgz"
+wget https://bosh.io/d/github.com/cloudfoundry/bosh-dns-release?v=1.10.0 -O /tmp/${release_name}
+az storage blob upload -f /tmp/${release_name} -c ${container_name} -n dns-releases/${release_name}
+rm /tmp/${release_name}
+
+# Upload releases
 pushd manifests
+  file_names="bosh.yml uaa.yml credhub.yml"
+  for file_name in ${file_names}
+  do
+    release_urls=$(grep "s3.amazonaws.com" ${file_name} | awk '{print $2}')
+    for release_url in ${release_urls}
+    do
+      release_url=$(sed -e 's/^"//' -e 's/"$//' <<< $release_url)
+      IFS='/ ' read -r -a array <<< "$release_url"
+      release_name=${array[-1]}
+      wget ${release_url} -O /tmp/${release_name}
+      az storage blob upload -f /tmp/${release_name} -c ${container_name} -n bosh-compiled-release-tarballs/${release_name}
+      rm /tmp/${release_name}
+    done
+  done
+
   file_names="use-compiled-releases.yml"
   for file_name in ${file_names}
   do
-    compiled_release_urls=$(grep "storage.googleapis.com" ${file_name} | awk '{print $2}')
-    for compiled_release_url in ${compiled_release_urls}
+    release_urls=$(grep "storage.googleapis.com" ${file_name} | awk '{print $2}')
+    for release_url in ${release_urls}
     do
-      IFS='/ ' read -r -a array <<< "$compiled_release_url"
-      compiled_release=${array[-1]}
-      wget ${compiled_release_url} -O /tmp/${compiled_release}
-      az storage blob upload -f /tmp/${compiled_release} -c ${container_name} -n cf-deployment-compiled-releases/${compiled_release}
-      rm /tmp/${compiled_release}
+      release_url=$(sed -e 's/^"//' -e 's/"$//' <<< $release_url)
+      IFS='/ ' read -r -a array <<< "$release_url"
+      release_name=${array[-1]}
+      wget ${release_url} -O /tmp/${release_name}
+      az storage blob upload -f /tmp/${release_name} -c ${container_name} -n cf-deployment-compiled-releases/${release_name}
+      rm /tmp/${release_name}
     done
   done
 popd
