@@ -1,6 +1,6 @@
 # Change log for AzureRM template for SharePoint 2016 and 2013 configured with ADFS
 
-## November 2019 update
+## November 2018 update
 
 * MySites are now configured as host-named site collections
 * Added a new host-named site collection
@@ -9,6 +9,7 @@
 * Added a wildcard as AdditionalWSFedEndpoint in relying party in ADFS (to support HNSC)
 * Added parameter AdditionalWSFedEndpoint on resource cADFSRelyingPartyTrust of DSC module cADFS
 * Updated name of Azure resources
+* Update API version of all resources
 * Updated resource SPTrustedIdentityTokenIssuer in SharePointDSC 2.5 to support parameter UseWReplyParameter
 * Updated SharePointDSC from 2.2 to 2.6
 * Updated xDnsServer from 1.10 to 1.11
