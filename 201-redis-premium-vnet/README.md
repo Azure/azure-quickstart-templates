@@ -7,7 +7,6 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-Create and configure Premium Redis Cache with Virtual Network by using a template. Azure Virtual Network (VNet) deployments provide enhanced security and isolation for your Azure Redis Cache, as well as subnets, access control policies, and other features to further restrict access to Azure Redis Cache.
+Create a premium Redis Cache inside a Virtual Network by using a template. Azure Virtual Network (VNet) deployments provide enhanced security and isolation for your Azure Redis Cache, as well as subnets, access control policies, and other features to further restrict access to Azure Redis Cache with a Virtual Network.
 
 For information about using this template, see [How to configure Virtual Network Support for a Premium Azure Redis Cache](https://azure.microsoft.com/documentation/articles/cache-how-to-premium-vnet/).
-
