@@ -31,7 +31,7 @@ This template provision an Azure Active Directory Domain Service (AADDS) with re
 * Subscription tenant should not have existing managed Azure Active Directory Domain Services (AADDS). Azure active directory supports only **one Domain Service per tenant**.
 * Domain Name provided as input parameter while deployment should be **verified** within Azure active directory.
 * AAD Domain Services requires the chosen subnet to belong to a reserved private range. Use AADDS subnet range within one of the following IP address ranges: 192.168.0.0/16, 172.16.0.0/12, or 10.0.0.0/8.
-* Do not run this solution in **production environment/subscriptions**.
+* Do not run this solution in a **production environment/subscriptions**.
 * It is recommended you use a clean Windows 10 (or similar) VM to perform the solution to ensure that the correct PowerShell modules get loaded.
 * Deployment takes around **40-45 minutes** to complete.
 
@@ -39,9 +39,9 @@ This template provision an Azure Active Directory Domain Service (AADDS) with re
 
 ### Pre Deployment Step
 
-Before proceeding to deployment of the AADDS template, we need to perform following steps.
+Before proceeding to the deployment of the AADDS template, we need to perform the following steps.
 
-**Note:** You can perform these steps through portal as well.
+**Note:** You can perform these steps through the Azure portal as well.
 
 #### 1. Install the required Powershell modules
 
@@ -132,17 +132,17 @@ After deploying AAD Domain services it will take around 40 minutes more to get c
 To check configuration status follow below steps,
 Go to Azure portal -> Select AADDS resource group -> select Domain services resource -> see health status is "Running"(refer below image)
 
-    ![](images\aaddsstatus.png)
+    ![](images/aaddsstatus.png)
 
-#### 2. Update DNS on virtual network
+#### 2. Update DNS on the virtual network
 
 Click on "Configure" button from overview blade to update the DNS server settings to point to the two IP addresses where Azure Active Directory Domain Services is available on the virtual network.
 
-    ![](images\dnsupdate.png)
+    ![](images/dnsupdate.png)
 
 #### 3. Enable password hash synchronization
 
-Users cannot bind using secure LDAP or sign in to the managed domain until you enable password hash synchronization to Azure AD Domain Services. We are using cloud-only user accounts. Refer this document  for resetting the password and more details.
+Users cannot bind using secure LDAP or sign in to the managed domain until you enable password hash synchronization to Azure AD Domain Services. We are using cloud-only user accounts. Refer to this document  for resetting the password and more details.
 
 **Reset AAD User password:** To use the Managed AADDS we need to perform the password hash synchronization.
 
@@ -151,7 +151,7 @@ You need to change the active directory administrator [AADGlobalAdminUser] passw
 <a name="teardown"></a>
 
 ### Teardown Deployment
-Run following powershell command after login to subscription to clear all the resources deployed. Specify resource group name given during deployment.
+Run following Powershell command after login to a subscription to clear all the resources deployed. Specify resource group name given during deployment.
  
  `Remove-AzureRmResourceGroup -Name <ResourceGroupName>  -Force `
  
@@ -167,4 +167,4 @@ Verification steps -
 1. Pre-requisites: https://docs.microsoft.com/en-us/azure/active-directory-domain-services/active-directory-ds-enable-using-powershell
 2. Networking Considerations: https://docs.microsoft.com/en-us/azure/active-directory-domain-services/active-directory-ds-networking
 3. Password Synchronization: https://docs.microsoft.com/en-us/azure/active-directory-domain-services/active-directory-ds-getting-started-password-sync
-4. Troubleshooting Giude: https://docs.microsoft.com/en-us/azure/active-directory-domain-services/active-directory-ds-troubleshooting
+4. Troubleshooting Guide: https://docs.microsoft.com/en-us/azure/active-directory-domain-services/active-directory-ds-troubleshooting
