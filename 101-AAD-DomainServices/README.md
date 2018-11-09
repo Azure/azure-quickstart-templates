@@ -132,13 +132,15 @@ After deploying AAD Domain services it will take around 40 minutes more to get c
 To check configuration status follow below steps,
 Go to Azure portal -> Select AADDS resource group -> select Domain services resource -> see health status is "Running"(refer below image)
 
-    ![](images/aaddsstatus.png)
+
+![](images/aaddsstatus.png)
 
 #### 2. Update DNS on the virtual network
 
 Click on "Configure" button from overview blade to update the DNS server settings to point to the two IP addresses where Azure Active Directory Domain Services is available on the virtual network.
 
-    ![](images/dnsupdate.png)
+
+![](images/dnsupdate.png)
 
 #### 3. Enable password hash synchronization
 
