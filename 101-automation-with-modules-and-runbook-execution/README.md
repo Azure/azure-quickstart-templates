@@ -19,7 +19,7 @@ see the [Azure Automation Documentation](https://docs.microsoft.com/en-us/azure/
 ## What is new in this template
 
 This template creates an automation account, imports and updates the AzureRM.Profile, AzureRM.Resources from powershell gallery. When these modules are updated, a runbook from storage account is scheduled and executed.
- This runbook creates an application into the active directory.
+ This runbook creates an application in the active directory.
 
  Notice that no custom scripts or chained-together ARM templates are required in this example.
 
@@ -29,4 +29,4 @@ This template does not use any other nested template, it directly uses the follo
 
 This templates describes how we can update the required modules to schedule and run a runbook, automatically.
  It does not use RunAsAccount to authenticate runbook to execute runbook. It asks Azure portal email and password from the user and uses these credentials to authenticate the runbook.
-This contains powershell runbook that registers an application into active directory.
+It contains powershell runbook that registers an application in active directory.
