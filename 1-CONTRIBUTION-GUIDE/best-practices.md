@@ -368,7 +368,7 @@ The following code shows an example.
 
 ### VM Disks
 
-* OS Disks and Data Disks must use implicit managed disks except for QuickStart samples showing the use of explict disks.  An explicit disk is a disk where the resource is explicitly defined in the template.
+* OS Disks and Data Disks must use implicit managed disks except for QuickStart samples showing the use of explicit disks.  An explicit disk is a disk where the resource is explicitly defined in the template.
 
 
   ```json
