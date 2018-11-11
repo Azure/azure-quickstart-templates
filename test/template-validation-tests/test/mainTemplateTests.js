@@ -179,6 +179,13 @@ describe('template files - ', () => {
                     }
                 });
             });
+            /** MSI extension must not be used */
+            it.each(templateObject, 'ManagedIdentityExtension must not be used ' + templateJSONObject.filename + '. This extension is not necessary to use an MSI and is being deprecated.', function (element, next) {
+                var templateFileContent = JSON.stringify(templateObject).toLowerCase();
+                var message = 'in file:' + templateJSONObject.filename + ' should NOT use Managed Identity Extension.';
+                assert(templateFileContent.match('managedidentityextension') === null, message);
+                next();
+            });
         });
     });
 });
