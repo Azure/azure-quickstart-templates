@@ -1,5 +1,27 @@
 # Change log for AzureRM template for SharePoint 2016 and 2013 configured with ADFS
 
+## November 2018 update
+
+* MySites are now configured as host-named site collections
+* Added a new host-named site collection
+* App catalog is now correctly set
+* Added missing SPN to enable Kerberos authentication to SQL Server
+* Added a wildcard as AdditionalWSFedEndpoint in relying party in ADFS (to support HNSC)
+* Added parameter AdditionalWSFedEndpoint on resource cADFSRelyingPartyTrust of DSC module cADFS
+* Updated name of Azure resources
+* Update API version of all resources
+* Updated resource SPTrustedIdentityTokenIssuer in SharePointDSC 2.5 to support parameter UseWReplyParameter
+* Updated SharePointDSC from 2.2 to 2.6
+* Updated xDnsServer from 1.10 to 1.11
+* Updated xActiveDirectory from 2.18 to 2.21
+* Updated xPSDesiredStateConfiguration from 8.2 to 8.4
+* Updated ActiveDirectoryCSDsc from 2.0 to 3.0
+* Updated ComputerManagementDsc from 5.0 to 5.2
+* Updated SqlServerDsc from 11.2 to 12.0
+* Updated CertificateDsc from 4.0 to 4.2
+* Updated xWebAdministration from 1.20 to 2.2
+* Updated from xNetworking 5.7 to NetworkingDsc 6.1
+
 ## June 2018 update
 
 * Removed SharePoint farm account from local administrators group as this is no longer necessary since SharePointDsc 2.2
