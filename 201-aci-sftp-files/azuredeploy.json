@@ -2,12 +2,6 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "storageAccountPrefix": {
-            "type": "string",
-            "metadata": {
-                "description": "Storage account naming prefix"
-            }
-        },
         "storageAccountType": {
             "type": "string",
             "defaultValue": "Standard_LRS",
@@ -28,7 +22,6 @@
         },
         "sftpUser": {
             "type": "string",
-            "defaultValue": "sftp",
             "metadata": {
                 "description": "Username to use for SFTP access"
             }
@@ -37,6 +30,13 @@
             "type": "securestring",
             "metadata": {
                 "description": "Password to use for SFTP access"
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Primary location for resources"
             }
         }
     },
@@ -48,13 +48,12 @@
         "sftpContainerGroupName": "sftp-group",
         "sftpContainerImage": "atmoz/sftp:latest",
         "sftpEnvVariable": "[concat(parameters('sftpUser'), ':', parameters('sftpPassword'), ':1001')]",
-        "storageAccountName": "[concat(parameters('storageAccountPrefix'), uniqueString(resourceGroup().id))]",
-        "createFileShareTemplateUri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-aci-sftp-files/nestedtemplates/createFileShare.json"
+        "storageAccountName": "[concat('sftpstg', uniqueString(resourceGroup().id))]"
     },
     "resources": [
         {
             "type": "Microsoft.Resources/deployments",
-            "name": "18f281fe-d1e1-502c-8b87-d945383dc75b",
+            "name": "pid-18f281fe-d1e1-502c-8b87-d945383dc75b",
             "apiVersion": "2015-01-01",
             "properties": {
                 "mode": "Incremental",
@@ -66,35 +65,68 @@
             }
         },
         {
-            "type": "Microsoft.Resources/deployments",
-            "name": "create-share-deployment",
-            "apiVersion": "2015-01-01",
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[variables('storageAccountName')]",
+            "apiVersion": "2018-02-01",
+            "location": "[parameters('location)]",
+            "sku": {
+                "name": "[parameters('storageAccountType')]"
+            },
+            "kind": "Storage",
+            "properties": {}
+        },
+        {
+            "type": "Microsoft.ContainerInstance/containerGroups",
+            "name": "[variables('cliContainerGroupName')]",
+            "apiVersion": "2018-04-01",
+            "location": "[parameters('location)]",
+            "dependsOn": [
+                "[variables('storageAccountName')]"
+            ],
             "properties": {
-                "mode": "Incremental",
-                "templateLink": {
-                    "uri": "[variables('createFileShareTemplateUri')]",
-                    "contentVersion": "1.0.0.0"
-                },
-                "parameters": {
-                    "storageAccountName": {
-                        "value": "[variables('storageAccountName')]"
-                    },
-                    "storageAccountType": {
-                        "value": "[parameters('storageAccountType')]"
-                    },
-                    "fileShareName": {
-                        "value": "[parameters('fileShareName')]"
+                "containers": [
+                    {
+                        "name": "[variables('cliContainerName')]",
+                        "properties": {
+                            "image": "[variables('cliContainerImage')]",
+                            "command": [
+                                "az",
+                                "storage",
+                                "share",
+                                "create",
+                                "--name",
+                                "[parameters('fileShareName')]"
+                            ],
+                            "environmentVariables": [
+                                {
+                                    "name": "AZURE_STORAGE_KEY",
+                                    "value": "[listKeys(variables('storageAccountName'),'2018-02-01').keys[0].value]"
+                                },
+                                {
+                                    "name": "AZURE_STORAGE_ACCOUNT",
+                                    "value": "[variables('storageAccountName')]"
+                                }
+                            ],
+                            "resources": {
+                                "requests": {
+                                    "cpu": 2,
+                                    "memoryInGB": 2
+                                }
+                            }
+                        }
                     }
-                }
+                ],
+                "restartPolicy": "OnFailure",
+                "osType": "Linux"
             }
         },
         {
             "type": "Microsoft.ContainerInstance/containerGroups",
             "name": "[variables('sftpContainerGroupName')]",
             "apiVersion": "2018-04-01",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location)]",
             "dependsOn": [
-                "create-share-deployment"
+                "[variables('cliContainerGroupName')]"
             ],
             "properties": {
                 "containers": [
@@ -147,7 +179,7 @@
                             "readOnly": false,
                             "shareName": "[parameters('fileShareName')]",
                             "storageAccountName": "[variables('storageAccountName')]",
-                            "storageAccountKey": "[reference('create-share-deployment').outputs.storageKey.value]"
+                            "storageAccountKey": "[[listKeys(variables('storageAccountName'),'2018-02-01').keys[0].value]"
                         }
                     }
                 ]
@@ -157,7 +189,7 @@
     "outputs": {
         "containerIPv4Address": {
             "type": "string",
-            "value": "[reference(concat('Microsoft.ContainerInstance/containerGroups/', variables('sftpContainerGroupName'))).ipAddress.ip]"
+            "value": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups/', variables('sftpContainerGroupName'))).ipAddress.ip]"
         }
     }
 }
