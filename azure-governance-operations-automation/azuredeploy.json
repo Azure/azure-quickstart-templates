@@ -31,7 +31,6 @@
         "description": "Describes plan's instance count"
       }
     },
-
     "sqlAdministratorLogin": {
       "type": "string",
       "defaultValue": "cloudwiseuser",
@@ -45,7 +44,6 @@
         "description": "The password to use for the database server administrator."
       }
     },
-
     "omsWorkspaceName": {
       "type": "string",
       "defaultValue": "CloudWiseOMSWorkspace",
@@ -86,7 +84,6 @@
         "description": "Location of the OMS regions."
       }
     },
-
     "_artifactsLocation": {
       "type": "string",
       "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/azure-governance-operations-automation",
@@ -100,13 +97,18 @@
       "metadata": {
         "description": "Reserved for deploying using Visual Studio. Please keep it as an empty string"
       }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
     "packageURI": "https://msignite2016stg.blob.core.windows.net/cloudwise/package.zip",
 
-    "WebAppDeployPackageFolder": "ISVDemoUsage",
-    "WebAppDeployPackageFileName": "package.zip",
     "hostingPlanName": "[concat('CloudWiseHostingplan-', uniqueString(resourceGroup().id))]",
     "webSiteName": "[concat('CloudWise', uniqueString(resourceGroup().id))]",
     "sqlserverName": "[concat('sqlcloudwise', uniqueString(resourceGroup().id))]",
@@ -117,10 +119,8 @@
     "sqlRequestedServiceObjectiveName": "Basic",
     "insightsName": "[concat(variables('webSiteName'),'insights')]",
     "omsWorkspaceName": "[concat(parameters('omsWorkspaceName'), uniqueString(resourceGroup().id, deployment().name))]",
-
     "OMSWebAppsRunBookAndDashboardTemplateFolder": "nested/AutomationRunbooksOMSDashboard",
     "OMSWebAppsRunBookAndDashboardTemplateFileName": "OMSAutomationRunbooksDashboard.json",
-
     "OMSCommonTemplateFolder": "nested/OMSCommon",
     "OMSCommonTemplateFileName": "OMSCommon.json",
     "quickstartTags": {
@@ -132,7 +132,7 @@
     {
       "name": "[variables('sqlserverName')]",
       "type": "Microsoft.Sql/servers",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "tags": {
         "displayName": "SqlServer",
         "quickstartName": "[variables('quickstartTags').name]"
@@ -146,7 +146,7 @@
         {
           "name": "[variables('sqlDatabaseName')]",
           "type": "databases",
-          "location": "[resourceGroup().location]",
+          "location": "[parameters('location')]",
           "apiVersion": "2014-04-01-preview",
           "dependsOn": [
             "[concat('Microsoft.Sql/servers/', variables('sqlServerName'))]"
@@ -164,7 +164,7 @@
       "apiVersion": "2015-08-01",
       "name": "[variables('hostingPlanName')]",
       "type": "Microsoft.Web/serverfarms",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "tags": {
         "displayName": "HostingPlan",
         "quickstartName": "[variables('quickstartTags').name]"
@@ -181,7 +181,7 @@
       "apiVersion": "2015-08-01",
       "name": "[variables('webSiteName')]",
       "type": "Microsoft.Web/sites",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[variables('hostingPlanName')]"
       ],
@@ -209,7 +209,6 @@
           },
           "properties": {
             "netFrameworkVersion": "v4.6"
-
           }
         },
         {
@@ -234,7 +233,7 @@
         {
           "name": "MSDeploy",
           "type": "extensions",
-          "location": "[resourceGroup().location]",
+          "location": "[parameters('location')]",
           "apiVersion": "2015-08-01",
           "dependsOn": [
             "[concat('Microsoft.Web/sites/', variables('Websitename'))]"
@@ -252,7 +251,7 @@
     {
       "name": "[concat(variables('hostingPlanName'), '-', resourceGroup().name)]",
       "type": "Microsoft.Insights/autoscalesettings",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2014-04-01",
       "dependsOn": [
         "[concat('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
@@ -319,7 +318,7 @@
     {
       "name": "[concat('CPUHigh ', variables('hostingPlanName'))]",
       "type": "Microsoft.Insights/alertrules",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2014-04-01",
       "dependsOn": [
         "[concat('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
@@ -354,7 +353,7 @@
     {
       "name": "[concat('LongHttpQueue ', variables('hostingPlanName'))]",
       "type": "Microsoft.Insights/alertrules",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2014-04-01",
       "dependsOn": [
         "[concat('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
@@ -389,7 +388,7 @@
     {
       "name": "[concat('ServerErrors ', variables('insightsName'))]",
       "type": "Microsoft.Insights/alertrules",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2014-04-01",
       "dependsOn": [
         "[concat('Microsoft.Web/sites/', variables('webSiteName'))]"
@@ -424,7 +423,7 @@
     {
       "name": "[concat('ForbiddenRequests ', variables('insightsName'))]",
       "type": "Microsoft.Insights/alertrules",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2014-04-01",
       "dependsOn": [
         "[concat('Microsoft.Web/sites/', variables('webSiteName'))]"
@@ -534,7 +533,9 @@
           "_artifactsLocation": {
             "value": "[concat(parameters('_artifactsLocation'), '/', variables('OMSWebAppsRunBookAndDashboardTemplateFolder'))]"
           },
-          "_artifactsLocationSasToken": { "value": "[parameters('_artifactsLocationSasToken')]" },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          },
           "quickstartTags": {
             "value": "[variables('quickstartTags')]"
           }
