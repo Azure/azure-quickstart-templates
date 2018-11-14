@@ -1,0 +1,138 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "frontDoorName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the frontdoor resource."
+            }
+        },
+        "backendAddress": {
+            "type": "string",
+            "metadata": {
+                "description": "The hostname of the backend. Must be an IP address or FQDN."
+            }
+        },
+        "healthProbeName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Health probe settings associated with this Front Door instance."
+            }
+        },
+        "healthProbePath": {
+            "type": "string",
+            "metadata": {
+                "description": "The path to use for the health probe. Default is /"
+            }
+        },
+        "healthProbeProtocol": {
+            "type": "string",
+            "allowedValues": [
+                "Http",
+                "Https"
+            ],
+            "metadata": {
+                "description": "Protocol scheme to use for this probe. Must be Http or Https."
+            }
+        },
+        "healthProbeIntervalInSeconds": {
+            "type": "int",
+            "metadata": {
+                "description": "The number of seconds between health probes."
+            }
+        }
+    },
+    "variables": {
+        "frontdoorref": "[resourceId('Microsoft.Network/frontDoors', parameters('frontDoorName'))]",
+        "frontdoorLocation": "global"
+    },
+    "resources": [
+        {
+            "apiVersion": "2018-08-01",
+            "type": "Microsoft.Network/frontDoors",
+            "name": "[parameters('frontDoorName')]",
+            "location": "[variables('frontdoorLocation')]",
+            "tags": {},
+            "properties": {
+                "routingRules": [
+                    {
+                        "name": "routingRule1",
+                        "properties": {
+                            "frontendEndpoints": [
+                                {
+                                    "id": "[concat(variables('frontdoorref'),'/frontendEndpoints/frontendEndpoint1')]"
+                                }
+                            ],
+                            "acceptedProtocols": [
+                                "Http"
+                            ],
+                            "patternsToMatch": [
+                                "/*"
+                            ],
+                            "forwardingProtocol": "MatchRequest",
+                            "backendPool": {
+                                "id": "[concat(variables('frontdoorref'),'/backendPools/backendPool1')]"
+                            },
+                            "enabledState": "Enabled"
+                        }
+                    }
+                ],
+                "healthProbeSettings": [
+                    {
+                        "name": "[parameters('healthProbeName')]",
+                        "properties": {
+                            "path": "[parameters('healthProbePath')]",
+                            "protocol": "[parameters('healthProbeProtocol')]",
+                            "intervalInSeconds": "[parameters('healthProbeIntervalInSeconds')]"
+                        }
+                    }
+                ],
+                "loadBalancingSettings": [
+                    {
+                        "name": "loadBalancingSettings1",
+                        "properties": {
+                            "sampleSize": 4,
+                            "successfulSamplesRequired": 2
+                        }
+                    }
+                ],
+                "backendPools": [
+                    {
+                        "name": "backendPool1",
+                        "properties": {
+                            "backends": [
+                                {
+                                    "address": "[parameters('backendAddress')]",
+                                    "httpPort": 80,
+                                    "httpsPort": 443,
+                                    "weight": 50,
+                                    "priority": 1,
+                                    "enabledState": "Enabled"
+                                }
+                            ],
+                            "loadBalancingSettings": {
+                                "id": "[concat(variables('frontdoorref'),'/loadBalancingSettings/loadBalancingSettings1')]"
+                            },
+                            "healthProbeSettings": {
+                                "id": "[concat(variables('frontdoorref'),'/healthProbeSettings/healthProbeSettings1')]"
+                            }
+                        }
+                    }
+                ],
+                "frontendEndpoints": [
+                    {
+                        "name": "frontendEndpoint1",
+                        "properties": {
+                            "hostName": "[concat(parameters('frontDoorName'), '.azurefd.net')]",
+                            "sessionAffinityEnabledState": "Disabled",
+                            "sessionAffinityTtlSeconds": 0
+                        }
+                    }
+                ],
+                "enabledState": "Enabled"
+            }
+        }
+    ],
+    "outputs": {}
+}
