@@ -33,7 +33,7 @@ You can click the "deploy to Azure" button at the beginning of this document or 
 
 ## Usage
 
-Use browser to access the Frontend public IP address of application gateway. WordPress will guide you through the rest of the setup.
+Use browser to access the SiteFQDN from output. WordPress will guide you through the rest of the setup.
 
 ## Notes
 Azure Container Instance is available in selected [locations](https://docs.microsoft.com/en-us/azure/container-instances/container-instances-quotas#region-availability). Please use one of the available location for Azure Container Instance resource.
