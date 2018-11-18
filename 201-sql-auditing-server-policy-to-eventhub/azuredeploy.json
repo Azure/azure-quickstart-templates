@@ -28,13 +28,13 @@
         "description": "The administrator password of the SQL Server."
       }
     },
-    "existingEventHubName": {
+    "eventHubName": {
       "type": "string",
       "metadata": {
         "description": "Event Hub name."
       }
     },
-    "namespaceName": {
+    "eventHubNamespaceName": {
       "type": "string",
       "metadata": {
         "description": "Name of EventHub namespace."
@@ -46,19 +46,31 @@
       "metadata": {
         "description": "Name of Namespace Authorization Rule."
       }
-    },
-    "eventHubResourceGroup": {
-      "type": "string",
-      "defaultValue": "[resourceGroup().name]",
-      "metadata": {
-        "description": "The resource group of the EventHub."
-      }
     }
   },
   "variables": {
    "diagnosticSettingsName": "SQLSecurityAuditEvents_3d229c42-c7e7-4c97-9a99-ec0d0d8b86c1"
   },
   "resources": [{
+    "apiVersion": "2018-01-01-preview",
+    "name": "[parameters('eventHubNamespaceName')]",
+    "type": "Microsoft.EventHub/namespaces",
+    "location": "[parameters('location')]",
+    "sku": {
+    "name": "Standard",
+    "tier": "Standard"
+    },
+    "properties": { },
+    "resources": [{
+      "apiVersion": "2017-04-01",
+      "name": "[parameters('eventHubName')]",
+      "type": "EventHubs",
+      "dependsOn": [
+      "[concat('Microsoft.EventHub/namespaces/', parameters('eventHubNamespaceName'))]"
+      ]
+    }]
+  },
+  {
     "type": "Microsoft.Sql/servers",
     "apiVersion": "2015-05-01-preview",
     "location": "[parameters('location')]",
@@ -74,12 +86,15 @@
     "resources": [{
       "type": "databases/providers/diagnosticSettings",
       "name": "[concat('master/microsoft.insights/',variables('diagnosticSettingsName'))]",
-      "dependsOn": [ "[parameters('sqlServerName')]", "[concat('Microsoft.Sql/servers/', parameters('sqlServerName'), '/auditingSettings/DefaultAuditingSettings')]" ],
+      "dependsOn": [ "[parameters('sqlServerName')]",
+        "[concat('Microsoft.EventHub/namespaces/', parameters('eventHubNamespaceName'))]",
+        "[concat('Microsoft.Sql/servers/', parameters('sqlServerName'), '/auditingSettings/DefaultAuditingSettings')]" 
+      ],
       "apiVersion": "2017-05-01-preview",
       "properties": {
         "name": "[variables('diagnosticSettingsName')]",
-        "eventHubAuthorizationRuleId": "[resourceId( parameters('eventHubResourceGroup'),'Microsoft.EventHub/namespaces/authorizationRules', parameters('namespaceName'), parameters('eventhubAuthorizationRuleName'))]",
-        "eventHubName": "[parameters('existingEventHubName')]",
+        "eventHubAuthorizationRuleId": "[resourceId('Microsoft.EventHub/namespaces/authorizationRules', parameters('eventHubNamespaceName'), parameters('eventhubAuthorizationRuleName'))]",
+        "eventHubName": "[parameters('eventHubName')]",
         "logs": [{
           "category": "SQLSecurityAuditEvents",
           "enabled": true,
