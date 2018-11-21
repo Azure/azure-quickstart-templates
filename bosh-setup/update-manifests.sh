@@ -20,10 +20,6 @@ pushd manifests
   wget https://raw.githubusercontent.com/cloudfoundry/cf-deployment/master/operations/use-azure-storage-blobstore.yml -O use-azure-storage-blobstore.yml
   wget https://raw.githubusercontent.com/cloudfoundry/cf-deployment/master/operations/scale-to-one-az.yml -O scale-to-one-az.yml
   wget https://raw.githubusercontent.com/cloudfoundry/cf-deployment/master/operations/use-compiled-releases.yml -O use-compiled-releases.yml
-  wget https://raw.githubusercontent.com/cloudfoundry/cf-deployment/master/operations/experimental/use-xenial-stemcell.yml -O use-xenial-stemcell.yml
-  wget https://raw.githubusercontent.com/cloudfoundry/cf-deployment/master/operations/experimental/use-compiled-releases-xenial-stemcell.yml -O use-compiled-releases-xenial-stemcell.yml
   cp use-compiled-releases.yml use-mirror-compiled-releases.yml
   sed -i 's/storage.googleapis.com/cloudfoundry.blob.core.chinacloudapi.cn\/bosh-setup/g' use-mirror-compiled-releases.yml
-  cp use-compiled-releases-xenial-stemcell.yml use-mirror-compiled-releases-xenial-stemcell.yml
-  sed -i 's/storage.googleapis.com/cloudfoundry.blob.core.chinacloudapi.cn\/bosh-setup/g' use-mirror-compiled-releases-xenial-stemcell.yml
 popd
