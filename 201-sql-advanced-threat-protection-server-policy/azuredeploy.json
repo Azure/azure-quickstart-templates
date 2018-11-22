@@ -27,9 +27,9 @@
         "description": "Name for the SQL database under the SQL server"
       }
     },
-	"storageName": {
+    "storageName": {
       "type": "string",
-      "defaultValue": "[concat('sqlatp-', uniqueString(resourceGroup().id, deployment().name))]",
+      "defaultValue": "[concat('sqlatp', uniqueString(resourceGroup().id, deployment().name))]",
       "metadata": {
         "description": "Name for the storage account to store Vulnerability Assessment scan results"
       }
@@ -51,7 +51,7 @@
         "description": "Email addresses to receive alerts and scan reports"
       }
     },
-	"emailAdmins": {
+    "emailAdmins": {
       "type": "bool",
       "defaultValue": true,
       "metadata": {
@@ -82,63 +82,63 @@
     "storageName": "[parameters('storageName')]"
   },
   "resources": [
-      {
-       "type": "Microsoft.Storage/storageAccounts",
-       "name": "[parameters('storageName')]",
-       "apiVersion": "2016-01-01",
-       "location": "[resourceGroup().location]",
-       "sku": {
-         "name": "Standard_LRS"
-       },
-       "kind": "Storage",
-       "properties": {
-       }
-     },
-     {
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[parameters('storageName')]",
+      "apiVersion": "2018-02-01",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "Storage",
+      "properties": {}
+    },
+    {
       "type": "Microsoft.Sql/servers",
       "apiVersion": "2015-05-01-preview",
       "location": "[variables('databaseServerLocation')]",
       "name": "[variables('serverName')]",
+      "tags": {
+        "DisplayName": "[variables('serverName')]"
+      },
       "properties": {
         "administratorLogin": "[variables('databaseServerAdminLogin')]",
         "administratorLoginPassword": "[variables('databaseServerAdminLoginPassword')]",
         "version": "12.0"
       },
-      "tags": {
-        "DisplayName": "[variables('serverName')]"
-      },
       "resources": [
-	  {
-        "apiVersion": "2017-03-01-preview",
-        "type": "securityAlertPolicies",
-        "name": "DefaultAtpTemplate",
-        "dependsOn": [
-          "[variables('serverName')]"
-        ],
-        "properties": {
-          "state": "Enabled",
-          "emailAddresses": "[variables('emailAddresses')]",
-          "emailAccountAdmins": "[parameters('emailAdmins')]"
-        }
-      },
-	  {
-        "name": "DefaultAtpTemplate",
-        "type": "vulnerabilityAssessments",
-        "apiVersion": "2018-06-01-preview",
-        "dependsOn": [
-          "[variables('serverName')]",
-          "[concat('Microsoft.Storage/storageAccounts/', parameters('storageName'))]"
-        ],
-        "properties": {
-          "storageContainerPath": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', parameters('storageName'))).primaryEndpoints.blob, 'vulnerability-assessment')]",
-          "storageAccountAccessKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]",
-          "recurringScans": {
-            "isEnabled": true,
-            "emailSubscriptionAdmins": "[parameters('emailAdmins')]",
-            "emails": "[variables('emailAddresses')]"
+        {
+          "apiVersion": "2017-03-01-preview",
+          "type": "securityAlertPolicies",
+          "name": "DefaultAtpTemplate",
+          "dependsOn": [
+            "[variables('serverName')]"
+          ],
+          "properties": {
+            "state": "Enabled",
+            "emailAddresses": "[variables('emailAddresses')]",
+            "emailAccountAdmins": "[parameters('emailAdmins')]"
+          }
+        },
+        {
+          "name": "DefaultAtpTemplate",
+          "type": "vulnerabilityAssessments",
+          "apiVersion": "2018-06-01-preview",
+          "dependsOn": [
+            "[variables('serverName')]",
+            "[concat('Microsoft.Storage/storageAccounts/', parameters('storageName'))]"
+          ],
+          "properties": {
+            "storageContainerPath": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', parameters('storageName'))).primaryEndpoints.blob, 'vulnerability-assessment')]",
+            "storageAccountAccessKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageName')), '2018-02-01').keys[0].value]",
+            "recurringScans": {
+              "isEnabled": true,
+              "emailSubscriptionAdmins": "[parameters('emailAdmins')]",
+              "emails": "[variables('emailAddresses')]"
+            }
           }
         }
-      }]
+      ]
     },
     {
       "condition": "[equals(variables('shouldDeployDb'), 'Yes')]",
@@ -149,10 +149,10 @@
       "dependsOn": [
         "[concat('Microsoft.Sql/servers/', variables('serverName'))]"
       ],
-      "properties": {},
       "tags": {
         "DisplayName": "[variables('serverName')]"
-      }
+      },
+      "properties": {}
     }
   ]
 }
