@@ -9,4 +9,4 @@
 
 This template provides a easy way to deploy a puckel/docker-airflow docker image on a Linux Web App with Azure database for PostgreSQL.
 
-**Notice** Once deployed Airflow can take a while to start due the creation and initialization of Airflow database.
+**Note** Once deployed Airflow can take a while to start due the creation and initialization of Airflow database.
