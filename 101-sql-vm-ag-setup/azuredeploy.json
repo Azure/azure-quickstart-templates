@@ -1,70 +1,77 @@
 {
-	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-	"contentVersion": "1.0.0.0",
-	"parameters": {
-		"FailoverClusterName": {
-			"type": "String",
-			"metadata": {
-				"description": "Specify the Windows Failover Cluster Name"
-			}
-		},
-		"existingVmList": {
-			"type": "String",
-			"metadata": {
-				"description": "Specify the list the names of SQL Server VM's with specified SqlServerVersion and Enterprise SKU to participate in the Availability Group (ex: SQLVM1, SQLVM2). OS underneath should be at least WS 2016."
-			}
-		},
-		"SqlServerVersion": {
-			"allowedValues": ["SQL2017", "SQL2016"],
-			"type": "String",
-			"metadata": {
-				"description": "Select the version of SQL Server present on all VMs in the list"
-			}
-		},
-		"existingFullyQualifiedDomainName": {
-			"type": "String",
-			"metadata": {
-				"description": "Specify the Fully Qualified Domain Name under which the Failover Cluster will be created. The VM's should already be joined to it. (e.g. contoso.com)"
-			}
-		},
-		"existingOuPath": {
-			"defaultValue": "",
-			"type": "String",
-			"metadata": {
-				"description": "Specify an optional Organizational Unit (OU) on AD Domain where the CNO (Computer Object for Cluster Name) will be created. Default is empty, which will create the CNO in OU of the VMs."
-			}
-		},
-		"existingDomainAccount": {
-			"type": "String",
-			"metadata": {
-				"description": "Specify the account for WS failover cluster creation in UPN format (e.g. example@contoso.com). This account can either be a Domain Admin or at least have permissions to create Computer Objects in default or specified OU."
-			}
-		},
-		"DomainAccountPassword": {
-			"type": "SecureString",
-			"metadata": {
-				"description": "Specify the password for the domain account"
-			}
-		},
-		"existingSqlServiceAccount": {
-			"type": "String",
-			"metadata": {
-				"description": "Specify the domain account under which SQL Server service will run for AG setup in UPN format (e.g. sqlservice@contoso.com)"
-			}
-		},
-		"SqlServicePassword": {
-			"type": "SecureString",
-			"metadata": {
-				"description": "Specify the password for Sql Server service account"
-			}
-		},
-		"CloudWitnessName": {
-			"type": "String",
-			"metadata": {
-				"description": "Specify the name of the storage account to be used for creating Cloud Witness for Windows server failover cluster"
-			},
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "FailoverClusterName": {
+            "type": "String",
+            "metadata": {
+                "description": "Specify the Windows Failover Cluster Name"
+            }
+        },
+        "existingVmList": {
+            "type": "String",
+            "metadata": {
+                "description": "Specify comma separated list of names of SQL Server VM's to participate in the Availability Group (e.g. SQLVM1, SQLVM2). OS underneath should be at least WS 2016."
+            }
+        },
+        "existingVmResourceGroup": {
+            "type": "String",
+            "metadata": {
+                "description": "Specify resourcegroup name for existing Vms."
+            },
+            "defaultValue": "[resourceGroup().name]"
+        },
+        "SqlServerVersion": {
+            "allowedValues": [ "SQL2017", "SQL2016" ],
+            "type": "String",
+            "metadata": {
+                "description": "Select the version of SQL Server present on all VMs in the list"
+            }
+        },
+        "existingFullyQualifiedDomainName": {
+            "type": "String",
+            "metadata": {
+                "description": "Specify the Fully Qualified Domain Name under which the Failover Cluster will be created. The VM's should already be joined to it. (e.g. contoso.com)"
+            }
+        },
+        "existingOuPath": {
+            "type": "String",
+            "metadata": {
+                "description": "Specify an optional Organizational Unit (OU) on AD Domain where the CNO (Computer Object for Cluster Name) will be created (e.g. OU=testou,OU=testou2,DC=contoso,DC=com). Default is empty."
+            },
+            "defaultValue": ""
+        },
+        "existingDomainAccount": {
+            "type": "String",
+            "metadata": {
+                "description": "Specify the account for WS failover cluster creation in UPN format (e.g. example@contoso.com). This account can either be a Domain Admin or at least have permissions to create Computer Objects in default or specified OU."
+            }
+        },
+        "DomainAccountPassword": {
+            "type": "SecureString",
+            "metadata": {
+                "description": "Specify the password for the domain account"
+            }
+        },
+        "existingSqlServiceAccount": {
+            "type": "String",
+            "metadata": {
+                "description": "Specify the domain account under which SQL Server service will run for AG setup in UPN format (e.g. sqlservice@contoso.com)"
+            }
+        },
+        "SqlServicePassword": {
+            "type": "SecureString",
+            "metadata": {
+                "description": "Specify the password for Sql Server service account"
+            }
+        },
+        "CloudWitnessName": {
+            "type": "String",
+            "metadata": {
+                "description": "Specify the name of the storage account to be used for creating Cloud Witness for Windows server failover cluster"
+            },
             "defaultValue": "[concat('clwitness', uniqueString(resourceGroup().id))]"
-		},
+        },
         "_artifactsLocation": {
             "type": "string",
             "metadata": {
@@ -86,94 +93,95 @@
             },
             "defaultValue": "[resourceGroup().location]"
         }
-	},
-	"variables": {
-		"existingVMListArray": "[split(parameters('existingVmList'),',')]",
-		"GroupResourceId": "[resourceId('Microsoft.SqlVirtualMachine/SqlVirtualMachineGroups', parameters('FailoverClusterName'))]",
+    },
+    "variables": {
+        "existingVMListArray": "[split(parameters('existingVmList'),',')]",
+        "GroupResourceId": "[resourceId('Microsoft.SqlVirtualMachine/SqlVirtualMachineGroups', parameters('FailoverClusterName'))]",
         "joinClusterTemplateURL": "[concat(parameters('_artifactsLocation'),'/nested/join-cluster.json',parameters('_artifactsLocationSasToken'))]"
-	},
-	"resources": [
-    {
-		"type": "Microsoft.SqlVirtualMachine/SqlVirtualMachines",
-        "apiVersion": "2017-03-01-preview",
-		"name": "[trim(variables('existingVMListArray')[copyIndex()])]",
-		"location": "[parameters('Location')]",
-		"copy": {
-			"name": "sqlvirtualMachineLoop",
-			"count": "[length(variables('existingVMListArray'))]"
-		},
-		"properties": {
-			"virtualMachineResourceId": "[resourceId('Microsoft.Compute/virtualMachines', trim(variables('existingVMListArray')[copyIndex()]))]"
-		}
-	},
-	{
-		"type": "Microsoft.Storage/storageAccounts",
-        "apiVersion": "2018-07-01",
-        "name": "[parameters('CloudWitnessName')]",
-		"sku": {
-			"name": "Standard_LRS"
-		},
-		"kind": "StorageV2",
-		"location": "[parameters('Location')]",
-		"properties": {
-			"accessTier": "Hot",
-			"supportsHttpsTrafficOnly": true
-		}
-	},
-	{
-		"type": "Microsoft.SqlVirtualMachine/SqlVirtualMachineGroups",
-        "apiVersion": "2017-03-01-preview",
-		"name": "[parameters('FailoverClusterName')]",
-		"location": "[parameters('Location')]",
-		"properties": {
-			"SqlImageOffer": "[concat(parameters('SqlServerVersion'),'-WS2016')]",
-			"SqlImageSku": "Enterprise",
-			"WSFCDomainProfile": {
-				"DomainFqdn": "[parameters('existingFullyQualifiedDomainName')]",
-				"OuPath": "[parameters('existingOuPath')]",
-				"ClusterBootstrapAccount": "[parameters('existingDomainAccount')]",
-				"ClusterOperatorAccount": "[parameters('existingDomainAccount')]",
-				"SqlServiceAccount": "[parameters('existingSqlServiceAccount')]",
-				"StorageAccountUrl": "[reference(resourceId('Microsoft.Storage/storageAccounts', parameters('CloudWitnessName')), '2018-07-01').primaryEndpoints['blob']]",
-				"StorageAccountPrimaryKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('CloudWitnessName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]"
-			}
-		}
-	},
-	{
-		"type": "Microsoft.Resources/deployments",
-        "apiVersion": "2017-05-10",
-		"name": "joincluster",
-		"properties": {
-			"mode": "Incremental",
-			"templateLink": {
-				"uri": "[variables('joinClusterTemplateURL')]",
-				"contentVersion": "1.0.0.0"
-			},
-			"parameters": {
-				"VirtualMachineNames": {
-					"value": "[variables('existingVMListArray')]"
-				},
-				"Location": {
-					"value": "[parameters('Location')]"
-				},
-				"ResourceGroup": {
-					"value": "[resourcegroup().name]"
-				},
-				"GroupResourceId": {
-					"value": "[variables('GroupResourceId')]"
-				},
-				"DomainAccountPassword": {
-					"value": "[parameters('DomainAccountPassword')]"
-				},
-				"SqlServicePassword": {
-					"value": "[parameters('SqlServicePassword')]"
-				}
-			}
-		},
-		"dependsOn": [
-           "[parameters('FailoverClusterName')]",
-		   "[parameters('CloudWitnessName')]",
-		   "sqlvirtualMachineLoop"
-        ]
-	}]
+    },
+    "resources": [
+        {
+            "type": "Microsoft.SqlVirtualMachine/SqlVirtualMachines",
+            "apiVersion": "2017-03-01-preview",
+            "name": "[trim(variables('existingVMListArray')[copyIndex()])]",
+            "location": "[parameters('Location')]",
+            "copy": {
+                "name": "sqlvirtualMachineLoop",
+                "count": "[length(variables('existingVMListArray'))]"
+            },
+            "properties": {
+                "virtualMachineResourceId": "[resourceId(parameters('existingVmResourceGroup'), 'Microsoft.Compute/virtualMachines', trim(variables('existingVMListArray')[copyIndex()]))]"
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2018-07-01",
+            "name": "[parameters('CloudWitnessName')]",
+            "sku": {
+                "name": "Standard_LRS"
+            },
+            "kind": "StorageV2",
+            "location": "[parameters('Location')]",
+            "properties": {
+                "accessTier": "Hot",
+                "supportsHttpsTrafficOnly": true
+            }
+        },
+        {
+            "type": "Microsoft.SqlVirtualMachine/SqlVirtualMachineGroups",
+            "apiVersion": "2017-03-01-preview",
+            "name": "[parameters('FailoverClusterName')]",
+            "location": "[parameters('Location')]",
+            "properties": {
+                "SqlImageOffer": "[concat(parameters('SqlServerVersion'),'-WS2016')]",
+                "SqlImageSku": "Enterprise",
+                "WsfcDomainProfile": {
+                    "DomainFqdn": "[parameters('existingFullyQualifiedDomainName')]",
+                    "OuPath": "[parameters('existingOuPath')]",
+                    "ClusterBootstrapAccount": "[parameters('existingDomainAccount')]",
+                    "ClusterOperatorAccount": "[parameters('existingDomainAccount')]",
+                    "SqlServiceAccount": "[parameters('existingSqlServiceAccount')]",
+                    "StorageAccountUrl": "[reference(resourceId('Microsoft.Storage/storageAccounts', parameters('CloudWitnessName')), '2018-07-01').primaryEndpoints['blob']]",
+                    "StorageAccountPrimaryKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('CloudWitnessName')), '2018-07-01').keys[0].value]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2017-05-10",
+            "name": "joincluster",
+            "dependsOn": [
+                "[parameters('FailoverClusterName')]",
+                "[parameters('CloudWitnessName')]",
+                "sqlvirtualMachineLoop"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('joinClusterTemplateURL')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "existingVirtualMachineNames": {
+                        "value": "[variables('existingVMListArray')]"
+                    },
+                    "Location": {
+                        "value": "[parameters('Location')]"
+                    },
+                    "existingVmResourceGroup": {
+                        "value": "[parameters('existingVmResourceGroup')]"
+                    },
+                    "GroupResourceId": {
+                        "value": "[variables('GroupResourceId')]"
+                    },
+                    "DomainAccountPassword": {
+                        "value": "[parameters('DomainAccountPassword')]"
+                    },
+                    "SqlServicePassword": {
+                        "value": "[parameters('SqlServicePassword')]"
+                    }
+                }
+            }
+        }
+    ]
 }
