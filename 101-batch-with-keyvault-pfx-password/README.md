@@ -7,5 +7,5 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template demostrates using Azure Batch service with pfx password certificate from keyvault
+This template demostrates using pfx certificate from keyvault in Azure batch service.
 
