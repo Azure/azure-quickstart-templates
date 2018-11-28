@@ -26,6 +26,18 @@
         "description": "The type of the operating system you want to deploy."
       }
     },
+    "dbtype": {
+      "type": "string",
+      "allowedValues": [
+        "SQL",
+        "HANA",
+        "other"
+      ],
+      "defaultValue": "other",
+      "metadata": {
+        "description": "The type of the database"
+      }
+    },
     "sapSystemSize": {
       "type": "string",
       "allowedValues": [
@@ -147,104 +159,665 @@
         "Publisher": "Microsoft.Compute",
         "Name": "CustomScriptExtension",
         "Version": "1.7",
-        "script": "[uri(parameters('_artifactsLocation'), concat('scripts/configureSAPVM.ps1', parameters('_artifactsLocationSasToken')))]",
-        "scriptCall": "powershell.exe -ExecutionPolicy bypass -File configureSAPVM.ps1"
+        "script": "[uri(parameters('_artifactsLocation'), concat('scripts/diskConfig.ps1', parameters('_artifactsLocationSasToken')))]",
+        "scriptCall": "powershell.exe -ExecutionPolicy bypass -File diskConfig.ps1"
       },
       "Linux": {
         "Publisher": "Microsoft.Azure.Extensions",
         "Name": "CustomScript",
         "Version": "2.0",
-        "script": "[uri(parameters('_artifactsLocation'), concat('scripts/configureSAPVM.sh', parameters('_artifactsLocationSasToken')))]",
-        "scriptCall": "sh configureSAPVM.sh"
+        "script": "[uri(parameters('_artifactsLocation'), concat('scripts/diskConfig.sh', parameters('_artifactsLocationSasToken')))]",
+        "scriptCall": "sh diskConfig.sh"
       }
     },
-    "vmSizes": {
+    "sizes": {
       "Demo": {
-        "size": "Standard_D2s_v3",
-        "disks": [
-          {
-            "size": 128
+        "HANA": {
+          "vmSize": "Standard_E4s_v3",
+          "disks": [
+            {
+              "lun": 0,
+              "caching": "ReadOnly",
+              "createOption": "Empty",
+              "diskSizeGB": 128
+            },
+            {
+              "lun": 1,
+              "caching": "ReadOnly",
+              "createOption": "Empty",
+              "diskSizeGB": 128
+            },
+            {
+              "lun": 2,
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": 128
+            },
+            {
+              "lun": 3,
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": 128
+            },
+            {
+              "lun": 4,
+              "caching": "ReadOnly",
+              "createOption": "Empty",
+              "diskSizeGB": 128
+            },
+            {
+              "lun": 5,
+              "caching": "ReadOnly",
+              "createOption": "Empty",
+              "diskSizeGB": 128
+            },
+            {
+              "lun": 6,
+              "caching": "ReadOnly",
+              "createOption": "Empty",
+              "diskSizeGB": 128
+            },
+            {
+              "lun": 7,
+              "caching": "ReadOnly",
+              "createOption": "Empty",
+              "diskSizeGB": 128
+            }
+          ],
+          "scriptArguments": {
+            "Linux": "-luns '0,1#2,3#4#5#6,7' -names 'data#log#shared#usrsap#backup' -paths '/hana/data#/hana/log#/hana/shared#/usr/sap#/hana/backup'  -sizes '100#100#100#100#100'"
           },
-          {
-            "size": 128
-          }
-        ],
-        "scriptArgs": " -DBDataLUNS '0' -DBLogLUNS '1'"
+          "useFastNetwork": false
+        },
+        "SQL": {
+          "vmSize": "Standard_E2s_v3",
+          "disks": [
+            {
+              "lun": 0,
+              "caching": "ReadOnly",
+              "createOption": "Empty",
+              "diskSizeGB": 128
+            },
+            {
+              "lun": 1,
+              "caching": "ReadOnly",
+              "createOption": "Empty",
+              "diskSizeGB": 128
+            }
+          ],
+          "scriptArguments": {
+            "Windows": "-luns \"0#1\" -names \"data#sap\" -paths \"C:\\sql\\data,C:\\sql\\log#S\"  -sizes \"70,100#100\""
+          },
+          "useFastNetwork": false
+        },
+        "other": {
+          "vmSize": "Standard_E2s_v3",
+          "disks": [
+            {
+              "lun": 0,
+              "caching": "ReadOnly",
+              "createOption": "Empty",
+              "diskSizeGB": 128
+            },
+            {
+              "lun": 1,
+              "caching": "ReadOnly",
+              "createOption": "Empty",
+              "diskSizeGB": 128
+            }
+          ],
+          "scriptArguments": {
+            "Linux": "-luns '0' -names 'usrsap' -paths '/usr/sap'  -sizes '100'",
+            "Windows": "-luns \"0\" -names \"sap\" -paths \"S\"  -sizes \"100\""
+          },
+          "useFastNetwork": false
+        }
       },
       "Small < 2.000 SAPS": {
-        "size": "Standard_E2s_v3",
-        "disks": [
-          {
-            "size": 512
+        "HANA": {
+          "vmSize": "Standard_E32s_v3",
+          "disks": [
+            {
+              "lun": 0,
+              "caching": "ReadOnly",
+              "createOption": "Empty",
+              "diskSizeGB": 512
+            },
+            {
+              "lun": 1,
+              "caching": "ReadOnly",
+              "createOption": "Empty",
+              "diskSizeGB": 512
+            },
+            {
+              "lun": 2,
+              "caching": "ReadOnly",
+              "createOption": "Empty",
+              "diskSizeGB": 512
+            },
+            {
+              "lun": 3,
+              "caching": "ReadOnly",
+              "createOption": "Empty",
+              "diskSizeGB": 512
+            },
+            {
+              "lun": 4,
+              "caching": "ReadOnly",
+              "createOption": "Empty",
+              "diskSizeGB": 64
+            },
+            {
+              "lun": 5,
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": 512
+            }
+          ],
+          "scriptArguments": {
+            "Linux": "-luns '0,1,2#3#4#5' -names 'datalog#shared#usrsap#backup' -paths '/hana/data,/hana/log#/hana/shared#/usr/sap#/hana/backup' -sizes '70,100#100#100#100'"
           },
-          {
-            "size": 512
+          "useFastNetwork": true
+        },
+        "SQL": {
+          "vmSize": "Standard_D4s_v3",
+          "disks": [
+            {
+              "lun": 0,
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": 512
+            },
+            {
+              "lun": 1,
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": 512
+            },
+            {
+              "lun": 2,
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": 512
+            },
+            {
+              "lun": 3,
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": 512
+            },
+            {
+              "lun": 4,
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": 512
+            },
+            {
+              "lun": 5,
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": 128
+            }
+          ],
+          "scriptArguments": {
+            "Windows": "-luns \"0,1,2,3#4#5\" -names \"data#log#sap\" -paths \"C:\\sql\\data#C:\\sql\\log#S\"  -sizes \"100#100#100\""
           },
-          {
-            "size": 128
-          }
-        ],
-        "scriptArgs": " -DBDataLUNS '0,1' -DBLogLUNS '2'"
+          "useFastNetwork": true
+        },
+        "other": {
+          "vmSize": "Standard_D4s_v3",
+          "disks": [
+            {
+              "lun": 0,
+              "caching": "ReadOnly",
+              "createOption": "Empty",
+              "diskSizeGB": 128
+            },
+            {
+              "lun": 1,
+              "caching": "ReadOnly",
+              "createOption": "Empty",
+              "diskSizeGB": 128
+            }
+          ],
+          "scriptArguments": {
+            "Linux": "-luns '0' -names 'usrsap' -paths '/usr/sap'  -sizes '100'",
+            "Windows": "-luns \"0\" -names \"sap\" -paths \"S\"  -sizes \"100\""
+          },
+          "useFastNetwork": true
+        }
       },
       "Medium < 9.000 SAPS": {
-        "size": "Standard_E8s_v3",
-        "disks": [
-          {
-            "size": 512
+        "HANA": {
+          "vmSize": "Standard_E64s_v3",
+          "disks": [
+            {
+              "lun": 0,
+              "caching": "ReadOnly",
+              "createOption": "Empty",
+              "diskSizeGB": 512
+            },
+            {
+              "lun": 1,
+              "caching": "ReadOnly",
+              "createOption": "Empty",
+              "diskSizeGB": 512
+            },
+            {
+              "lun": 2,
+              "caching": "ReadOnly",
+              "createOption": "Empty",
+              "diskSizeGB": 512
+            },
+            {
+              "lun": 3,
+              "caching": "ReadOnly",
+              "createOption": "Empty",
+              "diskSizeGB": 512
+            },
+            {
+              "lun": 4,
+              "caching": "ReadOnly",
+              "createOption": "Empty",
+              "diskSizeGB": 64
+            },
+            {
+              "lun": 5,
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": 1024
+            }
+          ],
+          "scriptArguments": {
+            "Linux": "-luns '0,1,2#3#4#5' -names 'datalog#shared#usrsap#backup' -paths '/hana/data,/hana/log#/hana/shared#/usr/sap#/hana/backup' -sizes '70,100#100#100#100'"
           },
-          {
-            "size": 512
+          "useFastNetwork": true
+        },
+        "SQL": {
+          "vmSize": "Standard_D32s_v3",
+          "disks": [
+            {
+              "lun": 0,
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": 512
+            },
+            {
+              "lun": 1,
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": 512
+            },
+            {
+              "lun": 2,
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": 512
+            },
+            {
+              "lun": 3,
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": 512
+            },
+            {
+              "lun": 4,
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": 512
+            },
+            {
+              "lun": 5,
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": 512
+            },
+            {
+              "lun": 6,
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": 512
+            },
+            {
+              "lun": 7,
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": 512
+            },
+            {
+              "lun": 8,
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": 128
+            }
+          ],
+          "scriptArguments": {
+            "Windows": "-luns \"0,1,2,3,4,5,6#7#8\" -names \"data#log#sap\" -paths \"C:\\sql\\data#C:\\sql\\log#S\"  -sizes \"100#100#100\""
           },
-          {
-            "size": 512
+          "useFastNetwork": true
+        },
+        "other": {
+          "vmSize": "Standard_D32s_v3",
+          "disks": [
+            {
+              "lun": 0,
+              "caching": "ReadOnly",
+              "createOption": "Empty",
+              "diskSizeGB": 128
+            },
+            {
+              "lun": 1,
+              "caching": "ReadOnly",
+              "createOption": "Empty",
+              "diskSizeGB": 128
+            }
+          ],
+          "scriptArguments": {
+            "Linux": "-luns '0' -names 'usrsap' -paths '/usr/sap'  -sizes '100'",
+            "Windows": "-luns \"0\" -names \"sap\" -paths \"S\"  -sizes \"100\""
           },
-          {
-            "size": 128
-          }
-        ],
-        "scriptArgs": " -DBDataLUNS '0,1,2' -DBLogLUNS '3'"
+          "useFastNetwork": true
+        }
       },
       "Large < 18.000 SAPS": {
-        "size": "Standard_E16s_v3",
-        "disks": [
-          {
-            "size": 1023
+        "HANA": {
+          "vmSize": "Standard_M64s",
+          "disks": [
+            {
+              "lun": 0,
+              "caching": "ReadOnly",
+              "createOption": "Empty",
+              "diskSizeGB": 512
+            },
+            {
+              "lun": 1,
+              "caching": "ReadOnly",
+              "createOption": "Empty",
+              "diskSizeGB": 512
+            },
+            {
+              "lun": 2,
+              "caching": "ReadOnly",
+              "createOption": "Empty",
+              "diskSizeGB": 512
+            },
+            {
+              "lun": 3,
+              "caching": "ReadOnly",
+              "createOption": "Empty",
+              "diskSizeGB": 512
+            },
+            {
+              "lun": 4,
+              "caching": "None",
+              "writeAcceleratorEnabled": "true",
+              "createOption": "Empty",
+              "diskSizeGB": 512
+            },
+            {
+              "lun": 5,
+              "caching": "None",
+              "writeAcceleratorEnabled": "true",
+              "createOption": "Empty",
+              "diskSizeGB": 512
+            },
+            {
+              "lun": 6,
+              "caching": "ReadOnly",
+              "createOption": "Empty",
+              "diskSizeGB": 1024
+            },
+            {
+              "lun": 7,
+              "caching": "ReadOnly",
+              "createOption": "Empty",
+              "diskSizeGB": 64
+            },
+            {
+              "lun": 8,
+              "caching": "ReadOnly",
+              "createOption": "Empty",
+              "diskSizeGB": 1024
+            },
+            {
+              "lun": 9,
+              "caching": "ReadOnly",
+              "createOption": "Empty",
+              "diskSizeGB": 1024
+            }
+          ],
+          "scriptArguments": {
+            "Linux": "-luns '0,1,2,3#4,5#6#7#8,9' -names 'data#log#shared#usrsap#backup' -paths '/hana/data#/hana/log#/hana/shared#/usr/sap#/hana/backup' -sizes '100#100#100#100#100'"
           },
-          {
-            "size": 1023
+          "useFastNetwork": true
+        },
+        "SQL": {
+          "vmSize": "Standard_D64s_v3",
+          "disks": [
+            {
+              "lun": 0,
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": 1024
+            },
+            {
+              "lun": 1,
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": 1024
+            },
+            {
+              "lun": 2,
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": 1024
+            },
+            {
+              "lun": 3,
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": 1024
+            },
+            {
+              "lun": 4,
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": 1024
+            },
+            {
+              "lun": 5,
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": 512
+            },
+            {
+              "lun": 6,
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": 128
+            }
+          ],
+          "scriptArguments": {
+            "Windows": "-luns \"0,1,2,3,4#5#6\" -names \"data#log#sap\" -paths \"C:\\sql\\data#C:\\sql\\log#S\"  -sizes \"100#100#100\""
           },
-          {
-            "size": 1023
+          "useFastNetwork": true
+        },
+        "other": {
+          "vmSize": "Standard_D64s_v3",
+          "disks": [
+            {
+              "lun": 0,
+              "caching": "ReadOnly",
+              "createOption": "Empty",
+              "diskSizeGB": 128
+            },
+            {
+              "lun": 1,
+              "caching": "ReadOnly",
+              "createOption": "Empty",
+              "diskSizeGB": 128
+            }
+          ],
+          "scriptArguments": {
+            "Linux": "-luns '0' -names 'usrsap' -paths '/usr/sap'  -sizes '100'",
+            "Windows": "-luns \"0\" -names \"sap\" -paths \"S\"  -sizes \"100\""
           },
-          {
-            "size": 512
-          }
-        ],
-        "scriptArgs": " -DBDataLUNS '0,1,2' -DBLogLUNS '3'"
+          "useFastNetwork": true
+        }
       },
       "X-Large < 40.000 SAPS": {
-        "size": "Standard_E64s_v3",
-        "disks": [
-          {
-            "size": 1023
+        "HANA": {
+          "vmSize": "Standard_M128s",
+          "disks": [
+            {
+              "lun": 0,
+              "caching": "ReadOnly",
+              "createOption": "Empty",
+              "diskSizeGB": 1024
+            },
+            {
+              "lun": 1,
+              "caching": "ReadOnly",
+              "createOption": "Empty",
+              "diskSizeGB": 1024
+            },
+            {
+              "lun": 2,
+              "caching": "ReadOnly",
+              "createOption": "Empty",
+              "diskSizeGB": 1024
+            },
+            {
+              "lun": 3,
+              "caching": "None",
+              "writeAcceleratorEnabled": "true",
+              "createOption": "Empty",
+              "diskSizeGB": 512
+            },
+            {
+              "lun": 4,
+              "caching": "None",
+              "writeAcceleratorEnabled": "true",
+              "createOption": "Empty",
+              "diskSizeGB": 512
+            },
+            {
+              "lun": 5,
+              "caching": "ReadOnly",
+              "createOption": "Empty",
+              "diskSizeGB": 1024
+            },
+            {
+              "lun": 6,
+              "caching": "ReadOnly",
+              "createOption": "Empty",
+              "diskSizeGB": 64
+            },
+            {
+              "lun": 7,
+              "caching": "ReadOnly",
+              "createOption": "Empty",
+              "diskSizeGB": 2048
+            },
+            {
+              "lun": 8,
+              "caching": "ReadOnly",
+              "createOption": "Empty",
+              "diskSizeGB": 2048
+            }
+          ],
+          "scriptArguments": {
+            "Linux": "-luns '0,1,2#3,4#5#6#7,8' -names 'data#log#shared#usrsap#backup' -paths '/hana/data#/hana/log#/hana/shared#/usr/sap#/hana/backup' -sizes '100#100#100#100#100'"
           },
-          {
-            "size": 1023
+          "useFastNetwork": true
+        },
+        "SQL": {
+          "vmSize": "Standard_E64s_v3",
+          "disks": [
+            {
+              "lun": 0,
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": 1024
+            },
+            {
+              "lun": 1,
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": 1024
+            },
+            {
+              "lun": 2,
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": 1024
+            },
+            {
+              "lun": 3,
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": 1024
+            },
+            {
+              "lun": 4,
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": 1024
+            },
+            {
+              "lun": 5,
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": 1024
+            },
+            {
+              "lun": 6,
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": 1024
+            },
+            {
+              "lun": 7,
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": 1024
+            },
+            {
+              "lun": 8,
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": 128
+            }
+          ],
+          "scriptArguments": {
+            "Windows": "-luns \"0,1,2,3,4,5,6#7#8\" -names \"data#log#sap\" -paths \"C:\\sql\\data#C:\\sql\\log#S\"  -sizes \"100#100#100\""
           },
-          {
-            "size": 1023
+          "useFastNetwork": true
+        },
+        "other": {
+          "vmSize": "Standard_E64s_v3",
+          "disks": [
+            {
+              "lun": 0,
+              "caching": "ReadOnly",
+              "createOption": "Empty",
+              "diskSizeGB": 128
+            },
+            {
+              "lun": 1,
+              "caching": "ReadOnly",
+              "createOption": "Empty",
+              "diskSizeGB": 128
+            }
+          ],
+          "scriptArguments": {
+            "Linux": "-luns '0' -names 'usrsap' -paths '/usr/sap'  -sizes '100'",
+            "Windows": "-luns \"0\" -names \"sap\" -paths \"S\"  -sizes \"100\""
           },
-          {
-            "size": 1023
-          },
-          {
-            "size": 512
-          }
-        ],
-        "scriptArgs": " -DBDataLUNS '0,1,2,3' -DBLogLUNS '4'"
+          "useFastNetwork": true
+        }
       }
     },
-    "dataDiskSizes": "[variables('vmSizes')[parameters('sapSystemSize')].disks]",
     "sidlower": "[toLower(parameters('sapSystemId'))]",
     "vmName": "[concat(variables('sidlower'), '-servercs')]",
     "vnetName": "[concat(variables('sidlower'), '-vnet')]",
@@ -391,7 +964,7 @@
       "location": "[parameters('location')]",
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[variables('vmSizes')[parameters('sapSystemSize')].size]"
+          "vmSize": "[variables('sizes')[parameters('sapSystemSize')][parameters('dbType')].vmSize]"
         },
         "osProfile": {
           "computerName": "[variables('vmName')]",
@@ -414,19 +987,7 @@
               "storageAccountType": "Premium_LRS"
             }
           },
-          "value": {
-            "copy": [
-              {
-                "name": "dataDisks",
-                "count": "[length(variables('dataDiskSizes'))]",
-                "input": {
-                  "lun": "[copyIndex('dataDisks')]",
-                  "createOption": "Empty",
-                  "diskSizeGB": "[variables('dataDiskSizes')[copyIndex('dataDisks')].size]"
-                }
-              }
-            ]
-          }
+          "dataDisks": "[variables('sizes')[parameters('sapSystemSize')][parameters('dbType')].disks]"
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -454,7 +1015,7 @@
           "fileUris": [
             "[variables('csExtension')[variables('internalOSType')].script]"
           ],
-          "commandToExecute": "[concat(variables('csExtension')[variables('internalOSType')].scriptCall, ' ', variables('vmSizes')[parameters('sapSystemSize')].scriptArgs)]"
+          "commandToExecute": "[concat(variables('csExtension')[variables('internalOSType')].scriptCall, ' ', variables('sizes')[parameters('sapSystemSize')][parameters('dbType')].scriptArguments[variables('internalOSType')])]"
         }
       }
     }
