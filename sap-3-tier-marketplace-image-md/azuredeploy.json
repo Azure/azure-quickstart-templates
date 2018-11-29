@@ -42,10 +42,9 @@
       "type": "string",
       "allowedValues": [
         "SQL",
-        "HANA",
-        "other"
+        "HANA"
       ],
-      "defaultValue": "other",
+      "defaultValue": "SQL",
       "metadata": {
         "description": "The type of the database"
       }
@@ -136,6 +135,7 @@
   },
   "variables": {
     "azArray": "[split(parameters('availabilityZones'), ',')]",
+    "azArrayLength": "[length(variables('azArray'))]",
     "images": {
       "Windows Server 2012 Datacenter": {
         "sku": "2012-Datacenter",
@@ -195,8 +195,8 @@
       "Demo": {
         "HANA": {
           "dbvmSize": "Standard_E8s_v3",
-          "ascsVMSize": "Standard_DS2_v3",
-          "diVMSize": "Standard_DS2_v3",
+          "ascsVMSize": "Standard_D2s_v3",
+          "diVMSize": "Standard_D2s_v3",
           "diVMCount": 1,
           "dbdisks": [
             {
@@ -255,8 +255,8 @@
         },
         "SQL": {
           "dbvmSize": "Standard_E4s_v3",
-          "ascsVMSize": "Standard_DS2_v3",
-          "diVMSize": "Standard_DS2_v3",
+          "ascsVMSize": "Standard_D2s_v3",
+          "diVMSize": "Standard_D2s_v3",
           "diVMCount": 1,
           "dbdisks": [
             {
@@ -273,8 +273,8 @@
         },
         "other": {
           "dbvmSize": "Standard_E4s_v3",
-          "ascsVMSize": "Standard_DS2_v3",
-          "diVMSize": "Standard_DS2_v3",
+          "ascsVMSize": "Standard_D2s_v3",
+          "diVMSize": "Standard_D2s_v3",
           "diVMCount": 1,
           "dbdisks": [
             {
@@ -983,10 +983,12 @@
     "avSetNameASCS": "[concat(variables('sidlower'), '-avset-ascs')]",
     "nsgName": "[concat(variables('sidlower'), '-nsg')]",
     "loadBalancerNameASCS": "[concat(variables('sidlower'), '-lb-ascs')]",
+    "loadBalancerNamePubASCS": "[concat(variables('sidlower'), '-lb-pub-ascs')]",
     "vmNameASCS": "[concat(variables('vmName'), '-ascs')]",
     "nicNameASCS": "[concat(variables('sidlower'), '-nic-ascs')]",
     "avSetNameDB": "[concat(variables('sidlower'), '-avset-db')]",
     "loadBalancerNameDB": "[concat(variables('sidlower'), '-lb-db')]",
+    "loadBalancerNamePubDB": "[concat(variables('sidlower'), '-lb-pub-db')]",
     "nicNameDB": "[concat(variables('sidlower'), '-nic-db')]",
     "vmNameDB": "[concat(variables('vmName'), '-db')]",
     "avSetNameDI": "[concat(variables('sidlower'), '-avset-di')]",
@@ -1050,6 +1052,8 @@
     "frontendSCS": "frontendscs",
     "frontendERS": "frontenders",
     "frontendASCSCL": "frontendascscl",
+    "frontendPubASCS": "frontendpubascs",
+    "frontendPubDB": "frontendpubdb",
     "backendPoolHANADB": "backendhdb",
     "backendPoolSQLDB": "backendsql",
     "backendPoolSQLCL": "backendsqlcl",
@@ -1058,6 +1062,8 @@
     "backendPoolSCS": "backendscs",
     "backendPoolERS": "backenders",
     "backendPoolASCSCL": "backendascscl",
+    "backendPoolPubASCS": "backendpubascs",
+    "backendPoolPubDB": "backendpubdb",
     "probePortHANADB": "probehdb",
     "probePortSQLDB": "probesql",
     "probePortSQLCL": "probesqlcl",
@@ -1088,17 +1094,10 @@
     "lbRulePrefixERS": "lbersRule",
     "lbRulePrefixASCSCL": "lbascsclRule",
     "idleTimeoutInMinutes": 30,
-    "dbTypeInternalValues": {
-      "Linux": {
-        "HANA": "HANA",
-        "other": "HANA"
-      },
-      "Windows": {
-        "SQL": "SQL",
-        "other": "SQL"
-      }
-    },
-    "dbTypeInternal": "[variables('dbTypeInternalValues')[variables('internalOsType')][parameters('dbType')]]",
+    "publicIpNameLBDB": "[concat(variables('sidlower'), '-pip-lb-db')]",
+    "publicIpNameLBASCS": "[concat(variables('sidlower'), '-pip-lb-ascs')]",
+    "pipIdDB": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpNameLBDB'))]",
+    "pipIdASCS": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpNameLBASCS'))]",
     "lbFrontendConfigsDB": {
       "HANA": {
         "Linux": [
@@ -1507,12 +1506,18 @@
       "HANA": {
         "Linux": [
           {
+            "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancerNamePubDB'), variables('backendPoolPubDB'))]"
+          },
+          {
             "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancerNameDB'), variables('backendPoolHANADB'))]"
           }
         ]
       },
       "SQL": {
         "Windows": [
+          {
+            "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancerNamePubDB'), variables('backendPoolPubDB'))]"
+          },
           {
             "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancerNameDB'), variables('backendPoolSQLDB'))]"
           },
@@ -1538,15 +1543,21 @@
         "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancerNameASCS'), variables('backendPoolERS'))]"
       }
     ],
-    "nicBackAddressPoolsIND": [
+    "nicBackAddressPoolsIND": [     
       {
         "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancerNameASCS'), variables('backendPoolASCSCL'))]"
       }
     ],
+    "nicBackAddressPoolsPub": [
+      {
+        "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancerNamePubASCS'), variables('backendPoolPubASCS'))]"
+      }
+    ],
+    "nicBackAddressPoolsINDPub": "[if(greater(length(parameters('subnetId')), 0), concat(variables('nicBackAddressPoolsIND'), variables('nicBackAddressPoolsPub')), variables('nicBackAddressPoolsIND'))]",
     "nicBackAddressPoolXSCS": {
-      "ABAP": "[concat(variables('nicBackAddressPoolsIND'), variables('nicBackAddressPoolsABAP'))]",
-      "JAVA": "[concat(variables('nicBackAddressPoolsIND'), variables('nicBackAddressPoolsJAVA'))]",
-      "ABAP+JAVA": "[concat(variables('nicBackAddressPoolsIND'), variables('nicBackAddressPoolsABAP'), variables('nicBackAddressPoolsJAVA'))]"
+      "ABAP": "[concat(variables('nicBackAddressPoolsINDPub'), variables('nicBackAddressPoolsABAP'))]",
+      "JAVA": "[concat(variables('nicBackAddressPoolsINDPub'), variables('nicBackAddressPoolsJAVA'))]",
+      "ABAP+JAVA": "[concat(variables('nicBackAddressPoolsINDPub'), variables('nicBackAddressPoolsABAP'), variables('nicBackAddressPoolsJAVA'))]"
     }
   },
   "resources": [
@@ -1596,9 +1607,72 @@
       "sku": {
         "name": "Aligned"
       },
+      "condition": "[equals(length(parameters('availabilityZones')), 0)]",
       "properties": {
-        "platformFaultDomainCount": 3,
-        "platformUpdateDomainCount": 20
+        "platformFaultDomainCount": 2,
+        "platformUpdateDomainCount": 10
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIpNameLBASCS')]",
+      "apiVersion": "2018-10-01",
+      "condition": "[and(greater(variables('ascsvmCount') , 1), greater(length(parameters('subnetId')), 0))]",
+      "sku": {
+        "name": "Standard"
+      },
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "Static"
+      }
+    },
+    {
+      "type": "Microsoft.Network/loadBalancers",
+      "name": "[variables('loadBalancerNamePubASCS')]",
+      "apiVersion": "2018-07-01",
+      "location": "[parameters('location')]",
+      "condition": "[and(greater(variables('ascsvmCount') , 1), greater(length(parameters('subnetId')), 0))]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIpNameLBASCS'))]"
+      ],
+      "sku": {
+        "name": "Standard"
+      },
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "[variables('frontendPubASCS')]",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[variables('pipIdASCS')]"
+              }
+            }
+          }
+        ],
+        "outboundRules": [
+          {
+            "name": "test",
+            "properties": {
+              "frontendIPConfigurations": [
+                {
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('loadBalancerNamePubASCS'), variables('frontendPubASCS'))]"
+                }
+              ],
+              "allocatedOutboundPorts": 1000,
+              "idleTimeoutInMinutes": 4,
+              "enableTcpReset": true,
+              "protocol": "All",
+              "backendAddressPool": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancerNamePubASCS'), variables('backendPoolPubASCS'))]"
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "[variables('backendPoolPubASCS')]"
+          }
+        ]
       }
     },
     {
@@ -1651,7 +1725,8 @@
       "dependsOn": [
         "pipLoop",
         "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
-        "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerNameASCS'))]"
+        "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerNameASCS'))]",
+        "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerNamePubASCS'))]"
       ],
       "location": "[parameters('location')]",
       "properties": {
@@ -1683,10 +1758,9 @@
       ],
       "apiVersion": "2017-12-01",
       "location": "[parameters('location')]",
+      "zones": "[if(equals(length(parameters('availabilityZones')), 0), json('null'), array(variables('azArray')[mod(copyIndex(), variables('azArrayLength'))]))]",
       "properties": {
-        "availabilitySet": {
-          "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('avSetNameASCS'))]"
-        },
+        "availabilitySet": "[if(equals(variables('azArrayLength'), 0), resourceId('Microsoft.Compute/availabilitySets', variables('avSetNameASCS')), json('null'))]",
         "hardwareProfile": {
           "vmSize": "[variables('ascsVMSize')]"
         },
@@ -1761,9 +1835,71 @@
       "sku": {
         "name": "Aligned"
       },
+      "condition": "[equals(length(parameters('availabilityZones')), 0)]",
       "properties": {
-        "platformFaultDomainCount": 3,
-        "platformUpdateDomainCount": 20
+        "platformFaultDomainCount": 2,
+        "platformUpdateDomainCount": 10
+      }
+    },    
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIpNameLBDB')]",
+      "apiVersion": "2018-10-01",
+      "sku": {
+        "name": "Standard"
+      },
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "Static"
+      }
+    },
+    {
+      "type": "Microsoft.Network/loadBalancers",
+      "name": "[variables('loadBalancerNamePubDB')]",
+      "apiVersion": "2018-07-01",
+      "location": "[parameters('location')]",
+      "condition": "[greater(variables('ascsvmCount') , 1)]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIpNameLBDB'))]"
+      ],
+      "sku": {
+        "name": "Standard"
+      },
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "[variables('frontendPubDB')]",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[variables('pipIdDB')]"
+              }
+            }
+          }
+        ],
+        "outboundRules": [
+          {
+            "name": "test",
+            "properties": {
+              "frontendIPConfigurations": [
+                {
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('loadBalancerNamePubDB'), variables('frontendPubDB'))]"
+                }
+              ],
+              "allocatedOutboundPorts": 1000,
+              "idleTimeoutInMinutes": 4,
+              "enableTcpReset": true,
+              "protocol": "All",
+              "backendAddressPool": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancerNamePubDB'), variables('backendPoolPubDB'))]"
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "[variables('backendPoolPubDB')]"
+          }
+        ]
       }
     },
     {
@@ -1779,10 +1915,10 @@
         "name": "Standard"
       },
       "properties": {
-        "frontendIPConfigurations": "[variables('lbFrontendConfigsDB')[variables('dbTypeInternal')][variables('internalOSType')]]",
-        "backendAddressPools": "[variables('lbBackendPoolsDB')[variables('dbTypeInternal')][variables('internalOSType')]]",
-        "loadBalancingRules": "[variables('lbRulesDB')[variables('dbTypeInternal')][variables('internalOSType')]]",
-        "probes": "[variables('lbProbesDB')[variables('dbTypeInternal')][variables('internalOSType')]]"
+        "frontendIPConfigurations": "[variables('lbFrontendConfigsDB')[parameters('dbType')][variables('internalOSType')]]",
+        "backendAddressPools": "[variables('lbBackendPoolsDB')[parameters('dbType')][variables('internalOSType')]]",
+        "loadBalancingRules": "[variables('lbRulesDB')[parameters('dbType')][variables('internalOSType')]]",
+        "probes": "[variables('lbProbesDB')[parameters('dbType')][variables('internalOSType')]]"
       }
     },
     {
@@ -1795,7 +1931,8 @@
       },
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
-        "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerNameDB'))]"
+        "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerNameDB'))]",
+        "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerNamePubDB'))]"
       ],
       "location": "[parameters('location')]",
       "properties": {
@@ -1807,7 +1944,7 @@
               "subnet": {
                 "id": "[variables('selectedSubnetId')]"
               },
-              "loadBalancerBackendAddressPools": "[if(greater(variables('dbvmCount'), 1), variables('nicBackAddressPoolsDB')[variables('dbTypeInternal')][variables('internalOSType')], json('null'))]"
+              "loadBalancerBackendAddressPools": "[if(greater(variables('dbvmCount'), 1), variables('nicBackAddressPoolsDB')[parameters('dbType')][variables('internalOSType')], json('null'))]"
             }
           }
         ]
@@ -1826,10 +1963,9 @@
       ],
       "apiVersion": "2017-12-01",
       "location": "[parameters('location')]",
+      "zones": "[if(equals(length(parameters('availabilityZones')), 0), json('null'), array(variables('azArray')[mod(copyIndex(), variables('azArrayLength'))]))]",
       "properties": {
-        "availabilitySet": {
-          "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('avSetNameDB'))]"
-        },
+        "availabilitySet": "[if(equals(variables('azArrayLength'), 0), resourceId('Microsoft.Compute/availabilitySets', variables('avSetNameDB')), json('null'))]",        
         "hardwareProfile": {
           "vmSize": "[variables('dbvmSize')]"
         },
@@ -1898,9 +2034,10 @@
       "sku": {
         "name": "Aligned"
       },
+      "condition": "[equals(length(parameters('availabilityZones')), 0)]",
       "properties": {
-        "platformFaultDomainCount": 3,
-        "platformUpdateDomainCount": 20
+        "platformFaultDomainCount": 2,
+        "platformUpdateDomainCount": 10
       }
     },
     {
@@ -1942,10 +2079,9 @@
       ],
       "apiVersion": "2017-12-01",
       "location": "[parameters('location')]",
+      "zones": "[if(equals(length(parameters('availabilityZones')), 0), json('null'), array(variables('azArray')[mod(copyIndex(), variables('azArrayLength'))]))]",
       "properties": {
-        "availabilitySet": {
-          "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('avSetNameDI'))]"
-        },
+        "availabilitySet": "[if(equals(variables('azArrayLength'), 0), resourceId('Microsoft.Compute/availabilitySets', variables('avSetNameDI')), json('null'))]",
         "hardwareProfile": {
           "vmSize": "[variables('divmSize')]"
         },
