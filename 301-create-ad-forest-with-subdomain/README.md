@@ -146,7 +146,7 @@ New Features:
 * Added the possibility to deploy to a location different to that of the Resource Group.
 * general cleanup: updated all APIs to the most recent ones, updated DSC modules to the latest.
 
-### Update December 2019
+### Update December 2018
 
 * Added support for Windows Server 2019.
 
