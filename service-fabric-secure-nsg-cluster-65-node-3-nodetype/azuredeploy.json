@@ -4,26 +4,28 @@
     "parameters": {
       "clusterLocation": {
         "type": "string",
+        "defaultValue": "westus",
         "metadata": {
           "description": "Location of the Cluster"
         }
       },
       "clusterName": {
         "type": "string",
-        "defaultValue": "Cluster",
+        "defaultValue": "GEN-UNIQUE",
         "metadata": {
           "description": "Name of your cluster - Between 3 and 23 characters. Letters and numbers only"
         }
       },
       "adminUsername": {
         "type": "string",
-        "defaultValue": "testadm",
+        "defaultValue": "GEN-UNIQUE",
         "metadata": {
           "description": "Remote desktop user Id"
         }
       },
       "adminPassword": {
         "type": "securestring",
+        "defaultValue": "GEN-PASSWORD",
         "metadata": {
           "description": "Remote desktop user password. Must be a strong password"
         }
@@ -94,18 +96,21 @@
       },
       "certificateThumbprint": {
         "type": "string",
+        "defaultValue": "GEN-CUSTOM-DOMAIN-SSLCERT-THUMBPRINT",
         "metadata": {
           "description": "X.509 SHA-1 Certificate Thumbprint"
         }
       },
       "sourceVaultValue": {
         "type": "string",
+        "defaultValue": "GEN-KEYVAULT-RESOURCE-ID",
         "metadata": {
           "description": "Resource Id of the key vault, is should be in the format of /subscriptions/<Sub ID>/resourceGroups/<Resource group name>/providers/Microsoft.KeyVault/vaults/<vault name>"
         }
       },
       "certificateUrlValue": {
         "type": "string",
+        "defaultValue": "GEN-KEYVAULT-SSL-SECRET-URI",
         "metadata": {
           "description": "Refers to the location URL in your key vault where the certificate was uploaded, it is should be in the format of https://<name of the vault>.vault.azure.net:443/secrets/<exact location>"
         }
@@ -154,8 +159,7 @@
       }
     },
     "variables": {
-      "computeLocation": "[parameters('clusterLocation')]",
-      "dnsName": "[toLower(parameters('clusterName'))]",
+      "dnsName": "[parameters('clusterName')]",
       "vmName": "vm",
       "virtualNetworkName": "VNet",
       "addressPrefix": "10.0.0.0/16",
@@ -218,10 +222,10 @@
     },
     "resources": [
       {
-        "apiVersion": "2016-01-01",
+        "apiVersion": "2018-07-01",
         "type": "Microsoft.Storage/storageAccounts",
         "name": "[variables('supportLogStorageAccountName')]",
-        "location": "[variables('computeLocation')]",
+        "location": "[parameters('clusterLocation')]",
         "dependsOn": [],
         "properties": {},
         "kind": "Storage",
@@ -237,7 +241,7 @@
         "apiVersion": "2015-06-15",
         "type": "Microsoft.Network/virtualNetworks",
         "name": "[variables('virtualNetworkName')]",
-        "location": "[variables('computeLocation')]",
+        "location": "[parameters('clusterLocation')]",
         "dependsOn": [
           "[concat('Microsoft.Network/networkSecurityGroups/', concat('nsg', variables('subnet0Name')))]",
           "[concat('Microsoft.Network/networkSecurityGroups/', concat('nsg', variables('subnet1Name')))]",
@@ -285,10 +289,10 @@
         }
       },
       {
-        "apiVersion": "2015-06-15",
+        "apiVersion": "2018-08-01",
         "type": "Microsoft.Network/publicIPAddresses",
         "name": "[concat(variables('lbIPName'),'-','0')]",
-        "location": "[variables('computeLocation')]",
+        "location": "[parameters('clusterLocation')]",
         "properties": {
           "dnsSettings": {
             "domainNameLabel": "[variables('dnsName')]"
@@ -301,10 +305,10 @@
         }
       },
       {
-        "apiVersion": "2015-06-15",
+        "apiVersion": "2018-08-01",
         "type": "Microsoft.Network/loadBalancers",
         "name": "[concat('LB','-', parameters('clusterName'),'-',variables('vmNodeType0Name'))]",
-        "location": "[variables('computeLocation')]",
+        "location": "[parameters('clusterLocation')]",
         "dependsOn": [
           "[concat('Microsoft.Network/publicIPAddresses/',concat(variables('lbIPName'),'-','0'))]"
         ],
@@ -465,7 +469,7 @@
         "apiVersion": "2015-06-15",
         "type": "Microsoft.Network/networkSecurityGroups",
         "name": "[concat('nsg', variables('subnet0Name'))]",
-        "location": "[resourceGroup().location]",
+        "location": "[parameters('clusterLocation')]",
         "properties": {
           "securityRules": [
             {
@@ -616,10 +620,10 @@
         }
       },
       {
-        "apiVersion": "2017-03-30",
+        "apiVersion": "2018-10-01",
         "type": "Microsoft.Compute/virtualMachineScaleSets",
         "name": "[variables('vmNodeType0Name')]",
-        "location": "[variables('computeLocation')]",
+        "location": "[parameters('clusterLocation')]",
         "dependsOn": [
             "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
           "[concat('Microsoft.Network/loadBalancers/', concat('LB','-', parameters('clusterName'),'-',variables('vmNodeType0Name')))]",
@@ -735,10 +739,10 @@
         }
       },
       {
-        "apiVersion": "2015-06-15",
+        "apiVersion": "2018-08-01",
         "type": "Microsoft.Network/publicIPAddresses",
         "name": "[concat(variables('lbIPName'),'-','1')]",
-        "location": "[variables('computeLocation')]",
+        "location": "[parameters('clusterLocation')]",
         "properties": {
           "dnsSettings": {
             "domainNameLabel": "[concat(variables('dnsName'),'-','web')]"
@@ -751,10 +755,10 @@
         }
       },
       {
-        "apiVersion": "2015-06-15",
+        "apiVersion": "2018-08-01",
         "type": "Microsoft.Network/loadBalancers",
         "name": "[concat('LB','-', parameters('clusterName'),'-',variables('vmNodeType1Name'))]",
-        "location": "[variables('computeLocation')]",
+        "location": "[parameters('clusterLocation')]",
         "dependsOn": [
           "[concat('Microsoft.Network/publicIPAddresses/',concat(variables('lbIPName'),'-','1'))]"
         ],
@@ -915,7 +919,7 @@
         "apiVersion": "2015-06-15",
         "type": "Microsoft.Network/networkSecurityGroups",
         "name": "[concat('nsg', variables('subnet1Name'))]",
-        "location": "[resourceGroup().location]",
+        "location": "[parameters('clusterLocation')]",
         "properties": {
           "securityRules": [
             {
@@ -1066,10 +1070,10 @@
         }
       },
       {
-        "apiVersion": "2017-03-30",
+        "apiVersion": "2018-10-01",
         "type": "Microsoft.Compute/virtualMachineScaleSets",
         "name": "[variables('vmNodeType1Name')]",
-        "location": "[variables('computeLocation')]",
+        "location": "[parameters('clusterLocation')]",
         "dependsOn": [
             "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
           "[concat('Microsoft.Network/loadBalancers/', concat('LB','-', parameters('clusterName'),'-',variables('vmNodeType1Name')))]",
@@ -1185,10 +1189,10 @@
         }
       },
       {
-        "apiVersion": "2015-06-15",
+        "apiVersion": "2018-08-01",
         "type": "Microsoft.Network/publicIPAddresses",
         "name": "[concat(variables('lbIPName'),'-','2')]",
-        "location": "[variables('computeLocation')]",
+        "location": "[parameters('clusterLocation')]",
         "properties": {
           "dnsSettings": {
             "domainNameLabel": "[concat(variables('dnsName'),'-','backend')]"
@@ -1201,10 +1205,10 @@
         }
       },
       {
-        "apiVersion": "2015-06-15",
+        "apiVersion": "2018-08-01",
         "type": "Microsoft.Network/loadBalancers",
         "name": "[concat('LB','-', parameters('clusterName'),'-',variables('vmNodeType2Name'))]",
-        "location": "[variables('computeLocation')]",
+        "location": "[parameters('clusterLocation')]",
         "dependsOn": [
           "[concat('Microsoft.Network/publicIPAddresses/',concat(variables('lbIPName'),'-','2'))]"
         ],
@@ -1365,7 +1369,7 @@
         "apiVersion": "2015-06-15",
         "type": "Microsoft.Network/networkSecurityGroups",
         "name": "[concat('nsg', variables('subnet2Name'))]",
-        "location": "[resourceGroup().location]",
+        "location": "[parameters('clusterLocation')]",
         "properties": {
           "securityRules": [
             {
@@ -1516,10 +1520,10 @@
         }
       },
       {
-        "apiVersion": "2017-03-30",
+        "apiVersion": "2018-10-01",
         "type": "Microsoft.Compute/virtualMachineScaleSets",
         "name": "[variables('vmNodeType2Name')]",
-        "location": "[variables('computeLocation')]",
+        "location": "[parameters('clusterLocation')]",
         "dependsOn": [
           "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
           "[concat('Microsoft.Network/loadBalancers/', concat('LB','-', parameters('clusterName'),'-',variables('vmNodeType2Name')))]",
@@ -1635,7 +1639,7 @@
         }
       },
       {
-        "apiVersion": "2016-09-01",
+        "apiVersion": "2018-02-01",
         "type": "Microsoft.ServiceFabric/clusters",
         "name": "[parameters('clusterName')]",
         "location": "[parameters('clusterLocation')]",
