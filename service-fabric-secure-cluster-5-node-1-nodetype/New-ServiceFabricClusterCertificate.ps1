@@ -14,8 +14,14 @@ param(
     [string] [Parameter(Mandatory=$true)] $Password,
     [string] [Parameter(Mandatory=$true)] $CertDNSName,
     [string] [Parameter(Mandatory=$true)] $KeyVaultName,
-    [string] [Parameter(Mandatory=$true)] $KeyVaultSecretName
+    [string] [Parameter(Mandatory=$true)] $KeyVaultResourceGroup, 
+    [string] [Parameter(Mandatory=$true)] $KeyVaultSecretName,
+    [string] [Parameter(Mandatory=$true)] $SubscriptionId
 )
+
+Connect-AzureRmAccount
+Set-AzureRmContext -SubscriptionId $SubscriptionId
+Set-AzureRmKeyVaultAccessPolicy -VaultName $KeyVaultName -ResourceGroupName $KeyVaultResourceGroup -EnabledForDeployment -EnabledForTemplateDeployment
 
 $SecurePassword = ConvertTo-SecureString -String $Password -AsPlainText -Force
 $CertFileFullPath = $(Join-Path (Split-Path -Parent $MyInvocation.MyCommand.Definition) "\$CertDNSName.pfx")
