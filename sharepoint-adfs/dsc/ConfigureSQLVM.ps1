@@ -9,7 +9,7 @@ configuration ConfigureSQLVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSetupCreds
     )
 
-    Import-DscResource -ModuleName ComputerManagementDsc, xNetworking, xActiveDirectory, SqlServerDsc, xPSDesiredStateConfiguration
+    Import-DscResource -ModuleName ComputerManagementDsc, NetworkingDsc, xActiveDirectory, SqlServerDsc, xPSDesiredStateConfiguration
 
     WaitForSqlSetup
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
@@ -33,7 +33,12 @@ configuration ConfigureSQLVM
         #**********************************************************
         # Initialization of VM
         #**********************************************************
-        xFirewall DatabaseEngineFirewallRule
+        WindowsFeature ADTools  { Name = "RSAT-AD-Tools";      Ensure = "Present"; }
+        WindowsFeature ADPS     { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; }
+        
+        DnsServerAddress DnsServerAddress { Address = $DNSServer; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4' }
+
+        Firewall DatabaseEngineFirewallRule
         {
             Direction = "Inbound"
             Name = "SQL-Server-Database-Engine-TCP-In"
@@ -46,31 +51,17 @@ configuration ConfigureSQLVM
             Ensure = "Present"
         }
 
-        WindowsFeature ADPS
-        {
-            Name = "RSAT-AD-PowerShell"
-            Ensure = "Present"
-            DependsOn = "[xFirewall]DatabaseEngineFirewallRule"
-        }
-
-        xDnsServerAddress DnsServerAddress
-        {
-            Address        = $DNSServer
-            InterfaceAlias = $InterfaceAlias
-            AddressFamily  = 'IPv4'
-            DependsOn="[WindowsFeature]ADPS"
-        }
 
         #**********************************************************
         # Join AD forest
         #**********************************************************
         xWaitForADDomain DscForestWait
         {
-            DomainName = $DomainFQDN
-            DomainUserCredential= $DomainAdminCredsQualified
-            RetryCount = $RetryCount
-            RetryIntervalSec = $RetryIntervalSec
-            DependsOn = "[xDnsServerAddress]DnsServerAddress"
+            DomainName           = $DomainFQDN
+            DomainUserCredential = $DomainAdminCredsQualified
+            RetryCount           = $RetryCount
+            RetryIntervalSec     = $RetryIntervalSec
+            DependsOn            = "[DnsServerAddress]DnsServerAddress"
         }
 
         Computer DomainJoin
@@ -113,6 +104,24 @@ configuration ConfigureSQLVM
             DependsOn            = "[xADUser]CreateSqlSvcAccount"
         }
 
+        xADServicePrincipalName UpdateSqlSPN3
+        {
+            Ensure               = "Present"
+            ServicePrincipalName = "MSSQLSvc/$($ComputerName):1433"
+            Account              = $SqlSvcCreds.UserName
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[xADUser]CreateSqlSvcAccount"
+        }
+
+        xADServicePrincipalName UpdateSqlSPN4
+        {
+            Ensure               = "Present"
+            ServicePrincipalName = "MSSQLSvc/$ComputerName"
+            Account              = $SqlSvcCreds.UserName
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[xADUser]CreateSqlSvcAccount"
+        }
+
         SqlServiceAccount SetSqlInstanceServiceAccount
         {
             ServerName     = $ComputerName
@@ -120,7 +129,7 @@ configuration ConfigureSQLVM
             ServiceType    = "DatabaseEngine"
             ServiceAccount = $SQLCredsQualified
             RestartService = $true
-            DependsOn      = "[xADServicePrincipalName]UpdateSqlSPN1", "[xADServicePrincipalName]UpdateSqlSPN2"
+            DependsOn      = "[xADServicePrincipalName]UpdateSqlSPN1", "[xADServicePrincipalName]UpdateSqlSPN2", "[xADServicePrincipalName]UpdateSqlSPN3", "[xADServicePrincipalName]UpdateSqlSPN4"
         }
 
         xADUser CreateSPSetupAccount

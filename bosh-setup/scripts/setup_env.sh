@@ -54,7 +54,7 @@ if [ "$environment" = "AzureStack" ]; then
   az cloud update --profile 2017-03-09-profile
 fi
 az storage container create --name bosh --connection-string ${connection_string}
-az storage container create --name stemcell --public-access blob --connection-string ${connection_string}
+az storage container create --name stemcell --connection-string ${connection_string}
 az storage table create --name stemcells --connection-string ${connection_string}
 
 username=$(get_setting ADMIN_USER_NAME)
@@ -119,6 +119,7 @@ bosh create-env ~/example_manifests/bosh.yml \\
   --state=state.json \\
   --vars-store=~/bosh-deployment-vars.yml \\
   -o ~/example_manifests/cpi.yml \\
+  -o ~/example_manifests/use-location.yml \\
   -o ~/example_manifests/custom-cpi-release.yml \\
   -o ~/example_manifests/custom-environment.yml \\
   -o ~/example_manifests/use-azure-dns.yml \\
@@ -134,6 +135,7 @@ bosh create-env ~/example_manifests/bosh.yml \\
   -v cpi_release_sha1=$(get_setting BOSH_AZURE_CPI_RELEASE_SHA1) \\
   -v director_vm_instance_type=$(get_setting BOSH_VM_SIZE) \\
   -v resource_group_name=$(get_setting RESOURCE_GROUP_NAME) \\
+  -v location=$(get_setting LOCATION) \\
   -v vnet_name=$(get_setting VNET_NAME) \\
   -v subnet_name=$(get_setting SUBNET_NAME_FOR_BOSH) \\
   -v default_security_group=$(get_setting NSG_NAME_FOR_BOSH) \\
@@ -180,7 +182,42 @@ else
   -o ~/example_manifests/use-managed-disks.yml
 EOF
 fi
+
+cat >> "$home_dir/deploy_bosh.sh" << EOF
+
+cat >> "$home_dir/.profile" << EndOfFile
+# BOSH CLI
+export BOSH_ENVIRONMENT=10.0.0.4
+export BOSH_CLIENT=admin
+export BOSH_CLIENT_SECRET="\$(bosh int ~/bosh-deployment-vars.yml --path /admin_password)"
+export BOSH_CA_CERT="\$(bosh int ~/bosh-deployment-vars.yml --path /director_ssl/ca)"
+EndOfFile
+source $home_dir/.profile
+EOF
+
 chmod 777 $home_dir/deploy_bosh.sh
+
+cat > "$home_dir/login_bosh.sh" << EOF
+#!/usr/bin/env bash
+
+export BOSH_ENVIRONMENT=10.0.0.4
+export BOSH_CLIENT=admin
+export BOSH_CLIENT_SECRET="\$(bosh int ~/bosh-deployment-vars.yml --path /admin_password)"
+export BOSH_CA_CERT="\$(bosh int ~/bosh-deployment-vars.yml --path /director_ssl/ca)"
+
+bosh alias-env azure
+bosh -e azure login
+EOF
+chmod 777 $home_dir/login_bosh.sh
+
+cat > "$home_dir/connect_director_vm.sh" << EOF
+#!/usr/bin/env bash
+
+bosh int ~/bosh-deployment-vars.yml --path /jumpbox_ssh/private_key > jumpbox.key
+chmod 600 jumpbox.key
+ssh jumpbox@10.0.0.4 -i jumpbox.key
+EOF
+chmod 777 $home_dir/connect_director_vm.sh
 
 system_domain=$(get_setting SYSTEM_DOMAIN)
 if [ "${system_domain}" = "NotConfigured" ]; then
@@ -204,45 +241,38 @@ bosh -n update-cloud-config ~/example_manifests/cloud-config.yml \\
   -v subnet_name=$(get_setting SUBNET_NAME_FOR_CLOUD_FOUNDRY) \\
   -v security_group=$(get_setting NSG_NAME_FOR_CLOUD_FOUNDRY) \\
   -v load_balancer_name=$(get_setting LOAD_BALANCER_NAME)
-
-bosh -n update-runtime-config ~/example_manifests/dns.yml --name=dns
-
-bosh upload-stemcell --sha1=$(get_setting STEMCELL_SHA1) $(get_setting STEMCELL_URL)
 EOF
 
+if [ "$environment" = "AzureChinaCloud" ]; then
+  cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
+bosh -n update-runtime-config ~/example_manifests/dns.yml \\
+  -o ~/example_manifests/use-mirror-bosh-dns-release.yml \\
+  --name=dns
+EOF
+else
+  cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
+bosh -n update-runtime-config ~/example_manifests/dns.yml \\
+  --name=dns
+EOF
+fi
+
 cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
+bosh upload-stemcell --sha1=$(get_setting STEMCELL_SHA1) $(get_setting STEMCELL_URL)
+
 bosh -n -d cf deploy ~/example_manifests/cf-deployment.yml \\
   --vars-store=~/cf-deployment-vars.yml \\
   -o ~/example_manifests/azure.yml \\
   -o ~/example_manifests/scale-to-one-az.yml \\
 EOF
 
-stemcell_os_version=$(get_setting STEMCELL_OS_VERSION)
 if [ "$environment" = "AzureChinaCloud" ]; then
   cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
-  -o ~/example_manifests/use-mirror-releases-for-cf.yml \\
-EOF
-  if [ "${stemcell_os_version}" = "Trusty" ]; then
-    cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
   -o ~/example_manifests/use-mirror-compiled-releases.yml \\
 EOF
-  else
-    cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
-  -o ~/example_manifests/use-xenial-stemcell.yml \\
-  -o ~/example_manifests/use-mirror-compiled-releases-xenial-stemcell.yml \\
-EOF
-  fi
 else
-  if [ "${stemcell_os_version}" = "Trusty" ]; then
-    cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
+  cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
   -o ~/example_manifests/use-compiled-releases.yml \\
 EOF
-  else
-    cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
-  -o ~/example_manifests/use-xenial-stemcell.yml \\
-  -o ~/example_manifests/use-compiled-releases-xenial-stemcell.yml \\
-EOF
-  fi
 fi
 
 cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
@@ -267,28 +297,6 @@ cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
 EOF
 chmod 777 $home_dir/deploy_cloud_foundry.sh
 
-cat > "$home_dir/connect_director_vm.sh" << EOF
-#!/usr/bin/env bash
-
-bosh int ~/bosh-deployment-vars.yml --path /jumpbox_ssh/private_key > jumpbox.key
-chmod 600 jumpbox.key
-ssh jumpbox@10.0.0.4 -i jumpbox.key
-EOF
-chmod 777 $home_dir/connect_director_vm.sh
-
-cat > "$home_dir/login_bosh.sh" << EOF
-#!/usr/bin/env bash
-
-export BOSH_ENVIRONMENT=10.0.0.4
-export BOSH_CLIENT=admin
-export BOSH_CLIENT_SECRET="\$(bosh int ~/bosh-deployment-vars.yml --path /admin_password)"
-export BOSH_CA_CERT="\$(bosh int ~/bosh-deployment-vars.yml --path /director_ssl/ca)"
-
-bosh alias-env azure
-bosh -e azure login
-EOF
-chmod 777 $home_dir/login_bosh.sh
-
 cat > "$home_dir/login_cloud_foundry.sh" << EOF
 #!/usr/bin/env bash
 
@@ -311,14 +319,6 @@ fi
 echo "Starting to deploy BOSH director..."
 su - $username -c "./deploy_bosh.sh"
 echo "The BOSH director is deployed successfully. Please check run.log."
-
-cat >> "$home_dir/.profile" << EOF
-# BOSH CLI
-export BOSH_ENVIRONMENT=10.0.0.4
-export BOSH_CLIENT=admin
-export BOSH_CLIENT_SECRET="\$(bosh int ~/bosh-deployment-vars.yml --path /admin_password)"
-export BOSH_CA_CERT="\$(bosh int ~/bosh-deployment-vars.yml --path /director_ssl/ca)"
-EOF
 
 auto_deploy_cf=$(get_setting AUTO_DEPLOY_CLOUD_FOUNDRY)
 if [ "$auto_deploy_cf" != "enabled" ]; then
