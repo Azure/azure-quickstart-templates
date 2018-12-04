@@ -4,8 +4,6 @@
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-`Tags: high availability, cluster, replication, real-time replication, synchronous replication, failover, business continuity, disaster recovery, evidian, safekit, mirror`
-
 *   [Description](#description)
 *   [Deployed resources](#resources)
 *   [How to use](#use)
@@ -57,3 +55,6 @@ After deployment, go to the resource groups's deployment ('Microsoft.Template') 
 
 *   [Azure: The Simplest Load Balancing Cluster with Failover](https://www.evidian.com/products/high-availability-software-for-application-clustering/azure-load-balancing-cluster-failover/)
 *   [Azure: The Simplest High Availability Cluster with Synchronous Replication and Failover](https://www.evidian.com/products/high-availability-software-for-application-clustering/azure-high-availability-cluster-synchronous-replication-failover/)
+
+`Tags: high availability, cluster, replication, real-time replication, synchronous replication, failover, business continuity, disaster recovery, evidian, safekit, mirror`
+
