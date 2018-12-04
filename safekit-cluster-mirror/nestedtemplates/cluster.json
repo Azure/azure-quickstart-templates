@@ -66,6 +66,13 @@
 			},
 			"defaultValue": ""
 		},
+		"VMDnsPrefix":{
+			"type": "string",
+			"metadata": {
+				"description": "Public VM IP dns label prefix"
+			},
+			"defaultValue": "[resourceGroup().name]"
+		},		
 		"Loadbalancer": {
 			"type": "string",
 			"metadata": {
@@ -92,8 +99,7 @@
 			"type": "string",
 			"metadata": {
 				"description": "resources location"
-			},
-			"defaultValue": "[resourceGroup().location]"
+			}
 		},
 		"safekitFileUri": {
 			"type": "string",
@@ -143,7 +149,7 @@
 		"skclustertemplate": "[concat(uri(parameters('_artifactsLocation'), 'nestedtemplates/installCluster.json'),parameters('_artifactsLocationSasToken'))]",
 		"createviptemplate": "[concat(uri(parameters('_artifactsLocation'),'nestedtemplates/createvip.json'),parameters('_artifactsLocationSasToken'))]",
 		"skmoduletemplate": "[concat(uri(parameters('_artifactsLocation'),'nestedtemplates/installModule.json'),parameters('_artifactsLocationSasToken'))]",
-		"NSGName": "[concat(uniquestring(resourceGroup().id,parameters('location')),'-NSG')]",
+		"NSGName": "SafeKit-NSG",
 		"storageAccountName": "[concat(uniquestring(resourceGroup().id,parameters('location')), 'stor')]",
 		"lbPoolID": "[if(equals(parameters('LoadBalancer'),'none'),'',resourceId('Microsoft.Network/loadBalancers/backendAddressPools',variables('lbName'),variables('lbPoolName')))]",
 		"lbaddrpool1": [
@@ -191,7 +197,7 @@
 	"resources": [
 		{
 			"type": "Microsoft.Network/virtualNetworks",
-			"apiVersion": "2016-03-30",
+			"apiVersion": "2018-08-01",
 			"name": "[variables('virtualNetworkName')]",
 			"location": "[parameters('location')]",
 			"properties": {
@@ -388,7 +394,7 @@
 			"properties": {
 				"publicIPAllocationMethod": "Static",
 				"dnsSettings": {
-					"domainNameLabel": "[toLower(concat(resourceGroup().name,variables('vms')[copyIndex()]))]"
+					"domainNameLabel": "[toLower(concat(parameters('VMDnsPrefix'),variables('vms')[copyIndex()]))]"
 				}
 			}
 		},
@@ -476,7 +482,7 @@
 			"condition": "[equals(parameters('azurePwsh'),'yes')]",
 			"type": "Microsoft.Authorization/roleAssignments",
 			"apiVersion": "2016-07-01",
-			"name": "[guid(resourceId('Microsoft.Compute/virtualMachines/',variables('vms')[copyIndex()]))]",
+			"name": "[guid(resourceGroup().id,copyIndex())]",
 			"copy": {
 				"name": "roleLoop",
 				"count": "[length(variables('vms'))]"
@@ -565,6 +571,9 @@
 					},
 					"privateIps": {
 						"value": "[variables('ips')]"
+					},
+					"VMDnsPrefix" : {
+						"value": "[parameters('VMDnsPrefix')]"
 					},
 					"lblist": {
 						"value": "[if(greater(length(parameters('VIPDnsLabel')),0),reference('optionalVip').outputs.fqdn.value,'')]"
