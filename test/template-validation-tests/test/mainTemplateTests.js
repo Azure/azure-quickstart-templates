@@ -78,7 +78,7 @@ describe('template files - ', () => {
                 Object.keys(templateObject.parameters).forEach(parameter => {
                     if (templateObject.parameters[parameter].type == 'securestring') {
                         // get default value if one exists
-                        var defaultval = templateObject.parameters[parameter].defaultValue;
+                        var defaultval = templateObject.parameters[parameter].defaultvalue;
                         if (defaultval && defaultval.length > 0) {
                             expect(templateObject.parameters[parameter], 'in file:' + templateJSONObject.filename + ' "' + parameter + '" should not have defaultValue').to.not.have.property('defaultvalue');
                         }
@@ -166,18 +166,25 @@ describe('template files - ', () => {
                     if (resourceType === 'microsoft.compute/virtualmachines') {
                         console.log('VM');
                         var previewString = "-preview";
-                        var offer = JSON.stringify(templateObject.resources[resource].properties.storageProfile.imageReference).toLowerCase();
+                        var offer = JSON.stringify(templateObject.resources[resource].properties.storageprofile.imagereference).toLowerCase();
                         var message = 'in file:' + templateJSONObject.filename + ' VM must NOT use a preview image: ' + offer;
                         assert(offer.includes(previewString) === false, message);
                     }
                     if (resourceType === 'microsoft.compute/virtualmachinescalesets') {
                         console.log('VMSS');
                         var previewString = "-preview";
-                        var offer = JSON.stringify(templateObject.resources[resource].properties.virtualMachineProfile.storageProfile.imageReference).toLowerCase();
+                        var offer = JSON.stringify(templateObject.resources[resource].properties.virtualmachineprofile.storageprofile.imagereference).toLowerCase();
                         var message = 'in file:' + templateJSONObject.filename + ' VMSS must NOT use a preview image: ' + offer;
                         assert(offer.includes(previewString) === false, message);
                     }
                 });
+            });
+            /** MSI extension must not be used */
+            it.each(templateObject, 'ManagedIdentityExtension must not be used ' + templateJSONObject.filename + '. This extension is not necessary to use an MSI and is being deprecated.', function (element, next) {
+                var templateFileContent = JSON.stringify(templateObject).toLowerCase();
+                var message = 'in file:' + templateJSONObject.filename + ' should NOT use Managed Identity Extension.';
+                assert(templateFileContent.match('managedidentityextension') === null, message);
+                next();
             });
         });
     });
