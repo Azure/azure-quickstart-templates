@@ -4,10 +4,10 @@
 
 1. Create a Single VM OpenShift deployment using the Azure Portal
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fcealsair%2Fazure-quickstart-templates%2Fmaster%2F101-dukes-eap-openshift%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fcealsair%2Fazure-quickstart-templates%2Fmaster%2Fjboss-eap-standalone-openshift%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2F101-dukes-eap-openshift%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fjboss-eap-standalone-openshift%2Fazuredeploy.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
@@ -59,45 +59,45 @@ Once all of these values are set, then check the box to "Agree to the terms and 
 
 A notification will pop up in the top right notifying you of the deployment:
 
-<img src="https://github.com/cealsair/azure-quickstart-templates/blob/master/101-dukes-eap-openshift/images/ocpDeployInProgress.png" width="500">
+<img src="https://github.com/cealsair/azure-quickstart-templates/blob/master/jboss-eap-standalone-openshift/images/ocpDeployInProgress.png" width="500">
 
 The deployment will take about 50 minutes. Once completed, the notification will display:
 
-<img src="https://github.com/cealsair/azure-quickstart-templates/blob/master/101-dukes-eap-openshift/images/deploySucceeded.png" width="500">
+<img src="https://github.com/cealsair/azure-quickstart-templates/blob/master/jboss-eap-standalone-openshift/images/deploySucceeded.png" width="500">
 
 Click on "Go to resource group" button in the notification above to open up the window for the origin resource group (or you can also click on the "Resource groups" under "Favorites" on the leftmost vertical Azure portal menu, and then click on "ocp" to open the ocp resource group). You will see the following:
 
-<img src="https://github.com/cealsair/azure-quickstart-templates/blob/master/101-dukes-eap-openshift/images/ocpResource.png" width="800">
+<img src="https://github.com/cealsair/azure-quickstart-templates/blob/master/jboss-eap-standalone-openshift/images/ocpResource.png" width="800">
 
 On the top right of the origin resource group window, you will see a heading "Deployments".  Click on "1 Succeeded" under this heading to see the deployments:
 
-<img src="https://github.com/cealsair/azure-quickstart-templates/blob/master/101-dukes-eap-openshift/images/ocpDeployment.png" width="800">
+<img src="https://github.com/cealsair/azure-quickstart-templates/blob/master/jboss-eap-standalone-openshift/images/ocpDeployment.png" width="800">
 
 Now, click on the "Microsoft.Template" link to display the contents of the template.  Then click on the "Outputs" to see the URL of the OpenShift Origin console:
 
-<img src="https://github.com/cealsair/azure-quickstart-templates/blob/master/101-dukes-eap-openshift/images/templateOutput.png" width="800">
+<img src="https://github.com/cealsair/azure-quickstart-templates/blob/master/jboss-eap-standalone-openshift/images/templateOutput.png" width="800">
 
 At this point, copy the string from the "OPENSHIFTCONSOLE" field, open a browser window and paste the string in the Address field. If your browser warns you about the site being insecure, go ahead and continue to the insecure site.  At this point, you should see the login prompt to log in to the all-in-one OpenShift Origin cluster:
 
-<img src="https://github.com/cealsair/azure-quickstart-templates/blob/master/101-dukes-eap-openshift/images/openShiftConsoleLogin.png" width="800">
+<img src="https://github.com/cealsair/azure-quickstart-templates/blob/master/jboss-eap-standalone-openshift/images/openShiftConsoleLogin.png" width="800">
 
 For Username and Password, the "Admin User" and "Admin Password" you supplied in the template above. Click on "Log In" and you should see:
 
-<img src="https://github.com/cealsair/azure-quickstart-templates/blob/master/101-dukes-eap-openshift/images/openShiftConsole.png" width="800">
+<img src="https://github.com/cealsair/azure-quickstart-templates/blob/master/jboss-eap-standalone-openshift/images/openShiftConsole.png" width="800">
 
 Once you login into the Openshift Console, you shoud have a preconfigured project listed on the right hand side of the console
 
-<img src="https://github.com/cealsair/azure-quickstart-templates/blob/master/101-dukes-eap-openshift/images/dukes_sample_app.png"/>
+<img src="https://github.com/cealsair/azure-quickstart-templates/blob/master/jboss-eap-standalone-openshift/images/dukes_sample_app.png"/>
 
 Click on Applications, select Deployments and from the table on the right click on dukes,select the #1 Deployment and you will be able to see the number of instances/pods that are running of the application, status, creation date,configuration, etc.
 
-<img src="https://github.com/cealsair/azure-quickstart-templates/blob/master/101-dukes-eap-openshift/images/dukes_pod.png"/>
+<img src="https://github.com/cealsair/azure-quickstart-templates/blob/master/jboss-eap-standalone-openshift/images/dukes_pod.png"/>
 
 To access the webapp go to Applications and select Routes. Routes is the way Openshift Container Platform exposes services at a host name, you shoud see the url for dukes. Click on it and goto the context dukes.
 
-<img src="https://github.com/cealsair/azure-quickstart-templates/blob/master/101-dukes-eap-openshift/images/dukes_route.png"/>
+<img src="https://github.com/cealsair/azure-quickstart-templates/blob/master/jboss-eap-standalone-openshift/images/dukes_route.png"/>
 
 You should see the webapp dukes. You have just installed Openshift Container Platform, Red Hat Enterprise Application Paltform and a webapp called dukes. 
 
-<img src="https://github.com/cealsair/azure-quickstart-templates/blob/master/101-dukes-eap-openshift/images/dukes_hello_world.png"/>
+<img src="https://github.com/cealsair/azure-quickstart-templates/blob/master/jboss-eap-standalone-openshift/images/dukes_hello_world.png"/>
 
