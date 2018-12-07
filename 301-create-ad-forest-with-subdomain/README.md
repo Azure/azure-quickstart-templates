@@ -7,18 +7,18 @@ Click the button below to deploy a forest to Azure.
 </a>
 
 Warning: this template will **create running VMs**. 
-Be sure to deallocate them when you no longer need them
+Be sure to deallocate the VMs when you no longer need them
 to avoid incurring costs.
 
 This template creates an Active Directory forest for you. The configuration
 is flexible. 
 
-* The root domain is always created; the child domain is optional. 
+* Have a choice of one or two domains. The root domain is always created; the child domain is optional. 
 * Choose to have one or two DCs per domain.
 * Choose names for the Domains, DCs, and network objects.  
 * Choose the VM type from a prepopulated list. 
-* Use either Windows Server 2012, Windows Server 2012 R2, or Windows Server 2016. 
-* Get a public IP endpoint to use with RDP, configured with a Network Security Group.
+* Supported and tested are Windows Server 2012, 2012 R2, 2016 and 2019. 
+* Get one public IP endpoint to use with RDP, configured with a Network Security Group.
 
 A forest with two domains in Azure is especially useful for AD-related 
 development, testing, and troubleshooting. Many enterprises have complex 
@@ -47,7 +47,7 @@ memory and one CPU core. This is plenty for a simple Active
 Directory. The disk type defaults to Standard SSD, which is low latency but also
 low IOPS. This is fine for Active Directory.
 The only thing you really need to do is to supply an administrator name and 
-password. Make sure it is 8 characters or more, and complex. You know 
+password. Make sure the password is 8 characters or more, and complex. You know 
 the drill. 
 
 ### Credits
@@ -128,12 +128,6 @@ Powershell execution policy specifically for Windows Server 2012
 (non-R2). By default, DSC does not work here. I injected a small 
 powershell script to set the execution policy to unrestricted. 
 
-For similar reasons, this template does not support Windows Server 2008 
-R2. While the standard Azure image VM image for 2008 R2
- supports DSC now, it is still highly limited in which modules work or not. 
-This is almost undocumented, but the short version is that almost
- nothing worked for 2008 R2 so I had to give it up. 
-
 ### Update October 2017
 
 New features:
@@ -152,6 +146,10 @@ New Features:
 * Added the possibility to deploy to a location different to that of the Resource Group.
 * general cleanup: updated all APIs to the most recent ones, updated DSC modules to the latest.
 
-Willem Kasdorp, 9-30-2018.
+### Update December 2018
+
+* Added support for Windows Server 2019.
+
+Willem Kasdorp, 12-02-2018.
 
 `Tags: active directory,forest,domain,DSC`
