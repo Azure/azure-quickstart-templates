@@ -93,7 +93,7 @@ Click on Applications, select Deployments and from the table on the right click 
 
 <img src="images/dukes_pod.png"/>
 
-To access the webapp go to Applications and select Routes. Routes is the way Openshift Container Platform exposes services at a host name, you shoud see the url for dukes. Click on it and goto the context dukes.
+To access the webapp go to Applications and select Routes. Routes is the way Openshift Container Platform exposes services at a host name, you shoud see the url for the route. To access the web application dukes, append "dukes" to the <ROUTE> as follows: <ROUTE URL>/dukes.
 
 <img src="images/dukes_route.png"/>
 
