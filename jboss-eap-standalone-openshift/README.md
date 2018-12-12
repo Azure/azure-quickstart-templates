@@ -93,9 +93,15 @@ Click on Applications, select Deployments and from the table on the right click 
 
 <img src="images/dukes_pod.png"/>
 
-To access the webapp go to Applications and select Routes. Routes is the way Openshift Container Platform exposes services at a host name, you shoud see the url for the route. To access the web application dukes, append "dukes" to the <ROUTE> as follows: <ROUTE URL>/dukes.
+To access the webapp go to Applications and select Routes. Routes is the way Openshift Container Platform exposes services at a host name, you shoud see the url for the route.
 
 <img src="images/dukes_route.png"/>
+
+Click on the link under "Hostname". This will open the JBoss EAP Welcome screen:
+    
+<img src="images/welcomeToEAP.png"/>
+
+To access the web application dukes, append "/dukes" at the end of the URL you just opened, e.g. [ROUTE URL]/dukes.
 
 You should see the webapp dukes. You have just installed Openshift Container Platform, Red Hat Enterprise Application Paltform and a webapp called dukes. 
 
