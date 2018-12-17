@@ -15,7 +15,7 @@ This ARM template deploys an AKS instance with advanced networking features into
 
 Executing an AKS deployment using this ARM template will create an AKS instance. However, it will also assign the selected Service Principal the following roles:
 - 'Network Contributor' role against the pre-existing subnet.
-- 'Contributor' role against the newly created resource group that contains the AKS cluster resources.
+- 'Contributor' role against the automatically created resource group that contains the AKS cluster resources.
 
 ## Prerequisites
 
