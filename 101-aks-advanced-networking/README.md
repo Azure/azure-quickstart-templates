@@ -29,7 +29,7 @@ The following Azure CLI command can be used to create a Service Principal:
 az ad sp create-for-rbac -n "spn-name"
 ```
 
-Please note that using the 'create-for-rbac' function would assign the SPN the 'Contributor' role on subscription level, which may not be appropriate in shared subscriptions.
+Please note that using the 'create-for-rbac' function would assign the SPN the 'Contributor' role on subscription level, which may not be appropriate from a security standpoint.
 
 ## Deployment steps
 
