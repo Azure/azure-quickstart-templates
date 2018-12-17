@@ -7,7 +7,7 @@
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
-This ARM template deploys an AKS instance with advanced networking features into an existing virtual network. Additionally, the selected Service Principal is assigned the Network Contributor role against the subnet that contains the AKS cluster.
+This ARM template demonstrates the deployment of an AKS instance with advanced networking features into an existing virtual network. Additionally, the selected Service Principal is assigned the Network Contributor role against the subnet that contains the AKS cluster.
 
 `Tags: AKS, Kubernetes, Advanced Networking`
 
