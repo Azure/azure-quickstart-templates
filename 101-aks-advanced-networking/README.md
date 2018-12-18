@@ -26,7 +26,7 @@ Prior to deploying AKS using this ARM template, the following resources need to 
 The following Azure CLI command can be used to create a Service Principal:
 
 ```
-az ad sp create-for-rbac -n "spn-name"
+az ad sp create-for-rbac -n "spn_name" --skip-assignment
 ```
 
 Please note that using the 'create-for-rbac' function would assign the SPN the 'Contributor' role on subscription level, which may not be appropriate from a security standpoint.
