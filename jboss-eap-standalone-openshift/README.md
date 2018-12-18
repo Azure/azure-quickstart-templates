@@ -29,19 +29,19 @@ Select "Create new" resource group if one does not currently exist. Enter "ocp" 
 The geographic location in which to deploy OpenShift Container Platform.
 
 #### Admin User
-Supply a username which will be used for SSH access,OpenShift Container Platform web console, JBoss EAP Admin .
+Supply a username which will be used for SSH access, OpenShift Container Platform web console, JBoss EAP Admin .
 
 #### Admin Password
 Supply a password which will be used for the Openshift Container Platform web console.
 
 #### Rhsm User
-Red Hat user name to be used for system registration.
+Your Red Hat Subscription Manager account username to be used for system registration.
 
 #### Rhsm Password
-Red Hat password to be used for system registration.
+Your Red Hat Subscription Manager account password to be used for system registration.
 
 #### Rhsm Pool
-Subscription pool to be used for the installation. This apha-numeric value can be found under https://access.redhat.com/management/products
+Your Red Hat Subscription pool to be used for the installation. This apha-numeric value can be found under https://access.redhat.com/management/products
 
 #### Ssh Key Data
 You will need a SSH RSA public key for access if one currently does not exist on your system. Please supply your Public SSH key only. 
@@ -73,11 +73,11 @@ On the top right of the origin resource group window, you will see a heading "De
 
 <img src="images/ocpDeployment.png" width="800">
 
-Now, click on the "Microsoft.Template" link to display the contents of the template.  Then click on the "Outputs" to see the URL of the OpenShift Origin console:
+Now, click on the "Microsoft.Template" link to display the contents of the template.  Then click on the "Outputs" to see the URL of the OpenShift console:
 
 <img src="images/templateOutput.png" width="800">
 
-At this point, copy the string from the "OPENSHIFTCONSOLE" field, open a browser window and paste the string in the Address field. If your browser warns you about the site being insecure, go ahead and continue to the insecure site.  At this point, you should see the login prompt to log in to the all-in-one OpenShift Origin cluster:
+At this point, copy the string from the "OPENSHIFTCONSOLE" field, open a browser window and paste the string in the Address field. If your browser warns you about the site being insecure, go ahead and continue to the insecure site.  At this point, you should see the login prompt to log in to the all-in-one OpenShift cluster:
 
 <img src="images/openShiftConsoleLogin.png" width="800">
 
@@ -89,7 +89,7 @@ Once you login into the Openshift Console, you shoud have a preconfigured projec
 
 <img src="images/dukes_sample_app.png"/>
 
-Click on Applications, select Deployments and from the table on the right click on dukes,select the #1 Deployment and you will be able to see the number of instances/pods that are running of the application, status, creation date,configuration, etc.
+Click on Applications, select Deployments and from the table on the right click on dukes,select the #1 Deployment and you will be able to see the number of instances/pods that are running of the application, status, creation date, configuration, etc.
 
 <img src="images/dukes_pod.png"/>
 
