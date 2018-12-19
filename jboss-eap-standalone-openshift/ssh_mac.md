@@ -1,8 +1,8 @@
 # Red Hat OpenShift Container Platform on Azure
 
-## SSH Key Generation - Linux/CentOS/Fedora
+## SSH Key Generation - MacOS
 1. Open the Terminal in the Application/Utilities folder.
-![Terminal ScreenShot][terminal]
+<img src="images/terminal.png">
 2. Enter the commands:
 ```bash
 ssh-keygen -t rsa
@@ -34,6 +34,3 @@ The keys randomart image is:
 ```
 
 Your public and private keys are now available in your home folder under the .ssh directory.
-
-
-[terminal]:  https://github.com/openshift/openshift-ansible-contrib/raw/master/reference-architecture/azure-ansible/images/terminal.png
