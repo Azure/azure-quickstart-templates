@@ -47,6 +47,11 @@ Your Red Hat Subscription pool to be used for the installation. This apha-numeri
 You will need a SSH RSA public key for access if one currently does not exist on your system. Please supply your Public SSH key only. 
 For example, in Linux the key can be located at ~/.ssh/id_rsa.pub. Make sure to copy and paste the **ENTIRE** contents of the file ~/.ssh/id_rsa.pub into this input field.
 
+##### SSH Key Generation (Optional)
+
+1. [Windows](ssh_windows.md)
+2. [Linux](ssh_linux.md)
+3. [Mac](ssh_mac.md)
 
 #### Vm Size
 Specify a VM size. A default value is provided. If another size or type of vm is required ensure that the Location contains that instance type.
