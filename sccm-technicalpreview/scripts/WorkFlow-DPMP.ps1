@@ -1,4 +1,4 @@
-Param($DCIPAddress,$DomainFullName,$DomainAdminName,$Password,$tempurl,$saskey)
+Param($DCIPAddress,$DomainFullName,$DomainAdminName,$Password,$tempurl,$sakey)
 
 add-type @"
     using System.Net;
@@ -21,27 +21,20 @@ if(!(Test-Path $ProvisionToolPath))
     New-Item $ProvisionToolPath -ItemType directory | Out-Null
 }
 
-$AzcopyPath = "$ProvisionToolPath\Azcopy"
+$AzcopyPath = "C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy"
 
-if(!(Test-Path $ProvisionToolPath\Azcopy))
+if(!(Test-Path $AzcopyPath))
 {
-    New-Item $ProvisionToolPath\Azcopy -ItemType directory | Out-Null
-    [string[]]$scriptlist = "AzCopy.exe",
-                            "Microsoft.Data.Edm.dll",
-                            "Microsoft.Data.OData.dll",
-                            "Microsoft.Data.Services.Client.dll",
-                            "Microsoft.WindowsAzure.Storage.AzCopy.CommandLineParameters.dll",
-                            "Microsoft.WindowsAzure.Storage.AzCopy.WindowsCommandLineParser.dll",
-                            "Microsoft.WindowsAzure.Storage.DataMovement.dll",
-                            "Microsoft.WindowsAzure.Storage.dll",
-                            "Microsoft.WindowsAzure.Storage.TableDataMovement.dll",
-                            "Newtonsoft.Json.dll",
-                            "System.Spatial.dll"
-    $scriptlist | %{
-	    $url = "https://cmsetoolstorage.blob.core.windows.net/work/AzCopy/$_"
-	    $path = "$ProvisionToolPath\Azcopy\" + $_
-	    Invoke-WebRequest -Uri $url -OutFile $path
-    }
+	$path = "$ProvisionToolPath\azcopy.msi"
+	if(!(Test-Path $path))
+	{
+		#Download azcopy
+		$url = "http://aka.ms/downloadazcopy"
+		Invoke-WebRequest -Uri $url -OutFile $path
+	}
+
+	#Install azcopy
+	Start-Process msiexec.exe -Wait -ArgumentList "/I $path /quiet"
 }
 
 $url = "https://cmsetoolstorage.blob.core.windows.net/work/InServicing/main.ps1"
@@ -104,7 +97,7 @@ $Configuration | Add-Member -MemberType ScriptMethod -Name SetRebootConfig -Valu
     try {
         $Invocation = (Get-Variable MyInvocation -Scope 1).Value
         $Path =  $Invocation.MyCommand.Path
-        $command = ". $Path $DCIPAddress $DomainFullName $DomainAdminName $Password $tempurl `"$saskey`""
+        $command = ". $Path $DCIPAddress $DomainFullName $DomainAdminName $Password $tempurl `"$sakey`""
         $BatchFilePath = Join-Path -Path $ProvisionToolPath -ChildPath "Resume_$($env:COMPUTERNAME).ps1"
         $BatchFile = "cmd /c powershell -ExecutionPolicy Unrestricted -file " + $BatchFilePath
         $Command | Out-File -FilePath $BatchFilePath -Encoding ascii -Append
@@ -116,8 +109,8 @@ $Configuration | Add-Member -MemberType ScriptMethod -Name SetRebootConfig -Valu
         $this | ConvertTo-Json | Out-File -FilePath $ConfigurationFile -Force
 
         $configfile = $ConfigurationFile
-	    $uploadurl = $tempurl + "/$Role.json" + $saskey
-	    AZCopy -source $configfile -dest $uploadurl
+	    $uploadurl = $tempurl + "/$Role.json"
+	    AZCopy -source $configfile -dest $uploadurl -upload $true
 
         return 0
     }

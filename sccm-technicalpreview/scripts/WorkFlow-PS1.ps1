@@ -1,4 +1,4 @@
-﻿Param($DCIPAddress,$DomainFullName,$DomainAdminName,$Password,$tempurl,$saskey)
+﻿Param($DCIPAddress,$DomainFullName,$DomainAdminName,$Password,$tempurl,$sakey)
 
 add-type @"
     using System.Net;
@@ -21,27 +21,20 @@ if(!(Test-Path $ProvisionToolPath))
     New-Item $ProvisionToolPath -ItemType directory | Out-Null
 }
 
-$AzcopyPath = "$ProvisionToolPath\Azcopy"
+$AzcopyPath = "C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy"
 
-if(!(Test-Path $ProvisionToolPath\Azcopy))
+if(!(Test-Path $AzcopyPath))
 {
-    New-Item $ProvisionToolPath\Azcopy -ItemType directory | Out-Null
-    [string[]]$scriptlist = "AzCopy.exe",
-                            "Microsoft.Data.Edm.dll",
-                            "Microsoft.Data.OData.dll",
-                            "Microsoft.Data.Services.Client.dll",
-                            "Microsoft.WindowsAzure.Storage.AzCopy.CommandLineParameters.dll",
-                            "Microsoft.WindowsAzure.Storage.AzCopy.WindowsCommandLineParser.dll",
-                            "Microsoft.WindowsAzure.Storage.DataMovement.dll",
-                            "Microsoft.WindowsAzure.Storage.dll",
-                            "Microsoft.WindowsAzure.Storage.TableDataMovement.dll",
-                            "Newtonsoft.Json.dll",
-                            "System.Spatial.dll"
-    $scriptlist | %{
-	    $url = "https://cmsetoolstorage.blob.core.windows.net/work/AzCopy/$_"
-	    $path = "$ProvisionToolPath\Azcopy\" + $_
-	    Invoke-WebRequest -Uri $url -OutFile $path
-    }
+	$path = "$ProvisionToolPath\azcopy.msi"
+	if(!(Test-Path $path))
+	{
+		#Download azcopy
+		$url = "http://aka.ms/downloadazcopy"
+		Invoke-WebRequest -Uri $url -OutFile $path
+	}
+
+	#Install azcopy
+	Start-Process msiexec.exe -Wait -ArgumentList "/I $path /quiet"
 }
 
 $url = "https://cmsetoolstorage.blob.core.windows.net/work/InServicing/main.ps1"
@@ -142,7 +135,7 @@ sqlcmd -Q "if not exists(select * from sys.server_principals where name='BUILTIN
 '@
 		}
 		$Command | Out-File -FilePath $BatchFilePath -Encoding ascii
-		$Command = ". $Path $DCIPAddress $DomainFullName $DomainAdminName $Password $tempurl `"$saskey`""
+		$Command = ". $Path $DCIPAddress $DomainFullName $DomainAdminName $Password $tempurl `"$sakey`""
 		$Command | Out-File -FilePath $BatchFilePath -Encoding ascii -Append
 
         $BatchFile = "cmd /k powershell -ExecutionPolicy Unrestricted -file " + $BatchFilePath
@@ -154,8 +147,8 @@ sqlcmd -Q "if not exists(select * from sys.server_principals where name='BUILTIN
         $this | ConvertTo-Json | Out-File -FilePath $ConfigurationFile -Force
 
         $configfile = $ConfigurationFile
-	    $uploadurl = $tempurl + "/$Role.json" + $saskey
-	    AZCopy -source $configfile -dest $uploadurl
+	    $uploadurl = $tempurl + "/$Role.json"
+	    AZCopy -source $configfile -dest $uploadurl -upload $true
 
         return 0
     }
