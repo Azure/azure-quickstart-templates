@@ -26,24 +26,10 @@
         "description": "Input must meet password complexity requirements as documented for property 'adminPassword' in https://docs.microsoft.com/en-us/rest/api/compute/virtualmachines/virtualmachines-create-or-update"
       }
     },
-    "existingStorageUrl": {
-      "type": "string",
-      "defaultValue": "https://cmsetoolstorage.blob.core.windows.net/cmsetemp/tempblob",
-      "metadata": {
-        "description": "The storage Url. Formatted as https://{storageaccountname}.blob.core.windows.net/{containername}/{blobname}. "
-      }
-    },
-    "existingSasKey": {
-      "type": "string",
-      "defaultValue": "?st=2018-12-18T09%3A17%3A44Z&se=2019-02-19T09%3A17%3A00Z&sp=rwl&sv=2018-03-28&sr=c&sig=wnQ3XeECJStLrvpRjnB%2F7OdJq%2B8fEYqoy91FlFQMAkI%3D",
-      "metadata": {
-        "description": "The sasToken required to access existingStorageUrl. It requires read and write permissions to save some temp data. "
-      }
-    },
     "_artifactsLocation": {
       "type": "string",
       "metadata": {
-          "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
       },
       "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sccm-technicalpreview"
     },
@@ -64,13 +50,14 @@
   },
   "variables": {
     "Quotes": "\"",
+    "storageAccountName": "[concat(toLower(parameters('prefix')), 'sa')]",
+    "containerName": "[concat(parameters('prefix'), 'container')]",
     "virtualNetworkName": "[concat(parameters('prefix'), '-vnet')]",
     "vnetId": "[resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
     "generalSettings": {
-
-      "domainName": "[concat(parameters('prefix'), 'DOM.net')]",
-      "saskey": "[concat(variables('Quotes'),parameters('existingSasKey'),variables('Quotes'))]",
-      "storageAccountType": "Premium_LRS",
+      "domainName": "contoso.com",
+      "storageAccountType": "Standard_LRS",
+      "DiskstorageAccountType": "Premium_LRS",
       "virtualMachinessize": "Standard_D2s_v3"
     },
     "networkSettings": {
@@ -101,9 +88,30 @@
   },
   "resources": [
     {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2018-07-01",
+      "name": "[variables('storageAccountName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[variables('generalSettings').storageAccountType]"
+      },
+      "kind": "StorageV2",
+      "properties": {},
+      "resources": [
+        {
+          "type": "blobServices/containers",
+          "apiVersion": "2018-07-01",
+          "name": "[concat('default/', variables('containerName'))]",
+          "dependsOn": [
+            "[variables('storageAccountName')]"
+          ]
+        }
+      ]
+    },
+    {
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2018-06-01",
-      "name": "[concat(parameters('prefix'),'-vm-',variables('vmrole')[copyIndex()])]",
+      "name": "[concat(parameters('prefix'),variables('vmrole')[copyIndex()])]",
       "location": "[parameters('location')]",
       "copy": {
         "name": "vmcopy",
@@ -114,7 +122,7 @@
       ],
       "properties": {
         "osProfile": {
-          "computerName": "[concat(parameters('prefix'),'-vm-',variables('vmrole')[copyIndex()])]",
+          "computerName": "[concat(parameters('prefix'),variables('vmrole')[copyIndex()])]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
@@ -133,11 +141,11 @@
           },
           "osDisk": {
             "osType": "Windows",
-            "name": "[concat(parameters('prefix'),'-vm-',variables('vmrole')[copyIndex()],'-OsDisk')]",
+            "name": "[concat(parameters('prefix'),variables('vmrole')[copyIndex()],'-OsDisk')]",
             "createOption": "FromImage",
             "caching": "ReadWrite",
             "managedDisk": {
-              "storageAccountType": "[variables('generalSettings').storageAccountType]"
+              "storageAccountType": "[variables('generalSettings').DiskstorageAccountType]"
             },
             "diskSizeGB": 150
           },
@@ -160,14 +168,15 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "apiVersion": "2018-06-01",
-      "name": "[concat(parameters('prefix'),'-vm-',variables('vmrole')[copyIndex()],'/WorkFlow')]",
+      "name": "[concat(parameters('prefix'),variables('vmrole')[copyIndex()],'/WorkFlow')]",
       "location": "[parameters('location')]",
       "copy": {
         "name": "extensioncopy",
         "count": 3
       },
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/',parameters('prefix'),'-vm-',variables('vmrole')[copyIndex()])]"
+        "[concat('Microsoft.Compute/virtualMachines/',parameters('prefix'),variables('vmrole')[copyIndex()])]",
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
       ],
       "properties": {
         "type": "CustomScriptExtension",
@@ -180,7 +189,7 @@
           ]
         },
         "protectedSettings": {
-          "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -file scripts\\WorkFlow-',variables('vmrole')[copyIndex()],'.ps1 ',concat(variables('networkSettings').virtualMachinesIPAddress,add(int('0'),int('4'))),' ',variables('generalSettings').domainName,' ',parameters('adminUsername'),' ',parameters('adminPassword'),' ',parameters('existingStorageUrl'),' ',variables('generalSettings').sasKey)]"
+          "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -file WorkFlow-',variables('vmrole')[copyIndex()],'.ps1 ',concat(variables('networkSettings').virtualMachinesIPAddress,add(int('0'),int('4'))),' ',variables('generalSettings').domainName,' ',parameters('adminUsername'),' ',parameters('adminPassword'),' ',concat(reference(variables('storageAccountName')).primaryEndpoints.blob, variables('containerName'),' ',variables('Quotes'),listKeys(concat('Microsoft.Storage/storageAccounts/', variables('StorageAccountName')), '2018-07-01').keys[0].value,variables('Quotes')))]"
         }
       }
     },
@@ -283,7 +292,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2018-06-01",
-      "name": "[concat(toLower(parameters('prefix')), '-vm-',variables('vmrole')[copyIndex(3)])]",
+      "name": "[concat(toLower(parameters('prefix')),variables('vmrole')[copyIndex(3)])]",
       "location": "[parameters('location')]",
       "copy": {
         "name": "vmcopy",
@@ -294,7 +303,7 @@
       ],
       "properties": {
         "osProfile": {
-          "computerName": "[concat(toLower(parameters('prefix')), '-vm-',variables('vmrole')[copyIndex(3)])]",
+          "computerName": "[concat(toLower(parameters('prefix')),variables('vmrole')[copyIndex(3)])]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
@@ -314,7 +323,7 @@
           "osDisk": {
             "createOption": "FromImage",
             "managedDisk": {
-              "storageAccountType": "[variables('generalSettings').storageAccountType]"
+              "storageAccountType": "[variables('generalSettings').DiskstorageAccountType]"
             }
           },
           "dataDisks": [
@@ -324,7 +333,7 @@
               "diskSizeGB": "1023",
               "caching": "ReadOnly",
               "managedDisk": {
-                "storageAccountType": "[variables('generalSettings').storageAccountType]"
+                "storageAccountType": "[variables('generalSettings').DiskstorageAccountType]"
               }
             }
           ]
@@ -346,14 +355,15 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "apiVersion": "2018-06-01",
-      "name": "[concat(toLower(parameters('prefix')), '-vm-',variables('vmrole')[copyIndex(3)],'/WorkFlow')]",
+      "name": "[concat(toLower(parameters('prefix')),variables('vmrole')[copyIndex(3)],'/WorkFlow')]",
       "location": "[parameters('location')]",
       "copy": {
         "name": "extensioncopy",
         "count": 1
       },
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', concat(toLower(parameters('prefix')), '-vm-',variables('vmrole')[copyIndex(3)]))]"
+        "[concat('Microsoft.Compute/virtualMachines/', concat(toLower(parameters('prefix')),variables('vmrole')[copyIndex(3)]))]",
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
       ],
       "properties": {
         "type": "CustomScriptExtension",
@@ -366,7 +376,7 @@
           ]
         },
         "protectedSettings": {
-          "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -file scripts\\WorkFlow-',variables('vmrole')[copyIndex(3)],'.ps1 ',concat(variables('networkSettings').virtualMachinesIPAddress,add(int('0'),int('4'))),' ',variables('generalSettings').domainName,' ',parameters('adminUsername'),' ',parameters('adminPassword'),' ',parameters('existingStorageUrl'),' ',variables('generalSettings').sasKey)]"
+          "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -file WorkFlow-',variables('vmrole')[copyIndex(3)],'.ps1 ',concat(variables('networkSettings').virtualMachinesIPAddress,add(int('0'),int('4'))),' ',variables('generalSettings').domainName,' ',parameters('adminUsername'),' ',parameters('adminPassword'),' ',concat(reference(variables('storageAccountName')).primaryEndpoints.blob, variables('containerName'),' ',variables('Quotes'),listKeys(concat('Microsoft.Storage/storageAccounts/', variables('StorageAccountName')), '2018-07-01').keys[0].value,variables('Quotes')))]"
         }
       }
     }
