@@ -37,10 +37,9 @@ if(!(Test-Path $AzcopyPath))
 	Start-Process msiexec.exe -Wait -ArgumentList "/I $path /quiet"
 }
 
-$url = "https://cmsetoolstorage.blob.core.windows.net/work/InServicing/main.ps1"
-$path = "$ProvisionToolPath\main.ps1"
-
-Invoke-WebRequest -Uri $url -OutFile $path
+$sourceDirctory = (split-path -parent $MyInvocation.MyCommand.Definition) + "\*"
+$destDirctory = "$ProvisionToolPath\"
+Copy-item -Force -Recurse $sourceDirctory -Destination $destDirctory
 
 $ConfigurationFile = Join-Path -Path $ProvisionToolPath -ChildPath "$Role.json";
 
@@ -134,7 +133,7 @@ $Configuration | Add-Member -MemberType ScriptMethod -Name SetRebootConfig -Valu
     };
 }
 
-$Mainscript = $path
+$Mainscript = $ProvisionToolPath + "\main.ps1"
 . $Mainscript;
 
 if ($Configuration.JoinDomain.Status -eq 'NotStart') {
