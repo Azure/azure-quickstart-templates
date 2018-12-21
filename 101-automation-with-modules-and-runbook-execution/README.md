@@ -1,4 +1,4 @@
-# Automation account, modules updation and runbook to register AD App
+# Add Azure Automation account, update modules and register AD App
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-automation-with-modules-and-runbook-execution%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
@@ -27,6 +27,4 @@ This template does not use any other nested template, it directly uses the follo
 
 ## What is unique about this concept
 
-This templates describes how we can update the required modules to schedule and run a runbook, automatically.
- It does not use RunAsAccount to authenticate runbook to execute runbook. It asks Azure portal email and password from the user and uses these credentials to authenticate the runbook.
-It contains powershell runbook that registers an application in active directory.
+This templates describes how we can update the required modules to schedule and run a runbook, automatically. It uses credentials to authenticate the runbook. It contains powershell runbook that registers an application in active directory.
