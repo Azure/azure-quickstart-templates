@@ -7,11 +7,12 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template takes a minimum amount of parameters and deploys an Linux NFS server or Windows Server 2016 Storage Spaces Direct Scale out File Server that is customized for use with SAP NetWeaver, using the latest version of the selected operating system. It deploys 2 virtual machines in an Availability Sets and a Load Balancer is added to allow HA configurations in the operating system (e.g. Windows Failover Cluster).
+This template takes a minimum amount of parameters and deploys an NFS on SLES, GlusterFS on RHEL or Windows Server 2016 Storage Spaces Direct Scale out File Server that is customized for use with SAP NetWeaver, using the latest version of the selected operating system. It deploys 2 (3 for GlusterFS) virtual machines in an Availability Sets and a Load Balancer is added to allow HA configurations in the operating system (e.g. Windows Failover Cluster) if required.
 
 ## Internal Load Balancer ports
 
 * Windows specific ports 445, 5985
-* Linux specific ports 2049 (TCP and UDP)
+* SLES NFS ports 2049 (TCP and UDP)
+* no Load Balancer for RHEL and GlusterFS required
 
-Internal Load Balancer probe port: **61000**			
+Internal Load Balancer probe port: **61000**

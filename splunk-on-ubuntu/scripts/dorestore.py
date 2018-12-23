@@ -22,7 +22,7 @@
 
 from azure.storage import CloudStorageAccount
 
-import config, time
+import config
 
 account_name = config.STORAGE_ACCOUNT_NAME
 account_key  = config.STORAGE_ACCOUNT_KEY
