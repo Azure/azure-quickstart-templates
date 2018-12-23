@@ -27,19 +27,19 @@ Before running the script, edit *azuredeploy.parameters.json* and replace the sa
 
 * Time Grain: The time covered by a budget. Tracking of the amount will be reset based on the time grain. Allowed values are "Monthly", "Quarterly", "Annually".
 
-* Start Date: The start date must be first of the month and should be less than the end date. Budget start date must be on or after June 1, 2017. Future start date should not be more than three months. Past start date should be selected within the timegrain preiod.
+* Start Date: The start date must be first of the month in YYYY-MM-DD format and should be less than the end date. Budget start date must be on or after June 1, 2017. Future start date should not be more than three months. Past start date should be selected within the timegrain preiod.
 
-* End Date: Any date after the start date.
+* End Date: Any date after the start date in in YYYY-MM-DD format.
 
 * Operator: The comparison operator. Allowed values are "EqualTo", "GreaterThan", "GreaterThanOrEqualTo".
 
 * Threshold: It is the threshold value associated with a notification. Notification is sent when the cost exceeded the threshold. It is always percent and has to be between 0 and 1000.
 
-* Contact Emails: Email addresses to send the budget notification to when the threshold is exceeded. It accepts array of strings.
+* Contact Emails: The list of email addresses to send the budget notification to when the threshold is exceeded. It accepts array of strings.
 
-* Contact Roles: Contact roles to send the budget notification to when the threshold is exceeded. It accepts array of strings.
+* Contact Roles: The list of contact roles to send the budget notification to when the threshold is exceeded. It accepts array of strings.
 
-* Contact Groups: Action groups to send the budget notification to when the threshold is exceeded. It accepts array of strings.
+* Contact Groups: The list of action groups to send the budget notification to when the threshold is exceeded. It accepts array of strings.
 
 * Resources Filter: The list of filters on resources. It accepts array of strings.
 
