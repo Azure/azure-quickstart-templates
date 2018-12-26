@@ -49,6 +49,7 @@ Please note following aspects related to this template:
     <li>There may be up to 5 minutes delay (beyond the latency in pushing logs from Application Gateways to Storage account) in seeing statistics updated on GoAccess.</li>
     <li>This solution may result in increased data, network, or compute resource usage in Azure. The solution may increase a customer’s Azure license or subscription costs.</li>
     <li>The time duration of logs that can be analyzed depends on the size of the RAM and disc capacity configured for the underlying VM.</li>
+    <li>This VM periodically (every 24 hour) reports the health of the VM to the Microsoft.  The heartbeat contains the compute metadata of the VM published by Azure's <a href="https://docs.microsoft.com/en-us/azure/virtual-machines/windows/instance-metadata-service">instance metadata service</a>.
     </ul>
 
 <h2>Securing Access</h2>
