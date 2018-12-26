@@ -20,7 +20,7 @@ def workerthread():
         # main loop to thrash the CPI
         while (keepworking == True):
             for x in range(1, 69):
-                y = math.factorial(x)
+                math.factorial(x)
         time.sleep(3)
 
 

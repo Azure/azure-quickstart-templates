@@ -12,7 +12,7 @@
 
 [Concourse](http://concourse.ci/) is a CI system composed of simple tools and ideas. It can express entire pipelines, integrating with arbitrary resources, or it can be used to execute one-off tasks, either locally or in another CI system.
 
->**NOTE:** When you deploy this template, you should choose the right location which supports DS series VMs for better performance. If you don't want to use DS series VMs, you need to update `Standard_DS` to `Standard_D` in [cloud.yml](manifests/cloud.yml) before deploying Concourse.
+>**NOTE:** When you deploy this template, you should choose the right location which supports DS series VMs for better performance. If you don't want to use DS series VMs, you need to update `Standard_DS` to `Standard_D` in [cloud-config.yml](manifests/cloud-config.yml) before deploying Concourse.
 
 # 1 Prepare Azure Resources
 
@@ -170,7 +170,7 @@ If you have enabled the parameter `autoConcourse`, you can skip this step.
 
 ## 4.1 Configure
 
-The ARM template pre-creates and configure the cloud-config manifest file `cloud.yml` and the deployment manifest file `concourse.yml` in `~/example_manifests`. You do not need to update it unless you have other specific configurations.
+The ARM template pre-creates and configure the cloud-config manifest file `cloud-config.yml` and the deployment manifest file `concourse.yml` in `~/example_manifests`. You do not need to update it unless you have other specific configurations.
 
 ## 4.2 Deploy
 

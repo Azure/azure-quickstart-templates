@@ -20,7 +20,7 @@
 
 <a name="objectives"></a>
 # Objective of the POC  
-This playbook illustrates a simulated distributed denial of service (DDOS) attack against a virtual machine.  Work through the configuration setting to enable DDOS protections and get alerted when attacks occur. 
+This playbook illustrates a simulated Distributed Denial of Service (DDoS) attack against a virtual machine.  Work through the configuration setting to enable DDOS protections and get alerted when attacks occur. 
 
 # Overview
 Perform DDoS attack on resources in a virtual network having public IP addresses associated with virtual machines with DDoS Protection Standard to detect, mitigate and send alert on being attacked.
@@ -78,7 +78,7 @@ Microsoft have partnered with [BreakingPoint Cloud](https://www.ixiacom.com/prod
 
       ![](images/ddos-standard-plan-1.png)
     
-    b. Enter details 
+    b. Enter details and click Create
 
       ![](images/ddos-standard-plan-2.png)
 

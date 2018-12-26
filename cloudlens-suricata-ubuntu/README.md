@@ -22,7 +22,7 @@
 
 ## Solution Overview
 
-This Quick Start deployment guide provides step-by-step instructions for deploying suricata and CloudLens in the Azure Cloud.
+This Quick Start deployment guide provides step-by-step instructions for deploying Suricata and CloudLens in the Azure Cloud.
 
 This Quick Start is for users who need to identify malicious activity, insider threats and data leakage within your Azure vms.
 
@@ -70,7 +70,7 @@ Create your CloudLens environment on Azure in a few simple steps:
 
 After the deployment is ready (~ 6 minutes):
 - Check the CloudLens portal to see if the agents have connected and are part of the 2 groups (should say '1 instance' under each group).
-- Login in the Suricata web ui (https://<suricata-vm-ip>) with scirius/scirius. If you get a 502 Bad Gateway error, it means  Suricata is still installing.
+- Login in the Suricata web ui (https://{suricata-vm-ip}) with scirius/scirius. If you get a 502 Bad Gateway error, it means  Suricata is still installing.
 - Check the alerts
 
 ## Support
