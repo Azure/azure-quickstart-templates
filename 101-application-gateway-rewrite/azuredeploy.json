@@ -146,7 +146,10 @@
         "name": "Standard"
       },
       "properties": {
-        "publicIPAllocationMethod": "Static"
+        "publicIPAllocationMethod": "Static",
+        "dnsSettings": {
+            "domainNameLabel": "[resourceGroup().name]"
+        }
       }
     },
     {
@@ -222,9 +225,15 @@
         ],
         "frontendPorts": [
           {
-            "name": "appGatewayFrontendPort",
+            "name": "SecurePort",
             "properties": {
               "Port": 443
+            }
+          },
+          {
+            "name": "HttpPort",
+            "properties": {
+                "Port": 80
             }
           }
         ],
@@ -249,34 +258,50 @@
             "properties": {
               "Port": 80,
               "Protocol": "Http",
-              "CookieBasedAffinity": "Disabled"
+              "CookieBasedAffinity": "Disabled",
+              "PickHostNameFromBackendAddress": true,
+              "probe": {
+                  "id": "[concat(variables('applicationGatewayID'), '/probes/HttpCustomProbe')]"
+              }
             }
           }
         ],
         "httpListeners": [
           {
-            "name": "appGatewayHttpListener",
+            "name": "SecureListener",
             "properties": {
               "FrontendIPConfiguration": {
                 "Id": "[concat(variables('applicationGatewayID'), '/frontendIPConfigurations/appGatewayFrontendIP')]"
               },
               "FrontendPort": {
-                "Id": "[concat(variables('applicationGatewayID'), '/frontendPorts/appGatewayFrontendPort')]"
+                "Id": "[concat(variables('applicationGatewayID'), '/frontendPorts/SecurePort')]"
               },
               "Protocol": "Https",
               "SslCertificate": {
                 "Id": "[concat(variables('applicationGatewayID'), '/sslCertificates/appGatewaySslCert')]"
               }
             }
+          },
+          {
+              "name": "HttpListener",
+              "properties": {
+                  "FrontendIPConfiguration": {
+                      "Id": "[concat(variables('applicationGatewayID'), '/frontendIPConfigurations/appGatewayFrontendIP')]"
+                  },
+                  "FrontendPort": {
+                      "Id": "[concat(variables('applicationGatewayID'), '/frontendPorts/HttpPort')]"
+                  },
+                  "Protocol": "Http"
+              }
           }
         ],
         "requestRoutingRules": [
           {
-            "Name": "rule1",
+            "Name": "SecureRule1",
             "properties": {
               "RuleType": "Basic",
               "httpListener": {
-                "id": "[concat(variables('applicationGatewayID'), '/httpListeners/appGatewayHttpListener')]"
+                "id": "[concat(variables('applicationGatewayID'), '/httpListeners/SecureListener')]"
               },
               "backendAddressPool": {
                 "id": "[concat(variables('applicationGatewayID'), '/backendAddressPools/appGatewayBackendPool')]"
@@ -284,6 +309,24 @@
               "backendHttpSettings": {
                 "id": "[concat(variables('applicationGatewayID'), '/backendHttpSettingsCollection/appGatewayBackendHttpSettings')]"
               }
+            }
+          },
+          {
+            "Name": "HttpRule1",
+            "properties": {
+                "RuleType": "Basic",
+                "httpListener": {
+                    "id": "[concat(variables('applicationGatewayID'), '/httpListeners/HttpListener')]"
+                },
+                "backendAddressPool": {
+                    "id": "[concat(variables('applicationGatewayID'), '/backendAddressPools/appGatewayBackendPool')]"
+                },
+                "backendHttpSettings": {
+                    "id": "[concat(variables('applicationGatewayID'), '/backendHttpSettingsCollection/appGatewayBackendHttpSettings')]"
+                },
+                "rewriteRuleSet": {
+                    "id": "[concat(variables('applicationGatewayID'), '/rewriteRuleSets/rewriteRuleSet1')]"
+                }
             }
           }
         ],
@@ -303,8 +346,8 @@
                     ],
                     "responseHeaderConfigurations": [
                       {
-                        "headerName": "Content-Type",
-                        "headerValue": "text/html"
+                        "headerName": "Content-MD5",
+                        "headerValue": "Q2hlY2sgSW50ZWdyaXR5IQ=="
                       }
                     ]
                   }
@@ -313,6 +356,27 @@
             },
             "type": "Microsoft.Network/applicationGateways/rewriteRuleSets"
           }
+        ],
+        "probes": [
+            {
+                "name": "HttpCustomProbe",
+                "properties": {
+                    "protocol": "Http",
+                    "path": "/",
+                    "interval": 30,
+                    "timeout": 30,
+                    "unhealthyThreshold": 3,
+                    "pickHostNameFromBackendHttpSettings": true,
+                    "minServers": 0,
+                    "match": {
+                        "body": "",
+                        "statusCodes": [
+                            "200-399"
+                        ]
+                    }
+                },
+                "type": "Microsoft.Network/applicationGateways/probes"
+            }
         ]
       }
     }
