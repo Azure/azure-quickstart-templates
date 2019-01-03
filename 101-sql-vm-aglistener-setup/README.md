@@ -1,4 +1,4 @@
-# Configure ILB and create listener for an existing Always On availability group on a SQL Server VM
+# Configure ILB and create listener for an existing Always On availability group on SQL Server VMs in Azure
 
 Before deploying the template you must have the following
 
