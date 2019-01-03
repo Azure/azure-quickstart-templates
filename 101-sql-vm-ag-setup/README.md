@@ -1,4 +1,4 @@
-# Create Always ON setup on existing SQL Virtual Machines
+# Create WSFC Cluster and join existing SQL Server Virtual Machines for Always On availability group
 
 Before deploying the template you must have the following
 
