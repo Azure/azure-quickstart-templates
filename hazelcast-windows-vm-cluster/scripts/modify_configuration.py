@@ -39,19 +39,15 @@ if __name__ == "__main__":
                 network.find("hazelcast_ns:port", ns).text = opts.cluster_port
             print("Updated cluster port...")
 
-            ## Updating discovery stategy
-            print("Updating discovery strategy nodes...")
-            for strategy in root.iter(str(QName(hazelcast_ns, "discovery-strategy"))):
-                strategy_class = strategy.get("class")
-                if strategy_class == "com.hazelcast.azure.AzureDiscoveryStrategy":
-                    properties = strategy.find("hazelcast_ns:properties", ns);
-                    properties.find("*/[@name='subscription-id']").text = opts.subscription_id
-                    properties.find("*/[@name='tenant-id']").text = opts.tenant_id
-                    properties.find("*/[@name='client-id']").text = opts.aad_client_id
-                    properties.find("*/[@name='client-secret']").text = opts.aad_client_secret
-                    properties.find("*/[@name='group-name']").text = opts.group_name
-                    properties.find("*/[@name='cluster-id']").text = opts.cluster_tag
-            print("Updated discovery strategy nodes...")
+            print("Updating Azure discovery...")
+            for azure in root.iter(str(QName(hazelcast_ns, "azure"))):
+                azure.find("hazelcast_ns:client-id", ns).text = opts.aad_client_id
+                azure.find("hazelcast_ns:client-secret", ns).text = opts.aad_client_secret
+                azure.find("hazelcast_ns:tenant-id", ns).text = opts.tenant_id
+                azure.find("hazelcast_ns:subscription-id", ns).text = opts.subscription_id
+                azure.find("hazelcast_ns:cluster-id", ns).text = opts.cluster_tag
+                azure.find("hazelcast_ns:group-name", ns).text = opts.group_name
+            print("Updated Azure discovery....")
 
             tree.write(opts.filename)
             print("Updating configuration file suceeded , file updated and saved at " + opts.filename)
@@ -60,4 +56,3 @@ if __name__ == "__main__":
 
     else:
         print("Script exited without executing, no input parameters found")
-
