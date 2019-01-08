@@ -153,7 +153,7 @@ Quickstart CI engine provides few pre-created azure components which can be used
 **Virtual Network Related placeholders:**
 + **GEN-VNET-NAME** - the name of the virtual network
 + **GEN-VNET-RESOURCEGROUP-NAME** - the name of the resource group for the virtual network
-+ **GEN-SUBNET1-NAME** - the name of subnet-1
++ **GEN-VNET-SUBNET1-NAME** - the name of subnet-1
 
 
 **Key Vault Related placeholders:**
@@ -196,7 +196,7 @@ Here's an example in an `azuredeploy.parameters.json` file:
 
 ```
 {
-"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
 "contentVersion": "1.0.0.0",
 "parameters": {
  "newStorageAccountName":{
