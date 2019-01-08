@@ -16,11 +16,11 @@
       },
       "maxLength": 61
     },
-    "clusterLocation": {
+    "location": {
       "type": "string",
-      "defaultValue": "",
+      "defaultValue": "[resourceGroup().location]",
       "metadata": {
-        "description": "Cluster location. Default to resource group location if blank."
+        "description": "Location for the resources."
       }
     },
     "nodeCount": {
@@ -212,7 +212,6 @@
     }
   },
   "variables": {
-    "clusterLocation": "[if(equals(parameters('clusterLocation'), ''), resourceGroup().location, parameters('clusterLocation'))]",
     "namingInfix": "[toLower(substring(concat(parameters('clusterName'), uniqueString(resourceGroup().id)), 0, 9))]",
     "addressPrefix": "10.0.0.0/16",
     "subnetPrefix": "10.0.1.0/24",
@@ -222,10 +221,10 @@
     "lbName": "[concat(variables('namingInfix'), 'lb')]",
     "bepoolName": "[concat(variables('lbName'), 'bepool')]",
     "fepoolName": "[concat(variables('lbName'), 'fepool')]",
-    "lbID": "[resourceId('Microsoft.Network/loadBalancers',variables('lbName'))]",
-    "bepoolID": "[concat(variables('lbID'),'/backendAddressPools/', variables('bepoolName'))]",
+    "lbID": "[resourceId('Microsoft.Network/loadBalancers', variables('lbName'))]",
+    "bepoolID": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('lbName'), variables('bePoolName'))]",
     "feIpConfigName": "[concat(variables('fepoolName'), 'IpConfig')]",
-    "feIpConfigId": "[concat(variables('lbID'),'/frontendIPConfigurations/', variables('feIpConfigName'))]",
+    "feIpConfigId": "[resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', parameters('lbName'), variables('feIpConfigName'))]",
     "pipName": "[concat(variables('namingInfix'), 'pip')]",
     "nicName": "[concat(variables('namingInfix'), 'nic')]",
     "natPoolName": "[concat(variables('lbName'), 'natpool')]",
@@ -280,7 +279,7 @@
     },
     {
       "type": "Microsoft.Network/networkSecurityGroups",
-      "location": "[variables('clusterLocation')]",
+      "location": "[parameters('location')]",
       "name": "[variables('nsgName')]",
       "apiVersion": "2018-07-01",
       "properties": {
@@ -361,7 +360,7 @@
     {
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
-      "location": "[variables('clusterLocation')]",
+      "location": "[parameters('location')]",
       "apiVersion": "2018-07-01",
       "dependsOn": [
         "[concat('Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]"
@@ -389,7 +388,7 @@
       "apiVersion": "2018-07-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
-      "location": "[variables('clusterLocation')]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('pipName'))]",
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
@@ -402,7 +401,7 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "subnet": {
-                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName')), '/subnets/', variables('subnetName'))]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName')), variables('subnetName')]"
               }
             }
           }
@@ -416,7 +415,7 @@
       "apiVersion": "2018-07-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('nicName'),'2')]",
-      "location": "[variables('clusterLocation')]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('pipName'),'2')]",
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
@@ -429,7 +428,7 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "subnet": {
-                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName')), '/subnets/', variables('subnetName'))]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName')), variables('subnetName')]"
               }
             }
           }
@@ -442,7 +441,7 @@
     {
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('pipName')]",
-      "location": "[variables('clusterLocation')]",
+      "location": "[parameters('location')]",
       "sku": {
         "name": "Standard"
       },
@@ -457,7 +456,7 @@
     {
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat(variables('pipName'),'2')]",
-      "location": "[variables('clusterLocation')]",
+      "location": "[parameters('location')]",
       "sku": {
         "name": "Standard"
       },
@@ -472,7 +471,7 @@
     {
       "type": "Microsoft.Network/loadBalancers",
       "name": "[variables('lbName')]",
-      "location": "[variables('clusterLocation')]",
+      "location": "[parameters('location')]",
       "apiVersion": "2018-07-01",
       "sku": {
         "name": "Standard"
@@ -665,7 +664,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountName')]",
-      "location": "[variables('clusterLocation')]",
+      "location": "[parameters('location')]",
       "tags":{
         "displayName": "Artifactory Storage Account"
       },
@@ -708,7 +707,7 @@
     {
       "type": "Microsoft.Compute/virtualMachineScaleSets",
       "name": "[variables('scaleSetName')]",
-      "location": "[variables('clusterLocation')]",
+      "location": "[parameters('location')]",
       "apiVersion": "2018-10-01",
       "dependsOn": [
         "[concat('Microsoft.Network/loadBalancers/', variables('lbName'))]",
@@ -752,16 +751,16 @@
                       "name": "[concat(variables('ipConfigName'),'1')]",
                       "properties": {
                         "subnet": {
-                          "id": "[concat(resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName')), '/subnets/', variables('subnetName'))]"
+                          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
                         },
                         "loadBalancerBackendAddressPools": [
                           {
-                            "id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('lbName'), '/backendAddressPools/', variables('bePoolName'))]"
+                            "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('lbName'), variables('bePoolName'))]"
                           }
                         ],
                         "loadBalancerInboundNatPools": [
                           {
-                            "id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('lbName'), '/inboundNatPools/', variables('natPoolName'))]"
+                            "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatPools', variables('lbName'), variables('natPoolName'))]"
                           }
                         ]
                       }
@@ -798,7 +797,7 @@
     {
       "type": "Microsoft.Compute/virtualMachineScaleSets",
       "name": "[concat(variables('scaleSetName'),'2')]",
-      "location": "[variables('clusterLocation')]",
+      "location": "[parameters('location')]",
       "apiVersion": "2018-10-01",
       "dependsOn": [
         "[concat('Microsoft.Network/loadBalancers/', variables('lbName'))]",
@@ -873,7 +872,7 @@
                   "autoUpgradeMinorVersion": false,
                   "settings": {
                     "fileUris": [
-                      "[concat(parameters('_artifactsLocation'), 'scripts/','install_artifactory.sh')]"
+                      "[uri(parameters('_artifactsLocation'), concat('scripts/install_artifactory.sh', parameters('_artifactsLocationSasToken')))]"
                     ]
                   },
                   "protectedSettings": {
