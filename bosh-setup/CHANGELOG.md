@@ -1,3 +1,9 @@
+# v6.0.0 (2018-11-15)
+
+- Upgrade Azure CPI version to v35.5.0. Please see new features in [bosh-azure-cpi-release v35.5.0](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v35.5.0)
+  - Azure CPI v35.5.0 doesn't require the stemcell container to be public
+- Use cf-deployment [6.0.0](https://github.com/cloudfoundry/cf-deployment/tree/v6.0.0)
+
 # v5.0.0 (2018-08-31)
 
 - Upgrade Azure CPI version to v35.4.0. Please see new features in [bosh-azure-cpi-release v35.4.0](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v35.4.0)
