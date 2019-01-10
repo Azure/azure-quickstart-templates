@@ -162,7 +162,18 @@ The following example shows how to use the reference function for the `storageUr
 ```
 * Other values in a template configured with a public endpoint, must use the reference function.  
 
-* All resources should use the `parameters('location')` expression for the `location` property for all resources.  Other expressions may be used for resources that need to be placed in alternate locations, for example a geo-redundant application.  Location values must never be hard-coded or use `resourceGroup().location` directly for the location property.
+* All resources should use the `parameters('location')` expression for the `location` property for all resources.  Other expressions may be used for resources that need to be placed in alternate locations, for example a geo-redundant application.  Location values must never be hard-coded or use `resourceGroup().location` directly for the location property.  Required parameter definition: 
+
+```json
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+```  
+
 
 * A literal value must not be used for all or part of an endpoint, for example, the following is **never** allowed:
 ```json
@@ -256,7 +267,8 @@ The following code shows an example:
           "metadata": {
               "description": "The base URI where artifacts required by this template are located including a trailing '/'"
           },
-          "defaultValue": "[deployment().properties.templateLink.uri]"
+          "defaultValue": "[deployment().properties.templateLink.uri]",  //use this for the Azure marketplace
+          "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/[name of sample folder]" // use this for a Quickstart in this repo (we're working on fixing this...)
       },
       "_artifactsLocationSasToken": {
           "type": "securestring",
@@ -272,7 +284,7 @@ After the parameters are added to the template all URIs can be created using the
 ```json
 "variables": {
         "scriptFileUri": "[uri(parameters('_artifactsLocation'), concat('scripts/configuration.sh', parameters('_artifactsLocationSasToken')))]",
-        "nestedTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedTemplates/jumpbox.json', parameters('_artifactsLocationSasToken')))]"
+        "nestedtemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/jumpbox.json', parameters('_artifactsLocationSasToken')))]"
     },
 ```
 
@@ -356,7 +368,7 @@ The following code shows an example.
 
 ### VM Disks
 
-* OS Disks and Data Disks must use implicit managed disks except for QuickStart samples showing the use of explict disks.  An explicit disk is a disk where the resource is explicitly defined in the template.
+* OS Disks and Data Disks must use implicit managed disks except for QuickStart samples showing the use of explicit disks.  An explicit disk is a disk where the resource is explicitly defined in the template.
 
 
   ```json

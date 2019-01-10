@@ -3,9 +3,13 @@ name: bosh
 
 releases:
 - name: bosh
-  version: "265.2.0"
-  url: https://s3.amazonaws.com/bosh-compiled-release-tarballs/bosh-265.2.0-ubuntu-trusty-3541.10-20180327-211954-148015419-20180327211957.tgz?versionId=cMRVRXQgYNbDeRdF52IyQ1yNBu7klA5j
-  sha1: a8f8f5138ef1e3b356bd5078a32694625e8846a5
+  version: "268.2.0"
+  url: https://s3.amazonaws.com/bosh-compiled-release-tarballs/bosh-268.2.0-ubuntu-xenial-97.28-20181024-210824-586102372-20181024210828.tgz
+  sha1: 3107ba41a109561cf181862ac59aa1e82ab0b286
+- name: bpm
+  version: "0.12.3"
+  url: https://s3.amazonaws.com/bosh-compiled-release-tarballs/bpm-0.12.3-ubuntu-xenial-97.17-20180919-183904-508666998-20180919183910.tgz?versionId=prHEVL4zedQ.NxMXbIOUGlwq6hidaqYq
+  sha1: f57c590660fb00a55e23fa9a955e79d39ef21d1a
 
 resource_pools:
 - name: vms
@@ -33,6 +37,7 @@ instance_groups:
 - name: bosh
   instances: 1
   jobs:
+  - {name: bpm, release: bpm}
   - {name: nats, release: bosh}
   - {name: postgres-9.4, release: bosh}
   - {name: blobstore, release: bosh}
@@ -44,6 +49,20 @@ instance_groups:
   - name: default
     static_ips: [((internal_ip))]
   properties:
+    agent:
+      mbus: nats://nats:((nats_password))@((internal_ip)):4222
+      env:
+        bosh:
+          blobstores:
+          - provider: dav
+            options:
+              # todo switch to using https
+              endpoint: http://((internal_ip)):25250
+              user: agent
+              password: ((blobstore_agent_password))
+              tls:
+                cert:
+                  ca: ((blobstore_ca.certificate))
     nats:
       address: ((internal_ip))
       user: nats
@@ -79,6 +98,11 @@ instance_groups:
       agent:
         user: agent
         password: ((blobstore_agent_password))
+      tls:
+        cert:
+          ca: ((blobstore_ca.certificate))
+          certificate: ((blobstore_server_tls.certificate))
+          private_key: ((blobstore_server_tls.private_key))
     director:
       address: 127.0.0.1
       name: ((director_name))
@@ -115,8 +139,6 @@ instance_groups:
     - time2.google.com
     - time3.google.com
     - time4.google.com
-    agent:
-      mbus: nats://nats:((nats_password))@((internal_ip)):4222
 
 cloud_provider:
   mbus: https://mbus:((mbus_bootstrap_password))@((internal_ip)):6868
@@ -192,3 +214,16 @@ variables:
     common_name: default.hm.bosh-internal
     extended_key_usage:
     - client_auth
+
+- name: blobstore_ca
+  type: certificate
+  options:
+    is_ca: true
+    common_name: default.blobstore-ca.bosh-internal
+
+- name: blobstore_server_tls
+  type: certificate
+  options:
+    ca: blobstore_ca
+    common_name: ((internal_ip))
+    alternative_names: [((internal_ip))]

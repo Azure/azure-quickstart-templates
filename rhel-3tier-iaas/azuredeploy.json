@@ -57,7 +57,6 @@
     "vmStorageAccountType": "Standard_GRS",
     "vmStorageAccountName": "[concat(uniqueString(resourceGroup().id),'storage')]",
     "diagStorageAccountName": "[concat(uniqueString(resourceGroup().id),'diagstorage')]",
-    "vmStorageAccountContainerName": "vhds",
     "virtualNetworkName": "RedHat3Tier-vnet",
     "webTierSubnetName": "web-tier-subnet",
     "appTierSubnetName": "app-tier-subnet",
@@ -346,7 +345,7 @@
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[concat(variables('availSetName'), copyindex(1))]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-12-01",
       "location": "[parameters('location')]",
       "comments": "These are the Availability Sets for Web VMs, App VMs and Database VMs",
       "tags": {
@@ -358,7 +357,13 @@
         "name": "availSetLoop",
         "count": 3
       },
-      "properties": {}
+      "sku": {
+        "name": "Aligned"
+          },
+        "properties": { 
+            "platformFaultDomainCount": 2,
+            "platformUpdateDomainCount": 5
+        }
     },
     {
       "type": "Microsoft.Network/loadBalancers",
@@ -657,7 +662,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('webTierVmName'),'-', copyindex(1))]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "location": "[parameters('location')]",
       "comments": " Web Tier VMs",
       "tags": {
@@ -666,7 +671,7 @@
         "provider": "[variables('redHatTags').provider]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('vmStorageAccountName'),'1')]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('vmStorageAccountName'),'1')]", 
         "[concat('Microsoft.Network/networkInterfaces/', variables('webTierVmNicName'), copyindex(1))]",
         "[concat('Microsoft.Compute/availabilitySets/', variables('availSetName'),'1')]"
       ],
@@ -694,10 +699,7 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[variables('webTierVmName')]",
-            "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('vmStorageAccountName'),'1'),'2016-01-01').primaryEndpoints.blob, variables('vmStorageAccountContainerName'),'/', variables('webTierVmName'),copyIndex(1),'-','webTierOSDisk','.vhd')]"
-            },
+            "name":  "[concat(variables('webTierVmName'),'-', copyindex(1),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -711,7 +713,7 @@
         },
         "diagnosticsProfile": {
           "bootDiagnostics": {
-            "enabled": "true",
+            "enabled": true,
             "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', variables('diagStorageAccountName'))).primaryEndpoints.blob]"
           }
         }
@@ -720,7 +722,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('appTierVmName'),'-', copyindex(1))]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "location": "[parameters('location')]",
       "comments": " App Tier VMs",
       "tags": {
@@ -729,7 +731,7 @@
         "provider": "[variables('redHatTags').provider]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('vmStorageAccountName'),'2')]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('vmStorageAccountName'),'2')]", 
         "[concat('Microsoft.Network/networkInterfaces/', variables('appTierVmNicName'), copyindex(1))]",
         "[concat('Microsoft.Compute/availabilitySets/',variables('availSetName'),'2')]"
       ],
@@ -757,10 +759,7 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[variables('appTierVmName')]",
-            "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('vmStorageAccountName'),'2'),'2016-01-01').primaryEndpoints.blob, variables('vmStorageAccountContainerName'),'/', variables('appTierVmName'),copyIndex(1),'-','appTierOSDisk','.vhd')]"
-            },
+            "name": "[concat(variables('appTierVmName'),'-', copyindex(1),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -774,7 +773,7 @@
         },
         "diagnosticsProfile": {
           "bootDiagnostics": {
-            "enabled": "true",
+            "enabled": true,
             "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', variables('diagStorageAccountName'))).primaryEndpoints.blob]"
           }
         }
@@ -783,7 +782,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('databaseTierVmName'),'-', copyindex(1))]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "location": "[parameters('location')]",
       "comments": "Database Tier VMs",
       "tags": {
@@ -792,7 +791,7 @@
         "provider": "[variables('redHatTags').provider]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('vmStorageAccountName'),'3')]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('vmStorageAccountName'),'3')]", 
         "[concat('Microsoft.Network/networkInterfaces/', variables('databaseTierVmNicName'), copyindex(1))]",
         "[concat('Microsoft.Compute/availabilitySets/', variables('availSetName'),'3')]"
       ],
@@ -820,10 +819,7 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[variables('databaseTierVmName')]",
-            "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('vmStorageAccountName'),'3'),'2016-01-01').primaryEndpoints.blob, variables('vmStorageAccountContainerName'),'/', variables('databaseTierVmName'),copyIndex(1),'-','dbTierOSDisk','.vhd')]"
-            },
+            "name": "[concat(variables('databaseTierVmName'),'-', copyindex(1),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -837,7 +833,7 @@
         },
         "diagnosticsProfile": {
           "bootDiagnostics": {
-            "enabled": "true",
+            "enabled": true,
             "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', variables('diagStorageAccountName'))).primaryEndpoints.blob]"
           }
         }
@@ -846,7 +842,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('jumpVmName')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "location": "[parameters('location')]",
       "comments": "Jump VM",
       "tags": {
@@ -855,7 +851,7 @@
         "provider": "[variables('redHatTags').provider]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('vmStorageAccountName'),'4')]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('vmStorageAccountName'),'4')]", 
         "[concat('Microsoft.Network/networkInterfaces/', variables('jumpVmNicName'))]"
       ],
       "properties": {
@@ -875,10 +871,7 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[variables('jumpVmName')]",
-            "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('vmStorageAccountName'),'4'),'2016-01-01').primaryEndpoints.blob, variables('vmStorageAccountContainerName'),'/', variables('jumpVmName'),'-','jumpVmOSDisk','.vhd')]"
-            },
+            "name": "[concat(variables('jumpVmName'),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -892,7 +885,7 @@
         },
         "diagnosticsProfile": {
           "bootDiagnostics": {
-            "enabled": "true",
+            "enabled": true,
             "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', variables('diagStorageAccountName'))).primaryEndpoints.blob]"
           }
         }
