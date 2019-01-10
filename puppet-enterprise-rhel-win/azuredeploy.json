@@ -74,11 +74,7 @@
     "puppetNsgName": "puppet-nsg",
     "linuxAgentNsgName": "linux-agent-nsg",
     "windowsAgentNsgName": "windows-agent-nsg",
-    "puppetStorageName": "[concat('puppetstor',uniqueString(resourceGroup().id))]",
-    "linuxAgentStorageName": "[concat('linstor',uniqueString(resourceGroup().id))]",
-    "windowsAgentStorageName": "[concat('winstor',uniqueString(resourceGroup().id))]",
     "diagStorageAccountName": "[concat('diagstor',uniqueString(resourceGroup().id))]",
-    "storageAccountType": "Standard_GRS",
     "virtualNetworkName": "puppet-vnet",
     "linuxSubnetName": "linux-agent-subnet",
     "windowsSubnetName": "windows-agent-subnet",
@@ -100,7 +96,6 @@
     "vmLinAgentName": "vm-linux-agent",
     "vmWinAgentNicName": "vm-windows-agent-nic-",
     "vmLinAgentNicName": "vm-linux-agent-nic-",
-    "vmStorageAccountContainerName": "vhds",
     "scriptClose": "'",
     "scriptFileName2": "installpuppetagent.sh",
     "scriptStart": "su -c'sh ",
@@ -122,7 +117,7 @@
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "master-avset",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-12-01",
       "location": "[parameters('location')]",
       "comments": "This availability set will consist of puppet master installed virtual machine",
       "tags": {
@@ -130,12 +125,18 @@
         "quickstartName": "[variables('quickstartTags').name]",
         "provider": "[variables('puppetTags').provider]"
       },
-      "properties": {}
+      "sku": {
+        "name": "Aligned"
+        },
+        "properties": { 
+        "platformFaultDomainCount": 2,
+        "platformUpdateDomainCount": 5
+        }
     },
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "agent-avset",
-      "apiVersion": "2015-06-15",
+      "apiVersion":"2017-12-01",
       "location": "[parameters('location')]",
       "comments": "This availability set will consist of windows virtual machines configured as puppet agents ",
       "tags": {
@@ -143,7 +144,13 @@
         "quickstartName": "[variables('quickstartTags').name]",
         "provider": "[variables('redHatTags').provider]"
       },
-      "properties": {}
+      "sku": {
+        "name": "Aligned"
+        },
+        "properties": { 
+        "platformFaultDomainCount": 2,
+        "platformUpdateDomainCount": 5
+        }
     },
     {
       "type": "Microsoft.Network/networkSecurityGroups",
@@ -495,52 +502,7 @@
         ]
       }
     },
-    {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('puppetStorageName')]",
-      "apiVersion": "2015-06-15",
-      "location": "[parameters('location')]",
-      "comments": "This storage account is used to store the VM disks of puppet master vm",
-      "tags": {
-        "displayName": "Puppet Master Storage Account",
-        "quickstartName": "[variables('quickstartTags').name]",
-        "provider": "[variables('puppetTags').provider]"
-      },
-      "properties": {
-        "accountType": "[variables('StorageAccountType')]"
-      }
-    },
-    {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('linuxAgentStorageName')]",
-      "apiVersion": "2015-06-15",
-      "location": "[parameters('location')]",
-      "comments": "This storage account is used to store the VM disks of RHEL puppet agent vms",
-      "tags": {
-        "displayName": "Linux Agent Storage Account",
-        "quickstartName": "[variables('quickstartTags').name]",
-        "provider": "[variables('redHatTags').provider]"
-      },
-      "properties": {
-        "accountType": "[variables('storageAccountType')]"
-      }
-    },
-    {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('windowsAgentStorageName')]",
-      "apiVersion": "2015-06-15",
-      "location": "[parameters('location')]",
-      "comments": "This storage account is used to store the VM disks of windows puppet agent vms",
-      "tags": {
-        "displayName": "Windows Agent Storage Account",
-        "quickstartName": "[variables('quickstartTags').name]",
-        "provider": "[variables('redHatTags').provider]"
-      },
-      "properties": {
-        "accountType": "[variables('storageAccountType')]"
-      }
-    },
-    {
+   {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('diagStorageAccountName')]",
       "apiVersion": "2015-06-15",
@@ -862,7 +824,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('puppetMasterVmName')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion":  "2017-03-30",
       "location": "[parameters('location')]",
       "comments": "This vm will be used as puppet master",
       "tags": {
@@ -871,7 +833,6 @@
         "provider": "[variables('puppetTags').provider]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('puppetStorageName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('puppetMasterNicName'))]"
       ],
       "plan": {
@@ -896,14 +857,11 @@
           "imageReference": {
             "publisher": "Puppet",
             "offer": "Puppet-Enterprise",
-            "sku": "2016-1",
+            "sku": "2017-2",
             "version": "latest"
           },
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('puppetStorageName')),'2015-06-15').primaryEndpoints.blob,variables('vmStorageAccountContainerName'),'/OSDisk','.vhd')]"
-            },
+            "name": "[concat(variables('puppetMasterVmName'),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -917,7 +875,7 @@
         },
         "diagnosticsProfile": {
           "bootDiagnostics": {
-            "enabled": "true",
+            "enabled": true,
             "storageUri": "[reference(concat('Microsoft.Storage/storageAccounts/', variables('diagStorageAccountName')),'2015-06-15').primaryEndpoints.blob]"
           }
         }
@@ -955,7 +913,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('vmWinAgentName'),copyIndex(1))]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "location": "[parameters('location')]",
       "comments": "These vms will be used as Windows puppet agents",
       "tags": {
@@ -968,7 +926,6 @@
         "count": "[parameters('windowsAgentCount')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('windowsAgentStorageName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('vmWinAgentNicName'),copyIndex(1))]"
       ],
       "properties": {
@@ -992,9 +949,6 @@
           },
           "osDisk": {
             "name": "[concat('vmWinAgent',copyIndex(1),'os-disk')]",
-            "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('windowsAgentStorageName')),'2015-06-15').primaryEndpoints.blob,variables('vmStorageAccountContainerName'),'/','vmWinAgent',copyIndex(1),'os-disk','.vhd')]"
-            },
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -1008,7 +962,7 @@
         },
         "diagnosticsProfile": {
           "bootDiagnostics": {
-            "enabled": "true",
+            "enabled": true,
             "storageUri": "[reference(concat('Microsoft.Storage/storageAccounts/', variables('diagStorageAccountName')),'2015-06-15').primaryEndpoints.blob]"
           }
         }
@@ -1046,7 +1000,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('vmLinAgentName'),copyIndex(1))]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "location": "[parameters('location')]",
       "comments": "These vms will be used as puppet agents",
       "tags": {
@@ -1059,7 +1013,6 @@
         "count": "[parameters('linuxAgentCount')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('linuxAgentStorageName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('vmLinAgentNicName'),copyIndex(1))]"
       ],
       "properties": {
@@ -1083,9 +1036,6 @@
           },
           "osDisk": {
             "name": "[concat('vmLinAgent',copyIndex(1),'os-disk')]",
-            "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('linuxAgentStorageName')),'2015-06-15').primaryEndpoints.blob,variables('vmStorageAccountContainerName'),'/','vmLinAgent',copyIndex(1),'os-disk','.vhd')]"
-            },
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -1099,7 +1049,7 @@
         },
         "diagnosticsProfile": {
           "bootDiagnostics": {
-            "enabled": "true",
+            "enabled": true,
             "storageUri": "[reference(concat('Microsoft.Storage/storageAccounts/', variables('diagStorageAccountName')),'2015-06-15').primaryEndpoints.blob]"
           }
         }

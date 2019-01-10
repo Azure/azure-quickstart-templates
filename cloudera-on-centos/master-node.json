@@ -1,5 +1,5 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.1",
   "parameters": {
     "vnetID": {
@@ -72,18 +72,6 @@
       }
     },
     {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[concat(uniquestring(concat(copyIndex(), 'mn', resourceGroup().id)), variables('storageAccountName'))]",
-      "location": "[parameters('location')]",
-      "copy": {
-        "name": "storageAccountLoop",
-        "count": "[parameters('vmCount')]"
-      },
-      "properties": {
-        "accountType": "[parameters('storageAccount').type]"
-      }
-    },
-    {
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat(variables('publicIPAddressName'), copyIndex())]",
       "location": "[parameters('location')]",
@@ -133,6 +121,7 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2017-03-30",
       "name": "[concat(variables('vmName'), copyIndex())]",
       "plan": "[parameters('vmSpec').imageInfo.plan]",
       "location": "[parameters('location')]",
@@ -141,8 +130,7 @@
         "count": "[parameters('vmCount')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex())]",
-        "[concat('Microsoft.Storage/storageAccounts/', concat(uniquestring(concat(copyIndex(), 'mn', resourceGroup().id)), variables('storageAccountName')))]"
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex())]"
       ],
       "properties": {
         "availabilitySet": {
@@ -156,54 +144,39 @@
           "adminUsername": "[parameters('vmSpec').adminUsername]",
           "adminPassword": "[parameters('vmSpec').adminPassword]",
           "linuxConfiguration": {
-            "disablePasswordAuthentication": "false"
+            "disablePasswordAuthentication": false
           }
         },
         "storageProfile": {
           "imageReference": "[parameters('vmSpec').imageInfo.imageReference]",
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', uniquestring(concat(copyIndex(), 'mn', resourceGroup().id)), variables('storageAccountName')), '2015-06-15').primaryEndpoints.blob, uniquestring(concat(copyIndex(), 'mn', resourceGroup().id)), '/', variables('vmName'), copyIndex(), '.vhd')]"
-            },
+            "name":"[concat(variables('vmName'), copyIndex(),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           },
           "dataDisks": [
             {
-              "name": "datadisk0",
+              "name": "[concat(variables('vmName'), copyIndex(),'_DataDisk1')]",
               "diskSizeGB": 512,
               "lun": 0,
-              "vhd": {
-                "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', uniquestring(concat(copyIndex(), 'mn', resourceGroup().id)), variables('storageAccountName')), '2015-06-15').primaryEndpoints.blob, uniquestring(concat(copyIndex(), 'mn', resourceGroup().id)), '/', variables('vmName'), '-datadisk0.vhd')]"
-              },
               "createOption": "Empty"
             },
             {
-              "name": "datadisk1",
+              "name":  "[concat(variables('vmName'), copyIndex(),'_DataDisk2')]",
               "diskSizeGB": 512,
               "lun": 1,
-              "vhd": {
-                "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', uniquestring(concat(copyIndex(), 'mn', resourceGroup().id)), variables('storageAccountName')), '2015-06-15').primaryEndpoints.blob, uniquestring(concat(copyIndex(), 'mn', resourceGroup().id)), '/', variables('vmName'), '-datadisk1.vhd')]"
-              },
               "createOption": "Empty"
             },
             {
-              "name": "datadisk2",
+              "name":  "[concat(variables('vmName'), copyIndex(),'_DataDisk3')]",
               "diskSizeGB": 512,
               "lun": 2,
-              "vhd": {
-                "uri": "[ concat(reference(concat('Microsoft.Storage/storageAccounts/', uniquestring(concat(copyIndex(), 'mn', resourceGroup().id)), variables('storageAccountName')), '2015-06-15').primaryEndpoints.blob, uniquestring(concat(copyIndex(), 'mn', resourceGroup().id)), '/', variables('vmName'), '-datadisk2.vhd')]"
-              },
               "createOption": "Empty"
             },
             {
-              "name": "datadisk3",
+              "name":  "[concat(variables('vmName'), copyIndex(),'_DataDisk4')]",
               "diskSizeGB": 512,
               "lun": 3,
-              "vhd": {
-                "uri": "[ concat(reference(concat('Microsoft.Storage/storageAccounts/', uniquestring(concat(copyIndex(), 'mn', resourceGroup().id)), variables('storageAccountName')), '2015-06-15').primaryEndpoints.blob, uniquestring(concat(copyIndex(), 'mn', resourceGroup().id)), '/', variables('vmName'), '-datadisk3.vhd')]"
-              },
               "createOption": "Empty"
             }
           ]

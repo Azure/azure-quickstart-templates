@@ -47,7 +47,8 @@
       "name": "[concat(parameters('clusterName'),'-vnet')]",
       "addressSpacePrefix": "10.0.0.0/16",
       "subnetName": "subnet1",
-      "subnetPrefix": "10.0.0.0/24"
+      "subnetPrefix": "10.0.0.0/24",
+      "subnet": "[resourceId('Microsoft.Network/virtualNetworks/subnets', concat(parameters('clusterName'),'-vnet'), 'subnet1')]"
     },
     "networkSecurityGroup": {
       "name": "[concat(parameters('clusterName'),'-nsg')]"
@@ -62,17 +63,17 @@
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('networkSecurityGroup').name]",
       "location": "[parameters('location')]",
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2017-06-01",
       "properties": {
         "securityRules": [
           {
-            "name": "hdirule1",
+            "name": "Allow_HDInsight_Management_Traffic",
             "properties": {
-              "description": null,
+              "description": "Allow traffic from the Azure health and management services to reach HDInsight",
               "protocol": "*",
               "sourcePortRange": "*",
               "destinationPortRange": "443",
-              "sourceAddressPrefix": "168.61.49.99",
+              "sourceAddressPrefixes": ["168.61.49.99", "23.99.5.239", "168.61.48.131", "138.91.141.162"],
               "destinationAddressPrefix": "VirtualNetwork",
               "access": "Allow",
               "priority": 300,
@@ -80,13 +81,13 @@
             }
           },
           {
-            "name": "hdirule2",
+            "name": "Allow_Azure_Resolver_Traffic",
             "properties": {
-              "description": null,
+              "description": "Allow access from Azure's recursive resolver",
               "protocol": "*",
               "sourcePortRange": "*",
               "destinationPortRange": "443",
-              "sourceAddressPrefix": "23.99.5.239",
+              "sourceAddressPrefix": "168.63.129.16",
               "destinationAddressPrefix": "VirtualNetwork",
               "access": "Allow",
               "priority": 301,
@@ -94,30 +95,16 @@
             }
           },
           {
-            "name": "hdirule3",
+            "name": "Allow_HDInsight_Management_Traffic_Regional",
             "properties": {
-              "description": null,
+              "description": "Adapt this rule based on the region where you are deploying HDInsight, or remove the rule if your region is not listed.",
               "protocol": "*",
               "sourcePortRange": "*",
               "destinationPortRange": "443",
-              "sourceAddressPrefix": "168.61.48.131",
+              "sourceAddressPrefixes": ["23.102.235.122", "52.175.38.134", "13.76.245.160", "13.76.136.249", "104.210.84.115", "13.75.152.195", "13.77.2.56", "13.77.2.94", "191.235.84.104", "191.235.87.113", "52.229.127.96", "52.229.123.172", "52.228.37.66", "52.228.45.222", "42.159.96.170", "139.217.2.219", "42.159.198.178", "42.159.234.157", "40.73.37.141", "40.73.38.172", "52.164.210.96", "13.74.153.132", "52.166.243.90", "52.174.36.244", "51.4.146.68", "51.4.146.80", "51.5.150.132", "51.5.144.101", "52.172.153.209", "52.172.152.49", "104.211.223.67", "104.211.216.210", "13.78.125.90", "13.78.89.60", "40.74.125.69", "138.91.29.150", "52.231.39.142", "52.231.36.209", "52.231.203.16", "52.231.205.214", "51.141.13.110", "51.141.7.20", "51.140.47.39", "51.140.52.16", "13.67.223.215", "40.86.83.253", "13.82.225.233", "40.71.175.99", "157.56.8.38", "157.55.213.99", "52.161.23.15", "52.161.10.167", "13.64.254.98", "23.101.196.19", "52.175.211.210", "52.175.222.222"],
               "destinationAddressPrefix": "VirtualNetwork",
               "access": "Allow",
               "priority": 302,
-              "direction": "Inbound"
-            }
-          },
-          {
-            "name": "hdirule4",
-            "properties": {
-              "description": null,
-              "protocol": "*",
-              "sourcePortRange": "*",
-              "destinationPortRange": "443",
-              "sourceAddressPrefix": "138.91.141.162",
-              "destinationAddressPrefix": "VirtualNetwork",
-              "access": "Allow",
-              "priority": 303,
               "direction": "Inbound"
             }
           }
@@ -135,14 +122,14 @@
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
-            "[variables('vnet').addressSpacePrefix]"
+            "[variables('vNet').addressSpacePrefix]"
           ]
         },
         "subnets": [
           {
-            "name": "[variables('vnet').subnetName]",
+            "name": "[variables('vNet').subnetName]",
             "properties": {
-              "addressPrefix": "[variables('vnet').subnetPrefix]",
+              "addressPrefix": "[variables('vNet').subnetPrefix]",
               "networkSecurityGroup": {
                 "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroup').name)]"
               }
@@ -168,9 +155,10 @@
       "location": "[parameters('location')]",
       "apiVersion": "2015-03-01-preview",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/',variables('defaultStorageAccount').name)]",
-        "[concat('Microsoft.Network/virtualNetworks/',variables('vNet').name)]"
+        "[resourceId('Microsoft.Storage/storageAccounts',variables('defaultStorageAccount').name)]",
+        "[resourceId('Microsoft.Network/virtualNetworks',variables('vNet').name)]"
       ],
+      "tags": {},
       "properties": {
         "clusterVersion": "3.6",
         "osType": "Linux",
@@ -207,6 +195,10 @@
                   "username": "[parameters('sshUserName')]",
                   "password": "[parameters('sshPassword')]"
                 }
+              },
+             "virtualNetworkProfile": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks',variables('vNet').name)]",
+                "subnet": "[variables('vNet').subnet]"
               }
             },
             {
@@ -220,11 +212,29 @@
                   "username": "[parameters('sshUserName')]",
                   "password": "[parameters('sshPassword')]"
                 }
+              },
+              "virtualNetworkProfile": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks',variables('vNet').name)]",
+                "subnet": "[variables('vNet').subnet]"
               }
             }
           ]
         }
       }
     }
-  ]
+  ],
+  "outputs": {
+    "storage": {
+      "type": "object",
+      "value": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name))]"
+    },
+    "vnet": {
+      "type": "object",
+      "value": "[reference(resourceId('Microsoft.Network/virtualNetworks',variables('vNet').name))]"
+    },
+    "cluster": {
+      "type": "object",
+      "value": "[reference(resourceId('Microsoft.HDInsight/clusters',parameters('clusterName')))]"
+    }
+  }
 }
