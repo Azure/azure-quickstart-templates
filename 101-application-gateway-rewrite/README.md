@@ -12,9 +12,9 @@ Application Gateway now supports the ability to rewrite headers of the incoming 
 With this change, you need to:
 1.	Create the new objects required to rewrite the http headers:
     a.	""requestHeaderConfiguration" and "responseHeaderConfiguration": to specify the names of headers that you intend to rewrite and new value that the original headers need to be rewritten to.
-    b.	ìactionSetî- this object contains the configurations of the request and response headers specified above.
-    c.	ìrewriteRuleî- this object contains all the actionSets
-    d.	ìrewriteRuleSetî- this object contains all the rewriteRules and will need to be attached to a request routing rule- basic or path-based
+    b.	‚ÄúactionSet‚Äù- this object contains the configurations of the request and response headers specified above.
+    c.	‚ÄúrewriteRule‚Äù- this object contains all the actionSets
+    d.	‚ÄúrewriteRuleSet‚Äù- this object contains all the rewriteRules and will need to be attached to a request routing rule- basic or path-based
 2.	You will then be required to attach the rewrite rule set with a routing rule. Once created, this rewrite configuration is attached to the source listener via the routing rule. When using a basic routing rule, the header rewrite configuration is associated with a source listener and is a global header rewrite. When a path-based routing rule is used, the header rewrite configuration is defined on the URL path map. So, it only applies to the specific path area of a site.
 
 You can create multiple http header rewrite rule sets and each rewrite rule set can be applied to multiple listeners. However, you can apply only one http rewrite rule set to a specific listener.
@@ -69,26 +69,26 @@ You can create multiple http header rewrite rule sets and each rewrite rule set 
 ### Sample request routing rule configuration with rewrite rule set
 ```
 {
-    "requestRoutingRules": [
-        {
-            "Name": "rule1",
-            "properties": {
-                "RuleType": "Basic",
-                "httpListener": {
-                "id": "[concat(variables('applicationGatewayID'), '/httpListeners/appGatewayHttpListener')]"
-                },
-                "backendAddressPool": {
-                "id": "[concat(variables('applicationGatewayID'), '/backendAddressPools/appGatewayBackendPool')]"
-                },
-                "backendHttpSettings": {
-                "id": "[concat(variables('applicationGatewayID'), '/backendHttpSettingsCollection/appGatewayBackendHttpSettings')]"
-                },
-                "rewriteRuleSet": {
-                "id": "[concat(variables('applicationGatewayID'), '/rewriteRuleSets/RewriteRuleSet1')]"
-                }
-            }
+  "requestRoutingRules": [
+    {
+      "Name": "HttpRule1",
+      "properties": {
+        "RuleType": "Basic",
+        "httpListener": {
+          "id": "[resourceId('Microsoft.Network/applicationGateways/httpListeners', variables('applicationGatewayName'), 'HttpListener')]"
+        },
+        "backendAddressPool": {
+          "id": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools', variables('applicationGatewayName'), 'appGatewayBackendPool')]"
+        },
+        "backendHttpSettings": {
+          "id": "[resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', variables('applicationGatewayName'), 'appGatewayBackendHttpSettings')]"
+        },
+        "rewriteRuleSet": {
+          "id": "[resourceId('Microsoft.Network/applicationGateways/rewriteRuleSets', variables('applicationGatewayName'), 'rewriteRuleSet1')]"
         }
-    ]
+      }
+    }
+  ]
 }
 ```
 
