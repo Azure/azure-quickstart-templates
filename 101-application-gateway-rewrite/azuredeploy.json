@@ -37,25 +37,11 @@
         "description": "IP Address for Backend Server 2"
       }
     },
-    "MSIVersion": {
-      "type": "string",
-      "defaultValue": "2015-08-31-PREVIEW",
-      "metadata": {
-        "description": "API version for msi extension"
-      }
-    },
     "MSIPort": {
       "type": "int",
       "defaultValue": 50342,
       "metadata": {
         "description": "Default port for msi extension"
-      }
-    },
-    "KeyVaultVersion": {
-      "type": "string",
-      "defaultValue": "2018-02-14",
-      "metadata": {
-        "description": "API version for key vault resources and access policy resources"
       }
     },
     "Secrets": {
@@ -69,30 +55,35 @@
       "metadata": {
         "description": "An array of json objects like this : {'name':name, 'value':value}"
       }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]"
+      "metadata": {
+        "description": "The Location For the resources"
+      }
     }
   },
   "variables": {
     "applicationGatewayName": "[concat(resourceGroup().name, '-appgw')]",
     "idName": "identity1",
-    "keyVaultName": "yourvault-kv",
+    "keyVaultName": "[concat(uniqueString(resourceGroup().name), '-kv')]",
     "publicIPAddressName": "[concat(resourceGroup().name, '-publicIp')]",
     "virtualNetworkName": "[concat(resourceGroup().name, '-vnet')]",
-    "publicIPRef": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]",
-    "identityID": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities',variables('idName'))]",
-    "keyVaultID": "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
+    "identityID": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities',variables('idName'))]"
   },
   "resources": [
     {
       "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
       "apiVersion": "2015-08-31-PREVIEW",
       "name": "[variables('idName')]",
-      "location": "[resourceGroup().location]"
+      "location": "[parameters('location')]"
     },
     {
       "type": "Microsoft.KeyVault/vaults",
-      "apiVersion": "['2018-02-14']",
+      "apiVersion": "2018-02-14",
       "name": "[variables('keyVaultName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.ManagedIdentity/userAssignedIdentities/', variables('idName'))]"
       ],
@@ -118,9 +109,9 @@
     },
     {
       "type": "Microsoft.KeyVault/vaults/secrets",
-      "apiVersion": "['2018-02-14']",
+      "apiVersion": "2018-02-14",
       "name": "[concat(variables('keyVaultName'), '/', parameters('Secrets')[copyIndex()].name)]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
       ],
@@ -135,24 +126,24 @@
     },
     {
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "['2018-10-01']",
+      "apiVersion": "2018-10-01",
       "name": "[variables('publicIPAddressName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "sku": {
         "name": "Standard"
       },
       "properties": {
         "publicIPAllocationMethod": "Static",
         "dnsSettings": {
-            "domainNameLabel": "[resourceGroup().name]"
+            "domainNameLabel": "[uniqueString(resourceGroup().name)]"
         }
       }
     },
     {
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "['2018-10-01']",
+      "apiVersion": "2018-10-01",
       "name": "[variables('virtualNetworkName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -171,9 +162,9 @@
     },
     {
       "type": "Microsoft.Network/applicationGateways",
-      "apiVersion": "['2018-10-01']",
+      "apiVersion": "2018-10-01",
       "name": "[variables('applicationGatewayName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
         "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
@@ -195,7 +186,7 @@
           {
             "name": "appGatewaySslCert",
             "properties": {
-              "keyVaultSecretId": "[concat(reference(variables('keyVaultID')).vaultUri,'secrets/sslcert')]"
+              "keyVaultSecretId": "[resourceId('Microsoft.KeyVault/vaults/sslcert', variables('keyVaultName'), 'sslcert')]" 
             }
           }
         ],
@@ -204,7 +195,7 @@
             "name": "appGatewayIpConfig",
             "properties": {
               "subnet": {
-                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName')), '/subnets/', 'subnet1')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), 'subnet1')]"
               }
             }
           }
@@ -214,7 +205,7 @@
             "name": "appGatewayFrontendIP",
             "properties": {
               "PublicIPAddress": {
-                "id": "[variables('publicIPRef')]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
               }
             }
           }
