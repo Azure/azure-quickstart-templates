@@ -1,8 +1,4 @@
-<<<<<<< HEAD:sccm-currentbranch/scripts/WorkFlow-DPMP.ps1
-Param($DCIPAddress,$DomainFullName,$DomainAdminName,$Password,$tempurl,$sakey)
-=======
 ﻿Param($DCIPAddress,$DomainFullName,$DomainAdminName,$Password,$tempurl,$sakey)
->>>>>>> upstream/master:sccm-technicalpreview/scripts/WorkFlow-DC.ps1
 
 add-type @"
     using System.Net;
