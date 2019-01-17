@@ -1,4 +1,4 @@
-# Create a System Center Configuration Manager environment with the latest general release
+# Create a System Center Configuration Manager Environment with the Latest General Release
 
 ## Description
 
@@ -9,7 +9,6 @@ This template deploys the latest System Center Configuration Manager (SCCM) gene
 * a remote site system server to host managemenent point and distribution point. 
 * a remote site system server to host other site system roles. 
 
-ExpressRoute is must to have to communicate to corp network. All virtual machines join to existing domains. Virtual machines aren't associated with public IP address. 
+ExpressRoute is required to communicate with a corporate network. All virtual machines join to existing domains and do not have public IP addresses. 
 
-After provision, in domain controller, admin need manually add permissions to the primay site computer account on "System Management" container. 
-
+After provisioning, the domain admin must manually add permissions to the primay site computer account on the "System Management" container. 
