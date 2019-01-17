@@ -301,7 +301,7 @@ if($Configuration.WaitForDC.Status -eq 'Completed')
             $Configuration.InstallSCCM.Status = 'Running'
             $Configuration.InstallSCCM.StartTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
             UploadConfigFile
-            $Result = Install-SCCM $DomainFullName $DomainAdminName $Password $Role "CM1811TP"
+            $Result = Install-SCCM $DomainFullName $DomainAdminName $Password $Role "CMTP"
             if ($Result[-1] -eq 0)  {
                 $Configuration.InstallSCCM.Status = 'Completed'
                 $Configuration.InstallSCCM.EndTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"

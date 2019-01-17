@@ -32,19 +32,51 @@ if(!(Test-Path $AzcopyPath))
 	Start-Process msiexec.exe -Wait -ArgumentList "/I $path /quiet"
 }
 
-"[$(Get-Date -format HH:mm:ss)] Copying SCCM installation source..." | Out-File -Append $logpath
-#SCCM installation file are not available from internet. We maintain it in our own storage currently.
-$cmurl = "https://cmsetoolstorage.blob.core.windows.net/source/NewSCCM/"+$CM+".zip"
-$cmpath = "c:\"+$CM+".zip"
-$cmd = "$AzcopyPath\AzCopy.exe"
-$arg1 = "/Source:"+"$cmurl"
-$arg2 = "/Dest:"+"$cmpath"
-$arg3 = "/Y"
-& $cmd $arg1 $arg2 $arg3 $arg4
+if(!(Test-Path "c:\$CM"))
+{
+    $cmpath = "c:\"+$CM+".zip"
+    if(Test-Path $cmpath)
+    {
+        Remove-Item $cmpath
+    }
+    "[$(Get-Date -format HH:mm:ss)] Copying SCCM installation source..." | Out-File -Append $logpath
+    #SCCM installation file are not available from internet. We maintain it in our own storage currently.
+    $cmurl = "https://cmsetoolstorage.blob.core.windows.net/source/NewSCCM/"+$CM+".zip"
+    $cmd = "$AzcopyPath\AzCopy.exe"
+    $arg1 = "/Source:"+"$cmurl"
+    $arg2 = "/Dest:"+"$cmpath"
+    $arg3 = "/Y"
+    & $cmd $arg1 $arg2 $arg3 $arg4
 
-[System.Reflection.Assembly]::LoadWithPartialName("System.IO.Compression.FileSystem")
-[System.IO.Compression.ZipFile]::ExtractToDirectory($cmpath, "c:\")
-"[$(Get-Date -format HH:mm:ss)] Finished." | Out-File -Append $logpath
+    [System.Reflection.Assembly]::LoadWithPartialName("System.IO.Compression.FileSystem")
+    try
+    {
+        [System.IO.Compression.ZipFile]::ExtractToDirectory($cmpath, "c:\")
+        "[$(Get-Date -format HH:mm:ss)] Finished." | Out-File -Append $logpath
+    }
+    catch
+    {
+        "[$(Get-Date -format HH:mm:ss)] Failed to Extract the SCCM installation source. Will try to use the backup installation file." | Out-File -Append $logpath
+        $cmpath = "c:\"+$CM+"_bak.zip"
+        if(Test-Path $cmpath)
+        {
+            Remove-Item $cmpath
+        }
+        "[$(Get-Date -format HH:mm:ss)] Copying SCCM installation source..." | Out-File -Append $logpath
+        #SCCM installation file are not available from internet. We maintain it in our own storage currently.
+        $cmurl = "https://cmsetoolstorage.blob.core.windows.net/source/NewSCCM/"+$CM+"_bak.zip"
+        $cmd = "$AzcopyPath\AzCopy.exe"
+        $arg1 = "/Source:"+"$cmurl"
+        $arg2 = "/Dest:"+"$cmpath"
+        $arg3 = "/Y"
+        & $cmd $arg1 $arg2 $arg3 $arg4
+
+        [System.Reflection.Assembly]::LoadWithPartialName("System.IO.Compression.FileSystem")
+        [System.IO.Compression.ZipFile]::ExtractToDirectory($cmpath, "c:\")
+        "[$(Get-Date -format HH:mm:ss)] Finished." | Out-File -Append $logpath
+    }
+}
+
 "[$(Get-Date -format HH:mm:ss)] Start installing CM." | Out-File -Append $logpath
 "[$(Get-Date -format HH:mm:ss)] Current Install mode is $CMInstallMode." | Out-File -Append $logpath
 
