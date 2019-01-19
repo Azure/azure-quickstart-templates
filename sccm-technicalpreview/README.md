@@ -1,4 +1,4 @@
-﻿# Create a System Center Configuration Manager environment with the latest Technical Preview
+﻿# Create System Center Configuration Manager Technical Preview Lab environment in Azure
 
 ## Description
 
