@@ -54,6 +54,7 @@ EOF
         curl -LO https://raw.githubusercontent.com/ClusterLabs/resource-agents/master/heartbeat/azure-lb
         chmod +x ./azure-lb
     fi
+    ln -s /bin/nc /usr/bin/nc
     popd
 }
 
