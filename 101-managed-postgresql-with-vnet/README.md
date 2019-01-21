@@ -4,4 +4,4 @@
   <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-This template provides a easy way to deploy Azure database for PostgreSQL with VNet Integration.
+This template provides an easy way to deploy an Azure database for PostgreSQL with VNet Integration.
