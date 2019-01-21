@@ -32,30 +32,36 @@ if(!(Test-Path $AzcopyPath))
 	Start-Process msiexec.exe -Wait -ArgumentList "/I $path /quiet"
 }
 
-"[$(Get-Date -format HH:mm:ss)] Copying SCCM installation source..." | Out-File -Append $logpath
-#SCCM installation file are not available from internet. We maintain it in our own storage currently.
-$cmurl = "https://cmsetoolstorage.blob.core.windows.net/source/NewSCCM/"+$CM+".zip"
-$cmpath = "c:\"+$CM+".zip"
-$cmd = "$AzcopyPath\AzCopy.exe"
-$arg1 = "/Source:"+"$cmurl"
-$arg2 = "/Dest:"+"$cmpath"
-$arg3 = "/Y"
-& $cmd $arg1 $arg2 $arg3 $arg4
+$cmpath = "c:\"+$CM+".exe"
+$cmsourcepath = "c:\$CM"
+if(Test-Path $cmpath)
+{
+    Remove-Item $cmpath
+}
 
-[System.Reflection.Assembly]::LoadWithPartialName("System.IO.Compression.FileSystem")
-[System.IO.Compression.ZipFile]::ExtractToDirectory($cmpath, "c:\")
+"[$(Get-Date -format HH:mm:ss)] Copying SCCM installation source..." | Out-File -Append $logpath
+$cmurl = "http://download.microsoft.com/download/D/8/E/D8E795CE-44D7-40B7-9067-D3D1313865E5/SC_Configmgr_SCEP_TechPreview1810.exe"
+Invoke-WebRequest -Uri $cmurl -OutFile $cmpath
+
+if(Test-Path $cmsourcepath)
+{
+    Remove-Item $cmsourcepath -Recurse -Force
+}
+Start-Process -Filepath ($cmpath) -ArgumentList ('/Auto "' + $cmsourcepath + '"') -wait
+
 "[$(Get-Date -format HH:mm:ss)] Finished." | Out-File -Append $logpath
 "[$(Get-Date -format HH:mm:ss)] Start installing CM." | Out-File -Append $logpath
 "[$(Get-Date -format HH:mm:ss)] Current Install mode is $CMInstallMode." | Out-File -Append $logpath
 
 if($CMInstallMode -eq "standalone")
 {
-	$CMINIPath = "c:\" +$CM+ "\" + $CMInstallMode + ".ini"
-	"[$(Get-Date -format HH:mm:ss)] Check ini file." | Out-File -Append $logpath
+    $CMINIPath = "c:\" +$CM+ "\" + $CMInstallMode + ".ini"
+    "[$(Get-Date -format HH:mm:ss)] Check ini file." | Out-File -Append $logpath
 
     $cmini = @'
 [Identification]
 Action=InstallPrimarySite
+Preview=1
 
 [Options]
 ProductID=EVAL
@@ -65,7 +71,7 @@ SMSInstallDir=C:\Program Files\Microsoft Configuration Manager
 SDKServer=%MachineFQDN%
 RoleCommunicationProtocol=HTTPorHTTPS
 ClientsUsePKICertificate=0
-PrerequisiteComp=1
+PrerequisiteComp=0
 PrerequisitePath=C:\%CM%\REdist
 MobileDeviceLanguage=0
 AdminConsole=1
@@ -92,29 +98,34 @@ SysCenterId=
 
 '@
 
-	"[$(Get-Date -format HH:mm:ss)] ini file exist." | Out-File -Append $logpath
-	$cmini = $cmini.Replace('%MachineFQDN%',"$env:computername.$env:userdnsdomain")
-	$cmini = $cmini.Replace('%SQLMachineFQDN%',"$SQLVMName.$env:userdnsdomain")
-	$cmini = $cmini.Replace('%Role%',$Role)
-	$cmini = $cmini.Replace('%SQLDataFilePath%',$SQLDataFilePath)
-	$cmini = $cmini.Replace('%SQLLogFilePath%',$SQLLogFilePath)
-	$cmini = $cmini.Replace('%CM%',$CM)
+    "[$(Get-Date -format HH:mm:ss)] ini file exist." | Out-File -Append $logpath
+    $cmini = $cmini.Replace('%MachineFQDN%',"$env:computername.$env:userdnsdomain")
+    $cmini = $cmini.Replace('%SQLMachineFQDN%',"$SQLVMName.$env:userdnsdomain")
+    $cmini = $cmini.Replace('%Role%',$Role)
+    $cmini = $cmini.Replace('%SQLDataFilePath%',$SQLDataFilePath)
+    $cmini = $cmini.Replace('%SQLLogFilePath%',$SQLLogFilePath)
+    $cmini = $cmini.Replace('%CM%',$CM)
 
-	if($SQLInstanceName.ToUpper() -eq "MSSQLSERVER")
-	{
-		$cmini = $cmini.Replace('%SQLInstance%',"")
-	}
-	else
-	{
-		$tinstance = $SQLInstanceName.ToUpper() + "\"
-		$cmini = $cmini.Replace('%SQLInstance%',$tinstance)
-	}
-	$CMInstallationFile = "c:\" + $CM + "\SMSSETUP\BIN\X64\Setup.exe"
-	$cmini > $CMINIPath 
-	"[$(Get-Date -format HH:mm:ss)] Installing.." | Out-File -Append $logpath
-	Start-Process -Filepath ($CMInstallationFile) -ArgumentList ('/script "' + $CMINIPath + '"') -wait
+    if(!(Test-Path C:\$CM\REdist))
+    {
+        New-Item C:\$CM\REdist -ItemType directory | Out-Null
+    }
+    
+    if($SQLInstanceName.ToUpper() -eq "MSSQLSERVER")
+    {
+    	$cmini = $cmini.Replace('%SQLInstance%',"")
+    }
+    else
+    {
+    	$tinstance = $SQLInstanceName.ToUpper() + "\"
+	$cmini = $cmini.Replace('%SQLInstance%',$tinstance)
+    }
+    $CMInstallationFile = "c:\" + $CM + "\SMSSETUP\BIN\X64\Setup.exe"
+    $cmini > $CMINIPath 
+    "[$(Get-Date -format HH:mm:ss)] Installing.." | Out-File -Append $logpath
+    Start-Process -Filepath ($CMInstallationFile) -ArgumentList ('/NOUSERINPUT /script "' + $CMINIPath + '"') -wait
 
-	"[$(Get-Date -format HH:mm:ss)] Finished installing CM." | Out-File -Append $logpath
+    "[$(Get-Date -format HH:mm:ss)] Finished installing CM." | Out-File -Append $logpath
 
-	Remove-Item $CMINIPath
+    Remove-Item $CMINIPath
 }
