@@ -356,6 +356,21 @@ function Install-SCCM($DomainFullName,$Username,$Password,$SQLRole,$CM)
     return 0
 }
 
+function Upgrade-SCCM($DomainFullName)
+{
+    $path = "$ProvisionToolPath\UpgradeSCCM.ps1"
+
+    try
+    {
+        . $path $DomainFullName
+    }
+    catch
+    {
+        return 1
+    }
+    return 0
+}
+
 function Update-SQLServicesAccount($DomainFullName,$Username,$Password)
 {
 	if($DomainFullName)
