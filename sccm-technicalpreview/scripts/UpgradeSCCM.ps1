@@ -44,31 +44,83 @@ $originalbuildnumber = ""
 #get the available update
 function getupdate()
 {
+    "[$(Get-Date -format HH:mm:ss)] Get CM update..." | Out-File -Append $logpath
+    $updatepacklist= Get-CMSiteUpdate | ?{$_.State -ne 196612}
+    if($updatepacklist.Count -eq 0)
+    {
 	"[$(Get-Date -format HH:mm:ss)] Invoke CM Site update check..." | Out-File -Append $logpath
-    Invoke-CMSiteUpdateCheck
-    Start-Sleep 120
-	"[$(Get-Date -format HH:mm:ss)] Get CM update..." | Out-File -Append $logpath
-    $updatepacklist= Get-CMSiteUpdate
+    	Invoke-CMSiteUpdateCheck
+    	Start-Sleep 120
+
+        $updatepacklist= Get-CMSiteUpdate | ?{$_.State -ne 196612}
+    }
+
     $updatepack=""
 
     if($updatepacklist.Count -eq 0)
     {
-	}
+    }
     elseif($updatepacklist.Count -eq 1)
     {
-		$updatepack= $updatepacklist
+	$updatepack= $updatepacklist
     }
     else
     {
-		$updatepack= ($updatepacklist | %{if($_.State -ne 196612){$_}} | sort -Property fullversion)[-1] 
+	$updatepack= ($updatepacklist | sort -Property fullversion)[-1] 
     }
     return $updatepack
 }
 
 #----------------------------------------------------
 $state=@{
-    0 = 'UNKNOWN'	2 = 'ENABLED'#DMP DOWNLOAD    262145 = 'DOWNLOAD_IN_PROGRESS'    262146 = 'DOWNLOAD_SUCCESS'    327679 = 'DOWNLOAD_FAILED'#APPLICABILITY    327681 = 'APPLICABILITY_CHECKING'    327682 = 'APPLICABILITY_SUCCESS'    393213 ='APPLICABILITY_HIDE'    393214 = 'APPLICABILITY_NA'    393215 = 'APPLICABILITY_FAILED'#CONTENT    65537 = 'CONTENT_REPLICATING'    65538 = 'CONTENT_REPLICATION_SUCCESS'    131071 = 'CONTENT_REPLICATION_FAILED'#PREREQ    131073 = 'PREREQ_IN_PROGRESS'    131074 = 'PREREQ_SUCCESS'    131075 = 'PREREQ_WARNING'    196607 = 'PREREQ_ERROR'
-#Apply changes    196609 = 'INSTALL_IN_PROGRESS'    196610 = 'INSTALL_WAITING_SERVICE_WINDOW'    196611 = 'INSTALL_WAITING_PARENT'    196612 = 'INSTALL_SUCCESS'    196613 = 'INSTALL_PENDING_REBOOT'    262143 = 'INSTALL_FAILED'#CMU SERVICE UPDATEI    196614 = 'INSTALL_CMU_VALIDATING'    196615 = 'INSTALL_CMU_STOPPED'    196616 = 'INSTALL_CMU_INSTALLFILES'    196617 = 'INSTALL_CMU_STARTED'    196618 = 'INSTALL_CMU_SUCCESS'    196619 = 'INSTALL_WAITING_CMU'    262142 = 'INSTALL_CMU_FAILED'#DETAILED INSTALL STATUS    196620 = 'INSTALL_INSTALLFILES'    196621 = 'INSTALL_UPGRADESITECTRLIMAGE'    196622 = 'INSTALL_CONFIGURESERVICEBROKER'    196623 = 'INSTALL_INSTALLSYSTEM'    196624 = 'INSTALL_CONSOLE'    196625 = 'INSTALL_INSTALLBASESERVICES'    196626 = 'INSTALL_UPDATE_SITES'    196627 = 'INSTALL_SSB_ACTIVATION_ON'    196628 = 'INSTALL_UPGRADEDATABASE'    196629 = 'INSTALL_UPDATEADMINCONSOLE'}
+    0 = 'UNKNOWN'
+    2 = 'ENABLED'
+    #DMP DOWNLOAD
+    262145 = 'DOWNLOAD_IN_PROGRESS'
+    262146 = 'DOWNLOAD_SUCCESS'
+    327679 = 'DOWNLOAD_FAILED'
+    #APPLICABILITY
+    327681 = 'APPLICABILITY_CHECKING'
+    327682 = 'APPLICABILITY_SUCCESS'
+    393213 ='APPLICABILITY_HIDE'
+    393214 = 'APPLICABILITY_NA'
+    393215 = 'APPLICABILITY_FAILED'
+    #CONTENT
+    65537 = 'CONTENT_REPLICATING'
+    65538 = 'CONTENT_REPLICATION_SUCCESS'
+    131071 = 'CONTENT_REPLICATION_FAILED'
+    #PREREQ
+    131073 = 'PREREQ_IN_PROGRESS'
+    131074 = 'PREREQ_SUCCESS'
+    131075 = 'PREREQ_WARNING'
+    196607 = 'PREREQ_ERROR'
+    #Apply changes
+    196609 = 'INSTALL_IN_PROGRESS'
+    196610 = 'INSTALL_WAITING_SERVICE_WINDOW'
+    196611 = 'INSTALL_WAITING_PARENT'
+    196612 = 'INSTALL_SUCCESS'
+    196613 = 'INSTALL_PENDING_REBOOT'
+    262143 = 'INSTALL_FAILED'
+    #CMU SERVICE UPDATEI
+    196614 = 'INSTALL_CMU_VALIDATING'
+    196615 = 'INSTALL_CMU_STOPPED'
+    196616 = 'INSTALL_CMU_INSTALLFILES'
+    196617 = 'INSTALL_CMU_STARTED'
+    196618 = 'INSTALL_CMU_SUCCESS'
+    196619 = 'INSTALL_WAITING_CMU'
+    262142 = 'INSTALL_CMU_FAILED'
+    #DETAILED INSTALL STATUS
+    196620 = 'INSTALL_INSTALLFILES'
+    196621 = 'INSTALL_UPGRADESITECTRLIMAGE'
+    196622 = 'INSTALL_CONFIGURESERVICEBROKER'
+    196623 = 'INSTALL_INSTALLSYSTEM'
+    196624 = 'INSTALL_CONSOLE'
+    196625 = 'INSTALL_INSTALLBASESERVICES'
+    196626 = 'INSTALL_UPDATE_SITES'
+    196627 = 'INSTALL_SSB_ACTIVATION_ON'
+    196628 = 'INSTALL_UPGRADEDATABASE'
+    196629 = 'INSTALL_UPDATEADMINCONSOLE'
+}
 #----------------------------------------------------
 $starttime= Get-Date
 $sites= Get-CMSite
