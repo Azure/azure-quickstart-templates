@@ -318,10 +318,10 @@ if($Configuration.WaitForDC.Status -eq 'Completed')
 				$Result = Set-AutoLogOn $DomainFullName $DomainAdminName $Password
                 if ($Result -eq 0) {
                     shutdown -r -t 120
-					exit 0
                 }
             }
 			UploadConfigFile
+			exit 0
         }
 
 		if($Configuration.InstallSCCM.Status -eq 'Completed')
