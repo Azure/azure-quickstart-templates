@@ -235,6 +235,7 @@ if($Configuration.WaitForDC.Status -eq 'Completed')
                 $Result = $Configuration.SetRebootConfig()
                 if ($Result -eq 0) {
                     shutdown -r -t 0
+					exit 0
                 }
             }
             else
@@ -314,8 +315,10 @@ if($Configuration.WaitForDC.Status -eq 'Completed')
                 $Configuration.InstallSCCM.EndTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
 
 				$Result = $Configuration.SetRebootConfig()
+				$Result = Set-AutoLogOn $DomainFullName $DomainAdminName $Password
                 if ($Result -eq 0) {
                     shutdown -r -t 120
+					exit 0
                 }
             }
 			UploadConfigFile
