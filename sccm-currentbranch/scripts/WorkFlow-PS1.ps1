@@ -83,6 +83,11 @@ if (Test-Path -Path $ConfigurationFile) {
             StartTime = ''
             EndTime = ''
         }
+		UpgradeSCCM= @{
+            Status = 'NotStart'
+            StartTime = ''
+            EndTime = ''
+        }
 		WaitForSiteServer= @{
             Status = 'NotStart'
             StartTime = ''
@@ -241,49 +246,69 @@ if ($Configuration.JoinDomain.Status -eq 'Completed') {
         $Configuration.InstallSCCM.Status = 'Running'
         $Configuration.InstallSCCM.StartTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
         UploadConfigFile
-        $Result = Install-SCCM $DomainFullName $DomainAdminName $Password "SQL" "CM1806"
+        $Result = Install-SCCM $DomainFullName $DomainAdminName $Password "SQL" "CMCB"
         if ($Result[-1] -eq 0)  {
             $Configuration.InstallSCCM.Status = 'Completed'
             $Configuration.InstallSCCM.EndTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
+			$Result = $Configuration.SetRebootConfig()
+            if ($Result -eq 0) 
+			{
+                shutdown -r -t 120
+            }
         }
 		UploadConfigFile
     }
+	if($Configuration.InstallSCCM.Status -eq 'Completed')
+	{
+		if ($Configuration.UpgradeSCCM.Status -eq 'NotStart') 
+		{
+			$Configuration.UpgradeSCCM.Status = 'Running'
+			$Configuration.UpgradeSCCM.StartTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
+			UploadConfigFile
+			$Result = Upgrade-SCCM $DomainFullName
+			if ($Result[-1] -eq 0)  {
+				$Configuration.UpgradeSCCM.Status = 'Completed'
+				$Configuration.UpgradeSCCM.EndTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
+			}
+			UploadConfigFile
+		}
 
-	if ($Configuration.WaitForSiteServer.Status -eq 'NotStart') {
-        $Configuration.WaitForSiteServer.Status = 'Running'
-        $Configuration.WaitForSiteServer.StartTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
-        UploadConfigFile
-        $Result = WaitFor-SiteServer "DP_MP"
-        if ($Result[-1] -eq 0)  {
-            $Configuration.WaitForSiteServer.Status = 'Completed'
-            $Configuration.WaitForSiteServer.EndTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
-        }
-		UploadConfigFile
-    }
+		if ($Configuration.WaitForSiteServer.Status -eq 'NotStart') {
+			$Configuration.WaitForSiteServer.Status = 'Running'
+			$Configuration.WaitForSiteServer.StartTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
+			UploadConfigFile
+			$Result = WaitFor-SiteServer "DP_MP"
+			if ($Result[-1] -eq 0)  {
+				$Configuration.WaitForSiteServer.Status = 'Completed'
+				$Configuration.WaitForSiteServer.EndTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
+			}
+			UploadConfigFile
+		}
 
-	if ($Configuration.InstallDP.Status -eq 'NotStart') {
-        $Configuration.InstallDP.Status = 'Running'
-        $Configuration.InstallDP.StartTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
-        UploadConfigFile
-        $Result = Install-DP $DomainFullName
-        if ($Result[-1] -eq 0)  {
-            $Configuration.InstallDP.Status = 'Completed'
-            $Configuration.InstallDP.EndTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
-        }
-		UploadConfigFile
-    }
+		if ($Configuration.InstallDP.Status -eq 'NotStart') {
+			$Configuration.InstallDP.Status = 'Running'
+			$Configuration.InstallDP.StartTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
+			UploadConfigFile
+			$Result = Install-DP $DomainFullName
+			if ($Result[-1] -eq 0)  {
+				$Configuration.InstallDP.Status = 'Completed'
+				$Configuration.InstallDP.EndTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
+			}
+			UploadConfigFile
+		}
 
-	if ($Configuration.InstallMP.Status -eq 'NotStart') {
-        $Configuration.InstallMP.Status = 'Running'
-        $Configuration.InstallMP.StartTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
-        UploadConfigFile
-        $Result = Install-MP $DomainFullName "SQL" $DomainAdminName $Password
-        if ($Result[-1] -eq 0)  {
-            $Configuration.InstallMP.Status = 'Completed'
-            $Configuration.InstallMP.EndTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
-        }
-		UploadConfigFile
-    }
+		if ($Configuration.InstallMP.Status -eq 'NotStart') {
+			$Configuration.InstallMP.Status = 'Running'
+			$Configuration.InstallMP.StartTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
+			UploadConfigFile
+			$Result = Install-MP $DomainFullName "SQL" $DomainAdminName $Password
+			if ($Result[-1] -eq 0)  {
+				$Configuration.InstallMP.Status = 'Completed'
+				$Configuration.InstallMP.EndTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
+			}
+			UploadConfigFile
+		}
+	}
 
 	if ($Configuration.CleanUp.Status -eq 'NotStart') {
         $Configuration.CleanUp.Status = 'Running'
