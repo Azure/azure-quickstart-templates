@@ -24,13 +24,11 @@ if((Get-Module ConfigurationManager) -eq $null) {
 
 # Connect to the site's drive if it is not already present
 "[$(Get-Date -format HH:mm:ss)] Setting PS Drive..." | Out-File -Append $logpath
-do
-{
-	New-PSDrive -Name $SiteCode -PSProvider CMSite -Root $ProviderMachineName @initParams
-}
+New-PSDrive -Name $SiteCode -PSProvider CMSite -Root $ProviderMachineName @initParams
+
 while((Get-PSDrive -Name $SiteCode -PSProvider CMSite -ErrorAction SilentlyContinue) -eq $null) 
 {
-	"[$(Get-Date -format HH:mm:ss)] Failed ,retry in 10s. Please wait." | Out-File -Append $logpath
+	"[$(Get-Date -format HH:mm:ss)] Retry in 10s to set PS Drive. Please wait." | Out-File -Append $logpath
 	Start-Sleep -Seconds 10
 	New-PSDrive -Name $SiteCode -PSProvider CMSite -Root $ProviderMachineName @initParams
 }
@@ -45,6 +43,7 @@ $originalbuildnumber = ""
 function getupdate()
 {
     "[$(Get-Date -format HH:mm:ss)] Get CM update..." | Out-File -Append $logpath
+    $CMPSSuppressFastNotUsedCheck = $true
     $updatepacklist= Get-CMSiteUpdate | ?{$_.State -ne 196612}
     if($updatepacklist.Count -eq 0)
     {
@@ -252,6 +251,9 @@ if($upgradingfailed -eq $true)
 }
 else
 {
+	# Set the current location to be the site code.
+	Set-Location "$($SiteCode):\" @initParams
+
 	$site = Get-CMSite 
 	$consolepath = Get-ItemPropertyValue -Path 'HKLM:\SOFTWARE\Microsoft\SMS\Setup' -Name 'UI Installation Directory'
 	if($consolepath.contains('C:\Program Files'))
@@ -260,13 +262,21 @@ else
 	} 
 	$upgradeconsole =$consolepath + "\bin\AdminUI.ExtensionInstaller.exe"
 
-	if($site.BuildNumber -ne $originalbuildnumber)
+	try
 	{
-		Start-Process -Filepath ($upgradeconsole) -ArgumentList ('SiteServerName=' + $ProviderMachineName + ' ReinstallConsole') -wait
+		if($site.BuildNumber -ne $originalbuildnumber)
+		{
+			Start-Process -Filepath ($upgradeconsole) -ArgumentList ('SiteServerName=' + $ProviderMachineName + ' ReinstallConsole') -wait
+		}
+		else
+		{
+			Start-Process -Filepath ($upgradeconsole) -ArgumentList ('SiteServerName=' + $ProviderMachineName + ' ApplyConsoleUpdate') -wait
+		}
 	}
-	else
+	catch
 	{
-		Start-Process -Filepath ($upgradeconsole) -ArgumentList ('SiteServerName=' + $ProviderMachineName + ' ApplyConsoleUpdate') -wait
+		"[$(Get-Date -format HH:mm:ss)] Failed to upgrade Admin Console, but ignore this error. " | Out-File -Append $logpath
+		return 0
 	}
 }
     
