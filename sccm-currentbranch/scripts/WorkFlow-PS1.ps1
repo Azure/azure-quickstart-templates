@@ -251,12 +251,14 @@ if ($Configuration.JoinDomain.Status -eq 'Completed') {
             $Configuration.InstallSCCM.Status = 'Completed'
             $Configuration.InstallSCCM.EndTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
 			$Result = $Configuration.SetRebootConfig()
+			$Result = Set-AutoLogOn $DomainFullName $DomainAdminName $Password
             if ($Result -eq 0) 
 			{
                 shutdown -r -t 120
             }
         }
 		UploadConfigFile
+		exit 0
     }
 	if($Configuration.InstallSCCM.Status -eq 'Completed')
 	{
