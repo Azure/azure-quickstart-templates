@@ -254,34 +254,4 @@ if($upgradingfailed -eq $true)
 	("[$(Get-Date -format HH:mm:ss)] Upgrade " + $updatepack.Name + " failed") | Out-File -Append $logpath
 	throw
 }
-else
-{
-	# Set the current location to be the site code.
-	Set-Location "$($SiteCode):\" @initParams
-
-	$site = Get-CMSite 
-	$consolepath = Get-ItemPropertyValue -Path 'HKLM:\SOFTWARE\Microsoft\SMS\Setup' -Name 'UI Installation Directory'
-	if($consolepath.contains('C:\Program Files'))
-	{
-		$consolepath = $consolepath.replace('C:\Program Files','C:\Program Files (x86)')
-	} 
-	$upgradeconsole =$consolepath + "\bin\AdminUI.ExtensionInstaller.exe"
-
-	try
-	{
-		if($site.BuildNumber -ne $originalbuildnumber)
-		{
-			Start-Process -Filepath ($upgradeconsole) -ArgumentList ('SiteServerName=' + $ProviderMachineName + ' ReinstallConsole') -wait
-		}
-		else
-		{
-			Start-Process -Filepath ($upgradeconsole) -ArgumentList ('SiteServerName=' + $ProviderMachineName + ' ApplyConsoleUpdate') -wait
-		}
-	}
-	catch
-	{
-		"[$(Get-Date -format HH:mm:ss)] Failed to upgrade Admin Console, but ignore this error. " | Out-File -Append $logpath
-		return 0
-	}
-}
     
