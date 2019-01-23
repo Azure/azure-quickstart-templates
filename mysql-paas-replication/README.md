@@ -11,25 +11,15 @@
 
 # Introduction
 
-The ARM templates included in this repository provide a solution to replicate a MySQL Server. Two options are avaibale:
-
-Implement PaaS MySQL servers. Microsoft has enabled replication between MySQL PaaS instances, but all of them must be deployed in the same location.
+The ARM template in this repository provide a solution to replicate a Azure DB for MySQL instance.
 
 # Template description
 
-This ARM template will deploy only MySQL PaaS instances. Depending on the information provided it might deploy from 1 to 6 instances. In the case of deploying only 1 (a master and 0 copies) and SQL Instance will be created and no read only copies will be deployed. Any other combination will deploy a master MySQL PaaS instance and between 1 to 5 read only replicas. All of them will be deployed whihthin the same region and resource group.
+This ARM template will deploy only MySQL PaaS instances. Depending on the information provided it might deploy from 1 to 6 instances. In the case of deploying only 1 (a master and 0 copies) and SQL Instance will be created and no read only copies will be deployed. Any other combination will deploy a master MySQL PaaS instance and between 1 to 5 read only replicas. All of them will be deployed within the same region and resource group.
 
 ![image](images/img01.png)
 
 This implementation is based on what is described in [Read replicas in Azure Database for MySQL](https://docs.microsoft.com/en-us/azure/mysql/concepts-read-replicas)
-
-## How to deploy (not using Quick Start Templates tools):
-
-To deploy this using PowerShell:
-```powershell
-New-AzureRMResourceGroup -Name "MySQLPaaS" -Location eastus
-New-AzureRmResourceGroupDeployment -ResourceGroupName "MySQLPaaS" -TemplateParameterFile .\paas.azuredeploy.parameters.json -TemplateFile .\paas.azuredeploy.json
-```
 
 ## How to connect to the services deployed
 

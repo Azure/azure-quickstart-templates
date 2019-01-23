@@ -4,8 +4,15 @@
     "parameters": {
         "serverName": {
             "type": "string",
+            "defaultValue": "uniqueString",
             "metadata": {
                 "description": "Server name for the MySQL PaaS instance and it's replicas (replicas will get a '-' attached to the end with the replica number)."
+            }
+        },
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "Location for the MySQL PaaS components to be deployed."
             }
         },
         "administratorLogin": {
@@ -103,10 +110,25 @@
             "metadata": {
                 "description": "Enable or disable geo redundant backups."
             }
+        },
+        "_artifactsLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+            },
+            "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/mysql-paas-replication/"
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+            }
         }
     },
     "variables": {
-        "sourceServerId": "[resourceId(resourceGroup().name, 'Microsoft.DBforMySQL/servers', parameters('serverName'))]",
+        "nestedtemplateMySQL": "[uri(parameters('_artifactsLocation'), concat('nested/mysql.json', parameters('_artifactsLocationSasToken')))]",
+        "nestedtemplateMySQLReplica": "[uri(parameters('_artifactsLocation'), concat('nested/mysqlReplica.json', parameters('_artifactsLocationSasToken')))]",
+        "sourceServerId": "[resourceId('Microsoft.DBforMySQL/servers', parameters('serverName'))]",
         "skuName": "[concat(if(equals(parameters('skuTier'),'GeneralPurpose'),'GP',if(equals(parameters('skuTier'),'Basic'),'B',if(equals(parameters('skuTier'),'MemoryOptimized'),'MO',''))),'_',parameters('skuFamily'),'_',parameters('vCPU'))]",
         "sku": {
             "name": "[variables('skuName')]",
@@ -114,8 +136,7 @@
             "capacity": "[parameters('vCPU')]",
             "size": "[parameters('skuSizeMB')]",
             "family": "[parameters('skuFamily')]"
-        },
-        "location": "[resourceGroup().location]"
+        }
     },
     "resources": [
         {
@@ -125,7 +146,7 @@
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri":"https://raw.githubusercontent.com/hjlarrea/MySQL_Replication/master/nested/mysql.json"
+                    "uri":"[variables('nestedtemplateMySQL')]"
                 },
                 "parameters": {
                     "sku": {
@@ -135,7 +156,7 @@
                         "value": "[parameters('serverName')]"
                     },
                     "location": {
-                        "value": "[variables('location')]"
+                        "value": "[parameters('location')]"
                     },
                     "version": {
                         "value": "[parameters('version')]"
@@ -172,7 +193,7 @@
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri":"https://raw.githubusercontent.com/hjlarrea/MySQL_Replication/master/nested/mysqlReplica.json"
+                    "uri":"[variables('nestedtemplateMySQLReplica')]"
                 },
                 "parameters": {
                     "sku": {
@@ -182,7 +203,7 @@
                         "value": "[parameters('serverName')]"
                     },
                     "location": {
-                        "value": "[variables('location')]"
+                        "value": "[parameters('location')]"
                     },
                     "numberOfReplicas": {
                         "value": "[parameters('numberOfReplicas')]"
