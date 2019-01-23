@@ -141,6 +141,12 @@ $updatepack = getupdate
 "[$(Get-Date -format HH:mm:ss)] Update package is " + $updatepack.Name | Out-File -Append $logpath
 while($updatepack -ne "")
 {
+        if($retrytimes -le 3)
+        {
+                $upgradingfailed = $true
+                break;
+        }
+        $updatepack = Get-CMSiteUpdate -Fast -Name $updatepack.Name 
 	while($updatepack.State -eq 327682 -or $updatepack.State -eq 262145 -or $updatepack.State -eq 327679)
 	{
 		#package not downloaded
@@ -243,7 +249,6 @@ while($updatepack -ne "")
 	}
 }
 
-Set-Location c:\
 if($upgradingfailed -eq $true)
 {
 	("[$(Get-Date -format HH:mm:ss)] Upgrade " + $updatepack.Name + " failed") | Out-File -Append $logpath
