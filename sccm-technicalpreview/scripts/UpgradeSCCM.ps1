@@ -141,7 +141,7 @@ $updatepack = getupdate
 "[$(Get-Date -format HH:mm:ss)] Update package is " + $updatepack.Name | Out-File -Append $logpath
 while($updatepack -ne "")
 {
-        if($retrytimes -le 3)
+        if($retrytimes -eq 3)
         {
                 $upgradingfailed = $true
                 break;
