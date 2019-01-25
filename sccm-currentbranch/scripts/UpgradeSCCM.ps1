@@ -24,13 +24,11 @@ if((Get-Module ConfigurationManager) -eq $null) {
 
 # Connect to the site's drive if it is not already present
 "[$(Get-Date -format HH:mm:ss)] Setting PS Drive..." | Out-File -Append $logpath
-do
-{
-	New-PSDrive -Name $SiteCode -PSProvider CMSite -Root $ProviderMachineName @initParams
-}
+New-PSDrive -Name $SiteCode -PSProvider CMSite -Root $ProviderMachineName @initParams
+
 while((Get-PSDrive -Name $SiteCode -PSProvider CMSite -ErrorAction SilentlyContinue) -eq $null) 
 {
-	"[$(Get-Date -format HH:mm:ss)] Failed ,retry in 10s. Please wait." | Out-File -Append $logpath
+	"[$(Get-Date -format HH:mm:ss)] Retry in 10s to set PS Drive. Please wait." | Out-File -Append $logpath
 	Start-Sleep -Seconds 10
 	New-PSDrive -Name $SiteCode -PSProvider CMSite -Root $ProviderMachineName @initParams
 }
@@ -45,6 +43,7 @@ $originalbuildnumber = ""
 function getupdate()
 {
     "[$(Get-Date -format HH:mm:ss)] Get CM update..." | Out-File -Append $logpath
+    $CMPSSuppressFastNotUsedCheck = $true
     $updatepacklist= Get-CMSiteUpdate | ?{$_.State -ne 196612}
     if($updatepacklist.Count -eq 0)
     {
@@ -142,6 +141,12 @@ $updatepack = getupdate
 "[$(Get-Date -format HH:mm:ss)] Update package is " + $updatepack.Name | Out-File -Append $logpath
 while($updatepack -ne "")
 {
+        if($retrytimes -eq 3)
+        {
+                $upgradingfailed = $true
+                break;
+        }
+        $updatepack = Get-CMSiteUpdate -Fast -Name $updatepack.Name 
 	while($updatepack.State -eq 327682 -or $updatepack.State -eq 262145 -or $updatepack.State -eq 327679)
 	{
 		#package not downloaded
@@ -244,28 +249,8 @@ while($updatepack -ne "")
 	}
 }
 
-Set-Location c:\
 if($upgradingfailed -eq $true)
 {
 	("[$(Get-Date -format HH:mm:ss)] Upgrade " + $updatepack.Name + " failed") | Out-File -Append $logpath
 	throw
-}
-else
-{
-	$site = Get-CMSite 
-	$consolepath = Get-ItemPropertyValue -Path 'HKLM:\SOFTWARE\Microsoft\SMS\Setup' -Name 'UI Installation Directory'
-	if($consolepath.contains('C:\Program Files'))
-	{
-		$consolepath = $consolepath.replace('C:\Program Files','C:\Program Files (x86)')
-	} 
-	$upgradeconsole =$consolepath + "\bin\AdminUI.ExtensionInstaller.exe"
-
-	if($site.BuildNumber -ne $originalbuildnumber)
-	{
-		Start-Process -Filepath ($upgradeconsole) -ArgumentList ('SiteServerName=' + $ProviderMachineName + ' ReinstallConsole') -wait
-	}
-	else
-	{
-		Start-Process -Filepath ($upgradeconsole) -ArgumentList ('SiteServerName=' + $ProviderMachineName + ' ApplyConsoleUpdate') -wait
-	}
 }
