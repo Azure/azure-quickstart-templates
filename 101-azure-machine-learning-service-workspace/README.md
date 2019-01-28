@@ -7,7 +7,7 @@
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
-This template deploys an **Azure Machine Learning service workspace**.
+This template deploys an **Azure Machine Learning service workspace**. You are prompted to select or create a resource group, and then enter a name for the new workspace.
 
-See https://docs.microsoft.com/azure/machine-learning/service/overview-what-is-azure-ml for more information on the service.
+See https://docs.microsoft.com/azure/machine-learning/service/overview-what-is-azure-ml for more information on the Azure Machine Learning service.
 
