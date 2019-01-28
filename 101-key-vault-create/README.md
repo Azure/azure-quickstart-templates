@@ -7,7 +7,7 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template creates an Azure Key Vault. If you are new to Azure Key Vault, see:
+This template creates an Azure Key Vault and a secret stored inside the key vault. If you are new to Azure Key Vault, see:
 
 - [Azure Key Vault service](https://azure.microsoft.com/services/key-vault/)
 - [Azure Key Vault documentation](https://docs.microsoft.com/azure/key-vault/)
