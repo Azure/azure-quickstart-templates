@@ -1,4 +1,4 @@
-Param($DCIPAddress,$DomainFullName,$DomainAdminName,$Password,$tempurl,$sakey)
+Param($DCIPAddress,$DomainFullName,$DomainAdminName,$Password,$tempurl,$sakey,$adminUsername="")
 
 add-type @"
     using System.Net;
@@ -145,9 +145,16 @@ if ($Configuration.AddBuiltinPermission.Status -eq 'NotStart') {
 	Get-SQLInformation
     $Result = $Configuration.SetRebootConfig()
     if ($Result -eq 0) {
+	if($adminUsername -ne "")
+	{
+		$Result = Set-AutoLogOn "" $adminUsername $Password
+	}
+	else
+	{
 		$Result = Set-AutoLogOn "" $DomainAdminName $Password
+	}
         shutdown -r -t 10
-		exit 0
+	exit 0
     }
 }
 
