@@ -208,7 +208,7 @@ echo "export JAVA_OPTIONS=\"${EXTRA_JAVA_OPTS}\"" >> /var/opt/jfrog/artifactory/
 chown artifactory:artifactory -R /var/opt/jfrog/artifactory/*  && chown artifactory:artifactory -R /var/opt/jfrog/artifactory/etc/security && chown artifactory:artifactory -R /var/opt/jfrog/artifactory/etc/*
 
 # start Artifactory
-sleep $((RANDOM % 120))
+sleep $((RANDOM % 240))
 service artifactory start
 service nginx start
 nginx -s reload
