@@ -127,7 +127,7 @@ cat <<EOF >/var/opt/jfrog/artifactory/etc/ha-node.properties
 node.id=art1
 artifactory.ha.data.dir=/var/opt/jfrog/artifactory/data
 context.url=http://127.0.0.1:8081/artifactory
-access.context.url=http://10.0.0.121:8081/access
+access.context.url=http://127.0.0.2:8081/access
 membership.port=10001
 hazelcast.interface=172.25.0.3
 primary=${IS_PRIMARY}
@@ -192,7 +192,7 @@ EOF
 HOSTNAME=$(hostname -i)
 sed -i -e "s/art1/art-$(date +%s$RANDOM)/" /var/opt/jfrog/artifactory/etc/ha-node.properties
 sed -i -e "s/127.0.0.1/$HOSTNAME/" /var/opt/jfrog/artifactory/etc/ha-node.properties
-sed -i -e "s/10.0.0.121/$HOSTNAME/" /var/opt/jfrog/artifactory/etc/ha-node.properties
+sed -i -e "s/127.0.0.2/$HOSTNAME/" /var/opt/jfrog/artifactory/etc/ha-node.properties
 sed -i -e "s/172.25.0.3/$HOSTNAME/" /var/opt/jfrog/artifactory/etc/ha-node.properties
 
 cat /var/lib/cloud/instance/user-data.txt | grep "^CERTIFICATE=" | sed "s/CERTIFICATE=//" > /tmp/temp.pem
