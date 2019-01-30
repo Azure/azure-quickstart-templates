@@ -45,11 +45,18 @@ function getupdate()
     "[$(Get-Date -format HH:mm:ss)] Get CM update..." | Out-File -Append $logpath
     $CMPSSuppressFastNotUsedCheck = $true
     $updatepacklist= Get-CMSiteUpdate | ?{$_.State -ne 196612}
-    if($updatepacklist.Count -eq 0)
+    $getupdateretrycount = 0
+    while($updatepacklist.Count -eq 0)
     {
-	"[$(Get-Date -format HH:mm:ss)] Invoke CM Site update check..." | Out-File -Append $logpath
-    	Invoke-CMSiteUpdateCheck
-    	Start-Sleep 120
+        if($getupdateretrycount -eq 3)
+        {
+            break
+        }
+        "[$(Get-Date -format HH:mm:ss)] Not found any updates, retry to invoke update check." | Out-File -Append $logpath
+        $getupdateretrycount++
+        "[$(Get-Date -format HH:mm:ss)] Invoke CM Site update check..." | Out-File -Append $logpath
+        Invoke-CMSiteUpdateCheck
+        Start-Sleep 120
 
         $updatepacklist= Get-CMSiteUpdate | ?{$_.State -ne 196612}
     }
@@ -61,11 +68,11 @@ function getupdate()
     }
     elseif($updatepacklist.Count -eq 1)
     {
-	$updatepack= $updatepacklist
+        $updatepack= $updatepacklist
     }
     else
     {
-	$updatepack= ($updatepacklist | sort -Property fullversion)[-1] 
+        $updatepack= ($updatepacklist | sort -Property fullversion)[-1] 
     }
     return $updatepack
 }
@@ -138,15 +145,22 @@ if($originalbuildnumber -eq "")
 #----------------------------------------------------
 $retrytimes = 0
 $updatepack = getupdate
-"[$(Get-Date -format HH:mm:ss)] Update package is " + $updatepack.Name | Out-File -Append $logpath
+if($updatepack -ne "")
+{
+    "[$(Get-Date -format HH:mm:ss)] Update package is " + $updatepack.Name | Out-File -Append $logpath
+}
+else
+{
+    "[$(Get-Date -format HH:mm:ss)] No update package be found." | Out-File -Append $logpath
+}
 while($updatepack -ne "")
 {
-        if($retrytimes -eq 3)
-        {
-                $upgradingfailed = $true
-                break;
-        }
-        $updatepack = Get-CMSiteUpdate -Fast -Name $updatepack.Name 
+    if($retrytimes -eq 3)
+    {
+        $upgradingfailed = $true
+        break;
+    }
+    $updatepack = Get-CMSiteUpdate -Fast -Name $updatepack.Name 
 	while($updatepack.State -eq 327682 -or $updatepack.State -eq 262145 -or $updatepack.State -eq 327679)
 	{
 		#package not downloaded
