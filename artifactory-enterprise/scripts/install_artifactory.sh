@@ -191,9 +191,9 @@ EOF
 
 HOSTNAME=$(hostname -i)
 sed -i -e "s/art1/art-$(date +%s$RANDOM)/" /var/opt/jfrog/artifactory/etc/ha-node.properties
-sed -i -e "s/127.0.0.1/$HOSTNAME/" /var/opt/jfrog/artifactory/etc/ha-node.properties
-sed -i -e "s/127.0.0.2/$HOSTNAME/" /var/opt/jfrog/artifactory/etc/ha-node.properties
-sed -i -e "s/172.25.0.3/$HOSTNAME/" /var/opt/jfrog/artifactory/etc/ha-node.properties
+sed -i -e "s/127.0.0.1/${HOSTNAME}/" /var/opt/jfrog/artifactory/etc/ha-node.properties
+sed -i -e "s/127.0.0.2/${HOSTNAME}/" /var/opt/jfrog/artifactory/etc/ha-node.properties
+sed -i -e "s/172.25.0.3/${HOSTNAME}/" /var/opt/jfrog/artifactory/etc/ha-node.properties
 
 cat /var/lib/cloud/instance/user-data.txt | grep "^CERTIFICATE=" | sed "s/CERTIFICATE=//" > /tmp/temp.pem
 cat /tmp/temp.pem | sed 's/CERTIFICATE----- /&\n/g' | sed 's/ -----END/\n-----END/g' | awk '{if($0 ~ /----/) {print;} else { gsub(/ /,"\n");print;}}' > /etc/pki/tls/certs/cert.pem
