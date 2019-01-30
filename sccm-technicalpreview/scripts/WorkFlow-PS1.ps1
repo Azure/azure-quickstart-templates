@@ -137,6 +137,22 @@ $Configuration | Add-Member -MemberType ScriptMethod -Name SetRebootConfig -Valu
 			$command = @'
 Start-Sleep -Second 240
 sqlcmd -Q "if not exists(select * from sys.server_principals where name='BUILTIN\administrators') CREATE LOGIN [BUILTIN\administrators] FROM WINDOWS;EXEC master..sp_addsrvrolemember @loginame = N'BUILTIN\administrators', @rolename = N'sysadmin'"
+$retrycount = 0
+$sqlpermission = sqlcmd -Q "if not exists(select * from sys.server_principals where name='BUILTIN\administrators') Print 1"
+while($sqlpermission -eq 1)
+{
+    if($retrycount -eq 3)
+    {
+        $sqlpermission = 0
+    }
+    else
+    {
+        $retrycount++
+        Start-Sleep -Second 240
+        sqlcmd -Q "if not exists(select * from sys.server_principals where name='BUILTIN\administrators') CREATE LOGIN [BUILTIN\administrators] FROM WINDOWS;EXEC master..sp_addsrvrolemember @loginame = N'BUILTIN\administrators', @rolename = N'sysadmin'"
+        $sqlpermission = sqlcmd -Q "if not exists(select * from sys.server_principals where name='BUILTIN\administrators') Print 1"
+    }
+}
 '@
 		}
 		$Command | Out-File -FilePath $BatchFilePath -Encoding ascii
