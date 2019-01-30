@@ -39,8 +39,8 @@ Start-Process -Filepath ($cmpath) -ArgumentList ('/Auto "' + $cmsourcepath + '"'
 
 if($CMInstallMode -eq "standalone")
 {
-	$CMINIPath = "c:\" +$CM+ "\" + $CMInstallMode + ".ini"
-	"[$(Get-Date -format HH:mm:ss)] Check ini file." | Out-File -Append $logpath
+    $CMINIPath = "c:\" +$CM+ "\" + $CMInstallMode + ".ini"
+    "[$(Get-Date -format HH:mm:ss)] Check ini file." | Out-File -Append $logpath
 
     $cmini = @'
 [Identification]
@@ -81,34 +81,34 @@ SysCenterId=
 
 '@
 
-	"[$(Get-Date -format HH:mm:ss)] ini file exist." | Out-File -Append $logpath
-	$cmini = $cmini.Replace('%MachineFQDN%',"$env:computername.$env:userdnsdomain")
-	$cmini = $cmini.Replace('%SQLMachineFQDN%',"$SQLVMName.$env:userdnsdomain")
-	$cmini = $cmini.Replace('%Role%',$Role)
-	$cmini = $cmini.Replace('%SQLDataFilePath%',$SQLDataFilePath)
-	$cmini = $cmini.Replace('%SQLLogFilePath%',$SQLLogFilePath)
-	$cmini = $cmini.Replace('%CM%',$CM)
+    "[$(Get-Date -format HH:mm:ss)] ini file exist." | Out-File -Append $logpath
+    $cmini = $cmini.Replace('%MachineFQDN%',"$env:computername.$env:userdnsdomain")
+    $cmini = $cmini.Replace('%SQLMachineFQDN%',"$SQLVMName.$env:userdnsdomain")
+    $cmini = $cmini.Replace('%Role%',$Role)
+    $cmini = $cmini.Replace('%SQLDataFilePath%',$SQLDataFilePath)
+    $cmini = $cmini.Replace('%SQLLogFilePath%',$SQLLogFilePath)
+    $cmini = $cmini.Replace('%CM%',$CM)
 
-	if(!(Test-Path C:\$CM\REdist))
+    if(!(Test-Path C:\$CM\REdist))
     {
         New-Item C:\$CM\REdist -ItemType directory | Out-Null
     }
 
-	if($SQLInstanceName.ToUpper() -eq "MSSQLSERVER")
-	{
-		$cmini = $cmini.Replace('%SQLInstance%',"")
-	}
-	else
-	{
-		$tinstance = $SQLInstanceName.ToUpper() + "\"
-		$cmini = $cmini.Replace('%SQLInstance%',$tinstance)
-	}
-	$CMInstallationFile = "c:\" + $CM + "\SMSSETUP\BIN\X64\Setup.exe"
-	$cmini > $CMINIPath 
-	"[$(Get-Date -format HH:mm:ss)] Installing.." | Out-File -Append $logpath
-	Start-Process -Filepath ($CMInstallationFile) -ArgumentList ('/NOUSERINPUT /script "' + $CMINIPath + '"') -wait
+    if($SQLInstanceName.ToUpper() -eq "MSSQLSERVER")
+    {
+        $cmini = $cmini.Replace('%SQLInstance%',"")
+    }
+    else
+    {
+        $tinstance = $SQLInstanceName.ToUpper() + "\"
+        $cmini = $cmini.Replace('%SQLInstance%',$tinstance)
+    }
+    $CMInstallationFile = "c:\" + $CM + "\SMSSETUP\BIN\X64\Setup.exe"
+    $cmini > $CMINIPath 
+    "[$(Get-Date -format HH:mm:ss)] Installing.." | Out-File -Append $logpath
+    Start-Process -Filepath ($CMInstallationFile) -ArgumentList ('/NOUSERINPUT /script "' + $CMINIPath + '"') -wait
 
-	"[$(Get-Date -format HH:mm:ss)] Finished installing CM." | Out-File -Append $logpath
+    "[$(Get-Date -format HH:mm:ss)] Finished installing CM." | Out-File -Append $logpath
 
-	Remove-Item $CMINIPath
+    Remove-Item $CMINIPath
 }

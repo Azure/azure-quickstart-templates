@@ -25,33 +25,36 @@ $AzcopyPath = "C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy"
 
 if(!(Test-Path $AzcopyPath))
 {
-	$path = "$ProvisionToolPath\azcopy.msi"
-	if(!(Test-Path $path))
-	{
-		#Download azcopy
-		$url = "http://aka.ms/downloadazcopy"
-		Invoke-WebRequest -Uri $url -OutFile $path
-	}
+    $path = "$ProvisionToolPath\azcopy.msi"
+    if(!(Test-Path $path))
+    {
+        #Download azcopy
+        $url = "http://aka.ms/downloadazcopy"
+        Invoke-WebRequest -Uri $url -OutFile $path
+    }
 
-	#Install azcopy
-	Start-Process msiexec.exe -Wait -ArgumentList "/I $path /quiet"
+    #Install azcopy
+    Start-Process msiexec.exe -Wait -ArgumentList "/I $path /quiet"
 }
 
 $sourceDirctory = (split-path -parent $MyInvocation.MyCommand.Definition) + "\*"
 $destDirctory = "$ProvisionToolPath\"
 Copy-item -Force -Recurse $sourceDirctory -Destination $destDirctory
 
-$ConfigurationFile = Join-Path -Path $ProvisionToolPath -ChildPath "$Role.json";
+$ConfigurationFile = Join-Path -Path $ProvisionToolPath -ChildPath "$Role.json"
 
-if (Test-Path -Path $ConfigurationFile) {
-    $Configuration = Get-Content -Path $ConfigurationFile | ConvertFrom-Json;
-} else {
+if (Test-Path -Path $ConfigurationFile) 
+{
+    $Configuration = Get-Content -Path $ConfigurationFile | ConvertFrom-Json
+} 
+else 
+{
     [hashtable]$Actions = @{
-		Name = $env:COMPUTERNAME
-		SQLInstanceName = ""
-		SQLDataFilePath = ""
-		SQLLogFilePath = ""
-		AddBuiltinPermission = @{
+        Name = $env:COMPUTERNAME
+        SQLInstanceName = ""
+        SQLDataFilePath = ""
+        SQLLogFilePath = ""
+        AddBuiltinPermission = @{
             Status = 'NotStart'
             StartTime = ''
             EndTime = ''
@@ -66,7 +69,7 @@ if (Test-Path -Path $ConfigurationFile) {
             StartTime = ''
             EndTime = ''
         }
-		TurnOnFirewallPort= @{
+        TurnOnFirewallPort= @{
             Status = 'NotStart'
             StartTime = ''
             EndTime = ''
@@ -76,92 +79,111 @@ if (Test-Path -Path $ConfigurationFile) {
             StartTime = ''
             EndTime = ''
         }
-		ChangeSQLServicesAccount= @{
+        ChangeSQLServicesAccount= @{
             Status = 'NotStart'
             StartTime = ''
             EndTime = ''
         }
-		WaitForPS= @{
+        WaitForPS= @{
             Status = 'NotStart'
             StartTime = ''
             EndTime = ''
         }
-		AddPermission= @{
+        AddPermission= @{
             Status = 'NotStart'
             StartTime = ''
             EndTime = ''
         }
-		CleanUp= @{
+        CleanUp= @{
             Status = 'NotStart'
             StartTime = ''
             EndTime = ''
         }
-    };
-    $Configuration = New-Object -TypeName psobject -Property $Actions;
+    }
+    $Configuration = New-Object -TypeName psobject -Property $Actions
 }
 
 $Configuration | Add-Member -MemberType ScriptMethod -Name SetRebootConfig -Value {
-    try {
-                $Invocation = (Get-Variable MyInvocation -Scope 1).Value
+    try 
+    {
+        $Invocation = (Get-Variable MyInvocation -Scope 1).Value
         $Path =  $Invocation.MyCommand.Path
-		$BatchFilePath = Join-Path -Path $ProvisionToolPath -ChildPath "Resume_$($env:COMPUTERNAME).ps1"
-		$Command = ""
-		if($this.AddBuiltinPermission.Status -eq "Running")
-		{
-			$command = @'
+        $BatchFilePath = Join-Path -Path $ProvisionToolPath -ChildPath "Resume_$($env:COMPUTERNAME).ps1"
+        $Command = ""
+        if($this.AddBuiltinPermission.Status -eq "Running")
+        {
+            $command = @'
 Start-Sleep -Second 240
 sqlcmd -Q "if not exists(select * from sys.server_principals where name='BUILTIN\administrators') CREATE LOGIN [BUILTIN\administrators] FROM WINDOWS;EXEC master..sp_addsrvrolemember @loginame = N'BUILTIN\administrators', @rolename = N'sysadmin'"
+$retrycount = 0
+$sqlpermission = sqlcmd -Q "if not exists(select * from sys.server_principals where name='BUILTIN\administrators') Print 1"
+while($sqlpermission -eq 1)
+{
+    if($retrycount -eq 3)
+    {
+        $sqlpermission = 0
+    }
+    else
+    {
+        $retrycount++
+        Start-Sleep -Second 240
+        sqlcmd -Q "if not exists(select * from sys.server_principals where name='BUILTIN\administrators') CREATE LOGIN [BUILTIN\administrators] FROM WINDOWS;EXEC master..sp_addsrvrolemember @loginame = N'BUILTIN\administrators', @rolename = N'sysadmin'"
+        $sqlpermission = sqlcmd -Q "if not exists(select * from sys.server_principals where name='BUILTIN\administrators') Print 1"
+    }
+}
 '@
-		}
-		$Command | Out-File -FilePath $BatchFilePath -Encoding ascii
-		$Command = ". $Path $DCIPAddress $DomainFullName $DomainAdminName $Password $tempurl `"$sakey`""
-		$Command | Out-File -FilePath $BatchFilePath -Encoding ascii -Append
+        }
+        $Command | Out-File -FilePath $BatchFilePath -Encoding ascii
+        $Command = ". $Path $DCIPAddress $DomainFullName $DomainAdminName $Password $tempurl `"$sakey`""
+        $Command | Out-File -FilePath $BatchFilePath -Encoding ascii -Append
 
         $BatchFile = "cmd /k powershell -ExecutionPolicy Unrestricted -file " + $BatchFilePath
         
         $RunOnceRegKey = 'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce'
-        $KeyValueName = 'Workflow Reboot';
-        $KeyType = [Microsoft.Win32.RegistryValueKind]::String;
+        $KeyValueName = 'Workflow Reboot'
+        $KeyType = [Microsoft.Win32.RegistryValueKind]::String
         $null = [Microsoft.Win32.Registry]::SetValue($RunOnceRegKey,$KeyValueName,$BatchFile,$KeyType)
         $this | ConvertTo-Json | Out-File -FilePath $ConfigurationFile -Force
 
         $configfile = $ConfigurationFile
-	    $uploadurl = $tempurl + "/$Role.json"
-	    AZCopy -source $configfile -dest $uploadurl -upload $true
+        $uploadurl = $tempurl + "/$Role.json"
+        AZCopy -source $configfile -dest $uploadurl -upload $true
 
         return 0
     }
-    catch {
+    catch 
+    {
         return 1
-    };
+    }
 }
 
 $Mainscript = $ProvisionToolPath + "\main.ps1"
-. $Mainscript;
+. $Mainscript
 
 if ($Configuration.AddBuiltinPermission.Status -eq 'NotStart') {
     $Configuration.AddBuiltinPermission.Status = 'Running'
     $Configuration.AddBuiltinPermission.StartTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
-	Get-SQLInformation
+    Get-SQLInformation
     $Result = $Configuration.SetRebootConfig()
-    if ($Result -eq 0) {
-	if($adminUsername -ne "")
-	{
-		$Result = Set-AutoLogOn "" $adminUsername $Password
-	}
-	else
-	{
-		$Result = Set-AutoLogOn "" $DomainAdminName $Password
-	}
+    if ($Result -eq 0) 
+    {
+        if($adminUsername -ne "")
+        {
+            $Result = Set-AutoLogOn "" $adminUsername $Password
+        }
+        else
+        {
+            $Result = Set-AutoLogOn "" $DomainAdminName $Password
+        }
         shutdown -r -t 10
-	exit 0
+        exit 0
     }
 }
 
 if ($Configuration.AddBuiltinPermission.Status -eq 'Running') {
     $Configuration.AddBuiltinPermission.Status = 'Completed'
     $Configuration.AddBuiltinPermission.EndTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
-	UploadConfigFile
+    UploadConfigFile
 }
 
 
@@ -210,17 +232,17 @@ if ($Configuration.JoinDomain.Status -eq 'Completed') {
 
     Enable-RDP
     
-	if ($Configuration.TurnOnFirewallPort.Status -eq 'NotStart') {
-		$Configuration.TurnOnFirewallPort.Status = 'Running'
-		$Configuration.TurnOnFirewallPort.StartTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
-		UploadConfigFile
-		$Result = TurnOn-FirewallPort $rolelist
-		if ($Result[-1] -eq 0)  {
-			$Configuration.TurnOnFirewallPort.Status = 'Completed'
-			$Configuration.TurnOnFirewallPort.EndTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
-		}
-		UploadConfigFile
-	}
+    if ($Configuration.TurnOnFirewallPort.Status -eq 'NotStart') {
+        $Configuration.TurnOnFirewallPort.Status = 'Running'
+        $Configuration.TurnOnFirewallPort.StartTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
+        UploadConfigFile
+        $Result = TurnOn-FirewallPort $rolelist
+        if ($Result[-1] -eq 0)  {
+            $Configuration.TurnOnFirewallPort.Status = 'Completed'
+            $Configuration.TurnOnFirewallPort.EndTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
+        }
+        UploadConfigFile
+    }
 
     if ($Configuration.InstallRolesAndFeatures.Status -eq 'NotStart') {
         $Configuration.InstallRolesAndFeatures.Status = 'Running'
@@ -233,8 +255,8 @@ if ($Configuration.JoinDomain.Status -eq 'Completed') {
         }
         UploadConfigFile
     }
-	
-	if ($Configuration.ChangeSQLServicesAccount.Status -eq 'NotStart') {
+    
+    if ($Configuration.ChangeSQLServicesAccount.Status -eq 'NotStart') {
         $Configuration.ChangeSQLServicesAccount.Status = 'Running'
         $Configuration.ChangeSQLServicesAccount.StartTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
         UploadConfigFile
@@ -243,10 +265,10 @@ if ($Configuration.JoinDomain.Status -eq 'Completed') {
             $Configuration.ChangeSQLServicesAccount.Status = 'Completed'
             $Configuration.ChangeSQLServicesAccount.EndTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
         }
-		UploadConfigFile
+        UploadConfigFile
     }
 
-	if ($Configuration.WaitForPS.Status -eq 'NotStart') {
+    if ($Configuration.WaitForPS.Status -eq 'NotStart') {
         $Configuration.WaitForPS.Status = 'Running'
         $Configuration.WaitForPS.StartTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
         UploadConfigFile
@@ -255,10 +277,10 @@ if ($Configuration.JoinDomain.Status -eq 'Completed') {
             $Configuration.WaitForPS.Status = 'Completed'
             $Configuration.WaitForPS.EndTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
         }
-		UploadConfigFile
+        UploadConfigFile
     }
 
-	if ($Configuration.AddPermission.Status -eq 'NotStart') {
+    if ($Configuration.AddPermission.Status -eq 'NotStart') {
         $Configuration.AddPermission.Status = 'Running'
         $Configuration.AddPermission.StartTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
         UploadConfigFile
@@ -267,10 +289,10 @@ if ($Configuration.JoinDomain.Status -eq 'Completed') {
             $Configuration.AddPermission.Status = 'Completed'
             $Configuration.AddPermission.EndTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
         }
-		UploadConfigFile
+        UploadConfigFile
     }
 
-	if ($Configuration.CleanUp.Status -eq 'NotStart') {
+    if ($Configuration.CleanUp.Status -eq 'NotStart') {
         $Configuration.CleanUp.Status = 'Running'
         $Configuration.CleanUp.StartTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
         UploadConfigFile
@@ -279,7 +301,7 @@ if ($Configuration.JoinDomain.Status -eq 'Completed') {
             $Configuration.CleanUp.Status = 'Completed'
             $Configuration.CleanUp.EndTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
         }
-		UploadConfigFile
+        UploadConfigFile
     }
 }
 
