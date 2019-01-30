@@ -55,7 +55,7 @@ function getupdate()
         "[$(Get-Date -format HH:mm:ss)] Not found any updates, retry to invoke update check." | Out-File -Append $logpath
         $getupdateretrycount++
         "[$(Get-Date -format HH:mm:ss)] Invoke CM Site update check..." | Out-File -Append $logpath
-        Invoke-CMSiteUpdateCheck
+        Invoke-CMSiteUpdateCheck -ErrorAction Ignore
         Start-Sleep 120
 
         $updatepacklist= Get-CMSiteUpdate | ?{$_.State -ne 196612}
