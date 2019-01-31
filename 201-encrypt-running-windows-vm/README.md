@@ -15,7 +15,13 @@ This template enables encryption on a running windows vm using AAD client secret
 Prerequisites:
 1. Azure Disk Encryption securely stores the encryption secrets in a specified Azure Key Vault. 
 Use the below PS cmdlet for getting the "keyVaultSecretUrl" and "keyVaultResourceId"
-Get-AzureRmKeyVault -VaultName $KeyVaultName -ResourceGroupName $rgname
+Get-AzureRmKeyVault -VaultName $KeyVaultName -ResourceGroupName $rgname 
+
+Incase : If deployment fails with the the error code: Access Denied or conflict : extension not supported or VM has reported a failure when processing extension 'AzureDiskEncryption'. Error message: "Failed to configure bitlocker as expected; use the below PD cmdlet for removing the unsuccessful disk encryption extension and re-do the template deployment for success.
+Remove-AzureRmVMExtension -ResourceGroupName $rgname -Name "extensionname" -VMName $vmname
+Reference:  https://social.msdn.microsoft.com/Forums/SECURITY/en-US/f77af0b4-d06e-468a-816d-c894f08af125/error-user-encryption-settings-in-the-vm-model-are-not-supported-please-upgrade-azure-disk?forum=AzureDiskEncryption
+https://blogs.msdn.microsoft.com/azuresecurity/2016/02/10/azure-disk-encryption-error-related-to-azure-powershell-1-1-0/
+
 
 References:
 White paper - https://azure.microsoft.com/en-us/documentation/articles/azure-security-disk-encryption/
