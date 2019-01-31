@@ -2,42 +2,54 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "workspaceName": {
+    "vnetName": {
       "type": "string",
       "metadata": {
-        "description": "The name of the Azure Databricks workspace to create."
+        "description": "Name of the existing virtual network for Azure Databricks"
       }
     },
-    "pricingTier": {
-      "defaultValue": "premium",
-      "allowedValues": [
-        "trial",
-        "standard",
-        "premium"
-      ],
+    "vnetResourceGroup": {
       "type": "string",
       "metadata": {
-        "description": "The pricing tier of workspace."
+        "description": "Name of the virtual network resource group"
       }
     },
-    "customVirtualNetworkId": {
-      "type": "string",
-      "metadata": {
-        "description": "The complete ARM resource Id of the custom virtual network."
-      }
-    },
-    "customPublicSubnetName": {
+    "publicSubnetName": {
       "type": "string",
       "defaultValue": "public-subnet",
       "metadata": {
-        "description": "The name of the public subnet in the custom VNet."
+        "description": "Name of the existing subnet that is to be used for the public network traffic"
       }
     },
-    "customPrivateSubnetName": {
+    "privateSubnetName": {
       "type": "string",
       "defaultValue": "private-subnet",
       "metadata": {
-        "description": "The name of the private subnet in the custom VNet."
+        "description": "Name of the existing subnet that is to be used for the private network traffic"
+      }
+    },
+    "workspaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Azure Databricks workspace"
+      }
+    },
+    "tier": {
+      "type": "string",
+      "defaultValue": "premium",
+      "metadata": {
+        "description": "Azure Databricks pricing tier"
+      },
+      "allowedValues": [
+        "trial",
+        "premium",
+        "standard"
+      ]
+    },
+    "managedResourceGroupName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the resource group to create that will contain Azure Databricks dependent resources, storage account, VNet, Nsg, etc."
       }
     },
     "location": {
@@ -49,31 +61,33 @@
     }
   },
   "variables": {
-    "managedResourceGroupId": "[concat(subscription().id, '/resourceGroups/', variables('managedResourceGroupName'))]",
-    "managedResourceGroupName": "[concat('databricks-rg-', parameters('workspaceName'), '-', uniqueString(parameters('workspaceName'), resourceGroup().id))]"
+    "managedResourceGroupId": "[concat(subscription().id, '/resourceGroups/', parameters('managedResourceGroupName'))]",
+    "vnetID": "[resourceId(parameters('vnetResourceGroup'),'Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
   },
-  "resources": [{
-    "apiVersion": "2018-04-01",
-    "location": "[parameters('location')]",
-    "name": "[parameters('workspaceName')]",
-    "sku": {
-      "name": "[parameters('pricingTier')]"
-    },
-    "comments": "The resource group specified will be locked after deployment.",
-    "properties": {
-      "ManagedResourceGroupId": "[variables('managedResourceGroupId')]",
-      "parameters": {
-        "customVirtualNetworkId": {
-          "value": "[parameters('customVirtualNetworkId')]"
-        },
-        "customPublicSubnetName": {
-          "value": "[parameters('customPublicSubnetName')]"
-        },
-        "customPrivateSubnetName": {
-          "value": "[parameters('customPrivateSubnetName')]"
+  "resources": [
+    {
+      "apiVersion": "2018-04-01",
+      "type": "Microsoft.Databricks/workspaces",
+      "location": "[parameters('location')]",
+      "name": "[parameters('workspaceName')]",
+      "dependsOn": [],
+      "sku": {
+        "name": "[parameters('tier')]"
+      },
+      "properties": {
+        "ManagedResourceGroupId": "[variables('managedResourceGroupId')]",
+        "parameters": {
+          "customVirtualNetworkId": {
+            "value": "[variables('vnetId')]"
+          },
+          "customPublicSubnetName": {
+            "value": "[parameters('publicSubnetName')]"
+          },
+          "customPrivateSubnetName": {
+            "value": "[parameters('privateSubnetName')]"
+          }
         }
       }
-    },
-    "type": "Microsoft.Databricks/workspaces"
-  }]
+    }
+  ]
 }
