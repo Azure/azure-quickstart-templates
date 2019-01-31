@@ -125,8 +125,14 @@ EOF
 
 HOSTNAME=$(hostname -i)
 
+if [ "${IS_PRIMARY}" = "true" ]; then
+    NODE_NAME=art-primary
+else
+    NODE_NAME=art-$(date +%s$RANDOM)
+fi
+
 cat <<EOF >/var/opt/jfrog/artifactory/etc/ha-node.properties
-node.id=art1-$(date +%s$RANDOM)
+node.id=${NODE_NAME}
 artifactory.ha.data.dir=/var/opt/jfrog/artifactory/data
 context.url=http://${HOSTNAME}:8081/artifactory
 access.context.url=http://${HOSTNAME}:8081/access
