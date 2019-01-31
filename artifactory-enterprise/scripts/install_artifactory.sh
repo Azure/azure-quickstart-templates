@@ -189,11 +189,10 @@ cat <<EOF >/var/opt/jfrog/artifactory/etc/binarystore.xml
 </config>
 EOF
 
-HOSTNAME=$(hostname -i)
 sed -i -e "s/art1/art-$(date +%s$RANDOM)/" /var/opt/jfrog/artifactory/etc/ha-node.properties
-sed -i -e "s/127.0.0.1/${HOSTNAME}/" /var/opt/jfrog/artifactory/etc/ha-node.properties
-sed -i -e "s/127.0.0.2/${HOSTNAME}/" /var/opt/jfrog/artifactory/etc/ha-node.properties
-sed -i -e "s/172.25.0.3/${HOSTNAME}/" /var/opt/jfrog/artifactory/etc/ha-node.properties
+sed -i -e "s/127.0.0.1/$(hostname -i)/" /var/opt/jfrog/artifactory/etc/ha-node.properties
+sed -i -e "s/127.0.0.2/$(hostname -i)/" /var/opt/jfrog/artifactory/etc/ha-node.properties
+sed -i -e "s/172.25.0.3/$(hostname -i)/" /var/opt/jfrog/artifactory/etc/ha-node.properties
 
 cat /var/lib/cloud/instance/user-data.txt | grep "^CERTIFICATE=" | sed "s/CERTIFICATE=//" > /tmp/temp.pem
 cat /tmp/temp.pem | sed 's/CERTIFICATE----- /&\n/g' | sed 's/ -----END/\n-----END/g' | awk '{if($0 ~ /----/) {print;} else { gsub(/ /,"\n");print;}}' > /etc/pki/tls/certs/cert.pem
@@ -203,7 +202,6 @@ cat /var/lib/cloud/instance/user-data.txt | grep "^CERTIFICATE_KEY=" | sed "s/CE
 cat /tmp/temp.key | sed 's/KEY----- /&\n/' | sed 's/ -----END/\n-----END/' | awk '{if($0 ~ /----/) {print;} else { gsub(/ /,"\n");print;}}' > /etc/pki/tls/private/cert.key
 rm /tmp/temp.key
 
-echo "artifactory.ping.allowUnauthenticated=true" >> /var/opt/jfrog/artifactory/etc/artifactory.system.properties
 EXTRA_JAVA_OPTS=$(cat /var/lib/cloud/instance/user-data.txt | grep "^EXTRA_JAVA_OPTS=" | sed "s/EXTRA_JAVA_OPTS=//")
 [ -z "$EXTRA_JAVA_OPTS" ] && EXTRA_JAVA_OPTS='-server -Xms2g -Xmx6g -Xss256k -XX:+UseG1GC -XX:OnOutOfMemoryError="kill -9 %p"'
 echo "export JAVA_OPTIONS=\"${EXTRA_JAVA_OPTS}\"" >> /var/opt/jfrog/artifactory/etc/default
@@ -214,4 +212,4 @@ sleep $((RANDOM % 240))
 service artifactory start
 service nginx start
 nginx -s reload
-echo "INFO: Artifactory installation completed."
+echo "INFO: Artifactory installation completed." > /tmp/artifactory-install.log
