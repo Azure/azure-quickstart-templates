@@ -1,4 +1,4 @@
-param(
+﻿param(
 [Parameter(Mandatory=$true,Position=0)]
 [PSObject]
 $CreateUIDefinitionObject,
@@ -24,5 +24,6 @@ foreach ($output in $parameterInfo.outputs.psobject.properties) {
         Write-Error "output $outputName does not exist in template.parameters"
     }
 }
+
 
 

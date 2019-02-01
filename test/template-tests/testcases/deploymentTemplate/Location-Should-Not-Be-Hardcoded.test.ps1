@@ -1,4 +1,4 @@
-param(
+﻿param(
 [Parameter(Mandatory=$true,Position=0)]
 [string]$TemplateText,
 
@@ -27,5 +27,6 @@ if ($TemplateWithoutParameters -like '*resourceGroup().location*') {
 
  
  
+
 
 

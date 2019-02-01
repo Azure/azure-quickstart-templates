@@ -1,4 +1,4 @@
-param(
+﻿param(
 [Parameter(Mandatory=$true,Position=0)]
 [PSObject]
 $TemplateObject
@@ -11,6 +11,7 @@ foreach ($resource in $templateObject.resources) {
         }
     }
 }
+
 
 
 

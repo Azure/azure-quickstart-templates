@@ -1,4 +1,4 @@
-param(
+﻿param(
 [Parameter(Mandatory=$true,Position=0)]
 [PSObject]
 $CreateUIDefinitionObject
@@ -11,5 +11,6 @@ if (-not $CreateUIDefinitionObject.handler) {
 if ($CreateUIDefinitionObject.handler -cne 'Microsoft.Compute.MultiVm') {
     throw "The handler for CreateUIDefinition must be Microsoft.Compute.MultiVm"
 } 
+
 
 

@@ -1,4 +1,4 @@
-param(
+﻿param(
 [Parameter(Mandatory=$true,Position=0)]
 [PSObject]
 $CreateUIDefinitionObject
@@ -28,4 +28,5 @@ $schemaVersion = $CreateUIDefinitionObject.'$Schema' -split '/' -ne '' |
 if ($CreateUIDefinitionObject.version -ne $schemaVersion) {
     throw "CreateUIDefinition version ($($CreateUIDefinitionObject.version)) is different from schema version ($schemaVersion)"
 }
+
 

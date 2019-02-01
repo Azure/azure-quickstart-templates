@@ -1,4 +1,4 @@
-param(
+﻿param(
 [Parameter(Mandatory=$true,Position=0)]
 [PSObject]
 $TemplateObject
@@ -9,6 +9,7 @@ foreach ($parameter in $templateObject.parameters) {
             -ErrorId SecureString.Must.Not.Have.Default -TargetObject $parameter
     }
 }
+
 
 
 

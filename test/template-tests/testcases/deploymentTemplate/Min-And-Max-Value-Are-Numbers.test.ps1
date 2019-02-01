@@ -1,4 +1,4 @@
-param(
+﻿param(
 [Parameter(Mandatory=$true,Position=0)]
 [PSObject]
 $TemplateObject
@@ -32,4 +32,5 @@ foreach ($parameter in $templateObject.parameters) {
         Write-Error "$($Parameter.Name) missing min value" -ErrorId Parameter.Missing.Min -TargetObject $parameter           
     }
 }
+
 

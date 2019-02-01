@@ -1,4 +1,4 @@
-param(
+﻿param(
 [Parameter(Mandatory=$true)]
 [PSObject]
 $TemplateObject,
@@ -23,5 +23,6 @@ foreach ($parameter in $TemplateObject.parameters.psobject.properties) {
         }
     }
 } 
+
 
 
