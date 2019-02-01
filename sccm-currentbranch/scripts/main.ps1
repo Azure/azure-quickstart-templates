@@ -98,19 +98,27 @@ function AZCopy($source,$dest,$upload,$isfolder=$false)
     else
     {
         $arg3 = "/SourceKey:" + $sakey
+        $arg8 = "/MT"
     }
     $arg4 = "/Y"
     $arg5 = "/V:"+"$AZCopylogpath"
-
+    $arg6 = "/XO"
 
     if($isfolder)
     {
-        $arg6 = "/s"
-        & $cmd $arg1 $arg2 $arg3 $arg4 $arg5 $arg6 | out-null
+        $arg7 = "/s"
+        & $cmd $arg1 $arg2 $arg3 $arg4 $arg5 $arg6 $arg7 | out-null
     }
     else
     {
-        & $cmd $arg1 $arg2 $arg3 $arg4 $arg5 | out-null
+        if($upload)
+        {
+            & $cmd $arg1 $arg2 $arg3 $arg4 $arg5 $arg6 | out-null
+        }
+        else
+        {
+            & $cmd $arg1 $arg2 $arg3 $arg4 $arg5 $arg6 $arg8 | out-null
+        }
     }
 }
 
