@@ -1,4 +1,4 @@
-function Test-AzureRMTemplate
+﻿function Test-AzureRMTemplate
 {
     <#
     .Synopsis
@@ -459,5 +459,6 @@ Each test script has access to a set of well-known variables:
         }
     }    
 }
+
 
 

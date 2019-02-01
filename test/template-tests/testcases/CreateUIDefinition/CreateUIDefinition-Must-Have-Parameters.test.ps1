@@ -1,4 +1,4 @@
-param(
+﻿param(
 [Parameter(Mandatory=$true,Position=0)]
 [PSObject]
 $CreateUIDefinitionObject
@@ -11,4 +11,5 @@ if (-not $CreateUIDefinitionObject.parameters) {
 if (-not $CreateUIDefinitionObject.parameters.basics) {
     Write-Error "CreateUIDefinition is missing .parameters.basics"     
 }
+
 
