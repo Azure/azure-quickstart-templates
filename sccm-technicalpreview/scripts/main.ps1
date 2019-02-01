@@ -87,30 +87,38 @@ function Join-Domain($DCIPAddress,$DomainFullName,$DomainAdminName,$Password)
 
 function AZCopy($source,$dest,$upload,$isfolder=$false)
 {
-	$AZCopylogpath = $ProvisionToolPath+"\AZCopy.txt"
-	$cmd = "$AzcopyPath\AzCopy.exe"
-	$arg1 = "/Source:"+"$source"
-	$arg2 = "/Dest:"+"$dest"
-	if($upload)
-	{
-		$arg3 = "/DestKey:" + $sakey
-	}
-	else
-	{
-		$arg3 = "/SourceKey:" + $sakey
-	}
-	$arg4 = "/Y"
-	$arg5 = "/V:"+"$AZCopylogpath"
-
-
-	if($isfolder)
+    $AZCopylogpath = $ProvisionToolPath+"\AZCopy.txt"
+    $cmd = "$AzcopyPath\AzCopy.exe"
+    $arg1 = "/Source:"+"$source"
+    $arg2 = "/Dest:"+"$dest"
+    if($upload)
     {
-        $arg6 = "/s"
-	    & $cmd $arg1 $arg2 $arg3 $arg4 $arg5 $arg6 | out-null
+        $arg3 = "/DestKey:" + $sakey
     }
     else
     {
-        & $cmd $arg1 $arg2 $arg3 $arg4 $arg5 | out-null
+        $arg3 = "/SourceKey:" + $sakey
+        $arg8 = "/MT"
+    }
+    $arg4 = "/Y"
+    $arg5 = "/V:"+"$AZCopylogpath"
+    $arg6 = "/XO"
+
+    if($isfolder)
+    {
+        $arg7 = "/s"
+        & $cmd $arg1 $arg2 $arg3 $arg4 $arg5 $arg6 $arg7 | out-null
+    }
+    else
+    {
+        if($upload)
+        {
+            & $cmd $arg1 $arg2 $arg3 $arg4 $arg5 $arg6 | out-null
+        }
+        else
+        {
+            & $cmd $arg1 $arg2 $arg3 $arg4 $arg5 $arg6 $arg8 | out-null
+        }
     }
 }
 
