@@ -1,6 +1,6 @@
 # Cisco Cloud Services Router 1000v
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcisco-csr-1000v-existing-vnet%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.cn/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fciscoxiaobing%2Fazure-quickstart-templates%2Fmaster%2Fcisco-csr-1000v-existing-vnet%2Fazuredeploy.json" target="_blank">
 <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 <a href="https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcisco-csr-1000v-existing-vnet%2Fazuredeploy.json" target="_blank">
@@ -24,3 +24,5 @@ The existing network's route tables will not be altered.
 This deployment creates a CSR with 2 NICs, plus public and private subnets.  It requires an existing virtual network with at least 2 subnets.  User defined routes are created on the subnets to ensure the CSR is used as the default gateway for virtual machines in the private subnet. Finally, the IP Forwarding flag is set on Azure to allow the CSR to properly pass traffic.
 
 `Tags: Cisco, CSR, 1000v`
+
+## Has been confirmed to be deployable in China
