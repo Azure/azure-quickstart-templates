@@ -17,3 +17,9 @@ Click the button below to deploy
 # Known Issues
 
 +	This template is entirely serial due to some concurrency issues between the platform agent and the DSC extension which cause problems when multiple VM and\or extension resources are deployed concurrently, this will be fixed in the near future
+
+## Currently China has not supported availability zones
+
+<!-- Docs -->
+
+[availability zones]: https://docs.microsoft.com/en-us/azure/availability-zones/az-overview#regions-that-support-availability-zones
