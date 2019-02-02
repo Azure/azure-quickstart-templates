@@ -25,4 +25,5 @@ This deployment creates a CSR with 2 NICs, plus public and private subnets.  It 
 
 `Tags: Cisco, CSR, 1000v`
 
-## "Call to marketplace failed. Status: 'Unauthorized'. Response: '{}'."
+## Cannot be deployed in China, Report the following error:
+"Call to marketplace failed. Status: 'Unauthorized'. Response: '{}'."
