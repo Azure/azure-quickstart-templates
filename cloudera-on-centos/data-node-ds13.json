@@ -1,11 +1,8 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.1",
   "parameters": {
     "vnetID": {
-      "type": "string"
-    },
-    "resourceAPIVersion": {
       "type": "string"
     },
     "dnsNamePrefix": {
@@ -13,9 +10,6 @@
     },
     "scriptsUri": {
       "type": "string"
-    },
-    "storageAccount": {
-      "type": "object"
     },
     "vmCount": {
       "type": "int"
@@ -43,7 +37,6 @@
     "workerIP": "[parameters('networkSpec').workerIP]",
     "vmName": "[concat(parameters('dnsNamePrefix'), '-dn')]",
     "nicName": "[concat(variables('vmName'), '-nic')]",
-    "storageAccountName": "[parameters('storageAccount').prefix]",
     "publicIPAddressName": "[concat(variables('vmName'), '-publicIP')]",
     "securityGroupName": "[concat(parameters('dnsNamePrefix'), '-dn-sg')]"
   },
@@ -69,18 +62,6 @@
             }
           }
         ]
-      }
-    },
-    {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[concat(uniquestring(concat(copyIndex(), 'dn', resourceGroup().id)), variables('storageAccountName'))]",
-      "location": "[parameters('location')]",
-      "copy": {
-        "name": "storageAccountLoop",
-        "count": "[parameters('vmCount')]"
-      },
-      "properties": {
-        "accountType": "[parameters('storageAccount').type]"
       }
     },
     {
@@ -133,6 +114,7 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2017-03-30",
       "name": "[concat(variables('vmName'), copyIndex())]",
       "plan": {
         "name": "cloudera-centos-6",
@@ -145,8 +127,7 @@
         "count": "[parameters('vmCount')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex())]",
-        "[concat('Microsoft.Storage/storageAccounts/', concat(uniquestring(concat(copyIndex(), 'dn', resourceGroup().id)), variables('storageAccountName')))]"
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex())]"
       ],
       "properties": {
         "availabilitySet": {
@@ -160,77 +141,56 @@
           "adminUsername": "[parameters('vmSpec').adminUsername]",
           "adminPassword": "[parameters('vmSpec').adminPassword]",
           "linuxConfiguration": {
-            "disablePasswordAuthentication": "false"
+            "disablePasswordAuthentication": false
           }
         },
         "storageProfile": {
           "imageReference": {
             "publisher": "cloudera",
             "offer": "cloudera-centos-6",
-            "sku": "CLOUDERA-CENTOS-6",
+            "sku": "cloudera-centos-6",
             "version": "latest"
           },
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', uniquestring(concat(copyIndex(), 'dn', resourceGroup().id)), variables('storageAccountName')), '2015-06-15').primaryEndpoints.blob, uniquestring(concat(copyIndex(), 'dn', resourceGroup().id)), '/', variables('vmName'), copyIndex(), '.vhd')]"
-            },
+            "name": "[concat(variables('vmName'), copyIndex(),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           },
           "dataDisks": [
             {
-              "name": "datadisk0",
+              "name": "[concat(variables('vmName'), copyIndex(),'_DataDisk1')]",
               "diskSizeGB": 512,
               "lun": 0,
-              "vhd": {
-                "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', uniquestring(concat(copyIndex(), 'dn', resourceGroup().id)), variables('storageAccountName')), '2015-06-15').primaryEndpoints.blob, uniquestring(concat(copyIndex(), 'dn', resourceGroup().id)), '/', variables('vmName'), '-datadisk0.vhd')]"
-              },
               "createOption": "Empty"
             },
             {
-              "name": "datadisk1",
+              "name": "[concat(variables('vmName'), copyIndex(),'_DataDisk2')]",
               "diskSizeGB": 1023,
               "lun": 1,
-              "vhd": {
-                "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', uniquestring(concat(copyIndex(), 'dn', resourceGroup().id)), variables('storageAccountName')), '2015-06-15').primaryEndpoints.blob, uniquestring(concat(copyIndex(), 'dn', resourceGroup().id)), '/', variables('vmName'), '-datadisk1.vhd')]"
-              },
               "createOption": "Empty"
             },
             {
-              "name": "datadisk2",
+              "name": "[concat(variables('vmName'), copyIndex(),'_DataDisk3')]",
               "diskSizeGB": 1023,
               "lun": 2,
-              "vhd": {
-                "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', uniquestring(concat(copyIndex(), 'dn', resourceGroup().id)), variables('storageAccountName')), '2015-06-15').primaryEndpoints.blob, uniquestring(concat(copyIndex(), 'dn', resourceGroup().id)), '/', variables('vmName'), '-datadisk2.vhd')]"
-              },
               "createOption": "Empty"
             },
             {
-              "name": "datadisk3",
+              "name": "[concat(variables('vmName'), copyIndex(),'_DataDisk4')]",
               "diskSizeGB": 1023,
               "lun": 3,
-              "vhd": {
-                "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', uniquestring(concat(copyIndex(), 'dn', resourceGroup().id)), variables('storageAccountName')), '2015-06-15').primaryEndpoints.blob, uniquestring(concat(copyIndex(), 'dn', resourceGroup().id)), '/', variables('vmName'), '-datadisk3.vhd')]"
-              },
               "createOption": "Empty"
             },
             {
-              "name": "datadisk4",
+              "name": "[concat(variables('vmName'), copyIndex(),'_DataDisk5')]",
               "diskSizeGB": 1023,
               "lun": 4,
-              "vhd": {
-                "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', uniquestring(concat(copyIndex(), 'dn', resourceGroup().id)), variables('storageAccountName')), '2015-06-15').primaryEndpoints.blob, uniquestring(concat(copyIndex(), 'dn', resourceGroup().id)), '/', variables('vmName'), '-datadisk4.vhd')]"
-              },
               "createOption": "Empty"
             },
             {
-              "name": "datadisk5",
+              "name": "[concat(variables('vmName'), copyIndex(),'_DataDisk6')]",
               "diskSizeGB": 1023,
               "lun": 5,
-              "vhd": {
-                "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', uniquestring(concat(copyIndex(), 'dn', resourceGroup().id)), variables('storageAccountName')), '2015-06-15').primaryEndpoints.blob, uniquestring(concat(copyIndex(), 'dn', resourceGroup().id)), '/', variables('vmName'), '-datadisk5.vhd')]"
-              },
               "createOption": "Empty"
             }
           ]

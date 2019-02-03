@@ -2,16 +2,16 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "vstsAccountName": {
-      "type": "String",
+    "azureDevOpsServicesAccount": {
+      "type": "string",
       "metadata": {
-        "description": "Please enter the VSTS account name. If you access your VSTS account using 'https://yourAccountName.visualstudio.com', enter yourAccountName."
+        "description": "Please enter the Azure DevOps Services account name. If you access your Azure DevOps Services account using 'https://dev.azure.com/yourAccountName' or 'https://yourAccountName.visualstudio.com', enter yourAccountName."
       }
     },
-    "vstsPersonalAccessToken": {
+    "personalAccessToken": {
       "type": "SecureString",
       "metadata": {
-        "description": "Personal Access Token (PAT) for the VSTS account. You should select the  scope as 'Load test (read and write)'. Please refer 'https://www.visualstudio.com/en-us/get-started/setup/use-personal-access-tokens-to-authenticate' for more details."
+        "description": "Personal Access Token (PAT) for the Azure DevOps Services account. You should select the  scope as 'Load test (read and write)'. Please refer 'https://www.visualstudio.com/en-us/get-started/setup/use-personal-access-tokens-to-authenticate' for more details."
       }
     },
     "agentCount": {
@@ -33,7 +33,7 @@
       }
     },
     "adminUsername": {
-      "type": "String",
+      "type": "string",
       "metadata": {
         "description": "Username for the virtual machine."
       }
@@ -45,19 +45,19 @@
       }
     },
     "existingVNetResourceGroupName": {
-      "type": "String",
+      "type": "string",
       "metadata": {
         "description": "Name of the existing VNET resource group"
       }
     },
     "existingVNetName": {
-      "type": "String",
+      "type": "string",
       "metadata": {
         "description": "Name of the existing VNet"
       }
     },
     "subnetName": {
-      "type": "String",
+      "type": "string",
       "metadata": {
         "description": "Name of the subnet in the virtual network you want to use"
       }
@@ -87,7 +87,7 @@
     "dataDisk1VhdName": "datadisk",
     "windowsOSVersion": "2012-R2-Datacenter",
     "OSDiskName": "osdisk",
-    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('existingVNetName'),  parameters('subnetName'))]",
+    "subnetRef": "[resourceId(parameters('existingVNetResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('existingVNetName'),  parameters('subnetName'))]",
     "agentGroupName": "[resourceGroup().name]"
   },
   "resources": [
@@ -145,7 +145,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('vmName'), 'i',copyIndex())]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "location": "[parameters('location')]",
       "copy": {
         "name": "vmCopy",
@@ -168,21 +168,15 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',concat(variables('vmName'), copyIndex(), variables('OSDiskName')),'.vhd')]"
-            },
+            "name": "[concat(variables('vmName'), 'i',copyIndex(),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           },
           "dataDisks": [
             {
-              "name": "datadisk",
+              "name": "[concat(variables('vmName'), 'i',copyIndex(),'_DataDisk1')]", 
               "diskSizeGB": "[variables('sizeOfDiskInGB')]",
               "lun": 0,
-              "vhd": {
-                "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/', concat(variables('vmName'), copyIndex(), variables('dataDisk1VhdName')),'.vhd')]"
-              },
               "createOption": "Empty"
             }
           ]
@@ -196,7 +190,7 @@
         },
         "diagnosticsProfile": {
           "bootDiagnostics": {
-            "enabled": "true",
+            "enabled": true,
             "storageUri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net')]"
           }
         }
@@ -224,7 +218,7 @@
           "fileUris": [
             "https://elsprodch2su1.blob.core.windows.net/ets-containerfor-loadagentresources/bootstrap/ManageVSTSCloudLoadAgent.ps1"
           ],
-          "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File .\\bootstrap\\ManageVSTSCloudLoadAgent.ps1 -TeamServicesAccountName ', parameters('vstsAccountName'), ' -PATToken ', parameters('vstsPersonalAccessToken'), ' -AgentGroupName ', variables('agentGroupName') , ' -ConfigureAgent')]"
+          "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File .\\bootstrap\\ManageVSTSCloudLoadAgent.ps1 -TeamServicesAccountName ', parameters('azureDevOpsServicesAccount'), ' -PATToken ', parameters('personalAccessToken'), ' -AgentGroupName ', variables('agentGroupName') , ' -ConfigureAgent')]"
         }
       },
       "dependsOn": [

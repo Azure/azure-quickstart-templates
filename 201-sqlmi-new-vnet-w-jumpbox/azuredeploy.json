@@ -1,9 +1,10 @@
 {
-    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.1",
     "parameters": {
         "managedInstanceName": {
             "type": "string",
+            "maxLength": 13,
             "metadata": {
                 "description": "Enter managed instance name."
             }
@@ -82,15 +83,6 @@
                 "description": "Enter sku name."
             }
         },
-        "storageSizeInGB": {
-            "type": "int",         
-            "defaultValue": 256,
-            "minValue": 8,
-            "maxValue": 8192,
-            "metadata": {
-                "description": "Enter storage size."
-            }
-        },
         "vCores": {
             "type": "int",
             "defaultValue": 16,
@@ -105,6 +97,15 @@
             ],              
             "metadata": {
                 "description": "Enter number of vCores."
+            }
+        },
+        "storageSizeInGB": {
+            "type": "int",         
+            "defaultValue": 256,
+            "minValue": 32,
+            "maxValue": 8192,
+            "metadata": {
+                "description": "Enter storage size."
             }
         },
         "licenseType": {
@@ -134,15 +135,138 @@
         }        
     },
     "variables": {
+        "networkSecurityGroupName": "[concat('SQLMI-', parameters('managedInstanceName'), '-NSG')]",
         "routeTableName": "[concat('SQLMI-', parameters('managedInstanceName'), '-Route-Table')]",
-        "virtualMachineName": "[concat(parameters('managedInstanceName'), 'JumpBox')]",
+        "virtualMachineName": "[concat(parameters('managedInstanceName'), 'JB')]",
         "virtualMachineSize": "Standard_B2s",
-        "networkInterfaceName": "[concat('SQLMI-', parameters('managedInstanceName'), '-JumpBox-NIC')]",
-        "publicIpAddressName": "[concat('SQLMI-', parameters('managedInstanceName'), '-JumpBox-IP')]",
-        "networkSecurityGroupName": "[concat('SQLMI-', parameters('managedInstanceName'), '-JumpBox-NSG')]",
+        "networkInterfaceName": "[concat('SQLMI-', parameters('managedInstanceName'), '-JB-NIC')]",
+        "publicIpAddressName": "[concat('SQLMI-', parameters('managedInstanceName'), '-JB-IP')]",
+        "jbNetworkSecurityGroupName": "[concat('SQLMI-', parameters('managedInstanceName'), '-JB-NSG')]",
         "scriptFileUri": "[uri(parameters('_artifactsLocation'), concat('installSSMS.ps1', parameters('_artifactsLocationSasToken')))]"
     },
     "resources": [
+        {
+            "apiVersion": "2017-10-01",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[variables('networkSecurityGroupName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+              "securityRules": [
+                {
+                  "name": "allow_management_inbound",
+                  "properties": {
+                    "description": "Allow inbound management traffic",
+                    "protocol": "Tcp",
+                    "sourcePortRange": "*",
+                    "destinationPortRanges": ["9000", "9003", "1438", "1440", "1452"],
+                    "sourceAddressPrefix": "*",
+                    "destinationAddressPrefix": "*",
+                    "access": "Allow",
+                    "priority": 100,
+                    "direction": "Inbound"
+                  }
+                },
+                {
+                    "name": "allow_misubnet_inbound",
+                    "properties": {
+                      "description": "Allow inbound traffic inside the subnet",
+                      "protocol": "*",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "*",
+                      "sourceAddressPrefix": "[parameters('subnetPrefix')]",
+                      "destinationAddressPrefix": "*",
+                      "access": "Allow",
+                      "priority": 200,
+                      "direction": "Inbound"
+                    }
+                  },
+                  {
+                    "name": "allow_health_probe_inbound",
+                    "properties": {
+                      "description": "Allow health probe",
+                      "protocol": "*",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "*",
+                      "sourceAddressPrefix": "AzureLoadBalancer",
+                      "destinationAddressPrefix": "*",
+                      "access": "Allow",
+                      "priority": 300,
+                      "direction": "Inbound"
+                    }
+                  },
+                  {
+                    "name": "allow_tds_inbound",
+                    "properties": {
+                      "description": "Allow access to data",
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "1433",
+                      "sourceAddressPrefix": "VirtualNetwork",
+                      "destinationAddressPrefix": "*",
+                      "access": "Allow",
+                      "priority": 1000,
+                      "direction": "Inbound"
+                    }
+                  },
+                  {
+                    "name": "deny_all_inbound",
+                    "properties": {
+                      "description": "Deny all other inbound traffic",
+                      "protocol": "*",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "*",
+                      "sourceAddressPrefix": "*",
+                      "destinationAddressPrefix": "*",
+                      "access": "Deny",
+                      "priority": 4096,
+                      "direction": "Inbound"
+                    }
+                  },
+                  {
+                    "name": "allow_management_outbound",
+                    "properties": {
+                      "description": "Allow outbound management traffic",
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRanges": ["80", "443", "12000"],
+                      "sourceAddressPrefix": "*",
+                      "destinationAddressPrefix": "*",
+                      "access": "Allow",
+                      "priority": 100,
+                      "direction": "Outbound"
+                    }
+                  },
+                  {
+                    "name": "allow_misubnet_outbound",
+                    "properties": {
+                      "description": "Allow outbound traffic inside the subnet",
+                      "protocol": "*",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "*",
+                      "sourceAddressPrefix": "*",
+                      "destinationAddressPrefix": "[parameters('subnetPrefix')]",
+                      "access": "Allow",
+                      "priority": 200,
+                      "direction": "Outbound"
+                    }
+                  },                  
+                  {
+                    "name": "deny_all_outbound",
+                    "properties": {
+                      "description": "Deny all other outbound traffic",
+                      "protocol": "*",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "*",
+                      "sourceAddressPrefix": "*",
+                      "destinationAddressPrefix": "*",
+                      "access": "Deny",
+                      "priority": 4096,
+                      "direction": "Outbound"
+                    }
+                  }
+              ]
+            }
+        },        
         {
             "type": "Microsoft.Network/routeTables",
             "name": "[variables('routeTableName')]",
@@ -166,7 +290,8 @@
             "type": "Microsoft.Network/virtualNetworks",
             "apiVersion": "2018-02-01",
             "dependsOn":[
-                "[variables('routeTableName')]"
+                "[variables('routeTableName')]",
+                "[variables('networkSecurityGroupName')]"
             ],
             "location": "[parameters('location')]",
             "properties": {
@@ -182,7 +307,10 @@
                             "addressPrefix": "[parameters('subnetPrefix')]",
                             "routeTable": {
                                 "id": "[resourceId('Microsoft.Network/routeTables', variables('routeTableName'))]"
-                            }
+                            },
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+                            }   
                         }
                     },
                     {
@@ -262,7 +390,7 @@
             },
             "resources": [
                 {
-                  "name": "SetupChocolatey",
+                  "name": "SetupSSMS",
                   "type": "extensions",
                   "location": "[parameters('location')]",
                   "apiVersion": "2015-06-15",
@@ -270,7 +398,7 @@
                     "[concat('Microsoft.Compute/virtualMachines/', variables('virtualMachineName'))]"
                   ],
                   "tags": {
-                    "displayName": "SetupChocolatey"
+                    "displayName": "SetupSSMS"
                   },
                   "properties": {
                     "publisher": "Microsoft.Compute",
@@ -296,7 +424,7 @@
             "dependsOn": [
                 "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
                 "[concat('Microsoft.Network/publicIpAddresses/', variables('publicIpAddressName'))]",
-                "[concat('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroupName'))]"
+                "[concat('Microsoft.Network/networkSecurityGroups/', variables('jbNetworkSecurityGroupName'))]"
             ],
             "properties": {
                 "ipConfigurations": [
@@ -314,7 +442,7 @@
                     }
                 ],
                 "networkSecurityGroup": {
-                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('jbNetworkSecurityGroupName'))]"
                 }
             }
         },
@@ -331,7 +459,7 @@
             }
         },
         {
-            "name": "[variables('networkSecurityGroupName')]",
+            "name": "[variables('jbNetworkSecurityGroupName')]",
             "type": "Microsoft.Network/networkSecurityGroups",
             "apiVersion": "2018-01-01",
             "location": "[parameters('location')]",
@@ -341,7 +469,7 @@
                         "name": "RDP",
                         "properties": {
                             "priority": 300,
-                            "protocol": "TCP",
+                            "protocol": "Tcp",
                             "access": "Allow",
                             "direction": "Inbound",
                             "sourceApplicationSecurityGroups": [],

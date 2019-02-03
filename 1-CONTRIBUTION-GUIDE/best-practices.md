@@ -284,7 +284,7 @@ After the parameters are added to the template all URIs can be created using the
 ```json
 "variables": {
         "scriptFileUri": "[uri(parameters('_artifactsLocation'), concat('scripts/configuration.sh', parameters('_artifactsLocationSasToken')))]",
-        "nestedTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedTemplates/jumpbox.json', parameters('_artifactsLocationSasToken')))]"
+        "nestedtemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/jumpbox.json', parameters('_artifactsLocationSasToken')))]"
     },
 ```
 
@@ -368,7 +368,7 @@ The following code shows an example.
 
 ### VM Disks
 
-* OS Disks and Data Disks must use implicit managed disks except for QuickStart samples showing the use of explict disks.  An explicit disk is a disk where the resource is explicitly defined in the template.
+* OS Disks and Data Disks must use implicit managed disks except for QuickStart samples showing the use of explicit disks.  An explicit disk is a disk where the resource is explicitly defined in the template.
 
 
   ```json

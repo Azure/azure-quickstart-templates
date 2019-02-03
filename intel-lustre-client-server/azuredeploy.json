@@ -21,13 +21,7 @@
 			"type": "int",
 			"defaultValue": 1,
 			"metadata": {
-				"description": "Number of storage accounts that will be created for the Lustre nodes to spread the VHDs evenly"
-			}
-		},
-		"existingStorageAccountResourceGroup": {
-			"type": "string",
-			"metadata": {
-				"description": "Storage account resource group for future cases when existing storage account is used"
+				"description": "Number of storage accounts that will be created for the Lustre nodes to spread the disks evenly"
 			}
 		},
 		"storageAccountType": {
@@ -495,7 +489,7 @@
 	"variables": {
 		"imageReferenceLustre": {
 			"publisher": "intel",
-			"offer": "lustre-cloud-edition-cv-image",
+			"offer": "lustre-cloud-edition-gs-image",
 			"sku": "eval-lustre-2-7",
 			"version": "latest"
 		},
@@ -630,6 +624,9 @@
 		"type": "Microsoft.Compute/availabilitySets",
 		"name": "[variables('ossAvailabilitySetSettings').name]",
 		"location": "[parameters('location')]",
+		"sku": {
+			"name": "Aligned"
+			},
 		"properties": {
 			"platformFaultDomainCount": "[variables('ossAvailabilitySetSettings').faultDomainCount]",
 			"platformUpdateDomainCount": "[variables('ossAvailabilitySetSettings').updateDomainCount]"
@@ -670,12 +667,12 @@
 			}]
 		}
 	}, {
-		"apiVersion": "2015-06-15",
+		"apiVersion": "2017-03-30",
 		"type": "Microsoft.Compute/virtualMachines",
 		"name": "[concat(parameters('vmNamePrefix'),'mgs')]",
 		"plan": {
 			"publisher": "intel",
-			"product": "lustre-cloud-edition-cv-image",
+			"product": "lustre-cloud-edition-gs-image",
 			"name": "eval-lustre-2-7"
 		},
 		"location": "[parameters('location')]",
@@ -704,29 +701,20 @@
 					"version": "latest"
 				},
 				"osDisk": {
-					"name": "osdisk",
-					"vhd": {
-						"uri": "[concat('http://', variables('storageAccountName'), variables('mgsStorageAccountNumber'), '.blob.core.windows.net/vhds/', concat(parameters('vmNamePrefix'),'mgs'), '-osdisk.vhd')]"
-					},
+					"name": "[concat(parameters('vmNamePrefix'),'mgs','_OSDisk')]",
 					"caching": "ReadWrite",
 					"createOption": "FromImage"
 				},
 				"dataDisks": [{
-					"name": "datadisk0",
+					"name": "[concat(parameters('vmNamePrefix'),'mgs','_DataDisk1')]",
 					"diskSizeGB": 5,
 					"lun": 0,
-					"vhd": {
-						"uri": "[concat('http://', variables('storageAccountName'), variables('mgsStorageAccountNumber'), '.blob.core.windows.net/vhds/', concat(parameters('vmNamePrefix'),'mgs'), '-datadisk0.vhd')]"
-					},
 					"caching": "None",
 					"createOption": "Empty"
 				}, {
-					"name": "datadisk1",
+					"name": "[concat(parameters('vmNamePrefix'),'mgs','_DataDisk2')]",
 					"diskSizeGB": 16,
 					"lun": 1,
-					"vhd": {
-						"uri": "[concat('http://', variables('storageAccountName'), variables('mgsStorageAccountNumber'), '.blob.core.windows.net/vhds/', concat(parameters('vmNamePrefix'),'mgs'), '-datadisk1.vhd')]"
-					},
 					"caching": "None",
 					"createOption": "Empty"
 				}]
@@ -778,12 +766,12 @@
 			}]
 		}
 	}, {
-		"apiVersion": "2015-06-15",
+		"apiVersion": "2017-03-30",
 		"type": "Microsoft.Compute/virtualMachines",
 		"name": "[concat(parameters('vmNamePrefix'),'mds')]",
 		"plan": {
 			"publisher": "intel",
-			"product": "lustre-cloud-edition-cv-image",
+			"product": "lustre-cloud-edition-gs-image",
 			"name": "eval-lustre-2-7"
 		},
 		"location": "[parameters('location')]",
@@ -812,20 +800,14 @@
 					"version": "latest"
 				},
 				"osDisk": {
-					"name": "osdisk",
-					"vhd": {
-						"uri": "[concat('http://', variables('storageAccountName'), variables('mdsStorageAccountNumber'), '.blob.core.windows.net/vhds/', concat(parameters('vmNamePrefix'),'mds'), '-osdisk.vhd')]"
-					},
+					"name": "[concat(parameters('vmNamePrefix'),'mds','_OSDisk')]",
 					"caching": "ReadWrite",
 					"createOption": "FromImage"
 				},
 				"dataDisks": [{
-					"name": "datadisk0",
+					"name": "[concat(parameters('vmNamePrefix'),'mds','_DataDisk1')]",
 					"diskSizeGB": 128,
 					"lun": 0,
-					"vhd": {
-						"uri": "[concat('http://', variables('storageAccountName'), variables('mdsStorageAccountNumber'), '.blob.core.windows.net/vhds/', concat(parameters('vmNamePrefix'),'mds'), '-datadisk0.vhd')]"
-					},
 					"caching": "None",
 					"createOption": "Empty"
 				}]
@@ -882,12 +864,12 @@
 			}]
 		}
 	}, {
-		"apiVersion": "2015-06-15",
+		"apiVersion": "2017-03-30",
 		"type": "Microsoft.Compute/virtualMachines",
 		"name": "[concat(parameters('vmNamePrefix'), 'oss', copyIndex())]",
 		"plan": {
 			"publisher": "intel",
-			"product": "lustre-cloud-edition-cv-image",
+			"product": "lustre-cloud-edition-gs-image",
 			"name": "eval-lustre-2-7"
 		},
 		"location": "[parameters('location')]",
@@ -923,38 +905,26 @@
 					"version": "latest"
 				},
 				"osDisk": {
-					"name": "osdisk",
-					"vhd": {
-						"uri": "[concat('http://', variables('storageAccountName'), add(mod(copyIndex(),parameters('storageAccountCount')),1), '.blob.core.windows.net/vhds/', concat(parameters('vmNamePrefix'),'oss',copyIndex()), '-osdisk.vhd')]"
-					},
+					"name": "[concat(parameters('vmNamePrefix'), 'oss', copyIndex(),'_OSDisk')]",
 					"caching": "ReadWrite",
 					"createOption": "FromImage"
 				},
 				"dataDisks": [{
-					"name": "datadisk0",
+					"name": "[concat(parameters('vmNamePrefix'), 'oss', copyIndex(),'_DataDisk1')]",
 					"diskSizeGB": "[parameters('ossDiskSize')]",
 					"lun": 0,
-					"vhd": {
-						"uri": "[concat('http://', variables('storageAccountName'), add(mod(copyIndex(),parameters('storageAccountCount')),1), '.blob.core.windows.net/vhds/', concat(parameters('vmNamePrefix'),'oss',copyIndex()), '-datadisk0.vhd')]"
-					},
 					"caching": "None",
 					"createOption": "Empty"
 				}, {
-					"name": "datadisk1",
+					"name": "[concat(parameters('vmNamePrefix'), 'oss', copyIndex(),'_DataDisk2')]",
 					"diskSizeGB": "[parameters('ossDiskSize')]",
 					"lun": 1,
-					"vhd": {
-						"uri": "[concat('http://', variables('storageAccountName'), add(mod(copyIndex(),parameters('storageAccountCount')),1), '.blob.core.windows.net/vhds/', concat(parameters('vmNamePrefix'),'oss',copyIndex()), '-datadisk1.vhd')]"
-					},
 					"caching": "None",
 					"createOption": "Empty"
 				}, {
-					"name": "datadisk2",
+					"name":  "[concat(parameters('vmNamePrefix'), 'oss', copyIndex(),'_DataDisk3')]",
 					"diskSizeGB": "[parameters('ossDiskSize')]",
 					"lun": 2,
-					"vhd": {
-						"uri": "[concat('http://', variables('storageAccountName'), add(mod(copyIndex(),parameters('storageAccountCount')),1), '.blob.core.windows.net/vhds/', concat(parameters('vmNamePrefix'),'oss',copyIndex()), '-datadisk2.vhd')]"
-					},
 					"caching": "None",
 					"createOption": "Empty"
 				}]
@@ -1043,6 +1013,9 @@
 		"type": "Microsoft.Compute/availabilitySets",
 		"name": "[variables('clientAvailabilitySetSettings').name]",
 		"location": "[parameters('location')]",
+		"sku": {
+			"name": "Aligned"
+			},
 		"properties": {
 			"platformFaultDomainCount": "[variables('clientAvailabilitySetSettings').faultDomainCount]",
 			"platformUpdateDomainCount": "[variables('clientAvailabilitySetSettings').updateDomainCount]"
@@ -1102,7 +1075,7 @@
 			}]
 		}
 	}, {
-		"apiVersion": "2015-06-15",
+		"apiVersion": "2017-03-30",
 		"type": "Microsoft.Compute/virtualMachines",
 		"name": "[concat(parameters('clientVmNamePrefix'), 'client', copyIndex())]",
 		"location": "[parameters('location')]",
@@ -1134,10 +1107,7 @@
 			"storageProfile": {
 				"imageReference": "[variables('imageReference')]",
 				"osDisk": {
-					"name": "osdisk",
-					"vhd": {
-						"uri": "[concat('http://', variables('clientStorageAccountName'), '.blob.core.windows.net/vhds-client/', concat(parameters('clientVmNamePrefix'),'client',copyIndex()), '-osdisk.vhd')]"
-					},
+					"name":  "[concat(parameters('clientVmNamePrefix'), 'client', copyIndex(),'OSDisk')]",
 					"caching": "ReadWrite",
 					"createOption": "FromImage"
 				}

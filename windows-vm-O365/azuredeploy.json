@@ -1,5 +1,5 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.1",
   "parameters": {
     "storageType": {
@@ -41,11 +41,11 @@
     },
     "vmOSVersion": {
       "type": "string",
-      "defaultValue": "10-Enterprise-N",
+      "defaultValue": "Windows-10-N-x64",
       "allowedValues": [
-        "10-Enterprise-N",
-        "7.0-Enterprise-N",
-        "8.1-Enterprise-N"
+        "Windows-10-N-x64",
+        "Win7-SP1-Ent-N-x64",
+        "Win81-Ent-N-x64"
       ],
       "metadata": {
         "description": "Which version of Windows would like to deploy"
@@ -91,32 +91,16 @@
     }
   },
   "variables": {
-    "storageName": "[concat(uniquestring(resourceGroup().id), 'standardsa')]",
     "vnet01Prefix": "10.0.0.0/16",
     "vnet01Subnet1Name": "Subnet-1",
     "vnet01Subnet1Prefix": "10.0.0.0/24",
     "vmImagePublisher": "MicrosoftVisualStudio",
     "vmImageOffer": "Windows",
-    "vmOSDiskName": "VMOSDisk",
     "vmSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'Vnet01', variables('Vnet01Subnet1Name'))]",
-    "vmStorageAccountContainerName": "vhds",
     "vmNicName": "[concat(parameters('VMName'), 'NetworkInterface')]",
     "vmIP01Name": "VMIP01"
   },
   "resources": [
-    {
-      "name": "[variables('storageName')]",
-      "type": "Microsoft.Storage/storageAccounts",
-      "location": "[parameters('location')]",
-      "apiVersion": "2015-06-15",
-      "dependsOn": [],
-      "tags": {
-        "displayName": "Storage01"
-      },
-      "properties": {
-        "accountType": "[parameters('storageType')]"
-      }
-    },
     {
       "name": "VNet01",
       "type": "Microsoft.Network/virtualNetworks",
@@ -175,9 +159,8 @@
       "name": "[parameters('vmName')]",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[parameters('location')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion":  "2017-03-30",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('vmNicName'))]"
       ],
       "tags": {
@@ -200,10 +183,7 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "VMOSDisk",
-            "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageName')), '2015-06-15').primaryEndpoints.blob, variables('vmStorageAccountContainerName'), '/', variables('vmOSDiskName'), '.vhd')]"
-            },
+            "name": "[concat(parameters('vmName'),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -229,9 +209,9 @@
             "displayName": "SetupOffice"
           },
           "properties": {
-            "publisher": "Microsoft.Azure.Extensions",
+            "publisher": "Microsoft.Compute",
             "type": "CustomScriptExtension",
-            "typeHandlerVersion": "2.0",
+            "typeHandlerVersion": "1.9",
             "autoUpgradeMinorVersion": true,
             "settings": {
               "fileUris": [

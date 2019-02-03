@@ -10,7 +10,7 @@
 > :warning: :warning: **NOTE:** This template is designed for Docker versions earlier than v1.12
 for which Docker Swarm was still distributed as a separate container. As of Docker v1.12,
 Docker Engine has the Swarm functionalities built in. This template has not been
-updated to accomodate these changes.
+updated to accommodate these changes.
 
 This template deploys a [Docker Swarm](http://docs.docker.com/swarm) cluster on
 Azure with 3 Swarm managers and specified number of Swarm nodes in the location
@@ -38,7 +38,7 @@ command.
 
 The template provisions 3 Swarm manager VMs that use
 [Consul](https://consul.io/) for discovery and leader election. These VMs are in
-an [Avabilability Set][av-set] to achieve the highest uptime.
+an [Availability Set][av-set] to achieve the highest uptime.
 
 Each Swarm manager VM is of size `Standard_A0` as they are not running any
 workloads except the Swarm Manager and Consul containers. Manager node VMs have

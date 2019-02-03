@@ -1,9 +1,9 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "vpnType": {
-      "type": "String",
+      "type": "string",
       "metadata": {
         "description": "Route based (Dynamic Gateway) or Policy based (Static Gateway)"
       },
@@ -122,24 +122,6 @@
     "vmSize": {
       "type": "string",
       "defaultValue": "Standard_A1",
-      "allowedValues": [
-        "Standard_A1",
-        "Standard_A2",
-        "Standard_A3",
-        "Standard_A6",
-        "Standard_A7",
-        "Standard_A8",
-        "Standard_A9",
-        "Standard_A10",
-        "Standard_A11",
-        "Standard_D2",
-        "Standard_D3",
-        "Standard_D4",
-        "Standard_D11",
-        "Standard_D12",
-        "Standard_D13",
-        "Standard_D14"
-      ],
       "metadata": {
         "description": "Size of the Virtual Machine."
       }
@@ -155,25 +137,6 @@
       "metadata": {
         "description": "User password for sample VM"
       }
-    },
-    "newStorageAccountName": {
-      "type": "string",
-      "metadata": {
-        "description": "Storage Account Name for VM Disk"
-      }
-    },
-    "storageAccountType": {
-      "type": "string",
-      "allowedValues": [
-        "Standard_LRS",
-        "Standard_GRS",
-        "Standard_RAGRS",
-        "Premium_LRS"
-      ],
-      "metadata": {
-        "description": "The type of the Storage Account created"
-      },
-      "defaultValue": "Standard_LRS"
     }
   },
   "variables": {
@@ -183,13 +146,11 @@
     "gatewaySubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), 'GatewaySubnet')]",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
     "nicName": "[concat(parameters('vmName'), '-nic')]",
-    "vmPublicIPName": "[concat(parameters('vmName'), '-publicIP')]",
-    "OSDiskName": "osdisk",
-    "vmStorageAccountContainerName":"vhds"
+    "vmPublicIPName": "[concat(parameters('vmName'), '-publicIP')]"
   },
   "resources": [
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2018-07-01",
       "type": "Microsoft.Network/localNetworkGateways",
       "name": "[parameters('localGatewayName')]",
       "location": "[resourceGroup().location]",
@@ -203,7 +164,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2018-07-01",
       "name": "[parameters('connectionName')]",
       "type": "Microsoft.Network/connections",
       "location": "[resourceGroup().location]",
@@ -224,7 +185,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2018-07-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[parameters('virtualNetworkName')]",
       "location": "[resourceGroup().location]",
@@ -251,7 +212,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2018-07-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[parameters('gatewayPublicIPName')]",
       "location": "[resourceGroup().location]",
@@ -260,7 +221,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2018-07-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('vmPublicIPName')]",
       "location": "[resourceGroup().location]",
@@ -269,16 +230,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
-      "name": "[parameters('newStorageAccountName')]",
-      "location": "[resourceGroup().location]",
-      "type": "Microsoft.Storage/storageAccounts",
-      "properties": {
-        "accountType": "[parameters('storageAccountType')]"
-      }
-    },
-    {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2018-07-01",
       "type": "Microsoft.Network/virtualNetworkGateways",
       "name": "[parameters('gatewayName')]",
       "location": "[resourceGroup().location]",
@@ -311,7 +263,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2018-07-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
       "location": "[resourceGroup().location]",
@@ -338,12 +290,11 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30", 
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
       ],
       "properties": {
@@ -362,12 +313,9 @@
             "sku": "[variables('imageSKU')]",
             "version": "latest"
           },
-          "osDisk": {
-            "createOption": "FromImage",
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob, variables('vmStorageAccountContainerName'),'/', variables('OSDiskName'), '.vhd')]"
-            }
+          "osDisk": {  
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
           }
         },
         "networkProfile": {
