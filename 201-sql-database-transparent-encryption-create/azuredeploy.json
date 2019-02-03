@@ -2,16 +2,28 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "sqlServerName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of Azure SQL Logical Server where the database will be placed."
+      }
+    },
     "sqlAdministratorLogin": {
       "type": "string",
       "metadata": {
-        "description": "The administrator username of the SQL Server."
+        "description": "The administrator username of the Azure SQL Logical Server."
       }
     },
     "sqlAdministratorLoginPassword": {
       "type": "securestring",
       "metadata": {
-        "description": "The administrator password of the SQL Server."
+        "description": "The administrator password of the Azure SQL Logical Server."
+      }
+    },
+    "databaseName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the database."
       }
     },
     "transparentDataEncryption": {
@@ -31,23 +43,35 @@
       "metadata": {
         "description": "Location for all resources."
       }
-    }
+    },
+    "startIpAddress": {
+      "type": "string",
+      "defaultValue": "0.0.0.0",
+      "metadata": {
+        "description": "Start Ip address for allowed IP firewall range."
+      }
+    },
+    "endIpAddress": {
+      "type": "string",
+      "defaultValue": "0.0.0.0",
+      "metadata": {
+        "description": "End Ip address for allowed IP firewall range."
+      }
+    },
   },
   "variables": {
-    "sqlServerName": "[concat('sqlserver', uniqueString(subscription().id, resourceGroup().id))]",
-    "databaseName": "sample-db-with-tde",
     "databaseEdition": "Basic",
     "databaseCollation": "SQL_Latin1_General_CP1_CI_AS",
     "databaseServiceObjectiveName": "Basic"
   },
   "resources": [
     {
-      "name": "[variables('sqlServerName')]",
+      "name": "[parameters('sqlServerName')]",
       "type": "Microsoft.Sql/servers",
       "apiVersion": "2014-04-01-preview",
       "location": "[parameters('location')]",
       "tags": {
-        "displayName": "SqlServer"
+        "displayName": "Logical Server"
       },
       "properties": {
         "administratorLogin": "[parameters('sqlAdministratorLogin')]",
@@ -56,7 +80,7 @@
       },
       "resources": [
         {
-          "name": "[variables('databaseName')]",
+          "name": "[parameters('databaseName')]",
           "type": "databases",
           "apiVersion": "2015-01-01",
           "location": "[parameters('location')]",
@@ -69,7 +93,7 @@
             "requestedServiceObjectiveName": "[variables('databaseServiceObjectiveName')]"
           },
           "dependsOn": [
-            "[variables('sqlServerName')]"
+            "[parameters('sqlServerName')]"
           ],
           "resources": [
             {
@@ -81,7 +105,7 @@
                 "status": "[parameters('transparentDataEncryption')]"
               },
               "dependsOn": [
-                "[variables('databaseName')]"
+                "[parameters('databaseName')]"
               ]
             }
           ]
@@ -92,11 +116,11 @@
           "apiVersion": "2014-04-01",
           "location": "[parameters('location')]",
           "properties": {
-            "endIpAddress": "0.0.0.0",
-            "startIpAddress": "0.0.0.0"
+            "endIpAddress": "[parameters('endIpAddress')]",
+            "startIpAddress": "[parameters('startIpAddress')]"
           },
           "dependsOn": [
-            "[variables('sqlServerName')]"
+            "[parameters('sqlServerName')]"
           ]
         }
       ]
@@ -105,11 +129,11 @@
   "outputs": {
     "sqlServerFqdn": {
       "type": "string",
-      "value": "[reference(concat('Microsoft.Sql/servers/', variables('sqlServerName'))).fullyQualifiedDomainName]"
+      "value": "[reference(concat('Microsoft.Sql/servers/', parameters('sqlServerName'))).fullyQualifiedDomainName]"
     },
     "databaseName": {
       "type": "string",
-      "value": "[variables('databaseName')]"
+      "value": "[parameters('databaseName')]"
     }
   }
 }
