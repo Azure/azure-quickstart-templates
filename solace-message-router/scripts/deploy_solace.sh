@@ -277,7 +277,7 @@ else
       break
     fi
   done
-  if [ ${disk_volume} == "" ]; then
+  if [[ ${disk_volume} == "" ]]; then
     echo "`date` INFO: Default disk device to /dev/sdc"
     disk_volume="/dev/sdc"
   fi
