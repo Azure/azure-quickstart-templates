@@ -200,23 +200,36 @@
   "variables": {
     "namingInfix": "[toLower(substring(concat(parameters('clusterName'), uniqueString(resourceGroup().id)), 0, 9))]",
     "addressPrefix": "10.0.0.0/16",
-    "subnetPrefix": "10.0.1.0/24",
+    "subnetPrimaryPrefix": "10.0.1.0/24",
+    "subnetMemberPrefix": "10.0.2.0/24",
     "virtualNetworkName": "[concat(variables('namingInfix'), 'vnet')]",
-    "subnetName": "[concat(variables('namingInfix'), 'subnet')]",
-    "scaleSetName": "[concat(variables('namingInfix'), 'scaleset')]",
+    "subnetPrimaryName": "[concat(variables('namingInfix'), 'primarySubnet')]",
+    "subnetMemberName": "[concat(variables('namingInfix'), 'memberSubnet')]",
+    "scaleSetPrimaryName": "[concat(variables('namingInfix'), 'primaryScaleset')]",
+    "scaleSetMemberName": "[concat(variables('namingInfix'), 'memberScaleset')]",
     "lbName": "[concat(variables('namingInfix'), 'lb')]",
-    "bepoolName": "[concat(variables('lbName'), 'bepool')]",
-    "fepoolName": "[concat(variables('lbName'), 'fepool')]",
+    "bepoolPrimaryName": "[concat(variables('lbName'), 'primaryBepool')]",
+    "bepoolMemberName": "[concat(variables('lbName'), 'memberBepool')]",
+    "fepoolPrimaryName": "[concat(variables('lbName'), 'primaryFepool')]",
+    "fepoolMemberName": "[concat(variables('lbName'), 'memberFepool')]",
     "lbID": "[resourceId('Microsoft.Network/loadBalancers', variables('lbName'))]",
-    "bepoolID": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('lbName'), variables('bePoolName'))]",
-    "feIpConfigName": "[concat(variables('fepoolName'), 'IpConfig')]",
-    "feIpConfigId": "[resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', variables('lbName'), variables('feIpConfigName'))]",
-    "pipName": "[concat(variables('namingInfix'), 'pip')]",
-    "nicName": "[concat(variables('namingInfix'), 'nic')]",
-    "natPoolName": "[concat(variables('lbName'), 'natpool')]",
+    "bepoolPrimaryID": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('lbName'), variables('bepoolPrimaryName'))]",
+    "bepoolMemberID": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('lbName'), variables('bepoolMemberName'))]",
+    "feIpConfigPrimaryName": "[concat(variables('fepoolPrimaryName'), 'primaryIpConfig')]",
+    "feIpConfigMemberName": "[concat(variables('fepoolMemberName'), 'memberIpConfig')]",
+    "feIpConfigPrimaryId": "[resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', variables('lbName'), variables('feIpConfigPrimaryName'))]",
+    "feIpConfigMemberId": "[resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', variables('lbName'), variables('feIpConfigMemberName'))]",
+    "pipPrimaryName": "[concat(variables('namingInfix'), 'primaryPip')]",
+    "pipMemberName": "[concat(variables('namingInfix'), 'memberPip')]",
+    "nicPrimaryName": "[concat(variables('namingInfix'), 'primaryNic')]",
+    "nicMemberName": "[concat(variables('namingInfix'), 'memberNic')]",
+    "natPoolPrimaryName": "[concat(variables('lbName'), 'primaryNatpool')]",
+    "natPoolMemberName": "[concat(variables('lbName'), 'memberNatpool')]",
     "ipConfigName": "[concat(variables('namingInfix'), 'ipconfig')]",
-    "httpProbeName": "httpProbe",
-    "httpsProbeName": "httpsProbe",
+    "httpProbePrimaryName": "primaryHttpProbe",
+    "httpsProbePrimaryName": "primaryHttpsProbe",
+    "httpProbeMemberName": "memberHttpProbe",
+    "httpsProbeMemberName": "memberHttpsProbe",
     "storageAccountName": "[concat(variables('namingInfix'), 'storage')]",
     "vmStorageAccountContainerName": "filestore",
     "azureSqlServerName": "[concat(variables('namingInfix'), 'sqlsrv')]",
@@ -225,7 +238,6 @@
     "DB_Admin_Password": "[parameters('DB_Admin_Password')]",
     "DB_Edition": "[parameters('DB_Edition')]",
     "DB_Location": "[parameters('location')]",
-    "artifactoryVersion": "[parameters('artifactoryVersion')]",
     "masterKey": "[parameters('masterKey')]",
     "certificate": "[parameters('certificate')]",
     "certificateKey": "[parameters('certificateKey')]",
@@ -312,7 +324,7 @@
             }
           },
           {
-            "name": "https-rule",
+            "name": "https-nginx-rule",
             "properties": {
               "description": "Allow HTTP",
               "protocol": "Tcp",
@@ -358,9 +370,18 @@
         },
         "subnets": [
           {
-            "name": "[variables('subnetName')]",
+            "name": "[variables('subnetPrimaryName')]",
             "properties": {
-              "addressPrefix": "[variables('subnetPrefix')]",
+              "addressPrefix": "[variables('subnetPrimaryPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+              }
+            }
+          },
+          {
+            "name": "[variables('subnetMemberName')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetMemberPrefix')]",
               "networkSecurityGroup": {
                 "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
               }
@@ -372,10 +393,10 @@
     {
       "apiVersion": "2018-07-01",
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[variables('nicName')]",
+      "name": "[variables('nicPrimaryName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('pipName'))]",
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('pipPrimaryName'))]",
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
         "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
       ],
@@ -386,7 +407,7 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "subnet": {
-                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetPrimaryName'))]"
               }
             }
           }
@@ -399,10 +420,10 @@
     {
       "apiVersion": "2018-07-01",
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[concat(variables('nicName'),'2')]",
+      "name": "[variables('nicMemberName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('pipName'),'2')]",
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('pipMemberName'))]",
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
         "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
       ],
@@ -413,7 +434,7 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "subnet": {
-                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetMemberName'))]"
               }
             }
           }
@@ -425,7 +446,7 @@
     },
     {
       "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[variables('pipName')]",
+      "name": "[variables('pipPrimaryName')]",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Standard"
@@ -440,7 +461,7 @@
     },
     {
       "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[concat(variables('pipName'),'2')]",
+      "name": "[variables('pipMemberName')]",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Standard"
@@ -462,45 +483,45 @@
         "name": "Standard"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('pipName'))]",
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('pipName'), '2')]"
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('pipPrimaryName'))]",
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('pipMemberName'))]"
       ],
-      "tags": {
+      "tags":{
         "displayName": "Load Balancer"
       },
       "properties": {
         "frontendIPConfigurations": [
           {
-            "name": "[variables('feIpConfigName')]",
+            "name": "[variables('feIpConfigPrimaryName')]",
             "properties": {
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('pipName'))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('pipPrimaryName'))]"
               }
             }
           },
           {
-            "name": "[concat(variables('feIpConfigName'),'2')]",
+            "name": "[variables('feIpConfigMemberName')]",
             "properties": {
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('pipName'),'2'))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('pipMemberName'))]"
               }
             }
           }
         ],
         "backendAddressPools": [
           {
-            "name": "[variables('bepoolName')]"
+            "name": "[variables('bepoolPrimaryName')]"
           },
           {
-            "name": "[concat(variables('bepoolName'),'2')]"
+            "name": "[variables('bepoolMemberName')]"
           }
         ],
         "inboundNatPools": [
           {
-            "name": "[variables('natPoolName')]",
+            "name": "[variables('natPoolPrimaryName')]",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[variables('feIpConfigId')]"
+                "id": "[variables('feIpConfigPrimaryId')]"
               },
               "protocol": "tcp",
               "frontendPortRangeStart": 10022,
@@ -509,10 +530,10 @@
             }
           },
           {
-            "name": "[concat(variables('natPoolName'),'2')]",
+            "name": "[variables('natPoolMemberName')]",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[concat(variables('feIpConfigId'),'2')]"
+                "id": "[variables('feIpConfigMemberId')]"
               },
               "protocol": "tcp",
               "frontendPortRangeStart": 20022,
@@ -523,14 +544,14 @@
         ],
         "loadBalancingRules": [
           {
-            "name": "HTTPRule",
+            "name": "HTTPRulePrimary",
             "properties": {
               "loadDistribution": "Default",
               "frontendIPConfiguration": {
-                "id": "[variables('feIpConfigId')]"
+                "id": "[variables('feIpConfigPrimaryId')]"
               },
               "backendAddressPool": {
-                "id": "[variables('bepoolID')]"
+                "id": "[variables('bepoolPrimaryID')]"
               },
               "protocol": "Tcp",
               "frontendPort": 80,
@@ -538,19 +559,19 @@
               "enableFloatingIP": false,
               "idleTimeoutInMinutes": 5,
               "probe": {
-                "id": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('lbName'), variables('httpProbeName'))]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('lbName'), variables('httpProbePrimaryName'))]"
               }
             }
           },
           {
-            "name": "HTTPSRule",
+            "name": "HTTPSRulePrimary",
             "properties": {
               "loadDistribution": "Default",
               "frontendIPConfiguration": {
-                "id": "[variables('feIpConfigId')]"
+                "id": "[variables('feIpConfigPrimaryId')]"
               },
               "backendAddressPool": {
-                "id": "[variables('bepoolID')]"
+                "id": "[variables('bepoolPrimaryID')]"
               },
               "protocol": "Tcp",
               "frontendPort": 443,
@@ -558,19 +579,19 @@
               "enableFloatingIP": false,
               "idleTimeoutInMinutes": 5,
               "probe": {
-                "id": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('lbName'), variables('httpsProbeName'))]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('lbName'), variables('httpsProbePrimaryName'))]"
               }
             }
           },
           {
-            "name": "HTTPRule2",
+            "name": "HTTPRuleMember",
             "properties": {
               "loadDistribution": "Default",
               "frontendIPConfiguration": {
-                "id": "[concat(variables('feIpConfigId'),'2')]"
+                "id": "[variables('feIpConfigMemberId')]"
               },
               "backendAddressPool": {
-                "id": "[concat(variables('bepoolID'),'2')]"
+                "id": "[variables('bepoolMemberID')]"
               },
               "protocol": "Tcp",
               "frontendPort": 80,
@@ -578,19 +599,19 @@
               "enableFloatingIP": false,
               "idleTimeoutInMinutes": 5,
               "probe": {
-                "id": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('lbName'), concat(variables('httpProbeName'), '2'))]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('lbName'), variables('httpProbeMemberName'))]"
               }
             }
           },
           {
-            "name": "HTTPSRule2",
+            "name": "HTTPSRuleMember",
             "properties": {
               "loadDistribution": "Default",
               "frontendIPConfiguration": {
-                "id": "[concat(variables('feIpConfigId'),'2')]"
+                "id": "[variables('feIpConfigMemberId')]"
               },
               "backendAddressPool": {
-                "id": "[concat(variables('bepoolID'),'2')]"
+                "id": "[variables('bepoolMemberID')]"
               },
               "protocol": "Tcp",
               "frontendPort": 443,
@@ -598,14 +619,14 @@
               "enableFloatingIP": false,
               "idleTimeoutInMinutes": 5,
               "probe": {
-                "id": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('lbName'), concat(variables('httpsProbeName'), '2'))]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('lbName'), variables('httpsProbeMemberName'))]"
               }
             }
           }
         ],
         "probes": [
           {
-            "name": "[variables('httpProbeName')]",
+            "name": "[variables('httpProbePrimaryName')]",
             "properties": {
               "protocol": "Http",
               "requestPath": "/artifactory/api/system/ping",
@@ -615,7 +636,7 @@
             }
           },
           {
-            "name": "[variables('httpsProbeName')]",
+            "name": "[variables('httpsProbePrimaryName')]",
             "properties": {
               "protocol": "Tcp",
               "port": 443,
@@ -624,7 +645,7 @@
             }
           },
           {
-            "name": "[concat(variables('httpProbeName'),'2')]",
+            "name": "[variables('httpProbeMemberName')]",
             "properties": {
               "protocol": "Http",
               "requestPath": "/artifactory/api/system/ping",
@@ -634,7 +655,7 @@
             }
           },
           {
-            "name": "[concat(variables('httpsProbeName'),'2')]",
+            "name": "[variables('httpsProbeMemberName')]",
             "properties": {
               "protocol": "Tcp",
               "port": 443,
@@ -693,7 +714,7 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachineScaleSets",
-      "name": "[variables('scaleSetName')]",
+      "name": "[variables('scaleSetPrimaryName')]",
       "location": "[parameters('location')]",
       "apiVersion": "2018-10-01",
       "dependsOn": [
@@ -731,12 +752,12 @@
             "computerNamePrefix": "[variables('namingInfix')]",
             "adminUsername": "[parameters('adminUsername')]",
             "adminPassword": "[parameters('adminPassword')]",
-            "customData": "[base64(concat('#INSTALL SCRIPT INPUTS\nCERTIFICATE_KEY=',parameters('certificateKey'),'\nCERTIFICATE=', parameters('certificate'),'\nCERTIFICATE_DOMAIN=',parameters('certificateDomain'),'\nARTIFACTORY_SERVER_NAME=',parameters('artifactoryServerName'),'\nEXTRA_JAVA_OPTS=',parameters('extraJavaOptions'),'\nJDBC_STR=',reference('Microsoft.Resources/deployments/deploySQLDB').outputs.jdbcConnString.value,'\nDB_NAME=',variables('DB_Name'),'\nDB_ADMIN_USER=',variables('DB_Admin_User'),'\nDB_ADMIN_PASSWD=',variables('DB_Admin_Password'),'\nSTO_ACT_NAME=',variables('storageAccountName'),'\nSTO_ACT_ENDPOINT=',reference(resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))).primaryEndpoints.blob,'\nSTO_CTR_NAME=',variables('vmStorageAccountContainerName'),'\nSTO_ACT_KEY=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2018-07-01').keys[0].value,'\nARTIFACTORY_VERSION=',variables('artifactoryVersion'),'\nMASTER_KEY=',variables('masterKey'),'\nIS_PRIMARY=','true','\nLICENSE1=',variables('artifactoryLicense1'),'\nLICENSE2=',variables('artifactoryLicense2'),'\nLICENSE3=',variables('artifactoryLicense3'),'\nLICENSE4=',variables('artifactoryLicense4'),'\nLICENSE5=',variables('artifactoryLicense5'),'\n'))]"
+            "customData": "[base64(concat('#INSTALL SCRIPT INPUTS\nCERTIFICATE_KEY=',parameters('certificateKey'),'\nCERTIFICATE=', parameters('certificate'),'\nCERTIFICATE_DOMAIN=',parameters('certificateDomain'),'\nARTIFACTORY_SERVER_NAME=',parameters('artifactoryServerName'),'\nEXTRA_JAVA_OPTS=',parameters('extraJavaOptions'),'\nJDBC_STR=',reference('Microsoft.Resources/deployments/deploySQLDB').outputs.jdbcConnString.value,'\nDB_NAME=',variables('DB_Name'),'\nDB_ADMIN_USER=',variables('DB_Admin_User'),'\nDB_ADMIN_PASSWD=',variables('DB_Admin_Password'),'\nSTO_ACT_NAME=',variables('storageAccountName'),'\nSTO_ACT_ENDPOINT=',reference(resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))).primaryEndpoints.blob,'\nSTO_CTR_NAME=',variables('vmStorageAccountContainerName'),'\nSTO_ACT_KEY=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2018-07-01').keys[0].value,'\nMASTER_KEY=',variables('masterKey'),'\nIS_PRIMARY=','true','\nLICENSE1=',variables('artifactoryLicense1'),'\nLICENSE2=',variables('artifactoryLicense2'),'\nLICENSE3=',variables('artifactoryLicense3'),'\nLICENSE4=',variables('artifactoryLicense4'),'\nLICENSE5=',variables('artifactoryLicense5'),'\n'))]"
           },
           "networkProfile": {
             "networkInterfaceConfigurations": [
               {
-                "name": "[variables('nicName')]",
+                "name": "[variables('nicPrimaryName')]",
                 "properties": {
                   "primary": true,
                   "ipConfigurations": [
@@ -744,16 +765,16 @@
                       "name": "[concat(variables('ipConfigName'),'1')]",
                       "properties": {
                         "subnet": {
-                          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
+                          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetPrimaryName'))]"
                         },
                         "loadBalancerBackendAddressPools": [
                           {
-                            "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('lbName'), variables('bePoolName'))]"
+                            "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('lbName'), variables('bePoolPrimaryName'))]"
                           }
                         ],
                         "loadBalancerInboundNatPools": [
                           {
-                            "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatPools', variables('lbName'), variables('natPoolName'))]"
+                            "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatPools', variables('lbName'), variables('natPoolPrimaryName'))]"
                           }
                         ]
                       }
@@ -789,13 +810,13 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachineScaleSets",
-      "name": "[concat(variables('scaleSetName'),'2')]",
+      "name": "[variables('scaleSetMemberName')]",
       "location": "[parameters('location')]",
       "apiVersion": "2018-10-01",
       "dependsOn": [
         "[concat('Microsoft.Network/loadBalancers/', variables('lbName'))]",
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-        "[concat('Microsoft.Compute/virtualMachineScaleSets/', variables('scaleSetName'))]",
+        "[concat('Microsoft.Compute/virtualMachineScaleSets/', variables('scaleSetPrimaryName'))]",
         "[concat('Microsoft.Resources/deployments/', 'deploySQLDB')]",
         "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
       ],
@@ -828,12 +849,12 @@
             "computerNamePrefix": "[variables('namingInfix')]",
             "adminUsername": "[parameters('adminUsername')]",
             "adminPassword": "[parameters('adminPassword')]",
-            "customData": "[base64(concat('#INSTALL SCRIPT INPUTS\nCERTIFICATE_KEY=',parameters('certificateKey'),'\nCERTIFICATE=', parameters('certificate'),'\nCERTIFICATE_DOMAIN=',parameters('certificateDomain'),'\nARTIFACTORY_SERVER_NAME=',parameters('artifactoryServerName'),'\nEXTRA_JAVA_OPTS=',parameters('extraJavaOptions'),'\nJDBC_STR=',reference('Microsoft.Resources/deployments/deploySQLDB').outputs.jdbcConnString.value,'\nDB_NAME=',variables('DB_Name'),'\nDB_ADMIN_USER=',variables('DB_Admin_User'),'\nDB_ADMIN_PASSWD=',variables('DB_Admin_Password'),'\nSTO_ACT_NAME=',variables('storageAccountName'),'\nSTO_ACT_ENDPOINT=',reference(resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))).primaryEndpoints.blob,'\nSTO_CTR_NAME=',variables('vmStorageAccountContainerName'),'\nSTO_ACT_KEY=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2018-07-01').keys[0].value,'\nARTIFACTORY_VERSION=',variables('artifactoryVersion'),'\nMASTER_KEY=',variables('masterKey'),'\nIS_PRIMARY=','false','\nLICENSE1=',variables('artifactoryLicense1'),'\nLICENSE2=',variables('artifactoryLicense2'),'\nLICENSE3=',variables('artifactoryLicense3'),'\nLICENSE4=',variables('artifactoryLicense4'),'\nLICENSE5=',variables('artifactoryLicense5'),'\n'))]"
+            "customData": "[base64(concat('#INSTALL SCRIPT INPUTS\nCERTIFICATE_KEY=',parameters('certificateKey'),'\nCERTIFICATE=', parameters('certificate'),'\nCERTIFICATE_DOMAIN=',parameters('certificateDomain'),'\nARTIFACTORY_SERVER_NAME=',parameters('artifactoryServerName'),'\nEXTRA_JAVA_OPTS=',parameters('extraJavaOptions'),'\nJDBC_STR=',reference('Microsoft.Resources/deployments/deploySQLDB').outputs.jdbcConnString.value,'\nDB_NAME=',variables('DB_Name'),'\nDB_ADMIN_USER=',variables('DB_Admin_User'),'\nDB_ADMIN_PASSWD=',variables('DB_Admin_Password'),'\nSTO_ACT_NAME=',variables('storageAccountName'),'\nSTO_ACT_ENDPOINT=',reference(resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))).primaryEndpoints.blob,'\nSTO_CTR_NAME=',variables('vmStorageAccountContainerName'),'\nSTO_ACT_KEY=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2018-07-01').keys[0].value,'\nMASTER_KEY=',variables('masterKey'),'\nIS_PRIMARY=','false','\nLICENSE1=',variables('artifactoryLicense1'),'\nLICENSE2=',variables('artifactoryLicense2'),'\nLICENSE3=',variables('artifactoryLicense3'),'\nLICENSE4=',variables('artifactoryLicense4'),'\nLICENSE5=',variables('artifactoryLicense5'),'\n'))]"
           },
           "networkProfile": {
             "networkInterfaceConfigurations": [
               {
-                "name": "[concat(variables('nicName'),'2')]",
+                "name": "[variables('nicMemberName')]",
                 "properties": {
                   "primary": true,
                   "ipConfigurations": [
@@ -841,16 +862,16 @@
                       "name": "[concat(variables('ipConfigName'),'1')]",
                       "properties": {
                         "subnet": {
-                          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
+                          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetMemberName'))]"
                         },
                         "loadBalancerBackendAddressPools": [
                           {
-                            "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('lbName'), concat(variables('bePoolName'), '2'))]"
+                            "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('lbName'), variables('bePoolMemberName'))]"
                           }
                         ],
                         "loadBalancerInboundNatPools": [
                           {
-                            "id":"[resourceId('Microsoft.Network/loadBalancers/inboundNatPools', variables('lbName'), concat(variables('natPoolName'), '2'))]"
+                            "id":"[resourceId('Microsoft.Network/loadBalancers/inboundNatPools', variables('lbName'), variables('natPoolMemberName'))]"
                           }
                         ]
                       }
@@ -887,7 +908,7 @@
   ],
   "outputs": {
     "fqdn": {
-      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',concat(variables('pipName'),'2')),'2018-07-01').dnsSettings.fqdn]",
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('pipMemberName')),'2018-07-01').dnsSettings.fqdn]",
       "type": "string"
     }
   }
