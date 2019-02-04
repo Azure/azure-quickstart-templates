@@ -24,10 +24,8 @@ if((Get-Module ConfigurationManager) -eq $null) {
 
 # Connect to the site's drive if it is not already present
 "[$(Get-Date -format HH:mm:ss)] Setting PS Drive..." | Out-File -Append $logpath
-do
-{
-	New-PSDrive -Name $SiteCode -PSProvider CMSite -Root $ProviderMachineName @initParams
-}
+
+New-PSDrive -Name $SiteCode -PSProvider CMSite -Root $ProviderMachineName @initParams
 while((Get-PSDrive -Name $SiteCode -PSProvider CMSite -ErrorAction SilentlyContinue) -eq $null) 
 {
 	"[$(Get-Date -format HH:mm:ss)] Failed ,retry in 10s. Please wait." | Out-File -Append $logpath

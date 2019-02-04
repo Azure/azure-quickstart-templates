@@ -12,7 +12,7 @@ The interesting portion of this template worth noting is here:
 
 		"diagnosticsProfile": {
           "bootDiagnostics": {
-             "enabled": "true",
+             "enabled": true,
 			 "storageUri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net')]"
           }
         }
