@@ -7,7 +7,6 @@ STORAGE_ACCT=$(cat /var/lib/cloud/instance/user-data.txt | grep "^STO_ACT_NAME="
 STORAGE_ACT_ENDPOINT=$(cat /var/lib/cloud/instance/user-data.txt | grep "^STO_ACT_ENDPOINT=" | sed "s/STO_ACT_ENDPOINT=//")
 STORAGE_CONTAINER=$(cat /var/lib/cloud/instance/user-data.txt | grep "^STO_CTR_NAME=" | sed "s/STO_CTR_NAME=//")
 STORAGE_ACCT_KEY=$(cat /var/lib/cloud/instance/user-data.txt | grep "^STO_ACT_KEY=" | sed "s/STO_ACT_KEY=//")
-ARTIFACTORY_VERSION=$(cat /var/lib/cloud/instance/user-data.txt | grep "^ARTIFACTORY_VERSION=" | sed "s/ARTIFACTORY_VERSION=//")
 MASTER_KEY=$(cat /var/lib/cloud/instance/user-data.txt | grep "^MASTER_KEY=" | sed "s/MASTER_KEY=//")
 IS_PRIMARY=$(cat /var/lib/cloud/instance/user-data.txt | grep "^IS_PRIMARY=" | sed "s/IS_PRIMARY=//")
 ARTIFACTORY_LICENSE_1=$(cat /var/lib/cloud/instance/user-data.txt | grep "^LICENSE1=" | sed "s/LICENSE1=//")
