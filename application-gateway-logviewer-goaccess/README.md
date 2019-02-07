@@ -33,7 +33,7 @@ The template will require a set of parameters input from you as the user:
         <li><b>adminUsername:</b> Username you want to use for the VM the template creates</li>
         <li><b>adminPassword:</b> Password you want to use to log in to the VM</li>
         <li><b>dnsNameForPublicIP:</b> The DNS name (prefix) you want to use for the VM to map against its public IP</li>
-        <li><b>appGwAccessLogsBlobSasUri:</b> The SAS URL connection string (see 2(c) in the Pre-requisites list above) for the storage account blog where your Application Gateway Access Logs are stored</li>
+        <li><b>appGwAccessLogsBlobSasUri:</b> The SAS URL connection string (see 2(c) in the Pre-requisites list above) for the storage account blob container where your Application Gateway Access Logs are stored. For example insights-logs-applicationgatewayaccesslog.</li>
         <li><b>FilterRegexForAppGwAccessLogs:</b> A regex to use to filter the Application Gateway Access Logs to a specific subset. For example, if you have multiple application gateways publishing logs to the same storage account blob, and you only want GoAccess to surface traffic stats for say one of the Application Gateways, you can provide a regex for this field to filter to just that instance.</li>
         <li><b>Region:</b> The Azure region where you would like the VM to be created</li>
     </ol>
