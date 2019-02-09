@@ -246,6 +246,7 @@ Each test script has access to a set of well-known variables:
 
                 if (-not $matchingGroups) { continue } 
                 if ($fileInfo.Schema -like '*deploymentTemplate*') {
+                    $isMainTemplate = 'mainTemplate.json', 'azureDeploy.json' -contains $fileInfo.Name
                     $templateFileName = $fileInfo.Name
                     $TemplateObject = $fileInfo.Object
                     $TemplateText = $fileInfo.Text
@@ -287,8 +288,9 @@ Each test script has access to a set of well-known variables:
     process {
         # If no template was passed,
         if ($PSCmdlet.ParameterSetName -eq 'NearbyTemplate') {
-            # attempt to find one in the current directory and it's subdirectories. 
+            # attempt to find one in the current directory and it's subdirectories 
             $possibleJsonFiles = @(Get-ChildItem -Filter *.json -Recurse |
+                Sort-Object Name -Descending | # (sort by name descending so that MainTemplate.json comes first).
                 Where-Object {
                     'azureDeploy.json', 'mainTemplate.json' -contains $_.Name 
                 })
@@ -369,7 +371,7 @@ Each test script has access to a set of well-known variables:
         #*$TemplateFileName (the name of the azure template file)
         $templateFileName = $TemplatePath | Split-Path -Leaf
         #*$IsMainTemplate (if the TemplateFileName is named mainTemplate.json)
-        $isMainTemplate = $templateFileName -eq 'mainTemplate.json'
+        $isMainTemplate = 'mainTemplate.json', 'azureDeploy.json' -contains $templateFileName
         $templateFile = Get-Item -LiteralPath $resolvedTemplatePath
         $templateFolder = $templateFile.Directory
         #*$FolderName (the name of the root folder containing the template)
@@ -386,10 +388,11 @@ Each test script has access to a set of well-known variables:
             #*$CreateUIDefinitionObject (the createuidefinition text, converted from json)
             $createUIDefinitionObject =  $createUIDefintionText | ConvertFrom-Json
             #*$HasCreateUIDefinition (indicates if a CreateUIDefinition.json file exists)
-            $HasCreateUIDefinition = $false            
+            $HasCreateUIDefinition = $true            
         } else {                
             $HasCreateUIDefinition = $false 
         }
+        
 
         #*$FolderFiles (a list of objects of each file in the directory)
         $FolderFiles = 
@@ -416,10 +419,14 @@ Each test script has access to a set of well-known variables:
                     $fileObject    
                 })
 
-        
+        if ($isMainTemplate) {
+            $MainTemplatePath = "$TemplateFullPath"
+            $MainTemplateText = [IO.File]::ReadAllText($MainTemplatePath)
+            $MainTemplateObject = $MainTemplateText | ConvertFrom-Json
+        }
         
         # If we've found a CreateUIDefinition, we'll want to process it first.                
-        if ($createUIDefintionText) { 
+        if ($HasCreateUIDefinition) { 
             # Loop over the folder files and get every file that isn't createUIDefinition
             $otherFolderFiles = @(foreach ($_ in $FolderFiles) {
                 if ($_.Name -ne 'CreateUIDefinition.json') {
