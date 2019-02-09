@@ -8,7 +8,7 @@ if (-not $CreateUIDefinitionObject.'$Schema') {
     throw "CreateUIDefinition is missing a `$schema property"
 }
 
-if (-not $CreateUIDefinitionObject.'$schema' -ne 'https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#') {
+if (-not $CreateUIDefinitionObject.'$schema' -cne 'https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#') {
     throw "CreateUIDefintion has an incorrect schema.  Schema should be https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#, and is '$($CreateUIDefinitionObject.'$schema')'"
 }
 
