@@ -4,7 +4,8 @@
 $CreateUIDefinitionObject
 )
 
-$findTextBoxes = {
+
+function findTextBoxes {
     param([Parameter(ValueFromPipelineByPropertyName=$true,Position=0)][PSObject]$value)
     process {
         if (-not $value) { return } 
@@ -20,13 +21,13 @@ $findTextBoxes = {
                 & $findTextBoxes -value { $_ } 
         } else {
             $value.psobject.properties |
-                & $findTextBoxes
+                findTextBoxes
         }
     
     }
 } 
 
-$allTextBoxes = & $findTextBoxes $CreateUIDefinitionObject
+$allTextBoxes = findTextBoxes $CreateUIDefinitionObject
 foreach ($textbox in $allTextBoxes) {
     if (-not $textbox.constraints) {
         Write-Error "Textbox $($textbox.Name) is missing constraints"

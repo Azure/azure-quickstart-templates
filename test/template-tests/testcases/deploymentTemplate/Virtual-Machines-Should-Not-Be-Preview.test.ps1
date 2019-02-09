@@ -4,7 +4,11 @@
 $TemplateObject
 )
 foreach ($resource in $templateObject.resources) {
-    if ('microsoft.compute/virtualmachinescalesets', 'microsoft.compute/virtualmachines' -notcontains $resource.ResourceType) {
+    # This is a PowerShell trick to simplify multiple -ors
+    # -notcontains checks that a list (on the left side) doesn't contain a value (on the right side)
+    # So this test will ignore resources that aren't /virtualmachines or /virtualmachineassets
+    if ('microsoft.compute/virtualmachinescalesets', 
+        'microsoft.compute/virtualmachines' -notcontains $resource.ResourceType) {
         continue
     }
     $imageReference = $resource.virtualmachineprofile.storageprofile.imagereference
