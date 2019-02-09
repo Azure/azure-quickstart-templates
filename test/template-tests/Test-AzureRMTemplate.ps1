@@ -64,7 +64,7 @@ Each test script has access to a set of well-known variables:
     [Collections.IDictionary]
     $TestCase = [Ordered]@{},
 
-    # A set of test groups.
+    # A set of test groups.  Test groups will be automatically populated by the directory names in /testcases.
     [Parameter(ValueFromPipelineByPropertyName=$true)]
     [ValidateScript({
         foreach ($k in $_.Keys) {
@@ -298,7 +298,8 @@ Each test script has access to a set of well-known variables:
             
             # If more than one template was found, warn which one we'll be testing.
             if ($possibleJsonFiles.Count -gt 1) {
-                Write-Warning "More than one potential template file found, using $($possibleJsonFiles[0].Fullname)"
+                Write-Error "More than one potential template file found beneath '$pwd'.  Please have only azureDeploy.json or mainTemplate.json, not both."
+                return
             }
             
             
