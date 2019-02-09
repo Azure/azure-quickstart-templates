@@ -1,0 +1,177 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "VNET_Name": {            
+            "type": "String",
+            "metadata": {
+                "description": "Name of the VNET to be created"
+            }
+        },        
+        "VNET_IP_Range": {
+            "defaultValue": "10.1.0.0/16",
+            "type": "String",
+            "metadata": {
+                "description": "IP range for the VNET, including prefix length"
+            }
+        },
+        "Subnet_IP_Range": {
+            "defaultValue": "10.1.0.0/24",
+            "type": "String",
+            "metadata": {
+                "description": "IP range for the subnet, including prefix length"
+            }
+        },
+        "AADDS_DNS_Servers": {
+            "type": "String",
+            "metadata": {
+                "description": "Comma separated list of IP addresses"
+            }
+        },
+        "AADDS_Resource_Group_Name": {
+            "type": "String",
+            "metadata": {
+                "description": "Name of the Resource Group that Azure Active Directory Domain Services is in" 
+            }
+        },
+        "AD_VNET_Name": {
+            "type": "String",
+            "metadata": {
+                "description": "Name of the VNET Azure Active Directory Domain Services is in" 
+            }
+        }
+    },
+    "variables": {        
+        "virtualNetworkPeerings_Peer2ADVNET_name": "Peer2ADVNET",
+        "ADVNET_address_prefixes": "10.0.0.0/16",
+        "virtualNetworkPeerings_Peer2VNET_name": "[concat('Peer2',parameters('VNET_Name'))]",
+        "ARR_IP": "168.63.129.16",
+        "virtualNetworks_ADVNET_id": "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',parameters('AADDS_Resource_Group_Name'),'/providers/Microsoft.Network/virtualNetworks/',parameters('AD_VNET_Name'))]"
+    },
+    "resources": [
+        {
+            "comments": "VNET",
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[parameters('VNET_Name')]",
+            "apiVersion": "2018-10-01",
+            "location": "eastus2",
+            "scale": null,
+            "properties": {
+                "provisioningState": "Succeeded",
+                "resourceGuid": "617b50fc-c444-4a53-ad25-60de9a50d622",
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[parameters('VNET_IP_Range')]"
+                    ]
+                },
+                "dhcpOptions": {
+                    "dnsServers": "[concat(split(parameters('AADDS_DNS_Servers'),','),array(variables('ARR_IP')))]"
+                },
+                "subnets": [
+                    {
+                        "name": "default",
+                        "etag": "W/\"803f189e-b0f7-4fe3-a050-d515cbf9f659\"",
+                        "properties": {
+                            "provisioningState": "Succeeded",
+                            "addressPrefix": "[parameters('Subnet_IP_Range')]",
+                            "serviceEndpoints": [],
+                            "delegations": []
+                        }
+                    }
+                ],
+                "virtualNetworkPeerings": [
+                    {
+                        "name": "Peer2ADVNET",
+                        "etag": "W/\"803f189e-b0f7-4fe3-a050-d515cbf9f659\"",
+                        "properties": {
+                            "provisioningState": "Succeeded",
+                            "peeringState": "Initiated",
+                            "remoteVirtualNetwork": {
+                                "id": "[variables('virtualNetworks_ADVNET_id')]"
+                            },
+                            "allowVirtualNetworkAccess": true,
+                            "allowForwardedTraffic": true,
+                            "allowGatewayTransit": false,
+                            "useRemoteGateways": false                            
+                        }
+                    }
+                ],
+                "enableDdosProtection": false,
+                "enableVmProtection": false
+            }
+        },
+        {
+            "comments": "VNET Subnet",
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "name": "[concat(parameters('VNET_Name'), '/', 'default')]",
+            "apiVersion": "2018-10-01",
+            "scale": null,
+            "properties": {
+                "provisioningState": "Succeeded",
+                "addressPrefix": "[parameters('Subnet_IP_Range')]",
+                "serviceEndpoints": [],
+                "delegations": []
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('VNET_Name'))]"
+            ]
+        },
+        {
+            "comments": "VNET Peer2ADVNET",
+            "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+            "name": "[concat(parameters('VNET_Name'), '/', variables('virtualNetworkPeerings_Peer2ADVNET_name'))]",
+            "apiVersion": "2018-10-01",
+            "scale": null,
+            "properties": {
+                "provisioningState": "Succeeded",
+                "peeringState": "Initiated",
+                "remoteVirtualNetwork": {
+                    "id": "[variables('virtualNetworks_ADVNET_id')]"
+                },
+                "allowVirtualNetworkAccess": true,
+                "allowForwardedTraffic": true,
+                "allowGatewayTransit": false,
+                "useRemoteGateways": false                
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('VNET_Name'))]"
+            ]
+        },
+        {
+            "apiVersion": "2017-05-10",
+            "name": "nestedtemplate",
+            "type": "Microsoft.Resources/deployments",
+            "resourceGroup": "[parameters('AADDS_Resource_Group_Name')]",            
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "resources": [                     
+                        {
+                            "comments": "ADVNET Peer2VNET",
+                            "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+                            "name": "[concat(parameters('AD_VNET_Name'), '/', variables('virtualNetworkPeerings_Peer2VNET_name'))]",
+                            "apiVersion": "2018-10-01",
+                            "scale": null,
+                            "properties": {
+                                "provisioningState": "Succeeded",
+                                "peeringState": "Initiated",
+                                "remoteVirtualNetwork": {
+                                    "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('VNET_Name'))]"
+                                },
+                                "allowVirtualNetworkAccess": true,
+                                "allowForwardedTraffic": true,
+                                "allowGatewayTransit": false,
+                                "useRemoteGateways": false                                
+                            }                            
+                        }
+                    ]
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('VNET_Name'))]"                
+            ]
+        }
+    ]
+}
