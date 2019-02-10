@@ -11,7 +11,7 @@
 
 # Introduction
 
-The ARM template in this repository provide a solution to replicate a Azure DB for MySQL instance.
+This ARM template provides a solution to replicate a Azure DB for MySQL instance.
 
 # Template description
 
