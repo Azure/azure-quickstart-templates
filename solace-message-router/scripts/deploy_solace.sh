@@ -260,7 +260,7 @@ docker volume create --name=var
 docker volume create --name=softAdb
 docker volume create --name=adbBackup
 
-if [ ${disk_size} == "0" ]; then
+if [[ ${disk_size} == "0" ]]; then
   docker volume create --name=diagnostics
   docker volume create --name=internalSpool
   SPOOL_MOUNT="-v diagnostics:/var/lib/solace/diags -v internalSpool:/usr/sw/internalSpool"
@@ -277,7 +277,7 @@ else
       break
     fi
   done
-  if [ ${disk_volume} == "" ]; then
+  if [[ ${disk_volume} == "" ]]; then
     echo "`date` INFO: Default disk device to /dev/sdc"
     disk_volume="/dev/sdc"
   fi
@@ -289,9 +289,9 @@ else
     echo   # First sector (Accept default: 1)
     echo   # Last sector (Accept default: varies)
     echo w # Write changes
-  ) | sudo fdisk $workspace_id
-  mkfs.xfs  ${workspace_id}1 -m crc=0
-  UUID=`blkid -s UUID -o value ${workspace_id}1`
+  ) | sudo fdisk $disk_volume
+  mkfs.xfs  ${disk_volume}1 -m crc=0
+  UUID=`blkid -s UUID -o value ${disk_volume}1`
   echo "UUID=${UUID} /opt/vmr xfs defaults 0 0" >> /etc/fstab
   mkdir /opt/vmr
   mkdir /opt/vmr/diagnostics
