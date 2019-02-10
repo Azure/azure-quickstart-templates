@@ -16,22 +16,26 @@ There is not suitable configuration for X-Large with Standard Storage. If you se
 <table>
 	<tr>
 		<th>Size</th>
-		<th>Premium Storage</th>
+		<th>Premium Storage (Data Log)</th>
+	</tr>
+	<tr>
+		<td>Demo</td>
+		<td>1xStandard_D2s_v3 (1xP10 1xP10)</td>
 	</tr>
 	<tr>
 		<td>Small < 2.000 SAPS</td>
-		<td>1xDS11 (2xP20 1xP10)</td>
+		<td>1xStandard_E2s_v3 (2xP20 1xP10)</td>
 	</tr>
 	<tr>
 		<td>Medium < 9.000 SAPS</td>
-		<td>1xDS13 (3xP20 1xP10)</td>
+		<td>1xStandard_E8s_v3 (3xP20 1xP10)</td>
 	</tr>
 	<tr>
 		<td>Large < 18.000 SAPS</td>
-		<td>1xDS14 (3xP30 + 1xP20)</td>
+		<td>1xStandard_E16s_v3 (3xP30 + 1xP20)</td>
 	</tr>
 	<tr>
 		<td>X-Large < 40.000 SAPS</td>
-		<td>1xGS5 (4xP30 1xP20)</td>
+		<td>1xStandard_E64s_v3 (4xP30 1xP20)</td>
 	</tr>
 </table>				

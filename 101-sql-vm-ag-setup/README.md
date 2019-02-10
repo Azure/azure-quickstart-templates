@@ -1,4 +1,4 @@
-# Create Always ON setup on existing SQL Virtual Machines
+# Create WS Failover Cluster and join existing SQL Server Virtual Machines for setting up an Always On availability group
 
 Before deploying the template you must have the following
 
