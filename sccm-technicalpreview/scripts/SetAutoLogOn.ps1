@@ -31,13 +31,13 @@ while((Get-ItemProperty $RegPath).DefaultUsername -ne $Username)
 
 while((Get-ItemProperty $RegPath).DefaultPassword -ne $password)
 {
-	"[$(Get-Date -format HH:mm:ss)] Setting Password.$password." | Out-File -Append $logpath
+	"[$(Get-Date -format HH:mm:ss)] Setting Password..." | Out-File -Append $logpath
 	Set-ItemProperty $RegPath "DefaultPassword" -Value "$password" -type String
 }
 
 while((Get-ItemProperty $RegPath).AutoLogonCount -ne 1)
 {
-	"[$(Get-Date -format HH:mm:ss)] Setting Logon count to 2." | Out-File -Append $logpath
+	"[$(Get-Date -format HH:mm:ss)] Setting Logon count to 1." | Out-File -Append $logpath
 	Set-ItemProperty $RegPath "AutoLogonCount" -Value 1 -type DWord
 }
 

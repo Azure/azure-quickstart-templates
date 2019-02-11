@@ -31,7 +31,7 @@
         },
         "skuName": {
             "type": "string",
-            "defaultValue": "GP_Gen4_2",
+            "defaultValue": "GP_Gen5_2",
             "metadata": {
                 "description": "Azure database for MySQL sku name "
             }
@@ -52,7 +52,7 @@
         },
         "skuFamily": {
             "type": "string",
-            "defaultValue": "Gen4",
+            "defaultValue": "Gen5",
             "metadata": {
                 "description": "Azure database for MySQL sku family"
             }
@@ -125,6 +125,24 @@
             }
         }
     },
+    "variables": {
+        "firewallrules": {
+            "batch": {
+                "rules": [
+                    {
+                        "Name": "rule1",
+                        "StartIpAddress": "0.0.0.0",
+                        "EndIpAddress": "255.255.255.255"
+                    },
+                    {
+                        "Name": "rule2",
+                        "StartIpAddress": "0.0.0.0",
+                        "EndIpAddress": "255.255.255.255"
+                    }
+                ]
+            }
+        }
+    },
     "resources": [
         {
             "apiVersion": "2018-06-01",
@@ -189,6 +207,25 @@
                     ]
                 }
             ]
+        },
+		{
+            "name": "[concat(parameters('serverName'),'/',variables('firewallrules').batch.rules[copyIndex()].Name)]",
+            "type": "Microsoft.DBforMySQL/servers/firewallRules",
+            "apiVersion": "2017-12-01",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.DBforMySQL/servers/', parameters('serverName'))]"
+            ],
+            "copy": {
+                "name": "firewallRulesCopy",
+                "mode": "Serial",
+                "batchSize": 1,
+                "count": "[length(variables('firewallrules').batch.rules)]"
+            },
+            "properties": {
+                "StartIpAddress": "[variables('firewallrules').batch.rules[copyIndex()].StartIpAddress]",
+                "EndIpAddress": "[variables('firewallrules').batch.rules[copyIndex()].EndIpAddress]"
+            }
         }
     ]
 }

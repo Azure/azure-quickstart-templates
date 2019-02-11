@@ -137,6 +137,22 @@ $Configuration | Add-Member -MemberType ScriptMethod -Name SetRebootConfig -Valu
 			$command = @'
 Start-Sleep -Second 240
 sqlcmd -Q "if not exists(select * from sys.server_principals where name='BUILTIN\administrators') CREATE LOGIN [BUILTIN\administrators] FROM WINDOWS;EXEC master..sp_addsrvrolemember @loginame = N'BUILTIN\administrators', @rolename = N'sysadmin'"
+$retrycount = 0
+$sqlpermission = sqlcmd -Q "if exists(select * from sys.server_principals where name='BUILTIN\administrators') Print 1"
+while($sqlpermission -eq $null)
+{
+    if($retrycount -eq 3)
+    {
+        $sqlpermission = 1
+    }
+    else
+    {
+        $retrycount++
+        Start-Sleep -Second 240
+        sqlcmd -Q "if not exists(select * from sys.server_principals where name='BUILTIN\administrators') CREATE LOGIN [BUILTIN\administrators] FROM WINDOWS;EXEC master..sp_addsrvrolemember @loginame = N'BUILTIN\administrators', @rolename = N'sysadmin'"
+        $sqlpermission = sqlcmd -Q "if exists(select * from sys.server_principals where name='BUILTIN\administrators') Print 1"
+    }
+}
 '@
 		}
 		$Command | Out-File -FilePath $BatchFilePath -Encoding ascii
@@ -235,6 +251,7 @@ if($Configuration.WaitForDC.Status -eq 'Completed')
                 $Result = $Configuration.SetRebootConfig()
                 if ($Result -eq 0) {
                     shutdown -r -t 0
+					exit 0
                 }
             }
             else
@@ -314,11 +331,13 @@ if($Configuration.WaitForDC.Status -eq 'Completed')
                 $Configuration.InstallSCCM.EndTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
 
 				$Result = $Configuration.SetRebootConfig()
+				$Result = Set-AutoLogOn $DomainFullName $DomainAdminName $Password
                 if ($Result -eq 0) {
                     shutdown -r -t 120
                 }
             }
 			UploadConfigFile
+			exit 0
         }
 
 		if($Configuration.InstallSCCM.Status -eq 'Completed')
