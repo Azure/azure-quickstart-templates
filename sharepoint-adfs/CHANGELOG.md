@@ -1,4 +1,4 @@
-# Change log for Azure template for SharePoint 2019 / 2016 / 2013 
+# Change log for Azure template for SharePoint 2019 / 2016 / 2013
 
 ## February 2019 update
 
