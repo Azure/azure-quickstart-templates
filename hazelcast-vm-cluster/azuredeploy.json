@@ -37,19 +37,21 @@
         ]
     },
     "clusterName": {
+      "defaultValue": "[concat(parameters('adminUsername'),uniqueString(resourceGroup().id))]",
       "type": "string",
       "metadata": {
-        "description": "Username for hazelcast grid"
-      },
-      "defaultValue": "[parameters('adminUsername')]"
+        "description": "Cluster Name for hazelcast grid"
+      }
     },
     "dnsPrefix": {
+      "defaultValue": "hazelcast",
       "type": "string",
       "metadata": {
         "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
       }
     },
     "instanceCount": {
+      "defaultValue": 2,
       "type": "int",
       "metadata": {
         "description": "The number of hazelcast nodes in the grid"
@@ -66,18 +68,6 @@
       "type": "string",
       "metadata": {
         "description": "The cluster port to identify this cluster"
-      }
-    },
-    "minHeapSizeInGB": {
-      "type": "string",
-      "metadata": {
-        "description": "The minimum heap size for each hazelcast jvm. Applicable values should end in 'G' - 4G, 8G etc."
-      }
-    },
-    "maxHeapSizeInGB": {
-      "type": "string",
-      "metadata": {
-        "description": "The maximum heap size for each hazelcast jvm. Applicable values should end in 'G' - 4G, 8G etc."
       }
     },
     "aadClientId": {
@@ -99,19 +89,11 @@
       }
     },
     "vmSize": {
+      "defaultValue": "Standard_DS2",
       "type": "string",
       "metadata": {
         "description": "The size of each instance VM"
-      },
-      "allowedValues": [
-        "Standard_DS1",
-        "Standard_DS2",
-        "Standard_DS3",
-        "Standard_DS4",
-        "Standard_DS8",
-        "Standard_DS16",
-        "Standard_D1"
-      ]
+      }
     },
     "ubuntuOSVersion": {
       "type": "string",
@@ -125,12 +107,19 @@
         "18.04-LTS"
       ]
     },
-    "templateBaseUrl": {
+    "_artifactsLocation": {
       "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/hazelcast-vm-cluster/",
       "metadata": {
         "description": "The base URL for the bootstrap files"
-      }
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/hazelcast-vm-cluster/"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+      },
+      "defaultValue": ""
     },
     "location": {
       "type": "string",
@@ -164,17 +153,17 @@
       }
     },
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
-    "scriptParameters": "[concat(parameters('minHeapSizeInGB'), ' ', parameters('maxHeapSizeInGB'), ' ', parameters('clusterName'), ' ', parameters('hazelcastVersion'), ' ', subscription().subscriptionId, ' ', parameters('aadClientId'), ' ',  parameters('aadClientSecret'), ' ',  parameters('aadTenantId'), ' ', resourceGroup().name, ' ', parameters('clusterTag'), ' ', parameters('clusterPort'))]",
+    "scriptParameters": "[concat(parameters('clusterName'), ' ', parameters('hazelcastVersion'), ' ', subscription().subscriptionId, ' ', parameters('aadClientId'), ' ',  parameters('aadClientSecret'), ' ',  parameters('aadTenantId'), ' ', resourceGroup().name, ' ', parameters('clusterTag'), ' ', parameters('clusterPort'))]",
     "bootstrapFiles": [
-      "[concat(parameters('templateBaseUrl'), 'scripts/bootstrap_hazelcast')]",
-      "[concat(parameters('templateBaseUrl'), 'scripts/hazelcast.service')]",
-      "[concat(parameters('templateBaseUrl'), 'scripts/hazelcast.conf')]",
-      "[concat(parameters('templateBaseUrl'), 'scripts/hazelcast.xml')]",
-      "[concat(parameters('templateBaseUrl'), 'scripts/install_hazelcast')]",
-      "[concat(parameters('templateBaseUrl'), 'scripts/logging.properties')]",
-      "[concat(parameters('templateBaseUrl'), 'scripts/modify_configuration')]",
-      "[concat(parameters('templateBaseUrl'), 'scripts/modify_version')]",
-      "[concat(parameters('templateBaseUrl'), 'scripts/pom.xml')]"
+      "[concat(parameters('_artifactsLocation'), 'scripts/bootstrap_hazelcast')]",
+      "[concat(parameters('_artifactsLocation'), 'scripts/hazelcast.service')]",
+      "[concat(parameters('_artifactsLocation'), 'scripts/hazelcast.conf')]",
+      "[concat(parameters('_artifactsLocation'), 'scripts/hazelcast.xml')]",
+      "[concat(parameters('_artifactsLocation'), 'scripts/install_hazelcast')]",
+      "[concat(parameters('_artifactsLocation'), 'scripts/logging.properties')]",
+      "[concat(parameters('_artifactsLocation'), 'scripts/modify_configuration')]",
+      "[concat(parameters('_artifactsLocation'), 'scripts/modify_version')]",
+      "[concat(parameters('_artifactsLocation'), 'scripts/pom.xml')]"
     ]
   },
   "resources": [
@@ -207,7 +196,7 @@
       "properties": {
           "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
           "dnsSettings": {
-              "domainNameLabel": "[concat(parameters('dnsPrefix'), copyIndex(1))]"
+              "domainNameLabel": "[concat(parameters('dnsPrefix'),copyIndex(1),uniqueString(resourceGroup().id))]"
           }
       },
       "copy": {
@@ -224,6 +213,10 @@
           "name": "createNics",
           "count": "[parameters('instanceCount')]"
       },
+      "dependsOn": [
+          "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+          "createPubIps"
+      ],
       "properties": {
           "ipConfigurations": [
               {
@@ -239,12 +232,8 @@
                   }
               }
           ]
+        }
       },
-      "dependsOn": [
-          "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-          "createPubIps"
-      ]
-    },
     {
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('vmName'), copyIndex(1))]",
@@ -257,6 +246,10 @@
       "tags": {
           "[parameters('clusterTag')]": "[parameters('clusterPort')]"
       },
+      "dependsOn": [
+          "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex(1))]",
+          "createNics"
+      ],
       "properties": {
           "hardwareProfile": {
               "vmSize": "[parameters('vmSize')]"
@@ -264,7 +257,7 @@
           "osProfile": {
             "computerName": "[variables('vmName')]",
             "adminUsername": "[parameters('adminUsername')]",
-            "adminPassword": "[if(equals(parameters('authenticationType'), 'sshPublicKey'), json('null'), parameters('adminPasswordOrKey'))]",
+            "adminPassword": "[parameters('adminPasswordOrKey')]",
             "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
           },
           "storageProfile": {
@@ -287,17 +280,17 @@
                   }
               ]
           }
-      },
-      "dependsOn": [
-          "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex(1))]",
-          "createNics"
-      ]
+      }
   },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmName'), copyIndex(1),'/initHazelcast')]",
       "apiVersion": "2018-06-01",
       "location": "[parameters('location')]",
+      "copy": {
+        "name": "createExtensions",
+        "count": "[parameters('instanceCount')]"
+      },
       "dependsOn": [
         "createVms"
       ],
@@ -307,20 +300,12 @@
         "typeHandlerVersion": "2.0",
         "autoUpgradeMinorVersion": true,
         "settings": {
-          "fileUris": "[variables('bootstrapFiles')]",
+          "fileUris": "[variables('bootstrapFiles')]"
+        },
+        "protectedSettings": {
           "commandToExecute": "[concat('sh bootstrap_hazelcast ', variables('scriptParameters'))]"
         }
-      },
-      "copy": {
-        "name": "createExtensions",
-        "count": "[parameters('instanceCount')]"
       }
     }
-  ],
-  "outputs": {
-    "scriptParameters": {
-        "type": "String",
-        "value": "[variables('scriptParameters')]"
-    }
-  }
+  ]
 }
