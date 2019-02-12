@@ -26,19 +26,21 @@
           ]
     },
       "clusterName": {
-          "defaultValue": "[parameters('adminUsername')]",
+          "defaultValue": "[concat(parameters('adminUsername'),uniqueString(resourceGroup().id))]",
           "type": "String",
           "metadata": {
-              "description": "Username for hazelcast grid"
+              "description": "Cluster Name for hazelcast grid"
           }
       },
       "dnsPrefix": {
+          "defaultValue": "hazelcast",
           "type": "String",
           "metadata": {
               "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
           }
       },
       "instanceCount": {
+          "defaultValue": 2,
           "type": "Int",
           "metadata": {
               "description": "The number of hazelcast nodes in the grid"
@@ -80,16 +82,7 @@
           "type": "String",
           "metadata": {
               "description": "The size of each instance VM"
-      },
-          "allowedValues": [
-            "Standard_DS1",
-            "Standard_DS2",
-            "Standard_DS3",
-            "Standard_DS4",
-            "Standard_DS8",
-            "Standard_DS16",
-            "Standard_D1"
-          ]
+          }
       },
       "windowsOSVersion": {
           "defaultValue": "2016-Datacenter",
@@ -106,13 +99,20 @@
             "2016-Datacenter"
           ]
       },
-      "templateBaseUrl": {
-          "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/hazelcast-windows-vm-cluster/",
-          "type": "String",
-          "metadata": {
-              "description": "The base URL for the bootstrap files"
-          }
+     "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
       },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/hazelcast-windows-vm-cluster/"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+      },
+      "defaultValue": ""
+    },
       "location": {
           "defaultValue": "[resourceGroup().location]",
           "type": "String",
@@ -136,12 +136,12 @@
       "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
       "scriptParameters": "[concat('-clusterName ', parameters('clusterName'), ' -subscriptionId ', subscription().subscriptionId, ' -aadClientId ', parameters('aadClientId'), ' -aadClientSecret ', parameters('aadClientSecret'), ' -aadTenantId ', parameters('aadTenantId'), ' -groupName ', resourceGroup().name, ' -clusterTag ', parameters('clusterTag'), ' -clusterPort ', parameters('clusterPort'), ' -hazelcastVersion ', parameters('hazelcastVersion'))]",
       "bootstrapFiles": [
-          "[concat(parameters('templateBaseUrl'), 'scripts/bootstrap_hazelcast.ps1')]",
-          "[concat(parameters('templateBaseUrl'), 'scripts/install_hazelcast.ps1')]",
-          "[concat(parameters('templateBaseUrl'), 'scripts/hazelcast.xml')]",
-          "[concat(parameters('templateBaseUrl'), 'scripts/pom.xml')]",
-          "[concat(parameters('templateBaseUrl'), 'scripts/modify_configuration.py')]",
-          "[concat(parameters('templateBaseUrl'), 'scripts/modify_version.py')]"
+          "[concat(parameters('_artifactsLocation'), 'scripts/bootstrap_hazelcast.ps1')]",
+          "[concat(parameters('_artifactsLocation'), 'scripts/install_hazelcast.ps1')]",
+          "[concat(parameters('_artifactsLocation'), 'scripts/hazelcast.xml')]",
+          "[concat(parameters('_artifactsLocation'), 'scripts/pom.xml')]",
+          "[concat(parameters('_artifactsLocation'), 'scripts/modify_configuration.py')]",
+          "[concat(parameters('_artifactsLocation'), 'scripts/modify_version.py')]"
       ]
   },
   "resources": [
@@ -174,7 +174,7 @@
           "properties": {
               "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
               "dnsSettings": {
-                  "domainNameLabel": "[concat(parameters('dnsPrefix'), copyIndex(1))]"
+                  "domainNameLabel": "[concat(parameters('dnsPrefix'),copyIndex(1),uniqueString(resourceGroup().id))]"
               }
           },
           "copy": {
@@ -191,6 +191,10 @@
               "name": "createNics",
               "count": "[parameters('instanceCount')]"
           },
+          "dependsOn": [
+              "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+              "createPubIps"
+          ],
           "properties": {
               "ipConfigurations": [
                   {
@@ -206,11 +210,7 @@
                       }
                   }
               ]
-          },
-          "dependsOn": [
-              "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-              "createPubIps"
-          ]
+          }
       },
       {
         "type": "Microsoft.Compute/virtualMachines",
@@ -224,6 +224,10 @@
         "tags": {
             "[parameters('clusterTag')]": "[parameters('clusterPort')]"
         },
+        "dependsOn": [
+            "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex(1))]",
+            "createNics"
+        ],
         "properties": {
             "hardwareProfile": {
                 "vmSize": "[parameters('vmSize')]"
@@ -253,11 +257,7 @@
                     }
                 ]
             }
-        },
-        "dependsOn": [
-            "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex(1))]",
-            "createNics"
-        ]
+        }
     },
     {
         "type": "Microsoft.Compute/virtualMachines/extensions",
@@ -268,25 +268,21 @@
             "name": "createExtensions",
             "count": "[parameters('instanceCount')]"
         },
+        "dependsOn": [
+            "createVms"
+        ],
         "properties": {
             "publisher": "Microsoft.Compute",
             "type": "CustomScriptExtension",
             "typeHandlerVersion": "1.9",
             "autoUpgradeMinorVersion": true,
             "settings": {
-                "fileUris": "[variables('bootstrapFiles')]",
-                "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File bootstrap_hazelcast.ps1 ', variables('scriptParameters'), ' > C:/bootstrap.log')]"
+                "fileUris": "[variables('bootstrapFiles')]"
+            },
+            "protectedSettings": {
+             "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File .\\bootstrap_hazelcast.ps1 ', variables('scriptParameters'), ' > C:\\bootstrap.log')]"
             }
-        },
-        "dependsOn": [
-            "createVms"
-        ]
+        }
     }
-  ],
-  "outputs": {
-      "scriptParameters": {
-          "type": "String",
-          "value": "[variables('scriptParameters')]"
-      }
-    }
+  ]
 }
