@@ -1,0 +1,232 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "storageAccountName": {
+            "type": "string",
+            "defaultValue": "[concat('storage', uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "Name of the Azure Storage account"
+            }
+        },
+        "keyVaultName": {
+            "type": "string",
+            "defaultValue": "[concat('keyvault', uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "Name of the Azure Key Vault"
+            }
+        },
+        "hostingPlanName": {
+            "type": "string",
+            "defaultValue": "[concat('plan', uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "Name of the Azure App Service Hosting Plan"
+            }
+        },
+        "webAppName": {
+            "type": "string",
+            "defaultValue": "[concat('webApp', uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "Name of the Azure Web App"
+            }
+        },
+        "aadInstance":{
+            "type":"string",
+            "defaultValue": "https://login.microsoftonline.com",
+            "metadata": {
+                "description":"Instance of Azure Active Directory to log the user into (ex. login.microsoftonline.com)"
+            }
+        },
+        "aadDomain":{
+            "type":"string",            
+            "metadata": {
+                "description":"Name of the Azure Active Directory domain (ex. contoso.onmicrosoft.com)"
+            }
+        },
+        "aadTenantId":{
+            "type":"string",            
+            "metadata": {
+                "description":"Tenant ID of the Azure Active Directory instance"
+            }
+        },
+        "aadClientId":{
+            "type":"string",            
+            "metadata": {
+                "description":"Client ID of the Azure Active Directory application registration"
+            }
+        }
+    },
+    "variables": {
+        "skuName": "F1",
+        "skuCapacity": "1",
+        "storageType": "Standard_LRS",
+        "containerName": "demo"
+    },
+    "resources": [
+        {
+            "name": "[parameters('storageAccountName')]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2018-07-01",
+            "sku": {
+                "name": "[variables('storageType')]"
+            },
+            "kind": "BlobStorage",
+            "properties":{
+                "accessTier":"Hot"
+            },
+            "dependsOn": [],
+            "tags": {
+                "displayName": "Storage"
+            }
+        },
+        {
+            "name": "[parameters('keyVaultName')]",
+            "type": "Microsoft.KeyVault/vaults",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2018-02-14",            
+            "properties": {
+                "tenantId": "[subscription().tenantId]",
+                "sku": {
+                    "family": "A",
+                    "name": "standard"
+                },
+                "enabledForDeployment": "false",
+                "enabledForTemplateDeployment": "false",
+                "accessPolicies": []
+            },
+            "tags": {
+                "displayName": "KeyVault"
+            },
+            "resources": [
+                {
+                    "type": "secrets",
+                    "name": "storageKey",
+                    "apiVersion": "2018-02-14",
+                    "properties": {
+                        "value": "[listKeys(parameters('storageAccountName'),'2018-07-01').keys[0].value]"
+                    },
+                    "tags": { "displayName": "secret" },
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+                        "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"                        
+                    ]
+                }
+            ]
+        },
+        {            
+            "name": "[parameters('hostingPlanName')]",
+            "type": "Microsoft.Web/serverfarms",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2018-02-01",
+            "sku": {
+                "name": "[variables('skuName')]",
+                "capacity": "[variables('skuCapacity')]"
+            },
+            "properties": {
+                "name": "[parameters('hostingPlanName')]"
+            },
+            "tags": {
+                "displayName": "HostingPlan"
+            }
+        },
+        {            
+            "name": "[parameters('webAppName')]",
+            "type": "Microsoft.Web/sites",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2018-02-01",
+            "identity": {
+                "type": "SystemAssigned"
+            },            
+            "properties": {
+                "name": "[parameters('webAppName')]",
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName'))]"
+            },
+            "tags": {
+                "[concat('hidden-related:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]": "empty",
+                "displayName": "Website"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverFarms/', parameters('hostingPlanName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts',parameters('storageAccountName'))]",
+                "[resourceId('Microsoft.KeyVault/vaults/',parameters('keyVaultName'))]"
+            ],
+            "resources": [
+                {
+                    "name": "appsettings",
+                    "type": "config",
+                    "apiVersion": "2018-02-01",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/sites', parameters('webAppName'))]"
+                    ],
+                    "tags": {
+                        "displayName": "appSettings"
+                    },
+                    "properties": {
+                        "StorageAccountName":"[parameters('storageAccountName')]",
+                        "StorageAccountUrl": "[reference(concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName')), '2018-07-01').primaryEndpoints.blob]",
+                        "ContainerName":"[variables('containerName')]",
+                        "KeyVaultUrl": "[reference(concat('Microsoft.KeyVault/vaults/',parameters('keyVaultName')),'2018-02-14').vaultUri]",                        
+                        "AzureAd:CallbackPath":"/signin-oidc",
+                        "AzureAd:Instance":"[parameters('aadInstance')]",
+                        "AzureAd:Domain":"[parameters('aadDomain')]",
+                        "AzureAd:TenantId":"[parameters('aadTenantId')]",
+                        "AzureAd:ClientId":"[parameters('aadClientId')]"
+                    }
+                },
+                {
+                    "apiVersion": "2018-02-01",
+                    "name": "web",
+                    "type": "sourcecontrols",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/Sites', parameters('webAppName'))]",
+                        "[resourceId('Microsoft.Web/Sites/config', parameters('webAppName'),'appsettings')]"
+                    ],
+                    "properties": {
+                        "RepoUrl": "https://github.com/kaevans/aspnet-mvc-keyvault-storage.git",
+                        "branch": "master",
+                        "IsManualIntegration": true
+                    }
+                }
+            ]
+        },
+        {
+            "name": "[concat(parameters('keyVaultName'), '/add')]",
+            "type": "Microsoft.KeyVault/vaults/accessPolicies",
+            "apiVersion": "2018-02-14",
+            "properties": {
+                "accessPolicies": [
+                    {
+                        "tenantId": "[subscription().tenantId]",
+                        "objectId": "[reference(parameters('webAppName'),'2018-02-01','Full').identity.principalId]",
+                        "permissions": {
+                            "secrets": [
+                                "get"
+                            ]
+                        }
+                    }
+                ],
+                "mode":"Incremental"
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Web/sites/',parameters('webAppName'))]",
+                "[concat('Microsoft.KeyVault/vaults/', parameters('keyVaultName'))]",                
+                "[resourceId('Microsoft.KeyVault/vaults/secrets', parameters('keyVaultName'), 'storageKey')]"
+            ]
+        }
+    ],
+    "outputs": {
+        "appUrl": {
+            "type": "string",
+            "value": "[concat('https://',reference(concat('Microsoft.Web/sites/', parameters('webAppName')),'2018-02-01').hostNames[0],'/')]"
+        },
+        "blobUrl": {
+            "type": "string",
+            "value": "[reference(concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName')), '2018-07-01').primaryEndpoints.blob]"
+        },
+        "vaultUrl": {
+            "type": "string",
+            "value": "[reference(concat('Microsoft.KeyVault/vaults/',parameters('keyVaultName')),'2018-02-14').vaultUri]"
+        }
+    }
+}
