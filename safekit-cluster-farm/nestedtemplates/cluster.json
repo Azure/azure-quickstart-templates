@@ -66,7 +66,6 @@
 			"metadata": {
 				"description": "Public VM IP dns label prefix"
 			}
-			
 		},
 		"Loadbalancer": {
 			"type": "string",
@@ -230,80 +229,66 @@
 			}
 		},
 		{
-			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2018-05-01",
-			"name": "optionalLB",
+			"condition": "[and(not(empty(parameters('VIPDnsLabel'))),not(equals(parameters('Loadbalancer'),'none')))]",
+			"type": "Microsoft.Network/loadBalancers",
+			"apiVersion": "2018-08-01",
+			"name": "[variables('lbName')]",
+			"location": "[parameters('location')]",
 			"dependsOn": [
 				"optionalVip"
 			],
+			"sku": {
+				"name": "Standard"
+			},
 			"properties": {
-				"mode": "Incremental",
-				"template": {
-					"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-					"contentVersion": "1.0.0.0",
-					"resources": [
-						{
-							"condition": "[and(not(empty(parameters('VIPDnsLabel'))),not(equals(parameters('Loadbalancer'),'none')))]",
-							"type": "Microsoft.Network/loadBalancers",
-							"apiVersion": "2018-08-01",
-							"name": "[variables('lbName')]",
-							"location": "[parameters('location')]",
-							"sku": {
-								"name": "Standard"
-							},
-							"properties": {
-								"frontendIPConfigurations": [
-									{
-										"name": "[variables('frontEndIPConfigName')]",
-										"properties": {
-											"publicIPAddress": {
-												"id": "[resourceId('Microsoft.Network/publicIPAddresses',concat('pip',parameters('VIPDnsLabel')))]"
-											}
-										}
-									}
-								],
-								"backendAddressPools": [
-									{
-										"name": "[variables('lbPoolName')]"
-									}
-								],
-								"loadBalancingRules": [
-									{
-										"name": "LBRule",
-										"properties": {
-											"frontendIPConfiguration": {
-												"id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbName'),variables('frontEndIPConfigName'))]"
-											},
-											"backendAddressPool": {
-												"id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools',variables('lbName'),variables('lbPoolName'))]"
-											},
-											"protocol": "tcp",
-											"frontendPort": 9453,
-											"backendPort": 9453,
-											"enableFloatingIP": false,
-											"idleTimeoutInMinutes": 5,
-											"probe": {
-												"id": "[resourceId('Microsoft.Network/loadBalancers/probes',variables('lbName'),variables('lbProbeName'))]"
-											}
-										}
-									}
-								],
-								"probes": [
-									{
-										"name": "[variables('lbProbeName')]",
-										"properties": {
-											"protocol": "http",
-											"port": 9010,
-											"requestPath": "[concat('/var/modules/',parameters('moduleName'),'/ready.txt')]",
-											"intervalInSeconds": 5,
-											"numberOfProbes": 2
-										}
-									}
-								]
+				"frontendIPConfigurations": [
+					{
+						"name": "[variables('frontEndIPConfigName')]",
+						"properties": {
+							"publicIPAddress": {
+								"id": "[resourceId('Microsoft.Network/publicIPAddresses',concat('pip',parameters('VIPDnsLabel')))]"
 							}
 						}
-					]
-				}
+					}
+				],
+				"backendAddressPools": [
+					{
+						"name": "[variables('lbPoolName')]"
+					}
+				],
+				"loadBalancingRules": [
+					{
+						"name": "LBRule",
+						"properties": {
+							"frontendIPConfiguration": {
+								"id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',variables('lbName'),variables('frontEndIPConfigName'))]"
+							},
+							"backendAddressPool": {
+								"id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools',variables('lbName'),variables('lbPoolName'))]"
+							},
+							"protocol": "tcp",
+							"frontendPort": 9453,
+							"backendPort": 9453,
+							"enableFloatingIP": false,
+							"idleTimeoutInMinutes": 5,
+							"probe": {
+								"id": "[resourceId('Microsoft.Network/loadBalancers/probes',variables('lbName'),variables('lbProbeName'))]"
+							}
+						}
+					}
+				],
+				"probes": [
+					{
+						"name": "[variables('lbProbeName')]",
+						"properties": {
+							"protocol": "http",
+							"port": 9010,
+							"requestPath": "[concat('/var/modules/',parameters('moduleName'),'/ready.txt')]",
+							"intervalInSeconds": 5,
+							"numberOfProbes": 2
+						}
+					}
+				]
 			}
 		},
 		{
@@ -401,7 +386,7 @@
 				"count": "[length(variables('vms'))]"
 			},
 			"dependsOn": [
-				"optionalLB",
+				"[variables('lbName')]",
 				"[resourceId('Microsoft.Network/publicIPAddresses/',concat('pip',variables('vms')[copyIndex()]))]",
 				"[resourceId('Microsoft.Network/networkSecurityGroups/',variables('NSGName'))]",
 				"[variables('virtualNetworkName')]"
