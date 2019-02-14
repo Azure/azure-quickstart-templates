@@ -7,4 +7,4 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template allows you to load balancer VMs using a Standard Load Balancer.
+This template allows you to create a Standard Load Balancer, with a zone-redundant frontend, two VMs with zone-redundant IP addresses in the backend pool, a health probe to determine health of the VMs, and a load balancing rule.
