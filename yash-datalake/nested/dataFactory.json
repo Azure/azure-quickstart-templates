@@ -1,293 +1,306 @@
 {
-	"contentVersion": "1.0.0.0",
-	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-	"parameters": {
-		"KibanaESDeployedVMIP":{
-			"type": "string",
-			"metadata": {
-				"description": "Name of the data factory. Must be globally unique."
-			}
-		},
-		"dataFactoryName": {
-			"type": "string",
-			"metadata": {
-				"description": "Name of the data factory. Must be globally unique."
-			}
-		},
-		"dataFactoryLocation": {
-			"type": "string",
-			"metadata": {
-				"description": "Location of the data factory. Currently, only East US and East US 2 are supported. "
-			}
-		},
-		"blobContainer": {
-			"type": "string",
-			"metadata": {
-				"description": "Name of the blob container in the Azure Storage account."
-			}
-		},
-		"clientAzureStorageConnectionString": {
-			"type": "string",
-			"metadata": {
-				"description": "Connection string for the Azure Storage account."
-			}
-		},
-		"servicePrincipalId": {
-			"type": "string",
-			"metadata": {
-				"description": "The ID of the service principal that has permissions to create HDInsight clusters in your subscription."
-			}
-		},
-		"servicePrincipalKey": {
-			"type": "string",
-			"metadata": {
-				"description": "The access key of the service principal that has permissions to create HDInsight clusters in your subscription."
-			}
-		},
-		"storageAccountName": {
-			"type": "string",
-			"metadata": {
-				"description": "storage account name"
-			}
-		}
-	},
-	"variables": {
-		"blobContainer":"raw",
-		"yashAzureStorageLinkedServiceName": "LinkedServiceToYashAzureStorage",
-		"SASUri": "https://yashinnovationstorage.blob.core.windows.net/yash-datalake-resource?sv=2017-11-09&sr=c&sig=qoJfA%2BX7K7YdOAjqZFFfuv4C8MVbbQkeBhugnG7DoKk%3D&se=2023-06-20T10%3A55%3A45Z&sp=rl",
-		"clientAzureStorageLinkedServiceName": "LinkedServiceToClientAzureStorage",
-		"onDemandHDInsightLinkedServiceName": "LinkedServiceToOnDemandHDInsight",
-		"inputDatasetName": "DatasetIn",
-		"outputDatasetName": "DatasetOut",
-		"pipeline_name_1": "pipelineForDataMovement",
-		"pipeline_name_2": "pipelineForDataTransformation",
-		"pipeline_name_3": "pipelineForDataTransformation2",
-		"entryFilePath": "Neo4JSparkTransformation-0.0.1-SNAPSHOT-jar-with-dependencies.jar"
-		
-	},
-	"resources": [{
-		"name": "[parameters('dataFactoryName')]",
-		"apiVersion": "2017-09-01-preview",
-		"type": "Microsoft.DataFactory/factories",
-		"location": "[parameters('dataFactoryLocation')]",
-		"properties": {},
-		"resources": [{
-				"type": "linkedservices",
-				"name": "[variables('yashAzureStorageLinkedServiceName')]",
-				"dependsOn": [
-					"[parameters('dataFactoryName')]"
-				],
-				"apiVersion": "2017-09-01-preview",
-				"properties": {
-					"type": "AzureStorage",
-					"description": "Azure Storage linked service",
-					"typeProperties": {
-						"sasUri": {
-							"type": "SecureString",
-							"value": "[variables('SASUri')]"
-						}
-					}
-				}
-			},
-			{
-				"type": "linkedservices",
-				"name": "[variables('clientAzureStorageLinkedServiceName')]",
-				"dependsOn": [
-					"[parameters('dataFactoryName')]"
-				],
-				"apiVersion": "2018-06-01",
-				"properties": {
-					"type": "AzureStorage",
-					"description": "Azure Storage linked service",
-					"typeProperties": {
-						"connectionString": {
-							"value": "[parameters('clientAzureStorageConnectionString')]",
-							"type": "SecureString"
-						}
-					}
-				}
-			},
-			{
-				"type": "linkedservices",
-				"name": "[variables('onDemandHDInsightLinkedServiceName')]",
-				"dependsOn": [
-					"[parameters('dataFactoryName')]",
-					"[variables('clientAzureStorageLinkedServiceName')]"
-				],
-				"apiVersion": "2018-06-01",
-				"properties": {
-					"type": "HDInsightOnDemand",
-					"typeProperties": {
-						"clusterType": "spark",
-						"clusterSize": 1,
-						"version": "3.6",
-						"timeToLive": "01:35:00",
-						"hostSubscriptionId": "18bc600e-57c7-4ea5-b64a-bb62f1f34d2c",
-						"clusterResourceGroup": "[resourceGroup().name]",
-						"tenant": "[subscription().tenantId]",
-						"sparkVersion": "",
-						"servicePrincipalId": "[parameters('servicePrincipalId')]",
-						"servicePrincipalKey": {
-							"type": "SecureString",
-							"value": "[parameters('servicePrincipalKey')]"
-						},
-						"linkedServiceName": {
-							"referenceName": "[variables('clientAzureStorageLinkedServiceName')]",
-							"type": "LinkedServiceReference"
-						}
-					}
-				}
-			},
-			{
-				"type": "datasets",
-				"name": "[variables('inputDatasetName')]",
-				"dependsOn": [
-					"[parameters('dataFactoryName')]",
-					"[variables('yashAzureStorageLinkedServiceName')]"
-				],
-				"apiVersion": "2017-09-01-preview",
-				"properties": {
-					"type": "AzureBlob",
-					"typeProperties": {
-						"folderPath": "yash-datalake-resource",
-						"fileName": "*"
-					},
-					"linkedServiceName": {
-						"referenceName": "[variables('yashAzureStorageLinkedServiceName')]",
-						"type": "LinkedServiceReference"
-					}
-				}
-			},
-			{
-				"type": "datasets",
-				"name": "[variables('outputDatasetName')]",
-				"dependsOn": [
-					"[parameters('dataFactoryName')]",
-					"[variables('clientAzureStorageLinkedServiceName')]"
-				],
-				"apiVersion": "2017-09-01-preview",
-				"properties": {
-					"type": "AzureBlob",
-					"typeProperties": {
-						"folderPath": "[variables('blobContainer')]"
-					},
-					"linkedServiceName": {
-						"referenceName": "[variables('clientAzureStorageLinkedServiceName')]",
-						"type": "LinkedServiceReference"
-					}
-				}
-			},
-			{
-				"type": "pipelines",
-				"name": "[variables('pipeline_name_1')]",
-				"dependsOn": [
-					"[parameters('dataFactoryName')]",
-					"[variables('clientAzureStorageLinkedServiceName')]",
-					"[variables('inputDatasetName')]",
-					"[variables('outputDatasetName')]"
-				],
-				"apiVersion": "2018-06-01",
-				"properties": {
-					"activities": [{
-						"type": "Copy",
-						"typeProperties": {
-							"source": {
-								"type": "BlobSource"
-							},
-							"sink": {
-								"type": "BlobSink"
-							}
-						},
-						"name": "MyCopyActivity",
-						"inputs": [{
-							"referenceName": "[variables('inputDatasetName')]",
-							"type": "DatasetReference"
-						}],
-						"outputs": [{
-							"referenceName": "[variables('outputDatasetName')]",
-							"type": "DatasetReference"
-						}]
-					}]
-				}
-			},
-			{
-				"type": "pipelines",
-				"name": "[variables('pipeline_name_2')]",
-				"dependsOn": [
-					"[parameters('dataFactoryName')]",
-					"[variables('clientAzureStorageLinkedServiceName')]",
-					"[variables('onDemandHDInsightLinkedServiceName')]"
-				],
-				"apiVersion": "2017-09-01-preview",
-				"properties": {
-					"activities": [{
-						"name": "MySparkActivity",
-						"type": "HDInsightSpark",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "7.00:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30
-						},
-						"typeProperties": {
-							"rootPath": "[concat(variables('blobContainer'), '/scripts')]",
-							"entryFilePath": "[variables('entryFilePath')]",
-							"arguments": [
-								"[parameters('storageAccountName')]",
-								"[parameters('KibanaESDeployedVMIP')]"
-							],
-                            "className": "com.neo4j.AzureNeo4J",
-							"sparkJobLinkedService": {
-								"referenceName": "[variables('clientAzureStorageLinkedServiceName')]",
-								"type": "LinkedServiceReference"
-							}
-						},
-						"linkedServiceName": {
-							"referenceName": "[variables('onDemandHDInsightLinkedServiceName')]",
-							"type": "LinkedServiceReference"
-						}
-					}]
-				}
-			},
-			{
-				"type": "pipelines",
-				"name": "[variables('pipeline_name_3')]",
-				"dependsOn": [
-					"[parameters('dataFactoryName')]",
-					"[variables('clientAzureStorageLinkedServiceName')]",
-					"[variables('onDemandHDInsightLinkedServiceName')]"
-				],
-				"apiVersion": "2017-09-01-preview",
-				"properties": {
-					"activities": [{
-						"name": "MySparkActivity",
-						"type": "HDInsightSpark",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "7.00:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30
-						},
-						"typeProperties": {
-							"rootPath": "[concat(variables('blobContainer'), '/jars')]",
-							"entryFilePath": "[variables('entryFilePath')]",
-							"arguments": [
-								"[parameters('storageAccountName')]",
-								"[parameters('KibanaESDeployedVMIP')]"
-							],
-                            "className": "com.neo4j.AzureNeo4J",
-							"sparkJobLinkedService": {
-								"referenceName": "[variables('clientAzureStorageLinkedServiceName')]",
-								"type": "LinkedServiceReference"
-							}
-						},
-						"linkedServiceName": {
-							"referenceName": "[variables('onDemandHDInsightLinkedServiceName')]",
-							"type": "LinkedServiceReference"
-						}
-					}]
-				}
-			}
-		]
-	}]
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "KibanaESDeployedVMIP": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the data factory. Must be globally unique."
+      }
+    },
+    "dataFactoryName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the data factory. Must be globally unique."
+      }
+    },
+    "dataFactoryLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "Location of the data factory. Currently, only East US and East US 2 are supported. "
+      }
+    },
+    "blobContainer": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the blob container in the Azure Storage account."
+      }
+    },
+    "clientAzureStorageConnectionString": {
+      "type": "string",
+      "metadata": {
+        "description": "Connection string for the Azure Storage account."
+      }
+    },
+    "servicePrincipalId": {
+      "type": "string",
+      "metadata": {
+        "description": "The ID of the service principal that has permissions to create HDInsight clusters in your subscription."
+      }
+    },
+    "servicePrincipalKey": {
+      "type": "string",
+      "metadata": {
+        "description": "The access key of the service principal that has permissions to create HDInsight clusters in your subscription."
+      }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "storage account name"
+      }
+    }
+  },
+  "variables": {
+    "_artifactsLocation": "https://yashinnovationstorage.blob.core.windows.net/yash-datalake-resource",
+    "_artifactsLocationSasToken": "?sv=2017-11-09&sr=c&sig=qoJfA%2BX7K7YdOAjqZFFfuv4C8MVbbQkeBhugnG7DoKk%3D&se=2023-06-20T10%3A55%3A45Z&sp=rl",
+    "yashAzureStorageLinkedServiceName": "LinkedServiceToYashAzureStorage",
+    "SASUri": "https://yashinnovationstorage.blob.core.windows.net/yash-datalake-resource?sv=2017-11-09&sr=c&sig=qoJfA%2BX7K7YdOAjqZFFfuv4C8MVbbQkeBhugnG7DoKk%3D&se=2023-06-20T10%3A55%3A45Z&sp=rl",
+    "clientAzureStorageLinkedServiceName": "LinkedServiceToClientAzureStorage",
+    "onDemandHDInsightLinkedServiceName": "LinkedServiceToOnDemandHDInsight",
+    "inputDatasetName": "DatasetIn",
+    "outputDatasetName": "DatasetOut",
+    "pipeline_name_1": "pipelineForDataMovement",
+    "pipeline_name_2": "pipelineForDataTransformation",
+    "pipeline_name_3": "pipelineForDataTransformation2",
+    "entryFilePath": "Neo4JSparkTransformation-0.0.1-SNAPSHOT-jar-with-dependencies.jar"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.DataFactory/factories",
+      "name": "[parameters('dataFactoryName')]",
+      "apiVersion": "2018-06-01",
+      "location": "[parameters('dataFactoryLocation')]",
+      "resources": [
+        {
+          "apiVersion": "2018-06-01",
+          "name": "[variables('yashAzureStorageLinkedServiceName')]",
+          "type": "linkedservices",
+          "dependsOn": [
+            "[parameters('dataFactoryName')]"
+          ],
+          "properties": {
+            "type": "AzureStorage",
+            "description": "Azure Storage linked service",
+            "typeProperties": {
+              "sasUri": {
+                "type": "SecureString",
+                "value": "[uri(variables('_artifactsLocation'),concat(variables('_artifactsLocationSasToken')))]"
+              }
+            }
+          }
+        },
+        {
+          "type": "linkedservices",
+          "name": "[variables('clientAzureStorageLinkedServiceName')]",
+          "dependsOn": [
+            "[parameters('dataFactoryName')]"
+          ],
+          "apiVersion": "2018-06-01",
+          "properties": {
+            "type": "AzureStorage",
+            "description": "Azure Storage linked service",
+            "typeProperties": {
+              "connectionString": {
+                "value": "[parameters('clientAzureStorageConnectionString')]",
+                "type": "SecureString"
+              }
+            }
+          }
+        },
+        {
+          "type": "linkedservices",
+          "name": "[variables('onDemandHDInsightLinkedServiceName')]",
+          "dependsOn": [
+            "[parameters('dataFactoryName')]",
+            "[variables('clientAzureStorageLinkedServiceName')]"
+          ],
+          "apiVersion": "2018-06-01",
+          "properties": {
+            "type": "HDInsightOnDemand",
+            "typeProperties": {
+              "clusterType": "spark",
+              "clusterSize": 1,
+              "version": "3.6",
+              "timeToLive": "01:35:00",
+              "hostSubscriptionId": "18bc600e-57c7-4ea5-b64a-bb62f1f34d2c",
+              "clusterResourceGroup": "[resourceGroup().name]",
+              "tenant": "[subscription().tenantId]",
+              "sparkVersion": "",
+              "servicePrincipalId": "[parameters('servicePrincipalId')]",
+              "servicePrincipalKey": {
+                "type": "SecureString",
+                "value": "[parameters('servicePrincipalKey')]"
+              },
+              "linkedServiceName": {
+                "referenceName": "[variables('clientAzureStorageLinkedServiceName')]",
+                "type": "LinkedServiceReference"
+              }
+            }
+          }
+        },
+        {
+          "type": "datasets",
+          "name": "[variables('inputDatasetName')]",
+          "dependsOn": [
+            "[parameters('dataFactoryName')]",
+            "[variables('yashAzureStorageLinkedServiceName')]"
+          ],
+          "apiVersion": "2018-06-01",
+          "properties": {
+            "type": "AzureBlob",
+            "typeProperties": {
+              "folderPath": "yash-datalake-resource",
+              "fileName": "*"
+            },
+            "linkedServiceName": {
+              "referenceName": "[variables('yashAzureStorageLinkedServiceName')]",
+              "type": "LinkedServiceReference"
+            }
+          }
+        },
+        {
+          "type": "datasets",
+          "name": "[variables('outputDatasetName')]",
+          "dependsOn": [
+            "[parameters('dataFactoryName')]",
+            "[variables('clientAzureStorageLinkedServiceName')]"
+          ],
+          "apiVersion": "2018-06-01",
+          "properties": {
+            "type": "AzureBlob",
+            "typeProperties": {
+              "folderPath": "[parameters('blobContainer')]"
+            },
+            "linkedServiceName": {
+              "referenceName": "[variables('clientAzureStorageLinkedServiceName')]",
+              "type": "LinkedServiceReference"
+            }
+          }
+        },
+        {
+          "type": "pipelines",
+          "name": "[variables('pipeline_name_1')]",
+          "dependsOn": [
+            "[parameters('dataFactoryName')]",
+            "[variables('clientAzureStorageLinkedServiceName')]",
+            "[variables('inputDatasetName')]",
+            "[variables('outputDatasetName')]"
+          ],
+          "apiVersion": "2018-06-01",
+          "properties": {
+            "activities": [
+              {
+                "type": "Copy",
+                "typeProperties": {
+                  "source": {
+                    "type": "BlobSource"
+                  },
+                  "sink": {
+                    "type": "BlobSink"
+                  }
+                },
+                "name": "MyCopyActivity",
+                "inputs": [
+                  {
+                    "referenceName": "[variables('inputDatasetName')]",
+                    "type": "DatasetReference"
+                  }
+                ],
+                "outputs": [
+                  {
+                    "referenceName": "[variables('outputDatasetName')]",
+                    "type": "DatasetReference"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "type": "pipelines",
+          "name": "[variables('pipeline_name_2')]",
+          "dependsOn": [
+            "[parameters('dataFactoryName')]",
+            "[variables('clientAzureStorageLinkedServiceName')]",
+            "[variables('onDemandHDInsightLinkedServiceName')]"
+          ],
+          "apiVersion": "2018-06-01",
+          "properties": {
+            "activities": [
+              {
+                "name": "MySparkActivity",
+                "type": "HDInsightSpark",
+                "dependsOn": [],
+                "policy": {
+                  "timeout": "7.00:00:00",
+                  "retry": 0,
+                  "retryIntervalInSeconds": 30
+                },
+                "typeProperties": {
+                  "rootPath": "[concat(parameters('blobContainer'), '/scripts')]",
+                  "entryFilePath": "[variables('entryFilePath')]",
+                  "arguments": [
+                    "[parameters('storageAccountName')]",
+                    "[parameters('KibanaESDeployedVMIP')]"
+                  ],
+                  "className": "com.neo4j.AzureNeo4J",
+                  "sparkJobLinkedService": {
+                    "referenceName": "[variables('clientAzureStorageLinkedServiceName')]",
+                    "type": "LinkedServiceReference"
+                  }
+                },
+                "linkedServiceName": {
+                  "referenceName": "[variables('onDemandHDInsightLinkedServiceName')]",
+                  "type": "LinkedServiceReference"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "pipelines",
+          "name": "[variables('pipeline_name_3')]",
+          "dependsOn": [
+            "[parameters('dataFactoryName')]",
+            "[variables('clientAzureStorageLinkedServiceName')]",
+            "[variables('onDemandHDInsightLinkedServiceName')]"
+          ],
+          "apiVersion": "2018-06-01",
+          "properties": {
+            "activities": [
+              {
+                "name": "MySparkActivity",
+                "type": "HDInsightSpark",
+                "dependsOn": [],
+                "policy": {
+                  "timeout": "7.00:00:00",
+                  "retry": 0,
+                  "retryIntervalInSeconds": 30
+                },
+                "typeProperties": {
+                  "rootPath": "[concat(parameters('blobContainer'), '/jars')]",
+                  "entryFilePath": "[variables('entryFilePath')]",
+                  "arguments": [
+                    "[parameters('storageAccountName')]",
+                    "[parameters('KibanaESDeployedVMIP')]"
+                  ],
+                  "className": "com.neo4j.AzureNeo4J",
+                  "sparkJobLinkedService": {
+                    "referenceName": "[variables('clientAzureStorageLinkedServiceName')]",
+                    "type": "LinkedServiceReference"
+                  }
+                },
+                "linkedServiceName": {
+                  "referenceName": "[variables('onDemandHDInsightLinkedServiceName')]",
+                  "type": "LinkedServiceReference"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "properties": {}
+    }
+  ]
 }
