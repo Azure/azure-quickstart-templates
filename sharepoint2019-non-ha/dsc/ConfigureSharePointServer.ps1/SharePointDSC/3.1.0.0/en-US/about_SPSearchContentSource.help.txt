@@ -1,0 +1,153 @@
+﻿.NAME
+    SPSearchContentSource
+
+# Description
+    
+    **Type:** Distributed
+    **Requires CredSSP:** No
+    
+    This resource will deploy and configure a content source in a specified search
+    service application.
+    
+    The default value for the Ensure parameter is Present. When not specifying this
+    parameter, the content source is created.
+    
+.PARAMETER Name
+    Key - String
+    The name of the content source
+
+.PARAMETER ServiceAppName
+    Key - String
+    The name of the search service app that this content source exists within
+
+.PARAMETER ContentSourceType
+    Required - String
+    Allowed values: SharePoint, Website, FileShare, Business
+    The type of content source - currently only SharePoint, Website, File Shares and Business are supported
+
+.PARAMETER Addresses
+    Write - String
+    A list of the addresses this content source includes
+
+.PARAMETER CrawlSetting
+    Write - String
+    Allowed values: CrawlEverything, CrawlFirstOnly, Custom
+    Should the crawler index everything, just the first site or page, or a custom depth (applies to websites only)
+
+.PARAMETER ContinuousCrawl
+    Write - Boolean
+    Should this content source use continuous crawl (SharePoint sites only)
+
+.PARAMETER IncrementalSchedule
+    Write - String
+    What is the incremental schedule for this content source
+
+.PARAMETER FullSchedule
+    Write - String
+    What is the full schedule for this content source
+
+.PARAMETER Priority
+    Write - String
+    Allowed values: Normal, High
+    What is the priority on this content source
+
+.PARAMETER LimitPageDepth
+    Write - Uint32
+    How many pages deep should the crawler go (-1 = unlimited, website sources only)
+
+.PARAMETER LimitServerHops
+    Write - Uint32
+    How many server hops should the crawler make (-1 = unlimtied, website sources only)
+
+.PARAMETER LOBSystemSet
+    Write - String
+    Line of Business System and System Instance names
+
+.PARAMETER Ensure
+    Write - string
+    Allowed values: Present, Absent
+    Present if the source should exist, absent if it should not
+
+.PARAMETER Force
+    Write - Boolean
+    Specify true if DSC is allowed to delete and recreate a content source to apply the correct settings, otherwise false will just report errors if a change can not be applied.
+
+.PARAMETER InstallAccount
+    Write - String
+    POWERSHELL 4 ONLY: The account to run this resource as, use PsDscRunAsCredential if using PowerShell 5
+
+
+.EXAMPLE
+    This example shows how to create a SharePoint sites content source
+
+
+    Configuration Example 
+    {
+        param(
+            [Parameter(Mandatory = $true)]
+            [PSCredential]
+            $SetupAccount
+        )
+        Import-DscResource -ModuleName SharePointDsc
+
+        node localhost {
+            SPSearchContentSource LocalSharePointSites
+            {
+                Name                 = "Local SharePoint Sites"
+                ServiceAppName       = "Search Service Application"
+                ContentSourceType    = "SharePoint"
+                Addresses            = @("http://sharepointsite1.contoso.com", "http://sharepointsite2.contoso.com")
+                CrawlSetting         = "CrawlEverything"
+                ContinuousCrawl      = $true
+                FullSchedule         = $null
+                Priority             = "Normal"
+                Ensure               = "Present"
+                PsDscRunAsCredential = $SetupAccount
+            }
+        }
+    }
+
+
+.EXAMPLE
+    This example shows how to create a website content source
+
+
+    Configuration Example 
+    {
+        param(
+            [Parameter(Mandatory = $true)]
+            [PSCredential]
+            $SetupAccount
+        )
+        Import-DscResource -ModuleName SharePointDsc
+
+        node localhost {
+            SPSearchContentSource WebsiteSource
+            {
+                Name                 = "Contoso website"
+                ServiceAppName       = "Search Service Application"
+                ContentSourceType    = "Website"
+                Addresses            = @("http://www.contoso.com")
+                CrawlSetting         = "Custom"
+                LimitPageDepth       = 5
+                IncrementalSchedule  = MSFT_SPSearchCrawlSchedule{
+                                        ScheduleType = "Daily"
+                                        StartHour = "0"
+                                        StartMinute = "0"
+                                        CrawlScheduleRepeatDuration = "1440"
+                                        CrawlScheduleRepeatInterval = "5"
+                                       }
+                FullSchedule         = MSFT_SPSearchCrawlSchedule{
+                                        ScheduleType = "Weekly"
+                                        CrawlScheduleDaysOfWeek = @("Monday", "Wednesday", "Friday")
+                                        StartHour = "3"
+                                        StartMinute = "0"
+                                       }
+                Priority             = "Normal"
+                Ensure               = "Present"
+                PsDscRunAsCredential = $SetupAccount
+            }
+        }
+    }
+
+

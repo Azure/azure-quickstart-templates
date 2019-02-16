@@ -1,0 +1,218 @@
+﻿.NAME
+    SPFarm
+
+# Description
+    
+    **Type:** Specific
+    **Requires CredSSP:** No
+    
+    This resource is used to create a new SharePoint farm and allow servers to
+    join that farm. It will detect the presence of the configuration database
+    on the SQL server as a first step, and if it does not exist then the farm
+    will be created. If the database does exist, the server will join that
+    configuration database. Once the config DB has been created, the
+    resource will install local help collections, secure resources and activate
+    features.
+    
+    If the central admin site is to be running on the local server, the
+    RunCentralAdmin property should be set to true. In the event that the central
+    admin site has not been provisioned, this resource will first create it,
+    otherwise it will simply start the central admin service instance on the
+    local server.
+    
+    The passphrase is passed as a Credential object.The username of this
+    credential is ignored, only the value of the password is used as the farm
+    passphrase.
+    
+    The port of the Central Admin website can be set by using the
+    CentralAdministrationPort property, if this is not defined the site will be
+    provisioned on port 9999. However this setting will not impact existing
+    deployments that already have Central Admin provisioned on another port. Also
+    when a farm is created, the current behavior is to not enroll the server as a
+    cache server (which is the default behavior of SharePoint). This means you
+    need to use SPDistributedCacheService on at least one server in the farm to
+    designate it as a cache server.
+    
+    CentralAdministrationAuth can be specified as "NTLM" or "KERBEROS". If not
+    specified, it defaults to NTLM. If using Kerberos, make sure to have
+    appropriate SPNs setup for Farm account and Central Administration URI.
+    
+.PARAMETER IsSingleInstance
+    Key - String
+    Allowed values: Yes
+    Specifies the resource is a single instance, the value must be 'Yes'
+
+.PARAMETER Ensure
+    Write - string
+    Allowed values: Present, Absent
+    Present to create/join the farm. Absent is currently not supported
+
+.PARAMETER FarmConfigDatabaseName
+    Required - String
+    Name of the configuration database
+
+.PARAMETER DatabaseServer
+    Required - String
+    Server that will host the configuration and admin content databases
+
+.PARAMETER FarmAccount
+    Required - String
+    The account to use as the main farm account
+
+.PARAMETER Passphrase
+    Required - String
+    The passphrase to use to allow servers to join this farm
+
+.PARAMETER AdminContentDatabaseName
+    Required - String
+    The name of the admin content database
+
+.PARAMETER RunCentralAdmin
+    Required - Boolean
+    Should the central admin site run on this specific server?
+
+.PARAMETER CentralAdministrationPort
+    Write - uint32
+    What port will Central Admin be provisioned to - default is 9999
+
+.PARAMETER CentralAdministrationAuth
+    Write - String
+    Allowed values: NTLM, Kerberos
+    The authentication provider of the CentralAdministration web application
+
+.PARAMETER ServerRole
+    Write - string
+    Allowed values: Application, ApplicationWithSearch, Custom, DistributedCache, Search, SingleServer, SingleServerFarm, WebFrontEnd, WebFrontEndWithDistributedCache
+    SharePoint 2016 & 2019 only - the MinRole role to enroll this server as
+
+.PARAMETER InstallAccount
+    Write - String
+    POWERSHELL 4 ONLY: The account to run this resource as, use PsDscRunAsCredential if using PowerShell 5
+
+
+.EXAMPLE
+    This example shows how a basic SharePoint farm can be created. The database server and names
+    are specified, and the accounts to run the setup as, the farm account and the passphrase are
+    all passed in to the configuration to be applied. By default the central admin site in this
+    example is provisioned to port 9999 using NTLM authentication.
+
+
+    Configuration Example
+    {
+        param(
+            [Parameter(Mandatory = $true)]
+            [PSCredential]
+            $FarmAccount,
+
+            [Parameter(Mandatory = $true)]
+            [PSCredential]
+            $SetupAccount,
+
+            [Parameter(Mandatory = $true)]
+            [PSCredential]
+            $Passphrase
+        )
+        Import-DscResource -ModuleName SharePointDsc
+
+        node localhost {
+            SPFarm SharePointFarm
+            {
+                IsSingleInstance          = "Yes"
+                DatabaseServer            = "SQL.contoso.local\SQLINSTANCE"
+                FarmConfigDatabaseName    = "SP_Config"
+                AdminContentDatabaseName  = "SP_AdminContent"
+                Passphrase                = $Passphrase
+                FarmAccount               = $FarmAccount
+                RunCentralAdmin           = $true
+                PsDscRunAsCredential      = $SetupAccount
+            }
+        }
+    }
+
+
+.EXAMPLE
+    This example shows how a basic SharePoint farm can be created. The database server and names
+    are specified, and the accounts to run the setup as, the farm account and the passphrase are
+    all passed in to the configuration to be applied. Here the port for the central admin site to
+    run on, as well as the authentication mode for the site are also specified.
+
+
+    Configuration Example
+    {
+        param(
+            [Parameter(Mandatory = $true)]
+            [PSCredential]
+            $FarmAccount,
+
+            [Parameter(Mandatory = $true)]
+            [PSCredential]
+            $SetupAccount,
+
+            [Parameter(Mandatory = $true)]
+            [PSCredential]
+            $Passphrase
+        )
+        Import-DscResource -ModuleName SharePointDsc
+
+        node localhost {
+            SPFarm SharePointFarm
+            {
+                IsSingleInstance          = "Yes"
+                DatabaseServer            = "SQL.contoso.local\SQLINSTANCE"
+                FarmConfigDatabaseName    = "SP_Config"
+                AdminContentDatabaseName  = "SP_AdminContent"
+                CentralAdministrationPort = 5000
+                CentralAdministrationAuth = "Kerberos"
+                Passphrase                = $Passphrase
+                FarmAccount               = $FarmAccount
+                RunCentralAdmin           = $true
+                PsDscRunAsCredential      = $SetupAccount
+            }
+        }
+    }
+
+
+.EXAMPLE
+    This example shows how a basic SharePoint farm can be created. The database server and names
+    are specified, and the accounts to run the setup as, the farm account and the passphrase are
+    all passed in to the configuration to be applied. By default the central admin site in this
+    example is provisioned to port 9999 using NTLM authentication. In this example we also see
+    the server role defined as "Application" which tells SharePoint 2016/2019 the role to apply to
+    this server as soon as the farm is created. This property is not supported for SharePoint 2013
+    and so this specific example would fail if used against that verison.
+
+
+    Configuration Example
+    {
+        param(
+            [Parameter(Mandatory = $true)]
+            [PSCredential]
+            $FarmAccount,
+
+            [Parameter(Mandatory = $true)]
+            [PSCredential]
+            $SetupAccount,
+
+            [Parameter(Mandatory = $true)]
+            [PSCredential]
+            $Passphrase
+        )
+        Import-DscResource -ModuleName SharePointDsc
+
+        node localhost {
+            SPFarm SharePointFarm
+            {
+                IsSingleInstance          = "Yes"
+                DatabaseServer            = "SQL.contoso.local\SQLINSTANCE"
+                FarmConfigDatabaseName    = "SP_Config"
+                AdminContentDatabaseName  = "SP_AdminContent"
+                ServerRole                = "Application"
+                Passphrase                = $Passphrase
+                FarmAccount               = $FarmAccount
+                RunCentralAdmin           = $true
+                PsDscRunAsCredential      = $SetupAccount
+            }
+        }
+    }
+
+

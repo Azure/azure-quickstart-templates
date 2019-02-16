@@ -1,0 +1,175 @@
+﻿.NAME
+    SPTrustedIdentityTokenIssuer
+
+# Description
+    
+    **Type:** Distributed
+    **Requires CredSSP:** No
+    
+    This resource is used to create or remove SPTrustedIdentityTokenIssuer in a
+    SharePoint farm.
+    
+    Either parameter SigningCertificateThumbPrint or SigningCertificateFilePath
+    must be set, but not both.
+    
+    The SigningCertificateThumbPrint must be the thumbprint of the signing
+    certificate stored in the certificate store LocalMachine\My of the server
+    
+    Note that the private key of the certificate must not be available in the
+    certiificate store because SharePoint does not accept it.
+    
+    The SigningCertificateFilePath must be the file path to the public key of
+    the signing certificate.
+    
+    The ClaimsMappings property is an array of MSFT_SPClaimTypeMapping to use
+    with cmdlet New-SPClaimTypeMapping. Each MSFT_SPClaimTypeMapping requires
+    properties Name and IncomingClaimType. Property LocalClaimType is not
+    required if its value is identical to IncomingClaimType.
+    
+    The IdentifierClaim property must match an IncomingClaimType element in
+    ClaimsMappings array.
+    
+    The ClaimProviderName property can be set to specify a custom claims provider.
+    It must be already installed in the SharePoint farm and returned by cmdlet
+    
+    The default value for the Ensure parameter is Present. When not specifying this
+    parameter, the token issuer is created.
+    
+.PARAMETER Name
+    Key - String
+    Name of the SPTrustedIdentityTokenIssuer
+
+.PARAMETER Description
+    Required - String
+    Description of the SPTrustedIdentityTokenIssuer
+
+.PARAMETER Realm
+    Required - String
+    Default Realm that is passed to identity provider
+
+.PARAMETER SignInUrl
+    Required - String
+    URL of the identity provider where user is redirected to for authentication
+
+.PARAMETER IdentifierClaim
+    Required - String
+    Identity claim type that uniquely identifies the user
+
+.PARAMETER ClaimsMappings
+    Required - String
+    Array of MSFT_SPClaimTypeMapping to use with cmdlet New-SPClaimTypeMapping
+
+.PARAMETER SigningCertificateThumbprint
+    Write - String
+    Specify the thumbprint of the signing certificate, which must be located in certificate store LocalMachine\\My
+
+.PARAMETER SigningCertificateFilePath
+    Write - String
+    Specify the file path to the signing certificate if it is not stored in the local certificate store already
+
+.PARAMETER ClaimProviderName
+    Write - String
+    Name of a claims provider to set with this SPTrustedIdentityTokenIssuer
+
+.PARAMETER ProviderSignOutUri
+    Write - String
+    Sign-out URL
+
+.PARAMETER UseWReplyParameter
+    Write - Boolean
+    WReply parameter allows SharePoint to specify the return URL to the 3rd party STS upon successful authentication
+
+.PARAMETER Ensure
+    Write - String
+    Allowed values: Present, Absent
+    Present if the SPTrustedIdentityTokenIssuer should be created, or Absent if it should be removed
+
+.PARAMETER InstallAccount
+    Write - String
+    POWERSHELL 4 ONLY: The account to run this resource as, use PsDscRunAsCredential if using PowerShell 5
+
+
+.EXAMPLE
+    This example deploys a trusted token issuer to the local farm.
+
+
+    Configuration Example 
+    {
+        param(
+            [Parameter(Mandatory = $true)]
+            [PSCredential]
+            $SetupAccount
+        )
+        Import-DscResource -ModuleName SharePointDsc
+
+        node localhost {
+            SPTrustedIdentityTokenIssuer SampleSPTrust
+            {
+                Name                         = "Contoso"
+                Description                  = "Contoso"
+                Realm                        = "https://sharepoint.contoso.com"
+                SignInUrl                    = "https://adfs.contoso.com/adfs/ls/"
+                IdentifierClaim              = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
+                ClaimsMappings               =  @(
+                    MSFT_SPClaimTypeMapping{
+                        Name = "Email"
+                        IncomingClaimType = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
+                    }
+                    MSFT_SPClaimTypeMapping{
+                        Name = "Role"
+                        IncomingClaimType = "http://schemas.xmlsoap.org/ExternalSTSGroupType"
+                        LocalClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+                    }
+                )
+                SigningCertificateThumbPrint = "F0D3D9D8E38C1D55A3CEF3AAD1C18AD6A90D5628"
+                ClaimProviderName            = "LDAPCP"
+                ProviderSignOutUri           = "https://adfs.contoso.com/adfs/ls/"
+                Ensure                       = "Present"
+                PsDscRunAsCredential         = $SetupAccount
+            }
+        }
+    }
+
+
+.EXAMPLE
+    This example deploys a trusted token issuer to the local farm.
+
+
+    Configuration Example 
+    {
+        param(
+            [Parameter(Mandatory = $true)]
+            [PSCredential]
+            $SetupAccount
+        )
+        Import-DscResource -ModuleName SharePointDsc
+
+        node localhost {
+            SPTrustedIdentityTokenIssuer SampleSPTrust
+            {
+                Name                         = "Contoso"
+                Description                  = "Contoso"
+                Realm                        = "https://sharepoint.contoso.com"
+                SignInUrl                    = "https://adfs.contoso.com/adfs/ls/"
+                IdentifierClaim              = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
+                ClaimsMappings               =  @(
+                    MSFT_SPClaimTypeMapping{
+                        Name = "Email"
+                        IncomingClaimType = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
+                    }
+                    MSFT_SPClaimTypeMapping{
+                        Name = "Role"
+                        IncomingClaimType = "http://schemas.xmlsoap.org/ExternalSTSGroupType"
+                        LocalClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+                    }
+                )
+                SigningCertificateFilePath   = "F:\Data\DSC\FakeSigning.cer"
+                ClaimProviderName            = "LDAPCP"
+                ProviderSignOutUri           = "https://adfs.contoso.com/adfs/ls/"
+                Ensure                       = "Present"
+                PsDscRunAsCredential         = $SetupAccount
+            }
+        }
+    }
+
+

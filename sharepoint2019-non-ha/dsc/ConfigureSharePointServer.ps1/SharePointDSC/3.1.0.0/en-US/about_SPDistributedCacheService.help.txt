@@ -1,0 +1,177 @@
+﻿.NAME
+    SPDistributedCacheService
+
+# Description
+    
+    **Type:** Specific
+    **Requires CredSSP:** No
+    
+    This resource is responsible for provisioning the distributed cache to the
+    service it runs on. This is required in your farm on at least one server (as
+    the behavior of SPCreateFarm and SPJoinFarm is to not enroll every server as a
+    cache server). The service will be provisioned or de-provisioned based on the
+    Ensure property, and when provisioned the CacheSizeInMB property and
+    ServiceAccount property will be used to configure it. The property
+    createFirewallRules is used to determine if exceptions should be added to the
+    windows firewall to allow communication between servers on the appropriate
+    ports.
+    
+    The ServerProvisionOrder optional property is used when a pull server is
+    handing out configurations to nodes in order to tell this resource about a
+    specific order of enabling the caches. This allows for multiple servers to
+    receive the same configuration, but they will always check for the server
+    before them in the list first to ensure that it is running distributed cache.
+    By doing this you can ensure that you do not create conflicts with two or more
+    servers provisioning a cache at the same time. Note, this approach only makes
+    a server check the others for distributed cache, it does not provision the
+    cache automatically on all servers. If a previous server in the sequence does
+    
+    The default value for the Ensure parameter is Present. When not specifying this
+    parameter, the distributed cache is provisioned.
+    
+.PARAMETER Name
+    Key - String
+    A name to assign to this resource - not really used. For example - AppFabricCachingService
+
+.PARAMETER Ensure
+    Write - string
+    Allowed values: Present, Absent
+    Present to ensure the current server should be running distributed cache, absent to ensure that it isn't running
+
+.PARAMETER CacheSizeInMB
+    Required - UInt32
+    How many MB should be used for the cache. The maximum supported is 16384
+
+.PARAMETER ServiceAccount
+    Required - String
+    The name of the service account to run the service as. This should already be registered as a managed account in SharePoint
+
+.PARAMETER ServerProvisionOrder
+    Write - String
+    A list of servers which specifies the order they should provision the cache in to ensure that two servers do not do it at the same time
+
+.PARAMETER CreateFirewallRules
+    Required - Boolean
+    Should the Windows Firewall rules for distributed cache be created?
+
+.PARAMETER InstallAccount
+    Write - String
+    POWERSHELL 4 ONLY: The account to run this resource as, use PsDscRunAsCredential if using PowerShell 5
+
+
+.EXAMPLE
+    This example applies the distributed cache service to the current server,
+    also setting the rules in Windows firewall to allow communication with
+    other cache hosts.
+
+
+    Configuration Example 
+    {
+        param(
+            [Parameter(Mandatory = $true)]
+            [PSCredential]
+            $SetupAccount
+        )
+        Import-DscResource -ModuleName SharePointDsc
+
+        node localhost {
+            SPDistributedCacheService EnableDistributedCache
+            {
+                Name                 = "AppFabricCachingService"
+                CacheSizeInMB        = 8192
+                ServiceAccount       = "DEMO\ServiceAccount"
+                InstallAccount       = $SetupAccount
+                CreateFirewallRules  = $true
+            }
+        }
+    }
+
+
+.EXAMPLE
+    This example applies the distributed cache service to the current server,
+    but will not apply the rules to allow it to communicate with other cache 
+    hosts to the Windows Firewall. Use this approach if you have an alternate
+    firewall solution.
+
+
+    Configuration Example 
+    {
+        param(
+            [Parameter(Mandatory = $true)]
+            [PSCredential]
+            $SetupAccount
+        )
+        Import-DscResource -ModuleName SharePointDsc
+
+        node localhost {
+            SPDistributedCacheService EnableDistributedCache
+            {
+                Name                 = "AppFabricCachingService"
+                CacheSizeInMB        = 8192
+                ServiceAccount       = "DEMO\ServiceAccount"
+                InstallAccount       = $SetupAccount
+                CreateFirewallRules  = $false
+            }
+        }
+    }
+
+
+.EXAMPLE
+    This example applies the distributed cache service to both "server1" and
+    "server2". The ServerProvisionOrder will ensure that it applies it to
+    server1 first and then server2, making sure they don't both attempt to 
+    create the cache at the same time, resuling in errors.
+
+    Note: Do not allow plain text passwords in production environments.
+
+
+    $ConfigurationData = @{
+        AllNodes = @(
+            @{
+                NodeName = 'Server1'
+                PSDscAllowPlainTextPassword = $true
+            },
+            @{
+                NodeName = 'Server2'
+                PSDscAllowPlainTextPassword = $true
+            }
+        )
+    }
+
+    Configuration Example 
+    {
+        param(
+            [Parameter(Mandatory = $true)]
+            [PSCredential]
+            $SetupAccount
+        )
+        Import-DscResource -ModuleName SharePointDsc
+        
+        node "Server1" 
+        {
+            SPDistributedCacheService EnableDistributedCache
+            {
+                Name                 = "AppFabricCachingService"
+                CacheSizeInMB        = 8192
+                ServiceAccount       = "DEMO\ServiceAccount"
+                ServerProvisionOrder = @("Server1","Server2")
+                CreateFirewallRules  = $true
+                InstallAccount       = $SetupAccount
+            }
+        }
+
+        node "Server2"
+        {
+            SPDistributedCacheService EnableDistributedCache
+            {
+                Name                 = "AppFabricCachingService"
+                CacheSizeInMB        = 8192
+                ServiceAccount       = "DEMO\ServiceAccount"
+                ServerProvisionOrder = @("Server1","Server2")
+                CreateFirewallRules  = $true
+                InstallAccount       = $SetupAccount
+            }
+        }
+    }
+
+

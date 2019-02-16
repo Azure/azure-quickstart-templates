@@ -1,0 +1,166 @@
+﻿.NAME
+    SPServiceAppSecurity
+
+# Description
+    
+    **Type:** Distributed
+    **Requires CredSSP:** No
+    
+    This resource is used to manage the sharing security settings of a specific
+    service application. There are a number of approaches to how this can be
+    implemented. Firstly you can set permissions for the app administrators, or
+    for the sharing permission by specifying the SecurityType attribute. These
+    options correlate to the buttons seen in the ribbon on the "manage service
+    applications" page in Central Administration after you select a specific
+    service app. The "Members" property will set a specific list of members for
+    the service app, making sure that every user/group in the list is in the group
+    and all others that are members and who are not in this list will be removed.
+    The "MembersToInclude" and "MembersToExclude" properties will allow you to
+    control a specific set of users to add or remove, without changing any other
+    members that are in the group already that may not be specified here, allowing
+    
+    NOTE:
+    In order to specify Local Farm you can use the token "\{LocalFarm\}"
+    as the username. The token is case sensitive.
+    
+    ## Permission overview
+    
+    Available permissions for Administrators are Full Control except for these
+    service applications:
+    
+    Secure Store Service Application:
+    
+    - Full Control
+    - Create Target Application
+    - Delete Target Application
+    - Manage Target Application
+    - All Target Applications
+    
+    User Profile Service Application:
+    
+    - Full Control
+    - Manage Profiles
+    - Manage Audiences
+    - Manage Permissions
+    - Retrieve People Data for Search Crawlers
+    - Manage Social Data
+    
+    Search Service Application:
+    
+    - Full Control
+    - Read (Diagnostics Pages Only)
+    
+    Permissions for Sharing Permissions are Full Control except for these
+    service applications:
+    
+    Managed Metadata Service Application:
+    
+    - Read Access to Term Store
+    - Read and Restricted Write Access to Term Store
+    - Full Access to Term Store
+    
+    NOTE:
+    Multiple permissions can be specified for each principal. Full Control
+    will include all other permissions. It is not required to specify all
+    available permissions if Full Control is specified.
+    
+.PARAMETER ServiceAppName
+    Key - String
+    The name of the service application you wish to apply security settings to
+
+.PARAMETER SecurityType
+    Key - string
+    Allowed values: Administrators, SharingPermissions
+    Administrators will set the administrators for the service app, SharingPermissions will set those granted access through the permissions button seen in the Sharing section of the ribbon in central admin
+
+.PARAMETER Members
+    Write - String
+    A list of members to set the group to. Those not in this list will be removed
+
+.PARAMETER MembersToInclude
+    Write - String
+    A list of members to add. Members not in this list will be left in the group
+
+.PARAMETER MembersToExclude
+    Write - String
+    A list of members to remove. Members not in this list will be left in the group
+
+.PARAMETER InstallAccount
+    Write - String
+    POWERSHELL 4 ONLY: The account to run this resource as, use PsDscRunAsCredential if using PowerShell 5
+
+
+.EXAMPLE
+    This example shows how full control permission can be given to the farm
+    account and service app pool account to the user profile service app's
+    sharing permission.
+    It also shows granting access to specific areas to a user.
+
+
+    Configuration Example
+    {
+        param(
+            [Parameter(Mandatory = $true)]
+            [PSCredential]
+            $SetupAccount
+        )
+        Import-DscResource -ModuleName SharePointDsc
+
+        node localhost {
+            $membersToInclude = @()
+            $membersToInclude += MSFT_SPServiceAppSecurityEntry {
+                                    Username     = "CONTOSO\SharePointFarmAccount"
+                                    AccessLevels = @("Full Control")
+                                }
+            $membersToInclude += MSFT_SPServiceAppSecurityEntry {
+                                    Username     = "CONTOSO\SharePointServiceApps"
+                                    AccessLevels = @("Full Control")
+                                }
+            $membersToInclude += MSFT_SPServiceAppSecurityEntry {
+                                    Username     = "CONTOSO\User1"
+                                    AccessLevels = @("Manage Profiles", "Manage Social Data")
+                                }
+            SPServiceAppSecurity UserProfileServiceSecurity
+            {
+                ServiceAppName       = "User Profile Service Application"
+                SecurityType         = "SharingPermissions"
+                MembersToInclude     = $membersToInclude
+                MembersToExclude     = @("CONTOSO\BadAccount1", "CONTOSO\BadAccount2")
+                PsDscRunAsCredential = $SetupAccount
+            }
+        }
+    }
+
+
+.EXAMPLE
+    This example shows how to use the local farm token to grant
+    full control permission to the local farm to the
+    user profile service app's sharing permission.
+
+
+    Configuration Example
+    {
+        param(
+            [Parameter(Mandatory = $true)]
+            [PSCredential]
+            $SetupAccount
+        )
+        Import-DscResource -ModuleName SharePointDsc
+
+        node localhost {
+            $members = @()
+            $members += MSFT_SPServiceAppSecurityEntry {
+                                    Username     = "{LocalFarm}"
+                                    AccessLevels = @("Full Control")
+                                }
+            SPServiceAppSecurity UserProfileServiceSecurity
+            {
+                ServiceAppName       = "User Profile Service Application"
+                SecurityType         = "SharingPermissions"
+                Members              = $members
+                PsDscRunAsCredential = $SetupAccount
+            }
+        }
+    }
+
+

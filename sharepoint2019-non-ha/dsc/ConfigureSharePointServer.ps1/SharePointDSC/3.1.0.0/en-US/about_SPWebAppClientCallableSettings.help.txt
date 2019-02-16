@@ -1,0 +1,169 @@
+﻿.NAME
+    SPWebAppClientCallableSettings
+
+# Description
+    
+    **Type:** Distributed
+    **Requires CredSSP:** No
+    
+    This resource sets the client callable settings for the web application.
+    It can set the proxy libraries and specific properties for the client
+    callable settings. The resource can for example be used to increase the
+    timeout for client code, and to enable the tenant administration
+    functionality.
+    
+    Tenant administration functionality enables client code to work with
+    the namespace Microsoft.Online.SharePoint.Client.Tenant from the
+    assembly with the same name. This enables client code to create site
+    collection, list all site collections, and more.
+    
+    In order to use the tenant administration client code a site collection
+    within the web application needs to be designated as a tenant
+    administration site collection. This can be done using the SPSite
+    resource setting the AdministrationSiteType to TenantAdministration.
+    Use this site collection when creating a client side connection.
+    
+    More information about the tenant can be found in a [blog
+    post]
+    (https://blogs.msdn.microsoft.com/vesku/2015/12/04/sharepoint-tenant-csom-object-support-in-sharepoint-2013-and-2016/)
+    by Vesa Juvonen. In another [blog post]
+    (https://blogs.msdn.microsoft.com/vesku/2014/06/09/provisioning-site-collections-using-sp-app-model-in-on-premises-with-just-csom/)
+    he goes into more details of
+    the setup and architecture, and includes sample code for how to use.
+    
+    NOTE:
+    Proxy library used for enabling tenant administration:
+    
+    **SharePoint 2013** (Requires mininum April 2014 Cumulative Update):
+    Microsoft.Online.SharePoint.Dedicated.TenantAdmin.ServerStub
+    , Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c
+    
+    **SharePoint 2016/2019**:
+    Microsoft.Online.SharePoint.Dedicated.TenantAdmin.ServerStub
+    , Version=16.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c
+    
+    In both version set the SupportAppAuthentication property to true.
+    
+    NOTE2:
+    An IIS reset needs to be performed on all servers in the farm after
+    modifying the registered proxy libraries.
+    
+.PARAMETER WebAppUrl
+    Key - string
+    The URL of the web application to set blocked file types for
+
+.PARAMETER ProxyLibraries
+    write - string
+    A list of proxy libraries to set. Those not in this list will be removed
+
+.PARAMETER ProxyLibrariesToInclude
+    write - string
+    A list of proxy libraries to add. Proxy libraries not in this list will be kept
+
+.PARAMETER ProxyLibrariesToExclude
+    write - string
+    A list of proxy libraries to remove. Proxy libraries not in this list will be kept
+
+.PARAMETER MaxResourcesPerRequest
+    write - UInt32
+    Sets the maximum number of internal SPRequest objects that can be included in one request
+
+.PARAMETER MaxObjectPaths
+    write - UInt32
+    Sets the maximum number of object paths that can be used within one request
+
+.PARAMETER ExecutionTimeout
+    write - UInt32
+    Sets the execution timeout for the client request in minutes
+
+.PARAMETER RequestXmlMaxDepth
+    write - UInt32
+    Sets the maximum depth of the request XML that is sent by the client measured in 'tag' count
+
+.PARAMETER EnableXsdValidation
+    write - Boolean
+    Sets a Boolean value that specifies whether to enable XSD validation against an XML request or not
+
+.PARAMETER EnableStackTrace
+    write - Boolean
+    Sets a Boolean value that specifies whether the server can send stack trace data to the client
+
+.PARAMETER RequestUsageExecutionTimeThreshold
+    write - UInt32
+    Sets the threshold in milliseconds for logging csom request usage data 
+
+.PARAMETER EnableRequestUsage
+    write - Boolean
+    Sets a Boolean value that specifies whether to log usage data or not
+
+.PARAMETER LogActionsIfHasRequestException
+    write - Boolean
+    Sets a Boolean value that specifies whether to log usage data when request has an exception or not
+
+.PARAMETER InstallAccount
+    Write - string
+    POWERSHELL 4 ONLY: The account to run this resource as, use PsDscRunAsCredential if using PowerShell 5
+
+
+.EXAMPLE
+    This example shows how to set the client callable settings for a web application
+
+
+    Configuration Example
+    {
+        param(
+            [Parameter(Mandatory = $true)]
+            [PSCredential]
+            $SetupAccount
+        )
+        Import-DscResource -ModuleName SharePointDsc
+
+        node localhost {
+            SPWebAppClientCallableSettings DefaultClientCallableSettings
+            {
+                WebAppUrl                          = "http://example.contoso.local"
+                MaxResourcesPerRequest             = 16
+                MaxObjectPaths                     = 256
+                ExecutionTimeout                   = 90
+                RequestXmlMaxDepth                 = 32
+                EnableXsdValidation                = $true
+                EnableStackTrace                   = $false
+                RequestUsageExecutionTimeThreshold = 800
+                EnableRequestUsage                 = $true
+                LogActionsIfHasRequestException    = $true
+                PsDscRunAsCredential               = $SetupAccount
+            }
+        }
+    }
+
+
+.EXAMPLE
+    This example shows how to enable tenant administration for a web application in a SharePoint 2013 farm
+
+
+    Configuration Example
+    {
+        param(
+            [Parameter(Mandatory = $true)]
+            [PSCredential]
+            $SetupAccount
+        )
+        Import-DscResource -ModuleName SharePointDsc
+
+        node localhost {
+            $proxyLibraries = @()
+            $proxyLibraries += MSFT_SPProxyLibraryEntry {
+                AssemblyName = "Microsoft.Online.SharePoint.Dedicated.TenantAdmin.ServerStub, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c"
+                SupportAppAuthentication = $true
+            }
+
+            SPWebAppClientCallableSettings TenantAdministration
+            {
+                WebAppUrl            = "http://example.contoso.local"
+                ProxyLibraries       = $proxyLibraries
+                PsDscRunAsCredential = $SetupAccount
+            }
+        }
+    }
+
+

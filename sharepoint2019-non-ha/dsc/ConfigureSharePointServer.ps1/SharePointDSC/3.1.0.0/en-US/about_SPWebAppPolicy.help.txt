@@ -1,0 +1,126 @@
+﻿.NAME
+    SPWebAppPolicy
+
+# Description
+    
+    **Type:** Distributed
+    **Requires CredSSP:** No
+    
+    This resource is used to set the User Policies for web applications. The
+    usernames can be either specified in Classic or Claims format, both will be
+    accepted. There are a number of approaches to how this can be implemented. The
+    "Members" property will set a specific list of members for the group, making
+    sure that every user/group in the list is in the group and all others that are
+    members and who are not in this list will be removed. The "MembersToInclude"
+    and "MembersToExclude" properties will allow you to control a specific set of
+    users to add or remove, without changing any other members that are in the
+    group already that may not be specified here, allowing for some manual
+    management outside of this configuration resource.
+    
+    Requirements:
+    At least one of the Members, MemberToInclude or MembersToExclude properties
+    needs to be specified. Do not combine the Members property with the
+    MemberToInclude and MembersToExclude properties. Do not set the
+    ActAsSystemAccount property to $true without setting the permission level to
+    
+.PARAMETER WebAppUrl
+    Key - string
+    The URL of the web application
+
+.PARAMETER Members
+    Write - String
+    Exact list of accounts that will have to get Web Policy permissions
+
+.PARAMETER MembersToInclude
+    Write - String
+    List of all accounts that must be in the Web Policy group
+
+.PARAMETER MembersToExclude
+    Write - String
+    List of all accounts that are not allowed to have any Web Policy permissions
+
+.PARAMETER SetCacheAccountsPolicy
+    Write - Boolean
+    Include the Cache Accounts in the policy or not
+
+.PARAMETER InstallAccount
+    Write - String
+    POWERSHELL 4 ONLY: The account to run this resource as, use PsDscRunAsCredential if using PowerShell 5
+
+
+.EXAMPLE
+    This example sets the specific web app policy for the specified web app to
+    match the provided list below.
+
+
+    Configuration Example 
+    {
+        param(
+            [Parameter(Mandatory = $true)]
+            [PSCredential]
+            $SetupAccount
+        )
+        Import-DscResource -ModuleName SharePointDsc
+
+        node localhost {
+            SPWebAppPolicy WebAppPolicy
+            {
+                WebAppUrl = "http://sharepoint.contoso.com"
+                Members = @(
+                    MSFT_SPWebPolicyPermissions {
+                        Username           = "contoso\user1"
+                        PermissionLevel    = "Full Control"
+                        ActAsSystemAccount = $true
+                    }
+                    MSFT_SPWebPolicyPermissions {
+                        Username        = "contoso\Group 1"
+                        PermissionLevel = "Full Read"
+                        IdentityType    = "Claims"
+                    }
+                )
+                PsDscRunAsCredential = $SetupAccount
+            }
+        }
+    }
+
+
+.EXAMPLE
+    This example shows how to include specific members while excluding other members
+    from the policy of the web app. 
+
+
+    Configuration Example 
+    {
+        param(
+            [Parameter(Mandatory = $true)]
+            [PSCredential]
+            $SetupAccount
+        )
+        Import-DscResource -ModuleName SharePointDsc
+
+        node localhost {
+            SPWebAppPolicy WebAppPolicy
+            {
+                WebAppUrl            = "http://sharepoint.contoso.com"
+                MembersToInclude = @(
+                    @(MSFT_SPWebPolicyPermissions {
+                        Username        = "contoso\user1"
+                        PermissionLevel = "Full Control"
+                    })
+                    @(MSFT_SPWebPolicyPermissions {
+                        Username        = "contoso\user2"
+                        PermissionLevel = "Full Read"
+                    })
+                )
+                MembersToExclude = @(
+                    @(MSFT_SPWebPolicyPermissions {
+                        Username = "contoso\user3"
+                    })
+                )
+                SetCacheAccountsPolicy = $true 
+                PsDscRunAsCredential   = $SetupAccount
+            }
+        }
+    }
+
+

@@ -1,0 +1,145 @@
+﻿.NAME
+    SPInstall
+
+# Description
+    
+    **Type:** Common
+    **Requires CredSSP:** No
+    
+    This resource is used to install the SharePoint binaries. The BinaryDir
+    parameter should point to the path that setup.exe is located (not to setup.exe
+    itself). The ProductKey parameter is used to inject in to the configuration
+    file and validate the license key during the installation process. This module
+    depends on the prerequisites already being installed, which can be done
+    
+    NOTE:
+    This resource only supports SharePoint Server. SharePoint Foundation
+    is not supported. For examples to install SharePoint Foundation using DSC, see:
+    https://github.com/PowerShell/SharePointDsc/wiki/SPInstall (Example 3)
+    
+    ## Installing from network locations
+    
+    If you wish to install SharePoint from a network location this can
+    be done, however you must disable User Account Control (UAC) on the server
+    to allow DSC to run the executable from a remote location, and also set
+    the PsDscRunAsCredential value to run as an account with local admin
+    permissions as well as read access to the network location.
+    
+    It is *not recommended* to disable UAC for security reasons. The recommended
+    approach is to copy the installation media to the local nodes first and
+    then execute the installation from there.
+    
+    ## Multilingual support
+    
+    Where possible, resources in SharePointDsc have been written in a way that
+    they should support working with multiple language packs for multilingual
+    deployments. However due to constraints in how we set up and install the
+    product, only English ISOs are supported for installing SharePoint.
+    
+.PARAMETER IsSingleInstance
+    Key - String
+    Allowed values: Yes
+    Specifies the resource is a single instance, the value must be 'Yes'
+
+.PARAMETER BinaryDir
+    Required - String
+    The directory that contains all of the SharePoint binaries
+
+.PARAMETER ProductKey
+    Required - String
+    The product key to use during the installation
+
+.PARAMETER InstallPath
+    Write - String
+    The install directory to use in the installation, leave blank to use the setup defaults
+
+.PARAMETER DataPath
+    Write - String
+    The data directory to use in the installation, leave blank to use the setup defaults
+
+.PARAMETER Ensure
+    Write - string
+    Allowed values: Present, Absent
+    Present to install SharePoint. Absent is currently not supported
+
+
+.EXAMPLE
+    This module will install SharePoint to the default locations. The binaries for
+    SharePoint in this scenario are stored at C:\SPInstall (so it will look to run
+    C:\SPInstall\Setup.exe)
+
+
+    Configuration Example
+    {
+        param(
+            [Parameter(Mandatory = $true)]
+            [PSCredential]
+            $SetupAccount
+        )
+        Import-DscResource -ModuleName SharePointDsc
+
+        node localhost {
+            SPInstall InstallBinaries
+            {
+                IsSingleInstance = "Yes"
+                BinaryDir        = "C:\SPInstall"
+                ProductKey       = "XXXXX-XXXXX-XXXXX-XXXXX-XXXXX"
+            }
+        }
+    }
+
+
+.EXAMPLE
+    This module will install SharePoint to the specific locations set for the
+    InstallPath and DataPath directories.
+
+
+    Configuration Example
+    {
+        param(
+            [Parameter(Mandatory = $true)]
+            [PSCredential]
+            $SetupAccount
+        )
+        Import-DscResource -ModuleName SharePointDsc
+
+        node localhost {
+            SPInstall InstallBinaries
+            {
+                IsSingleInstance = "Yes"
+                BinaryDir        = "D:\SharePoint\Binaries"
+                InstallPath      = "D:\SharePoint\Install"
+                DataPath         = "D:\SharePoint\Data"
+                ProductKey       = "XXXXX-XXXXX-XXXXX-XXXXX-XXXXX"
+            }
+        }
+    }
+
+
+.EXAMPLE
+    This module will install SharePoint Foundation 2013 to the local server
+
+
+    Configuration Example
+    {
+        param(
+            [Parameter(Mandatory = $true)]
+            [PSCredential]
+            $SetupAccount
+        )
+        Import-DscResource -ModuleName PSDesiredStateConfiguration
+
+        node localhost {
+            Package InstallSharePointFoundation
+            {
+                Ensure             = "Present"
+                Name               = "Microsoft SharePoint Foundation 2013 Core"
+                Path               = "E:\SharePoint2013\Setup.exe"
+                Arguments          = "/config E:\SharePoint2013\files\setupfarmsilent\config.xml"
+                ProductID          = "90150000-1014-0000-1000-0000000FF1CE"
+                ReturnCode         = 0
+            }
+        }
+    }
+
+
