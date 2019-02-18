@@ -24,71 +24,74 @@ $AzcopyPath = "C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy"
 
 if(!(Test-Path $AzcopyPath))
 {
-	$path = "$ProvisionToolPath\azcopy.msi"
-	if(!(Test-Path $path))
-	{
-		#Download azcopy
-		$url = "http://aka.ms/downloadazcopy"
-		Invoke-WebRequest -Uri $url -OutFile $path
-	}
+    $path = "$ProvisionToolPath\azcopy.msi"
+    if(!(Test-Path $path))
+    {
+        #Download azcopy
+        $url = "http://aka.ms/downloadazcopy"
+        Invoke-WebRequest -Uri $url -OutFile $path
+    }
 
-	#Install azcopy
-	Start-Process msiexec.exe -Wait -ArgumentList "/I $path /quiet"
+    #Install azcopy
+    Start-Process msiexec.exe -Wait -ArgumentList "/I $path /quiet"
 }
 
 $sourceDirctory = (split-path -parent $MyInvocation.MyCommand.Definition) + "\*"
 $destDirctory = "$ProvisionToolPath\"
 Copy-item -Force -Recurse $sourceDirctory -Destination $destDirctory
 
-$ConfigurationFile = Join-Path -Path $ProvisionToolPath -ChildPath "$Role.json";
+$ConfigurationFile = Join-Path -Path $ProvisionToolPath -ChildPath "$Role.json"
 
-if (Test-Path -Path $ConfigurationFile) {
-    $Configuration = Get-Content -Path $ConfigurationFile | ConvertFrom-Json;
-} else {
+if (Test-Path -Path $ConfigurationFile) 
+{
+    $Configuration = Get-Content -Path $ConfigurationFile | ConvertFrom-Json
+} 
+else 
+{
     [hashtable]$Actions = @{
-		Name = $env:COMPUTERNAME
-        InstallADDS    = @{
+        Name = $env:COMPUTERNAME
+        InstallADDS = @{
             Status = 'NotStart'
             StartTime = ''
             EndTime = ''
         }
-        SetAutoLogOn  = @{
+        SetAutoLogOn = @{
             Status = 'NotStart'
             StartTime = ''
             EndTime = ''
         }
-        TurnOnFirewallPort= @{
+        TurnOnFirewallPort = @{
             Status = 'NotStart'
             StartTime = ''
             EndTime = ''
         }
-        InstallRolesAndFeatures= @{
+        InstallRolesAndFeatures = @{
             Status = 'NotStart'
             StartTime = ''
             EndTime = ''
         }
-        WaitForPS= @{
+        WaitForPS = @{
             Status = 'NotStart'
             StartTime = ''
             EndTime = ''
         }
-        DelegateControl= @{
+        DelegateControl = @{
             Status = 'NotStart'
             StartTime = ''
             EndTime = ''
         }
-        ExendADSchema= @{
+        ExendADSchema = @{
             Status = 'NotStart'
             StartTime = ''
             EndTime = ''
         }
-		CleanUp= @{
+        CleanUp = @{
             Status = 'NotStart'
             StartTime = ''
             EndTime = ''
         }
-    };
-    $Configuration = New-Object -TypeName psobject -Property $Actions;
+    }
+    $Configuration = New-Object -TypeName psobject -Property $Actions
 }
 
 $Configuration | Add-Member -MemberType ScriptMethod -Name SetRebootConfig -Value {
@@ -101,24 +104,24 @@ $Configuration | Add-Member -MemberType ScriptMethod -Name SetRebootConfig -Valu
         $Command | Out-File -FilePath $BatchFilePath -Encoding ascii -Append
 
         $RunOnceRegKey = 'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce'
-        $KeyValueName = 'Workflow Reboot';
+        $KeyValueName = 'Workflow Reboot'
         $KeyType = [Microsoft.Win32.RegistryValueKind]::String
         $null = [Microsoft.Win32.Registry]::SetValue($RunOnceRegKey,$KeyValueName,$BatchFile,$KeyType)
         $this | ConvertTo-Json | Out-File -FilePath $ConfigurationFile -Force
 
         $configfile = $ConfigurationFile
-	    $uploadurl = $tempurl + "/$Role.json"
-	    AZCopy -source $configfile -dest $uploadurl -upload $true
+        $uploadurl = $tempurl + "/$Role.json"
+        AZCopy -source $configfile -dest $uploadurl -upload $true
 
         return 0
     }
     catch {
         return 1
-    };
+    }
 }
 
 $Mainscript = $ProvisionToolPath + "\main.ps1"
-. $Mainscript;
+. $Mainscript
 
 if ($Configuration.InstallADDS.Status -eq 'NotStart') {
     $Configuration.InstallADDS.Status = 'Running'
@@ -153,7 +156,7 @@ if ($Configuration.InstallADDS.Status -eq 'Completed') {
             $Result = $Configuration.SetRebootConfig()
             if ($Result -eq 0) {
                 shutdown -r -t 10
-				exit 0
+                exit 0
             }
         }
         else
@@ -188,7 +191,7 @@ if ($Configuration.InstallADDS.Status -eq 'Completed') {
             $Configuration.InstallRolesAndFeatures.Status = 'Completed'
             $Configuration.InstallRolesAndFeatures.EndTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
         }
-		else
+        else
         {
             $Configuration.InstallRolesAndFeatures.Status = 'Error'
             $Configuration.InstallRolesAndFeatures.EndTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
@@ -217,7 +220,7 @@ if ($Configuration.InstallADDS.Status -eq 'Completed') {
         $Configuration.DelegateControl.Status = 'Running'
         $Configuration.DelegateControl.StartTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
         UploadConfigFile
-		[string[]]$AddPermissionRoleList = "PS1","DP_MP"
+        [string[]]$AddPermissionRoleList = "PS1","DP_MP"
         $Result = Delegate-Control $DomainFullName $AddPermissionRoleList
         if ($Result[-1] -eq 0)  {
             $Configuration.DelegateControl.Status = 'Completed'
@@ -231,7 +234,7 @@ if ($Configuration.InstallADDS.Status -eq 'Completed') {
         UploadConfigFile
     }
 
-	if ($Configuration.ExendADSchema.Status -eq 'NotStart') {
+    if ($Configuration.ExendADSchema.Status -eq 'NotStart') {
         $Configuration.ExendADSchema.Status = 'Running'
         $Configuration.ExendADSchema.StartTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
         UploadConfigFile
@@ -248,7 +251,7 @@ if ($Configuration.InstallADDS.Status -eq 'Completed') {
         UploadConfigFile
     }
 
-	if ($Configuration.CleanUp.Status -eq 'NotStart') {
+    if ($Configuration.CleanUp.Status -eq 'NotStart') {
         $Configuration.CleanUp.Status = 'Running'
         $Configuration.CleanUp.StartTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
         UploadConfigFile
@@ -257,7 +260,7 @@ if ($Configuration.InstallADDS.Status -eq 'Completed') {
             $Configuration.CleanUp.Status = 'Completed'
             $Configuration.CleanUp.EndTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
         }
-		UploadConfigFile
+        UploadConfigFile
     }
 }
 
