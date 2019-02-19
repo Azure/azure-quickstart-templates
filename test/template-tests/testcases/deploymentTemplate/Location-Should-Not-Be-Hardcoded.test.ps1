@@ -9,8 +9,8 @@
 [switch]$IsMainTemplate
 )
 $TemplateObjectCopy = $templateText | ConvertFrom-Json
-$TemplateObjectCopy.psobject.properties.remove('parameters')
-$TemplateWithoutParameters = $TemplateObjectCopy | 
+$TemplateObjectCopy.parameters.psobject.properties.remove('location')
+$TemplateWithoutLocationParameter = $TemplateObjectCopy | 
     ConvertTo-Json -Depth 10        
 
  
@@ -22,6 +22,6 @@ if ($locationParameter -and
     Write-Error "Location parameter must not be hardcoded.  The default value should be [resourceGroup().location]." -ErrorId Location.Parameter.Hardcoded -TargetObject $parameter
 }
 
-if ($TemplateWithoutParameters -like '*resourceGroup().location*') {
+if ($TemplateWithoutLocationParameter -like '*resourceGroup().location*') {
     Write-Error "$TemplateFileName must use the location parameter, not resourceGroup().location (except when used as a default value)" -ErrorId Location.Parameter.Should.Be.Used -TargetObject $parameter
 }
