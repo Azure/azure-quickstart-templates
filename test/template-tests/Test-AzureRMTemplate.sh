@@ -1,2 +1,2 @@
 #!/bin/sh
-powershell -noprofile -nologo -command ". .\Test-AzureRMTemplate.ps1; Import-Module Pester; Test-AzureRMTemplate $@ ; if (\$error.Count) { exit 1}"
+powershell -noprofile -nologo -command "Import-Module Pester, '$(dirname $(readlink -f $0))/AzRMTester.psd1'; Test-AzureRMTemplate $@ ; if (\$error.Count) { exit 1}"

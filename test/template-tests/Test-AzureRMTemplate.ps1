@@ -23,6 +23,12 @@ Each test script has access to a set of well-known variables:
 * CreateUIDefinitionText (the text of createUIDefintion.json)
 * CreateUIDefinitionObject ( the createUIDefintion object)
 * HasCreateUIDefintion (a boolean indicating if the directory includes createUIDefintion.json)
+* MainTemplateText (the text of the main template file)
+* MainTemplateObject (the main template file, converted from JSON)
+* MainTemplateResources (the resources and child resources of the main template)
+* MainTemplateParameters (a hashtable containing the parameters found in the main template)
+* MainTemplateVariables (a hashtable containing the variables found in the main template)
+* MainTemplateOutputs (a hashtable containing the outputs found in the main template) 
 
     #>
     [CmdletBinding(DefaultParameterSetName='NearbyTemplate')]
@@ -330,115 +336,13 @@ Each test script has access to a set of well-known variables:
             }
         }
 
-        # Now let's try to resolve the template path.
-        $resolvedTemplatePath = 
-            # If the template path doesn't appear to be a path to a json file,
-            if ($TemplatePath -notlike '*.json') { 
-                # see if it looks like a file
-                if (($templatePath | Split-Path -Leaf) -like '*.*') {
-                    $TemplatePath = $TemplatePath | Split-Path # if it does, reassign template path to it's directory.
-                }
-                # Then, go looking beneath that template path
-                $preferredJsonFile = $TemplatePath | 
-                    Get-ChildItem -Filter *.json |
-                    # for a file named azureDeploy.json or mainTemplate.json
-                    Where-Object { 'azureDeploy.json', 'mainTemplate.json' -contains $_.Name } |
-                    Select-Object -First 1 -ExpandProperty Fullname
-                # If no file was found, write an error and return.
-                if (-not $preferredJsonFile) {
-                    Write-Error "No azureDeploy.json or mainTemplate.json found beneath $TemplatePath"
-                    return
-                }
-                $preferredJsonFile
-            } else { 
-                $ExecutionContext.SessionState.Path.GetResolvedPSPathFromPSPath($templatePath)
-            }
+        $expandedTemplate =Expand-AzureRMTemplate -TemplatePath $templatePath
+        if (-not $expandedTemplate) { return }
+        $wellKnownVariables = $expandedTemplate.Keys
 
-        # If we couldn't find a template file, return (an error should have already been written).
-        if (-not $resolvedTemplatePath) {  return }
-
-
-        # Next, we want to pre-populate a number of well-known variables.
-        # These variables will be available to every test case.   They are:
-        $WellKnownVariables = 'TemplateFullPath','TemplateText','TemplateObject',
-            'CreateUIDefinitionFullPath','createUIDefintionText','CreateUIDefinitionObject',
-            'FolderName', 'HasCreateUIDefinition', 'IsMainTemplate'
-        foreach ($_ in $WellKnownVariables) {
-            $ExecutionContext.SessionState.PSVariable.Set($_, $null)
-        }
-            
-        #*$templateFullPath (the full path to the .json file)
-        $TemplateFullPath = "$resolvedTemplatePath"
-        #*$TemplateFileName (the name of the azure template file)
-        $templateFileName = $TemplatePath | Split-Path -Leaf
-        #*$IsMainTemplate (if the TemplateFileName is named mainTemplate.json)
-        $isMainTemplate = 'mainTemplate.json', 'azureDeploy.json' -contains $templateFileName
-        $templateFile = Get-Item -LiteralPath $resolvedTemplatePath
-        $templateFolder = $templateFile.Directory
-        #*$FolderName (the name of the root folder containing the template)
-        $TemplateName = $templateFolder.Name
-        #*$TemplateText (the text contents of the template file)
-        $TemplateText = [IO.File]::ReadAllText($resolvedTemplatePath)
-        #*$TemplateObject (the template text, converted from JSON)
-        $TemplateObject = $TemplateText | ConvertFrom-Json    
-        #*$CreateUIDefinitionFullPath (the path to CreateUIDefinition.json)
-        $createUiDefinitionFullPath = Join-Path -childPath 'createUiDefinition.json' -Path $templateFolder
-        if (Test-Path $createUiDefinitionFullPath) {
-            #*$CreateUIDefinitionText (the text contents of CreateUIDefinition.json)
-            $createUIDefintionText = [IO.File]::ReadAllText($createUiDefinitionFullPath)
-            #*$CreateUIDefinitionObject (the createuidefinition text, converted from json)
-            $createUIDefinitionObject =  $createUIDefintionText | ConvertFrom-Json
-            #*$HasCreateUIDefinition (indicates if a CreateUIDefinition.json file exists)
-            $HasCreateUIDefinition = $true            
-        } else {                
-            $HasCreateUIDefinition = $false 
-        }
-        
-
-        #*$FolderFiles (a list of objects of each file in the directory)
-        $FolderFiles = 
-            @(Get-ChildItem -Path $templateFolder.FullName -Recurse |
-                Where-Object { -not $_.PSIsContainer } |
-                ForEach-Object {
-
-                    # All FolderFile objects will have the following properties:
-                    $fileInfo = $_
-                    $fileObject = [Ordered]@{
-                        Name = $fileInfo.Name #*Name (the name of the file)
-                        Extension = $fileInfo.Extension #*Extension (the file extension) 
-                        Bytes = [IO.File]::ReadAllBytes($fileInfo.FullName)#*Bytes (the file content as a byte array)
-                        Text = [IO.File]::ReadAllText($fileInfo.FullName)#*Text (the file content as text)
-                        FullPath = $fileInfo.Fullname#*FullPath (the full path to the file)
-                    }
-                    if ($fileInfo.Extension -eq '.json') { 
-                        # If the file is JSON, two additional properties may be present:
-                        #*Object (the file's text, converted from JSON)
-                        $fileObject.Object = $fileObject.Text | ConvertFrom-Json
-                        #*Schema (the value of the $schema property of the JSON object, if present)
-                        $fileObject.schema = $fileObject.Object.'$schema'                        
-                    }
-                    $fileObject    
-                })
-
-        if ($isMainTemplate) {
-            $MainTemplatePath = "$TemplateFullPath"
-            $MainTemplateText = [IO.File]::ReadAllText($MainTemplatePath)
-            $MainTemplateObject = $MainTemplateText | ConvertFrom-Json
-        }
-        
-        # If we've found a CreateUIDefinition, we'll want to process it first.                
-        if ($HasCreateUIDefinition) { 
-            # Loop over the folder files and get every file that isn't createUIDefinition
-            $otherFolderFiles = @(foreach ($_ in $FolderFiles) {
-                if ($_.Name -ne 'CreateUIDefinition.json') {
-                    $_
-                } else {
-                    $createUIDefFile = $_
-                }
-            })
-            # Then recreate the list with createUIDefinition that the front.
-            $FolderFiles = @(@($createUIDefFile) + @($otherFolderFiles) -ne $null)
-        }
+        foreach ($kv in $expandedTemplate.GetEnumerator()) {
+            $ExecutionContext.SessionState.PSVariable.Set($kv.Key, $kv.Value)
+        }            
 
         # If a file list was provided,
         if ($PSBoundParameters.File) {
@@ -467,6 +371,3 @@ Each test script has access to a set of well-known variables:
         }
     }    
 }
-
-
-
