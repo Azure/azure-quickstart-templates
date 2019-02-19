@@ -32,5 +32,3 @@ foreach ($parameter in $templateObject.parameters) {
         Write-Error "$($Parameter.Name) missing min value" -ErrorId Parameter.Missing.Min -TargetObject $parameter           
     }
 }
-
-
