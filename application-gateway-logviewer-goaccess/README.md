@@ -19,7 +19,12 @@ By default, GoAccess installed by this template will parse and display traffic s
     <ol type="a">
         <li>Only the ApplicationGatewayAccessLog will be used by GoAccess</li>
         <li>You want to make sure you are sending and storing your ApplicationGatewayAccessLog to a storage account (select the “Archive to a storage account” check box if using the Portal to enable Application Gateway logging).</li>
-        <li>In your storage account settings, ensure you have Shared Access Signature key configured. The expiry date time needs to be set to a date much further out in the future (eg: 1 year out from now). Also, only the Read and List permissions are needed for GoAccess. Make sure to generate the connection string as well.  The Blob service SAS URL connection string is what you need to input to the ARM template.</li>
+        <li>In your storage account container, ensure you have Shared Access Signature key configured. The expiry date time needs to be set to a date much further out in the future (eg: 1 year out from now). Also, only the Read and List permissions are needed for GoAccess. Make sure to generate the connection string as well.  The Blob Container Service SAS URL connection string is what you need to input to the ARM template.
+        <p>You can generate Service-level SAS URL for the Blob Container "insights-logs-applicationgatewayaccesslog" using <a href="https://azure.microsoft.com/en-in/features/storage-explorer/">Azure Storage Explorer</a> for your operating system. Storage Explorer is available for Windows, MacOS and Linux.<br /><br />
+          For example, the blob container SAS URL should look like this - <blockquote>https://[your-blob-url]/insights-logs-applicationgatewayaccesslog?st=2019-02-08T12%3A55%3A14Z&se=2020-02-09T12%3A55%3A00Z&sp=rl&sv=2018-03-28&sr=c&sig=jcfAjefo3TitH7kl9YC15COaSdfgMmPFnO8QTI6oY9c%3D</blockquote> <br /><br />
+<img src="https://user-images.githubusercontent.com/6194147/52483050-f2ec1800-2bd8-11e9-8982-224ddd37dfa9.png" width="1000" title="Container SAS token generation using Azure Storage Explorer">
+            <br /><br />Alternatively, you can generate the Service-level SAS using REST API. Read more about it <a href="https://docs.microsoft.com/en-us/rest/api/storageservices/constructing-a-service-sas">here</a>.
+          </li>
     </ol>
     </li>
     </ol>
@@ -33,7 +38,7 @@ The template will require a set of parameters input from you as the user:
         <li><b>adminUsername:</b> Username you want to use for the VM the template creates</li>
         <li><b>adminPassword:</b> Password you want to use to log in to the VM</li>
         <li><b>dnsNameForPublicIP:</b> The DNS name (prefix) you want to use for the VM to map against its public IP</li>
-        <li><b>appGwAccessLogsBlobSasUri:</b> The SAS URL connection string (see 2(c) in the Pre-requisites list above) for the storage account blog where your Application Gateway Access Logs are stored</li>
+        <li><b>appGwAccessLogsBlobSasUri:</b> The SAS URL connection string (see 2(iii) in the Pre-requisites list above) for the storage account blog where your Application Gateway Access Logs are stored</li>
         <li><b>FilterRegexForAppGwAccessLogs:</b> A regex to use to filter the Application Gateway Access Logs to a specific subset. For example, if you have multiple application gateways publishing logs to the same storage account blob, and you only want GoAccess to surface traffic stats for say one of the Application Gateways, you can provide a regex for this field to filter to just that instance.</li>
         <li><b>Region:</b> The Azure region where you would like the VM to be created</li>
     </ol>
@@ -55,6 +60,8 @@ Please note following aspects related to this template:
 <h2>Securing Access</h2>
 
 By default, the GoAccess dashboard and associated data are unsecured. Since the web server is Apache HTTP Webserver, you can secure access by following the <a href="https://httpd.apache.org/docs/2.4/howto/auth.html">Apache Auth documentation</a>.
+
+Also, since it is a Virtual Machine, you can use <a href="https://docs.microsoft.com/en-us/azure/virtual-network/tutorial-filter-network-traffic">Network Security Groups</a> to allow/deny IP addresses to restrict access, but make sure that outbound internet connectivity is allowed to reach the storage account.
 
 <h2>Getting Help</h2>
 
