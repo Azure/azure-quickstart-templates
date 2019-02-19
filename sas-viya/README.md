@@ -328,7 +328,7 @@ in the SAS Data Agent for Linux: Deployment Guide.
 
 To access SAS Viya applications, navigate to the **Outputs** screen and access SASDrive or SASStudio. 
 
-![Outputs Screen](https://gitlab.sas.com/iaas-deployment-templates/quickstart-sas-viya-azure/raw/master/sas-viya/outputs.jpg)
+![Outputs Screen](outputs.jpg) 
 
 <a name="Tshoot"></a>
 ## Troubleshooting
