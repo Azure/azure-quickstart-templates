@@ -7,7 +7,8 @@
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
-This ARM template demonstrates the deployment of an AKS instance with advanced networking features into an existing virtual network and Azure Active Directory Integration. Additionally, the selected Service Principal is assigned the Network Contributor role against the subnet that contains the AKS cluster.
+
+> **Important:** The user running this template needs to be an **Owner** on the subscription or Resource Group where your Virtual Network is located.
 
 `Tags: AKS, Kubernetes, Advanced Networking, Azure Active Directory`
 
