@@ -26,9 +26,12 @@ Tested scenarios:
 
 Future work:
 
-- Add OMS monitoring
 - Add Operational Validation
 - Deliver web app using Containers managed by [DSC](https://github.com/bgelens/cWindowsContainer)
+
+## Release Notes
+
+2019-02-20: Updated and revised entire solution to align with [101-automation-configuration](https://github.com/Azure/azure-quickstart-templates/tree/master/101-automation-configuration) example.  Also added runbook solution for tombstoning stale nodes per customer request.
 
 ## To verify the nodes are deployed and configured (manual operational validation)
 
