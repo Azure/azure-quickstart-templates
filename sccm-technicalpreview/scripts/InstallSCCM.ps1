@@ -20,16 +20,16 @@ $AzcopyPath = "C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy"
 
 if(!(Test-Path $AzcopyPath))
 {
-	$path = "$ProvisionToolPath\azcopy.msi"
-	if(!(Test-Path $path))
-	{
-		#Download azcopy
-		$url = "http://aka.ms/downloadazcopy"
-		Invoke-WebRequest -Uri $url -OutFile $path
-	}
+    $path = "$ProvisionToolPath\azcopy.msi"
+    if(!(Test-Path $path))
+    {
+        #Download azcopy
+        $url = "http://aka.ms/downloadazcopy"
+        Invoke-WebRequest -Uri $url -OutFile $path
+    }
 
-	#Install azcopy
-	Start-Process msiexec.exe -Wait -ArgumentList "/I $path /quiet"
+    #Install azcopy
+    Start-Process msiexec.exe -Wait -ArgumentList "/I $path /quiet"
 }
 
 $cmpath = "c:\"+$CM+".exe"
@@ -113,12 +113,12 @@ SysCenterId=
     
     if($SQLInstanceName.ToUpper() -eq "MSSQLSERVER")
     {
-    	$cmini = $cmini.Replace('%SQLInstance%',"")
+        $cmini = $cmini.Replace('%SQLInstance%',"")
     }
     else
     {
-    	$tinstance = $SQLInstanceName.ToUpper() + "\"
-	$cmini = $cmini.Replace('%SQLInstance%',$tinstance)
+        $tinstance = $SQLInstanceName.ToUpper() + "\"
+    $cmini = $cmini.Replace('%SQLInstance%',$tinstance)
     }
     $CMInstallationFile = "c:\" + $CM + "\SMSSETUP\BIN\X64\Setup.exe"
     $cmini > $CMINIPath 

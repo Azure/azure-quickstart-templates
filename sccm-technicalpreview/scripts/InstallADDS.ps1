@@ -67,6 +67,6 @@ else
     "[$(Get-Date -format HH:mm:ss)] AD have already installed" | Out-File -Append $logpath
     if(TestADDSForeastInstall -DomainFullName $DomainFullName -eq "Success")
     { 
-		$result = InstallADDSForest -DomainFullName $DomainFullName
+        $result = InstallADDSForest -DomainFullName $DomainFullName
     }
 }
