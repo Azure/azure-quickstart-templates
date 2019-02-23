@@ -16,28 +16,28 @@ function Install-ADDS($DomainFullName,$Password)
 
 function Add-BuiltinPermission
 {
-	$logpath = $ProvisionToolPath+"\AddBuiltinPermission.txt"
-	try
-	{
-		Start-Sleep -Seconds 240
-		"[$(Get-Date -format HH:mm:ss)] Adding Built Permission ..." | Out-File -Append $logpath
-		sqlcmd -Q "if not exists(select * from sys.server_principals where name='BUILTIN\administrators') CREATE LOGIN [BUILTIN\administrators] FROM WINDOWS;EXEC master..sp_addsrvrolemember @loginame = N'BUILTIN\administrators', @rolename = N'sysadmin'" | Out-Null
+    $logpath = $ProvisionToolPath+"\AddBuiltinPermission.txt"
+    try
+    {
+        Start-Sleep -Seconds 240
+        "[$(Get-Date -format HH:mm:ss)] Adding Built Permission ..." | Out-File -Append $logpath
+        sqlcmd -Q "if not exists(select * from sys.server_principals where name='BUILTIN\administrators') CREATE LOGIN [BUILTIN\administrators] FROM WINDOWS;EXEC master..sp_addsrvrolemember @loginame = N'BUILTIN\administrators', @rolename = N'sysadmin'" | Out-Null
 
-		$returncode = sqlcmd -Q "if not exists(select * from sys.server_principals where name='BUILTIN\administrators') PRINT 1"
-		while($returncode -eq 1 -or $returncode -eq $null)
-		{
-			"[$(Get-Date -format HH:mm:ss)] Failed , will try again ..." | Out-File -Append $logpath
-			Start-Sleep -Seconds 60
-			sqlcmd -Q "if not exists(select * from sys.server_principals where name='BUILTIN\administrators') CREATE LOGIN [BUILTIN\administrators] FROM WINDOWS;EXEC master..sp_addsrvrolemember @loginame = N'BUILTIN\administrators', @rolename = N'sysadmin'" | Out-Null
-			$returncode = sqlcmd -Q "if not exists(select * from sys.server_principals where name='BUILTIN\administrators') PRINT 1"
-		}
-	}
-	catch
-	{
-		$_.Exception | Out-File -Append $logpath
-		Return 1
-	}
-	Return 0
+        $returncode = sqlcmd -Q "if not exists(select * from sys.server_principals where name='BUILTIN\administrators') PRINT 1"
+        while($returncode -eq 1 -or $returncode -eq $null)
+        {
+            "[$(Get-Date -format HH:mm:ss)] Failed , will try again ..." | Out-File -Append $logpath
+            Start-Sleep -Seconds 60
+            sqlcmd -Q "if not exists(select * from sys.server_principals where name='BUILTIN\administrators') CREATE LOGIN [BUILTIN\administrators] FROM WINDOWS;EXEC master..sp_addsrvrolemember @loginame = N'BUILTIN\administrators', @rolename = N'sysadmin'" | Out-Null
+            $returncode = sqlcmd -Q "if not exists(select * from sys.server_principals where name='BUILTIN\administrators') PRINT 1"
+        }
+    }
+    catch
+    {
+        $_.Exception | Out-File -Append $logpath
+        Return 1
+    }
+    Return 0
 }
 
 function Set-AutoLogOn($DomainFullName,$Username,$Password)
@@ -127,7 +127,7 @@ function WaitFor-DC
     $waitfordclog = $ProvisionToolPath +"\WaitForDCLog.txt"
     $dcconfigpath = $ProvisionToolPath + "\DC.json"
     $source = $tempurl + "/DC.json"
-	AZCopy $source $dcconfigpath $false
+    AZCopy $source $dcconfigpath $false
     while(!(Test-Path $dcconfigpath))
     {
         "[$(Get-Date -format HH:mm:ss)] Waiting for DC config file..." | Out-File -Append $waitfordclog
@@ -152,7 +152,7 @@ function WaitFor-PS
     $waitforpslog = $ProvisionToolPath +"\WaitForPSLog.txt"
     $psconfigpath = $ProvisionToolPath + "\PS1.json"
     $source = $tempurl + "/PS1.json"
-	AZCopy $source $psconfigpath $false
+    AZCopy $source $psconfigpath $false
     while(!(Test-Path $psconfigpath))
     {
         "[$(Get-Date -format HH:mm:ss)] Waiting for PS config file..." | Out-File -Append $waitforpslog
@@ -177,7 +177,7 @@ function WaitFor-SiteServer($SiteServerRole)
     $waitforsiteserverlog = $ProvisionToolPath +"\WaitForSiteServerLog.txt"
     $siteserverconfigpath = $ProvisionToolPath + "\$SiteServerRole.json"
     $source = $tempurl + "/$SiteServerRole.json"
-	AZCopy $source $siteserverconfigpath $false
+    AZCopy $source $siteserverconfigpath $false
     while(!(Test-Path $siteserverconfigpath))
     {
         "[$(Get-Date -format HH:mm:ss)] Waiting for Site Server config file..." | Out-File -Append $waitforsiteserverlog
@@ -202,7 +202,7 @@ function WaitFor-SQL
     $waitforsqllog = $ProvisionToolPath +"\waitforsqllog.txt"
     $sqlconfigpath = $ProvisionToolPath + "\SQL.json"
     $source = $tempurl + "/SQL.json"
-	AZCopy $source $sqlconfigpath $false
+    AZCopy $source $sqlconfigpath $false
     while(!(Test-Path $sqlconfigpath))
     {
         "[$(Get-Date -format HH:mm:ss)] Waiting for SQL config file..." | Out-File -Append $waitforsqllog
@@ -227,9 +227,9 @@ function UploadConfigFile
 {
     $Configuration | ConvertTo-Json | Out-File -FilePath $ConfigurationFile -Force;
     $configfile = $ConfigurationFile
-	$uploadurl = $tempurl + "/$Role.json"
+    $uploadurl = $tempurl + "/$Role.json"
 
-	AZCopy $configfile $uploadurl $true
+    AZCopy $configfile $uploadurl $true
 }
 
 function Enable-RDP
@@ -265,48 +265,48 @@ function TurnOn-FirewallPort([string[]]$Role)
 
 function Delegate-Control($DomainFullName,[string[]]$RoleList)
 {
-	$logpath = $ProvisionToolPath+"\DelegateControlLog.txt"
-	$RoleList | %{
-		"[$(Get-Date -format HH:mm:ss)] Add permission for $_ ..." | Out-File -Append $logpath
-		$psconfigpath = $ProvisionToolPath + "\$_.json"
-		$source = $tempurl + "/$_.json"
-		AZCopy $source $psconfigpath $false
-		$psconfig = gc $psconfigpath | ConvertFrom-Json
+    $logpath = $ProvisionToolPath+"\DelegateControlLog.txt"
+    $RoleList | %{
+        "[$(Get-Date -format HH:mm:ss)] Add permission for $_ ..." | Out-File -Append $logpath
+        $psconfigpath = $ProvisionToolPath + "\$_.json"
+        $source = $tempurl + "/$_.json"
+        AZCopy $source $psconfigpath $false
+        $psconfig = gc $psconfigpath | ConvertFrom-Json
 
-		$currentmachine = $psconfig.Name
+        $currentmachine = $psconfig.Name
 
-		try
-		{
-			$root = ConfigContainer
-			$DomainName = $DomainFullName.split('.')[0]
-			#Delegate Control
-			$cmd = "dsacls.exe"
-			$arg1 = "CN=System Management,CN=System,$root"
-			$arg2 = "/G"
-			$arg3 = ""+$DomainName+"\"+$currentmachine+"`$:GA;;"
-			$arg4 = "/I:T"
+        try
+        {
+            $root = ConfigContainer
+            $DomainName = $DomainFullName.split('.')[0]
+            #Delegate Control
+            $cmd = "dsacls.exe"
+            $arg1 = "CN=System Management,CN=System,$root"
+            $arg2 = "/G"
+            $arg3 = ""+$DomainName+"\"+$currentmachine+"`$:GA;;"
+            $arg4 = "/I:T"
 
-			& $cmd $arg1 $arg2 $arg3 $arg4
-			"[$(Get-Date -format HH:mm:ss)] Finished." | Out-File -Append $logpath
-		}
-		catch
-		{
-			return 1
-		}
-	}
+            & $cmd $arg1 $arg2 $arg3 $arg4
+            "[$(Get-Date -format HH:mm:ss)] Finished." | Out-File -Append $logpath
+        }
+        catch
+        {
+            return 1
+        }
+    }
     
-	Return 0
+    Return 0
 }
 
 function Extend-ADSchema
 {
-	$url = "https://cmsetoolstorage.blob.core.windows.net/work/tools/extadsch.exe"
+    $url = "https://cmsetoolstorage.blob.core.windows.net/work/tools/extadsch.exe"
     $path = "C:\extadsch.exe"
     Invoke-WebRequest -Uri $url -OutFile $path
 
     & 'C:\extadsch.exe' | out-null
 
-	return 0
+    return 0
 }
 
 function Install-ADK
@@ -343,15 +343,15 @@ function Install-SCCM($DomainFullName,$Username,$Password,$SQLRole,$CM)
 {
     $path = "$ProvisionToolPath\InstallSCCM.ps1"
 
-	#GetSQLInfo
-	$configpath = $ProvisionToolPath + "\$SQLRole.json"
+    #GetSQLInfo
+    $configpath = $ProvisionToolPath + "\$SQLRole.json"
     $source = $tempurl + "/$SQLRole.json"
-	AZCopy $source $configpath $false
+    AZCopy $source $configpath $false
     $config = gc $configpath | ConvertFrom-Json
-	$SQLVMName = $config.Name
-	$SQLInstanceName = $config.SQLInstanceName
-	$SQLDataFilePath = $config.SQLDataFilePath
-	$SQLLogFilePath = $config.SQLLogFilePath
+    $SQLVMName = $config.Name
+    $SQLInstanceName = $config.SQLInstanceName
+    $SQLDataFilePath = $config.SQLDataFilePath
+    $SQLLogFilePath = $config.SQLLogFilePath
 
     try
     {
@@ -381,97 +381,97 @@ function Upgrade-SCCM($DomainFullName)
 
 function Update-SQLServicesAccount($DomainFullName,$Username,$Password)
 {
-	if($DomainFullName)
-	{
-		$NetBIOSName = $DomainFullName.split('.')[0]
-		$Username = $NetBIOSName + '\' + $Username
-	}
-	$DomainPassword = $Password
-	$DomainUserName = $Username
+    if($DomainFullName)
+    {
+        $NetBIOSName = $DomainFullName.split('.')[0]
+        $Username = $NetBIOSName + '\' + $Username
+    }
+    $DomainPassword = $Password
+    $DomainUserName = $Username
 
-	$SQLInstanceName = $Configuration.SQLInstanceName
-	$logpath = $ProvisionToolPath + "\UpdateSQLServicesAccount.log"
-	#Get SQL Server Services account
-	$query = "Name = '"+ $SQLInstanceName.ToUpper() +"'"
-	$services = Get-WmiObject win32_service -Filter $query
-	if($services -ne $null)
-	{
-		"[$(Get-Date -format HH:mm:ss)] Verify if SQL Server services account need to be changed" | Out-File -Append $logpath
-		if($services.StartName -ne $DomainUserName)
-		{
-			"[$(Get-Date -format HH:mm:ss)] SQL Server services account need to be changed" | Out-File -Append $logpath
-			#change services account 
-			if($services.State -eq 'Running')
-			{
-				#Check if SQLSERVERAGENT is running
-				$sqlserveragentflag = 0
-				$sqlserveragentservices = Get-WmiObject win32_service -Filter "Name = 'SQLSERVERAGENT'"
-				if($sqlserveragentservices -ne $null)
-				{
-					if($sqlserveragentservices.State -eq 'Running')
-					{
-						"[$(Get-Date -format HH:mm:ss)] SQLSERVERAGENT need to be stopped first" | Out-File -Append $logpath
-						$Result = $sqlserveragentservices.StopService()
-						"[$(Get-Date -format HH:mm:ss)] Stopping SQLSERVERAGENT.." | Out-File -Append $logpath
-						if ($Result.ReturnValue -eq '0')
-						{
-							$sqlserveragentflag = 1
-							"[$(Get-Date -format HH:mm:ss)] Stopped" | Out-File -Append $logpath
-						}
-					}
-				}
-				$Result = $services.StopService()
-				"[$(Get-Date -format HH:mm:ss)] Stopping SQL Server services.." | Out-File -Append $logpath
-				if ($Result.ReturnValue -eq '0')
-				{
-					"[$(Get-Date -format HH:mm:ss)] Stopped" | Out-File -Append $logpath
-				}
+    $SQLInstanceName = $Configuration.SQLInstanceName
+    $logpath = $ProvisionToolPath + "\UpdateSQLServicesAccount.log"
+    #Get SQL Server Services account
+    $query = "Name = '"+ $SQLInstanceName.ToUpper() +"'"
+    $services = Get-WmiObject win32_service -Filter $query
+    if($services -ne $null)
+    {
+        "[$(Get-Date -format HH:mm:ss)] Verify if SQL Server services account need to be changed" | Out-File -Append $logpath
+        if($services.StartName -ne $DomainUserName)
+        {
+            "[$(Get-Date -format HH:mm:ss)] SQL Server services account need to be changed" | Out-File -Append $logpath
+            #change services account 
+            if($services.State -eq 'Running')
+            {
+                #Check if SQLSERVERAGENT is running
+                $sqlserveragentflag = 0
+                $sqlserveragentservices = Get-WmiObject win32_service -Filter "Name = 'SQLSERVERAGENT'"
+                if($sqlserveragentservices -ne $null)
+                {
+                    if($sqlserveragentservices.State -eq 'Running')
+                    {
+                        "[$(Get-Date -format HH:mm:ss)] SQLSERVERAGENT need to be stopped first" | Out-File -Append $logpath
+                        $Result = $sqlserveragentservices.StopService()
+                        "[$(Get-Date -format HH:mm:ss)] Stopping SQLSERVERAGENT.." | Out-File -Append $logpath
+                        if ($Result.ReturnValue -eq '0')
+                        {
+                            $sqlserveragentflag = 1
+                            "[$(Get-Date -format HH:mm:ss)] Stopped" | Out-File -Append $logpath
+                        }
+                    }
+                }
+                $Result = $services.StopService()
+                "[$(Get-Date -format HH:mm:ss)] Stopping SQL Server services.." | Out-File -Append $logpath
+                if ($Result.ReturnValue -eq '0')
+                {
+                    "[$(Get-Date -format HH:mm:ss)] Stopped" | Out-File -Append $logpath
+                }
 
-				"[$(Get-Date -format HH:mm:ss)] Changing the services account..." | Out-File -Append $logpath
-			
-				$Result = $services.change($null,$null,$null,$null,$null,$null,$DomainUserName,$Password,$null,$null,$null) 
-				if ($Result.ReturnValue -eq '0')
-				{
-					"[$(Get-Date -format HH:mm:ss)] Successfully Change the services account" | Out-File -Append $logpath
-					if($sqlserveragentflag -eq 1)
-					{
-						"[$(Get-Date -format HH:mm:ss)] Starting SQLSERVERAGENT.." | Out-File -Append $logpath
-						$Result = $sqlserveragentservices.StartService()
-						if($Result.ReturnValue -eq '0')
-						{
-							"[$(Get-Date -format HH:mm:ss)] Started" | Out-File -Append $logpath
-						}
-					}
-					$Result =  $services.StartService()
-					"[$(Get-Date -format HH:mm:ss)] Starting SQL Server services.." | Out-File -Append $logpath
-					while($Result.ReturnValue -ne '0') 
-					{
-						$returncode = $Result.ReturnValue
-						"[$(Get-Date -format HH:mm:ss)] Return $returncode , will try again" | Out-File -Append $logpath
-						Start-Sleep -Seconds 10
-						$Result =  $services.StartService()
-					}
-					"[$(Get-Date -format HH:mm:ss)] Started" | Out-File -Append $logpath
-				}
-			}
-		}
-		else
-		{
-			"[$(Get-Date -format HH:mm:ss)] No need to be changed" | Out-File -Append $logpath
-		}
-	}
-	Return 0
+                "[$(Get-Date -format HH:mm:ss)] Changing the services account..." | Out-File -Append $logpath
+            
+                $Result = $services.change($null,$null,$null,$null,$null,$null,$DomainUserName,$Password,$null,$null,$null) 
+                if ($Result.ReturnValue -eq '0')
+                {
+                    "[$(Get-Date -format HH:mm:ss)] Successfully Change the services account" | Out-File -Append $logpath
+                    if($sqlserveragentflag -eq 1)
+                    {
+                        "[$(Get-Date -format HH:mm:ss)] Starting SQLSERVERAGENT.." | Out-File -Append $logpath
+                        $Result = $sqlserveragentservices.StartService()
+                        if($Result.ReturnValue -eq '0')
+                        {
+                            "[$(Get-Date -format HH:mm:ss)] Started" | Out-File -Append $logpath
+                        }
+                    }
+                    $Result =  $services.StartService()
+                    "[$(Get-Date -format HH:mm:ss)] Starting SQL Server services.." | Out-File -Append $logpath
+                    while($Result.ReturnValue -ne '0') 
+                    {
+                        $returncode = $Result.ReturnValue
+                        "[$(Get-Date -format HH:mm:ss)] Return $returncode , will try again" | Out-File -Append $logpath
+                        Start-Sleep -Seconds 10
+                        $Result =  $services.StartService()
+                    }
+                    "[$(Get-Date -format HH:mm:ss)] Started" | Out-File -Append $logpath
+                }
+            }
+        }
+        else
+        {
+            "[$(Get-Date -format HH:mm:ss)] No need to be changed" | Out-File -Append $logpath
+        }
+    }
+    Return 0
 }
 
 function Install-DP($DomainFullName)
 {
     $path = "$ProvisionToolPath\InstallDP.ps1"
 
-	$configpath = $ProvisionToolPath + "\DP_MP.json"
+    $configpath = $ProvisionToolPath + "\DP_MP.json"
     $source = $tempurl + "/DP_MP.json"
-	AZCopy $source $configpath $false
+    AZCopy $source $configpath $false
     $config = gc $configpath | ConvertFrom-Json
-	$currentmachine = $config.Name
+    $currentmachine = $config.Name
 
     try
     {
@@ -486,8 +486,8 @@ function Install-DP($DomainFullName)
 
 function Clean-Up
 {
-	$BatchFilePath = Join-Path -Path $ProvisionToolPath -ChildPath "Resume_$($env:COMPUTERNAME).ps1"
-	Remove-Item $BatchFilePath
+    $BatchFilePath = Join-Path -Path $ProvisionToolPath -ChildPath "Resume_$($env:COMPUTERNAME).ps1"
+    Remove-Item $BatchFilePath
 
     return 0
 }
@@ -495,21 +495,21 @@ function Clean-Up
 function Install-MP($DomainFullName,$SQLRole,$DomainAdminName,$Password)
 {
     $path = "$ProvisionToolPath\InstallMP.ps1"
-	$configpath = $ProvisionToolPath + "\DP_MP.json"
+    $configpath = $ProvisionToolPath + "\DP_MP.json"
     $source = $tempurl + "/DP_MP.json"
-	AZCopy $source $configpath $false
+    AZCopy $source $configpath $false
     $config = gc $configpath | ConvertFrom-Json
-	$currentmachine = $config.Name
+    $currentmachine = $config.Name
 
-	#GetSQLInfo
-	$configpath = $ProvisionToolPath + "\$SQLRole.json"
+    #GetSQLInfo
+    $configpath = $ProvisionToolPath + "\$SQLRole.json"
     $source = $tempurl + "/$SQLRole.json"
-	AZCopy $source $configpath $false
+    AZCopy $source $configpath $false
     $config = gc $configpath | ConvertFrom-Json
-	$SQLVMName = $config.Name
-	$SQLInstanceName = $config.SQLInstanceName
-	$SQLDataFilePath = $config.SQLDataFilePath
-	$SQLLogFilePath = $config.SQLLogFilePath
+    $SQLVMName = $config.Name
+    $SQLInstanceName = $config.SQLInstanceName
+    $SQLDataFilePath = $config.SQLDataFilePath
+    $SQLLogFilePath = $config.SQLLogFilePath
 
     try
     {
@@ -546,17 +546,17 @@ function ConfigContainer
 
 function Add-Permission($DomainFullName)
 {
-	$logpath = $ProvisionToolPath+"\AddPermissionLog.txt"
-	$DomainName = $DomainFullName.split('.')[0]
-	$psconfigpath = $ProvisionToolPath + "\PS1.json"
+    $logpath = $ProvisionToolPath+"\AddPermissionLog.txt"
+    $DomainName = $DomainFullName.split('.')[0]
+    $psconfigpath = $ProvisionToolPath + "\PS1.json"
     $source = $tempurl + "/PS1.json"
-	AZCopy $source $psconfigpath $false
+    AZCopy $source $psconfigpath $false
     $psconfig = gc $psconfigpath | ConvertFrom-Json
 
-	$currentmachine = $psconfig.Name
-	$psname = $currentmachine +"$"
+    $currentmachine = $psconfig.Name
+    $psname = $currentmachine +"$"
 
-	$GroupObj = [ADSI]"WinNT://$env:COMPUTERNAME/Administrators"
+    $GroupObj = [ADSI]"WinNT://$env:COMPUTERNAME/Administrators"
     if($GroupObj.IsMember("WinNT://$DomainName/$psname") -eq $false)
     {
         "[$(Get-Date -format HH:mm:ss)] add $psname to administrators group" | Out-File -Append $logpath
@@ -567,17 +567,17 @@ function Add-Permission($DomainFullName)
         "[$(Get-Date -format HH:mm:ss)] $psname is already in administrators group" | Out-File -Append $logpath
     }
 
-	return 0
+    return 0
 }
 
 function Get-SQLInformation
 {
-	$inst = (get-itemproperty 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server').InstalledInstances[0]
-	$p = (Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\Instance Names\SQL').$inst
+    $inst = (get-itemproperty 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server').InstalledInstances[0]
+    $p = (Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\Instance Names\SQL').$inst
 
-	$sqlinfo = Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\$p\$inst"
+    $sqlinfo = Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\$p\$inst"
 
-	$Configuration.SQLInstanceName = $inst
-	$Configuration.SQLDataFilePath = $sqlinfo.DefaultData
-	$Configuration.SQLLogFilePath = $sqlinfo.DefaultLog
+    $Configuration.SQLInstanceName = $inst
+    $Configuration.SQLDataFilePath = $sqlinfo.DefaultData
+    $Configuration.SQLLogFilePath = $sqlinfo.DefaultLog
 }
