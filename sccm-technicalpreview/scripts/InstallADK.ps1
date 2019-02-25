@@ -18,15 +18,15 @@ $arg4 = "/q"
 
 try
 {
-	"[$(Get-Date -format HH:mm:ss)] Installing ADK..." | Out-File -Append $logpath
-	& $cmd $arg1 $arg2 $arg3 $arg4 | out-null
-	"[$(Get-Date -format HH:mm:ss)] ADK Installed Successfully!" | Out-File -Append $logpath
+    "[$(Get-Date -format HH:mm:ss)] Installing ADK..." | Out-File -Append $logpath
+    & $cmd $arg1 $arg2 $arg3 $arg4 | out-null
+    "[$(Get-Date -format HH:mm:ss)] ADK Installed Successfully!" | Out-File -Append $logpath
 }
 catch
 {
-	"[$(Get-Date -format HH:mm:ss)] Failed to install ADK with below error:" | Out-File -Append $logpath
-	$ErrorMessage = $_.Exception.Message
-	$ErrorMessage | Out-File -Append $logpath
+    "[$(Get-Date -format HH:mm:ss)] Failed to install ADK with below error:" | Out-File -Append $logpath
+    $ErrorMessage = $_.Exception.Message
+    $ErrorMessage | Out-File -Append $logpath
 }
 
 #ADK add-on (17763)
@@ -41,13 +41,13 @@ $arg3 = "/q"
 
 try
 {
-	"[$(Get-Date -format HH:mm:ss)] Installing add-on for ADK..." | Out-File -Append $logpath
-	& $cmd $arg1 $arg2 $arg3 | out-null
-	"[$(Get-Date -format HH:mm:ss)] Add-on for ADK Installed Successfully!" | Out-File -Append $logpath
+    "[$(Get-Date -format HH:mm:ss)] Installing add-on for ADK..." | Out-File -Append $logpath
+    & $cmd $arg1 $arg2 $arg3 | out-null
+    "[$(Get-Date -format HH:mm:ss)] Add-on for ADK Installed Successfully!" | Out-File -Append $logpath
 }
 catch
 {
-	"[$(Get-Date -format HH:mm:ss)] Failed to install Add-on for ADK with below error:" | Out-File -Append $logpath
-	$ErrorMessage = $_.Exception.Message
-	$ErrorMessage | Out-File -Append $logpath
+    "[$(Get-Date -format HH:mm:ss)] Failed to install Add-on for ADK with below error:" | Out-File -Append $logpath
+    $ErrorMessage = $_.Exception.Message
+    $ErrorMessage | Out-File -Append $logpath
 }

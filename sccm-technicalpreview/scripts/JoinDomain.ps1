@@ -13,8 +13,8 @@ if($DCIPaddress -eq "")
 }
 else
 {
-	"[$(Get-Date -format HH:mm:ss)] Set DNS to $DCIPaddress" | Out-File -Append $logpath
-	Set-DnsClientServerAddress -InterfaceIndex $dnsset.InterfaceIndex -ServerAddresses $DCIPaddress
+    "[$(Get-Date -format HH:mm:ss)] Set DNS to $DCIPaddress" | Out-File -Append $logpath
+    Set-DnsClientServerAddress -InterfaceIndex $dnsset.InterfaceIndex -ServerAddresses $DCIPaddress
 }
 $DomainName = $DomainFullName.split('.')[0]
 $DName = $DomainName + "\" + $DomainAdminName
@@ -27,7 +27,7 @@ $credential = New-Object System.Management.Automation.PSCredential($DName,$pwd)
 try
 {
     Add-Computer -DomainName $DomainFullName -Credential $credential
-	"[$(Get-Date -format HH:mm:ss)] Finished!" | Out-File -Append $logpath
+    "[$(Get-Date -format HH:mm:ss)] Finished!" | Out-File -Append $logpath
 }
 catch
 {
