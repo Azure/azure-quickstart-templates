@@ -1,6 +1,6 @@
 ﻿### Running Tests
 
-Test can be run directly in PowerShell, or run from the command line using a wrapper script.
+Tests can be run directly in PowerShell, or run from the command line using a wrapper script.
 
 You can run the full suite of tests by using Test-AzureRMTemplate.cmd (on Windows) or Test-AzureRMTemplate.sh (on Linux), and passing in the path to a template.
 
@@ -9,12 +9,18 @@ This will run the full suite of applicable tests on your template.  To run a spe
 
     Test-AzureRMTemplate -TemplatePath $thePathToYourTemplate -Test deploymentTemplate 
     # This will run deployment template tests on all appropriate files
+    <# There are currently three groups of tests:
+        * deploymentTemplate (aka MainTemplateTests)
+        * createUIDefinition
+        * all
+    #>
     
     Test-AzureRMTemplate -TemplatePath $thePathToYourTemplate -Test "Resources Should Have Location" 
     # This will run the specific test, 'Resources Should have Location', on all appropriate files
 
     Test-AzureRMTemplate -TemplatePath $thePathToYourTemplate -Test "Resources Should Have Location" -File MyNestedTemplate.json 
-    # This will run the specific test, 'Resources Should have Location', but only on MyNestedTemplate.json 
+    # This will run the specific test, 'Resources Should have Location', but only on MyNestedTemplate.json        
+      
 
 
 #### Running Tests on Linux
@@ -29,7 +35,7 @@ To run the tests in PowerShell, you'll need to import the module.
 
 You can then test a particular path by using:
 
-    Test-AzureRMTemplate -TemplatePath /yourTemplatePath/
+    Test-AzureRMTemplate -TemplatePath $TemplateFileOrFolder
 
 ### Running Tests from the Command Line
 
@@ -42,17 +48,17 @@ By default, tests are run in Pester, which displays output in a colorized format
 To inspect the results, use the -NoPester flag and assign the results to a variable 
 (you must be running in PowerShell):
 
-    $TestResults = Test-AzureRMTemplate -TemplatePath /yourTemplatePath/ -NoPester
+    $TestResults = Test-AzureRMTemplate -TemplatePath $TemplateFileOrFolder -NoPester
 
 To see failures, use Where-Object to filter the results
 
     $TestFailures =  $TestResults | Where-Object { -not $_.Passed }
 
-Many test failures will return a TargetObject, for instance, the exact parameter within a template that had an issue.  To extract out target objects from an error, use:
+Many test failures will return a TargetObject, for instance, the exact property within a template that had an issue.  To extract out target objects from an error, use:
 
     $FailureTargetObjects = $TestFailures |
         Select-Object -ExpandProperty Errors | 
         Select-Object -ExpandProperty TargetObject
 
 
-Please note that not all test cases will return a target object.  If no target object is returned, the target should be clear from the error message.
+Please note that not all test cases will return a target object.  If no target object is returned, the target should be clear from the text of the error.
