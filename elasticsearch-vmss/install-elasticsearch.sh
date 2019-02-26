@@ -189,8 +189,9 @@ configure_system()
     if [ ${IS_DATA_NODE} -eq 0 ]; 
     then
         # Kibana    
-        echo "server.host: \"$HOSTNAME\"" >> /etc/kibana/kibana.yml
-        echo "elasticsearch.url: \"http://localhost:9200\"" >> /etc/kibana/kibana.yml
+        IP_ADDRESS=$(ip route get 8.8.8.8 | awk -F"src " 'NR==1{split($2,a," ");print a[1]}')
+        echo "server.host: \"$IP_ADDRESS\"" >> /etc/kibana/kibana.yml
+        echo "elasticsearch.url: \"http://$IP_ADDRESS:9200\"" >> /etc/kibana/kibana.yml
         echo "xpack.security.enabled: false" >> /etc/kibana/kibana.yml
         chown -R kibana:kibana /usr/share/kibana
     else
