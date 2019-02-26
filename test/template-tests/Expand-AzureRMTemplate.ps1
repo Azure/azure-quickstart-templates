@@ -72,7 +72,8 @@
         $WellKnownVariables = 'TemplateFullPath','TemplateText','TemplateObject',
             'CreateUIDefinitionFullPath','createUIDefintionText','CreateUIDefinitionObject',
             'FolderName', 'HasCreateUIDefinition', 'IsMainTemplate','FolderFiles', 
-            'MainTemplatePath', 'MainTemplateObject', 'MainTemplateText'
+            'MainTemplatePath', 'MainTemplateObject', 'MainTemplateText', 
+            'MainTemplateResources','MainTemplateVariables','MainTemplateParameters', 'MainTemplateOutputs'
         foreach ($_ in $WellKnownVariables) {
             $ExecutionContext.SessionState.PSVariable.Set($_, $null)
         }
@@ -80,10 +81,10 @@
         #*$templateFullPath (the full path to the .json file)
         $TemplateFullPath = "$resolvedTemplatePath"
         #*$TemplateFileName (the name of the azure template file)
-        $templateFileName = $TemplatePath | Split-Path -Leaf
+        $templateFileName = $TemplateFullPath | Split-Path -Leaf
         #*$IsMainTemplate (if the TemplateFileName is named mainTemplate.json)
         $isMainTemplate = 'mainTemplate.json', 'azureDeploy.json' -contains $templateFileName
-        $templateFile = Get-Item -LiteralPath $resolvedTemplatePath
+        $templateFile = Get-Item -LiteralPath "$resolvedTemplatePath"
         $templateFolder = $templateFile.Directory
         #*$FolderName (the name of the root folder containing the template)
         $TemplateName = $templateFolder.Name
