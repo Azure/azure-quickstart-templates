@@ -92,11 +92,13 @@ The common properties should be authored consistently to provide for understanda
 ```json
     "resources": [
         {
+            "comments": "if any",
             "condition": true,
             "type": "Microsoft.Compute/virtualMachines",
             "apiVersion": "2017-12-01",
             "name": "[concat(parameters('virtualMachineName'), copyIndex(1))]",
             "location": "[parameters('location')]",
+            "sku": {},
             "copy": {
                 "name": "vmLoop",
                 "count": "[parameters('numberOfVMs')]"
@@ -104,8 +106,8 @@ The common properties should be authored consistently to provide for understanda
             "dependsOn": [
                 "nicLoop"
             ],
-            "comments": "this is the vm loop",
-            "properties": {
+            "tags": {},
+            "properties": {}
 ```
 ### dependsOn  
 Deployment sequence dependencies can be specified by using the dependsOn property.  Dependencies are only allowed for resources that are deployed within the same template. They are not needed for existing resources, and for nested deployments, the dependency is created on the deployment resource itself.
