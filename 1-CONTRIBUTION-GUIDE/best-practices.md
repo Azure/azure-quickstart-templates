@@ -87,7 +87,7 @@ Parameters should be used for collecting input to customize the deployment.  Val
 All resources share a common set of properties and as such these guidelines will apply to all resources in an application.  
 
 ### Sort Order of Properties  
-The common properties should be authored consistently to provide for understandability and consumption of the code.    
+The common properties should be authored consistently to provide for understandability and consumption of the code.  
 **Note:** Not all properties are required and if not listed here should be placed before the properties object for the resource.  
 ```json
     "resources": [
