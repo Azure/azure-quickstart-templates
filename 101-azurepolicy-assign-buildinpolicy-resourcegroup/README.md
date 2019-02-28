@@ -7,11 +7,10 @@
 
 This template assigns a build-in policy to an existing resource group. Inputs to this template are following fields:
 
-- policyAssignmentName
-- rgName
 - policyDefinitionID
+- policyAssignmentName
 
-The following PowerShell script shows how to get the policy definition ID and the policy display name of a built-in policy called "Audit resource location matches resource group location". The default name for the policyAssignmentName is the policy display name.
+The following PowerShell script shows how to get the policy definition ID and the policy display name of a built-in policy called "Audit resource location matches resource group location". The default policyAssignmentName is the policy display name.
 
     PS C:\> $definition = Get-AzPolicyDefinition | Where-Object { $_.Properties.DisplayName -eq 'Audit resource location matches resource group location' }
             $policyAssignmentName = $definition.Properties.displayName
