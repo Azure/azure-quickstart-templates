@@ -2,10 +2,25 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "iotHubNewOrExisting": {
+      "type": "string",
+      "defaultValue": "new",
+      "metadata": {
+        "description": "Determines whether or not a new IoT Hub should be provisioned."
+      }
+    },
+    "iotHubExistingResourceGroup": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().name]",
+      "metadata": {
+        "description": "If you have an existing IotHub provide the name here. Defaults to the same resource group as the TSI environnment."
+      }
+    },
     "iotHubName": {
       "type": "string",
+      "defaultValue": "iothub",
       "metadata": {
-        "description": "The name of the source event hub."
+        "description": "The name of the source IoT hub."
       }
     },
     "iotHubSku": {
@@ -24,15 +39,9 @@
     },
     "consumerGroupName": {
       "type": "string",
+      "defaultValue": "consumerGroup",
       "metadata": {
         "description": "The name of the consumer group that the Time Series Insights service will use to read the data from the event hub. NOTE: To avoid resource contention, this consumer group must be dedicated to the Time Series Insights service and not shared with other readers."
-      }
-    },
-    "existingIoTHubResourceId": {
-      "type": "string",
-      "defaultValue": "",
-      "metadata": {
-        "description": "An optional resource id of an existing Event Hub that will be connected to the Time Series Insights environment through the event source. NOTE: The user deploying the template must have privliges to perform the listkeys operation on the Event Hub. If no value is passed, a new event hub will be created by the template."
       }
     },
     "environmentName": {
@@ -144,10 +153,11 @@
       }
     ],
     "eventSourceTagsValue": "[variables('eventSourceTagsOptions')[length(take(parameters('eventSourceDisplayName'), 1))]]",
-    "eventSourceResourceId": "[if(empty(parameters('existingIoTHubResourceId')), resourceId('Microsoft.Devices/IotHubs', parameters('iotHubName')), parameters('existingIoTHubResourceId'))]"  },
+    "eventSourceResourceId": "[if(equals(parameters('iotHubNewOrExisting'), 'new'), resourceId('Microsoft.Devices/IotHubs', parameters('iotHubName')), resourceId(parameters('iotHubExistingResourceGroup'), 'Microsoft.Devices/IotHubs', parameters('iotHubName')))]"  
+  },
   "resources": [
     {
-      "condition": "[empty(parameters('existingIoTHubResourceId'))]",
+      "condition": "[equals(parameters('iotHubNewOrExisting'), 'new')]",
       "apiVersion": "2016-02-03",
       "type": "Microsoft.Devices/IotHubs",
       "name": "[parameters('iotHubName')]",
@@ -159,7 +169,7 @@
       }
     },
     {
-      "condition": "[empty(parameters('existingIoTHubResourceId'))]",
+      "condition": "[equals(parameters('iotHubNewOrExisting'), 'new')]",
       "apiVersion": "2016-02-03",
       "name": "[concat(parameters('iotHubName'), '/events/', parameters('consumerGroupName'))]",
       "type": "Microsoft.Devices/iotHubs/eventhubEndpoints/ConsumerGroups",
