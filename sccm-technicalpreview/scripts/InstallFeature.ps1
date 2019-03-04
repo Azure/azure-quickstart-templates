@@ -76,11 +76,11 @@ if($rolelist -contains "Management point")
 }
 if($rolelist -contains "Reporting services point")
 {
-        #installed .net 4.5 or later   
+    #installed .net 4.5 or later   
 }
 if($rolelist -contains "Service connection point")
 {
-        #installed .net 4.5 or later
+    #installed .net 4.5 or later
 }
 if($rolelist -contains "Software update point")
 {
