@@ -53,24 +53,6 @@
         "description": "Proxy SSL certificate password."
       }
     },
-    "portalCustomHostname": {
-      "type": "string",
-      "metadata": {
-        "description": "Portal Custom hostname."
-      }
-    },
-    "portalCustomHostnameBase64EncodedPfxCertificate": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Base-64 encoded SSL .pfx Certificate for portal custom hostname."
-      }
-    },
-    "portalSSLCertificatePassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Portal SSL certificate password."
-      }
-    },
     "virtualNetworkName": {
       "type": "string",
       "metadata": {
@@ -107,9 +89,411 @@
   },
   "variables": {
     "apiManagementServiceName": "[concat('apiservice', uniqueString(resourceGroup().id))]",
-    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]"
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
+    "apimNsgName": "[concat('apimnsg', uniqueString(resourceGroup().id))]"
   },
   "resources": [
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('apimNsgName')]",
+      "apiVersion": "2018-10-01",
+      "location": "westus",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "Client_communication_to_API_Management",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "protocol": "TCP",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "Secure_Client_communication_to_API_Management",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "protocol": "TCP",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 110,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "Management_endpoint_for_Azure_portal_and_Powershell",            
+            "properties": {
+              "provisioningState": "Succeeded",
+              "protocol": "TCP",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3443",
+              "sourceAddressPrefix": "ApiManagement",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 120,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "Dependency_on_Redis_Cache",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "protocol": "TCP",
+              "sourcePortRange": "*",
+              "destinationPortRange": "6381-6383",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 130,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "Dependency_on_Azure_SQL",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "protocol": "TCP",
+              "sourcePortRange": "*",
+              "destinationPortRange": "1433",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "Sql",
+              "access": "Allow",
+              "priority": 110,
+              "direction": "Outbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "Dependency_for_Log_to_event_Hub_policy",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "5671",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "EventHub",
+              "access": "Allow",
+              "priority": 150,
+              "direction": "Outbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "Dependency_on_Redis_Cache_outbound",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "protocol": "TCP",
+              "sourcePortRange": "*",
+              "destinationPortRange": "6381-6383",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 160,
+              "direction": "Outbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "Dependency_on_Azure_File_Share_for_GIT",
+            "properties": {
+              "protocol": "TCP",
+              "sourcePortRange": "*",
+              "destinationPortRange": "445",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "Storage",
+              "access": "Allow",
+              "priority": 170,
+              "direction": "Outbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "Azure_Infrastructure_Load_Balancer",
+            "properties": {
+              "protocol": "TCP",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "AzureLoadBalancer",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 140,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "Publish_DiagnosticLogs_And_Metrics",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "description": "APIM Logs and Metrics for consumption by admins and your IT team are all part of the management plane",
+              "protocol": "TCP",
+              "sourcePortRange": "*",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "AzureMonitor",
+              "access": "Allow",
+              "priority": 180,
+              "direction": "Outbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [
+                "443",
+                "12000",
+                "1886"
+              ],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "Connect_To_SMTP_Relay_For_SendingEmails",
+            "properties": {
+              "description": "APIM features the ability to generate email traffic as part of the data plane and the management plane",
+              "protocol": "TCP",
+              "sourcePortRange": "*",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "Internet",
+              "access": "Allow",
+              "priority": 190,
+              "direction": "Outbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [
+                "25",
+                "587",
+                "25028"
+              ],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "Authenticate_To_Azure_Active_Directory",            
+            "properties": {
+              "description": "Connect to Azure Active Directory for Developer Portal Authentication or for Oauth2 flow during any Proxy Authentication",
+              "protocol": "TCP",
+              "sourcePortRange": "*",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "AzureActiveDirectory",
+              "access": "Allow",
+              "priority": 200,
+              "direction": "Outbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [
+                "80",
+                "443"
+              ],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": [],
+              "destinationPortRange": []
+            }
+          },
+          {
+            "name": "Dependency_on_Azure_Storage",
+            "properties": {
+              "description": "APIM service dependency on Azure Blob and Azure Table Storage",
+              "protocol": "TCP",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "Storage",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Outbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "Publish_Monitoring_Logs",
+            "etag": "W/\"dfe09904-34c8-4e35-960e-714da0eb527f\"",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "protocol": "TCP",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "AzureCloud",
+              "access": "Allow",
+              "priority": 300,
+              "direction": "Outbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "Deny_All_Internet_Outbound",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "Internet",
+              "access": "Deny",
+              "priority": 999,
+              "direction": "Outbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          }
+        ],
+        "defaultSecurityRules": [
+          {
+            "name": "AllowVnetInBound",
+            "properties": {
+              "description": "Allow inbound traffic from all VMs in VNET",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 65000,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "AllowAzureLoadBalancerInBound",
+            "properties": {
+              "description": "Allow inbound traffic from azure load balancer",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "AzureLoadBalancer",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 65001,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "DenyAllInBound",
+            "properties": {
+              "description": "Deny all inbound traffic",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Deny",
+              "priority": 65500,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "AllowVnetOutBound",
+            "properties": {
+              "description": "Allow outbound traffic from all VMs to all VMs in VNET",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 65000,
+              "direction": "Outbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "AllowInternetOutBound",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "description": "Allow outbound traffic from all VMs to Internet",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "Internet",
+              "access": "Allow",
+              "priority": 65001,
+              "direction": "Outbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "DenyAllOutBound",
+            "properties": {
+              "description": "Deny all outbound traffic",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Deny",
+              "priority": 65500,
+              "direction": "Outbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          }
+        ]
+      },
+      "dependsOn": []
+    },
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/virtualNetworks",
@@ -125,14 +509,20 @@
           {
             "name": "[parameters('subnetName')]",
             "properties": {
-              "addressPrefix": "[parameters('subnetPrefix')]"
+              "addressPrefix": "[parameters('subnetPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('apimNsgName'))]"
+              }
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('apimNsgName'))]"
+      ]
     },
     {
-      "apiVersion": "2017-03-01",
+      "apiVersion": "2018-01-01",
       "name": "[variables('apiManagementServiceName')]",
       "type": "Microsoft.ApiManagement/service",
       "location": "[parameters('location')]",
@@ -154,19 +544,11 @@
             "encodedCertificate": "[parameters('proxyCustomHostnameBase64EncodedPfxCertificate')]",
             "certificatePassword": "[parameters('proxySSLCertificatePassword')]",
             "negotiateClientCertificate": false
-          },
-          {
-            "type": "Portal",
-            "hostName": "[parameters('portalCustomHostname')]",
-            "encodedCertificate": "[parameters('portalCustomHostnameBase64EncodedPfxCertificate')]",
-            "certificatePassword": "[parameters('portalSSLCertificatePassword')]",
-            "negotiateClientCertificate": false
           }
         ],
         "virtualNetworkType": "External",
         "virtualNetworkConfiguration": {
-          "subnetResourceId": "[variables('subnetRef')]",
-          "location": "[parameters('location')]"
+          "subnetResourceId": "[variables('subnetRef')]"
         }
       }
     }
