@@ -73,7 +73,7 @@ echo "Mounting Successful"
 # load the code from remote
 echo "$(date)"
 echo "download all files from file tree"
-file_list_url="${https_location}/sas-viya/file_tree.txt"
+file_list_url="${https_location}file_tree.txt"
 if [ ! -z "$https_sas_key" ]; then
 	file_list_url="${file_list_url}${https_sas_key}"
 fi
@@ -84,8 +84,8 @@ while read line; do
   chmod_attr="$(echo "$line" | cut -f2 -d'|')"
   directory="$(dirname "$line")"
   target_directory="${CODE_DIRECTORY}/$directory"
-  target_file_name="${CODE_DIRECTORY}/$file_name"
-  target_url="${https_location}/sas-viya${file_name}"
+  target_file_name="${CODE_DIRECTORY}/${file_name}"
+  target_url="${https_location%"/"}${file_name}"
   if [ ! -z "$https_sas_key" ]; then
 	target_url="${target_url}${https_sas_key}"
   fi
