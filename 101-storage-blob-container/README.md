@@ -8,4 +8,14 @@
 
 This template creates an Azure Storage account and a blob container. Template originally authored by John Downs.
 
-`Tags: storage`
+If you are new to Azure Storage account, see:
+
+- [Azure Storage account documentation](http://azure.microsoft.com/documentation/articles/storage-create-storage-account/)
+- [Azure Storage account template reference](https://docs.microsoft.com/azure/templates/microsoft.storage/allversions)
+- [Quickstart templates](https://azure.microsoft.com/resources/templates/?resourceType=Microsoft.Storage&pageNumber=1&sort=Popular)
+
+If you are new to the template development, see:
+
+- [Azure Resource Manager documentation](https://docs.microsoft.com/en-us/azure/azure-resource-manager/)
+
+Tags: Azure Storage account, Resource Manager, Resource Manager templates, ARM templates
