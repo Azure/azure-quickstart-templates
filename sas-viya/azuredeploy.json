@@ -55,6 +55,20 @@
         "description": "OPTIONAL: Specifies the https location of a SAS mirror. Mirror should be in the form of a .tgz/.tar.gz file or path to a mirror directory tree in blob storage."
       }
     },
+    "Ansible VM SKU": {
+      "type": "string",
+      "defaultValue": "Standard_B2s",
+      "metadata": {
+        "description": "This is the SKU for the Ansible/Bastion VM."
+      }
+    },
+    "Services VM SKU": {
+      "type": "string",
+      "defaultValue": "Standard_E8s_v3",
+      "metadata": {
+        "description": "This is the SKU for the Services VM. The default SKU value represents the minimum recommended size for system stability in most SAS software license sets. The selected SKU must support premium disks."
+      }
+    },
     "_artifactsLocationSasToken": {
       "type": "string",
       "defaultValue": "",
@@ -64,9 +78,9 @@
     },
     "_artifactsLocation": {
       "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sas-viya/",
       "metadata": {
-        "description": "For a standard deployment, keep the default.  The https URL to the base of the deployment files in Microsoft Azure. If a SAS key is needed, please do not include the SAS key in the URL. Instead, add the part after and include the question mark to the _artifactsLocationSasToken variable. ex. https://<STORAGE_ACCOUNT>.file.core.windows.net/<SHARE_NAME>/<SUBDIRECTORY_NAME>"
+        "description": "For a standard deployment, keep the default.  The https URL to the base of the deployment files in Microsoft Azure. If a SAS key is needed, please do not include the SAS key in the URL. Instead, add the part after and include the question mark to the _artifactsLocationSasToken variable. ex. https://(STORAGE_ACCOUNT).file.core.windows.net/(SHARE_NAME)/(SUBDIRECTORY_NAME)"
       }
     }
   },
@@ -86,24 +100,21 @@
     "LoadBalancerName": "PrimaryViyaLoadbalancer",
     "LoadBalancerNetworkSecurityGroup": "[concat(variables('LoadBalancerName'), '_NetworkSecurityGroup')]",
     "AnsibleController_name": "Ansible",
-    "AnsibleController_VMsize": "Standard_B2s",
     "CASController_name": "controller",
-    "Services_VMsize": "Standard_E8s_v3",
     "Services_name": "services",
     "DiagnosticStorageGroupName": "[toLower(concat('rg4diag', variables('resourceGroupUniqueString')))]",
     "AzureFilesViyaShare": "viyashare",
     "PrimaryUserName": "vmuser",
-    "ExtensionAnsibleURI": "[concat(parameters('_artifactsLocation'), '/sas-viya/nestedtemplates/run_ansible_script.json', parameters('_artifactsLocationSasToken'))]",
-    "NetworkCreateTemplateURI": "[concat(parameters('_artifactsLocation'), '/sas-viya/nestedtemplates/createNetworkSubtemplate.json', parameters('_artifactsLocationSasToken'))]",
+    "ExtensionAnsibleURI": "[concat(parameters('_artifactsLocation'), 'nestedtemplates/run_ansible_script.json', parameters('_artifactsLocationSasToken'))]",
+    "NetworkCreateTemplateURI": "[concat(parameters('_artifactsLocation'), 'nestedtemplates/createNetworkSubtemplate.json', parameters('_artifactsLocationSasToken'))]",
     "AlternateDomain": "[concat('viya-', subscription().subscriptionId, '-', variables('resourceGroupUniqueString'))]",
     "DomainActual": "[ substring(variables('AlternateDomain'),0,if(lessOrEquals(length(variables('AlternateDomain')),60), length(variables('AlternateDomain')), 60))]",
     "Base64AdminPass": "[base64(parameters('SASAdminPass'))]",
     "Base64UserPass": "[base64(parameters('SASUserPass'))]"
   },
-  "functions": [],
   "resources": [
     {
-      "comments": "The public IP address for the load balancer. Should be the only public IP outside of the Ansible controler",
+      "comments": "The public IP address for the load balancer. Should be the only public IP outside of the Ansible controller",
       "type": "Microsoft.Network/publicIPAddresses",
       "sku": {
         "name": "Basic",
@@ -112,18 +123,14 @@
       "name": "[concat(variables('LoadBalancerName'), '_PublicIP')]",
       "apiVersion": "2018-02-01",
       "location": "[parameters('location')]",
-      "scale": null,
       "properties": {
-        "provisioningState": "Succeeded",
         "publicIPAddressVersion": "IPv4",
         "publicIPAllocationMethod": "Dynamic",
         "idleTimeoutInMinutes": 4,
-        "ipTags": [],
         "dnsSettings": {
           "domainNameLabel": "[variables('DomainActual')]"
         }
-      },
-      "dependsOn": []
+      }
     },
     {
       "comments": "The primary network security group of the Ansible controller",
@@ -131,14 +138,11 @@
       "name": "[variables('LoadBalancerNetworkSecurityGroup')]",
       "apiVersion": "2018-02-01",
       "location": "[parameters('location')]",
-      "scale": null,
       "properties": {
-        "provisioningState": "Succeeded",
         "securityRules": [
           {
             "name": "allow-https",
             "properties": {
-              "provisioningState": "Succeeded",
               "protocol": "TCP",
               "sourcePortRange": "*",
               "destinationPortRange": "443",
@@ -146,17 +150,12 @@
               "destinationAddressPrefix": "*",
               "access": "Allow",
               "priority": 1000,
-              "direction": "Inbound",
-              "sourcePortRanges": [],
-              "destinationPortRanges": [],
-              "sourceAddressPrefixes": [],
-              "destinationAddressPrefixes": []
+              "direction": "Inbound"
             }
           },
           {
             "name": "allow-backend-health",
             "properties": {
-              "provisioningState": "Succeeded",
               "protocol": "TCP",
               "sourcePortRange": "*",
               "destinationPortRange": "65503-65534",
@@ -164,11 +163,7 @@
               "destinationAddressPrefix": "*",
               "access": "Allow",
               "priority": 1001,
-              "direction": "Inbound",
-              "sourcePortRanges": [],
-              "destinationPortRanges": [],
-              "sourceAddressPrefixes": [],
-              "destinationAddressPrefixes": []
+              "direction": "Inbound"
             }
           }
         ],
@@ -176,7 +171,6 @@
           {
             "name": "AllowVnetInBound",
             "properties": {
-              "provisioningState": "Succeeded",
               "description": "Allow inbound traffic from all VMs in VNET",
               "protocol": "*",
               "sourcePortRange": "*",
@@ -185,17 +179,12 @@
               "destinationAddressPrefix": "VirtualNetwork",
               "access": "Allow",
               "priority": 65000,
-              "direction": "Inbound",
-              "sourcePortRanges": [],
-              "destinationPortRanges": [],
-              "sourceAddressPrefixes": [],
-              "destinationAddressPrefixes": []
+              "direction": "Inbound"
             }
           },
           {
             "name": "AllowAzureLoadBalancerInBound",
             "properties": {
-              "provisioningState": "Succeeded",
               "description": "Allow inbound traffic from the Microsoft Azure load balancer",
               "protocol": "*",
               "sourcePortRange": "*",
@@ -204,17 +193,12 @@
               "destinationAddressPrefix": "*",
               "access": "Allow",
               "priority": 65001,
-              "direction": "Inbound",
-              "sourcePortRanges": [],
-              "destinationPortRanges": [],
-              "sourceAddressPrefixes": [],
-              "destinationAddressPrefixes": []
+              "direction": "Inbound"
             }
           },
           {
             "name": "DenyAllInBound",
             "properties": {
-              "provisioningState": "Succeeded",
               "description": "Deny all inbound traffic",
               "protocol": "*",
               "sourcePortRange": "*",
@@ -223,17 +207,12 @@
               "destinationAddressPrefix": "*",
               "access": "Deny",
               "priority": 65500,
-              "direction": "Inbound",
-              "sourcePortRanges": [],
-              "destinationPortRanges": [],
-              "sourceAddressPrefixes": [],
-              "destinationAddressPrefixes": []
+              "direction": "Inbound"
             }
           },
           {
             "name": "AllowVnetOutBound",
             "properties": {
-              "provisioningState": "Succeeded",
               "description": "Allow outbound traffic from all VMs to all VMs in VNET",
               "protocol": "*",
               "sourcePortRange": "*",
@@ -242,17 +221,12 @@
               "destinationAddressPrefix": "VirtualNetwork",
               "access": "Allow",
               "priority": 65000,
-              "direction": "Outbound",
-              "sourcePortRanges": [],
-              "destinationPortRanges": [],
-              "sourceAddressPrefixes": [],
-              "destinationAddressPrefixes": []
+              "direction": "Outbound"
             }
           },
           {
             "name": "AllowInternetOutBound",
             "properties": {
-              "provisioningState": "Succeeded",
               "description": "Allow outbound traffic from all VMs to the Internet",
               "protocol": "*",
               "sourcePortRange": "*",
@@ -261,17 +235,12 @@
               "destinationAddressPrefix": "Internet",
               "access": "Allow",
               "priority": 65001,
-              "direction": "Outbound",
-              "sourcePortRanges": [],
-              "destinationPortRanges": [],
-              "sourceAddressPrefixes": [],
-              "destinationAddressPrefixes": []
+              "direction": "Outbound"
             }
           },
           {
             "name": "DenyAllOutBound",
             "properties": {
-              "provisioningState": "Succeeded",
               "description": "Deny all outbound traffic",
               "protocol": "*",
               "sourcePortRange": "*",
@@ -280,16 +249,11 @@
               "destinationAddressPrefix": "*",
               "access": "Deny",
               "priority": 65500,
-              "direction": "Outbound",
-              "sourcePortRanges": [],
-              "destinationPortRanges": [],
-              "sourceAddressPrefixes": [],
-              "destinationAddressPrefixes": []
+              "direction": "Outbound"
             }
           }
         ]
-      },
-      "dependsOn": []
+      }
     },
 
     {
@@ -348,7 +312,12 @@
       "name": "[variables('LoadBalancerName')]",
       "apiVersion": "2018-02-01",
       "location": "[parameters('location')]",
-      "scale": null,
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', 'Services_NetworkInterface')]",
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('Services_name'))]",
+        "[resourceId('Microsoft.Resources/deployments', 'CreateNetwork')]"
+      ],
       "properties": {
         "sku": {
           "name": "Standard_Small",
@@ -362,8 +331,7 @@
               "subnet": {
                 "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('VirtualNetworkName'), variables('VirtualNetworkApplicationGatewaySubnet'))]"
               }
-            },
-            "type": "Microsoft.Network/applicationGateways/gatewayIPConfigurations"
+            }
           }
         ],
         "sslCertificates": [
@@ -372,8 +340,7 @@
             "properties": {
               "data": "[json(concat(split(reference('AnsiblePhase3GetLBCertPart1').outputs.instanceView.value.statuses[0].message, '#DATA#')[1],split(reference('AnsiblePhase4GetLBCertPart2').outputs.instanceView.value.statuses[0].message, '#DATA#')[1])).data]",
               "password": "[json(concat(split(reference('AnsiblePhase3GetLBCertPart1').outputs.instanceView.value.statuses[0].message, '#DATA#')[1],split(reference('AnsiblePhase4GetLBCertPart2').outputs.instanceView.value.statuses[0].message, '#DATA#')[1])).password]"
-            },
-            "type": "Microsoft.Network/applicationGateways/sslCertificates"
+            }
           }
         ],
         "authenticationCertificates": [
@@ -381,16 +348,13 @@
             "name": "viya-ca.cer",
             "properties": {
               "data": "[split(reference('AnsiblePhase6GetCACert').outputs.instanceView.value.statuses[0].message, '#DATA#')[1]]"
-            },
-            "type": "Microsoft.Network/applicationGateways/authenticationCertificates"
+            }
           }
         ],
         "frontendIPConfigurations": [
           {
             "name": "appGatewayFrontendIP",
-            "type": "Microsoft.Network/applicationGateways/frontendIPConfigurations",
             "properties": {
-              "provisioningState": "Succeeded",
               "privateIPAllocationMethod": "Dynamic",
               "publicIPAddress": {
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))]"
@@ -403,8 +367,7 @@
             "name": "appGatewayFrontendPort",
             "properties": {
               "port": 443
-            },
-            "type": "Microsoft.Network/applicationGateways/frontendPorts"
+            }
           }
         ],
         "backendAddressPools": [
@@ -416,8 +379,7 @@
                   "IpAddress": "[reference(resourceId('Microsoft.Network/networkInterfaces', 'Services_NetworkInterface')).ipConfigurations[0].properties.privateIPAddress]"
                 }
               ]
-            },
-            "type": "Microsoft.Network/applicationGateways/backendAddressPools"
+            }
           }
         ],
         "backendHttpSettingsCollection": [
@@ -434,15 +396,13 @@
                   "id": "[resourceId('Microsoft.Network/applicationGateways/authenticationCertificates', variables('LoadBalancerName'), 'viya-ca.cer')]"
                 }
               ]
-            },
-            "type": "Microsoft.Network/applicationGateways/backendHttpSettingsCollection"
+            }
           }
         ],
         "httpListeners": [
           {
             "name": "appGatewayHttpListener",
             "properties": {
-              "provisioningState": "Succeeded",
               "frontendIPConfiguration": {
                 "id": "[resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', variables('LoadBalancerName'), 'appGatewayFrontendIP')]"
               },
@@ -454,16 +414,13 @@
                 "id": "[resourceId('Microsoft.Network/applicationGateways/sslCertificates', variables('LoadBalancerName'), 'appGatewayFrontendCertificate')]"
               },
               "requireServerNameIndication": false
-            },
-            "type": "Microsoft.Network/applicationGateways/httpListeners"
+            }
           }
         ],
-        "urlPathMaps": [],
         "requestRoutingRules": [
           {
             "name": "rule1",
             "properties": {
-              "provisioningState": "Succeeded",
               "ruleType": "Basic",
               "httpListener": {
                 "id": "[resourceId('Microsoft.Network/applicationGateways/httpListeners', variables('LoadBalancerName'), 'appGatewayHttpListener')]"
@@ -474,20 +431,11 @@
               "backendHttpSettings": {
                 "id": "[resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', variables('LoadBalancerName'), 'appGatewayBackendHttpSettings')]"
               }
-            },
-            "type": "Microsoft.Network/applicationGateways/requestRoutingRules"
+            }
           }
         ],
-        "probes": [],
-        "redirectConfigurations": [],
         "enableHttp2": false
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))]",
-        "[resourceId('Microsoft.Network/networkInterfaces', 'Services_NetworkInterface')]",
-        "[resourceId('Microsoft.Compute/virtualMachines', variables('Services_name'))]",
-        "[resourceId('Microsoft.Resources/deployments', 'CreateNetwork')]"
-      ]
+      }
     },
     {
       "comments": "The primary network security group of the Ansible controller",
@@ -495,14 +443,11 @@
       "name": "AnsibleController_NetworkSecurityGroup",
       "apiVersion": "2018-02-01",
       "location": "[parameters('location')]",
-      "scale": null,
       "properties": {
-        "provisioningState": "Succeeded",
         "securityRules": [
           {
             "name": "allow-ssh",
             "properties": {
-              "provisioningState": "Succeeded",
               "protocol": "TCP",
               "sourcePortRange": "*",
               "destinationPortRange": "22",
@@ -510,11 +455,7 @@
               "destinationAddressPrefix": "*",
               "access": "Allow",
               "priority": 1000,
-              "direction": "Inbound",
-              "sourcePortRanges": [],
-              "destinationPortRanges": [],
-              "sourceAddressPrefixes": [],
-              "destinationAddressPrefixes": []
+              "direction": "Inbound"
             }
           }
         ],
@@ -530,17 +471,12 @@
               "destinationAddressPrefix": "VirtualNetwork",
               "access": "Allow",
               "priority": 65000,
-              "direction": "Inbound",
-              "sourcePortRanges": [],
-              "destinationPortRanges": [],
-              "sourceAddressPrefixes": [],
-              "destinationAddressPrefixes": []
+              "direction": "Inbound"
             }
           },
           {
             "name": "AllowAzureLoadBalancerInBound",
             "properties": {
-              "provisioningState": "Succeeded",
               "description": "Allow inbound traffic from the Microsoft Azure load balancer",
               "protocol": "*",
               "sourcePortRange": "*",
@@ -549,17 +485,12 @@
               "destinationAddressPrefix": "*",
               "access": "Allow",
               "priority": 65001,
-              "direction": "Inbound",
-              "sourcePortRanges": [],
-              "destinationPortRanges": [],
-              "sourceAddressPrefixes": [],
-              "destinationAddressPrefixes": []
+              "direction": "Inbound"
             }
           },
           {
             "name": "DenyAllInBound",
             "properties": {
-              "provisioningState": "Succeeded",
               "description": "Deny all inbound traffic",
               "protocol": "*",
               "sourcePortRange": "*",
@@ -568,17 +499,12 @@
               "destinationAddressPrefix": "*",
               "access": "Deny",
               "priority": 65500,
-              "direction": "Inbound",
-              "sourcePortRanges": [],
-              "destinationPortRanges": [],
-              "sourceAddressPrefixes": [],
-              "destinationAddressPrefixes": []
+              "direction": "Inbound"
             }
           },
           {
             "name": "AllowVnetOutBound",
             "properties": {
-              "provisioningState": "Succeeded",
               "description": "Allow outbound traffic from all VMs to all VMs in VNET",
               "protocol": "*",
               "sourcePortRange": "*",
@@ -587,17 +513,12 @@
               "destinationAddressPrefix": "VirtualNetwork",
               "access": "Allow",
               "priority": 65000,
-              "direction": "Outbound",
-              "sourcePortRanges": [],
-              "destinationPortRanges": [],
-              "sourceAddressPrefixes": [],
-              "destinationAddressPrefixes": []
+              "direction": "Outbound"
             }
           },
           {
             "name": "AllowInternetOutBound",
             "properties": {
-              "provisioningState": "Succeeded",
               "description": "Allow outbound traffic from all VMs to Internet",
               "protocol": "*",
               "sourcePortRange": "*",
@@ -606,17 +527,12 @@
               "destinationAddressPrefix": "Internet",
               "access": "Allow",
               "priority": 65001,
-              "direction": "Outbound",
-              "sourcePortRanges": [],
-              "destinationPortRanges": [],
-              "sourceAddressPrefixes": [],
-              "destinationAddressPrefixes": []
+              "direction": "Outbound"
             }
           },
           {
             "name": "DenyAllOutBound",
             "properties": {
-              "provisioningState": "Succeeded",
               "description": "Deny all outbound traffic",
               "protocol": "*",
               "sourcePortRange": "*",
@@ -625,16 +541,11 @@
               "destinationAddressPrefix": "*",
               "access": "Deny",
               "priority": 65500,
-              "direction": "Outbound",
-              "sourcePortRanges": [],
-              "destinationPortRanges": [],
-              "sourceAddressPrefixes": [],
-              "destinationAddressPrefixes": []
+              "direction": "Outbound"
             }
           }
         ]
-      },
-      "dependsOn": []
+      }
     },
     {
       "comments": "The public IP address for the Ansible controller. Should be the only public IP outside of the load balancer",
@@ -646,30 +557,29 @@
       "name": "AnsibleController_PublicIP",
       "apiVersion": "2018-02-01",
       "location": "[parameters('location')]",
-      "scale": null,
       "properties": {
-        "provisioningState": "Succeeded",
         "publicIPAddressVersion": "IPv4",
         "publicIPAllocationMethod": "Static",
-        "idleTimeoutInMinutes": 4,
-        "ipTags": []
-      },
-      "dependsOn": []
+        "idleTimeoutInMinutes": 4
+      }
     },
     {
-      "comments": "The network interface of the Ansible controller. This will be accessable to the public within the bounds of the security groups.",
+      "comments": "The network interface of the Ansible controller. This will be accessible to the public within the bounds of the security groups.",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "AnsibleController_NetworkInterface",
       "apiVersion": "2018-02-01",
       "location": "[parameters('location')]",
-      "scale": null,
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', 'AnsibleController_PublicIP')]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', 'AnsibleController_NetworkSecurityGroup')]",
+        "[resourceId('Microsoft.Network/applicationSecurityGroups', 'github-accessor')]",
+        "[resourceId('Microsoft.Resources/deployments', 'CreateNetwork')]"
+      ],
       "properties": {
-        "provisioningState": "Succeeded",
         "ipConfigurations": [
           {
             "name": "ipconfig1",
             "properties": {
-              "provisioningState": "Succeeded",
               "privateIPAllocationMethod": "Dynamic",
               "publicIPAddress": {
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'AnsibleController_PublicIP')]"
@@ -677,7 +587,6 @@
               "subnet": {
                 "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('VirtualNetworkName'), variables('VirtualNetworkPublicSubnet'))]"
               },
-              "primary": true,
               "privateIPAddressVersion": "IPv4",
               "applicationSecurityGroups": [
                 {
@@ -687,23 +596,12 @@
             }
           }
         ],
-        "dnsSettings": {
-          "dnsServers": [],
-          "appliedDnsServers": []
-        },
         "enableAcceleratedNetworking": false,
         "enableIPForwarding": false,
         "networkSecurityGroup": {
           "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'AnsibleController_NetworkSecurityGroup')]"
-        },
-        "primary": true
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses', 'AnsibleController_PublicIP')]",
-        "[resourceId('Microsoft.Network/networkSecurityGroups', 'AnsibleController_NetworkSecurityGroup')]",
-        "[resourceId('Microsoft.Network/applicationSecurityGroups', 'github-accessor')]",
-        "[resourceId('Microsoft.Resources/deployments', 'CreateNetwork')]"
-      ]
+        }
+      }
     },
     {
       "comments": "The Ansible controller and bastion server for this environment.",
@@ -711,10 +609,13 @@
       "name": "[variables('AnsibleController_name')]",
       "apiVersion": "2017-12-01",
       "location": "[parameters('location')]",
-      "scale": null,
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', 'AnsibleController_NetworkInterface')]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('DiagnosticStorageGroupName'))]"
+      ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[variables('AnsibleController_VMsize')]"
+          "vmSize": "[parameters('Ansible VM SKU')]"
         },
         "storageProfile": {
           "imageReference": {
@@ -749,8 +650,7 @@
                 }
               ]
             }
-          },
-          "secrets": []
+          }
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -762,14 +662,10 @@
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": true,
-            "storageUri": "[concat('https', '://', variables('DiagnosticStorageGroupName'), '.blob.core.windows.net', '/')]"
+            "storageUri": "[reference(concat('Microsoft.Storage/storageAccounts/', variables('DiagnosticStorageGroupName')), '2016-01-01').primaryEndpoints.blob]"
           }
         }
       },
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', 'AnsibleController_NetworkInterface')]",
-        "[resourceId('Microsoft.Storage/storageAccounts', variables('DiagnosticStorageGroupName'))]"
-      ],
       "resources": [
       ]
     },
@@ -902,38 +798,6 @@
       }
     },
     {
-      "name": "AnsiblePhase6GetCACert",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2018-05-01",
-      "dependsOn": [
-        "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase5PreViyaInstall')]"
-      ],
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[variables('ExtensionAnsibleURI')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "location": {
-            "value": "[parameters('location')]"
-          },
-          "vmName": {
-            "value": "[variables('AnsibleController_name')]"
-          },
-          "commandToExecute": {
-            "value": "[concat('set -o pipefail; ./ansiblecontroller_startup.sh \"6\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', variables('VirtualNetworkPrivateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" \"', parameters('DeploymentMirror'), '\" \"', variables('DiagnosticStorageGroupName'), '\" \"', variables('AzureFilesViyaShare'), '\" \"', listKeys(variables('DiagnosticStorageGroupName'),'2017-10-01').keys[0].value, '\" 2>&1 | tee /tmp/runAnsiblePhase6_SAS_CA_CRT.log')]"
-          },
-          "_artifactsLocation": {
-            "value": "[parameters('_artifactsLocation')]"
-          },
-          "_artifactsLocationSasToken": {
-            "value": "[parameters('_artifactsLocationSasToken')]"
-          }
-        }
-      }
-    },
-    {
       "name": "AnsiblePhase5PreViyaInstall",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2018-05-01",
@@ -955,6 +819,38 @@
           },
           "commandToExecute": {
             "value": "[concat('set -o pipefail; ./ansiblecontroller_startup.sh \"5\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', variables('VirtualNetworkPrivateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" \"', parameters('DeploymentMirror'), '\" \"', variables('DiagnosticStorageGroupName'), '\" \"', variables('AzureFilesViyaShare'), '\" \"', listKeys(variables('DiagnosticStorageGroupName'),'2017-10-01').keys[0].value, '\" 2>&1 | tee /tmp/runAnsiblePhase5_PRE_INSTALL.log')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "AnsiblePhase6GetCACert",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2018-05-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase5PreViyaInstall')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('ExtensionAnsibleURI')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "vmName": {
+            "value": "[variables('AnsibleController_name')]"
+          },
+          "commandToExecute": {
+            "value": "[concat('set -o pipefail; ./ansiblecontroller_startup.sh \"6\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', variables('VirtualNetworkPrivateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" \"', parameters('DeploymentMirror'), '\" \"', variables('DiagnosticStorageGroupName'), '\" \"', variables('AzureFilesViyaShare'), '\" \"', listKeys(variables('DiagnosticStorageGroupName'),'2017-10-01').keys[0].value, '\" 2>&1 | tee /tmp/runAnsiblePhase6_SAS_CA_CRT.log')]"
           },
           "_artifactsLocation": {
             "value": "[parameters('_artifactsLocation')]"
@@ -1099,18 +995,22 @@
       "name": "CASController_NetworkInterface",
       "apiVersion": "2018-02-01",
       "location": "[parameters('location')]",
-      "scale": null,
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', 'Viya_NetworkSecurityGroup')]",
+        "[resourceId('Microsoft.Network/applicationSecurityGroups', 'github-accessor')]",
+        "[resourceId('Microsoft.Network/applicationSecurityGroups', 'sas-services-accessor')]",
+        "[resourceId('Microsoft.Network/applicationSecurityGroups', 'sas-viya-provider')]",
+        "[resourceId('Microsoft.Resources/deployments', 'CreateNetwork')]"
+      ],
       "properties": {
-        "provisioningState": "Succeeded",
         "ipConfigurations": [
           {
             "name": "ipconfig1",
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "subnet": {
-                "id": "[resourceId(subscription().subscriptionId, resourceGroup().name, 'Microsoft.Network/virtualNetworks/subnets', variables('VirtualNetworkName'), variables('VirtualNetworkPrivateSubnet'))]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('VirtualNetworkName'), variables('VirtualNetworkPrivateSubnet'))]"
               },
-              "primary": true,
               "privateIPAddressVersion": "IPv4",
               "applicationSecurityGroups": [
                 {
@@ -1126,24 +1026,12 @@
             }
           }
         ],
-        "dnsSettings": {
-          "dnsServers": [],
-          "appliedDnsServers": []
-        },
         "enableAcceleratedNetworking": false,
         "enableIPForwarding": false,
         "networkSecurityGroup": {
           "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'Viya_NetworkSecurityGroup')]"
-        },
-        "primary": true
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkSecurityGroups', 'Viya_NetworkSecurityGroup')]",
-        "[resourceId('Microsoft.Network/applicationSecurityGroups', 'github-accessor')]",
-        "[resourceId('Microsoft.Network/applicationSecurityGroups', 'sas-services-accessor')]",
-        "[resourceId('Microsoft.Network/applicationSecurityGroups', 'sas-viya-provider')]",
-        "[resourceId('Microsoft.Resources/deployments', 'CreateNetwork')]"
-      ]
+        }
+      }
     },
     {
       "comments": "Diagnostic storage group for the SAS Viya stack",
@@ -1156,13 +1044,9 @@
       "name": "[variables('DiagnosticStorageGroupName')]",
       "apiVersion": "2018-02-01",
       "location": "[parameters('location')]",
-      "tags": {},
-      "scale": null,
       "properties": {
         "networkAcls": {
           "bypass": "AzureServices",
-          "virtualNetworkRules": [],
-          "ipRules": [],
           "defaultAction": "Allow"
         },
         "supportsHttpsTrafficOnly": false,
@@ -1177,16 +1061,19 @@
           },
           "keySource": "Microsoft.Storage"
         }
-      },
-      "dependsOn": []
+      }
     },
     {
-      "comments": "The CAS controler for this environment.",
+      "comments": "The CAS controller for this environment.",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('CASController_name')]",
       "apiVersion": "2018-04-01",
       "location": "[parameters('location')]",
-      "scale": null,
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', 'CASController_NetworkInterface')]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('DiagnosticStorageGroupName'))]",
+        "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase2GetCASSizingFromLicense')]"
+      ],
       "properties": {
         "hardwareProfile": {
           "vmSize": "[json(split(reference('AnsiblePhase2GetCASSizingFromLicense').outputs.instanceView.value.statuses[0].message, '#DATA#')[1]).CAS_VM_SIZE]"
@@ -1233,8 +1120,7 @@
                 }
               ]
             }
-          },
-          "secrets": []
+          }
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -1246,15 +1132,10 @@
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": true,
-            "storageUri": "[concat('https', '://', variables('DiagnosticStorageGroupName'), '.blob.core.windows.net', '/')]"
+            "storageUri": "[reference(concat('Microsoft.Storage/storageAccounts/', variables('DiagnosticStorageGroupName')), '2016-01-01').primaryEndpoints.blob]"
           }
         }
       },
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', 'CASController_NetworkInterface')]",
-        "[resourceId('Microsoft.Storage/storageAccounts', variables('DiagnosticStorageGroupName'))]",
-        "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase2GetCASSizingFromLicense')]"
-      ],
       "resources": [
       ]
     },
@@ -1268,9 +1149,6 @@
         "[resourceId('Microsoft.Compute/virtualMachines', variables('AnsibleController_name'))]",
         "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase2GetCASSizingFromLicense')]"
       ],
-      "tags": {
-        "displayName": "config-app"
-      },
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
         "type": "CustomScript",
@@ -1282,7 +1160,7 @@
         "protectedSettings": {
           "commandToExecute": "[ concat('set -o pipefail; ./nonansiblecontroller_prereqs.sh \"', variables('PrimaryUserName'), '\" \"', variables('DiagnosticStorageGroupName'), '\" \"', variables('AzureFilesViyaShare'), '\" \"', listKeys(variables('DiagnosticStorageGroupName'),'2017-10-01').keys[0].value,'\" \"CasControllerServers\" 2>&1 | tee /tmp/prerequisites.log')]",
           "fileUris": [
-            "[concat(parameters('_artifactsLocation'), '/sas-viya/scripts/nonansiblecontroller_prereqs.sh', parameters('_artifactsLocationSasToken'))]"
+            "[concat(parameters('_artifactsLocation'), 'scripts/nonansiblecontroller_prereqs.sh', parameters('_artifactsLocationSasToken'))]"
           ]
         }
       }
@@ -1293,15 +1171,11 @@
       "name": "Viya_NetworkSecurityGroup",
       "apiVersion": "2018-02-01",
       "location": "[parameters('location')]",
-      "scale": null,
       "properties": {
-        "provisioningState": "Succeeded",
-        "securityRules": [],
         "defaultSecurityRules": [
           {
             "name": "AllowVnetInBound",
             "properties": {
-              "provisioningState": "Succeeded",
               "description": "Allow inbound traffic from all VMs in VNET",
               "protocol": "*",
               "sourcePortRange": "*",
@@ -1310,17 +1184,12 @@
               "destinationAddressPrefix": "VirtualNetwork",
               "access": "Allow",
               "priority": 65000,
-              "direction": "Inbound",
-              "sourcePortRanges": [],
-              "destinationPortRanges": [],
-              "sourceAddressPrefixes": [],
-              "destinationAddressPrefixes": []
+              "direction": "Inbound"
             }
           },
           {
             "name": "AllowAzureLoadBalancerInBound",
             "properties": {
-              "provisioningState": "Succeeded",
               "description": "Allow inbound traffic from the Microsoft Azure load balancer",
               "protocol": "*",
               "sourcePortRange": "*",
@@ -1329,17 +1198,12 @@
               "destinationAddressPrefix": "*",
               "access": "Allow",
               "priority": 65001,
-              "direction": "Inbound",
-              "sourcePortRanges": [],
-              "destinationPortRanges": [],
-              "sourceAddressPrefixes": [],
-              "destinationAddressPrefixes": []
+              "direction": "Inbound"
             }
           },
           {
             "name": "DenyAllInBound",
             "properties": {
-              "provisioningState": "Succeeded",
               "description": "Deny all inbound traffic",
               "protocol": "*",
               "sourcePortRange": "*",
@@ -1348,17 +1212,12 @@
               "destinationAddressPrefix": "*",
               "access": "Deny",
               "priority": 65500,
-              "direction": "Inbound",
-              "sourcePortRanges": [],
-              "destinationPortRanges": [],
-              "sourceAddressPrefixes": [],
-              "destinationAddressPrefixes": []
+              "direction": "Inbound"
             }
           },
           {
             "name": "AllowVnetOutBound",
             "properties": {
-              "provisioningState": "Succeeded",
               "description": "Allow outbound traffic from all VMs to all VMs in VNET",
               "protocol": "*",
               "sourcePortRange": "*",
@@ -1367,17 +1226,12 @@
               "destinationAddressPrefix": "VirtualNetwork",
               "access": "Allow",
               "priority": 65000,
-              "direction": "Outbound",
-              "sourcePortRanges": [],
-              "destinationPortRanges": [],
-              "sourceAddressPrefixes": [],
-              "destinationAddressPrefixes": []
+              "direction": "Outbound"
             }
           },
           {
             "name": "AllowInternetOutBound",
             "properties": {
-              "provisioningState": "Succeeded",
               "description": "Allow outbound traffic from all VMs to the Internet",
               "protocol": "*",
               "sourcePortRange": "*",
@@ -1386,17 +1240,12 @@
               "destinationAddressPrefix": "Internet",
               "access": "Allow",
               "priority": 65001,
-              "direction": "Outbound",
-              "sourcePortRanges": [],
-              "destinationPortRanges": [],
-              "sourceAddressPrefixes": [],
-              "destinationAddressPrefixes": []
+              "direction": "Outbound"
             }
           },
           {
             "name": "DenyAllOutBound",
             "properties": {
-              "provisioningState": "Succeeded",
               "description": "Deny all outbound traffic",
               "protocol": "*",
               "sourcePortRange": "*",
@@ -1405,16 +1254,11 @@
               "destinationAddressPrefix": "*",
               "access": "Deny",
               "priority": 65500,
-              "direction": "Outbound",
-              "sourcePortRanges": [],
-              "destinationPortRanges": [],
-              "sourceAddressPrefixes": [],
-              "destinationAddressPrefixes": []
+              "direction": "Outbound"
             }
           }
         ]
-      },
-      "dependsOn": []
+      }
     },
     {
       "comments": "The network interface of the ansible controller. This will be accessible to the public within the bounds of the security groups.",
@@ -1422,19 +1266,22 @@
       "name": "Services_NetworkInterface",
       "apiVersion": "2018-02-01",
       "location": "[parameters('location')]",
-      "scale": null,
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', 'Viya_NetworkSecurityGroup')]",
+        "[resourceId('Microsoft.Network/applicationSecurityGroups', 'github-accessor')]",
+        "[resourceId('Microsoft.Network/applicationSecurityGroups', 'sas-services-provider')]",
+        "[resourceId('Microsoft.Network/applicationSecurityGroups', 'sas-viya-accessor')]",
+        "[resourceId('Microsoft.Resources/deployments', 'CreateNetwork')]"
+      ],
       "properties": {
-        "provisioningState": "Succeeded",
         "ipConfigurations": [
           {
             "name": "ipconfig1",
             "properties": {
-              "provisioningState": "Succeeded",
               "privateIPAllocationMethod": "Dynamic",
               "subnet": {
-                "id": "[resourceId(subscription().subscriptionId, resourceGroup().name, 'Microsoft.Network/virtualNetworks/subnets', variables('VirtualNetworkName'), variables('VirtualNetworkPrivateSubnet'))]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('VirtualNetworkName'), variables('VirtualNetworkPrivateSubnet'))]"
               },
-              "primary": true,
               "privateIPAddressVersion": "IPv4",
               "applicationSecurityGroups": [
                 {
@@ -1450,24 +1297,12 @@
             }
           }
         ],
-        "dnsSettings": {
-          "dnsServers": [],
-          "appliedDnsServers": []
-        },
         "enableAcceleratedNetworking": false,
         "enableIPForwarding": false,
         "networkSecurityGroup": {
           "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'Viya_NetworkSecurityGroup')]"
-        },
-        "primary": true
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkSecurityGroups', 'Viya_NetworkSecurityGroup')]",
-        "[resourceId('Microsoft.Network/applicationSecurityGroups', 'github-accessor')]",
-        "[resourceId('Microsoft.Network/applicationSecurityGroups', 'sas-services-provider')]",
-        "[resourceId('Microsoft.Network/applicationSecurityGroups', 'sas-viya-accessor')]",
-        "[resourceId('Microsoft.Resources/deployments', 'CreateNetwork')]"
-      ]
+        }
+      }
     },
     {
       "comments": "The services server for this environment.",
@@ -1475,10 +1310,13 @@
       "name": "[variables('Services_name')]",
       "apiVersion": "2017-12-01",
       "location": "[parameters('location')]",
-      "scale": null,
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', 'Services_NetworkInterface')]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('DiagnosticStorageGroupName'))]"
+      ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[variables('Services_VMsize')]"
+          "vmSize": "[parameters('Services VM SKU')]"
         },
         "storageProfile": {
           "imageReference": {
@@ -1522,8 +1360,7 @@
                 }
               ]
             }
-          },
-          "secrets": []
+          }
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -1535,14 +1372,10 @@
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": true,
-            "storageUri": "[concat('https', '://', variables('DiagnosticStorageGroupName'), '.blob.core.windows.net', '/')]"
+            "storageUri": "[reference(concat('Microsoft.Storage/storageAccounts/', variables('DiagnosticStorageGroupName')), '2016-01-01').primaryEndpoints.blob]"
           }
         }
       },
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', 'Services_NetworkInterface')]",
-        "[resourceId('Microsoft.Storage/storageAccounts', variables('DiagnosticStorageGroupName'))]"
-      ],
       "resources": [
       ]
     },
@@ -1556,9 +1389,6 @@
         "[resourceId('Microsoft.Compute/virtualMachines', variables('AnsibleController_name'))]",
         "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase2GetCASSizingFromLicense')]"
       ],
-      "tags": {
-        "displayName": "config-app"
-      },
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
         "type": "CustomScript",
@@ -1570,7 +1400,7 @@
         "protectedSettings": {
           "commandToExecute": "[ concat('set -o pipefail; ./nonansiblecontroller_prereqs.sh \"', variables('PrimaryUserName'), '\" \"', variables('DiagnosticStorageGroupName'), '\" \"', variables('AzureFilesViyaShare'), '\" \"', listKeys(variables('DiagnosticStorageGroupName'),'2017-10-01').keys[0].value, '\" \"VisualServicesServers,ProgrammingServicesServers,StatefulServicesServers\" 2>&1 | tee /tmp/prerequisites.log')]",
           "fileUris": [
-            "[concat(parameters('_artifactsLocation'), '/sas-viya/scripts/nonansiblecontroller_prereqs.sh', parameters('_artifactsLocationSasToken'))]"
+            "[concat(parameters('_artifactsLocation'), 'scripts/nonansiblecontroller_prereqs.sh', parameters('_artifactsLocationSasToken'))]"
           ]
         }
       }
@@ -1581,12 +1411,7 @@
       "name": "github-accessor",
       "apiVersion": "2018-02-01",
       "location": "[parameters('location')]",
-      "tags": {},
-      "scale": null,
-      "properties": {
-        "provisioningState": "Succeeded"
-      },
-      "dependsOn": []
+      "properties": {}
     },
     {
       "comments": "Application security group for those servers that require access to github",
@@ -1594,12 +1419,7 @@
       "name": "sas-services-accessor",
       "apiVersion": "2018-02-01",
       "location": "[parameters('location')]",
-      "tags": {},
-      "scale": null,
-      "properties": {
-        "provisioningState": "Succeeded"
-      },
-      "dependsOn": []
+      "properties": {}
     },
     {
       "comments": "Application security group for those servers that require access to github",
@@ -1607,12 +1427,7 @@
       "name": "sas-services-provider",
       "apiVersion": "2018-02-01",
       "location": "[parameters('location')]",
-      "tags": {},
-      "scale": null,
-      "properties": {
-        "provisioningState": "Succeeded"
-      },
-      "dependsOn": []
+      "properties": {}
     },
     {
       "comments": "Application security group for those servers that require access to github",
@@ -1620,12 +1435,7 @@
       "name": "sas-viya-accessor",
       "apiVersion": "2018-02-01",
       "location": "[parameters('location')]",
-      "tags": {},
-      "scale": null,
-      "properties": {
-        "provisioningState": "Succeeded"
-      },
-      "dependsOn": []
+      "properties": {}
     },
     {
       "comments": "Application security group for those servers that require access to github",
@@ -1633,12 +1443,7 @@
       "name": "sas-viya-provider",
       "apiVersion": "2018-02-01",
       "location": "[parameters('location')]",
-      "tags": {},
-      "scale": null,
-      "properties": {
-        "provisioningState": "Succeeded"
-      },
-      "dependsOn": []
+      "properties": {}
     }
   ],
   "outputs": {
