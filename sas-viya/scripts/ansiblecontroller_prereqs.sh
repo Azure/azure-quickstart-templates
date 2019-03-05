@@ -73,25 +73,25 @@ echo "Mounting Successful"
 # load the code from remote
 echo "$(date)"
 echo "download all files from file tree"
-file_list_url="${https_location}/sas-viya/file_tree.txt"
+file_list_url="${https_location}file_tree.txt"
 if [ ! -z "$https_sas_key" ]; then
 	file_list_url="${file_list_url}${https_sas_key}"
 fi
 echo "pullin from url: $file_list_url"
-curl "$file_list_url" > file_list.txt
+curl --retry 10 --max-time 60 "$file_list_url" > file_list.txt
 while read line; do
   file_name="$(echo "$line" | cut -f1 -d'|')"
   chmod_attr="$(echo "$line" | cut -f2 -d'|')"
   directory="$(dirname "$line")"
   target_directory="${CODE_DIRECTORY}/$directory"
-  target_file_name="${CODE_DIRECTORY}/$file_name"
-  target_url="${https_location}/sas-viya${file_name}"
+  target_file_name="${CODE_DIRECTORY}/${file_name}"
+  target_url="${https_location%"/"}${file_name}"
   if [ ! -z "$https_sas_key" ]; then
 	target_url="${target_url}${https_sas_key}"
   fi
   mkdir -p "$target_directory"
   echo "Downloading '$target_file_name' from '$target_url'"
-  curl "$target_url" > "$target_file_name"
+  curl --retry 10 --max-time 60 "$target_url" > "$target_file_name"
   chmod $chmod_attr "$target_file_name"
 done <file_list.txt
 
@@ -144,9 +144,9 @@ END
 
 # get the license file and put it in the nfs
 mkdir -p "$DIRECTORY_LICENSE_FILE"
-curl "$license_file_uri" > "$FILE_LICENSE_FILE"
+curl --retry 10 --max-time 60 "$license_file_uri" > "$FILE_LICENSE_FILE"
 chown -R ${PRIMARY_USER}:${PRIMARY_USER} "$DIRECTORY_NFS_SHARE"
-# wget -nH -r -np --cut-dirs=$(if echo "$SOURCE_URI" | grep -q "://"; then i="$((${#SOURCE_URI}-1))"; if [ "${SOURCE_URI:$i:1}" = "/" ]; then echo "$SOURCE_URI" | awk -F'/' '{print NF -4}'; else echo "$SOURCE_URI" | awk -F'/' '{print NF -3}'; fi; else echo "$SOURCE_URI" | awk -F'/' '{print NF -1}'; fi) -R "index.html*" "$SOURCE_URI"
+
 echo "$(date)"
 echo "create cas sizing file"
 
