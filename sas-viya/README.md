@@ -1,3 +1,5 @@
+
+
 ## SAS Viya Quickstart Template for Azure
 [![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsas-viya%2Fazuredeploy.json) 
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsas-viya%2Fazuredeploy.json" target="_blank">
@@ -12,6 +14,9 @@ This README for  SAS Viya Quickstart Template for Azure is used to deploy the fo
 * SAS Visual Data Mining and Machine Learning 8.3.1 on Linux
 
 This Quickstart is a reference architecture for users who want to deploy the SAS platform, using microservices and other cloud-friendly technologies. By deploying the SAS platform in Azure, you get SAS analytics, data visualization, and machine-learning capabilities in an Azure-validated environment. 
+
+For questions and assistance, please contact your SAS representative. 
+
 ## Contents
 1. [Solution Summary](#Summary)
     1. [Costs and Licenses](#Costs)
