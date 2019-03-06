@@ -1,4 +1,4 @@
-# Deploy an Azure SQL Server with Auditing enabled to qrite audit logs to Azure blob storage account
+# Deploy an Azure SQL Server with Auditing enabled to write audit logs to Event Hubs
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-sql-auditing-server-policy-to-eventhub%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
