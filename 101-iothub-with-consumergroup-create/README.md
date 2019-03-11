@@ -7,4 +7,4 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template creates an IoT Hub instance with device to cloud and cloud to device messaging configurations and a device to cloud consumer group. For more information, go to: https://azure.microsoft.com/en-in/documentation/services/iot-hub/
+This template creates an IoT Hub instance with device to cloud and cloud to device messaging configurations and a device to cloud consumer group. For more information, go to: https://docs.microsoft.com/en-us/azure/iot-hub/.
