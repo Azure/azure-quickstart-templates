@@ -17,7 +17,6 @@
     },
     "adminUsername": {
       "type": "string",
-      "defaultValue": "azureuser",
       "metadata": {
         "description": "Specifies a username for the Virtual Machine."
       }
@@ -30,27 +29,14 @@
     }
   },
   "variables": {
-    "networkInterface": {
-      "name": "[concat(parameters('projectName'), subString(uniqueString(subscription().subscriptionId), 0, 3))]"
-    },
-    "networkSecurityGroupName": "[concat(parameters('projectName'), '-nsg')]",
-    "virtualNetwork": {
-      "name": "[concat(parameters('projectName'), '-vnet')]",
-      "addressPrefixes": "10.0.0.0/16",
-      "subnets": {
-        "name": "default",
-        "addressPrefix": "10.0.0.0/24"
-      }
-    },
-    "virtualMachine": {
-      "name": "[concat(parameters('projectName'), '-vm')]",
-      "vmSize": "Standard_D2s_v3"
-    },
-    "publicIPAddress": {
-      "name": "[concat(parameters('projectName'), '-ip')]",
-      "type": "Dynamic",
-      "sku": "Basic"
-    }
+    "vNetName": "[concat(parameters('projectName'), '-vnet')]",
+    "vNetAddressPrefixes": "10.0.0.0/16",
+    "vNetSubnetName": "default",
+    "vNetSubnetAddressPrefix": "10.0.0.0/24",
+    "vmName": "[concat(parameters('projectName'), '-vm')]",
+    "publicIPAddressName": "[concat(parameters('projectName'), '-ip')]",
+    "networkInterfaceName": "[concat(parameters('projectName'), subString(uniqueString(subscription().subscriptionId), 0, 3))]",
+    "networkSecurityGroupName": "[concat(parameters('projectName'), '-nsg')]"
   },
   "resources": [
     {
@@ -79,32 +65,32 @@
     },
     {
       "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[variables('publicIPAddress').name]",
+      "name": "[variables('publicIPAddressName')]",
       "location": "[parameters('location')]",
       "apiVersion": "2018-11-01",
       "properties": {
-        "publicIPAllocationMethod": "[variables('publicIPAddress').type]"
+        "publicIPAllocationMethod": "Dynamic"
       },
       "sku": {
-        "name": "[variables('publicIPAddress').sku]"
+        "name": "Basic"
       }
     },
     {
       "type": "Microsoft.Network/virtualNetworks",
-      "name": "[variables('virtualNetwork').name]",
+      "name": "[variables('vNetName')]",
       "location": "[parameters('location')]",
       "apiVersion": "2018-11-01",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
-            "[variables('virtualNetwork').addressPrefixes]"
+            "[variables('vNetAddressPrefixes')]"
           ]
         },
         "subnets": [
           {
-            "name": "[variables('virtualNetwork').subnets.name]",
+            "name": "[variables('vNetSubnetName')]",
             "properties": {
-              "addressPrefix": "[variables('virtualNetwork').subnets.addressPrefix]"
+              "addressPrefix": "[variables('vNetSubnetAddressPrefix')]"
             }
           }
         ]
@@ -112,13 +98,13 @@
     },
     {
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[variables('networkInterface').name]",
+      "name": "[variables('networkInterfaceName')]",
       "location": "[parameters('location')]",
       "apiVersion": "2018-11-01",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddress').name)]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetwork').name)]",
-        "[concat('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroupName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vNetName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -127,10 +113,10 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddress').name)]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
               },
               "subnet": {
-                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetwork').name),'/subnets/', variables('virtualNetwork').subnets.name)]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNetSubnetName'))]"
               }
             }
           }
@@ -139,18 +125,18 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[variables('virtualMachine').name]",
+      "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
       "apiVersion": "2018-10-01",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('networkInterface').name)]"
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[variables('virtualMachine').vmSize]"
+          "vmSize": "Standard_D2s_v3"
         },
         "osProfile": {
-          "computerName": "[variables('virtualMachine').name]",
+          "computerName": "[variables('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
           "linuxConfiguration": {
             "disablePasswordAuthentication": true,
@@ -178,7 +164,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterface').name)]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
             }
           ]
         }
