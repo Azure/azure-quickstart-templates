@@ -70,9 +70,10 @@
         # Next, we want to pre-populate a number of well-known variables.
         # These variables will be available to every test case.   They are:
         $WellKnownVariables = 'TemplateFullPath','TemplateText','TemplateObject',
-            'CreateUIDefinitionFullPath','createUIDefintionText','CreateUIDefinitionObject',
-            'FolderName', 'HasCreateUIDefinition', 'IsMainTemplate','FolderFiles', 
-            'MainTemplatePath', 'MainTemplateObject', 'MainTemplateText'
+                    'CreateUIDefinitionFullPath','createUIDefintionText','CreateUIDefinitionObject',
+                    'FolderName', 'HasCreateUIDefinition', 'IsMainTemplate','FolderFiles',
+                    'MainTemplatePath', 'MainTemplateObject', 'MainTemplateText',
+                    'MainTemplateResources','MainTemplateVariables','MainTemplateParameters', 'MainTemplateOutputs'        
         foreach ($_ in $WellKnownVariables) {
             $ExecutionContext.SessionState.PSVariable.Set($_, $null)
         }
