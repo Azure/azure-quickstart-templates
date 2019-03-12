@@ -13,16 +13,6 @@ See https://docs.microsoft.com/en-us/azure/aks/cluster-autoscaler for more infor
 
 **Please note that this is a preview feature. Previews are made available to you on the condition that you agree to the supplemental terms of use. Some aspects of this feature may change prior to general availability (GA). For more information, please refer to https://azure.microsoft.com/support/legal/preview-supplemental-terms/**
 
-Please note that before using this template you will need to register the following features and providers:
-
-```
-az feature register --name VMSSPreview --namespace Microsoft.ContainerService
-```
-
-```
-az provider register -n Microsoft.ContainerService
-```
-
 To use keys stored in keyvault, replace ```"value":""``` with a reference to keyvault in parameters file. For example:
 
 ```json
@@ -37,6 +27,16 @@ To use keys stored in keyvault, replace ```"value":""``` with a reference to key
 ```
 
 ## Prerequisites
+
+Please note that before using this template you will need to register the following features and providers:
+
+```
+az feature register --name VMSSPreview --namespace Microsoft.ContainerService
+```
+
+```
+az provider register -n Microsoft.ContainerService
+```
 
 Prior to deploying AKS using this ARM template, the following resources need to exist:
 - Service Principal
