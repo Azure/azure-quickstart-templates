@@ -11,14 +11,14 @@ This template deploys a simple **AKS cluster** with autoscaling using Virtual Ma
 
 See https://docs.microsoft.com/en-us/azure/aks/cluster-autoscaler for more information.
 
-Please note that this is a preview feature. Previews are made available to you on the condition that you agree to the supplemental terms of use. Some aspects of this feature may change prior to general availability (GA). More information: https://azure.microsoft.com/support/legal/preview-supplemental-terms/
+**Please note that this is a preview feature. Previews are made available to you on the condition that you agree to the supplemental terms of use. Some aspects of this feature may change prior to general availability (GA). More information: https://azure.microsoft.com/support/legal/preview-supplemental-terms/**
 
 Please note that before using this template you will need to register the following features and providers:
 
-```Batchfile
+```
 az feature register --name VMSSPreview --namespace Microsoft.ContainerService
 ```
 
-```Batchfile
+```
 az provider register -n Microsoft.ContainerService
 ```
