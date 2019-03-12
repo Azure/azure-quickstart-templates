@@ -1,9 +1,9 @@
 # Azure Container Service (AKS) with autoscaling (VMSS) - PREVIEW
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-aks%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAdamSharif-MSFT%2Fazure-quickstart-templates%2Fmaster%2F101-aks-vmss%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-aks%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAdamSharif-MSFT%2Fazure-quickstart-templates%2Fmaster%2F101-aks-vmss%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
@@ -15,10 +15,10 @@ Please note that this is a preview feature. Previews are made available to you o
 
 Please note that before using this template you will need to register the following providers:
 
-```json
+```Batchfile
 az feature register --name VMSSPreview --namespace Microsoft.ContainerService
 ```
 
-```json
+```Batchfile
 az provider register -n Microsoft.ContainerService
 ```
