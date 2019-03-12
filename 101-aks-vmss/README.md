@@ -1,4 +1,4 @@
-# Azure Container Service (AKS) with autoscaling (VMSS) - PREVIEW
+# Azure Kubernetes Service (AKS) with autoscaling (VMSS) - PREVIEW
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAdamSharif-MSFT%2Fazure-quickstart-templates%2Fmaster%2F101-aks-vmss%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
