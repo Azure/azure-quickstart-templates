@@ -7,4 +7,4 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template shows an example of how to deploy an Azure API Management service within your own virtual network's subnet along with custom hostname configuration for proxy and portal endpoints.
+This template shows an example of how to deploy an Azure API Management service within your own virtual network's subnet along with custom hostname configuration for proxy and portal endpoints. The template also deploys a NSG, which is based on the documentation here https://docs.microsoft.com/en-us/azure/api-management/api-management-using-with-vnet#a-namenetwork-configuration-issues-acommon-network-configuration-issues
