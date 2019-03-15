@@ -8,19 +8,19 @@
 This template assigns Owner, Reader or Contributor access to an existing resource group. Inputs to this template are following fields:
 
 - Principal ID
-- Role Definition Type
+- Role Definition ID
 
-**Use following Azure PowerShell cmdlet to get Principal ID associated with a user using their email id. Please note, principal id maps to the id inside the directory and can point to a user, service principal, or security group. The ObjectId is the principal ID.
+**Use the following Azure PowerShell cmdlet to get Principal ID associated with a user using their email id. Please note, principal id maps to the id inside the directory and can point to a user, service principal, or security group. The ObjectId is the principal ID.
 
-    PS C:\> Get-AzureRmADUser -mail <email id>
+    PS C:\> Get-AzADUser -mail <email id>
     
     DisplayName                    Type                           ObjectId
     -----------                    ----                           --------
     <NAME>                                                        xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 
-**Use following Azure PowerShell cmdlet to learn about RoleDefinitions. 
+**Use the following Azure PowerShell cmdlet to learn about role definitions. 
 
-    PS C:\> Get-AzureRmRoleDefinition -Name "reader"
+    PS C:\> Get-AzRoleDefinition -Name "reader"
 
     Name             : Reader
     Id               : acdd72a7-3385-48ef-bd42-f606fba81ae7
@@ -32,7 +32,7 @@ This template assigns Owner, Reader or Contributor access to an existing resourc
     NotDataActions   : {}
     AssignableScopes : {/}
 
-   You can use the same cmdlet to get the role definition ID for owner, and contributor.
+   You can use the same cmdlet to get the role definition ID for owner and contributor.
 
     "Owner": "8e3af657-a8ff-443c-a75c-2fe8c4bcb635"
     "Contributor": "b24988ac-6180-42a0-ab88-20f7382dd24c"
