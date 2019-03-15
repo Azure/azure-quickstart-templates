@@ -1,4 +1,4 @@
-# Create a Single-Region Azure Cosmos DB account for any API Type
+# Create a Single-Region Azure Cosmos DB account
 
 This template will create an Azure Cosmos DB account in a single region and provides multiple different configurations including:
 
@@ -8,6 +8,12 @@ This template will create an Azure Cosmos DB account in a single region and prov
 - **Automatic Failover:** Select whether to enable automatic failover on the account (Ignored when Multi-Master is enabled).
 
 The location for the single primary region is derived from the resource group the Cosmos DB account resource is provisioned in. After provisioning the account and single region, users can add additional regions to replicate to.
+
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https://raw.githubusercontent.com/markjbrown/azure-quickstart-templates/master/101-cosmosdb-create-arm-template/azuredeploy.json" target="_blank">
+    <img src="http://azuredeploy.net/deploybutton.png"/>
+
+
+
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-cosmosdb-create-arm-template%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
