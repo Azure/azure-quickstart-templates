@@ -9,11 +9,6 @@ This template will create an Azure Cosmos DB account in a single region and prov
 
 The location for the single primary region is derived from the resource group the Cosmos DB account resource is provisioned in. After provisioning the account and single region, users can add additional regions to replicate to.
 
-
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmarkjbrown%2Fazure-quickstart-templates%2Fmaster%2F101-cosmosdb-create-arm-template%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
-</a>
-
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-cosmosdb-create-arm-template%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
