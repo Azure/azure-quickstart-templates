@@ -23,7 +23,5 @@ If you are new to Azure Backup service, see:
 If you are new to the template development, see:
 
 - [Azure Resource Manager documentation](https://docs.microsoft.com/en-us/azure/azure-resource-manager/)
-- [Use Azure Backup to pass secure parameter value during deployment](https://docs.microsoft.com/azure/azure-resource-manager/resource-manager-keyvault-parameter)
-- [Tutorial: Integrate Azure Backup in Resource Manager Template deployment](https://docs.microsoft.com/azure/azure-resource-manager/resource-manager-tutorial-use-key-vault)
 
 Tags: Azure Backup, Backup, Secrets, Resource Manager, Resource Manager templates, ARM templates
