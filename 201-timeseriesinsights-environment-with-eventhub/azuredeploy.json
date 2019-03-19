@@ -145,8 +145,7 @@
       }
     ],
     "eventSourceTagsValue": "[variables('eventSourceTagsOptions')[length(take(parameters('eventSourceDisplayName'), 1))]]",
-    "eventSourceResourceId": "[resourceId(parameters('eventHubResourceGroup'), 'Microsoft.EventHub/Namespaces/EventHubs', parameters('eventHubNamespaceName'), parameters('eventHubName'))]",
-    "authorizationRuleResourceId": "[resourceId(parameters('eventHubResourceGroup'), 'Microsoft.EventHub/Namespaces/EventHubs/AuthorizationRules', parameters('eventHubNamespaceName'), parameters('eventHubName'), parameters('eventSourceKeyName'))]"
+    "eventSourceResourceId": "[resourceId(parameters('eventHubResourceGroup'), 'Microsoft.EventHub/Namespaces/EventHubs', parameters('eventHubNamespaceName'), parameters('eventHubName'))]"
   },
   "resources": [
     {
@@ -168,9 +167,7 @@
           "apiVersion": "2017-04-01",
           "name": "[parameters('eventHubName')]",
           "type": "eventhubs",
-          "dependsOn": [
-            "[concat('Microsoft.EventHub/namespaces/', parameters('eventHubNamespaceName'))]"
-          ],
+          "dependsOn": ["[parameters('eventHubNamespaceName')]"],
           "properties": {
             "messageRetentionInDays": 7,
             "partitionCount": 4
@@ -218,21 +215,22 @@
           "apiVersion": "2017-11-15",
           "location": "[parameters('location')]",
           "kind": "Microsoft.EventHub",
+          "dependsOn": [
+            "[resourceId('Microsoft.TimeSeriesInsights/environments/', parameters('environmentName'))]",
+            "[resourceId('Microsoft.EventHub/Namespaces', parameters('eventHubNamespaceName'))]",
+            "[resourceId('Microsoft.EventHub/Namespaces/EventHubs/ConsumerGroups', parameters('eventHubNamespaceName'), parameters('eventHubName'), parameters('consumerGroupName'))]",
+            "[resourceId('Microsoft.EventHub/Namespaces/EventHubs/AuthorizationRules', parameters('eventHubNamespaceName'), parameters('eventHubName'), parameters('eventSourceKeyName'))]"
+          ],
           "properties": {
             "eventSourceResourceId": "[variables('eventSourceResourceId')]",
             "eventHubName": "[parameters('eventHubName')]",
             "serviceBusNamespace": "[parameters('eventHubNamespaceName')]",
             "consumerGroupName": "[parameters('consumerGroupName')]",
             "keyName": "[parameters('eventSourceKeyName')]",
-            "sharedAccessKey": "[listkeys(variables('authorizationRuleResourceId'), '2017-04-01').primaryKey]",
+            "sharedAccessKey": "[listkeys(resourceId(parameters('eventHubResourceGroup'), 'Microsoft.EventHub/Namespaces/EventHubs/AuthorizationRules', parameters('eventHubNamespaceName'), parameters('eventHubName'), parameters('eventSourceKeyName')), '2017-04-01').primaryKey]",
             "timestampPropertyName": "[parameters('eventSourceTimestampPropertyName')]"
           },
-          "tags": "[variables('eventSourceTagsValue')]",
-          "dependsOn": [
-            "[concat('Microsoft.TimeSeriesInsights/environments/', parameters('environmentName'))]",
-            "[resourceId('Microsoft.EventHub/Namespaces/EventHubs/ConsumerGroups', parameters('eventHubNamespaceName'), parameters('eventHubName'), parameters('consumerGroupName'))]",
-            "[resourceId('Microsoft.EventHub/Namespaces/EventHubs/AuthorizationRules', parameters('eventHubNamespaceName'), parameters('eventHubName'), parameters('eventSourceKeyName'))]"
-          ]
+          "tags": "[variables('eventSourceTagsValue')]"
         }
       ]
     },
@@ -244,14 +242,14 @@
         "name": "accessPolicyReaderCopy",
         "count": "[if(empty(parameters('accessPolicyReaderObjectIds')), 1, length(parameters('accessPolicyReaderObjectIds')))]"
       },
-      "apiVersion": "2017-11-15",
+      "apiVersion": "2017-11-15",      
+      "dependsOn": [
+        "[resourceId('Microsoft.TimeSeriesInsights/environments/', parameters('environmentName'))]"
+      ],
       "properties": {
         "principalObjectId": "[parameters('accessPolicyReaderObjectIds')[copyIndex()]]",
         "roles": ["Reader"]
-      },
-      "dependsOn": [
-        "[concat('Microsoft.TimeSeriesInsights/environments/', parameters('environmentName'))]"
-      ]
+      }
     },
     {
       "condition": "[not(empty(parameters('accessPolicyContributorObjectIds')))]",
@@ -262,13 +260,13 @@
         "count": "[if(empty(parameters('accessPolicyContributorObjectIds')), 1, length(parameters('accessPolicyContributorObjectIds')))]"
       },
       "apiVersion": "2017-11-15",
+      "dependsOn": [
+        "[resourceId('Microsoft.TimeSeriesInsights/environments/', parameters('environmentName'))]"
+      ],
       "properties": {
         "principalObjectId": "[parameters('accessPolicyContributorObjectIds')[copyIndex()]]",
         "roles": ["Contributor"]
-      },
-      "dependsOn": [
-        "[concat('Microsoft.TimeSeriesInsights/environments/', parameters('environmentName'))]"
-      ]
+      }
     }
   ],
   "outputs": {
