@@ -182,7 +182,7 @@ Each test script has access to a set of well-known variables:
 
                 if ($NoPester) {
                     $testStartedAt = [DateTime]::Now
-                    $testCaseOutput = Test-Case $testCase.$dq $TestInput *>&1
+                    $testCaseOutput = Test-Case $testCase.$dq $TestInput 2>&1 3>&1
                     $testTook = [DateTime]::Now - $testStartedAt
                     
                     $testErrors = 
