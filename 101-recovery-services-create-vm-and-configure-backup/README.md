@@ -24,4 +24,4 @@ If you are new to the template development, see:
 
 - [Azure Resource Manager documentation](https://docs.microsoft.com/en-us/azure/azure-resource-manager/)
 
-Tags: Azure Backup, Backup, Secrets, Resource Manager, Resource Manager templates, ARM templates
+Tags: Azure Backup, Backup, Resource Manager, Resource Manager templates, ARM templates
