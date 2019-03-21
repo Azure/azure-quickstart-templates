@@ -7,6 +7,7 @@ configuration ConfigureSPVM
         [Parameter(Mandatory)] [String]$DCName,
         [Parameter(Mandatory)] [String]$SQLName,
         [Parameter(Mandatory)] [String]$SQLAlias,
+        [Parameter(Mandatory)] [String]$SharePointVersion,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$DomainAdminCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSetupCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPFarmCreds,
@@ -17,7 +18,7 @@ configuration ConfigureSPVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSuperReaderCreds
     )
 
-    Import-DscResource -ModuleName ComputerManagementDsc, StorageDsc, NetworkingDsc, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, CertificateDsc, SqlServerDsc
+    Import-DscResource -ModuleName ComputerManagementDsc, StorageDsc, NetworkingDsc, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, CertificateDsc, SqlServerDsc, xPendingReboot
 
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
@@ -37,7 +38,7 @@ configuration ConfigureSPVM
     [String] $UpaServiceName = "User Profile Service Application"
     [String] $AppDomainFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps")
     [String] $AppDomainIntranetFQDN = (Get-AppDomain -DomainFQDN $DomainFQDN -Suffix "Apps-Intranet")
-    [String] $SetupPath = "F:\Setup"
+    [String] $SetupPath = "C:\Setup"
     [String] $DCSetupPath = "\\$DCName\C$\Setup"
     [String] $MySiteHostAlias = "OhMy"
     [String] $HNSC1Alias = "HNSC1"
@@ -53,11 +54,9 @@ configuration ConfigureSPVM
         #**********************************************************
         # Initialization of VM
         #**********************************************************
-        WaitforDisk WaitForDataDisk   { DiskId = 2; RetryIntervalSec = $RetryIntervalSec; RetryCount = $RetryCount }
-        Disk PrepareDataDisk          { DiskId = 2; DriveLetter = "F"; DependsOn = "[WaitforDisk]WaitForDataDisk" }
-        WindowsFeature ADTools  { Name = "RSAT-AD-Tools";      Ensure = "Present"; DependsOn = "[Disk]PrepareDataDisk" }
-        WindowsFeature ADPS     { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; DependsOn = "[Disk]PrepareDataDisk" }
-        WindowsFeature DnsTools { Name = "RSAT-DNS-Server";    Ensure = "Present"; DependsOn = "[Disk]PrepareDataDisk" }
+        WindowsFeature ADTools  { Name = "RSAT-AD-Tools";      Ensure = "Present"; }
+        WindowsFeature ADPS     { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; }
+        WindowsFeature DnsTools { Name = "RSAT-DNS-Server";    Ensure = "Present"; }
         DnsServerAddress DnsServerAddress
         {
             Address        = $DNSServer
@@ -107,7 +106,8 @@ configuration ConfigureSPVM
                 setspn.exe -S "WSMAN/$computerName" "$computerName"
                 setspn.exe -S "WSMAN/$computerName.$domainFQDN" "$computerName"
             }
-            GetScript = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            GetScript = { }
+            # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
             TestScript = 
             {
                 $computerName = $using:ComputerName
@@ -262,7 +262,7 @@ configuration ConfigureSPVM
 
         File AccountsProvisioned
         {
-            DestinationPath      = "F:\Logs\DSC1.txt"
+            DestinationPath      = "C:\Logs\DSC1.txt"
             Contents             = "AccountsProvisioned"
             Type                 = 'File'
             Force                = $true
@@ -343,8 +343,8 @@ configuration ConfigureSPVM
                     }
                 }
             }
-            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+            GetScript            = { } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SqlAlias]AddSqlAlias"
         }
@@ -363,8 +363,32 @@ configuration ConfigureSPVM
             CentralAdministrationPort = 5000
             # If RunCentralAdmin is false and configdb does not exist, SPFarm checks during 30 mins if configdb got created and joins the farm
             RunCentralAdmin           = $true
+            IsSingleInstance          = "Yes"
             Ensure                    = "Present"
             DependsOn                 = "[xScript]WaitForSQL"
+        }
+
+        xScript RestartSPTimer
+        {
+            SetScript =
+            {
+                # Restarting SPTimerV4 service before deploying solution makes deployment a lot more reliable
+                Restart-Service SPTimerV4
+            }
+            GetScript            = { }
+            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[SPFarm]CreateSPFarm"
+        }
+
+        SPFarmSolution InstallLdapcp
+        {
+            LiteralPath          = "$SetupPath\LDAPCP.wsp"
+            Name                 = "LDAPCP.wsp"
+            Deployed             = $true
+            Ensure               = "Present"
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn            = "[xScript]RestartSPTimer"
         }
 
         SPManagedAccount CreateSPSvcManagedAccount
@@ -385,8 +409,9 @@ configuration ConfigureSPVM
 
         SPDiagnosticLoggingSettings ApplyDiagnosticLogSettings
         {
-            LogPath              = "F:\ULS"
+            LogPath              = "C:\ULS"
             LogSpaceInGB         = 20
+            IsSingleInstance     = "Yes"
             PsDscRunAsCredential = $SPSetupCredsQualified
             DependsOn            = "[SPFarm]CreateSPFarm"
         }
@@ -410,27 +435,31 @@ configuration ConfigureSPVM
             DependsOn            = "[SPFarm]CreateSPFarm"
         }
 
-        xScript RestartSPTimer
-        {
-            SetScript =
+        # Installing LDAPCP somehow updates SPClaimEncodingManager 
+        # But in SharePoint 2019 (only), it causes an UpdatedConcurrencyException on SPClaimEncodingManager in SPTrustedIdentityTokenIssuer resource
+        # The only solution I've found is to force a reboot in SharePoint 2019
+        if ($SharePointVersion -eq "2019") {
+            xScript ForceRebootBeforeCreatingSPTrust
             {
-                # Restarting SPTimerV4 service before deploying solution makes deployment a lot more reliable
-                Restart-Service SPTimerV4
+                # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+                TestScript = {
+                    return (Test-Path HKLM:\SOFTWARE\SPDSCConfigForceRebootKey\RebootRequested)
+                }
+                SetScript = {
+                    New-Item -Path HKLM:\SOFTWARE\SPDSCConfigForceRebootKey\RebootRequested -Force
+                    $global:DSCMachineStatus = 1
+                }
+                GetScript = { }
+                PsDscRunAsCredential = $SPSetupCredsQualified
+                DependsOn = "[SPFarmSolution]InstallLdapcp"
             }
-            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[SPDistributedCacheService]EnableDistributedCache"
-        }
 
-        SPFarmSolution InstallLdapcp
-        {
-            LiteralPath          = "$SetupPath\LDAPCP.wsp"
-            Name                 = "LDAPCP.wsp"
-            Deployed             = $true
-            Ensure               = "Present"
-            PsDscRunAsCredential = $SPSetupCredsQualified
-            DependsOn            = "[xScript]RestartSPTimer"
+            xPendingReboot RebootBeforeCreatingSPTrust
+            {
+                Name             = "BeforeCreatingSPTrust"
+                SkipCcmClientSDK = $true
+                DependsOn        = "[xScript]ForceRebootBeforeCreatingSPTrust"
+            }
         }
 
         SPTrustedIdentityTokenIssuer CreateSPTrust
@@ -502,7 +531,7 @@ configuration ConfigureSPVM
             ApplicationPoolAccount = $SPAppPoolCredsQualified.UserName
             AllowAnonymous         = $false
             DatabaseName           = $SPDBPrefix + "Content_80"
-            Url                    = "http://$SPTrustedSitesName/"
+            WebAppUrl              = "http://$SPTrustedSitesName/"
             Port                   = 80
             Ensure                 = "Present"
             PsDscRunAsCredential   = $SPSetupCredsQualified
@@ -516,8 +545,8 @@ configuration ConfigureSPVM
             {
                 gpupdate.exe /force
             }
-            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript           = { return $false }
+            GetScript            = { }
+            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
             DependsOn            = "[Computer]DomainJoin"
             PsDscRunAsCredential = $DomainAdminCredsQualified
         }
@@ -608,8 +637,8 @@ configuration ConfigureSPVM
                 New-Item IIS:\SslBindings\*!443 -value $siteCert
                 #>
             }
-            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+            GetScript            = { }
+            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPWebAppAuthentication]ConfigureWebAppAuthentication"
         }
@@ -775,8 +804,8 @@ configuration ConfigureSPVM
             SecurityType         = "SharingPermissions"
             MembersToInclude     =  @(
                 MSFT_SPServiceAppSecurityEntry {
-                    Username    = $SPSvcCredsQualified.UserName
-                    AccessLevel = "Full Control"
+                    Username     = $SPSvcCredsQualified.UserName
+                    AccessLevels = @("Full Control")
             })
             PsDscRunAsCredential = $SPSetupCredsQualified
             #DependsOn           = "[xScript]RefreshLocalConfigCache"
@@ -861,6 +890,7 @@ configuration ConfigureSPVM
             UseSessionCookies     = $false
             AllowOAuthOverHttp    = $true
             AllowMetadataOverHttp = $true
+            IsSingleInstance      = "Yes"
             PsDscRunAsCredential  = $SPSetupCredsQualified
             DependsOn             = "[SPAppDomain]ConfigureLocalFarmAppUrls"
         }
@@ -933,8 +963,8 @@ configuration ConfigureSPVM
                 # Do not overwrite and do not throw an exception if file already exists
                 New-Item $DestinationPath -Type file -Value $Contents -ErrorAction SilentlyContinue
             }
-            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+            GetScript            = { } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[Script]ConfigureAppDomains"
         }
@@ -1028,8 +1058,9 @@ $DCName = "DC"
 $SQLName = "SQL"
 $SQLAlias = "SQLAlias"
 
-ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -SPSuperUserCreds $SPSuperUserCreds -SPSuperReaderCreds $SPSuperReaderCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -SQLAlias $SQLAlias -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.77.0.0\DSCWork\ConfigureSPVM.0\ConfigureSPVM"
-Set-DscLocalConfigurationManager -Path "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.77.0.0\DSCWork\ConfigureSPVM.0\ConfigureSPVM"
-Start-DscConfiguration -Path "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.77.0.0\DSCWork\ConfigureSPVM.0\ConfigureSPVM" -Wait -Verbose -Force
+$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.77.0.0\DSCWork\ConfigureSPVM.0\ConfigureSPVM"
+ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPPassphraseCreds $SPPassphraseCreds -SPSuperUserCreds $SPSuperUserCreds -SPSuperReaderCreds $SPSuperReaderCreds -DNSServer $DNSServer -DomainFQDN $DomainFQDN -DCName $DCName -SQLName $SQLName -SQLAlias $SQLAlias -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
+Set-DscLocalConfigurationManager -Path $outputPath
+Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
 
 #>
