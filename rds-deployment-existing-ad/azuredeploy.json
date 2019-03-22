@@ -95,7 +95,28 @@
             "metadata": {
                 "description": "Location for all resources."
             }
-        }
+        },
+    "GatewayVmName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the gateway VM"
+      },
+      "defaultValue": "gw-vm"
+    },
+    "BrokerVmName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the broker VM"
+      },
+      "defaultValue": "cb-vm"
+    },
+    "RDSVmNamePrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "The Prefix name of the RDS"
+      },
+      "defaultValue": "rdsh-"
+    }
     },
     "variables": {
         "gwdnsLabelPrefix": "[toLower(concat('gwd', resourceGroup().name))]",
@@ -290,7 +311,7 @@
         {
             "apiVersion": "2015-06-15",
             "type": "Microsoft.Network/networkInterfaces",
-            "name": "gw-nic",
+            "name": "[concat(parameters('GatewayVmName'), '-nic')]",
             "location": "[parameters('location')]",
             "dependsOn": [
                 "Microsoft.Network/loadBalancers/loadBalancer"
@@ -360,7 +381,7 @@
         {
             "apiVersion": "2015-06-15",
             "type": "Microsoft.Network/networkInterfaces",
-            "name": "[concat('rdsh-', copyindex(), '-nic')]",
+            "name": "[concat(parameters('RDSVmNamePrefix'), copyindex(), '-nic')]",
             "location": "[parameters('location')]",
             "copy": {
                 "name": "rdsh-nic-loop",
@@ -391,11 +412,11 @@
         {
             "apiVersion": "2017-03-30",
             "type": "Microsoft.Compute/virtualMachines",
-            "name": "gw-vm",
+            "name": "[parameters('GatewayVmName')]",
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Compute/availabilitySets', 'gw-availabilityset')]",
-                "Microsoft.Network/networkInterfaces/gw-nic"
+                "[concat('Microsoft.Network/networkInterfaces/', parameters('GatewayVmName'), '-nic')]"
             ],
             "properties": {
                 "hardwareProfile": {
@@ -405,7 +426,7 @@
                     "id": "[resourceId('Microsoft.Compute/availabilitySets', 'gw-availabilityset')]"
                 },
                 "osProfile": {
-                    "computerName": "gateway",
+                    "computerName": "[parameters('GatewayVmName')]",
                     "adminUsername": "[parameters('adminUsername')]",
                     "adminPassword": "[parameters('adminPassword')]"
                 },
@@ -417,7 +438,7 @@
                         "version": "latest"
                     },
                     "osDisk": {
-                        "name": "gw_OSDisk",
+                        "name": "[concat(parameters('GatewayVmName'), '_OSDisk')]",
                         "caching": "ReadWrite",
                         "createOption": "FromImage",
                         "managedDisk": {
@@ -428,7 +449,7 @@
                 "networkProfile": {
                     "networkInterfaces": [
                         {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces','gw-nic')]"
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('GatewayVmName'), '-nic'))]"
                         }
                     ]
                 }
@@ -437,10 +458,10 @@
                 {
                     "apiVersion": "2015-06-15",
                     "type": "Microsoft.Compute/virtualMachines/extensions",
-                    "name": "gw-vm/gateway",
+                    "name": "[concat(parameters('GatewayVmName'),'/gateway')]",
                     "location": "[parameters('location')]",
                     "dependsOn": [
-                        "[resourceId('Microsoft.Compute/virtualMachines', 'gw-vm')]"
+                        "[resourceId('Microsoft.Compute/virtualMachines', parameters('GatewayVmName'))]"
                     ],
                     "properties": {
                         "publisher": "Microsoft.Powershell",
@@ -553,11 +574,11 @@
         {
             "apiVersion": "2017-03-30",
             "type": "Microsoft.Compute/virtualMachines",
-            "name": "cb-vm",
+            "name": "[parameters('BrokerVmName')]",
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Compute/availabilitySets', 'cb-availabilityset')]",
-                "Microsoft.Network/networkInterfaces/cb-nic",
+                "[concat('Microsoft.Network/networkInterfaces/', parameters('BrokerVmName'), '-nic')]",
                 "rdsh-vm-loop"
             ],
             "properties": {
@@ -568,7 +589,7 @@
                     "id": "[resourceId('Microsoft.Compute/availabilitySets', 'cb-availabilityset')]"
                 },
                 "osProfile": {
-                    "computerName": "broker",
+                    "computerName": "[parameters('BrokerVmName')]",
                     "adminUsername": "[parameters('adminUsername')]",
                     "adminPassword": "[parameters('adminPassword')]"
                 },
@@ -580,7 +601,7 @@
                         "version": "latest"
                     },
                     "osDisk": {
-                        "name": "cb_OSDisk",
+                        "name": "[concat(parameters('BrokerVmName'), '_OSDisk')]",
                         "caching": "ReadWrite",
                         "createOption": "FromImage",
                         "managedDisk": {
@@ -591,7 +612,7 @@
                 "networkProfile": {
                     "networkInterfaces": [
                         {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces','cb-nic')]"
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('BrokerVmName'), '-nic'))]"
                         }
                     ]
                 }
@@ -599,12 +620,12 @@
         },
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "cb-vm/rdsdeployment",
+            "name": "[concat(parameters('BrokerVmName'),'/rdsdeployment')]",
             "apiVersion": "2015-06-15",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Compute/virtualMachines', 'cb-vm')]",
-                "Microsoft.Compute/virtualMachines/gw-vm/extensions/gateway",
+                "[resourceId('Microsoft.Compute/virtualMachines', parameters('BrokerVmName'))]",
+                "[concat('Microsoft.Compute/virtualMachines/',parameters('GatewayVmName'),'/extensions/gateway')]",
                 "rdsh-vm-loop"
             ],
             "properties": {
@@ -620,11 +641,11 @@
                             "UserName": "[parameters('adminUsername')]",
                             "Password": "PrivateSettingsRef:adminPassword"
                         },
-                        "connectionBroker": "[concat('broker.',parameters('adDomainName'))]",
+                        "connectionBroker": "[concat(parameters('BrokerVmName'),'.',parameters('adDomainName'))]",
                         "domainName": "[parameters('adDomainName')]",
                         "externalfqdn": "[reference(variables('gatewayIpRef')).dnsSettings.fqdn]",
                         "numberOfRdshInstances": "[parameters('numberOfRdshInstances')]",
-                        "sessionHostNamingPrefix": "rdsh-",
+                        "sessionHostNamingPrefix": "[parameters('RDSVmNamePrefix')]",
                         "webAccessServer": "[concat('gateway.',parameters('adDomainName'))]"
                     }
                 },
