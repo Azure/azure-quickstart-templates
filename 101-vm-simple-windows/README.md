@@ -17,6 +17,6 @@ If you are new to Azure virtual machines, see:
 - [Template reference](https://docs.microsoft.com/azure/templates/microsoft.compute/allversions)
 - [Quickstart templates](https://azure.microsoft.com/resources/templates/?resourceType=Microsoft.Compute&pageNumber=1&sort=Popular)
 
-If you are new to the template deployment, see:
+If you are new to template deployment, see:
 
 [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
