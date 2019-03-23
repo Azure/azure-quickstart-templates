@@ -58,8 +58,22 @@ $SQLServerFqdnName = "$SQLServerName.$env:userdnsdomain"
 if($SQLInstanceName -eq "MSSQLSERVER")
 {
     Add-CMManagementPoint -SiteSystemServerName $MPServerFullName -SiteCode $SiteCode -ClientConnectionType InternetAndIntranet -AllowDevice -GenerateAlert -SQLServerFqdnName $SQLServerFqdnName -DatabaseName $DBName -UserName $DName
+
+    $connectionString = "Data Source=.; Integrated Security=SSPI; Initial Catalog=CM_$SiteCode"
+    $connection = new-object system.data.SqlClient.SQLConnection($connectionString)
+    $sqlCommand = "INSERT INTO [Feature_EC] (FeatureID,Exposed) values (N'49E3EF35-718B-4D93-A427-E743228F4855',0)"
+    $connection.Open() | Out-Null
+    $command = new-object system.data.sqlclient.sqlcommand($sqlCommand,$connection)
+    $command.ExecuteNonQuery() | Out-Null
 }
 else
 {
     Add-CMManagementPoint -SiteSystemServerName $MPServerFullName -SiteCode $SiteCode -ClientConnectionType InternetAndIntranet -AllowDevice -GenerateAlert -SQLServerFqdnName $SQLServerFqdnName -SQLServerInstanceName $SQLInstanceName -DatabaseName $DBName -UserName $DName
+    $connectionString = "Data Source=.\$SQLInstanceName; Integrated Security=SSPI; Initial Catalog=CM_$SiteCode"
+    $connection = new-object system.data.SqlClient.SQLConnection($connectionString)
+    $sqlCommand = "INSERT INTO [Feature_EC] (FeatureID,Exposed) values (N'49E3EF35-718B-4D93-A427-E743228F4855',0)"
+    $connection.Open() | Out-Null
+    $command = new-object system.data.sqlclient.sqlcommand($sqlCommand,$connection)
+    $command.ExecuteNonQuery() | Out-Null
 }
+
