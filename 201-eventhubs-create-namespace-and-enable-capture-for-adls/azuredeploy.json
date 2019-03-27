@@ -1,5 +1,5 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "eventHubNamespaceName": {
@@ -35,10 +35,7 @@
     "captureEnabled": {
       "type": "string",
       "defaultValue": "true",
-      "allowedValues": [
-        "false",
-        "true"
-      ],
+      "allowedValues": [ "false", "true" ],
       "metadata": {
         "description": "Enable or disable the Capture feature for your Event Hub"
       }
@@ -46,9 +43,7 @@
     "captureEncodingFormat": {
       "type": "string",
       "defaultValue": "Avro",
-      "allowedValues": [
-        "Avro"
-      ],
+      "allowedValues": [ "Avro" ],
       "metadata": {
         "description": "The encoding format Eventhub capture serializes the EventData when archiving to your storage"
       }
@@ -71,86 +66,85 @@
         "description": "the size window in bytes for evetn hub capture"
       }
     },
-   
     "captureNameFormat": {
       "type": "string",
-	  "defaultValue": "{Namespace}/{EventHub}/{PartitionId}/{Year}/{Month}/{Day}/{Hour}/{Minute}/{Second}",
+      "defaultValue": "{Namespace}/{EventHub}/{PartitionId}/{Year}/{Month}/{Day}/{Hour}/{Minute}/{Second}",
       "metadata": {
         "description": "A Capture Name Format must contain {Namespace}, {EventHub}, {PartitionId}, {Year}, {Month}, {Day}, {Hour}, {Minute} and {Second} fields. These can be arranged in any order with or without delimeters. E.g.  Prod_{EventHub}/{Namespace}\\{PartitionId}_{Year}_{Month}/{Day}/{Hour}/{Minute}/{Second}"
       }
-  },
-  "subscriptionId": {
-            "type": "string",
-            "metadata": {
-                "description": "Subscription Id of both Data Lake Store and Event Hub namespace"
-            }
-        },
-        "dataLakeAccountName": {
-            "type": "string",
-            "metadata": {
-                "description": "Data Lake Store name"
-            }
-        },
-        "dataLakeFolderPath": {
-            "type": "string",
-            "metadata": {
-                "description": "Destination archive folder path"
-            }
-        }
+    },
+    "subscriptionId": {
+      "type": "string",
+      "metadata": {
+        "description": "Subscription Id of both Data Lake Store and Event Hub namespace"
+      }
+    },
+    "dataLakeAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Data Lake Store name"
+      }
+    },
+    "dataLakeFolderPath": {
+      "type": "string",
+      "metadata": {
+        "description": "Destination archive folder path"
+      }
+    }
   },
   "variables": {
     "defaultSASKeyName": "RootManageSharedAccessKey",
-    "authRuleResourceId": "[resourceId('Microsoft.EventHub/namespaces/authorizationRules', parameters('eventHubNamespaceName'), variables('defaultSASKeyName'))]",
-	"ehVersion": "2017-04-01"
+    "authRuleResourceId": "[resourceId('Microsoft.EventHub/namespaces/authorizationRules', parameters('eventHubNamespaceName'), variables('defaultSASKeyName'))]"
   },
   "resources": [
+    {
+      "apiVersion": "2017-04-01",
+      "name": "[parameters('eventHubNamespaceName')]",
+      "type": "Microsoft.EventHub/Namespaces",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "Standard",
+        "tier": "Standard"
+      },
+      "resources": [
         {
-            "apiVersion": "2017-04-01",
-            "name": "[parameters('eventHubNamespaceName')]",
-            "type": "Microsoft.EventHub/Namespaces",
-            "sku": {
-                "name": "Standard",
-                "tier": "Standard"
-            },
-            "resources": [
-                {
-                    "apiVersion": "2017-04-01",
-                    "name": "[parameters('eventHubName')]",
-                    "type": "EventHubs",
-                    "dependsOn": [
-                        "[concat('Microsoft.EventHub/namespaces/', parameters('eventHubNamespaceName'))]"
-                    ],
-                    "properties": {
-                        "path": "[parameters('eventHubName')]",
-                        "captureDescription": {
-                            "enabled": "true",
-                            "encoding": "[parameters('captureEncodingFormat')]",
-                            "intervalInSeconds": "[parameters('captureTime')]",
-                            "sizeLimitInBytes": "[parameters('captureSize')]",
-                            "destination": {
-                                "name": "EventHubArchive.AzureDataLake",
-                                "properties": {
-                                    "DataLakeSubscriptionId": "[parameters('subscriptionId')]",
-                                    "DataLakeAccountName": "[parameters('dataLakeAccountName')]",
-                                    "DataLakeFolderPath": "[parameters('dataLakeFolderPath')]",
-                                    "ArchiveNameFormat": "[parameters('captureNameFormat')]"
-                                }
-                            }
-                        }
-                    }
+          "apiVersion": "2017-04-01",
+          "name": "[parameters('eventHubName')]",
+          "type": "eventhubs",
+          "dependsOn": [
+            "[concat('Microsoft.EventHub/namespaces/', parameters('eventHubNamespaceName'))]"
+          ],
+          "properties": {
+            "path": "[parameters('eventHubName')]",
+            "captureDescription": {
+              "enabled": true,
+              "skipEmptyArchives": false,
+              "encoding": "[parameters('captureEncodingFormat')]",
+              "intervalInSeconds": "[parameters('captureTime')]",
+              "sizeLimitInBytes": "[parameters('captureSize')]",
+              "destination": {
+                "name": "EventHubArchive.AzureDataLake",
+                "properties": {
+                  "DataLakeSubscriptionId": "[parameters('subscriptionId')]",
+                  "DataLakeAccountName": "[parameters('dataLakeAccountName')]",
+                  "DataLakeFolderPath": "[parameters('dataLakeFolderPath')]",
+                  "ArchiveNameFormat": "[parameters('captureNameFormat')]"
                 }
-            ]
+              }
+            }
+          }
         }
-    ],
-  
+      ]
+    }
+  ],
   "outputs": {
     "NamespaceConnectionString": {
       "type": "string",
-      "value": "[listkeys(variables('authRuleResourceId'), variables('ehVersion')).primaryConnectionString]"
+      "value": "[listkeys(variables('authRuleResourceId'), '2017-04-01').primaryConnectionString]"
     },
     "SharedAccessPolicyPrimaryKey": {
       "type": "string",
-      "value": "[listkeys(variables('authRuleResourceId'), variables('ehVersion')).primaryKey]"
+      "value": "[listkeys(variables('authRuleResourceId'), '2017-04-01').primaryKey]"
     }
   }
 }

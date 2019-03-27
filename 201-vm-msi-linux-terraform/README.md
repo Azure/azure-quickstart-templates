@@ -17,3 +17,13 @@ This template creates a Terraform workstation as follows:
 
 This template creates a new Linux VM with a MSI and deploys the MSI extension to the VM. The MSI associated with the VM is given owner permission on the resource group containing the VM. A shell script is then run on the VM using the customscript extension. This shell script installs Terraform and Azure CLI v2. It then creates a Terraform template folder that is preconfigured to use Terraform Remote State with the Azure backend. The Azure CLI also creates the storage container required by remote state.  Optionally, this template installs Ubuntu Mate Desktop environment for usage as develolpment environment. 
 
+
+### Steps to enable Remote State
+Copy ~/tfTemplate/remoteState.tf from home directory to the root of the Terraform scripts to enable remote state management
+
+### Steps to enable MSI
+Once the template is deployed, log into the vm and run the following command to enable MSI with terraform
+
+     `sh ~/tfEnv.sh`
+
+
