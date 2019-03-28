@@ -20,16 +20,16 @@ $AzcopyPath = "C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy"
 
 if(!(Test-Path $AzcopyPath))
 {
-	$path = "$ProvisionToolPath\azcopy.msi"
-	if(!(Test-Path $path))
-	{
-		#Download azcopy
-		$url = "http://aka.ms/downloadazcopy"
-		Invoke-WebRequest -Uri $url -OutFile $path
-	}
+    $path = "$ProvisionToolPath\azcopy.msi"
+    if(!(Test-Path $path))
+    {
+        #Download azcopy
+        $url = "http://aka.ms/downloadazcopy"
+        Invoke-WebRequest -Uri $url -OutFile $path
+    }
 
-	#Install azcopy
-	Start-Process msiexec.exe -Wait -ArgumentList "/I $path /quiet"
+    #Install azcopy
+    Start-Process msiexec.exe -Wait -ArgumentList "/I $path /quiet"
 }
 
 $cmpath = "c:\"+$CM+".exe"
@@ -40,7 +40,7 @@ if(Test-Path $cmpath)
 }
 
 "[$(Get-Date -format HH:mm:ss)] Copying SCCM installation source..." | Out-File -Append $logpath
-$cmurl = "http://download.microsoft.com/download/D/8/E/D8E795CE-44D7-40B7-9067-D3D1313865E5/SC_Configmgr_SCEP_TechPreview1810.exe"
+$cmurl = "https://go.microsoft.com/fwlink/?linkid=2077212&clcid=0x409"
 Invoke-WebRequest -Uri $cmurl -OutFile $cmpath
 
 if(Test-Path $cmsourcepath)
@@ -113,12 +113,12 @@ SysCenterId=
     
     if($SQLInstanceName.ToUpper() -eq "MSSQLSERVER")
     {
-    	$cmini = $cmini.Replace('%SQLInstance%',"")
+        $cmini = $cmini.Replace('%SQLInstance%',"")
     }
     else
     {
-    	$tinstance = $SQLInstanceName.ToUpper() + "\"
-	$cmini = $cmini.Replace('%SQLInstance%',$tinstance)
+        $tinstance = $SQLInstanceName.ToUpper() + "\"
+    $cmini = $cmini.Replace('%SQLInstance%',$tinstance)
     }
     $CMInstallationFile = "c:\" + $CM + "\SMSSETUP\BIN\X64\Setup.exe"
     $cmini > $CMINIPath 
