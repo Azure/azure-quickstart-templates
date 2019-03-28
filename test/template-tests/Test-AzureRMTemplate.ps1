@@ -134,6 +134,16 @@ Each test script has access to a set of well-known variables:
         # This lets our built-in groups be automatically defined by their file structure.
 
 
+        # Next we want to load the cached items
+        $cacheDir = $myLocation | Split-Path | Join-Path -ChildPath cache
+        $cacheItemNames = @(foreach ($cacheFile in (Get-ChildItem -Path $cacheDir -Filter *.cache.json)) {
+            $cacheName = $cacheFile.Name -replace '\.cache\.json', ''
+            $cacheData = [IO.File]::ReadAllText($cacheFile.Fullname) | ConvertFrom-Json
+            $ExecutionContext.SessionState.PSVariable.Set($cacheName, $cacheData)
+            $cacheName
+        })
+
+
         # Next we want to declare some internal functions:
         #*Test-Case (executes a test, given a set of parameters) 
         function Test-Case($TheTest, $TestParameters = @{}) {            
@@ -341,13 +351,6 @@ Each test script has access to a set of well-known variables:
         foreach ($kv in $expandedTemplate.GetEnumerator()) {
             $ExecutionContext.SessionState.PSVariable.Set($kv.Key, $kv.Value)
         }
-        $cacheDir = $myLocation | Split-Path | Join-Path -ChildPath cache
-        $cacheItemNames = @(foreach ($cacheFile in (Get-ChildItem -Path $cacheDir -Filter *.cache.json)) {
-            $cacheName = $cacheFile.Name -replace '\.cache\.json', ''
-            $cacheData = [IO.File]::ReadAllText($cacheFile.Fullname) | ConvertFrom-Json
-            $ExecutionContext.SessionState.PSVariable.Set($cacheName, $cacheData)
-            $cacheName
-        })
         $wellKnownVariables = @($expandedTemplate.Keys) + $cacheItemNames
 
         # If a file list was provided,
