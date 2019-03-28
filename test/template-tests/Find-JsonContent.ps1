@@ -1,10 +1,10 @@
-﻿function Find-AzureRMTemplate
+﻿function Find-JsonContent
 {
     <#
     .Synopsis
-        Finds content within a resource manager template
+        Finds content within a json object
     .Description
-        Recursively finds content within an Azure Resource Manager template
+        Recursively finds content within a json object 
     #>
     param(
     # The input object
@@ -57,7 +57,15 @@
                 ($NotLike -and $InputObject.$key -notlike $Value) -or 
                 ($NotMatch -and $InputObject.$key -notmatch $Value) -or 
                 $InputObject.$key -eq $Value) {
-                return ($InputObject |
+
+                $OutObject = [PSObject]::new()
+                foreach ($prop in $InputObject.psobject.properties) {
+                    $OutObject.psobject.properties.Add(
+                        [Management.Automation.PSNoteProperty]::new($prop.Name, $prop.Value))
+                }
+                
+
+                return ($OutObject |
                     Add-Member NoteProperty ParentObject -Value $Parent -Force -PassThru)
             }
         }
@@ -65,12 +73,12 @@
         
         if ($InputObject -is [Object[]]) {
             $InputObject |
-                Find-AzureRMTemplate @mySplat
+                Find-JsonContent @mySplat
         } else {
             $InputObject.psobject.properties |
                 Where-Object { @('parentObject', 'parentResources') -notcontains $_.Name } |
                 Select-Object -ExpandProperty Value |
-                Find-AzureRMTemplate @mySplat
+                Find-JsonContent @mySplat
         }
     }
 } 

@@ -182,7 +182,7 @@ Each test script has access to a set of well-known variables:
 
                 if ($NoPester) {
                     $testStartedAt = [DateTime]::Now
-                    $testCaseOutput = Test-Case $testCase.$dq $TestInput *>&1
+                    $testCaseOutput = Test-Case $testCase.$dq $TestInput 2>&1 3>&1
                     $testTook = [DateTime]::Now - $testStartedAt
                     
                     $testErrors = 
@@ -263,7 +263,7 @@ Each test script has access to a set of well-known variables:
                         $testInput[$_] = $ExecutionContext.SessionState.PSVariable.Get($_).Value
                     }
                     $ValidTestList = if ($test) {
-                        @(Get-TestGroups $test -includeTest)
+                        @(Get-TestGroups ($test -replace '-',' ') -includeTest)
                     } else {
                         $null
                     }
@@ -338,11 +338,17 @@ Each test script has access to a set of well-known variables:
 
         $expandedTemplate =Expand-AzureRMTemplate -TemplatePath $templatePath
         if (-not $expandedTemplate) { return }
-        $wellKnownVariables = $expandedTemplate.Keys
-
         foreach ($kv in $expandedTemplate.GetEnumerator()) {
             $ExecutionContext.SessionState.PSVariable.Set($kv.Key, $kv.Value)
-        }            
+        }
+        $cacheDir = $myLocation | Split-Path | Join-Path -ChildPath cache
+        $cacheItemNames = @(foreach ($cacheFile in (Get-ChildItem -Path $cacheDir -Filter *.cache.json)) {
+            $cacheName = $cacheFile.Name -replace '\.cache\.json', ''
+            $cacheData = [IO.File]::ReadAllText($cacheFile.Fullname) | ConvertFrom-Json
+            $ExecutionContext.SessionState.PSVariable.Set($cacheName, $cacheData)
+            $cacheName
+        })
+        $wellKnownVariables = @($expandedTemplate.Keys) + $cacheItemNames
 
         # If a file list was provided,
         if ($PSBoundParameters.File) {
@@ -360,7 +366,30 @@ Each test script has access to a set of well-known variables:
         
         
         # Now that the filelist and test groups are set up, we use Test-FileList to test the list of files.                   
-        
+        if (-not $NoPester) {
+            $IsPesterLoaded? = $(
+                $loadedModules = Get-module
+                foreach ($_ in $loadedModules) { 
+                    if ($_.Name -eq 'Pester') {
+                        $true
+                        break
+                    }
+                }
+            )
+            $DoesPesterExist? = 
+                if ($IsPesterLoaded?) {
+                    $true
+                } else {
+                    $env:PSModulePath -split ';' | 
+                        Get-ChildItem -Filter Pester |
+                        Import-Module -Global -PassThru        
+                }
+
+            if (-not $DoesPesterExist?){
+                Write-Warning "Pester not found.  Please install Pester (Install-Module Pester)"
+                $NoPester = $true
+            }
+        }
         
         if ($NoPester) { # If we're not running Pester, 
             Test-FileList # we just call it directly.

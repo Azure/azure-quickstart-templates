@@ -4,12 +4,14 @@
 $CreateUIDefinitionObject
 )
 
+# First, find al user name text boxes.
 $userNameTextBoxes =
     $CreateUIDefinitionObject | 
-        Find-AzureRMTemplate -Key type -Value Microsoft.Compute.UserNameTextBox
+        Find-JsonContent -Key type -Value Microsoft.Compute.UserNameTextBox
 
-foreach ($tb in $userNameTextBoxes) {
-    if ($tb.defaultValue) {
+foreach ($tb in $userNameTextBoxes) { # Then walk thru each text box, 
+    if ($tb.defaultValue) { # if it contained a default value,
+        # write an error.
         Write-Error "Username textbox $($tb.Name) should not have a default value" -TargetObject $tb
     }
 }

@@ -4,12 +4,13 @@
 $MainTemplateObject
 )
 
+# Find all public IP addresses
 $publicIpResources = $MainTemplateObject |
-    Find-AzureRMTemplate -Key type -Value 'Microsoft.Network/publicIPAddresses'
+    Find-JsonContent -Key type -Value 'Microsoft.Network/publicIPAddresses'
 
 
 foreach ($pir in $publicIpResources) {
-    if ($pir.properties.dnsSettings.domainNameLabel -like '*Concat(*') {
-        Write-Error "Public IP Resources should not use the Concatenate expression" -TargetObject $pir
+    if ($pir.properties.dnsSettings.domainNameLabel -like '*Concat(*') { # If the domain name label contains a concat
+        Write-Error "Public IP Resources should not use the Concatenate expression" -TargetObject $pir # write an error.
     }
 }
