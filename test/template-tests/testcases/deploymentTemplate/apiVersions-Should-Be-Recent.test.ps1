@@ -55,6 +55,8 @@ foreach ($av in $allApiVersions) { # Then walk over each object containing an Ap
     # Now find all of the valid versions from this API
     $validApiVersions = $AllAzureResources.$FullResourceType | 
         Select-Object -ExpandProperty apiVersions 
+    #! sort this yourself, because it might not be
+
 
     # If the actual string in the template was not in the list of APIs,
     if ($validApiVersions -notcontains $av.ApiVersion) {
@@ -64,6 +66,7 @@ foreach ($av in $allApiVersions) { # Then walk over each object containing an Ap
     }
     
     if ($av.ApiVersion -like '*-preview') {
+        #! Determine the index without respect to preview versions
         $howRecent? = $validApiVersions.IndexOf($av.ApiVersion) 
         if ($howRecent?) {
             Write-Error "$FullResourceType uses a -preview version when there are $($howRecent?) more recent versions available" -TargetObject $av
