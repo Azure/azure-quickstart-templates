@@ -76,6 +76,6 @@ foreach ($av in $allApiVersions) { # Then walk over each object containing an Ap
     $timeSinceApi = [DateTime]::Now - $apiDate
     if ($timeSinceApi.TotalDays -gt 365) {  # If it's older than a year
         # write a warning        
-        Write-Warning "Api versions should be under a year old ($($helperName) is $([Math]::Floor($timeSinceApi.TotalDays)) days old)" 
+        Write-Warning "Api versions should be under a year old ($FullResourceType is $([Math]::Floor($timeSinceApi.TotalDays)) days old)" 
     }
 }
