@@ -298,7 +298,9 @@ Each test script has access to a set of well-known variables:
                     $_
                 }
             }
-        }    
+        }
+        
+        $accumulatedTemplates = [Collections.Arraylist]::new()    
     }
 
     process {
@@ -346,60 +348,76 @@ Each test script has access to a set of well-known variables:
             }
         }
 
-        $expandedTemplate =Expand-AzureRMTemplate -TemplatePath $templatePath
-        if (-not $expandedTemplate) { return }
-        foreach ($kv in $expandedTemplate.GetEnumerator()) {
-            $ExecutionContext.SessionState.PSVariable.Set($kv.Key, $kv.Value)
-        }
-        $wellKnownVariables = @($expandedTemplate.Keys) + $cacheItemNames
+        $null = $accumulatedTemplates.Add($TemplatePath)
+    }
 
-        # If a file list was provided,
-        if ($PSBoundParameters.File) {
-            $FolderFiles = @(foreach ($ff in $FolderFiles) { # filter the folder files. 
-                $matched = @(foreach ($_ in $file) {
-                    $ff.Name -like $_ # If file the name matched any of valid patterns.
-                })
-                if ($matched -eq $true) 
-                {
-                    $ff # then we include it.   
-                }
-            })
-        }
-        
-        
-        
-        # Now that the filelist and test groups are set up, we use Test-FileList to test the list of files.                   
-        if (-not $NoPester) {
-            $IsPesterLoaded? = $(
-                $loadedModules = Get-module
-                foreach ($_ in $loadedModules) { 
-                    if ($_.Name -eq 'Pester') {
-                        $true
-                        break
-                    }
-                }
-            )
-            $DoesPesterExist? = 
-                if ($IsPesterLoaded?) {
-                    $true
-                } else {
-                    $env:PSModulePath -split ';' | 
-                        Get-ChildItem -Filter Pester |
-                        Import-Module -Global -PassThru        
-                }
+    end {
+        $c, $t = 0, $accumulatedTemplates.Count
+        $progId = Get-Random
 
-            if (-not $DoesPesterExist?){
-                Write-Warning "Pester not found.  Please install Pester (Install-Module Pester)"
-                $NoPester = $true
+        foreach ($TemplatePath in $accumulatedTemplates) {
+            $C++
+            $p = $c * 100 / $t
+            $templateFileName = $TemplatePath | Split-Path -Leaf
+            Write-Progress "Validating Templates" "$templateFileName" -PercentComplete $p -Id $progId
+            $expandedTemplate =Expand-AzureRMTemplate -TemplatePath $templatePath
+            if (-not $expandedTemplate) { continue }
+            foreach ($kv in $expandedTemplate.GetEnumerator()) {
+                $ExecutionContext.SessionState.PSVariable.Set($kv.Key, $kv.Value)
             }
-        }
+            $wellKnownVariables = @($expandedTemplate.Keys) + $cacheItemNames
+
+            # If a file list was provided,
+            if ($PSBoundParameters.File) {
+                $FolderFiles = @(foreach ($ff in $FolderFiles) { # filter the folder files. 
+                    $matched = @(foreach ($_ in $file) {
+                        $ff.Name -like $_ # If file the name matched any of valid patterns.
+                    })
+                    if ($matched -eq $true) 
+                    {
+                        $ff # then we include it.   
+                    }
+                })
+            }
         
-        if ($NoPester) { # If we're not running Pester, 
-            Test-FileList # we just call it directly.
+        
+        
+            # Now that the filelist and test groups are set up, we use Test-FileList to test the list of files.                   
+            if (-not $NoPester) {
+                $IsPesterLoaded? = $(
+                    $loadedModules = Get-module
+                    foreach ($_ in $loadedModules) { 
+                        if ($_.Name -eq 'Pester') {
+                            $true
+                            break
+                        }
+                    }
+                )
+                $DoesPesterExist? = 
+                    if ($IsPesterLoaded?) {
+                        $true
+                    } else {
+                        $env:PSModulePath -split ';' | 
+                            Get-ChildItem -Filter Pester |
+                            Import-Module -Global -PassThru        
+                    }
+
+                if (-not $DoesPesterExist?){
+                    Write-Warning "Pester not found.  Please install Pester (Install-Module Pester)"
+                    $NoPester = $true
+                }
+            }
+        
+            if ($NoPester) { # If we're not running Pester, 
+                Test-FileList # we just call it directly.
+            }
+            else { 
+                # If we're running Pester, we pass the function defintion as a parameter to describe.
+                describe "Validating Azure Template $TemplateName" ${function:Test-FileList}
+            }
+
         }
-        else { 
-            # If we're running Pester, we pass the function defintion as a parameter to describe.
-            describe "Validating Azure Template $TemplateName" ${function:Test-FileList}
-        }
+
+        Write-Progress "Validating Templates" "Complete" -Completed -Id $progId        
     }    
 }

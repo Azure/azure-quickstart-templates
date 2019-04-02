@@ -188,7 +188,9 @@ function Expand-AzureRMTemplate
                 #*MainTemplateObject (the main template, converted from JSON)
                 $MainTemplateObject = $MainTemplateText | ConvertFrom-Json
                 #*MainTemplateResources (the resources and child resources in the main template)
-                $MainTemplateResources = Expand-Resource -Resource $MainTemplateObject.resources
+                $MainTemplateResources = if ($mainTemplateObject.Resources) {
+                    Expand-Resource -Resource $MainTemplateObject.resources
+                } else { $null }
                 #*MainTemplateParameters (a hashtable of parameters in the main template)
                 $MainTemplateParameters = [Ordered]@{}
                 foreach ($prop in $MainTemplateObject.parameters.psobject.properties) {
