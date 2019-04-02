@@ -28,5 +28,3 @@ $schemaVersion = $CreateUIDefinitionObject.'$Schema' -split '/' -ne '' |
 if ($CreateUIDefinitionObject.version -ne $schemaVersion) {
     throw "CreateUIDefinition version ($($CreateUIDefinitionObject.version)) is different from schema version ($schemaVersion)"
 }
-
-

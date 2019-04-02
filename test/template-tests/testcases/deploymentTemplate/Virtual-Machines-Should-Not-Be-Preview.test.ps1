@@ -20,6 +20,3 @@ foreach ($resource in $templateObject.resources) {
         Write-Error "Virtual machine resource $($resource.Name) must not use a preview image" -TargetObject $ResourceType -ErrorId VM.Using.Preview.Image
     }
 }
-
-
-
