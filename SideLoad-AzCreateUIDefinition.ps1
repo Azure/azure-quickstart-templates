@@ -23,14 +23,14 @@ try {
         if ($StorageResourceGroupLocation -eq "") { throw "The StorageResourceGroupLocation parameter is required on first run in a subscription." }
         $StorageResourceGroupName = 'ARM_Deploy_Staging'
         New-AzResourceGroup -Location "$StorageResourceGroupLocation" -Name $StorageResourceGroupName -Force
-        $StorageAccount = New-AzmStorageAccount -StorageAccountName $StorageAccountName -Type 'Standard_LRS' -ResourceGroupName $StorageResourceGroupName -Location "$StorageResourceGroupLocation"
+        $StorageAccount = New-AzStorageAccount -StorageAccountName $StorageAccountName -Type 'Standard_LRS' -ResourceGroupName $StorageResourceGroupName -Location "$StorageResourceGroupLocation"
     }
 
-    New-AzureStorageContainer -Name $StorageContainerName -Context $StorageAccount.Context -ErrorAction SilentlyContinue *>&1
+    New-AzStorageContainer -Name $StorageContainerName -Context $StorageAccount.Context -ErrorAction SilentlyContinue *>&1
 
-    Set-AzureStorageBlobContent -Container $StorageContainerName -File "$ArtifactsStagingDirectory\$createUIDefFile"  -Context $storageAccount.Context -Force
+    Set-AzStorageBlobContent -Container $StorageContainerName -File "$ArtifactsStagingDirectory\$createUIDefFile"  -Context $storageAccount.Context -Force
         
-    $uidefurl = New-AzureStorageBlobSASToken -Container $StorageContainerName -Blob (Split-Path $createUIDefFile -leaf) -Context $storageAccount.Context -FullUri -Permission r   
+    $uidefurl = New-AzStorageBlobSASToken -Container $StorageContainerName -Blob (Split-Path $createUIDefFile -leaf) -Context $storageAccount.Context -FullUri -Permission r   
     $encodedurl = [uri]::EscapeDataString($uidefurl)
 
 if ($Gov) {
