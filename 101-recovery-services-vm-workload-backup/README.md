@@ -9,7 +9,7 @@
 
 ### This template creates a Recovery Services Vault and a Workload specific Backup Policy. Registers VM with Azure Backup service and Configures Protection.
 
-The Backup service is Microsoft's born in the cloud backup solution to backup data that's located on-premises and in Azure. It replaces your existing on-premises or offsite backup solution with a reliable, secure and cost competitive cloud backup solution. It also provides the flexibility of protecting your assets running in the cloud. You can backup Windows Servers, Windows Clients, Hyper-V VMs, Microsoft workloads, Azure Virtual Machines (Windows and Linux) with its in-built resilience and high SLAs. [Learn more] (http://aka.ms/backup-learn-more/).
+The Backup service is Microsoft's born in the cloud backup solution to backup data that's located on-premises and in Azure. It replaces your existing on-premises or offsite backup solution with a reliable, secure and cost competitive cloud backup solution. It also provides the flexibility of protecting your assets running in the cloud. You can backup Windows Servers, Windows Clients, Hyper-V VMs, Microsoft workloads, Azure Virtual Machines (Windows and Linux) with its in-built resilience and high SLAs. [Learn more](http://aka.ms/backup-learn-more/).
 
 ### Prerequisites
 
@@ -27,6 +27,6 @@ Once you have VM and Database available to be backed up.
 </ol>
 
 Make use of conditional property in the template to toggle between new vs existing vault and policy.
-![alt text](images/WorkloadBackup.png "Azure Backup for SQL Server in Azure Virtual Machines")
+![Azure Backup for SQL Server in Azure Virtual Machines](images/WorkloadBackup.png "Azure Backup for SQL Server in Azure Virtual Machines")
 
 To know more about Azure Backup for SQL Server in Azure Virtual Machines [Click Here](https://azure.microsoft.com/en-us/blog/azure-backup-for-sql-server-in-azure-virtual-machines-now-generally-available/)
