@@ -85,15 +85,15 @@ Example output:
 Done: Here are details for connecting and running pipelines
 {
   "exampleNextflowCommand": {
-    "type": "String",
+    "type": "string",
     "value": "nextflow run hello -process.executor ignite -cluster.join path:/datadisks/disk1/cifs/cluster -with-timeline runtimeline.html -with-trace -cluster.maxCpus 0"
   },
   "exampleNextflowCommandWithDocker": {
-    "type": "String",
+    "type": "string",
     "value": "nextflow run nextflow-io/rnatoy -with-docker -process.executor ignite -cluster.join path:/datadisks/disk1/cifs/cluster -with-timeline runtimeline.html -with-trace -cluster.maxCpus 0"
   },
   "jumpboxConnectionString": {
-    "type": "String",
+    "type": "string",
     "value": "ssh nextflow@jumpboxvmaddress.westus2.cloudapp.azure.com"
   }
 }
