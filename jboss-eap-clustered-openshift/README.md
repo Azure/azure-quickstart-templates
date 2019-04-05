@@ -110,8 +110,6 @@ The web application displays the following information:
 
 Now, select the **Increment Counter** link:
 
-Now, select the **Increment Counter** link:
-
 <img src="images/session-replication-increment.png" width="800">
 
 You should see the session variables being set.
