@@ -70,7 +70,7 @@
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       },
-      "defaultValue": "https://raw.githubusercontent.com/danieloh30/azure-quickstart-templates/jboss-eap-clustered-rhel-1.0/jboss-eap-clustered-rhel7/"
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/jboss-eap-clustered-rhel7/"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -145,7 +145,7 @@
       "properties": {
         "publicIpAllocationMethod": "[variables('publicIpAddressType')]",
         "dnsSettings": {
-          "domainNameLabel": "[parameters('dnsLabelPrefix')]"
+          "domainNameLabel": "[concat(parameters('dnsLabelPrefix'), copyIndex(1))]"
         }
       }
     },
@@ -268,7 +268,7 @@
       "dependsOn": [
         "[concat('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroupName'))]",
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-        "[concat('Microsoft.Network/publicIpAddresses/', variables('publicIpAddressName'))]"
+        "[concat('Microsoft.Network/publicIpAddresses/', variables('publicIpAddressName'), copyIndex(1))]"
       ],
       "tags": {},
       "copy": {
@@ -285,7 +285,7 @@
                   },
                   "privateIPAllocationMethod": "Dynamic",
                   "publicIpAddress": {
-                      "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', variables('publicIpAddressName'))]"
+                      "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', concat(variables('publicIpAddressName'), copyIndex(1)))]"
                   }
               }
           }
@@ -302,7 +302,7 @@
       "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('sActName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('networkInterfaceName'))]"
+        "[concat('Microsoft.Network/networkInterfaces/', concat(variables('networkInterfaceName'), copyIndex(1)))]"
       ],
       "tags": {},
       "copy": {
@@ -330,12 +330,12 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('networkInterfaceName'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('networkInterfaceName'), copyIndex(1)))]"
             }
           ]
         },
         "osProfile": {
-          "computerName": "[variables('virtualMachineName')]",
+          "computerName": "[concat(variables('virtualMachineName'), copyIndex(1))]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]"
         }
@@ -343,7 +343,7 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('virtualMachineName'),'/newuserscript', copyIndex(1))]",
+      "name": "[concat(variables('virtualMachineName'), copyIndex(1),'/newuserscript')]",
       "apiVersion": "2017-12-01",
       "location": "[parameters('location')]",
       "dependsOn": [
@@ -362,19 +362,19 @@
           "fileUris": [
             "[concat(parameters('_artifactsLocation'), '/', variables('ScriptFolder'), '/', variables('ScriptFileName'), parameters('_artifactsLocationSasToken'))]"
           ],
-          "commandToExecute": "[concat('sh eap-setup-redhat.sh',' ',parameters('adminUsername'),' ',parameters('eapUserName'),' ',parameters('eapPassword'),' ',parameters('rhsmUserName'),' ',parameters('rhsmPassword'),' ', parameters('rhsmPool'),' ',parameters('sshPassPhrase'),' ',reference(variables('publicIPAddressName')).dnsSettings.fqdn,' ',reference(concat('Microsoft.Network/networkInterfaces/', variables('networkInterfaceName'))).ipConfigurations[0].properties.privateIPAddress,' ',variables('sActName'),' ',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('sActName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value)]"
+          "commandToExecute": "[concat('sh eap-setup-redhat.sh',' ',parameters('adminUsername'),' ',parameters('eapUserName'),' ',parameters('eapPassword'),' ',parameters('rhsmUserName'),' ',parameters('rhsmPassword'),' ', parameters('rhsmPool'),' ',parameters('sshPassPhrase'),' ',reference(concat(variables('publicIPAddressName'), copyIndex(1))).dnsSettings.fqdn,' ',reference(concat('Microsoft.Network/networkInterfaces/', concat(variables('networkInterfaceName'), copyIndex(1)))).ipConfigurations[0].properties.privateIPAddress,' ',variables('sActName'),' ',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('sActName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value)]"
         }
       }
     }
   ],
   "outputs": {
     "sshCommand": {
-      "type": "array",
-      "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(variables('publicIPAddressName')).dnsSettings.fqdn)]"
+      "type": "string",
+      "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(concat(variables('publicIPAddressName'), '1')).dnsSettings.fqdn)]"
     },
     "AppUI": {
-      "type": "array",
-      "value": "[concat('http://', reference(variables('publicIPAddressName')).dnsSettings.fqdn, ':8080/eap-session-replication/')]"
+      "type": "string",
+      "value": "[concat('http://', reference(concat(variables('publicIPAddressName'), '1')).dnsSettings.fqdn, ':8080/eap-session-replication/')]"
     }
   }
 }

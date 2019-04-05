@@ -29,13 +29,19 @@ https://access.redhat.com/documentation/en-us/red_hat_jboss_enterprise_applicati
 
 To create the VM, you will need to:
 
-1. Choose an admin user name and password for your VM.  
+1. Input an admin username and password for your VM.  
 
-2. Choose a name for your VM.
+2. Input a name for your VM.
 
-3. Choose a EAP user name and password to enable the EAP manager UI and deployment method. 
+3. Input EAP username and password to enable the EAP manager UI and deployment method.
 
-4. Choose a Pass phrase to use with your SSH certificate.  This pass phrase will be used as the Team Services SSH endpoint passphrase.
+4. Input username and password to registry Red Hat Subscription for JBoss EAP Installation.
+
+5. Input a passphrase to use with your SSH certificate.  This pass phrase will be used as the Team Services SSH endpoint passphrase.
+
+6. Input the number of JBoss EAP instances to cluster across multiple VMs.
+
+The deployment will take about 70 minutes. Once completed, the notification will display:
 
 ## After you Deploy to Azure
 
