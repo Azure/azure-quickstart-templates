@@ -56,6 +56,15 @@
         "description": "Pass phrase for SSH certificate"
       }
     },
+    "eapInstances": {
+      "type": "int",
+      "defaultValue": 2,
+      "minValue": 2,
+      "maxValue": 4,
+      "metadata": {
+        "description": "Number of VMs to deploy, limit 4 since this sample is using a single storage account"
+      }
+    },
     "_artifactsLocation": {
       "type": "string",
       "metadata": {
@@ -126,9 +135,13 @@
     {
       "type": "Microsoft.Network/publicIpAddresses",
       "apiVersion": "2018-08-01",
-      "name": "[variables('publicIpAddressName')]",
+      "name": "[concat(variables('publicIpAddressName'), copyIndex(1))]",
       "location": "[parameters('location')]",
       "tags": {},
+      "copy": {
+        "name": "pubIPLoop",
+        "count": "[parameters('eapInstances')]"
+      },
       "properties": {
         "publicIpAllocationMethod": "[variables('publicIpAddressType')]",
         "dnsSettings": {
@@ -250,7 +263,7 @@
     {
       "type": "Microsoft.Network/networkInterfaces",
       "apiVersion": "2018-10-01",
-      "name": "[variables('networkInterfaceName')]",
+      "name": "[concat(variables('networkInterfaceName'), copyIndex(1))]",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroupName'))]",
@@ -258,6 +271,10 @@
         "[concat('Microsoft.Network/publicIpAddresses/', variables('publicIpAddressName'))]"
       ],
       "tags": {},
+      "copy": {
+        "name": "nicLoop",
+        "count": "[parameters('eapInstances')]"
+      },
       "properties": {
         "ipConfigurations": [
           {
@@ -281,13 +298,17 @@
     {
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2018-06-01",
-      "name": "[variables('virtualMachineName')]",
+      "name": "[concat(variables('virtualMachineName'), copyIndex(1))]",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('sActName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('networkInterfaceName'))]"
       ],
       "tags": {},
+      "copy": {
+        "name": "vmLoop",
+        "count": "[parameters('eapInstances')]"
+      },
       "properties": {
         "hardwareProfile": {
           "vmSize": "[variables('vmSize')]"
@@ -322,12 +343,16 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('virtualMachineName'),'/newuserscript')]",
+      "name": "[concat(variables('virtualMachineName'),'/newuserscript', copyIndex(1))]",
       "apiVersion": "2017-12-01",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('virtualMachineName'))]"
+        "[concat('Microsoft.Compute/virtualMachines/', variables('virtualMachineName'), copyIndex(1))]"
       ],
+      "copy": {
+        "name": "extLoop",
+        "count": "[parameters('eapInstances')]"
+      },
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
         "type": "CustomScript",
@@ -344,11 +369,11 @@
   ],
   "outputs": {
     "sshCommand": {
-      "type": "string",
+      "type": "array",
       "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(variables('publicIPAddressName')).dnsSettings.fqdn)]"
     },
     "AppUI": {
-      "type": "string",
+      "type": "array",
       "value": "[concat('http://', reference(variables('publicIPAddressName')).dnsSettings.fqdn, ':8080/eap-session-replication/')]"
     }
   }
