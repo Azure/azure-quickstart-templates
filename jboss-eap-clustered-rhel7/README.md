@@ -8,7 +8,7 @@
 
 This template deploys a web applicaton deployed on JBoss EAP 7 cluster running on RHEL 7.
 
-`Tags: JBoss, EAP, Red Hat,EAP7`
+`Tags: JBoss, EAP, Red Hat,EAP7, CLUSTER`
 
 To obtain a rhsm account go to: www.redhat.com and sign in.
 
@@ -29,6 +29,8 @@ https://access.redhat.com/documentation/en-us/red_hat_jboss_enterprise_applicati
 
 To create the VM, you will need to:
 
+<img src="images/parameters.png" width="800">
+
 1. Input an admin username and password for your VM.  
 
 2. Input a name for your VM.
@@ -41,10 +43,41 @@ To create the VM, you will need to:
 
 6. Input the number of JBoss EAP instances to cluster across multiple VMs.
 
-The deployment will take about 70 minutes. Once completed, the notification will display:
+The deployment will take about 10 minutes. Once completed, the notification will display:
 
-## After you Deploy to Azure
+<img src="images/deploySucceeded.png" width="800">
 
-Once you create the VM, open a web broser and got to http://<PUBLIC_HOSTNAME>:8080/eap-session-replication/ and you should see the applicaiton running
+Then click on the "Outputs" to see the URL of the SSH Command, App WEB URLs:
+
+<img src="images/templateOutput.png" width="800">
+
+At this point, copy the string from the "sshCommand" field ( i.e. ssh doh@eap-cluster.koreacentral.cloudapp.azure.com ).
+Then, open a termial tool(or cmd window) and paste the string to access a VM on Azure cloud.
+
+For Username and Password, the "Admin User" and "Admin Password" you supplied in the template above.
+Once you login into the VM, you can go through a server.log on JBoss EAP how Jgroup discovery works for clustering:
+
+<img src="images/ssh_command.png" width="800">
+
+When you look at one of server logs ( i.e. node1 or node2 ), you should be able to identify the JGroups cluster members being added `Received new cluster view:`
+
+<img src="images/session-replication-logs.png" width="800">
+
+Click on one of APP URL ( i.e. http://eap-cluster.koreacentral.cloudapp.azure.com:8080/eap-session-replication/ ).
+You will see Testing EAP Session Replication web page.
+
+<img src="images/session-application-app0.png" width="800">
+
+The web application displays the following information:
+
+- Session ID
+- Session `counter` and `timestamp` (these are variables stored in the session that are replicated)
+- The container name that the web page and session is being hosted from
+
+Now, select the **Increment Counter** link:
+
+<img src="images/session-replication-increment.png" width="800">
+
+You should see the session variables being set.
 
 ## Notes

@@ -62,7 +62,7 @@ echo "Start EAP 7 instances..." >> /home/$1/install.log
 $JBOSS_HOME/bin/standalone.sh -Djboss.node.name=$NODENAME1 -Djboss.server.base.dir=$JBOSS_HOME/$NODENAME1 -c $SVR_CONFIG -b $IP_ADDR -bmanagement $IP_ADDR -bprivate $IP_ADDR -Djboss.jgroups.azure_ping.storage_account_name=$STORAGE_ACCOUNT_NAME -Djboss.jgroups.azure_ping.storage_access_key=$STORAGE_ACCESS_KEY -Djboss.jgroups.azure_ping.container=$CONTAINER_NAME > /dev/null 2>&1 &
 $JBOSS_HOME/bin/standalone.sh -Djboss.node.name=$NODENAME2 -Djboss.server.base.dir=$JBOSS_HOME/$NODENAME2 -c $SVR_CONFIG -b $IP_ADDR -bmanagement $IP_ADDR -bprivate $IP_ADDR -Djboss.jgroups.azure_ping.storage_account_name=$STORAGE_ACCOUNT_NAME -Djboss.jgroups.azure_ping.storage_access_key=$STORAGE_ACCESS_KEY -Djboss.jgroups.azure_ping.container=$CONTAINER_NAME -Djboss.socket.binding.port-offset=$PORT_OFFSET > /dev/null 2>&1 &
 
-echo "Configure firewall for ports 8080, 9990..." >> /home/$1/install.log 
+echo "Configure firewall for ports 8080, 8180, 9990..." >> /home/$1/install.log 
 firewall-cmd --zone=public --add-port=8080/tcp --permanent 
 firewall-cmd --zone=public --add-port=8180/tcp --permanent 
 firewall-cmd --zone=public --add-port=9990/tcp --permanent 
