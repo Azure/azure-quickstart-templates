@@ -1,12 +1,12 @@
-# VM-Redhat - JBoss EAP 7 standalone mode
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fvsts-tomcat-redhat-vm%2Fazuredeploy.json" target="_blank">
+# VM-Redhat - JBoss EAP 7 cluster mode
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fjboss-eap-clustered-rhel7%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fvsts-tomcat-redhat-vm%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fjboss-eap-clustered-rhel7%2Fazuredeploy.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template deploys a web applicaton deployed on JBoss EAP 7 running on RHEL 7. 
+This template deploys a web applicaton deployed on JBoss EAP 7 cluster running on RHEL 7.
 
 `Tags: JBoss, EAP, Red Hat,EAP7`
 
@@ -31,7 +31,7 @@ To create the VM, you will need to:
 
 1. Choose an admin user name and password for your VM.  
 
-2. Choose a name for your VM. 
+2. Choose a name for your VM.
 
 3. Choose a EAP user name and password to enable the EAP manager UI and deployment method. 
 
@@ -39,10 +39,6 @@ To create the VM, you will need to:
 
 ## After you Deploy to Azure
 
-Once you create the VM, open a web broser and got to http://<PUBLIC_HOSTNAME>:8080/dukes/ and you should see the applicaiton running
-If you want to access the administration console go to http://<PUBLIC_HOSTNAME>:8080 and click on the link Administration Console 
+Once you create the VM, open a web broser and got to http://<PUBLIC_HOSTNAME>:8080/eap-session-replication/ and you should see the applicaiton running
 
 ## Notes
-
-
-
