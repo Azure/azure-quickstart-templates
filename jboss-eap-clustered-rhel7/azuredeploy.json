@@ -56,15 +56,6 @@
         "description": "Pass phrase for SSH certificate"
       }
     },
-    "eapInstances": {
-      "type": "int",
-      "defaultValue": 2,
-      "minValue": 2,
-      "maxValue": 4,
-      "metadata": {
-        "description": "Number of VMs to deploy, limit 4 since this sample is using a single storage account"
-      }
-    },
     "_artifactsLocation": {
       "type": "string",
       "metadata": {
@@ -135,17 +126,13 @@
     {
       "type": "Microsoft.Network/publicIpAddresses",
       "apiVersion": "2018-08-01",
-      "name": "[concat(variables('publicIpAddressName'), copyIndex(1))]",
+      "name": "[variables('publicIpAddressName')]",
       "location": "[parameters('location')]",
       "tags": {},
-      "copy": {
-        "name": "pubIPLoop",
-        "count": "[parameters('eapInstances')]"
-      },
       "properties": {
         "publicIpAllocationMethod": "[variables('publicIpAddressType')]",
         "dnsSettings": {
-          "domainNameLabel": "[concat(parameters('dnsLabelPrefix'), copyIndex(1))]"
+          "domainNameLabel": "[parameters('dnsLabelPrefix')]"
         }
       }
     },
@@ -263,18 +250,14 @@
     {
       "type": "Microsoft.Network/networkInterfaces",
       "apiVersion": "2018-10-01",
-      "name": "[concat(variables('networkInterfaceName'), copyIndex(1))]",
+      "name": "[variables('networkInterfaceName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroupName'))]",
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-        "[concat('Microsoft.Network/publicIpAddresses/', variables('publicIpAddressName'), copyIndex(1))]"
+        "[concat('Microsoft.Network/publicIpAddresses/', variables('publicIpAddressName'))]"
       ],
       "tags": {},
-      "copy": {
-        "name": "nicLoop",
-        "count": "[parameters('eapInstances')]"
-      },
       "properties": {
         "ipConfigurations": [
           {
@@ -285,7 +268,7 @@
                   },
                   "privateIPAllocationMethod": "Dynamic",
                   "publicIpAddress": {
-                      "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', concat(variables('publicIpAddressName'), copyIndex(1)))]"
+                      "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', variables('publicIpAddressName'))]"
                   }
               }
           }
@@ -298,17 +281,13 @@
     {
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2018-06-01",
-      "name": "[concat(variables('virtualMachineName'), copyIndex(1))]",
+      "name": "[variables('virtualMachineName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('sActName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', concat(variables('networkInterfaceName'), copyIndex(1)))]"
+        "[concat('Microsoft.Network/networkInterfaces/', variables('networkInterfaceName'))]"
       ],
       "tags": {},
-      "copy": {
-        "name": "vmLoop",
-        "count": "[parameters('eapInstances')]"
-      },
       "properties": {
         "hardwareProfile": {
           "vmSize": "[variables('vmSize')]"
@@ -330,12 +309,12 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('networkInterfaceName'), copyIndex(1)))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
             }
           ]
         },
         "osProfile": {
-          "computerName": "[concat(variables('virtualMachineName'), copyIndex(1))]",
+          "computerName": "[variables('virtualMachineName')]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]"
         }
@@ -343,16 +322,12 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('virtualMachineName'), copyIndex(1),'/newuserscript')]",
+      "name": "[concat(variables('virtualMachineName'),'/newuserscript')]",
       "apiVersion": "2017-12-01",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('virtualMachineName'), copyIndex(1))]"
+        "[concat('Microsoft.Compute/virtualMachines/', variables('virtualMachineName'))]"
       ],
-      "copy": {
-        "name": "extLoop",
-        "count": "[parameters('eapInstances')]"
-      },
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
         "type": "CustomScript",
@@ -362,7 +337,7 @@
           "fileUris": [
             "[concat(parameters('_artifactsLocation'), '/', variables('ScriptFolder'), '/', variables('ScriptFileName'), parameters('_artifactsLocationSasToken'))]"
           ],
-          "commandToExecute": "[concat('sh eap-setup-redhat.sh',' ',parameters('adminUsername'),' ',parameters('eapUserName'),' ',parameters('eapPassword'),' ',parameters('rhsmUserName'),' ',parameters('rhsmPassword'),' ', parameters('rhsmPool'),' ',parameters('sshPassPhrase'),' ',reference(concat(variables('publicIPAddressName'), copyIndex(1))).dnsSettings.fqdn,' ',reference(concat('Microsoft.Network/networkInterfaces/', concat(variables('networkInterfaceName'), copyIndex(1)))).ipConfigurations[0].properties.privateIPAddress,' ',variables('sActName'),' ',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('sActName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value)]"
+          "commandToExecute": "[concat('sh eap-setup-redhat.sh',' ',parameters('adminUsername'),' ',parameters('eapUserName'),' ',parameters('eapPassword'),' ',parameters('rhsmUserName'),' ',parameters('rhsmPassword'),' ', parameters('rhsmPool'),' ',parameters('sshPassPhrase'),' ',reference(variables('publicIPAddressName')).dnsSettings.fqdn,' ',reference(concat('Microsoft.Network/networkInterfaces/', variables('networkInterfaceName'))).ipConfigurations[0].properties.privateIPAddress,' ',variables('sActName'),' ',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('sActName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value)]"
         }
       }
     }
