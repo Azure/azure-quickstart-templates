@@ -121,7 +121,7 @@ if ($UploadArtifacts -Or $ArtifactsLocationParameter -ne $null) {
     foreach ($SourcePath in $ArtifactFilePaths) {
         
         if ($SourcePath -like "$DSCSourceFolder*" -and $SourcePath -like "*.zip" -or !($SourcePath -like "$DSCSourceFolder*")) { #When using DSC, just copy the DSC archive, not all the modules and source files
-            Set-AzureStorageBlobContent -File $SourcePath -Blob $SourcePath.Substring($ArtifactStagingDirectory.length + 1) -Container $StorageContainerName -Context $StorageAccount.Context -Force
+            Set-AzureStorageBlobContent -File $SourcePath -Blob (Split-Path $SourcePath -Leaf) -Container $StorageContainerName -Context $StorageAccount.Context -Force
             #Write-host $SourcePath
         }
     }
