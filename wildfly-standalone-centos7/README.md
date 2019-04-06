@@ -13,7 +13,7 @@ This template deploys a web applicaton deployed on WildFly 16.0.0.Final running 
 To obtain a rhsm account go to: www.redhat.com and sign in.
 
 ## Solution overview and deployed resources
-This template creates all of the compute resources to run JBoss WILDFLY 7 on top of RHEL 7.2, deploying the following components:
+This template creates all of the compute resources to run WILDFLY 16 on top of CentOS 7.5, deploying the following components:
 - CentOS 7.5 VM 
 - Public DNS 
 - Private Virtual Network 
@@ -32,7 +32,7 @@ To create the VM, you will need to:
 
 2. Choose a name for your VM. 
 
-3. Choose a WILDFLY username and password to enable the WILDFLY manager UI and deployment method. 
+3. Choose a WILDFLY username and password to enable the WILDFLY admin console and deployment method. 
 
 4. Choose a Passphrase to use with your SSH certificate.  This pass phrase will be used as the Team Services SSH endpoint passphrase.
 
@@ -42,7 +42,7 @@ Once you create the VM, open a web broser and got to **http://<PUBLIC_HOSTNAME>:
 
 <img src="images/app.png" width="800">
 
-If you want to access the administration console go to **http://<PUBLIC_HOSTNAME>:9990** and click on the link Administration Console:
+If you want to access the administration console go to **http://<PUBLIC_HOSTNAME>:8080** and click on the link Administration Console:
 
 <img src="images/admin.png" width="800">
 
