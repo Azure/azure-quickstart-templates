@@ -9,10 +9,10 @@ export EAP_HOME="/opt/rh/eap7/root/usr/share/wildfly"
 export EAP_RPM_CONF_STANDALONE="/etc/opt/rh/eap7/wildfly/eap7-standalone.conf"
 export EAP_RPM_CONF_DOMAIN="/etc/opt/rh/eap7/wildfly/eap7-domain.conf"
 
-EAP_USER=$2
-EAP_PASSWORD=$3
-RHSM_USER=$4
-RHSM_PASSWORD=$5
+export EAP_USER=$2
+export EAP_PASSWORD=$3
+export RHSM_USER=$4
+export RHSM_PASSWORD=$5
 export RHSM_POOL=$6
 
 PROFILE=standalone 
