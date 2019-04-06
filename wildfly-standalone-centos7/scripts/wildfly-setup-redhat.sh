@@ -1,12 +1,11 @@
 #!/bin/sh
 
-echo "Red Hat WILDFLY 16.0.0.Final Standalone Intallation Start: " | /bin/date +%H:%M:%S  >> /home/$1/install.log
+echo "Red Hat WILDFLY 16.0.0.Final Standalone Intallation Start..." >> /home/$1/install.log
+/bin/date +%H:%M:%S  >> /home/$1/install.log
 
-export SVR_CONFIG="standalone-full.xml"
 export WILDFLY_USER=$2
 export WILDFLY_PASSWORD=$3
 
-echo "SVR_CONFIG: " ${SVR_CONFIG} >> /home/$1/install.log
 echo "WILDFLY_USER: " ${WILDFLY_USER} >> /home/$1/install.log
 echo "WILDFLY_PASSWORD: " ${WILDFLY_PASSWORD} >> /home/$1/install.log
 
@@ -18,14 +17,14 @@ unzip wildfly-16.0.0.Final.zip
 
 echo "Sample app deploy..." >> /home/$1/install.log 
 git clone https://github.com/danieloh30/dukes.git
-/bin/cp -rf /home/$1/dukes/target/dukes.war /home/$1/wildfly-16.0.0.Final/deployments/
+/bin/cp -rf /home/$1/dukes/target/dukes.war /home/$1/wildfly-16.0.0.Final/standalone/deployments/
 
 echo "Configuring WILDFLY managment user..." >> /home/$1/install.log 
 /home/$1/wildfly-16.0.0.Final/bin/add-user.sh -u $WILDFLY_USER -p $WILDFLY_PASSWORD -g 'guest,mgmtgroup' 
 
 echo "Start WILDFLY 16.0.0.Final instance..." >> /home/$1/install.log 
-/home/$1/wildfly-16.0.0.Final/bin/standalone.sh -c $SVR_CONFIG -b $IP_ADDR -bmanagement $IP_ADDR -bprivate $IP_ADDR > /dev/null 2>&1 &
-$
+/home/$1/wildfly-16.0.0.Final/bin/standalone.sh -b 0.0.0.0 -bmanagement 0.0.0.0 > /dev/null 2>&1 &
+
 echo "Configure firewall for ports 8080, 9990..." >> /home/$1/install.log 
 firewall-cmd --zone=public --add-port=8080/tcp --permanent 
 firewall-cmd --zone=public --add-port=9990/tcp --permanent 
@@ -56,8 +55,6 @@ mkdir /home/$1/.ssh
 ssh-keygen -q -N $4 -f /home/$1/.ssh/id_rsa
 cd /home/$1/.ssh
 cp id_rsa.pub authorized_keys
-chown -R $1.jboss .
-chown -R $1.jboss *
 echo "SSH User name:  "$1 > /home/$1/vsts_ssh_info
 echo "SSH passphrase: "$4 >> /home/$1/vsts_ssh_info
 echo "SSH Private key:" >> /home/$1/vsts_ssh_info
@@ -66,8 +63,5 @@ cat id_rsa >> /home/$1/vsts_ssh_info
 echo "Configure SELinux to use Linux ACL's for file protection..." >> /home/$1/install.log
 setsebool -P allow_ftpd_full_access 1
 
-# Seeing a race condition timing error so sleep to deplay
-sleep 20
-chown $1.jboss /home/$1/install.log
-
-echo "Red Hat WILDFLY 16.0.0.Final Standalone Intallation End: " | /bin/date +%H:%M:%S  >> /home/$1/install.log
+echo "Red Hat WILDFLY 16.0.0.Final Standalone Intallation End..." >> /home/$1/install.log
+/bin/date +%H:%M:%S >> /home/$1/install.log
