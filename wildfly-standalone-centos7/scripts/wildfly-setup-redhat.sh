@@ -2,7 +2,6 @@
 
 echo "Red Hat WILDFLY 16.0.0.Final Standalone Intallation Start: " | /bin/date +%H:%M:%S  >> /home/$1/install.log
 
-export WILDFLY_HOME="/home/"$1"/wildfly-16.0.0.Final"
 export SVR_CONFIG="standalone-full.xml"
 export WILDFLY_USER=$2
 export WILDFLY_PASSWORD=$3
@@ -13,19 +12,19 @@ echo "WILDFLY_PASSWORD: " ${WILDFLY_PASSWORD} >> /home/$1/install.log
 
 echo "WILDFLY Downloading..." >> /home/$1/install.log
 cd /home/$1
-yum install -y git unzip
+yum install -y git unzip java
 curl https://download.jboss.org/wildfly/16.0.0.Final/wildfly-16.0.0.Final.zip -o wildfly-16.0.0.Final.zip
 unzip wildfly-16.0.0.Final.zip
 
 echo "Sample app deploy..." >> /home/$1/install.log 
-git clone https://github.com/MyriamFentanes/dukes.git
-/bin/cp -rf /home/$1/dukes/target/dukes.war $WILDFLY_HOME/deployments/
+git clone https://github.com/danieloh30/dukes.git
+/bin/cp -rf /home/$1/dukes/target/dukes.war /home/$1/wildfly-16.0.0.Final/deployments/
 
 echo "Configuring WILDFLY managment user..." >> /home/$1/install.log 
-$WILDFLY_HOME/bin/add-user.sh -u $WILDFLY_USER -p $WILDFLY_PASSWORD -g 'guest,mgmtgroup' 
+/home/$1/wildfly-16.0.0.Final/bin/add-user.sh -u $WILDFLY_USER -p $WILDFLY_PASSWORD -g 'guest,mgmtgroup' 
 
 echo "Start WILDFLY 16.0.0.Final instance..." >> /home/$1/install.log 
-$WILDFLY_HOME/bin/standalone.sh -c $SVR_CONFIG -b $IP_ADDR -bmanagement $IP_ADDR -bprivate $IP_ADDR > /dev/null 2>&1 &
+/home/$1/wildfly-16.0.0.Final/bin/standalone.sh -c $SVR_CONFIG -b $IP_ADDR -bmanagement $IP_ADDR -bprivate $IP_ADDR > /dev/null 2>&1 &
 $
 echo "Configure firewall for ports 8080, 9990..." >> /home/$1/install.log 
 firewall-cmd --zone=public --add-port=8080/tcp --permanent 
