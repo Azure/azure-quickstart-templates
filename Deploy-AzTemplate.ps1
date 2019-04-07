@@ -132,8 +132,7 @@ if ($UploadArtifacts -Or $ArtifactsLocationParameter -ne $null) {
         
         if ($SourcePath -like "$DSCSourceFolder*" -and $SourcePath -like "*.zip" -or !($SourcePath -like "$DSCSourceFolder*")) {
             #When using DSC, just copy the DSC archive, not all the modules and source files
-            Set-AzStorageBlobContent -File $SourcePath -Blob (Split-Path $SourcePath -Leaf) -Container $StorageContainerName -Context $StorageAccount.Context -Force
-            #Write-host $SourcePath
+            Set-AzStorageBlobContent -File $SourcePath -Blob $SourcePath.Replace($ArtifactStagingDirectory, "") -Container $StorageContainerName -Context $StorageAccount.Context -Force
         }
     }
     # Generate a 4 hour SAS token for the artifacts location if one was not provided in the parameters file
