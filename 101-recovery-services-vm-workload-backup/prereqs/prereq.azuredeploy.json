@@ -79,8 +79,7 @@
         }
     },
     "variables": {
-        "vnetId": "[resourceId(resourceGroup().name,'Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
-        "subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('subnetName'))]"
+        "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]"
     },
     "resources": [
         {
@@ -88,6 +87,9 @@
             "name": "[parameters('virtualMachineName')]",
             "apiVersion": "2018-06-01",
             "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkInterfaces/', parameters('networkInterfaceName'))]"
+            ],
             "properties": {
                 "osProfile": {
                     "computerName": "[parameters('virtualMachineName')]",
@@ -132,16 +134,17 @@
                         }
                     ]
                 }
-            },
-            "dependsOn": [
-                "[concat('Microsoft.Network/networkInterfaces/', parameters('networkInterfaceName'))]"
-            ]
+            }
         },
         {
             "type": "Microsoft.SqlVirtualMachine/SqlVirtualMachines",
             "name": "[parameters('virtualMachineName')]",
             "apiVersion": "2017-03-01-preview",
             "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachineName'))]",
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'))]"
+            ],
             "properties": {
                 "virtualMachineResourceId": "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachineName'))]",
                 "AutoPatchingSettings": {
@@ -173,11 +176,7 @@
                         "IsRServicesEnabled": "[parameters('rServicesEnabled')]"
                     }
                 }
-            },
-            "dependsOn": [
-                "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachineName'))]",
-                "[concat('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'))]"
-            ]
+            }
         },
         {
             "name": "[parameters('virtualNetworkName')]",
@@ -205,6 +204,11 @@
             "name": "[parameters('networkInterfaceName')]",
             "apiVersion": "2018-10-01",
             "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
+                "[concat('Microsoft.Network/publicIpAddresses/', parameters('publicIpAddressName'))]",
+                "[concat('Microsoft.Network/networkSecurityGroups/', parameters('networkSecurityGroupName'))]"
+            ],
             "properties": {
                 "ipConfigurations": [
                     {
@@ -215,20 +219,15 @@
                             },
                             "privateIPAllocationMethod": "Dynamic",
                             "publicIpAddress": {
-                                "id": "[resourceId(resourceGroup().name,'Microsoft.Network/publicIpAddresses', parameters('publicIpAddressName'))]"
+                                "id": "[resourceId('Microsoft.Network/publicIpAddresses', parameters('publicIpAddressName'))]"
                             }
                         }
                     }
                 ],
                 "networkSecurityGroup": {
-                    "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]"
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]"
                 }
-            },
-            "dependsOn": [
-                "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
-                "[concat('Microsoft.Network/publicIpAddresses/', parameters('publicIpAddressName'))]",
-                "[concat('Microsoft.Network/networkSecurityGroups/', parameters('networkSecurityGroupName'))]"
-            ]
+            }
         },
         {
             "type": "Microsoft.Network/publicIpAddresses",
@@ -256,8 +255,6 @@
                             "protocol": "TCP",
                             "access": "Allow",
                             "direction": "Inbound",
-                            "sourceApplicationSecurityGroups": [],
-                            "destinationApplicationSecurityGroups": [],
                             "sourceAddressPrefix": "*",
                             "sourcePortRange": "*",
                             "destinationAddressPrefix": "*",
@@ -271,8 +268,6 @@
                             "protocol": "TCP",
                             "access": "Allow",
                             "direction": "Inbound",
-                            "sourceApplicationSecurityGroups": [],
-                            "destinationApplicationSecurityGroups": [],
                             "sourceAddressPrefix": "*",
                             "sourcePortRange": "*",
                             "destinationAddressPrefix": "*",
