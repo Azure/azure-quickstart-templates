@@ -2,12 +2,6 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "vaultName": {
-      "type": "string",
-      "metadata": {
-        "description": "Name of the Vault"
-      }
-    },
     "vmResourceGroup": {
       "type": "string",
       "defaultValue": "[resourceGroup().name]",
@@ -82,6 +76,7 @@
     }
   },
   "variables": {
+    "vaultName": "SqlBackupDemoVault",
     "skuName": "RS0",
     "skuTier": "Standard",
     "backupFabric": "Azure",
@@ -93,7 +88,7 @@
       "condition": "[parameters('isNewVault')]",
       "type": "Microsoft.RecoveryServices/vaults",
       "apiVersion": "2018-01-10",
-      "name": "[parameters('vaultName')]",
+      "name": "[variables('vaultName')]",
       "location": "[parameters('location')]",
       "sku": {
         "name": "[variables('skuName')]",
@@ -104,25 +99,25 @@
     {
       "type": "Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers",
       "apiVersion": "2018-01-10",
-      "name": "[concat(parameters('vaultName'), '/', variables('backupFabric'), '/', variables('containerType'), ';compute;', parameters('vmResourceGroup'),';',parameters('vmName'))]",
+      "name": "[concat(variables('vaultName'), '/', variables('backupFabric'), '/', variables('containerType'), ';compute;', parameters('vmResourceGroup'),';',parameters('vmName'))]",
       "dependsOn": [
-        "[resourceId('Microsoft.RecoveryServices/vaults/', parameters('vaultName'))]"
+        "[resourceId('Microsoft.RecoveryServices/vaults/', variables('vaultName'))]"
       ],
       "properties":{
         "containerType": "[variables('containerType')]",
         "backupManagementType": "[variables('backupManagementType')]",
         "workloadType": "[parameters('workloadType')]",
         "friendlyName": "[parameters('vmName')]",
-        "sourceResourceId": "[resourceId(subscription().subscriptionId, parameters('vmResourceGroup'),'Microsoft.Compute/virtualMachines', parameters('vmName'))]"
+        "sourceResourceId": "[resourceId(parameters('vmResourceGroup'),'Microsoft.Compute/virtualMachines', parameters('vmName'))]"
       }
     },
     {
       "condition": "[parameters('isNewPolicy')]",
       "type": "Microsoft.RecoveryServices/vaults/backupPolicies",
       "apiVersion": "2018-01-10",
-      "name": "[concat(parameters('vaultName'), '/', parameters('policyName'))]",
+      "name": "[concat(variables('vaultName'), '/', parameters('policyName'))]",
       "dependsOn": [
-        "[resourceId('Microsoft.RecoveryServices/vaults/', parameters('vaultName'))]"
+        "[resourceId('Microsoft.RecoveryServices/vaults/', variables('vaultName'))]"
       ],
       "properties": {
         "backupManagementType": "[variables('backupManagementType')]",
@@ -176,17 +171,17 @@
     {
       "type": "Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers/protectedItems",
       "apiVersion": "2018-01-10",
-      "name": "[concat(parameters('vaultName'), '/', variables('backupFabric'), '/', variables('containerType'), ';compute;', parameters('vmResourceGroup'),';',parameters('vmName'), '/', parameters('workloadType'), ';', parameters('databaseInstanceName'), ';', parameters('databaseName'))]",
+      "name": "[concat(variables('vaultName'), '/', variables('backupFabric'), '/', variables('containerType'), ';compute;', parameters('vmResourceGroup'),';',parameters('vmName'), '/', parameters('workloadType'), ';', parameters('databaseInstanceName'), ';', parameters('databaseName'))]",
       "dependsOn": [
-        "[resourceId('Microsoft.RecoveryServices/vaults', parameters('vaultName'))]",
-        "[resourceId('Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers', parameters('vaultName'), variables('backupFabric'), concat(variables('containerType'), ';compute;', parameters('vmResourceGroup'),';',parameters('vmName')))]"
+        "[resourceId('Microsoft.RecoveryServices/vaults', variables('vaultName'))]",
+        "[resourceId('Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers', variables('vaultName'), variables('backupFabric'), concat(variables('containerType'), ';compute;', parameters('vmResourceGroup'),';',parameters('vmName')))]"
       ],
       "properties":{
         "backupManagementType": "[variables('backupManagementType')]",
         "workloadType": "[parameters('workloadType')]",
         "protectedItemType": "[parameters('protectedItemType')]",
         "friendlyName": "[parameters('databaseName')]",
-        "policyId": "[resourceId('Microsoft.RecoveryServices/vaults/backupPolicies', parameters('vaultName'), parameters('policyName'))]"
+        "policyId": "[resourceId('Microsoft.RecoveryServices/vaults/backupPolicies', variables('vaultName'), parameters('policyName'))]"
       }
     }
   ]
