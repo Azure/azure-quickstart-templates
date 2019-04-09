@@ -20,8 +20,8 @@ You need to have [VM with SQL Server](https://azure.microsoft.com/en-us/services
 Once you have VM and Database available to be backed up.
 
 <ol>
-<li>Create Recovery Services Vault</li>
-<li>Create Workload Backup Policy</li>
+<li>Create Recovery Services Vault (Create new or use existing)</li>
+<li>Create Workload Backup Policy (Create new or use existing)</li>
 <li>Register VM with Backup Service (Installs Backup VM Extension)</li>
 <li>Configure Protection</li>
 </ol>
