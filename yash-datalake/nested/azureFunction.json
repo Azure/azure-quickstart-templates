@@ -8,6 +8,19 @@
         "description": "Deployment location"
       }
     },
+	"_artifactsLocation": {
+          "type": "string",
+          "metadata": {
+              "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+          }
+      },	  
+    "_artifactsLocationSasToken": {
+          "type": "securestring",
+          "metadata": {
+              "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+          },
+          "defaultValue": ""
+      },
     "KibanaESDeployedVMIP": {
       "type": "string",
       "metadata": {
@@ -100,8 +113,6 @@
     }
   },
   "variables": {
-    "_artifactsLocation": "https://github.com/ajos1993/yash-datalake/raw/master/",
-    "_artifactsLocationSasToken": "",
     "config_web_name": "web",
     "pythonExtension": "azureappservice-python2714x64",
     "functionAppName": "[parameters('appName')]",
@@ -134,6 +145,9 @@
       "type": "Microsoft.Web/sites",
       "name": "[variables('functionAppName')]",
       "apiVersion": "2018-02-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]"
+      ],
       "properties": {
         "enabled": true,
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
@@ -228,10 +242,6 @@
         "containerSize": 1536,
         "dailyMemoryTimeQuota": 0
       },
-      "dependsOn": [
-        "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]"
-      ],
-      "comments": "Generalized from resource: '/subscriptions/18bc600e-57c7-4ea5-b64a-bb62f1f34d2c/resourceGroups/innovationgroup-BigData/providers/Microsoft.Web/sites/demotriggerapp1234'.",
       "kind": "functionapp",
       "location": "[parameters('location')]",
       "resources": [
@@ -258,7 +268,7 @@
             "displayName": "pythonextension"
           },
           "properties": {
-            "packageUri": "[uri(variables('_artifactsLocation'),concat('scripts/quickstart_function_app.zip', variables('_artifactsLocationSasToken')))]",
+            "packageUri": "[uri(parameters('_artifactsLocation'),concat('scripts/quickstart_function_app.zip', parameters('_artifactsLocationSasToken')))]",
             "dbType": "None",
             "connectionString": ""
           }
@@ -269,6 +279,11 @@
       "type": "Microsoft.Web/sites/config",
       "name": "[concat(variables('functionAppName'), '/', variables('config_web_name'))]",
       "apiVersion": "2018-02-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]",
+        "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
+        "[concat('Microsoft.Web/sites/',variables('functionAppName'),'/Extensions/MSDeploy')]"
+      ],
       "properties": {
         "numberOfWorkers": 1,
         "defaultDocuments": [
@@ -342,11 +357,6 @@
           "routePrefix": ""
         }
       },
-      "dependsOn": [
-        "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]",
-        "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
-        "[concat('Microsoft.Web/sites/',variables('functionAppName'),'/Extensions/MSDeploy')]"
-      ],
       "location": "[parameters('location')]"
     }
   ],
