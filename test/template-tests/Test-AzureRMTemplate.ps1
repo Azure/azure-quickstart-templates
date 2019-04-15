@@ -134,6 +134,16 @@ Each test script has access to a set of well-known variables:
         # This lets our built-in groups be automatically defined by their file structure.
 
 
+        # Next we want to load the cached items
+        $cacheDir = $myLocation | Split-Path | Join-Path -ChildPath cache
+        $cacheItemNames = @(foreach ($cacheFile in (Get-ChildItem -Path $cacheDir -Filter *.cache.json)) {
+            $cacheName = $cacheFile.Name -replace '\.cache\.json', ''
+            $cacheData = [IO.File]::ReadAllText($cacheFile.Fullname) | ConvertFrom-Json
+            $ExecutionContext.SessionState.PSVariable.Set($cacheName, $cacheData)
+            $cacheName
+        })
+
+
         # Next we want to declare some internal functions:
         #*Test-Case (executes a test, given a set of parameters) 
         function Test-Case($TheTest, $TestParameters = @{}) {            
@@ -263,7 +273,7 @@ Each test script has access to a set of well-known variables:
                         $testInput[$_] = $ExecutionContext.SessionState.PSVariable.Get($_).Value
                     }
                     $ValidTestList = if ($test) {
-                        @(Get-TestGroups $test -includeTest)
+                        @(Get-TestGroups ($test -replace '-',' ') -includeTest)
                     } else {
                         $null
                     }
@@ -288,7 +298,9 @@ Each test script has access to a set of well-known variables:
                     $_
                 }
             }
-        }    
+        }
+        
+        $accumulatedTemplates = [Collections.Arraylist]::new()    
     }
 
     process {
@@ -336,38 +348,76 @@ Each test script has access to a set of well-known variables:
             }
         }
 
-        $expandedTemplate =Expand-AzureRMTemplate -TemplatePath $templatePath
-        if (-not $expandedTemplate) { return }
-        $wellKnownVariables = $expandedTemplate.Keys
+        $null = $accumulatedTemplates.Add($TemplatePath)
+    }
 
-        foreach ($kv in $expandedTemplate.GetEnumerator()) {
-            $ExecutionContext.SessionState.PSVariable.Set($kv.Key, $kv.Value)
-        }            
+    end {
+        $c, $t = 0, $accumulatedTemplates.Count
+        $progId = Get-Random
 
-        # If a file list was provided,
-        if ($PSBoundParameters.File) {
-            $FolderFiles = @(foreach ($ff in $FolderFiles) { # filter the folder files. 
-                $matched = @(foreach ($_ in $file) {
-                    $ff.Name -like $_ # If file the name matched any of valid patterns.
+        foreach ($TemplatePath in $accumulatedTemplates) {
+            $C++
+            $p = $c * 100 / $t
+            $templateFileName = $TemplatePath | Split-Path -Leaf
+            Write-Progress "Validating Templates" "$templateFileName" -PercentComplete $p -Id $progId
+            $expandedTemplate =Expand-AzureRMTemplate -TemplatePath $templatePath
+            if (-not $expandedTemplate) { continue }
+            foreach ($kv in $expandedTemplate.GetEnumerator()) {
+                $ExecutionContext.SessionState.PSVariable.Set($kv.Key, $kv.Value)
+            }
+            $wellKnownVariables = @($expandedTemplate.Keys) + $cacheItemNames
+
+            # If a file list was provided,
+            if ($PSBoundParameters.File) {
+                $FolderFiles = @(foreach ($ff in $FolderFiles) { # filter the folder files. 
+                    $matched = @(foreach ($_ in $file) {
+                        $ff.Name -like $_ # If file the name matched any of valid patterns.
+                    })
+                    if ($matched -eq $true) 
+                    {
+                        $ff # then we include it.   
+                    }
                 })
-                if ($matched -eq $true) 
-                {
-                    $ff # then we include it.   
+            }
+        
+        
+        
+            # Now that the filelist and test groups are set up, we use Test-FileList to test the list of files.                   
+            if (-not $NoPester) {
+                $IsPesterLoaded? = $(
+                    $loadedModules = Get-module
+                    foreach ($_ in $loadedModules) { 
+                        if ($_.Name -eq 'Pester') {
+                            $true
+                            break
+                        }
+                    }
+                )
+                $DoesPesterExist? = 
+                    if ($IsPesterLoaded?) {
+                        $true
+                    } else {
+                        $env:PSModulePath -split ';' | 
+                            Get-ChildItem -Filter Pester |
+                            Import-Module -Global -PassThru        
+                    }
+
+                if (-not $DoesPesterExist?){
+                    Write-Warning "Pester not found.  Please install Pester (Install-Module Pester)"
+                    $NoPester = $true
                 }
-            })
+            }
+        
+            if ($NoPester) { # If we're not running Pester, 
+                Test-FileList # we just call it directly.
+            }
+            else { 
+                # If we're running Pester, we pass the function defintion as a parameter to describe.
+                describe "Validating Azure Template $TemplateName" ${function:Test-FileList}
+            }
+
         }
-        
-        
-        
-        # Now that the filelist and test groups are set up, we use Test-FileList to test the list of files.                   
-        
-        
-        if ($NoPester) { # If we're not running Pester, 
-            Test-FileList # we just call it directly.
-        }
-        else { 
-            # If we're running Pester, we pass the function defintion as a parameter to describe.
-            describe "Validating Azure Template $TemplateName" ${function:Test-FileList}
-        }
+
+        Write-Progress "Validating Templates" "Complete" -Completed -Id $progId        
     }    
 }

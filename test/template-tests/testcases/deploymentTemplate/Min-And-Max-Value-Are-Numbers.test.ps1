@@ -3,7 +3,11 @@
 [PSObject]
 $TemplateObject
 )
-foreach ($parameter in $templateObject.parameters) {
+
+# Walk thru each of the parameters in the template object
+foreach ($parameterInfo in $templateObject.parameters.psobject.properties) {
+    $parameterName = $parameterInfo.Name
+    $parameter = $parameterInfo.Value
     $Min = $null
     $Max = $null
     if ($parameter.psobject.properties.item('MaxValue')) {
