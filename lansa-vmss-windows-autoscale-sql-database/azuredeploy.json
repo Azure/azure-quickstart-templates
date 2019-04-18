@@ -21,7 +21,39 @@
          "metadata": {
             "description": "String used as a base for naming resources. Must be 3-61 characters in length and globally unique across Azure. A hash is prepended to this string for some resources, and resource-specific information is appended."
          },
+         "minLength" : 3,
          "maxLength": 61
+      },
+      "applicationGatewaySkuName": {
+         "type": "string",
+         "allowedValues": [
+            "Standard_Small",
+            "Standard_Medium",
+            "Standard_Large"
+         ],
+         "defaultValue": "Standard_Medium",
+         "metadata": {
+            "description": "Application Gateway SKU Name"
+         }
+      },
+      "applicationGatewayCapacity": {
+         "type": "int",
+         "defaultValue": 2,
+         "metadata": {
+            "description": "Number of Application Gateway instances"
+         }
+      },
+      "certificateBase64Encoded": {
+         "type": "string",
+         "metadata": {
+            "description": "Base 64 encoded String representing the SSL certificate"
+         }
+      },
+      "certificatePassword": {
+         "type": "securestring",
+         "metadata": {
+            "description": "SSL certificate password"
+         }
       },
       "minInstanceCount": {
          "type": "int",
@@ -94,7 +126,6 @@
       },
       "adminUsername": {
          "type": "string",
-         "defaultValue": "lansa",
          "metadata": {
             "description": "Admin username on all VMs."
          }
@@ -107,7 +138,6 @@
       },
       "webUsername": {
          "type": "string",
-         "defaultValue": "Pcxuser2",
          "metadata": {
             "description": "Web Server username on all VMs."
          }
@@ -120,7 +150,6 @@
       },
       "databaseLogin": {
          "type": "string",
-         "defaultValue": "lansa",
          "metadata": {
             "description": "The admin user of the Azure SQL Database"
          }
@@ -183,7 +212,7 @@
          "defaultValue": "support/L4W14000_scalable_azure",
          "metadata": {
             "description": "Git Branch"
-         }        
+         }
       },
       "trace": {
          "type": "string",
@@ -204,10 +233,11 @@
          }
       }
    },
-  "variables": { 
+  "variables": {
     "namingInfix": "[toLower(substring(concat(parameters('vmssName'), uniqueString(resourceGroup().id)), 0, 9))]",
     "longNamingInfix": "[toLower(parameters('vmssName'))]",
     "dblongNamingInfix": "[toLower(concat('db',parameters('vmssName')))]",
+    "aglongNamingInfix": "[toLower(concat('ag',parameters('vmssName')))]",
     "dbvmssName": "[toLower(substring(concat('db',parameters('vmssName'), uniqueString(resourceGroup().id)), 0, 9))]",
     "addressPrefix": "10.0.0.0/16",
     "subnetPrefix": "10.0.0.0/24",
@@ -245,7 +275,15 @@
     "gitRepo": "https://raw.githubusercontent.com/robe070/cookbooks/",
     "gitRefreshName": "git-pull.ps1",
    "gitRefreshUri": "[concat(variables('gitRepo'), parameters('gitBranch'), '/scripts/', variables('gitRefreshName'))]",
-   "q":  "'"
+   "q":  "'",
+   "agPublicIPAddressName": "[concat(variables('namingInfix'), '-agpip')]",
+   "agPublicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('agPublicIPAddressName'))]",
+   "agSubnetPrefix": "10.0.1.0/24",
+   "agSubnetName": "[concat(variables('namingInfix'), '-agsubnet')]",
+   "agSubnetID": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('agsubnetName'))]",
+   "agName": "[concat(variables('namingInfix'), '-ag')]",
+   "agID": "[resourceId('Microsoft.Network/applicationgateways',variables('agName'))]",
+   "agBackendAddressPoolName": "[concat(variables('namingInfix'), '-agpool')]"
   },
    "resources": [
       {
@@ -264,6 +302,12 @@
                   "name": "[variables('subnetName')]",
                   "properties": {
                      "addressPrefix": "[variables('subnetPrefix')]"
+                  }
+               },
+               {
+                  "name": "[variables('agSubnetName')]",
+                  "properties": {
+                     "addressPrefix": "[variables('agSubnetPrefix')]"
                   }
                }
             ]
@@ -435,7 +479,8 @@
             "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]",
             "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
             "[concat('Microsoft.Sql/servers/', variables('sqlserverName'))]",
-            "[concat('Microsoft.Sql/servers/', variables('sqlserverName'), '/databases/', parameters('databaseName'))]"
+            "[concat('Microsoft.Sql/servers/', variables('sqlserverName'), '/databases/', parameters('databaseName'))]",
+            "[concat('Microsoft.Network/applicationGateways/', variables('agName'))]"
          ],
          "sku": {
             "name": "[variables('dbvmSku')]",
@@ -581,6 +626,11 @@
                                        {
                                           "id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('loadBalancerName'), '/inboundNatPools/', variables('natPoolName'))]"
                                        }
+                                    ],
+                                    "applicationGatewayBackendAddressPools": [
+                                       {
+                                          "id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/applicationGateways/', variables('agName'), '/backendAddressPools/', variables('agBackendAddressPoolName'))]"
+                                       }
                                     ]
                                  }
                               }
@@ -677,6 +727,147 @@
          }
       },
       {
+         "type": "Microsoft.Insights/autoscaleSettings",
+         "apiVersion": "2015-04-01",
+         "name": "[variables('dbvmssName')]",
+         "location": "[resourceGroup().location]",
+         "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachineScaleSets/', variables('dbvmssName'))]"
+         ],
+         "properties": {
+            "name": "[variables('dbvmssName')]",
+            "targetResourceUri": "[concat('/subscriptions/',subscription().subscriptionId, '/resourceGroups/',  resourceGroup().name, '/providers/Microsoft.Compute/virtualMachineScaleSets/', variables('dbvmssName'))]",
+            "enabled": true,
+            "profiles": [
+               {
+                  "name": "Single Fixed Instance",
+                  "capacity": {
+                     "minimum": "1",
+                     "maximum": "1",
+                     "default": "1"
+                  },
+                  "rules": []
+               }
+            ]
+         }
+      },
+      {
+         "apiVersion": "2015-05-01-preview",
+         "type": "Microsoft.Network/publicIPAddresses",
+         "name": "[variables('agPublicIPAddressName')]",
+         "location": "[resourceGroup().location]",
+         "properties": {
+            "publicIPAllocationMethod": "Dynamic",
+            "dnsSettings": {
+               "domainNameLabel": "[variables('aglongNamingInfix')]"
+            }
+         }
+      },
+      {
+         "apiVersion": "2017-06-01",
+         "name": "[variables('agName')]",
+         "type": "Microsoft.Network/applicationGateways",
+         "location": "[resourceGroup().location]",
+         "dependsOn": [
+            "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+            "[concat('Microsoft.Network/publicIPAddresses/', variables('agPublicIPAddressName'))]"
+         ],
+         "properties": {
+            "sku": {
+               "name": "[parameters('applicationGatewaySkuName')]",
+               "tier": "Standard",
+               "capacity": "[parameters('applicationGatewayCapacity')]"
+            },
+            "sslCertificates": [
+               {
+                  "name": "appGatewaySslCert",
+                  "properties": {
+                     "data": "[parameters('certificateBase64Encoded')]",
+                     "password": "[parameters('certificatePassword')]"
+                  }
+               }
+            ],
+            "gatewayIPConfigurations": [
+               {
+                  "name": "appGatewayIpConfig",
+                  "properties": {
+                     "subnet": {
+                        "id": "[variables('agSubnetID')]"
+                     }
+                  }
+               }
+            ],
+            "frontendIPConfigurations": [
+               {
+                  "name": "appGatewayFrontendIP",
+                  "properties": {
+                     "PublicIPAddress": {
+                        "id": "[variables('agPublicIPAddressID')]"
+                     }
+                  }
+               }
+            ],
+            "frontendPorts": [
+               {
+                  "name": "appGatewayFrontendPort",
+                  "properties": {
+                     "Port": 443
+                  }
+               }
+            ],
+            "backendAddressPools": [
+               {
+                  "name": "[variables('agBackendAddressPoolName')]"
+               }
+            ],
+            "backendHttpSettingsCollection": [
+               {
+                  "name": "appGatewayBackendHttpSettings",
+                  "properties": {
+                     "Port": 80,
+                     "Protocol": "Http",
+                     "CookieBasedAffinity": "Enabled",
+                     "RequestTimeout": 120
+                  }
+               }
+            ],
+            "httpListeners": [
+               {
+                  "name": "appGatewayHttpListener",
+                  "properties": {
+                     "FrontendIPConfiguration": {
+                        "Id": "[concat(variables('agID'), '/frontendIPConfigurations/appGatewayFrontendIP')]"
+                     },
+                     "FrontendPort": {
+                        "Id": "[concat(variables('agID'), '/frontendPorts/appGatewayFrontendPort')]"
+                     },
+                     "Protocol": "Https",
+                     "SslCertificate": {
+                        "Id": "[concat(variables('agID'), '/sslCertificates/appGatewaySslCert')]"
+                     }
+                  }
+               }
+            ],
+            "requestRoutingRules": [
+               {
+                  "Name": "rule1",
+                  "properties": {
+                     "RuleType": "Basic",
+                     "httpListener": {
+                        "id": "[concat(variables('agID'), '/httpListeners/appGatewayHttpListener')]"
+                     },
+                     "backendAddressPool": {
+                        "id": "[concat(variables('agID'), '/backendAddressPools/', variables('agBackendAddressPoolName'))]"
+                     },
+                     "backendHttpSettings": {
+                        "id": "[concat(variables('agID'), '/backendHttpSettingsCollection/appGatewayBackendHttpSettings')]"
+                     }
+                  }
+               }
+            ]
+         }
+      },
+      {
          "name": "[variables('sqlserverName')]",
          "type": "Microsoft.Sql/servers",
          "location": "[resourceGroup().location]",
@@ -727,7 +918,6 @@
             }
          ]
       }
-
    ],
    "outputs": {
       "dbServerName": {
@@ -740,7 +930,7 @@
       },
       "lbFqdn": {
          "type": "string",
-         "value": "[reference(variables('publicIPAddressName')).dnsSettings.fqdn]"
+         "value": "[concat('https://', reference(variables('agPublicIPAddressName')).dnsSettings.fqdn)]"
       },
       "dbrdpAddress": {
          "type": "string",
