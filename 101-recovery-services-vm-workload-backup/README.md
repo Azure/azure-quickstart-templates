@@ -29,4 +29,12 @@ Once you have VM and Database available to be backed up.
 Make use of conditional property in the template to toggle between new vs existing vault and policy.
 ![Azure Backup for SQL Server in Azure Virtual Machines](images/WorkloadBackup.png "Azure Backup for SQL Server in Azure Virtual Machines")
 
+In order to delete the recovery services vault, you first need to stop protection to any existing backup item (e.g. database) and unregister the virtual machine containing the workload. You may refer below documentation:
+
+<ul>
+<li>[Stop backup and delete backup data](https://docs.microsoft.com/en-us/azure/backup/backup-azure-sql-automation#delete-backup-data)</li>
+<li>[Unregister VM](https://docs.microsoft.com/en-us/azure/backup/backup-azure-sql-automation#unregister-sql-vm)</li>
+<li>[Delete Recovery Services Vault](https://docs.microsoft.com/en-us/azure/backup/backup-azure-delete-vault#delete-the-recovery-services-vault-by-force)</li>
+</ul>
+
 To know more about Azure Backup for SQL Server in Azure Virtual Machines [Click Here](https://azure.microsoft.com/en-us/blog/azure-backup-for-sql-server-in-azure-virtual-machines-now-generally-available/)
