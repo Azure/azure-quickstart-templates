@@ -82,4 +82,4 @@ foreach ($p in $JsonParameters.psObject.Properties) {
 }
 
 Write-Host "Writing file: $NewTemplateParametersFile"
-$JsonParameters | ConvertTo-Json | Out-File -FilePath $NewTemplateParametersFile
+$JsonParameters | ConvertTo-Json -Depth 30 | Out-File -FilePath $NewTemplateParametersFile
