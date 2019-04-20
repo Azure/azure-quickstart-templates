@@ -1,20 +1,27 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
-    "parameters": {
-      "adminUsername": {
-         "type": "string",
-  	     "metadata": {
-  	        "description": "The name of the administrator of the new VM. Exclusion list: 'admin','administrator'"
-           }
-         },
-      "adminPassword": {
-            "type": "securestring",
-  	        "metadata": {
-  	          "description": "The password for the administrator account of the new VM"
-             }
-          }
-   },
+  "parameters": {
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the administrator of the new VM. Exclusion list: 'admin','administrator'"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The password for the administrator account of the new VM"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
   "variables": {
     "vnetv4AddressRange": "10.0.0.0/16",
     "vnetv6AddressRange": "ace:cab:deca::/48",
@@ -23,76 +30,79 @@
     "subnetName": "DualStackSubnet",
     "newStorageAccountName": "[concat('st', uniqueString(resourceGroup().id))]",
     "availabilitySetName": "myavset",
-    "subnet-id": "[concat(resourceId('Microsoft.Network/virtualNetworks','VNET'),'/subnets/',variables('subnetName'))]",
-    "ApiVersion": "2018-07-01",  
+    "subnet-id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'VNET', variables('subnetName'))]",
     "numberOfInstances": 2,
     "vmName": "DsVM",
     "publicipName": "RDPpublicIp",
     "imagePublisher": "MicrosoftWindowsServer",
     "imageOffer": "WindowsServer",
-    "imageSku": "2016-Datacenter"
+    "imageSku": "2019-Datacenter"
   },
   "resources": [
     {
-      "apiVersion": "[variables('ApiVersion')]",
+      "apiVersion": "2019-02-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat(variables('publicipName'), copyindex())]",
       "copy": {
         "name": "publicIpLoop",
         "count": "[variables('numberOfInstances')]"
       },
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic"
       }
     },
-	{
-      "apiVersion": "[variables('ApiVersion')]",
+    {
+      "apiVersion": "2019-02-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "lbpublicip",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic"
       }
     },
-	{
-      "apiVersion": "[variables('ApiVersion')]",
+    {
+      "apiVersion": "2019-02-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "lbpublicip-v6",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
-		"publicIPAddressVersion": "IPv6"
+        "publicIPAddressVersion": "IPv6"
       }
     },
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('availabilitySetName')]",
-      "apiVersion": "2016-04-30-preview",
-      "location": "[resourceGroup().location]",
+      "apiVersion": "2019-03-01",
+      "location": "[parameters('location')]",
       "properties": {
-        "platformFaultDomainCount": "1",
-        "platformUpdateDomainCount": "1",
-        "managed": "true"
+        "platformFaultDomainCount": "2",
+        "platformUpdateDomainCount": "5"
+      },
+      "sku": {
+        "name": "Aligned"
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2019-04-01",
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('newStorageAccountName')]",
-      "location": "eastus2",
-      "properties": {
-        "accountType": "Standard_LRS"
-      }
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "StorageV2",
+      "properties": { }
     },
     {
-      "apiVersion": "[variables('ApiVersion')]",
+      "apiVersion": "2019-02-01",
       "name": "loadBalancer",
       "type": "Microsoft.Network/loadBalancers",
-      "location": "[resourceGroup().location]",
-	   "dependsOn": [
-        "Microsoft.Network/publicIPAddresses/lbpublicip",
-		"Microsoft.Network/publicIPAddresses/lbpublicip-v6"
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses','lbpublicip')]",
+        "[resourceId('Microsoft.Network/publicIPAddresses','lbpublicip-v6')]"
       ],
       "properties": {
         "frontendIpConfigurations": [
@@ -104,7 +114,7 @@
               }
             }
           },
-		  {
+          {
             "name": "LBFE-v6",
             "properties": {
               "publicIPAddress": {
@@ -117,7 +127,7 @@
           {
             "name": "LBBAP"
           },
-		  {
+          {
             "name": "LBBAP-v6"
           }
         ],
@@ -125,10 +135,10 @@
           {
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', 'loadBalancer'), '/frontendIpConfigurations/LBFE')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', 'loadBalancer', 'LBFE')]"
               },
               "backendAddressPool": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', 'loadBalancer'), '/backendAddressPools/LBBAP')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', 'loadBalancer', 'LBBAP')]"
               },
               "protocol": "Tcp",
               "frontendPort": 80,
@@ -137,13 +147,13 @@
             },
             "name": "lbrule"
           },
-		  {
+          {
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', 'loadBalancer'), '/frontendIpConfigurations/LBFE-v6')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', 'loadBalancer', 'LBFE-v6')]"
               },
               "backendAddressPool": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', 'loadBalancer'), '/backendAddressPools/LBBAP-v6')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', 'loadBalancer', 'LBBAP-v6')]"
               },
               "protocol": "Tcp",
               "frontendPort": 80,
@@ -155,35 +165,35 @@
       }
     },
     {
-      "apiVersion": "[variables('ApiVersion')]",
+      "apiVersion": "2019-02-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "VNET",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
             "[variables('vnetv4AddressRange')]",
-            "[variables('vnetv6AddressRange')]"    
+            "[variables('vnetv6AddressRange')]"
           ]
         },
         "subnets": [
           {
             "name": "[variables('subnetName')]",
             "properties": {
-              "addressPrefixes":[
+              "addressPrefixes": [
                 "[variables('subnetv4AddressRange')]",
                 "[variables('subnetv6AddressRange')]"
-               ]
+              ]
             }
           }
         ]
       }
     },
     {
-      "apiVersion": "[variables('ApiVersion')]",
+      "apiVersion": "2019-02-01",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "dsNsg",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
           {
@@ -236,7 +246,7 @@
               "sourcePortRange": "33819-33829",
               "destinationPortRange": "5000-6000",
               "sourceAddressPrefix": "ace:cab:deca:deed::/64",
-              "destinationAddressPrefixes": ["cab:cab:aaaa:bbbb::/64", "cab:cab:1111:2222::/64"],
+              "destinationAddressPrefixes": [ "cab:cab:aaaa:bbbb::/64", "cab:cab:1111:2222::/64" ],
               "access": "Allow",
               "priority": 1004,
               "direction": "Outbound"
@@ -248,8 +258,8 @@
     {
       "type": "Microsoft.Network/routeTables",
       "name": "v6routeTable",
-      "apiVersion": "[variables('ApiVersion')]",
-      "location": "[resourceGroup().location]",
+      "apiVersion": "2019-02-01",
+      "location": "[parameters('location')]",
       "properties": {
         "routes": [
           {
@@ -264,19 +274,19 @@
       }
     },
     {
-      "apiVersion": "[variables('ApiVersion')]",
+      "apiVersion": "2019-02-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('vmName'),copyindex())]",
       "copy": {
         "name": "netIntLoop",
         "count": "[variables('numberOfInstances')]"
       },
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
-        "Microsoft.Network/virtualNetworks/VNET",
-        "Microsoft.Network/networkSecurityGroups/dsNsg",
-        "Microsoft.Network/loadBalancers/loadBalancer",
-		"[concat('Microsoft.Network/publicIPAddresses/',variables('publicipName'),copyindex())]"
+        "[resourceId('Microsoft.Network/virtualNetworks','VNET')]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups','dsNsg')]",
+        "[resourceId('Microsoft.Network/loadBalancers','loadBalancer')]",
+        "publicIpLoop"
       ],
       "properties": {
         "networkSecurityGroup": {
@@ -287,7 +297,7 @@
             "name": "ipconfig-v4",
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
-	      "privateIPAddressVersion":"IPv4",
+              "privateIPAddressVersion": "IPv4",
               "primary": "true",
               "publicIPAddress": {
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(variables('publicipName'),copyindex()))]"
@@ -297,7 +307,7 @@
               },
               "loadBalancerBackendAddressPools": [
                 {
-                  "id": "[concat(resourceId('Microsoft.Network/loadBalancers','loadBalancer'),'/backendAddressPools/LBBAP')]"
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', 'loadBalancer', 'LBBAP')]"
                 }
               ]
             }
@@ -306,13 +316,13 @@
             "name": "ipconfig-v6",
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
-	      "privateIPAddressVersion":"IPv6",
+              "privateIPAddressVersion": "IPv6",
               "subnet": {
                 "id": "[variables('subnet-id')]"
               },
               "loadBalancerBackendAddressPools": [
                 {
-                  "id": "[concat(resourceId('Microsoft.Network/loadBalancers','loadBalancer'),'/backendAddressPools/LBBAP-v6')]"
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', 'loadBalancer', 'LBBAP-v6')]"
                 }
               ]
             }
@@ -321,18 +331,18 @@
       }
     },
     {
-      "apiVersion": "2016-04-30-preview",
+      "apiVersion": "2019-03-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('vmName'), copyindex())]",
       "copy": {
         "name": "virtualMachineLoop",
         "count": "[variables('numberOfInstances')]"
       },
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts',variables('newStorageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/',variables('vmName'),copyindex())]",
-        "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
+        "[resourceId('Microsoft.Compute/availabilitySets',variables('availabilitySetName'))]",
+        "netIntLoop"
       ],
       "properties": {
         "availabilitySet": {
