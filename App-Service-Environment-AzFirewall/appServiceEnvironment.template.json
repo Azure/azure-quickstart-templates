@@ -1,0 +1,341 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "East US",
+            "allowedValues": [
+                "East US"
+            ],
+            "metadata": {
+                "description": "Location for all resources"
+            }
+        },
+        "aseName": {
+            "type": "string",
+            "defaultValue": "[concat('ASE', uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "Name of the ASE resource"
+            }
+        },
+        "dnsSuffix": {
+            "type": "string",
+            "metadata": {
+                "description": "Used when deploying an ILB enabled ASE.  Set this to the root domain associated with the ASE.  For example: contoso.com"
+            }
+        },
+        "vnetResourceGroupName": {
+            "type": "string",
+            "metadata": {
+                "description": "The resource group name that contains the vnet"
+            }
+        },
+        "vnetResourceName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the vnet"
+            }
+        },
+        "application_name": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the initial ASE App (without the FQDN)"
+            }
+        },
+        "internalLoadBalancingMode": {
+            "type": "int",
+            "defaultValue": 3,
+            "allowedValues": [
+                0,
+                1,
+                2,
+                3
+            ],
+            "metadata": {
+                "description": "0 = public VIP only, 1 = only ports 80/443 are mapped to ILB VIP, 2 = only FTP ports are mapped to ILB VIP, 3 = both ports 80/443 and FTP ports are mapped to an ILB VIP."
+            }
+        },
+        "aseSubnetName": {
+            "type": "string",
+            "defaultValue": "ase-subnet",
+            "metadata": {
+                "description": "Subnet name which will contain the App Service Environment"
+            }
+        },
+        "serverfarms_ASE_asp_name": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the app service"
+            }
+        },
+        "_artifactsLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "The location of resources, such as templates and DSC modules, that the template depends on"
+            },
+            "defaultValue": "https://raw.githubusercontent.com/jftl6y/azure-quickstart-templates/master"
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Auto-generated token to access _artifactsLocation"
+            },
+            "defaultValue": ""
+        },
+        "vnetAddressRange": {
+            "type": "string",
+            "metadata": {
+                "description": "Address range for the virtual network in CIDR notation"
+            }
+        },
+        "aseSubnetAddressRange": {
+            "type": "string",
+            "metadata": {
+                "description": "Address range for the ASE subnet in CIDR notation"
+            }
+        },
+        "aseNSGName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name for the NSG attached to the ASE subnet"
+            }
+        },
+        "aseRouteTableName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Route Table attached to the ASE subnet"
+            }
+        },
+        "azureFirewallName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Azure Firewall"
+            }
+        },
+        "deployAzureFirewall":{
+            "type": "bool",
+            "metadata": {"description":"Toggle whether to deploy the Azure Firewall"}
+        },
+        "azureFirewallRouteTableName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Azure Firewall Route Table"
+            }
+        },
+        "azureFirewallSubnetAddressRange": {
+            "type": "string",
+            "metadata": {
+                "description": "Address range that will be used by the Azure Firewall Subnet"
+            }
+        },
+        "azureFirewallPublicIP": {
+            "type": "string",
+            "metadata": {
+                "description": "Name for the Azure Firewall public IP resource"
+            }
+        },
+        "tags":{
+            "type": "object",
+            "metadata": {
+                "Description": "Resource Tags."
+            }
+        },
+        "aseManagementIPs":{
+            "type":"array",
+            "metadata": {"description": "Array of ASE management addresses"}
+        },
+        "aseNSGRoutes": {
+            "type": "object",
+            "metadata": {
+                "description": "Routes for the ASE NSG"
+            }
+        }
+    },
+    "variables": {
+        "vnetID": "[resourceId(parameters('vnetResourceGroupName'), 'Microsoft.Network/virtualNetworks', parameters('vnetResourceName'))]"
+    },
+    "resources": [
+        {
+            "apiVersion": "2017-05-10",
+            "type": "Microsoft.Resources/deployments",
+            "name": "BuildOrUpdateASENetworking",
+            "resourceGroup": "[parameters('vnetResourceGroupName')]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(parameters('_artifactsLocation'), '/nestedtemplates/vnet.json', parameters('_artifactsLocationSasToken'))]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "vnetResourceName": {
+                        "value": "[parameters('vnetResourceName')]"
+                    },
+                    "vnetResourceGroupName": {
+                        "value": "[parameters('vnetResourceGroupName')]"
+                    },
+                    "vnetAddressRange": {
+                        "value": "[parameters('vnetAddressRange')]"
+                    },
+                    "aseSubnetName": {
+                        "value": "[parameters('aseSubnetName')]"
+                    },
+                    "aseSubnetAddressRange": {
+                        "value": "[parameters('aseSubnetAddressRange')]"
+                    },
+                    "aseNSGName": {
+                        "value": "[parameters('aseNSGName')]"
+                    },
+                    "aseRouteTableName":{
+                        "value":"[parameters('aseRouteTableName')]"
+                    },
+                    "azureFirewallName": {
+                        "value": "[parameters('azureFirewallName')]"
+                    },
+                    "azureFirewallSubnetAddressRange": {
+                        "value": "[parameters('azureFirewallSubnetAddressRange')]"
+                    },
+                    "azureFirewallRouteTableName": {
+                        "value": "[parameters('azureFirewallRouteTableName')]"
+                    },
+                    "azureFirewallPublicIP": {
+                        "value": "[parameters('azureFirewallPublicIP')]"
+                    },
+                    "deployAzureFirewall": {
+                        "value": "[parameters('deployAzureFirewall')]"
+                    },
+                    "tags":{
+                        "value": "[parameters('tags')]"
+                    },
+                    "aseManagementIPs":{
+                        "value": "[parameters('aseManagementIPs')]"
+                    },
+                    "aseNSGRoutes":{
+                        "value":"[parameters('aseNSGRoutes')]"
+                    }
+                }
+            }
+        },
+        {
+            "apiVersion": "2015-08-01",
+            "type": "Microsoft.Web/hostingEnvironments",
+            "name": "[parameters('aseName')]",
+            "location": "[parameters('location')]",
+            "kind": "ASEV2",
+            "tags": {
+                "displayName": "Deploy ASE"
+            },
+            "properties": {
+                "name": "[parameters('aseName')]",
+                "location": "[parameters('location')]",
+                "ipSslAddressCount": 0,
+                "internalLoadBalancingMode": "[parameters('internalLoadBalancingMode')]",
+                "dnsSuffix": "[parameters('dnsSuffix')]",
+                "virtualNetwork": {
+                    "Id": "[variables('vnetID')]",
+                    "Subnet": "[parameters('aseSubnetName')]"
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "type": "Microsoft.web/serverfarms",
+            "tags": {
+                "displayName": "Deploy App Service"
+            },
+            "sku": {
+                "name": "I1",
+                "tier": "Isolated"
+            },
+            "kind": "app",
+            "name": "[parameters('serverfarms_ASE_asp_name')]",
+            "apiVersion": "2016-03-01",
+            "location": "[parameters('location')]",
+            "properties": {
+                "name": "[parameters('serverfarms_ASE_asp_name')]",
+                "workerSize": "0",
+                "workerSizeId": "0",
+                "numberOfWorkers": "1",
+                "reserved": false,
+                "hostingEnvironment": "[parameters('aseName')]"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/hostingEnvironments', parameters('aseName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Web/sites",
+            "tags": {
+                "displayName": "Deploy Web App"
+            },
+            "kind": "app",
+            "name": "[parameters('application_name')]",
+            "apiVersion": "2016-08-01",
+            "location": "West US 2",
+            "scale": null,
+            "properties": {
+                "enabled": true,
+                "hostNameSslStates": [
+                    {
+                        "name": "[concat(parameters('application_name'),parameters('dnsSuffix'))]",
+                        "sslState": "Disabled",
+                        "virtualIP": null,
+                        "thumbprint": null,
+                        "toUpdate": null,
+                        "hostType": "Standard"
+                    },
+                    {
+                        "name": "[concat(parameters('application_name'),'.scm.',parameters('dnsSuffix'))]",
+                        "sslState": "Disabled",
+                        "virtualIP": null,
+                        "thumbprint": null,
+                        "toUpdate": null,
+                        "hostType": "Repository"
+                    }
+                ],
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarms_ASE_asp_name'))]",
+                "reserved": false,
+                "siteConfig": null,
+                "scmSiteAlsoStopped": false,
+                "hostingEnvironmentProfile": {
+                    "id": "[resourceId('Microsoft.Web/hostingEnvironments', parameters('aseName'))]"
+                },
+                "clientAffinityEnabled": true,
+                "clientCertEnabled": false,
+                "hostNamesDisabled": false,
+                "containerSize": 0,
+                "dailyMemoryTimeQuota": 0,
+                "cloningInfo": null,
+                "httpsOnly": false
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarms_ASE_asp_name'))]",
+                "[resourceId('Microsoft.Web/hostingEnvironments', parameters('aseName'))]"
+            ]
+        },
+        {
+            "type": "microsoft.insights/components",
+            "kind": "web",
+            "name": "[parameters('application_name')]",
+            "apiVersion": "2015-05-01",
+            "location": "[parameters('location')]",
+            "tags": {
+                "applicationType": "web",
+                "displayName": "Deploy Application Insights"
+            },
+            "scale": null,
+            "properties": {
+                "Application_Type": "web",
+                "Flow_Type": "Redfield",
+                "Request_Source": "AppServiceEnablementCreate",
+                "HockeyAppId": null,
+                "SamplingPercentage": null
+            },
+            "dependsOn": []
+        }
+    ],
+    "outputs": {}
+}
