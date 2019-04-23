@@ -1,4 +1,20 @@
-# Change log for AzureRM template for SharePoint 2016 and 2013 configured with ADFS
+# Change log for Azure template for SharePoint 2019 / 2016 / 2013
+
+## February 2019 update
+
+* Added SharePoint 2019
+* Added option to enable Hybrid benefit for Windows Server licenses
+* Added option to enable automatic Windows updates
+* SharePoint VMs are now created with no data disk by default, but it can still be added by setting its size
+* Updated SharePointDSC from 2.6 to 3.1, and added unreleased changes of [PR #997](https://github.com/PowerShell/SharePointDsc/pull/997) to fix SPDistributedCacheService error in SharePoint 2019
+* Updated xActiveDirectory from 2.21 to 2.23
+* Updated NetworkingDsc from 6.1 to 6.3
+* Updated ActiveDirectoryCSDsc from 3.0 to 3.1
+* Updated CertificateDsc from 4.2 to 4.3
+* Updated ComputerManagementDsc from 5.2 to 6.1
+* Updated SqlServerDsc from 12.0 to 12.2
+* Updated StorageDsc from 4.0 to 4.4
+* Updated xWebAdministration from 2.2 to 2.4
 
 ## November 2018 update
 
