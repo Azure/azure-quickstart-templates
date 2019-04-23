@@ -31,7 +31,7 @@ if ! type -p ansible;  then
 #   yum -y install ansible
     curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
     sudo python get-pip.py
-    pip install ansible
+    pip install 'ansible==2.4.0'
 fi
 
 # remove the requiretty from the sudoers file. Per bug https://bugzilla.redhat.com/show_bug.cgi?id=1020147 this is unnecessary and has been removed on future releases of redhat, 
