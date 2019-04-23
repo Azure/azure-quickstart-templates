@@ -7,7 +7,7 @@
         "metadata": {
           "defaultValue":"[uniqueString('sql', resourceGroup().id)]",
           "description": "The name of the SQL logical server."
-        }          
+        }
       },
       "administratorLogin": {
           "type": "string",
@@ -19,30 +19,30 @@
           "type": "securestring",
           "metadata": {
             "description": "The administrator password of the SQL logical server."
-          }          
+          }
       },
-      "enableATP": {
+      "enableADS": {
           "defaultValue": false,
           "type": "bool"
           ,
           "metadata": {
-            "description": "Enable Advanced Threat Protection."
-          }     
+            "description": "Enable Advanced Data Security."
+          }
       },
       "allowAzureIPs": {
           "defaultValue": true,
           "type": "bool",
           "metadata": {
             "description": "Allow Azure services to access server."
-          }     
+          }
       },
       "connectionType": {
           "defaultValue": "Default",
-          "allowedValues": [ "Default", "Redirect", "Proxy" ],           
+          "allowedValues": [ "Default", "Redirect", "Proxy" ],
           "type": "string",
           "metadata": {
             "description": "SQL logical server connection type."
-          }     
+          }
       },
       "location": {
         "type": "string",
@@ -50,9 +50,14 @@
         "metadata": {
           "description": "Location for all resources."
         }
-      }      
+      }
   },
-  "variables": {},
+  "variables": {
+       "serverResourceGroupName": "[resourceGroup().name]",
+       "subscriptionId": "[subscription().subscriptionId]",
+       "uniqueStorage": "[uniqueString(variables('subscriptionId'), variables('serverResourceGroupName'), parameters('location'))]",
+       "storageName": "[tolower(concat('sqlva', variables('uniqueStorage')))]"
+   },
   "resources": [
       {
           "type": "Microsoft.Sql/servers",
@@ -80,7 +85,7 @@
                   }
               },
               {
-                  "condition": "[parameters('enableATP')]",
+                  "condition": "[parameters('enableADS')]",
                   "type": "securityAlertPolicies",
                   "name": "Default",
                   "apiVersion": "2017-03-01-preview",
@@ -95,17 +100,45 @@
                   }
               },
               {
+                  "condition": "[parameters('enableADS')]",
+                  "type": "vulnerabilityAssessments",
+                  "name": "Default",
+                  "apiVersion": "2018-06-01-preview",
+                  "dependsOn": [
+                      "[resourceId('Microsoft.Sql/servers/', parameters('serverName'))]"
+                  ],
+                  "properties": {
+                      "storageContainerPath": "[if(parameters('enableADS'), concat(reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageName')), '2018-07-01').primaryEndpoints.blob, 'vulnerability-assessment'), '')]",
+                      "storageAccountAccessKey": "[if(parameters('enableADS'), listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageName')), '2018-02-01').keys[0].value, '')]",
+                      "recurringScans": {
+                          "isEnabled": true,
+                          "emailSubscriptionAdmins": true
+                      }
+                  }
+              },
+              {
                   "type": "connectionPolicies",
                   "name": "Default",
                   "apiVersion": "2014-04-01",
                   "dependsOn": [
                       "[resourceId('Microsoft.Sql/servers/', parameters('serverName'))]"
-                  ],                
+                  ],
                   "properties": {
                       "connectionType": "[parameters('connectionType')]"
                   }
             }
           ]
+      },
+      {
+          "condition": "[parameters('enableADS')]",
+          "type": "Microsoft.Storage/storageAccounts",
+          "sku": {
+              "name": "Standard_LRS"
+          },
+          "kind": "Storage",
+          "name": "[variables('storageName')]",
+          "apiVersion": "2018-07-01",
+          "location": "[parameters('location')]"
       }
   ]
 }
