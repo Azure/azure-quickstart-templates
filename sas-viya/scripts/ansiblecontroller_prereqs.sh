@@ -22,13 +22,16 @@ if [ -z "$PRIMARY_USER" ]; then
 fi
 
 # to workaround the strange issues azure has had with certs in yum, run yum update twice.
-yum update -y rhui-azure-rhel7
+#yum update -y rhui-azure-rhel7
 #yum update -y --exclude=WALinuxAgent
 
 if ! type -p ansible;  then
    # install Ansible
    # pip install 'ansible==2.4.0'
-   yum -y install ansible
+#   yum -y install ansible
+    curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
+    sudo python get-pip.py
+    pip install ansible
 fi
 
 # remove the requiretty from the sudoers file. Per bug https://bugzilla.redhat.com/show_bug.cgi?id=1020147 this is unnecessary and has been removed on future releases of redhat, 
