@@ -127,12 +127,6 @@
         "description": "User name for the Virtual Machine."
       }
     },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Password for the Virtual Machine."
-      }
-    },
     "ubuntuOSVersion": {
       "type": "string",
       "defaultValue": "14.04.4-LTS",
@@ -186,6 +180,23 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
     }
   },
   "variables": {
@@ -206,7 +217,18 @@
     "subnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName')), '/subnets/', 'other')]",
     "esHost": "10.0.2.100",
     "esTemplateBase": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/elasticsearch",
-    "esDeploymentName": "esDeploymentForDiagnosticsWithELK"
+    "esDeploymentName": "esDeploymentForDiagnosticsWithELK",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
@@ -400,7 +422,8 @@
         "osProfile": {
           "computerName": "[variables('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
@@ -410,7 +433,7 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[concat(variables('vmName'),'_OSDisk')]",   
+            "name": "[concat(variables('vmName'),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
