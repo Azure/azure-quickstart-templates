@@ -57,16 +57,24 @@
 		},	
 		"multipleWriteLocations": {
 			"type": "bool",
-			"defaultValue": false,
+			"defaultValue": true,
 			"allowedValues": [ true, false ],
 			"metadata": {
 				"description": "Enable multi-master to make all regions writable."
 			}
 		},
+		"automaticFailover": {
+			"type": "bool",
+			"defaultValue": false,
+			"allowedValues": [ true, false ],
+			"metadata": {
+				"description": "Enable automatic failover for regions. Ignored when Multi-Master is enabled"
+			}
+		},
 		"databaseName": {
 			"type": "string",
 			"metadata": {
-				"description": "The name for the Mongo DB database"
+				"description": "The name for the Gremlin database"
 			}
 		},
 		"throughput": {
@@ -75,16 +83,16 @@
 			"minValue": 400,
 			"maxValue": 1000000			
 		},
-		"collection1Name": {
+		"graph1Name": {
 			"type": "string",
 			"metadata": {
-				"description": "The name for the first Mongo DB collection"
+				"description": "The name for the first Gremlin graph"
 			}
 		},
-		"collection2Name": {
+		"graph2Name": {
 			"type": "string",
 			"metadata": {
-				"description": "The name for the second Mongo DB collection"
+				"description": "The name for the second Gremlin graph"
 			}
 		}
 	},
@@ -125,78 +133,107 @@
 	[
 		{
 			"type": "Microsoft.DocumentDB/databaseAccounts",
-			"name": "[variables('accountName'))]",
+			"name": "[variables('accountName')]",
 			"apiVersion": "2015-04-08",
 			"location": "[parameters('location')]",
 			"tags": {},
-			"kind": "MongoDB",
+			"kind": "GlobalDocumentDB",
 			"properties": {
+				"capabilities": [{ "name": "EnableGremlin" }],
 				"consistencyPolicy": "[variables('consistencyPolicy')[parameters('defaultConsistencyLevel')]]",
 				"locations": "[variables('locations')]",
 				"databaseAccountOfferType": "Standard",
+				"enableAutomaticFailover": "[parameters('automaticFailover')]",
 				"enableMultipleWriteLocations": "[parameters('multipleWriteLocations')]"
 			}
 		},
 		{
-			"type": "Microsoft.DocumentDB/databaseAccounts/apis/mongo/databases",
-			"name": "[parameters('databaseName')]",
+			"type": "Microsoft.DocumentDB/databaseAccounts/apis/databases",
+			"name": "[concat(variables('accountName'), '/gremlin/', parameters('databaseName'))]",
 			"apiVersion": "2015-04-08",
 			"dependsOn": [ "[resourceId('Microsoft.DocumentDB/databaseAccounts/', variables('accountName'))]" ],
-			"options": { 
-				"throughput": "[parameters('throughput')]"	
+			"properties":{
+				"resource":{
+					"id": "[parameters('databaseName')]"
+				},
+				"options": { "throughput": "[parameters('throughput')]" }
 			}
 		},
 		{
-			"type": "Microsoft.DocumentDb/databaseAccounts/apis/mongo/databases/collections",
-			"name": "[parameters('collection1Name')]",
+			"type": "Microsoft.DocumentDb/databaseAccounts/apis/databases/graphs",
+			"name": "[concat(variables('accountName'), '/gremlin/', parameters('databaseName'), '/', parameters('graph1Name'))]",
 			"apiVersion": "2015-04-08",
-			"dependsOn": [ "[resourceId('Microsoft.DocumentDB/databaseAccounts/apis/mongo/databases', (parameters('databaseName'))]" ],
+			"dependsOn": [ "[resourceId('Microsoft.DocumentDB/databaseAccounts/apis/databases', variables('accountName'), 'gremlin', parameters('databaseName'))]" ],
 			"properties":
 			{
-				"shardKey": { "user_id": "Hash" },
-				"indexes": [
-					{
-						"key": { "key":["user_address"] },
-						"options": { "unique": "true" }
+				"resource":{
+					"id":  "[parameters('graph1Name')]",
+					"indexingPolicy": {
+						"indexingMode": "consistent",
+						"includedPaths": [{
+								"path": "/*",
+								"indexes": [
+									{
+										"kind": "Range",
+										"dataType": "number",
+										"precision": -1
+									},
+									{
+										"kind": "Range",
+										"dataType": "string",
+										"precision": -1
+									}
+								]
+							}
+						],
+						"excludedPaths": [
+							{
+								"path": "/MyPathToNotIndex/*"
+							}
+						]
 					},
-					{
-						"key": {"keys": ["user_address", "user_telephone"]},
-						"options": {}
+					"partitionKey": {
+						"paths": [ "/MyPartitionKey" ],
+						"kind": "Hash"
 					},
-					{
-						"key": { "keys":["_ts"] },
-						"options": { "expireAfterSeconds": "1000" }
-					}
-				]
-			},	
-			"options": {
-				"If-Match": "<ETag>"
-			},
+					"options": {}
+				}
+			}
+		},
+		{
+			"type": "Microsoft.DocumentDb/databaseAccounts/apis/databases/graphs",
+			"name": "[concat(variables('accountName'), '/gremlin/', parameters('databaseName'), '/', parameters('graph2Name'))]",
+			"apiVersion": "2015-04-08",
+			"dependsOn": [ "[resourceId('Microsoft.DocumentDB/databaseAccounts/apis/databases', variables('accountName'), 'gremlin', parameters('databaseName'))]" ],
+			"properties":
 			{
-				"type": "Microsoft.DocumentDb/databaseAccounts/apis/mongo/databases/collections",
-				"name": "[parameters('collection2Name')]",
-				"apiVersion": "2015-04-08",
-				"dependsOn": [ "[resourceId('Microsoft.DocumentDB/databaseAccounts/apis/mongo/databases', (parameters('databaseName'))]" ],
-				"properties":
-				{
-					"shardKey": { "company_id": "Hash" },
-					"indexes": [
-						{
-							"key": { "key":["company_address"] },
-							"options": { "unique": "true" }
-						},
-						{
-							"key": {"keys": ["company_address", "company_telephone"]},
-							"options": {}
-						},
-						{
-							"key": { "keys":["_ts"] },
-							"options": { "expireAfterSeconds": "1000" }
-						}
-					]
-				},	
-				"options": {
-					"If-Match": "<ETag>"
+				"resource":{
+					"id":  "[parameters('graph2Name')]",
+					"indexingPolicy": {
+						"indexingMode": "consistent",
+						"includedPaths": [{
+								"path": "/*",
+								"indexes": [
+									{
+										"kind": "Range",
+										"dataType": "number",
+										"precision": -1
+									},
+									{
+										"kind": "Range",
+										"dataType": "string",
+										"precision": -1
+									}
+								]
+							}
+						],
+						"excludedPaths": []
+					},
+					"partitionKey": {
+						"paths": [ "/MyPartitionKey" ],
+						"kind": "Hash"
+					},
+					"options": { }
 				}
 			}
 		}

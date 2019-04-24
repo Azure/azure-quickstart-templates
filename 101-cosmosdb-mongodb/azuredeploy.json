@@ -69,17 +69,23 @@
 				"description": "The name for the Mongo DB database"
 			}
 		},
-		"collectionName": {
-			"type": "string",
-			"metadata": {
-				"description": "The name for the Mongo DB collection"
-			}
-		},
 		"throughput": {
 			"type": "int",
 			"defaultValue": 400,
 			"minValue": 400,
 			"maxValue": 1000000			
+		},
+		"collection1Name": {
+			"type": "string",
+			"metadata": {
+				"description": "The name for the first Mongo DB collection"
+			}
+		},
+		"collection2Name": {
+			"type": "string",
+			"metadata": {
+				"description": "The name for the second Mongo DB collection"
+			}
 		}
 	},
 	"variables": {
@@ -119,7 +125,7 @@
 	[
 		{
 			"type": "Microsoft.DocumentDB/databaseAccounts",
-			"name": "[variables('accountName'))]",
+			"name": "[variables('accountName')]",
 			"apiVersion": "2015-04-08",
 			"location": "[parameters('location')]",
 			"tags": {},
@@ -132,42 +138,67 @@
 			}
 		},
 		{
-			"type": "Microsoft.DocumentDB/databaseAccounts/apis/mongo/databases",
-			"name": "[parameters('databaseName')]",
+			"type": "Microsoft.DocumentDB/databaseAccounts/apis/databases",
+			"name": "[concat(variables('accountName'), '/mongodb/', parameters('databaseName'))]",
 			"apiVersion": "2015-04-08",
 			"dependsOn": [ "[resourceId('Microsoft.DocumentDB/databaseAccounts/', variables('accountName'))]" ],
-			"options": {  }
+			"properties":{
+				"resource":{
+					"id": "[parameters('databaseName')]"
+				},
+				"options": { "throughput": "[parameters('throughput')]" }
+			}
 		},
 		{
-			"type": "Microsoft.DocumentDb/databaseAccounts/apis/mongo/databases/collections",
-			"name": "[parameters('collectionName')]",
+			"type": "Microsoft.DocumentDb/databaseAccounts/apis/databases/collections",
+			"name": "[concat(variables('accountName'), '/mongodb/', parameters('databaseName'), '/', parameters('collection1Name'))]",
 			"apiVersion": "2015-04-08",
-			"dependsOn": [ "[resourceId('Microsoft.DocumentDB/databaseAccounts/apis/mongo/databases', (parameters('databaseName'))]" ],
+			"dependsOn": [ "[resourceId('Microsoft.DocumentDB/databaseAccounts/apis/databases', variables('accountName'), 'mongodb', parameters('databaseName'))]" ],
 			"properties":
 			{
-				"shardKey": { "userid": "Hash" },
-				"indexes": [
-					{
-						"key": { "key":["user_address"] },
-						"options": { "unique": "true" }
-					},
-					{
-						"key": {"keys": ["user_address", "user_tel"]},
-						"options": {}
-					},
-					{
-						"key": { "keys":["_ts"] },
-						"options": { "expireAfterSeconds": "1000" }
+				"resource":{
+					"id":  "[parameters('collection1Name')]",
+					"shardKey": { "user_id": "Hash" },
+					"indexes": [
+						{
+							"key": { "keys":["user_id", "user_address"] },
+							"options": { "unique": "true" }
+						},
+						{
+							"key": { "keys":["_ts"] },
+							"options": { "expireAfterSeconds": "2629746" }
+						}
+					],
+					"options": {
+						"If-Match": "<ETag>"
 					}
-				]
-			},
-			"conflictResolutionPolicy": {
-				"mode": "LastWriterWins",
-				"conflictResolutionPath": "/user_level"
-			},	
-			"options": {
-				"throughput": "[parameters('throughput')]",
-				"If-Match": "<ETag>"
+				}
+			}
+		},
+		{
+			"type": "Microsoft.DocumentDb/databaseAccounts/apis/databases/collections",
+			"name": "[concat(variables('accountName'), '/mongodb/', parameters('databaseName'), '/', parameters('collection2Name'))]",
+			"apiVersion": "2015-04-08",
+			"dependsOn": [ "[resourceId('Microsoft.DocumentDB/databaseAccounts/apis/databases', variables('accountName'), 'mongodb', parameters('databaseName'))]" ],
+			"properties":
+			{
+				"resource":{
+					"id":  "[parameters('collection2Name')]",
+					"shardKey": { "company_id": "Hash" },
+					"indexes": [
+						{
+							"key": { "keys":["company_id", "company_address"] },
+							"options": { "unique": "true" }
+						},
+						{
+							"key": { "keys":["_ts"] },
+							"options": { "expireAfterSeconds": "2629746" }
+						}
+					],
+					"options": {
+						"If-Match": "<ETag>"
+					}
+				}
 			}
 		}
 	],

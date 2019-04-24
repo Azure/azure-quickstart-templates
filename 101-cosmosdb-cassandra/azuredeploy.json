@@ -19,14 +19,14 @@
 			"type":"string",
 			"defaultValue": "West US 2",
 			"metadata": {
-				"description": "The primary region for the Cosmos DB account."
+				"description": "The primary replica region for the Cosmos DB account."
 			}
 		},
 		"secondaryRegion":{
 			"type":"string",
 			"defaultValue": "East US 2",
 			"metadata": {
-			  "description": "The secondary region for the Cosmos DB account."
+			  "description": "The secondary replica region for the Cosmos DB account."
 		  }
 		},
 		"defaultConsistencyLevel": {
@@ -83,10 +83,16 @@
 			"minValue": 400,
 			"maxValue": 1000000			
 		},
-		"containerName": {
+		"table1Name": {
 			"type": "string",
 			"metadata": {
-				"description": "The name for the Cassandra table"
+				"description": "The name for first the Cassandra table"
+			}
+		},
+		"table2Name": {
+			"type": "string",
+			"metadata": {
+				"description": "The name for second the Cassandra table"
 			}
 		}
 	},
@@ -127,13 +133,13 @@
 	[
 		{
 			"type": "Microsoft.DocumentDB/databaseAccounts",
-			"name": "[variables('accountName'))]",
+			"name": "[variables('accountName')]",
 			"apiVersion": "2015-04-08",
 			"location": "[parameters('location')]",
 			"tags": {},
 			"kind": "GlobalDocumentDB",
 			"properties": {
-				"capabilities": "EnableCassandra",
+				"capabilities": [{ "name": "EnableCassandra" }],
 				"consistencyPolicy": "[variables('consistencyPolicy')[parameters('defaultConsistencyLevel')]]",
 				"locations": "[variables('locations')]",
 				"databaseAccountOfferType": "Standard",
@@ -142,81 +148,72 @@
 			}
 		},
 		{
-			"type": "Microsoft.DocumentDB/databaseAccounts/apis/cassandra/keyspaces",
-			"name": "[parameters('keyspaceName')]",
+			"type": "Microsoft.DocumentDB/databaseAccounts/apis/keyspaces",
+			"name": "[concat(variables('accountName'), '/cassandra/', parameters('keyspaceName'))]",
 			"apiVersion": "2015-04-08",
 			"dependsOn": [ "[resourceId('Microsoft.DocumentDB/databaseAccounts/', variables('accountName'))]" ],
-			"options": { "throughput": "[parameters('throughput')]" }
-		},
-		{
-			"type": "Microsoft.DocumentDb/databaseAccounts/apis/cassandra/keyspaces/tables",
-			"name": "[parameters('containerName')]",
-			"apiVersion": "2015-04-08",
-			"dependsOn": [ "[resourceId('Microsoft.DocumentDB/databaseAccounts/apis/cassandra/keyspaces', (parameters('table1Name'))]" ],
-			"properties":
-			{
-				"schema": {
-					"columns": [
-						{
-							"name": "userid",
-							"type": "uuid"
-						},
-						{
-							"name": "posted_month",
-							"type": "int"
-						},
-						{
-							"name": "posted_time",
-							"type": "uuid"
-						},
-						{
-							"name": "body",
-							"type": "text"
-						},
-						{
-							"name": "posted_by",
-							"type": "text"
-						}
-					],
-					"partitionKeys": [ { "name": "userid" }, { "name": "posted_month" }, { "name": "posted_time" } ]
-				}
-			},
-			"options": {
-				"If-Match": "<ETag>"
+			"properties":{
+				"resource":{
+					"id": "[parameters('keyspaceName')]"
+				},
+				"options": { "throughput": "[parameters('throughput')]" }
 			}
 		},
 		{
-			"type": "Microsoft.DocumentDb/databaseAccounts/apis/cassandra/keyspaces/tables",
-			"name": "[parameters('containerName')]",
+			"type": "Microsoft.DocumentDb/databaseAccounts/apis/keyspaces/tables",
+			"name": "[concat(variables('accountName'), '/cassandra/', parameters('keyspaceName'), '/', parameters('table1Name'))]",
 			"apiVersion": "2015-04-08",
-			"dependsOn": [ "[resourceId('Microsoft.DocumentDB/databaseAccounts/apis/cassandra/keyspaces', (parameters('table2Name'))]" ],
+			"dependsOn": [ "[resourceId('Microsoft.DocumentDB/databaseAccounts/apis/keyspaces', variables('accountName'), 'cassandra', parameters('keyspaceName'))]" ],
 			"properties":
 			{
-				"schema": {
-					"columns": [
-						{
-							"name": "machine",
-							"type": "uuid"
-						},
-						{
-							"name": "cpu",
-							"type": "int"
-						},
-						{
-							"name": "mtime",
-							"type": "timeuuid"
-						},
-						{
-							"name": "load",
-							"type": "float"
-						}
-					],
-					"partitionKeys": [ { "name": "machine" }, { "name": "cpu" }, { "name": "mtime" } ],
-					"clusterKeys": [ { "name": "mtime" }, { "orderBy": "Des" } ]
-				}
-			},
-			"options": {
-				"If-Match": "<ETag>"
+				"resource":{
+					"id":  "[parameters('table1Name')]",
+					"schema": {
+						"columns": [
+							{ "name": "userid", "type": "uuid" },
+							{ "name": "posted_month", "type": "int" },
+							{ "name": "posted_time", "type": "uuid" },
+							{ "name": "body", "type": "text" },
+							{ "name": "posted_by", "type": "text" }
+						],
+						"partitionKeys": [ 
+							{ "name": "userid" }, 
+							{ "name": "posted_month" }, 
+							{ "name": "posted_time" } 
+						]
+					}
+				},
+				"options": {}
+			}
+		},
+		{
+			"type": "Microsoft.DocumentDb/databaseAccounts/apis/keyspaces/tables",
+			"name": "[concat(variables('accountName'), '/cassandra/', parameters('keyspaceName'), '/', parameters('table2Name'))]",
+			"apiVersion": "2015-04-08",
+			"dependsOn": [ "[resourceId('Microsoft.DocumentDB/databaseAccounts/apis/keyspaces', variables('accountName'), 'cassandra', parameters('keyspaceName'))]" ],
+			"properties":
+			{
+				"resource":{
+					"id":  "[parameters('table2Name')]",
+					"schema": {
+						"columns": [
+							{ "name": "loadid", "type": "uuid" },
+							{ "name": "machine", "type": "uuid" },
+							{ "name": "cpu", "type": "int" },
+							{ "name": "mtime", "type": "int" },
+							{ "name": "load", "type": "float" }
+						],
+						"partitionKeys": [ 
+							{ "name": "machine" }, 
+							{ "name": "cpu" }, 
+							{ "name": "mtime" } 
+						],
+						"clusterKeys": [ 
+							{ "name": "loadid", "orderBy": "asc" } 
+						]
+					}
+				},
+				"options": {}
 			}
 		}
 	],

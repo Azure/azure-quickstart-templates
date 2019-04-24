@@ -4,7 +4,7 @@ This template will create an Azure Cosmos DB account and provides multiple diffe
 
 - **API Type:** Select from any of the supported API types including: SQL, Cassandra, Gremlin, MongoDB, or Table.
 - **Consistency Level:** Select from one of the 5 consistency levels: Strong, Bounded Staleness, Session, Consistent Prefix, Eventual.
-- **Multi-Region:** Select locations for primary and secondary regions. (Note, this template lists every region in Azure, ensure regions selected are available to your subscription.)
+- **Multi-Region:** Select locations for primary and secondary regions. (Note, this template lists every region in Azure at the time of publishing, ensure regions selected are available to your subscription.)
 - **Multi-Master:** Select whether to enable multi-master support. Primary and Secondary regions, fully writable.
 - **Automatic Failover:** Select whether to enable automatic failover on the account (Ignored when Multi-Master is enabled).
 
@@ -14,5 +14,3 @@ This template will create an Azure Cosmos DB account and provides multiple diffe
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-cosmosdb-create-multi-region-account%2Fazuredeploy.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
-
-Issues with this ARM template can be filed here: [github.com/markjbrown/cosmosdb-create-account-arm-template](https://github.com/markjbrown/cosmosdb-create-account-arm-template)
