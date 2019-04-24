@@ -21,14 +21,11 @@ if [ -z "$PRIMARY_USER" ]; then
 	PRIMARY_USER="sas"
 fi
 
-# to workaround the strange issues azure has had with certs in yum, run yum update twice.
-#yum update -y rhui-azure-rhel7
-#yum update -y --exclude=WALinuxAgent
+# on 4/17, we started having intermittent issues with this repository being present for updates, so configuring to skip
+yum-config-manager --save --setopt=rhui-microsoft-azure-rhel7-eus.skip_if_unavailable=true
 
 if ! type -p ansible;  then
    # install Ansible
-   # pip install 'ansible==2.4.0'
-#   yum -y install ansible
     curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
     sudo python get-pip.py
     pip install 'ansible==2.4.0'
