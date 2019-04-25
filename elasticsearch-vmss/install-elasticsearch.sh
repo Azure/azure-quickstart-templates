@@ -90,7 +90,7 @@ done
 # Install Oracle Java
 install_java()
 {
-    if [ -f "jdk-8u151-linux-x64.tar.gz" ];
+    if [ -f "jdk-8u201-linux-x64.tar.gz" ];
     then
         log "Java already downloaded"
         return
@@ -100,8 +100,8 @@ install_java()
     RETRY=0
     MAX_RETRY=5
     while [ $RETRY -lt $MAX_RETRY ]; do
-        log "Retry $RETRY: downloading jdk-8u151-linux-x64.tar.gz"
-        wget --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/8u151-b12/e758a0de34e24606bca991d704f6dcbf/jdk-8u151-linux-x64.tar.gz
+        log "Retry $RETRY: downloading jdk-8u201-linux-x64.tar.gz"
+        wget --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" https://download.oracle.com/otn-pub/java/jdk/8u201-b09/42970487e3af4f5aa5bca3f542482c60/jdk-8u201-linux-x64.tar.gz
         if [ $? -ne 0 ]; then
             let RETRY=RETRY+1
         else
@@ -109,12 +109,12 @@ install_java()
         fi
     done
     if [ $RETRY -eq $MAX_RETRY ]; then
-        log "Failed to download jdk-8u151-linux-x64.tar.gz"
+        log "Failed to download jdk-8u201-linux-x64.tar.gz"
         exit 1
     fi
     
-    tar xzf jdk-8u151-linux-x64.tar.gz -C /var/lib
-    export JAVA_HOME=/var/lib/jdk1.8.0_151
+    tar xzf jdk-8u201-linux-x64.tar.gz -C /var/lib
+    export JAVA_HOME=/var/lib/jdk1.8.0_201
     export PATH=$PATH:$JAVA_HOME/bin
     log "JAVA_HOME: $JAVA_HOME"
     log "PATH: $PATH"
@@ -189,9 +189,9 @@ configure_system()
     if [ ${IS_DATA_NODE} -eq 0 ]; 
     then
         # Kibana    
-        IPADDRESS=$(ip route get 8.8.8.8 | awk 'NR==1 {print $NF}')
-        echo "server.host: \"$IPADDRESS\"" >> /etc/kibana/kibana.yml
-        echo "elasticsearch.url: \"http://$IPADDRESS:9200\"" >> /etc/kibana/kibana.yml
+        IP_ADDRESS=$(ip route get 8.8.8.8 | awk -F"src " 'NR==1{split($2,a," ");print a[1]}')
+        echo "server.host: \"$IP_ADDRESS\"" >> /etc/kibana/kibana.yml
+        echo "elasticsearch.url: \"http://$IP_ADDRESS:9200\"" >> /etc/kibana/kibana.yml
         echo "xpack.security.enabled: false" >> /etc/kibana/kibana.yml
         chown -R kibana:kibana /usr/share/kibana
     else
