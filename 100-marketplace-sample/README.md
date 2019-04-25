@@ -9,7 +9,7 @@ This template contains extra parameters to allow for the existing resources use 
 
 createUiDefinition.json is also included.
 
-Before submitting the Marketplace, the following steps will need to be performed
+Before submitting to Marketplace, the following steps will need to be performed
 
 - Rename ```azuredeploy.json``` to ```mainTemplate.json```
 - Rename ```azuredeploy.parameters.json``` to ```mainTemplate.parameters.json```
