@@ -215,4 +215,11 @@ else
   log "count not equal"
 fi
 
+osVersion=$(cat /etc/os-release)
+if [[ $osVersion =~ SUSE ]]
+then
+  systemctl restart nfsserver
+  systemctl enable nfsserver
+fi
+
 exit
