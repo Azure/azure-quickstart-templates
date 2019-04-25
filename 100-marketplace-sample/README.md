@@ -12,7 +12,7 @@ createUiDefinition.json is also included.
 Before submitting to Marketplace, the following steps will need to be performed
 
 - Rename ```azuredeploy.json``` to ```mainTemplate.json```
-- Rename ```azuredeploy.parameters.json``` to ```mainTemplate.parameters.json```
+- Remove ```azuredeploy.parameters.json``` from the list if files to be submitted
 - Update the GUID in ```mainTemplate.json``` for Customer Usage Attribution
   - https://docs.microsoft.com/en-us/azure/marketplace/marketplace-solution-templates
 - Create a zip package of all the dependencies including the templates files, scripts, UI definition etc
