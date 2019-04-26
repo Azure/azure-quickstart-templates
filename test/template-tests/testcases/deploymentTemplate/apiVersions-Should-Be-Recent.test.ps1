@@ -44,7 +44,7 @@ foreach ($av in $allApiVersions) { # Then walk over each object containing an Ap
         $apiString = $apiString.Substring(0, $apiString.Length - '-preview'.Length)
     }
     
-    $apiDate = $av.ApiVersion -as [DateTime] # now coerce the apiVersion into a DateTime
+    $apiDate = $apiString -as [DateTime] # now coerce the apiVersion into a DateTime
     if (-not $apiDate) {
         # If this failed, write an error.
         Write-Error "Api versions must be a fixed date. $FullResourceType is not." -TargetObject $av -ErrorId ApiVersion.Not.Date
@@ -72,10 +72,15 @@ foreach ($av in $allApiVersions) { # Then walk over each object containing an Ap
             Write-Error "$FullResourceType uses a -preview version when there are $($howRecent?) more recent versions available" -TargetObject $av
         } 
     }
+
+    #! need to make sure that if it is an old apiVersion, that there is a later one that can be used.
     # Finally, check how long it's been since the ApiVersion's date
     $timeSinceApi = [DateTime]::Now - $apiDate
-    if ($timeSinceApi.TotalDays -gt 365) {  # If it's older than a year
+    if ($timeSinceApi.TotalDays -gt 730) {  # If it's older than a year
         # write a warning        
-        Write-Warning "Api versions should be under a year old ($FullResourceType is $([Math]::Floor($timeSinceApi.TotalDays)) days old)" 
+        Write-Error "Api versions must be no more than 2 years old ($FullResourceType is $([Math]::Floor($timeSinceApi.TotalDays)) days old)" 
+    }elseif ($timeSinceApi.TotalDays -gt 365) {
+        # write a warning        
+        Write-Warning "Api versions should be less than a year old ($FullResourceType is $([Math]::Floor($timeSinceApi.TotalDays)) days old)"         
     }
 }
