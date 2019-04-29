@@ -55,6 +55,8 @@ class SasLicenseCPU:
                         'serial': self.serial}
         if self.serial.startswith('+'):
             ansible_dict['licensed_cores'] = int(self.serial.lstrip('+'))
+        else:
+            ansible_dict['licensed_cores'] = -1
 
         return ansible_dict
 

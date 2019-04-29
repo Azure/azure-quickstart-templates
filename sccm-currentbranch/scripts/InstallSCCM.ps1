@@ -24,7 +24,7 @@ if(Test-Path $cmpath)
 }
 
 "[$(Get-Date -format HH:mm:ss)] Copying SCCM installation source..." | Out-File -Append $logpath
-$cmurl = "http://download.microsoft.com/download/F/C/E/FCEC70F4-168A-4D68-8B52-30913C402D5F/SC_Configmgr_SCEP_1802.exe"
+$cmurl = "http://download.microsoft.com/download/1/B/C/1BCADBD7-47F6-40BB-8B1F-0B2D9B51B289/SC_Configmgr_SCEP_1902.exe"
 Invoke-WebRequest -Uri $cmurl -OutFile $cmpath
 
 if(Test-Path $cmsourcepath)
