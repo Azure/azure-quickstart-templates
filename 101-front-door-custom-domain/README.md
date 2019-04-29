@@ -4,3 +4,10 @@
 </a>
 
 This template configures a custom domain with HTTPS (AFD managed cert) with **Front Door**.
+
+For the deployment of this template to succeed the specified domain will require a CNAME to the Front Door address.
+
+An example would be:
+
+AFD hostname: contoso.azurefd.net
+CNAME www.contoso.com to contoso.azurefd.net
