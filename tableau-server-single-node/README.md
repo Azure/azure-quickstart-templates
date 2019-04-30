@@ -1,4 +1,8 @@
 # Tableau Server Single Node
+<<<<<<< HEAD
+=======
+<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/tableau-server-single-node/images/tableau_rgb.png"/>
+>>>>>>> a20929106bf49c96295d40ef0a6a6bb7616d9050
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Ftableau-server-single-node%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
