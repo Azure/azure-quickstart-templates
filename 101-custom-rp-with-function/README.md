@@ -7,7 +7,7 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This sample template deploys a custom resource provider to Azure and creates a user using an ARM template.
+This sample template deploys a custom resource provider to Azure and creates a user using an ARM template.  You may optionally deploy the function app and custom provider definition - this only needs to be done once and then the custom resource can be deployed many times.
 
 The customproviders resource is a hidden Azure resource so to confirm that the resource provider has been deployed you will have to check the box that says *Show hidden types* in the Azure portal Overview page for the resource group.
 
