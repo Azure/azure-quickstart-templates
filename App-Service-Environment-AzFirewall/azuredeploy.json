@@ -77,56 +77,63 @@
         },
         "vnetAddressRange": {
             "type": "string",
-            "defaultValue": {},
+            "defaultValue": "",
             "metadata": {
                 "description": "Address range for the virtual network in CIDR notation"
             }
         },
         "aseSubnetAddressRange": {
             "type": "string",
-            "defaultValue": {},
+            "defaultValue": "",
             "metadata": {
                 "description": "Address range for the ASE subnet in CIDR notation"
             }
         },
         "aseNSGName": {
             "type": "string",
+            "defaultValue": "ase-NSG",
             "metadata": {
                 "description": "Name for the NSG attached to the ASE subnet"
             }
         },
         "aseRouteTableName": {
             "type": "string",
+            "defaultValue": "ase-RouteTable",
             "metadata": {
                 "description": "Name of the Route Table attached to the ASE subnet"
             }
         },
         "azureFirewallName": {
             "type": "string",
+            "defaultValue": "azFirewall",
             "metadata": {
                 "description": "Name of the Azure Firewall"
             }
         },
         "deployAzureFirewall": {
             "type": "bool",
+            "defaultValue": true,
             "metadata": {
                 "description": "Toggle whether to deploy the Azure Firewall"
             }
         },
         "azureFirewallRouteTableName": {
             "type": "string",
+            "defaultValue": "azFirewall-RouteTable",
             "metadata": {
                 "description": "Name of the Azure Firewall Route Table"
             }
         },
         "azureFirewallSubnetAddressRange": {
             "type": "string",
+            "defaultValue": "",
             "metadata": {
                 "description": "Address range that will be used by the Azure Firewall Subnet"
             }
         },
         "azureFirewallPublicIP": {
             "type": "string",
+            "defaultValue": "AzFirewall-pip",
             "metadata": {
                 "description": "Name for the Azure Firewall public IP resource"
             }
@@ -152,13 +159,13 @@
         }
     },
     "variables": {
-        "vnetID": "[resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks', parameters('vnetResourceName'))]",
+        "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetResourceName'))]",
         "nestedtemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/vnet.json', parameters('_artifactsLocationSasToken')))]"
     },
     "resources": [
         {
-            "apiVersion": "2018-05-01",
             "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2018-05-01",
             "name": "BuildOrUpdateASENetworking",
             "properties": {
                 "mode": "Incremental",
@@ -213,18 +220,20 @@
                         "value": "[parameters('aseManagementIps')]"
                     }
                 }
-            },
-            "dependsOn": []
+            }
         },
         {
-            "apiVersion": "2015-08-01",
             "type": "Microsoft.Web/hostingEnvironments",
+            "apiVersion": "2018-02-01",
             "name": "[parameters('aseName')]",
             "location": "[parameters('location')]",
             "kind": "ASEV2",
             "tags": {
                 "displayName": "Deploy ASE"
             },
+            "dependsOn": [
+                "Microsoft.Resources/deployments/BuildOrUpdateASENetworking"
+            ],
             "properties": {
                 "name": "[parameters('aseName')]",
                 "location": "[parameters('location')]",
@@ -235,22 +244,19 @@
                     "Id": "[variables('vnetID')]",
                     "Subnet": "[parameters('aseSubnetName')]"
                 }
-            },
-            "dependsOn": [
-                "Microsoft.Resources/deployments/BuildOrUpdateASENetworking"
-            ]
+            }
         },
         {
             "type": "Microsoft.web/serverfarms",
-            "name": "[parameters('serverFarmsAseAspName')]",
             "apiVersion": "2018-02-01",
+            "name": "[parameters('serverFarmsAseAspName')]",
             "location": "[parameters('location')]",
-            "tags": {
-                "displayName": "Deploy App Service"
-            },
             "sku": {
                 "name": "I1",
                 "tier": "Isolated"
+            },
+            "tags": {
+                "displayName": "Deploy App Service"
             },
             "kind": "app",
             "properties": {
@@ -267,13 +273,13 @@
         },
         {
             "type": "Microsoft.Web/sites",
+            "apiVersion": "2018-02-01",
+            "name": "[parameters('applicationName')]",
+            "location": "[parameters('location')]",
             "tags": {
                 "displayName": "Deploy Web App"
             },
             "kind": "app",
-            "name": "[parameters('applicationName')]",
-            "apiVersion": "2018-02-01",
-            "location": "[parameters('location')]",
             "properties": {
                 "enabled": true,
                 "hostNameSslStates": [
@@ -308,14 +314,14 @@
         },
         {
             "type": "microsoft.insights/components",
-            "kind": "web",
-            "name": "[parameters('applicationName')]",
             "apiVersion": "2015-05-01",
+            "name": "[parameters('applicationName')]",
             "location": "[parameters('location')]",
             "tags": {
                 "applicationType": "web",
                 "displayName": "Deploy Application Insights"
             },
+            "kind": "web",
             "properties": {
                 "Application_Type": "web",
                 "Flow_Type": "Redfield",
@@ -325,6 +331,5 @@
                 "Microsoft.Resources/deployments/BuildOrUpdateASENetworking"
             ]
         }
-    ],
-    "outputs": {}
+    ]
 }
