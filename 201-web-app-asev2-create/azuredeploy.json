@@ -1,5 +1,5 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
     "contentVersion": "1.0.0.0",
     "parameters": {
         "aseName": {
@@ -10,36 +10,27 @@
         },
         "aseLocation": { 
             "type": "string",
-            "defaultValue": "South Central US",
             "metadata": { 
                 "description": "Location of the App Service Environment" 
             } 
-        }, 
-        "existingVirtualNetworkName": {
+         },
+        "existingSubnetResourceId": {
             "type": "string",
             "metadata": {
-              "description": "Name of the existing VNET"
+                "description": "ARM Url reference for the subnet that will contain the ASE.  Only Microsoft.Network is supported for ASEv2.  /subscriptions/subIDGoesHere/resourceGroups/rgNameGoesHere/providers/Microsoft.Network/virtualNetworks/vnetnamegoeshere/subnets/subnetnamegoeshere"
             }
         },
-        "existingVirtualNetworkResourceGroup": {
-            "type": "string",
+        "internalLoadBalancingMode": {
+            "type": "int",
+            "allowedValues": [0,3],
             "metadata": {
-              "description": "Name of the existing VNET resource group"
-            }
-        }, 
-        "subnetName": {
-            "type": "string",
-            "metadata": {
-                "description": "Subnet name that will contain the App Service Environment"
+                "description": "0 = public VIP only, 3 = both ports 80/443 and FTP ports are mapped to an ILB VIP."
             }
         }
     },
-    "variables":{
-        "vnetID": "[resourceId(parameters('existingVirtualNetworkResourceGroup'), 'Microsoft.Network/virtualNetworks', parameters('existingVirtualNetworkName'))]"
-    },
     "resources": [
       {
-        "apiVersion": "2015-08-01",
+        "apiVersion": "2019-02-01",
         "type": "Microsoft.Web/hostingEnvironments",
         "name": "[parameters('aseName')]",
         "kind": "ASEV2",
@@ -47,9 +38,10 @@
         "properties": {
           "name": "[parameters('aseName')]",
           "location": "[parameters('aseLocation')]",
+          "ipSslAddressCount": 0,
+          "internalLoadBalancingMode": "[parameters('internalLoadBalancingMode')]",
           "virtualNetwork": {
-            "Id": "[variables('vnetID')]",
-            "Subnet": "[parameters('subnetName')]"
+            "Id": "[parameters('existingSubnetResourceId')]",
           }
         }
       }
