@@ -20,6 +20,12 @@
         "description": "Password for the DevOps Virtual Machine, the Jenkins instance, and the VM Scale Sets deployed by Spinnaker."
       }
     },
+    "sshPublicKey": {
+      "type": "string",
+      "metadata": {
+        "description": "Configure the linux machines with the SSH public key string. Your key should include three parts, for example 'ssh-rsa AAAAB...snip...UcyupgH azureuser@linuxvm'"
+      }
+    },
     "servicePrincipalAppId": {
       "type": "string",
       "metadata": {
@@ -55,8 +61,7 @@
     "publicIPAddressName": "[concat(variables('scenarioPrefix'), 'PublicIP')]",
     "vmName": "[concat(variables('scenarioPrefix'), 'VM')]",
     "vmExtensionName": "[concat(variables('scenarioPrefix'), 'Init')]",
-    "spinnakerOSDiskName": "[concat(variables('scenarioPrefix'), 'OSDisk')]",
-    "_artifactsLocation": "https://raw.githubusercontent.com/Azure/azure-devops-utils/v0.24.0/",
+    "_artifactsLocation": "https://raw.githubusercontent.com/Azure/azure-devops-utils/master/",
     "_extensionScript": "301-jenkins-aptly-spinnaker-vmss.sh",
     "_artifactsLocationSasToken": ""
   },
@@ -130,6 +135,17 @@
           "apiVersion": "2015-06-01",
           "properties": {
             "value": "[parameters('adminPassword')]"
+          },
+          "dependsOn": [
+            "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
+          ]
+        },
+        {
+          "type": "secrets",
+          "name": "VMSshPublicKey",
+          "apiVersion": "2015-06-01",
+          "properties": {
+            "value": "[parameters('sshPublicKey')]"
           },
           "dependsOn": [
             "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
@@ -280,7 +296,7 @@
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "Standard_D1_v2"
+          "vmSize": "Standard_D4_v2"
         },
         "osProfile": {
           "computerName": "[variables('vmName')]",
@@ -291,7 +307,7 @@
           "imageReference": {
             "publisher": "Canonical",
             "offer": "UbuntuServer",
-            "sku": "14.04.5-LTS",
+            "sku": "16.04-LTS",
             "version": "latest"
           },
           "osDisk": {
@@ -329,7 +345,7 @@
               ]
             },
             "protectedSettings": {
-              "commandToExecute": "[concat('./', variables('_extensionScript'), ' -ju \"', parameters('adminUsername'), '\" -jp \"', parameters('adminPassword'), '\" -ai \"', parameters('servicePrincipalAppId'), '\" -ak \"', parameters('servicePrincipalAppKey'), '\" -ti \"', subscription().tenantId, '\" -si \"', subscription().subscriptionId, '\" -rg \"', resourceGroup().name, '\" -vn \"', variables('keyVaultName'), '\" -san \"', variables('storageAccountName'), '\" -sak \"', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2016-01-01').keys[0].value, '\" -psa \"', variables('packerStorageAccountName'), '\" -vf \"', reference(variables('publicIPAddressName')).dnsSettings.fqdn, '\" -r \"', parameters('location'), '\" -al \"', variables('_artifactsLocation'), '\" -st \"', variables('_artifactsLocationSasToken'), '\"')]"
+              "commandToExecute": "[concat('./', variables('_extensionScript'), ' -ju \"', parameters('adminUsername'), '\" -jp ''', parameters('adminPassword'), ''' -ai \"', parameters('servicePrincipalAppId'), '\" -ak \"', parameters('servicePrincipalAppKey'), '\" -ti \"', subscription().tenantId, '\" -si \"', subscription().subscriptionId, '\" -rg \"', resourceGroup().name, '\" -vn \"', variables('keyVaultName'), '\" -san \"', variables('storageAccountName'), '\" -sak \"', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2016-01-01').keys[0].value, '\" -vf \"', reference(variables('publicIPAddressName')).dnsSettings.fqdn, '\" -r \"', parameters('location'), '\" -al \"', variables('_artifactsLocation'), '\" -st \"', variables('_artifactsLocationSasToken'), '\"')]"
             }
           }
         }
