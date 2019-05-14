@@ -2,20 +2,13 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "gwdnsLabelPrefix": {
+    "dnsLabelPrefix": {
       "type": "string",
       "metadata": {
-        "description": "Unique gateway public DNS prefix for the deployment. The fqdn will look something like '<dnsname>.westus.cloudapp.azure.com'. Up to 62 chars, digits or dashes, lowercase, should start with a letter: must conform to '^[a-z][a-z0-9-]{1,61}[a-z0-9]$'. For example johndns1 will result the final RDWEB access url like https://johndns1.westus.cloudapp.azure.com/RDWeb"
+        "description": "Unique public DNS prefix for the deployment. The fqdn will look something like '<dnsname>.westus.cloudapp.azure.com'. Up to 62 chars, digits or dashes, lowercase, should start with a letter: must conform to '^[a-z][a-z0-9-]{1,61}[a-z0-9]$'. For example johndns1 will result the final RDWEB access url like https://johndns1.westus.cloudapp.azure.com/RDWeb"
       }
     },
-    "gwpublicIPAddressName": {
-      "type": "string",
-      "metadata": {
-        "description": "The name of gateway PublicIPAddress object"
-      },
-      "defaultValue": "gwpip"
-    },
-    "adDomainName": {
+    "domainName": {
       "type": "string",
       "metadata": {
         "description": "The name of the AD domain. For example contoso.com"
@@ -34,7 +27,7 @@
       "metadata": {
         "description": "The password for the administrator account of the new VM and the domain"
       },
-      "defaultValue": "[concat('Subscription#',subscription().subscriptionId)]"
+      "defaultValue": ""
     },
     "imageSKU": {
       "type": "string",
@@ -57,24 +50,23 @@
     "rdshVmSize": {
       "type": "string",
       "allowedValues": [
-        "Standard_A0",
-        "Standard_A1",
-        "Standard_A2",
-        "Standard_A3",
-        "Standard_A4",
-        "Standard_A5",
-        "Standard_A6",
-        "Standard_A7",
-        "Standard_D1",
-        "Standard_D2",
-        "Standard_D3",
-        "Standard_D4",
-        "Standard_D5"
+        "Standard_A1_v2",
+        "Standard_A2_v2",
+        "Standard_A2m_v2",
+        "Standard_A4_v2",
+        "Standard_A4m_v2",
+        "Standard_A8_v2",
+        "Standard_A8m_v2",
+        "Standard_D1_v2",
+        "Standard_D2_v2",
+        "Standard_D3_v2",
+        "Standard_D4_v2",
+        "Standard_D5_v2"
       ],
       "metadata": {
         "description": "The size of the RDSH VMs"
       },
-      "defaultValue": "Standard_A4"
+      "defaultValue": "Standard_A4_v2"
     },
     "location": {
       "type": "string",
@@ -88,7 +80,7 @@
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/AzureStack-QuickStart-Templates/master/ad-non-ha/"
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/rds-deployment/"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -99,194 +91,117 @@
     }
   },
   "variables": {
-    "adVMSize": "Standard_A1",
-    "adVnetName": "[concat('ADVNET',resourceGroup().name)]",
-    "adSubnetName": "[concat('ADStaticSubnet',resourceGroup().name)]",
-    "staticSubnetID": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('adVnetName'), variables('adSubnetName'))]",
-    "adTemplateURL": "[uri(parameters('_artifactsLocation'),concat('adVmTemplate.json',parameters('_artifactsLocationSasToken')))]",
-    "adStorageName": "[tolower(concat('adsa',uniqueString(resourceGroup().id)))]",
-    "adVmDeployment": "CreateAdVms",
-    "adVmDeploymentId": "[concat('Microsoft.Resources/deployments/', variables('adVmDeployment'))]",
-    "deployPrimaryAdTemplateURL": "[uri(parameters('_artifactsLocation'),concat('deployPrimaryAD.json',parameters('_artifactsLocationSasToken')))]",
-    "deployPrimaryAd": "DeployPrimaryAd",
-    "deployPrimaryAdID": "[concat('Microsoft.Resources/deployments/', variables('deployPrimaryAd'))]",
-    "adPDCVMName": "advm",
-    "vnetwithDNSTemplateURL": "[uri(parameters('_artifactsLocation'),concat('vnet-with-dns-server.json',parameters('_artifactsLocationSasToken')))]",
-    "updateVNetDNS1": "updateVNetDNS",
-    "publicLBName": "[concat('ADPLB',resourceGroup().name)]",
-    "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]",
-    "lbFE": "ADLBFE",
-    "rdpNAT": "ADRDPNAT",
-    "publiclbID": "[resourceId('Microsoft.Network/loadBalancers',variables('publicLBName'))]",
-    "publiclbFEConfigID": "[concat(variables('publiclbID'),'/frontendIPConfigurations/',variables('lbFE'))]",
-    "rdpPort": 3389,
-    "adRDPNATRuleID": "[concat(variables('publiclbID'),'/inboundNatRules/',variables('rdpNAT'))]",
-    "adNICName": "[concat('ADNic',resourceGroup().name)]",
-    "lbBE": "ADLBBE",
-    "gwLBName": "[concat('GWPLB',resourceGroup().name)]",
-    "publicIPAddressName": "[tolower(concat('adpip',uniqueString(resourceGroup().Id)))]",
-    "gwIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('gwpublicIPAddressName'))]",
-    "gwlbFE": "GWLBFE",
-    "gwlbID": "[resourceId('Microsoft.Network/loadBalancers',variables('gwLBName'))]",
-    "gwlbFEConfigID": "[concat(variables('gwlbID'),'/frontendIPConfigurations/',variables('gwlbFE'))]",
-    "gwlbBE": "GWLBBE",
-    "gwBEAddressPoolID": "[concat(variables('gwlbID'),'/backendAddressPools/',variables('gwlbBE'))]",
-    "dnsLabelPrefix": "[tolower(concat('adns', resourceGroup().name))]",
-    "storageAccountName": "[tolower(concat('rdsa',uniqueString(resourceGroup().id)))]",
-    "storageAccountType": "Standard_LRS",
-    "uniqueStorageAccountContainerName": "[tolower(concat('sc', uniqueString(resourceGroup().id)))]",
+    "gwdnsLabelPrefix": "[toLower(concat('gwd', resourceGroup().name))]",
+    "cbdnsLabelPrefix": "[toLower(concat('cbd', resourceGroup().name))]",
     "imagePublisher": "MicrosoftWindowsServer",
     "imageOffer": "WindowsServer",
-    "vnetAddressRange": "10.0.0.0/16",
-    "subnetAddressRange": "10.0.0.0/24",
-    "dnsServerPrivateIp": "10.0.0.4",
-    "subnet-id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('adVnetName')),'/subnets/', variables('adSubnetName'))]",
-    "nsgName": "RDSNsg",
-    "nsgID": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('nsgName'))]",
-    "subnets": [
-      {
-        "name": "[variables('adSubnetName')]",
-        "properties": {
-          "addressPrefix": "[variables('subnetAddressRange')]",
-          "networkSecurityGroup": {
-            "id": "[variables('nsgID')]"
-          }
-        }
-      }
-    ]
+    "publicIpRef": "publicIp",
+    "brokerIpRef": "brokerpublicIp",
+    "gatewayIpRef": "gatewaypublicIp",
+    "adLBFE": "LBFE",
+    "adLBBE": "LBBE",
+    "adRDPNAT": "adRDP",
+    "adNicName": "adNic",
+    "adVMName": "adVM",
+    "adVMSize": "Standard_D2_v2",
+    "virtualNetworkName": "vNET",
+    "virtualNetworkAddressRange": "10.0.0.0/16",
+    "subnetName": "subnet1",
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets',variables('virtualNetworkName'),variables('subnetName'))]",
+    "subnetAddressPrefix": "10.0.0.0/24",
+    "adNicIPAddress": "10.0.0.4",
+    "adpublicIPAddressName": "adPublicIP",
+    "adAvailabilitySetName": "adAvailabiltySet",
+    "adLBName": "adLoadBalancer"
   },
   "resources": [
     {
-      "name": "[variables('nsgName')]",
-      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('adPublicIPAddressName')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2019-02-01",
       "location": "[parameters('location')]",
-      "apiVersion": "2015-06-15",
       "properties": {
-        "securityRules": [
-          {
-            "name": "rule1",
-            "properties": {
-              "protocol": "*",
-              "sourcePortRange": "*",
-              "destinationPortRange": "*",
-              "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 101,
-              "direction": "Inbound"
-            }
-          }
-        ]
+        "publicIPAllocationMethod": "Static",
+        "dnsSettings": {
+          "domainNameLabel": "[concat(parameters('dnsLabelPrefix'),'ad')]"
+        }
       }
     },
     {
-      "name": "[variables('adVnetName')]",
-      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('adAvailabilitySetName')]",
+      "type": "Microsoft.Compute/availabilitySets",
+      "apiVersion": "2019-03-01",
       "location": "[parameters('location')]",
-      "apiVersion": "2015-06-15",
-      "dependsOn": [
-        "[variables('nsgID')]"
-      ],
       "properties": {
-        "addressSpace": {
-          "addressPrefixes": [
-            "[variables('vnetAddressRange')]"
-          ]
+        "PlatformUpdateDomainCount": 20,
+        "PlatformFaultDomainCount": 2
+      },
+      "sku": {
+        "name": "Aligned"
+      }
+    },
+    {
+      "name": "VNet",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2018-11-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/vnet.json', parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.0.0.0"
         },
-        "subnets": [
-          {
-            "name": "[variables('adSubnetName')]",
-            "properties": {
-              "addressPrefix": "[variables('subnetAddressRange')]",
-              "networkSecurityGroup": {
-                "id": "[variables('nsgID')]"
-              }
-            }
+        "parameters": {
+          "virtualNetworkName": {
+            "value": "[variables('virtualNetworkName')]"
+          },
+          "virtualNetworkAddressRange": {
+            "value": "[variables('virtualNetworkAddressRange')]"
+          },
+          "subnetName": {
+            "value": "[variables('subnetName')]"
+          },
+          "subnetRange": {
+            "value": "[variables('subnetAddressPrefix')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
           }
-        ]
-      }
-    },
-    {
-      "name": "[variables('publicIPAddressName')]",
-      "type": "Microsoft.Network/publicIPAddresses",
-      "location": "[parameters('location')]",
-      "apiVersion": "2015-06-15",
-      "dependsOn": [
-        "[variables('adVnetName')]"
-      ],
-      "properties": {
-        "publicIPAllocationMethod": "Dynamic",
-        "dnsSettings": {
-          "domainNameLabel": "[variables('dnsLabelPrefix')]"
         }
       }
     },
     {
-      "name": "[parameters('gwpublicIPAddressName')]",
-      "type": "Microsoft.Network/publicIPAddresses",
-      "location": "[parameters('location')]",
-      "apiVersion": "2015-06-15",
-      "dependsOn": [
-        "[variables('deployPrimaryAdID')]"
-      ],
-      "properties": {
-        "publicIPAllocationMethod": "Dynamic",
-        "dnsSettings": {
-          "domainNameLabel": "[parameters('gwdnsLabelPrefix')]"
-        }
-      }
-    },
-    {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Compute/availabilitySets",
-      "name": "gw-availabilityset",
-      "location": "[parameters('location')]"
-    },
-    {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Compute/availabilitySets",
-      "name": "cb-availabilityset",
-      "location": "[parameters('location')]"
-    },
-    {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Compute/availabilitySets",
-      "name": "rdsh-availabilityset",
-      "location": "[parameters('location')]"
-    },
-    {
-      "name": "[variables('publiclbName')]",
       "type": "Microsoft.Network/loadBalancers",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2019-02-01",
+      "name": "[variables('adLBName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[variables('publicIPAddressID')]"
+        "[variables('adPublicIPAddressName')]"
       ],
       "properties": {
         "frontendIPConfigurations": [
           {
-            "name": "[variables('lbFE')]",
+            "name": "[variables('adLBFE')]",
             "properties": {
               "publicIPAddress": {
-                "id": "[variables('publicIPAddressID')]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('adPublicIPAddressName'))]"
               }
             }
           }
         ],
         "backendAddressPools": [
           {
-            "name": "[variables('lbBE')]"
+            "name": "[variables('adLBBE')]"
           }
         ],
         "inboundNatRules": [
           {
-            "name": "[variables('rdpNAT')]",
+            "name": "[variables('adRDPNAT')]",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[variables('publiclbFEConfigID')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('adLBName'), variables('adLBFE'))]"
               },
               "protocol": "Tcp",
-              "frontendPort": "[variables('rdpPort')]",
+              "frontendPort": 3389,
               "backendPort": 3389,
               "enableFloatingIP": false
             }
@@ -295,27 +210,265 @@
       }
     },
     {
-      "name": "[variables('gwlbName')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2019-02-01",
+      "name": "[variables('adNicName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "VNet",
+        "[variables('adLBName')]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[variables('adNicIPAddress')]",
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
+              },
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('adLBName'), variables('adLBBE'))]"
+                }
+              ],
+              "loadBalancerInboundNatRules": [
+                {
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules', variables('adLBName'), variables('adRDPNAT'))]"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2019-03-01",
+      "name": "[variables('adVMName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('adNicName')]",
+        "[variables('adAvailabilitySetName')]",
+        "[variables('adLBName')]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('adVMSize')]"
+        },
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('adAvailabilitySetName'))]"
+        },
+        "osProfile": {
+          "computerName": "[variables('adVMName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "MicrosoftWindowsServer",
+            "offer": "WindowsServer",
+            "sku": "2016-Datacenter",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(variables('adVMName'),'_OSDisk')]",
+            "caching": "ReadOnly",
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "StandardSSD_LRS"
+            }
+          },
+          "dataDisks": [
+            {
+              "name": "[concat(variables('adVMName'), '_DataDisk')]",
+              "caching": "ReadWrite",
+              "createOption": "Empty",
+              "diskSizeGB": 20,
+              "managedDisk": {
+                "storageAccountType": "StandardSSD_LRS"
+              },
+              "lun": 0
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('adNicName'))]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "type": "extensions",
+          "apiVersion": "2019-03-01",
+          "name": "CreateADForest",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[variables('adVMName')]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Powershell",
+            "type": "DSC",
+            "typeHandlerVersion": "2.19",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "ModulesUrl": "[uri(parameters('_artifactsLocation'), concat('DSC/CreateADPDC.zip', parameters('_artifactsLocationSasToken')))]",
+              "ConfigurationFunction": "CreateADPDC.ps1\\CreateADPDC",
+              "Properties": {
+                "DomainName": "[parameters('domainName')]",
+                "AdminCreds": {
+                  "UserName": "[parameters('adminUsername')]",
+                  "Password": "PrivateSettingsRef:AdminPassword"
+                }
+              }
+            },
+            "protectedSettings": {
+              "Items": {
+                "AdminPassword": "[parameters('adminPassword')]"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2018-11-01",
+      "name": "UpdateVNetDNS",
+      "dependsOn": [
+        "CreateADForest"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/vnet-with-dns-server.json', parameters('_artifactsLocationSasToken')))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "virtualNetworkName": {
+            "value": "[variables('virtualNetworkName')]"
+          },
+          "virtualNetworkAddressRange": {
+            "value": "[variables('virtualNetworkAddressRange')]"
+          },
+          "subnetName": {
+            "value": "[variables('subnetName')]"
+          },
+          "subnetRange": {
+            "value": "[variables('subnetAddressPrefix')]"
+          },
+          "DNSServerAddress": {
+            "value": [
+              "[variables('adNicIPAddress')]"
+            ]
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "[variables('publicIpRef')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('dnsLabelPrefix')]"
+        }
+      }
+    },
+    {
+      "name": "[variables('gatewayIpRef')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[variables('gwdnsLabelPrefix')]"
+        }
+      }
+    },
+    {
+      "name": "[variables('brokerIpRef')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[variables('cbdnsLabelPrefix')]"
+        }
+      }
+    },
+    {
+      "name": "gw-availabilityset",
+      "type": "Microsoft.Compute/availabilitySets",
+      "apiVersion": "2017-03-30",
+      "location": "[parameters('location')]",
+      "properties": {
+        "PlatformUpdateDomainCount": 20,
+        "PlatformFaultDomainCount": 2
+      },
+      "sku": {
+        "name": "Aligned"
+      }
+    },
+    {
+      "name": "cb-availabilityset",
+      "type": "Microsoft.Compute/availabilitySets",
+      "apiVersion": "2017-03-30",
+      "location": "[parameters('location')]",
+      "properties": {
+        "PlatformUpdateDomainCount": 20,
+        "PlatformFaultDomainCount": 2
+      },
+      "sku": {
+        "name": "Aligned"
+      }
+    },
+    {
+      "name": "rdsh-availabilityset",
+      "type": "Microsoft.Compute/availabilitySets",
+      "apiVersion": "2017-03-30",
+      "location": "[parameters('location')]",
+      "properties": {
+        "PlatformUpdateDomainCount": 20,
+        "PlatformFaultDomainCount": 2
+      },
+      "sku": {
+        "name": "Aligned"
+      }
+    },
+    {
+      "name": "loadBalancer",
       "type": "Microsoft.Network/loadBalancers",
       "apiVersion": "2015-06-15",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[variables('gwIPAddressID')]"
+        "[concat('Microsoft.Network/publicIPAddresses/',variables('publicIpRef'))]"
       ],
       "properties": {
         "frontendIPConfigurations": [
           {
-            "name": "[variables('gwlbFE')]",
+            "name": "LBFE",
             "properties": {
               "publicIPAddress": {
-                "id": "[variables('gwIPAddressID')]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIpRef'))]"
               }
             }
           }
         ],
         "backendAddressPools": [
           {
-            "name": "[variables('gwlbBE')]"
+            "name": "LBBAP"
           }
         ],
         "loadBalancingRules": [
@@ -323,10 +476,10 @@
             "name": "LBRule01",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[variables('gwlbFEConfigID')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers','loadbalancer'),'/frontendIPConfigurations/LBFE')]"
               },
               "backendAddressPool": {
-                "id": "[variables('gwBEAddressPoolID')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers','loadbalancer'),'/backendAddressPools/LBBAP')]"
               },
               "protocol": "Tcp",
               "frontendPort": 443,
@@ -335,7 +488,7 @@
               "idleTimeoutInMinutes": 5,
               "loadDistribution": "SourceIPProtocol",
               "probe": {
-                "id": "[concat(variables('gwlbID'),'/probes/tcpProbe')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers','loadbalancer'),'/probes/tcpProbe')]"
               }
             }
           },
@@ -343,10 +496,10 @@
             "name": "LBRule02",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[variables('gwlbFEConfigID')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers','loadbalancer'),'/frontendIPConfigurations/LBFE')]"
               },
               "backendAddressPool": {
-                "id": "[variables('gwBEAddressPoolID')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers','loadbalancer'),'/backendAddressPools/LBBAP')]"
               },
               "protocol": "Udp",
               "frontendPort": 3391,
@@ -355,7 +508,7 @@
               "idleTimeoutInMinutes": 5,
               "loadDistribution": "SourceIPProtocol",
               "probe": {
-                "id": "[concat(variables('gwlbID'),'/probes/tcpProbe01')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers','loadbalancer'),'/probes/tcpProbe')]"
               }
             }
           }
@@ -385,7 +538,7 @@
             "name": "rdp",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[variables('gwlbFEConfigID')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers','loadBalancer'),'/frontendIPConfigurations/LBFE')]"
               },
               "protocol": "Tcp",
               "frontendPort": 3389,
@@ -397,132 +550,13 @@
       }
     },
     {
-      "name": "[variables('adVmDeployment')]",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2016-02-01",
-      "dependsOn": [
-        "[variables('publiclbID')]"
-      ],
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[variables('adTemplateURL')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "adminUsername": {
-            "value": "[parameters('adminUsername')]"
-          },
-          "adminPassword": {
-            "value": "[parameters('adminPassword')]"
-          },
-          "adRDPNATRuleID": {
-            "value": "[variables('adRDPNATRuleID')]"
-          },
-          "storageAccount": {
-            "value": "[variables('adStorageName')]"
-          },
-          "subnetResourceId": {
-            "value": "[variables('staticSubnetID')]"
-          },
-          "primaryAdIpAddress": {
-            "value": "[variables('dnsServerPrivateIp')]"
-          },
-          "storageAccountType": {
-            "value": "[variables('storageAccountType')]"
-          },
-          "vmName": {
-            "value": "[variables('adPDCVMName')]"
-          },
-          "vmSize": {
-            "value": "[variables('adVMSize')]"
-          },
-          "adDNicName": {
-            "value": "[variables('adNICName')]"
-          }
-        }
-      }
-    },
-    {
-      "name": "[variables('deployPrimaryAd')]",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2016-02-01",
-      "dependsOn": [
-        "[variables('adVmDeploymentID')]"
-      ],
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[variables('deployPrimaryAdTemplateURL')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "primaryADName": {
-            "value": "[variables('adPDCVMName')]"
-          },
-          "domainName": {
-            "value": "[parameters('adDomainName')]"
-          },
-          "adminUsername": {
-            "value": "[parameters('adminUsername')]"
-          },
-          "adminPassword": {
-            "value": "[parameters('adminPassword')]"
-          },
-          "assetLocation": {
-            "value": "[parameters('_artifactsLocation')]"
-          }
-        }
-      }
-    },
-    {
-      "name": "[variables('updateVNetDNS1')]",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2016-02-01",
-      "dependsOn": [
-        "[variables('deployPrimaryAdID')]"
-      ],
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[variables('vnetwithDNSTemplateURL')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "virtualNetworkName": {
-            "value": "[variables('adVnetName')]"
-          },
-          "virtualNetworkAddressRange": {
-            "value": "[variables('vnetAddressRange')]"
-          },
-          "subnets": {
-            "value": "[variables('subnets')]"
-          },
-          "dnsServerAddress": {
-            "value": [
-              "[variables('dnsServerPrivateIp')]"
-            ]
-          }
-        }
-      }
-    },
-    {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('storageAccountName')]",
-      "location": "[parameters('location')]",
-      "properties": {
-        "accountType": "[variables('storageAccountType')]"
-      }
-    },
-    {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Network/networkInterfaces",
       "name": "gw-nic",
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2015-06-15",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[variables('gwlbID')]",
-        "[variables('adVmDeploymentID')]"
+        "Microsoft.Network/loadBalancers/loadBalancer",
+        "UpdateVNetDNS"
       ],
       "properties": {
         "ipConfigurations": [
@@ -530,17 +564,20 @@
             "name": "ipconfig",
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('gatewayIpRef'))]"
+              },
               "subnet": {
-                "id": "[variables('subnet-id')]"
+                "id": "[variables('subnetRef')]"
               },
               "loadBalancerBackendAddressPools": [
                 {
-                  "id": "[variables('gwBEAddressPoolID')]"
+                  "id": "[concat(resourceId('Microsoft.Network/loadBalancers','loadBalancer'),'/backendAddressPools/LBBAP')]"
                 }
               ],
               "loadBalancerInboundNatRules": [
                 {
-                  "id": "[concat(variables('gwlbID'),'/inboundNatRules/rdp')]"
+                  "id": "[concat(resourceId('Microsoft.Network/loadBalancers','loadBalancer'),'/inboundNatRules/rdp')]"
                 }
               ]
             }
@@ -548,19 +585,19 @@
         ],
         "dnsSettings": {
           "dnsServers": [
-            "[variables('dnsServerPrivateIp')]"
+            "[variables('adNicIPAddress')]"
           ]
         }
       }
     },
     {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Network/networkInterfaces",
       "name": "cb-nic",
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2015-06-15",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[variables('publiclbID')]",
-        "[variables('adVmDeploymentID')]"
+        "Microsoft.Network/loadBalancers/loadBalancer",
+        "UpdateVNetDNS"
       ],
       "properties": {
         "ipConfigurations": [
@@ -568,31 +605,34 @@
             "name": "ipconfig",
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('brokerIpRef'))]"
+              },
               "subnet": {
-                "id": "[variables('subnet-id')]"
+                "id": "[variables('subnetRef')]"
               }
             }
           }
         ],
         "dnsSettings": {
           "dnsServers": [
-            "[variables('dnsServerPrivateIp')]"
+            "[variables('adNicIPAddress')]"
           ]
         }
       }
     },
     {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat('rdsh-', copyindex(), '-nic')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2015-06-15",
       "location": "[parameters('location')]",
       "copy": {
         "name": "rdsh-nic-loop",
         "count": "[parameters('numberOfRdshInstances')]"
       },
       "dependsOn": [
-        "[variables('publiclbID')]",
-        "[variables('adVmDeploymentID')]"
+        "Microsoft.Network/loadBalancers/loadBalancer",
+        "UpdateVNetDNS"
       ],
       "properties": {
         "ipConfigurations": [
@@ -601,26 +641,25 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "subnet": {
-                "id": "[variables('subnet-id')]"
+                "id": "[variables('subnetRef')]"
               }
             }
           }
         ],
         "dnsSettings": {
           "dnsServers": [
-            "[variables('dnsServerPrivateIp')]"
+            "[variables('adNicIPAddress')]"
           ]
         }
       }
     },
     {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Compute/virtualMachines",
       "name": "gw-vm",
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2017-03-30",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[variables('deployPrimaryAdID')]",
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Compute/availabilitySets', 'gw-availabilityset')]",
         "Microsoft.Network/networkInterfaces/gw-nic"
       ],
       "properties": {
@@ -643,12 +682,12 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')),'2016-01-01').primaryEndpoints.blob,variables('uniqueStorageAccountContainerName'),'/','gw-vm-os-disk.vhd')]"
-            },
+            "name": "gw_OSDisk",
             "caching": "ReadWrite",
-            "createOption": "FromImage"
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "Standard_LRS"
+            }
           }
         },
         "networkProfile": {
@@ -658,53 +697,50 @@
             }
           ]
         }
-      },
-      "resources": [
-        {
-          "apiVersion": "2015-06-15",
-          "type": "Microsoft.Compute/virtualMachines/extensions",
-          "name": "gw-vm/gateway",
-          "location": "[parameters('location')]",
-          "dependsOn": [
-            "[resourceId('Microsoft.Compute/virtualMachines', 'gw-vm')]"
-          ],
-          "properties": {
-            "publisher": "Microsoft.Powershell",
-            "type": "DSC",
-            "typeHandlerVersion": "2.11",
-            "autoUpgradeMinorVersion": true,
-            "settings": {
-              "modulesUrl": "[uri(parameters('_artifactsLocation'),concat('DSC/Configuration.zip',parameters('_artifactsLocationSasToken')))]",
-              "configurationFunction": "Configuration.ps1\\Gateway",
-              "Properties": {
-                "DomainName": "[parameters('adDomainName')]",
-                "AdminCreds": {
-                  "UserName": "[parameters('adminUsername')]",
-                  "Password": "PrivateSettingsRef:AdminPassword"
-                }
-              }
-            },
-            "protectedSettings": {
-              "Items": {
-                "AdminPassword": "[parameters('adminPassword')]"
-              }
-            }
-          }
-        }
-      ]
+      }
     },
     {
+      "name": "gw-vm/gateway",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
       "apiVersion": "2015-06-15",
-      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', 'gw-vm')]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.11",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "ModulesUrl": "[uri(parameters('_artifactsLocation'),concat('DSC/Configuration.zip',parameters('_artifactsLocationSasToken')))]",
+          "ConfigurationFunction": "Configuration.ps1\\Gateway",
+          "Properties": {
+            "DomainName": "[parameters('domainName')]",
+            "AdminCreds": {
+              "UserName": "[parameters('adminUsername')]",
+              "Password": "PrivateSettingsRef:AdminPassword"
+            }
+          }
+        },
+        "protectedSettings": {
+          "Items": {
+            "AdminPassword": "[parameters('adminPassword')]"
+          }
+        }
+      }
+    },
+    {
       "name": "[concat('rdsh-', copyindex())]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2017-03-30",
       "location": "[parameters('location')]",
       "copy": {
         "name": "rdsh-vm-loop",
         "count": "[parameters('numberOfRdshInstances')]"
       },
       "dependsOn": [
-        "[variables('deployPrimaryAdID')]",
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Compute/availabilitySets', 'rdsh-availabilityset')]",
         "[concat('Microsoft.Network/networkInterfaces/', 'rdsh-', copyindex(), '-nic')]"
       ],
       "properties": {
@@ -727,12 +763,12 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')),'2016-01-01').primaryEndpoints.blob,variables('uniqueStorageAccountContainerName'),'/','rdsh-',copyindex(),'-os-disk.vhd')]"
-            },
+            "name": "[concat('rdsh-', copyIndex(),'_OSDisk')]",
             "caching": "ReadWrite",
-            "createOption": "FromImage"
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "Standard_LRS"
+            }
           }
         },
         "networkProfile": {
@@ -742,49 +778,50 @@
             }
           ]
         }
-      },
-      "resources": [
-        {
-          "apiVersion": "2015-06-15",
-          "type": "Microsoft.Compute/virtualMachines/extensions",
-          "name": "[concat('rdsh-', copyindex(),'/sessionhost')]",
-          "location": "[parameters('location')]",
-          "dependsOn": [
-            "[resourceId('Microsoft.Compute/virtualMachines', concat('rdsh-', copyindex()))]"
-          ],
-          "properties": {
-            "publisher": "Microsoft.Powershell",
-            "type": "DSC",
-            "typeHandlerVersion": "2.11",
-            "autoUpgradeMinorVersion": true,
-            "settings": {
-              "ModulesUrl": "[uri(parameters('_artifactsLocation'),concat('DSC/Configuration.zip',parameters('_artifactsLocationSasToken')))]",
-              "ConfigurationFunction": "Configuration.ps1\\SessionHost",
-              "Properties": {
-                "DomainName": "[parameters('adDomainName')]",
-                "AdminCreds": {
-                  "UserName": "[parameters('adminUsername')]",
-                  "Password": "PrivateSettingsRef:AdminPassword"
-                }
-              }
-            },
-            "protectedSettings": {
-              "Items": {
-                "AdminPassword": "[parameters('adminPassword')]"
-              }
-            }
-          }
-        }
-      ]
+      }
     },
     {
+      "name": "[concat('rdsh-', copyindex(),'/sessionhost')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
       "apiVersion": "2015-06-15",
-      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "rdsh-vm-loop",
+        "count": "[parameters('numberOfRdshInstances')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', concat('rdsh-', copyindex()))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.11",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "ModulesUrl": "[uri(parameters('_artifactsLocation'),concat('DSC/Configuration.zip',parameters('_artifactsLocationSasToken')))]",
+          "ConfigurationFunction": "Configuration.ps1\\SessionHost",
+          "Properties": {
+            "DomainName": "[parameters('domainName')]",
+            "AdminCreds": {
+              "UserName": "[parameters('adminUsername')]",
+              "Password": "PrivateSettingsRef:AdminPassword"
+            }
+          }
+        },
+        "protectedSettings": {
+          "Items": {
+            "AdminPassword": "[parameters('adminPassword')]"
+          }
+        }
+      }
+    },
+    {
       "name": "cb-vm",
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2017-03-30",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[variables('deployPrimaryAdID')]",
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Compute/availabilitySets', 'cb-availabilityset')]",
         "Microsoft.Network/networkInterfaces/cb-nic",
         "rdsh-vm-loop"
       ],
@@ -808,12 +845,12 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')),'2016-01-01').primaryEndpoints.blob,variables('uniqueStorageAccountContainerName'),'/','cb-vm-os-disk.vhd')]"
-            },
+            "name": "cb_OSDisk",
             "caching": "ReadWrite",
-            "createOption": "FromImage"
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "Standard_LRS"
+            }
           }
         },
         "networkProfile": {
@@ -826,8 +863,8 @@
       }
     },
     {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "cb-vm/rdsdeployment",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
       "apiVersion": "2015-06-15",
       "location": "[parameters('location')]",
       "dependsOn": [
@@ -836,13 +873,10 @@
         "rdsh-vm-loop"
       ],
       "properties": {
-        "autoUpgradeMinorVersion": true,
-        "protectedSettings": {
-          "Items": {
-            "adminPassword": "[parameters('adminPassword')]"
-          }
-        },
         "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.11",
+        "autoUpgradeMinorVersion": true,
         "settings": {
           "modulesUrl": "[uri(parameters('_artifactsLocation'),concat('DSC/Configuration.zip',parameters('_artifactsLocationSasToken')))]",
           "configurationFunction": "Configuration.ps1\\RDSDeployment",
@@ -851,16 +885,19 @@
               "UserName": "[parameters('adminUsername')]",
               "Password": "PrivateSettingsRef:adminPassword"
             },
-            "connectionBroker": "[concat('broker.',parameters('adDomainName'))]",
-            "domainName": "[parameters('adDomainName')]",
-            "externalfqdn": "[reference(parameters('gwpublicIPAddressName')).dnsSettings.fqdn]",
+            "connectionBroker": "[concat('broker.',parameters('domainName'))]",
+            "domainName": "[parameters('domainName')]",
+            "externalfqdn": "[reference(variables('gatewayIpRef')).dnsSettings.fqdn]",
             "numberOfRdshInstances": "[parameters('numberOfRdshInstances')]",
             "sessionHostNamingPrefix": "rdsh-",
-            "webAccessServer": "[concat('gateway.',parameters('adDomainName'))]"
+            "webAccessServer": "[concat('gateway.',parameters('domainName'))]"
           }
         },
-        "type": "DSC",
-        "typeHandlerVersion": "2.11"
+        "protectedSettings": {
+          "Items": {
+            "adminPassword": "[parameters('adminPassword')]"
+          }
+        }
       }
     }
   ]
