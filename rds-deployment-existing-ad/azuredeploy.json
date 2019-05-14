@@ -36,6 +36,13 @@
             },
             "defaultValue": "AD-VNET-SUBNET"
         },
+        "dnsServerIpAddress": {
+            "type": "string",
+            "metadata": {
+                "description": "The IP address of the DNS server"
+            },
+            "defaultValue": "10.0.0.4"
+        },
         "adminUsername": {
             "type": "string",
             "metadata": {
@@ -101,7 +108,7 @@
             "metadata": {
               "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
             },
-            "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/rds-deployment/"
+            "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/rds-deployment-existing-ad/"
           },
           "_artifactsLocationSasToken": {
             "type": "securestring",
@@ -116,7 +123,6 @@
         "cbdnsLabelPrefix": "[toLower(concat('cbd', resourceGroup().name))]",
         "imagePublisher": "MicrosoftWindowsServer",
         "imageOffer": "WindowsServer",
-        "dnsServerPrivateIp": "10.0.0.4",
         "subnet-id": "[concat(resourceId(parameters('adVnetRG'),'Microsoft.Network/virtualNetworks',parameters('adVnetName')),'/subnets/',parameters('adSubnetName'))]",
         "publicIpRef": "publicIp",
         "brokerIpRef": "brokerpublicIp",
@@ -124,9 +130,9 @@
     },
     "resources": [
         {
-            "apiVersion": "2015-06-15",
-            "type": "Microsoft.Network/publicIPAddresses",
             "name": "[variables('publicIpRef')]",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2015-06-15",
             "location": "[parameters('location')]",
             "properties": {
                 "publicIPAllocationMethod": "Dynamic",
@@ -136,9 +142,9 @@
             }
         },
         {
-            "apiVersion": "2015-06-15",
-            "type": "Microsoft.Network/publicIPAddresses",
             "name": "[variables('gatewayIpRef')]",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2015-06-15",
             "location": "[parameters('location')]",
             "properties": {
                 "publicIPAllocationMethod": "Dynamic",
@@ -148,9 +154,9 @@
             }
         },
         {
-            "apiVersion": "2015-06-15",
-            "type": "Microsoft.Network/publicIPAddresses",
             "name": "[variables('brokerIpRef')]",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2015-06-15",
             "location": "[parameters('location')]",
             "properties": {
                 "publicIPAllocationMethod": "Dynamic",
@@ -160,10 +166,10 @@
             }
         },
         {
-            "apiVersion": "2017-03-30",
-            "type": "Microsoft.Compute/availabilitySets",
-            "location": "[parameters('location')]",
             "name": "gw-availabilityset",
+            "type": "Microsoft.Compute/availabilitySets",
+            "apiVersion": "2017-03-30",
+            "location": "[parameters('location')]",
             "properties": {
                 "PlatformUpdateDomainCount": 20,
                 "PlatformFaultDomainCount": 2
@@ -173,23 +179,10 @@
             }
         },
         {
-            "apiVersion": "2017-03-30",
-            "type": "Microsoft.Compute/availabilitySets",
-            "location": "[parameters('location')]",
             "name": "cb-availabilityset",
-            "properties": {
-                "PlatformUpdateDomainCount": 20,
-                "PlatformFaultDomainCount": 2
-            },
-            "sku": {
-                "name": "Aligned"
-            }
-        },
-        {
-            "apiVersion": "2017-03-30",
             "type": "Microsoft.Compute/availabilitySets",
+            "apiVersion": "2017-03-30",
             "location": "[parameters('location')]",
-            "name": "rdsh-availabilityset",
             "properties": {
                 "PlatformUpdateDomainCount": 20,
                 "PlatformFaultDomainCount": 2
@@ -199,9 +192,22 @@
             }
         },
         {
-            "apiVersion": "2015-06-15",
-            "type": "Microsoft.Network/loadBalancers",
+            "name": "rdsh-availabilityset",
+            "type": "Microsoft.Compute/availabilitySets",
+            "apiVersion": "2017-03-30",
+            "location": "[parameters('location')]",
+            "properties": {
+                "PlatformUpdateDomainCount": 20,
+                "PlatformFaultDomainCount": 2
+            },
+            "sku": {
+                "name": "Aligned"
+            }
+        },
+        {
             "name": "loadBalancer",
+            "type": "Microsoft.Network/loadBalancers",
+            "apiVersion": "2015-06-15",
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[concat('Microsoft.Network/publicIPAddresses/',variables('publicIpRef'))]"
@@ -301,9 +307,9 @@
             }
         },
         {
-            "apiVersion": "2015-06-15",
-            "type": "Microsoft.Network/networkInterfaces",
             "name": "gw-nic",
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2015-06-15",
             "location": "[parameters('location')]",
             "dependsOn": [
                 "Microsoft.Network/loadBalancers/loadBalancer"
@@ -335,15 +341,15 @@
                 ],
                 "dnsSettings": {
                     "dnsServers": [
-                        "[variables('dnsServerPrivateIp')]"
+                        "[parameters('dnsServerIpAddress')]"
                     ]
                 }
             }
         },
         {
-            "apiVersion": "2015-06-15",
-            "type": "Microsoft.Network/networkInterfaces",
             "name": "cb-nic",
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2015-06-15",
             "location": "[parameters('location')]",
             "dependsOn": [
                 "Microsoft.Network/loadBalancers/loadBalancer"
@@ -365,15 +371,15 @@
                 ],
                 "dnsSettings": {
                     "dnsServers": [
-                        "[variables('dnsServerPrivateIp')]"
+                        "[parameters('dnsServerIpAddress')]"
                     ]
                 }
             }
         },
         {
-            "apiVersion": "2015-06-15",
-            "type": "Microsoft.Network/networkInterfaces",
             "name": "[concat('rdsh-', copyindex(), '-nic')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2015-06-15",
             "location": "[parameters('location')]",
             "copy": {
                 "name": "rdsh-nic-loop",
@@ -396,15 +402,15 @@
                 ],
                 "dnsSettings": {
                     "dnsServers": [
-                        "[variables('dnsServerPrivateIp')]"
+                        "[parameters('dnsServerIpAddress')]"
                     ]
                 }
             }
         },
         {
-            "apiVersion": "2017-03-30",
-            "type": "Microsoft.Compute/virtualMachines",
             "name": "gw-vm",
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2017-03-30",
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Compute/availabilitySets', 'gw-availabilityset')]",
@@ -445,45 +451,43 @@
                         }
                     ]
                 }
-            },
-            "resources": [
-                {
-                    "apiVersion": "2015-06-15",
-                    "type": "Microsoft.Compute/virtualMachines/extensions",
-                    "name": "gw-vm/gateway",
-                    "location": "[parameters('location')]",
-                    "dependsOn": [
-                        "[resourceId('Microsoft.Compute/virtualMachines', 'gw-vm')]"
-                    ],
-                    "properties": {
-                        "publisher": "Microsoft.Powershell",
-                        "type": "DSC",
-                        "typeHandlerVersion": "2.11",
-                        "autoUpgradeMinorVersion": true,
-                        "settings": {
-                            "ModulesUrl": "[uri(parameters('_artifactsLocation'),concat('DSC/Configuration.zip',parameters('_artifactsLocationSasToken')))]",
-                            "ConfigurationFunction": "Configuration.ps1\\Gateway",
-                            "Properties": {
-                                "DomainName": "[parameters('adDomainName')]",
-                                "AdminCreds": {
-                                    "UserName": "[parameters('adminUsername')]",
-                                    "Password": "PrivateSettingsRef:AdminPassword"
-                                }
-                            }
-                        },
-                        "protectedSettings": {
-                            "Items": {
-                                "AdminPassword": "[parameters('adminPassword')]"
-                            }
-                        }
-                    }
-                }
-            ]
+            }
         },
         {
-            "apiVersion": "2017-03-30",
-            "type": "Microsoft.Compute/virtualMachines",
+            "name": "gw-vm/gateway",
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "apiVersion": "2015-06-15",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', 'gw-vm')]"
+            ],
+            "properties": {
+                "publisher": "Microsoft.Powershell",
+                "type": "DSC",
+                "typeHandlerVersion": "2.11",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "ModulesUrl": "[uri(parameters('_artifactsLocation'),concat('DSC/Configuration.zip',parameters('_artifactsLocationSasToken')))]",
+                    "ConfigurationFunction": "Configuration.ps1\\Gateway",
+                    "Properties": {
+                        "DomainName": "[parameters('adDomainName')]",
+                        "AdminCreds": {
+                            "UserName": "[parameters('adminUsername')]",
+                            "Password": "PrivateSettingsRef:AdminPassword"
+                        }
+                    }
+                },
+                "protectedSettings": {
+                    "Items": {
+                        "AdminPassword": "[parameters('adminPassword')]"
+                    }
+                }
+            }
+        },
+        {
             "name": "[concat('rdsh-', copyindex())]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2017-03-30",
             "location": "[parameters('location')]",
             "copy": {
                 "name": "rdsh-vm-loop",
@@ -528,45 +532,47 @@
                         }
                     ]
                 }
-            },
-            "resources": [
-                {
-                    "apiVersion": "2015-06-15",
-                    "type": "Microsoft.Compute/virtualMachines/extensions",
-                    "name": "[concat('rdsh-', copyindex(),'/sessionhost')]",
-                    "location": "[parameters('location')]",
-                    "dependsOn": [
-                        "[resourceId('Microsoft.Compute/virtualMachines', concat('rdsh-', copyindex()))]"
-                    ],
-                    "properties": {
-                        "publisher": "Microsoft.Powershell",
-                        "type": "DSC",
-                        "typeHandlerVersion": "2.11",
-                        "autoUpgradeMinorVersion": true,
-                        "settings": {
-                            "ModulesUrl": "[uri(parameters('_artifactsLocation'),concat('DSC/Configuration.zip',parameters('_artifactsLocationSasToken')))]",
-                            "ConfigurationFunction": "Configuration.ps1\\SessionHost",
-                            "Properties": {
-                                "DomainName": "[parameters('adDomainName')]",
-                                "AdminCreds": {
-                                    "UserName": "[parameters('adminUsername')]",
-                                    "Password": "PrivateSettingsRef:AdminPassword"
-                                }
-                            }
-                        },
-                        "protectedSettings": {
-                            "Items": {
-                                "AdminPassword": "[parameters('adminPassword')]"
-                            }
-                        }
-                    }
-                }
-            ]
+            }
         },
         {
-            "apiVersion": "2017-03-30",
-            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[concat('rdsh-', copyindex(),'/sessionhost')]",
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "apiVersion": "2015-06-15",
+            "location": "[parameters('location')]",
+            "copy": {
+                "name": "rdsh-vm-loop",
+                "count": "[parameters('numberOfRdshInstances')]"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', concat('rdsh-', copyindex()))]"
+            ],
+            "properties": {
+                "publisher": "Microsoft.Powershell",
+                "type": "DSC",
+                "typeHandlerVersion": "2.11",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "ModulesUrl": "[uri(parameters('_artifactsLocation'),concat('DSC/Configuration.zip',parameters('_artifactsLocationSasToken')))]",
+                    "ConfigurationFunction": "Configuration.ps1\\SessionHost",
+                    "Properties": {
+                        "DomainName": "[parameters('adDomainName')]",
+                        "AdminCreds": {
+                            "UserName": "[parameters('adminUsername')]",
+                            "Password": "PrivateSettingsRef:AdminPassword"
+                        }
+                    }
+                },
+                "protectedSettings": {
+                    "Items": {
+                        "AdminPassword": "[parameters('adminPassword')]"
+                    }
+                }
+            }
+        },
+        {
             "name": "cb-vm",
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2017-03-30",
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Compute/availabilitySets', 'cb-availabilityset')]",
@@ -611,8 +617,8 @@
             }
         },
         {
-            "type": "Microsoft.Compute/virtualMachines/extensions",
             "name": "cb-vm/rdsdeployment",
+            "type": "Microsoft.Compute/virtualMachines/extensions",
             "apiVersion": "2015-06-15",
             "location": "[parameters('location')]",
             "dependsOn": [
