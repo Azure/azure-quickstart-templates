@@ -94,7 +94,7 @@
         }
     },
     "variables": {
-        "nsgId": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', parameters('aseNSGName'))]",
+        "nsgId": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('aseNSGName'))]",
         "azureFirewallPrivateIpArray": "[split(parameters('azureFireWallSubnetAddressRange'),'.')]",
         "azureFireWallPrivateIp": "[concat(variables('azureFirewallPrivateIpArray')[0],'.',variables('azureFirewallPrivateIpArray')[1],'.',variables('azureFirewallPrivateIpArray')[2],'.4')]"
     },
@@ -395,6 +395,11 @@
             "apiVersion": "2018-11-01",
             "name": "[parameters('vnetResourceName')]",
             "location": "[parameters('location')]",
+            "dependsOn": [
+                "[variables('nsgId')]",
+                "[resourceId('Microsoft.Network/routeTables', parameters('aseRouteTableName'))]",
+                "[resourceId('Microsoft.Network/routeTables',parameters('azureFirewallRouteTableName'))]"
+            ],
             "tags": "[parameters('tags')]",
             "properties": {
                 "addressSpace": {
@@ -426,12 +431,7 @@
                         }
                     }
                 ]
-            },
-            "dependsOn": [
-                "[variables('nsgId')]",
-                "[resourceId('Microsoft.Network/routeTables', parameters('aseRouteTableName'))]",
-                "[resourceId('Microsoft.Network/routeTables',parameters('azureFirewallRouteTableName'))]"
-            ]
+            }
         },
         {
             "condition": "[parameters('deployAzureFirewall')]",
@@ -453,6 +453,10 @@
             "apiVersion": "2018-12-01",
             "name": "[parameters('azureFirewallName')]",
             "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks',parameters('vnetResourceName'))]",
+                "[resourceId('Microsoft.Network/publicIpAddresses',parameters('azureFirewallPublicIP'))]"
+            ],
             "tags": "[parameters('tags')]",
             "properties": {
                 "ipConfigurations": [
@@ -460,10 +464,10 @@
                         "name": "IpConf",
                         "properties": {
                             "subnet": {
-                                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks/subnets',parameters('vnetResourceName'),'AzureFirewallSubnet')]"
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets',parameters('vnetResourceName'),'AzureFirewallSubnet')]"
                             },
                             "publicIPAddress": {
-                                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', parameters('azureFirewallPublicIP'))]"
+                                "id": "[resourceId('Microsoft.Network/publicIpAddresses', parameters('azureFirewallPublicIP'))]"
                             }
                         }
                     }
@@ -541,11 +545,7 @@
                         }
                     }
                 ]
-            },
-            "dependsOn": [
-                "[resourceId(resourceGroup().name,'Microsoft.Network/virtualNetworks',parameters('vnetResourceName'))]",
-                "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses',parameters('azureFirewallPublicIP'))]"
-            ]
+            }
         }
     ]
 }
