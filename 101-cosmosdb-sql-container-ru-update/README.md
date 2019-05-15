@@ -1,4 +1,4 @@
-# Update RU/s for Azure Cosmos Core (SQL) API
+# Update RU/s for Azure Cosmos DB Container - Core (SQL) API
 
 This template updates the RU/s (throughput) on a container resource for an Azure Cosmos account - Core (SQL) API.
 
