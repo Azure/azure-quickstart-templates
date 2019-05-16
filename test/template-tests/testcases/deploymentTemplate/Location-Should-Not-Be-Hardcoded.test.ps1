@@ -3,7 +3,7 @@
 [string]$TemplateText,
 
 [Parameter(Mandatory=$true,Position=1)]
-[string]$TemplateObject,
+[PSObject]$TemplateObject,
 
 [Parameter(Mandatory=$true,Position=1)]
 [switch]$IsMainTemplate
@@ -26,7 +26,7 @@ if ($locationParameter -and
     "$($locationParameter.defaultValue)".Trim() -ne 'global' -and 
     $IsMainTemplate) {
     # If it wasn't, write an error
-    Write-Error "Location parameter must not be hardcoded.  The default value should be [resourceGroup().location]." -ErrorId Location.Parameter.Hardcoded -TargetObject $parameter
+    Write-Error "Location parameter must not be hardcoded.  The default value should be [resourceGroup().location]. It is $($locationParameter.defaultValue)" -ErrorId Location.Parameter.Hardcoded -TargetObject $parameter
 }
 
 # Now check that the rest of the template doesn't use [resourceGroup().location] 
