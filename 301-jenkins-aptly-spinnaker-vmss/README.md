@@ -9,7 +9,7 @@
 
 This template allows you to deploy and configure a DevOps pipeline from an Aptly repository to a VM Scale Set in Azure. It deploys an instance of Jenkins and Spinnaker on a Linux Ubuntu 16.04 LTS VM.
 
-The Jenkins instance will include a basic pipeline that checks out a [sample git repository](https://github.com/mybayern1974/hello-karyon-rxnetty.git), builds the debian package, and pushes the package to an Aptly repository hosted on the VM. The Spinnaker instance will automatically be setup to listen to that Jenkins instance and to deploy VM Scale Sets.
+The Jenkins instance will include a basic pipeline that checks out a [sample git repository](https://github.com/azure-devops/hello-karyon-rxnetty.git), builds the debian package, and pushes the package to an Aptly repository hosted on the VM. The Spinnaker instance will automatically be setup to listen to that Jenkins instance and to deploy VM Scale Sets.
 
 ## A. Deploy
 1. Click the "Deploy to Azure" button. If you don't have an Azure subscription, you can follow instructions to signup for a free trial.
