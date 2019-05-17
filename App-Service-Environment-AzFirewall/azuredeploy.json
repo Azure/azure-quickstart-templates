@@ -16,13 +16,6 @@
                 "description": "Name of the ASE resource"
             }
         },
-        "dnsSuffix": {
-            "type": "string",
-            "defaultValue" : "ase.contoso.com",
-            "metadata": {
-                "description": "Used when deploying an ILB enabled ASE.  Set this to the root domain associated with the ASE.  For example: contoso.com"
-            }
-        },
         "vnetResourceName": {
             "type": "string",
             "defaultValue": "virtualNetwork",
@@ -42,8 +35,6 @@
             "defaultValue": 3,
             "allowedValues": [
                 0,
-                1,
-                2,
                 3
             ],
             "metadata": {
@@ -164,7 +155,7 @@
         }
     },
     "variables": {
-        "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetResourceName'))]",
+        "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetResourceName'), parameters('aseSubnetName'))]",
         "nestedtemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/vnet.json', parameters('_artifactsLocationSasToken')))]"
     },
     "resources": [
@@ -229,7 +220,7 @@
         },
         {
             "type": "Microsoft.Web/hostingEnvironments",
-            "apiVersion": "2018-02-01",
+            "apiVersion": "2019-02-01",
             "name": "[parameters('aseName')]",
             "location": "[parameters('location')]",
             "kind": "ASEV2",
@@ -244,10 +235,8 @@
                 "location": "[parameters('location')]",
                 "ipSslAddressCount": 0,
                 "internalLoadBalancingMode": "[parameters('internalLoadBalancingMode')]",
-                "dnsSuffix": "[parameters('dnsSuffix')]",
                 "virtualNetwork": {
-                    "Id": "[variables('vnetID')]",
-                    "Subnet": "[parameters('aseSubnetName')]"
+                    "Id": "[variables('subnetId')]"
                 }
             }
         },
@@ -287,18 +276,6 @@
             "kind": "app",
             "properties": {
                 "enabled": true,
-                "hostNameSslStates": [
-                    {
-                        "name": "[concat(parameters('applicationName'),parameters('dnsSuffix'))]",
-                        "sslState": "Disabled",
-                        "hostType": "Standard"
-                    },
-                    {
-                        "name": "[concat(parameters('applicationName'),'.scm.',parameters('dnsSuffix'))]",
-                        "sslState": "Disabled",
-                        "hostType": "Repository"
-                    }
-                ],
                 "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('serverFarmsAseAspName'))]",
                 "reserved": false,
                 "scmSiteAlsoStopped": false,
