@@ -78,7 +78,7 @@ foreach ($av in $allApiVersions) { # Then walk over each object containing an Ap
         #! Determine the index without respect to preview versions
         $howRecent? = $validApiVersions.IndexOf($av.ApiVersion) 
         if ($howRecent?) {
-            Write-Error "$FullResourceType uses an preview version ( $($av.apiVersion) ) when there are $($howRecent?) more recent versions available" -TargetObject $av
+            Write-Error "$FullResourceType uses a preview version ( $($av.apiVersion) ) when there are $($howRecent?) more recent versions available" -TargetObject $av
         } 
     }
     # Finally, check how long it's been since the ApiVersion's date

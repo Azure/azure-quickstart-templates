@@ -22,11 +22,10 @@ $locationParameter = $templateObject.parameters.location
 
 # Make sure that the template parameter's default is the expression [resourceGroup().location] 
 if ($locationParameter -and 
-    "$($locationParameter.defaultvalue)".Trim() -ne '[resourceGroup().location]' -and
-    "$($locationParameter.defaultValue)".Trim() -ne 'global' -and 
+    "$($locationParameter.defaultvalue)".Trim() -ne '[resourceGroup().location]' -and 
     $IsMainTemplate) {
     # If it wasn't, write an error
-    Write-Error "Location parameter must not be hardcoded.  The default value should be [resourceGroup().location]. It is $($locationParameter.defaultValue)" -ErrorId Location.Parameter.Hardcoded -TargetObject $parameter
+    Write-Error "The defaultValue of the location parameter must not be a specific location. The default value must be [resourceGroup().location]. It is $($locationParameter.defaultValue)" -ErrorId Location.Parameter.Hardcoded -TargetObject $parameter
 }
 
 # Now check that the rest of the template doesn't use [resourceGroup().location] 
