@@ -1,0 +1,217 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "Location for all resources"
+            }
+        },
+        "vnetResourceName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the vnet"
+            }
+        },
+        "managedInstanceSubnetName": {
+            "type": "string",
+            "metadata": {
+                "description": "Managed Instance Subnet name"
+            }
+        },
+        "sqlManagedInstanceName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Azure SQL Managed Instance - must be globally unique, contain only lowercase letters, numbers and '-'"
+            }
+        },
+        "sqlManagedInstanceAdminLogin": {
+            "type": "string",
+            "metadata": {
+                "description": "Admin user for Managed Instance"
+            }
+        },
+        "sqlManagedInstancePassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Admin user password - must be 16-128 characters, must contain 3 of uppercase, lowercase, numbers and non-alphanumeric characters, and cannot contain all or part of the login name"
+            }
+        },
+        "sqlManagedInstance-storageSizeInGB": {
+            "type": "string",
+            "metadata": {
+                "description": "Amount of Storage in GB for this instance"
+            }
+        },
+        "sqlManagedInstance-vCores": {
+            "type": "string",
+            "metadata": {
+                "description": "Number of vCores for this instance"
+            }
+        },
+        "sqlManagedInstance-licenseType": {
+            "type": "string",
+            "metadata": {
+                "description": "Type of license: BasePrice (BYOL) or LicenceIncluded"
+            },
+            "allowedValues": [
+                "BasePrice",
+                "LicenseIncluded"
+            ]
+        },
+        "sqlManagedInstance-skuName": {
+            "type": "string",
+            "metadata": {
+                "description": "SKU NAME (GP_Gen4, GP_Gen5, BC_GEN5)"
+            },
+            "allowedValues": [
+                "GP_Gen4",
+                "GP_Gen5",
+                "BC_Gen4",
+                "BC_Gen5"
+            ]
+        },
+        "sqlManagedInstance-skuEdition": {
+            "type": "string",
+            "metadata": {
+                "description": "SKU Edition (GeneralPurpose, BusinessCritical)"
+            },
+            "allowedValues": [
+                "GeneralPurpose",
+                "BusinessCritical"
+            ]
+        },
+        "sqlManagedInstance-hardwareFamily": {
+            "type": "string",
+            "metadata": {
+                "description": "Hardware family (Gen4, Gen5)"
+            },
+            "allowedValues": [
+                "Gen4",
+                "Gen5"
+            ]
+        },
+        "sqlManagedInstance-collation": {
+            "type": "string",
+            "metadata": {
+                "description": "SQL Collation"
+            }
+        },
+        "tags": {
+            "type": "object",
+            "metadata": {
+                "Description": "Resource Tags."
+            }
+        },
+        "_artifactsLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "The location of resources, such as templates and DSC modules, that the template depends on"
+            },
+            "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/azure-sql-managed-instance"
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Auto-generated token to access _artifactsLocation"
+            },
+            "defaultValue": ""
+        },
+        "vnetAddressRange": {
+            "type": "string",
+            "metadata": {
+                "description": "Address range for the virtual network in CIDR notation"
+            }
+        },
+        "managedInstanceNSGName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Managed Instance NSG"
+            }
+        },
+        "managedInstanceRouteTableName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Managed Instance Route Table"
+            }
+        },
+        "managedInstanceSubnetAddressRange": {
+            "type": "string",
+            "metadata": {
+                "description": "Managed Instance Subnet range"
+            }
+        }
+    },
+    "variables": {
+        "nestedTemplateUri": "[concat(parameters('_artifactsLocation'), '/nestedtemplates/vnet.json', parameters('_artifactsLocationSasToken'))]"
+    },
+    "resources": [
+        {
+            "apiVersion": "2017-05-10",
+            "type": "Microsoft.Resources/deployments",
+            "name": "BuildMINetworking",
+            "resourceGroup": "[resourceGroup().name]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('nestedTemplateUri')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "vnetResourceName": {
+                        "value": "[parameters('vnetResourceName')]"
+                    },
+                    "vnetAddressRange": {
+                        "value": "[parameters('vnetAddressRange')]"
+                    },
+                    "managedInstanceSubnetName": {
+                        "value": "[parameters('managedInstanceSubnetName')]"
+                    },
+                    "managedInstanceSubnetAddressRange": {
+                        "value": "[parameters('managedInstanceSubnetAddressRange')]"
+                    },
+                    "managedInstanceNSGName": {
+                        "value": "[parameters('managedInstanceNSGName')]"
+                    },
+                    "managedInstanceRouteTableName": {
+                        "value": "[parameters('managedInstanceRouteTableName')]"
+                    }
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "type": "Microsoft.Sql/managedInstances",
+            "tags": "[parameters('tags')]",
+            "sku": {
+                "name": "[parameters('sqlManagedInstance-skuName')]",
+                "tier": "[parameters('sqlManagedInstance-skuEdition')]"
+            },
+            "name": "[parameters('sqlManagedInstanceName')]",
+            "apiVersion": "2015-05-01-preview",
+            "location": "[parameters('location')]",
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "properties": {
+                "administratorLogin": "[parameters('sqlManagedInstanceAdminLogin')]",
+                "administratorLoginPassword": "[parameters('sqlManagedInstancePassword')]",
+                "subnetId": "[resourceId(resourceGroup().name,'Microsoft.Network/virtualNetworks/subnets',parameters('vnetResourceName'),parameters('managedInstanceSubnetName'))]",
+                "storageSizeInGB": "[parameters('sqlManagedInstance-storageSizeInGB')]",
+                "vCores": "[parameters('sqlManagedInstance-vCores')]",
+                "licenseType": "[parameters('sqlManagedInstance-licenseType')]",
+                "hardwareFamily": "[parameters('sqlManagedInstance-hardwareFamily')]",
+                "collation": "[parameters('sqlManagedInstance-collation')]",
+                "publicDataEndpointEnabled": "false"
+            },
+            "dependsOn": [
+                "Microsoft.Resources/deployments/BuildMINetworking"
+            ]
+        }
+    ],
+    "outputs": {}
+}
