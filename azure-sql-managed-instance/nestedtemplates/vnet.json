@@ -1,0 +1,431 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "Location for all resources"
+            }
+        },
+        "vnetResourceName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the vnet"
+            }
+        },
+        "vnetAddressRange": {
+            "type": "string",
+            "metadata": {
+                "description": "Address range of the virtual network"
+            }
+        },
+        "managedInstanceSubnetName": {
+            "type": "string",
+            "metadata": {
+                "description": "Managed Instance Subnet name"
+            }
+        },
+        "managedInstanceSubnetAddressRange": {
+            "type": "string",
+            "metadata": {
+                "description": "Managed Instance Subnet range"
+            }
+        },
+        "managedInstanceNSGName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Managed Instance NSG"
+            }
+        },
+        "managedInstanceRouteTableName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Managed Instance Route Table"
+            }
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "apiVersion": "2018-04-01",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "location": "[parameters('location')]",
+            "name": "[parameters('managedInstanceNSGName')]",
+            "tags": {
+                "displayName": "Deploy MI NSG"
+            },
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "inbound-management",
+                        "properties": {
+                            "description": "Management ports for the Managed Instance",
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 100,
+                            "direction": "Inbound",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [
+                                "9000",
+                                "9003",
+                                "1438",
+                                "1440",
+                                "1452"
+                            ],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    },
+                    {
+                        "name": "inbound-mi-subnet",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "sourceAddressPrefix": "[parameters('managedInstanceSubnetAddressRange')]",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "destinationPortRange": "*",
+                            "destinationPOrtRanges": [],
+                            "sourcePortRanges": [],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": [],
+                            "direction": "Inbound",
+                            "priority": "110"
+                        }
+                    },
+                    {
+                        "name": "inbound-health-probe",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "sourceAddressPrefix": "AzureLoadBalancer",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "destinationPortRange": "*",
+                            "destinationPOrtRanges": [],
+                            "sourcePortRanges": [],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": [],
+                            "direction": "Inbound",
+                            "priority": "120"
+                        }
+                    },
+                    {
+                        "name": "prepare-allow-management-outbound-80",
+                        "properties": {
+                            "description": "Allow outbound TCP traffic on port 80",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 110,
+                            "direction": "Outbound",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [
+                                "80",
+                                "443",
+                                "12000"
+                            ],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    },
+                    {
+                        "name": "outbound-mi-subnet",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "[parameters('managedInstanceSubnetAddressRange')]",
+                            "access": "Allow",
+                            "destinationPortRange": "*",
+                            "destinationPortRanges": [],
+                            "sourcePortRanges": [],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": [],
+                            "direction": "Outbound",
+                            "priority": "110"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/routeTables",
+            "name": "[parameters('managedInstanceRouteTableName')]",
+            "location": "[parameters('location')]",
+            "tags": {
+                "displayName": "Deploy Azure SQL Managed Instance UDR"
+            },
+            "properties": {
+                "routes": [
+                    {
+                        "Name": "subnet_to_vnetlocal",
+                        "properties": {
+                            "addressPrefix": "[parameters('managedInstanceSubnetAddressRange')]",
+                            "nextHopType": "VnetLocal"
+                        }
+                    },
+                    {
+                        "Name": "mi-0-5-next-hop-internet",
+                        "properties": {
+                            "addressPrefix": "0.0.0.0/5",
+                            "nextHopType": "Internet"
+                        }
+                    },
+                    {
+                        "Name": "mi-11-8-nexthop-internet",
+                        "properties": {
+                            "addressPrefix": "11.0.0.0/8",
+                            "nextHopType": "Internet"
+                        }
+                    },
+                    {
+                        "Name": "mi-12-6-nexthop-internet",
+                        "properties": {
+                            "addressPrefix": "12.0.0.0/6",
+                            "nextHopType": "Internet"
+                        }
+                    },
+                    {
+                        "Name": "mi-128-3-nexthop-internet",
+                        "properties": {
+                            "addressPrefix": "128.0.0.0/3",
+                            "nextHopType": "Internet"
+                        }
+                    },
+                    {
+                        "Name": "mi-16-4-nexthop-internet",
+                        "properties": {
+                            "addressPrefix": "16.0.0.0/4",
+                            "nextHopType": "Internet"
+                        }
+                    },
+                    {
+                        "Name": "mi-160-5-nexthop-internet",
+                        "properties": {
+                            "addressPrefix": "160.0.0.0/5",
+                            "nextHopType": "Internet"
+                        }
+                    },
+                    {
+                        "Name": "mi-168-6-nexthop-internet",
+                        "properties": {
+                            "addressPrefix": "168.0.0.0/6",
+                            "nextHopType": "Internet"
+                        }
+                    },
+                    {
+                        "Name": "mi-172-12-nexthop-internet",
+                        "properties": {
+                            "addressPrefix": "172.0.0.0/12",
+                            "nextHopType": "Internet"
+                        }
+                    },
+                    {
+                        "Name": "mi-172-128-9-nexthop-internet",
+                        "properties": {
+                            "addressPrefix": "172.128.0.0/9",
+                            "nextHopType": "Internet"
+                        }
+                    },
+                    {
+                        "Name": "mi-172-32-11-nexthop-internet",
+                        "properties": {
+                            "addressPrefix": "172.32.0.0/11",
+                            "nextHopType": "Internet"
+                        }
+                    },
+                    {
+                        "Name": "mi-172-64-10-nexthop-internet",
+                        "properties": {
+                            "addressPrefix": "172.64.0.0/10",
+                            "nextHopType": "Internet"
+                        }
+                    },
+                    {
+                        "Name": "mi-173-8-nexthop-internet",
+                        "properties": {
+                            "addressPrefix": "173.0.0.0/8",
+                            "nextHopType": "Internet"
+                        }
+                    },
+                    {
+                        "Name": "mi-174-7-nexthop-internet",
+                        "properties": {
+                            "addressPrefix": "174.0.0.0/7",
+                            "nextHopType": "Internet"
+                        }
+                    },
+                    {
+                        "Name": "mi-176-4-nexthop-internet",
+                        "properties": {
+                            "addressPrefix": "176.0.0.0/4",
+                            "nextHopType": "Internet"
+                        }
+                    },
+                    {
+                        "Name": "mi-192-128-11-nexthop-internet",
+                        "properties": {
+                            "addressPrefix": "192.128.0.0/11",
+                            "nextHopType": "Internet"
+                        }
+                    },
+                    {
+                        "Name": "mi-192-160-13-nexthop-internet",
+                        "properties": {
+                            "addressPrefix": "192.160.0.0/13",
+                            "nextHopType": "Internet"
+                        }
+                    },
+                    {
+                        "Name": "mi-192-169-16-nexthop-internet",
+                        "properties": {
+                            "addressPrefix": "192.169.0.0/16",
+                            "nextHopType": "Internet"
+                        }
+                    },
+                    {
+                        "Name": "mi-192-170-15-nexthop-internet",
+                        "properties": {
+                            "addressPrefix": "192.170.0.0/15",
+                            "nextHopType": "Internet"
+                        }
+                    },
+                    {
+                        "Name": "mi-192-172-14-nexthop-internet",
+                        "properties": {
+                            "addressPrefix": "192.172.0.0/14",
+                            "nextHopType": "Internet"
+                        }
+                    },
+                    {
+                        "Name": "mi-192-176-12-nexthop-internet",
+                        "properties": {
+                            "addressPrefix": "192.176.0.0/12",
+                            "nextHopType": "Internet"
+                        }
+                    },
+                    {
+                        "Name": "mi-192-192-10-nexthop-internet",
+                        "properties": {
+                            "addressPrefix": "192.192.0.0/10",
+                            "nextHopType": "Internet"
+                        }
+                    },
+                    {
+                        "Name": "mi-192-9-nexthop-internet",
+                        "properties": {
+                            "addressPrefix": "192.0.0.0/9",
+                            "nextHopType": "Internet"
+                        }
+                    },
+                    {
+                        "Name": "mi-193-8-nexthop-internet",
+                        "properties": {
+                            "addressPrefix": "193.0.0.0/8",
+                            "nextHopType": "Internet"
+                        }
+                    },
+                    {
+                        "Name": "mi-194-7-nexthop-internet",
+                        "properties": {
+                            "addressPrefix": "194.0.0.0/7",
+                            "nextHopType": "Internet"
+                        }
+                    },
+                    {
+                        "Name": "mi-196-6-nexthop-internet",
+                        "properties": {
+                            "addressPrefix": "196.0.0.0/6",
+                            "nextHopType": "Internet"
+                        }
+                    },
+                    {
+                        "Name": "mi-200-5-nexthop-internet",
+                        "properties": {
+                            "addressPrefix": "200.0.0.0/5",
+                            "nextHopType": "Internet"
+                        }
+                    },
+                    {
+                        "Name": "mi-208-4-nexthop-internet",
+                        "properties": {
+                            "addressPrefix": "208.0.0.0/4",
+                            "nextHopType": "Internet"
+                        }
+                    },
+                    {
+                        "Name": "mi-224-3-nexthop-internet",
+                        "properties": {
+                            "addressPrefix": "224.0.0.0/3",
+                            "nextHopType": "Internet"
+                        }
+                    },
+                    {
+                        "Name": "mi-32-3-nexthop-internet",
+                        "properties": {
+                            "addressPrefix": "32.0.0.0/3",
+                            "nextHopType": "Internet"
+                        }
+                    },
+                    {
+                        "Name": "mi-64-2-nexthop-internet",
+                        "properties": {
+                            "addressPrefix": "64.0.0.0/2",
+                            "nextHopType": "Internet"
+                        }
+                    },
+                    {
+                        "Name": "mi-8-7-nexthop-internet",
+                        "properties": {
+                            "addressPrefix": "8.0.0.0/7",
+                            "nextHopType": "Internet"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2017-06-01",
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[parameters('vnetResourceName')]",
+            "location": "[parameters('location')]",
+            "tags": {
+                "displayName": "Deploy VNet"
+            },
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[parameters('vnetAddressRange')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[parameters('managedInstanceSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('managedInstanceSubnetAddressRange')]",
+                            "routeTable": {
+                                "id": "[resourceId('Microsoft.Network/routeTables',parameters('managedInstanceRouteTableName'))]"
+                            },
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups',parameters('managedInstanceNSGName'))]"
+                            }
+                        }
+                    }
+                ]
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups',parameters('managedInstanceNSGName'))]",
+                "[resourceId('Microsoft.Network/routeTables',parameters('managedInstanceRouteTableName'))]"
+            ]
+        }
+    ],
+    "outputs": {}
+}
