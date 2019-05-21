@@ -66,13 +66,6 @@ foreach ($av in $allApiVersions) { # Then walk over each object containing an Ap
             }
         })
 
-
-    # If the actual string in the template was not in the list of APIs,
-    if ($validApiVersions -notcontains $av.ApiVersion) {
-        # write an error
-        Write-Error "$FullResourceType has an invalid API version.  Valid API versions are: $validApiVersions" -TargetObject $av
-        continue
-    }
     
     if ($av.ApiVersion -like '*-*-*-*') {
         #! Determine the index without respect to preview versions
