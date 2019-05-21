@@ -4,24 +4,28 @@
     "parameters": {
         "location": {
             "type": "string",
+            "defaultValue":"[resourceGroup().location]",
             "metadata": {
                 "description": "Location for all resources"
             }
         },
         "vnetResourceName": {
             "type": "string",
+            "defaultValue": "virtualNetwork",
             "metadata": {
                 "description": "The name of the vnet"
             }
         },
         "managedInstanceSubnetName": {
             "type": "string",
+            "defaultValue": "mi-subnet",
             "metadata": {
                 "description": "Managed Instance Subnet name"
             }
         },
         "sqlManagedInstanceName": {
             "type": "string",
+            "defaultValue": "[concat('managedInstance-', uniqueString(resourceGroup().id))]",
             "metadata": {
                 "description": "Name of the Azure SQL Managed Instance - must be globally unique, contain only lowercase letters, numbers and '-'"
             }
@@ -40,18 +44,21 @@
         },
         "sqlManagedInstance-storageSizeInGB": {
             "type": "string",
+            "defaultValue": "256",
             "metadata": {
                 "description": "Amount of Storage in GB for this instance"
             }
         },
         "sqlManagedInstance-vCores": {
             "type": "string",
+            "defaultValue": "8",
             "metadata": {
                 "description": "Number of vCores for this instance"
             }
         },
         "sqlManagedInstance-licenseType": {
             "type": "string",
+            "defaultValue": "BasePrice",
             "metadata": {
                 "description": "Type of license: BasePrice (BYOL) or LicenceIncluded"
             },
@@ -62,6 +69,7 @@
         },
         "sqlManagedInstance-skuName": {
             "type": "string",
+            "defaultValue": "GP_Gen5",
             "metadata": {
                 "description": "SKU NAME (GP_Gen4, GP_Gen5, BC_GEN5)"
             },
@@ -74,6 +82,7 @@
         },
         "sqlManagedInstance-skuEdition": {
             "type": "string",
+            "defaultValue": "GeneralPurpose",
             "metadata": {
                 "description": "SKU Edition (GeneralPurpose, BusinessCritical)"
             },
@@ -84,6 +93,7 @@
         },
         "sqlManagedInstance-hardwareFamily": {
             "type": "string",
+            "defaultValue": "Gen5",
             "metadata": {
                 "description": "Hardware family (Gen4, Gen5)"
             },
@@ -94,6 +104,7 @@
         },
         "sqlManagedInstance-collation": {
             "type": "string",
+            "defaultValue": "SQL_Latin1_General_CP1_CI_AS",
             "metadata": {
                 "description": "SQL Collation"
             }
@@ -109,7 +120,7 @@
             "metadata": {
                 "description": "The location of resources, such as templates and DSC modules, that the template depends on"
             },
-            "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/azure-sql-managed-instance"
+            "defaultValue": "https://raw.githubusercontent.com/jftl6y/azure-quickstart-templates/master/azure-sql-managed-instance"
         },
         "_artifactsLocationSasToken": {
             "type": "securestring",
@@ -120,31 +131,42 @@
         },
         "vnetAddressRange": {
             "type": "string",
+            "defaultValue": "10.0.0.0/16",
             "metadata": {
                 "description": "Address range for the virtual network in CIDR notation"
             }
         },
         "managedInstanceNSGName": {
             "type": "string",
+            "defaultValue": "mi-NSG",
             "metadata": {
                 "description": "Name of the Managed Instance NSG"
             }
         },
         "managedInstanceRouteTableName": {
             "type": "string",
+            "defaultValue": "mi-RouteTable",
             "metadata": {
                 "description": "Name of the Managed Instance Route Table"
             }
         },
         "managedInstanceSubnetAddressRange": {
             "type": "string",
+            "defaultValue": "10.0.0.0/24",
             "metadata": {
                 "description": "Managed Instance Subnet range"
+            }
+        },
+        "miManagementIps": {
+            "type": "array",
+            "defaultValue": [],
+            "metadata": {
+                "description": "List of MI management IP ranges"
             }
         }
     },
     "variables": {
-        "nestedTemplateUri": "[concat(parameters('_artifactsLocation'), '/nestedtemplates/vnet.json', parameters('_artifactsLocationSasToken'))]"
+        "nestedtemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/vnet.json', parameters('_artifactsLocationSasToken')))]"
     },
     "resources": [
         {
@@ -179,10 +201,12 @@
                     },
                     "managedInstanceRouteTableName": {
                         "value": "[parameters('managedInstanceRouteTableName')]"
+                    },
+                    "miManagementIps": {
+                        "value": "[parameters('miManagementIps')]"
                     }
                 }
-            },
-            "dependsOn": []
+            }
         },
         {
             "type": "Microsoft.Sql/managedInstances",
@@ -197,6 +221,9 @@
             "identity": {
                 "type": "SystemAssigned"
             },
+            "dependsOn": [
+                "Microsoft.Resources/deployments/BuildMINetworking"
+            ],
             "properties": {
                 "administratorLogin": "[parameters('sqlManagedInstanceAdminLogin')]",
                 "administratorLoginPassword": "[parameters('sqlManagedInstancePassword')]",
@@ -207,11 +234,7 @@
                 "hardwareFamily": "[parameters('sqlManagedInstance-hardwareFamily')]",
                 "collation": "[parameters('sqlManagedInstance-collation')]",
                 "publicDataEndpointEnabled": "false"
-            },
-            "dependsOn": [
-                "Microsoft.Resources/deployments/BuildMINetworking"
-            ]
+            }
         }
-    ],
-    "outputs": {}
+    ]
 }
