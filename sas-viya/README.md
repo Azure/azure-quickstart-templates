@@ -32,6 +32,9 @@ For assistance with SAS software, contact  [SAS Technical Support](https://suppo
     1. [Set Up SAS Data Agent](#DataAgent)
 1. [Usage](#Usage)
 1. [Troubleshooting](#Tshoot)
+    1. [Reviewing the Logs](#ReviewLog)
+    1. [Restarting the SAS Services](#RestartServices)
+    1. [Uncommon Errors that Require a Redeploy](#UncommonErrors)
 1. [Appendix A: Configuring the Identities Service](#AddA)
     1. [Verify Security Settings](#AddAVerify)
     1. [Create a Service Account](#AddACreateServiceAccount)
@@ -349,6 +352,7 @@ If your deployment fails:
 * If the error comes from a sub-deployment (ex. “AnsiblePhase5PreViyaInstall”), review the logs.
 * With some older licenses, some services might not be fully started after a full deployment. If you receive a connection error when connecting to SASHome or SASDrive, then you must restart the services as described [here](#RestartServices).
 
+<a name="ReviewLog"></a>
 ### Review the Log Files
 Ansible is the primary virtual machine used for the install and the majority of the deployment log files reside on the Ansible virtual machine.  
 #### Ansible Server Log Files:
@@ -387,7 +391,7 @@ Viya-Ark can restart all of the services by issuing the following commands as th
 cd /sas/install/setup/orchestration/sas_viya_playbook/
 ansible-playbook viya-ark/playbooks/viya-mmsu/viya-services-restart.yml -e enable_stray_cleanup=true
 ```
-
+<a name="UncommonErrors"></a>
 ### Uncommon Errors that Require a Redeploy
 If you encounter the following errors, remove the deployment and redeploy.
 #### SSH Error: data could not be sent to remote host
