@@ -1,0 +1,555 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "The location for all resources"
+            }
+        },
+        "vnetResourceName": {
+            "type": "string",
+            "defaultValue": "GET-VNET-NAME",
+            "metadata": {
+                "description": "The name of the VNet"
+            }
+        },
+        "vnetAddressRange": {
+            "type": "string",
+            "defaultValue": "10.0.0.0/16",
+            "metadata": {
+                "description": "The address range for the VNet"
+            }
+        },
+        "apiManagementSubnetName": {
+            "type": "string",
+            "defaultValue": "GEN-VNET-SUBNET1-NAME",
+            "metadata": {
+                "description": "The name of the API Management subnet"
+            }
+        },
+        "apiManagementSubnetRange": {
+            "type": "string",
+            "defaultValue": "10.0.0.0/24",
+            "metadata": {
+                "description": "Address range used by API Management"
+            }
+        },
+        "appGWSubnetName": {
+            "type": "string",
+            "defaultValue": "GEN-VNET-SUBNET2-NAME",
+            "metadata": {
+                "description": "The name of the App Gateway subnet"
+            }
+        },
+        "appGWSubnetRange": {
+            "type": "string",
+            "defaultValue": "10.0.1.0/24",
+            "metadata": {
+                "description": "Address range used by the App Gateway"
+            }
+        },
+        "appGWResourceName": {
+            "type": "string",
+            "defaultValue": "[concat('appgw-', uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "The name of the App GW resource"
+            }
+        },
+        "appGWPublicDNSPrefix": {
+            "type": "string",
+            "defaultValue": "[concat('appgw-', uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "The name of the App GW resource"
+            }
+        },
+        "apiManagementResourceName": {
+            "type": "string",
+            "defaultValue": "[concat('apiservice-', uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "The name of the API Management resource"
+            }
+        },
+        "apiManagementGatewayCustomDomain": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Custom domain used by the gateway / proxy of the API Management instance"
+            }
+        },
+        "apiManagementPortalCustomDomain": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Custom domain used by the developer portal of the API Management instance"
+            }
+        },
+        "apiManagementPublisherEmail": {
+            "type": "string",
+            "minLength": 1,
+            "metadata": {
+                "description": "The email address of the owner of the service"
+            }
+        },
+        "apiManagementPublisherName": {
+            "type": "string",
+            "minLength": 1,
+            "metadata": {
+                "description": "The name of the owner of the service"
+            }
+        },
+        "apiManagementSku": {
+            "type": "string",
+            "allowedValues": [
+                "Developer",
+                "Premium"
+            ],
+            "defaultValue": "Developer",
+            "metadata": {
+                "description": "The pricing tier of this API Management service (needs either Developer or Premium for VNet integration)"
+            }
+        },
+        "apiManagementSkuCount": {
+            "type": "int",
+            "defaultValue": 1,
+            "metadata": {
+                "description": "The instance size of this API Management service."
+            }
+        },
+        "existingKeyVaultName": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Name of the existing Key Vault resource"
+            }
+        },
+        "existingKeyVaultSecret": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Name of the private certificate loaded into Key Vault"
+            }
+        },
+        "trustedRootBase64PublicKey": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "The base-64 representation of the public key of the trusted root certificate for the custom domain"
+            }
+        },
+        "tags": {
+            "type": "object",
+            "defaultValue": {},
+            "metadata": {
+                "description": "The collection of resource tags passed from parameters file"
+            }
+        },
+        "_artifactsLocation": {
+            "type": "string",
+            "defaultValue": "https://raw.githubusercontent.com/azure/azure-quickstart-templates/api-management-application-gateway/master/",
+            "metadata": {
+                "description": "The location of resources, such as templates and DSC modules, that the template depends on"
+            }
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "defaultValue": "",
+            "metadata": {
+                "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+            }
+        }
+    },
+    "variables": {
+        "apimSubnetResourceId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetResourceName'), parameters('apiManagementSubnetName'))]",
+        "gwSubnetResourceId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetResourceName'), parameters('appGWSubnetName'))]",
+        "vnetNestedTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/vnet.json', parameters('_artifactsLocationSasToken')))]",
+        "apimNestedTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/update-apim-with-keyvault.json', parameters('_artifactsLocationSasToken')))]",
+        "apimServiceIdentityResourceId": "[concat(resourceId('Microsoft.ApiManagement/service', parameters('apiManagementResourceName')),'/providers/Microsoft.ManagedIdentity/Identities/default')]",
+        "appGWPublicIPAddressName": "[concat(parameters('appGWResourceName'), '-pip')]",
+        "appGWPublicIPRef": "[resourceId('Microsoft.Network/publicIPAddresses',variables('appGWPublicIPAddressName'))]",
+        "appGWRefId": "[resourceId('Microsoft.Network/applicationGateways',parameters('appGWResourceName'))]",
+        "appGWManagedIdName": "appgw-keyvault-msi",
+        "appGWManagedIdRef": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities',variables('appGWManagedIdName'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+            "apiVersion": "2018-11-30",
+            "name": "[variables('appGWManagedIdName')]",
+            "location": "[resourceGroup().location]"
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2018-10-01",
+            "name": "[variables('appGWPublicIPAddressName')]",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Standard"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Static",
+                "dnsSettings": {
+                    "domainNameLabel": "[parameters('appGWPublicDNSPrefix')]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2018-05-01",
+            "name": "BuildOrUpdateAPIMNetworking",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('vnetNestedTemplateUri')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "vnetResourceName": {
+                        "value": "[parameters('vnetResourceName')]"
+                    },
+                    "vnetAddressRange": {
+                        "value": "[parameters('vnetAddressRange')]"
+                    },
+                    "apiManagementSubnetName": {
+                        "value": "[parameters('apiManagementSubnetName')]"
+                    },
+                    "apimanagementSubnetRange": {
+                        "value": "[parameters('apiManagementSubnetRange')]"
+                    },
+                    "appGWSubnetName": {
+                        "value": "[parameters('appGWSubnetName')]"
+                    },
+                    "appGWSubnetRange": {
+                        "value": "[parameters('appGWSubnetRange')]"
+                    },
+                    "tags": {
+                        "value": "[parameters('tags')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service",
+            "apiVersion": "2018-06-01-preview",
+            "name": "[parameters('apiManagementResourceName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "Microsoft.Resources/deployments/BuildOrUpdateAPIMNetworking"
+            ],
+            "tags": {},
+            "sku": {
+                "name": "[parameters('apiManagementSku')]",
+                "capacity": "[parameters('apiManagementSkuCount')]"
+            },
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "properties": {
+                "publisherEmail": "[parameters('apiManagementPublisherEmail')]",
+                "publisherName": "[parameters('apiManagementPublisherName')]",
+                "virtualNetworkType": "Internal",
+                "virtualNetworkConfiguration": {
+                    "subnetResourceId": "[variables('apimSubnetResourceId')]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.KeyVault/vaults/accessPolicies",
+            "name": "[concat(parameters('existingKeyVaultName'), '/add')]",
+            "apiVersion": "2015-06-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/', parameters('apiManagementResourceName'))]",
+                "[concat('Microsoft.ManagedIdentity/userAssignedIdentities/', variables('appGWManagedIdName'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "accessPolicies": [
+                    {
+                        "tenantId": "[reference(variables('apimServiceIdentityResourceId'), '2018-11-30').tenantId]",
+                        "objectId": "[reference(variables('apimServiceIdentityResourceId'), '2018-11-30').principalId]",
+                        "permissions": {
+                            "secrets": [
+                                "get"
+                            ]
+                        }
+                    },
+                    {
+                        "tenantId": "[reference(variables('appGWManagedIdRef'), '2018-11-30').tenantId]",
+                        "objectId": "[reference(variables('appGWManagedIdRef'), '2018-11-30').principalId]",
+                        "permissions": {
+                            "secrets": [
+                                "get"
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2018-05-01",
+            "name": "UpdateAPIMCertificates",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementResourceName'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('apimNestedTemplateUri')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "vnetResourceName": {
+                        "value": "[parameters('vnetResourceName')]"
+                    },
+                    "apiManagementSubnetName": {
+                        "value": "[parameters('apiManagementSubnetName')]"
+                    },
+                    "apiManagementResourceName": {
+                        "value": "[parameters('apiManagementResourceName')]"
+                    },
+                    "apiManagementGatewayCustomDomain": {
+                        "value": "[parameters('apiManagementGatewayCustomDomain')]"
+                    },
+                    "apiManagementPortalCustomDomain": {
+                        "value": "[parameters('apiManagementPortalCustomDomain')]"
+                    },
+                    "apiManagementPublisherEmail": {
+                        "value": "[parameters('apiManagementPublisherEmail')]"
+                    },
+                    "apiManagementPublisherName": {
+                        "value": "[parameters('apiManagementPublisherName')]"
+                    },
+                    "apiManagementSku": {
+                        "value": "[parameters('apiManagementSku')]"
+                    },
+                    "apiManagementSkuCount": {
+                        "value": "[parameters('apiManagementSkuCount')]"
+                    },
+                    "existingKeyVaultName": {
+                        "value": "[parameters('existingKeyVaultName')]"
+                    },
+                    "existingKeyVaultSecret": {
+                        "value": "[parameters('existingKeyVaultSecret')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/applicationGateways",
+            "apiVersion": "2018-10-01",
+            "name": "[parameters('appGWResourceName')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/', parameters('apiManagementResourceName'))]",
+                "[concat('Microsoft.Network/publicIPAddresses/', variables('appGWPublicIPAddressName'))]"
+            ],
+            "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": {
+                    "[variables('appGWManagedIdRef')]": {}
+                }
+            },
+            "properties": {
+                "sku": {
+                    "name": "Standard_v2",
+                    "tier": "Standard_v2"
+                },
+                "autoscaleConfiguration": {
+                    "minCapacity": 2
+                },
+                "sslCertificates": [
+                    {
+                        "name": "appGatewaySslCert",
+                        "properties": {
+                            "keyVaultSecretId": "[concat('https://', parameters('existingKeyVaultName'), '.vault.azure.net/secrets/', parameters('existingKeyVaultSecret'), '/')]"
+                        }
+                    }
+                ],
+                "gatewayIPConfigurations": [
+                    {
+                        "name": "appGatewayIpConfig",
+                        "properties": {
+                            "subnet": {
+                                "id": "[variables('gwSubnetResourceId')]"
+                            }
+                        }
+                    }
+                ],
+                "frontendIPConfigurations": [
+                    {
+                        "name": "appGatewayFrontendIP",
+                        "properties": {
+                            "PublicIPAddress": {
+                                "id": "[variables('appGWPublicIPRef')]"
+                            }
+                        }
+                    }
+                ],
+                "frontendPorts": [
+                    {
+                        "name": "appGatewayFrontendPort",
+                        "properties": {
+                            "Port": 443
+                        }
+                    }
+                ],
+                "backendAddressPools": [
+                    {
+                        "name": "api-mgmt-backend-pool",
+                        "properties": {
+                            "BackendAddresses": [
+                                {
+                                    "IpAddress": "[reference(parameters('apiManagementResourceName'), '2017-03-01').staticIps[1]]"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "trustedRootCertificates": [
+                    {
+                        "name": "api-mgmt-trustedroot-ca",
+                        "properties": {
+                            "data": "[parameters('trustedRootBase64PublicKey')]"
+                        }
+                    }
+                ],
+                "probes": [
+                    {
+                        "name": "api-mgmt-gateway-probe",
+                        "properties": {
+                            "host": "[parameters('apiManagementGatewayCustomDomain')]",
+                            "path": "/status-0123456789abcdef",
+                            "interval": 30,
+                            "timeout": 30,
+                            "unhealthyThreshold": 3,
+                            "protocol": "Https"
+                        }
+                    },
+                    {
+                        "name": "api-mgmt-portal-probe",
+                        "properties": {
+                            "host": "[parameters('apiManagementPortalCustomDomain')]",
+                            "path": "/signin",
+                            "interval": 30,
+                            "timeout": 30,
+                            "unhealthyThreshold": 3,
+                            "protocol": "Https"
+                        }
+                    }
+                ],
+                "backendHttpSettingsCollection": [
+                    {
+                        "name": "api-mgmt-gateway-https-settings",
+                        "properties": {
+                            "Port": 443,
+                            "Protocol": "Https",
+                            "hostName": "[parameters('apiManagementGatewayCustomDomain')]",
+                            "CookieBasedAffinity": "Disabled",
+                            "probe": {
+                                "id": "[concat(variables('appGWRefId'), '/probes/api-mgmt-gateway-probe')]"
+                            },
+                            "trustedRootCertificates": [
+                                {
+                                    "id": "[concat(variables('appGWRefId'), '/trustedRootCertificates/api-mgmt-trustedroot-ca')]"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "api-mgmt-portal-https-settings",
+                        "properties": {
+                            "Port": 443,
+                            "Protocol": "Https",
+                            "hostName": "[parameters('apiManagementPortalCustomDomain')]",
+                            "CookieBasedAffinity": "Disabled",
+                            "probe": {
+                                "id": "[concat(variables('appGWRefId'), '/probes/api-mgmt-portal-probe')]"
+                            },
+                            "trustedRootCertificates": [
+                                {
+                                    "id": "[concat(variables('appGWRefId'), '/trustedRootCertificates/api-mgmt-trustedroot-ca')]"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "httpListeners": [
+                    {
+                        "name": "api-mgmt-gateway-listener",
+                        "properties": {
+                            "FrontendIPConfiguration": {
+                                "Id": "[concat(variables('appGWRefId'), '/frontendIPConfigurations/appGatewayFrontendIP')]"
+                            },
+                            "FrontendPort": {
+                                "Id": "[concat(variables('appGWRefId'), '/frontendPorts/appGatewayFrontendPort')]"
+                            },
+                            "Protocol": "Https",
+                            "SslCertificate": {
+                                "Id": "[concat(variables('appGWRefId'), '/sslCertificates/appGatewaySslCert')]"
+                            },
+                            "hostName": "[parameters('apiManagementGatewayCustomDomain')]"
+                        }
+                    },
+                    {
+                        "name": "api-mgmt-portal-listener",
+                        "properties": {
+                            "FrontendIPConfiguration": {
+                                "Id": "[concat(variables('appGWRefId'), '/frontendIPConfigurations/appGatewayFrontendIP')]"
+                            },
+                            "FrontendPort": {
+                                "Id": "[concat(variables('appGWRefId'), '/frontendPorts/appGatewayFrontendPort')]"
+                            },
+                            "Protocol": "Https",
+                            "SslCertificate": {
+                                "Id": "[concat(variables('appGWRefId'), '/sslCertificates/appGatewaySslCert')]"
+                            },
+                            "hostName": "[parameters('apiManagementPortalCustomDomain')]"
+                        }
+                    }
+                ],
+                "requestRoutingRules": [
+                    {
+                        "Name": "api-mgmt-gateway-rule",
+                        "properties": {
+                            "RuleType": "Basic",
+                            "httpListener": {
+                                "id": "[concat(variables('appGWRefId'), '/httpListeners/api-mgmt-gateway-listener')]"
+                            },
+                            "backendAddressPool": {
+                                "id": "[concat(variables('appGWRefId'), '/backendAddressPools/api-mgmt-backend-pool')]"
+                            },
+                            "backendHttpSettings": {
+                                "id": "[concat(variables('appGWRefId'), '/backendHttpSettingsCollection/api-mgmt-gateway-https-settings')]"
+                            }
+                        }
+                    },
+                    {
+                        "Name": "api-mgmt-portal-rule",
+                        "properties": {
+                            "RuleType": "Basic",
+                            "httpListener": {
+                                "id": "[concat(variables('appGWRefId'), '/httpListeners/api-mgmt-portal-listener')]"
+                            },
+                            "backendAddressPool": {
+                                "id": "[concat(variables('appGWRefId'), '/backendAddressPools/api-mgmt-backend-pool')]"
+                            },
+                            "backendHttpSettings": {
+                                "id": "[concat(variables('appGWRefId'), '/backendHttpSettingsCollection/api-mgmt-portal-https-settings')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ],
+    "outputs": {}
+}

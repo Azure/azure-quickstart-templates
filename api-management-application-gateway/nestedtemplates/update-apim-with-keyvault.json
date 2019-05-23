@@ -1,0 +1,125 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "The location for all resources"
+            }
+        },
+        "vnetResourceName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the VNet"
+            }
+        },
+        "apiManagementSubnetName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the API Management subnet"
+            }
+        },
+        "apiManagementResourceName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the API Management resource"
+            }
+        },
+        "apiManagementGatewayCustomDomain": {
+            "type": "string",
+            "metadata": {
+                "description": "Custom domain used by the gateway / proxy of the API Management instance"
+            }
+        },
+        "apiManagementPortalCustomDomain": {
+            "type": "string",
+            "metadata": {
+                "description": "Custom domain used by the developer portal of the API Management instance"
+            }
+        },
+        "apiManagementPublisherEmail": {
+            "type": "string",
+            "metadata": {
+                "description": "The email address of the owner of the service"
+            }
+        },
+        "apiManagementPublisherName": {
+            "type": "string",
+            "minLength": 1,
+            "metadata": {
+                "description": "The name of the owner of the service"
+            }
+        },
+        "apiManagementSku": {
+            "type": "string",
+            "allowedValues": [
+                "Developer",
+                "Premium"
+            ],
+            "metadata": {
+                "description": "The pricing tier of this API Management service (needs either Developer or Premium for VNet integration)"
+            }
+        },
+        "apiManagementSkuCount": {
+            "type": "int",
+            "defaultValue": 1,
+            "metadata": {
+                "description": "The instance size of this API Management service."
+            }
+        },
+        "existingKeyVaultName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the existing Key Vault resource"
+            }
+        },
+        "existingKeyVaultSecret": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the private certificate loaded into Key Vault"
+            }
+        }
+    },
+    "variables": {
+        "apimSubnetResourceId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetResourceName'), parameters('apiManagementSubnetName'))]",
+        "keyVaultID": "[resourceId('Microsoft.KeyVault/vaults',parameters('existingKeyVaultName'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.ApiManagement/service",
+            "apiVersion": "2018-06-01-preview",
+            "name": "[parameters('apiManagementResourceName')]",
+            "location": "[parameters('location')]",
+            "tags": {},
+            "sku": {
+                "name": "[parameters('apiManagementSku')]",
+                "capacity": "[parameters('apiManagementSkuCount')]"
+            },
+            "properties": {
+                "publisherEmail": "[parameters('apiManagementPublisherEmail')]",
+                "publisherName": "[parameters('apiManagementPublisherName')]",
+                "hostnameConfigurations": [
+                    {
+                        "hostName": "[parameters('apiManagementGatewayCustomDomain')]",
+                        "type": "Proxy",
+                        "keyVaultId": "[concat('https://', parameters('existingKeyVaultName'), '.vault.azure.net/secrets/', parameters('existingKeyVaultSecret'), '/')]"
+                    },
+                    {
+                        "hostName": "[parameters('apiManagementPortalCustomDomain')]",
+                        "type": "Portal",
+                        "keyVaultId": "[concat('https://', parameters('existingKeyVaultName'), '.vault.azure.net/secrets/', parameters('existingKeyVaultSecret'), '/')]"
+                    }
+                ],
+                "virtualNetworkType": "Internal",
+                "virtualNetworkConfiguration": {
+                    "subnetResourceId": "[variables('apimSubnetResourceId')]"
+                }
+            },
+            "identity": {
+                "type": "SystemAssigned"
+            }
+        }
+    ],
+    "outputs": {}
+}
