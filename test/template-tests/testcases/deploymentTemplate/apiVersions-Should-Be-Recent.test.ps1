@@ -39,37 +39,39 @@ foreach ($av in $allApiVersions) { # Then walk over each object containing an Ap
 
     # Now, get the API version as a string
     $apiString = $av.ApiVersion 
-    if ($apiString -like '*-preview') { # If it was a preview API, 
-        # chop off the -preview from the text
-        $apiString = $apiString.Substring(0, $apiString.Length - '-preview'.Length)
-    }
+    $hasDate = $apiString -match "(?<Year>\d{4,4})-(?<Month>\d{2,2})-(?<Day>\d{2,2})"
     
-    $apiDate = $av.ApiVersion -as [DateTime] # now coerce the apiVersion into a DateTime
-    if (-not $apiDate) {
+    
+    
+    if (-not $hasDate) {
         # If this failed, write an error.
         Write-Error "Api versions must be a fixed date. $FullResourceType is not." -TargetObject $av -ErrorId ApiVersion.Not.Date
         continue
     }
+    $apiDate = [DateTime]::new($matches.Year, $matches.Month, $matches.Day) # now coerce the apiVersion into a DateTime
+
     
 
     # Now find all of the valid versions from this API
-    $validApiVersions = $AllAzureResources.$FullResourceType | 
-        Select-Object -ExpandProperty apiVersions 
-    #! sort this yourself, because it might not be
+    $validApiVersions = # This is made a little tricky by the fact that some resources don't directly have an API version        
+        @(for ($i = $FullResourceTypes.Count - 1; $i -ge 0; $i--) { # so we need to walk backwards thru the list of items
+            $resourceTypeName = $FullResourceTypes[0..$i] -join '/' # construct the resource type name
+            $apiVersionsOfType = $AllAzureResources.$resourceTypeName | # and see if there's an apiVersion.
+                Select-Object -ExpandProperty apiVersions |
+                Sort-Object -Descending
 
+            if ($apiVersionsOfType) { # If there was,
+                $apiVersionsOfType # set it and break the loop
+                break
+            }
+        })
 
-    # If the actual string in the template was not in the list of APIs,
-    if ($validApiVersions -notcontains $av.ApiVersion) {
-        # write an error
-        Write-Error "$FullResourceType has an invalid API version.  Valid API versions are: $validApiVersions" -TargetObject $av
-        continue
-    }
     
-    if ($av.ApiVersion -like '*-preview') {
+    if ($av.ApiVersion -like '*-*-*-*') {
         #! Determine the index without respect to preview versions
         $howRecent? = $validApiVersions.IndexOf($av.ApiVersion) 
         if ($howRecent?) {
-            Write-Error "$FullResourceType uses a -preview version when there are $($howRecent?) more recent versions available" -TargetObject $av
+            Write-Error "$FullResourceType uses a preview version ( $($av.apiVersion) ) when there are $($howRecent?) more recent versions available" -TargetObject $av
         } 
     }
     # Finally, check how long it's been since the ApiVersion's date

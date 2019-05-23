@@ -23,9 +23,9 @@ CIFS_ANSIBLE_INVENTORIES_DIR="${CIFS_MOUNT_POINT}/setup/ansible/inventory"
 CIFS_ANSIBLE_GROUPS_DIR="${CIFS_MOUNT_POINT}/setup/ansible/groups"
 cifs_server_fqdn="${azure_storage_account}.file.core.windows.net"
 
-# to workaround the strange issues azure has had with certs in yum, run yum update twice.
-yum update -y rhui-azure-rhel7
-#yum update -y --exclude=WALinuxAgent
+
+# on 4/17, we started having intermittent issues with this repository being present for updates, so configuring to skip
+yum-config-manager --save --setopt=rhui-microsoft-azure-rhel7-eus.skip_if_unavailable=true
 
 
 # remove the requiretty from the sudoers file. Per bug https://bugzilla.redhat.com/show_bug.cgi?id=1020147 this is unnecessary and has been removed on future releases of redhat, 

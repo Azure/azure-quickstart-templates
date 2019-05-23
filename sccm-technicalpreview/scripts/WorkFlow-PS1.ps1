@@ -159,7 +159,7 @@ while($sqlpermission -eq $null)
 '@
         }
         $Command | Out-File -FilePath $BatchFilePath -Encoding ascii
-        $Command = ". $Path $DCIPAddress $DomainFullName $DomainAdminName $Password $tempurl `"$sakey`""
+        $Command = ". $Path $DCIPAddress $DomainFullName $DomainAdminName `"$Password`" $tempurl `"$sakey`""
         $Command | Out-File -FilePath $BatchFilePath -Encoding ascii -Append
 
         $BatchFile = "cmd /k powershell -ExecutionPolicy Unrestricted -file " + $BatchFilePath
@@ -253,7 +253,7 @@ if($Configuration.WaitForDC.Status -eq 'Completed')
 
                 $Result = $Configuration.SetRebootConfig()
                 if ($Result -eq 0) {
-                    shutdown -r -t 0
+                    shutdown -r -t 30
                     exit 0
                 }
             }
