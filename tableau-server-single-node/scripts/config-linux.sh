@@ -63,7 +63,14 @@ echo '{
 wait
 
 # download tableau server .deb file
-wget --output-document=tableau-installer.deb https://downloads.tableau.com/esdalt/2019.1.2/tableau-server-2019-1-2_amd64.deb
+# retry on fail
+wget --tries=3 --output-document=tableau-installer.deb https://downloads.tableau.com/esdalt/2019.1.2/tableau-server-2019-1-2_amd64.deb
+
+if [ $? -ne 0 ]
+then
+  echo "wget of Tableau installer failed" >> installer_log.txt
+  exit 1;
+fi
 
 # download automated-installer
 wget --remote-encoding=UTF-8 --output-document=automated-installer.sh https://raw.githubusercontent.com/tableau/server-install-script-samples/master/linux/automated-installer/automated-installer
