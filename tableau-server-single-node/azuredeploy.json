@@ -2,13 +2,14 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "resourceGroupLocation": {
-      "defaultValue": "West US",
+    "location": {
+      "defaultValue": "[resourceGroup().location]",
       "type": "string",
       "metadata": {
         "description": "Resource group location"
       }
-    },"adminUsername": {
+    },
+    "adminUsername": {
       "type": "string",
       "metadata": {
         "description": "Admin username for Virtual Machine"
@@ -130,7 +131,6 @@
         "Yes",
         "No"
       ],
-      "defaultValue": "",
       "metadata": {
         "description": "Please type 'Yes' to accept the Tableau EULA which can be found here: https://mkt.tableau.com/files/tableau_eula.pdf. If you type No then the Azure resources will still be deployed but Tableau Server will not be installed."
       }
@@ -219,184 +219,184 @@
   },
   "resources": [
     {
-      "apiVersion": "2018-02-01",
+      "apiVersion": "2018-11-01",
       "name": "pid-6c922c23-cc65-4b76-8290-74feb0f3c476",
       "type": "Microsoft.Resources/deployments",
       "properties": {
-          "mode": "Incremental",
-          "template": {
-              "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-              "contentVersion": "1.0.0.0",
-              "resources": []
-          }
-      }
-  },
-  {
-    "type": "Microsoft.Network/virtualNetworks",
-    "name": "[variables('virtualNetworkName')]",
-    "apiVersion": "2016-03-30",
-    "location": "[parameters('resourceGroupLocation')]",
-    "dependsOn": [
-      "[variables('NSGName')]"
-    ],
-    "properties": {
-      "addressSpace": {
-        "addressPrefixes": [
-          "[variables('addressPrefix')]"
-        ]
-      },
-      "subnets": [
-        {
-          "name": "[variables('subnet1Name')]",
-          "properties": {
-            "addressPrefix": "[variables('subnet1Prefix')]",
-            "networkSecurityGroup": {
-              "id": "[variables('nsgId')]"
-            }
-          }
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "resources": []
         }
-      ]
-    }
-  },
-  {
-    "apiVersion": "2015-06-15",
-    "type": "Microsoft.Network/networkSecurityGroups",
-    "name": "[variables('NSGName')]",
-    "location": "[parameters('resourceGroupLocation')]",
-    "tags": {
-      "displayName": "[variables('NSGName')]"
-    },
-    "properties": {
-      "securityRules": "[variables('LinuxsecurityRules')]"
-    }
-  },
-  {
-    "type": "Microsoft.Network/publicIPAddresses",
-    "name": "[concat('tabpip', copyindex(1))]",
-    "apiVersion": "2016-03-30",
-    "location": "[parameters('resourceGroupLocation')]",
-    "copy": {
-      "name": "PipLoop",
-      "count": "[variables('numberOfInstances')]"
-    },
-    "dependsOn": [
-      "[variables('virtualNetworkName')]"
-    ],
-    "properties": {
-      "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
-      "dnsSettings": {
-        "domainNameLabel": "[concat(variables('publicIpName'), copyIndex(1))]"
       }
-    }
-  },
-  {
-    "type": "Microsoft.Network/networkInterfaces",
-    "name": "[concat('tabnic', copyIndex(1))]",
-    "apiVersion": "2016-03-30",
-    "location": "[parameters('resourceGroupLocation')]",
-    "copy": {
-      "name": "nicLoop",
-      "count": "[variables('numberOfInstances')]"
     },
-    "dependsOn": [
-      "[variables('virtualNetworkName')]",
-      "[concat('tabpip', copyIndex(1))]"
-    ],
-    "properties": {
-      "ipConfigurations": [
-        {
-          "name": "ipconfig1",
-          "properties": {
-            "publicIPAddress": {
-              "id": "[resourceId ('Microsoft.Network/publicIPAddresses/', concat('tabpip', copyIndex(1)))]"
-            },
-            "privateIPAllocationMethod": "Dynamic",
-            "subnet": {
-              "id": "[variables('subnet1Ref')]"
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "apiVersion": "2019-04-01",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('NSGName')]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnet1Name')]",
+            "properties": {
+              "addressPrefix": "[variables('subnet1Prefix')]",
+              "networkSecurityGroup": {
+                "id": "[variables('nsgId')]"
+              }
             }
           }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2019-04-01",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('NSGName')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "[variables('NSGName')]"
+      },
+      "properties": {
+        "securityRules": "[variables('LinuxsecurityRules')]"
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat('tabpip', copyindex(1))]",
+      "apiVersion": "2019-04-01",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "PipLoop",
+        "count": "[variables('numberOfInstances')]"
+      },
+      "dependsOn": [
+        "[variables('virtualNetworkName')]"
+      ],
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[concat(variables('publicIpName'), copyIndex(1))]"
         }
-      ]
-    }
-  },
-  {
-    "type": "Microsoft.Compute/virtualMachines",
-    "name": "[concat('tableau', copyIndex(1))]",
-    "apiVersion": "2016-04-30-preview",
-    "location": "[parameters('resourceGroupLocation')]",
-    "copy": {
-      "name": "virtualMachineLoop",
-      "count": "[variables('numberOfInstances')]"
+      }
     },
-    "dependsOn": [
-      "nicLoop"
-    ],
-    "properties": {
-      "hardwareProfile": {
-        "vmSize": "[variables('virtualMachineSize')]"
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat('tabnic', copyIndex(1))]",
+      "apiVersion": "2019-04-01",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "nicLoop",
+        "count": "[variables('numberOfInstances')]"
       },
-      "osProfile": {
-        "computerName": "[concat('tableauvm', copyIndex(1))]",
-        "adminUsername": "[parameters('adminUsername')]",
-        "adminPassword": "[parameters('adminPassword')]"
-        },
-      "storageProfile": {
-        "imageReference": "[variables('imageReference')]",
-        "osDisk": {
-          "caching": "ReadWrite",
-          "createOption": "FromImage"
-        },
-        "copy": [
+      "dependsOn": [
+        "[variables('virtualNetworkName')]",
+        "[concat('tabpip', copyIndex(1))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
           {
-            "name": "dataDisks",
-            "count": 1,
-            "input": {
-              "diskSizeGB": 64,
-              "lun": "[copyIndex('dataDisks')]",
-              "createOption": "Empty"
+            "name": "ipconfig1",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[resourceId ('Microsoft.Network/publicIPAddresses/', concat('tabpip', copyIndex(1)))]"
+              },
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('subnet1Ref')]"
+              }
             }
-          }
-        ]
-      },
-      "networkProfile": {
-        "networkInterfaces": [
-          {
-            "id": "[resourceId('Microsoft.Network/networkInterfaces',concat('tabnic', copyIndex(1)))]"
           }
         ]
       }
     },
-    "resources": [
-      {
-        "condition": "[equals(parameters('accept_eula'), 'Yes')]",
-        "name": "[concat('tableau', copyIndex(1),'/CustomScript')]",
-        "type": "Microsoft.Compute/virtualMachines/extensions",
-        "location": "[parameters('resourceGroupLocation')]",
-        "apiVersion": "2016-03-30",
-        "dependsOn": [
-          "[resourceId('Microsoft.Compute/virtualMachines', concat('tableau', copyIndex(1)))]"
-        ],
-        "tags": {
-          "displayName": "linuxappdeploy"
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat('tableau', copyIndex(1))]",
+      "apiVersion": "2019-03-01",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "virtualMachineLoop",
+        "count": "[variables('numberOfInstances')]"
+      },
+      "dependsOn": [
+        "nicLoop"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('virtualMachineSize')]"
         },
-        "properties": {
-          "publisher": "Microsoft.Azure.Extensions",
-          "type": "CustomScript",
-          "typeHandlerVersion": "2.0",
-          "autoUpgradeMinorVersion": true,
-          "settings": {
-            "skipDos2Unix": false,
-            "timestamp": 123456789
+        "osProfile": {
+          "computerName": "[concat('tableauvm', copyIndex(1))]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": "[variables('imageReference')]",
+          "osDisk": {
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
           },
-          "protectedSettings": {
-            "commandToExecute": "[variables('UbCmdWrapper')]",
-            "fileUris": [
-              "[variables('ubuntuscripturi')]"
-            ]
+          "copy": [
+            {
+              "name": "dataDisks",
+              "count": 1,
+              "input": {
+                "diskSizeGB": 64,
+                "lun": "[copyIndex('dataDisks')]",
+                "createOption": "Empty"
+              }
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat('tabnic', copyIndex(1)))]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "condition": "[equals(parameters('accept_eula'), 'Yes')]",
+          "name": "[concat('tableau', copyIndex(1),'/CustomScript')]",
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "location": "[parameters('location')]",
+          "apiVersion": "2019-03-01",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', concat('tableau', copyIndex(1)))]"
+          ],
+          "tags": {
+            "displayName": "linuxappdeploy"
+          },
+          "properties": {
+            "publisher": "Microsoft.Azure.Extensions",
+            "type": "CustomScript",
+            "typeHandlerVersion": "2.0",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "skipDos2Unix": false,
+              "timestamp": 123456789
+            },
+            "protectedSettings": {
+              "commandToExecute": "[variables('UbCmdWrapper')]",
+              "fileUris": [
+                "[variables('ubuntuscripturi')]"
+              ]
+            }
           }
         }
-      }
-    ]
-  }
+      ]
+    }
   ]
 }
