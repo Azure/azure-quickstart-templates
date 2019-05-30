@@ -1,15 +1,19 @@
-﻿configuration DCConfiguration
+﻿configuration Configuration
 {
    param
    (
         [Parameter(Mandatory)]
         [String]$DomainName,
         [Parameter(Mandatory)]
+        [String]$DCName,
+        [Parameter(Mandatory)]
         [String]$DPMPName,
         [Parameter(Mandatory)]
         [String]$ClientName,
         [Parameter(Mandatory)]
         [String]$PSName,
+        [Parameter(Mandatory)]
+        [String]$DNSIPAddress,
         [Parameter(Mandatory)]
         [System.Management.Automation.PSCredential]$Admincreds
     )
@@ -50,13 +54,13 @@
             Name = "Rdc"             
         }
 
-        WindowsFeature ADDSInstall             
+		WindowsFeature ADDSInstall             
         {             
             Ensure = "Present"             
             Name = "AD-Domain-Services"             
         }         
 
-        WindowsFeature ADTools
+		WindowsFeature ADTools
         {
             Ensure = "Present"
             Name = "RSAT-AD-Tools"

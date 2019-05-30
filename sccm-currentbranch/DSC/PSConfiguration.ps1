@@ -1,4 +1,4 @@
-﻿configuration PSConfiguration
+﻿configuration Configuration
 {
    param
    (
@@ -10,6 +10,8 @@
         [String]$DPMPName,
         [Parameter(Mandatory)]
         [String]$ClientName,
+        [Parameter(Mandatory)]
+        [String]$PSName,
         [Parameter(Mandatory)]
         [String]$DNSIPAddress,
         [Parameter(Mandatory)]

@@ -48,14 +48,11 @@
     }
   },
   "variables": {
-    "Quotes": "\"",
     "containerName": "[concat(toLower(parameters('prefix')), 'container')]",
+    "dscScript": "DSC/DCConfiguration.zip",
     "virtualNetworkName": "[concat(toLower(parameters('prefix')), '-vnet')]",
     "vnetId": "[resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
-    "generalSettings": {
-      "domainName": "contoso.com",
-      "storageAccountType": "Standard_LRS"
-    },
+    "domainName": "contoso.com",
     "networkSettings": {
       "virtualNetworkAddressPrefix": "10.0.0.0/16",
       "subnetAddressPrefix": "10.0.0.0/24",
@@ -79,7 +76,7 @@
       "DC",
       "DPMP",
       "Client",
-      "PS1"
+      "PS"
     ],
     "vmname": [
       "DC01",
@@ -104,14 +101,14 @@
     {
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2018-06-01",
-      "name": "[concat(parameters('prefix'),variables('vmrole')[copyIndex()])]",
+      "name": "[variables('vmname')[copyIndex()]]",
       "location": "[parameters('location')]",
       "copy": {
         "name": "vmcopy",
         "count": 3
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', toLower(parameters('prefix')), '-ni-',variables('vmrole')[copyIndex()])]"
+        "[concat('Microsoft.Network/networkInterfaces/', toLower(variables('vmname')[copyIndex()]), '-ni')]"
       ],
       "properties": {
         "osProfile": {
@@ -134,7 +131,7 @@
           },
           "osDisk": {
             "osType": "Windows",
-            "name": "[concat(parameters('prefix'),variables('vmrole')[copyIndex()],'-OsDisk')]",
+            "name": "[concat(toLower(variables('vmname')[copyIndex()]),'-OsDisk')]",
             "createOption": "FromImage",
             "caching": "ReadWrite",
             "managedDisk": {
@@ -147,7 +144,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(toLower(parameters('prefix')), '-ni-',variables('vmrole')[copyIndex()]))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(toLower(variables('vmname')[copyIndex()]), '-ni'))]"
             }
           ]
         },
@@ -161,10 +158,14 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "apiVersion": "2018-06-01",
-      "name": "[concat(parameters('prefix'),variables('vmrole')[0],'/WorkFlow')]",
+      "name": "[concat(variables('vmname')[copyIndex()],'/WorkFlow')]",
       "location": "[parameters('location')]",
+      "copy": {
+        "name": "vmcopy",
+        "count": 4
+      },
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/',parameters('prefix'),variables('vmrole')[0])]"
+        "[concat('Microsoft.Compute/virtualMachines/',variables('vmname')[copyIndex()])]"
       ],
       "properties": {
         "publisher": "Microsoft.Powershell",
@@ -172,115 +173,14 @@
         "typeHandlerVersion": "2.21",
         "autoUpgradeMinorVersion": true,
         "settings": {
-          "modulesUrl": "[Uri(parameters('_artifactsLocation'),concat('DSC/DCConfiguration.zip',parameters('_artifactsLocationSasToken')))]",
-          "configurationFunction": "DCConfiguration.ps1\\DCConfiguration",
+          "modulesUrl": "[Uri(parameters('_artifactsLocation'),concat(variables('dscScript'),parameters('_artifactsLocationSasToken')))]",
+          "configurationFunction": "[concat(variables('vmrole')[copyIndex()],'Configuration.ps1\\Configuration')]",
           "Properties": {
-            "DomainName": "[variables('generalSettings').domainName]",
-            "DPMPName": "[concat(parameters('prefix'),variables('vmrole')[1])]",
-            "ClientName": "[concat(parameters('prefix'),variables('vmrole')[2])]",
-            "PSName": "[concat(parameters('prefix'),variables('vmrole')[3])]",
-            "AdminCreds": {
-              "UserName": "[parameters('adminUsername')]",
-              "Password": "PrivateSettingsRef:AdminPassword"
-            }
-          }
-        },
-        "protectedSettings": {
-          "Items": {
-            "AdminPassword": "[parameters('adminPassword')]"
-          }
-        }
-      }
-    },
-    {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "apiVersion": "2018-06-01",
-      "name": "[concat(parameters('prefix'),variables('vmrole')[3],'/WorkFlow')]",
-      "location": "[parameters('location')]",
-      "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/',parameters('prefix'),variables('vmrole')[3])]"
-      ],
-      "properties": {
-        "publisher": "Microsoft.Powershell",
-        "type": "DSC",
-        "typeHandlerVersion": "2.21",
-        "autoUpgradeMinorVersion": true,
-        "settings": {
-          "modulesUrl": "[Uri(parameters('_artifactsLocation'),concat('DSC/DCConfiguration.zip',parameters('_artifactsLocationSasToken')))]",
-          "configurationFunction": "PSConfiguration.ps1\\PSConfiguration",
-          "Properties": {
-            "DomainName": "[variables('generalSettings').domainName]",
-            "DCName": "[concat(parameters('prefix'),variables('vmrole')[0])]",
-            "DPMPName": "[concat(parameters('prefix'),variables('vmrole')[1])]",
-            "ClientName": "[concat(parameters('prefix'),variables('vmrole')[2])]",
-            "DNSIPAddress": "[concat(variables('networkSettings').virtualMachinesIPAddress,add(int('0'),int('4')))]",
-            "AdminCreds": {
-              "UserName": "[parameters('adminUsername')]",
-              "Password": "PrivateSettingsRef:AdminPassword"
-            }
-          }
-        },
-        "protectedSettings": {
-          "Items": {
-            "AdminPassword": "[parameters('adminPassword')]"
-          }
-        }
-      }
-    },
-    {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "apiVersion": "2018-06-01",
-      "name": "[concat(parameters('prefix'),variables('vmrole')[2],'/WorkFlow')]",
-      "location": "[parameters('location')]",
-      "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/',parameters('prefix'),variables('vmrole')[2])]"
-      ],
-      "properties": {
-        "publisher": "Microsoft.Powershell",
-        "type": "DSC",
-        "typeHandlerVersion": "2.21",
-        "autoUpgradeMinorVersion": true,
-        "settings": {
-          "modulesUrl": "[Uri(parameters('_artifactsLocation'),concat('DSC/DCConfiguration.zip',parameters('_artifactsLocationSasToken')))]",
-          "configurationFunction": "ClientConfiguration.ps1\\ClientConfiguration",
-          "Properties": {
-            "DomainName": "[variables('generalSettings').domainName]",
-            "PSName": "[concat(parameters('prefix'),variables('vmrole')[3])]",
-            "DCName": "[concat(parameters('prefix'),variables('vmrole')[0])]",
-            "DNSIPAddress": "[concat(variables('networkSettings').virtualMachinesIPAddress,add(int('0'),int('4')))]",
-            "AdminCreds": {
-              "UserName": "[parameters('adminUsername')]",
-              "Password": "PrivateSettingsRef:AdminPassword"
-            }
-          }
-        },
-        "protectedSettings": {
-          "Items": {
-            "AdminPassword": "[parameters('adminPassword')]"
-          }
-        }
-      }
-    },
-    {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "apiVersion": "2018-06-01",
-      "name": "[concat(parameters('prefix'),variables('vmrole')[1],'/WorkFlow')]",
-      "location": "[parameters('location')]",
-      "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/',parameters('prefix'),variables('vmrole')[1])]"
-      ],
-      "properties": {
-        "publisher": "Microsoft.Powershell",
-        "type": "DSC",
-        "typeHandlerVersion": "2.21",
-        "autoUpgradeMinorVersion": true,
-        "settings": {
-          "modulesUrl": "[Uri(parameters('_artifactsLocation'),concat('DSC/DCConfiguration.zip',parameters('_artifactsLocationSasToken')))]",
-          "configurationFunction": "DPMPConfiguration.ps1\\DPMPConfiguration",
-          "Properties": {
-            "DomainName": "[variables('generalSettings').domainName]",
-            "PSName": "[concat(parameters('prefix'),variables('vmrole')[3])]",
-            "DCName": "[concat(parameters('prefix'),variables('vmrole')[0])]",
+            "DomainName": "[variables('domainName')]",
+            "DCName": "[variables('vmname')[0]]",
+            "DPMPName": "[variables('vmname')[1]]",
+            "ClientName": "[variables('vmname')[2]]",
+            "PSName": "[variables('vmname')[3]]",
             "DNSIPAddress": "[concat(variables('networkSettings').virtualMachinesIPAddress,add(int('0'),int('4')))]",
             "AdminCreds": {
               "UserName": "[parameters('adminUsername')]",
@@ -318,7 +218,7 @@
     },
     {
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[concat(toLower(parameters('prefix')), '-ni-',variables('vmrole')[copyIndex()])]",
+      "name": "[concat(toLower(variables('vmname')[copyIndex()]), '-ni')]",
       "apiVersion": "2018-08-01",
       "location": "[parameters('location')]",
       "copy": {
@@ -327,7 +227,7 @@
       },
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-        "[concat('Microsoft.Network/publicIpAddresses/', toLower(parameters('prefix')), '-ip-',variables('vmrole')[copyIndex()])]",
+        "[concat('Microsoft.Network/publicIpAddresses/', toLower(variables('vmname')[copyIndex()]), '-ip')]",
         "[concat('Microsoft.Network/networkSecurityGroups/', toLower(parameters('prefix')), '-nsg')]"
       ],
       "properties": {
@@ -341,7 +241,7 @@
               "privateIPAllocationMethod": "[variables('networkSettings').privateIPAllocationMethod]",
               "privateIPAddress": "[concat(variables('networkSettings').virtualMachinesIPAddress,add(copyIndex(),int('4')))]",
               "publicIpAddress": {
-                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', concat(toLower(parameters('prefix')), '-ip-',variables('vmrole')[copyIndex()]))]"
+                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', concat(toLower(variables('vmname')[copyIndex()]), '-ip'))]"
               }
             }
           }
@@ -354,7 +254,7 @@
     {
       "type": "Microsoft.Network/publicIpAddresses",
       "apiVersion": "2018-08-01",
-      "name": "[concat(toLower(parameters('prefix')), '-ip-',variables('vmrole')[copyIndex()])]",
+      "name": "[concat(toLower(variables('vmname')[copyIndex()]), '-ip')]",
       "location": "[parameters('location')]",
       "copy": {
         "name": "ipcopy",
@@ -390,10 +290,10 @@
     {
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2018-06-01",
-      "name": "[concat(parameters('prefix'),variables('vmrole')[3])]",
+      "name": "[variables('vmname')[3]]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', toLower(parameters('prefix')), '-ni-',variables('vmrole')[3])]"
+        "[concat('Microsoft.Network/networkInterfaces/', toLower(variables('vmname')[3]), '-ni')]"
       ],
       "properties": {
         "osProfile": {
@@ -415,6 +315,7 @@
             "version": "latest"
           },
           "osDisk": {
+            "name": "[concat(toLower(variables('vmname')[copyIndex()]),'-OsDisk')]",
             "createOption": "FromImage",
             "managedDisk": {
               "storageAccountType": "[variables('vmDiskType')[3]]"
@@ -425,7 +326,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(toLower(parameters('prefix')), '-ni-',variables('vmrole')[3]))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(toLower(variables('vmname')[3]), '-ni'))]"
             }
           ]
         },

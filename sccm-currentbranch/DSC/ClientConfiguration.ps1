@@ -1,13 +1,17 @@
-﻿configuration ClientConfiguration
+﻿configuration Configuration
 {
    param
    (
         [Parameter(Mandatory)]
         [String]$DomainName,
         [Parameter(Mandatory)]
-        [String]$PSName,
-        [Parameter(Mandatory)]
         [String]$DCName,
+        [Parameter(Mandatory)]
+        [String]$DPMPName,
+        [Parameter(Mandatory)]
+        [String]$ClientName,
+        [Parameter(Mandatory)]
+        [String]$PSName,
         [Parameter(Mandatory)]
         [String]$DNSIPAddress,
         [Parameter(Mandatory)]
