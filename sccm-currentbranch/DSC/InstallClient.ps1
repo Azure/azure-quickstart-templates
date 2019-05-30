@@ -1,4 +1,4 @@
-Param($DomainFullName,$CMUser,$ClientName,$Role,$ProvisionToolPath)
+Param($DomainFullName,$CMUser,$ClientName,$DPMPName,$Role,$ProvisionToolPath)
 
 $logpath = $ProvisionToolPath+"\InstallClientLog.txt"
 $ConfigurationFile = Join-Path -Path $ProvisionToolPath -ChildPath "$Role.json"
@@ -12,6 +12,7 @@ $DomainUserName = $CMUser
 $SiteCode = $Role
 
 $ProviderMachineName = $env:COMPUTERNAME+"."+$DomainFullName # SMS Provider machine name
+$DPMPMachineName = $DPMPName +"." + $DomainFullName
 
 # Customizations
 $initParams = @{}
@@ -59,7 +60,7 @@ $boundaryrange = $clientIP+"-"+$clientIP
 "[$(Get-Date -format HH:mm:ss)] Create boundary and boundary group..." | Out-File -Append $logpath
 New-CMBoundary -Type IPRange -Name Client -Value $boundaryrange
 
-New-CMBoundaryGroup -Name $SiteCode -DefaultSiteCode $SiteCode -AddSiteSystemServerName $ProviderMachineName
+New-CMBoundaryGroup -Name $SiteCode -DefaultSiteCode $SiteCode -AddSiteSystemServerName $DPMPMachineName
 
 Add-CMBoundaryToGroup -BoundaryName Client -BoundaryGroupName $SiteCode
 

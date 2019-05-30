@@ -63,4 +63,4 @@ $ScriptFile = Join-Path -Path $ProvisionToolPath -ChildPath "InstallMP.ps1"
 #Install Client
 $ScriptFile = Join-Path -Path $ProvisionToolPath -ChildPath "InstallClient.ps1"
 
-. $ScriptFile $DomainFullName $CMUser $ClientName $Role $ProvisionToolPath
+. $ScriptFile $DomainFullName $CMUser $ClientName $DPMPName $Role $ProvisionToolPath
