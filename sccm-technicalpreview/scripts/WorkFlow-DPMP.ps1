@@ -128,6 +128,7 @@ if ($Configuration.WaitForDC.Status -eq 'NotStart') {
     $Configuration.WaitForDC.Status = 'Running'
     $Configuration.WaitForDC.StartTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
     UploadConfigFile
+    Start-Sleep -Seconds 600
     $Result = WaitFor-DC
     if ($Result -eq 0)  {
         $Configuration.WaitForDC.Status = 'Completed'
