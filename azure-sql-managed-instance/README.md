@@ -10,5 +10,9 @@
 
 This template deploys an **Azure SQL Managed Instance** into Azure with an correct routes and NSGs per [Connectivity architecture for a managed instance in Azure SQL Database](https://docs.microsoft.com/en-us/azure/sql-database/sql-database-managed-instance-connectivity-architecture).
 
-> [!NOTE]
-   > For the first instance in a subnet, deployment time is typically much longer than in the case of the subsequent instances and can take up to 6 hours to complete.
+---
+**NOTE**
+
+For the first instance in a subnet, deployment time is typically much longer than in the case of the subsequent instances and can take up to 6 hours to complete.
+
+---
