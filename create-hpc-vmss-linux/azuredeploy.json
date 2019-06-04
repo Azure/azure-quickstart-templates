@@ -1,0 +1,358 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"VM SKU Type": {
+			"defaultValue": "Standard_HC44rs",
+			"allowedValues": [
+				"Standard_HC44rs",
+				"Standard_HB60rs"
+			],
+			"type": "String",
+			"metadata": {
+				"description": "Which instance would you like to deploy to? Not all VMs are available in all regions"
+			}
+		},
+		"VMSS Name": {
+			"maxLength": 10,
+			"type": "String",
+			"metadata": {
+				"description": "String used as a base for naming resources. Must be 3-10 characters in length and globally unique across Azure. A hash is prepended to this string for some resources, and resource-specific information is appended."
+			}
+		},
+		"Compute Node Image": {
+			"type": "string",
+			"defaultValue": "CentOS-7.6 HPC",
+			"allowedValues": [
+				"CentOS-7.6",
+				"CentOS-7.6 HPC"
+			],
+			"metadata": {
+				"description": "The VM image of the compute nodes"
+			}
+		},
+		"Instance Count": {
+			"maxValue": 300,
+			"type": "Int",
+			"metadata": {
+				"description": "Number of VM instances (300 or fewer)."
+			}
+		},
+		"Username": {
+			"maxLength": 10,
+			"type": "String",
+			"metadata": {
+				"description": "User name."
+			}
+		},
+		"Password": {
+			"maxLength": 32,
+			"type": "securestring",
+			"metadata": {
+				"description": "User password for compute nodes."
+			}
+		},
+		"RSA Public Key": {
+			"type": "String",
+			"metadata": {
+				"description": "The RSA public key to access the headnode."
+			}
+		}
+	},
+	"variables": {
+		"resourceLocation": "[resourceGroup().location]",
+		"namingInfix": "[toLower(parameters('VMSS Name'))]",
+		"jumpBoxName": "[concat(variables('namingInfix'),'-hd')]",
+		"storageName": "[concat(variables('namingInfix'),'sa')]",
+		"jumpBoxIPConfigName": "[concat(variables('jumpBoxName'), 'ipconfig')]",
+		"jumpBoxNicName": "[concat(variables('jumpBoxName'), 'nic')]",
+		"jumpBoxNSGName": "[concat(variables('jumpBoxName'), 'nsg')]",
+		"addressPrefix": "10.0.0.0/16",
+		"subnetPrefix": "10.0.2.0/24",
+		"virtualNetworkName": "[concat(variables('namingInfix'), 'vnet')]",
+		"subnetName": "[concat(variables('namingInfix'), 'subnet')]",
+		"vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
+		"subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
+		"publicIPAddressName": "[concat(variables('namingInfix'), 'pip')]",
+		"publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]",
+		"nicName": "[concat(variables('namingInfix'), 'nic')]",
+		"ipConfigName": "[concat(variables('namingInfix'), 'ipconfig')]",
+		"hpcImageTypes":{
+			"CentOS-7.6": {
+				"publisher": "OpenLogic",
+				"offer": "CentOS",
+				"sku": "7.6",
+				"version": "latest"
+			},
+			"CentOS-7.6 HPC": {
+				"publisher": "OpenLogic",
+				"offer": "CentOS-HPC",
+				"sku": "7.6",
+				"version": "latest"
+			}
+		},
+		"imageReference": "[variables('hpcImageTypes')[parameters('Compute Node Image')]]",
+		"computeApiVersion": "2016-04-30-preview",
+		"networkApiVersion": "2016-03-30",
+		"storageApiVersion": "2016-01-01",
+		"skuType": "[parameters('VM SKU Type')]"
+	},
+	"resources": [
+		{
+			"type": "Microsoft.Storage/storageAccounts",
+			"sku": {
+				"name": "Standard_LRS",
+				"tier": "Standard"
+			},
+			"kind": "Storage",
+			"name": "[variables('storageName')]",
+			"apiVersion": "[variables('storageApiVersion')]",
+			"location": "[variables('resourceLocation')]",
+			"properties": {
+				"encryption": {
+					"keySource": "Microsoft.Storage",
+					"services": {
+						"blob": {
+							"enabled": false
+						}
+					}
+				}
+			}
+		},
+		{
+			"type": "Microsoft.Network/virtualNetworks",
+			"name": "[variables('virtualNetworkName')]",
+			"apiVersion": "[variables('networkApiVersion')]",
+			"location": "[variables('resourceLocation')]",
+			"properties": {
+				"addressSpace": {
+					"addressPrefixes": [
+						"[variables('addressPrefix')]"
+					]
+				},
+				"subnets": [
+					{
+						"name": "[variables('subnetName')]",
+						"properties": {
+							"addressPrefix": "[variables('subnetPrefix')]"
+						}
+					}
+				]
+			}
+		},
+		{
+			"type": "Microsoft.Network/publicIPAddresses",
+			"name": "[variables('publicIPAddressName')]",
+			"apiVersion": "[variables('networkApiVersion')]",
+			"location": "[variables('resourceLocation')]",
+			"properties": {
+				"publicIPAllocationMethod": "Dynamic",
+				"dnsSettings": {
+					"domainNameLabel": "[variables('namingInfix')]"
+				}
+			}
+		},
+		{
+			"type": "Microsoft.Network/networkSecurityGroups",
+			"apiVersion": "[variables('networkApiVersion')]",
+			"name": "[variables('jumpBoxNSGName')]",
+			"location": "[variables('resourceLocation')]",
+			"dependsOn": [],
+			"tags": {},
+			"properties": {
+				"securityRules": [
+					{
+						"name": "default-allow-ssh",
+						"properties": {
+							"protocol": "Tcp",
+							"sourcePortRange": "*",
+							"destinationPortRange": "22",
+							"sourceAddressPrefix": "*",
+							"destinationAddressPrefix": "*",
+							"access": "Allow",
+							"priority": 1000,
+							"direction": "Inbound"
+						}
+					}
+				]
+			}
+		},
+		{
+			"type": "Microsoft.Network/networkInterfaces",
+			"name": "[variables('jumpBoxNicName')]",
+			"apiVersion": "[variables('networkApiVersion')]",
+			"location": "[variables('resourceLocation')]",
+			"properties": {
+				"ipConfigurations": [
+					{
+						"name": "[variables('jumpBoxIPConfigName')]",
+						"properties": {
+							"privateIPAllocationMethod": "Dynamic",
+							"publicIPAddress": {
+								"id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+							},
+							"subnet": {
+								"id": "[variables('subnetRef')]"
+							}
+						}
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+				"[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+				"[concat('Microsoft.Network/networkSecurityGroups/', variables('jumpBoxNSGName'))]"
+			]
+		},
+		{
+			"type": "Microsoft.Compute/virtualMachines",
+			"name": "[variables('jumpBoxName')]",
+			"apiVersion": "[variables('computeApiVersion')]",
+			"location": "[variables('resourceLocation')]",
+			"properties": {
+				"hardwareProfile": {
+					"vmSize": "[variables('skuType')]"
+				},
+				"osProfile": {
+					"computerName": "[variables('jumpBoxName')]",
+					"adminUserName": "[parameters('Username')]",
+					"linuxConfiguration": {
+						"disablePasswordAuthentication": true,
+						"ssh": {
+							"publicKeys": [
+								{
+									"path": "[concat('/home/', parameters('Username'), '/.ssh/authorized_keys')]",
+									"keyData": "[parameters('RSA Public Key')]"
+								}
+							]
+						}
+					}
+				},
+				"storageProfile": {
+					"imageReference": "[variables('imageReference')]",
+					"osDisk": {
+						"createOption": "FromImage"
+					}
+				},
+				"networkProfile": {
+					"networkInterfaces": [
+						{
+							"id": "[resourceId('Microsoft.Network/networkInterfaces',variables('jumpBoxNicName'))]"
+						}
+					]
+				}
+			},
+			"resources": [
+				{
+					"type": "extensions",
+					"name": "updateHeadnodeExtension",
+					"apiVersion": "[variables('computeApiVersion')]",
+					"location": "[variables('resourceLocation')]",
+					"tags": {
+						"displayName": "installHeadnodeExtension"
+					},
+					"properties": {
+						"publisher": "Microsoft.Azure.Extensions",
+						"type": "CustomScript",
+						"typeHandlerVersion": "2.0",
+						"autoUpgradeMinorVersion": true,
+						"settings": {
+							"fileUris": [
+								"[uri(deployment().properties.templateLink.uri, 'hn-setup.sh')]"
+							],
+							"commandToExecute": "[concat('bash hn-setup.sh ', deployment().properties.templateLink.uri, ' ', parameters('Username'))]",
+							"timestamp": 12345
+						}
+					},
+					"dependsOn": [
+						"[concat('Microsoft.Compute/virtualMachines/', variables('jumpBoxName'))]"
+					]
+				}
+			],
+			"dependsOn": [
+				"[concat('Microsoft.Network/networkInterfaces/', variables('jumpBoxNicName'))]"
+			]
+		},
+		{
+			"type": "Microsoft.Compute/virtualMachineScaleSets",
+			"sku": {
+				"name": "[variables('skuType')]",
+				"tier": "Standard",
+				"capacity": "[parameters('Instance Count')]"
+			},
+			"name": "[variables('namingInfix')]",
+			"apiVersion": "[variables('computeApiVersion')]",
+			"location": "[variables('resourceLocation')]",
+			"properties": {
+				"overprovision": true,
+				"upgradePolicy": {
+					"mode": "Manual"
+				},
+				"virtualMachineProfile": {
+					"storageProfile": {
+						"osDisk": {
+							"createOption": "FromImage"
+						},
+						"imageReference": "[variables('imageReference')]"
+					},
+					"extensionProfile": {
+						"extensions": [
+							{
+								"name": "installNode",
+								"properties": {
+									"publisher": "Microsoft.Azure.Extensions",
+									"type": "CustomScript",
+									"typeHandlerVersion": "2.0",
+									"autoUpgradeMinorVersion": true,
+									"settings": {
+										"fileUris": [
+											"[uri(deployment().properties.templateLink.uri, 'cn-setup.sh')]"
+										],
+										"commandToExecute": "[concat('bash cn-setup.sh ', variables('jumpBoxName'), ' ', parameters('Username'))]",
+										"timestamp": 12345
+									}
+								}
+							}
+						]
+					},
+					"osProfile": {
+						"computerNamePrefix": "[variables('namingInfix')]",
+						"adminUsername": "[parameters('Username')]",
+						"adminPassword": "[parameters('Password')]"
+					},
+					"diagnosticsProfile": {
+						"bootDiagnostics": {
+							"enabled": true,
+							"storageUri": "[concat('http://',variables('storageName'),'.blob.core.windows.net')]"
+						}
+					},
+					"networkProfile": {
+						"networkInterfaceConfigurations": [
+							{
+								"name": "[variables('nicName')]",
+								"properties": {
+									"primary": true,
+									"ipConfigurations": [
+										{
+											"name": "[variables('ipConfigName')]",
+											"properties": {
+												"subnet": {
+													"id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'), '/subnets/', variables('subnetName'))]"
+												}
+											}
+										}
+									]
+								}
+							}
+						]
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+				"[concat('Microsoft.Compute/virtualMachines/', variables('jumpBoxName'))]",
+				"[concat('Microsoft.Storage/storageAccounts/', variables('storageName'))]"
+			]
+		}
+	]
+}
