@@ -164,12 +164,20 @@
             DependsOn = "[WindowsFeature]Web-Url-Auth"
         }
 
+        InstallADK ADKInstall
+        {
+            ADKPath = "C:\adksetup.exe"
+            ADKWinPEPath = "c:\adksetupwinpe.exe"
+            Ensure = "Present"
+            DependsOn = "[WindowsFeature]Rdc"
+        }
+
         WaitForDomainReady WaitForDomain
         {
             Ensure = "Present"
             DCName = $DCName
             WaitSeconds = 0
-            DependsOn = "[WindowsFeature]Rdc"
+            DependsOn = "[InstallADK]ADKInstall"
         }
 
         Computer JoinDomain
@@ -258,14 +266,6 @@
             DependsOn = "[Computer]JoinDomain"
         }
 
-        InstallADK ADKInstall
-        {
-            ADKPath = "C:\adksetup.exe"
-            ADKWinPEPath = "c:\adksetupwinpe.exe"
-            Ensure = "Present"
-            DependsOn = "[Computer]JoinDomain"
-        }
-
         WaitForConfigurationFile DelegateControl
         {
             Role = "DC"
@@ -273,7 +273,7 @@
             LogFolder = $LogFolder
             ReadNode = "DelegateControl"
             Ensure = "Present"
-            DependsOn = "[InstallADK]ADKInstall"
+            DependsOn = "[Firewall]UDPInbound"
         }
 
         ChangeSQLServicesAccount ChangeToLocalSystem
