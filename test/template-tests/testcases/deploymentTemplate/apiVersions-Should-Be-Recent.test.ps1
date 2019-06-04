@@ -2,16 +2,20 @@
 # The resource in the main template
 [Parameter(Mandatory=$true,Position=0)]
 [PSObject]
-$MainTemplateResources,
+$TemplateObject,
+
+[Parameter(Mandatory=$true,Position=1)]
+[string]
+$TemplateText,
 
 # All potential resources in Azure (from cache)
-[Parameter(Mandatory=$true,Position=0)]
+[Parameter(Mandatory=$true,Position=2)]
 [PSObject]
 $AllAzureResources
 )
 
 # First, find all of the API versions in the main template resources.
-$allApiVersions = $MainTemplateResources | 
+$allApiVersions = $TemplateObject.resources | 
     Find-JsonContent -Key apiVersion -Value * -Like
 
 foreach ($av in $allApiVersions) { # Then walk over each object containing an ApiVersion.
@@ -80,4 +84,8 @@ foreach ($av in $allApiVersions) { # Then walk over each object containing an Ap
         # write a warning        
         Write-Warning "Api versions should be under a year old ($FullResourceType is $([Math]::Floor($timeSinceApi.TotalDays)) days old)" 
     }
+}
+
+if ($TemplateText -like '*providers().apiVersions*') {
+    Write-Error "providers().apiVersions is not permitted" -ErrorId ApiVersion.Using.Providers -TargetObject $TemplateText
 }
