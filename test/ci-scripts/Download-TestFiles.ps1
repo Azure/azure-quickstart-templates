@@ -30,7 +30,7 @@ function DownloadFiles([string]$sourceUri, [string]$destFolder) {
         }
         else {
             Write-Verbose "Downloading $($file.download_url)..."
-            Write-Verbose "Outfile: $destFolder/$($file.name)"
+            Write-Verbose "Outfile: $destFolder/$($file.name))"
             Invoke-WebRequest $file.download_url -UseBasicParsing -OutFile "$destFolder/$($file.name)"
         }
     }
@@ -38,5 +38,3 @@ function DownloadFiles([string]$sourceUri, [string]$destFolder) {
 }
 
 DownloadFiles $source $dest
-
-Get-ChildItem $destFolder
