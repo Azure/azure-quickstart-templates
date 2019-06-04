@@ -119,7 +119,7 @@
             Group = 'For SCCM Client' 
             Ensure = 'Present' 
             Enabled = 'True' 
-            Profile = ('Domain', 'Private', 'Public') 
+            Profile = ('Domain', 'Private') 
             Direction = 'Inbound' 
             LocalPort = ('2701') 
             Protocol = 'TCP' 
@@ -134,7 +134,7 @@
             Group = 'For SCCM Client' 
             Ensure = 'Present' 
             Enabled = 'True' 
-            Profile = ('Domain', 'Private', 'Public') 
+            Profile = ('Domain', 'Private') 
             Direction = 'Outbound' 
             LocalPort = ('80','443','2701','8530','8531','10123') 
             Protocol = 'TCP' 
@@ -149,7 +149,7 @@
             Group = 'For SCCM Client' 
             Ensure = 'Present' 
             Enabled = 'True' 
-            Profile = ('Domain', 'Private', 'Public') 
+            Profile = ('Domain', 'Private') 
             Direction = 'Outbound' 
             LocalPort = ('9','25536') 
             Protocol = 'UDP' 

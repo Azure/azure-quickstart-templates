@@ -740,6 +740,9 @@ class WaitForDomainReady
     [DscProperty(key)]
     [string] $DCName
 
+    [DscProperty(Mandatory=$false)]
+    [int] $WaitSeconds = 600
+
     [DscProperty(Mandatory)]
     [Ensure] $Ensure
 
@@ -749,6 +752,7 @@ class WaitForDomainReady
     [void] Set()
     {
         $_DCName = $this.DCName
+        $_WaitSeconds = $this.WaitSeconds
         Write-Verbose "Domain computer is: $_DCName"
         $testconnection = test-connection -ComputerName $_DCName -ErrorAction Ignore
         while(!$testconnection)
@@ -757,8 +761,8 @@ class WaitForDomainReady
             Start-Sleep -Seconds 30
             $testconnection = test-connection -ComputerName $_DCName -ErrorAction Ignore
         }
-        Write-Verbose "Domain is ready now."
-        Start-Sleep -Seconds 600
+        Write-Verbose "Domain is ready now. Sleep: $_WaitSeconds"
+        Start-Sleep -Seconds $_WaitSeconds
     }
 
     [bool] Test()
@@ -1039,3 +1043,46 @@ class RegisterTaskScheduler
         return $this
     }
 }
+
+[DscResource()]
+class SetAutomaticManagedPageFile
+{
+    [DscProperty(key)]
+    [string] $TaskName
+	
+    [DscProperty(Mandatory)]
+    [bool] $Value
+
+    [DscProperty(Mandatory)]
+    [Ensure] $Ensure
+
+    [DscProperty(NotConfigurable)]
+    [Nullable[datetime]] $CreationTime
+
+    [void] Set()
+    {
+        $_Value = $this.Value
+        $computersys = Get-WmiObject Win32_ComputerSystem -EnableAllPrivileges
+        Write-Verbose "Set AutomaticManagedPagefile to $_Value..."
+        $computersys.AutomaticManagedPagefile = $_Value
+        $computersys.Put()
+    }
+
+    [bool] Test()
+    {
+        $_Value = $this.Value
+        $computersys = Get-WmiObject Win32_ComputerSystem -EnableAllPrivileges;
+        if($computersys.AutomaticManagedPagefile -ne $_Value)
+        {
+            return $false
+        }
+        
+        return $true
+    }
+
+    [SetAutomaticManagedPageFile] Get()
+    {
+        return $this
+    }
+}
+

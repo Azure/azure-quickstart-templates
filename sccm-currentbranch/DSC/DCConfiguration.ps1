@@ -40,7 +40,7 @@
             ConfigurationMode = 'ApplyOnly'
             RebootNodeIfNeeded = $true
         }
-        
+
         File ADFiles
         {            
             DestinationPath = 'C:\Windows\NTDS'            
@@ -51,7 +51,8 @@
         WindowsFeature Rdc
         {             
             Ensure = "Present"             
-            Name = "Rdc"             
+            Name = "Rdc"
+            DependsOn = "[File]ADFiles"
         }
 
 		WindowsFeature ADDSInstall             

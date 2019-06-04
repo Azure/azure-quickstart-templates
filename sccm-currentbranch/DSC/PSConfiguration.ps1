@@ -39,7 +39,7 @@
             ConfigurationMode = 'ApplyOnly'
             RebootNodeIfNeeded = $true
         }
-        
+
         AddBuiltinPermission AddSQLPermission
         {
             Ensure = "Present"
@@ -52,107 +52,124 @@
             DependsOn = "[AddBuiltinPermission]AddSQLPermission"
         }
 
-        WaitForDomainReady WaitForDomain
-        {
-            Ensure = "Present"
-            DCName = $DCName
-            DependsOn = "[SetDNS]DnsServerAddress"
-        }
-
         WindowsFeature BITS
         {             
             Ensure = "Present"             
-            Name = "BITS"             
+            Name = "BITS"
+            DependsOn = "[SetDNS]DnsServerAddress"
         }
 
         WindowsFeature BITS-IIS-Ext
         {             
             Ensure = "Present"             
-            Name = "BITS-IIS-Ext"             
+            Name = "BITS-IIS-Ext"
+            DependsOn = "[WindowsFeature]BITS"
         }
 
         WindowsFeature Web-Basic-Auth
         {             
             Ensure = "Present"             
-            Name = "Web-Basic-Auth"             
+            Name = "Web-Basic-Auth"    
+            DependsOn = "[WindowsFeature]BITS-IIS-Ext"
         }
 
         WindowsFeature Web-IP-Security
         {             
             Ensure = "Present"             
-            Name = "Web-IP-Security"             
+            Name = "Web-IP-Security"
+            DependsOn = "[WindowsFeature]Web-Basic-Auth"
         }
 
         WindowsFeature Web-Scripting-Tools
         {             
             Ensure = "Present"             
             Name = "Web-Scripting-Tools"
+            DependsOn = "[WindowsFeature]Web-IP-Security"
         }
 
         WindowsFeature Web-Mgmt-Tools
         {             
             Ensure = "Present"             
-            Name = "Web-Mgmt-Tools"             
+            Name = "Web-Mgmt-Tools"
+            DependsOn = "[WindowsFeature]Web-Scripting-Tools"
         }
 
         WindowsFeature Web-Mgmt-Service
         {             
             Ensure = "Present"             
-            Name = "Web-Mgmt-Service"             
+            Name = "Web-Mgmt-Service"
+            DependsOn = "[WindowsFeature]Web-Mgmt-Tools"
         }
     
         WindowsFeature Web-WMI
         {             
             Ensure = "Present"             
-            Name = "Web-WMI"             
+            Name = "Web-WMI"
+            DependsOn = "[WindowsFeature]Web-Mgmt-Service"
         }
 
         WindowsFeature Web-Lgcy-Scripting
         {             
             Ensure = "Present"             
-            Name = "Web-Lgcy-Scripting"             
+            Name = "Web-Lgcy-Scripting"
+            DependsOn = "[WindowsFeature]Web-WMI"
         }
         
         WindowsFeature Web-Lgcy-Mgmt-Console
         {             
             Ensure = "Present"             
-            Name = "Web-Lgcy-Mgmt-Console"             
+            Name = "Web-Lgcy-Mgmt-Console" 
+            DependsOn = "[WindowsFeature]Web-Lgcy-Scripting"
         }
 
         WindowsFeature Web-Mgmt-Console
         {             
             Ensure = "Present"             
-            Name = "Web-Mgmt-Console"             
+            Name = "Web-Mgmt-Console"
+            DependsOn = "[WindowsFeature]Web-Lgcy-Mgmt-Console"
         }
 
         WindowsFeature Web-Asp-Net
         {             
             Ensure = "Present"             
-            Name = "Web-Asp-Net"             
+            Name = "Web-Asp-Net"
+            DependsOn = "[WindowsFeature]Web-Mgmt-Console"
         }
 
         WindowsFeature Web-ASP
         {             
             Ensure = "Present"             
-            Name = "Web-ASP"             
+            Name = "Web-ASP"
+            DependsOn = "[WindowsFeature]Web-Asp-Net"
         }
 
         WindowsFeature Web-Windows-Auth
         {             
             Ensure = "Present"             
-            Name = "Web-Windows-Auth"             
+            Name = "Web-Windows-Auth"
+            DependsOn = "[WindowsFeature]Web-ASP"
         }
 
         WindowsFeature Web-Url-Auth
         {             
             Ensure = "Present"             
-            Name = "Web-Url-Auth"             
+            Name = "Web-Url-Auth"
+            DependsOn = "[WindowsFeature]Web-Windows-Auth"
         }
 
         WindowsFeature Rdc
         {             
             Ensure = "Present"             
-            Name = "Rdc"             
+            Name = "Rdc"
+            DependsOn = "[WindowsFeature]Web-Url-Auth"
+        }
+
+        WaitForDomainReady WaitForDomain
+        {
+            Ensure = "Present"
+            DCName = $DCName
+            WaitSeconds = 0
+            DependsOn = "[WindowsFeature]Rdc"
         }
 
         Computer JoinDomain
@@ -188,7 +205,7 @@
             Group = 'For SCCM PS' 
             Ensure = 'Present' 
             Enabled = 'True' 
-            Profile = ('Domain', 'Private', 'Public') 
+            Profile = ('Domain', 'Private') 
             Direction = 'InBound' 
             LocalPort = ('80','135','443','445','1433','1723','1024-65535') 
             Protocol = 'TCP' 
@@ -203,7 +220,7 @@
             Group = 'For SCCM PS' 
             Ensure = 'Present' 
             Enabled = 'True' 
-            Profile = ('Domain', 'Private', 'Public') 
+            Profile = ('Domain', 'Private') 
             Direction = 'Outbound' 
             LocalPort = ('80','135','389','443','445','636','1433','1723','3268','3269','1024-65535') 
             Protocol = 'TCP' 
@@ -218,7 +235,7 @@
             Group = 'For SCCM PS' 
             Ensure = 'Present' 
             Enabled = 'True' 
-            Profile = ('Domain', 'Private', 'Public') 
+            Profile = ('Domain', 'Private') 
             Direction = 'Outbound' 
             LocalPort = ('9','135','636') 
             Protocol = 'UDP' 
@@ -233,7 +250,7 @@
             Group = 'For SCCM PS' 
             Ensure = 'Present' 
             Enabled = 'True' 
-            Profile = ('Domain', 'Private', 'Public') 
+            Profile = ('Domain', 'Private') 
             Direction = 'Outbound' 
             LocalPort = ('135') 
             Protocol = 'UDP' 
