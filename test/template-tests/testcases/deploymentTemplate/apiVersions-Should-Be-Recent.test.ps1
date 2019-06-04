@@ -86,6 +86,6 @@ foreach ($av in $allApiVersions) { # Then walk over each object containing an Ap
     }
 }
 
-if ($TemplateText -like '*providers().apiVersions*') {
+if ($TemplateText -like '*providers(*).apiVersions*') {
     Write-Error "providers().apiVersions is not permitted" -ErrorId ApiVersion.Using.Providers -TargetObject $TemplateText
 }
