@@ -22,6 +22,13 @@ $MachineName = $DPMPName + "." + $DomainFullName
 $initParams = @{}
 Set-Location "$($SiteCode):\" @initParams
 
+#Get Database name
+$DatabaseValue='Database Name'
+$DatabaseName=(Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\SMS\SQL Server' -Name 'Database Name').$DatabaseValue
+#Get Instance Name
+$InstanceValue='Service Name'
+$InstanceName=(Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\SMS\SQL Server' -Name 'Service Name').$InstanceValue
+
 $SystemServer = Get-CMSiteSystemServer -SiteSystemServerName $MachineName
 if(!$SystemServer)
 {
@@ -38,6 +45,17 @@ if((Get-CMManagementPoint -SiteSystemServerName $MachineName).count -ne 1)
     "[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Adding management point on $MachineName ..." | Out-File -Append $logpath
     Add-CMManagementPoint -InputObject $SystemServer -CommunicationType Http | Out-File -Append $logpath
     "[$(Get-Date -format "MM/dd/yyyy HH:mm:ss")] Finished adding management point on $MachineName ..." | Out-File -Append $logpath
+    
+    $connectionString = "Data Source=.; Integrated Security=SSPI; Initial Catalog=$DatabaseName"
+    if($InstanceName.ToUpper() -ne 'MSSQLSERVER')
+    {
+        $connectionString = "Data Source=.\$InstanceName; Integrated Security=SSPI; Initial Catalog=$DatabaseName"
+    }
+    $connection = new-object system.data.SqlClient.SQLConnection($connectionString)
+    $sqlCommand = "INSERT INTO [Feature_EC] (FeatureID,Exposed) values (N'49E3EF35-718B-4D93-A427-E743228F4855',0)"
+    $connection.Open() | Out-Null
+    $command = new-object system.data.sqlclient.sqlcommand($sqlCommand,$connection)
+    $command.ExecuteNonQuery() | Out-Null
 
     if((Get-CMManagementPoint -SiteSystemServerName $MachineName).count -eq 1)
     {
