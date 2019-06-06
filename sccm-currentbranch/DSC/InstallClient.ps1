@@ -4,8 +4,8 @@ $logpath = $ProvisionToolPath+"\InstallClientLog.txt"
 $ConfigurationFile = Join-Path -Path $ProvisionToolPath -ChildPath "$Role.json"
 $Configuration = Get-Content -Path $ConfigurationFile | ConvertFrom-Json
 
-$Configuration.InstallSCCM.Status = 'Running'
-$Configuration.InstallSCCM.StartTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
+$Configuration.InstallClient.Status = 'Running'
+$Configuration.InstallClient.StartTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
 $Configuration | ConvertTo-Json | Out-File -FilePath $ConfigurationFile -Force
 
 $DomainUserName = $CMUser
@@ -76,6 +76,6 @@ while($machinelist -notcontains $ClientName)
 Install-CMClient -DeviceName $ClientName -SiteCode $SiteCode -AlwaysInstallClient $true
 "[$(Get-Date -format HH:mm:ss)]Done." | Out-File -Append $logpath
 
-$Configuration.InstallSCCM.Status = 'Completed'
-$Configuration.InstallSCCM.EndTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
+$Configuration.InstallClient.Status = 'Completed'
+$Configuration.InstallClient.EndTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
 $Configuration | ConvertTo-Json | Out-File -FilePath $ConfigurationFile -Force

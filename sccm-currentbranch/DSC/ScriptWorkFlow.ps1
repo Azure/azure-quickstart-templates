@@ -43,6 +43,7 @@ else
         }
     }
     $Configuration = New-Object -TypeName psobject -Property $Actions
+    $Configuration | ConvertTo-Json | Out-File -FilePath $ConfigurationFile -Force
 }
 
 #Install CM and Config
