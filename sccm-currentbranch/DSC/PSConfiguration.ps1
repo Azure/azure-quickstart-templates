@@ -45,18 +45,11 @@
             Ensure = "Present"
         }
 
-        SetDNS DnsServerAddress
-        {
-            DNSIPAddress = $DNSIPAddress
-            Ensure = "Present"
-            DependsOn = "[AddBuiltinPermission]AddSQLPermission"
-        }
-
         WindowsFeature BITS
         {             
             Ensure = "Present"             
             Name = "BITS"
-            DependsOn = "[SetDNS]DnsServerAddress"
+            DependsOn = "[AddBuiltinPermission]AddSQLPermission"
         }
 
         WindowsFeature BITS-IIS-Ext
@@ -172,12 +165,19 @@
             DependsOn = "[WindowsFeature]Rdc"
         }
 
+        SetDNS DnsServerAddress
+        {
+            DNSIPAddress = $DNSIPAddress
+            Ensure = "Present"
+            DependsOn = "[InstallADK]ADKInstall"
+        }
+
         WaitForDomainReady WaitForDomain
         {
             Ensure = "Present"
             DCName = $DCName
             WaitSeconds = 0
-            DependsOn = "[InstallADK]ADKInstall"
+            DependsOn = "[SetDNS]DnsServerAddress"
         }
 
         Computer JoinDomain
