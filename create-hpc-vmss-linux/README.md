@@ -40,3 +40,7 @@ The `\home` folder is mounted over NFS and is hosted by the head node. Review `\
 Compute nodes are the actual VMSS. Run the `generateHostFile` script under `\home\<user>\scripts` folder to generate a list of compute nodes that are part of this VMSS. The hostfile will be generated under `\home\<user>\scripts`.
 
 *Note*: Please review [`hn-setup.sh`](hn-setup.sh) and [`cn-setup.sh`](cn-setup.sh) for more details on how the head node and compute nodes are configured.
+
+## SKU Availability and Locations
+
+Please note that these are specialized SKU types and are not available in all locations. Please refer to [Virtual Machine Availability by Regions](https://azure.microsoft.com/global-infrastructure/services/?products=virtual-machines) to decide on the target location for your deployment.
