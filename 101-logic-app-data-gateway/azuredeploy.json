@@ -1,0 +1,162 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workflows_LogicAppDG_name": {            
+            "type": "string",
+            "metadata": {
+                "description": "The name of the logic app."
+              }
+        },        
+        "connectionName": {
+            "type": "string",            
+            "metadata": {
+              "description": "The name of the sql connection to on premise data source."
+            }
+          },
+          "dbServer": {
+            "type": "string",            
+            "metadata": {
+              "description": "The name of the on premise database server."
+            }
+          },
+          "dbName": {
+            "type": "string",            
+            "metadata": {
+                "description": "The name of the on premise database."
+            }
+          },
+          "dbAuth": {
+            "type": "string",
+            "metadata": {
+                "description": "Database Authentication Type."
+            }
+          },
+          "dbUser": {
+            "type": "string",
+            "metadata": {
+                "description": "Database user name."
+            }
+          },
+          "dbPassword": {
+            "type": "string",
+            "metadata": {
+              "description": "Database password"
+            }
+          },          
+          "gatewayName": {
+            "type": "string",            
+            "metadata": {
+              "description": "The name of the on premise data gateway"
+            }
+          }
+    },
+    "variables": {},
+    "resources": [       
+          
+        {
+            "type": "Microsoft.Web/connections",
+            "name": "[parameters('connectionName')]",
+            "apiVersion": "2016-06-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+              "api": {                
+                "id": "[concat(subscription().id,'/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/sql')]"
+              },
+               "parameterValues": {
+            
+                        "gateway": {
+                           "id": "[resourceId('Microsoft.Web/connectionGateways', parameters('gatewayName'))]"
+                        },
+                "server": "[parameters('dbServer')]",
+                "database": "[parameters('dbName')]",
+                "authType": "[parameters('dbAuth')]",
+                "username": "[parameters('dbUser')]",
+                "password": "[parameters('dbPassword')]"
+              }              
+            }
+          },
+        {
+            "type": "Microsoft.Logic/workflows",
+            "apiVersion": "2017-07-01",
+            "name": "[parameters('workflows_LogicAppDG_name')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/connections', parameters('connectionName'))]"
+              ],
+            "properties": {
+                "state": "Enabled",
+                "definition": {
+                    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "$connections": {
+                            "defaultValue": {},
+                            "type": "Object"
+                        }
+                    },
+                    "triggers": {
+                        "manual": {
+                            "type": "Request",
+                            "kind": "Http",
+                            "inputs": {
+                                "schema": {
+                                    "properties": {
+                                        "age": {
+                                            "type": "integer"
+                                        },
+                                        "car": {},
+                                        "name": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "actions": {
+                        "Compose": {
+                            "runAfter": {},
+                            "type": "Compose",
+                            "inputs": "@triggerBody()"
+                        },
+                        "Insert_row": {
+                            "runAfter": {
+                                "Compose": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "ApiConnection",
+                            "inputs": {
+                                "body": {
+                                    "CreatedDate": "@{utcNow()}",
+                                    "Description": "@{outputs('Compose')}"
+                                },
+                                "host": {
+                                    "connection": {
+                                        "name": "@parameters('$connections')['sql']['connectionName']"
+                                    }
+                                },
+                                "method": "post",
+                                "path": "/datasets/default/tables/@{encodeURIComponent(encodeURIComponent('[dbo].[Todoes]'))}/items"
+                            }
+                        }
+                    },
+                    "outputs": {}
+                },
+                "parameters": {
+                    "$connections": {
+                        "value": {
+                            "sql": {                                
+                                "id": "[concat(subscription().id,'/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/sql')]",
+                                "connectionId": "[resourceId('Microsoft.Web/connections', parameters('connectionName'))]",
+                                "connectionName": "[parameters('connectionName')]"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}
