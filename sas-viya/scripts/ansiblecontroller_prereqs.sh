@@ -24,6 +24,14 @@ fi
 # on 4/17, we started having intermittent issues with this repository being present for updates, so configuring to skip
 yum-config-manager --save --setopt=rhui-microsoft-azure-rhel7-eus.skip_if_unavailable=true
 
+# temporary workaround to azure issue on 6/06 where azurecli stopped installing
+sudo rm -f /etc/yum/vars/releasever
+sudo yum --disablerepo='*' remove 'rhui-azure-rhel7-eus' -y
+sudo yum --config='https://rhelimage.blob.core.windows.net/repositories/rhui-microsoft-azure-rhel7.config' install -y 'rhui-azure-rhel7' -y
+sudo yum clean all
+sudo rm -rf /var/cache/yum
+# end workaround
+
 if ! type -p ansible;  then
    # install Ansible
     curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
