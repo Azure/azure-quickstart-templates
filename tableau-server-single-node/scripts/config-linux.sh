@@ -73,7 +73,7 @@ then
 fi
 
 # download automated-installer
-wget --remote-encoding=UTF-8 --output-document=automated-installer.sh https://raw.githubusercontent.com/tableau/server-install-script-samples/master/linux/automated-installer/automated-installer
+wget --remote-encoding=UTF-8 --output-document=automated-installer.sh https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/tableau-server-single-node/scripts/automated-installer
                                                               
 wait
 chmod +x automated-installer.sh
