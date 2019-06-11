@@ -44,7 +44,7 @@ export CAS_SIZING_FILE="\${DIRECTORY_LICENSE_FILE}/cas_size.txt"
 export FILE_SSL_JSON_FILE="\${DIRECTORY_SSL_JSON_FILE}/loadbalancer.pfx.json"
 export FILE_CA_B64_FILE="\${DIRECTORY_SSL_JSON_FILE}/sas_certificate_all.crt.b64.txt"
 export ORCHESTRATION_DIRECTORY="\${SAS_INSTALL_SRC_DIRECTORY}/setup/orchestration"
-export VIRK_CLONE_DIRECTORY="\${ORCHESTRATION_DIRECTORY}/sas_viya_playbook/virk"
+export VIRK_CLONE_DIRECTORY="\${ORCHESTRATION_DIRECTORY}/sas_viya_playbook/viya-ark"
 export CODE_DIRECTORY="\${SAS_INSTALL_SRC_DIRECTORY}/code"
 export ANSIBLE_SSH_RETRIES=10
 EOF

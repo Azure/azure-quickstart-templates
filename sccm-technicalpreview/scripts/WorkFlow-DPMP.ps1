@@ -99,7 +99,7 @@ $Configuration | Add-Member -MemberType ScriptMethod -Name SetRebootConfig -Valu
     try {
         $Invocation = (Get-Variable MyInvocation -Scope 1).Value
         $Path =  $Invocation.MyCommand.Path
-        $command = ". $Path $DCIPAddress $DomainFullName $DomainAdminName $Password $tempurl `"$sakey`""
+        $command = ". $Path $DCIPAddress $DomainFullName $DomainAdminName `"$Password`" $tempurl `"$sakey`""
         $BatchFilePath = Join-Path -Path $ProvisionToolPath -ChildPath "Resume_$($env:COMPUTERNAME).ps1"
         $BatchFile = "cmd /c powershell -ExecutionPolicy Unrestricted -file " + $BatchFilePath
         $Command | Out-File -FilePath $BatchFilePath -Encoding ascii -Append
@@ -128,6 +128,7 @@ if ($Configuration.WaitForDC.Status -eq 'NotStart') {
     $Configuration.WaitForDC.Status = 'Running'
     $Configuration.WaitForDC.StartTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
     UploadConfigFile
+    Start-Sleep -Seconds 600
     $Result = WaitFor-DC
     if ($Result -eq 0)  {
         $Configuration.WaitForDC.Status = 'Completed'

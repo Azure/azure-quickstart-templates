@@ -1,0 +1,50 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {},
+	"variables": {
+        "accountName": "[concat('table-', uniqueString(resourceGroup().id))]",
+        "tableName": "myTable",
+        "tableThroughput": 400
+	},
+	"resources": 
+	[
+		{
+			"type": "Microsoft.DocumentDB/databaseAccounts",
+			"name": "[variables('accountName')]",
+			"apiVersion": "2016-03-31",
+			"location": "West US 2",
+			"kind": "GlobalDocumentDB",
+			"properties": {
+				"capabilities": [{ "name": "EnableTable" }],
+				"consistencyPolicy": { "defaultConsistencyLevel": "Eventual" },
+				"locations": [ { "locationName": "West US 2", "failoverPriority": 0 }, { "locationName": "East US 2", "failoverPriority": 1 } ],
+				"databaseAccountOfferType": "Standard",
+				"enableAutomaticFailover": false,
+				"enableMultipleWriteLocations": true
+			}
+		},
+		{
+			"type": "Microsoft.DocumentDB/databaseAccounts/apis/tables",
+			"name": "[concat(variables('accountName'), '/table/', variables('tableName'))]",
+			"apiVersion": "2016-03-31",
+			"dependsOn": [ "[resourceId('Microsoft.DocumentDB/databaseAccounts/', variables('accountName'))]" ],
+			"properties":{
+				"resource":{
+					"id": "[variables('tableName')]"
+				},
+				"options": { "throughput": "[variables('tableThroughput')]" }
+			}
+		}
+    ],
+    "outputs": {
+        "accountName": {
+            "type": "string",
+            "value": "[variables('accountName')]"
+        },
+		"tableName": {
+            "type": "string",
+            "value": "[variables('tableName')]"
+        }
+    }
+}
