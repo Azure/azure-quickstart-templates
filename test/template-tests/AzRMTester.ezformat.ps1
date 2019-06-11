@@ -30,10 +30,11 @@ Write-FormatView -Action {
     $foregroundColor = 'Green'
     $statusChar = '+'
 
-    $messageLines = @(
+    $errorLines = @(
         foreach ($_ in $testOut.Errors) {
             "$_"
-        }
+        })
+    $warningLines = @(
         foreach ($_ in $testOut.Warnings) {
             "$_"
         }
@@ -54,10 +55,16 @@ Write-FormatView -Action {
     $null
 
     $indent = 4
-    if ($messageLines) {
+    if ($errorLines) {
         Write-Host " " # end of line
-        foreach ($line in $messageLines) {
-            Write-Host "$(' ' * $indent)$line" -foregroundColor $foregroundColor    
+        foreach ($line in $errorLines) {
+            Write-Host "$(' ' * $indent)$line" -foregroundColor Red    
+        }
+    }
+    if ($warningLines) {
+        Write-Host " " # end of line
+        foreach ($line in $warningLines) {
+            Write-Host "$(' ' * $indent)$line" -foregroundColor DarkYellow 
         }
     }
     
