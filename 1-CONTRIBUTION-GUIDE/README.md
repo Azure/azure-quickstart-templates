@@ -98,13 +98,18 @@ A valid metadata.json must adhere to the following structure
 
 ```
 {
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/...",
   "itemDisplayName": "60 char limit",
   "description": "1000 char limit",
   "summary": "200 char limit",
   "githubUsername": "<e.g. bmoore-msft>",
-  "dateUpdated": "<e.g. 2015-12-20>"
+  "dateUpdated": "<e.g. 2015-12-20>",
+  "type": "QuickStart"
 }
 ```
+**schema**
++ Proper metadata schema
+
 **itemDisplayName**
 + Title of the sample
 
@@ -121,6 +126,9 @@ A valid metadata.json must adhere to the following structure
 **dateUpdated**
 + Must be in yyyy-mm-dd format.
 + The date must not be in the future to the date of the pull request
+
+**type**
++ Type of template; in this case, QuickStart
 
 ## Common errors from acomghbot
 acomghbot is a bot designed to enforce the above rules and check the syntactic correctness of the template using the ARM Validate Template [API](https://msdn.microsoft.com/en-us/library/azure/dn790547.aspx). Below are some of the more cryptic error messages you might receive from the bot and how to solve these issues.
