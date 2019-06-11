@@ -2,12 +2,6 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "vmAdminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "The admin password for the Ubuntu machine"
-      }
-    },
     "vmAdminUsername": {
       "type": "string",
       "metadata": {
@@ -27,6 +21,23 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
     }
   },
   "variables": {
@@ -36,13 +47,24 @@
     "pipName": "[concat(variables('prefix'),'-pip')]",
     "vnetName": "[concat(variables('prefix'),'-vnet')]",
     "storageAccountDiagnostics": "[concat(uniquestring(resourceGroup().id), 'diagsa')]",
-    "storageAccountVms": "[concat(uniquestring(resourceGroup().id), 'vmsa')]"
+    "storageAccountVms": "[concat(uniquestring(resourceGroup().id), 'vmsa')]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('vmAdminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
-      "apiVersion": "2017-03-30",  
+      "apiVersion": "2017-03-30",
       "location": "[parameters('location')]",
       "properties": {
         "hardwareProfile": {
@@ -56,8 +78,8 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[concat(parameters('vmName'),'_OSDisk')]",  
-            "createOption": "FromImage",  
+            "name": "[concat(parameters('vmName'),'_OSDisk')]",
+            "createOption": "FromImage",
             "caching": "ReadWrite"
           },
           "dataDisks": []
@@ -65,11 +87,9 @@
         "osProfile": {
           "computerName": "[parameters('vmName')]",
           "adminUsername": "[parameters('vmAdminUsername')]",
-          "linuxConfiguration": {
-            "disablePasswordAuthentication": false
-          },
           "secrets": [],
-          "adminPassword": "[parameters('vmAdminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "networkProfile": {
           "networkInterfaces": [
