@@ -24,6 +24,7 @@ For assistance with SAS software, contact  [SAS Technical Support](https://suppo
     1. [Upload the License File to an Azure Blob](#License)
     1. [Create a Mirror Repository](#Mirror)
 1. [Deployment Steps](#Deployment)
+1. [Additional Deployment Details](#deployment-details)
 1. [Optional Post-Deployment](#Post-Deployment)
     1. [Configure a Certificate Authority-Signed Digital Certificate and Custom DNS Name](#DNS)
     1. [Enable Access to Existing Data Sources](#DataSources)
@@ -145,6 +146,13 @@ az storage blob upload-batch --account-name "$STORAGE_ACCOUNT" --account-key "$S
 You can click the "Deploy to Azure" button at the beginning of this document or follow the instructions for a command-line deployment using the scripts in the root of this repository.
 
 The deployment takes between 1 and 4 hours, depending on the quantity of software licensed.
+
+<a name="deployment-details"></a>
+
+## Additional Deployment Details
+The *vmuser* host operating system account is created during deployment. Use this account to log in via SSH to any of the machines.
+
+The *sasadmin* and *sasuser* SAS Viya user accounts are also created during deployment.  These accounts exist in LDAP, and are the default user accounts for logging into SAS Viya.  You cannot directly log onto the host operating system with these accounts.
 
 <a name="Post-Deployment"></a>
 ## Optional Post-Deployment 
@@ -333,6 +341,10 @@ in the SAS Data Agent for Linux: Deployment Guide.
 
 <a name="Usage"></a>
 ## Usage 
+
+To log into any machine via SSH to check on a deployment or to perform maintenance, log in as *vmuser*.
+
+To log into SAS Viya initially, use one of the following default user accounts: *sasadmin* (administrative user) or *sasuser*.
 
 To access SAS Viya applications, navigate to the **Outputs** screen and access SASDrive or SASStudio. 
 
