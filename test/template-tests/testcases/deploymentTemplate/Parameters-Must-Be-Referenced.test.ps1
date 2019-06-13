@@ -1,7 +1,11 @@
 ﻿param(
 [Parameter(Mandatory=$true,Position=0)]
 [PSObject]
-$TemplateObject
+$TemplateObject,
+
+[Parameter(Mandatory=$true,Position=0)]
+[PSObject]
+$TemplateText
 )
 foreach ($parameter in $TemplateObject.parameters.psobject.properties) {
     if ($TemplateText -notmatch "parameters\(['`"]$($Parameter.Name)['`"]\)") {
