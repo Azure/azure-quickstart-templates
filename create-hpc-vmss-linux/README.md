@@ -43,6 +43,6 @@ Compute nodes are the actual VMSS. Run the `generateHostFile` script under `\hom
 
 ## SKU Availability and Locations
 
-Please note that these are specialized SKU types and are not available in all locations. Please refer to [Virtual Machine Availability by Regions](https://azure.microsoft.com/global-infrastructure/services/?products=virtual-machines) to decide on the target location for your deployment.
+Please note that these are specialized SKU types and are not available in all locations. For example, HB is currently available in West Europe and South Central US, and HC is available in East US and West US2. This is a growing list and more locations are being added. Please refer to [Virtual Machine Availability by Regions](https://azure.microsoft.com/global-infrastructure/services/?products=virtual-machines) to decide on the target location for your deployment.
 
 Before deployment, make sure you have sufficient vCPU quota for the selected SKU in the target location. Please refer to [Quota Increase Requests](https://docs.microsoft.com/azure/azure-supportability/resource-manager-core-quotas-request) for more details on quota requests.
