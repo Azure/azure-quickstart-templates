@@ -14,18 +14,6 @@
         "description": "Username for the DevOps Virtual Machine, the Jenkins instance, and the VM Scale Sets deployed by Spinnaker."
       }
     },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Password for the DevOps Virtual Machine, the Jenkins instance, and the VM Scale Sets deployed by Spinnaker."
-      }
-    },
-    "sshPublicKey": {
-      "type": "string",
-      "metadata": {
-        "description": "Configure the linux machines with the SSH public key string. Your key should include three parts, for example 'ssh-rsa AAAAB...snip...UcyupgH azureuser@linuxvm'"
-      }
-    },
     "servicePrincipalAppId": {
       "type": "string",
       "metadata": {
@@ -43,6 +31,23 @@
       "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "Location for all resources."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
     }
   },
@@ -62,7 +67,18 @@
     "vmExtensionName": "[concat(variables('scenarioPrefix'), 'Init')]",
     "_artifactsLocation": "https://raw.githubusercontent.com/Azure/azure-devops-utils/master/",
     "_extensionScript": "301-jenkins-aptly-spinnaker-vmss.sh",
-    "_artifactsLocationSasToken": ""
+    "_artifactsLocationSasToken": "",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
@@ -289,7 +305,8 @@
         "osProfile": {
           "computerName": "[variables('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
@@ -300,7 +317,7 @@
           },
           "osDisk": {
             "name": "[concat(variables('vmName'),'_OSDisk')]",
-           "caching": "ReadWrite",
+            "caching": "ReadWrite",
             "createOption": "FromImage"
           }
         },

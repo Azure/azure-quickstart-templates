@@ -21,14 +21,12 @@ if [ -z "$PRIMARY_USER" ]; then
 	PRIMARY_USER="sas"
 fi
 
-# on 4/17, we started having intermittent issues with this repository being present for updates, so configuring to skip
-yum-config-manager --save --setopt=rhui-microsoft-azure-rhel7-eus.skip_if_unavailable=true
 
 if ! type -p ansible;  then
    # install Ansible
     curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
     sudo python get-pip.py
-    pip install 'ansible==2.4.0'
+    pip install 'ansible==2.7.10'
 fi
 
 # remove the requiretty from the sudoers file. Per bug https://bugzilla.redhat.com/show_bug.cgi?id=1020147 this is unnecessary and has been removed on future releases of redhat, 
