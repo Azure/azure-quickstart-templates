@@ -96,6 +96,7 @@ Before deploying SAS Viya Quickstart Template for Azure, you must have the follo
 *  The license file in .zip format from your software order uploaded to an Azure blob
 *  Verification that your required SAS Viya file upload sizes do not exceed the limits of the Application Gateway. For details about limits, see 
 ["Application Gateway limits."](https://docs.microsoft.com/en-us/azure/azure-subscription-service-limits?toc=%2fazure%2fapplication-gateway%2ftoc.json#application-gateway-limits)
+* A resource group that does not already contain a Quickstart deployment. For more information, see [Resource groups](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-overview#resource-groups).
 
 <a name="License"></a>
 ### Upload the License File to an Azure Blob
