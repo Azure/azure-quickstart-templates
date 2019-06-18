@@ -1,4 +1,6 @@
 #r "Newtonsoft.Json"
+#r "Microsoft.WindowsAzure.Storage"
+#r "../bin/Microsoft.Azure.Management.ResourceManager.Fluent.dll"
 
 using System;
 using System.Net;
@@ -9,145 +11,81 @@ using System.Text;
 using System.Threading;
 using System.Globalization;
 using System.Collections.Generic;
+using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.WebJobs.Host;
+using Microsoft.WindowsAzure.Storage.Table;
+using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-public class UserResource
+// The custom resource class, which stores generic request data.
+public class CustomResource : TableEntity
 {
-    public string name {get; set;}
-    public string type {get; set;}
-    public string id {get; set;}
-    public User properties {get; set;}
+    public string Data { get; set; }
 }
 
-
-public class User
+public static async Task<HttpResponseMessage> Run(HttpRequestMessage req, ILogger log, CloudTable tableStorage)
 {
-    public string FullName {get; set;}
-    public string Location {get; set;}
-}
+    // Get the unique Azure resource id from request headers.
+    var azureResourceId = ResourceId.FromString(req.Headers.GetValues("x-ms-customproviders-requestpath").First());
 
-private static string separator = ":::";
+    // Create the Partition Key and Row Key
+    var partitionKey = $"{azureResourceId.SubscriptionId}:{azureResourceId.ResourceGroupName}:{azureResourceId.Parent.Name}";
+    var rowKey = $"{azureResourceId.Name}";
 
-public static HttpResponseMessage Run(HttpRequestMessage req, string subscriptionId, string resourceGroupName, string miniRpName, string action, string instorageBlob, out string outstorageBlob, string name = null, ILogger log = null)
-{
-    HttpResponseMessage response = null;    
-    outstorageBlob = instorageBlob;
+    log.LogInformation($"The Custom Provider Function received a request '{req.Method}' for resource '{azureResourceId.Id}' PartitionKey=[{partitionKey}] RowKey=[{rowKey}].");
 
-    // functions seem to just set this value to {name} if not provider. Setting to null for processing
-    if(name == "{name}")
+    // Attempt to retrieve the Existing Stored Value
+    var tableQuery = TableOperation.Retrieve<CustomResource>(partitionKey, rowKey);
+    var existingCustomResource = (CustomResource)(await tableStorage.ExecuteAsync(tableQuery)).Result;
+
+    switch (req.Method)
     {
-        name = null;        
-    }
+        // Request to add an instance of the custom Azure resource.
+        case HttpMethod m when m == HttpMethod.Put:
 
-    // Resource mgmt for "Users" resource
-    if(action == "users")
-    {
-        var callmethod = req.Method.ToString();
-        var userInfo = getUserDictionaryFromFile(instorageBlob, log);
-        if(String.IsNullOrEmpty(name) && callmethod != "GET")
-        {
-            response = req.CreateResponse(HttpStatusCode.MethodNotAllowed);
-            return response;
-        }
-        var id = req.RequestUri.AbsolutePath.Replace("/api","").ToLower();
-        switch (callmethod)
-        {
-            case "PUT":
-            //add the user
-            string bodyString = req.Content.ReadAsStringAsync().Result;
-            var userJson = JToken.Parse(bodyString);
-            var inputObject = userJson.ToObject<UserResource>();
-            inputObject.id = id;
-            inputObject.name = name;
-            inputObject.type = "Microsoft.CustomProviders/resourceproviders/users";
+            // Construct the new resource from the request body and adds the Azure Resource Manager fields.
+            var myCustomResource = JObject.Parse(await req.Content.ReadAsStringAsync());
+            myCustomResource["name"] = azureResourceId.Name;
+            myCustomResource["type"] = azureResourceId.FullResourceType;
+            myCustomResource["id"] = azureResourceId.Id;
 
-            if(userInfo.TryGetValue(id, out UserResource tempUser))
-            {
-                userInfo[id] = inputObject;
-                response = req.CreateResponse(HttpStatusCode.OK);
-                response.Content = new StringContent(JToken.FromObject(inputObject).ToString(), System.Text.Encoding.UTF8, "application/json");
-            }
-            else
-            {
-                userInfo.Add(id, inputObject);
-                response = req.CreateResponse(HttpStatusCode.Created);
-                response.Content = new StringContent(JToken.FromObject(inputObject).ToString(), System.Text.Encoding.UTF8, "application/json");
-            }
-            
-            break;
-            case "GET":
-            // get the user
-            if(String.IsNullOrEmpty(name))
-            {
-                // return all the users
-                response = req.CreateResponse(HttpStatusCode.OK);
-                response.Content = new StringContent(JToken.FromObject(userInfo).ToString(), System.Text.Encoding.UTF8, "application/json");
-            }
-            else
-                if(userInfo.TryGetValue(id, out UserResource getUser))
+            // Save the resource into storage.
+            var insertOperation = TableOperation.InsertOrReplace(
+                new CustomResource
                 {
-                    response = req.CreateResponse(HttpStatusCode.OK);          
-                    response.Content = new StringContent(JToken.FromObject(getUser).ToString(), System.Text.Encoding.UTF8, "application/json");
-                }
-                else
-                {
-                    response = req.CreateResponse(HttpStatusCode.NotFound);
-                }
-            break;
-            case "DELETE":
-            //Delete the user            
-            if(userInfo.TryGetValue(id, out UserResource deleteUser))
-            {
-                userInfo.Remove(id);
-                response = req.CreateResponse(HttpStatusCode.OK);
-                response.Content = new StringContent(JToken.FromObject(deleteUser).ToString(), System.Text.Encoding.UTF8, "application/json");
+                    PartitionKey = partitionKey,
+                    RowKey = rowKey,
+                    Data = myCustomResource.ToString(),
+                });
+            await tableStorage.ExecuteAsync(insertOperation);
+
+            // Return the response with the newly created resource.
+            var createResponse = req.CreateResponse(HttpStatusCode.OK);
+            createResponse.Content = new StringContent(myCustomResource.ToString(), System.Text.Encoding.UTF8, "application/json");
+            return createResponse;
+
+        // Request to remove an instance of the custom Azure resource.
+        case HttpMethod m when m == HttpMethod.Delete:
+
+            // Delete the resource from storage.
+            if (existingCustomResource != null) {
+                var deleteOperation = TableOperation.Delete(existingCustomResource);
+                await tableStorage.ExecuteAsync(deleteOperation);
             }
-            else
-            {
-                response = req.CreateResponse(HttpStatusCode.NotFound);
-            }
-            
-            break;
-            default:
-            response = req.CreateResponse(HttpStatusCode.MethodNotAllowed);
-            break;
-        }
-        outstorageBlob = saveuserDictionary(userInfo, log);        
-    }    
-    return response;
-}
 
-private static Dictionary<string, UserResource> getUserDictionaryFromFile(string storageBlob, ILogger log)
-{
-    Dictionary<string, UserResource> dictionary = new Dictionary<string, UserResource>();    
+            return req.CreateResponse(
+                existingCustomResource != null ? HttpStatusCode.OK : HttpStatusCode.NoContent);
 
-    if(String.IsNullOrEmpty(storageBlob)) return dictionary; 
-    
-    var users = storageBlob.Split(separator);    
-    foreach(string user in users)
-    {           
-        var data = user.Split(",");        
-        if(data.Length == 5)
-        {
-            dictionary.Add(data[2], new UserResource { name = data[0], type = data[1], id = data[2], properties = new User {FullName = data[3], Location = data[4]}});
-        }
+        // Request to retrieve an instance of the custom Azure resource.
+        default:
+            var retrieveResponse = req.CreateResponse(
+                existingCustomResource != null ? HttpStatusCode.OK : HttpStatusCode.NotFound);
+
+            retrieveResponse.Content = existingCustomResource != null ?
+                 new StringContent(existingCustomResource.Data, System.Text.Encoding.UTF8, "application/json"):
+                 null;
+
+            return retrieveResponse;
     }
-    return dictionary;
-}
-
-private static string saveuserDictionary(Dictionary<string, UserResource> userdictionary, ILogger log)
-{    
-    string storageBlob = "";    
-    foreach(KeyValuePair<string, UserResource> userid in userdictionary)
-    {                
-        var data = GetSaveFormat(userid.Value);
-        storageBlob += data + separator;
-    }
-    return storageBlob;
-}
-
-private static string GetSaveFormat(UserResource userresource)
-{
-    return $"{userresource.name},{userresource.type},{userresource.id},{userresource.properties.FullName},{userresource.properties.Location}";
 }
