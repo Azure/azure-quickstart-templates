@@ -4,16 +4,10 @@
     "parameters": {
         "location": {
             "type": "string",
+            "defaultValue": "eastus",
             "allowedValues": [ "australiaeast", "eastus", "westeurope" ],
             "metadata": {
                 "description": "Location for the resources."
-            }
-        },
-        "deployFunction": {
-        "type": "bool",
-        "defaultValue": true,
-            "metadata": {
-                "description": "Determines whether to deploy the function app and create the custom RP."
             }
         },
         "funcName": {
@@ -27,19 +21,21 @@
             "type": "string",
             "defaultValue": "[uniqueString(resourceGroup().id)]",
             "metadata": {
-                "description": "Name of the storage account for storing users in the function app"
+                "description": "Name of the storage account for storing users in the function app."
             }
         },
-        "userName": {
+        "azureCustomResourceName": {
             "type": "string",
+            "defaultValue": "[uniqueString(newGuid())]",
             "metadata": {
-                "description": "Name of the user to be added."
+                "description": "Name of the custom resource that is being created."
             }
         },
-        "userLocation": {
+        "myCustomPropertyValue": {
             "type": "string",
+            "defaultValue": "foobar",
             "metadata": {
-                "description": "location of the user, not related to the resource location."
+                "description": "The custom property value for the custom property on the custom resource."
             }
         },
         "_artifactsLocation": {
@@ -60,7 +56,6 @@
     "variables": {},
     "resources": [
         {
-            "condition": "[parameters('deployFunction')]",
             "type": "Microsoft.Storage/storageAccounts",
             "apiVersion": "2018-02-01",
             "name": "[parameters('storageAccountName')]",
@@ -71,7 +66,6 @@
             }
         },
         {
-            "condition": "[parameters('deployFunction')]",
             "type": "Microsoft.Web/sites",
             "apiVersion": "2018-02-01",
             "name": "[parameters('funcName')]",
@@ -123,7 +117,6 @@
             }
         },
         {
-            "condition": "[parameters('deployFunction')]",
             "type": "Microsoft.CustomProviders/resourceProviders",
             "apiVersion": "2018-09-01-preview",
             "name": "[parameters('funcName')]",
@@ -142,18 +135,23 @@
             }
         },
         {
-            "type": "Microsoft.CustomProviders/resourceProviders/users",
-            "name": "[concat(parameters('funcName'), '/addUser')]",
+            "type": "Microsoft.CustomProviders/resourceProviders/customResources",
+            "name": "[concat(parameters('funcName'), '/', parameters('azureCustomResourceName'))]",
             "apiVersion": "2018-09-01-preview",
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.CustomProviders/resourceProviders', parameters('funcName'))]"
             ],
             "properties": {
-                "FullName": "[parameters('userName')]",
-                "Location": "[parameters('userLocation')]"
+                "hello": "world",
+                "myCustomProperty": "[parameters('myCustomPropertyValue')]"
             }
         }
-
-    ]
+    ],
+    "outputs": {
+        "CustomResource": {
+            "type": "object",
+            "value": "[reference(resourceId('Microsoft.CustomProviders/resourceProviders/customResources', parameters('funcName'), parameters('azureCustomResourceName')), '2018-09-01-preview', 'Full')]"
+        }
+    }
 }
