@@ -23,6 +23,7 @@ For assistance with SAS software, contact  [SAS Technical Support](https://suppo
 1. [Prerequisites](#Prerequisites)
     1. [Upload the License File to an Azure Blob](#License)
     1. [Create a Mirror Repository](#Mirror)
+1. [Best Practices](#Best_Practices)
 1. [Deployment Steps](#Deployment)
 1. [Additional Deployment Details](#deployment-details)
 1. [Optional Post-Deployment](#Post-Deployment)
@@ -139,7 +140,11 @@ az storage blob upload-batch --account-name "$STORAGE_ACCOUNT" --account-key "$S
 2. Upload the compressed tar archive to Azure blob storage or another storage location that is accessible from the internet and can be secured. 
 3. During deployment, set the DeploymentMirror parameter to the authenticated URL. In the case of blob storage, the URL is the path URL to the blob that is qualified by a SAS key.
 
-
+<a name="Best-Practices"></a>
+## Best Practices when Deploying SAS Viya on Azure
+We recommend the following as best practices:
+* Create a separate resource group for each Quickstart deployment. For more information, see [Resource groups](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-overview#resource-groups).
+* In resource groups that contain a Quickstart deployment, include only the Quickstart deployment in the resource group to facilitate the deletion of the deployment as a unit.
 
 <a name="Deployment"></a>
 ## Deployment Steps
