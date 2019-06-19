@@ -1,0 +1,137 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+        "galleryName": {
+            "type": "String",
+			"defaultValue": "[concat('defaultGallery', uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "The gallery name."
+            }
+        },
+        "imageName": {
+            "type": "String",
+			"defaultValue": "defaultGalleryImageDef",
+            "metadata": {
+                "description": "The gallery image name."
+            }
+        },
+		"versionName": {
+            "type": "String",
+			"defaultValue": "1.0.0",
+            "metadata": {
+                "description": "The gallery image version name, like 1.0.0"
+            }
+        },
+		"publisherName": {
+            "type": "String",
+			"defaultValue": "[concat('myPublisher', uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "The publisher name"
+            }
+        }, 
+		"offerName": {
+            "type": "String",
+			"defaultValue": "myOffer",
+            "metadata": {
+                "description": "The offer name"
+            }
+        },
+		"skuName": {
+            "type": "String",
+			"defaultValue": "mySku",
+            "metadata": {
+                "description": "The sku name"
+            }
+        },
+        "sourceManagedDisk": {
+            "type": "String",
+            "metadata": {
+                "description": "the resource id of managed disk to use as source."
+            }
+        }, 
+		"OSType": {
+            "type": "String",
+            "metadata": {
+                "description": "the os type. Windows Or Linux."
+            },
+			"allowedValues": [
+				"Linux",
+				"Windows"
+			  ]
+        }
+    },
+    "variables": {
+        "temporaryImageName": "[concat('sourceImage-', parameters('galleryName'), '-', parameters('imageName'), '-', parameters('versionName'))]"
+    },
+  "resources": [
+    {
+      "name": "[variables('temporaryImageName')]",
+      "type": "Microsoft.Compute/images",
+      "apiVersion": "2018-04-01",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "storageProfile": {
+          "osDisk": {
+            "osType": "[parameters('OSType')]",
+            "osState": "Generalized",
+            "managedDisk": {
+				  "id": "[parameters('sourceManagedDisk')]"
+				}
+			}
+		  }
+		}
+	},
+	{
+      "type": "Microsoft.Compute/galleries",
+      "name": "[parameters('galleryName')]",
+      "apiVersion": "2019-03-01",
+      "location": "[resourceGroup().location]",  
+      "properties": {
+        "description": "My Private Gallery"
+      }
+    },
+	{
+      "type": "Microsoft.Compute/galleries/images",
+      "name": "[concat(parameters('galleryName'), '/', parameters('imageName'))]",
+      "apiVersion": "2019-03-01",
+      "location": "[resourceGroup().location]",  
+      "properties": {
+        "description": "My gallery image definition",
+        "osType": "[parameters('OSType')]",
+        "osState": "Generalized",
+        "endOfLifeDate": "2020-01-01",
+        "identifier": {
+          "publisher": "[parameters('publisherName')]",
+          "offer": "[parameters('offerName')]",
+          "sku": "[parameters('skuName')]"
+        }
+      },
+	  "dependsOn": [
+                "[resourceId('Microsoft.Compute/galleries', parameters('galleryName'))]"
+            ]
+    },
+    {
+      "type": "Microsoft.Compute/galleries/images/versions",
+      "name": "[concat(parameters('galleryName'), '/', parameters('imageName'), '/', parameters('versionName'))]",
+      "apiVersion": "2019-03-01",
+      "location": "[resourceGroup().location]",  
+      "properties": {
+        "publishingProfile": {
+          "replicaCount":2,
+          "source": {
+            "managedImage": {
+              "id": "[resourceId('Microsoft.Compute/images', variables('temporaryImageName'))]"
+            }
+          },
+          "excludeFromLatest": "false",
+          "endOfLifeDate": "2021-05-01"
+        }
+      },
+	  "dependsOn": [
+                "[resourceId('Microsoft.Compute/images', variables('temporaryImageName'))]",
+				"[resourceId('Microsoft.Compute/galleries/images', parameters('galleryName'), parameters('imageName'))]"
+            ]
+    }
+  ]
+}

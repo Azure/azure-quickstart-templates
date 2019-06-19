@@ -1,0 +1,131 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "galleryName": {
+            "defaultValue": "[concat('defaultGallery', uniqueString(resourceGroup().id))]",
+            "type": "String",
+            "metadata": {
+                "description": "The gallery name."
+            }
+        },
+        "imageName": {
+            "defaultValue": "defaultGalleryImageDef",
+            "type": "String",
+            "metadata": {
+                "description": "The gallery image name."
+            }
+        },
+        "versionName": {
+            "defaultValue": "1.0.0",
+            "type": "String",
+            "metadata": {
+                "description": "The gallery image version name, like 1.0.0"
+            }
+        },
+        "publisherName": {
+            "defaultValue": "[concat('myPublisher', uniqueString(resourceGroup().id))]",
+            "type": "String",
+            "metadata": {
+                "description": "The publisher name"
+            }
+        },
+        "offerName": {
+            "defaultValue": "myOffer",
+            "type": "String",
+            "metadata": {
+                "description": "The offer name"
+            }
+        },
+        "skuName": {
+            "defaultValue": "mySku",
+            "type": "String",
+            "metadata": {
+                "description": "The sku name"
+            }
+        },
+        "sourceVirtualMachine": {
+            "type": "String",
+            "metadata": {
+                "description": "the resourceId of the vm to use as source."
+            }
+        },
+        "OSType": {
+            "allowedValues": [
+                "Linux",
+                "Windows"
+            ],
+            "type": "String",
+            "metadata": {
+                "description": "the os type. Windows Or Linux."
+            }
+        }
+    },
+    "variables": {
+        "temporaryImageName": "[concat('sourceImage-', parameters('galleryName'), '-', parameters('imageName'), '-', parameters('versionName'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Compute/images",
+            "apiVersion": "2018-04-01",
+            "name": "[variables('temporaryImageName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "sourceVirtualMachine": {
+                    "id": "[parameters('sourceVirtualMachine')]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/galleries",
+            "apiVersion": "2019-03-01",
+            "name": "[parameters('galleryName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "description": "My Private Gallery"
+            }
+        },
+        {
+            "type": "Microsoft.Compute/galleries/images",
+            "apiVersion": "2019-03-01",
+            "name": "[concat(parameters('galleryName'), '/', parameters('imageName'))]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/galleries', parameters('galleryName'))]"
+            ],
+            "properties": {
+                "description": "My gallery image definition",
+                "osType": "[parameters('OSType')]",
+                "osState": "Generalized",
+                "endOfLifeDate": "2020-01-01",
+                "identifier": {
+                    "publisher": "[parameters('publisherName')]",
+                    "offer": "[parameters('offerName')]",
+                    "sku": "[parameters('skuName')]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/galleries/images/versions",
+            "apiVersion": "2019-03-01",
+            "name": "[concat(parameters('galleryName'), '/', parameters('imageName'), '/', parameters('versionName'))]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/images', variables('temporaryImageName'))]",
+                "[resourceId('Microsoft.Compute/galleries/images', parameters('galleryName'), parameters('imageName'))]"
+            ],
+            "properties": {
+                "publishingProfile": {
+                    "replicaCount": 2,
+                    "source": {
+                        "managedImage": {
+                            "id": "[resourceId('Microsoft.Compute/images', variables('temporaryImageName'))]"
+                        }
+                    },
+                    "excludeFromLatest": "false",
+                    "endOfLifeDate": "2029-05-01"
+                }
+            }
+        }
+    ]
+}
