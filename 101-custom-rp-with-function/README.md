@@ -58,7 +58,7 @@ The last defined resource in the Azure Resource Manager template utilizes the ne
 ```
 
 Navigating to the deployment details on the Azure Resource Manager template will show a new resource type called resourceproviders/customResources created on the custom resource provider.
-![](images/createdcustomresource.png)
+![](images/createdcustomresource.PNG)
 
 To confirm that the user has been created , you can use a rest api client such as postman and run the following query and see the results:
 
