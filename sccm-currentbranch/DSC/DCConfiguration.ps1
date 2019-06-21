@@ -41,11 +41,20 @@
             RebootNodeIfNeeded = $true
         }
 
+        VirtualMemory PagingSettings
+        {
+            Type        = 'CustomSize'
+            Drive       = 'C'
+            InitialSize = '8192'
+            MaximumSize = '8192'
+        }
+
         File ADFiles
         {            
             DestinationPath = 'C:\Windows\NTDS'            
             Type = 'Directory'            
             Ensure = 'Present'
+            DependsOn = "[VirtualMemory]PagingSettings"
         }
 
         WindowsFeature Rdc

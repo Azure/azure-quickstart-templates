@@ -17,6 +17,7 @@
         [Parameter(Mandatory)]
         [System.Management.Automation.PSCredential]$Admincreds
     )
+    
     Import-DscResource -ModuleName xActiveDirectory
     Import-DscResource -ModuleName NetworkingDsc
     Import-DscResource -ModuleName TemplateHelpDSC
@@ -40,10 +41,18 @@
             RebootNodeIfNeeded = $true
         }
 
+        ChangeServices WinRMService
+        {
+            Name = "WinRM"
+            StartupType = "auto"
+            Ensure = "Present"
+        }
+
         SetDNS DnsServerAddress
         {
             DNSIPAddress = $DNSIPAddress
             Ensure = "Present"
+            DependsOn = "[ChangeServices]WinRMService"
         }
 
         WaitForDomainReady WaitForDomain
@@ -51,12 +60,6 @@
             Ensure = "Present"
             DCName = $DCName
             DependsOn = "[SetDNS]DnsServerAddress"
-        }
-
-        WindowsFeature Rdc
-        {             
-            Ensure = "Present"             
-            Name = "Rdc"             
         }
 
         Firewall EnableBuiltInFirewallRule

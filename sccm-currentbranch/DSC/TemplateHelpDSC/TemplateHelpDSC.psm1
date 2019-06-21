@@ -4,6 +4,13 @@
     Present
 }
 
+enum StartupType
+{
+    auto
+    delayedauto
+    demand
+}
+
 [DscResource()]
 class InstallADK
 {
@@ -741,7 +748,7 @@ class WaitForDomainReady
     [string] $DCName
 
     [DscProperty(Mandatory=$false)]
-    [int] $WaitSeconds = 600
+    [int] $WaitSeconds = 900
 
     [DscProperty(Mandatory)]
     [Ensure] $Ensure
@@ -1081,6 +1088,68 @@ class SetAutomaticManagedPageFile
     }
 
     [SetAutomaticManagedPageFile] Get()
+    {
+        return $this
+    }
+}
+
+[DscResource()]
+class ChangeServices
+{
+    [DscProperty(key)]
+    [string] $Name
+	
+    [DscProperty(Mandatory)]
+    [StartupType] $StartupType
+
+    [DscProperty(Mandatory)]
+    [Ensure] $Ensure
+
+    [DscProperty(NotConfigurable)]
+    [Nullable[datetime]] $CreationTime
+
+    [void] Set()
+    {
+        $_Name = $this.Name
+        $_StartupType = $this.StartupType
+        sc.exe config $_Name start=$_StartupType | Out-Null
+    }
+
+    [bool] Test()
+    {
+        $_Name = $this.Name
+        $_StartupType = $this.StartupType
+        $currentstatus = sc.exe qc $_Name
+
+        switch($_StartupType)
+        {
+            "auto" {
+                if($currentstatus[4].contains("DELAYED"))
+                {
+                    return $false
+                }
+                break
+            }
+            "delayedauto"{
+                if(!($currentstatus[4].contains("DELAYED")))
+                {
+                    return $false
+                }
+                break
+            }
+            "demand"{
+                if(!($currentstatus[4].contains("DEMAND_START")))
+                {
+                    return $false
+                }
+                break
+            }
+        }
+        
+        return $true
+    }
+
+    [ChangeServices] Get()
     {
         return $this
     }

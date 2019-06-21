@@ -40,10 +40,19 @@
             RebootNodeIfNeeded = $true
         }
 
+        VirtualMemory PagingSettings
+        {
+            Type        = 'CustomSize'
+            Drive       = 'C'
+            InitialSize = '8192'
+            MaximumSize = '8192'
+        }
+
         SetDNS DnsServerAddress
         {
             DNSIPAddress = $DNSIPAddress
             Ensure = "Present"
+            DependsOn = "[VirtualMemory]PagingSettings"
         }
 
         WaitForDomainReady WaitForDomain
