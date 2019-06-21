@@ -37,22 +37,6 @@ Set-AzureKeyVaultSecret -VaultName $vaultName -Name $secretName -SecretValue $Se
 ```
 
 ```powershell
-# Find trusted root public certificate
-$cerFile = "CER_CERTIFICATE_FILE_PATH"
-
-$certificate = New-Object Security.Cryptography.X509Certificates.X509Certificate2
-$certificate.Import($cerFile)
-
-$chain = New-Object Security.Cryptography.X509Certificates.X509Chain
-$chain.Build($certificate)
-$rootCert = $chain.ChainElements[$chain.ChainElements.Count - 1].Certificate
-$base64 = [System.Convert]::ToBase64String($rootCert.RawData)
-$chain.Reset()
-
-$base64
-```
-
-```powershell
 # Enable Key Vault for soft delete
 $vaultName = "VAULT_NAME"
 
@@ -85,10 +69,96 @@ A summary of the parameters required for this template are in this table.
 |apiManagementSkuCount|Size of the API Management instance|
 |existingKeyVaultName|Name of the Key Vault that holds the PFX certificate|
 |existingKeyVaultSecret|Name of the secret of the PFX certificate|
-|trustedRootBase64PublicKey|Base-64 encoding of the trusted root certificate|
 |tags|Any tags to use in the deployment|
 
 Once the resource is deployed, you should be able to point your DNS to the CNAME record of the deployed Application Gateway and connect to API Management.
+
+### Custom Root Certificates
+
+This template assumes the certificates being deployed for the custom domain come from a trusted root authority: GoDaddy, DigiCert, Let's Encrypt, etc. If your domain comes from an internal certificate authority, you need to modify the template to support your root authority. We needed the following changes:
+
+1) We first need the base-64 value of the public-key of the root certificate. To do so, we need the public key (.cer) file of the private certificate.
+
+    ```powershell
+    # Find trusted root public certificate
+    $cerFile = "CER_CERTIFICATE_FILE_PATH"
+
+    $certificate = New-Object Security.Cryptography.X509Certificates.X509Certificate2
+    $certificate.Import($cerFile)
+
+    $chain = New-Object Security.Cryptography.X509Certificates.X509Chain
+    $chain.Build($certificate)
+    $rootCert = $chain.ChainElements[$chain.ChainElements.Count - 1].Certificate
+    $base64 = [System.Convert]::ToBase64String($rootCert.RawData)
+    $chain.Reset()
+
+    $base64
+    ```
+
+2) Modify the `azuredeploy.json` file, add the following parameter line to the **parameters** section.
+
+    ```json
+    "trustedRootBase64PublicKey": {
+        "type": "string",
+        "defaultValue": "",
+        "metadata": {
+            "description": "The base-64 representation of the public key of the trusted root certificate for the custom domain"
+        }
+    }
+    ```
+    This is the parameter that the base-64 value will be loaded into in deployment.
+
+3) In the same file, in the **resources** section, in the *Microsoft.Network/applicationGateways* resource, add the following block after the *"backendAddressPools": []* block
+    ```json
+    "trustedRootCertificates": [
+        {
+            "name": "api-mgmt-trustedroot-ca",
+            "properties": {
+                "data": "[parameters('trustedRootBase64PublicKey')]"
+            }
+        }
+    ],
+    ```
+
+4) In the same file, in the **resources** section, in the *Microsoft.Network/applicationGateways* resource, replace the *"backendHttpSettingsCollection": []* block with the following code.
+    ```json
+    "backendHttpSettingsCollection": [
+        {
+            "name": "api-mgmt-gateway-https-settings",
+            "properties": {
+                "Port": 443,
+                "Protocol": "Https",
+                "hostName": "[parameters('apiManagementGatewayCustomDomain')]",
+                "CookieBasedAffinity": "Disabled",
+                "probe": {
+                    "id": "[concat(variables('appGWRefId'), '/probes/api-mgmt-gateway-probe')]"
+                },
+                "trustedRootCertificates": [
+                    {
+                        "id": "[concat(variables('appGWRefId'), '/trustedRootCertificates/api-mgmt-trustedroot-ca')]"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "api-mgmt-portal-https-settings",
+            "properties": {
+                "Port": 443,
+                "Protocol": "Https",
+                "hostName": "[parameters('apiManagementPortalCustomDomain')]",
+                "CookieBasedAffinity": "Disabled",
+                "probe": {
+                    "id": "[concat(variables('appGWRefId'), '/probes/api-mgmt-portal-probe')]"
+                },
+                "trustedRootCertificates": [
+                    {
+                        "id": "[concat(variables('appGWRefId'), '/trustedRootCertificates/api-mgmt-trustedroot-ca')]"
+                    }
+                ]
+            }
+        }
+    ],
+    ```
 
 <!--Links -->
 [keyvault-enable-deployment]: https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-manager-keyvault-parameter#deploy-key-vaults-and-secrets
