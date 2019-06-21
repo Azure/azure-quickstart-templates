@@ -21,8 +21,6 @@ if [ -z "$PRIMARY_USER" ]; then
 	PRIMARY_USER="sas"
 fi
 
-# on 4/17, we started having intermittent issues with this repository being present for updates, so configuring to skip
-yum-config-manager --save --setopt=rhui-microsoft-azure-rhel7-eus.skip_if_unavailable=true
 
 if ! type -p ansible;  then
    # install Ansible
