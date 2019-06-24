@@ -1,10 +1,113 @@
-Param($DomainFullName)
+Param($DomainFullName,$CM,$CMUser,$Role,$ProvisionToolPath)
 
-$ProvisionToolPath = "$env:windir\temp\ProvisionScript"
-if(!(Test-Path $ProvisionToolPath))
+$logpath = $ProvisionToolPath+"\InstallSCCMlog.txt"
+$ConfigurationFile = Join-Path -Path $ProvisionToolPath -ChildPath "$Role.json"
+$Configuration = Get-Content -Path $ConfigurationFile | ConvertFrom-Json
+
+$Configuration.InstallSCCM.Status = 'Running'
+$Configuration.InstallSCCM.StartTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
+$Configuration | ConvertTo-Json | Out-File -FilePath $ConfigurationFile -Force
+
+$cmpath = "c:\$CM.exe"
+$cmsourcepath = "c:\$CM"
+if(!(Test-Path $cmpath))
 {
-    New-Item $ProvisionToolPath -ItemType directory | Out-Null
+    "[$(Get-Date -format HH:mm:ss)] Copying SCCM installation source..." | Out-File -Append $logpath
+    $cmurl = "http://download.microsoft.com/download/1/B/C/1BCADBD7-47F6-40BB-8B1F-0B2D9B51B289/SC_Configmgr_SCEP_1902.exe"
+    Invoke-WebRequest -Uri $cmurl -OutFile $cmpath
+    if(!(Test-Path $cmsourcepath))
+    {
+        Start-Process -Filepath ($cmpath) -ArgumentList ('/Auto "' + $cmsourcepath + '"') -wait
+    }
 }
+$CMINIPath = "c:\$CM\Standalone.ini"
+"[$(Get-Date -format HH:mm:ss)] Check ini file." | Out-File -Append $logpath
+
+$cmini = @'
+[Identification]
+Action=InstallPrimarySite
+Preview=1
+
+[Options]
+ProductID=EVAL
+SiteCode=%Role%
+SiteName=%Role%
+SMSInstallDir=C:\Program Files\Microsoft Configuration Manager
+SDKServer=%MachineFQDN%
+RoleCommunicationProtocol=HTTPorHTTPS
+ClientsUsePKICertificate=0
+PrerequisiteComp=0
+PrerequisitePath=C:\%CM%\REdist
+MobileDeviceLanguage=0
+AdminConsole=1
+JoinCEIP=0
+
+[SQLConfigOptions]
+SQLServerName=%SQLMachineFQDN%
+DatabaseName=%SQLInstance%CM_%Role%
+SQLSSBPort=4022
+SQLDataFilePath=%SQLDataFilePath%
+SQLLogFilePath=%SQLLogFilePath%
+
+[CloudConnectorOptions]
+CloudConnector=1
+CloudConnectorServer=%MachineFQDN%
+UseProxy=0
+ProxyName=
+ProxyPort=
+
+[SystemCenterOptions]
+SysCenterId=
+
+[HierarchyExpansionOption]
+
+'@
+$inst = (get-itemproperty 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server').InstalledInstances[0]
+$p = (Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\Instance Names\SQL').$inst
+
+$sqlinfo = Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\$p\$inst"
+
+"[$(Get-Date -format HH:mm:ss)] ini file exist." | Out-File -Append $logpath
+$cmini = $cmini.Replace('%MachineFQDN%',"$env:computername.$DomainFullName")
+$cmini = $cmini.Replace('%SQLMachineFQDN%',"$env:computername.$DomainFullName")
+$cmini = $cmini.Replace('%Role%',$Role)
+$cmini = $cmini.Replace('%SQLDataFilePath%',$sqlinfo.DefaultData)
+$cmini = $cmini.Replace('%SQLLogFilePath%',$sqlinfo.DefaultLog)
+$cmini = $cmini.Replace('%CM%',$CM)
+
+if(!(Test-Path C:\$CM\Redist))
+{
+    New-Item C:\$CM\Redist -ItemType directory | Out-Null
+}
+    
+if($inst.ToUpper() -eq "MSSQLSERVER")
+{
+    $cmini = $cmini.Replace('%SQLInstance%',"")
+}
+else
+{
+    $tinstance = $inst.ToUpper() + "\"
+    $cmini = $cmini.Replace('%SQLInstance%',$tinstance)
+}
+$CMInstallationFile = "c:\$CM\SMSSETUP\BIN\X64\Setup.exe"
+$cmini > $CMINIPath 
+"[$(Get-Date -format HH:mm:ss)] Installing.." | Out-File -Append $logpath
+Start-Process -Filepath ($CMInstallationFile) -ArgumentList ('/NOUSERINPUT /script "' + $CMINIPath + '"') -wait
+
+"[$(Get-Date -format HH:mm:ss)] Finished installing CM." | Out-File -Append $logpath
+
+Remove-Item $CMINIPath
+
+$Configuration.InstallSCCM.Status = 'Completed'
+$Configuration.InstallSCCM.EndTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
+$Configuration | ConvertTo-Json | Out-File -FilePath $ConfigurationFile -Force
+
+#Upgrade SCCM
+$Configuration.UpgradeSCCM.Status = 'Running'
+$Configuration.UpgradeSCCM.StartTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
+$Configuration | ConvertTo-Json | Out-File -FilePath $ConfigurationFile -Force
+
+Start-Sleep -econds 120
 $logpath = $ProvisionToolPath+"\UpgradeCMlog.txt"
 $SiteCode =  Get-ItemPropertyValue -Path 'HKLM:\SOFTWARE\Microsoft\SMS\Identification' -Name 'Site Code'
 
@@ -36,15 +139,33 @@ while((Get-PSDrive -Name $SiteCode -PSProvider CMSite -ErrorAction SilentlyConti
 # Set the current location to be the site code.
 Set-Location "$($SiteCode):\" @initParams
 
+#Add domain user as CM administrative user
+"Setting $CMUser as CM administrative user." | Out-File -Append $logpath
+New-CMAdministrativeUser -Name $CMUser -RoleName "Full Administrator" -SecurityScopeName "All","All Systems","All Users and User Groups"
+"Done" | Out-File -Append $logpath
+
 $upgradingfailed = $false
 $originalbuildnumber = ""
+
+#Wait for SMS_DMP_DOWNLOADER running
+$key = [Microsoft.Win32.RegistryKey]::OpenBaseKey([Microsoft.Win32.RegistryHive]::LocalMachine, [Microsoft.Win32.RegistryView]::Registry64)
+$subKey =  $key.OpenSubKey("SOFTWARE\Microsoft\SMS\Components\SMS_Executive\Threads\SMS_DMP_DOWNLOADER")
+$DMPState = $subKey.GetValue("Current State")
+while($DMPState -ne "Running")
+{
+    "Current SMS_DMP_DOWNLOADER state is : $DMPState , will try again 30 seconds later..." | Out-File -Append $logpath
+    Start-Sleep -Seconds 30
+    $DMPState = $subKey.GetValue("Current State")
+}
+
+"Current SMS_DMP_DOWNLOADER state is : $DMPState " | Out-File -Append $logpath
 
 #get the available update
 function getupdate()
 {
     "[$(Get-Date -format HH:mm:ss)] Get CM update..." | Out-File -Append $logpath
     $CMPSSuppressFastNotUsedCheck = $true
-    $updatepacklist= Get-CMSiteUpdate | ?{$_.State -ne 196612}
+    $updatepacklist= Get-CMSiteUpdate -Fast | ?{$_.State -ne 196612}
     $getupdateretrycount = 0
     while($updatepacklist.Count -eq 0)
     {
@@ -268,4 +389,7 @@ if($upgradingfailed -eq $true)
     ("[$(Get-Date -format HH:mm:ss)] Upgrade " + $updatepack.Name + " failed") | Out-File -Append $logpath
     throw
 }
-    
+
+$Configuration.UpgradeSCCM.Status = 'Completed'
+$Configuration.UpgradeSCCM.EndTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
+$Configuration | ConvertTo-Json | Out-File -FilePath $ConfigurationFile -Force
