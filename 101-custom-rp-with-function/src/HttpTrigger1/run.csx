@@ -18,30 +18,73 @@ using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-// The custom resource class, which stores generic request data.
+// Custom Resource Table Entity
 public class CustomResource : TableEntity
 {
     public string Data { get; set; }
 }
 
+// Webhook for the Azure Function
 public static async Task<HttpResponseMessage> Run(HttpRequestMessage req, ILogger log, CloudTable tableStorage)
 {
-    // Get the unique Azure resource id from request headers.
-    var azureResourceId = ResourceId.FromString(req.Headers.GetValues("x-ms-customproviders-requestpath").First());
+    // Get the unique Azure request path from request headers.
+    var requestPath = req.Headers.GetValues("x-ms-customproviders-requestpath").First();
+
+    log.LogInformation($"The Custom Provider Function received a request '{req.Method}' for resource '{requestPath}'.");
+
+    // Determines if it is a collection level call or action.
+    var isResourceRequest = requestPath.Split('/').Length % 2 == 1;
+    var azureResourceId = isResourceRequest ? 
+        ResourceId.FromString(requestPath) :
+        ResourceId.FromString($"{requestPath}/");
 
     // Create the Partition Key and Row Key
     var partitionKey = $"{azureResourceId.SubscriptionId}:{azureResourceId.ResourceGroupName}:{azureResourceId.Parent.Name}";
-    var rowKey = $"{azureResourceId.Name}";
-
-    log.LogInformation($"The Custom Provider Function received a request '{req.Method}' for resource '{azureResourceId.Id}' PartitionKey=[{partitionKey}] RowKey=[{rowKey}].");
+    var rowKey = $"{azureResourceId.FullResourceType.Replace('/', ':')}:{azureResourceId.Name}";
 
     // Attempt to retrieve the Existing Stored Value
     var tableQuery = TableOperation.Retrieve<CustomResource>(partitionKey, rowKey);
-    var existingCustomResource = (CustomResource)(await tableStorage.ExecuteAsync(tableQuery)).Result;
+    var existingCustomResource = isResourceRequest ? 
+        (CustomResource)(await tableStorage.ExecuteAsync(tableQuery)).Result :
+        null;
 
     switch (req.Method)
     {
-        // Request to add an instance of the custom Azure resource.
+        // Action request for an custom action.
+        case HttpMethod m when m == HttpMethod.Post && !isResourceRequest:
+            var myCustomActionRequest = JObject.Parse(await req.Content.ReadAsStringAsync());
+
+            var actionResponse = req.CreateResponse(HttpStatusCode.OK);
+            actionResponse.Content = new StringContent(myCustomActionRequest.ToString(), System.Text.Encoding.UTF8, "application/json");
+            return actionResponse;
+
+        // Enumerate request for all custom reousces.
+        case HttpMethod m when m == HttpMethod.Get && !isResourceRequest:
+            var enumerationQuery = new TableQuery<CustomResource>().Where(
+                TableQuery.CombineFilters(
+                    TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, partitionKey),
+                    TableOperators.And,
+                    TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.GreaterThan, rowKey)));
+            
+            var customResources = (await tableStorage.ExecuteQuerySegmentedAsync(enumerationQuery, null))
+                .ToList().Select(customResource => JToken.Parse(customResource.Data));
+
+            var enumerationResponse = req.CreateResponse(HttpStatusCode.OK);
+            enumerationResponse.Content = new StringContent(new JObject(new JProperty("value", customResources)).ToString(), System.Text.Encoding.UTF8, "application/json");
+            return enumerationResponse;
+
+        // Retrieve request for a custom resource.
+        case HttpMethod m when m == HttpMethod.Get:
+            var retrieveResponse = req.CreateResponse(
+                existingCustomResource != null ? HttpStatusCode.OK : HttpStatusCode.NotFound);
+
+            retrieveResponse.Content = existingCustomResource != null ?
+                 new StringContent(existingCustomResource.Data, System.Text.Encoding.UTF8, "application/json"):
+                 null;
+
+            return retrieveResponse;
+
+        // Create request for a custom resource.
         case HttpMethod m when m == HttpMethod.Put:
 
             // Construct the new resource from the request body and adds the Azure Resource Manager fields.
@@ -60,12 +103,11 @@ public static async Task<HttpResponseMessage> Run(HttpRequestMessage req, ILogge
                 });
             await tableStorage.ExecuteAsync(insertOperation);
 
-            // Return the response with the newly created resource.
             var createResponse = req.CreateResponse(HttpStatusCode.OK);
             createResponse.Content = new StringContent(myCustomResource.ToString(), System.Text.Encoding.UTF8, "application/json");
             return createResponse;
 
-        // Request to remove an instance of the custom Azure resource.
+        // Remove request for a custom resource.
         case HttpMethod m when m == HttpMethod.Delete:
 
             // Delete the resource from storage.
@@ -77,15 +119,8 @@ public static async Task<HttpResponseMessage> Run(HttpRequestMessage req, ILogge
             return req.CreateResponse(
                 existingCustomResource != null ? HttpStatusCode.OK : HttpStatusCode.NoContent);
 
-        // Request to retrieve an instance of the custom Azure resource.
+        // Invalid request recieved.
         default:
-            var retrieveResponse = req.CreateResponse(
-                existingCustomResource != null ? HttpStatusCode.OK : HttpStatusCode.NotFound);
-
-            retrieveResponse.Content = existingCustomResource != null ?
-                 new StringContent(existingCustomResource.Data, System.Text.Encoding.UTF8, "application/json"):
-                 null;
-
-            return retrieveResponse;
+            return req.CreateResponse(HttpStatusCode.BadRequest);
     }
 }
