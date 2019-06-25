@@ -21,7 +21,7 @@ This sample deployment creates the following apis on the resource.
 
 ### CustomResources
 
-"customResources" is an API extension contained within the custom resource provider. This extension is defined in the following part of the ARM template under the "resourceProviders" resource: 
+"customResources" is an API extension contained within the custom resource provider. This extension is defined in the following part of the ARM template under the "resourceProviders" resource:
 
 ```json
 "resourceTypes": [
@@ -60,7 +60,7 @@ The last defined resource in the Azure Resource Manager template utilizes the ne
 Navigating to the deployment details on the Azure Resource Manager template will show a new resource type called resourceproviders/customResources created on the custom resource provider.
 ![](images/createdcustomresource.PNG)
 
-To confirm that the user has been created , you can use a rest api client such as postman and run the following query and see the results:
+To confirm that the custom resource has been created , you can use a rest api client such as postman and run the following query and see the results:
 
 ```
 GET  
