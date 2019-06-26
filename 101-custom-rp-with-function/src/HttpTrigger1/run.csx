@@ -52,10 +52,12 @@ public static async Task<HttpResponseMessage> Run(HttpRequestMessage req, ILogge
     {
         // Action request for an custom action.
         case HttpMethod m when m == HttpMethod.Post && !isResourceRequest:
-            var myCustomActionRequest = JObject.Parse(await req.Content.ReadAsStringAsync());
+            var myCustomActionRequest = await req.Content.ReadAsStringAsync();
 
             var actionResponse = req.CreateResponse(HttpStatusCode.OK);
-            actionResponse.Content = new StringContent(myCustomActionRequest.ToString(), System.Text.Encoding.UTF8, "application/json");
+            actionResponse.Content = myCustomActionRequest != string.Empty ? 
+                new StringContent(JObject.Parse(myCustomActionRequest).ToString(), System.Text.Encoding.UTF8, "application/json") :
+                null;
             return actionResponse;
 
         // Enumerate request for all custom reousces.
