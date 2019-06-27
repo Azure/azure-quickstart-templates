@@ -16,7 +16,7 @@ See [CosmosDB Advanced Threat Protection official documentation](replace.with.of
 `Tags : CosmosDB, Advanced Threat Protection`
 
 ## Parameters
-The following parameters has default value allowing to deploy the template as-is without providing any parameter but could be overriden at the deployment time :
+The following parameters have default values allowing to deploy the template as-is without providing any parameter, but can be overriden at deployment time:
 
 `Name` : Name of the CosmosDB Account, default is a unique string calculated from the "cosmosdb" token and the resource group id.  
 
