@@ -11,7 +11,7 @@ This ARM template is intented to create a **CosmosDB Account** quickly with the 
 
 CosmosDB Advanced Threat Protection is a unified package for advanced CosmosDB security capabilities.
 
-See [CosmosDB Advanced Threat Protection official documentation](replace.with.official.documentation.link) for more information.
+See the [official documentation](replace.with.official.documentation.link) of CosmosDB Advanced Threat Protection for more information.
 
 `Tags : CosmosDB, Advanced Threat Protection`
 
