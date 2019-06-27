@@ -18,8 +18,10 @@ For more information on CosmosDB Advanced Threat Protection, see the [official d
 ## Parameters
 The following parameters has default value allowing to deploy the template as-is without providing any parameter but could be overriden at the deployment time :
 
-`name` : Name of the CosmosDB Account, default is a unique string calculated from the "cosmosdb" token and the resource group id.  
+`Name` : Name of the CosmosDB Account, default is a unique string calculated from the "cosmosdb" token and the resource group id.  
 
-`location` : Location of the CosmosDB Account, default to the location of the resource group.  
+`Location` : Location of the CosmosDB Account, default to the location of the resource group.  
 
-`tier` : Offering type of the CosmosDB Account, default to Standard.
+`Tier` : Offering type of the CosmosDB Account, default to Standard.
+
+`Advanced Threat Protection Enabled` : Advanced Threat Protection for the CosmosDB Account, default to true (enabled).
