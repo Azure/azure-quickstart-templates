@@ -70,4 +70,4 @@ You can further create \ delete the user resource using the current page.
 
 The nice thing about this whole experience is that the entire customization for the UI is done with no code ! The configuration for this is specified in the viewdefinition file packaged as part of the managed application definition. To understand this specific configuration please check the details on the view definition file here :
 
-+ [**Creating the view definition file**](/artifacts/ManagedAppZip/README.md)
++ [**Creating the view definition file**](artifacts/ManagedAppZip/README.md)
