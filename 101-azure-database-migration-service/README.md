@@ -15,4 +15,4 @@ The above template will deploy a resource group with the below resources in your
 3) A Target Azure SQL database server with pre-created schema of the source database on the target server.
 4) A virtual network to which the source and DMS service will be connected.
 
-Using the above resources you can connect to source and target servers select the databases to migrate and run an end-to-end migration.
+Using the above resources you can connect to source and target servers, select the databases to migrate and run an end-to-end migration.
