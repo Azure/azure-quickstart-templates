@@ -46,9 +46,11 @@ describe('createUiDefinition.json file - ', () => {
     });
 
     /** A $handler property should be present in the file.
-    It's value MUST be 'Microsoft.Compute.MultiVm' */
-    it('handler property value should be \'Microsoft.Compute.MultiVm\'', () => {
-        createUiDefFileJSONObject.should.withMessage('handler property is expected, and it\'s value should be \'Microsoft.Compute.MultiVm\'').have.property('handler', 'microsoft.compute.multivm');
+    It's value MUST be one of the valid handlers */
+    it('handler property value should be \'Microsoft.Compute.MultiVm\' or or \'microsoft.azure.createuidef\'', () => {
+        createUiDefFileJSONObject.should.withMessage('handler property is expected, and it\'s value should be \'Microsoft.Compute.MultiVm\' or \'microsoft.azure.createuidef\'').have.property('handler', 'microsoft.compute.multivm')
+         || 
+        createUiDefFileJSONObject.should.withMessage('handler property is expected, and it\'s value should be \'Microsoft.Compute.MultiVm\' or \'microsoft.azure.createuidef\'').have.property('handler', 'microsoft.azure.createuidef');
     });
 
     /** A $version property should be present in the file.

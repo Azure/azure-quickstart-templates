@@ -159,7 +159,7 @@ while($sqlpermission -eq $null)
 '@
         }
         $Command | Out-File -FilePath $BatchFilePath -Encoding ascii
-        $Command = ". $Path $DCIPAddress $DomainFullName $DomainAdminName $Password $tempurl `"$sakey`""
+        $Command = ". $Path $DCIPAddress $DomainFullName $DomainAdminName `"$Password`" $tempurl `"$sakey`""
         $Command | Out-File -FilePath $BatchFilePath -Encoding ascii -Append
 
         $BatchFile = "cmd /k powershell -ExecutionPolicy Unrestricted -file " + $BatchFilePath
