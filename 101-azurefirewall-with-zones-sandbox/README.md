@@ -7,7 +7,6 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-<<<<<<< HEAD:101-azurefirewall-with-zones-sandbox/README.md
 This template creates following resources:
 - A virtual network with 3 subnets (server subnet, jumpbox subnet and AzureFirewall subnet)
 - A jumpbox VM running Microsoft Windows with public IP and RDP access
