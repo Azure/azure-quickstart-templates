@@ -69,7 +69,7 @@ else
     memoryAllocx=2g
 fi
 
-# create the uela file
+# create the eula file
 touch $minecraft_server_path/eula.txt
 echo 'eula=true' >> $minecraft_server_path/eula.txt
 
