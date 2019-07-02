@@ -33,28 +33,28 @@ This sample deployment creates the following apis on the resource.
                  ]
 ```
 
-In the above template we can see that the "customResources" API has been defined as a Proxy resource which means that it is backed by a RESTful API endpoint. The details of the endpoint come next. The endpoint uri in the section refers to the endpoint that implements this resource. When the resource is defined as above , the resource will support all CRUD calls like "GET", "PUT", "DELETE" etc and it is expected that the endpoint has implemented them. In the above case, this means that we will be able to make the following calls on Azure Resource Manager:
+In the above template, we can see that the "customResources" API has been defined as a Proxy resource which means that it is backed by a RESTful API endpoint. The details of the endpoint come next. The endpoint uri in the section refers to the endpoint that implements this resource. When the resource is defined as above , the resource will support all CRUD calls like "GET", "PUT", "DELETE" etc and it is expected that the endpoint has implemented them. In the above case, this means that we will be able to make the following calls on Azure Resource Manager:
 
 ```
 PUT/GET/DELETE /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CustomProviders/resourceProviders/{resourceProviderName}/customResources/{customResourceName}?api-version=2018-09-01-preview
 ```
 
-The last defined resource in the Azure Resource Manager template utilizes the new Azure extension to create an instance of the "customResources": 
+The Azure Resource Manager template also utilizes the new Azure extension to create an instance of the "customResources":
 
 ```json
-        {
-            "type": "Microsoft.CustomProviders/resourceProviders/customResources",
-            "name": "[concat(parameters('funcName'), '/', parameters('azureCustomResourceName'))]",
-            "apiVersion": "2018-09-01-preview",
-            "location": "[parameters('location')]",
-            "properties": {
-                "hello": "world",
-                "myCustomProperty": "[parameters('myCustomPropertyValue')]"
-            },
-            "dependsOn": [
-                "[resourceId('Microsoft.CustomProviders/resourceProviders', parameters('funcName'))]"
-            ],
-        }
+{
+    "type": "Microsoft.CustomProviders/resourceProviders/customResources",
+    "name": "[concat(parameters('funcName'), '/', parameters('azureCustomResourceName'))]",
+    "apiVersion": "2018-09-01-preview",
+    "location": "[parameters('location')]",
+    "properties": {
+        "hello": "world",
+        "myCustomProperty": "[parameters('myCustomPropertyValue')]"
+    },
+    "dependsOn": [
+        "[resourceId('Microsoft.CustomProviders/resourceProviders', parameters('funcName'))]"
+    ],
+}
 ```
 
 Navigating to the deployment details on the Azure Resource Manager template will show a new resource type called resourceproviders/customResources created on the custom resource provider.
@@ -68,6 +68,27 @@ https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{reso
 ```
 
 You can also create\delete additional "customResources".
+
+### Ping action
+
+In addition to users you can also define actions on your resourceprovider. An example action called ping is provided here defined as follows:
+
+```json
+"actions": [
+                                {
+                                    "name": "ping",
+                                    "routingType":"Proxy",
+                                    "endpoint": "[concat('https://', parameters('funcname'), '.azurewebsites.net/api/{requestPath}')]"
+                                }
+                            ]
+```
+
+The format for this action is similar to the resource type defined above , but since this is an action this call will only support POST methods as follows:
+
+```
+POST  
+https://management.azure.com/subscriptions/{subscriptionid}/resourceGroups/{resourcegroup}/providers/Microsoft.CustomProviders/resourceProviders/{customrpname}/ping?api-version=2018-09-01-preview
+```
 
 The code that enables this process is all implemented as part of the azure function that is deployed along with the template. To further understand how the function has been configured please look here:
 
