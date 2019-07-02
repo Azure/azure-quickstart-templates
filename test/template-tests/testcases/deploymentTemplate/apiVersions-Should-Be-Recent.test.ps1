@@ -2,16 +2,16 @@
 # The resource in the main template
 [Parameter(Mandatory=$true,Position=0)]
 [PSObject]
-$MainTemplateResources,
+$TemplateObject,
 
 # All potential resources in Azure (from cache)
-[Parameter(Mandatory=$true,Position=0)]
+[Parameter(Mandatory=$true,Position=2)]
 [PSObject]
 $AllAzureResources
 )
 
 # First, find all of the API versions in the main template resources.
-$allApiVersions = $MainTemplateResources | 
+$allApiVersions = $TemplateObject.resources | 
     Find-JsonContent -Key apiVersion -Value * -Like
 
 foreach ($av in $allApiVersions) { # Then walk over each object containing an ApiVersion.
