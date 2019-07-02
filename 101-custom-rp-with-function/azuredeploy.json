@@ -4,10 +4,16 @@
     "parameters": {
         "location": {
             "type": "string",
-            "defaultValue": "eastus",
             "allowedValues": [ "australiaeast", "eastus", "westeurope" ],
             "metadata": {
                 "description": "Location for the resources."
+            }
+        },
+        "deployFunction": {
+            "type": "bool",
+            "defaultValue": true,
+            "metadata": {
+                "description": "Determines whether to deploy the function app and create the custom RP."
             }
         },
         "funcName": {
@@ -24,16 +30,14 @@
                 "description": "Name of the storage account for storing custom resources in the function app."
             }
         },
-        "azureCustomResourceName": {
+        "myCustomResourceName": {
             "type": "string",
-            "defaultValue": "[uniqueString(newGuid())]",
             "metadata": {
                 "description": "Name of the custom resource that is being created."
             }
         },
         "myCustomPropertyValue": {
             "type": "string",
-            "defaultValue": "foobar",
             "metadata": {
                 "description": "The custom property value for the custom property on the custom resource."
             }
@@ -56,6 +60,7 @@
     "variables": {},
     "resources": [
         {
+            "condition": "[parameters('deployFunction')]",
             "type": "Microsoft.Storage/storageAccounts",
             "apiVersion": "2018-02-01",
             "name": "[parameters('storageAccountName')]",
@@ -66,6 +71,7 @@
             }
         },
         {
+            "condition": "[parameters('deployFunction')]",
             "type": "Microsoft.Web/sites",
             "apiVersion": "2018-02-01",
             "name": "[parameters('funcName')]",
@@ -117,6 +123,7 @@
             }
         },
         {
+            "condition": "[parameters('deployFunction')]",
             "type": "Microsoft.CustomProviders/resourceProviders",
             "apiVersion": "2018-09-01-preview",
             "name": "[parameters('funcName')]",
@@ -125,6 +132,13 @@
                 "[resourceId('Microsoft.Web/sites', parameters('funcName'))]"
             ],
             "properties": {
+                "actions": [
+                    {
+                        "name": "ping",
+                        "routingType": "Proxy",
+                        "endpoint": "[listSecrets(resourceId('Microsoft.Web/sites/functions', parameters('funcName'), 'HttpTrigger1'), '2018-02-01').trigger_url]"
+                    }
+                ],
                 "resourceTypes": [
                     {
                         "name": "customResources",
@@ -147,11 +161,5 @@
                 "myCustomProperty": "[parameters('myCustomPropertyValue')]"
             }
         }
-    ],
-    "outputs": {
-        "CustomResource": {
-            "type": "string",
-            "value": "[reference(resourceId('Microsoft.CustomProviders/resourceProviders/customResources', parameters('funcName'), parameters('azureCustomResourceName')), '2018-09-01-preview', 'Full').resourceId]"
-        }
-    }
+    ]
 }
