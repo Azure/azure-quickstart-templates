@@ -13,7 +13,7 @@ Note that Azure Bastion is currently in Public Preview status.  As a result, ple
 
 You can deploy these samples directly through the Azure Portal or by using scripts.
 
-To deploy a sammple using the Azure Portal, click the **Deploy to Azure** button.
+To deploy a sample using the Azure Portal, click the **Deploy to Azure** button.
 
 To deploy the sample via the command line (using [Azure PowerShell or the Azure CLI](https://azure.microsoft.com/en-us/downloads/)) you can use scripts.
 ```
