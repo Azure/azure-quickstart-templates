@@ -1,58 +1,55 @@
-<# 
-This script gets the folders that have changed in the PR - only one sample is allowed per PR.  
-Currently it expects the folder to be in the root - but once the repo is re-orged, this will need to change
+<#
+This script will find the sample folder for the PR - Test are run on that folder only
+If the PR contains more than one sample the build must fail
+If the PR does not contain changes to a sample folder, it will currently fail but we'll TODO this
 #>
 
-#region variables
-
-# These ENV vars are set in AzDO
 $GitHubRepository = $ENV:BUILD_REPOSITORY_NAME
 $GitHubPRNumber = $ENV:SYSTEM_PULLREQUEST_PULLREQUESTNUMBER
+$RepoRoot = $ENV:BUILD_REPOSITORY_LOCALPATH
 
-# for local testing
-$GitHubRepository = "Azure/azure-quickstart-templates"
-$GitHubPRNumber = "5976"
+#$ChangedFile = Invoke-Restmethod "https://api.github.com/repos/$($GitHubRepository)/pulls/$($GitHubPRNumber)/files"
+#$RepoRoot = "c:\users\bmoore\source\repos\azure-quickstart-templates"
+$ChangedFile = Invoke-Restmethod "https://api.github.com/repos/Azure/azure-quickstart-templates/pulls/6267/files"
 
-#endregion
+Get-ChildItem env:
+#Write-Output "$(Get-ChildItem -Path $ENV:AGENT_BUILDDIRECTORY -Recurse)"
+Write-Output "$RepoRoot"
 
-# Get Changed Files
-$ChangedFile = Invoke-Restmethod "https://api.github.com/repos/$($GitHubRepository)/pulls/$($GitHubPRNumber)/files"
-Write-Debug ($ChangedFile | Out-String)
-
-# Get Folders
 $FolderArray = @()
-$ChangedFile | Foreach-Object {
-    Write-Host $_.filename
-    if ($_.filename.contains('/')) {
-        #$FolderArray += $_.filename.split('/')[0]
-        $FolderArray += "$($_.filename | Split-Path)"
+$ChangedFile | ForEach-Object {
+    Write-Output $_.blob_url
+    $CurrentPath = Split-Path (Join-Path -path $RepoRoot -ChildPath $_.filename)
+ 
+    # File in root of repo?
+    If ($CurrentPath -eq $RepoRoot) {
+        Write-Error "### Error ### The file $($_.filename) is in the root of the repository. A PR can only contain changes to files from a sample folder at this time."
     }
-    else {
-        write-warning "The pull request contains a top level file of the repository. The repo admin is notified to review the pull request."
+    Else {
+        # Metadata in current folder?
+        while (!(Test-Path (Join-Path -path $CurrentPath -ChildPath "metadata.json")) -and $CurrentPath -ne $RepoRoot) {
+            $CurrentPath = Split-Path $CurrentPath
+        }
+ 
+        If ($CurrentPath -eq $RepoRoot) {
+            Write-Error "### Error ### The scenario folder for $($_.filename) does not include a metadata.json file. Please add a metadata.json file to your scenario folder as part of the pull request."
+        }
+        Else {
+            $FolderArray += $currentpath
+        }
     }
 }
-
+ 
 $FolderArray = @($FolderArray | Select-Object -Unique)
-
-# go through folders
-# look for azuredeploy.json - if not go to it's parent to find it
-# if there's more than one at a different path fail the build
-
-<#
-/foo/bar/baz/foo.json (azuredeploy in bar)
-/foo/bar/baz/scripts/script.ps1 (azuredeploy in bar)
-/foo/bar/baz/stuff/script.ps1 (azuredeploy in bar)
-/foo/not/too/scripts/script.ps1 (azuredeploy in not)
-/foo/not/too/foo.json
-#>
-
-
-# Files changes span scenario folders?
-if ($FolderArray.count -gt 1) {
-    Write-Error "The Pull request contains file changes in sample level folders. A pull request can only contain changes to files from a single sample)" 
+ 
+If ($FolderArray.count -gt 1) {
+ 
+    Write-Error "### Error ### The Pull request contains file changes from $($FolderArray.count) scenario folders. A pull request can only contain changes to files from a single scenario folder."
+ 
 }
-
+ 
 # Update pipeline variable
-$FolderString = $FolderArray -join ","
-Write-Host $FolderString
+$FolderString = $FolderArray[0]
+Write-Output "Using sample folder: $FolderString"
 Write-Host "##vso[task.setvariable variable=SampleFolder]$FolderString"
+
