@@ -51,3 +51,7 @@ If ($FolderArray.count -gt 1) {
 $FolderString = $FolderArray[0]
 Write-Output "Using sample folder: $FolderString"
 Write-Host "##vso[task.setvariable variable=sample.folder]$FolderString"
+
+# Generate a resourceGroup Name
+$resourceGroupName = "azdo-$(New-Guid)"
+Write-Host "##vso[task.setvariable variable=resourceGroup.name]$resourceGroupName"
