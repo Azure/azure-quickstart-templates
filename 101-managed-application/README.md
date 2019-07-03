@@ -15,8 +15,8 @@ You can also use the package located under the artifacts folder to deploy the ma
 
 To learn more about Managed Application definitions and Marketplace please visit :
 
-1) [Publish an Azure managed application definition](https://docs.microsoft.com/en-us/azure/managed-applications/publish-managed-app-definition-quickstart)
-2) [Azure managed applications in the Marketplace](https://docs.microsoft.com/en-us/azure/managed-applications/publish-marketplace-app)
++ [Publish an Azure managed application definition](https://docs.microsoft.com/en-us/azure/managed-applications/publish-managed-app-definition-quickstart)
++ [Azure managed applications in the Marketplace](https://docs.microsoft.com/en-us/azure/managed-applications/publish-marketplace-app)
 
 ## Exploring created Managed Application
 
@@ -36,14 +36,14 @@ To learn more about View definition please visit:
 
 Every managed application has associated managed resource group, that actually contains application resources. These resources are deployed using Azure Resource Manager template [mainTemplate.json](artifacts/ManagedAppZip/mainTemplate.json) from the application definition package.
 
-To learn more about Azure Resource Manager templates best practices please visit: 
-+ [**Azure Resource Manager Templates - Best Practices Guide**](https://github.com/Azure/azure-quickstart-templates/blob/master/1-CONTRIBUTION-GUIDE/best-practices.md)
-
 If you click managed resource group in managed application Overview, you'll see a storage account created inside that resource group.
 
 ![](images/essentialsmrg.png)
 
 ![](images/mrgstorageaccount.png)
+
+To learn more about Azure Resource Manager templates best practices please visit: 
++ [**Azure Resource Manager Templates - Best Practices Guide**](https://github.com/Azure/azure-quickstart-templates/blob/master/1-CONTRIBUTION-GUIDE/best-practices.md)
 
 ## Exploring created Managed Application definition and deploy another application instance
 
