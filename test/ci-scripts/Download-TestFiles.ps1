@@ -15,7 +15,7 @@ if($pass -and $user){
         Authorization = $basicAuthValue
     }
 }
-function DownloadFiles([string]$sourceUri, [string]$destFolder) {
+function DownloadFiles([string]$sourceUri, [string]$destFolder, [string]$Headers) {
 
     Write-Verbose "Getting contents from $sourceUri"
     $folderContents = Invoke-WebRequest $sourceUri -UseBasicParsing -Headers $Headers | Select-Object -ExpandProperty Content | ConvertFrom-Json
@@ -26,7 +26,7 @@ function DownloadFiles([string]$sourceUri, [string]$destFolder) {
             if ( -Not ( Test-Path -Path "$destFolder/$($file.name)" ) ) {
                 New-Item -ItemType directory -Path "$destFolder/$($file.name)"
             }
-            DownloadFiles "$sourceUri/$($file.name)" "$destFolder/$($file.name)"
+            DownloadFiles "$sourceUri/$($file.name)" "$destFolder/$($file.name)" "$Headers"
         }
         else {
             Write-Verbose "Downloading $($file.download_url)..."
@@ -37,4 +37,4 @@ function DownloadFiles([string]$sourceUri, [string]$destFolder) {
 
 }
 
-DownloadFiles $source $dest
+DownloadFiles $source $dest $Headers
