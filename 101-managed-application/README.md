@@ -7,10 +7,11 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This sample template deploys a managed application along with a managed application definition that contains a single storage account as a resource. This application demonstrates an ability to create default view for the application: customizing application overview header and description.
+This sample template deploys a managed application along with a managed application definition that contains a single storage account as a resource. This application demonstrates an ability to create customized default view for the application: customizing application overview header and description.
 [To learn more about managed applications click here](https://docs.microsoft.com/en-us/azure/managed-applications/overview)
 
-To deploy the managed application, this template first deploys a Service catalog Managed Application Definition, after that uses the definition to  deploy a managed application. You can also use the package located under the artifacts folder to deploy the managed application as Azure Marketplace application offer. 
+This template deploys a Service catalog managed application definition first, after that uses this application definition to  deploy a managed application.
+You can also use the package located under the artifacts folder to deploy the managed application as Azure Marketplace application offer.
 
 To learn more about Managed Application definitions and Marketplace please visit :
 
@@ -21,19 +22,24 @@ To learn more about Managed Application definitions and Marketplace please visit
 
 This sample deployment creates the following two resources:
 
-1) A Managed Application definition.
-2) A Managed Application instance that contains a storage account.
+1) A managed application definition.
+2) A managed application that contains a storage account.
 
 Once you click on the managed application you will notice that Overview contains header and description of the application.
 
 ![](images/defaultview.png)
 
-This view is driven by [view definition](artifacts/ManagedAppZip/viewDefinition.json) file from application definition package.
+This view is driven by [viewDefinition.json](artifacts/ManagedAppZip/viewDefinition.json) file from application definition package.
 
 To learn more about View definition please visit:
 + [**View definition artifact in Azure Managed Applications**](https://docs.microsoft.com/en-us/azure/managed-applications/concepts-view-definition)
 
-If you click managed resource group in  managed application Overview you'll see storage account created inside that resource group.
+Every managed application has associated managed resource group, that actually contains application resources. These resources are deployed using Azure Resource Manager template [mainTemplate.json](artifacts/ManagedAppZip/mainTemplate.json) from the application definition package.
+
+To learn more about Azure Resource Manager templates best practices please visit: 
++ [**Azure Resource Manager Templates - Best Practices Guide**](https://github.com/Azure/azure-quickstart-templates/blob/master/1-CONTRIBUTION-GUIDE/best-practices.md)
+
+If you click managed resource group in managed application Overview, you'll see a storage account created inside that resource group.
 
 ![](images/essentialsmrg.png)
 
@@ -41,7 +47,7 @@ If you click managed resource group in  managed application Overview you'll see 
 
 ## Exploring created Managed Application definition and deploy another application instance
 
-If you click on application definition in managed application Overview you'll be able to see managed application definition that was used for the application deployment.
+If you click on application definition in managed application Overview, you'll be able to see managed application definition that was used for the application deployment.
 
 ![](images/ama-amadefinition.png)
 
@@ -53,16 +59,16 @@ Navigate to the managed application definition, you'll see "Deploy from definiti
 
 ![](images/scdefinitionoverview.png)
 
-When you click "Deploy from definition" button you'll see the Create application experience that is driven by Create UI definition file.
+When you click "Deploy from definition" button, you'll see the Create application experience. 
 Fill in Basics and proceed to Application Settings.
 
 ![](images/cuid-basic.png)
 
-Enter storage account prefix and select storage account type if needed. Proceed to "Next: Review + Create".
+Enter storage account name prefix and select storage account type if needed. Proceed to "Next: Review + Create".
 
 ![](images/cuid-app-settings.png)
 
-You should see "Validation Passed" status so you may proceed with actual application deployment: click "Create".
+You should see "Validation Passed" status, so you may proceed with actual application deployment: click "Create".
 
 ![](images/cuid-create.png)
 
@@ -70,8 +76,8 @@ You should see notification that application deployment was succesful, so you ca
 
 ![](images/app-created.png)
 
-This Create experience is authored by the application developer, packaged inside application definition package as  [createUiDefinition.json](artifacts/ManagedAppZip/createUiDefinition.json) file from application definition package..
+Create experience is driven by [createUiDefinition.json](artifacts/ManagedAppZip/createUiDefinition.json) file from application definition package.
 
-To learn more about authoring your managed application Create experience please visit:
+To learn more about authoring your managed application create experience please visit:
 + [Create Azure portal user interface for your managed application](https://docs.microsoft.com/en-us/azure/managed-applications/create-uidefinition-overview)
 + [Test your portal interface for Azure Managed Applications](https://docs.microsoft.com/en-us/azure/managed-applications/test-createuidefinition)
