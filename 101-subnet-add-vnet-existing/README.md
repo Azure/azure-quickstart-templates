@@ -9,3 +9,4 @@ This template allows you to add a subnet to an existing VNET. **NOTE:** Deploy i
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
+`Tags: existing vnet`
