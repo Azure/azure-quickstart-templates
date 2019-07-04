@@ -19,4 +19,4 @@ Before submitting to Marketplace, the following steps will need to be performed
   - https://docs.microsoft.com/en-us/azure/marketplace/cloud-partner-portal/azure-applications/cpp-skus-tab#package-details-for-solution-template 
 
 
-`Tags: new, exiting, resource, vm, condition, conditional`
+`Tags: new, exiting, resource, vm, condition, conditional, marketplace`
