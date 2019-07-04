@@ -1,6 +1,6 @@
 # OMS monitoring solution for Azure Backup
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fadityabalaji-msft%2Fazure-quickstart-templates%2Fadbalaji-working-branch-july02%2F101-backup-oms-monitoring%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster02%2F101-backup-oms-monitoring%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-backup-oms-monitoring%2Fazuredeploy.json" target="_blank">
@@ -11,7 +11,8 @@ This template deploys **OMS Monitoring and Reporting solution for Azure backup**
 
 `Tags: Azure Backup, OMS Log Analytics, Monitoring`
 
-> [!IMPORTANT]
+> **Important**
+<br>
 > This is an updated, multi-view template for LA-based Monitoring and Reporting in Azure Backup. Users who were using our earlier solution are required to deploy the new template by clicking the 'Deploy to Azure' button above. Please note that users who were using the earlier solution (titled 'Azure Backup Monitoring Solution') will continue to see it in their workspaces even after deploying the new solution. However, the old solution may provide inaccurate results due to some minor schema changes in the backend. **Users are hence advised to deploy the new template and explicitly delete the 'Azure Backup Monitoring Solution' view from their workspaces**.
 
 ## Prerequisites
