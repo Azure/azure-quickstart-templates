@@ -20,3 +20,5 @@ Before submitting to Marketplace, the following steps will need to be performed
 
 
 `Tags: new, exiting, resource, vm, condition, conditional`
+
+Trigger CI
