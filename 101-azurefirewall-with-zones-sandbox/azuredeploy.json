@@ -4,6 +4,7 @@
   "parameters": {
     "virtualNetworkName": {
       "type": "string",
+      "defaultValue": "test-vnet",
       "metadata": {
         "description": "virtual network name"
       }
@@ -25,6 +26,13 @@
       "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "Location for all resources."
+      }
+    },
+    "availabilityZones": {
+      "type": "array",
+      "defaultValue": ["1", "2", "3"],
+      "metadata": {
+        "description": "Zone numbers e.g. 1,2,3."
       }
     }
   },
@@ -54,7 +62,7 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountName')]",
-      "apiVersion": "2017-10-01",
+      "apiVersion": "2019-04-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Standard_LRS"
@@ -65,7 +73,7 @@
     {
       "type": "Microsoft.Network/routeTables",
       "name": "[variables('azfwRouteTableName')]",
-      "apiVersion": "2018-02-01",
+      "apiVersion": "2019-04-01",
       "location": "[parameters('location')]",
       "properties": {
         "disableBgpRoutePropagation": false,
@@ -83,7 +91,7 @@
     },
     {
       "name": "[parameters('virtualNetworkName')]",
-      "apiVersion": "2017-06-01",
+      "apiVersion": "2019-04-01",
       "type": "Microsoft.Network/virtualNetworks",
       "location": "[parameters('location')]",
       "dependsOn": [
@@ -126,7 +134,7 @@
     {
       "name": "[variables('publicIPName')]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2017-10-01",
+      "apiVersion": "2019-04-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Standard"
@@ -139,7 +147,7 @@
     {
       "name": "[variables('jumpBoxPublicIPAddressName')]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2017-10-01",
+      "apiVersion": "2019-04-01",
       "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic"
@@ -147,8 +155,8 @@
     },
     {
       "name": "[variables('jumpBoxNsgName')]",
-      "type": "Microsoft.Network/networkSecurityGroups",            
-      "apiVersion": "2018-02-01",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2019-04-01",
       "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
@@ -162,18 +170,14 @@
               "destinationAddressPrefix": "*",
               "access": "Allow",
               "priority": 1000,
-              "direction": "Inbound",
-              "sourcePortRanges": [],
-              "destinationPortRanges": [],
-              "sourceAddressPrefixes": [],
-              "destinationAddressPrefixes": []
+              "direction": "Inbound"
             }
           }
         ]
       }
     },
     {
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2019-04-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('JumpBoxNicName')]",
       "location": "[parameters('location')]",
@@ -203,7 +207,7 @@
       }
     },
     {
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2019-04-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('ServerNicName')]",
       "location": "[parameters('location')]",
@@ -227,8 +231,12 @@
     { 
       "name": "JumpBox",
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2017-12-01",
+      "apiVersion": "2019-03-01",
       "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('JumpBoxNicName'))]"
+      ],
       "properties": {
         "hardwareProfile": {
           "vmSize": "Standard_DS1_v2"
@@ -244,14 +252,12 @@
             "osType": "Windows",
             "createOption": "FromImage",
             "diskSizeGB": 127
-          },
-          "dataDisks": []
+          }
         },
         "osProfile": {
           "computerName": "JumpBox",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]",
-          "secrets": []
+          "adminPassword": "[parameters('adminPassword')]"
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -266,17 +272,17 @@
             "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))).primaryEndpoints.blob]"
           }
         }
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-        "[resourceId('Microsoft.Network/networkInterfaces', variables('JumpBoxNicName'))]"
-      ]
+      }
     },
     { 
       "name": "Server",
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2017-12-01",
+      "apiVersion": "2019-03-01",
       "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('ServerNicName'))]"
+      ],
       "properties": {
         "hardwareProfile": {
           "vmSize": "Standard_DS1_v2"
@@ -292,14 +298,12 @@
             "osType": "Windows",
             "createOption": "FromImage",
             "diskSizeGB": 127
-          },
-          "dataDisks": []
+          }
         },
         "osProfile": {
           "computerName": "Server",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]",
-          "secrets": []
+          "adminPassword": "[parameters('adminPassword')]"
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -314,20 +318,17 @@
             "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))).primaryEndpoints.blob]"
           }
         }
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-        "[resourceId('Microsoft.Network/networkInterfaces', variables('ServerNicName'))]"
-      ]
-    },    
+      }
+    },
     {
-      "apiVersion": "2018-06-01",
+      "apiVersion": "2019-04-01",
       "type": "Microsoft.Network/azureFirewalls",
       "name": "[variables('firewallName')]",
       "location": "[parameters('location')]",
+      "zones": "[if(equals(length(parameters('availabilityZones')), 0), json('null'), parameters('availabilityZones'))]",
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -337,7 +338,7 @@
               "subnet": {
                 "id": "[variables('azureFirewallSubnetId')]"
               },
-              "InternalPublicIPAddress": {
+              "PublicIPAddress": {
                 "id": "[variables('azureFirewallPublicIpId')]"
               }
             }
@@ -352,8 +353,14 @@
               "rules": [
                 {
                   "name": "appRule1",
-                  "protocols": [{"port": "80", "protocolType": "http"}, {"port": "443", "protocolType": "https"}],
-                  "targetUrls": ["*microsoft.com"]
+                  "protocols": [
+                    {
+                      "port": "80",
+                      "protocolType": "http"
+                    }
+                  ],
+                  "targetFqdns": [ "www.microsoft.com" ],
+                  "sourceAddresses": [ "10.0.0.0/24" ]
                 }
               ]
             }
@@ -362,16 +369,16 @@
         "networkRuleCollections": [
           {
             "name": "netRc1",
-            "properties": {                    
+            "properties": {
               "priority": 200,
-              "action":  { "type":  "Allow"},
+              "action":  { "type": "Allow" },
               "rules": [
                 {
                   "name": "netRule1",
-                  "protocols": ["TCP"],
-                  "sourceAddresses": ["192.168.2.0/24"],
-                  "destinationAddresses": ["*"],
-                  "destinationPorts": ["8000-8999"]
+                  "protocols": [ "TCP" ],
+                  "sourceAddresses": [ "10.0.0.0/24" ],
+                  "destinationAddresses": [ "*" ],
+                  "destinationPorts": [ "8000-8999" ]
                 }
               ]
             }
