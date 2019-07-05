@@ -10,5 +10,3 @@ This template allows you to add a subnet to an existing VNET. **NOTE:** Deploy i
 </a>
 
 `Tags: existing vnet, add subnet`
-
-Test
