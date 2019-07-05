@@ -9,8 +9,8 @@ Create ExpressRoute Circuit  - <a href="https://portal.azure.com/#create/Microso
 
 This template creates an ExpressRoute Circuit for a specified Service Provider and SKU.
 
-Refer to https://azure.microsoft.com/en-us/documentation/articles/expressroute-introduction/ for more details on ExpressRoute and Circuits.
+Refer to https://azure.microsoft.com/documentation/articles/expressroute-introduction/ for more details on ExpressRoute and Circuits.
 
-Refer to https://azure.microsoft.com/en-us/pricing/details/expressroute/ for more details on pricing/SKU of ExpressRoute.
+Refer to https://azure.microsoft.com/pricing/details/expressroute/ for more details on pricing/SKU of ExpressRoute.
 
-Refer to https://azure.microsoft.com/en-us/documentation/articles/expressroute-locations/ for ExpressRoute partners and peering locations list.
+Refer to https://azure.microsoft.com/documentation/articles/expressroute-locations/ for ExpressRoute partners and peering locations list.
