@@ -46,7 +46,7 @@ Clicking on the solution would let you explore Alerts, backups, restores, Cloud 
 
 ![alt text](images/CloudStorageInGB.png "OMS Monitoring solution for Azure backup cloud storage distribution")
 
-You can click on each tile to get more details about the queries used to create it and you can configure it as per your requirement. Clicking further on values appearing in the tiles will lead you to Log analytics screen where you can raise alerts for configurable event thresholds and automate actions to be performed when those thresholds are met/crossed.
+You can click on each tile to get more details about the queries used to create it and you can configure it as per your requirement. Clicking further on values appearing in the tiles will lead you to Log analytics screen where you can raise alerts for configurable event thresholds and automate actions to be performed when those thresholds are met/crossed..
 
 ![alt text](images/LogAnalyticsScreen.JPG "OMS Monitoring solution for Azure backup Log search")
 
