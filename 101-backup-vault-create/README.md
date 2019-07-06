@@ -7,4 +7,4 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template creates a Backup Vault. For more information, go to: https://azure.microsoft.com/en-us/documentation/services/backup/
+This template creates a Backup Vault. For more information, go to : https://azure.microsoft.com/en-us/documentation/services/backup/
