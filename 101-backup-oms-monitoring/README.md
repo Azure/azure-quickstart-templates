@@ -34,7 +34,7 @@ Please select the relevant log, “AzureBackupReport” in this case, to be sent
 <br>
 ## Solution overview and deployed resources
 
-Upon deploying the solution, you would view an overview tile which reflects backup jobs and their status.
+Upon deploying the solution, you would view an overview tile which reflects backup jobs and their status..
 
 ![alt text](images/OverviewTile.JPG "OMS Monitoring solution for Azure backup monitoring tile")
 
