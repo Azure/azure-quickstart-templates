@@ -8,13 +8,6 @@
         "description": "Username for the virtual Machines"
       }
     },
-    "adminPassword": {
-      "type": "securestring",
-      "minLength": 12,
-      "metadata": {
-        "description": "Password for Barracuda WAF Admin Interface and Backend Web Servers(Min Length: 12)"
-      }
-    },
     "webVmCount": {
       "type": "int",
       "defaultValue": 2,
@@ -49,6 +42,23 @@
       "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "Location for all resources."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
     }
   },
@@ -92,6 +102,17 @@
     "quickstartTags": {
       "type": "object",
       "name": "barracuda-waf-iis"
+    },
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
     }
   },
   "resources": [
@@ -314,7 +335,7 @@
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('webAvailSetName')]",
-      "apiVersion": "2017-12-01", 
+      "apiVersion": "2017-12-01",
       "location": "[parameters('location')]",
       "comments": "This is the Availability Set for all Web VMs",
       "tags": {
@@ -324,7 +345,7 @@
       },
       "sku": {
         "name": "Aligned"
-        },
+      },
       "properties": {}
     },
     {
@@ -478,7 +499,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('webVmName'), copyindex(1))]",
-      "apiVersion": "2017-03-30", 
+      "apiVersion": "2017-03-30",
       "location": "[parameters('location')]",
       "comments": " Web Server VMs",
       "tags": {
@@ -515,7 +536,7 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[concat(variables('webVmName'), copyindex(1),'_OSDisk')]", 
+            "name": "[concat(variables('webVmName'), copyindex(1),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -568,7 +589,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('bwafVmName')]",
-      "apiVersion":  "2017-03-30", 
+      "apiVersion": "2017-03-30",
       "location": "[parameters('location')]",
       "comments": "This is the Barracuda WAF VM",
       "tags": {
@@ -590,7 +611,8 @@
         "osProfile": {
           "computerName": "bwafserver",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "hardwareProfile": {
           "vmSize": "[variables('bwafVmSize')]"
