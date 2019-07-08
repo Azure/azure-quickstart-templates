@@ -4,12 +4,13 @@
 # sh ./config-linux.sh -u <username> -p <password> -h admin -i admin -j 98107 -k usa -l seattle -m data -n tech -o yes -q pm -r 8888888 -s tableau -t wa -v dev -w jamie -x jdata@tableau.com [-y <license key>]
 # customized to reflect machine admin username and admin password
 
-while getopts u:p:h:i:j:k:l:m:n:o:q:r:s:t:v:w:x:y: option
+while getopts u:p:g:h:i:j:k:l:m:n:o:q:r:s:t:v:w:x:y: option
 do
  case "${option}"
  in
  u) USER=${OPTARG};;
  p) PASSWORD=${OPTARG};;
+ g) INSTALL_SCRIPT_URL=${OPTARG};;
  h) TS_USER=${OPTARG};;
  i) TS_PASS=${OPTARG};;
  j) ZIP=${OPTARG};;
@@ -64,7 +65,7 @@ wait
 
 # download tableau server .deb file
 # retry on fail
-wget --tries=3 --output-document=tableau-installer.deb https://downloads.tableau.com/esdalt/2019.1.2/tableau-server-2019-1-2_amd64.deb
+wget --tries=3 --output-document=tableau-installer.deb https://downloads.tableau.com/esdalt/2019.2.1/tableau-server-2019-2-1_amd64.deb
 
 if [ $? -ne 0 ]
 then
@@ -73,7 +74,7 @@ then
 fi
 
 # download automated-installer
-wget --remote-encoding=UTF-8 --output-document=automated-installer.sh https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/tableau-server-single-node/scripts/automated-installer
+wget --remote-encoding=UTF-8 --output-document=automated-installer.sh $INSTALL_SCRIPT_URL
                                                               
 wait
 chmod +x automated-installer.sh
