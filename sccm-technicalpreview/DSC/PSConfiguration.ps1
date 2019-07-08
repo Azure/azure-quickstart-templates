@@ -163,11 +163,19 @@
             DependsOn = "[WindowsFeature]Rdc"
         }
 
+        DownloadSCCM DownLoadSCCM
+        {
+            CM = $CM
+            ExtPath = $LogPath
+            Ensure = "Present"
+            DependsOn = "[InstallADK]ADKInstall"
+        }
+
         SetDNS DnsServerAddress
         {
             DNSIPAddress = $DNSIPAddress
             Ensure = "Present"
-            DependsOn = "[InstallADK]ADKInstall"
+            DependsOn = "[DownloadSCCM]DownLoadSCCM"
         }
 
         WaitForDomainReady WaitForDomain
@@ -281,14 +289,6 @@
             DependsOn = "[WaitForConfigurationFile]DelegateControl"
         }
 
-        DownloadSCCM DownLoadSCCM
-        {
-            CM = $CM
-            ExtPath = $LogPath
-            Ensure = "Present"
-            DependsOn = "[ChangeSQLServicesAccount]ChangeToLocalSystem"
-        }
-
         xSmbShare CMSourceSMBShare
         {
             Ensure = "Present"
@@ -296,7 +296,7 @@
             Path =  "c:\$CM"
             ReadAccess = @($DCComputerAccount)
             Description = "This is CM source Share"
-            DependsOn = "[DownloadSCCM]DownLoadSCCM"
+            DependsOn = "[ChangeSQLServicesAccount]ChangeToLocalSystem"
         }
 
         RegisterTaskScheduler InstallAndUpdateSCCM
