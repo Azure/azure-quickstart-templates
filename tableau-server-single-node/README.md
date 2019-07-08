@@ -76,7 +76,7 @@ When the resource template creates the Virtual Machine listed above it executes 
 
 The steps performed by the configuration script are as follows:
 + Create secrets, registration.json & config.json files to reflect the parametrized inputs from the template
-+ Download the Tableau Server <a href=https://www.tableau.com/support/releases/server>installer</a> - this tempalte is currently using Linux version 2019.1.2
++ Download the Tableau Server <a href=https://www.tableau.com/support/releases/server>installer</a> - this tempalte is currently using Linux version 2019.2.1
 + Download the automated installer script (maintained in a separate <a href=https://github.com/tableau/server-install-script-samples/tree/master/linux/automated-installer>github repo</a>) and modify permissions.
 + Execute command to perform a silent install (refer to previous bullet for additional documentation)
 + Clean up all installation & configuration files
