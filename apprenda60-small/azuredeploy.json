@@ -32,12 +32,6 @@
         "description": "This is the username of the administrative account."
       }
     },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "This is the password of the administrative account."
-      }
-    },
     "storageAccountType": {
       "type": "string",
       "defaultValue": "Standard_LRS",
@@ -60,6 +54,23 @@
       "type": "string",
       "metadata": {
         "description": "This is the name of the virtual machine."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
     }
   },
@@ -94,10 +105,21 @@
     "dcScriptName": "domainControllerSetup.ps1",
     "dcScriptArgs": "[concat('-dcpassword ', parameters('adminPassword'))]",
     "centosScriptURL": "http://apprendaconfigfiles.blob.core.windows.net/configurationfiles/linuxSetup.sh",
-    "centosScriptName": "linuxSetup.sh"
+    "centosScriptName": "linuxSetup.sh",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
-       {
+    {
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('platformPIPName')]",
@@ -227,7 +249,7 @@
       }
     },
     {
-      "apiVersion":  "2017-03-30", 
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('platformNode')]",
       "location": "[resourceGroup().location]",
@@ -250,8 +272,8 @@
             "sku": "2012-R2-Datacenter",
             "version": "latest"
           },
-          "osDisk": {            
-            "name": "[concat(variables('platformNode'),'_OSDisk')]", 
+          "osDisk": {
+            "name": "[concat(variables('platformNode'),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage",
             "managedDisk": {
@@ -269,7 +291,7 @@
       }
     },
     {
-      "apiVersion":  "2017-03-30", 
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('domainControllerNode')]",
       "location": "[resourceGroup().location]",
@@ -292,8 +314,8 @@
             "sku": "2012-R2-Datacenter",
             "version": "latest"
           },
-          "osDisk": {           
-           "name": "[concat(variables('domainControllerNode'),'_OSDisk')]", 
+          "osDisk": {
+            "name": "[concat(variables('domainControllerNode'),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage",
             "managedDisk": {
@@ -311,7 +333,7 @@
       }
     },
     {
-      "apiVersion": "2017-03-30", 
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('centOSNode')]",
       "location": "[resourceGroup().location]",
@@ -325,7 +347,8 @@
         "osProfile": {
           "computerName": "[variables('centOSNode')]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
@@ -334,8 +357,8 @@
             "sku": "7.0",
             "version": "latest"
           },
-          "osDisk": {           
-            "name": "[concat(variables('centOSNode'),'_OSDisk')]", 
+          "osDisk": {
+            "name": "[concat(variables('centOSNode'),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage",
             "managedDisk": {
