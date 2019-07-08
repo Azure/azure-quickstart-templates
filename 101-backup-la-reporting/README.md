@@ -12,7 +12,9 @@ This template deploys **OMS Monitoring and Reporting solution for Azure backup**
 `Tags: Azure Backup, OMS Log Analytics, Monitoring`
 
 > **Important** <br>
-> This is an updated, multi-view template for LA-based Monitoring and Reporting in Azure Backup. Users who were using our earlier solution are required to deploy the new template by clicking the 'Deploy to Azure' button above. Please note that users who were using the earlier solution (titled 'Azure Backup Monitoring Solution') will continue to see it in their workspaces even after deploying the new solution. However, the old solution may provide inaccurate results due to some minor schema changes in the backend. **Users are hence advised to deploy the new template and explicitly delete the 'Azure Backup Monitoring Solution' view from their workspaces**.
+> This is an updated, multi-view template for LA-based Monitoring and Reporting in Azure Backup. Users who were using our earlier solution are required to deploy the new template by clicking the 'Deploy to Azure' button above. Please note that users who were using the earlier solution (titled 'Azure Backup Monitoring Solution') will continue to see it in their workspaces even after deploying the new solution. However, the old solution may provide inaccurate results due to some minor schema changes in the backend. 
+
+Note- When deploying this template, users may leave the fields "_artifactsLocation" and "_artifactsLocationSasToken" untouched.
 
 ## Prerequisites
 
