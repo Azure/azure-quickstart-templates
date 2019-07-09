@@ -40,6 +40,8 @@ export ANSIBLE_CONFIG=/sas/install/common/ansible/playbooks/ansible.cfg
 
 pushd "${CODE_DIRECTORY}/ansible/playbooks"
 
+# we need to map the inventory file from common, so lets symlink it
+ln -s "$INVENTORY_FILE" "inventory.ini"
 
 echo "Create LB certificate files"
 time ansible-playbook -v create_load_balancer_cert.yml -i $INVENTORY_FILE -e "SSL_HOSTNAME=${PUBLIC_DNS_NAME}" -e "SSL_WORKING_FOLDER=${DIRECTORY_SSL_JSON_FILE}" -e "ARM_CERTIFICATE_FILE=${FILE_SSL_JSON_FILE}"
@@ -83,12 +85,12 @@ fi
 openldap_installed_time="$(date -u +%s)"
 
 
+
 ANSIBLE_LOG_PATH=/var/log/sas/install/prepare_deployment.log \
-    time ansible-playbook -v /sas/install/common/ansible/playbooks/prepare_deployment.yml \
+    time ansible-playbook -v /sas/install/ansible/playbooks/prepare_deployment.yml \
       -e "DEPLOYMENT_MIRROR=${DeploymentMirror}" \
       -e "DEPLOYMENT_DATA_LOCATION=${license_file_uri}" \
       -e "ADMINPASS=${ADMINPASS}" \
-      -e "VIYA_VERSION=$(cat /tmp/viya_version.txt)" \
       -e MIRROR_URL="file:///mnt/viyashare/mirror" \
       -e USE_MIRROR="True" \
       -e MIRROR_DIR="/mnt/viyashare/mirror" \
