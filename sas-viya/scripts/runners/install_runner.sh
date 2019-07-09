@@ -21,16 +21,16 @@ RETURN_FILE="$1"
 
 # sometimes there are ssh connection errors (53) during the install
 # this function allows to retry N times
-function try () {
-  # allow up to N attempts of a command
-  # syntax: try N [command]
-  RC=1; count=1; max_count=$1; shift
-  until  [ $count -gt "$max_count" ]
-  do
-    "$@" && RC=0 && break || let count=count+1
-  done
-  return $RC
-}
+#function try () {
+#  # allow up to N attempts of a command
+#  # syntax: try N [command]
+#  RC=1; count=1; max_count=$1; shift
+#  until  [ $count -gt "$max_count" ]
+#  do
+#    "$@" && RC=0 && break || let count=count+1
+#  done
+#  return $RC
+#}
 start_time="$(date -u +%s)"
 
 export ANSIBLE_STDOUT_CALLBACK=debug
@@ -46,33 +46,11 @@ echo "Create LB certificate files"
 time ansible-playbook -v create_load_balancer_cert.yml -e "SSL_HOSTNAME=${PUBLIC_DNS_NAME}" -e "SSL_WORKING_FOLDER=${DIRECTORY_SSL_JSON_FILE}" -e "ARM_CERTIFICATE_FILE=${FILE_SSL_JSON_FILE}"
 
 popd
-
+finished_server_prerequisites="$(date -u +%s)"
 touch "$TOUCHPOINT_PREREQUISITES"
 
 
-#echo "waiting for sync with client servers"
-#${ScriptDirectory}/ansiblecontroller_waitforsync.sh
-#ret="$?"
-#if [ "$ret" -ne "0" ]; then
-#    echo "Timed out after 30 min waiting for Services and Controller to mount shared folder and announce readyness."
-#    exit $ret
-#fi
-
-
-#time ansible-playbook -i $INVENTORY_FILE -v create_main_inventory.yml -e CODE_DIRECTORY="${CODE_DIRECTORY}" -e GROUPS_DIRECTORY="${DIRECTORY_ANSIBLE_GROUPS}" -e INVENTORIES_DIRECTORY="${DIRECTORY_ANSIBLE_INVENTORIES}"
-#ret="$?"
-#if [ "$ret" -ne "0" ]; then
-#    exit $ret
-#fi
-
-#time ansible-playbook -f $FORKS -i $INVENTORY_FILE -v pre.deployment.yml -e VIRK_CLONE_DIRECTORY="$VIRK_CLONE_DIRECTORY" -e ORCHESTRATION_DIRECTORY="$ORCHESTRATION_DIRECTORY" -e "sasboot_pw='$ADMINPASS'" -e "OLCROOTPW='$ADMINPASS' OLCUSERPW='$USERPASS'" -e LOCAL_DIRECTORY_MIRROR="${DIRECTORY_MIRROR}" -e REMOTE_DIRECTORY_MIRROR="${REMOTE_DIRECTORY_MIRROR}" -e MIRROR_HTTP="${MIRROR_HTTP}" -e LICENSE_FILE="${FILE_LICENSE_FILE}" -e SSL_WORKING_FOLDER="${DIRECTORY_SSL_JSON_FILE}" -e CODE_DIRECTORY="${CODE_DIRECTORY}"
-#ret="$?"
-#if [ "$ret" -ne "0" ]; then
-#    exit $ret
-#fi
-
 echo "Preparing nodes"
-
 ANSIBLE_LOG_PATH="${LOGS_DIR}/prepare_nodes.log" \
     time ansible-playbook -v "${CODE_DIRECTORY}/common/ansible/playbooks/prepare_nodes.yml" \
         -e SAS_INSTALL_DISK="256.00 GB" \
@@ -88,8 +66,9 @@ pushd "${CODE_DIRECTORY}/ansible/playbooks"
         exit $ret
     fi
 popd
-
+finished_preparing_nodes="$(date -u +%s)"
 touch "$TOUCHPOINT_PREORCHESTRATION"
+
 
 if [ -n "${ADMINPASS}" ] && [ -n "${USERPASS}" ]; then
 
@@ -99,53 +78,22 @@ if [ -n "${ADMINPASS}" ] && [ -n "${USERPASS}" ]; then
             -e "OLCUSERPW='${USERPASS}'"
 
 fi
-
-
-
-
-
-
-
-
-#if [ -n "$USERPASS" ]; then
-#	echo "$(date) Install and set up OpenLDAP (see deployment-openldap.log)"
-#
-#	time ansible-playbook -v -f $FORKS "${CODE_DIRECTORY}/openldap/openldapsetup.yml" -i $INVENTORY_FILE -e "OLCROOTPW='$ADMINPASS' OLCUSERPW='$USERPASS'"
-#	ret="$?"
-#	if [ "$ret" -ne "0" ]; then
-#		exit $ret
-#	fi
-##	rm -f "${ORCHESTRATION_DIRECTORY}/sas_viya_playbook/roles_old/consul/files/sitedefault.yml"
-##	cp "${CODE_DIRECTORY}/openldap/sitedefault.yml" "${ORCHESTRATION_DIRECTORY}/sas_viya_playbook/roles_old/consul/files/"
-#fi
-
 openldap_installed_time="$(date -u +%s)"
 
-#time ansible-playbook -f $FORKS -i $INVENTORY_FILE -v at.deployment.yml -e VIRK_CLONE_DIRECTORY="$VIRK_CLONE_DIRECTORY" -e ORCHESTRATION_DIRECTORY="$ORCHESTRATION_DIRECTORY" -e "sasboot_pw='$ADMINPASS'" -e "OLCROOTPW='$ADMINPASS' OLCUSERPW='$USERPASS'" -e LOCAL_DIRECTORY_MIRROR="${DIRECTORY_MIRROR}" -e REMOTE_DIRECTORY_MIRROR="${REMOTE_DIRECTORY_MIRROR}" -e MIRROR_HTTP="${MIRROR_HTTP}" -e LICENSE_FILE="${FILE_LICENSE_FILE}" -e SSL_WORKING_FOLDER="${DIRECTORY_SSL_JSON_FILE}" -e CODE_DIRECTORY="${CODE_DIRECTORY}"
-#ret="$?"
-#if [ "$ret" -ne "0" ]; then
-#    exit $ret
-#fi
+
 ANSIBLE_LOG_PATH=/var/log/sas/install/prepare_deployment.log \
     time ansible-playbook -v /sas/install/common/ansible/playbooks/prepare_deployment.yml \
       -e "DEPLOYMENT_MIRROR=${DeploymentMirror}" \
       -e "DEPLOYMENT_DATA_LOCATION=${license_file_uri}" \
       -e "ADMINPASS=${ADMINPASS}" \
-      -e "VIYA_VERSION=$(cat /tmp/viya_version.txt)"
+      -e "VIYA_VERSION=$(cat /tmp/viya_version.txt)" \
+      -e MIRROR_URL="file:///mnt/viyashare/mirror" \
+      -e USE_MIRROR="True" \
+      -e MIRROR_DIR="/mnt/viyashare/mirror"
 export ANSIBLE_INVENTORY=/sas/install/ansible/sas_viya_playbook/inventory.ini
 
 download_mirrors_and_orchestration_time="$(date -u +%s)"
 
-#if [ -n "$USERPASS" ]; then
-#    rm -f "${ORCHESTRATION_DIRECTORY}/sas_viya_playbook/roles_old/consul/files/sitedefault.yml"
-#	cp "${CODE_DIRECTORY}/openldap/sitedefault.yml" "${ORCHESTRATION_DIRECTORY}/sas_viya_playbook/roles_old/consul/files/"
-#fi
-
-#time ansible-playbook -v -f $FORKS "${VIRK_CLONE_DIRECTORY}/playbooks/pre-install-playbook/viya_pre_install_playbook.yml" -i "$ORCHESTRATION_DIRECTORY/sas_viya_playbook/inventory.ini" --skip-tags skipmemfail,skipcoresfail,skipstoragefail,skipnicssfail,bandwidth -e 'use_pause=false'
-#ret="$?"
-#if [ "$ret" -ne "0" ]; then
-#    exit $ret
-#fi
 pushd /sas/install/ansible/sas_viya_playbook
 export ANSIBLE_CONFIG=/sas/install/ansible/sas_viya_playbook/ansible.cfg
 ANSIBLE_LOG_PATH=/var/log/sas/install/virk.log \
@@ -153,30 +101,14 @@ ANSIBLE_LOG_PATH=/var/log/sas/install/virk.log \
         -e "use_pause=false" \
         --skip-tags skipmemfail,skipcoresfail,skipstoragefail,skipnicssfail,bandwidth
 ran_virk_time="$(date -u +%s)"
-#
-#
-#sudo chown -R $USER "${ORCHESTRATION_DIRECTORY}"
-#cd "${ORCHESTRATION_DIRECTORY}/sas_viya_playbook"
-#ansible-playbook site.yml
-#ret="$?"
-#if [ ! -z "$RETURN_FILE" ]; then
-#    echo "$ret" > "$RETURN_FILE"
-#fi
-#if [ "$ret" -ne "0" ]; then
-#    exit $ret
-#fi
+
 
 ANSIBLE_LOG_PATH=/var/log/sas/install/viya_deployment.log \
     time ansible-playbook site.yml
 popd
 finished_time="$(date -u +%s)"
-#
-#cd $ScriptDirectory/../playbooks
-#time ansible-playbook -f $FORKS -i $INVENTORY_FILE -v post.deployment.yml -e "cas_virtual_host=$PUBLIC_DNS_NAME"
-#ret="$?"
-#if [ "$ret" -ne "0" ]; then
-#    exit $ret
-#fi
+
+
 export ANSIBLE_CONFIG=/sas/install/common/ansible/playbooks/ansible.cfg
 ANSIBLE_LOG_PATH=/var/log/sas/install/post_deployment.log \
     time ansible-playbook -v /sas/install/common/ansible/playbooks/post_deployment.yml
@@ -184,7 +116,17 @@ ANSIBLE_LOG_PATH=/var/log/sas/install/post_deployment.log \
 
 finished_post_orchestration_time="$(date -u +%s)"
 
-elapsed="$(($openldap_installed_time-$start_time))"
+ANSIBLE_LOG_PATH=/var/log/sas/install/post_service_restart.log \
+    time ansible-playbook -v /sas/install/common/ansible/playbooks/restart_services.yml
+
+finished_checking_for_restart="$(date -u +%s)"
+
+
+elapsed="$(($finished_server_prerequisites-$start_time))"
+printf 'Time to create setup files: %02dh:%02dm:%02ds\n' $(($elapsed/3600)) $(($elapsed%3600/60)) $(($elapsed%60))
+elapsed="$(($finished_preparing_nodes-$finished_server_prerequisites))"
+printf 'Time to prepare nodes: %02dh:%02dm:%02ds\n' $(($elapsed/3600)) $(($elapsed%3600/60)) $(($elapsed%60))
+elapsed="$(($openldap_installed_time-$finished_preparing_nodes))"
 printf 'Time to install openldap: %02dh:%02dm:%02ds\n' $(($elapsed/3600)) $(($elapsed%3600/60)) $(($elapsed%60))
 elapsed="$(($download_mirrors_and_orchestration_time-$openldap_installed_time))"
 printf 'Time to setup mirror and orchestration: %02dh:%02dm:%02ds\n' $(($elapsed/3600)) $(($elapsed%3600/60)) $(($elapsed%60))
@@ -194,5 +136,7 @@ elapsed="$(($finished_time-$ran_virk_time))"
 printf 'Time to run sas installer: %02dh:%02dm:%02ds\n' $(($elapsed/3600)) $(($elapsed%3600/60)) $(($elapsed%60))
 elapsed="$(($finished_post_orchestration_time-$finished_time))"
 printf 'Time to run post configuration: %02dh:%02dm:%02ds\n' $(($elapsed/3600)) $(($elapsed%3600/60)) $(($elapsed%60))
-elapsed="$(($finished_post_orchestration_time-$start_time))"
+elapsed="$(($finished_checking_for_restart-$finished_post_orchestration_time))"
+printf 'Time to check for services start and restart if necessary: %02dh:%02dm:%02ds\n' $(($elapsed/3600)) $(($elapsed%3600/60)) $(($elapsed%60))
+elapsed="$(($finished_checking_for_restart-$start_time))"
 printf 'Total time: %02dh:%02dm:%02ds\n' $(($elapsed/3600)) $(($elapsed%3600/60)) $(($elapsed%60))
