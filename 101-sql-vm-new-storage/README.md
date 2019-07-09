@@ -1,9 +1,5 @@
-# Create WS Failover Cluster and join existing SQL Server Virtual Machines for setting up an Always On availability group
+# Create a SQL Server Virtual Machines with peformance optimized storage settings
 
-Before deploying the template you must have the following
-
-1. **Domain** Domain must exist in which the underlying Windows Server Failover Cluster will be created
-2. **VM** Virtual Machines in same location, joined to the existing domain
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-sql-vm-ag-setup%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
@@ -12,14 +8,15 @@ Before deploying the template you must have the following
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-`Tags: Azure, SQL, VirtualMachine, AlwaysON, Cluster`
+`Tags: Azure, SQL, VirtualMachine, Performance, StorageConfiguration`
 
 ## Solution overview and deployed resources
 
-This deployment will create a WS failover cluster with cloud witness on the provided VMs (in same region) and enable SQL Always ON them. This will enable creating SQL Availability Groups over the created Always ON setup.
+Waiting for text from MIne
+
+
 Following resources will be created
- - Storage Account to be used as Cloud Witness for failover cluster
- - Resource of type "SqlVirtualMachine" in Microsoft.SqlVirtualMachine resource provider. This corresponds to the existing VirtualMachine
- - Resource of type "SqlVirtualMachineGroup" in Microsoft.SqlVirtualMachine resource provider. This captures details of WS failover cluster setup
+ - A VirtualMachine with ........
+ - Resource of type "SqlVirtualMachine" in Microsoft.SqlVirtualMachine resource provider. This corresponds to the new 
  
 
