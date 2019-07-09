@@ -103,11 +103,14 @@ fi
 ##
 ## get Common Code
 ##
-#COMMON_CODE_TAG="master"
-#git clone https://github.com/sassoftware/quickstart-sas-viya-common.git "${CODE_DIRECTORY}/common"
-#pushd "${CODE_DIRECTORY}/common"
-#git checkout $COMMON_CODE_TAG -b $COMMON_CODE_TAG
-#rm -rf .git* && popd
+COMMON_CODE_TAG="AZUREVIYA-113"
+git clone https://github.com/sassoftware/quickstart-sas-viya-common.git "${CODE_DIRECTORY}/common"
+pushd "${CODE_DIRECTORY}/common"
+git checkout $COMMON_CODE_TAG
+set +e
+git checkout -b $COMMON_CODE_TAG
+set -e
+rm -rf .git* && popd
 
 #Now make the sharing structure
 mkdir -p "${ANSIBLE_KEY_DIR}"
