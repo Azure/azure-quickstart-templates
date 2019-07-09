@@ -126,7 +126,7 @@ ANSIBLE_LOG_PATH=/var/log/sas/install/post_service_restart.log \
 
 pushd "${CODE_DIRECTORY}/ansible/playbooks"
 echo "create cas sizing file"
-time ansible-playbook -v create_cas_uri_file.yml -i $INVENTORY_FILE -e LICENSE_FILE="${FILE_LICENSE_FILE}" -e CAS_URI_FILE="${CAS_URI_FILE}"
+time ansible-playbook -v create_cas_uri_file.yml -i $INVENTORY_FILE -e CAS_URI_FILE="${CAS_URI_FILE}"
 popd
 finished_checking_for_restart="$(date -u +%s)"
 
