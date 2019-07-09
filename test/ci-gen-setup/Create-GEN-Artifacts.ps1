@@ -45,7 +45,7 @@ Creat a KeyVault and add:
 # Create the Vault
 $vault = Get-AzureRMKeyVault -VaultName $KeyVaultName -verbose -ErrorAction SilentlyContinue
 if($vault -eq $null) {
-    $vault = New-AzureRMKeyVault -VaultName $KeyVaultName -ResourceGroupName $ResourceGroupName -Location $Location -EnabledForTemplateDeployment -EnabledForDiskEncryption
+    $vault = New-AzureRMKeyVault -VaultName $KeyVaultName -ResourceGroupName $ResourceGroupName -Location $Location -EnabledForTemplateDeployment -EnabledForDiskEncryption -Verbose
 }
 
 # 1) Create a sample password
