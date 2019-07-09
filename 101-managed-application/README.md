@@ -7,7 +7,8 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This sample template deploys a managed application along with a managed application definition that contains a single storage account as a resource. This application demonstrates an ability to create customized default view for the application: customizing application overview header and description.
+This sample template deploys a Service catalog managed application definition that creates a single storage account as an application resource.  The application definition demostrates how you can customize default application overview: header and description.
+
 [To learn more about managed applications click here](https://docs.microsoft.com/en-us/azure/managed-applications/overview)
 
 This template deploys a Service catalog managed application definition first, after that uses this application definition to  deploy a managed application.
@@ -22,10 +23,10 @@ To learn more about Managed Application definitions and Marketplace please visit
 
 This sample deployment creates the following two resources:
 
-1) A managed application definition.
+1) A Service catalog managed application definition.
 2) A managed application that contains a storage account.
 
-Once you click on the managed application you will notice that Overview contains header and description of the application.
+Once you click on the deployed managed application you will notice that Overview contains header and description of the application.
 
 ![](images/defaultview.png)
 
