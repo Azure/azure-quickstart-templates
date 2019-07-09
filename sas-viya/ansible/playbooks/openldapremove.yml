@@ -1,0 +1,108 @@
+---
+# uninstall playbook
+
+- name: "remove everything on openldapclients"
+  hosts: OpenLdapClients
+
+  become: yes
+  become_user: root
+
+  tasks: 
+
+    - name: do we have a config to restore?
+      stat: 
+        path: "{{SSSD_BACKUP_FILE}}"
+      register: backup
+    - debug: var=backup.stat.exists
+
+    - name: Restore the authconfig
+      shell: "authconfig --restorebackup={{SSSD_BACKUP_FILE}}"
+      register: authconfig
+      ignore_errors: yes
+      when: backup.stat.exists
+    - debug: var=authconfig
+
+    - name: Stop SSSD service
+      service: 
+        name: sssd
+        state: stopped
+        enabled: no
+      ignore_errors: yes
+
+    - name: does the sssd service exist?
+      stat:
+        path: "/usr/lib/systemd/system/sssd.service"
+      register: sssdservicefile
+
+
+    - name: Stop and disable SSSD
+      yum: 
+        pkg: "{{ item }}"
+        state: latest
+      with_items:
+         - sssd
+      when: sssdservicefile.stat.exists
+
+    - name: Remove files and folders
+      shell: "rm -rf {{item}}"
+      with_items:
+        - "/var/log/sssd/*"
+        - "/var/lib/sss/db/*"
+        - "{{CERTLOC}}/{{CERTNAME}}.pem"
+
+    - name: Replace SSSD configuration
+      shell: "echo \"# Place SSSD configuration here\" > /etc/sssd/sssd.conf"
+
+
+- name: "remove everything on openldapserver"
+  hosts: OpenLdapServer
+
+  become: yes
+  become_user: root
+
+  tasks: 
+    - name: Ensure we still have our playbook tmp folders
+      file:
+        path: "{{ tmp_folder_targets }}"
+        state: directory
+        mode: 0777
+        force: yes
+
+    - name: does the slpad service exist?
+      stat:
+        path: "/usr/lib/systemd/system/slapd.service"
+      register: slapdservicefile
+
+    - name: stop and disable slapd
+      service: 
+        name: slapd
+        state: stopped
+        enabled: no
+      ignore_errors: yes
+      when: slapdservicefile.stat.exists
+
+    - name: remove packages
+      yum: 
+        name: "{{ item }}"
+        state: absent
+      with_items:
+        - openldap-servers
+
+    - name: Remove Database directory and contents
+      shell: rm -rf /var/lib/ldap
+
+    - name: Remove configuration directory
+      shell: rm -rf /etc/openldap
+
+    - name: Remove TLS certificates
+      shell: "rm -f {{item}}"
+      with_items:
+        - "{{ tmp_folder_controller}}/{{CERTNAME}}.pem"
+        - "{{PRIVATELOC}}/{{CERTNAME}}_key.pem"
+        - "{{CERTLOC}}/{{CERTNAME}}.pem"
+
+
+    - name: Remove temp folder on targets
+      shell: rm -rf {{tmp_folder_targets}}
+
+
