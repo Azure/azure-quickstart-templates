@@ -32,18 +32,17 @@ RETURN_FILE="$1"
 #  return $RC
 #}
 start_time="$(date -u +%s)"
-
+INVENTORY_FILE="/sas/install/common/ansible/playbooks/inventory.ini"
 export ANSIBLE_STDOUT_CALLBACK=debug
 export ANSIBLE_ANY_ERRORS_FATAL=True
 export ANSIBLE_CONFIG=/sas/install/common/ansible/playbooks/ansible.cfg
 
 
 pushd "${CODE_DIRECTORY}/ansible/playbooks"
-echo "create cas sizing file"
-time ansible-playbook -v create_cas_sizing_file.yml -e LICENSE_FILE="${FILE_LICENSE_FILE}" -e CAS_SIZING_FILE="${CAS_SIZING_FILE}"
+
 
 echo "Create LB certificate files"
-time ansible-playbook -v create_load_balancer_cert.yml -e "SSL_HOSTNAME=${PUBLIC_DNS_NAME}" -e "SSL_WORKING_FOLDER=${DIRECTORY_SSL_JSON_FILE}" -e "ARM_CERTIFICATE_FILE=${FILE_SSL_JSON_FILE}"
+time ansible-playbook -v create_load_balancer_cert.yml -i $INVENTORY_FILE -e "SSL_HOSTNAME=${PUBLIC_DNS_NAME}" -e "SSL_WORKING_FOLDER=${DIRECTORY_SSL_JSON_FILE}" -e "ARM_CERTIFICATE_FILE=${FILE_SSL_JSON_FILE}"
 
 popd
 finished_server_prerequisites="$(date -u +%s)"
@@ -56,11 +55,12 @@ ANSIBLE_LOG_PATH="${LOGS_DIR}/prepare_nodes.log" \
         -e SAS_INSTALL_DISK="256.00 GB" \
         --skip-tags mount_cascache \
         --skip-tags mount_userlib_dir \
-        -e READINESS_FLAGS_DIR="${READINESS_FLAGS_DIR}"
+        -e READINESS_FLAGS_DIR="${READINESS_FLAGS_DIR}" \
+        -i $INVENTORY_FILE
 
 echo "Building Controller and Services Cert"
 pushd "${CODE_DIRECTORY}/ansible/playbooks"
-    time ansible-playbook -v create_sas_cert.yml -e SSL_WORKING_FOLDER="${DIRECTORY_SSL_JSON_FILE}" -e CODE_DIRECTORY="${CODE_DIRECTORY}"
+    time ansible-playbook -v create_sas_cert.yml -i $INVENTORY_FILE -e SSL_WORKING_FOLDER="${DIRECTORY_SSL_JSON_FILE}" -e CODE_DIRECTORY="${CODE_DIRECTORY}"
     ret="$?"
     if [ "$ret" -ne "0" ]; then
         exit $ret
@@ -75,7 +75,9 @@ if [ -n "${ADMINPASS}" ] && [ -n "${USERPASS}" ]; then
     ANSIBLE_LOG_PATH="${LOGS_DIR}/openldap.log" \
         time ansible-playbook -v /sas/install/ansible/playbooks/openldapsetup.yml \
             -e "OLCROOTPW='${ADMINPASS}'" \
-            -e "OLCUSERPW='${USERPASS}'"
+            -e "OLCUSERPW='${USERPASS}'" \
+            -i $INVENTORY_FILE \
+            -i $INVENTORY_FILE
 
 fi
 openldap_installed_time="$(date -u +%s)"
@@ -89,7 +91,8 @@ ANSIBLE_LOG_PATH=/var/log/sas/install/prepare_deployment.log \
       -e "VIYA_VERSION=$(cat /tmp/viya_version.txt)" \
       -e MIRROR_URL="file:///mnt/viyashare/mirror" \
       -e USE_MIRROR="True" \
-      -e MIRROR_DIR="/mnt/viyashare/mirror"
+      -e MIRROR_DIR="/mnt/viyashare/mirror" \
+      -i $INVENTORY_FILE
 export ANSIBLE_INVENTORY=/sas/install/ansible/sas_viya_playbook/inventory.ini
 
 download_mirrors_and_orchestration_time="$(date -u +%s)"
@@ -111,13 +114,16 @@ finished_time="$(date -u +%s)"
 
 export ANSIBLE_CONFIG=/sas/install/common/ansible/playbooks/ansible.cfg
 ANSIBLE_LOG_PATH=/var/log/sas/install/post_deployment.log \
-    time ansible-playbook -v /sas/install/common/ansible/playbooks/post_deployment.yml
+    time ansible-playbook -v /sas/install/common/ansible/playbooks/post_deployment.yml -i $INVENTORY_FILE
 
 
 finished_post_orchestration_time="$(date -u +%s)"
 
 ANSIBLE_LOG_PATH=/var/log/sas/install/post_service_restart.log \
-    time ansible-playbook -v /sas/install/common/ansible/playbooks/restart_services.yml
+    time ansible-playbook -v /sas/install/common/ansible/playbooks/restart_services.yml -i $INVENTORY_FILE
+
+echo "create cas sizing file"
+time ansible-playbook -v create_cas_uri_file.yml -i $INVENTORY_FILE -e LICENSE_FILE="${FILE_LICENSE_FILE}" -e CAS_URI_FILE="${CAS_URI_FILE}"
 
 finished_checking_for_restart="$(date -u +%s)"
 

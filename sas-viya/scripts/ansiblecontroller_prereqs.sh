@@ -21,7 +21,7 @@ fi
 
 if ! type -p ansible;  then
    # install Ansible
-    curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
+    curl --retry 10 --max-time 60 --fail --silent --show-error "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
     sudo python get-pip.py
     pip install 'ansible==2.7.10'
 fi
@@ -75,7 +75,7 @@ if [ ! -z "$https_sas_key" ]; then
 	file_list_url="${file_list_url}${https_sas_key}"
 fi
 echo "pullin from url: $file_list_url"
-curl --retry 10 --max-time 60 "$file_list_url" > file_list.txt
+curl --retry 10 --max-time 60 --fail --silent --show-error "$file_list_url" > file_list.txt
 while read line; do
   file_name="$(echo "$line" | cut -f1 -d'|')"
   chmod_attr="$(echo "$line" | cut -f2 -d'|')"
@@ -88,7 +88,7 @@ while read line; do
   fi
   mkdir -p "$target_directory"
   echo "Downloading '$target_file_name' from '$target_url'"
-  curl --retry 10 --max-time 60 "$target_url" > "$target_file_name"
+  curl --retry 10 --max-time 60 --fail --silent --show-error "$target_url" > "$target_file_name"
   chmod $chmod_attr "$target_file_name"
 done <file_list.txt
 
@@ -103,7 +103,7 @@ fi
 ##
 ## get Common Code
 ##
-COMMON_CODE_TAG="f23e258fdc405a750c9bc51036208f4415c201af"
+COMMON_CODE_TAG="aa3ec7554a52abe347a170d75b55eb44e8598e91"
 git clone https://github.com/sassoftware/quickstart-sas-viya-common.git "${CODE_DIRECTORY}/common"
 pushd "${CODE_DIRECTORY}/common"
 git checkout $COMMON_CODE_TAG
@@ -187,9 +187,9 @@ END
 
 
 # get the license file and put it in the nfs
-mkdir -p "$DIRECTORY_LICENSE_FILE"
-curl --retry 10 --max-time 60 "$license_file_uri" > "$FILE_LICENSE_FILE"
-chown -R ${INSTALL_USER}:${INSTALL_USER} "$DIRECTORY_NFS_SHARE"
+#mkdir -p "$DIRECTORY_LICENSE_FILE"
+#curl --retry 10 --max-time 60 "$license_file_uri" > "$FILE_LICENSE_FILE"
+#chown -R ${INSTALL_USER}:${INSTALL_USER} "$DIRECTORY_NFS_SHARE"
 
 echo "$(date)"
 #echo "create cas sizing file"

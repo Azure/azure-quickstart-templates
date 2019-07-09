@@ -41,7 +41,7 @@ export DIRECTORY_SSL_JSON_FILE="\${INSTALL_DIR}/setup/ssl"
 export DIRECTORY_ANSIBLE_INVENTORIES="\${DIRECTORY_NFS_SHARE}/setup/ansible/inventory"
 export DIRECTORY_ANSIBLE_GROUPS="\${DIRECTORY_NFS_SHARE}/setup/ansible/groups"
 export FILE_LICENSE_FILE="\${DIRECTORY_LICENSE_FILE}/license_file.zip"
-export CAS_SIZING_FILE="\${DIRECTORY_LICENSE_FILE}/cas_size.txt"
+export CAS_URI_FILE="\${DIRECTORY_LICENSE_FILE}/cas_size.txt"
 export FILE_SSL_JSON_FILE="\${DIRECTORY_SSL_JSON_FILE}/loadbalancer.pfx.json"
 export FILE_CA_B64_FILE="\${DIRECTORY_SSL_JSON_FILE}/sas_certificate_all.crt.b64.txt"
 export ORCHESTRATION_DIRECTORY="\${INSTALL_DIR}/setup/orchestration"
@@ -63,8 +63,7 @@ if [ "$SCRIPT_PHASE" -eq "1" ]; then
 	${ScriptDirectory}/ansiblecontroller_prereqs.sh
 	su $INSTALL_USER -c	"${CODE_DIRECTORY}/scripts/wrapper_01_prereq.sh"
 # here we return the sizing for the cas controller
-elif [ "$SCRIPT_PHASE" -eq "2" ]; then
-	cat "${CAS_SIZING_FILE}" |tr -d '\n'
+
 # here we return the ssl certificate for the system (has to be done in 2 pieces because we only get to return 4096 charectors)
 elif [ "$SCRIPT_PHASE" -eq "3" ]; then
 	cat "${FILE_SSL_JSON_FILE}.1" |tr -d '\n'
@@ -80,4 +79,6 @@ elif [ "$SCRIPT_PHASE" -eq "7" ]; then
 elif [ "$SCRIPT_PHASE" -eq "8" ]; then
 	echo "Finishing Actual Install"
 	su $INSTALL_USER -c	"${CODE_DIRECTORY}/scripts/wrapper_04_final.sh"
+elif [ "$SCRIPT_PHASE" -eq "9" ]; then
+	cat "${CAS_URI_FILE}" |tr -d '\n'
 fi
