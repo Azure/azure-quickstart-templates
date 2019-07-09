@@ -1,0 +1,81 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "applicationName": {
+            "type": "string",
+            "metadata": {
+                "description": "Managed application name"
+            }
+        },
+        "storageAccountNamePrefix": {
+            "type": "string",
+            "metadata": {
+                "description": "Storage account name prefix, up to 8 symbols."
+            }
+        },
+        "_artifactsLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+            },
+            "defaultValue": "https://raw.githubusercontent.com/olgaian/azure-quickstart-templates/101amawithmetrics/101-managed-application-with-metrics/"
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+            },
+            "defaultValue": ""
+        }
+    },
+    "variables": {
+        "locklevel" : "None",
+        "location":  "[resourceGroup().location]",
+        "description" : "Sample Managed application definition",
+        "displayName" : "Sample Managed application definition",
+        "applicationDefinitionName": "[concat(parameters('applicationName'), '_ApplicationDefinition')]",
+        "packageFileUri":"[uri(parameters('_artifactsLocation'), concat('artifacts/ManagedAppZip/pkg.zip', parameters('_artifactsLocationSasToken')))]",
+        "managedResourceGroupId" : "[concat(subscription().id,'/resourceGroups/', concat(parameters('applicationName'),'_managed'))]",
+        "applicationDefinitionResourceId" : "[resourceId('Microsoft.Solutions/applicationDefinitions',variables('applicationDefinitionName'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Solutions/applicationDefinitions",
+            "apiVersion": "2017-09-01",
+            "name": "[variables('applicationDefinitionName')]",
+            "location": "[variables('location')]",
+            "properties": {
+                "lockLevel": "[variables('lockLevel')]",
+                "authorizations": [],
+                "description": "[variables('description')]",
+                "displayName": "[variables('displayName')]",
+                "packageFileUri": "[variables('packageFileUri')]"
+            }
+        },
+        {
+            "type": "Microsoft.Solutions/applications",
+            "apiVersion": "2017-09-01",
+            "name": "[parameters('applicationName')]",
+            "location": "[resourceGroup().Location]",
+            "kind": "ServiceCatalog",
+            "dependsOn": [
+                "[resourceId('Microsoft.Solutions/applicationDefinitions', variables('applicationDefinitionName'))]"
+            ],
+            "properties": {
+                "managedResourceGroupId": "[variables('managedResourceGroupId')]",
+                "applicationDefinitionId": "[variables('applicationDefinitionResourceId')]",
+                "parameters": {
+                    "location":{
+                        "value": "[variables('location')]"
+                    },                    
+                    "storageAccountNamePrefix": {
+                        "value": "[parameters('storageAccountNamePrefix')]"
+                    }
+                }
+            }
+        }
+    ],
+    "outputs": {
+    }
+}
