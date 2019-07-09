@@ -103,7 +103,7 @@ fi
 ##
 ## get Common Code
 ##
-COMMON_CODE_TAG="AZUREVIYA-113"
+COMMON_CODE_TAG="f23e258fdc405a750c9bc51036208f4415c201af"
 git clone https://github.com/sassoftware/quickstart-sas-viya-common.git "${CODE_DIRECTORY}/common"
 pushd "${CODE_DIRECTORY}/common"
 git checkout $COMMON_CODE_TAG

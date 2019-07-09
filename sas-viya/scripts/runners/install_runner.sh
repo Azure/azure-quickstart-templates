@@ -52,7 +52,7 @@ touch "$TOUCHPOINT_PREREQUISITES"
 
 echo "Preparing nodes"
 ANSIBLE_LOG_PATH="${LOGS_DIR}/prepare_nodes.log" \
-    time ansible-playbook -v "${CODE_DIRECTORY}/common/ansible/playbooks/prepare_nodes.yml" \
+    time ansible-playbook -v "${CODE_DIRECTORY}/ansible/playbooks/prepare_nodes.yml" \
         -e SAS_INSTALL_DISK="256.00 GB" \
         --skip-tags mount_cascache \
         --skip-tags mount_userlib_dir \
