@@ -42,8 +42,17 @@ All native connectors will be available by default in ISE. Refer to [documentati
 | smtp | [SMTP](https://docs.microsoft.com/en-us/connectors/smtp/) |
 | si3270 | [IBM 3270](https://docs.microsoft.com/en-us/connectors/si3270/) |
 
+## Deleting the Resource Group
+
+As the Integration Service Environment puts a subnet service delegation on the first subnet of the VNET, the resource group will fail to be deleted if you try to delete the entire resource group in one go. To delete the resource group:
+  * Delete the Integration Service Environment first
+  * Update the first subnet that has a service delegation to the Integration Service Environment and change the delegation to None
+  * Delete the VNET and the Resource Group
+
 ## Miscellaneous
 
 * This template does not deploy a Network Security Group and NSG rules. Review [the documentation](https://docs.microsoft.com/en-us/azure/logic-apps/connect-virtual-network-vnet-isolated-environment#check-network-ports) on recommendations for filtering traffic in your virtual network.
+
+* There is a `rebuildVNET` parameter in the template. If the VNET has already been deployed, this should be changed to false so it doesn't try deleting and recreating the VNET (it will attempt it even if the deployment mode is set to Incremental).
 
 ``Tags: logic-apps, ise, vnet``
