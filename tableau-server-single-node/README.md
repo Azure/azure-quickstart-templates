@@ -6,7 +6,7 @@
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
-This template deploys a **Standalone Tableau Server instance on a Standard_D16_v3 Virtual Machine running Ubuntu 16.04.0-LTS** in its own Virtual Network.
+This template deploys a **Standalone Tableau Server instance on a Virtual Machine running Ubuntu 16.04.0-LTS** in its own Virtual Network.
 
 `Tags: Tableau, Tableau Server, Business Intelligence, Analytics, Self-Service, Data Visualization`
 
@@ -66,7 +66,7 @@ This template deploys the following Azure resources.  For information on the cos
     + Port 80 - public TCP access to your Tableau Server.  By default this is set as open to the world, meaning anyone with the IP or DNS of the machine and Tableau Server credentials can access the deployed Tableau Server as a user.  You can limit this access to a given IP range after deployment via the Azure portal.
     + Port 223 - SSH traffic is limited to the source CIDR determined during deployment.   Best practice is to limit SSH access to the Tableau Server or machine administrator.  
     + Port 8850 - HTTPS access to Tableau Services Manager UI which allows you to perform Tableau Server administration tasks (stopping & restarting Tableau Server, adding nodes, etc.)
-+ <a href=https://docs.microsoft.com/en-us/azure/virtual-machines/linux/overview>**Virtual Machine**</a>: Standard D16 v3 (16 vCPUs, 64 GB mem) running Ubuntu 16.04.0-LTS with 2 attached disks (30, 64 GiB SSD) with Tableau Server installed
++ <a href=https://docs.microsoft.com/en-us/azure/virtual-machines/linux/overview>**Virtual Machine**</a>: Standard D16 v3 (16 vCPUs, 64 GB mem) or a memory or compute optimized 16 vCPU instance running Ubuntu 16.04.0-LTS with 2 attached disks (30, 64 GiB SSD) with Tableau Server installed
     + Access to the VM is controlled by username/password authentication which you specify in the template parameters.  Please ensure you follow Azure's username and password <a href=https://docs.microsoft.com/en-us/azure/virtual-machines/windows/faq>requirements</a>
 + This template has a static GUID associated with it - allowing Azure & the template's creator to track usage and deployment statistics
 
