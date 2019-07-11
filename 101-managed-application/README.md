@@ -7,7 +7,7 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This sample template deploys a Service catalog managed application definition that creates a single storage account as an application resource.  The application definition demostrates how you can customize default application overview: header and description.
+This sample template deploys a Service catalog managed application definition that creates a single storage account as an application resource.  The application definition demonstrates how you can customize default application overview: header and description.
 
 [To learn more about managed applications click here](https://docs.microsoft.com/en-us/azure/managed-applications/overview)
 
