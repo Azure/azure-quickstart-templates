@@ -19,16 +19,16 @@
         "description": "The virtual machine size."
       }
     },
-    "exisitingVirtualNetworkId": {
+    "exisitingVirtualNetworkName": {
       "type": "String",
       "metadata": {
-        "description": "Specify the id of an exisiting VNet, e.g /subscriptions/{subscription}/resourceGroups/{resourceGroup}/providers/Microsoft.Network/virtualNetworks/{vnetName}"
+        "description": "Specify the name of an exisiting VNet in the same resource group"
       }
     },
-    "exisitingSubNetName": {
+    "exisitingSubnetName": {
       "type": "String",
       "metadata": {
-        "description": "Specify the name of the SubNet Name"
+        "description": "Specify the name of the Subnet Name"
       }
     },
     "imageOffer": {
@@ -83,12 +83,11 @@
         "description": "SQL Server Workload Type"
       }
     },
-    "dataDisksLuns": {
-      "type": "Array",
-      "defaultValue": "[array(parameters('dataDisks')[0].lun)]",
-
+    "sqlDataDisksCount": {
+      "type": "int",
+      "defaultValue": 1,
       "metadata": {
-        "description": "The LUNs for the disks used for SQL data files"
+        "description": "Amount of data disks (1TB each) for SQL Data files"
       }
     },
     "dataPath": {
@@ -98,11 +97,11 @@
         "description": "Path for SQL Data files"
       }
     },
-    "logDisksLuns": {
-      "type": "Array",
-      "defaultValue": "[array(parameters('dataDisks')[1].lun)]",
+    "sqlLogDisksCount": {
+      "type": "int",
+      "defaultValue": 1,
       "metadata": {
-        "description": "The LUNs for the disks used for SQL Log files"
+        "description": "Amount of data disks (1TB each) for SQL Log files"
       }
     },
     "logPath": {
@@ -117,34 +116,6 @@
       "defaultValue": "D:\\SQLTemp",
       "metadata": {
         "description": "Path for SQL Temp DB files"
-      }
-    },
-    "dataDisks": {
-      "type": "Array",
-      "defaultValue": [
-        {
-          "lun": 0,
-          "createOption": "empty",
-          "caching": "ReadOnly",
-          "writeAcceleratorEnabled": false,
-          "id": null,
-          "name": null,
-          "storageAccountType": "Premium_LRS",
-          "diskSizeGB": 1023
-        },
-        {
-          "lun": 1,
-          "createOption": "empty",
-          "caching": "None",
-          "writeAcceleratorEnabled": false,
-          "id": null,
-          "name": null,
-          "storageAccountType": "Premium_LRS",
-          "diskSizeGB": 1023
-        }
-      ],
-      "metadata": {
-        "description": "Data disks used for SQL Data and Log files"
       }
     },
     "location": {
@@ -178,7 +149,19 @@
     "publicIpAddressSku": "Basic",
     "diskConfigurationType": "NEW",
     "nsgId": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]",
-    "subnetRef": "[concat(parameters('exisitingVirtualNetworkId'), '/subnets/', parameters('exisitingSubNetName'))]"
+    "vnetId": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',resourceGroup().name, '/providers/','Microsoft.Network/virtualNetWorks/', parameters('exisitingVirtualNetworkName'))]",
+    "subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('exisitingSubNetName'))]",
+    "dataDisksLuns": "[array(range(0 ,parameters('sqlDataDisksCount')))]",
+    "logDisksLuns": "[array(range(parameters('sqlDataDisksCount'), parameters('sqlLogDisksCount')))]",
+    "dataDisks": {
+      "createOption": "empty",
+      "caching": "ReadOnly",
+      "writeAcceleratorEnabled": false,
+      "id": null,
+      "name": null,
+      "storageAccountType": "Premium_LRS",
+      "diskSizeGB": 1023
+    }
   },
   "resources": [
     {
@@ -260,16 +243,16 @@
           "copy": [
             {
               "name": "dataDisks",
-              "count": "[length(parameters('dataDisks'))]",
+              "count": "[add(parameters('sqlDataDisksCount'), parameters('sqlDataDisksCount'))]",
               "input": {
-                "lun": "[parameters('dataDisks')[copyIndex('dataDisks')].lun]",
-                "createOption": "[parameters('dataDisks')[copyIndex('dataDisks')].createOption]",
-                "caching": "[parameters('dataDisks')[copyIndex('dataDisks')].caching]",
-                "writeAcceleratorEnabled": "[parameters('dataDisks')[copyIndex('dataDisks')].writeAcceleratorEnabled]",
-                "diskSizeGB": "[parameters('dataDisks')[copyIndex('dataDisks')].diskSizeGB]",
+                "lun": "[copyIndex('dataDisks')]",
+                "createOption": "[variables('dataDisks').createOption]",
+                "caching": "[if(greaterOrEquals(copyIndex('dataDisks'), parameters('sqlDataDisksCount')) ,'None', variables('dataDisks').caching )]",
+                "writeAcceleratorEnabled": "[variables('dataDisks').writeAcceleratorEnabled]",
+                "diskSizeGB": "[variables('dataDisks').diskSizeGB]",
                 "managedDisk": {
-                  "id": "[coalesce(parameters('dataDisks')[copyIndex('dataDisks')].id, if(equals(parameters('dataDisks')[copyIndex('dataDisks')].name, json('null')), json('null'), resourceId('Microsoft.Compute/disks', parameters('dataDisks')[copyIndex('dataDisks')].name)))]",
-                  "storageAccountType": "[parameters('dataDisks')[copyIndex('dataDisks')].storageAccountType]"
+                  "id": "[coalesce(variables('dataDisks').id, if(equals(variables('dataDisks').name, json('null')), json('null'), resourceId('Microsoft.Compute/disks', variables('dataDisks').name)))]",
+                  "storageAccountType": "[variables('dataDisks').storageAccountType]"
                 }
               }
             }
@@ -309,11 +292,11 @@
           "DiskConfigurationType": "[variables('diskConfigurationType')]",
           "StorageWorkloadType": "[parameters('storageWorkloadType')]",
           "SQLDataSettings": {
-            "LUNs": "[parameters('dataDisksLUNs')]",
+            "LUNs": "[variables('dataDisksLUNs')]",
             "DefaultFilePath": "[parameters('dataPath')]"
           },
           "SQLLogSettings": {
-            "Luns": "[parameters('logDisksLUNs')]",
+            "Luns": "[variables('logDisksLUNs')]",
             "DefaultFilePath": "[parameters('logPath')]"
           },
           "SQLTempDbSettings": {
