@@ -3,7 +3,7 @@
 
 Before deploying the template you must have the following
 
-1. **vNet** a Virtual Network must exist with a subNet
+1. **vNet** and **subnet** a Virtual Network must exist with a subNet
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-sql-vm-new-storage%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
@@ -16,11 +16,10 @@ Before deploying the template you must have the following
 
 ## Solution overview and deployed resources
 
-Overview Text waiting for PM's response
-
+Overview Text waiting for PM's	`
 
 Following resources will be created
- - A Network serucity group rule allow RDP login
- - A Public IP
- - A VirtualMachine with 2 Preiumn 1024GB Managed Disks
- - A SqlVirtualMachine resrouces 
+ - A Network security group to allow RDP to VM
+ - A Public IP address
+ - A Virtual Machine with 2 Premium 1024GB Disks
+ - A Sql Virtual Machine resource
