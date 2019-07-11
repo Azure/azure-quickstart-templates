@@ -14,6 +14,7 @@ Write-FormatView -Action {
         $global:_LastFile = ''
         $global:_LastHistoryId = $h.id
     }
+    
 
     if ($global:_LastFile -ne $testOut.File.FullPath) {
         Write-Host -ForegroundColor Magenta "Validating $($testOut.File.Name)" 
@@ -49,7 +50,17 @@ Write-FormatView -Action {
         $foregroundColor = 'Yellow'
         $statusChar = '?'        
     }
-    $statusLine = "    [$statusChar] $($testOut.Name) ($([Math]::Round($testOut.Timespan.TotalMilliseconds)) ms)"
+    $azoStatus = 
+        if ($env:AgentId) {
+            if ($errorCount) {
+                "##vso[task.logissue type=error;]"
+            } elseif ($warningCount) {
+                "##vso[task.logissue type=warning;]"
+            } else {
+                ''
+            }
+        }
+    $statusLine = "    [$statusChar]$azoStatus $($testOut.Name) ($([Math]::Round($testOut.Timespan.TotalMilliseconds)) ms)"
     Write-Host $statusLine -ForegroundColor $foregroundColor -NoNewline
 
     $null
@@ -57,14 +68,16 @@ Write-FormatView -Action {
     $indent = 4
     if ($errorLines) {
         Write-Host " " # end of line
+        $azoErrorStatus = if ($env:AgentId) { "##vso[task.logissue type=error;]"} else { '' }         
         foreach ($line in $errorLines) {
-            Write-Host "$(' ' * $indent)$line" -foregroundColor Red    
+            Write-Host "$azoErrorStatus$(' ' * $indent)$line" -foregroundColor Red    
         }
     }
     if ($warningLines) {
         Write-Host " " # end of line
+        $azoWarnStatus = if ($env:AgentId) { "##vso[task.logissue type=error;]"} else { '' }         
         foreach ($line in $warningLines) {
-            Write-Host "$(' ' * $indent)$line" -foregroundColor DarkYellow 
+            Write-Host "$azoWarnStatus$(' ' * $indent)$line" -foregroundColor DarkYellow 
         }
     }
     
