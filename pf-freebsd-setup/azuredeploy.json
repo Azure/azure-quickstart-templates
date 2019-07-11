@@ -65,12 +65,6 @@
         "description": "User name for the Virtual Machine"
       }
     },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Password for frontend and backend VMs."
-      }
-    },
     "vnetAddressPrefix": {
       "type": "string",
       "defaultValue": "10.0.0.0/19",
@@ -117,6 +111,23 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
     }
   },
   "variables": {
@@ -137,7 +148,18 @@
     "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'frontend')]",
     "backendStorageAccountName": "[concat(uniquestring(resourceGroup().id), 'backend')]",
     "routeTableName": "[concat(resourceGroup().name, 'routetable')]",
-    "sgName": "[concat(resourceGroup().name, '-sg')]"
+    "sgName": "[concat(resourceGroup().name, '-sg')]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
@@ -362,7 +384,7 @@
       }
     },
     {
-      "apiVersion":  "2017-03-30", 
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
@@ -382,7 +404,7 @@
             "version": "latest"
           },
           "osDisk": {
-           "name": "[concat(variables('vmName'),'_OSDisk')]", 
+            "name": "[concat(variables('vmName'),'_OSDisk')]",
             "createOption": "FromImage",
             "caching": "ReadWrite"
           }
@@ -390,10 +412,8 @@
         "osProfile": {
           "computerName": "[variables('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]",
-          "linuxConfiguration": {
-            "disablePasswordAuthentication": "false"
-          }
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -414,7 +434,7 @@
       }
     },
     {
-      "apiVersion": "2017-03-30", 
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('backendVM1Name')]",
       "location": "[parameters('location')]",
@@ -433,20 +453,16 @@
             "version": "latest"
           },
           "osDisk": {
-            
-           "name": "[concat(variables('backendVM1Name'),'_OSDisk')]",
+            "name": "[concat(variables('backendVM1Name'),'_OSDisk')]",
             "createOption": "FromImage",
-           
             "caching": "ReadWrite"
           }
         },
         "osProfile": {
           "computerName": "[variables('backendVM1Name')]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]",
-          "linuxConfiguration": {
-            "disablePasswordAuthentication": "false"
-          }
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -461,7 +477,7 @@
       }
     },
     {
-      "apiVersion": "2017-03-30", 
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('backendVM2Name')]",
       "location": "[parameters('location')]",
@@ -480,8 +496,7 @@
             "version": "latest"
           },
           "osDisk": {
-           
-            "name": "[concat(variables('backendVM2Name'),'_OSDisk')]", 
+            "name": "[concat(variables('backendVM2Name'),'_OSDisk')]",
             "createOption": "FromImage",
             "caching": "ReadWrite"
           }
@@ -489,10 +504,8 @@
         "osProfile": {
           "computerName": "[variables('backendVM2Name')]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]",
-          "linuxConfiguration": {
-            "disablePasswordAuthentication": "false"
-          }
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "networkProfile": {
           "networkInterfaces": [
