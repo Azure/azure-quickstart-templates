@@ -118,9 +118,6 @@ For details, see ["Using Shared Access Signatures."](https://docs.microsoft.com/
 For your repository, you can do either:
 * Use the default method, which downloads the installation files directly from SAS.
 * Upload an entire mirror to Azure blob storage.
-* Compress the folder and upload to an Azure blob or another storage location that is secure.
- 
-**Note** For the mirror storage, use the same storage account that you used for the license file in ["Upload the License Zip file."](#license)
 
 To use a mirror repository, create a mirror repository as documented in ["Create a Mirror Repository"](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=p1ilrw734naazfn119i2rqik91r0.htm&docsetVersion=3.4&locale=en) in the SAS Viya 3.4 for Linux: Deployment Guide.  
 
@@ -135,11 +132,7 @@ az storage blob upload-batch --account-name "$STORAGE_ACCOUNT" --account-key "$S
 
 3. During deployment, set the DeploymentMirror parameter to the URL of the folder in the Azure blob that is qualified by that SAS key.
 
-
-### Compress the Folder and Upload to Azure Blob or Another Storage Location That Is Secure
-1. Zip the entire folder as a compressed tar archive. For example, .tar.gz/.tgz. 
-2. Upload the compressed tar archive to Azure blob storage or another storage location that is accessible from the internet and can be secured. 
-3. During deployment, set the DeploymentMirror parameter to the authenticated URL. In the case of blob storage, the URL is the path URL to the blob that is qualified by a SAS key.
+**Note** For the mirror storage, use the same storage account that you used for the license file in ["Upload the License Zip file."](#license)
 
 <a name="Best-Practices"></a>
 ## Best Practices when Deploying SAS Viya on Azure
