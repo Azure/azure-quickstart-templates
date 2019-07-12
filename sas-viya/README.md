@@ -313,7 +313,7 @@ CryptoLibName=/usr/lib64/libcrypto.so.1.0.2k
 **Note:** The password of the admin user is the value that you specified during deployment for the SASAdminPass input parameter. 
 
    ``` 
-    cp /sas/install/code/postconfig-helpers/dataprep2dataagent.yml ./dataprep2dataagent.yml
+    cp /sas/install/postconfig-helpers/dataprep2dataagent.yml ./dataprep2dataagent.yml
    ``` 
    
    ``` 
@@ -321,13 +321,13 @@ CryptoLibName=/usr/lib64/libcrypto.so.1.0.2k
        -e "adminuser=sasadmin adminpw=<password of admin user>" \
        -e "data_agent_host=<FQDN(DNS)-of-SAS-Data-Agent-machine>" \
        -e "secret=<handshake-string>" \
-       -i "/sas/install/setup/orchestration/sas_viya_playbook/inventory.ini"
+       -i "/sas/install/ansible/sas_viya_playbook/inventory.ini"
    ```
 
 7. Register the SAS Viya environment with the SAS Data Agent. Copy the following file from the Ansible controller in your SAS Viya deployment into the playbook directory (sas_viya_playbook) in your SAS Data Agent deployment:
 
    ``` 
-   /sas/install/code/postconfig-helpers/dataagent2dataprep.yml
+   /sas/install/postconfig-helpers/dataagent2dataprep.yml
    ``` 
  
    From the playbook directory (sas_viya_playbook) for the SAS Data Agent:
@@ -376,7 +376,7 @@ The /tmp directory is the primary deployment log directory. Other logs follow:
 * install_run_orchestration.log: logs that are created by an asynchronous task started in phase 7 and ending in phase 8. Sections of the text are returned as the results in the runAnsiblePhase7* - runAnsiblePhase8* logs.
 
 * Commands.log: a listing of the parameters supplied to the Ansible start script.
-*	/sas/install/setup/orchestration/sas_viya_playbook/deployment.log: log created by the SAS installation. The content should be duplicated in the install_run_orchestration.log
+*	/sas/install/ansible/sas_viya_playbook/deployment.log: log created by the SAS installation. The content should be duplicated in the install_run_orchestration.log
 
 #### Services Server Log Files
 *	/var/log/sas: parent folder for SAS Viya application logs. If there is a startup issue after installation, the information in these logs might be helpful. 
@@ -396,14 +396,14 @@ While all the services can be started on each box independently, the Viya-Ark to
 #### Checking the status of the services through Viya-Ark
 Viya-Ark can check the status of the services by issuing the following commands as the vmuser on the ansible controller:
 ```
-cd /sas/install/setup/orchestration/sas_viya_playbook/
+cd /sas/install/ansible/sas_viya_playbook/
 ansible-playbook viya-ark/playbooks/viya-mmsu/viya-services-status.yml
 ```
 
 #### Restarting the services through Viya-Ark
 Viya-Ark can restart all of the services by issuing the following commands as the vmuser on the ansible controller:
 ```
-cd /sas/install/setup/orchestration/sas_viya_playbook/
+cd /sas/install/ansible/sas_viya_playbook/
 ansible-playbook viya-ark/playbooks/viya-mmsu/viya-services-restart.yml -e enable_stray_cleanup=true
 ```
 <a name="UncommonErrors"></a>
