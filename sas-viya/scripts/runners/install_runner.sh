@@ -89,7 +89,7 @@ openldap_installed_time="$(date -u +%s)"
 ANSIBLE_LOG_PATH=/var/log/sas/install/prepare_deployment.log \
     time ansible-playbook -v /sas/install/ansible/playbooks/prepare_deployment.yml \
       -e "DEPLOYMENT_MIRROR=${DeploymentMirror}" \
-      -e "DEPLOYMENT_DATA_LOCATION=${license_file_uri}" \
+      -e "DEPLOYMENT_DATA_LOCATION=${MIRROR_HTTP}" \
       -e "ADMINPASS=${ADMINPASS}" \
       -e MIRROR_URL="file:///mnt/viyashare/mirror" \
       -e USE_MIRROR="True" \
