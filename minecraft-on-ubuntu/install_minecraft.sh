@@ -17,8 +17,8 @@ minecraft_group=minecraft
 UUID_URL=https://api.mojang.com/users/profiles/minecraft/$1
 
 # screen scrape the server jar location from the Minecraft server download page
-SERVER_JAR_URL=`curl https://minecraft.net/en-us/download/server | grep Minecraft\.Download | cut -d '"' -f2`
-server_jar=`echo $SERVER_JAR_URL | cut -d '/' -f7`
+SERVER_JAR_URL=`curl -L https://minecraft.net/en-us/download/server/ | grep 'Download <a' | cut -d '"' -f2`
+server_jar=server.jar
 
 # add and update repos
 while ! echo y | apt-get install -y software-properties-common; do
@@ -45,7 +45,7 @@ while ! echo y | apt-get install -y oracle-java8-installer; do
 done
 
 # create user and install folder
-adduser --system --no-create-home --home /srv/minecraft-server $minecraft_user
+adduser --system --no-create-home --home $minecraft_server_path $minecraft_user
 addgroup --system $minecraft_group
 mkdir $minecraft_server_path
 cd $minecraft_server_path
@@ -69,7 +69,7 @@ else
     memoryAllocx=2g
 fi
 
-# create the uela file
+# create the eula file
 touch $minecraft_server_path/eula.txt
 echo 'eula=true' >> $minecraft_server_path/eula.txt
 
