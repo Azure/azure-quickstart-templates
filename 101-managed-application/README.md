@@ -1,9 +1,9 @@
 # Deploying your first Managed Application with default view
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-managed-application%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Folgaian%2Fazure-quickstart-templates%2F101ama%2F101-managed-application%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-managed-application%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Folgaian%2Fazure-quickstart-templates%2F101ama%2F101-managed-application%2Fazuredeploy.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
@@ -21,10 +21,12 @@ To learn more about Managed Application definitions and Marketplace please visit
 
 ## Exploring created Managed Application
 
-This sample deployment creates the following two resources:
+This sample template combines two steps:
 
-1) A Service catalog managed application definition.
-2) A managed application that contains a storage account.
+1) Deploys a Service catalog managed application definition.
+2) Deploys a managed application using deployed application definition.
+
+You may use deployed application definition to create more managed applications of this sample.
 
 Once you click on the deployed managed application you will notice that Overview contains header and description of the application.
 
