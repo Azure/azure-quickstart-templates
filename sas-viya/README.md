@@ -562,7 +562,7 @@ SAS Viya Quickstart for Azure uses the following network security groups to cont
 
 <a name="hard"></a>
 ### Hardening Provided OpenLDAP Security 
-By default, the OpenLDAP provider is set up if you provide a user password does not use TLS to secure the communications between the controller and the OpenLDAP server. Most connections should be authenticated by the OAuth provider in SASLogon, which communicates by loopback with the OpenLDAP server. In a production environment, it is recommended that you enable TLS encryption for OpenLDAP queries. For information to enable LDAPS, refer to the
+By default, the OpenLDAP provider is set up if you provide a user password that does not use TLS to secure the communications between the controller and the OpenLDAP server. Most connections should be authenticated by the OAuth provider in SASLogon, which communicates by loopback with the OpenLDAP server. In a production environment, it is recommended that you enable TLS encryption for OpenLDAP queries. For information about enabling LDAPS, refer to the
  [ OpenLDAP documentation.](https://www.openldap.org/doc/admin24/tls.html)
  
  <a name="datasec"></a>
