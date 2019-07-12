@@ -74,7 +74,9 @@ SAS Viya Quickstart Template for Azure creates three instances, including:
 * 1 VM for administration, the Ansible controller
 * 1 VM for the SAS Viya services
 
-The available licensed core sizes are: 
+#### CAS Controller VM
+
+Here are some available VM sizes based on the number of licensed cores:
 
 | Licensed Cores  | Virtual Machine| SKU	Memory(RAM) | Maximum Dataset Size | Cache Size |
 | ------------- | ------------- | ------------- | ------------- | ------------- |
@@ -82,6 +84,9 @@ The available licensed core sizes are:
 | 8 | Standard_E16s_v3  | 128 GB  |20-40 GB	  |256 GB  |
 | 16  | Standard_E32s_v3| 256 GB  | 90-170 GB |512 GB  |
 
+#### SAS Viya Services VM
+
+If you are installing VDMML or a similiarly large installation, we  recommend that you use the Standard E16s_v3 VM size.
 
 <a name="Prerequisites"></a>
 ## Prerequisites
