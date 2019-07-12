@@ -77,7 +77,7 @@ SAS Viya Quickstart Template for Azure creates three instances, including:
 
 #### CAS Controller VM
 
-Here are some available VM sizes based on the number of licensed cores:
+Here are some recommended example VM sizes based on the number of licensed cores:
 
 | Licensed Cores  | Virtual Machine| SKU	Memory(RAM) | Maximum Dataset Size | Cache Size |
 | ------------- | ------------- | ------------- | ------------- | ------------- |
@@ -87,7 +87,7 @@ Here are some available VM sizes based on the number of licensed cores:
 
 #### SAS Viya Services VM
 
-If you are installing VDMML or a similiarly large installation, we  recommend that you use the Standard E16s_v3 VM size.
+If you are installing VDMML or a similiarly large installation, we  recommend that you use at least the Standard E16s_v3 VM size.
 
 <a name="Prerequisites"></a>
 ## Prerequisites
