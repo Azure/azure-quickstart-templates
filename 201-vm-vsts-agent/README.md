@@ -1,19 +1,19 @@
 # Install Multiple Azure DevOps Agents with latest Az Modules with PowerShell Core
 
-With Visual Studio Enterprise you can create applications across devices and services, using an integrated, end-to-end DevOps solution for productivity and coordination across teams of any size. You get the tools you need to design, build, deploy and manage desktop, Windows Store, Windows Phone, and Office apps, as well as mobile and web apps across any device, web site, cloud service, and more. This image contains the recommended prodct install of the originally released (or 'RTW') version of Visual Studio Enterprise 2019 on Windows Server 2019. It allows you to easily and quickly set up a development environment in Azure to build and test applications using Visual Studio.
+With Visual Studio Enterprise you can create applications across devices and services, using an integrated, end-to-end DevOps solution for productivity and coordination across teams of any size. You get the tools you need to design, build, deploy and manage desktop, Windows Store, Windows Phone, and Office apps, as well as mobile and web apps across any device, web site, cloud service, and more. This image contains the recommended product install of the originally released (or 'RTW') version of Visual Studio Enterprise 2019 on Windows Server 2019. It allows you to easily and quickly set up a development environment in Azure to build and test applications using Visual Studio.
 
 This Template **201-vm-vsts-agent** builds the following:
  * Creates 1 Availability Set
  * Creates a Public IP Address
  * Creates a Virtual Network
- * Creates 1 Nic for the Virtual Machine
+ * Creates 1 NIC for the Virtual Machine
  * Creates 1 Virtual Machine with OS Disk with Windows 2016 including Visual Studio Enterprise 2017.
- * Installs and configures upto 4 VSTS agents
- * Installs modules and packages from PowerShell Gallery and Chocolately   
+ * Installs and configures up to 4 VSTS agents
+ * Installs modules and packages from PowerShell Gallery and Chocolatey   
 
 ## Usage
 
-Click on the **Deploy to Azure** button below. This will open the Azure Portal (login if necessary) and start a Custom Deployment. The following Parameters will be shown and must be updated / selected accordingly. 
+Click on the **Deploy to Azure** button below. This will open the Azure Portal (login if necessary) and start a Custom Deployment. The following Parameters will be shown and must be updated / selected accordingly.
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vm-vsts-agent%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
@@ -25,7 +25,7 @@ Click on the **Deploy to Azure** button below. This will open the Azure Portal (
 ## Parameters
 
 - script_url </br>
-  URL for the PowerShell Script. NOTE: Can be a Github url (raw) to the ps1 file. </br>
+  URL for the PowerShell Script. NOTE: Can be a GitHub URL (raw) to the ps1 file. </br>
   Default: Standard_DS1_v2 unless overridden.
 
 - vm_admin_user </br>
@@ -39,10 +39,10 @@ Click on the **Deploy to Azure** button below. This will open the Azure Portal (
   Default: Standard_DS1_v2 unless overridden.
 
 - devops_org </br>
-  The Azure DevOps Organisation name, that is, the last part of your Azure DevOps Url e.g. http://dev.azure.com/{OrgName}
+  The Azure DevOps Organization name, that is, the last part of your Azure DevOps URL e.g. http://dev.azure.com/{OrgName}
 
 - devops_agent_count </br>
-  The number of Azure DevOps agents to be coonfigured on the Virtual Machine. </br>
+  The number of Azure DevOps agents to be configured on the Virtual Machine. </br>
   Default: 3.
 
 - devops_pat </br>

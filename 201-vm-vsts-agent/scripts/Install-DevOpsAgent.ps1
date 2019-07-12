@@ -19,9 +19,15 @@ Param
 
 	[Parameter(Mandatory=$true)]
 	[int]$AgentCount,
-	
+
 	[Parameter(Mandatory=$false)]
 	[object]$Modules = @(
+		@{ Name = "AzureRm"; Version = "6.13.1" },
+		@{ Name = "Pester"; Version = "4.8.1" }
+	),
+
+	[Parameter(Mandatory=$false)]
+	[object]$ModulesCore = @(
 		@{ Name = "Az"; Version = "2.4.0" },
 		@{ Name = "Az.Blueprint"; Version = "0.2.1" },
 		@{ Name = "Pester"; Version = "4.8.1" }
@@ -31,7 +37,7 @@ Param
 	[object]$Packages = @(
 		@{ Name = "powershell-core"; Version = "6.2.1.20190704" },
 		@{ Name = "azure-cli"; Version = "2.0.68" },
-		@{ Name = "terraform"; Version = "0.12.3"}		
+		@{ Name = "terraform"; Version = "0.12.3"}
 	)
 )
 
@@ -66,7 +72,7 @@ Function Invoke-FileDownLoad
 			$exceptionText = ($_ | Out-String).Trim()
 			Write-Verbose "Exception occured downloading $($Name).zip: $($exceptionText) in try number $($retries)" -verbose
 			$retries++
-			Start-Sleep -Seconds 30 
+			Start-Sleep -Seconds 30
 		}
 	} while ($retries -le $retryCount)
 }
@@ -112,7 +118,7 @@ choco upgrade chocolatey
 foreach ($Package in $Packages)
 {
 	choco install $Package.Name --version $Package.Version --force -y
-} 
+}
 #endregion
 
 #region DevOps Agent
@@ -126,7 +132,7 @@ Write-Verbose "Server URL: $($serverUrl)" -Verbose
 Write-Verbose "Trying to get download URL for latest Azure DevOps agent release..."
 $header = @{Authorization = 'Basic ' + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$DevOpsPAT"))}
 $devopsUrl = "{0}/_apis/distributedtask/packages/agent?platform={1}&`$top=1" -f $serverUrl, "win-x64"
-$response = Invoke-WebRequest -UseBasicParsing -Headers $header -Uri $devopsUrl 
+$response = Invoke-WebRequest -UseBasicParsing -Headers $header -Uri $devopsUrl
 $response = ConvertFrom-Json $response.Content
 $uri = $response.value[0].downloadUrl
 
@@ -138,13 +144,13 @@ for ($i=0; $i -lt $AgentCount; $i++)
 
 	# Construct the agent folder under the main (hardcoded) C: drive.
 	$agentInstallationPath = Join-Path "C:\Agents" $Agent
-	
+
 	# Create the directory for this agent.
 	New-Item -ItemType Directory -Force -Path $agentInstallationPath
-	
+
 	# Set the current directory to the agent dedicated one previously created.
 	Push-Location -Path $agentInstallationPath
-	
+
 	# Extract Download File
 	Expand-ZipFile -Name "devops-agent" -Path $agentInstallationPath -TempFolderName $tempFolderName
 
@@ -164,11 +170,11 @@ for ($i=0; $i -lt $AgentCount; $i++)
 
 	# Call the agent with the configure command and all the options (this creates the settings file) without prompting
 	# the user or blocking the cmd execution
-	Write-Verbose "Configuring agent '$($Agent)'" -Verbose		
+	Write-Verbose "Configuring agent '$($Agent)'" -Verbose
 	.\config.cmd --unattended --url $serverUrl --auth PAT --token $DevOpsPAT --pool $PoolName --agent $Agent --runasservice
-	
+
 	Write-Verbose "Agent install output: $LASTEXITCODE" -Verbose
-	
+
 	Pop-Location
 }
 #endregion
@@ -176,42 +182,70 @@ for ($i=0; $i -lt $AgentCount; $i++)
 #region Install Modules
 # Installing Modules using PowerShell Core
 $scriptBlock = {
-    $Modules = $args
+  $Modules = $args
 
-    foreach ($Module in $Modules)
-    {	
-	    Install-Module -Name $Module.Name -RequiredVersion $Module.Version -Repository PSGallery -Scope AllUsers -Force -Confirm:$false -SkipPublisherCheck -AllowClobber -Verbose
-    }
+  foreach ($Module in $Modules)
+  {
+    Install-Module -Name $Module.Name -RequiredVersion $Module.Version -Repository PSGallery -Scope AllUsers -Force -Confirm:$false -SkipPublisherCheck -AllowClobber -Verbose
+  }
 
-    # Checking for multiple versions of modules 
-    $Mods = Get-InstalledModule
+  # Checking for multiple versions of modules
+  $Mods = Get-InstalledModule
 
-    foreach ($Mod in $Mods)
+  foreach ($Mod in $Mods)
+  {
+	    $latest = Get-InstalledModule $Mod.Name -AllVersions | Select-Object -First 1
+	    $specificMods = Get-InstalledModule $Mod.Name -AllVersions
+
+    if ($specificMods.count -gt 1)
     {
-  	    $latest = Get-InstalledModule $Mod.Name -AllVersions | Select-Object -First 1
-  	    $specificMods = Get-InstalledModule $Mod.Name -AllVersions
-
-	    if ($specificMods.count -gt 1)
+	    write-output "$($specificMods.count) versions of this module found [ $($Mod.Name) ]"
+	    foreach ($sm in $specificMods)
 	    {
-		    write-output "$($specificMods.count) versions of this module found [ $($Mod.Name) ]"
-		    foreach ($sm in $specificMods)
+		    if ($sm.version -ne $latest.version)
 		    {
-			    if ($sm.version -ne $latest.version)
-			    { 
-				    write-output " $($sm.name) - $($sm.version) [highest installed is $($latest.version)]" 
-				    $sm | uninstall-module -force
-			    }
+			    write-output " $($sm.name) - $($sm.version) [highest installed is $($latest.version)]"
+			    $sm | uninstall-module -force
 		    }
 	    }
     }
+  }
 }
 
-pwsh -Command $scriptBlock -Args $Modules -NonInteractive -ExecutionPolicy Unrestricted
+pwsh -Command $scriptBlock -Args $ModulesCore -NonInteractive -ExecutionPolicy Unrestricted
 
 # Uninstalling old Azure PowerShell Modules
 $programName = "Microsoft Azure PowerShell"
-if ($app = Get-WmiObject -Class Win32_Product -Filter "Name Like '$($programName)%'" -Verbose) 
+if ($app = Get-WmiObject -Class Win32_Product -Filter "Name Like '$($programName)%'" -Verbose)
 { $app.Uninstall() }
+
+# Installing Modules using PowerShell
+foreach ($Module in $Modules)
+{
+	Install-Module -Name $Module.Name -RequiredVersion $Module.Version -Repository PSGallery -Scope AllUsers -Force -Confirm:$false -SkipPublisherCheck -AllowClobber -Verbose
+}
+
+# Checking for multiple versions of modules
+$Mods = Get-InstalledModule
+
+foreach ($Mod in $Mods)
+{
+		$latest = Get-InstalledModule $Mod.Name -AllVersions | Select-Object -First 1
+		$specificMods = Get-InstalledModule $Mod.Name -AllVersions
+
+	if ($specificMods.count -gt 1)
+	{
+		write-output "$($specificMods.count) versions of this module found [ $($Mod.Name) ]"
+		foreach ($sm in $specificMods)
+		{
+			if ($sm.version -ne $latest.version)
+			{
+				write-output " $($sm.name) - $($sm.version) [highest installed is $($latest.version)]"
+				$sm | uninstall-module -force
+			}
+		}
+	}
+}
 
 Write-Verbose "Exiting InstallDevOpsAgent.ps1" -Verbose
 Restart-Computer -Force
