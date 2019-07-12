@@ -8,4 +8,4 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template allows the user to create a VM with dynamic selection of data disks without creating a per size template with different number of data disks. It takes advantage of the **take** function in the template to retrieve only the desired number of elements for creating the data disks.
+This template allows the user to create a VM with dynamic selection of data disks without creating a per size template with different number of data disks. It takes advantage of copy property loop in the template to construct the desired number of the data disks.

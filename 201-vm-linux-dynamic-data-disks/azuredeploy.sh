@@ -9,7 +9,7 @@ if [[ $(id -u) -ne 0 ]] ; then
 fi
 
 if [ $# != 8 ]; then
-    echo "Usage: $0 <MasterHostname> <mountFolder> <numDataDisks> <dockerVer> <dockerComposeVer> <adminUserName> <imageSku> <dockerMachineVer>"
+    echo "Usage: $0 <MasterHostname> <mountFolder> <numDataDisks> <dockerVer> <dockerComposeVer> <adminUsername> <imageSku> <dockerMachineVer>"
     exit 1
 fi
 

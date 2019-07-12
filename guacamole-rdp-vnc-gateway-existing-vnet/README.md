@@ -1,4 +1,4 @@
-# Guacamole VM in existing VNet
+# Guacamole VM in existing VNet 
 
 This template deploys a VM with [Guacamole](http://guac-dev.org), the open source HTML5 RDP/VNC proxy.
 

@@ -14,6 +14,7 @@ RPLPWD=${4}
 ROOTPWD=${5}
 PROBEPWD=${6}
 MASTERIP=${7}
+VERSION=5.5
 
 MOUNTPOINT="/datadrive"
 RAIDCHUNKSIZE=512
@@ -188,7 +189,7 @@ create_mycnf() {
 }
 
 install_mysql_ubuntu() {
-    dpkg -s mysql-5.6
+    dpkg -s mysql-$VERSION
     if [ ${?} -eq 0 ];
     then
         return
@@ -196,9 +197,9 @@ install_mysql_ubuntu() {
     echo "installing mysql"
     apt-get update
     export DEBIAN_FRONTEND=noninteractive
-	apt-get install -y mysql-server-5.6
+	apt-get install -y mysql-server-$VERSION
 	chown -R mysql:mysql "${MOUNTPOINT}/mysql/mysql"
-	apt-get install -y mysql-server-5.6
+	apt-get install -y mysql-server-$VERSION
 	wget http://dev.mysql.com/get/Downloads/Connector-Python/mysql-connector-python_2.1.3-1ubuntu14.04_all.deb
 	dpkg -i mysql-connector-python_2.1.3-1ubuntu14.04_all.deb
 	wget http://dev.mysql.com/get/Downloads/MySQLGUITools/mysql-utilities_1.6.4-1ubuntu14.04_all.deb
@@ -252,7 +253,7 @@ if [ "\$ERROR_MSG" != "" ]
 then
         # mysql is fine, return http 200
         echo -en "HTTP/1.1 200 OK\r\n"
-        echo -en "Content-Type: Content-Type: text/plain\r\n"
+        echo -en "Content-Type: text/plain\r\n"
         echo -en "Connection: close\r\n"
         echo -en "Content-Length: 19\r\n"
         echo -en "\r\n"
@@ -262,7 +263,7 @@ then
 else
         # mysql is down, return http 503
         echo -en "HTTP/1.1 503 Service Unavailable\r\n"
-        echo -en "Content-Type: Content-Type: text/plain\r\n"
+        echo -en "Content-Type: text/plain\r\n"
         echo -en "Connection: close\r\n"
         echo -en "Content-Length: 16\r\n"
         echo -en "\r\n"

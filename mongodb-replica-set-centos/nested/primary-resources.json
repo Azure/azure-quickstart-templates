@@ -52,20 +52,26 @@
     },
     "staticIp": {
       "type": "string"
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
     "subnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('subnet').vnet), '/subnets/', parameters('subnet').name)]",
-    "apiVersion": "2015-06-15",
     "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'standardsa')]",
     "securityGroupName": "[concat(parameters('namespace'), parameters('vmbasename'), 'nsg')]"
   },
   "resources": [
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('securityGroupName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
           {
@@ -96,7 +102,7 @@
               "direction": "Inbound"
             }
           },
-		  {
+          {
             "name": "zabbixAgent",
             "properties": {
               "description": "Allows zabbix monitoring",
@@ -110,7 +116,7 @@
               "direction": "Inbound"
             }
           },
-		  {
+          {
             "name": "zabbixAgent1",
             "properties": {
               "description": "Allows zabbix monitoring",
@@ -128,10 +134,10 @@
       }
     },
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'PublicIp')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
@@ -140,10 +146,10 @@
       }
     },
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(parameters('namespace'), concat(parameters('vmbasename'), 'nic'))]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', parameters('namespace'), parameters('vmbasename'), 'PublicIp')]"
       ],
@@ -169,10 +175,10 @@
       }
     },
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/networkInterfaces/', concat(parameters('namespace'), concat(parameters('vmbasename'), 'nic')))]"
       ],
@@ -187,53 +193,42 @@
         },
         "storageProfile": {
           "imageReference": "[parameters('osSettings').imageReference]",
-          "dataDisks": [ 
-             { 
-               "name": "datadisk1", 
-               "diskSizeGB": "[parameters('sizeOfDataDiskInGB')]", 
-               "lun": 0, 
-               "vhd": { 
-                 "Uri": "[concat('http://', variables('storageAccountName'),'.blob.core.windows.net/vhds/', 'datadisk1.vhd')]" 
-               }, 
-               "createOption": "Empty",
-               "caching": "ReadWrite"			   
-             }, 
-             { 
-               "name": "datadisk2", 
-               "diskSizeGB": "[parameters('sizeOfDataDiskInGB')]", 
-               "lun": 1, 
-               "vhd": { 
-                 "Uri": "[concat('http://', variables('storageAccountName'),'.blob.core.windows.net/vhds/', 'datadisk2.vhd')]" 
-               }, 
-               "caching": "ReadWrite",
-               "createOption": "Empty" 
-             }, 
-             { 
-               "name": "datadisk3", 
-               "diskSizeGB": "[parameters('sizeOfDataDiskInGB')]", 
-               "lun": 2, 
-               "vhd": { 
-                 "Uri": "[concat('http://', variables('storageAccountName'),'.blob.core.windows.net/vhds/', 'datadisk3.vhd')]" 
-               },
-               "caching": "ReadWrite",			   
-               "createOption": "Empty" 
-             }, 
-             { 
-               "name": "datadisk4", 
-               "diskSizeGB": "[parameters('sizeOfDataDiskInGB')]", 
-               "lun": 3, 
-               "vhd": { 
-                 "Uri": "[concat('http://', variables('storageAccountName'),'.blob.core.windows.net/vhds/', 'datadisk4.vhd')]" 
-               },
-               "caching": "ReadWrite",			   
-               "createOption": "Empty" 
-             } 
-           ], 
-          "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat('http://', variables('storageAccountName'),'.blob.core.windows.net/vhds/', parameters('vmbasename'), '-osdisk.vhd')]"
+          "dataDisks": [
+            {
+              
+              "diskSizeGB": "[parameters('sizeOfDataDiskInGB')]",
+              "lun": 0,
+              "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm','_DataDisk1')]",   
+              "createOption": "Empty",
+              "caching": "ReadWrite"
             },
+            {
+              
+              "diskSizeGB": "[parameters('sizeOfDataDiskInGB')]",
+              "lun": 1,
+              "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm','_DataDisk2')]",  
+              "caching": "ReadWrite",
+              "createOption": "Empty"
+            },
+            {
+              
+              "diskSizeGB": "[parameters('sizeOfDataDiskInGB')]",
+              "lun": 2,
+              "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm','_DataDisk3')]",  
+              "caching": "ReadWrite",
+              "createOption": "Empty"
+            },
+            {
+              
+              "diskSizeGB": "[parameters('sizeOfDataDiskInGB')]",
+              "lun": 3,
+              "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm','_DataDisk4')]",  
+              "caching": "ReadWrite",
+              "createOption": "Empty"
+            }
+          ],
+          "osDisk": {
+            "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm','_OSDisk')]",  
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -250,8 +245,8 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm', '/primaryInstall')]",
-      "apiVersion": "[variables('apiVersion')]",
-      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', concat(parameters('namespace'), concat(parameters('vmbasename'), 'vm')))]"
       ],
@@ -262,8 +257,8 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": "[parameters('osSettings').scripts]"
-		},
-		"protectedSettings": {
+        },
+        "protectedSettings": {
           "commandToExecute": "[concat('bash primary.sh ', parameters('dnsname'), ' ', parameters('secondaryNodeCount'), ' ', parameters('mongoAdminUsername'), ' ', parameters('mongoAdminPassword'), ' ', parameters('staticIp'), ' ', parameters('zabbixServerIPAddress'))]"
         }
       }

@@ -1,7 +1,7 @@
 var grunt = require('grunt');
 require('load-grunt-tasks')(grunt);
 
-var files = ['test/*.js'];
+var files = ['test/tests.js'];
 var templates = ['**/*.json'];
 
 grunt.initConfig({

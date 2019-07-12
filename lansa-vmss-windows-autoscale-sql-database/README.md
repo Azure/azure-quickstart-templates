@@ -52,14 +52,14 @@ For full instructions for using this template go to [Azure Deployment Tutorial](
 
 ## Notes
 
-1. Two VMSS. One to install the database; 1 to run the web site. OverProvision = false. This is so that extra VMs are not created which would put more load on the database which slows down provisioning. Failure to provision has not been seen. If it occurs, the VMSS will ensure another VM is created to establish the correct InstanceCount. A second reason is that the database installer VMSS MUST NEVER have more than 1 instance installing at a time. Errors occur when publishing the weblets. As well as the database state not being matched to what the VM thinks the state of the database is in terms of table creation, etc.
+1. Two VMSS. One to install the database; 1 to run the web site. OverProvision = false. This is so that extra VMs are not created which would put more load on the database which slows down provisioning. Failure to provision has not been seen. A second reason is that the database installer VMSS MUST NEVER have more than 1 instance installing at a time. Errors occur when publishing the weblets. As well as the database state not being matched to what the VM thinks the state of the database is in terms of table creation, etc.
   1. Database VMSS
 	1. Only 1 instance ever. If instance dies another one is created.
 	2. This instance is not currently used by the web site as 1 load balancer may only be configured for a single VMSS.
 	3. Installed with SUDB=1. Otherwise commandToExecute is identical.
   2. Web Site VMSS
 	1. Creator of stack specifies the minimum and maximum number of instances for autoscaling.
-	2. The minimum number of instances is also the starting capacity for the VMSS. Scaling events alter the VMSS capacity which in turn causes a vm to be created or deleted in order to being the current instance count in line with the VMSS capacity.
+	2. The minimum number of instances is also the starting capacity for the VMSS. Scaling events alter the VMSS capacity which in turn causes a vm to be created or deleted in order to bring the current instance count in line with the VMSS capacity.
 	3. Installed with SUDB=0. Otherwise commandToExecute is identical.
 
 2. Scale Out fast. Scale Out action is 10% of current instances. It scales out after 5 mins of avg CPU > 60%. Another scaling event will not occur for 20 minutes. This allows time for the VM to be installed.

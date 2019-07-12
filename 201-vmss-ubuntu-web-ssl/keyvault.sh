@@ -80,7 +80,7 @@ storesecret()
 {
     local secretfile=$1
     local name=$2
-    filecontentencoded=$( cat $secretfile | base64 -w 0 )
+    filecontentencoded=$( cat $secretfile | base64 $base64_unwrap )
 
 json=$(cat << EOF
 {
@@ -91,7 +91,7 @@ json=$(cat << EOF
 EOF
 )
 
-    jsonEncoded=$( echo $json | base64 -w 0 )
+    jsonEncoded=$( echo $json | base64 $base64_unwrap )
 
     r=$(azure keyvault secret set --vault-name $vaultname --secret-name $name --value $jsonEncoded)
     if [ $? -eq 1 ]
@@ -104,6 +104,16 @@ EOF
     echo Secret ID is $id
 }
 
+# We need exactly 7 parameters
+if [ "$#" -lt 6 ]; then
+    usage
+    exit
+fi
+
+# The base64 command on OSX does not know about the -w parameter, but outputs unwrapped base64 by default
+base64_unwrap="-w 0"
+[[ $(uname) == "Darwin" ]] && base64_unwrap=""
+
 vaultname=$1
 rgname=$2
 location=$3
@@ -112,8 +122,9 @@ certfile=$5
 keyfile=$6
 cacertfile=$7
 
-# TODO Change this to something else
-pwd="blabla"
+# Create a random password with 33 bytes of entropy
+# I picked 33 so the last character will not be =
+pwd=$(dd if=/dev/urandom bs=32 count=1 2>/dev/null | base64)
 
 certpfxfile=${certfile%.*crt}.pfx
 cacertpfxfile=${cacertfile%.*crt}.pfx
@@ -144,15 +155,13 @@ then
     rm -f $cacertpfxfile
 fi
 
-# make sure pattern substitution succeeds
-cp ./azuredeploy.parameters.json.template ./azuredeploy.parameters.json
-
 # update parameters file 
-sed -i 's|REPLACE_CERTURL|'$certid'|g' ./azuredeploy.parameters.json
-sed -i 's|REPLACE_CACERTURL|'$cacertid'|g' ./azuredeploy.parameters.json
-sed -i 's/REPLACE_CERTPRINT/'$certprint'/g' ./azuredeploy.parameters.json
-sed -i 's/REPLACE_CACERTPRINT/'$cacertprint'/g' ./azuredeploy.parameters.json
-sed -i 's/REPLACE_VAULTNAME/'$vaultname'/g' ./azuredeploy.parameters.json
-sed -i 's/REPLACE_VAULTRG/'$rgname'/g' ./azuredeploy.parameters.json
+sed -e 's|REPLACE_CERTURL|'$certid'|g' \
+    -e 's|REPLACE_CACERTURL|'$cacertid'|g' \
+    -e 's/REPLACE_CERTPRINT/'$certprint'/g' \
+    -e 's/REPLACE_CACERTPRINT/'$cacertprint'/g' \
+    -e 's/REPLACE_VAULTNAME/'$vaultname'/g' \
+    -e 's/REPLACE_VAULTRG/'$rgname'/g' \
+    azuredeploy.parameters.json.template >azuredeploy.parameters.json
 
 echo Done

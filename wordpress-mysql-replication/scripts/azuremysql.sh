@@ -14,6 +14,7 @@ RPLPWD=${4}
 ROOTPWD=${5}
 PROBEPWD=${6}
 MASTERIP=${7}
+DBNAME=${8}
 
 MOUNTPOINT="/datadrive"
 RAIDCHUNKSIZE=512
@@ -345,6 +346,7 @@ SET PASSWORD FOR 'root'@'::1' = PASSWORD('${ROOTPWD}');
 CREATE USER 'admin'@'%' IDENTIFIED BY '${ROOTPWD}';
 GRANT ALL PRIVILEGES ON *.* TO 'admin'@'%' with grant option;
 FLUSH PRIVILEGES;
+CREATE DATABASE ${DBNAME};
 EOF
 fi
     configure_mysql_replication
