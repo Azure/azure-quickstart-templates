@@ -4,6 +4,7 @@
   "parameters": {
     "virtualMachineName": {
       "type": "String",
+      "defaultValue": "myVM",
       "metadata": {
         "description": "The name of the VM"
       }
@@ -24,6 +25,13 @@
       "metadata": {
         "description": "Specify the name of an exisiting VNet in the same resource group"
       }
+    },
+    "exisitingVnetResourceGroup": {
+      "type": "String",
+      "metadata": {
+        "description": "Specify the resrouce group of the exisiting VNet"
+      },
+      "defaultValue": "[resourceGroup().name]"
     },
     "exisitingSubnetName": {
       "type": "String",
@@ -86,6 +94,8 @@
     "sqlDataDisksCount": {
       "type": "int",
       "defaultValue": 1,
+      "minValue": 1,
+      "maxValue": 8,
       "metadata": {
         "description": "Amount of data disks (1TB each) for SQL Data files"
       }
@@ -100,6 +110,8 @@
     "sqlLogDisksCount": {
       "type": "int",
       "defaultValue": 1,
+      "minValue": 1,
+      "maxValue": 8,
       "metadata": {
         "description": "Amount of data disks (1TB each) for SQL Log files"
       }
@@ -127,8 +139,8 @@
     }
   },
   "variables": {
-    "networkInterfaceName": "[concat(parameters('virtualMachineName'), '-nic-', uniqueString(parameters('virtualMachineName')))]",
-    "networkSecurityGroupName": "[concat(parameters('virtualMachineName'), '-nsg-', uniqueString(parameters('virtualMachineName')))]",
+    "networkInterfaceName": "[concat(parameters('virtualMachineName'), '-nic')]",
+    "networkSecurityGroupName": "[concat(parameters('virtualMachineName'), '-nsg')]",
     "networkSecurityGroupRules": [
       {
         "name": "RDP",
@@ -149,7 +161,7 @@
     "publicIpAddressSku": "Basic",
     "diskConfigurationType": "NEW",
     "nsgId": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]",
-    "vnetId": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',resourceGroup().name, '/providers/','Microsoft.Network/virtualNetWorks/', parameters('exisitingVirtualNetworkName'))]",
+    "vnetId": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',parameters('exisitingVNetResourceGroup'), '/providers/','Microsoft.Network/virtualNetWorks/', parameters('exisitingVirtualNetworkName'))]",
     "subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('exisitingSubNetName'))]",
     "dataDisksLuns": "[array(range(0 ,parameters('sqlDataDisksCount')))]",
     "logDisksLuns": "[array(range(parameters('sqlDataDisksCount'), parameters('sqlLogDisksCount')))]",
@@ -157,8 +169,6 @@
       "createOption": "empty",
       "caching": "ReadOnly",
       "writeAcceleratorEnabled": false,
-      "id": null,
-      "name": null,
       "storageAccountType": "Premium_LRS",
       "diskSizeGB": 1023
     }
@@ -204,7 +214,7 @@
               },
               "privateIPAllocationMethod": "Dynamic",
               "publicIpAddress": {
-                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', variables('publicIpAddressName'))]"
+                "id": "[resourceId('Microsoft.Network/publicIpAddresses', variables('publicIpAddressName'))]"
               }
             }
           }
@@ -251,7 +261,6 @@
                 "writeAcceleratorEnabled": "[variables('dataDisks').writeAcceleratorEnabled]",
                 "diskSizeGB": "[variables('dataDisks').diskSizeGB]",
                 "managedDisk": {
-                  "id": "[coalesce(variables('dataDisks').id, if(equals(variables('dataDisks').name, json('null')), json('null'), resourceId('Microsoft.Compute/disks', variables('dataDisks').name)))]",
                   "storageAccountType": "[variables('dataDisks').storageAccountType]"
                 }
               }
