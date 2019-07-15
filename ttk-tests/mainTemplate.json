@@ -1,0 +1,475 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "location": {
+        "type": "string",
+        "defaultValue": ""
+      },
+      "vmName": {
+        "type": "string",
+        "defaultValue": ""
+      },
+      "vmAdminName": {
+        "type": "string",
+        "defaultValue": ""
+      },
+      "vmAuthType": {
+        "type": "string",
+        "defaultValue": "password",
+        "allowedValues": [
+            "password",
+            "sshPublicKey"
+          ]
+      },
+      "vmAdminPassword": {
+        "type": "securestring",
+        "defaultValue": ""
+      },
+      "vmAdminSshPublicKey": {
+        "type": "securestring",
+        "defaultValue": ""
+      },
+      "vmSize": {
+        "type": "string",
+        "defaultValue": "Standard_D2_v2",
+        "allowedValues": [
+        ]
+      },
+      "managerPort": {
+        "type": "string",
+        "defaultValue": "443"
+      },
+      "heartbeatPort": {
+        "type": "string",
+        "defaultValue": "4120"
+      },
+      "databaseOption": {
+        "type": "string",
+        "defaultValue": "new",
+        "allowedValues": [
+            "new",
+            "existing"
+        ]
+      },
+      "dsmAdminName": {
+        "type": "string",
+        "defaultValue": ""
+      },
+      "dsmAdminPassword": {
+        "type": "securestring",
+        "defaultValue": ""
+      },
+      "existingSQLServerName": {
+        "type": "string",
+        "defaultValue": ""
+      },
+      "dbName": {
+        "type": "string",
+        "defaultValue": "dsm"
+      },
+      "dbAdminName": {
+        "type": "string",
+        "defaultValue": ""
+      },
+      "dbAdminPassword": {
+        "type": "securestring",
+        "defaultValue": ""
+      },
+      "publicIPAddressName": {
+        "type": "string",
+        "defaultValue": ""
+      },
+      "publicIPDomainNameLabel": {
+        "type": "string",
+        "defaultValue": ""
+      },
+      "virtualNetworkName": {
+        "type": "string",
+        "defaultValue": ""
+      },
+      "virtualNetworkResourceGroup": {
+        "type": "string",
+        "defaultValue": ""
+      },
+      "networkExists": {
+        "type": "string",
+        "defaultValue": "new",
+        "allowedValues": [
+            "new",
+            "existing"
+        ]
+      },
+      "networkAddress_new": {
+        "type": "string",
+        "defaultValue": "10.7.0.0/16"
+      },
+      "subnetName": {
+        "type": "string",
+        "defaultValue": ""
+      },
+      "subnetAddress_new": {
+        "type": "string",
+        "defaultValue": "10.7.0.0/24"
+      },
+      "_artifactsLocation": {
+        "type": "string",
+        "metadata": {
+          "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+        },
+        "defaultValue": "[deployment().properties.templateLink.uri]"
+      },
+      "_artifactsLocationSasToken": {
+        "type": "securestring",
+        "metadata": {
+          "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+        },
+        "defaultValue": ""
+      }
+    },
+    "variables": {
+        "location": "[parameters('location')]",
+        "nicName": "[concat(parameters('vmName'),'-nic')]",
+        "securityGroupName":"[concat(variables('nicName'),'-nsg')]",
+        "publicIPAddressType": "Dynamic",
+        "storageAccountName": "[tolower(concat(trim(substring(concat(parameters('vmName'),'       '),0,6)),uniquestring(resourceGroup().id)))]",
+        "storageAccountType": "Standard_LRS",
+        "vmStorageAccountContainerName": "vhds",
+        "newsqlServerName" : "[tolower(concat(parameters('vmName'),uniquestring(resourceGroup().id),'-sql'))]",
+        "storage-api-version": "2019-04-01",
+        "deployment-api-version": "2019-05-01",
+        "network-api-version": "2019-04-01",
+        "compute-api-version": "2019-07-01",
+        "publisher": "trendmicro",
+        "licenseMode": "20",
+        "offerChoosed": "[variables('offerBYOL')]",
+        "offerStandard_D2_v2": {
+            "vmSize": "Standard_D2_v2",
+            "vmSku": "dxxn25d2v2",
+            "product": "deep-security-vm"
+        },
+        "offerStandard_D3_v2": {
+            "vmSize": "Standard_D3_v2",
+            "vmSku": "dxxn50d3v2",
+            "product": "deep-security-vm"
+        },
+        "offerStandard_D4_v2": {
+            "vmSize": "Standard_D4_v2",
+            "vmSku": "dxxn100d4v2",
+            "product": "deep-security-vm"
+        },
+        "offerStandard_D5_v2": {
+            "vmSize": "Standard_D5_v2",
+            "vmSku": "dxxn200d5v2",
+            "product": "deep-security-vm"
+        },
+        "offerBYOL": {
+            "vmSize": "[parameters('vmSize')]",
+            "vmSku": "dxxnbyol",
+            "product": "deep-security-vm-byol"
+        },
+        "linuxConfigurationChoosen": "[variables(concat('linuxConfiguration', parameters('vmAuthType')))]",
+        "linuxConfigurationpassword": {
+          "disablePasswordAuthentication": "false"
+        },
+        "linuxConfigurationsshPublicKey": {
+          "disablePasswordAuthentication": "true",
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[concat('/home/',parameters('vmAdminName'),'/.ssh/authorized_keys')]",
+                  "keyData": "[parameters('vmAdminSshPublicKey')]"
+                }
+              ]
+            }
+        }
+    },
+    "resources": [
+      {
+        "type": "Microsoft.Storage/storageAccounts",
+        "name": "[variables('storageAccountName')]",
+        "apiVersion": "[variables('storage-api-version')]",
+        "location": "[variables('location')]",
+        "sku": {
+          "name": "[variables('storageAccountType')]"
+        }
+      },
+      {
+        "name": "buildSQLServer",
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "[variables('deployment-api-version')]",
+        "dependsOn": [
+        ],
+        "properties": {
+            "mode": "Incremental",
+            "templateLink": {
+              "uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/database-', parameters('databaseOption'), '.json', parameters('_artifactsLocationSasToken')))]",
+              "contentVersion": "1.0.0.0"
+            },
+            "parameters":{
+              "location": { "value": "[variables('location')]" },
+              "newsqlServerName": { "value": "[variables('newsqlServerName')]" },
+              "existingSQLServerName": { "value": "[parameters('existingSQLServerName')]"},
+              "dbAdminName": { "value": "[parameters('dbAdminName')]" },
+              "dbAdminPassword": { "value": "[parameters('dbAdminPassword')]" },
+              "sqlDBName": { "value": "[parameters('dbName')]" }
+            }
+        }
+      },
+      {
+        "name": "buildNetwork",
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "[variables('deployment-api-version')]",
+        "dependsOn": [
+        ],
+        "properties": {
+            "mode": "Incremental",
+            "templateLink": {
+              "uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/network-', parameters('networkExists'), '.json', parameters('_artifactsLocationSasToken')))]",
+              "contentVersion": "1.0.0.0"
+            },
+            "parameters":{
+              "location": { "value": "[variables('location')]" },
+              "virtualNetworkResourceGroup": { "value": "[parameters('virtualNetworkResourceGroup')]" },
+              "virtualNetworkName": { "value": "[parameters('virtualNetworkName')]" },
+              "networkAddress_new": { "value": "[parameters('networkAddress_new')]"},
+              "subnetName": { "value": "[parameters('subnetName')]" },
+              "subnetAddress_new": { "value": "[parameters('subnetAddress_new')]" }
+            }
+        }
+      },
+      {
+        "apiVersion": "[variables('network-api-version')]",
+        "type": "Microsoft.Network/publicIPAddresses",
+        "name": "[parameters('publicIPAddressName')]",
+        "location": "[variables('location')]",
+        "properties": {
+            "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+            "dnsSettings": {
+                "domainNameLabel": "[parameters('publicIPDomainNameLabel')]"
+            }
+        }
+      },
+      {
+        "apiVersion": "[variables('network-api-version')]",
+        "type": "Microsoft.Network/networkInterfaces",
+        "name": "[variables('nicName')]",
+        "location": "[variables('location')]",
+        "dependsOn": [
+            "[concat('Microsoft.Resources/deployments/', 'buildNetwork')]",
+            "[concat('Microsoft.Network/publicIPAddresses/', parameters('publicIPAddressName'))]",
+            "[concat('Microsoft.Network/networkSecurityGroups/', variables('securityGroupName'))]"
+        ],
+        "properties": {
+            "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('securityGroupName'))]"
+            },
+            "ipConfigurations": [{
+                "name": "ipconfig1",
+                "properties": {
+                    "privateIPAllocationMethod": "Dynamic",
+                    "publicIPAddress": {
+                        "id": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('publicIPAddressName'))]"
+                    },
+                    "subnet": {
+                        "id": "[reference('buildNetwork').outputs.subnetRef.value]"
+                    }
+                }
+            }]
+        }
+      },
+      {
+        "apiVersion": "[variables('network-api-version')]",
+        "type": "Microsoft.Network/networkSecurityGroups",
+        "name": "[variables('securityGroupName')]",
+        "location": "[variables('location')]",
+        "properties": {
+          "securityRules": [
+            {
+              "name": "allow-inbound-ssh",
+              "properties": {
+                "protocol": "Tcp",
+                "sourcePortRange": "*",
+                "destinationPortRange": "22",
+                "sourceAddressPrefix": "*",
+                "destinationAddressPrefix": "*",
+                "access": "Allow",
+                "priority": 1000,
+                "direction": "Inbound"
+              }
+            },
+            {
+              "name": "allow-inbound-dsmportal",
+              "properties": {
+                "protocol": "Tcp",
+                "sourcePortRange": "*",
+                "destinationPortRange": "[parameters('managerPort')]",
+                "sourceAddressPrefix": "*",
+                "destinationAddressPrefix": "*",
+                "access": "Allow",
+                "priority": 1100,
+                "direction": "Inbound"
+              }
+            },
+            {
+              "name": "allow-inbound-dsmagent",
+              "properties": {
+                "protocol": "Tcp",
+                "sourcePortRange": "*",
+                "destinationPortRange": "4118",
+                "sourceAddressPrefix": "*",
+                "destinationAddressPrefix": "*",
+                "access": "Allow",
+                "priority": 1200,
+                "direction": "Inbound"
+              }
+            },
+            {
+              "name": "allow-inbound-dsmheartbeat",
+              "properties": {
+                "protocol": "Tcp",
+                "sourcePortRange": "*",
+                "destinationPortRange": "[parameters('heartbeatPort')]",
+                "sourceAddressPrefix": "*",
+                "destinationAddressPrefix": "*",
+                "access": "Allow",
+                "priority": 1300,
+                "direction": "Inbound"
+              }
+            },
+            {
+              "name": "allow-inbound-dsmdownload",
+              "properties": {
+                "protocol": "Tcp",
+                "sourcePortRange": "*",
+                "destinationPortRange": "4122",
+                "sourceAddressPrefix": "*",
+                "destinationAddressPrefix": "*",
+                "access": "Allow",
+                "priority": 1400,
+                "direction": "Inbound"
+              }
+            },
+            {
+              "name": "allow-inbound-dsmwebinstaller",
+              "properties": {
+                "protocol": "Tcp",
+                "sourcePortRange": "*",
+                "destinationPortRange": "8443",
+                "sourceAddressPrefix": "*",
+                "destinationAddressPrefix": "*",
+                "access": "Allow",
+                "priority": 1500,
+                "direction": "Inbound"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "apiVersion": "[variables('compute-api-version')]",
+        "type": "Microsoft.Compute/virtualMachines",
+        "name": "[parameters('vmName')]",
+        "location": "[variables('location')]",
+        "dependsOn": [
+            "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+            "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]",
+            "[concat('Microsoft.Resources/deployments/', 'buildSQLServer')]"
+        ],
+        "plan": {
+            "publisher": "[variables('publisher')]",
+            "product": "[variables('offerChoosed').product]",
+            "name": "[variables('offerChoosed').vmSku]"
+        },
+        "properties": {
+            "hardwareProfile": {
+                "vmSize": "[variables('offerChoosed').vmSize]"
+            },
+            "osProfile": {
+                "computerName": "[parameters('vmName')]",
+                "adminUsername": "[parameters('vmAdminName')]",
+                "adminPassword": "[parameters('vmAdminPassword')]",
+                "linuxConfiguration": "[variables('linuxConfigurationChoosen')]"
+            },
+            "storageProfile": {
+                "imageReference": {
+                    "publisher": "[variables('publisher')]",
+                    "offer": "[variables('offerChoosed').product]",
+                    "sku": "[variables('offerChoosed').vmSku]",
+                    "version": "latest"
+                },
+                "osDisk": {
+                    "name": "[concat(parameters('vmName'),'-osDisk')]",
+                    "caching": "ReadWrite",
+                    "createOption": "FromImage",
+                    "vhd": {
+                        "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/',variables('storageAccountName')), variables('storage-api-version')).primaryEndpoints.blob,variables('vmStorageAccountContainerName'),'/',parameters('vmName'),'-osdisk.vhd')]"
+                    }
+                }
+            },
+            "networkProfile": {
+                "networkInterfaces": [{
+                    "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+                }]
+            },
+            "diagnosticsProfile": {
+                "bootDiagnostics": {
+                    "enabled": "true",
+                    "storageUri": "[reference(concat('Microsoft.Storage/storageAccounts/',variables('storageAccountName')), variables('storage-api-version')).primaryEndpoints.blob]"
+                }
+            }
+        }
+      },
+      {
+        "type": "Microsoft.Compute/virtualMachines/extensions",
+        "name": "[concat(parameters('vmName'),'/installDSM')]",
+        "apiVersion": "[variables('compute-api-version')]",
+        "location": "[variables('location')]",
+        "dependsOn": [
+          "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
+        ],
+        "properties": {
+          "publisher": "Microsoft.OSTCExtensions",
+          "type": "CustomScriptForLinux",
+          "typeHandlerVersion": "1.5",
+          "autoUpgradeMinorVersion": true,
+          "settings": {
+            "commandToExecute": "cp ../../config/0.settings /opt/trend/packages/dsm/default/"
+          },
+          "protectedSettings": {
+            "subscriptionId": "[subscription().subscriptionId]",
+            "vmName": "[parameters('vmName')]",
+            "databaseName": "[parameters('dbName')]",
+            "adminUserName": "[parameters('dsmAdminName')]",
+            "adminPassword": "[parameters('dsmAdminPassword')]",
+            "databaseUserName": "[parameters('dbAdminName')]",
+            "databaseUserPassword": "[parameters('dbAdminPassword')]",
+            "licenseMode": "[variables('licenseMode')]",
+            "databaseServer": "[reference('buildSQLServer').outputs.sqlServerFQDN.value]",
+            "location": "[variables('location')]",
+            "managerPort": "[parameters('managerPort')]",
+            "heartbeatPort": "[parameters('heartbeatPort')]",
+            "vmFQDN": "[reference(resourceId('Microsoft.Network/publicIPAddresses',parameters('publicIPAddressName')), variables('network-api-version')).dnsSettings.fqdn]",
+            "databaseOption": "[parameters('databaseOption')]",
+            "vmSize": "[variables('offerChoosed').vmSize]",
+            "resourceGroup": "[resourceGroup().name]",
+            "securityGroupName": "[variables('securityGroupName')]"
+          }
+        }
+      },
+      {
+        "type": "Microsoft.Resources/deployments",
+        "name": "pid-75edc520-a19a-5b66-b757-f0bfc49db606",
+        "apiVersion": "[variables('deployment-api-version')]",
+        "properties": {
+          "mode": "Incremental",
+          "template": {
+            "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+            "contentVersion": "1.0.0.0",
+            "resources": []
+          }
+        }
+      }
+    ]
+}
+
