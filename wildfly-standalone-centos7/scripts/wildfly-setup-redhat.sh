@@ -16,7 +16,7 @@ curl https://download.jboss.org/wildfly/16.0.0.Final/wildfly-16.0.0.Final.zip -o
 unzip wildfly-16.0.0.Final.zip
 
 echo "Sample app deploy..." >> /home/$1/install.log 
-git clone https://github.com/danieloh30/dukes.git
+git clone https://github.com/RedHat-Middleware-Workshops/msft-eap-quickstarts-app.git
 /bin/cp -rf /home/$1/dukes/target/dukes.war /home/$1/wildfly-16.0.0.Final/standalone/deployments/
 
 echo "Configuring WILDFLY managment user..." >> /home/$1/install.log 
