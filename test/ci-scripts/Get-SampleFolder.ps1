@@ -55,3 +55,4 @@ Write-Host "##vso[task.setvariable variable=sample.folder]$FolderString"
 # Generate a resourceGroup Name
 $resourceGroupName = "azdo-$(New-Guid)"
 Write-Host "##vso[task.setvariable variable=resourceGroup.name]$resourceGroupName"
+Write-Host "##vso[task.setvariable variable=prereq.resourceGroup.name]$resourceGroupName-prereqs"
