@@ -122,6 +122,28 @@
       "apiVersion": "2018-02-14",
       "name": "[variables('keyVaultName')]",
       "location": "[parameters('location')]",
+      "properties": {
+        "enabledForTemplateDeployment": true,
+        "tenantId": "[subscription().tenantId]",
+        "accessPolicies": [
+          {
+            "tenantId": "[subscription().tenantId]",
+            "objectId": "[parameters('servicePrincipalAppId')]",
+            "permissions": {
+              "keys": [
+                "all"
+              ],
+              "secrets": [
+                "get"
+              ]
+            }
+          }
+        ],
+        "sku": {
+          "name": "standard",
+          "family": "A"
+        }
+      },
       "resources": [
         {
           "type": "secrets",
@@ -156,37 +178,16 @@
             "value": "[parameters('sshPublicKey')]"
           }
         }
-      ],
-      "properties": {
-        "enabledForDeployment": true,
-        "enabledForTemplateDeployment": true,
-        "enabledForVolumeEncryption": true,
-        "tenantId": "[subscription().tenantId]",
-        "accessPolicies": [
-          {
-            "tenantId": "[subscription().tenantId]",
-            "objectId": "[parameters('servicePrincipalAppId')]",
-            "permissions": {
-              "keys": [
-                "all"
-              ],
-              "secrets": [
-                "get"
-              ]
-            }
-          }
-        ],
-        "sku": {
-          "name": "standard",
-          "family": "A"
-        }
-      }
+      ]
     },
     {
       "apiVersion": "2018-11-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('vnetName')]",
       "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('frontEndNSGName'))]"
+      ],
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -216,10 +217,7 @@
             }
           }
         ]
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('frontEndNSGName'))]"
-      ]
+      }
     },
     {
       "apiVersion": "2018-11-01",
@@ -307,7 +305,7 @@
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
               },
               "subnet": {
-                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('vnetName')), '/subnets/', variables('subnet0Name'))]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('subnet0Name'))]"
               }
             }
           }
@@ -370,7 +368,7 @@
             "autoUpgradeMinorVersion": true,
             "settings": {
               "fileUris": [
-                "[concat(variables('_artifactsLocation'), 'quickstart_template/', variables('_extensionScript'), variables('_artifactsLocationSasToken'))]"
+                "[uri(concat(variables('_artifactsLocation'), 'quickstart_template/'), concat(variables('_extensionScript'), variables('_artifactsLocationSasToken')))]"
               ]
             },
             "protectedSettings": {
@@ -392,7 +390,7 @@
     },
     "SSH": {
       "type": "string",
-      "value": "[concat('ssh -L 8084:localhost:8084 -L 9000:localhost:9000 ', if(empty(parameters('aksClusterName')), '-L 8080:localhost:8080 -L 8087:localhost:8087 ', '-L 8082:localhost:8082 '), parameters('adminUsername'), '@', reference(variables('publicIPAddressName')).dnsSettings.fqdn)]"
+      "value": "[concat('ssh -L 8084:localhost:8084 -L 9000:localhost:9000 ', if(empty(parameters('aksClusterName')), '-L 8082:localhost:8082 ', '-L 8080:localhost:8080 -L 8087:localhost:8087 '), parameters('adminUsername'), '@', reference(variables('publicIPAddressName')).dnsSettings.fqdn)]"
     },
     "useSshPublicKey": {
       "type": "string",
