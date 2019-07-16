@@ -12,9 +12,9 @@ This template deploys **OMS Monitoring and Reporting solution for Azure backup**
 `Tags: Azure Backup, OMS Log Analytics, Monitoring`
 
 > **Important** <br>
-> This is an updated, multi-view template for LA-based Monitoring and Reporting in Azure Backup. Users who were using our earlier solution are required to deploy the new template by clicking the 'Deploy to Azure' button above. Please note that users who were using the earlier solution (titled 'Azure Backup Monitoring Solution') will continue to see it in their workspaces even after deploying the new solution. However, the old solution may provide inaccurate results due to some minor schema changes in the backend. 
+> This is an updated, multi-view template for LA-based Monitoring and Reporting in Azure Backup. Users who were using our earlier solution are required to deploy the new template by clicking the 'Deploy to Azure' button above. Please note that users who were using the earlier solution (titled 'Azure Backup Monitoring Solution') will continue to see it in their workspaces even after deploying the new solution. However, the old solution may provide inaccurate results due to some minor schema changes. Users are hence required to use this new template.
 
-Note- When deploying this template, users may leave the fields "_artifactsLocation" and "_artifactsLocationSasToken" untouched.
+**Note**- When deploying this template, users may leave the fields "_artifactsLocation" and "_artifactsLocationSasToken" untouched.
 
 ## Prerequisites
 
@@ -40,7 +40,7 @@ Please select the relevant log, “AzureBackupReport” in this case, to be sent
 
 Upon deploying the solution, you would view an overview tile which reflects backup jobs and their status.
 
-![alt text](images/la-azurebackup-overview.png "OMS Monitoring and Reporting solution for Azure Backup overview blade")
+![alt text](images/la-azurebackup-overview-dashboard.png "OMS Monitoring and Reporting solution for Azure Backup overview blade")
 
 Clicking on the solution would let you explore Alerts, Backups, Restores, Cloud Storage and Active Data source details.
 
