@@ -50,32 +50,21 @@ Write-FormatView -Action {
         $foregroundColor = 'Yellow'
         $statusChar = '?'        
     }
-    $azoStatus = 
-        if ($env:AgentId) {
-            if ($errorCount) {
-                "##vso[task.logissue type=error;]"
-            } elseif ($warningCount) {
-                "##vso[task.logissue type=warning;]"
-            } else {
-                ''
-            }
-        }
-    $statusLine = "    [$statusChar]$azoStatus $($testOut.Name) ($([Math]::Round($testOut.Timespan.TotalMilliseconds)) ms)"
+    
+    $statusLine = "    [$statusChar] $($testOut.Name) ($([Math]::Round($testOut.Timespan.TotalMilliseconds)) ms)"
     Write-Host $statusLine -ForegroundColor $foregroundColor -NoNewline
-
-    $null
 
     $indent = 4
     if ($errorLines) {
         Write-Host " " # end of line
-        $azoErrorStatus = if ($env:AgentId) { "##vso[task.logissue type=error;]"} else { '' }         
+        $azoErrorStatus = if ($ENV:Agent_ID) { "##vso[task.logissue type=error;]"} else { '' }         
         foreach ($line in $errorLines) {
             Write-Host "$azoErrorStatus$(' ' * $indent)$line" -foregroundColor Red    
         }
     }
     if ($warningLines) {
         Write-Host " " # end of line
-        $azoWarnStatus = if ($env:AgentId) { "##vso[task.logissue type=error;]"} else { '' }         
+        $azoWarnStatus = if ($ENV:Agent_ID) { "##vso[task.logissue type=error;]"} else { '' }         
         foreach ($line in $warningLines) {
             Write-Host "$azoWarnStatus$(' ' * $indent)$line" -foregroundColor DarkYellow 
         }
