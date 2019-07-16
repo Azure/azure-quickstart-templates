@@ -9,10 +9,12 @@
 
 This template deploys **OMS Monitoring and Reporting solution for Azure backup** on a Log Analytics workspace. This allows you to monitor key backup parameters such as backup and restore jobs, backup alerts and Cloud storage usage across Recovery services vaults
 
-> **Important** <br>
-> This is an updated, multi-view template for LA-based Monitoring and Reporting in Azure Backup. Users who were using our earlier solution are required to deploy the new template by clicking the 'Deploy to Azure' button above. Please note that users who were using the earlier solution (titled 'Azure Backup Monitoring Solution') will continue to see it in their workspaces even after deploying the new solution. However, the old solution may provide inaccurate results due to some minor schema changes. Users are hence required to use this new template.
+`Tags: Azure Backup, OMS Log Analytics, Monitoring`
 
-**Note**- When deploying this template, users may leave the fields "_artifactsLocation" and "_artifactsLocationSasToken" untouched.
+> **Important** <br>
+> This is an updated, multi-view template for LA-based Monitoring and Reporting in Azure Backup. Users who were using our earlier solution are required to deploy the new template by clicking the 'Deploy to Azure' button above. Please note that users who were using the earlier solution (titled 'Azure Backup Monitoring Solution') will continue to see it in their workspaces even after deploying the new solution. However, the old solution may provide inaccurate results due to some minor schema changes in the backend. 
+
+Note- When deploying this template, users may leave the fields "_artifactsLocation" and "_artifactsLocationSasToken" untouched.
 
 ## Prerequisites
 
@@ -38,7 +40,7 @@ Please select the relevant log, “AzureBackupReport” in this case, to be sent
 
 Upon deploying the solution, you would view an overview tile which reflects backup jobs and their status.
 
-![alt text](images/la-azurebackup-overview-dashboard.png "OMS Monitoring and Reporting solution for Azure Backup overview blade")
+![alt text](images/la-azurebackup-overview.png "OMS Monitoring and Reporting solution for Azure Backup overview blade")
 
 Clicking on the solution would let you explore Alerts, Backups, Restores, Cloud Storage and Active Data source details.
 
@@ -52,5 +54,3 @@ You can click on each tile to get more details about the queries used to create 
 ![alt text](images/LogAnalyticsScreen.JPG "OMS Monitoring solution for Azure backup Log search")
 
 More information about configuring alerts can be found [here](https://docs.microsoft.com/azure/log-analytics/log-analytics-tutorial-response)
-
-`Tags: Azure Backup, OMS Log Analytics, Monitoring`
