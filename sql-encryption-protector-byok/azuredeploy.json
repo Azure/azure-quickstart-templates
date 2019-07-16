@@ -3,22 +3,41 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "sqlServerName": {
-            "type": "string"
+          "type": "string",
+          "defaultValue": "sql-server",
+          "metadata": {
+            "description": "Azure SQL server name to create"
+          }
         },
         "sqlServerAdministrator": {
-        "type": "string"
+          "type": "string",
+          "metadata": {
+            "description": "Azure SQL server administrator name"
+          }
         },
         "sqlServerAdministratorPwd": {
-            "type": "string"
+          "type": "securestring",
+          "metadata": {
+            "description": "Azure SQL server administrator password"
+          }
         },
         "keyVaultName": {
-            "type": "string"
+          "type": "string",
+          "metadata": {
+            "description": "Key vault name where the key to use is stored"
+          }
         },
         "keyName": {
-            "type": "string"
+          "type": "string",
+          "metadata": {
+            "description": "Key name in the key vault to use as encryption protector"
+          }
         },
-        "keyVersion": {
-            "type": "string"
+        "keyVersion" : {
+          "type": "string",
+          "metadata": {
+            "description": "Version of the key in the key vault to use as encryption protector"
+          }
         },
         "location": {
           "type": "string",
@@ -28,30 +47,25 @@
           }
         }
     },
-    "variables": {
-        "sqlServerKeyName": "[concat(parameters('keyVaultName'), '_', parameters('keyName'), '_', parameters('keyVersion'))]"
-    },
     "resources": [
     {
-      "type": "Microsoft.Sql/servers",
-      "apiVersion": "2015-05-01-preview",
       "name": "[parameters('sqlServerName')]",
+      "type": "Microsoft.Sql/servers",
+      "apiVersion": "2017-03-01-preview",
       "location": "[parameters('location')]",
       "identity": {
         "type": "SystemAssigned"
       },
       "properties": {
-        "mode": "Incremental",
         "administratorLogin": "[parameters('sqlServerAdministrator')]",
         "administratorLoginPassword": "[parameters('sqlServerAdministratorPwd')]",
         "version": "12.0"
-      },
-      "resources": []
+      }
     },
     {
       "name": "[concat(parameters('keyVaultName'), '/add')]",
       "type": "Microsoft.KeyVault/vaults/accessPolicies",
-      "apiVersion": "2018-02-14",
+      "apiVersion": "2018-02-14-preview",
       "dependsOn": [
         "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]"
       ],
@@ -59,7 +73,7 @@
         "accessPolicies": [
           {
             "tenantId": "[subscription().tenantId]",
-            "objectId": "[reference(concat('Microsoft.Sql/servers/', parameters('sqlServerName')), '2015-05-01-preview', 'Full').identity.principalId]",
+            "objectId": "[reference(concat('Microsoft.Sql/servers/', parameters('sqlServerName')), '2017-03-01-preview', 'Full').identity.principalId]",
             "permissions": {
               "keys": [
                 "get",
@@ -72,15 +86,16 @@
       }
     },
     {
-      "name": "[concat(parameters('sqlServerName'), '/', variables('sqlServerKeyName'))]",
+      "name": "[concat(parameters('sqlServerName'), '/', parameters('keyName'))]",
       "type": "Microsoft.Sql/servers/keys",
       "apiVersion": "2015-05-01-preview",
       "dependsOn": [
+        "[concat('Microsoft.KeyVault/vaults/', parameters('keyVaultName'), '/accessPolicies/add')]",
         "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]"
       ],
       "properties": {
         "serverKeyType": "AzureKeyVault",
-        "uri": "[concat('https://', parameters('keyVaultName'), '.vault.azure.net/keys/', parameters('keyName'), '/', parameters('keyVersion'))]"
+        "uri": "[concat(reference(concat('Microsoft.KeyVault/vaults/', parameters('keyVaultName')), '2018-02-14-preview', 'Full').properties.vaultUri, 'keys/', parameters('keyName'), '/', parameters('keyVersion'))]"
       }
     },
     {
@@ -89,12 +104,13 @@
       "apiVersion": "2015-05-01-preview",
       "kind": "azurekeyvault",
       "dependsOn": [
-        "[resourceId('Microsoft.SQL/servers/keys', parameters('sqlServerName'), variables('sqlServerKeyName'))]"
+        "[concat('Microsoft.SQL/servers/', parameters('sqlServerName'),'/keys/', parameters('keyName'))]"
       ],
       "properties": {
-        "serverKeyName": "[variables('sqlServerKeyName')]",
+        "serverKeyName": "[parameters('keyName')]",
         "serverKeyType": "AzureKeyVault"
       }
-    }]
+    }
+  ]
 }
 
