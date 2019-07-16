@@ -103,7 +103,7 @@ fi
 ##
 ## get Common Code
 ##
-COMMON_CODE_TAG="aa3ec7554a52abe347a170d75b55eb44e8598e91"
+COMMON_CODE_TAG="c8d9d46d8f78268b93c67ff5cdf58d92357eb4b5"
 git clone https://github.com/sassoftware/quickstart-sas-viya-common.git "${CODE_DIRECTORY}/common"
 pushd "${CODE_DIRECTORY}/common"
 git checkout $COMMON_CODE_TAG
