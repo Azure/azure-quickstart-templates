@@ -15,7 +15,8 @@ param(
     [string] $CertPass = $("cI#" + (New-Guid).ToString().Substring(0, 17)),
     [string] $CertDNSName = 'azbot-cert-dns',
     [string] $KeyVaultSelfSignedCertName = 'azbot-sscert',
-    [string] $KeyVaultNotSecretName = 'notSecretPassword'
+    [string] $KeyVaultNotSecretName = 'notSecretPassword',
+    [string] $ServicePrincipalObjectId #if not provided assigning perms to the Vault must be done manually
 
 )
 
@@ -35,6 +36,7 @@ $json.Add("VNET-SUBNET1-NAME", $vNet.Subnets[0].Name)
 
 <#
 Creat a KeyVault and add:
+    0) The principal deploying templates will need access to the vault (if needed for vm deployments)
     1) Sample Password
     2) Service Fabric Cert
     3) Disk Encryption Key
@@ -45,7 +47,38 @@ Creat a KeyVault and add:
 # Create the Vault
 $vault = Get-AzureRMKeyVault -VaultName $KeyVaultName -verbose -ErrorAction SilentlyContinue
 if($vault -eq $null) {
-    $vault = New-AzureRMKeyVault -VaultName $KeyVaultName -ResourceGroupName $ResourceGroupName -Location $Location -EnabledForTemplateDeployment -EnabledForDiskEncryption
+    $vault = New-AzureRMKeyVault -VaultName $KeyVaultName `
+                                 -ResourceGroupName $ResourceGroupName `
+                                 -Location $Location `
+                                 -EnabledForTemplateDeployment -EnabledForDiskEncryption -EnabledForDeployment `
+                                 -Verbose
+}
+
+# 0) Give the svc principal that will be deploying templates RBAC and Access Policy Access to the Vault
+
+if($ServicePrincipalObjectId){
+
+    $roleDef = New-Object -TypeName "Microsoft.Azure.Commands.Resources.Models.Authorization.PSRoleDefinition"
+
+    $roleDef.Id = $null
+    $roleDef.Name = "KeyVault Deployment Action"
+    $roleDef.Description = "KeyVault Deploy Action for Template Reference Parameter Use"
+    $roleDef.Actions = @("Microsoft.KeyVault/vaults/deploy/action")
+    $roleDef.AssignableScopes = @("/subscriptions/$((Get-AzureRMContext).Subscription.Id)")
+
+    $roleDef | Out-String
+
+    $role = New-AzureRMRoleDefinition -Role $roleDef -Verbose
+
+    New-AzureRMRoleAssignment -RoleDefinitionId $role.Id -ObjectId $ServicePrincipalObjectId -Scope $vault.ResourceId -Verbose
+
+    # Set the Data Plane Access Policy for the Principal
+
+    Set-AzureRMKeyVaultAccessPolicy -VaultName $KeyVaultName -ObjectId $ServicePrincipalObjectId `
+                               -PermissionsToKeys get,restore `
+                               -PermissionsToSecrets get,set `
+                               -PermissionsToCertificates get
+
 }
 
 # 1) Create a sample password
