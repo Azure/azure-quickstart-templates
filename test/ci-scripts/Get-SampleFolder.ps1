@@ -5,7 +5,7 @@ If the PR does not contain changes to a sample folder, it will currently fail bu
 pass the build in order to trigger a manual review
 #>
 
-Get-ChildItem env: # debugging
+# Get-ChildItem env: # debugging
 
 $GitHubRepository = $ENV:BUILD_REPOSITORY_NAME
 $GitHubPRNumber = $ENV:SYSTEM_PULLREQUEST_PULLREQUESTNUMBER
@@ -55,3 +55,4 @@ Write-Host "##vso[task.setvariable variable=sample.folder]$FolderString"
 # Generate a resourceGroup Name
 $resourceGroupName = "azdo-$(New-Guid)"
 Write-Host "##vso[task.setvariable variable=resourceGroup.name]$resourceGroupName"
+Write-Host "##vso[task.setvariable variable=prereq.resourceGroup.name]$resourceGroupName-prereqs"

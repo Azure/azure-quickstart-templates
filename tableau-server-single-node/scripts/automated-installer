@@ -1,0 +1,703 @@
+#!/bin/bash
+set -o nounset # exit script if trying to use an uninitialized variable
+set -o errexit # exit the script if any statement returns a non-true return value
+
+print() {
+  if [ "${verbose}" -eq 1 ]; then
+     echo "$@"
+  fi
+}
+
+errcho() {
+  echo "$@" >&2
+}
+
+show_short_help() {
+  errcho "Run '$(basename "$0") -h' to see the full list of available options."
+}
+
+error_with_no_value_specified() {
+  errcho "Command line option: '--${1}' must have an assigned value, if specified."
+  show_short_help
+}
+
+# TFSID: 531808 - localization
+show_help() {
+  cat <<EOM
+  Usage: $(basename "$0") -s secrets-file -f config-file -r registration-file --accepteula [optional arguments] package-file
+
+  Installs the package and sets up directories and permissions to properly run Tableau Server, then
+  begins Tableau Services Manager setup. After successful completion, Tableau Server should be fully operational.
+
+  If you wish this system to be added as an additional node in an existing cluster, provide the -b bootstrap flag
+  and the bootstrap file from the initial server.
+
+  REQUIRED
+    -s secrets-file                         The name of the secrets file, which provides the usernames for
+                                            the TSM adminstrative user and Tableau Server administrator, and optionally
+                                            their passwords. If passwords are not found in the secrets file,
+                                            this script will prompt for them (not suitable for unattended
+                                            installs).
+                                            Tableau provides "${TEMPLATE_SECRETS_FILE}" as a template.
+
+    -f config-file                          The name of the configuration and topology JSON file.
+                                            Tableau provides "${TEMPLATE_CONFIG_FILE}" as a template.
+
+    -r registration-file                    The name of the registration file.
+                                            Tableau provides "${TEMPLATE_REGISTRATION_FILE}" as a template.
+
+    --accepteula                            Indicate that you have accepted the End User License Agreement.
+
+    package-file                            The rpm or deb file to install (e.g., tableau-server-10.0.0-1.x86_64.rpm
+
+  OPTIONAL
+    -d data-directory                       Set a custom location for the data directory if it's not already set.
+                                            When not set, the initialize-tsm script uses its default value.
+
+    -c config-name                          Set the service configuration name.
+                                            When not set, the initialize-tsm script uses its default value.
+
+    -k license-key                          Specify product key used to activate Tableau Server.
+                                            When not set, trial license will be activated.
+
+    -g                                      Do NOT add the current user to the "tsmadmin" administrative
+                                            group, used for default access to Tableau Services Manager, or
+                                            to the "tableau" group, used for easier access to log files.
+
+    -a username                             The provided username will be used as the user to be added
+                                            to the appropriate groups, instead of the user running this
+                                            script. Providing both -a and -g is not allowed.
+
+    -b bootstrap-file                       Location of the bootstrap file downloaded from the Tableau Services Manager
+                                            on existing node. If this flag is provided, this node will be configured
+                                            as an additional node for an existing cluster.
+
+    -v                                      Verbose output.
+
+    --force                                 Bypass warning messages.
+
+    -i coordinationservice-client-port      Client port for the coordination service
+
+
+    -e coordinationservice-peer-port        Peer port for the coordination service
+
+
+    -m coordinationservice-leader-port      Leader port for the coordination service
+
+    -t licenseservice-vendordaemon-port     Vendor daemon port for the licensing service
+
+    -n agent-filetransfer-port              Filetransfer port for the agent service
+
+    -o controller-port                      HTTPS port for the controller service
+
+    -l port-range-min                       Lower port bound for automatic selection
+
+    -x port-range-max                       Upper port bound for automatic selection
+
+    --disable-port-remapping                Disable automatic port selection
+
+    --unprivileged-user=<value>             Name of the unprivileged account to run Tableau Server.
+                                            When not set, the initialize-tsm script uses its default value.
+
+    --tsm-authorized-group=<value>          Name of the group(s) granted authorization to access Tableau Services Manager.
+                                            When not set, the initialize-tsm script uses its default value.
+
+    --disable-account-creation              Do not create groups or the user account. This option will prevent any calls to useradd
+                                            or usermod (no users or groups will be created/edited). However, the values in: unprivileged-user,
+                                            privileged-user and tsm-authorized-group will still be passed
+                                            through for system configuration.
+
+    --debug                                 Print each command as it is run for debugging purposes. Produces extensive
+                                            output.
+
+    --http_proxy=<value>                    HTTP forward proxy for Tableau Server. Its value should be http://<proxy_address>:<proxy_port>/
+                                            For example, --http_proxy=http://1.2.3.4:3128/ or --http_proxy=http://example.com:3128/
+
+    --https_proxy=<value>                   HTTPS forward proxy for Tableau Server. Its value should be http://<proxy_address>:<proxy_port>/
+                                            For example, --https_proxy=http://1.2.3.4:3128/ or --https_proxy=http://example.com:3128/
+                                            Take care to use http when you specify the URL for the https_proxy environmental variable.
+                                            Do not specify the https protocol for the value of the https_proxy environmental variable.
+
+    --no_proxy=<value>                      Environment variable that directs certain URLs to bypass the forward proxy. For example,
+                                            --no_proxy=localhost,127.0.0.1,localaddress,.localdomain.com
+
+    --use-repo=<value>                      Install package from a configured repository instead of package file. Value should be the name of the package.
+                                            For example, --use-repo=tableau-server-2018-1-3.x86_64.rpm
+EOM
+}
+
+show_short_help() {
+    cat <<EOM
+Run '$(basename "$0") -h' to see the full list of available options.
+
+EOM
+}
+
+print_accept_eula_required_error_and_exit() {
+  errcho ""
+  errcho "You must accept the EULA to install Tableau Server."
+  errcho "Pass the '--accepteula' flag to indicate that that you"
+  errcho "accept Tableau's End User License Agreement."
+  exit 1
+}
+
+print_secrets_file_error_and_exit() {
+  errcho "$1"
+  errcho "The secrets file configures administrative users and passwords."
+  errcho "Specify the secrets file using '-s secrets-file' argument."
+  errcho "You may use the '${TEMPLATE_SECRETS_FILE}' file as a template."
+  exit 1
+}
+
+print_registration_file_error_and_exit() {
+  errcho "$1"
+  errcho "The registration file provides the user and organization information for registering Tableau Server."
+  errcho "Specify the registration file using '-r registration-file' argument."
+  errcho "You may use the '${TEMPLATE_REGISTRATION_FILE}' file as a template."
+  exit 1
+}
+
+print_config_file_error_and_exit() {
+  errcho "$1"
+  errcho "The configuration and topology file provides the initial configuration and topology of your Tableau Server."
+  errcho "Specify the configuration and topology file using '-f config-file' argument."
+  errcho "You may use the '${DEFAULT_CONFIG_FILE}' file as a template."
+  exit 1
+}
+
+print_secret_missing_error_and_exit() {
+  errcho "$1"
+  errcho "Set the value in the secrets file and specify the file using the -s option."
+  errcho "The secrets file configures administrative users and passwords."
+  errcho "You may use the '${TEMPLATE_SECRETS_FILE}' file as a template."
+  exit 1
+}
+
+print_package_file_error_and_exit() {
+  errcho "$1"
+  errcho "Provide the package file (rpm or deb) as last argument."
+  exit 1
+}
+
+print_wrong_package_file_error_and_exit(){
+  errcho "$1"
+  exit 1
+}
+
+print_distro_not_supported_error_and_exit(){
+  errcho "The detected Linux distribution is not supported by Tableau Server."
+  exit 1
+}
+
+print_unrecognized_distro_exit() {
+  errcho "Error: We did not recognize this Linux distribution (compatible release ids '$(echo "$os_release_ids" | awk '{$1=$1};1')')"
+  requirements_url="https://onlinehelp.tableau.com/current/server-linux/en-us/requ.htm"
+  localized_help_url
+  errcho "Please refer to our documentation page: \\n${requirements_url}\\n for supported distributions"
+  errcho "We will allow running on any distro recoginized as like RHEL or Debian, but support"
+  errcho "is not guaranteed outside of the officially supported distros"
+  exit 1
+}
+
+interactive_secrets() {
+  if [ -z "${tsm_admin_pass}" ]; then
+    read -r -p "Password of user with sudo access (tsm_admin_pass): " -s tsm_admin_pass # -s turns off echo
+    echo -e "" # newline, no echo for previous read
+  fi
+  if [ -z "${tableau_server_admin_pass}" ]; then
+    read -r -p "Password for Tableau Server administrator (tableau_server_admin_pass): " -s tableau_server_admin_pass # -s turns off echo
+    echo -e "" # newline, no echo for previous read
+  fi
+}
+
+localized_help_url() {
+  # If we attempt to invoke LANG directly it will throw an error "command not found" if it is not set.
+  # we use the colon dash operator and a local variable instead so we get an empty value if LANG is unset
+  local lang=${LANG:-}
+  local url_lang=${LC_ALL:-${lang}}
+  url_lang=${url_lang%%.*}   # Remove any suffix, including period (like ".UTF-8")
+  case "${url_lang}" in
+    en_* ) url_lang="en-us";;
+    de_* ) url_lang="de-de";;
+    es_* ) url_lang="es-es";;
+    fr_* ) url_lang="fr-fr";;
+    ja_* ) url_lang="ja-jp";;
+    ko_* ) url_lang="ko-kr";;
+    pt_* ) url_lang="pt-br";;
+    zh_* ) url_lang="zh-cn";;
+    *    ) url_lang="en-us";;
+  esac
+
+  requirements_url="${requirements_url/en-us/$url_lang}"
+}
+
+check_arguments() {
+
+  [ ${EUID} -ne 0 ] && { errcho -e "This script must be run as root. Canceling.\\n"; show_help; exit 1; }
+
+  if [ $# -lt 1 ]; then
+    show_help
+    exit 2
+  fi
+
+  OPTIND=1 # Reset for getopts (-: to allow long options)
+  while getopts "c:d:k:s:f:r:a:b:vgh-:i:e:m:t:n:o:l:x:" opt; do
+    case "$opt" in
+      c)
+        config_name="${OPTARG}"
+        ;;
+      d)
+        data_dir="${OPTARG}"
+        ;;
+      k)
+        license_key="${OPTARG}"
+        ;;
+      s)
+        secrets_file="${OPTARG}"
+        ;;
+      f)
+        config_file="${OPTARG}"
+        ;;
+      r)
+        registration_file="${OPTARG}"
+        ;;
+      a)
+        group_username="${OPTARG}"
+        ;;
+      b)
+        bootstrap_file="${OPTARG}"
+        ;;
+      g)
+        add_user_to_groups=0
+        ;;
+      v)
+        verbose=1
+        ;;
+      i)
+        zk_client_port="${OPTARG}"
+        ;;
+      e)
+        zk_peer_port="${OPTARG}"
+        ;;
+      m)
+        zk_leader_port="${OPTARG}"
+        ;;
+      t)
+        license_vd_port="${OPTARG}"
+        ;;
+      n)
+        agent_ft_port="${OPTARG}"
+        ;;
+      o)
+        controller_port="${OPTARG}"
+        ;;
+      l)
+        port_range_min="${OPTARG}"
+        ;;
+      x)
+        port_range_max="${OPTARG}"
+        ;;
+      h)
+        show_help
+        exit 0
+        ;;
+      -) # handle long options
+        # split arguments by '=' and store in local array
+        local args
+        IFS='=' read -r -a args <<< "${OPTARG}"
+        case "${args[0]}" in
+          accepteula)
+            accept_eula_arg='--accepteula'
+            ;;
+          force)
+            force_arg='-f'
+            ;;
+          disable-port-remapping)
+            port_remapping_disabled=1
+            ;;
+          unprivileged-user)
+            if [ ${#args[@]} -ne 2 ]; then
+              error_with_no_value_specified "${args[0]}"
+              exit 2
+            fi
+            unprivileged_username="${args[1]}"
+            ;;
+          tsm-authorized-group)
+            if [ ${#args[@]} -ne 2 ]; then
+              error_with_no_value_specified "${args[0]}"
+              exit 2
+            fi
+            tsm_authorized_groupname="${args[1]}"
+            ;;
+          http_proxy)
+            if [ ${#args[@]} -ne 2 ]; then
+              error_with_no_value_specified "${args[0]}"
+              exit 2
+            fi
+            http_proxy="${args[1]}"
+            ;;
+          https_proxy)
+            if [ ${#args[@]} -ne 2 ]; then
+              error_with_no_value_specified "${args[0]}"
+              exit 2
+            fi
+            https_proxy="${args[1]}"
+            ;;
+          no_proxy)
+            if [ ${#args[@]} -ne 2 ]; then
+              error_with_no_value_specified "${args[0]}"
+              exit 2
+            fi
+            no_proxy="${args[1]}"
+            ;;
+          disable-account-creation)
+            # account creation is enabled by default, so only set this flag
+            # if we're explicitly told to do so by the server admin.
+            disable_group_and_account_creation=1
+            ;;
+          debug)
+            set -o xtrace
+            enable_debug=1
+            ;;
+      use-repo)
+            use_repo="${args[1]}"
+            ;;
+          *)
+            echo ""
+            echo "Unknown or malformed command line option: '--${OPTARG}'"
+            show_short_help
+            exit 2
+            ;;
+        esac
+        ;;
+      ?)
+        show_short_help
+        exit 2
+        ;;
+    esac
+  done
+  shift "$((OPTIND-1))"
+
+  determine_distros
+
+  # While using repo, rpm query should not be used on package name provided, and a minor string manipulation to get version number.
+  if [ -z "${use_repo}" ]; then
+      if [ $# -lt 1 ]; then
+        print_package_file_error_and_exit "No package-file specified."
+      fi
+
+      readonly package_file="$1"
+
+      [ ! -e "${package_file}" ] && { print_package_file_error_and_exit "Package file ${package_file} not found. Canceling."; }
+
+      # The "version_string" used internally is always embedded in the name of the package to make the name unique so that
+      # multiple versions can be installed side-by-side. Ask the package for its name and derive the "version_string" that
+      # way.
+
+     if [ "$distro" = "rhel" ];then
+        version_string=$(rpm -qp --queryformat '%{NAME}\n' "$package_file" | sed -e "s/tableau-server-//")
+     elif [ "$distro" = "debian" ];then
+        version_string=$(dpkg-deb -f "$package_file" Package | sed -e "s/tableau-server-//")
+     else
+        print_distro_not_supported_error_and_exit
+     fi
+  else
+      if [ "$distro" = "rhel" ];then
+        tmp=${use_repo%.x86_64}
+        version_string=${tmp#tableau-server-}
+      elif [ "$distro" = "debian" ];then
+        version_string=${use_repo#tableau-server-}
+      else
+        print_distro_not_supported_error_and_exit
+      fi
+  fi
+
+  set +o errexit
+  shift
+  set -o errexit
+
+  readonly install_dir="/opt/tableau/tableau_server"
+
+  [ -z "${accept_eula_arg}" ] && print_accept_eula_required_error_and_exit
+  [ -z "${secrets_file}" ] && print_secrets_file_error_and_exit "Specify the secrets file using -s. Canceling."
+  [ -z "${config_file}" ] && print_config_file_error_and_exit "Specify the configuration and topology json file using -f. Canceling."
+  [ -z "${registration_file}" ] && print_registration_file_error_and_exit "Specify the registration file using -r. Canceling."
+
+  [ ! -e "${secrets_file}" ] && print_secrets_file_error_and_exit "Secrets file ${secrets_file} not found. Canceling."
+  source "${secrets_file}"
+
+  [ ! -e "${config_file}" ] && print_config_file_error_and_exit "Configuration and topology file ${config_file} not found. Canceling."
+  [ ! -e "${registration_file}" ] && print_registration_file_error_and_exit "Registration file ${registration_file} not found. Canceling."
+
+  [ -z "${tsm_admin_pass}" ] || [ -z "${tableau_server_admin_pass}" ] && interactive_secrets
+
+  [ -z "${tsm_admin_user}" ] && print_secret_missing_error_and_exit "No value specified for 'tsm_admin_user'. Canceling."
+  [ -z "${tsm_admin_pass}" ] && print_secret_missing_error_and_exit "No value specified for 'tsm_admin_pass'. Canceling."
+  [ -z "${tableau_server_admin_user}" ] && print_secret_missing_error_and_exit "No value specified for 'tableau_server_admin_user'. Canceling."
+  [ -z "${tableau_server_admin_pass}" ] && print_secret_missing_error_and_exit "No value specified for 'tableau_server_admin_pass'. Canceling."
+
+  return 0
+}
+
+determine_distros() {
+  # Load from the os-release file to determine distro, and the appropriate group
+  source /etc/os-release
+  local related_ids='' # blank if not defined
+  if [ -v ID_LIKE ]; then related_ids="${ID_LIKE}"; fi
+  # space at end of os_release_ids is significant: we match for "ol " with space at end
+  # to make sure we don't match "ol" as a substring of something else
+  os_release_ids="${ID} ${related_ids} "
+
+  case "$os_release_ids" in
+    *'centos '* ) distro="rhel";;
+    *'rhel '*   ) distro="rhel";;
+    *'fedora '* ) distro="rhel";;
+    *'ol '*     ) distro="rhel";; # Oracle Linux
+    *'ubuntu '* ) distro="debian";;
+    *'debian '* ) distro="debian";;
+    *           ) print_unrecognized_distro_exit
+  esac
+}
+
+find_running_username() {
+  # If user has provided -a username, use that as the running_username
+  running_username=${group_username}
+
+  if [ -z "${running_username}" ]; then
+    # need to determine what user to run tsm commands as. Since this script most commonly
+    # run by sudo, $USER will be root, which we don't want to run commands as.
+    running_username=$(/usr/bin/printenv SUDO_USER || logname 2>/dev/null || /usr/bin/printenv USER || echo "") # final echo ensures failure exit code doesn't cause script to exit
+    if [ -z "${running_username}" ]; then
+      errcho "Unable to determine which user is running this script (this is unusual). Canceling."
+      errcho ""
+      exit 1
+    fi
+  fi
+}
+
+# This function creats a temporary password file, on which tsm_admin_password or tableau-server-admin-password is populated and sent along with command
+create_temporary_password_file(){
+  temporary_password_file=$(mktemp)
+  chmod 0600 "${temporary_password_file}"
+  chown "${running_username}" "${temporary_password_file}"
+  trap "rm -f ${temporary_password_file}" EXIT
+}
+
+run_install() {
+    if [ $distro = "rhel" ];then
+           run_yum_install
+    elif [ $distro = "debian" ];then
+           run_gdebi_install
+    else
+        print_distro_not_supported_error_and_exit
+    fi
+}
+
+run_yum_install() {
+  # only install packages if not already installed
+  if [ -z "${use_repo}" ]; then
+      if ! rpm -q "${package_file%.*}" &> /dev/null; then
+        [[ $package_file != *rpm ]] && print_wrong_package_file_error_and_exit "Only .rpm packages can be installed in RHEL-like distros"
+        yum install "$package_file" -y
+      fi
+  else
+      if ! rpm -q "${use_repo%.*}" &> /dev/null; then
+        yum install "${use_repo}" -y
+      fi
+  fi
+}
+
+run_gdebi_install() {
+  # only install packages if not already installed
+  if [ -z "${use_repo}" ]; then
+    if ! dpkg-query -W gdebi-core &> /dev/null; then
+        apt-get update
+        apt-get -y install gdebi-core
+    fi
+
+    if ! dpkg-query -W "${package_file%%_amd64*}" &> /dev/null; then
+        [[ $package_file != *deb ]] && print_wrong_package_file_error_and_exit "Only .deb packages can be intalled in Debian-like distros"
+        gdebi -n "$package_file"
+    fi
+  else
+    if ! dpkg-query -W "${use_repo%%_amd64*}" &> /dev/null; then
+        apt-get -y --allow-unauthenticated install "${use_repo}"
+    fi
+  fi
+}
+
+run_initialize_tsm() {
+
+  initialize_tsm_cmd=("${install_dir}/packages/scripts.${version_string}/initialize-tsm")
+
+  [ -n "${accept_eula_arg}"                     ] && initialize_tsm_cmd+=("--accepteula")
+  [ -n "${force_arg}"                           ] && initialize_tsm_cmd+=("-f")
+  [ ${verbose} -eq 0                            ] && initialize_tsm_cmd+=("-q") # "not verbose" becomes "quiet"
+  [ ${add_user_to_groups} -eq 0                 ] && initialize_tsm_cmd+=("-g")
+  [ -n "${config_name}"                         ] && initialize_tsm_cmd+=("-c" "${config_name}")
+  [ -n "${data_dir}"                            ] && initialize_tsm_cmd+=("-d" "${data_dir}")
+  [ -n "${group_username}"                      ] && initialize_tsm_cmd+=("-a" "${group_username}")
+  [ "${zk_client_port}" -ne 0                   ] && initialize_tsm_cmd+=("-i" "${zk_client_port}")
+  [ "${zk_peer_port}" -ne 0                     ] && initialize_tsm_cmd+=("-e" "${zk_peer_port}")
+  [ "${zk_leader_port}" -ne 0                   ] && initialize_tsm_cmd+=("-m" "${zk_leader_port}")
+  [ "${license_vd_port}" -ne 0                  ] && initialize_tsm_cmd+=("-t" "${license_vd_port}")
+  [ "${agent_ft_port}" -ne 0                    ] && initialize_tsm_cmd+=("-n" "${agent_ft_port}")
+  [ "${controller_port}" -ne 0                  ] && initialize_tsm_cmd+=("-o" "${controller_port}")
+  [ "${port_range_min}" -ne 0                   ] && initialize_tsm_cmd+=("-l" "${port_range_min}")
+  [ "${port_range_max}" -ne 0                   ] && initialize_tsm_cmd+=("-r" "${port_range_max}")
+  [ ${port_remapping_disabled} -eq 1            ] && initialize_tsm_cmd+=("--disable-port-remapping")
+  [ -n "${unprivileged_username}"               ] && initialize_tsm_cmd+=("--unprivileged-user=${unprivileged_username}")
+  [ -n "${tsm_authorized_groupname}"            ] && initialize_tsm_cmd+=("--tsm-authorized-group=${tsm_authorized_groupname}")
+  [ -n "${http_proxy}"                          ] && initialize_tsm_cmd+=("--http_proxy=${http_proxy}")
+  [ -n "${https_proxy}"                         ] && initialize_tsm_cmd+=("--https_proxy=${https_proxy}")
+  [ -n "${no_proxy}"                            ] && initialize_tsm_cmd+=("--no_proxy=${no_proxy}")
+  [ ${disable_group_and_account_creation} -eq 1 ] && initialize_tsm_cmd+=("--disable-account-creation")
+  [ ${enable_debug} -eq 1                       ] && initialize_tsm_cmd+=("--debug")
+
+  if [ -n "${bootstrap_file}" ]; then
+                                                     initialize_tsm_cmd+=("-b" "${bootstrap_file}")
+    [ -n "${tsm_admin_user}"                    ] && initialize_tsm_cmd+=("-u" "${tsm_admin_user}")
+    [ -n "${tsm_admin_pass}"                    ] && create_temporary_password_file \
+                                                  && builtin echo "${tsm_admin_pass}" > "${temporary_password_file}" \
+                                                  && initialize_tsm_cmd+=("--password-file=${temporary_password_file}")
+  fi
+
+  "${initialize_tsm_cmd[@]}"
+
+  # Delets the temporary password file after executing the initialize-tsm command
+  rm -f "${temporary_password_file}"
+}
+
+run_tsm() {
+  tabadminArgs="$*"
+  # Put tsm_admin_pass in double quotes, and replace all double quotes (") in it with escaped double quotes (\")
+  # Of course because " and \ are special characters, they need to be escaped, so we're replacing \" with \\\"
+  # See "Substring Replacement" in http://tldp.org/LDP/abs/html/string-manipulation.html#FTN.AEN6164
+  local escaped_tsm_admin_pass="${tsm_admin_pass//\"/\\\"}"
+  # Run tsm via su so log and session file goes in running user's homedir and not root's
+  su -s /bin/bash -c "set -a && source <(cat ${confwild}) &&  ${install_dir}/packages/customer-bin.${version_string}/tsm ${tabadminArgs} -u \"${tsm_admin_user}\" -s https://$(hostname):${controller_port}" "${running_username}"  <<<"${escaped_tsm_admin_pass}"
+}
+
+setup() {
+  print "Setting up initial configuration..."
+
+  print "Activating..."
+  if [ "$license_key" == "" ]; then
+    run_tsm licenses activate --trial
+  else
+    run_tsm licenses activate --license-key "${license_key}"
+  fi
+
+  print "Registering product..."
+  run_tsm register --file "${registration_file}"
+
+  print "Setting initial configuration..."
+  # TODO: TFSID 771800 - remove the --force-keys argument along with proper fix
+  run_tsm settings import --config-only -f "${config_file}" --force-keys
+
+  print "Applying pending changes..."
+  run_tsm pending-changes apply --ignore-prompt
+
+  print "Initializing server..."
+  run_tsm initialize --start-server --request-timeout 2300
+
+  read -r server_status <<< "$(run_tsm status | awk '/Status:/ { print $2 }')"
+  if [ "$server_status" != "RUNNING" ]; then
+    if [ "$server_status" == "DEGRADED" ]; then
+      echo "Server status is $server_status, installation will attempt to continue..."
+    else
+      echo "Server status is $server_status. Canceling."
+      exit 1
+    fi
+  fi
+
+  # wait for config to propagate to all services
+  sleep 5
+
+  # Extract the gateway port from the configuration and topology JSON file
+  gateway_port="$(grep worker0.gateway.port "${TABLEAU_SERVER_DATA_DIR}/data/${TABLEAU_SERVER_CONFIG_NAME}/config/gateway_0.${version_string}/ports.yml" | awk -F ':' '{print $2}' | tr -d ' ')"
+
+  print 'Creating initial admin user...'
+
+  # Create temporary password file and write tableau server admin password
+  create_temporary_password_file
+  builtin echo "${tableau_server_admin_pass}" > "${temporary_password_file}"
+
+  # Run tabcmd via su so log and session file goes in running user's homedir and not root's
+  su -s /bin/bash -c "set -a && source <(cat ${confwild}) && ${install_dir}/packages/customer-bin.${version_string}/tabcmd initialuser --server \"localhost:${gateway_port}\" --username \"${tableau_server_admin_user}\" --password-file \"${temporary_password_file}\"" "${running_username}"
+
+  # Delete temp file
+  rm -f "${temporary_password_file}"
+}
+
+finish() {
+  print "Done."
+}
+
+resolve_controller_port_from_config() {
+  if [ "${controller_port}" -eq 0 ]; then
+    controller_port="$(grep worker0.tabadmincontroller.port "${TABLEAU_SERVER_DATA_DIR}/data/${TABLEAU_SERVER_CONFIG_NAME}/config/tabadmincontroller_0.${version_string}/ports.yml" | awk -F ':' '{print $2}' | tr -d ' ')"
+  fi
+}
+
+main() {
+
+  readonly TEMPLATE_SECRETS_FILE="secrets"
+  readonly TEMPLATE_CONFIG_FILE="config.json"
+  readonly TEMPLATE_REGISTRATION_FILE="reg_templ.json"
+  readonly DEFAULT_CONFIG_FILE="config.json"
+
+  local verbose=0
+  local add_user_to_groups=1
+  local data_dir=''
+  local config_name=''
+  local secrets_file=''
+  local config_file=''
+  local gateway_port=80
+  local registration_file=''
+  local accept_eula_arg=''
+  local force_arg=''
+  local license_key=''
+  local group_username=''
+  local running_username=''
+  local bootstrap_file=''
+  local zk_client_port=0
+  local zk_peer_port=0
+  local zk_leader_port=0
+  local license_vd_port=0
+  local agent_ft_port=0
+  local controller_port=0
+  local port_range_min=0
+  local port_range_max=0
+  local port_remapping_disabled=0
+  local unprivileged_username=''
+  local tsm_authorized_groupname=''
+  local disable_group_and_account_creation=0
+  local enable_debug=0
+  local http_proxy=''
+  local https_proxy=''
+  local no_proxy=''
+  local temporary_password_file=''
+  local use_repo=''
+  local distro=''
+
+  check_arguments "$@"
+
+  find_running_username
+
+  run_install
+  run_initialize_tsm
+
+  if [ "$bootstrap_file" == "" ]; then
+    source /etc/opt/tableau/tableau_server/environment.bash
+    local unprivileged_home
+    unprivileged_home=$(getent passwd "${TABLEAU_SERVER_UNPRIVILEGED_USERNAME}" | cut -d: -f6)
+    confwild="${unprivileged_home}/.config/systemd/tableau_server.conf.d/*.conf"
+    resolve_controller_port_from_config
+    setup
+  fi
+
+  finish
+}
+
+main "$@"
