@@ -116,7 +116,7 @@ finished_time="$(date -u +%s)"
 
 export ANSIBLE_CONFIG=/sas/install/common/ansible/playbooks/ansible.cfg
 ANSIBLE_LOG_PATH=/var/log/sas/install/post_deployment.log \
-    time ansible-playbook -v /sas/install/common/ansible/playbooks/post_deployment.yml -i $INVENTORY_FILE
+    time ansible-playbook -v /sas/install/ansible/playbooks/post_deployment.yml -i $INVENTORY_FILE
 
 
 finished_post_orchestration_time="$(date -u +%s)"
