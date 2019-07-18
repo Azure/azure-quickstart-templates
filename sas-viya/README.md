@@ -419,7 +419,9 @@ This error is the result of RHEL RPM mirrors that are not always correct in Azur
 ## Appendix A: Configuring the Identities Service
 <a name="AddAVerify"></a>
 ### Verify Security Settings
-Ensure that port 389 on your Lightweight Directory Access Protocol (LDAP) machine can be accessed by the SAS Viya machines.
+Ensure that the correct port on your Lightweight Directory Access Protocol (LDAP) or secure LDAP (LDAPS) machine can be accessed by the SAS Viya machines:
+* Port 389 if using LDAP
+* Port 636 if using secure LDAP (LDAPS). For more information about securing LDAP connections, see [Encrypt LDAP Connections](https://go.documentation.sas.com/?docsetId=calencryptmotion&docsetTarget=n1xdqv1sezyrahn17erzcunxwix9.htm&docsetVersion=3.4&locale=en#p1bai319815977n1bzdyyxr3d5he) in the Encryption in SAS Viya: Data in Motion.
 
 <a name="AddACreateServiceAccount"></a>
 ### Create a Service Account
@@ -427,6 +429,10 @@ Create a service account in your LDAP system. The service account must have perm
 
 <a name="AddAConfigureIdentitiesService"></a>
 ### Configure the Identities Service
+**Note:**   OpenLDAP systems and customized AD setups might require additional configuration that is beyond the scope of this guide.
+* See [Configure the Connection to Your Identity Provider ](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=p0dt267jhkqh3un178jzupyyetsa.htm&docsetVersion=3.4&locale=en#n1p4yydj6grbban1kl1te52gv0kf) in the SAS Viya for Linux: Deployment Guide for more information about configuring the identities service. 
+* See [Encrypt LDAP Connections](https://go.documentation.sas.com/?docsetId=calencryptmotion&docsetTarget=n1xdqv1sezyrahn17erzcunxwix9.htm&docsetVersion=3.4&locale=en#p1bai319815977n1bzdyyxr3d5he) in  Encryption in SAS Viya: Data in Motion for more information about securing LDAP connections.
+
 In the SAS Environment Manager, on the Configuration tab, select the Identities service. There are three sections to configure: connection, user, and group. 
 #### Connection
 *	host - the DNS address or IP address of your LDAP machine
@@ -441,8 +447,6 @@ In the SAS Environment Manager, on the Configuration tab, select the Identities 
 *	baseDN - DN to search for groups under
 Set the default values to work with a standard Microsoft Active Directory system.
 
-**Note:**   OpenLDAP systems and customized AD setups might require additional configuration that is beyond the scope of this guide.
-For further details about configuring the identities service, see [SAS Viya 3.4 for Linux: Deployment Guide](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=titlepage.htm&docsetVersion=3.4&locale=en).
  
 <a name="AddAVerifyTheConfiguration"></a>
 ### Verify the Configuration
