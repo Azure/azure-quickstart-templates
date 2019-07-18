@@ -491,8 +491,7 @@ ldapsearch -x -h localhost -b "dc=sasviya,dc=com"
 **Note:**    You must increment the UID from the last one displayed by the ldapsearch command.
 
    ```
-   newuser, sasviya.com
-   dn: uid=newuser,ou=users,dc=sasviya,dc=com=
+   dn: uid=newuser,ou=users,dc=sasviya,dc=com
    cn: newuser
    givenName: New
    sn: User
