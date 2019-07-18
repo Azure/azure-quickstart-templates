@@ -308,7 +308,7 @@ CryptoLibName=/usr/lib64/libcrypto.so.1.0.2k
     
    If the output from the nc command contains "Ncat: Connected to <IP_address:443>", the connection was successful.
    
-6. Register the SAS Data Agent with the SAS Viya environment. As the deployment vmuser, log on to the Ansible controller VM and run the following command from the /sas/install/ansible directory:
+6. Register the SAS Data Agent with the SAS Viya environment. As the deployment vmuser, log on to the Ansible controller VM and run the following command from the /sas/install/ansible/sas_viya_playbook directory:
 
 **Note:** The password of the admin user is the value that you specified during deployment for the SASAdminPass input parameter. 
 
@@ -374,10 +374,10 @@ Ansible is the primary virtual machine that is used for the installation. Most o
 #### Ansible Server Log Files:
 The /tmp directory is the primary deployment log directory. Other logs follow:
 * runAnsiblePhase*.log files: logs that are produced by the extensions 
-* install_run_orchestration.log: logs that are created by an asynchronous task started in phase 7 and ending in phase 8. Sections of the text are returned as the results in the runAnsiblePhase7* - runAnsiblePhase8* logs.
+* install_runner.log: logs that are created by an asynchronous task started in phase 1 and ending in phase 7. Sections of the text are returned as the results in the runAnsiblePhase* logs.
 
 * Commands.log: a listing of the parameters supplied to the Ansible start script.
-*	/sas/install/ansible/sas_viya_playbook/deployment.log: log created by the SAS installation. The content should be duplicated in the install_run_orchestration.log
+*	/sas/install/ansible/sas_viya_playbook/deployment.log: log created by the SAS installation. The content should be duplicated in the install_runner.log.
 
 #### Services Server Log Files
 *	/var/log/sas: parent folder for SAS Viya application logs. If there is a startup issue after installation, the information in these logs might be helpful. 
