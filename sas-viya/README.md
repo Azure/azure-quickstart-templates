@@ -377,7 +377,7 @@ The /tmp directory is the primary deployment log directory. Other logs follow:
 * install_runner.log: logs that are created by an asynchronous task started in phase 1 and ending in phase 7. Sections of the text are returned as the results in the runAnsiblePhase* logs.
 
 * Commands.log: a listing of the parameters supplied to the Ansible start script.
-*	/sas/install/ansible/sas_viya_playbook/deployment.log: log created by the SAS installation. The content should be duplicated in the install_runner.log.
+*	/var/log/sas/install: logs created by the SAS installation. The content should be duplicated in the /tmp/install_runner.log.
 
 #### Services Server Log Files
 *	/var/log/sas: parent folder for SAS Viya application logs. If there is a startup issue after installation, the information in these logs might be helpful. 
