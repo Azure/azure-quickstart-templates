@@ -24,7 +24,7 @@ For assistance with SAS software, contact  [SAS Technical Support](https://suppo
 1. [Prerequisites](#Prerequisites)
     1. [Upload the License File to an Azure Blob](#License)
     1. [Create a Mirror Repository](#Mirror)
-1. [Best Practices](#Best_Practices)
+1. [Best Practices When Deploying SAS Viya on Azure](#Best-Practices)
 1. [Deployment Steps](#Deployment)
 1. [Additional Deployment Details](#deployment-details)
 1. [Optional Post-Deployment](#Post-Deployment)
@@ -58,7 +58,7 @@ For assistance with SAS software, contact  [SAS Technical Support](https://suppo
 ## Solution Summary
 By default, Quickstart deployments enable Transport Layer Security (TLS) for secure communication.
 
-This SAS Viya Quickstart Template for Azure will take a generic license for SAS Viya and deploy SAS into its own network. The deployment will create the network and other infrastructure.  After the deployment process completes, you will have the outputs for the web endpoints for a SAS Viya deployment on recommended virtual machines (VMs). 
+This SAS Viya Quickstart Template for Azure will take a generic license for SAS Viya and deploy SAS into its own network. The deployment creates the network and other infrastructure.  After the deployment process completes, you will have the outputs for the web endpoints for a SAS Viya deployment on recommended virtual machines (VMs). 
 
 When you deploy the Quickstart with default parameters, the following SAS Viya environment is built in the Microsoft Azure cloud:
 
@@ -87,7 +87,7 @@ Here are some recommended example VM sizes based on the number of licensed cores
 
 #### SAS Viya Services VM
 
-If you are installing VDMML or a similiarly large installation, we  recommend that you use at least the Standard E16s_v3 VM size.
+If you are installing VDMML or a similarly large installation, we  recommend that you use at least the Standard E16s_v3 VM size.
 
 <a name="Prerequisites"></a>
 ## Prerequisites
@@ -141,7 +141,7 @@ az storage blob upload-batch --account-name "$STORAGE_ACCOUNT" --account-key "$S
 **Note** For the mirror storage, use the same storage account that you used for the license file in ["Upload the License Zip file."](#license)
 
 <a name="Best-Practices"></a>
-## Best Practices when Deploying SAS Viya on Azure
+## Best Practices When Deploying SAS Viya on Azure
 We recommend the following as best practices:
 * Create a separate resource group for each Quickstart deployment. For more information, see [Resource groups](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-overview#resource-groups).
 * In resource groups that contain a Quickstart deployment, include only the Quickstart deployment in the resource group to facilitate the deletion of the deployment as a unit.
@@ -157,14 +157,14 @@ The deployment takes between 1 and 4 hours, depending on the quantity of softwar
 ## Additional Deployment Details
 The *vmuser* host operating system account is created during deployment. Use this account to log in via SSH to any of the machines.
 
-The *sasadmin* and *sasuser* SAS Viya user accounts are also created during deployment.  These accounts exist in LDAP, and are the default user accounts for logging into SAS Viya.  You cannot directly log onto the host operating system with these accounts.
+The *sasadmin* and *sasuser* SAS Viya user accounts are also created during deployment.  These accounts exist in LDAP, and are the default user accounts for logging in to SAS Viya.  You cannot directly log on to the host operating system with these accounts.
 
 <a name="Post-Deployment"></a>
 ## Optional Post-Deployment 
 <a name="DNS"></a>
  ### Configure a Certificate Authority-Signed Digital Certificate and Custom DNS Name
 
-By default, the Quickstart deployment will generate a highly unique DNS name for your deployment and a self-signed certificate for secure connections. This is enough for limited use cases or proofs of concept. However, because a self-signed certificate provides limited protection against man-in-the-middle attacks and the default DNS is computer-readable, it is recommended that you change the DNS name and provide a Trusted Root signed certificate.
+By default, the Quickstart deployment generates a highly unique DNS name for your deployment and a self-signed certificate for secure connections. This is enough for limited use cases or proofs of concept. However, because a self-signed certificate provides limited protection against man-in-the-middle attacks and the default DNS is computer-readable, it is recommended that you change the DNS name and provide a Trusted Root signed certificate.
 After acquiring a domain name and a TLS certificate from your corporate IT department, Domain Name Registrar, or Certificate Authority, update your Domain Name Server entry to support one of the following choices:
 * create a CNAME or Alias record at the current unique Domain Name of the application gateway. (Refer to the DNS name attribute under the PrimaryViyaLoadbalancer_PublicIP resource for the current deployment's unique Domain Name.)
 * create a traditional A record at the application gateway IP. (Refer to the IP address under the PrimaryViyaLoadbalancer_PublicIP resource for the current deployment's application gateway IP.)
@@ -174,7 +174,7 @@ If you have acquired a new domain name or are using an existing domain name, you
 <a name="DataSources"></a>
 ### Enable Access to Existing Data Sources
 To access an existing data source from your SAS Viya deployment, add an inbound rule to each security group or firewall for the data source as follows:
-*  If your data source is accessed via the public internet, add a public IP to the SAS Viya services VM and SAS Viya controller VM. Add an Allow rule to your data source for both the services VM and controller VM  public IP addresses. When creating the public IP addresses for each Viya VM, a Static IP using the "Standard" SKU is recommended. For details, see
+*  If your data source is accessed via the public internet, add a public IP to the SAS Viya services VM and SAS Viya controller VM. Add an Allow rule to your data source for both the services VM and controller VM  public IP addresses. When creating the public IP addresses for each SAS Viya VM, a Static IP using the "Standard" SKU is recommended. For details, see
  ["Create, change, or delete a public IP address."](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-network-public-ip-address)
 
 * If you have an Azure-managed database, add the service endpoint for the database to the private subnet of your SAS Viya network. For details, see
@@ -189,7 +189,7 @@ Data sources accessed through SAS/ACCESS should use the [SAS Data Agent for Linu
 ### Validate the Server Certificate if Using SAS/ACCESS
 If you are using SAS/ACCESS with SSL/TLS, unvalidated SSL certificates are not supported. In this case, a trust store must be explicitly provided.
 
-**Note:** For most Azure-managed data sources, the standard OpenSSL trust store will validate the data source certificate:
+**Note:** For most Azure-managed data sources, the standard OpenSSL trust store validates the data source certificate:
 ```
 /etc/pki/ca-trust/extracted/openssl/ca-bundle.trust.crt
 ```
@@ -232,7 +232,7 @@ EnableBulkLoad=0
 EnableQuotedIdentifiers=0
 ```
 
-4. To set the encryption method, set EncryptionMethod to 0 for no SSL or 1 for SSL. 
+4. To specify the encryption method, set EncryptionMethod to 0 for no SSL or 1 for SSL. 
 
 ```
 EncryptionMethod=1 
@@ -308,7 +308,7 @@ CryptoLibName=/usr/lib64/libcrypto.so.1.0.2k
     
    If the output from the nc command contains "Ncat: Connected to <IP_address:443>", the connection was successful.
    
-6. Register the SAS Data Agent with the SAS Viya environment. As the deployment vmuser, log on to the Ansible controller VM and run the following command from the /sas/install/setup/orchestration directory:
+6. Register the SAS Data Agent with the SAS Viya environment. As the deployment vmuser, log on to the Ansible controller VM and run the following command from the /sas/install/ansible directory:
 
 **Note:** The password of the admin user is the value that you specified during deployment for the SASAdminPass input parameter. 
 
@@ -347,9 +347,9 @@ in the SAS Data Agent for Linux: Deployment Guide.
 <a name="Usage"></a>
 ## Usage 
 
-To log into any machine via SSH to check on a deployment or to perform maintenance, log in as *vmuser*.
+To log in to any machine via SSH to check on a deployment or to perform maintenance, log in as *vmuser*.
 
-To log into SAS Viya initially, use one of the following default user accounts: *sasadmin* (administrative user) or *sasuser*.
+To log in to SAS Viya initially, use one of the following default user accounts: *sasadmin* (administrative user) or *sasuser*.
 
 To access SAS Viya applications, navigate to the **Outputs** screen and access SASDrive or SASStudio. 
 
@@ -368,6 +368,7 @@ If your deployment fails:
 
 * If the error comes from a sub-deployment (for example, “AnsiblePhase5PreViyaInstall”), review the log files.
 
+<a name="ReviewLog"></a>
 ### Review the Log Files
 Ansible is the primary virtual machine that is used for the installation. Most of the deployment log files reside on the Ansible virtual machine.   
 #### Ansible Server Log Files:
@@ -391,17 +392,17 @@ The /tmp directory is the primary deployment log directory. Other logs follow:
     
 <a name="RestartServices"></a>
 ### Restarting the SAS Services
-While all the services can be started on each box independently, the Viya-Ark toolkit provides an efficient way to restart all the services across all the boxes from the ansible controller.
+While all the services can be started on each box independently, the Viya-Ark toolkit provides an efficient way to restart all the services across all the boxes from the Ansible controller.
 
 #### Checking the status of the services through Viya-Ark
-Viya-Ark can check the status of the services by issuing the following commands as the vmuser on the ansible controller:
+Viya-Ark can check the status of the services by issuing the following commands as the vmuser on the Ansible controller:
 ```
 cd /sas/install/ansible/sas_viya_playbook/
 ansible-playbook viya-ark/playbooks/viya-mmsu/viya-services-status.yml
 ```
 
 #### Restarting the services through Viya-Ark
-Viya-Ark can restart all of the services by issuing the following commands as the vmuser on the ansible controller:
+Viya-Ark can restart all of the services by issuing the following commands as the vmuser on the Ansible controller:
 ```
 cd /sas/install/ansible/sas_viya_playbook/
 ansible-playbook viya-ark/playbooks/viya-mmsu/viya-services-restart.yml -e enable_stray_cleanup=true
@@ -469,7 +470,7 @@ After SSSD has been configured, you might need to restart the services machine.
 
 <a name="AddBLoginAndList"></a>
 ### List All Users and Groups
-From the Ansible controller VM, log into the services VM: 
+From the Ansible controller VM, log in to the services VM: 
 ```
 ssh services.viya.sas
 ```
@@ -508,7 +509,7 @@ ldapsearch -x -h localhost -b "dc=sasviya,dc=com"
    ldapadd -x -h localhost -D "cn=admin,dc=sasviya,dc=com" -W -f /path/to/user/file 
    ```
 
-**Note:**    You will be prompted for the admin password (the same one you set when you created the stack).
+**Note:**    You will be prompted for the admin password (the same one you specified when you created the stack).
 
 3.	To enable the new user to access SAS Viya products, add the user as a member of the sasusers group by creating an ldif file with the following data:
    ```
