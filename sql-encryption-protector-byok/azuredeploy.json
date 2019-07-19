@@ -27,6 +27,12 @@
             "description": "Key vault name where the key to use is stored"
           }
         },
+        "keyVaultResourceGroupName" : {
+          "type": "string",
+          "metadata": {
+            "description": "Key vault resource group name where it is stored"
+          }
+        },
         "keyName": {
           "type": "string",
           "metadata": {
@@ -66,26 +72,41 @@
       }
     },
     {
-      "name": "[concat(parameters('keyVaultName'), '/add')]",
-      "type": "Microsoft.KeyVault/vaults/accessPolicies",
-      "apiVersion": "2018-02-14-preview",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-05-01",
+      "name": "addAccessPolicy",
+      "resourceGroup": "[parameters('keyVaultResourceGroupName')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]"
+          "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]"
       ],
       "properties": {
-        "accessPolicies": [
-          {
-            "tenantId": "[subscription().tenantId]",
-            "objectId": "[reference(concat('Microsoft.Sql/servers/', parameters('sqlServerName')), '2017-03-01-preview', 'Full').identity.principalId]",
-            "permissions": {
-              "keys": [
-                "get",
-                "wrapKey",
-                "unwrapKey"
+          "mode": "Incremental",
+          "template": {
+              "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+              "contentVersion": "1.0.0.0",
+              "resources": [
+                  {
+                      "type": "Microsoft.KeyVault/vaults/accessPolicies",
+                      "name": "[concat(parameters('keyVaultName'), '/add')]",
+                      "apiVersion": "2018-02-14-preview",
+                      "properties": {
+                          "accessPolicies": [
+                              {
+                                "tenantId": "[subscription().tenantId]",
+                                "objectId": "[reference(resourceId('Microsoft.Sql/servers/', parameters('sqlServerName')), '2017-03-01-preview', 'Full').identity.principalId]",
+                                "permissions": {
+                                  "keys": [
+                                    "get",
+                                    "wrapKey",
+                                    "unwrapKey"
+                                  ]
+                                }
+                              }
+                          ]
+                      }
+                  }
               ]
-            }
           }
-        ]
       }
     },
     {
@@ -93,12 +114,12 @@
       "type": "Microsoft.Sql/servers/keys",
       "apiVersion": "2015-05-01-preview",
       "dependsOn": [
-        "[concat('Microsoft.KeyVault/vaults/', parameters('keyVaultName'), '/accessPolicies/add')]",
+        "addAccessPolicy",
         "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]"
       ],
       "properties": {
         "serverKeyType": "AzureKeyVault",
-        "uri": "[concat(reference(concat('Microsoft.KeyVault/vaults/', parameters('keyVaultName')), '2018-02-14-preview', 'Full').properties.vaultUri, 'keys/', parameters('keyName'), '/', parameters('keyVersion'))]"
+        "uri": "[concat(reference(resourceId(parameters('keyVaultResourceGroupName'), 'Microsoft.KeyVault/vaults/', parameters('keyVaultName')), '2018-02-14-preview', 'Full').properties.vaultUri, 'keys/', parameters('keyName'), '/', parameters('keyVersion'))]"
       }
     },
     {
