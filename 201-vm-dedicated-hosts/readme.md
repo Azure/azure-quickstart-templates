@@ -44,13 +44,13 @@ Note that this template **will not provision any virtual machines** on the provi
 
 <a name="teardown"></a>
 
-### teardown
+### Teardown
 The easiest way to delete the created resources in this template is to simply delete the entire resource group. 
 
 Note that Azure will block an attempt to delete a dedicated host which has virtual machines deployed on. In case your hosts are used by virtual machines provisioned elsewhere (in another resource group), make sure those are deleted first before attempting to delete the host. 
 
-<a name="reference"></a>
+<a name="references"></a>
 
-### reference
+### Reference
 
 References to Azure Dedicated Hosts documentation will be added once publicly available  
