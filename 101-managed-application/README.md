@@ -1,4 +1,4 @@
-# Deploying your first Managed Application with default view
+# Deploying your first Managed application with default view
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-managed-application%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
@@ -14,19 +14,19 @@ This sample template deploys a Service catalog managed application definition th
 This template deploys a Service catalog managed application definition first, after that uses this application definition to  deploy a managed application.
 You can also use the package located under the artifacts folder to deploy the managed application as Azure Marketplace application offer.
 
-To learn more about Managed Application definitions and Marketplace please visit :
+To learn more about Managed application definitions and Marketplace please visit :
 
 + [Publish an Azure managed application definition](https://docs.microsoft.com/en-us/azure/managed-applications/publish-managed-app-definition-quickstart)
 + [Azure managed applications in the Marketplace](https://docs.microsoft.com/en-us/azure/managed-applications/publish-marketplace-app)
 
-## Exploring created Managed Application
+## Exploring created Managed application
 
 This sample template combines two steps:
 
 1) Deploys a Service catalog managed application definition.
 2) Deploys a managed application using deployed application definition.
 
-You may use deployed application definition to create more managed applications of this sample.
+In a production environment a typical scenario would deploy the application definition and application instance as separate steps. For example, a definition is deployed once and an application many times. In this sample the two steps are combined to make it easy to quickly see the final result of those steps.
 
 Once you click on the deployed managed application you will notice that Overview contains header and description of the application.
 
@@ -48,7 +48,7 @@ If you click managed resource group in managed application Overview, you'll see 
 To learn more about Azure Resource Manager templates best practices please visit: 
 + [**Azure Resource Manager Templates - Best Practices Guide**](https://github.com/Azure/azure-quickstart-templates/blob/master/1-CONTRIBUTION-GUIDE/best-practices.md)
 
-## Exploring created Managed Application definition and deploy another application instance
+## Exploring created Managed application definition and deploy another application instance
 
 If you click on application definition in managed application Overview, you'll be able to see managed application definition that was used for the application deployment.
 
