@@ -7,4 +7,4 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-For information about using this template, see [Create Azure Resourc Manager templates for Azure Logic Apps](https://docs.microsoft.com/azure/logic-apps/logic-apps-create-deploy-template).
+For information about using this template, see [Create Azure Resource Manager templates for Azure Logic Apps](https://docs.microsoft.com/azure/logic-apps/logic-apps-create-deploy-template).
