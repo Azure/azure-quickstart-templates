@@ -15,11 +15,8 @@
         [Parameter(Mandatory)]
         [System.Management.Automation.PSCredential]$Admincreds
     )
-    Import-DscResource -ModuleName xActiveDirectory
-    Import-DscResource -ModuleName NetworkingDsc
+
     Import-DscResource -ModuleName TemplateHelpDSC
-    Import-DscResource -ModuleName xSmbShare
-    Import-DscResource -ModuleName ComputerManagementDsc
 
     $LogFolder = "TempLog"
     $LogPath = "c:\$LogFolder"
@@ -38,64 +35,39 @@
             RebootNodeIfNeeded = $true
         }
 
-        VirtualMemory PagingSettings
+        SetCustomPagingFile PagingSettings
         {
-            Type        = 'CustomSize'
-            Drive       = 'C'
+            Drive       = 'C:'
             InitialSize = '8192'
             MaximumSize = '8192'
         }
 
-        File ADFiles
-        {            
-            DestinationPath = 'C:\Windows\NTDS'            
-            Type = 'Directory'            
-            Ensure = 'Present'
-            DependsOn = "[VirtualMemory]PagingSettings"
-        }
-
-        WindowsFeature Rdc
-        {             
-            Ensure = "Present"             
-            Name = "Rdc"
-            DependsOn = "[File]ADFiles"
-        }
-
-		WindowsFeature ADDSInstall             
-        {             
-            Ensure = "Present"             
-            Name = "AD-Domain-Services"             
-        }         
-
-		WindowsFeature ADTools
+        InstallFeatureForSCCM InstallFeature
         {
-            Ensure = "Present"
-            Name = "RSAT-AD-Tools"
+            Name = 'DC'
+            Role = 'DC'
+            DependsOn = "[SetCustomPagingFile]PagingSettings"
         }
         
-        xADDomain FirstDS
+        SetupDomain FirstDS
         {
-            DomainName = $DomainName
-            DomainAdministratorCredential = $DomainCreds
+            DomainFullName = $DomainName
             SafemodeAdministratorPassword = $DomainCreds
-            DatabasePath = "C:\Windows\NTDS"
-            LogPath = "C:\Windows\NTDS"
-            SysvolPath = "C:\Windows\SYSVOL"
-            DependsOn = @("[WindowsFeature]ADDSInstall","[File]ADFiles")
+            DependsOn = "[InstallFeatureForSCCM]InstallFeature"
         }
 
         VerifyComputerJoinDomain WaitForPS
         {
             ComputerName = $PSName
             Ensure = "Present"
-            DependsOn = "[xADDomain]FirstDS"
+            DependsOn = "[SetupDomain]FirstDS"
         }
 
         VerifyComputerJoinDomain WaitForDPMP
         {
             ComputerName = $DPMPName
             Ensure = "Present"
-            DependsOn = "[xADDomain]FirstDS"
+            DependsOn = "[SetupDomain]FirstDS"
         }
 
         File ShareFolder
@@ -106,13 +78,11 @@
             DependsOn = @("[VerifyComputerJoinDomain]WaitForPS","[VerifyComputerJoinDomain]WaitForDPMP")
         }
 
-        xSmbShare DomainSMBShare
+        FileReadAccessShare DomainSMBShare
         {
-            Ensure = "Present"
             Name   = $LogFolder
             Path =  $LogPath
-            ReadAccess = @($PSComputerAccount,$DPMPComputerAccount)
-            Description = "This is a test SMB Share"
+            Account = $PSComputerAccount,$DPMPComputerAccount
             DependsOn = "[File]ShareFolder"
         }
 
@@ -123,7 +93,7 @@
             WriteNode = "PSJoinDomain"
             Status = "Passed"
             Ensure = "Present"
-            DependsOn = "[xSmbShare]DomainSMBShare"
+            DependsOn = "[FileReadAccessShare]DomainSMBShare"
         }
 
         WriteConfigurationFile WriteDPMPJoinDomain
@@ -133,7 +103,7 @@
             WriteNode = "DPMPJoinDomain"
             Status = "Passed"
             Ensure = "Present"
-            DependsOn = "[xSmbShare]DomainSMBShare"
+            DependsOn = "[FileReadAccessShare]DomainSMBShare"
         }
 
         DelegateControl AddPS
