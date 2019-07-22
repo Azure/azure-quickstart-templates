@@ -16,7 +16,7 @@ This template deploys **LA Monitoring and Reporting solution for Azure backup** 
 
 ## Prerequisites
 
-You need to configure the OMS log analytics workspace to receive backup related data from Azure Recovery Services vaults. To do so, login into Azure portal –> Click “Monitor” service –> “Diagnostic settings” in Settings section –> Specify the relevant Subscription, Resource Group and Recovery Services Vault. In the Diagnostic settings window, as shown below, in addition to specifying a storage account, you can select “Send data to log analytics” and then select the relevant OMS workspace. You can choose any existing log analytics workspace such that all vaults pump the data to the same workspace
+You need to configure a Log Analytics workspace to receive backup related data from Azure Recovery Services vaults. To do so, login into Azure portal –> Click “Monitor” service –> “Diagnostic settings” in Settings section –> Specify the relevant Subscription, Resource Group and Recovery Services Vault. In the Diagnostic settings window, as shown below, in addition to specifying a storage account, you can select “Send data to log analytics” and then select the relevant workspace. You can choose any existing log analytics workspace such that all vaults pump the data to the same workspace
 
 Please select the relevant log, “AzureBackupReport” in this case, to be sent to the log analytics workspace. Click “Save” to save the setting.
 
@@ -36,20 +36,20 @@ Please select the relevant log, “AzureBackupReport” in this case, to be sent
 
 ## Solution overview and deployed resources
 
-Upon deploying the solution, you would view an overview tile which reflects backup jobs and their status.
+Upon deploying the template, you would view overview tiles for Alerts, Backups, Restores, Cloud Storage and Backup Items.
 
-![alt text](images/la-azurebackup-overview-dashboard.png "OMS Monitoring and Reporting solution for Azure Backup overview blade")
+![alt text](images/la-azurebackup-overview-dashboard.png "LA Monitoring and Reporting solution for Azure Backup overview blade")
 
-Clicking on the solution would let you explore Alerts, Backups, Restores, Cloud Storage and Active Data source details.
+Clicking on any tile would let you further explore Alerts, Backups, Restores, Cloud Storage and Active Data source details.
 
-![alt text](images/la-azurebackup-alertsazure.png "OMS Monitoring and Reporting solution for Azure Backup alerts")
+![alt text](images/la-azurebackup-alertsazure.png "LA Monitoring and Reporting solution for Azure Backup alerts")
 
-![alt text](images/la-azurebackup-backupjobsnonlog.png "OMS Monitoring and Reporting solution for Azure Backup non log jobs")
+![alt text](images/la-azurebackup-backupjobsnonlog.png "LA Monitoring and Reporting solution for Azure Backup non log jobs")
 
 
 You can click on each tile to get more details about the queries used to create it and you can configure it as per your requirement. Clicking further on values appearing in the tiles will lead you to Log analytics screen where you can raise alerts for configurable event thresholds and automate actions to be performed when those thresholds are met/crossed.
 
-![alt text](images/LogAnalyticsScreen.JPG "OMS Monitoring solution for Azure backup Log search")
+![alt text](images/LogAnalyticsScreen.JPG "LA Monitoring solution for Azure backup Log search")
 
 More information about configuring alerts can be found [here](https://docs.microsoft.com/azure/log-analytics/log-analytics-tutorial-response)
 
