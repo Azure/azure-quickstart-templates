@@ -122,10 +122,21 @@
         "description": "Admin username for the VMs in the deployment."
       }
     },
-    "adminPassword": {
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
       "type": "securestring",
       "metadata": {
-        "description": "Admin password for the VMs in the deployment."
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
     }
   },
@@ -139,16 +150,24 @@
     "ubuntuOSVersion": "15.10",
     "imagePieces": "[split(parameters('imageLocation'),'/')]",
     "blobName": "[variables('imagePieces')[sub(length(variables('imagePieces')),1)]]",
-
     "templateLocation": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/301-custom-images-at-scale/",
-
     "sharedResourcesTemplateUri ": "[concat(variables('templateLocation'), 'shared-resources.json')]",
     "finalTemplateUri": "[concat(variables('templateLocation'), 'final_')]",
-
     "downloadTemplateURI": "[concat(variables('templateLocation'), 'download.json')]",
     "downloadScriptURI": "[concat(variables('templateLocation'), 'download.sh')]",
     "uploadTemplateURI": "[concat(variables('templateLocation'), 'upload.json')]",
-    "uploadScriptURI": "[concat(variables('templateLocation'), 'upload.sh')]"
+    "uploadScriptURI": "[concat(variables('templateLocation'), 'upload.sh')]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
@@ -162,12 +181,24 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "uniquePrefix": { "value": "[parameters('uniquePrefix')]" },
-          "numberOfSAs": { "value": "[parameters('numberOfSAs')]" },
-          "vnetName": { "value": "[variables('vnetName')]" },
-          "addressPrefix": { "value": "[variables('addressPrefix')]" },
-          "subnetName": { "value": "[variables('subnetName')]" },
-          "subnetPrefix": { "value": "[variables('subnetPrefix')]" }
+          "uniquePrefix": {
+            "value": "[parameters('uniquePrefix')]"
+          },
+          "numberOfSAs": {
+            "value": "[parameters('numberOfSAs')]"
+          },
+          "vnetName": {
+            "value": "[variables('vnetName')]"
+          },
+          "addressPrefix": {
+            "value": "[variables('addressPrefix')]"
+          },
+          "subnetName": {
+            "value": "[variables('subnetName')]"
+          },
+          "subnetPrefix": {
+            "value": "[variables('subnetPrefix')]"
+          }
         }
       }
     },
@@ -231,7 +262,8 @@
         "osProfile": {
           "computerName": "[concat('transfer', parameters('uniquePrefix'), 'vm')]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
@@ -278,10 +310,18 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "uniquePrefix": { "value": "[parameters('uniquePrefix')]" },
-          "imageLocation": { "value": "[parameters('imageLocation')]" },
-          "storageAccountKey": { "value": "[parameters('storageAccountKey')]" },
-          "downloadScriptURI": { "value": "[variables('downloadScriptURI')]" }
+          "uniquePrefix": {
+            "value": "[parameters('uniquePrefix')]"
+          },
+          "imageLocation": {
+            "value": "[parameters('imageLocation')]"
+          },
+          "storageAccountKey": {
+            "value": "[parameters('storageAccountKey')]"
+          },
+          "downloadScriptURI": {
+            "value": "[variables('downloadScriptURI')]"
+          }
         }
       }
     },
@@ -303,9 +343,15 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "uniquePrefix": { "value": "[parameters('uniquePrefix')]" },
-          "index": { "value": "[copyIndex()]" },
-          "uploadScriptURI": { "value": "[variables('uploadScriptURI')]" }
+          "uniquePrefix": {
+            "value": "[parameters('uniquePrefix')]"
+          },
+          "index": {
+            "value": "[copyIndex()]"
+          },
+          "uploadScriptURI": {
+            "value": "[variables('uploadScriptURI')]"
+          }
         }
       }
     },
@@ -323,19 +369,45 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "uniquePrefix": { "value": "[parameters('uniquePrefix')]" },
-          "numberOfSAs": { "value": "[parameters('numberOfSAs')]" },
-          "instanceCountPerSA": { "value": "[parameters('instanceCountPerSA')]" },
-          "vmSize": { "value": "[parameters('computeVMSize')]" },
-          "OSType": { "value": "[parameters('computeOSType')]" },
-          "blobName": { "value": "[variables('blobName')]" },
-          "vnetName": { "value": "[variables('vnetName')]" },
-          "addressPrefix": { "value": "[variables('addressPrefix')]" },
-          "subnetName": { "value": "[variables('subnetName')]" },
-          "subnetPrefix": { "value": "[variables('subnetPrefix')]" },
-          "templateLocation": { "value": "[variables('templateLocation')]" },
-          "adminUsername": { "value": "[parameters('adminUsername')]" },
-          "adminPassword": { "value": "[parameters('adminPassword')]" }
+          "uniquePrefix": {
+            "value": "[parameters('uniquePrefix')]"
+          },
+          "numberOfSAs": {
+            "value": "[parameters('numberOfSAs')]"
+          },
+          "instanceCountPerSA": {
+            "value": "[parameters('instanceCountPerSA')]"
+          },
+          "vmSize": {
+            "value": "[parameters('computeVMSize')]"
+          },
+          "OSType": {
+            "value": "[parameters('computeOSType')]"
+          },
+          "blobName": {
+            "value": "[variables('blobName')]"
+          },
+          "vnetName": {
+            "value": "[variables('vnetName')]"
+          },
+          "addressPrefix": {
+            "value": "[variables('addressPrefix')]"
+          },
+          "subnetName": {
+            "value": "[variables('subnetName')]"
+          },
+          "subnetPrefix": {
+            "value": "[variables('subnetPrefix')]"
+          },
+          "templateLocation": {
+            "value": "[variables('templateLocation')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          }
         }
       }
     }

@@ -42,8 +42,8 @@ console.log("Setting UUID to " + uuid);
 
 var pubnub = require("pubnub")({
     ssl: true,
-    publish_key: PNPublishKey,
-    subscribe_key: PNSubscribeKey,
+    publishKey: PNPublishKey,
+    subscribeKey: PNSubscribeKey,
     uuid: uuid
 });
 
@@ -58,10 +58,16 @@ var PNPublish = function (ehEvent) {
 
             pubnub.publish({
                 channel: PNPubChannel,
-                message: element,
-                error: function(e) {
-                    console.log("PN Array Element Publish Error: ", e);
+                message: element
+            },
+            function(status, response) {
+                if (status.error) {
+                    console.log("PN Array Element Publish Error: ", status);
                     console.log("Message causing error: ", element);
+                }
+                else {
+                    console.log("message published with server response: ", response);
+                    console.log("Message published successfully: ", element);
                 }
             });
         });
@@ -71,13 +77,18 @@ var PNPublish = function (ehEvent) {
         console.log("No array detected.");
         pubnub.publish({
             channel: PNPubChannel,
-            message: ehEvent.body,
-            error: function(e) {
-                console.log("PN Object Publish Error: ", JSON.stringify(e));
-                console.log("Message causing error: ", element);
+            message: ehEvent.body
+        },
+        function(status, response) {
+            if (status.error) {
+                console.log("PN Array Element Publish Error: ", status);
+                console.log("Message causing error: ", ehEvent.body);
+            }
+            else {
+                console.log("message published with server response: ", response);
+                console.log("Message published successfully: ", ehEvent.body);
             }
         });
-
     }
 };
 
@@ -103,27 +114,36 @@ EHInClient.open()
 // Create the sender, and then, subscribe via PN, forwarding all messages to this new subscriber to the sender.
 
 EHInClient.createSender().then(function (sender) {
-    pubnub.subscribe({
-        channel: PNSubChannel,
-        message: function (message) {
+    pubnub.addListener({
+        message: function(message) {
+            console.log("Received Message: ", JSON.stringify(message, null, 4));
             // console.log("Forwarding from PN Subscriber to Ingress EH: " + JSON.stringify(message, null, 4));
             sender.send(message);
         },
-        error: printError
+        status: function(message) {
+            printError(message); // this is more than just errors - all PN status events
+        },
+        //,presence: function(message) {
+        //     // optionally, handle presence
+        // }
+    });
+
+    pubnub.subscribe({
+        channels: [PNSubChannel]
     });
 
     if (PNAnnounceChannel && PNAnnounceChannel != "disabled") {
-
-        pubnub.state({
-            channel: PNAnnounceChannel,
+        pubnub.setState({
+            channels: [PNAnnounceChannel],
             state: {
                 EHInConnectionString: EHInConnectionString,
                 EHOutConnectionString: EHOutConnectionString
             }
+        },
+        function (message) {
+            // optionally, handle status, response
         });
-
     }
-
 });
 
 /**************                                 Create the Egress Path                                 */
