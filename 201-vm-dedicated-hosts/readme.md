@@ -1,4 +1,4 @@
-# Azure Dedicated Hosts sample template .
+# Azure Dedicated Hosts sample template
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vm-dedicated-hosts%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/> 
@@ -12,17 +12,16 @@
 
 1. [Overview](#overview)
 2. [Important Notes](#importantnotes)
-2. [Deployment](#deployment)
 3. [Teardown Deployment](#teardown)
 4. [References](#references)
 
 <a name="overview"></a>
 
 ## Overview
-This templates provisions a dedicated environment using Azure Dedicated Hosts. You provide the number of zones ,how many hosts in each zone and the rest is taken care of by the template.
+This templates provisions a dedicated environment using Azure Dedicated Hosts. You provide the number of zones, how many hosts in each zone and the rest is taken care of by the template.
 
 
-Note: This is the infrastructure only, no VMs or other resrouces will be provisioned
+Note: This is the infrastructure only, no VMs or other resrouces will be provisioned.
 
 <a name="importantnotes"></a>
 
@@ -34,13 +33,6 @@ Note: This is the infrastructure only, no VMs or other resrouces will be provisi
 * The template creates one host group per each zone and will spread host across the zones and fault domains provided.
 * In case you are using availability zones, you will be required to provision the virtual machines and IP in the same AZ as the host group. Failing to do so will result in allocation failure.
 In case you are not using availability zones (set number of AZ to 0), there is no need to provide an AZ number for your VM. 
-
-<a name="deployment"></a>
-
-### Deployment
-Launch the template directly from the Azure portal or using the attached PowerShell script. You will be asked for a valid azure subscription and a resource group. In case of a new resource group, you will be asked for a region which will be used for all the created resources in this template. 
-
-Note that this template **will not provision any virtual machines** on the provisioned hosts. You may take any existing template and convert it to use your host. 
 
 <a name="teardown"></a>
 
