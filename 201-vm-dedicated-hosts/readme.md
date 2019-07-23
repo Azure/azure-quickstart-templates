@@ -21,7 +21,7 @@
 This templates provisions a dedicated environment using Azure Dedicated Hosts. You provide the number of zones, how many hosts in each zone and the rest is taken care of by the template.
 
 
-Note: This is the infrastructure only, no VMs or other resrouces will be provisioned.
+Note: This is the infrastructure only, no VMs or other resources will be provisioned.
 
 <a name="importantnotes"></a>
 
