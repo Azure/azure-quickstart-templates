@@ -366,7 +366,7 @@ If your deployment fails:
 
 * In general, issues that occur in the primary deployment but do not originate from a sub-deployment are platform issues such as the inability to obtain sufficient resources in a timely manner. In these cases, you must redeploy your software.  The primary deployment is often called "azure-deploy", and the names of sub-deployments usually begin with "AnsiblePhase".
 
-* If the error comes from a sub-deployment (for example, “AnsiblePhase5PreViyaInstall”), review the log files.
+* If the error comes from a sub-deployment (for example, “AnsiblePhase4PreViyaInstall”), review the log files.
 
 <a name="ReviewLog"></a>
 ### Review the Log Files
