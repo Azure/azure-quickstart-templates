@@ -22,7 +22,14 @@ DscResourcesToExport = @(
     'DownloadSCCM',
     'WaitForExtendSchemaFile',
     'SetAutomaticManagedPageFile',
-    'ChangeServices'
+    'ChangeServices',
+    'AddUserToLocalAdminGroup',
+    'JoinDomain',
+    'OpenFirewallPortForSCCM',
+    'InstallFeatureForSCCM',
+    'SetCustomPagingFile',
+    'SetupDomain',
+    'FileReadAccessShare'
 )
 
 # Version number of this module.
