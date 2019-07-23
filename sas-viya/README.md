@@ -6,7 +6,7 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-**Note:** For the current operational status of this Quickstart, click [here](https://github.com/sassoftware/quickstart-sas-viya-azure/tree/master/sas-viya) to redirect to the SAS repository.
+**Note:** For the current operational status of this Quickstart, click [here](https://github.com/sassoftware/quickstart-sas-viya-azure/tree/master) to redirect to the SAS repository.
 
 This README for  SAS Viya Quickstart Template for Azure is used to deploy the following SAS Viya products in the Azure cloud:
 
