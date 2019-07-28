@@ -2,16 +2,16 @@
 # The resource in the main template
 [Parameter(Mandatory=$true,Position=0)]
 [PSObject]
-$MainTemplateResources,
+$TemplateObject,
 
 # All potential resources in Azure (from cache)
-[Parameter(Mandatory=$true,Position=0)]
+[Parameter(Mandatory=$true,Position=2)]
 [PSObject]
 $AllAzureResources
 )
 
 # First, find all of the API versions in the main template resources.
-$allApiVersions = $MainTemplateResources | 
+$allApiVersions = $TemplateObject.resources | 
     Find-JsonContent -Key apiVersion -Value * -Like
 
 foreach ($av in $allApiVersions) { # Then walk over each object containing an ApiVersion.
@@ -76,8 +76,8 @@ foreach ($av in $allApiVersions) { # Then walk over each object containing an Ap
     }
     # Finally, check how long it's been since the ApiVersion's date
     $timeSinceApi = [DateTime]::Now - $apiDate
-    if ($timeSinceApi.TotalDays -gt 365) {  # If it's older than a year
+    if ($timeSinceApi.TotalDays -gt 730) {  # If it's older than a year
         # write a warning        
-        Write-Warning "Api versions should be under a year old ($FullResourceType is $([Math]::Floor($timeSinceApi.TotalDays)) days old)" 
+        Write-Error "Api versions should be under 2 years old (730 days) - ($FullResourceType is $([Math]::Floor($timeSinceApi.TotalDays)) days old)" 
     }
 }
