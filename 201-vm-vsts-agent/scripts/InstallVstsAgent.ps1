@@ -24,7 +24,9 @@ Param
 	[string]$AdminUser,
 
 	[Parameter(Mandatory=$true)]
-	[array]$Modules
+	[array]$Modules,
+	
+	[boolean]$prerelease=$false
 )
 
 Write-Verbose "Entering InstallVSOAgent.ps1" -verbose
@@ -50,7 +52,7 @@ do
   {
     Write-Verbose "Trying to get download URL for latest VSTS agent release..."
     $latestRelease = Invoke-RestMethod -Uri "https://api.github.com/repos/Microsoft/vsts-agent/releases"
-	$latestRelease = $latestRelease | Where-Object assets -ne $null | Sort-Object created_at -Descending | Select-Object -First 1
+	$latestRelease = $latestRelease |  Where-Object prerelease -eq $prerelease |where-object assets -ne $null | Sort-Object created_at -Descending | Select-Object -First 1
     $assetsURL = ($latestRelease.assets).browser_download_url
     $latestReleaseDownloadUrl = ((Invoke-RestMethod -Uri $assetsURL) -match 'win-x64').downloadurl
     Invoke-WebRequest -Uri $latestReleaseDownloadUrl -Method Get -OutFile "$agentTempFolderName\agent.zip"
