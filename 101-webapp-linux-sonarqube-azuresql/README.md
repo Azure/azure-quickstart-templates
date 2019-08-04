@@ -7,4 +7,5 @@
   <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template deploys Sonarqube in an Azure App Service web app Linux container using the official Sonarqube image and backed by an Azure SQL Server.
+This template deploys Sonarqube in an Azure App Service web app Linux container
+using the official Sonarqube image and backed by an Azure SQL Server.
