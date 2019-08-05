@@ -23,3 +23,4 @@ The following parameters have default values allowing to deploy the template as-
 `Tier` : Offering type of the CosmosDB Account, default to Standard.
 
 `Advanced Threat Protection Enabled` : Advanced Threat Protection for the CosmosDB Account, default to true (enabled).
+
