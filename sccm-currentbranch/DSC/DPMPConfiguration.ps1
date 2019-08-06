@@ -17,11 +17,8 @@
         [Parameter(Mandatory)]
         [System.Management.Automation.PSCredential]$Admincreds
     )
-    Import-DscResource -ModuleName xActiveDirectory
-    Import-DscResource -ModuleName NetworkingDsc
+
     Import-DscResource -ModuleName TemplateHelpDSC
-    Import-DscResource -ModuleName xSmbShare
-    Import-DscResource -ModuleName ComputerManagementDsc
 
     $LogFolder = "TempLog"
     $LogPath = "c:\$LogFolder"
@@ -40,10 +37,25 @@
             RebootNodeIfNeeded = $true
         }
 
+        SetCustomPagingFile PagingSettings
+        {
+            Drive       = 'C:'
+            InitialSize = '8192'
+            MaximumSize = '8192'
+        }
+
         SetDNS DnsServerAddress
         {
             DNSIPAddress = $DNSIPAddress
             Ensure = "Present"
+            DependsOn = "[SetCustomPagingFile]PagingSettings"
+        }
+
+        InstallFeatureForSCCM InstallFeature
+        {
+            Name = "DPMP"
+            Role = "Distribution Point","Management Point"
+            DependsOn = "[SetCustomPagingFile]PagingSettings"
         }
 
         WaitForDomainReady WaitForDomain
@@ -53,61 +65,10 @@
             DependsOn = "[SetDNS]DnsServerAddress"
         }
 
-        WindowsFeature Web-Windows-Auth
-        {             
-            Ensure = "Present"             
-            Name = "Web-Windows-Auth"             
-        }
-
-        WindowsFeature Rdc
-        {             
-            Ensure = "Present"             
-            Name = "Rdc"             
-        }
-
-        Firewall EnableBuiltInFirewallRule
+        JoinDomain JoinDomain
         {
-            Name = 'Windows Management Instrumentation (WMI)'
-            Ensure = 'Present'
-            Enabled = 'True'
-            DependsOn = "[Computer]JoinDomain"
-        }
-
-        WindowsFeature web-ISAPI-Ext
-        {             
-            Ensure = "Present"             
-            Name = "web-ISAPI-Ext"             
-        }
-
-        WindowsFeature Web-WMI
-        {             
-            Ensure = "Present"             
-            Name = "Web-WMI"             
-        }
-
-        WindowsFeature Web-Metabase
-        {             
-            Ensure = "Present"             
-            Name = "Web-Metabase"             
-        }
-
-        WindowsFeature BITS
-        {             
-            Ensure = "Present"             
-            Name = "BITS"             
-        }
-
-        WindowsFeature BITS-IIS-Ext
-        {             
-            Ensure = "Present"             
-            Name = "BITS-IIS-Ext"             
-        }
-
-        Computer JoinDomain
-        {
-            Name = $env:COMPUTERNAME
             DomainName = $DomainName
-            Credential = $DomainCreds # Credential to join to domain
+            Credential = $DomainCreds
             DependsOn = "[WaitForDomainReady]WaitForDomain"
         }
 
@@ -118,7 +79,7 @@
             LogFolder = $LogFolder
             ReadNode = "PSJoinDomain"
             Ensure = "Present"
-            DependsOn = "[Computer]JoinDomain"
+            DependsOn = "[JoinDomain]JoinDomain"
         }
 
         File ShareFolder
@@ -129,81 +90,31 @@
             DependsOn = "[WaitForConfigurationFile]WaitForPSJoinDomain"
         }
 
-        xSmbShare DomainSMBShare
+        FileReadAccessShare DomainSMBShare
         {
-            Ensure = "Present"
             Name   = $LogFolder
             Path = $LogPath
-            ReadAccess = @($DCComputerAccount,$PSComputerAccount)
-            Description = "This is a test SMB Share"
+            Account = $DCComputerAccount,$PSComputerAccount
             DependsOn = "[File]ShareFolder"
         }
 
-        Firewall TCPInbound
-        { 
-            Name = 'TCPInboundInbound' 
-            DisplayName = 'TCPInbound Inbound' 
-            Group = 'For SCCM DP' 
-            Ensure = 'Present' 
-            Enabled = 'True' 
-            Profile = ('Domain', 'Private') 
-            Direction = 'Inbound' 
-            LocalPort = ('80','135', '443' ,'445','1024-65535','63000-64000') 
-            Protocol = 'TCP' 
-            Description = 'TCPInbound Inbound'
-            DependsOn = "[Computer]JoinDomain"
+        OpenFirewallPortForSCCM OpenFirewall
+        {
+            Name = "DPMP"
+            Role = "Distribution Point","Management Point"
+            DependsOn = "[JoinDomain]JoinDomain"
         }
 
-        Firewall TCPOutbound
-        { 
-            Name = 'TCPOutbound' 
-            DisplayName = 'TCP Outbound' 
-            Group = 'For SCCM MP' 
-            Ensure = 'Present' 
-            Enabled = 'True' 
-            Profile = ('Domain', 'Private') 
-            Direction = 'Outbound' 
-            LocalPort = ('135','389', '636', '445', '1433', '3268', '3269','1024-65535') 
-            Protocol = 'TCP' 
-            Description = 'TCP Inbound'
-            DependsOn = "[Computer]JoinDomain"
+        AddUserToLocalAdminGroup AddADUserToLocalAdminGroup {
+            Name = $($Admincreds.UserName)
+            DomainName = $DomainName
+            DependsOn = "[FileReadAccessShare]DomainSMBShare"
         }
 
-        Firewall UDPOutbound
-        { 
-            Name = 'UDPOutbound' 
-            DisplayName = 'UDP Outbound' 
-            Group = 'For SCCM MP' 
-            Ensure = 'Present' 
-            Enabled = 'True' 
-            Profile = ('Domain', 'Private') 
-            Direction = 'Outbound' 
-            LocalPort = ('135','636') 
-            Protocol = 'UDP' 
-            Description = 'HTTP(S) Inbound'
-            DependsOn = "[Computer]JoinDomain"
-        }
-
-        Firewall UDPInbound
-        { 
-            Name = 'UDPInbound' 
-            DisplayName = 'UDP Inbound' 
-            Group = 'For SCCM MP' 
-            Ensure = 'Present' 
-            Enabled = 'True' 
-            Profile = ('Domain', 'Private') 
-            Direction = 'Outbound' 
-            LocalPort = ('135','636') 
-            Protocol = 'UDP' 
-            Description = 'UDP Inbound'
-            DependsOn = "[Computer]JoinDomain"
-        }
-
-        Group AddADUserToLocalAdminGroup {
-            GroupName='Administrators'
-            Ensure= 'Present'
-            MembersToInclude= @("${DomainName}\$($Admincreds.UserName)","${DomainName}\$PrimarySiteName")
-            DependsOn = "[xSmbShare]DomainSMBShare"
+        AddUserToLocalAdminGroup AddADComputerToLocalAdminGroup {
+            Name = "$PrimarySiteName"
+            DomainName = $DomainName
+            DependsOn = "[FileReadAccessShare]DomainSMBShare"
         }
 
         WriteConfigurationFile WriteDPMPFinished
@@ -213,7 +124,7 @@
             WriteNode = "DPMPFinished"
             Status = "Passed"
             Ensure = "Present"
-            DependsOn = "[Group]AddADUserToLocalAdminGroup"
+            DependsOn = "[AddUserToLocalAdminGroup]AddADUserToLocalAdminGroup","[AddUserToLocalAdminGroup]AddADComputerToLocalAdminGroup"
         }
     }
 }

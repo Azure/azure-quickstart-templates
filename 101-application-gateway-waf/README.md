@@ -7,4 +7,4 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template deploys an Application Gateway with Web Application Firewall functionality in a virtual network.
+This template deploys an Application Gateway with the Web Application Firewall functionality in a virtual network.
