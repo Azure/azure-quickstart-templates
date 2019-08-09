@@ -92,7 +92,7 @@
       "tags": {
         "displayName": "SqlServer"
       },
-      "apiVersion": "2014-04-01-preview",
+      "apiVersion": "2018-06-01-preview",
       "properties": {
         "administratorLogin": "[parameters('sqlAdministratorLogin')]",
         "administratorLoginPassword": "[parameters('sqlAdministratorPassword')]"
@@ -100,7 +100,7 @@
       "resources": [
         {
           "type": "firewallrules",
-          "apiVersion": "2014-04-01-preview",
+          "apiVersion": "2015-05-01-preview",
           "dependsOn": [
             "[resourceId('Microsoft.Sql/servers/', parameters('sqlserverName'))]"
           ],
@@ -114,7 +114,7 @@
       ]
     },
     {
-      "apiVersion": "2015-08-01",
+      "apiVersion": "2018-02-01",
       "name": "[parameters('hostingPlanName')]",
       "type": "Microsoft.Web/serverfarms",
       "location": "[resourceGroup().location]",
@@ -130,7 +130,7 @@
       }
     },
     {
-      "apiVersion": "2015-08-01",
+      "apiVersion": "2018-11-01",
       "name": "[parameters('webSiteName')]",
       "type": "Microsoft.Web/sites",
       "location": "[resourceGroup().location]",
@@ -144,27 +144,20 @@
       "properties": {
         "name": "[parameters('webSiteName')]",
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName'))]",
-        "minTlsVersion": "1.2"
-      },
-      "resources": [
-        {
-          "apiVersion": "2015-08-01",
-          "type": "config",
-          "name": "connectionstrings",
-          "dependsOn": [
-            "[resourceId('Microsoft.Web/Sites/', parameters('webSiteName'))]"
-          ],
-          "properties": {
-            "CMSConnectionString": {
-              "value": "[if(empty(parameters('connectionStringDatabaseName')),'',concat('Data Source=tcp:', reference(resourceId('Microsoft.Sql/servers/', parameters('sqlserverName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', parameters('connectionStringDatabaseName'), ';User Id=', parameters('sqlAdministratorLogin'), '@', parameters('sqlserverName'), ';Password=', parameters('sqlAdministratorPassword'), ';'))]",
+        "minTlsVersion": "1.2",
+        "siteConfig": {
+          "connectionStrings": [
+            {
+              "name": "CMSConnectionString",
+              "connectionString": "[if(empty(parameters('connectionStringDatabaseName')),'',concat('Data Source=tcp:', reference(resourceId('Microsoft.Sql/servers/', parameters('sqlserverName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', parameters('connectionStringDatabaseName'), ';User Id=', parameters('sqlAdministratorLogin'), '@', parameters('sqlserverName'), ';Password=', parameters('sqlAdministratorPassword'), ';'))]",
               "type": "SQLServer"
             }
-          }
+          ]
         }
-      ]
+      }
     },
     {
-      "apiVersion": "2014-04-01",
+      "apiVersion": "2015-04-01",
       "name": "[concat(parameters('hostingPlanName'), '-', resourceGroup().name)]",
       "type": "Microsoft.Insights/autoscalesettings",
       "location": "[resourceGroup().location]",
@@ -264,7 +257,7 @@
       }
     },
     {
-      "apiVersion": "2014-04-01",
+      "apiVersion": "2016-03-01",
       "name": "[concat('ForbiddenRequests ', parameters('webSiteName'))]",
       "type": "Microsoft.Insights/alertrules",
       "location": "[resourceGroup().location]",
@@ -298,7 +291,7 @@
       }
     },
     {
-      "apiVersion": "2014-04-01",
+      "apiVersion": "2016-03-01",
       "name": "[concat('CPUHigh ', parameters('hostingPlanName'))]",
       "type": "Microsoft.Insights/alertrules",
       "location": "[resourceGroup().location]",
@@ -332,7 +325,7 @@
       }
     },
     {
-      "apiVersion": "2014-04-01",
+      "apiVersion": "2016-03-01",
       "name": "[concat('LongHttpQueue ', parameters('hostingPlanName'))]",
       "type": "Microsoft.Insights/alertrules",
       "location": "[resourceGroup().location]",
@@ -366,7 +359,7 @@
       }
     },
     {
-      "apiVersion": "2014-04-01",
+      "apiVersion": "2015-05-01",
       "name": "[parameters('webSiteName')]",
       "type": "Microsoft.Insights/components",
       "location": "[resourceGroup().location]",
@@ -377,15 +370,16 @@
         "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/sites/', parameters('webSiteName'))]": "Resource",
         "displayName": "AppInsightsComponent"
       },
+      "kind": "web",
       "properties": {
-        "ApplicationId": "[parameters('webSiteName')]"
+        "Application_Type": "web"
       }
     },
     {
       "name": "[parameters('administrationWebSiteName')]",
       "type": "Microsoft.Web/sites",
       "location": "[resourceGroup().location]",
-      "apiVersion": "2015-08-01",
+      "apiVersion": "2018-11-01",
       "dependsOn": [
         "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName'))]"
       ],
@@ -396,27 +390,17 @@
       "properties": {
         "name": "[parameters('administrationWebSiteName')]",
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName'))]",
-        "minTlsVersion": "1.2"
-      },
-      "resources": [
-        {
-          "name": "connectionstrings",
-          "type": "config",
-          "apiVersion": "2015-08-01",
-          "dependsOn": [
-            "[resourceId('Microsoft.Web/sites', parameters('administrationWebSiteName'))]"
-          ],
-          "tags": {
-            "displayName": "administrationConnectionString"
-          },
-          "properties": {
-            "CMSConnectionString": {
-              "value": "[if(empty(parameters('connectionStringDatabaseName')),'',concat('Data Source=tcp:', reference(resourceId('Microsoft.Sql/servers/', parameters('sqlserverName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', parameters('connectionStringDatabaseName'), ';User Id=', parameters('sqlAdministratorLogin'), '@', parameters('sqlserverName'), ';Password=', parameters('sqlAdministratorPassword'), ';'))]",
+        "minTlsVersion": "1.2",
+        "siteConfig": {
+          "connectionStrings": [
+            {
+              "name": "CMSConnectionString",
+              "connectionString": "[if(empty(parameters('connectionStringDatabaseName')),'',concat('Data Source=tcp:', reference(resourceId('Microsoft.Sql/servers/', parameters('sqlserverName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', parameters('connectionStringDatabaseName'), ';User Id=', parameters('sqlAdministratorLogin'), '@', parameters('sqlserverName'), ';Password=', parameters('sqlAdministratorPassword'), ';'))]",
               "type": "SQLServer"
             }
-          }
+          ]
         }
-      ]
+      }
     }
   ]
 }
