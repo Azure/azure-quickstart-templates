@@ -23,26 +23,24 @@ $ChangedFile = Invoke-Restmethod "$PRUri"
 # Now check to make sure there is exactly one sample in this PR per repo guidelines
 $FolderArray = @()
 $ChangedFile | ForEach-Object {
-    if ($_.status -ne "removed") {  # ignore deleted files, for example when a sample folder is renamed
-        Write-Output $_.blob_url
-        $CurrentPath = Split-Path (Join-Path -path $RepoRoot -ChildPath $_.filename)
+    Write-Output $_.blob_url
+    $CurrentPath = Split-Path (Join-Path -path $RepoRoot -ChildPath $_.filename)
  
-        # File in root of repo - TODO: should we block this?
+    # File in root of repo - TODO: should we block this?
+    If ($CurrentPath -eq $RepoRoot) {
+        Write-Error "### Error ### The file $($_.filename) is in the root of the repository. A PR can only contain changes to files from a sample folder at this time."
+    }
+    Else {
+        # find metadata.json
+        while (!(Test-Path (Join-Path -path $CurrentPath -ChildPath "metadata.json")) -and $CurrentPath -ne $RepoRoot) {
+            $CurrentPath = Split-Path $CurrentPath # if it's not in the same folder as this file, search it's parent
+        }
+        # if we made it to the root searching for metadata.json write the error
         If ($CurrentPath -eq $RepoRoot) {
-            Write-Error "### Error ### The file $($_.filename) is in the root of the repository. A PR can only contain changes to files from a sample folder at this time."
+            Write-Error "### Error ### The scenario folder for $($_.filename) does not include a metadata.json file. Please add a metadata.json file to your scenario folder as part of the pull request."
         }
         Else {
-            # find metadata.json
-            while (!(Test-Path (Join-Path -path $CurrentPath -ChildPath "metadata.json")) -and $CurrentPath -ne $RepoRoot) {
-                $CurrentPath = Split-Path $CurrentPath # if it's not in the same folder as this file, search it's parent
-            }
-            # if we made it to the root searching for metadata.json write the error
-            If ($CurrentPath -eq $RepoRoot) {
-                Write-Error "### Error ### The scenario folder for $($_.filename) does not include a metadata.json file. Please add a metadata.json file to your scenario folder as part of the pull request."
-            }
-            Else {
-                $FolderArray += $currentpath
-            }
+            $FolderArray += $currentpath
         }
     }
 }
