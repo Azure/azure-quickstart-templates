@@ -11,4 +11,5 @@ This template deploys a group of open source software that is typically used tog
 
 2.	PHP application servers, with nginx and php-fpm - Each one has 2 NICs – One NIC with a private IP in subnet 2 and the other NIC with a private IP in subnet3. 
 
-3.	Database server, with postgreqsql and pgbouncer - It has 1 NIC with a private IP in subnet3. 
+3.	Database server, with postgreqsql and pgbouncer - It has 1 NIC with a private IP in subnet3.
+
