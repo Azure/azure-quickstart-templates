@@ -19,3 +19,4 @@ If you are new to the template development, see:
 - [Azure Resource Manager documentation](https://docs.microsoft.com/en-us/azure/azure-resource-manager/)
 
 Tags: Azure Storage account, Resource Manager, Resource Manager templates, ARM templates
+
