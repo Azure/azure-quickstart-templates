@@ -30,9 +30,22 @@
     },
     "availabilityZones": {
       "type": "array",
-      "defaultValue": ["1", "2", "3"],
+      "defaultValue": [
+        "1",
+        "2",
+        "3"
+      ],
       "metadata": {
         "description": "Zone numbers e.g. 1,2,3."
+      }
+    },
+    "numberOfFirewallPublicIPAddresses": {
+      "type": "int",
+      "defaultValue": 1,
+      "minValue": 1,
+      "maxValue": 100,
+      "metadata": {
+        "description": "Number of public IP addresses for the Azure Firewall"
       }
     }
   },
@@ -54,9 +67,25 @@
     "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'sajumpbox')]",
     "azfwRouteTableName": "AzfwRouteTable",
     "firewallName": "firewall1",
-    "publicIPName": "publicIP1",
-    "azureFirewallSubnetId":  "[resourceId('Microsoft.Network/virtualNetworks/subnets',parameters('virtualNetworkName'), variables('azureFirewallSubnetName'))]",
-    "azureFirewallPublicIpId": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPName'))]"
+    "publicIPNamePrefix": "publicIP",
+    "azureFirewallSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets',parameters('virtualNetworkName'), variables('azureFirewallSubnetName'))]",
+    "azureFirewallPublicIpId": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPNamePrefix'))]",
+    "azureFirewallSubnetJSON": "[json(format('{{\"id\": \"{0}\"}}', variables('azureFirewallSubnetId')))]",
+    "copy": [
+      {
+        "name": "azureFirewallIpConfigurations",
+        "count": "[parameters('numberOfFirewallPublicIPAddresses')]",
+        "input": {
+          "name": "[concat('IpConf', copyIndex('azureFirewallIpConfigurations'))]",
+          "properties": {
+            "subnet": "[if(equals(copyIndex('azureFirewallIpConfigurations'), 0), variables('azureFirewallSubnetJSON'), json('null'))]",
+            "publicIPAddress": {
+              "id": "[concat(variables('azureFirewallPublicIpId'), add(copyIndex('azureFirewallIpConfigurations'), 1))]"
+            }
+          }
+        }
+      }
+    ]
   },
   "resources": [
     {
@@ -132,12 +161,16 @@
       }
     },
     {
-      "name": "[variables('publicIPName')]",
+      "name": "[concat(variables('publicIPNamePrefix'), add(copyIndex(), 1))]",
       "type": "Microsoft.Network/publicIPAddresses",
       "apiVersion": "2019-04-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Standard"
+      },
+      "copy": {
+        "name": "publicIpCopy",
+        "count": "[parameters('numberOfFirewallPublicIPAddresses')]"
       },
       "properties": {
         "publicIPAllocationMethod": "Static",
@@ -228,7 +261,7 @@
         ]
       }
     },
-    { 
+    {
       "name": "JumpBox",
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2019-03-01",
@@ -264,7 +297,7 @@
             {
               "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('JumpBoxNicName'))]"
             }
-           ]
+          ]
         },
         "diagnosticsProfile": {
           "bootDiagnostics": {
@@ -274,7 +307,7 @@
         }
       }
     },
-    { 
+    {
       "name": "Server",
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2019-03-01",
@@ -310,7 +343,7 @@
             {
               "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('ServerNicName'))]"
             }
-           ]
+          ]
         },
         "diagnosticsProfile": {
           "bootDiagnostics": {
@@ -327,29 +360,19 @@
       "location": "[parameters('location')]",
       "zones": "[if(equals(length(parameters('availabilityZones')), 0), json('null'), parameters('availabilityZones'))]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
-        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
+        "publicIpCopy"
       ],
       "properties": {
-        "ipConfigurations": [
-          {
-            "name": "IpConf",
-            "properties" : {
-              "subnet": {
-                "id": "[variables('azureFirewallSubnetId')]"
-              },
-              "PublicIPAddress": {
-                "id": "[variables('azureFirewallPublicIpId')]"
-              }
-            }
-          }
-        ],
+        "ipConfigurations": "[variables('azureFirewallIpConfigurations')]",
         "applicationRuleCollections": [
           {
             "name": "appRc1",
             "properties": {
               "priority": 101,
-              "action": {"type": "Allow"},
+              "action": {
+                "type": "Allow"
+              },
               "rules": [
                 {
                   "name": "appRule1",
@@ -357,6 +380,10 @@
                     {
                       "port": "80",
                       "protocolType": "http"
+                    },
+                    {
+                      "port": "443",
+                      "protocolType": "https"
                     }
                   ],
                   "targetFqdns": [ "www.microsoft.com" ],
@@ -371,14 +398,24 @@
             "name": "netRc1",
             "properties": {
               "priority": 200,
-              "action":  { "type": "Allow" },
+              "action": {
+                "type": "Allow"
+              },
               "rules": [
                 {
                   "name": "netRule1",
-                  "protocols": [ "TCP" ],
-                  "sourceAddresses": [ "10.0.0.0/24" ],
-                  "destinationAddresses": [ "*" ],
-                  "destinationPorts": [ "8000-8999" ]
+                  "protocols": [
+                    "TCP"
+                  ],
+                  "sourceAddresses": [
+                    "10.0.2.0/24"
+                  ],
+                  "destinationAddresses": [
+                    "*"
+                  ],
+                  "destinationPorts": [
+                    "8000-8999"
+                  ]
                 }
               ]
             }
