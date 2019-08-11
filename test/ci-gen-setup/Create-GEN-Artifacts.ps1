@@ -53,7 +53,7 @@ if($vault -eq $null) {
                                  -EnabledForTemplateDeployment `
                                  -EnabledForDiskEncryption `
                                  -EnabledForDeployment `
-                                 -EnableSoftDelete
+                                 -EnableSoftDelete `
                                  -Verbose
 }
 
