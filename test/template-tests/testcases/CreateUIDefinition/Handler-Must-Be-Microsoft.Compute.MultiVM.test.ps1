@@ -11,7 +11,8 @@ if (-not $CreateUIDefinitionObject.handler) {
 }
 
 # Next, make sure CreateUIDefinition's handler is 'Microsoft.Compute.MultiVM' (case sensitive)
-if ($CreateUIDefinitionObject.handler -cne 'Microsoft.Compute.MultiVm') {
+if (($CreateUIDefinitionObject.handler -cne 'Microsoft.Compute.MultiVm') -and `
+    ($CreateUIDefinitionObject.handler -cne 'Microsoft.Azure.CreateUIDef')) {
     # (if it wasn't, throw an error)
-    throw "The handler for CreateUIDefinition must be Microsoft.Compute.MultiVm"
+    throw "The handler for CreateUIDefinition must be 'Microsoft.Compute.MultiVm' or 'Microsoft.Azure.CreateUIDef'"
 }
