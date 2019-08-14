@@ -5,11 +5,5 @@ $CreateUIDefinitionObject
 )
 
 if (-not $CreateUIDefinitionObject.parameters) {
-    throw "CreateUIDefinition is missing a parameters property"
+    Write-Error "CreateUIDefinition is missing a parameters property"
 }
-
-if (-not $CreateUIDefinitionObject.parameters.basics) {
-    Write-Error "CreateUIDefinition is missing .parameters.basics"     
-}
-
-
