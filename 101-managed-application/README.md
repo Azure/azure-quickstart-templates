@@ -1,4 +1,4 @@
-# Deploying your first Managed Application with default view
+# Deploying your first managed application
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-managed-application%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
@@ -75,7 +75,7 @@ You should see "Validation Passed" status, so you may proceed with actual applic
 
 ![](images/cuid-create.png)
 
-You should see notification that application deployment was succesful, so you can navigate to the application.
+You should see notification that application deployment was successful, so you can navigate to the application.
 
 ![](images/app-created.png)
 
