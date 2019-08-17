@@ -1,22 +1,23 @@
 <#
-This script will generate the resource group names for deployment.
+This script will generate the resource group names for deployment and check for prereqs
 
 If specified, the prereq and the sample resource group name will be the same - this is required by some samples, but should not be the default
 
 #>
 
 param(
-    [string] $ResourceGroupNamePrefix = "azdo"
+    [string] $ResourceGroupNamePrefix = "azdo",
+    [string] $sampleFolder
 )
 
 # checks to see if there are prereqs that need to be deployed and sets the env variable to trigger prereq tasks
-$result = Test-Path "$(sample.folder)\prereqs\prereq.azuredeploy.json"
+$result = Test-Path "$sampleFolder\prereqs\prereq.azuredeploy.json"
 Write-Host "Result: $result"
 Write-Host "##vso[task.setvariable variable=deploy.prereqs]$result"
 #Write-Host "Deploy Prereqs: $(deploy.prereqs)"
 
 # check for .settings.json file 
-$settingsFilePath = "$(sample.folder)\prereqs\.settings.json"
+$settingsFilePath = "$sampleFolder\prereqs\.settings.json"
 
 if(Test-Path "$settingsFilePath"){
     Write-Host "Found settings file... $settingsFilePath"
