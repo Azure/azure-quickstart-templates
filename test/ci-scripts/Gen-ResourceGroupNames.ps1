@@ -30,7 +30,7 @@ if($settings.psobject.Members.Name -contains "PrereqResourceGroupNameSuffix"){
     $PrereqResourceGroupNameSuffix = $settings.PrereqResourceGroupNameSuffix
 }
 else{
-    $PrereqResourceGroupNameSuffix = "prereqs" # by default we will deploy to a separate resource group - it's a more thorough test on resourceIds
+    $PrereqResourceGroupNameSuffix = "-prereqs" # by default we will deploy to a separate resource group - it's a more thorough test on resourceIds
 }
 
 # Generate a resourceGroup Name
