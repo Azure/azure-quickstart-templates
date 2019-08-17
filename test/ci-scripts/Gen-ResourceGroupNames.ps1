@@ -1,5 +1,5 @@
 <#
-This script will generate the resource group names for deployment.
+This script will generate the resource group names for deployment and check for prereqs
 
 If specified, the prereq and the sample resource group name will be the same - this is required by some samples, but should not be the default
 
