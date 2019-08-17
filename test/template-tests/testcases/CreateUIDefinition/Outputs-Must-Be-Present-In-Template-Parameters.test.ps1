@@ -43,12 +43,12 @@ if (-not $CreateUIDefinitionObject.parameters.outputs) {
     Write-Error "CreateUIDefinition is missing the .parameters.outputs property" -ErrorId CreateUIDefinition.Missing.Outputs     # ( write an error if it doesn't)
 }
 
-
 foreach ($output in $parameterInfo.outputs.psobject.properties) { # Then walk thru each output
     $outputName = $output.Name
-    if ($outputName -eq 'applicationresourcename') { # If the output was 'applicationresourcename', 
-        # we don't care  (this is added by publishing process and subject to future removal).
-        continue 
+    if ($outputName -eq 'applicationresourcename' -or `
+        $outputName -eq 'jitaccesspolicy' -or `
+        $outputName -eq 'managedresourcegroupid') { # If the output was one of the outputs used for Managed Apps and only found in the generated template, skip the test
+            continue 
     }
     # If the output name was not declared in the TemplateObject,      
     if (-not $TemplateObject.parameters.$outputName) {
