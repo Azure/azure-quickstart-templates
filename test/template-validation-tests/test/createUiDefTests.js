@@ -71,7 +71,7 @@ describe('createUiDefinition.json file - ', () => {
     var outputsInCreateUiDef = Object.keys(createUiDefFileJSONObject.parameters.outputs);
     it.each(outputsInCreateUiDef, 'output %s must be present in mainTemplate parameters', ['element'], function(element, next) {
         /** if this is a managed app, applicationresourcename will be added by the RP and not in mainTemplate, so skip it */
-        if (element != 'applicationresourcename') {
+        if ((element != 'applicationresourcename') && (element != 'jitaccesspolicy') && (element != 'managedresourcegroupid')) {
             parametersInTemplate.should.contain(element);
         }
         next();
