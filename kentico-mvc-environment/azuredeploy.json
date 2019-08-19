@@ -2,21 +2,14 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "location": {
-      "type": "string",
-      "defaultValue": "[resourceGroup().location]",
-      "metadata": {
-        "description": "Location for all resources."
-      }
-    },
-    "hostingPlanName": {
+    "hostingPlanMVC": {
       "type": "string",
       "minLength": 1,
       "metadata": {
-        "description": "Name of the App Service hosting plan used to host deployed Web Apps."
+        "description": "Name of the App Service hosting plan used to host MVC Web App."
       }
     },
-    "pricingTier": {
+    "pricingTierMVC": {
       "type": "string",
       "defaultValue": "B1",
       "allowedValues": [
@@ -33,7 +26,41 @@
         "P3"
       ],
       "metadata": {
-        "description": "Pricing tier of the created App Service hosting plan. See the Microsoft Azure App Service documentation for details."
+        "description": "Pricing tier of the created App Service hosting plan for the MVC website. See the Microsoft Azure App Service documentation for details."
+      }
+    },
+    "MVCSiteName": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Name of the Web App hosting the presentation (MVC) front end. By default, the deployed Web App will be available at WebSiteName.azurewebsites.net. Keep in mind that the name must be unique across the entire Azure environment, not only within your hosting plan."
+      }
+    },
+    "hostingPlanAdministration": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Name of the App Service hosting plan used to host Administration Web App."
+      }
+    },
+    "pricingTierAdministration": {
+      "type": "string",
+      "defaultValue": "B1",
+      "allowedValues": [
+        "F1",
+        "D1",
+        "B1",
+        "B2",
+        "B3",
+        "S1",
+        "S2",
+        "S3",
+        "P1",
+        "P2",
+        "P3"
+      ],
+      "metadata": {
+        "description": "Pricing tier of the created App Service hosting plan for the administration website. See the Microsoft Azure App Service documentation for details."
       }
     },
     "administrationWebSiteName": {
@@ -41,13 +68,6 @@
       "minLength": 1,
       "metadata": {
         "description": "Name of the Web App hosting the administration site. By default, the deployed Web App will be available at AdministrationWebSiteName.azurewebsites.net. Keep in mind that the name must be unique across the entire Azure environment, not only within your hosting plan."
-      }
-    },
-    "webSiteName": {
-      "type": "string",
-      "minLength": 1,
-      "metadata": {
-        "description": "Name of the Web App hosting the presentation (MVC) front end. By default, the deployed Web App will be available at WebSiteName.azurewebsites.net. Keep in mind that the name must be unique across the entire Azure environment, not only within your hosting plan."
       }
     },
     "sqlServerName": {
@@ -73,6 +93,14 @@
       "defaultValue": "",
       "metadata": {
         "description": "Database name substituted in the 'Initial Catalog' parameter of the administration and website Web App connection strings. If left empty, the Web Apps are deployed without preconfigured connection strings."
+      }
+    },
+    "location": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
       }
     }
   },
@@ -120,35 +148,35 @@
     },
     {
       "apiVersion": "2018-11-01",
-      "name": "[parameters('hostingPlanName')]",
+      "name": "[parameters('hostingPlanMVC')]",
       "type": "Microsoft.Web/serverfarms",
       "location": "[parameters('location')]",
       "tags": {
         "displayName": "HostingPlan"
       },
       "sku": {
-        "name": "[parameters('pricingTier')]",
+        "name": "[parameters('pricingTierMVC')]",
         "capacity": 1
       },
       "properties": {
-        "name": "[parameters('hostingPlanName')]"
+        "name": "[parameters('hostingPlanMVC')]"
       }
     },
     {
       "apiVersion": "2018-11-01",
-      "name": "[parameters('webSiteName')]",
+      "name": "[parameters('MVCSiteName')]",
       "type": "Microsoft.Web/sites",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Web/serverFarms/', parameters('hostingPlanName'))]"
+        "[resourceId('Microsoft.Web/serverFarms/', parameters('hostingPlanMVC'))]"
       ],
       "tags": {
-        "[concat('hidden-related:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]": "empty",
+        "[concat('hidden-related:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanMVC'))]": "empty",
         "displayName": "Website"
       },
       "properties": {
-        "name": "[parameters('webSiteName')]",
-        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName'))]",
+        "name": "[parameters('MVCSiteName')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanMVC'))]",
         "minTlsVersion": "1.2",
         "siteConfig": {
           "connectionStrings": [
@@ -163,15 +191,15 @@
     },
     {
       "apiVersion": "2015-04-01",
-      "name": "[concat(parameters('hostingPlanName'), '-', resourceGroup().name)]",
+      "name": "[concat(parameters('hostingPlanMVC'), '-', resourceGroup().name)]",
       "type": "Microsoft.Insights/autoscalesettings",
       "location": "[parameters('location')]",
       "tags": {
-        "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]": "Resource",
+        "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanMVC'))]": "Resource",
         "displayName": "AutoScaleSettings"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]"
+        "[resourceId('Microsoft.Web/serverfarms/', parameters('hostingPlanMVC'))]"
       ],
       "properties": {
         "profiles": [
@@ -186,7 +214,7 @@
               {
                 "metricTrigger": {
                   "metricName": "CpuPercentage",
-                  "metricResourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]",
+                  "metricResourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanMVC'))]",
                   "timeGrain": "PT1M",
                   "statistic": "Average",
                   "timeWindow": "PT10M",
@@ -204,7 +232,7 @@
               {
                 "metricTrigger": {
                   "metricName": "CpuPercentage",
-                  "metricResourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]",
+                  "metricResourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanMVC'))]",
                   "timeGrain": "PT1M",
                   "statistic": "Average",
                   "timeWindow": "PT1H",
@@ -223,152 +251,20 @@
           }
         ],
         "enabled": false,
-        "name": "[concat(parameters('hostingPlanName'), '-', resourceGroup().name)]",
-        "targetResourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]"
-      }
-    },
-    {
-      "apiVersion": "2016-03-01",
-      "name": "[concat('ServerErrors ', parameters('webSiteName'))]",
-      "type": "Microsoft.Insights/alertrules",
-      "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Web/sites/', parameters('webSiteName'))]"
-      ],
-      "tags": {
-        "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/sites/', parameters('webSiteName'))]": "Resource",
-        "displayName": "ServerErrorsAlertRule"
-      },
-      "properties": {
-        "name": "[concat('ServerErrors ', parameters('webSiteName'))]",
-        "description": "[concat(parameters('webSiteName'), ' has some server errors, status code 5xx.')]",
-        "isEnabled": false,
-        "condition": {
-          "odata.type": "Microsoft.Azure.Management.Insights.Models.ThresholdRuleCondition",
-          "dataSource": {
-            "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleMetricDataSource",
-            "resourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/sites/', parameters('webSiteName'))]",
-            "metricName": "Http5xx"
-          },
-          "operator": "GreaterThan",
-          "threshold": 0.0,
-          "windowSize": "PT5M"
-        },
-        "action": {
-          "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleEmailAction",
-          "sendToServiceOwners": true
-        }
-      }
-    },
-    {
-      "apiVersion": "2016-03-01",
-      "name": "[concat('ForbiddenRequests ', parameters('webSiteName'))]",
-      "type": "Microsoft.Insights/alertrules",
-      "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Web/sites/', parameters('webSiteName'))]"
-      ],
-      "tags": {
-        "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/sites/', parameters('webSiteName'))]": "Resource",
-        "displayName": "ForbiddenRequestsAlertRule"
-      },
-      "properties": {
-        "name": "[concat('ForbiddenRequests ', parameters('webSiteName'))]",
-        "description": "[concat(parameters('webSiteName'), ' has some requests that are forbidden, status code 403.')]",
-        "isEnabled": false,
-        "condition": {
-          "odata.type": "Microsoft.Azure.Management.Insights.Models.ThresholdRuleCondition",
-          "dataSource": {
-            "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleMetricDataSource",
-            "resourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/sites/', parameters('webSiteName'))]",
-            "metricName": "Http403"
-          },
-          "operator": "GreaterThan",
-          "threshold": 0,
-          "windowSize": "PT5M"
-        },
-        "action": {
-          "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleEmailAction",
-          "sendToServiceOwners": true
-        }
-      }
-    },
-    {
-      "apiVersion": "2016-03-01",
-      "name": "[concat('CPUHigh ', parameters('hostingPlanName'))]",
-      "type": "Microsoft.Insights/alertrules",
-      "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]"
-      ],
-      "tags": {
-        "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]": "Resource",
-        "displayName": "CPUHighAlertRule"
-      },
-      "properties": {
-        "name": "[concat('CPUHigh ', parameters('hostingPlanName'))]",
-        "description": "[concat('The average CPU is high across all the instances of ', parameters('hostingPlanName'))]",
-        "isEnabled": false,
-        "condition": {
-          "odata.type": "Microsoft.Azure.Management.Insights.Models.ThresholdRuleCondition",
-          "dataSource": {
-            "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleMetricDataSource",
-            "resourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]",
-            "metricName": "CpuPercentage"
-          },
-          "operator": "GreaterThan",
-          "threshold": 90,
-          "windowSize": "PT15M"
-        },
-        "action": {
-          "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleEmailAction",
-          "sendToServiceOwners": true
-        }
-      }
-    },
-    {
-      "apiVersion": "2016-03-01",
-      "name": "[concat('LongHttpQueue ', parameters('hostingPlanName'))]",
-      "type": "Microsoft.Insights/alertrules",
-      "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]"
-      ],
-      "tags": {
-        "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]": "Resource",
-        "displayName": "AutoScaleSettings"
-      },
-      "properties": {
-        "name": "[concat('LongHttpQueue ', parameters('hostingPlanName'))]",
-        "description": "[concat('The HTTP queue for the instances of ', parameters('hostingPlanName'), ' has a large number of pending requests.')]",
-        "isEnabled": false,
-        "condition": {
-          "odata.type": "Microsoft.Azure.Management.Insights.Models.ThresholdRuleCondition",
-          "dataSource": {
-            "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleMetricDataSource",
-            "resourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]",
-            "metricName": "HttpQueueLength"
-          },
-          "operator": "GreaterThan",
-          "threshold": 100.0,
-          "windowSize": "PT5M"
-        },
-        "action": {
-          "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleEmailAction",
-          "sendToServiceOwners": true,
-        }
+        "name": "[concat(parameters('hostingPlanMVC'), '-', resourceGroup().name)]",
+        "targetResourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanMVC'))]"
       }
     },
     {
       "apiVersion": "2018-05-01-preview",
-      "name": "[parameters('webSiteName')]",
+      "name": "[parameters('MVCSiteName')]",
       "type": "Microsoft.Insights/components",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Web/sites/', parameters('webSiteName'))]"
+        "[resourceId('Microsoft.Web/sites/', parameters('MVCSiteName'))]"
       ],
       "tags": {
-        "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/sites/', parameters('webSiteName'))]": "Resource",
+        "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/sites/', parameters('MVCSiteName'))]": "Resource",
         "displayName": "AppInsightsComponent"
       },
       "kind": "web",
@@ -377,20 +273,36 @@
       }
     },
     {
+      "apiVersion": "2018-11-01",
+      "name": "[parameters('hostingPlanAdministration')]",
+      "type": "Microsoft.Web/serverfarms",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "HostingPlan"
+      },
+      "sku": {
+        "name": "[parameters('pricingTierAdministration')]",
+        "capacity": 1
+      },
+      "properties": {
+        "name": "[parameters('hostingPlanAdministration')]"
+      }
+    },
+    {
       "name": "[parameters('administrationWebSiteName')]",
       "type": "Microsoft.Web/sites",
       "location": "[parameters('location')]",
       "apiVersion": "2018-11-01",
       "dependsOn": [
-        "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName'))]"
+        "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanAdministration'))]"
       ],
       "tags": {
-        "[concat('hidden-related:', resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName')))]": "Resource",
+        "[concat('hidden-related:', resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanAdministration')))]": "Resource",
         "displayName": "Administration"
       },
       "properties": {
         "name": "[parameters('administrationWebSiteName')]",
-        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName'))]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanAdministration'))]",
         "minTlsVersion": "1.2",
         "siteConfig": {
           "connectionStrings": [
