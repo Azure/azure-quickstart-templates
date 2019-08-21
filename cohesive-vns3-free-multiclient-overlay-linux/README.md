@@ -50,46 +50,31 @@ The template expects the following parameters:
 | adminUsernameUbuntu | Administrator username for Ubuntu VM | {No Default} |
 | adminPasswordUbuntu | Administrator password for Ubuntu VM | {No Default} |
 | numberOfInstances| VMs to deploy, max 5 as free edition only supports 5 clientpacks | 3 |
-| vmSize | The size of the VMs deployed in the overlay network (Defaults to Standard_D1_v2) | Standard_D1_v2 |
-| vmImage | The OS VM Image (defaults to Ubuntu 16.04.0-LTS) | 16.04.0-LTS |
 
 
-This is an overview of the solution
+### This is an overview of the solution
 
-The following resources are deployed as part of the solution
+The following resources are deployed as part of the solution:
 
-#### Resource provider 1
+A VNS3 4.4.3 Free controller running on a Standard_B1ms instance.
 
-Description Resource Provider 1
+Upto 5 Ubuntu 16.04.0-LTS VM's running on a Standard_B1ms instance.
 
-+ **Resource type 1A**: Description Resource type 1A
-+ **Resource type 1B**: Description Resource type 1B
-+ **Resource type 1C**: Description Resource type 1C
+VNET, Subnet, NSG's, NIC & PIP's
 
-#### Resource provider 2
+Once the controller and hosts are deployed a custom script downloads, deploys and configures the overlay network. 
 
-Description Resource Provider 2
-
-+ **Resource type 2A**: Description Resource type 2A
-
-#### Resource provider 3
-
-Description Resource Provider 3
-
-+ **Resource type 3A**: Description Resource type 3A
-+ **Resource type 3B**: Description Resource type 3B
-
-## Prerequisites
+### Prerequisites
 
 You will need an active Azure Subscription
 
-## Deployment steps
+### Deployment steps
 
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
 
 ## Usage
 
-#### Connect
+### Connect
 
 Once the deployment is complete, you can access the VNS3 Controller Web UI by navigating to the public IP on port 8000. 
 
@@ -98,10 +83,7 @@ The password is: vnscubed (you will be prompted to change these on initial login
 
 	https://[PublicIP]:8000
 
-#### Management
+### Management
 
-How to manage the solution
+For comprehesive documentation please visit our website https://www.cohesive.net/support/documentation	
 
-## Notes
-
-Solution notes
