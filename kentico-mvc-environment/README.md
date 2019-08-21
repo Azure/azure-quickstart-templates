@@ -91,6 +91,6 @@ You can specify the connection strings after deployment in **Azure Portal -> App
 
 `Value: Data Source=tcp:<SQL_SERVER_NAME>.database.windows.net,1433;Initial Catalog=<DATABASE_NAME>;User Id=<USER_NAME>@<SQL_SERVER_NAME>;Password=<USER_PASSWORD>;`
 
-`Type: SQLAzure`
+`Type: SQLServer`
 
 Substitute the *<SQL_SERVER_NAME>*, *<DATABASE_NAME>*, *<USER_NAME>*, and *<USER_PASSWORD>* placeholders with the information you provided during template deployment.
