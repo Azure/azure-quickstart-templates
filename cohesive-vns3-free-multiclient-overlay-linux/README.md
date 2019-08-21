@@ -79,6 +79,7 @@ You can click the "deploy to Azure" button at the beginning of this document or 
 Once the deployment is complete, you can access the VNS3 Controller Web UI by navigating to the public IP on port 8000. 
 
 The username is: vnscubed
+
 The password is: vnscubed (you will be prompted to change these on initial login)
 
 	https://[PublicIP]:8000
