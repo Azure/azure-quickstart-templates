@@ -15,11 +15,11 @@ You can add the password to the Key Vault using the below commands:
 #### PowerShell
 ```
 $Secret = ConvertTo-SecureString -String 'Password' -AsPlainText -Force
-Set-AzureKeyVaultSecret -VaultName 'Contoso' -Name 'ITSecret' -SecretValue $Secret
+Set-AzKeyVaultSecret -VaultName 'Contoso' -Name 'ITSecret' -SecretValue $Secret
 ```
 #### CLI
 ```
-azure keyvault secret set --vault-name Contoso --secret-name ITSecret --value azurepass
+az keyvault secret set --vault-name Contoso --name ITSecret --value 'password'
 ```
 
 ## Enable Key Vault for VM and Template secret access
@@ -27,10 +27,10 @@ After this you'll need to enable the Key Vault for template deployment. You can 
 
 ## PowerShell
 ```
-Set-AzureRmKeyVaultAccessPolicy -VaultName Contoso -EnabledForTemplateDeployment
+Set-AzKeyVaultAccessPolicy -VaultName Contoso -EnabledForTemplateDeployment
 ```
 
 ### CLI
 ```
-azure keyvault set-policy --vault-name Contoso --enabled-for-template-deployment true
+az keyvault update  --name Contoso --enabled-for-template-deployment true
 ```
