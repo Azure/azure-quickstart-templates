@@ -21,7 +21,15 @@ DscResourcesToExport = @(
     'RegisterTaskScheduler',
     'DownloadSCCM',
     'WaitForExtendSchemaFile',
-    'SetAutomaticManagedPageFile'
+    'SetAutomaticManagedPageFile',
+    'ChangeServices',
+    'AddUserToLocalAdminGroup',
+    'JoinDomain',
+    'OpenFirewallPortForSCCM',
+    'InstallFeatureForSCCM',
+    'SetCustomPagingFile',
+    'SetupDomain',
+    'FileReadAccessShare'
 )
 
 # Version number of this module.

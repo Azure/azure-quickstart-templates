@@ -1,5 +1,24 @@
 # Change log for Azure template for SharePoint 2019 / 2016 / 2013
 
+## July 2019 update
+
+* Significantly improve reliability of the deployment by mitigating its main source of failures: Add a retry mechanism to resource xRemoteFile when the download fails.
+* Completely configure SharePoint to host and run high-trust provider-hosted add-ins
+* Configure LDAPCP to enable augmentation and remove unused claim types
+* Add the certificate of the domain root authority to the SPTrustedRootAuthority
+* Update apiVersion of all ARM resources to latest version
+* Update some property descriptions in the ARM template
+* Update DSC module SharePointDSC to 3.5
+* Update DSC module xPSDesiredStateConfiguration to 8.8, wich a customization on resource xRemoteFile to deal with random connection errors while downloading LDAPCP
+* Update xActiveDirectory from 2.23 to 3.0
+* Update NetworkingDsc from 6.3 to 7.3
+* Update ActiveDirectoryCSDsc from 3.1 to 3.3
+* Update CertificateDsc from 4.3 to 4.7
+* Update xDnsServer from 1.11 to 1.13
+* Update ComputerManagementDsc from 6.1 to 6.4
+* Update SqlServerDsc from 12.2 to 13.0
+* Update StorageDsc from 4.4 to 4.7
+
 ## February 2019 update
 
 * Added SharePoint 2019

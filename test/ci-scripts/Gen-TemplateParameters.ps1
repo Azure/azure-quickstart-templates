@@ -60,7 +60,7 @@ foreach ($p in $JsonParameters.psObject.Properties) {
                 $v = New-Guid
             }
             "PASSWORD" {
-                $v = "cI#" + (New-Guid).ToString().Substring(0, 17)
+                $v = "cI#" + (New-Guid).ToString().Replace("-", "").Substring(0, 17)
             }
             default {
                 $v = $config.$token
