@@ -1,5 +1,4 @@
-#  Kentico MVC environment
-
+# Kentico MVC environment
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fkentico-mvc-environment%2Fazuredeploy.json" target="_blank">
 
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
@@ -39,9 +38,9 @@ The deployed SQL server by default only allows connections from other Azure reso
 
 ### Microsoft.&#8203;Web
 
-Deploys and configures two Azure App Service Web Apps, each with a separate hosting plan (allowing for independent scale-out of both applications to multiple instances). 
+Deploys and configures two Azure App Service Web Apps, each with a separate hosting plan (allowing for independent scale-out of both applications to multiple instances). In most cases, the MVC application will receive the bulk of the traffic and have different performance requirements than the administration interface.
 
-Furthermore, the Web App hosting the MVC application is configured to automatically scale out to up to two instances when necessary via the 'Autoscale' feature if deployed to an App Service plan with a pricing tier of *S1* or higher.
+Furthermore, if deployed to an App Service plan with a pricing tier of *S1* or higher, the Web App hosting the MVC application is configured to automatically scale out to up to two instances when necessary via the 'Autoscale' feature. Note that using 'Autoscale' may require you to reconfigure the MVC application's session state storage to account for multiple applications. See [Storing session state data in an Azure Environment](https://kentico.com/CMSPages/DocLinkMapper.ashx?version=latest&link=azure_state_storing) in the Kentico documentation.
 
 #### Deployed resources:
 
@@ -65,7 +64,7 @@ You can use this template to configure and deploy resources necessary to host a 
 1. [Develop](https://kentico.com/CMSPages/DocLinkMapper.ashx?version=latest&link=mvc_development) a Kentico MVC project locally.
 2. Use this template to deploy resources necessary to host the Kentico MVC site in Azure (click *Deploy to Azure* at the top of this document).
 	- See the **Deployed resources** section for an overview of all resources deployed by the template.
-3. [Publish](https://kentico.com/CMSPages/DocLinkMapper.ashx?version=latest&link=azure_webapps_deploying) the Kentico administration and MVC front-end applications to the deployed Web Apps.
+3. [Publish](https://kentico.com/CMSPages/DocLinkMapper.ashx?version=latest&link=azure_webapps_deploying_mvc) the Kentico administration and MVC front-end applications to the deployed Web Apps.
 4. Upload the project's database to a database created under the Azure SQL server instance deployed by the template. 
 
 For more information about MVC development and general best practices, visit the [Kentico documentation](https://docs.kentico.com).
@@ -79,7 +78,7 @@ For more information about MVC development and general best practices, visit the
 4. Agree with the displayed terms and conditions and click **Purchase**.
 	- The template deploys all resources necessary to host Kentico MVC sites in Microsoft Azure.
 5. Deploy your local database and MVC and Kentico administration sites to the created Azure SQL server and Web Apps.
-	- For step-by-step instructions detailing this process, visit the [Kentico documentation](https://kentico.com/CMSPages/DocLinkMapper.ashx?version=latest&link=azure_webapps_deploying).
+	- For step-by-step instructions detailing this process, visit the [Kentico documentation](https://kentico.com/CMSPages/DocLinkMapper.ashx?version=latest&link=azure_webapps_deploying_mvc).
 
 ### Additional database installation
 
