@@ -5,11 +5,6 @@ If the PR does not contain changes to a sample folder, it will currently fail bu
 pass the build in order to trigger a manual review
 #>
 
-param(
-    [string] $ResourceGroupNamePrefix = "azdo",
-    [string] $PrereqResourceGroupNameSuffix = "" # leave this to deploy prereqs to the same RG as the rest of the resources
-)
-
 # Get-ChildItem env: # debugging
 
 $GitHubRepository = $ENV:BUILD_REPOSITORY_NAME
@@ -24,23 +19,25 @@ $ChangedFile = Invoke-Restmethod "$PRUri"
 $FolderArray = @()
 $ChangedFile | ForEach-Object {
     Write-Output $_.blob_url
-    $CurrentPath = Split-Path (Join-Path -path $RepoRoot -ChildPath $_.filename)
+    if ($_.status -ne "removed") {  # ignore deleted files, for example when a sample folder is renamed
+        $CurrentPath = Split-Path (Join-Path -path $RepoRoot -ChildPath $_.filename)
  
-    # File in root of repo - TODO: should we block this?
-    If ($CurrentPath -eq $RepoRoot) {
-        Write-Error "### Error ### The file $($_.filename) is in the root of the repository. A PR can only contain changes to files from a sample folder at this time."
-    }
-    Else {
-        # find metadata.json
-        while (!(Test-Path (Join-Path -path $CurrentPath -ChildPath "metadata.json")) -and $CurrentPath -ne $RepoRoot) {
-            $CurrentPath = Split-Path $CurrentPath # if it's not in the same folder as this file, search it's parent
-        }
-        # if we made it to the root searching for metadata.json write the error
+        # File in root of repo - TODO: should we block this?
         If ($CurrentPath -eq $RepoRoot) {
-            Write-Error "### Error ### The scenario folder for $($_.filename) does not include a metadata.json file. Please add a metadata.json file to your scenario folder as part of the pull request."
+            Write-Error "### Error ### The file $($_.filename) is in the root of the repository. A PR can only contain changes to files from a sample folder at this time."
         }
         Else {
-            $FolderArray += $currentpath
+            # find metadata.json
+            while (!(Test-Path (Join-Path -path $CurrentPath -ChildPath "metadata.json")) -and $CurrentPath -ne $RepoRoot) {
+                $CurrentPath = Split-Path $CurrentPath # if it's not in the same folder as this file, search it's parent
+            }
+            # if we made it to the root searching for metadata.json write the error
+            If ($CurrentPath -eq $RepoRoot) {
+                Write-Error "### Error ### The scenario folder for $($_.filename) does not include a metadata.json file. Please add a metadata.json file to your scenario folder as part of the pull request."
+            }
+            Else {
+                $FolderArray += $currentpath
+            }
         }
     }
 }
@@ -56,8 +53,3 @@ If ($FolderArray.count -gt 1) {
 $FolderString = $FolderArray[0]
 Write-Output "Using sample folder: $FolderString"
 Write-Host "##vso[task.setvariable variable=sample.folder]$FolderString"
-
-# Generate a resourceGroup Name
-$resourceGroupName = "$ResourceGroupNamePrefix-$(New-Guid)"
-Write-Host "##vso[task.setvariable variable=resourceGroup.name]$resourceGroupName"
-Write-Host "##vso[task.setvariable variable=prereq.resourceGroup.name]$resourceGroupName-$PrereqResourceGroupNameSuffix"
