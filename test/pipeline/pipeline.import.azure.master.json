@@ -102,7 +102,6 @@
     "jobAuthorizationScope": 1,
     "jobTimeoutInMinutes": 360,
     "jobCancelTimeoutInMinutes": 5,
-    "badgeEnabled": false,
     "process": {
         "phases": [
             {
@@ -176,6 +175,56 @@
                             "failOnStderr": "false",
                             "ignoreLASTEXITCODE": "false",
                             "pwsh": "true",
+                            "workingDirectory": ""
+                        }
+                    },
+                    {
+                        "environment": {},
+                        "enabled": true,
+                        "continueOnError": false,
+                        "alwaysRun": false,
+                        "displayName": "Validate metadata.json",
+                        "timeoutInMinutes": 0,
+                        "condition": "succeeded()",
+                        "task": {
+                            "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
+                            "versionSpec": "2.*",
+                            "definitionType": "task"
+                        },
+                        "inputs": {
+                            "targetType": "filePath",
+                            "filePath": "$(ttk.folder)\\ci-scripts\\Validate-Metadata.ps1",
+                            "arguments": "-path \"$(sample.folder)\\metadata.json\"",
+                            "script": "param(\n    [string][Parameter(mandatory=$true)] $path\n)\n\n#get the file content\n#$metadata = Get-Content -Path \"$(sample.folder)\\metadata.json\" -Raw \n$metadata = Get-Content -Path $path -Raw \n\n#Check metadata.json against the schema\n$schema = Invoke-WebRequest -Uri \"https://aka.ms/azure-quickstart-templates-metadata-schema#\" -UseBasicParsing\n$metadata | Test-Json -Schema $schema.content \n\n#Make sure the date has been updated\n$dateUpdated = (Get-Date ($metadata | convertfrom-json).dateUpdated)\n\nWrite-Host $dateUpdated\n\nif($dateUpdated -gt (Get-Date)){\n    Write-Error \"dateUpdated in metadata.json must not be in the future\"\n    Write-Error \"$dateUpdated is later than $(Get-Date)\"\n}\n\n$oldDate = (Get-Date).AddDays(-60)\n\nif($dateUpdated -lt $oldDate){\n    Write-Error \"dateUpdated in metadata.json needs to be updated\"\n    Write-Error \"$dateUpdated is older than $oldDate\"\n}\n",
+                            "errorActionPreference": "stop",
+                            "failOnStderr": "false",
+                            "ignoreLASTEXITCODE": "false",
+                            "pwsh": "true",
+                            "workingDirectory": ""
+                        }
+                    },
+                    {
+                        "environment": {},
+                        "enabled": true,
+                        "continueOnError": false,
+                        "alwaysRun": false,
+                        "displayName": "TODO: Workaround for prereq resource group",
+                        "timeoutInMinutes": 0,
+                        "condition": "succeeded()",
+                        "task": {
+                            "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
+                            "versionSpec": "2.*",
+                            "definitionType": "task"
+                        },
+                        "inputs": {
+                            "targetType": "inline",
+                            "filePath": "",
+                            "arguments": "",
+                            "script": "#workaround until we fix the pipeline to use the same resourceGroup for prereqs... or figure out a solution for resources that must be in the same group\n\nWrite-Host \"##vso[task.setvariable variable=prereq.resourceGroup.name]$(resourceGroup.name)\"",
+                            "errorActionPreference": "stop",
+                            "failOnStderr": "false",
+                            "ignoreLASTEXITCODE": "false",
+                            "pwsh": "false",
                             "workingDirectory": ""
                         }
                     },
@@ -281,7 +330,7 @@
                     },
                     {
                         "environment": {},
-                        "enabled": true,
+                        "enabled": false,
                         "continueOnError": true,
                         "alwaysRun": false,
                         "displayName": "Create ResourceGroup - Assign RBAC (prereqs RG) ",
@@ -556,7 +605,7 @@
                     },
                     {
                         "environment": {},
-                        "enabled": true,
+                        "enabled": false,
                         "continueOnError": false,
                         "alwaysRun": false,
                         "displayName": "Clean Up ResourceGroup (mainTemplate)",
@@ -582,6 +631,31 @@
                     {
                         "environment": {},
                         "enabled": true,
+                        "continueOnError": false,
+                        "alwaysRun": false,
+                        "displayName": "Clean Up ResourceGroup with Retry",
+                        "timeoutInMinutes": 0,
+                        "condition": "always()",
+                        "task": {
+                            "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
+                            "versionSpec": "2.*",
+                            "definitionType": "task"
+                        },
+                        "inputs": {
+                            "targetType": "inline",
+                            "filePath": "",
+                            "arguments": "",
+                            "script": "# remove the resource group\n& $(ttk.folder)/ci-scripts/Kill-AzResourceGroup.ps1 -ResourceGroupName \"$(resourceGroup.name)\" -ErrorAction SilentlyContinue\n\n# if the resource group still exists after the first attempt, try again after a few minutes\nif ((Get-AzResourceGroup -Name \"$(resourceGroup.name)\" -verbose -ErrorAction SilentlyContinue) -ne $null) {\n\n    Write-Host \"Sleeping...\" \n    Sleep 600\n    Write-Host \"Attempting Kill-AzResourceGroup…\"\n    & $(ttk.folder)/ci-scripts/Kill-AzResourceGroup.ps1 -ResourceGroupName \"$(resourceGroup.name)\"\n\n}\n",
+                            "errorActionPreference": "stop",
+                            "failOnStderr": "false",
+                            "ignoreLASTEXITCODE": "false",
+                            "pwsh": "true",
+                            "workingDirectory": ""
+                        }
+                    },
+                    {
+                        "environment": {},
+                        "enabled": false,
                         "continueOnError": false,
                         "alwaysRun": false,
                         "displayName": "Clean Up ResourceGroup (prereqs)",
@@ -632,7 +706,7 @@
             "hasAdminPermissions": "True",
             "isFork": "False",
             "isPrivate": "False",
-            "lastUpdated": "07/15/2019 16:43:12",
+            "lastUpdated": "08/11/2019 20:00:50",
             "manageUrl": "https://github.com/Azure/azure-quickstart-templates",
             "nodeId": "MDEwOlJlcG9zaXRvcnkzNDQwNzY1MQ==",
             "ownerId": "6844498",
@@ -697,8 +771,8 @@
     "path": "\\",
     "type": 2,
     "queueStatus": 0,
-    "revision": 3,
-    "createdDate": "2019-07-16T16:11:47.817Z",
+    "revision": 18,
+    "createdDate": "2019-08-11T20:57:04.300Z",
     "project": {
         "id": "b191bd7a-37bb-47b0-870c-3f1270a79b3d",
         "name": "azure-quickstart-templates",
