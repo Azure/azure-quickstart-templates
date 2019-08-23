@@ -121,6 +121,7 @@ The common properties should be authored consistently to provide for understanda
             "name": "[concat(parameters('virtualMachineName'), copyIndex(1))]",
             "location": "[parameters('location')]",
             "sku": { ... },
+            "kind": "",
             "copy": {
                 "name": "vmLoop",
                 "count": "[parameters('numberOfVMs')]"
