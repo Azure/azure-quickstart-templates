@@ -23,26 +23,26 @@ This template will help you quickly spin up any number of [Application Insights]
 }
 ```
 
-The `guid` field is an arbitrary guid for the test. The `locations` field is a collection of locations to perform the test from. Here is a table of the valid locations, and their corresponding `Id` code:
+The `guid` field is an arbitrary guid for the test. The `locations` field is a collection of locations to perform the test from. Here is a table of the valid locations, and their corresponding `Id` code. Due to historical reasons, the `Id` code sometimes does not match the actual location where the webtest is occuring.
 
 | Name | Id          |
 | ------------- | ----------- |
-| US : IL-Chicago      | us-il-ch1-azr |
-| US : CA-San Jose     | us-ca-sjc-azr |
-| US : TX-San Antonio     | us-tx-sn1-azr |
-| US : VA-Ashburn     | us-va-ash-azr |
-| US : FL-Miami     | us-fl-mia-edge |
-| SG : Singapore     | apac-sg-sin-azr |
-| SE : Stockholm     | emea-se-sto-edge |
-| RU : Moscow     | emea-ru-msa-edge |
-| NL : Amsterdam     | emea-nl-ams-azr |
-| JP : Kawaguchi     | apac-jp-kaw-edge |
-| IE : Dublin     | emea-gb-db3-azr |
-| HK : Hong Kong     | apac-hk-hkn-azr |
-| FR : Paris     | emea-fr-pra-edge |
-| CH : Zurich     | emea-ch-zrh-edge |
-| BR : Sao Paulo     | latam-br-gru-edge |
-| AU : Sydney     | emea-au-syd-edge |
+| North Central US      | us-il-ch1-azr |
+| West US     | us-ca-sjc-azr |
+| South Central US     | us-tx-sn1-azr |
+| East US     | us-va-ash-azr |
+| Central US     | us-fl-mia-edge |
+| Southeast Asia     | apac-sg-sin-azr |
+| UK West     | emea-se-sto-edge |
+| UK South     | emea-ru-msa-edge |
+| West Europe     | emea-nl-ams-azr |
+| Japan East     | apac-jp-kaw-edge |
+| North Europe     | emea-gb-db3-azr |
+| East Asia    | apac-hk-hkn-azr |
+| France Central     | emea-fr-pra-edge |
+| France Central (Formerly France South)     | emea-ch-zrh-edge |
+| Brazil South     | latam-br-gru-edge |
+| Australia East     | emea-au-syd-edge |
 
 
 You can create any number of these test descriptors and pass them in as the parameter for `tests` as shown in the [parameters file](./azuredeploy.parameters.json).
