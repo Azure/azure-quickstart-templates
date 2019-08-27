@@ -1,13 +1,12 @@
-﻿function Sort-AzureRMTemplate
+﻿function Format-AzureRMTemplate
 {
     <#
     .Synopsis
-        Sorts a resource manager template
+        Formats a resource manager template in the desired order.
     .Description
         Sorts the content in a resource manager template.        
     .Link
         https://github.com/Azure/azure-quickstart-templates/blob/master/1-CONTRIBUTION-GUIDE/best-practices.md
-        !Reclarify this (sort order of resource properties)
     #>
     param(
     # The path to a file
@@ -35,7 +34,7 @@
             $templateObject = $templateText | ConvertFrom-Json
             if (-not $templateObject) { return } 
 
-            Sort-AzureRMTemplate -TemplateObject $TemplateObject
+            Format-AzureRMTemplate -TemplateObject $TemplateObject
             return
         }
 
