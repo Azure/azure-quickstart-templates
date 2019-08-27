@@ -29,7 +29,8 @@ DscResourcesToExport = @(
     'InstallFeatureForSCCM',
     'SetCustomPagingFile',
     'SetupDomain',
-    'FileReadAccessShare'
+    'FileReadAccessShare',
+    'InstallCA'
 )
 
 # Version number of this module.
