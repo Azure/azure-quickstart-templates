@@ -6,7 +6,7 @@
 
 . $PSScriptRoot\Expand-AzureRMTemplate.ps1
 . $PSScriptRoot\Test-AzureRMTemplate.ps1
-. $PSScriptRoot\Sort-AzureRMTemplate.ps1
 
+. $PSScriptRoot\Format-AzureRMTemplate.ps1
 
-
+Set-Alias Sort-AzureRMTemplate Format-AzureRMTemplate

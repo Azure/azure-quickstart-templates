@@ -17,7 +17,7 @@ Write-FormatView -Action {
     
 
     if ($global:_LastFile -ne $testOut.File.FullPath) {
-        Write-Host -ForegroundColor Magenta "Validating $($testOut.File.Name)" 
+        Write-Host -ForegroundColor Magenta "Validating $($testOut.File.FullPath | Split-Path | split-Path -Leaf)\$($testOut.File.Name)" 
 
         $global:_LastFile = $testOut.File.FullPath    
     }
