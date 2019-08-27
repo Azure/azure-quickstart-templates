@@ -578,3 +578,5 @@ The Quickstart deployment is built to get you "up and running" quickly. However,
 During installation, yum updates servers but will not automatically apply patches after deployment is complete. To apply patches either:
 * Schedule updates on the boxes through cron 
 * Regularly log on to the system and run a "yum update" command to keep security patches up to date on the operating system
+
+
