@@ -160,7 +160,7 @@ function Expand-AzureRMTemplate
                     ForEach-Object {
 
                         $fileInfo = $_
-                        if ($fileInfo.DirectoryName -like '*__macosx' -or $fileInfo.DirectoryName -like '*source.temp') {
+                        if ($fileInfo.DirectoryName -eq '__macosx') {
                             return # (excluding files as side-effects of MAC zips)
                         }
                         # All FolderFile objects will have the following properties:
