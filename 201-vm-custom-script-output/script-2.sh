@@ -4,3 +4,4 @@
 
 echo 'this is what we got from the previous script:'
 echo $1
+
