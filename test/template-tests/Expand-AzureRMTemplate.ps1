@@ -151,8 +151,7 @@ function Expand-AzureRMTemplate
             } else {                
                 $HasCreateUIDefinition = $false
                 $createUiDefinitionFullPath = $null 
-            }
-        
+            }       
 
             #*$FolderFiles (a list of objects of each file in the directory)
             $FolderFiles = 
@@ -160,8 +159,12 @@ function Expand-AzureRMTemplate
                     Where-Object { -not $_.PSIsContainer } |
                     ForEach-Object {
 
-                        # All FolderFile objects will have the following properties:
                         $fileInfo = $_
+                        if ($fileInfo.DirectoryName -eq '__macosx') {
+                            return # (excluding files as side-effects of MAC zips)
+                        }
+                        # All FolderFile objects will have the following properties:
+
                         $fileObject = [Ordered]@{
                             Name = $fileInfo.Name #*Name (the name of the file)
                             Extension = $fileInfo.Extension #*Extension (the file extension) 
@@ -176,7 +179,7 @@ function Expand-AzureRMTemplate
                             #*Schema (the value of the $schema property of the JSON object, if present)
                             $fileObject.schema = $fileObject.Object.'$schema'                        
                         }
-                        $fileObject    
+                        $fileObject
                     })
 
             if ($isMainTemplate) { # If the file was a main template,
