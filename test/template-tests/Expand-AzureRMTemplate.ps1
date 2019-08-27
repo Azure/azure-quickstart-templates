@@ -6,6 +6,13 @@ function Expand-AzureRMTemplate
     .Description
         Expands an Azure Resource Manager template and related files into a set of well-known parameters
 
+        Or
+
+        Expands an Azure Resource Manager template expression
+    .Notes
+        Expand-AzureRMTemplate -Expression expands expressions the resolve to a top-level property (e.g. variables or parameters).
+
+        It does not expand recursively, and it does not attempt to evaluate complex expressions.
     #>
     [CmdletBinding(DefaultParameterSetName='SpecificTemplate')]
     param(
@@ -14,11 +21,27 @@ function Expand-AzureRMTemplate
     [Alias('Fullname','Path')]
     [string]
     $TemplatePath,
-
+    
+    # An Azure Template Expression, for example [parameters('foo')].bar.
+    # If this expression was expanded, it would look in -InputObject for a .Parameters object containing the property 'foo'.
+    # Then it would look in that result for a property named bar.
     [Parameter(Mandatory=$true,Position=0,ValueFromPipelineByPropertyName=$true,ParameterSetName='Expression')]
     [string]
     $Expression,
 
+    # A whitelist of top-level properties to expand.
+    # For example, passing -Include Parameters will only expand out the [Parameters()] function
+    [Parameter(ParameterSetName='Expression')]
+    [string[]]
+    $Include,
+
+    # A blacklist of top-level properties that will not be expanded.
+    # For example, passing -Exclude Parameters will not expand any [Parameters()] function.
+    [Parameter(ParameterSetName='Expression')]
+    [string[]]
+    $Exclude,
+
+    # The object that will be used to evaluate the expression.
     [Parameter(ValueFromPipeline=$true,ParameterSetName='Expression')]
     [PSObject]
     $InputObject
@@ -253,26 +276,39 @@ function Expand-AzureRMTemplate
             $parametersExpression = $matched?.Groups["Parameters"].Value
             # strip off the () (don't use trim, or we might hurt subexpressions)
             $parametersExpression = $parametersExpression.Substring(1,$parametersExpression.Length - 1)
+            
             $functionParameters = @([Regex]::Matches($parametersExpression, $TemplateParametersExpression, $regexOptions))
-            if (-not $functionParameters) {
-                return $matched?.Value
+            if (-not $functionParameters) { # If there we no parameters
+                return $matched?.Value      # return the partially resolved expression.
             }
 
-            if (-not $functionParameters[0].Groups["StringLiteral"].Success) {
-                return $matched?.Value
+            if (-not $functionParameters[0].Groups["StringLiteral"].Success) { # If we didn't get a literal value
+                return $matched?.Value     # return the partially resolved expression.
             }
 
+            if ($Include -and $Include -notcontains $functionName) { # If we have a whitelist, and the function isn't in it.
+                return $Expression # don't evaluate.
+            }
+
+            if ($Exclude -and $Exclude -contains $functionName) { # If we have a blacklist, and the function is in it.
+                return $Expression # don't evaluate.
+            }
+
+
+            # Find the target property
             $targetProperty = $functionParameters[0].Groups["StringLiteral"].Value
+
+            # and resolve the target object.
             $targetObject = $InputObject.$functionName.$targetProperty
 
 
-            if (-not $targetObject) {
-                Write-Error ".$functionName.$targetProperty not found"
+            if (-not $targetObject) {  # If the object didn't resolve,
+                Write-Error ".$functionName.$targetProperty not found" # error out.
                 return 
             }
 
 
-            if ($matched?.Groups["Index"].Success) {
+            if ($matched?.Groups["Index"].Success) {  # Assuming it did, we have to check for indeces
                 $index = $matched?.Groups["Index"].Value -replace '[\[\]]', '' -as [int]
 
                 if (-not $targetObject[$index]) {
@@ -282,6 +318,7 @@ function Expand-AzureRMTemplate
                     $targetObject = $targetObject[$index]
                 }                
             }
+            # Since we can nest properties and indeces, we just have to work thru each remaining one.
             $propertyMatchGroup = $matched?.Groups["Property"]
             if ($propertyMatchGroup.Success) {
                 foreach ($cap in $propertyMatchGroup.Captures) {
@@ -300,11 +337,11 @@ function Expand-AzureRMTemplate
                         } else {
                             $targetObject = $targetObject[$propIndex -as [int]]
                         }
-                    }                    
+                    }
                 }    
             }
             
-
+            # and at last, we can return whatever was resolved.
             return $targetObject
         }
     }
