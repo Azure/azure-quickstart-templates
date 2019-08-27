@@ -50,7 +50,10 @@ if($vault -eq $null) {
     $vault = New-AzureRMKeyVault -VaultName $KeyVaultName `
                                  -ResourceGroupName $ResourceGroupName `
                                  -Location $Location `
-                                 -EnabledForTemplateDeployment -EnabledForDiskEncryption -EnabledForDeployment `
+                                 -EnabledForTemplateDeployment `
+                                 -EnabledForDiskEncryption `
+                                 -EnabledForDeployment `
+                                 -EnableSoftDelete `
                                  -Verbose
 }
 

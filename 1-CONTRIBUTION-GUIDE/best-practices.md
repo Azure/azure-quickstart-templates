@@ -34,6 +34,7 @@ An Azure Application or QuickStart sample must contain, at a minimum, the follow
 | Template File | mainTemplate.json | azuredeploy.json |  
 | Parameters File | n/a | azuredeploy.parameters.json |  
 | Read Me File | Not required | README.md |  
+| [SECURITY.md file](https://help.github.com/en/articles/adding-a-security-policy-to-your-repository) | Not required | SECURITY.md |
 | QuickStart Description | n/a | metadata.json |
 | Nested templates | In a **nestedtemplates** subfolder | In a **nestedtemplates** subfolder |  
 | Configuration Scripts | In a **scripts** subfolder | In a **scripts** subfolder |  
@@ -120,6 +121,7 @@ The common properties should be authored consistently to provide for understanda
             "name": "[concat(parameters('virtualMachineName'), copyIndex(1))]",
             "location": "[parameters('location')]",
             "sku": { ... },
+            "kind": "",
             "copy": {
                 "name": "vmLoop",
                 "count": "[parameters('numberOfVMs')]"

@@ -23,6 +23,13 @@
       },
       "defaultValue": "[resourceGroup().location]"
     },
+    "OS": {
+      "type": "string",
+      "allowedValues": ["Ubuntu 16.04 LTS", "CentOS 7.5", "RHEL 7.6"],
+      "metadata": {
+        "description": "The operating system of the VM."
+      }
+    },
     "VMSize": {
       "type": "string",
       "allowedValues": ["Standard_D16s_v3","Standard_E16s_v3","Standard_F16s_v2","Standard_D4s_v3"],
@@ -159,18 +166,32 @@
     "subnet1Name": "Subnet-1",
     "subnet1Prefix": "10.0.0.0/24",
     "numberOfInstances": 1,
-    "ubuntuscripturi": "[uri(parameters('_artifactsLocation'), concat('scripts/config-linux.sh', parameters('_artifactsLocationSasToken')))]",
+    "linuxscripturi": "[uri(parameters('_artifactsLocation'), concat('scripts/config-linux.sh', parameters('_artifactsLocationSasToken')))]",
     "installscripturi": "[uri(parameters('_artifactsLocation'), concat('scripts/automated-installer', parameters('_artifactsLocationSasToken')))]",
     "virtualMachineSize": "[parameters('VMSize')]",
     "imageReference": {
-      "publisher": "Canonical",
-      "offer": "UbuntuServer",
-      "sku": "16.04.0-LTS",
-      "version": "latest"
+      "Ubuntu 16.04 LTS": {
+        "publisher": "Canonical",
+        "offer": "UbuntuServer",
+        "sku": "16.04.0-LTS",
+        "version": "latest"
+      },
+      "CentOS 7.5": {
+        "publisher": "OpenLogic",
+        "offer": "CentOS",
+        "sku": "7.5",
+        "version": "latest"
+      },
+      "RHEL 7.6": {
+        "publisher": "RedHat",
+        "offer": "RHEL",
+        "sku": "7-RAW",
+        "version": "latest"
+      }
     },
     "publicIpName": "[substring(concat(uniqueString(resourceGroup().id, deployment().name)), 0, 6)]",
-    "UbuntuExecute": "[concat('-u ''', parameters('adminUsername'), ''' -p ''', parameters('adminPassword'), ''' -h ''', parameters('tableau_admin_username'), ''' -i ''', parameters('tableau_admin_password'), ''' -j ''', parameters('registration_zip'), ''' -k ''', parameters('registration_country'), ''' -l ''', parameters('registration_city'), ''' -m ''', parameters('registration_last_name'), ''' -n ''', parameters('registration_industry'), ''' -o yes -q ''', parameters('registration_title'),''' -r ''', parameters('registration_phone'),''' -s ''', parameters('registration_company'), ''' -t ''', parameters('registration_state'), ''' -x ''', parameters('registration_email'), ''' -v ''', parameters('registration_department'), ''' -g ''', variables('installscripturi'), ''' -y ''', parameters('license_key'), ''' -w ''', parameters('registration_first_name'), '''')]",
-    "UbCmdWrapper": "[concat('sh ./config-linux.sh ', variables('UbuntuExecute'))]",
+    "LinuxExecute": "[concat('-u ''', parameters('adminUsername'), ''' -p ''', parameters('adminPassword'), ''' -h ''', parameters('tableau_admin_username'), ''' -i ''', parameters('tableau_admin_password'), ''' -j ''', parameters('registration_zip'), ''' -k ''', parameters('registration_country'), ''' -l ''', parameters('registration_city'), ''' -m ''', parameters('registration_last_name'), ''' -n ''', parameters('registration_industry'), ''' -o yes -q ''', parameters('registration_title'),''' -r ''', parameters('registration_phone'),''' -s ''', parameters('registration_company'), ''' -t ''', parameters('registration_state'), ''' -x ''', parameters('registration_email'), ''' -v ''', parameters('registration_department'), ''' -g ''', variables('installscripturi'), ''' -y ''', parameters('license_key'), ''' -f ''', parameters('OS'), ''' -w ''', parameters('registration_first_name'), '''')]",
+    "LiCmdWrapper": "[concat('bash ./config-linux.sh ', variables('LinuxExecute'))]",
     "LinuxsecurityRules": [
       {
         "name": "ssh-rule",
@@ -340,7 +361,7 @@
           "adminPassword": "[parameters('adminPassword')]"
         },
         "storageProfile": {
-          "imageReference": "[variables('imageReference')]",
+          "imageReference": "[variables('imageReference')[parameters('OS')]]",
           "osDisk": {
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -388,9 +409,9 @@
               "timestamp": 123456789
             },
             "protectedSettings": {
-              "commandToExecute": "[variables('UbCmdWrapper')]",
+              "commandToExecute": "[variables('LiCmdWrapper')]",
               "fileUris": [
-                "[variables('ubuntuscripturi')]"
+                "[variables('linuxscripturi')]"
               ]
             }
           }
