@@ -11,6 +11,7 @@
     param(
     # The path to a file
     [Parameter(Mandatory=$true,ParameterSetName='FilePath',ValueFromPipelineByPropertyName=$true)]
+    [Alias('Fullname')]
     [string]$FilePath,
 
     # The path to a file
@@ -25,37 +26,38 @@
     }
 
     process {
-        if ($PSCmdlet.ParameterSetName -eq 'FilePath') {
-            $resolvedPath = $ExecutionContext.SessionState.Path.GetResolvedPSPathFromPSPath($FilePath)
+        if ($PSCmdlet.ParameterSetName -eq 'FilePath') { # If we're provided the path to a file
+            $resolvedPath = $ExecutionContext.SessionState.Path.GetResolvedPSPathFromPSPath($FilePath) # resolve it.
         
-            if (-not $resolvedPath) { return } 
+            if (-not $resolvedPath) { return } # If we couldn't, return.
         
-            $templateText = [IO.File]::ReadAllText("$resolvedPath")
-            $templateObject = $templateText | ConvertFrom-Json
-            if (-not $templateObject) { return } 
+            $templateText = [IO.File]::ReadAllText("$resolvedPath") # Read the file contents
+            $templateObject = $templateText | ConvertFrom-Json # convert them from JSON.
+            if (-not $templateObject) { return } # If it was null, return.
 
-            Format-AzureRMTemplate -TemplateObject $TemplateObject
+            Format-AzureRMTemplate -TemplateObject $TemplateObject # Call ourself, passing in the contents of the file. 
             return
         }
 
-        if ($PSCmdlet.ParameterSetName -eq 'TemplateObject') {
-            $newObject = [PSObject]::new()
-            foreach ($propName in $topLevelPropertyOrder) {
-                if ($templateObject.$propName) {
+        if ($PSCmdlet.ParameterSetName -eq 'TemplateObject') { # If we're provided a template object
+            $newObject = [PSObject]::new() # create a new object to output.
+            foreach ($propName in $topLevelPropertyOrder) { # Walk thru the properties in the preferred order.
+                if ($templateObject.$propName) { # If the template object had that property
                     $newProp = 
                         [Management.Automation.PSNoteProperty]::new($propName, $TemplateObject.$propName)                    
-                    $TemplateObject.psobject.properties.remove($propName)                    
-                    $newObject.psobject.properties.add($newProp)
+                    $newObject.psobject.properties.add($newProp) # add it to the new object 
+                    $TemplateObject.psobject.properties.remove($propName) # and remove it from the template object.
+                    
                 }
             }
-            if (@($templateObject.psobject.properties).Count) {
-                foreach ($prop in $templateObject.psobject.properties) {
+            if (@($templateObject.psobject.properties).Count) { # If the template object had any properties left
+                foreach ($prop in $templateObject.psobject.properties) { # add them to the new object in the order they were found.
                     $newProp = 
                         [Management.Automation.PSNoteProperty]::new($prop.Name, $TemplateObject.$prop.Name)                    
                     $newObject.psobject.properties.add($newProp)
                 } 
             }
-            return $newObject
+            return $newObject # then return the newly formatted object.
         }
     }
 }

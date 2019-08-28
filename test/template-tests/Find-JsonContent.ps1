@@ -67,7 +67,8 @@
 
         foreach ($in in $InputObject) {
             if (-not $in) { continue } 
-            if ($in -is [string] -or $in -is [int] -or $in -is [bool] -or $in -is [double]) {
+            if ($in -is [string] -or $in -is [int] -or $in -is [bool] -or 
+                $in -is [double] -or $in -is [long] -or $in -is [float]) {
                 continue
             }
 
