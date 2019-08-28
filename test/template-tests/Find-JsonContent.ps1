@@ -118,6 +118,7 @@
                 Find-JsonContent @mySplat -InputObject $in
             } else {
                 foreach ($prop in $in.psobject.properties) {
+                    if (-not $prop.Value) { continue } 
                     if ($prop.Name -like 'parent*') { continue }
                     $mySplat.Property = $prop.Name 
                     Find-JsonContent @mySplat -InputObject $prop.Value 
