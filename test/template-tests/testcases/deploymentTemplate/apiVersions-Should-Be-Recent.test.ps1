@@ -86,22 +86,25 @@ foreach ($av in $allApiVersions) { # Then walk over each object containing an Ap
             }
         })
 
-    
-    if ($av.ApiVersion -like '*-*-*-*') {
-        #! Determine the index without respect to preview versions
-        $howRecent? = $validApiVersions.IndexOf($av.ApiVersion)
-        $moreRecent = $validApiVersions[0..$howRecent?]
-        if ($howRecent? -ge 0 -and $moreRecent -notmatch '\d+-\d+-\d+-') {
+    $howOutOfDate = $validApiVersions.IndexOf($av.ApiVersion) # Find out how out of date we are.
+    if ($howOutOfDate -eq -1 -and $validApiVersions) {
+        Write-Error "$fullResourceType is using an invalid apiVersion.
+      Valid Versions are:
+      $($validApiVersions -join ([Environment]::NewLine + (' ' * 6)))" -ErrorId ApiVersion.Not.Valid
+    }
+
+    if ($av.ApiVersion -like '*-*-*-*') { # If it's a preview or other special variant
+        $moreRecent = $validApiVersions[0..$howOutOfDate] # see if there's a more recent non-preview version.
+        if ($howOutOfDate -ge 0 -and $moreRecent -notmatch '\d+-\d+-\d+-') {
             Write-Error "$FullResourceType uses a preview version ( $($av.apiVersion) ).
-      There are $($howRecent?) more recent non-preview versions available.
+      There are $($howOutOfDate) more recent non-preview versions available.
       The most recent non-preview version is:
       $(@($moreRecent -notmatch '\d+-\d+-\d+-')[0] -join ([Environment]::NewLine + (' ' * 6)))" -TargetObject $av -ErrorId 'ApiVersion.Not.Recent'
-        } 
-         
+        }        
     }
     # Finally, check how long it's been since the ApiVersion's date
     $timeSinceApi = [DateTime]::Now - $apiDate
-    if ($timeSinceApi.TotalDays -gt 730) {  # If it's older than two years
+    if ($timeSinceApi.TotalDays -gt 730 -and $howOutOfDate) {  # If it's older than two years, and there's nothing more recent
         # write a warning        
         Write-Warning "Api versions should be under 2 years old (730 days) - ($FullResourceType is $([Math]::Floor($timeSinceApi.TotalDays)) days old)" 
     }
