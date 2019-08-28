@@ -121,6 +121,7 @@ The common properties should be authored consistently to provide for understanda
             "name": "[concat(parameters('virtualMachineName'), copyIndex(1))]",
             "location": "[parameters('location')]",
             "sku": { ... },
+            "kind": "",
             "copy": {
                 "name": "vmLoop",
                 "count": "[parameters('numberOfVMs')]"
@@ -287,9 +288,11 @@ The following example shows how to use the reference function for the `storageUr
 
 Deployment artifacts are any files, in addition to the mainTemplate.json/azuredeploy.json and createUIDefinition.json files that are needed to complete a deployment.  For example, nested deployment templates or configuration scripts.  The following guidelines should be used when creating a solution with deployment artifacts:
 
-* **mainTemplate.json** and **createUIDefinition.json** must be in the root of the folder.  
-* Additional templates should be stored in the **nestedtemplates** folder.
-* Scripts should be stored in the **scripts** folder.
+* **mainTemplate.json** and **createUIDefinition.json** must be in the root of the folder. 
+* Additional artifacts should also be stored in subfolders.  
+  * Additional templates should be stored in the **nestedtemplates** folder.
+  * Scripts should be stored in the **scripts** folder.  
+* You do not have to use the folder names prescribed above, if a more appropriate or descriptive name is appropriate.  Just don't put everything in the root.
 
 NOTE: if your application uses the CustomScript extension for Windows – place configuration scripts and other artifacts in the **/** (root) folder rather than the **/scripts** subfolder.  
 

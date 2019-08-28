@@ -5,11 +5,6 @@ If the PR does not contain changes to a sample folder, it will currently fail bu
 pass the build in order to trigger a manual review
 #>
 
-param(
-    [string] $ResourceGroupNamePrefix = "azdo",
-    [string] $PrereqResourceGroupNameSuffix = "" # leave this to deploy prereqs to the same RG as the rest of the resources
-)
-
 # Get-ChildItem env: # debugging
 
 $GitHubRepository = $ENV:BUILD_REPOSITORY_NAME
@@ -58,8 +53,3 @@ If ($FolderArray.count -gt 1) {
 $FolderString = $FolderArray[0]
 Write-Output "Using sample folder: $FolderString"
 Write-Host "##vso[task.setvariable variable=sample.folder]$FolderString"
-
-# Generate a resourceGroup Name
-$resourceGroupName = "$ResourceGroupNamePrefix-$(New-Guid)"
-Write-Host "##vso[task.setvariable variable=resourceGroup.name]$resourceGroupName"
-Write-Host "##vso[task.setvariable variable=prereq.resourceGroup.name]$resourceGroupName-$PrereqResourceGroupNameSuffix"
