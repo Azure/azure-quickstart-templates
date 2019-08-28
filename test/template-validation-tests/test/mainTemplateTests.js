@@ -131,7 +131,6 @@ describe('template files - ', () => {
 
                 // if this is mainTemplate.json, a defaultValue of resourceGroup().location is OK, so remove it before searching for it
                 if (regExp.test(templateJSONObject.filename.toLowerCase())) {
-                    console.log("debug: edburns: matched");
                     templateFileContent = templateFileContent.replace(/\"defaultvalue\":\s*\"\[resourcegroup\(\)\.location\]\"/, "");
                 }
 
