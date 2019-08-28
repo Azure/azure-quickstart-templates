@@ -17,6 +17,7 @@
         [Parameter(Mandatory)]
         [System.Management.Automation.PSCredential]$Admincreds
     )
+    Set-ExecutionPolicy -ExecutionPolicy Bypass -Force
     Import-DscResource -ModuleName TemplateHelpDSC
 
     $LogFolder = "TempLog"
