@@ -1,4 +1,4 @@
- Call custom APIs hosted on Azure App Service and protected by Azure Active Directory by using Azure Logic Apps
+ # Call Custom APIs Hosted on an Azure App Service Protected by Azure Active Directory Using Azure Logic Apps
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-logic-app-custom-api%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
