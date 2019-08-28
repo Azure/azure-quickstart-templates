@@ -1,6 +1,8 @@
 ```
 
-Note: these tests are being replaced by: https://github.com/Azure/azure-quickstart-templates/tree/master/test/template-tests
+Note: these tests are being replaced by: 
+
+https://github.com/Azure/azure-quickstart-templates/tree/master/test/template-tests
 
 ```
 
