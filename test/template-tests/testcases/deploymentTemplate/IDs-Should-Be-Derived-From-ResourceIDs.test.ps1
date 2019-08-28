@@ -1,4 +1,4 @@
-﻿<#
+<#
 .Synopsis
     Ensures that all IDs use the resourceID() function.
 .Description
@@ -19,7 +19,10 @@ $ids = $TemplateObject  | Find-JsonContent -Key id -Value * -Like
 foreach ($id in $ids) { # Then loop over each object with an ID
     $myId = "$($id.id)".Trim() # Grab the actual ID,
     $expandedId = Expand-AzureRMTemplate -Expression $myId -InputObject $TemplateObject # then expand it.
-    if ($expandedId -notmatch '\[resourceId\(') { # Check that it uses the ResourceID function
+    # Check that it uses the ResourceID or a param or var - can remove variables once Expand-Template does full eval of nested vars
+    if ($expandedId -notmatch '\[resourceId\(' -and `
+        $expandedId -notmatch '\[parameters\(' -and `
+        $expandedId -notmatch '\[variables\(') { 
         # if it didn't, write an error.
         Write-Error "resourceId() must be used for resourceId properties: $($id.id)" -TargetObject $id
     }
