@@ -66,7 +66,7 @@ Write-FormatView -Action {
         Write-Host " " # end of line
         $azoWarnStatus = if ($ENV:Agent_ID) { "##vso[task.logissue type=error;]"} else { '' }         
         foreach ($line in $warningLines) {
-            Write-Host "$azoWarnStatus$(' ' * $indent)$line" -foregroundColor DarkYellow 
+            Write-Host "$azoWarnStatus$(' ' * $indent)$line" -foregroundColor Yellow
         }
     }
     
