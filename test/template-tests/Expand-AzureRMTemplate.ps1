@@ -278,7 +278,7 @@ function Expand-AzureRMTemplate
             $parametersExpression = $parametersExpression.Substring(1,$parametersExpression.Length - 1)
             
             $functionParameters = @([Regex]::Matches($parametersExpression, $TemplateParametersExpression, $regexOptions))
-            if (-not $functionParameters) { # If there we no parameters
+            if (-not $functionParameters) { # If there were no parameters
                 return $matched?.Value      # return the partially resolved expression.
             }
 
@@ -308,7 +308,7 @@ function Expand-AzureRMTemplate
             }
 
 
-            if ($matched?.Groups["Index"].Success) {  # Assuming it did, we have to check for indeces
+            if ($matched?.Groups["Index"].Success) {  # Assuming it did, we have to check for indices
                 $index = $matched?.Groups["Index"].Value -replace '[\[\]]', '' -as [int]
 
                 if (-not $targetObject[$index]) {
@@ -318,7 +318,7 @@ function Expand-AzureRMTemplate
                     $targetObject = $targetObject[$index]
                 }                
             }
-            # Since we can nest properties and indeces, we just have to work thru each remaining one.
+            # Since we can nest properties and indices, we just have to work thru each remaining one.
             $propertyMatchGroup = $matched?.Groups["Property"]
             if ($propertyMatchGroup.Success) {
                 foreach ($cap in $propertyMatchGroup.Captures) {
