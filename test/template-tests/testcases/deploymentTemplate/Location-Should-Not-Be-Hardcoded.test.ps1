@@ -20,16 +20,28 @@ $TemplateWithoutLocationParameter = $TemplateObjectCopy |
 # Now get the location parameter 
 $locationParameter = $templateObject.parameters.location
 
-# Make sure that the template parameter's default is the expression [resourceGroup().location] 
-if ($locationParameter -and 
-    "$($locationParameter.defaultvalue)".Trim() -ne '[resourceGroup().location]' -and 
-    $IsMainTemplate) {
-    # If it wasn't, write an error
-    Write-Error "The defaultValue of the location parameter must not be a specific location. The default value must be [resourceGroup().location]. It is `"$($locationParameter.defaultValue)`"" -ErrorId Location.Parameter.Hardcoded -TargetObject $parameter
+# All location parameters must be of type "string" in the parameter declaration
+if($locationParameter.type -ne "string"){
+    Write-Error "The location parameter must be a 'string' type in the parameter delcaration `"$($locationParameter.type)`"" -ErrorId Location.Parameter.TypeMisMatch -TargetObject $parameter
 }
 
+# In mainTemplate:
+# there must be a parameter named "location"
+# if that parameter has a defaultValue, it must be the expression [resourceGroup().location] 
+if ($IsMainTemplate){ 
+    if($locationParameter.defaultValue -and "$($locationParameter.defaultvalue)".Trim() -ne '[resourceGroup().location]') {
+    Write-Error "The defaultValue of the location parameter in the main template must not be a specific location. The default value must be [resourceGroup().location]. It is `"$($locationParameter.defaultValue)`"" -ErrorId Location.Parameter.Hardcoded -TargetObject $parameter
+}
+# In all other templates:
+# if the parameter named "location" exists, it must not have a defaultValue property
+# Note that Powershell will count an empty string (which should fail the test) as null if not explictly tested, so we check for it
+}else {
+    if($locationParameter.defaultValue -ne $null){ 
+        Write-Error "The location parameter of nested templates must not have a defaultValue property. It is `"$($locationParameter.defaultValue)`"" -ErrorId Location.Parameter.DefaultValuePresent -TargetObject $parameter
+    }   
+}
 # Now check that the rest of the template doesn't use [resourceGroup().location] 
 if ($TemplateWithoutLocationParameter -like '*resourceGroup().location*') {
     # If it did, write an error
-    Write-Error "$TemplateFileName must use the location parameter, not resourceGroup().location (except when used as a default value)" -ErrorId Location.Parameter.Should.Be.Used -TargetObject $parameter
+    Write-Error "$TemplateFileName must use the location parameter, not resourceGroup().location (except when used as a default value in the main template)" -ErrorId Location.Parameter.Should.Be.Used -TargetObject $parameter
 }
