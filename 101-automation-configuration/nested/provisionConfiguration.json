@@ -1,7 +1,7 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "$schema"       : "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
   "contentVersion": "1.0.0.0",
-  "parameters": {
+  "parameters"    : {
     "_artifactsLocation": {
       "type": "string"
     },
@@ -23,80 +23,77 @@
     "safeModePassword": {
       "type": "securestring"
     },
-    "domainName": {
-      "type": "string"
-    },
     "compileName": {
-      "type": "string",
+      "type"        : "string",
       "defaultValue": "[guid(resourceGroup().id, deployment().name)]"
     }
   },
   "variables": {
     "dscConfigurations": {
-      "DomainControllerConfig": {
-        "name": "DomainControllerConfig",
-        "description": "minimum viable configuration for a domain controller role",
-        "script": "dscConfigurations/DomainControllerConfig.ps1"
+      "DSCFromGPO": {
+        "name"       : "DSCFromGPO",
+        "description": "minimum viable configuration for Microsoft Security Policies",
+        "script"     : "dscConfigurations/DSCFromGPO.ps1"
       }
     },
     "dscResources": {
-      "xActiveDirectory": {
-        "name": "xActiveDirectory",
-        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/xactivedirectory.2.16.0.nupkg"
+      "AuditPolicyDSC": {
+        "name": "AuditPolicyDSC",
+        "url" : "https://www.powershellgallery.com/api/v2/packages/AuditPolicyDsc/1.4.0.0"
       },
-      "xStorage": {
-        "name": "xStorage",
-        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/xstorage.3.2.0.nupkg"
-      }
+      "SecurityPolicyDSC": {
+        "name": "SecurityPolicyDSC",
+        "url" : "https://www.powershellgallery.com/api/v2/packages/SecurityPolicyDSC/2.9.0.0"
+      },
     }
   },
   "resources": [
     {
-      "name": "[parameters('automationAccountName')]",
-      "type": "Microsoft.Automation/automationAccounts",
-      "apiversion": "2018-01-15",
-      "location": "[parameters('location')]",
-      "comments": "Automation account for OMS",
+      "name"      : "[parameters('automationAccountName')]",
+      "type"      : "Microsoft.Automation/automationAccounts",
+      "apiVersion": "2015-10-31",
+      "location"  : "[parameters('location')]",
+      "comments"  : "Automation account for Log Analytics",
       "properties": {
         "sku": {
-          "name": "OMS"
+          "name": "Free"
         }
       },
       "resources": [
         {
-          "name": "[variables('dscResources').xActiveDirectory.name]",
-          "type": "modules",
-          "apiVersion": "2018-01-15",
-          "location": "[parameters('location')]",
-          "dependsOn": [
+          "name"      : "[variables('dscResources').SecurityPolicyDSC.name]",
+          "type"      : "modules",
+          "apiVersion": "2015-10-31",
+          "location"  : "[parameters('location')]",
+          "dependsOn" : [
             "[parameters('AutomationAccountName')]"
           ],
           "properties": {
             "contentLink": {
-              "uri": "[variables('dscResources').xActiveDirectory.url]"
+              "uri": "[variables('dscResources').SecurityPolicyDSC.url]"
             }
           }
         },
         {
-          "name": "[variables('dscResources').xStorage.name]",
-          "type": "modules",
-          "apiVersion": "2018-01-15",
-          "location": "[parameters('location')]",
-          "dependsOn": [
+          "name"      : "[variables('dscResources').AuditPolicyDSC.name]",
+          "type"      : "modules",
+          "apiVersion": "2015-10-31",
+          "location"  : "[parameters('location')]",
+          "dependsOn" : [
             "[parameters('AutomationAccountName')]"
           ],
           "properties": {
             "contentLink": {
-              "uri": "[variables('dscResources').xStorage.url]"
+              "uri": "[variables('dscResources').AuditPolicyDSC.url]"
             }
           }
         },
         {
-          "name": "domainCredential",
-          "type": "credentials",
-          "apiVersion": "2018-01-15",
-          "location": "[parameters('location')]",
-          "dependsOn": [
+          "name"      : "domainCredential",
+          "type"      : "credentials",
+          "apiVersion": "2015-10-31",
+          "location"  : "[parameters('location')]",
+          "dependsOn" : [
             "[parameters('AutomationAccountName')]"
           ],
           "properties": {
@@ -105,11 +102,11 @@
           }
         },
         {
-          "name": "safeModeCredential",
-          "type": "credentials",
-          "apiVersion": "2018-01-15",
-          "location": "[parameters('location')]",
-          "dependsOn": [
+          "name"      : "safeModeCredential",
+          "type"      : "credentials",
+          "apiVersion": "2015-10-31",
+          "location"  : "[parameters('location')]",
+          "dependsOn" : [
             "[parameters('AutomationAccountName')]"
           ],
           "properties": {
@@ -118,41 +115,39 @@
           }
         },
         {
-          "name": "[variables('dscConfigurations').DomainControllerConfig.name]",
-          "type": "configurations",
-          "apiVersion": "2018-01-15",
-          "location": "[parameters('location')]",
-          "dependsOn": [
+          "name"      : "[variables('dscConfigurations').DSCFromGPO.name]",
+          "type"      : "configurations",
+          "apiVersion": "2015-10-31",
+          "location"  : "[parameters('location')]",
+          "dependsOn" : [
             "[parameters('AutomationAccountName')]",
-            "[variables('dscResources').xActiveDirectory.name]",
-            "[variables('dscResources').xStorage.name]",
-            "domainCredential",
-            "safeModeCredential"            
+            "[variables('dscResources').SecurityPolicyDSC.name]",
+            "[variables('dscResources').AuditPolicyDSC.name]",
           ],
           "properties": {
-            "state": "Published",
+            "state"    : "Published",
             "overwrite": "true",
-            "source": {
-              "type": "uri",
-              "value": "[concat(parameters('_artifactsLocation'), variables('dscConfigurations').DomainControllerConfig.script, parameters('_artifactsLocationSasToken'))]"
+            "source"   : {
+              "type" : "uri",
+              "value": "[concat(parameters('_artifactsLocation'), variables('dscConfigurations').DSCFromGPO.script, parameters('_artifactsLocationSasToken'))]"
             }
           }
         },
         {
-          "name": "[parameters('compileName')]",
-          "type": "compilationjobs",
-          "apiVersion": "2018-01-15",
-          "tags": {},
-          "dependsOn": [
+          "name"      : "[parameters('compileName')]",
+          "type"      : "compilationjobs",
+          "apiVersion": "2015-10-31",
+          "tags"      : {},
+          "dependsOn" : [
             "[parameters('AutomationAccountName')]",
-            "[variables('dscConfigurations').DomainControllerConfig.name]"
+            "[variables('dscConfigurations').DSCFromGPO.name]"
           ],
           "properties": {
             "configuration": {
-              "name": "[variables('dscConfigurations').DomainControllerConfig.name]"
+              "name": "[variables('dscConfigurations').DSCFromGPO.name]"
             },
             "parameters": {
-              "configurationData": "[concat('{\"AllNodes\":{\"nodename\":\"localhost\",\"domainname\":\"', parameters('domainName'), '\"}}')]"
+              "configurationData": "[concat('{\"AllNodes\":{\"nodename\":\"localhost\"}}')]"
             }
           }
         }
