@@ -35,6 +35,16 @@
         "description": "minimum viable configuration for Microsoft Security Policies",
         "script"     : "dscConfigurations/DSCFromGPO.ps1"
       }
+    },
+    "dscResources": {
+      "AuditPolicyDSC": {
+        "name": "AuditPolicyDSC",
+        "url" : "https://www.powershellgallery.com/api/v2/packages/AuditPolicyDsc/1.4.0.0"
+      },
+      "SecurityPolicyDSC": {
+        "name": "SecurityPolicyDSC",
+        "url" : "https://www.powershellgallery.com/api/v2/packages/SecurityPolicyDSC/2.9.0.0"
+      }
     }
   },
   "resources": [
@@ -51,12 +61,43 @@
       },
       "resources": [
         {
+          "name"      : "[variables('dscResources').SecurityPolicyDSC.name]",
+          "type"      : "modules",
+          "apiVersion": "2015-10-31",
+          "location"  : "[parameters('location')]",
+          "dependsOn" : [
+            "[parameters('AutomationAccountName')]"
+          ],
+          "properties": {
+            "contentLink": {
+              "uri": "[variables('dscResources').SecurityPolicyDSC.url]"
+            }
+          }
+        },
+        {
+          "name"      : "[variables('dscResources').AuditPolicyDSC.name]",
+          "type"      : "modules",
+          "apiVersion": "2015-10-31",
+          "location"  : "[parameters('location')]",
+          "dependsOn" : [
+            "[parameters('AutomationAccountName')]",
+            "[variables('dscResources').SecurityPolicyDSC.name]"
+          ],
+          "properties": {
+            "contentLink": {
+              "uri": "[variables('dscResources').AuditPolicyDSC.url]"
+            }
+          }
+        },
+        {
           "name"      : "[variables('dscConfigurations').DSCFromGPO.name]",
           "type"      : "configurations",
           "apiVersion": "2015-10-31",
           "location"  : "[parameters('location')]",
           "dependsOn" : [
-            "[parameters('AutomationAccountName')]"
+            "[parameters('AutomationAccountName')]",
+            "[variables('dscResources').SecurityPolicyDSC.name]",
+            "[variables('dscResources').AuditPolicyDSC.name]"
           ],
           "properties": {
             "state"    : "Published",
@@ -79,9 +120,6 @@
           "properties": {
             "configuration": {
               "name": "[variables('dscConfigurations').DSCFromGPO.name]"
-            },
-            "parameters": {
-              "configurationData": "[concat('{\"AllNodes\":{\"nodename\":\"localhost\"}}')]"
             }
           }
         }
