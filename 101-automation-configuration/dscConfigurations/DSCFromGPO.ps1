@@ -5,7 +5,6 @@ Configuration DSCFromGPO
 	Import-DSCResource -ModuleName 'PSDesiredStateConfiguration'
 	Import-DSCResource -ModuleName 'AuditPolicyDSC'
 	Import-DSCResource -ModuleName 'SecurityPolicyDSC'
-	Import-DSCResource -ModuleName 'PowerShellAccessControl'
 	Node localhost
 	{
          Registry 'Registry(POL): HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeviceGuard\EnableVirtualizationBasedSecurity'
@@ -401,7 +400,7 @@ Configuration DSCFromGPO
          }
 
          <#
-         	This MultiString Value has a value of $null, 
+         	This MultiString Value has a value of $null,
           	Some Security Policies require Registry Values to be $null
           	If you believe ' ' is the correct value for this string, you may change it here.
          #>
@@ -432,7 +431,7 @@ Configuration DSCFromGPO
          }
 
          <#
-         	This MultiString Value has a value of $null, 
+         	This MultiString Value has a value of $null,
           	Some Security Policies require Registry Values to be $null
           	If you believe ' ' is the correct value for this string, you may change it here.
          #>
@@ -513,7 +512,7 @@ Configuration DSCFromGPO
          }
 
          <#
-         	This MultiString Value has a value of $null, 
+         	This MultiString Value has a value of $null,
           	Some Security Policies require Registry Values to be $null
           	If you believe ' ' is the correct value for this string, you may change it here.
          #>
@@ -525,7 +524,7 @@ Configuration DSCFromGPO
          }
 
          <#
-         	This MultiString Value has a value of $null, 
+         	This MultiString Value has a value of $null,
           	Some Security Policies require Registry Values to be $null
           	If you believe ' ' is the correct value for this string, you may change it here.
          #>
