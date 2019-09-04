@@ -79,6 +79,7 @@
   },
   "variables": {
     "automationAccountName"   : "[concat('DSC-',take(guid(resourceGroup().id),5))]",
+    "keyVaultName"            : "[concat('DSC-',take(guid(resourceGroup().id),5))]",
     "publicIPAddressName"     : "PIP",
     "publicIPAddressType"     : "Dynamic",
     "virtualNetworkName"      : "Network",
@@ -97,9 +98,45 @@
     "provisionConfigurationURL": "[uri(parameters('_artifactsLocation'), concat('nested/provisionConfiguration.json', parameters('_artifactsLocationSasToken')))]",
     "provisionNetworkURL"      : "[uri(parameters('_artifactsLocation'), concat('nested/provisionNetwork.json', parameters('_artifactsLocationSasToken')))]",
     "provisionServerUrl"       : "[uri(parameters('_artifactsLocation'), concat('nested/provisionServer.json', parameters('_artifactsLocationSasToken')))]",
-    "provisionDNSUrl"          : "[uri(parameters('_artifactsLocation'), concat('nested/provisionDNS.json', parameters('_artifactsLocationSasToken')))]"
+    "provisionDNSUrl"          : "[uri(parameters('_artifactsLocation'), concat('nested/provisionDNS.json', parameters('_artifactsLocationSasToken')))]",
+    "provisionKeyVaultUrl"     : "[uri(parameters('_artifactsLocation'), concat('nested/provisionKeyVault.json', parameters('_artifactsLocationSasToken')))]"
   },
   "resources": [
+    {
+      "name"      : "provisionKeyVault",
+      "type"      : "Microsoft.Resources/deployments",
+      "apiVersion": "2016-09-01",
+      "properties": {
+        "mode"        : "Incremental",
+        "templateLink": {
+          "uri"           : "[variables('provisionKeyVaultURL')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters"    : {
+          "keyVaultName": {
+            "value": "[variables('keyVaultName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "enabledForDeployment": {
+            "value": true
+          },
+          "enabledForDiskEncryption": {
+            "value": true
+          },
+          "enabledForTemplateDeployment": {
+            "value": true
+          },
+          "secretName": {
+            "value": "VMPassword"
+          },
+          "secretValue": {
+            "value": "[parameters('adminPassword')]"
+          }
+        }
+      }
+    },
     {
       "name"      : "provisionConfiguration",
       "type"      : "Microsoft.Resources/deployments",
@@ -188,7 +225,8 @@
       "apiVersion": "2015-01-01",
       "dependsOn" : [
         "provisionNetwork",
-        "provisionConfiguration"
+        "provisionConfiguration",
+        "provisionKeyVault"
       ],
       "properties": {
         "mode"        : "Incremental",
@@ -210,7 +248,12 @@
             "value": "[parameters('adminUsername')]"
           },
           "adminPassword": {
-            "value": "[parameters('adminPassword')]"
+            "reference": {
+              "keyVault": {
+                "id": "[concat('/subscriptions/', subscription().id, '/resourceGroups/', resourceGroup().Name, '/providers/Microsoft.KeyVault/vaults/', variables('keyVaultName')]"
+              },
+              "secretName": "VMPassword"
+            }
           },
           "NicName": {
             "value": "[variables('NicName')]"
