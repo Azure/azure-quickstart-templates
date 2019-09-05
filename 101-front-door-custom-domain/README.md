@@ -3,11 +3,15 @@
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-This template configures a custom domain with **Front Door**.
+This template Creates a Front Door configuration with a single backend, onboards a custom domain with a path match '/*' for default frontend host and custom domain
 
-For the deployment of this template to succeed the specified domain will require a CNAME to the Front Door address.
+Parameters for this template are
+frontDoorName - Name of the frontdoor (ex: contoso)
+customDomainName - FQDN name of the custom domain (ex: www.contoso.com)
+backendaddress - FQDN of the backend (ex: www.contoso-backend.azurewebsites.com)
 
-An example would be:
+For the deployment of this template to succeed the specified custom domain will require a CNAME to the Front Door's default frontend host (say contoso.azurefd.net).
 
-AFD hostname: contoso.azurefd.net
-CNAME www.contoso.com to contoso.azurefd.net
+For example, for a frontdoor named "contoso", default frontend host name would be "contoso.azurefd.net". To add a custom domain "www.contoso.com", CNAME www.contoso.com to contoso.azurefd.net
+
+For more details - https://docs.microsoft.com/en-us/azure/frontdoor/front-door-custom-domain
