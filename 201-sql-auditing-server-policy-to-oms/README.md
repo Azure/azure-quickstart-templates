@@ -10,7 +10,7 @@
 This template allows you to deploy an Azure SQL server with Auditing enabled to write audit logs to Log Analytics (OMS workspace) 
 
 In order to send audit events to Log Analytics, set auditing settings with 'Enabled' state and set 'IsAzureMonitorTargetEnabled' as true.
-Also, configure Diagnostic Settings with 'SQLSecurityAuditEvents' diagnostic logs category on the 'master' database (for serve level auditing).
+Also, configure Diagnostic Settings with 'SQLSecurityAuditEvents' diagnostic logs category on the 'master' database (for server level auditing).
 
 Auditing for Azure SQL Database and SQL Data Warehouse tracks database events and writes them to an audit log in your Azure storage account, OMS workspace or Event Hubs.
 
