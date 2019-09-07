@@ -27,10 +27,10 @@ foreach ($vm in $vms) {
 
     $vmSize = $hardwareProfile.vmSize
 
-    if ($vmSize -notmatch '\[parameters\(') {
-        if ($vmSize -match '\[variables\(') { 
+    if ($vmSize -notmatch '\[\s*parameters\s*\(') {
+        if ($vmSize -match '\[\s*variables\s*\(') { 
             $resolvedVmSize = Expand-AzureRMTemplate -Expression $vmSize -InputObject $TemplateObject
-            if ($resolvedVmSize -notmatch '\[parameters\(') {
+            if ($resolvedVmSize -notmatch '\[\s*parameters\s*\(') {
                 Write-Error "VM Size must be a parameter" -TargetObject $vm
             }
         } else {

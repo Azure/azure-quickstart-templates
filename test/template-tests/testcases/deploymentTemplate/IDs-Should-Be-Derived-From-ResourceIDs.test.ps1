@@ -20,10 +20,10 @@ foreach ($id in $ids) { # Then loop over each object with an ID
     $myId = "$($id.id)".Trim() # Grab the actual ID,
     $expandedId = Expand-AzureRMTemplate -Expression $myId -InputObject $TemplateObject # then expand it.
     # Check that it uses the ResourceID or a param or var - can remove variables once Expand-Template does full eval of nested vars
-    if ($expandedId -notmatch '\[resourceId\(' -and `
-        $expandedId -notmatch '\[parameters\(' -and `
-        $expandedId -notmatch '\[variables\(') { 
+    if ($expandedId -notmatch '\[\s*resourceId\s*\(' -and `
+        $expandedId -notmatch '\[\s*parameters\s*\(' -and `
+        $expandedId -notmatch '\[\s*variables\s*\(') { 
         # if it didn't, write an error.
-        Write-Error "resourceId() must be used for resourceId properties: $($id.id)" -TargetObject $id
+        Write-Error "resourceId() or an expression must be used for resourceId properties: $($id.id)" -TargetObject $id
     }
 }
