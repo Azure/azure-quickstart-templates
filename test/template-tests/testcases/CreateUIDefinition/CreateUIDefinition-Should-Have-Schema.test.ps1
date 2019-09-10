@@ -5,15 +5,15 @@ $CreateUIDefinitionObject
 )
 
 if (-not $CreateUIDefinitionObject.'$Schema') {
-    throw "CreateUIDefinition is missing a `$schema property"
+    Write-Error -Message "CreateUIDefinition is missing a `$schema property" -ErrorId CreateUIDef.Must.Have.Schema
 }
 
 if ($CreateUIDefinitionObject.'$schema' -cne 'https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#') {
-    throw "CreateUIDefintion has an incorrect schema.  Schema should be https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#, and is '$($CreateUIDefinitionObject.'$schema')'"
+    Write-Error -Message "CreateUIDefintion has an incorrect schema.  Schema must be https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#, and is '$($CreateUIDefinitionObject.'$schema')'" -ErrorId CreateUIDef.Incorrect.Schema
 }
 
 if (-not $CreateUIDefinitionObject.version) {
-    throw "CreateUIDefinition is missing a version"
+    Write-Error -Message "CreateUIDefinition is missing a version" -ErrorId CreateUIDef.Must.Have.Version
 }
 
 # Remove any preview chunk and cast the remaining portion as a version (make clearer)
@@ -26,5 +26,5 @@ $schemaVersion = $CreateUIDefinitionObject.'$Schema' -split '/' -ne '' |
     Select-Object -First 1
 
 if ($CreateUIDefinitionObject.version -ne $schemaVersion) {
-    throw "CreateUIDefinition version ($($CreateUIDefinitionObject.version)) is different from schema version ($schemaVersion)"
+    Write-Error -Message "CreateUIDefinition version ($($CreateUIDefinitionObject.version)) is different from schema version ($schemaVersion)" -ErrorId CreateUIDef.Version.Mismatch
 }
