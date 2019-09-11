@@ -127,9 +127,10 @@ describe('template files - ', () => {
             /** resourceGroup().location should NOT be present anywhere in template, EXCEPT as a defaultValue */
             it.each(templateObject, 'resourceGroup().location must NOT be be used in the template file ' + templateJSONObject.filename + '.', function (element, next) {
                 var templateFileContent = JSON.stringify(templateObject).toLowerCase();
+                var regExp = new RegExp((folder + '.maintemplate.json').toLowerCase());
 
                 // if this is mainTemplate.json, a defaultValue of resourceGroup().location is OK, so remove it before searching for it
-                if (templateJSONObject.filename.toLowerCase() == (folder + '\\maintemplate.json')) {
+                if (regExp.test(templateJSONObject.filename.toLowerCase())) {
                     templateFileContent = templateFileContent.replace(/\"defaultvalue\":\s*\"\[resourcegroup\(\)\.location\]\"/, "");
                 }
 
