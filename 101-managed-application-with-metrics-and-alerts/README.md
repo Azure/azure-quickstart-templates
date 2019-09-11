@@ -1,9 +1,9 @@
 # Deploying your first Managed Application with default view
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Folgaian%2Fazure-quickstart-templates%2F101amawithmetrics%2F101-managed-application-with-metrics%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Folgaian%2Fazure-quickstart-templates%2F101amawithmetrics%2F101-managed-application-with-metrics-and-alerts%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Folgaian%2Fazure-quickstart-templates%2F101amawithmetrics%2F101-managed-application-with-metrics%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Folgaian%2Fazure-quickstart-templates%2F101amawithmetrics%2F101-managed-application-with-metrics-and-alerts%2Fazuredeploy.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
