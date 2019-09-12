@@ -29,5 +29,5 @@ Following resources will be created
  - An Ultra SSD Disk for SQL Log
  - A Sql Virtual Machine resource attached to the VM
 
-## Note: 
+## Note
 This VM would enable Ultra SSD compatibility and there would be a reservation charge if no Ultra Disk is attached to the VM.
