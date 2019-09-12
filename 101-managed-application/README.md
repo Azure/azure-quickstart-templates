@@ -84,3 +84,6 @@ Create experience is driven by [createUiDefinition.json](artifacts/ManagedAppZip
 To learn more about authoring your managed application create experience please visit:
 + [Create Azure portal user interface for your managed application](https://docs.microsoft.com/en-us/azure/managed-applications/create-uidefinition-overview)
 + [Test your portal interface for Azure Managed Applications](https://docs.microsoft.com/en-us/azure/managed-applications/test-createuidefinition)
+
+To learn avout how to add metrics and alerts to your application please visit:
++ [Creating managed application with metrics and alerts](https://github.com/azure/azure-quickstart-templates/tree/master/101-managed-application-with-metrics-and-alerts)
