@@ -68,7 +68,7 @@ foreach ($p in $JsonParameters.psObject.Properties) {
         }
         
         if($v -eq $null){
-            Write-Error "Could find "$($p.value.value)""" token in .config.json"
+            Write-Error "Could not find `"$($p.value.value)`" token in .config.json"
         }
         $JsonParameters.$($p.name).value = $v
 
@@ -80,7 +80,7 @@ foreach ($p in $JsonParameters.psObject.Properties) {
         #Write-Host "Token: $token"
         $v = $PreReqConfig.$token.value
         if($v -eq $null){
-            Write-Error "Could find "$($p.value.value)""" token in prereq outputs"
+            Write-Error "Could not find `"$($p.value.value)`" token in prereq outputs"
         }
         $JsonParameters.$($p.name).value = $v
 
