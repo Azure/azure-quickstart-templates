@@ -61,7 +61,7 @@ It may take a moment to propagate, but because you performed some blob operation
 
 ![](images/app-alerts.png)
 
-Now click on Metrics menu item. Application is exposing three metrics: Transactions, Availability and Success E2E latency for the application storage account. Because you performed some blob operations with the storage account you'll data is flowing into the metrics graph.
+Now click on Metrics menu item. Application is exposing three metrics: Transactions, Availability and Success E2E latency for the application storage account. Because you performed some blob operations with the storage account you'll see data is flowing into the metrics graph.
 
 ![](images/app-metrics.png)
 
