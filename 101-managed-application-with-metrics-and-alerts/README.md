@@ -37,21 +37,15 @@ You'll see a storage account created inside that resource group. Click "Show hid
 
 ![](images/app-mrg.png)
 
-This sample [mainTemplate.json](artifacts/ManagedAppZip/mainTemplate.json) specifies deployment of the action group and alert rules in addition to storage account deployment.
-
-To learn more about Azure Resource Manager templates best practices please visit: 
-+ [**Azure Resource Manager Templates - Best Practices Guide**](https://github.com/Azure/azure-quickstart-templates/blob/master/1-CONTRIBUTION-GUIDE/best-practices.md)
+This sample [mainTemplate.json](artifacts/ManagedAppZip/mainTemplate.json) specifies deployment of the [action group](artifacts/ManagedAppZip/mainTemplate.json#L45), [metric alert rule](artifacts/ManagedAppZip/mainTemplate.json#L59) and [activity log alert rule](artifacts/ManagedAppZip/mainTemplate.json#L102) in addition to storage account deployment.
 
 To learn more about Azure alerts, please visit:
 + [**Overview of alerts in Microsoft Azure**](https://docs.microsoft.com/en-us/azure/azure-monitor/platform/alerts-overview).
 
-The sample application definition creates application with lock level set to None, so you'll be able to access resources in managed resource group.
+To learn more about Azure Resource Manager templates best practices please visit: 
++ [**Azure Resource Manager Templates - Best Practices Guide**](https://github.com/Azure/azure-quickstart-templates/blob/master/1-CONTRIBUTION-GUIDE/best-practices.md)
 
-![](images/app-sa.png)
-
-Go to the storage account and try to perform some blob operations to generate some transactions, also go to "Access keys" and regenerate storage account key(s).
-
-![](images/sa-operations.png)
+The sample application definition creates application with lock level set to None, so you'll be able to access resources in managed resource group. Go to the managed resource group, go to storage account and try to perform some blob operations to generate some transactions, also go to "Access keys" and regenerate storage account key(s).
 
 Go back to the application and select Alerts menu. You'll be able to explore Alert rules, so you'll see that this application has two alert rules:
  + Metrics alert rule: if Availability metric for the storage account is greater than 0.
@@ -61,13 +55,15 @@ It may take a moment to propagate, but because you performed some blob operation
 
 ![](images/app-alerts.png)
 
-Now click on Metrics menu item. Application is exposing three metrics: Transactions, Availability and Success E2E latency for the application storage account. Because you performed some blob operations with the storage account you'll see data is flowing into the metrics graph.
+Now click on Metrics menu item. Application is exposing three metrics: Transactions, Availability and Success E2E latency for the application storage account. Because you performed some blob operations with the storage account you'll see data is flowing into the metric graphs.
 
 ![](images/app-metrics.png)
 
-Metrics view is driven by  by [viewDefinition.json](artifacts/ManagedAppZip/viewDefinition.json) file from application definition package. They are defined by "kind": "Metrics" element. You can use any metric supported by your application Azure resource to expose it as application metric. You can use different metrics view: bar chart, line chart etc for better visualization. 
-To learn more about View definition please visit:
-+ [**View definition artifact in Azure Managed Applications**](https://docs.microsoft.com/en-us/azure/managed-applications/concepts-view-definition)
-
+Metrics view is driven by  by [viewDefinition.json](artifacts/ManagedAppZip/viewDefinition.json) file from application definition package. They are defined by "kind": "Metrics" element. You can use any metric supported by your application Azure resource to expose it as application metric. You can use different metrics view: bar chart, line chart etc for better visualization.
 You can drill down into metric that you are interested in and explore more using [**Azure Metrics Explorer**](https://docs.microsoft.com/en-us/azure/azure-monitor/platform/metrics-getting-started) capabilities.
 
+To learn more about supported metrics, please visit:
++ [**Supported metrics with Azure Monitor**](https://docs.microsoft.com/en-us/azure/azure-monitor/platform/metrics-supported).
+
+To learn more about View definition please visit:
++ [**View definition artifact in Azure Managed Applications**](https://docs.microsoft.com/en-us/azure/managed-applications/concepts-view-definition)
