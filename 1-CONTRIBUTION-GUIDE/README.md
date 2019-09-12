@@ -211,6 +211,11 @@ Quickstart CI engine provides few pre-created azure components which can be used
 + **GEN-SELFSIGNED-CERT-PASSWORD** - password for a sample self signed cert
 + **GEN-SELFSIGNED-CERT-DNSNAME** - DNS name for a sample self signed cert
 
+**Custom Domain & SSL Cert related placeholders:**
+
++ **GEN-FRONTDOOR-NAME** - placeholder for the frontdoor name reserved for CI/CD
++ **GEN-FRONTDOOR-CUSTOM-HOSTNAME** - custom hostname with CNAME record mapped for the GEN-FRONTDOOR-NAME value 
+
 Here's an example in an `azuredeploy.parameters.json` file:
 
 ```json
