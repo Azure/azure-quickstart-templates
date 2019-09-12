@@ -37,7 +37,7 @@ You'll see a storage account created inside that resource group. Click "Show hid
 
 ![](images/app-mrg.png)
 
-This sample [mainTemplate.json](artifacts/ManagedAppZip/mainTemplate.json) specifies deployment of the action group and alert rules in addition to storage account deployment.
+This sample [mainTemplate.json](artifacts/ManagedAppZip/mainTemplate.json) specifies deployment of the [action group](artifacts/ManagedAppZip/mainTemplate.json#L45), [metric alert rule](artifacts/ManagedAppZip/mainTemplate.json#L59) and [activity log alert rule](artifacts/ManagedAppZip/mainTemplate.json#L102) in addition to storage account deployment.
 
 To learn more about Azure Resource Manager templates best practices please visit: 
 + [**Azure Resource Manager Templates - Best Practices Guide**](https://github.com/Azure/azure-quickstart-templates/blob/master/1-CONTRIBUTION-GUIDE/best-practices.md)
@@ -45,13 +45,7 @@ To learn more about Azure Resource Manager templates best practices please visit
 To learn more about Azure alerts, please visit:
 + [**Overview of alerts in Microsoft Azure**](https://docs.microsoft.com/en-us/azure/azure-monitor/platform/alerts-overview).
 
-The sample application definition creates application with lock level set to None, so you'll be able to access resources in managed resource group.
-
-![](images/app-sa.png)
-
-Go to the storage account and try to perform some blob operations to generate some transactions, also go to "Access keys" and regenerate storage account key(s).
-
-![](images/sa-operations.png)
+The sample application definition creates application with lock level set to None, so you'll be able to access resources in managed resource group. Go to the managed resource group, go to storage account and try to perform some blob operations to generate some transactions, also go to "Access keys" and regenerate storage account key(s).
 
 Go back to the application and select Alerts menu. You'll be able to explore Alert rules, so you'll see that this application has two alert rules:
  + Metrics alert rule: if Availability metric for the storage account is greater than 0.
