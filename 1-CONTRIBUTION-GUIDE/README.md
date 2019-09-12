@@ -1,7 +1,5 @@
 # Azure Resource Manager QuickStart Templates
 
-[![Travis](https://img.shields.io/travis/Azure/azure-quickstart-templates/master.svg?label=travis&style=flat-square)](https://travis-ci.org/Azure/azure-quickstart-templates)
-
 This repo contains all currently available Azure Resource Manager templates contributed by the community. A searchable template index is maintained at [Azure Resource Manager Templates](https://azure.microsoft.com/en-us/documentation/templates/).
 
 The following information is relevant to get started with contributing to this repository.
@@ -210,6 +208,11 @@ Quickstart CI engine provides few pre-created azure components which can be used
 + **GEN-SELFSIGNED-CERT-CERDATA** - CER data for a sample self signed cert
 + **GEN-SELFSIGNED-CERT-PASSWORD** - password for a sample self signed cert
 + **GEN-SELFSIGNED-CERT-DNSNAME** - DNS name for a sample self signed cert
+
+**Custom Domain & SSL Cert related placeholders:**
+
++ **GEN-FRONTDOOR-NAME** - placeholder for the frontdoor name reserved for CI/CD
++ **GEN-FRONTDOOR-CUSTOM-HOSTNAME** - custom hostname with CNAME record mapped for the GEN-FRONTDOOR-NAME value 
 
 Here's an example in an `azuredeploy.parameters.json` file:
 

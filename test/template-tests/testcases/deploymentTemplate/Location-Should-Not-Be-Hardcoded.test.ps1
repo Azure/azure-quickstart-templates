@@ -21,7 +21,7 @@ $TemplateWithoutLocationParameter = $TemplateObjectCopy |
 $locationParameter = $templateObject.parameters.location
 
 # All location parameters must be of type "string" in the parameter declaration
-if($locationParameter.type -ne "string"){
+if($locationParameter -ne $null -and $locationParameter.type -ne "string"){
     Write-Error "The location parameter must be a 'string' type in the parameter delcaration `"$($locationParameter.type)`"" -ErrorId Location.Parameter.TypeMisMatch -TargetObject $parameter
 }
 
