@@ -37,7 +37,7 @@
         "description": "Frontend VM size, please choose proper size which allow 2 NICs."
       }
     },
-    "frontendVmStorageAccountType":{
+    "frontendVmStorageAccountType": {
       "type": "string",
       "defaultValue": "Standard_LRS",
       "metadata": {
@@ -51,7 +51,7 @@
         "description": "Backend VM size."
       }
     },
-    "backendVmStorageAccountType":{
+    "backendVmStorageAccountType": {
       "type": "string",
       "defaultValue": "Standard_LRS",
       "metadata": {
@@ -63,12 +63,6 @@
       "defaultValue": "azureuser",
       "metadata": {
         "description": "User name for the Virtual Machine"
-      }
-    },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Password for frontend and backend VMs."
       }
     },
     "vnetAddressPrefix": {
@@ -110,6 +104,37 @@
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
     }
   },
   "variables": {
@@ -130,14 +155,25 @@
     "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'frontend')]",
     "backendStorageAccountName": "[concat(uniquestring(resourceGroup().id), 'backend')]",
     "routeTableName": "[concat(resourceGroup().name, 'routetable')]",
-    "sgName": "[concat(resourceGroup().name, '-sg')]"
+    "sgName": "[concat(resourceGroup().name, '-sg')]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountName')]",
       "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "accountType": "[parameters('frontendVmStorageAccountType')]"
       }
@@ -146,7 +182,7 @@
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('backendStorageAccountName')]",
       "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "accountType": "[parameters('backendVmStorageAccountType')]"
       }
@@ -155,28 +191,28 @@
       "type": "Microsoft.Network/routeTables",
       "name": "[variables('routeTableName')]",
       "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
-              "routes": [
-                  {
-                      "name": "RouteToInternet",
-                      "properties": {
-                          "addressPrefix": "0.0.0.0/0",
-                          "nextHopType": "VirtualAppliance",
-                          "nextHopIpAddress": "[parameters('frontendPrivateNicIP1')]"
-                  }
-             }
-         ]
+        "routes": [
+          {
+            "name": "RouteToInternet",
+            "properties": {
+              "addressPrefix": "0.0.0.0/0",
+              "nextHopType": "VirtualAppliance",
+              "nextHopIpAddress": "[parameters('frontendPrivateNicIP1')]"
+            }
+          }
+        ]
       }
     },
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('vnetName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/routeTables', variables('routeTableName'))]"
-       ],
+      ],
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -195,7 +231,7 @@
             "properties": {
               "addressPrefix": "[parameters('privateSubnetAddressPrefix')]",
               "routeTable": {
-                    "id": "[resourceId('Microsoft.Network/routeTables', variables('routeTableName'))]"
+                "id": "[resourceId('Microsoft.Network/routeTables', variables('routeTableName'))]"
               }
             }
           }
@@ -206,7 +242,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat(parameters('networkPrefix'),'-publicip')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "idleTimeoutInMinutes": 4,
@@ -219,7 +255,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('frontendPublicNic')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
       ],
@@ -246,7 +282,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('frontendPrivateNic')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
         "[resourceId('Microsoft.Network/networkSecurityGroups', variables('sgName'))]"
@@ -266,15 +302,15 @@
         ],
         "enableIPForwarding": true,
         "networkSecurityGroup": {
-                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('sgName'))]"
-                }
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('sgName'))]"
+        }
       }
     },
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('backendVM1PrivateNic')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
       ],
@@ -298,7 +334,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('backendVM2PrivateNic')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
       ],
@@ -319,46 +355,46 @@
       }
     },
     {
-    "type": "Microsoft.Network/networkSecurityGroups",
-    "name": "[variables('sgName')]",
-    "apiVersion": "2015-06-15",
-    "location": "[resourceGroup().location]",
-    "properties": {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('sgName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
+      "properties": {
         "securityRules": [
-            {
-                "name": "SSHRule",
-                "properties": {
-                    "protocol": "Tcp",
-                    "sourcePortRange": "*",
-                    "destinationPortRange": "22",
-                    "sourceAddressPrefix": "*",
-                    "destinationAddressPrefix": "*",
-                    "access": "Allow",
-                    "priority": 1000,
-                    "direction": "Inbound"
-                }
-            },
-            {
-                "name": "PrivateToPublicRule",
-                "properties": {
-                    "protocol": "*",
-                    "sourcePortRange": "*",
-                    "destinationPortRange": "0-65535",
-                    "sourceAddressPrefix": "VirtualNetwork",
-                    "destinationAddressPrefix": "*",
-                    "access": "Allow",
-                    "priority": 1001,
-                    "direction": "Inbound"
-                }
+          {
+            "name": "SSHRule",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1000,
+              "direction": "Inbound"
             }
+          },
+          {
+            "name": "PrivateToPublicRule",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "0-65535",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1001,
+              "direction": "Inbound"
+            }
+          }
         ]
-     }
+      }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/networkInterfaces/', variables('frontendPublicNic'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('frontendPrivateNic'))]"
@@ -375,21 +411,16 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[concat(variables('vmName'),'-osdisk')]",
+            "name": "[concat(variables('vmName'),'_OSDisk')]",
             "createOption": "FromImage",
-            "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2015-06-15').primaryEndpoints.blob, 'vhds/' ,variables('vmName'), '-osdisk.vhd')]"
-            },
             "caching": "ReadWrite"
           }
         },
         "osProfile": {
           "computerName": "[variables('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]",
-          "linuxConfiguration": {
-            "disablePasswordAuthentication": "false"
-          }
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -410,10 +441,10 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('backendVM1Name')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/networkInterfaces/', variables('backendVM1PrivateNic'))]"
       ],
@@ -429,21 +460,16 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[concat(variables('backendVM1Name'),'-osdisk')]",
+            "name": "[concat(variables('backendVM1Name'),'_OSDisk')]",
             "createOption": "FromImage",
-            "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('backendStorageAccountName')), '2015-06-15').primaryEndpoints.blob, 'vhds/' ,variables('backendVM1Name'), '-osdisk.vhd')]"
-            },
             "caching": "ReadWrite"
           }
         },
         "osProfile": {
           "computerName": "[variables('backendVM1Name')]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]",
-          "linuxConfiguration": {
-            "disablePasswordAuthentication": "false"
-          }
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -458,10 +484,10 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('backendVM2Name')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/networkInterfaces/', variables('backendVM2PrivateNic'))]"
       ],
@@ -477,21 +503,16 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[concat(variables('backendVM2Name'),'-osdisk')]",
+            "name": "[concat(variables('backendVM2Name'),'_OSDisk')]",
             "createOption": "FromImage",
-            "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('backendStorageAccountName')), '2015-06-15').primaryEndpoints.blob, 'vhds/' ,variables('backendVM2Name'), '-osdisk.vhd')]"
-            },
             "caching": "ReadWrite"
           }
         },
         "osProfile": {
           "computerName": "[variables('backendVM2Name')]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]",
-          "linuxConfiguration": {
-            "disablePasswordAuthentication": "false"
-          }
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -509,7 +530,7 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmName'),'/configurepf')]",
       "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]",
         "[concat('Microsoft.Compute/virtualMachines/', variables('backendVM1Name'))]",
@@ -522,7 +543,7 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[uri(variables('baseUriAzureCloud'), 'scripts/configurepf.sh')]"
+            "[uri(variables('baseUriAzureCloud'), concat('scripts/configurepf.sh', parameters('_artifactsLocationSasToken')))]"
           ]
         },
         "protectedSettings": {
@@ -534,7 +555,7 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('backendVM1Name'),'/installnginx')]",
       "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('vmName'), 'configurepf')]"
       ],
@@ -545,7 +566,7 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[uri(variables('baseUriAzureCloud'), 'scripts/installnginx.sh')]"
+            "[uri(variables('baseUriAzureCloud'), concat('scripts/installnginx.sh', parameters('_artifactsLocationSasToken')))]"
           ]
         },
         "protectedSettings": {
@@ -557,7 +578,7 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('backendVM2Name'),'/installnginx')]",
       "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('vmName'), 'configurepf')]"
       ],
@@ -568,7 +589,7 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[uri(variables('baseUriAzureCloud'), 'scripts/installnginx.sh')]"
+            "[uri(variables('baseUriAzureCloud'), concat('scripts/installnginx.sh', parameters('_artifactsLocationSasToken')))]"
           ]
         },
         "protectedSettings": {

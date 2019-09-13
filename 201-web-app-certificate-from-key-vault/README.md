@@ -19,11 +19,11 @@ In order to deploy this template, you need to have the following resources:  <br
 By default, 'Microsoft.Azure.WebSites' Resource Provider (RP) doesn't have access to the Key Vault specified in the template hence you need to authorize it by executing 
 the following PowerShell commands before deploying the template:  <br />
 
-<I>
-Login-AzureRmAccount  <br />
-Set-AzureRmContext -SubscriptionId AZURE_SUBSCRIPTION_ID  <br />
-Set-AzureRmKeyVaultAccessPolicy -VaultName KEY_VAULT_NAME -ServicePrincipalName abfa0a7c-a6b6-4736-8310-5855508787cd -PermissionsToSecrets get  <br />
-</I>
+```PowerShell
+Login-AzureRmAccount
+Set-AzureRmContext -SubscriptionId AZURE_SUBSCRIPTION_ID
+Set-AzureRmKeyVaultAccessPolicy -VaultName KEY_VAULT_NAME -ServicePrincipalName abfa0a7c-a6b6-4736-8310-5855508787cd -PermissionsToSecrets get
+```
 </P>
 
 ServicePrincipalName parameter represents Microsoft.Azure.WebSites RP in user tenant and will remain same for all Azure subscriptions. This is a onetime operation. Once you have a configured a Key Vault properly, 
@@ -33,17 +33,18 @@ https://azure.microsoft.com/en-us/documentation/articles/key-vault-get-started/
 The Web App should be in the same resource group with 'hostname' assigned as a custom domain. <br />
 https://azure.microsoft.com/en-us/documentation/articles/web-sites-custom-domain-name/
 
-PowerShell script to upload certificate into a Key Vault Secret:  <br />
-<I>
-$pfxFilePath = "PFX_CERTIFICATE_FILE_PATH" # Change this path  <br />
-$pwd = "PFX_CERTIFICATE_PASSWORD"  # Change this password  <br />
-$flag = [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable  <br />
-$collection = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2Collection   <br />
-$collection.Import($pfxFilePath, $pwd, $flag)  <br />
-$pkcs12ContentType = [System.Security.Cryptography.X509Certificates.X509ContentType]::Pkcs12  <br />
-$clearBytes = $collection.Export($pkcs12ContentType)  <br />
-$fileContentEncoded = [System.Convert]::ToBase64String($clearBytes)  <br />
-$secret = ConvertTo-SecureString -String $fileContentEncoded -AsPlainText –Force  <br />
-$secretContentType = 'application/x-pkcs12'  <br />
-Set-AzureKeyVaultSecret -VaultName KEY_VAULT_NAME -Name KEY_VAULT_SECRET_NAME -SecretValue $Secret -ContentType $secretContentType # Change Key Vault name and Secret name <br />
-</I>
+PowerShell script to upload certificate into a Key Vault Secret:
+
+```PowerShell
+$pfxFilePath = "PFX_CERTIFICATE_FILE_PATH" # Change this path
+$pwd = "PFX_CERTIFICATE_PASSWORD"  # Change this password
+$flag = [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable
+$collection = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2Collection
+$collection.Import($pfxFilePath, $pwd, $flag)
+$pkcs12ContentType = [System.Security.Cryptography.X509Certificates.X509ContentType]::Pkcs12
+$clearBytes = $collection.Export($pkcs12ContentType)
+$fileContentEncoded = [System.Convert]::ToBase64String($clearBytes)
+$secret = ConvertTo-SecureString -String $fileContentEncoded -AsPlainText –Force
+$secretContentType = 'application/x-pkcs12'
+Set-AzureKeyVaultSecret -VaultName KEY_VAULT_NAME -Name KEY_VAULT_SECRET_NAME -SecretValue $Secret -ContentType $secretContentType # Change Key Vault name and Secret name
+```

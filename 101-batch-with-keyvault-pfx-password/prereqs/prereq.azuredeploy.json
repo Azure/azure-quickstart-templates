@@ -1,0 +1,76 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "certificatePrefixName": {
+      "type": "string"
+    },
+    "certificatePfxBase64": {
+      "type": "securestring"
+    },
+    "certificatePfxPassword": {
+      "type": "string"
+    },
+    "locationname":{
+      "type": "string"
+    },
+    "storagename":{
+      "type": "string"
+    },
+    "batchname":{
+      "type": "string"
+    }
+  },
+  "variables": {
+    "certificateName": "[concat(parameters('certificatePrefixName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Web/certificates",
+      "apiVersion": "2018-02-01",
+      "name": "[variables('certificateName')]",
+      "location": "[parameters('locationname')]",
+      "properties": {
+        "pfxBlob": "[parameters('certificatePfxBase64')]",
+        "password": "[parameters('certificatePfxPassword')]"
+      },
+      "tags": {
+        "displayName": "Certificate"
+      }
+    },
+    {
+      "apiVersion": "2018-07-01",
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[parameters('storagename')]",
+      "location": "[parameters('locationname')]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "Storage"
+    },
+    {
+      "type": "Microsoft.Batch/batchAccounts",
+      "apiVersion": "2017-09-01",
+      "name": "[parameters('batchname')]",
+      "location": "[parameters('locationname')]",
+      "properties": {
+        "autoStorage": {
+          "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storagename'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storagename'))]"
+      ]
+    }    
+  ],
+  "outputs": {
+    "batchservice": {
+      "type": "string",
+      "value": "[parameters('batchname')]"
+    },
+    "certthumbprint": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Web/certificates', variables('certificateName')), '2018-02-01').thumbprint]"
+    }
+  }
+}

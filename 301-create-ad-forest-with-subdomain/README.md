@@ -7,17 +7,18 @@ Click the button below to deploy a forest to Azure.
 </a>
 
 Warning: this template will **create running VMs**. 
-Be sure to deallocate them when you no longer need them
-to avoid incurring costs. 
+Be sure to deallocate the VMs when you no longer need them
+to avoid incurring costs.
 
 This template creates an Active Directory forest for you. The configuration
 is flexible. 
-* The root domain is always created; the child domain is optional. 
+
+* Have a choice of one or two domains. The root domain is always created; the child domain is optional. 
 * Choose to have one or two DCs per domain.
 * Choose names for the Domains, DCs, and network objects.  
 * Choose the VM type from a prepopulated list. 
-* Use either Windows Server 2012, Windows Server 2012 R2, or Windows Server 2016. 
-* Get a public IP endpoint to use with RDP, configured with a Network Security Group.
+* Supported and tested are Windows Server 2012, 2012 R2, 2016 and 2019. 
+* Get one public IP endpoint to use with RDP, configured with a Network Security Group.
 
 A forest with two domains in Azure is especially useful for AD-related 
 development, testing, and troubleshooting. Many enterprises have complex 
@@ -31,22 +32,22 @@ incoming traffic allowing only Remote Desktop Protocol (RDP). You can
 edit the NSG manually to permit traffic from your datacenters only. With 
 VNET peering it is easy to connect different VNETs in the same Azure 
 Region, so the fact that a dedicated VNET is used here is not a 
-connectivity limitation anymore. 
+connectivity limitation anymore.
 
 The Domain Controllers are placed in an Availability Set to maximize 
 uptime. Each domain has its own Availability set. 
-The VMs are provisioned with managed disks. The disk type (Standard or Premium)
-is derived from the VM size. If the name contains "DS", a Premium (SSD) 
-disk used. Otherwise, a Standard (HDD) type is used. 
+The VMs are provisioned with managed disks. 
 
 Most template parameters have sensible defaults. You will get a forest 
 root of _contoso.com_, a child domain called _child.contoso.com_, two 
 DCs in each domain, a small IP space of 10.0.0.0/22 (meaning 10.0.0.0 up 
 to 10.0.3.255), etc. Each VM will have the AD-related management tools installed.
 By default, the VMs are of type DS1_v2, meaning 3.5 GB of 
-memory, one core and SSD storage. This is plenty for a simple Active 
-Directory. The only thing you really need to do is to supply an admin 
-password. Make sure it is 8 characters or more, and complex. You know 
+memory and one CPU core. This is plenty for a simple Active 
+Directory. The disk type defaults to Standard SSD, which is low latency but also
+low IOPS. This is fine for Active Directory.
+The only thing you really need to do is to supply an administrator name and 
+password. Make sure the password is 8 characters or more, and complex. You know 
 the drill. 
 
 ### Credits
@@ -112,7 +113,7 @@ developing or maintaining my own:
 
 * xActivedirectory
 * xNetworking
-* xDisk
+* xStorage
 * cDisk
 
 If you look into the DSC Configurations that I use you will see that I 
@@ -127,20 +128,28 @@ Powershell execution policy specifically for Windows Server 2012
 (non-R2). By default, DSC does not work here. I injected a small 
 powershell script to set the execution policy to unrestricted. 
 
-For similar reasons, this template does not support Windows Server 2008 
-R2. While the standard Azure image VM image for 2008 R2
- supports DSC now, it is still highly limited in which modules work or not. 
-This is almost undocumented, but the short version is that almost
- nothing worked for 2008 R2 so I had to give it up. 
-
 ### Update October 2017
 
 New features:
+
 * Converted VMs to use managed disks.
 * Removed the storage account.
 * Made the child domain optional.
 * Greatly simplified the optional parts of the template using the new "condition" keyword.
 
-Willem Kasdorp, 10-2-2017. 
+### Update September 2018
+
+New Features:
+
+* Added B-series (burstable) VM, very suitable to run DCs cheaply. 
+* Added Standard SSD disks (now default), and made the choice for disk type explicit. This type is well suited for typical DC performance. 
+* Added the possibility to deploy to a location different to that of the Resource Group.
+* general cleanup: updated all APIs to the most recent ones, updated DSC modules to the latest.
+
+### Update December 2018
+
+* Added support for Windows Server 2019.
+
+Willem Kasdorp, 12-02-2018.
 
 `Tags: active directory,forest,domain,DSC`

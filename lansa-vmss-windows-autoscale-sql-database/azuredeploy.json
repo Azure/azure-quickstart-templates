@@ -1,5 +1,5 @@
 {
-   "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
    "contentVersion": "1.0.0.0",
    "parameters": {
       "msiUri": {
@@ -172,7 +172,7 @@
          "defaultValue": "lansa-scalable-license",
          "allowedValues": [
             "lansa-scalable-license",
-            "lansa-scalable-license-preview"
+            "visuallansa"
          ],
          "metadata": {
             "description": "The offer of the image. Allowed values: lansa-scalable-license, lansa-scalable-license-preview"
@@ -204,23 +204,11 @@
          }
       }
    },
-  "variables": {
-    "storageAccountType": "Standard_LRS",
+  "variables": { 
     "namingInfix": "[toLower(substring(concat(parameters('vmssName'), uniqueString(resourceGroup().id)), 0, 9))]",
     "longNamingInfix": "[toLower(parameters('vmssName'))]",
     "dblongNamingInfix": "[toLower(concat('db',parameters('vmssName')))]",
     "dbvmssName": "[toLower(substring(concat('db',parameters('vmssName'), uniqueString(resourceGroup().id)), 0, 9))]",
-    "newStorageAccountSuffix": "[concat(variables('namingInfix'), 'sa')]",
-    "uniqueStringArray": [
-      "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '0')))]",
-      "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '1')))]",
-      "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '2')))]",
-      "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '3')))]",
-      "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '4')))]"
-    ],
-    "saCount": "[length(variables('uniqueStringArray'))]",
-    "vhdContainerName": "[concat(variables('namingInfix'), 'vhd')]",
-    "osDiskName": "[concat(variables('namingInfix'), 'osdisk')]",
     "addressPrefix": "10.0.0.0/16",
     "subnetPrefix": "10.0.0.0/24",
     "virtualNetworkName": "[concat(variables('namingInfix'), 'vnet')]",
@@ -253,9 +241,6 @@
       "version": "latest"
     },
     "imageReference": "[variables('osType')]",
-    "diagnosticsStorageAccountName": "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'))), variables('newStorageAccountSuffix') )]",
-    "diagnosticsStorageAccountResourceGroup": "[resourceGroup().name]",
-    "accountid": "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',variables('diagnosticsStorageAccountResourceGroup'),'/providers/','Microsoft.Storage/storageAccounts/', variables('diagnosticsStorageAccountName'))]",
     "sqlserverName": "[concat(variables('namingInfix'), 'sqlserver')]",
     "gitRepo": "https://raw.githubusercontent.com/robe070/cookbooks/",
     "gitRefreshName": "git-pull.ps1",
@@ -282,28 +267,6 @@
                   }
                }
             ]
-         }
-      },
-    {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[concat(variables('uniqueStringArray')[copyIndex()], variables('newStorageAccountSuffix'))]",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2015-06-15",
-      "copy": {
-        "name": "storageLoop",
-        "count": "[variables('saCount')]"
-      },
-      "properties": {
-        "accountType": "[variables('storageAccountType')]"
-      }
-    },
-      {
-         "type": "Microsoft.Storage/storageAccounts",
-         "name": "[variables('diagnosticsStorageAccountName')]",
-         "location": "[resourceGroup().location]",
-         "apiVersion": "2015-06-15",
-         "properties": {
-            "accountType": "[variables('storageAccountType')]"
          }
       },
       {
@@ -349,7 +312,7 @@
                      "frontendIPConfiguration": {
                         "id": "[variables('frontEndIPConfigID')]"
                      },
-                     "protocol": "tcp",
+                     "protocol": "Tcp",
                      "frontendPortRangeStart": "[variables('natStartPort')]",
                      "frontendPortRangeEnd": "[variables('natEndPort')]",
                      "backendPort": "[variables('natBackendPort')]"
@@ -467,10 +430,8 @@
          "type": "Microsoft.Compute/virtualMachineScaleSets",
          "name": "[variables('dbvmssName')]",
          "location": "[resourceGroup().location]",
-         "apiVersion": "2016-03-30",
+         "apiVersion": "2017-03-30",
          "dependsOn": [
-            "storageLoop",
-            "[concat('Microsoft.Storage/storageAccounts/', variables('diagnosticsStorageAccountName'))]",
             "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]",
             "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
             "[concat('Microsoft.Sql/servers/', variables('sqlserverName'))]",
@@ -494,14 +455,6 @@
             "virtualMachineProfile": {
                "storageProfile": {
                   "osDisk": {
-                     "vhdContainers": [
-                        "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray')[0], variables('newStorageAccountSuffix')),'2015-06-15').primaryEndpoints.blob, variables('vhdContainerName'))]",
-                        "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray')[1], variables('newStorageAccountSuffix')),'2015-06-15').primaryEndpoints.blob, variables('vhdContainerName'))]",
-                        "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray')[2], variables('newStorageAccountSuffix')),'2015-06-15').primaryEndpoints.blob, variables('vhdContainerName'))]",
-                        "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray')[3], variables('newStorageAccountSuffix')),'2015-06-15').primaryEndpoints.blob, variables('vhdContainerName'))]",
-                        "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray')[4], variables('newStorageAccountSuffix')),'2015-06-15').primaryEndpoints.blob, variables('vhdContainerName'))]"
-                     ],
-                     "name": "[variables('osDiskName')]",
                      "caching": "ReadOnly",
                      "createOption": "FromImage"
                   },
@@ -512,7 +465,7 @@
                   "adminUsername": "[parameters('adminUsername')]",
                   "adminPassword": "[parameters('adminPassword')]",
                   "windowsConfiguration": {
-                     "provisionVMAgent": "true"
+                     "provisionVMAgent": true
                   }
                },
                "networkProfile": {
@@ -548,7 +501,7 @@
                            "publisher": "Microsoft.Compute",
                            "type": "CustomScriptExtension",
                            "typeHandlerVersion": "1.8",
-                           "autoUpgradeMinorVersion": "true",
+                           "autoUpgradeMinorVersion": true,
                            "forceUpdateTag": "[concat( parameters('installMSI'),parameters('updateMSI'),parameters('triggerWebConfig'),parameters('UninstallMSI'),parameters('fixLicense'), parameters('trace'), parameters('gitBranch') )]",
                            "settings": {
                               "fileUris": [ "[variables('gitRefreshUri')]" ]
@@ -567,10 +520,8 @@
          "type": "Microsoft.Compute/virtualMachineScaleSets",
          "name": "[variables('namingInfix')]",
          "location": "[resourceGroup().location]",
-         "apiVersion": "2016-03-30",
+         "apiVersion": "2017-03-30",
          "dependsOn": [
-            "storageLoop",
-            "[concat('Microsoft.Storage/storageAccounts/', variables('diagnosticsStorageAccountName'))]",
             "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]",
             "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
             "[concat('Microsoft.Sql/servers/', variables('sqlserverName'))]",
@@ -588,21 +539,13 @@
             "publisher": "[variables('imagePublisher')]"
          },
          "properties": {
-            "overprovision": "false",
+            "overprovision": false,
             "upgradePolicy": {
                "mode": "Automatic"
             },
             "virtualMachineProfile": {
                "storageProfile": {
                   "osDisk": {
-                     "vhdContainers": [
-                        "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray')[0], variables('newStorageAccountSuffix')),'2015-06-15').primaryEndpoints.blob, variables('vhdContainerName'))]",
-                        "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray')[1], variables('newStorageAccountSuffix')),'2015-06-15').primaryEndpoints.blob, variables('vhdContainerName'))]",
-                        "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray')[2], variables('newStorageAccountSuffix')),'2015-06-15').primaryEndpoints.blob, variables('vhdContainerName'))]",
-                        "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray')[3], variables('newStorageAccountSuffix')),'2015-06-15').primaryEndpoints.blob, variables('vhdContainerName'))]",
-                        "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray')[4], variables('newStorageAccountSuffix')),'2015-06-15').primaryEndpoints.blob, variables('vhdContainerName'))]"
-                     ],
-                     "name": "[variables('osDiskName')]",
                      "caching": "ReadOnly",
                      "createOption": "FromImage"
                   },
@@ -613,7 +556,7 @@
                   "adminUsername": "[parameters('adminUsername')]",
                   "adminPassword": "[parameters('adminPassword')]",
                   "windowsConfiguration": {
-                     "provisionVMAgent": "true"
+                     "provisionVMAgent": true
                   }
                },
                "networkProfile": {
@@ -654,7 +597,7 @@
                            "publisher": "Microsoft.Compute",
                            "type": "CustomScriptExtension",
                            "typeHandlerVersion": "1.8",
-                           "autoUpgradeMinorVersion": "true",
+                           "autoUpgradeMinorVersion": true,
                            "forceUpdateTag": "[concat( parameters('installMSI'),parameters('updateMSI'),parameters('triggerWebConfig'),parameters('UninstallMSI'),parameters('fixLicense'), parameters('trace'), parameters('gitBranch') )]",
                            "settings": {
                               "fileUris": [ "[variables('gitRefreshUri')]" ]
@@ -738,8 +681,6 @@
          "type": "Microsoft.Sql/servers",
          "location": "[resourceGroup().location]",
          "dependsOn": [
-            "storageLoop",
-            "[concat('Microsoft.Storage/storageAccounts/', variables('diagnosticsStorageAccountName'))]",
             "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]",
             "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
          ],
@@ -772,7 +713,7 @@
                }
             },
             {
-               "type": "firewallrules",
+               "type": "firewallRules",
                "apiVersion": "2014-04-01",
                "dependsOn": [
                   "[variables('sqlserverName')]"

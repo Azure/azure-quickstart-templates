@@ -15,7 +15,7 @@ This template enables encryption on a running linux vm using AAD client secret. 
 ## Prerequisites:
 Azure Disk Encryption securely stores the encryption secrets in a specified Azure Key Vault.
 
-The [AzureDiskEncryptionPreRequisiteSetup.ps1](https://github.com/Azure/azure-powershell/blob/dev/src/ResourceManager/Compute/Commands.Compute/Extension/AzureDiskEncryption/Scripts/AzureDiskEncryptionPreRequisiteSetup.ps1) script can be used to create the Key Vault and assign appropriate access policies.
+The [AzureDiskEncryptionPreRequisiteSetup.ps1](https://raw.githubusercontent.com/Azure/azure-powershell/master/src/Compute/Compute/Extension/AzureDiskEncryption/Scripts/AzureDiskEncryptionPreRequisiteSetup.ps1) script can be used to create the Key Vault and assign appropriate access policies.
 
 Use the below PS cmdlet for getting the "keyVaultSecretUrl" and "keyVaultResourceId"
 

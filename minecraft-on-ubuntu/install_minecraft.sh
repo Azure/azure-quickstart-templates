@@ -17,7 +17,7 @@ minecraft_group=minecraft
 UUID_URL=https://api.mojang.com/users/profiles/minecraft/$1
 
 # screen scrape the server jar location from the Minecraft server download page
-SERVER_JAR_URL=`curl https://minecraft.net/en-us/download/server | grep 'Download <a' | cut -d '"' -f2`
+SERVER_JAR_URL="curl -L https://minecraft.net/en-us/download/server/ | grep -Eo \"(http|https)://[a-zA-Z0-9./?=_-]*\" | sort | uniq | grep launcher"
 server_jar=server.jar
 
 # add and update repos
@@ -26,9 +26,9 @@ while ! echo y | apt-get install -y software-properties-common; do
     apt-get install -y software-properties-common
 done
 
-while ! echo y | apt-add-repository -y ppa:webupd8team/java; do
+while ! echo y | apt-add-repository -y ppa:linuxuprising/java; do
     sleep 10
-    apt-add-repository -y ppa:webupd8team/java
+    apt-add-repository -y ppa:linuxuprising/java
 done
 
 while ! echo y | apt-get update; do
@@ -36,12 +36,12 @@ while ! echo y | apt-get update; do
     apt-get update
 done
 
-# Install Java8
-echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | /usr/bin/debconf-set-selections
+# Install Java12
+echo oracle-java12-installer shared/accepted-oracle-license-v1-2 select true | /usr/bin/debconf-set-selections
 
-while ! echo y | apt-get install -y oracle-java8-installer; do
+while ! echo y | apt-get install -y oracle-java12-installer; do
     sleep 10
-    apt-get install -y oracle-java8-installer
+    apt-get install -y oracle-java12-installer
 done
 
 # create user and install folder
@@ -51,9 +51,9 @@ mkdir $minecraft_server_path
 cd $minecraft_server_path
 
 # download the server jar
-while ! echo y | wget $SERVER_JAR_URL; do
+while ! echo y | wget `eval $SERVER_JAR_URL`; do
     sleep 10
-    wget $SERVER_JAR_URL
+    wget `eval $SERVER_JAR_URL`
 done
 
 # set permissions on install folder
@@ -69,7 +69,7 @@ else
     memoryAllocx=2g
 fi
 
-# create the uela file
+# create the eula file
 touch $minecraft_server_path/eula.txt
 echo 'eula=true' >> $minecraft_server_path/eula.txt
 

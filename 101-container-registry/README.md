@@ -16,7 +16,7 @@ To deploy this template using the scripts from the root of this repo:
 azure-group-deploy.sh -a '101-container-registry' -l eastus -u
 ```
 
-This template deploys an Azure Container Registry with its storage account. Azure Container Registry is a PaaS offer for creating your own Docker image registry.
+This template deploys an Azure Container Registry. Azure Container Registry is a PaaS offer for creating your own Docker image registry.
 
 `Tags: Azure Container Registry, Docker`
 
@@ -26,7 +26,6 @@ This is an overview of the solution
 
 The following resources are deployed as part of the solution
 
-+ **Storage Account**: Storage account used by Container Registry for storing its data
 + **Azure Container Registry**: Docker image registry
 
 ## Deployment steps

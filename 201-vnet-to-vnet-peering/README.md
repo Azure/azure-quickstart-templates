@@ -7,4 +7,4 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template creates two VNETs in the same location, each containing a single subnet, and creates connections between them using vNet Peering.
+This template creates two VNETs in the same location, each containing a single subnet, and creates connections between them using VNet peering.
