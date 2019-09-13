@@ -30,4 +30,4 @@ Following resources will be created
  - A Sql Virtual Machine resource attached to the VM
 
 ## Note
-This VM would enable Ultra SSD compatibility and there would be a reservation charge if no Ultra Disk is attached to the VM.
+*This VM would enable Ultra SSD compatibility and there would be a reservation charge if no Ultra Disk is attached to the VM.*
