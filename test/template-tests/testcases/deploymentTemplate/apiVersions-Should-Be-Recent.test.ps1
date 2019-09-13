@@ -89,8 +89,8 @@ foreach ($av in $allApiVersions) { # Then walk over each object containing an Ap
     $howOutOfDate = $validApiVersions.IndexOf($av.ApiVersion) # Find out how out of date we are.
     if ($howOutOfDate -eq -1 -and $validApiVersions) {
         Write-Error "$fullResourceType is using an invalid apiVersion.
-      Valid Versions are:
-      $($validApiVersions -join ([Environment]::NewLine + (' ' * 6)))" -ErrorId ApiVersion.Not.Valid
+          Valid Versions are:
+          $($validApiVersions -join ([Environment]::NewLine + (' ' * 6)))" -ErrorId ApiVersion.Not.Valid
     }
 
     if ($av.ApiVersion -like '*-*-*-*') { # If it's a preview or other special variant
@@ -99,12 +99,14 @@ foreach ($av in $allApiVersions) { # Then walk over each object containing an Ap
             Write-Error "$FullResourceType uses a preview version ( $($av.apiVersion) ).
       There are $($howOutOfDate) more recent non-preview versions available.
       The most recent non-preview version is:
-      $(@($moreRecent -notmatch '\d+-\d+-\d+-')[0] -join ([Environment]::NewLine + (' ' * 6)))" -TargetObject $av -ErrorId 'ApiVersion.Not.Recent'
+      $(@($moreRecent -notmatch '\d+-\d+-\d+-')[0] -join ([Environment]::NewLine + (' ' * 6)))" -TargetObject $av -ErrorId ApiVersion.Not.Recent
         }        
     }
     # Finally, check how long it's been since the ApiVersion's date
     $timeSinceApi = [DateTime]::Now - $apiDate
     if (($timeSinceApi.TotalDays -gt 730) -and ($howOutOfDate -gt 0)) {  # If it's older than two years, and there's nothing more recent
-        Write-Error "Api versions have to be the latest or under 2 years old (730 days) - (API version $($av.ApiVersion) of $FullResourceType is $([Math]::Floor($timeSinceApi.TotalDays)) days old)" 
+        Write-Error "Api versions have to be the latest or under 2 years old (730 days) - (API version $($av.ApiVersion) of $FullResourceType is $([Math]::Floor($timeSinceApi.TotalDays)) days old)
+          Valid Versions are:
+          $($validApiVersions -join ([Environment]::NewLine + (' ' * 6)))" -ErrorId ApiVersion.OutOfDate
     }
 }
