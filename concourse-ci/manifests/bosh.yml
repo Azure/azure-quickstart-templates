@@ -3,140 +3,227 @@ name: bosh
 
 releases:
 - name: bosh
-  url: REPLACE_WITH_BOSH_RELEASE_URL
-  sha1: REPLACE_WITH_BOSH_RELEASE_SHA1
-- name: bosh-azure-cpi
-  url: REPLACE_WITH_BOSH_AZURE_CPI_RELEASE_URL
-  sha1: REPLACE_WITH_BOSH_AZURE_CPI_RELEASE_SHA1
+  version: "267.5.0"
+  url: https://s3.amazonaws.com/bosh-compiled-release-tarballs/bosh-267.5.0-ubuntu-xenial-97.12-20180820-234355-048784588-20180820234358.tgz?versionId=X168wrj6izNJTi0V0bSPNpeKl_kZeahW
+  sha1: 37499312e1186237434ee7a2492812b084c4e345
+- name: bpm
+  version: "0.11.0"
+  url: https://s3.amazonaws.com/bosh-compiled-release-tarballs/bpm-0.11.0-ubuntu-xenial-97.12-20180820-235033-474094256-20180820235039.tgz?versionId=hzs0XSVxZzPFsTPDY3c3trwPf0OtugqB
+  sha1: 6008b48192ac38ce6ac6ff23ea5029ac2b5bc2b9
 
 resource_pools:
 - name: vms
-  network: private
-  stemcell:
-    url: REPLACE_WITH_STEMCELL_URL
-    sha1: REPLACE_WITH_STEMCELL_SHA1
-  cloud_properties:
-    instance_type: Standard_D1_v2
+  network: default
+  env:
+    bosh:
+      password: '*'
+      mbus:
+        cert: ((mbus_bootstrap_ssl))
 
 disk_pools:
 - name: disks
-  disk_size: 25_000
+  disk_size: 65_536
 
 networks:
-- name: public
-  type: vip
-
-- name: private
+- name: default
   type: manual
   subnets:
-  - range: REPLACE_WITH_SUBNET_ADDRESS_RANGE_FOR_BOSH
-    gateway: REPLACE_WITH_GATEWAY_IP
-    dns: [168.63.129.16, 8.8.8.8]
-    cloud_properties:
-      virtual_network_name: REPLACE_WITH_VNET_NAME
-      subnet_name: REPLACE_WITH_SUBNET_NAME_FOR_BOSH
+  - range: ((internal_cidr))
+    gateway: ((internal_gw))
+    static: [((internal_ip))]
+    dns: [8.8.8.8]
 
-jobs:
+instance_groups:
 - name: bosh
   instances: 1
-
-  templates:
+  jobs:
+  - {name: bpm, release: bpm}
   - {name: nats, release: bosh}
-  - {name: postgres, release: bosh}
+  - {name: postgres-9.4, release: bosh}
   - {name: blobstore, release: bosh}
   - {name: director, release: bosh}
   - {name: health_monitor, release: bosh}
-  - {name: registry, release: bosh}
-  - {name: azure_cpi, release: bosh-azure-cpi}
-
   resource_pool: vms
   persistent_disk_pool: disks
-
   networks:
-  - name: private
-    static_ips: [REPLACE_WITH_BOSH_DIRECTOR_IP]
-    default: [dns, gateway]
-  - name: public
-    static_ips: [REPLACE_WITH_BOSH_PUBLIC_IP]
-
+  - name: default
+    static_ips: [((internal_ip))]
   properties:
+    agent:
+      mbus: nats://nats:((nats_password))@((internal_ip)):4222
+      env:
+        bosh:
+          blobstores:
+          - provider: dav
+            options:
+              # todo switch to using https
+              endpoint: http://((internal_ip)):25250
+              user: agent
+              password: ((blobstore_agent_password))
+              tls:
+                cert:
+                  ca: ((blobstore_ca.certificate))
     nats:
-      address: 127.0.0.1
+      address: ((internal_ip))
       user: nats
-      password: REPLACE_WITH_NATS_PASSWORD
-
+      password: ((nats_password))
+      tls:
+        ca: ((nats_server_tls.ca))
+        client_ca:
+          certificate: ((nats_ca.certificate))
+          private_key: ((nats_ca.private_key))
+        server:
+          certificate: ((nats_server_tls.certificate))
+          private_key: ((nats_server_tls.private_key))
+        director:
+          certificate: ((nats_clients_director_tls.certificate))
+          private_key: ((nats_clients_director_tls.private_key))
+        health_monitor:
+          certificate: ((nats_clients_health_monitor_tls.certificate))
+          private_key: ((nats_clients_health_monitor_tls.private_key))
     postgres: &db
       listen_address: 127.0.0.1
       host: 127.0.0.1
       user: postgres
-      password: REPLACE_WITH_POSTGRES_PASSWORD
+      password: ((postgres_password))
       database: bosh
       adapter: postgres
-
-    registry:
-      address: REPLACE_WITH_BOSH_DIRECTOR_IP
-      host: REPLACE_WITH_BOSH_DIRECTOR_IP
-      db: *db
-      http: {user: admin, password: REPLACE_WITH_REGISTRY_PASSWORD, port: 25777}
-      username: admin
-      password: REPLACE_WITH_REGISTRY_PASSWORD
-      port: 25777
-
     blobstore:
-      address: REPLACE_WITH_BOSH_DIRECTOR_IP
+      address: ((internal_ip))
       port: 25250
       provider: dav
-      director: {user: director, password: REPLACE_WITH_DIRECTOR_PASSWORD}
-      agent: {user: agent, password: REPLACE_WITH_AGENT_PASSWORD}
-
+      director:
+        user: director
+        password: ((blobstore_director_password))
+      agent:
+        user: agent
+        password: ((blobstore_agent_password))
+      tls:
+        cert:
+          ca: ((blobstore_ca.certificate))
+          certificate: ((blobstore_server_tls.certificate))
+          private_key: ((blobstore_server_tls.private_key))
     director:
       address: 127.0.0.1
-      name: bosh
+      name: ((director_name))
       db: *db
-      cpi_job: azure_cpi
-      max_threads: 10
+      flush_arp: true
+      enable_post_deploy: true
+      generate_vm_passwords: true
+      enable_dedicated_status_worker: true
+      enable_nats_delivered_templates: true
+      workers: 4
+      local_dns:
+        enabled: true
+      events:
+        record_events: true
+      ssl:
+        key: ((director_ssl.private_key))
+        cert: ((director_ssl.certificate))
       user_management:
         provider: local
         local:
           users:
-          - {name: admin, password: REPLACE_WITH_ADMIN_PASSWORD}
-          - {name: hm, password: REPLACE_WITH_HM_PASSWORD}
-      debug:
-        keep_unreachable_vms: REPLACE_WITH_KEEP_UNREACHABLE_VMS
-
+          - name: admin
+            password: ((admin_password))
+          - name: hm
+            password: ((hm_password))
     hm:
-      director_account: {user: hm, password: REPLACE_WITH_HM_PASSWORD}
+      director_account:
+        user: hm
+        password: ((hm_password))
+        ca_cert: ((director_ssl.ca))
       resurrector_enabled: true
-
-    azure: &azure
-      environment: REPLACE_WITH_ENVIRONMENT
-      subscription_id: REPLACE_WITH_SUBSCRIPTION_ID
-      tenant_id: REPLACE_WITH_TENANT_ID
-      client_id: REPLACE_WITH_CLIENT_ID
-      client_secret: REPLACE_WITH_CLIENT_SECRET
-      resource_group_name: REPLACE_WITH_RESOURCE_GROUP_NAME
-      storage_account_name: REPLACE_WITH_DEFAULT_STORAGE_ACCOUNT_NAME
-      default_security_group: REPLACE_WITH_NSG_NAME_FOR_BOSH
-      ssh_user: vcap
-      ssh_public_key: REPLACE_WITH_SSH_PUBLIC_KEY
-
-    agent: {mbus: "nats://nats:REPLACE_WITH_NATS_PASSWORD@REPLACE_WITH_BOSH_DIRECTOR_IP:4222"}
-
-    ntp: &ntp [REPLACE_WITH_NTP_SERVERS]
+    ntp: &ntp
+    - time1.google.com
+    - time2.google.com
+    - time3.google.com
+    - time4.google.com
 
 cloud_provider:
-  template: {name: azure_cpi, release: bosh-azure-cpi}
-
-  ssh_tunnel:
-    host: REPLACE_WITH_BOSH_PUBLIC_IP
-    port: 22
-    user: vcap
-    private_key: ./bosh # Path relative to this manifest file
-
-  mbus: "https://mbus:REPLACE_WITH_MBUS_PASSWORD@REPLACE_WITH_BOSH_DIRECTOR_IP:6868"
-
+  mbus: https://mbus:((mbus_bootstrap_password))@((internal_ip)):6868
+  cert: ((mbus_bootstrap_ssl))
   properties:
-    azure: *azure
-    agent: {mbus: "https://mbus:REPLACE_WITH_MBUS_PASSWORD@0.0.0.0:6868"}
+    agent: {mbus: "https://mbus:((mbus_bootstrap_password))@0.0.0.0:6868"}
     blobstore: {provider: local, path: /var/vcap/micro_bosh/data/cache}
     ntp: *ntp
+
+variables:
+- name: admin_password
+  type: password
+- name: blobstore_director_password
+  type: password
+- name: blobstore_agent_password
+  type: password
+- name: hm_password
+  type: password
+- name: mbus_bootstrap_password
+  type: password
+- name: nats_password
+  type: password
+- name: postgres_password
+  type: password
+
+- name: default_ca
+  type: certificate
+  options:
+    is_ca: true
+    common_name: ca
+
+- name: mbus_bootstrap_ssl
+  type: certificate
+  options:
+    ca: default_ca
+    common_name: ((internal_ip))
+    alternative_names: [((internal_ip))]
+
+- name: director_ssl
+  type: certificate
+  options:
+    ca: default_ca
+    common_name: ((internal_ip))
+    alternative_names: [((internal_ip))]
+
+- name: nats_ca
+  type: certificate
+  options:
+    is_ca: true
+    common_name: default.nats-ca.bosh-internal
+
+- name: nats_server_tls
+  type: certificate
+  options:
+    ca: nats_ca
+    common_name: default.nats.bosh-internal
+    alternative_names: [((internal_ip))]
+    extended_key_usage:
+    - server_auth
+
+- name: nats_clients_director_tls
+  type: certificate
+  options:
+    ca: nats_ca
+    common_name: default.director.bosh-internal
+    extended_key_usage:
+    - client_auth
+
+- name: nats_clients_health_monitor_tls
+  type: certificate
+  options:
+    ca: nats_ca
+    common_name: default.hm.bosh-internal
+    extended_key_usage:
+    - client_auth
+
+- name: blobstore_ca
+  type: certificate
+  options:
+    is_ca: true
+    common_name: default.blobstore-ca.bosh-internal
+
+- name: blobstore_server_tls
+  type: certificate
+  options:
+    ca: blobstore_ca
+    common_name: ((internal_ip))
+    alternative_names: [((internal_ip))]

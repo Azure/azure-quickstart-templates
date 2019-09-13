@@ -14,12 +14,12 @@ This template allows you to create a Logic app that has a webhook to be used fro
 After the template deployment has completed, there is a manual step that you must complete before the messages can be posted to the channel. You have to log in to your Slack account via the Logic apps UI in order to consent to give Logic apps access to your Slack:
 
 1. Once the template has completed, navigate to the resource group you deployed it to.
-2. Find the Logic app (represented by a rocket icon) in the resource list, and click it.
+2. Find the Logic app in the resource list, and click it.
 3. Select the **Edit** button in the command bar.
-4. You'll now see the *Logic app designer*, and you'll see a card with **Slack** in the title, and an **Change Connection** text.
-5. Click it and choose "Create New"
+4. You'll now see the *Logic app designer* with "Connections" as being the last step. 
+5. Click "Connections". 
 6. Sign in, and acknowledge that Logic apps can access your account. 
-7. Click the Green checkmark at the bottom fo the **Slack**card.
+7. Click the Green checkmark at the bottom of the **Slack** card.
 8. Click the Save button in the command bar.
 
 ## Call from your Alerts

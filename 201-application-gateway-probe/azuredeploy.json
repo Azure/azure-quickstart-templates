@@ -41,7 +41,7 @@
         8,
         9,
         10
-      ],      
+      ],
       "defaultValue": 2,
       "metadata": {
         "description": "Number of instances"
@@ -118,6 +118,13 @@
       "metadata": {
         "description": "Minimum number of servers that are kept in healthy state regardless of probe results."
       }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
@@ -125,8 +132,7 @@
     "publicIPAddressName": "publicIp1",
     "virtualNetworkName": "virtualNetwork1",
     "subnetName": "appGatewaySubnet",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
-    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
     "publicIPRef": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]",
     "applicationGatewayID": "[resourceId('Microsoft.Network/applicationGateways',variables('applicationGatewayName'))]"
   },
@@ -135,7 +141,7 @@
       "apiVersion": "2017-06-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic"
       }
@@ -144,7 +150,7 @@
       "apiVersion": "2017-06-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -165,7 +171,7 @@
       "apiVersion": "2017-06-01",
       "name": "[variables('applicationGatewayName')]",
       "type": "Microsoft.Network/applicationGateways",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
         "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
@@ -223,7 +229,7 @@
               "Port": 80,
               "Protocol": "Http",
               "CookieBasedAffinity": "Disabled",
-              "ProbeEnabled":"[parameters('probeEnabled')]",
+              "ProbeEnabled": "[parameters('probeEnabled')]",
               "Probe": {
                 "id": "[concat(variables('applicationGatewayID'), '/probes/Probe1')]"
               }
@@ -274,9 +280,11 @@
               "UnhealthyThreshold": "[parameters('probeUnhealthyThreshold')]",
               "MinServers": "[parameters('probeMinServersAvailable')]",
               "Match": {
-                "StatusCodes": ["[parameters('healthyStatusCodes')]"]
+                "StatusCodes": [
+                  "[parameters('healthyStatusCodes')]"
+                ]
               },
-              "PickHostNameFromBackendHttpSettings":"[parameters('probePickHostNameFromBackendHttpSettings')]"
+              "PickHostNameFromBackendHttpSettings": "[parameters('probePickHostNameFromBackendHttpSettings')]"
             }
           }
         ]

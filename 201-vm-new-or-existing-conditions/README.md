@@ -8,4 +8,4 @@ This template allows deploying a linux VM using new or existing resources for th
 
 This template contains extra parameters to allow for the existing resources use cases, which is a common scenario for Solution Templates in the Azure Marketplace.
 
-`Tags: new, exiting, resource, vm, condition, conditional`
+`Tags: new, existing, resource, vm, condition, conditional`

@@ -7,4 +7,4 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template demonstrates how to create API Management service with additional locations.  This template creates API Management service in Premium tier since the feature to deploy additional locations in API Management is only available in Premium tier of API Management.
+This template demonstrates how to create API Management service with additional locations.  This template creates API Management service in Premium tier since the feature to deploy additional locations in API Management is only available in Premium tier of API Management. Make sure that the location is ResourceGroup is not same as location of one of additional Locations. The template deploys 3 units of Premium, consider the cost before deploying the template.

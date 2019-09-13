@@ -7,7 +7,7 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template allows you to create a HDInsight HBase replication with two virtual networks in two different regions and the VPN connections between the two VNets. After it is done, you need to configure static IP addresses for the Zookeeper nodes before you can enable HBase replication using script action. For more information, see [Configure HBase replication](https://docs.microsoft.com/azure/hdinsight/hdinsight-hbase-replication).
+This template allows you to create an Azure environment for HBase replication.  The template creates two virtual networks in two different regions, the VPN connections between the two VNets, and two Ubuntu virtual machines to be used as DNS servers. After it is done, you need to install and configure the BIND DNS services, install HBase clusters and enable replication. For more information, see [Configure HBase replication](https://docs.microsoft.com/azure/hdinsight/hdinsight-hbase-replication).
 
 ## Related templates
 

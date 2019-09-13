@@ -1,5 +1,5 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json",
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "newStorageAccountName": {
@@ -118,9 +118,15 @@
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('availabilitySetName')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2017-12-01",
       "location": "[resourceGroup().location]",
-      "properties": {}
+      "sku": {
+        "name": "Aligned"
+          },
+        "properties": { 
+            "platformFaultDomainCount": 2,
+            "platformUpdateDomainCount": 5
+        }
     },
     {
       "type": "Microsoft.Storage/storageAccounts",
@@ -202,7 +208,7 @@
               "frontendIPConfiguration": {
                 "id": "[variables('lbIPConfig')]"
               },
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "frontendPort": 2223,
               "backendPort": 22,
               "enableFloatingIP": false
@@ -214,7 +220,7 @@
               "frontendIPConfiguration": {
                 "id": "[variables('lbIPConfig')]"
               },
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "frontendPort": 2224,
               "backendPort": 22,
               "enableFloatingIP": false
@@ -226,7 +232,7 @@
               "frontendIPConfiguration": {
                 "id": "[variables('lbIPConfig')]"
               },
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "frontendPort": 2225,
               "backendPort": 22,
               "enableFloatingIP": false
@@ -318,7 +324,7 @@
         "[concat('Microsoft.Network/networkInterfaces/', 'nic', copyindex())]",
         "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
       ],
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2017-03-30",
       "properties": {
         "availabilitySet": {
           "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('availabilitySetName'))]"
@@ -351,20 +357,14 @@
           },
           "dataDisks": [
             {
-              "name": "dockerdisk",
+              "name": "[concat(variables('vmNamePrefix'), copyindex(),'_dockerdisk')]",
               "diskSizeGB": "[parameters('dockerVolumeSize')]",
               "lun": 0,
-              "vhd": {
-                "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/','datadisk', copyindex(),'.vhd')]"
-              },
               "createOption": "Empty"
             }
           ],
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/','osdisk', copyindex(),'.vhd')]"
-            },
+            "name": "[concat(variables('vmNamePrefix'), copyindex(),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }

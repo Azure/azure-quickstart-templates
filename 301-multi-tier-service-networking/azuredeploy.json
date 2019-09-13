@@ -96,28 +96,31 @@
       "metadata": {
         "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version. Allowed values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter."
       }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
     "imagePublisher": "MicrosoftWindowsServer",
     "imageOffer": "WindowsServer",
     "storageAccountType": "Standard_LRS",
-    "vmSize": "Standard_A2",
     "VNetName": "multiTierVNet",
     "FESubnetName": "FrontendSubnet",
     "AppSubnetName": "AppSubnet",
     "BESubnetName": "BackendSubnet",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('VNetName'))]",
-    "FESubnetRef": "[concat(variables('vnetID'),'/subnets/', variables('FESubnetName'))]",
-    "AppSubnetRef": "[concat(variables('vnetID'),'/subnets/', variables('AppSubnetName'))]",
-    "BESubnetRef": "[concat(variables('vnetID'),'/subnets/', variables('BESubnetName'))]",
+    "FESubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('VNetName'), variables('FESubnetName'))]",
+    "AppSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('VNetName'), variables('AppSubnetName'))]",
+    "BESubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('VNetName'), variables('BESubnetName'))]",
     "VNetAddressPrefix": "10.1.0.0/16",
     "FrontendPrefix": "10.1.0.0/24",
     "AppPrefix": "10.1.1.0/24",
     "BackendPrefix": "10.1.2.0/24",
-    "feAvailabilitySetName": "feAvSet",
     "appAvailabilitySetName": "appAvSet",
-    "beAvailabilitySetName": "beAvSet",
     "AppServerIP1": "10.1.1.4",
     "AppServerIP2": "10.1.1.5",
     "FeNsgname": "FrontendNSG",
@@ -128,9 +131,6 @@
     "appGatewayPubPRef": "[resourceId('Microsoft.Network/publicIPAddresses', variables('appGatewayPubIPName'))]",
     "applicationGatewayID": "[resourceId('Microsoft.Network/applicationGateways',variables('appGatewayName'))]",
     "ILBIP": "10.1.2.100",
-    "SqlIP1": "10.1.2.4",
-    "SqlIP2": "10.1.2.5",
-    "SqlIP3": "10.1.2.6",
     "IlbID": "[resourceId('Microsoft.Network/loadBalancers',parameters('multitierILB'))]",
     "privateIPConfigID": "[concat(variables('IlbID'),'/frontendIPConfigurations/LoadBalancerFrontEnd')]",
     "IlbPoolID": "[concat(variables('IlbID'),'/backendAddressPools/BackendPool1')]",
@@ -139,15 +139,14 @@
     "dbNicName": "dbNic",
     "appScaleCount": 2,
     "dbSclaeCount": 3,
-    "dbAvailabilitySetName": "DbAvlSet",
-    "apiVer": "2015-06-15"
+    "dbAvailabilitySetName": "DbAvlSet"
   },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[parameters('newDBStorageAccountName')]",
       "apiVersion": "2015-05-01-preview",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "accountType": "[variables('storageAccountType')]"
       }
@@ -156,7 +155,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('appGatewayPubIPName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "[parameters('publicIPAddressType')]"
       }
@@ -165,7 +164,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat(parameters('appServersPublicIPPrefix'), copyIndex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "foo",
         "count": "[variables('appScaleCount')]"
@@ -178,7 +177,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('VNetName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/networkSecurityGroups/', variables('FeNsgname'))]",
         "[concat('Microsoft.Network/networkSecurityGroups/', variables('AppNsgname'))]",
@@ -225,7 +224,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('FeNsgname')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
           {
@@ -291,7 +290,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('AppNsgname')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
           {
@@ -371,7 +370,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('BeNsgname')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
           {
@@ -423,7 +422,7 @@
       "apiVersion": "2017-06-01",
       "name": "[variables('appGatewayName')]",
       "type": "Microsoft.Network/applicationGateways",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', variables('VNetName'))]",
         "[concat('Microsoft.Network/publicIPAddresses/', variables('appGatewayPubIPName'))]"
@@ -525,7 +524,7 @@
       "apiVersion": "2015-05-01-preview",
       "name": "[parameters('multitierILB')]",
       "type": "Microsoft.Network/loadBalancers",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', variables('VNetName'))]"
       ],
@@ -585,7 +584,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('appNicName'), copyIndex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "foo",
         "count": "[variables('appScaleCount')]"
@@ -616,7 +615,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('dbNicName'), copyIndex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "foo",
         "count": "[variables('dbSclaeCount')]"
@@ -649,7 +648,7 @@
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('appAvailabilitySetName')]",
       "apiVersion": "2016-04-30-preview",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "platformFaultDomainCount": 2,
         "platformUpdateDomainCount": 2,
@@ -660,7 +659,7 @@
       "apiVersion": "2016-04-30-preview",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(parameters('appVmNamePrefix'), copyIndex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "foo",
         "count": "[variables('appScaleCount')]"
@@ -706,7 +705,7 @@
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('dbAvailabilitySetName')]",
       "apiVersion": "2016-04-30-preview",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "platformFaultDomainCount": 2,
         "platformUpdateDomainCount": 2,
@@ -717,7 +716,7 @@
       "apiVersion": "2016-04-30-preview",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(parameters('dbVmNamePrefix'), copyIndex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "foo",
         "count": "[variables('dbSclaeCount')]"

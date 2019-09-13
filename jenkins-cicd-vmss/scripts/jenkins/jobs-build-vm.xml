@@ -1,0 +1,105 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties/>
+  <scm class="hudson.plugins.git.GitSCM" plugin="git@3.7.0">
+    <configVersion>2</configVersion>
+    <userRemoteConfigs>
+      <hudson.plugins.git.UserRemoteConfig>
+        <url>{insert-repository-url}</url>
+      </hudson.plugins.git.UserRemoteConfig>
+    </userRemoteConfigs>
+    <branches>
+      <hudson.plugins.git.BranchSpec>
+        <name>*/master</name>
+      </hudson.plugins.git.BranchSpec>
+    </branches>
+    <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+    <submoduleCfg class="list"/>
+    <extensions/>
+  </scm>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers>
+    <hudson.triggers.SCMTrigger>
+      <spec>* * * * *</spec>
+      <ignorePostCommitHooks>false</ignorePostCommitHooks>
+    </hudson.triggers.SCMTrigger>
+  </triggers>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>echo &quot;MyBuild: Pre-check and delete existing resources/groups&quot;
+az login --service-principal -u $ARM_CLIENT_ID -p $ARM_CLIENT_SECRET -t $ARM_TENANT_ID
+az account set -s $ARM_SUBSCRIPTION_ID
+
+if [ $(az group show -n &quot;$ARM_RESOURCE_GROUP&quot; --query id --output tsv) ]; then
+  az group delete -n &quot;$ARM_RESOURCE_GROUP&quot; --yes
+  echo &quot;MyBuild: Deleted resource group $ARM_RESOURCE_GROUP&quot;
+fi
+
+if [ $(az resource show -g &quot;$ARM_IMAGE_RESOURCE_GROUP&quot; -n &quot;$ARM_IMAGE_NAME&quot;  --resource-type &quot;Microsoft.Compute/images&quot; --query id --output tsv) ]; then
+  az image delete -n &quot;$ARM_IMAGE_NAME&quot; -g &quot;$ARM_IMAGE_RESOURCE_GROUP&quot;
+  echo &quot;MyBuild: Deleted image $ARM_IMAGE_NAME from resource group $ARM_IMAGE_RESOURCE_GROUP&quot;
+fi
+
+az logout
+</command>
+    </hudson.tasks.Shell>
+    <hudson.tasks.Shell>
+      <command>echo &quot;MyBuild: Build image&quot;
+/usr/bin/packer build &quot;${WORKSPACE}/jenkins-cicd-vmss/scripts/packer/ubuntu.json&quot;
+</command>
+    </hudson.tasks.Shell>
+    <hudson.tasks.Shell>
+      <command>if [ ! -f ~/.ssh/id_rsa.pub ]; then
+    echo &quot;MyBuild: Create SSH public and private key pair&quot;
+    ssh-keygen -t rsa -b 2048 -f ~/.ssh/id_rsa -N &apos;&apos;
+fi
+
+echo &quot;MyBuild: Provision VMSS with packer image&quot;
+cd &quot;${WORKSPACE}/jenkins-cicd-vmss/scripts/terraform&quot;
+/usr/bin/terraform get
+/usr/bin/terraform init
+/usr/bin/terraform apply -auto-approve -var &quot;location=${ARM_LOCATION}&quot; -var &quot;resource_group_name=${ARM_RESOURCE_GROUP}&quot; -var &quot;image_resource_group_name=${ARM_IMAGE_RESOURCE_GROUP}&quot; -var &quot;image_name=${ARM_IMAGE_NAME}&quot; -var &quot;dns_name=${DNS_NAME}&quot; -var &quot;admin_username=${VMAdminUsername}&quot; -var &quot;admin_password=${VMAdminPassword}&quot;
+</command>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers>
+    <org.jenkinsci.plugins.credentialsbinding.impl.SecretBuildWrapper plugin="credentials-binding@1.13">
+      <bindings>
+        <org.jenkinsci.plugins.credentialsbinding.impl.UsernamePasswordMultiBinding>
+          <credentialsId>{insert-credentials-id}</credentialsId>
+          <usernameVariable>VMAdminUsername</usernameVariable>
+          <passwordVariable>VMAdminPassword</passwordVariable>
+        </org.jenkinsci.plugins.credentialsbinding.impl.UsernamePasswordMultiBinding>
+      </bindings>
+    </org.jenkinsci.plugins.credentialsbinding.impl.SecretBuildWrapper>
+    <EnvInjectBuildWrapper plugin="envinject@2.1.5">
+      <info>
+        <propertiesContent>ARM_SUBSCRIPTION_ID={insert-subscription-id}
+ARM_TENANT_ID={insert-tenant-id}
+ARM_CLIENT_ID={insert-client-id}
+ARM_CLIENT_SECRET={insert-client-secret}
+ARM_RESOURCE_GROUP={insert-resource-group}
+ARM_LOCATION={insert-location}
+ARM_IMAGE_RESOURCE_GROUP={insert-image-resource-group}
+ARM_IMAGE_NAME={insert-image-name}
+DNS_NAME={insert-dns-name}
+REPOSITORY_URL={insert-repository-url}
+OMS_WORKSPACE_ID={insert-oms-workspace-id}
+OMS_WORKSPACE_KEY={insert-oms-workspace-key}</propertiesContent>
+        <secureGroovyScript plugin="script-security@1.39">
+          <script></script>
+          <sandbox>false</sandbox>
+        </secureGroovyScript>
+        <loadFilesFromMaster>false</loadFilesFromMaster>
+      </info>
+    </EnvInjectBuildWrapper>
+  </buildWrappers>
+</project>
