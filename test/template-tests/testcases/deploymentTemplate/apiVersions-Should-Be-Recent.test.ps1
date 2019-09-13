@@ -11,40 +11,59 @@
     ) -AllAzureResources (
         Get-Content ..\..\cache\AllAzureResources.cache.json | ConvertFrom-Json
     )
+      -TestDate (
+          [datetime]::ParseExact("31/08/2019", "dd-mm-yy", $null)
+    )
 #>
 param(
-# The resource in the main template
-[Parameter(Mandatory=$true,Position=0)]
-[PSObject]
-$TemplateObject,
+    # The resource in the main template
+    [Parameter(Mandatory = $true, Position = 0)]
+    [PSObject]
+    $TemplateObject,
 
-# All potential resources in Azure (from cache)
-[Parameter(Mandatory=$true,Position=2)]
-[PSObject]
-$AllAzureResources
+    # All potential resources in Azure (from cache)
+    [Parameter(Mandatory = $true, Position = 2)]
+    [PSObject]
+    $AllAzureResources,
+
+    # Number of days that the apiVersion must be less than
+    [Parameter(Mandatory = $false, Position = 3)]
+    [int32]
+    $NumberOfDays = 730,
+
+    # Test Run Date - date to use when doing comparisons, if not current date (used for unit testing against and old cache)
+    [Parameter(Mandatory = $false, Position = 3)]
+    [datetime]
+    $TestDate = [DateTime]::Now
+
 )
 
-if (-not $TemplateObject.resources) { # If we don't have any resources
+
+if (-not $TemplateObject.resources) {
+    # If we don't have any resources
     # then it's probably a partial template, and there's no apiVersions to check anyway, 
     return # so return.
 }
 
 # First, find all of the API versions in the main template resources.
 $allApiVersions = $TemplateObject.resources | 
-    Find-JsonContent -Key apiVersion -Value * -Like
+Find-JsonContent -Key apiVersion -Value * -Like
 
-foreach ($av in $allApiVersions) { # Then walk over each object containing an ApiVersion.
-
-    if ($av.ApiVersion -isnot [string]) { # If the APIVersion is not a string
+foreach ($av in $allApiVersions) {
+    # Then walk over each object containing an ApiVersion.
+    Write-Host "Checking resource named `"$($av.name)`" with apiVersion `"$($av.apiVersion)`""
+    if ($av.ApiVersion -isnot [string]) {
+        # If the APIVersion is not a string
         # write an error 
         Write-Error "Api Versions must be strings" -TargetObject $av -ErrorId ApiVersion.Not.String
         continue # and continue.
     }
 
-    # Next, resolve the full resource name
+    # Next, resolve the full resource type
     $FullResourceTypes = 
-        @(
-        if ($av.ParentObject) { # by walking backwards over the parent resources 
+    @(
+        if ($av.ParentObject) {
+            # by walking backwards over the parent resources 
             # (since the topmost resource will be the last item in the list)
             for ($i = $av.ParentObject.Count - 1; $i -ge 0; $i--) {
                 if (-not $av.ParentObject[$i].type) { continue }
@@ -52,7 +71,7 @@ foreach ($av in $allApiVersions) { # Then walk over each object containing an Ap
             }
         }
         $av.type # and adding this resource's type. 
-        )
+    )
 
     # To get the full type name, join them all with a slash 
     $FullResourceType = $FullResourceTypes -join '/' 
@@ -61,9 +80,8 @@ foreach ($av in $allApiVersions) { # Then walk over each object containing an Ap
     $apiString = $av.ApiVersion 
     $hasDate = $apiString -match "(?<Year>\d{4,4})-(?<Month>\d{2,2})-(?<Day>\d{2,2})"
     
-    
-    
-    if (-not $hasDate) { # If we couldn't, write an error
+    if (-not $hasDate) {
+        # If we couldn't, write an error
         
         Write-Error "Api versions must be a fixed date. $FullResourceType is not." -TargetObject $av -ErrorId ApiVersion.Not.Date
         continue # and move onto the next resource
@@ -74,37 +92,54 @@ foreach ($av in $allApiVersions) { # Then walk over each object containing an Ap
 
     # Now find all of the valid versions from this API
     $validApiVersions = # This is made a little tricky by the fact that some resources don't directly have an API version        
-        @(for ($i = $FullResourceTypes.Count - 1; $i -ge 0; $i--) { # so we need to walk backwards thru the list of items
+    @(for ($i = $FullResourceTypes.Count - 1; $i -ge 0; $i--) {
+            # so we need to walk backwards thru the list of items
             $resourceTypeName = $FullResourceTypes[0..$i] -join '/' # construct the resource type name
             $apiVersionsOfType = $AllAzureResources.$resourceTypeName | # and see if there's an apiVersion.
-                Select-Object -ExpandProperty apiVersions |
-                Sort-Object -Descending
+            Select-Object -ExpandProperty apiVersions |
+            Sort-Object -Descending
 
-            if ($apiVersionsOfType) { # If there was,
+            if ($apiVersionsOfType) {
+                # If there was,
                 $apiVersionsOfType # set it and break the loop
                 break
             }
         })
 
-    $howOutOfDate = $validApiVersions.IndexOf($av.ApiVersion) # Find out how out of date we are.
-    if ($howOutOfDate -eq -1 -and $validApiVersions) {
-        Write-Error "$fullResourceType is using an invalid apiVersion.
-      Valid Versions are:
-      $($validApiVersions -join ([Environment]::NewLine + (' ' * 6)))" -ErrorId ApiVersion.Not.Valid
+    #Create a string of recent or allowed apiVersions for display in the error message
+    $recentApiVersions = ""
+    foreach ($v in $validApiVersions) {
+
+        $hasDate = $v -match "(?<Year>\d{4,4})-(?<Month>\d{2,2})-(?<Day>\d{2,2})"
+        $vDate = [DateTime]::new($matches.Year, $matches.Month, $matches.Day) 
+
+        #if the apiVersion is "recent" or the latest one add it to the list (note $validApiVersions is sorted)
+        if ($($TestDate - $vDate).TotalDays -lt $NumberOfDays -or $v -eq $validApiVersions[0]) {
+            $recentApiVersions += "      $v`n"
+        }
+
     }
 
-    if ($av.ApiVersion -like '*-*-*-*') { # If it's a preview or other special variant
-        $moreRecent = $validApiVersions[0..$howOutOfDate] # see if there's a more recent non-preview version.
-        if ($howOutOfDate -ge 0 -and $moreRecent -notmatch '\d+-\d+-\d+-') {
-            Write-Error "$FullResourceType uses a preview version ( $($av.apiVersion) ).
-      There are $($howOutOfDate) more recent non-preview versions available.
-      The most recent non-preview version is:
-      $(@($moreRecent -notmatch '\d+-\d+-\d+-')[0] -join ([Environment]::NewLine + (' ' * 6)))" -TargetObject $av -ErrorId 'ApiVersion.Not.Recent'
+    $howOutOfDate = $validApiVersions.IndexOf($av.ApiVersion) # Find out how out of date we are.
+    #Is the apiVersion even in the list?
+    if ($howOutOfDate -eq -1 -and $validApiVersions) {
+        Write-Error "$fullResourceType is using an invalid apiVersion." -ErrorId ApiVersion.Not.Valid
+        Write-Host "Valid Api Versions:`n$recentApiVersions"
+    }
+
+    if ($av.ApiVersion -like '*-*-*-*') {
+        # If it's a preview or other special variant, e.g. 2016-01-01-preview
+        $moreRecent = $validApiVersions[0..$howOutOfDate] # see if there's a more recent non-preview version. 
+        if ($howOutOfDate -gt 0) {
+            Write-Error "$FullResourceType uses a preview version ( $($av.apiVersion) ) and there are more recent versions available." -TargetObject $av -ErrorId ApiVersion.Preview.Not.Recent
+            Write-Host "Valid Api Versions:`n$recentApiVersions"
         }        
     }
     # Finally, check how long it's been since the ApiVersion's date
-    $timeSinceApi = [DateTime]::Now - $apiDate
-    if (($timeSinceApi.TotalDays -gt 730) -and ($howOutOfDate -gt 0)) {  # If it's older than two years, and there's nothing more recent
-        Write-Error "Api versions have to be the latest or under 2 years old (730 days) - (API version $($av.ApiVersion) of $FullResourceType is $([Math]::Floor($timeSinceApi.TotalDays)) days old)" 
+    $timeSinceApi = $TestDate - $apiDate
+    if (($timeSinceApi.TotalDays -gt $NumberOfDays) -and ($howOutOfDate -gt 0)) {
+        # If it's older than two years, and there's nothing more recent
+        Write-Error "Api versions must be the latest or under $($NumberOfDays / 365) years old ($NumberOfDays days)`nAPI version $($av.ApiVersion) of $FullResourceType is $([Math]::Floor($timeSinceApi.TotalDays)) days old" -ErrorId ApiVersion.OutOfDate
+        Write-Host "Valid Api Versions:`n$recentApiVersions"
     }
 }
