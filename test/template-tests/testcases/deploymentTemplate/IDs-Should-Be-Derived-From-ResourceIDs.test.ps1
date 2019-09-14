@@ -41,6 +41,7 @@ foreach ($id in $ids) { # Then loop over each object with an ID
     # Check to make sure the resourceId function does not use the resourceGroup().name function
     # it's the default and won't work with an existing resource in another resourceGroup
     # Search the entire template
+    #
     $txt = $TemplateObject | ConvertTo-JSON
     if ($txt -match "\s{0,}\[\s{0,}resourceId\s{0,}\(\s{0,}resourceGroup\(" ){
         Write-Error "ResourceId function must not use resourceGroup().name function." -TargetObject $id -ErrorId ResourceId.Contains.ResourceGroup.Name.Function
