@@ -19,6 +19,7 @@ $ids = $TemplateObject  | Find-JsonContent -Key id -Value * -Like
 foreach ($id in $ids) { # Then loop over each object with an ID
     $myId = "$($id.id)".Trim() # Grab the actual ID,
     $expandedId = Expand-AzureRMTemplate -Expression $myId -InputObject $TemplateObject # then expand it.
+    
     # Check that it uses the ResourceID or a param or var - can remove variables once Expand-Template does full eval of nested vars
     # REGEX
     # - 0 or more whitespace
@@ -27,9 +28,21 @@ foreach ($id in $ids) { # Then loop over each object with an ID
     # - 0 or more whitespace
     # - opening paren (
     # - 0 or more whitepace
-    # - single quote
+    # - single quote on parameters and variables (resourceId first parameters may not be a literal string)
     #
-    if ($expandedId -notmatch "\s{0,}\[\s{0,}(resourceId|parameters|variables)\s{0,}\(\s{0,}'"){
-        Write-Error "Property: `"$($id.propertyName)`" must use one of the following expressions for an resourceId property (resourceId(), parameters(), variables())" -TargetObject $id
+    if ($expandedId -notmatch "\s{0,}\[\s{0,}resourceId\s{0,}\(\s{0,}"  -and `
+        $expandedId -notmatch "\s{0,}\[\s{0,}parameters\s{0,}\(\s{0,}'" -and `
+        $expandedId -notmatch "\s{0,}\[\s{0,}variables\s{0,}\(\s{0,}'" ){
+            Write-Error "Property: `"$($id.propertyName)`" must use one of the following expressions for an resourceId property (resourceId(), parameters(), variables())" -TargetObject $id -ErrorId ResourceId.Should.Contain.Propert.Expression
     }
+
 }
+
+    # Check to make sure the resourceId function does not use the resourceGroup().name function
+    # it's the default and won't work with an existing resource in another resourceGroup
+    # Search the entire template
+    $txt = $TemplateObject | ConvertTo-JSON
+    if ($txt -match "\s{0,}\[\s{0,}resourceId\s{0,}\(\s{0,}resourceGroup\(" ){
+        Write-Error "ResourceId function must not use resourceGroup().name function." -TargetObject $id -ErrorId ResourceId.Contains.ResourceGroup.Name.Function
+}
+
