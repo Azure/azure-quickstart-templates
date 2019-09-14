@@ -14,7 +14,7 @@ The [Robot Operating System (ROS)](https://www.ros.org/) is a set of software li
 From drivers to state-of-the-art algorithms, and with powerful developer tools, ROS has what you need for your next robotics project.
 And it's all open source.
 
-This template creates a GPU-enabled Windows VM and installs the latest nightly build of [ROS on Windows](https://aka.ms/ros) into it using the CustomScript extension.
+This template creates a Windows VM and installs the latest nightly build of [ROS on Windows](https://aka.ms/ros) into it using the CustomScript extension.
 This VM will expose Windows Remote Management over HTTPS.
 Please see the below to learn how to connect to it.
 
