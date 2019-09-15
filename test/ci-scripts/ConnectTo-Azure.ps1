@@ -15,6 +15,7 @@ Set-PSRepository -InstallationPolicy Trusted -Name PSGallery -verbose
 
 if ($InstallAzModule){
     Install-Module -Name Az -AllowClobber -verbose
+    Install-Module -Name AzTable -AllowClobber -verbose # need this for updating the deployment status table
 }
 
 $pscredential = New-Object System.Management.Automation.PSCredential($appId, (ConvertTo-SecureString $secret -AsPlainText -Force))
