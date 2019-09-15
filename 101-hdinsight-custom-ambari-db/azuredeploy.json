@@ -80,6 +80,13 @@
         "description": "The name of the storage container to use."
       }
     },
+    "existingSQLServerResourceGroup": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().name]",
+      "metadata": {
+        "description": "The name of the resource group where the existing SQL server is to use for the new external metastore SQL db."
+      }
+    },
     "existingSQLServerName": {
       "type": "string",
       "metadata": {
@@ -133,32 +140,48 @@
     }
   },
   "variables": { 
-  	"sqldbname": "[concat(parameters('existingSQLServerName'), '/', parameters('newMetastoreDBName'))]"
+  	"sqldbname": "[concat(parameters('existingSQLServerName'), '/', parameters('newMetastoreDBName'))]",
+    "nestedtemplate_name": "[concat('nestedtemplate',uniqueString(resourceGroup().id))]"
   },
   "resources": [
-  	{
-	    "type": "Microsoft.Sql/servers/databases",
-	    "apiVersion": "2018-06-01-preview",
-	    "location": "[parameters('location')]",
-	    "name": "[variables('sqldbname')]",
-	    "properties": {
-	        "collation": "SQL_Latin1_General_CP1_CI_AS",
-	        "maxSizeBytes": "268435456000",
-	        "zoneRedundant": false,
-	        "readScale": "Disabled",
-	        "readReplicaCount": 0
-	    },
-	    "sku": {
-	        "name": "S2",
-	        "tier": "Standard"
-	    }
+  {            
+    "apiVersion": "2019-05-01",
+    "name": "[variables('nestedtemplate_name')]",
+    "type": "Microsoft.Resources/deployments",
+    "resourceGroup": "[parameters('existingSQLServerResourceGroup')]",
+    "properties": {
+        "mode": "Incremental",
+        "template": {
+            "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+            "contentVersion": "1.0.0.0",
+            "resources": [
+                {
+                  "type": "Microsoft.Sql/servers/databases",
+                  "apiVersion": "2018-06-01-preview",
+                  "location": "[parameters('location')]",
+                  "name": "[variables('sqldbname')]",
+                  "properties": {
+                      "collation": "SQL_Latin1_General_CP1_CI_AS",
+                      "maxSizeBytes": "268435456000",
+                      "zoneRedundant": false,
+                      "readScale": "Disabled",
+                      "readReplicaCount": 0
+                  },
+                  "sku": {
+                      "name": "S2",
+                      "tier": "Standard"
+                  }
+                }                  
+            ]
+        }
+      }
     },
     {
       "name": "[parameters('clusterName')]",
       "type": "Microsoft.HDInsight/clusters",
       "location": "[parameters('location')]",
       "apiVersion": "2018-06-01-preview",
-      "dependsOn": ["[resourceId('Microsoft.Sql/servers/databases', parameters('existingSQLServerName'), parameters('newMetastoreDBName'))]"],
+      "dependsOn": ["[concat('Microsoft.Resources/deployments/', variables('nestedtemplate_name'))]"],
       "properties": {
         "clusterVersion": "[parameters('clusterVersion')]",
         "osType": "Linux",
@@ -172,7 +195,7 @@
             },
             "hive-site": {
               "javax.jdo.option.ConnectionDriverName": "com.microsoft.sqlserver.jdbc.SQLServerDriver",
-              "javax.jdo.option.ConnectionURL": "[concat('jdbc:sqlserver://', reference(resourceId(resourceGroup().name, 'Microsoft.Sql/servers', parameters('existingSQLServerName')), '2018-06-01-preview').fullyQualifiedDomainName, ';database=',parameters('newMetastoreDBName'),';encrypt=true;trustServerCertificate=true;create=false;loginTimeout=300')]",
+              "javax.jdo.option.ConnectionURL": "[concat('jdbc:sqlserver://', reference(resourceId(parameters('existingSQLServerResourceGroup'), 'Microsoft.Sql/servers', parameters('existingSQLServerName')), '2018-06-01-preview').fullyQualifiedDomainName, ';database=',parameters('newMetastoreDBName'),';encrypt=true;trustServerCertificate=true;create=false;loginTimeout=300')]",
               "javax.jdo.option.ConnectionUserName": "[parameters('existingSQLServerUsername')]",
               "javax.jdo.option.ConnectionPassword": "[parameters('existingSQLServerPassword')]"
             },
@@ -181,12 +204,12 @@
               "hive_database_name": "[parameters('newMetastoreDBName')]",
               "hive_database_type": "mssql",
               "hive_existing_mssql_server_database": "[parameters('newMetastoreDBName')]",
-              "hive_existing_mssql_server_host": "[reference(resourceId(resourceGroup().name,'Microsoft.Sql/servers',parameters('existingSQLServerName')), '2018-06-01-preview').fullyQualifiedDomainName]",
-              "hive_hostname": "[reference(resourceId(resourceGroup().name,'Microsoft.Sql/servers',parameters('existingSQLServerName')), '2018-06-01-preview').fullyQualifiedDomainName]"
+              "hive_existing_mssql_server_host": "[reference(resourceId(parameters('existingSQLServerResourceGroup'),'Microsoft.Sql/servers',parameters('existingSQLServerName')), '2018-06-01-preview').fullyQualifiedDomainName]",
+              "hive_hostname": "[reference(resourceId(parameters('existingSQLServerResourceGroup'),'Microsoft.Sql/servers',parameters('existingSQLServerName')), '2018-06-01-preview').fullyQualifiedDomainName]"
 
             },
             "ambari-conf": {
-            	"database-server": "[reference(resourceId(resourceGroup().name,'Microsoft.Sql/servers',parameters('existingSQLServerName')), '2018-06-01-preview').fullyQualifiedDomainName]",
+            	"database-server": "[reference(resourceId(parameters('existingSQLServerResourceGroup'),'Microsoft.Sql/servers',parameters('existingSQLServerName')), '2018-06-01-preview').fullyQualifiedDomainName]",
             	"database-name": "[parameters('newMetastoreDBName')]",
             	"database-user-name": "[parameters('existingSQLServerUsername')]",
             	"database-user-password": "[parameters('existingSQLServerPassword')]"
