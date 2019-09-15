@@ -63,6 +63,7 @@
     },
     "existingClusterStorageResourceGroup": {
       "type": "string",
+      "defaultValue": "[resourceGroup().name]",
       "metadata": {
         "description": "The resource group name of the storage account to use as the cluster's default storage."
       }
@@ -82,7 +83,7 @@
     "existingSQLServerName": {
       "type": "string",
       "metadata": {
-        "description": "The name of the existing SQL server to use for the new external metastore SQLdb."
+        "description": "The name of the existing SQL server to use for the new external metastore SQL db."
       }
     },
     "existingSQLServerUsername": {
@@ -99,13 +100,14 @@
     },
     "newMetastoreDBName": {
       "type": "string",
-      "defaultValue": "[concat('metastoredb-', uniqueString(resourceGroup().id))]",
+      "defaultValue": "[concat('metastoredb', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "The name of the new SQL db to create to serve as the external metastores."
       }
     },
     "existingVirtualNetworkResourceGroup": {
       "type": "string",
+      "defaultValue": "[resourceGroup().name]",
       "metadata": {
         "description": "The existing virtual network resource group name."
       }
@@ -138,7 +140,7 @@
 	    "type": "Microsoft.Sql/servers/databases",
 	    "apiVersion": "2018-06-01-preview",
 	    "location": "[parameters('location')]",
-	    "name": "variables('sqldbname')",
+	    "name": "[variables('sqldbname')]",
 	    "properties": {
 	        "collation": "SQL_Latin1_General_CP1_CI_AS",
 	        "maxSizeBytes": "268435456000",
@@ -156,7 +158,7 @@
       "type": "Microsoft.HDInsight/clusters",
       "location": "[parameters('location')]",
       "apiVersion": "2018-06-01-preview",
-      "dependsOn": ["[resourceId('Microsoft.Sql/servers/databases', variables('sqldbname'))]"],
+      "dependsOn": ["[resourceId('Microsoft.Sql/servers/databases', parameters('existingSQLServerName'), parameters('newMetastoreDBName'))]"],
       "properties": {
         "clusterVersion": "[parameters('clusterVersion')]",
         "osType": "Linux",
@@ -170,7 +172,7 @@
             },
             "hive-site": {
               "javax.jdo.option.ConnectionDriverName": "com.microsoft.sqlserver.jdbc.SQLServerDriver",
-              "javax.jdo.option.ConnectionURL": "[concat('jdbc:sqlserver://', reference(resourceId(parameters('existingClusterStorageResourceGroup'), 'Microsoft.Sql/servers', parameters('existingSQLServerName')), '2015-05-01-preview').fullyQualifiedDomainName, ';database=',parameters('newMetastoreDBName'),';encrypt=true;trustServerCertificate=true;create=false;loginTimeout=300')]",
+              "javax.jdo.option.ConnectionURL": "[concat('jdbc:sqlserver://', reference(resourceId(resourceGroup().name, 'Microsoft.Sql/servers', parameters('existingSQLServerName')), '2018-06-01-preview').fullyQualifiedDomainName, ';database=',parameters('newMetastoreDBName'),';encrypt=true;trustServerCertificate=true;create=false;loginTimeout=300')]",
               "javax.jdo.option.ConnectionUserName": "[parameters('existingSQLServerUsername')]",
               "javax.jdo.option.ConnectionPassword": "[parameters('existingSQLServerPassword')]"
             },
@@ -179,11 +181,12 @@
               "hive_database_name": "[parameters('newMetastoreDBName')]",
               "hive_database_type": "mssql",
               "hive_existing_mssql_server_database": "[parameters('newMetastoreDBName')]",
-              "hive_existing_mssql_server_host": "[parameters('existingSQLServerName')]",
-              "hive_hostname": "[parameters('existingSQLServerName')]"
+              "hive_existing_mssql_server_host": "[reference(resourceId(resourceGroup().name,'Microsoft.Sql/servers',parameters('existingSQLServerName')), '2018-06-01-preview').fullyQualifiedDomainName]",
+              "hive_hostname": "[reference(resourceId(resourceGroup().name,'Microsoft.Sql/servers',parameters('existingSQLServerName')), '2018-06-01-preview').fullyQualifiedDomainName]"
+
             },
             "ambari-conf": {
-            	"database-server": "[parameters('existingSQLServerName')]",
+            	"database-server": "[reference(resourceId(resourceGroup().name,'Microsoft.Sql/servers',parameters('existingSQLServerName')), '2018-06-01-preview').fullyQualifiedDomainName]",
             	"database-name": "[parameters('newMetastoreDBName')]",
             	"database-user-name": "[parameters('existingSQLServerUsername')]",
             	"database-user-password": "[parameters('existingSQLServerPassword')]"
