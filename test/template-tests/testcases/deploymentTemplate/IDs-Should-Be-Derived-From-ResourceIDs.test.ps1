@@ -44,6 +44,6 @@ foreach ($id in $ids) { # Then loop over each object with an ID
     #
     $txt = $TemplateObject | ConvertTo-JSON
     if ($txt -match "\s{0,}\[\s{0,}resourceId\s{0,}\(\s{0,}resourceGroup\(" ){
-        Write-Error "ResourceId function must not use resourceGroup().name function." -TargetObject $id -ErrorId ResourceId.Contains.ResourceGroup.Name.Function
+        Write-Error "ResourceId() function must not use resourceGroup().name function.  Found $($matches.count) occurences of `"[resourceId(resourceGroup().name`"." -TargetObject $id -ErrorId ResourceId.Contains.ResourceGroup.Name.Function
 }
 
