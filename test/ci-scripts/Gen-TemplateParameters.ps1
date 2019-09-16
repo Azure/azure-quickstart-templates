@@ -85,6 +85,15 @@ foreach ($p in $JsonParameters.psObject.Properties) {
         $JsonParameters.$($p.name).value = $v
 
     }
+    # is this a reference parameter
+    elseif ($p.value.reference -like "GEN-*"){
+        $token = $p.value.reference.Replace("GEN-", "")
+        $v = $config.$token
+        if($v -eq $null){
+            Write-Error "Could not find reference parameter `"$($p.value.reference)`" token in .config.json"
+        }
+        $JsonParameters.$($p.name) = $v
+    }
 }
 
 Write-Host "Writing file: $NewTemplateParametersFile"

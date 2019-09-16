@@ -180,6 +180,7 @@ Quickstart CI engine provides few pre-created azure components which can be used
 + **GEN-KEYVAULT-RESOURCEGROUP-NAME** - the name of the resource group for the keyvault
 + **GEN-KEYVAULT-FQDN-URI** - the FQDN URI of the keyvault
 + **GEN-KEYVAULT-RESOURCE-ID** - the resource ID of the keyvault
++ **GEN-KEYVAULT-PASSWORD-REFERENCE** - the reference parameter used to retrieve a KeyVault Secret (use "reference" for the property name, not "value")
 + **GEN-KEYVAULT-SSL-SECRET-NAME** - the name of the secret where the sample SSL cert is stored in the keyvault
 + **GEN-KEYVAULT-SSL-SECRET-URI** - the URI of the sample SSL cert stored in the test keyvault
 + **GEN-KEYVAULT-ENCRYPTION-KEY** - the name of the sample encryption key stored in keyvault, used for disk encryption
