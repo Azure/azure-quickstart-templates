@@ -4,18 +4,36 @@ $downloadPath = Join-Path $outputPath -ChildPath "sfx-installer.zip"
 
 $latestBuildUrl = 'https://dev.azure.com/ros-win/ros-win/_apis/build/builds?definitions=54&$top=1&resultFilter=succeeded&api-version=5.1'
 
-$response = Invoke-RestMethod $latestBuildUrl -Method Get -ContentType 'application/json'
-$buildId = $response.value[0].id
-
-$artifactUrl = "https://ros-win.visualstudio.com/bed058dd-46da-4029-bb85-25eae7674d09/_apis/build/builds/$buildId/artifacts?artifactName=sfx-installer&api-version=5.2-preview.5&%24format=zip"
-
 New-Item -ItemType directory -Path $outputPath
 
-$download = New-Object net.webclient
-$download.Downloadfile($artifactUrl, $downloadPath)
+$retryCount = 3
+$retries = 1
+Write-Verbose "Downloading ROS install files" -verbose
+do
+{
+    try
+    {
+        $response = Invoke-RestMethod $latestBuildUrl -Method Get -ContentType 'application/json'
+        $buildId = $response.value[0].id
+
+        $artifactUrl = "https://ros-win.visualstudio.com/bed058dd-46da-4029-bb85-25eae7674d09/_apis/build/builds/$buildId/artifacts?artifactName=sfx-installer&api-version=5.2-preview.5&%24format=zip"
+
+        $download = New-Object net.webclient
+        $download.Downloadfile($artifactUrl, $downloadPath)
+        Write-Verbose "Downloaded agent successfully on attempt $retries" -verbose
+        break
+    }
+    catch
+    {
+        $exceptionText = ($_ | Out-String).Trim()
+        Write-Verbose "Exception occured downloading install files: $exceptionText in try number $retries" -verbose
+        $retries++
+        Start-Sleep -Seconds 30
+    }
+}
+while ($retries -le $retryCount)
 
 Expand-Archive -path $downloadPath -destinationpath $outputPath
-
 $sfxPath = Join-Path $outputPath -ChildPath "sfx-installer/ros-melodic-desktop_full.exe"
 
 Start-Process "$sfxPath" -ArgumentList "-oc:\","-y" -NoNewWindow -Wait
