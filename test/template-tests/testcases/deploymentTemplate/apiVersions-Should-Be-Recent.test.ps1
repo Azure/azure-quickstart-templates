@@ -51,7 +51,7 @@ Find-JsonContent -Key apiVersion -Value * -Like
 
 foreach ($av in $allApiVersions) {
     # Then walk over each object containing an ApiVersion.
-    Write-Host "Checking resource named `"$($av.name)`" with apiVersion `"$($av.apiVersion)`""
+    Write-Host "Checking resource named `"$($av.name)`" with apiVersion `"$($av.apiVersion)`"" # TODO: Remove this
     if ($av.ApiVersion -isnot [string]) {
         # If the APIVersion is not a string
         # write an error 
