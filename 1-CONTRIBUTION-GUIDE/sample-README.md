@@ -9,8 +9,6 @@
 
 This template deploys a **solution name**. The **solution name** is a **description**
 
-`Tags: Tag1, Tag2, Tag3`
-
 ## Solution overview and deployed resources
 
 This is an overview of the solution
@@ -59,3 +57,5 @@ How to manage the solution
 ## Notes
 
 Solution notes
+
+`Tags: Tag1, Tag2, Tag3`
