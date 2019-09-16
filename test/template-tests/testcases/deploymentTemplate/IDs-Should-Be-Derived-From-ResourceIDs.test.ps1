@@ -6,12 +6,13 @@
 .Example
     Test-AzureRMTemplate -TemplatePath .\100-marketplace-sample\ -Test IDs-Should-Be-Derived-From-ResourceIDs
 .Example
-    .\IDs-Should-Be-Derived-From-ResourceIDs.test.ps1 -TemplateObject (Get-Content ..\..\..\..\100-marketplace-sample\azureDeploy.json | ConvertFrom-Json) 
+    .\IDs-Should-Be-Derived-From-ResourceIDs.test.ps1 -TemplateObject (Get-Content ..\..\..\..\100-marketplace-sample\azureDeploy.json | ConvertFrom-Json)
 #>
 param(
 # The template object (the contents of azureDeploy.json, converted from JSON)
 [Parameter(Mandatory=$true,Position=0)]
-$TemplateObject)
+$TemplateObject
+)
 
 # First, find all objects with an ID property in the MainTemplate.
 $ids = $TemplateObject  | Find-JsonContent -Key id -Value * -Like
@@ -33,17 +34,8 @@ foreach ($id in $ids) { # Then loop over each object with an ID
     if ($expandedId -notmatch "\s{0,}\[\s{0,}resourceId\s{0,}\(\s{0,}"  -and `
         $expandedId -notmatch "\s{0,}\[\s{0,}parameters\s{0,}\(\s{0,}'" -and `
         $expandedId -notmatch "\s{0,}\[\s{0,}variables\s{0,}\(\s{0,}'" ){
-            Write-Error "Property: `"$($id.propertyName)`" must use one of the following expressions for an resourceId property (resourceId(), parameters(), variables())" -TargetObject $id -ErrorId ResourceId.Should.Contain.Propert.Expression
+            Write-Error "Property: `"$($id.propertyName)`" must use one of the following expressions for an resourceId property
+             (resourceId(), parameters(), variables())" -TargetObject $id -ErrorId ResourceId.Should.Contain.Proper.Expression
     }
 
 }
-
-    # Check to make sure the resourceId function does not use the resourceGroup().name function
-    # it's the default and won't work with an existing resource in another resourceGroup
-    # Search the entire template
-    #
-    $txt = $TemplateObject | ConvertTo-JSON
-    if ($txt -match "\s{0,}\[\s{0,}resourceId\s{0,}\(\s{0,}resourceGroup\(" ){
-        Write-Error "ResourceId() function must not use resourceGroup().name function.  Found $($matches.count) occurences of `"[resourceId(resourceGroup().name`"." -TargetObject $id -ErrorId ResourceId.Contains.ResourceGroup.Name.Function
-}
-
