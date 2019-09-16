@@ -27,9 +27,9 @@ After the template deployment has completed, there is a manual step that you mus
 To call this whenever your Alert fires, you need to paste in the webhook URI into the alert:
 
 1. Once the template has completed, navigate to the resource group you deployed it to.
-2. In the **Essentials** click on the **Last deployment** link. 
+2. Under **Settings**, click on **Deployments**
 3. Select the top deployment.
-4. This should show you the Outputs for the deployment. Copy the output called **WebHookURI**. 
+4. Click on **Outputs**. Copy the output called **WebHookURI**. 
 5. Navigate to the alert you want to trigger the Logic app and select **Edit**.
 6. Scroll to the bottom and paste in the **WebHook**. 
 7. Click save.
