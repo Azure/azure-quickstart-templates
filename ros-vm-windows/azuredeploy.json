@@ -18,7 +18,7 @@
         },
         "virtualMachineSize": {
             "type": "string",
-            "defaultValue": "Standard_NV6",
+            "defaultValue": "Standard_D2",
             "allowedValues": [
                 "Standard_D2",
                 "Standard_NV6",
@@ -40,6 +40,20 @@
             "metadata": {
                 "description": "Password for the Virtual Machine."
             }
+        },
+        "_artifactsLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+            },
+            "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/ros-vm-windows/"
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+            },
+            "defaultValue": ""
         }
     },
     "variables": {
@@ -95,7 +109,9 @@
         ],
         "publicIpAddressType": "Dynamic",
         "publicIpAddressSku": "Basic",
-        "osDiskType": "StandardSSD_LRS"
+        "osDiskType": "StandardSSD_LRS",
+        "scriptFileUri": "[uri(parameters('_artifactsLocation'), concat('scripts/InstallROS.ps1', parameters('_artifactsLocationSasToken')))]",
+        "nvidiaGpuDriverWindowsUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/nvidiaGpuDriverWindows.json', parameters('_artifactsLocationSasToken')))]"
     },
     "resources": [
         {
@@ -239,7 +255,7 @@
                 "autoUpgradeMinorVersion": true,
                 "settings": {
                     "fileUris": [
-                        "https://raw.githubusercontent.com/seanyen/azure-quickstart-templates/ros-vm/ros-vm-windows/installROS.ps1"
+                        "[variables('scriptFileUri')]"
                     ],
                     "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -file installROS.ps1')]"
                 }
@@ -251,12 +267,12 @@
             "apiVersion": "2019-05-01",
             "type": "Microsoft.Resources/deployments",
             "dependsOn": [
-                "[resourceId('Microsoft.Compute/virtualMachines/extensions',  variables('virtualMachineName'), 'ROSInstall')]"
+                "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('virtualMachineName'), 'ROSInstall')]"
             ],
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "https://gallery.azure.com/artifact/20161101/microsoft.nvidia-gpu-driver-windows-arm.1.1.0/Artifacts/MainTemplate.json"
+                    "uri": "[variables('nvidiaGpuDriverWindowsUri')]"
                 },
                 "parameters": {
                     "vmName": {
