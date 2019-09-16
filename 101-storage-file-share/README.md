@@ -16,4 +16,4 @@ If you are new to Azure Storage accounts, see:
 - [File Share template reference](https://docs.microsoft.com/en-us/azure/templates/microsoft.storage/2019-04-01/storageaccounts/fileservices/shares)
 - [Quickstart templates](https://azure.microsoft.com/resources/templates/?resourceType=Microsoft.Storage&pageNumber=1&sort=Popular)
 
-Tags: Azure Storage account, Resource Manager, Resource Manager templates, ARM templates, File Share
+`Tags: Azure Storage account, Resource Manager, Resource Manager templates, ARM templates, File Share`
