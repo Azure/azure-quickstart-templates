@@ -59,7 +59,7 @@ foreach ($parameterProp in $templateObject.parameters.psobject.properties) {
             #>
 
             if ($outputText -match "`"\s{0,}\[.*?parameters\s{0,}\(\s{0,}'$($Name)'") { 
-                Write-Error -Message "Output contains $($parameterProp.Type) parameter: $($output.Name)" -ErrorId Output.Contains.SecureParameter -TargetObject $output
+                Write-Error -Message "Output contains $($parameterProp.Value.Type) parameter: $($output.Name)" -ErrorId Output.Contains.SecureParameter -TargetObject $output
             }
         }        
     }
