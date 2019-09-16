@@ -20,7 +20,7 @@ do
 
         $download = New-Object net.webclient
         $download.Downloadfile($artifactUrl, $downloadPath)
-        Write-Verbose "Downloaded agent successfully on attempt $retries" -verbose
+        Write-Verbose "Downloaded install files successfully on attempt $retries" -verbose
         break
     }
     catch
