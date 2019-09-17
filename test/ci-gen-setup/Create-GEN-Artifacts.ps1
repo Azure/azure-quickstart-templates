@@ -94,6 +94,18 @@ $json.Add("KEYVAULT-PASSWORD-SECRET-NAME", $KeyVaultNotSecretName)
 $json.Add("KEYVAULT-SUBSCRIPTION-ID", $vault.ResourceId.Split('/')[2])
 $json.Add("KEYVAULT-RESOURCE-ID", $vault.ResourceId)
 
+$refParam = @"
+{
+    "reference": {
+      "keyVault": {
+        "id": "$($vault.ResourceId)"
+      },
+      "secretName": "$KeyVaultNotSecretName"
+    }
+}
+"@
+
+$json.Add("KEYVAULT-PASSWORD-REFERENCE", (ConvertFrom-Json $refParam))
 
 # 2) Create a sample cert for Service Fabric
 
@@ -154,4 +166,4 @@ $json.Add("SELFSIGNED-CERT-DNSNAME", $CertDNSName)
 
 
 #Output all the values needed for the config file
-Write-Output $($json | ConvertTo-json)
+Write-Output $($json | ConvertTo-json -Depth 30)

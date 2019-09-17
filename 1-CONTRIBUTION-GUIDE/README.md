@@ -1,7 +1,5 @@
 # Azure Resource Manager QuickStart Templates
 
-[![Travis](https://img.shields.io/travis/Azure/azure-quickstart-templates/master.svg?label=travis&style=flat-square)](https://travis-ci.org/Azure/azure-quickstart-templates)
-
 This repo contains all currently available Azure Resource Manager templates contributed by the community. A searchable template index is maintained at [Azure Resource Manager Templates](https://azure.microsoft.com/en-us/documentation/templates/).
 
 The following information is relevant to get started with contributing to this repository.
@@ -182,6 +180,7 @@ Quickstart CI engine provides few pre-created azure components which can be used
 + **GEN-KEYVAULT-RESOURCEGROUP-NAME** - the name of the resource group for the keyvault
 + **GEN-KEYVAULT-FQDN-URI** - the FQDN URI of the keyvault
 + **GEN-KEYVAULT-RESOURCE-ID** - the resource ID of the keyvault
++ **GEN-KEYVAULT-PASSWORD-REFERENCE** - the reference parameter used to retrieve a KeyVault Secret (use "reference" for the property name, not "value")
 + **GEN-KEYVAULT-SSL-SECRET-NAME** - the name of the secret where the sample SSL cert is stored in the keyvault
 + **GEN-KEYVAULT-SSL-SECRET-URI** - the URI of the sample SSL cert stored in the test keyvault
 + **GEN-KEYVAULT-ENCRYPTION-KEY** - the name of the sample encryption key stored in keyvault, used for disk encryption
@@ -210,6 +209,11 @@ Quickstart CI engine provides few pre-created azure components which can be used
 + **GEN-SELFSIGNED-CERT-CERDATA** - CER data for a sample self signed cert
 + **GEN-SELFSIGNED-CERT-PASSWORD** - password for a sample self signed cert
 + **GEN-SELFSIGNED-CERT-DNSNAME** - DNS name for a sample self signed cert
+
+**Custom Domain & SSL Cert related placeholders:**
+
++ **GEN-FRONTDOOR-NAME** - placeholder for the frontdoor name reserved for CI/CD
++ **GEN-FRONTDOOR-CUSTOM-HOSTNAME** - custom hostname with CNAME record mapped for the GEN-FRONTDOOR-NAME value 
 
 Here's an example in an `azuredeploy.parameters.json` file:
 
