@@ -58,8 +58,23 @@
         "resourceGroup.name": {
             "value": "<this will set by a pipeline task>"
         },
+        "result.best.practice": {
+            "value": "false"
+        },
+        "result.credscan": {
+            "value": "false"
+        },
+        "result.deployment": {
+            "value": "false"
+        },
+        "result.deployment.parameter": {
+            "value": "PublicDeployment"
+        },
         "sample.folder": {
             "value": "<this will set by a pipeline task>"
+        },
+        "skipComponentGovernanceDetection": {
+            "value": "true"
         },
         "subscription.id": {
             "value": "<subscription Id used for test deployments>"
@@ -98,7 +113,7 @@
     "tags": [],
     "jobAuthorizationScope": 1,
     "jobTimeoutInMinutes": 360,
-    "jobCancelTimeoutInMinutes": 5,
+    "jobCancelTimeoutInMinutes": 15,
     "badgeEnabled": false,
     "process": {
         "phases": [
@@ -156,7 +171,7 @@
                         "enabled": true,
                         "continueOnError": false,
                         "alwaysRun": false,
-                        "displayName": "Get Folder for Sample & ResourceGroup Name",
+                        "displayName": "Get Folder for Sample",
                         "timeoutInMinutes": 0,
                         "condition": "succeeded()",
                         "task": {
@@ -204,31 +219,6 @@
                     {
                         "environment": {},
                         "enabled": true,
-                        "continueOnError": false,
-                        "alwaysRun": false,
-                        "displayName": "TODO: Workaround for prereq resource group",
-                        "timeoutInMinutes": 0,
-                        "condition": "succeeded()",
-                        "task": {
-                            "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
-                            "versionSpec": "2.*",
-                            "definitionType": "task"
-                        },
-                        "inputs": {
-                            "targetType": "inline",
-                            "filePath": "",
-                            "arguments": "",
-                            "script": "#workaround until we fix the pipeline to use the same resourceGroup for prereqs... or figure out a solution for resources that must be in the same group\n\nWrite-Host \"##vso[task.setvariable variable=prereq.resourceGroup.name]$(resourceGroup.name)\"",
-                            "errorActionPreference": "stop",
-                            "failOnStderr": "false",
-                            "ignoreLASTEXITCODE": "false",
-                            "pwsh": "false",
-                            "workingDirectory": ""
-                        }
-                    },
-                    {
-                        "environment": {},
-                        "enabled": true,
                         "continueOnError": true,
                         "alwaysRun": false,
                         "displayName": "Run Best Practices Tests",
@@ -243,7 +233,7 @@
                             "targetType": "inline",
                             "filePath": "test/template-tests/Test-AzureRMTemplate.ps1",
                             "arguments": "-TemplatePath \"$(sample.folder)\"",
-                            "script": "Import-Module $(ttk.folder)/template-tests/AzRMTester.psd1 -Verbose\n$testOutput = @(Test-AzureRMTemplate -TemplatePath \"$(sample.folder)\")\n\n$testOutput \n\nif ($testOutput | ? {$_.Errors }) {\n   exit 1 \n} else {\n   exit 0\n} \n",
+                            "script": "Import-Module $(ttk.folder)/template-tests/AzRMTester.psd1 -Verbose\n$testOutput = @(Test-AzureRMTemplate -TemplatePath \"$(sample.folder)\")\n$testOutput\n\nif ($testOutput | ? {$_.Errors }) {\n   exit 1 \n} else {\n    Write-Host \"##vso[task.setvariable variable=result.best.practice]$true\"\n    exit 0\n} \n",
                             "errorActionPreference": "continue",
                             "failOnStderr": "true",
                             "ignoreLASTEXITCODE": "false",
@@ -256,7 +246,7 @@
                         "enabled": true,
                         "continueOnError": false,
                         "alwaysRun": false,
-                        "displayName": "Check for Prereq Deployment",
+                        "displayName": "Generate RG Names and Check for Prereqs",
                         "timeoutInMinutes": 0,
                         "condition": "succeeded()",
                         "task": {
@@ -265,10 +255,9 @@
                             "definitionType": "task"
                         },
                         "inputs": {
-                            "targetType": "inline",
-                            "filePath": "",
-                            "arguments": "",
-                            "script": "#checks to see if there are prereqs that need to be deployed and sets the env variable to trigger prereq tasks\n\n$result = Test-Path \"$(sample.folder)\\prereqs\\prereq.azuredeploy.json\"\n\nWrite-Host \"Result: $result\"\n\nWrite-Host \"##vso[task.setvariable variable=deploy.prereqs]$result\"\n\n#Write-Host \"Deploy Prereqs: $(deploy.prereqs)\"\n",
+                            "targetType": "filePath",
+                            "filePath": "$(ttk.folder)\\ci-scripts\\Gen-ResourceGroupNames.ps1",
+                            "arguments": "-sampleFolder $(sample.folder)",
                             "errorActionPreference": "stop",
                             "failOnStderr": "false",
                             "ignoreLASTEXITCODE": "false",
@@ -281,7 +270,7 @@
                         "enabled": true,
                         "continueOnError": false,
                         "alwaysRun": false,
-                        "displayName": "Connect To Azure (Admin) To Create RG",
+                        "displayName": "Connect To Azure (Admin) To Create RGs",
                         "timeoutInMinutes": 0,
                         "condition": "succeeded()",
                         "task": {
@@ -328,12 +317,12 @@
                     },
                     {
                         "environment": {},
-                        "enabled": false,
+                        "enabled": true,
                         "continueOnError": true,
                         "alwaysRun": false,
                         "displayName": "Create ResourceGroup - Assign RBAC (prereqs RG) ",
                         "timeoutInMinutes": 0,
-                        "condition": "and(succeeded(), eq(variables['deploy.prereqs'], 'true'), not(eq(variables['resourceGroup.name'], variables['prereq.resourceGroup.name'])))",
+                        "condition": "and(succeeded(), eq(variables['deploy.prereqs'], 'true'), ne(variables['prereq.resourceGroup.name'], variables['resourceGroup.name']))",
                         "task": {
                             "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
                             "versionSpec": "2.*",
@@ -540,10 +529,10 @@
                             "definitionType": "task"
                         },
                         "inputs": {
-                            "targetType": "filePath",
-                            "filePath": "$(ttk.folder)\\Deploy-AzTemplate.ps1",
-                            "arguments": "-ArtifactStagingDirectory \"$(sample.folder)\" -Location \"$(Location)\" -ResourceGroupName \"$(resourceGroup.name)\" -TemplateParametersFile \"$(sample.folder)\\$(gen.parameters.filename)\" -DeploymentName \"$(mainTemplate.deployment.name)\"",
-                            "script": "",
+                            "targetType": "inline",
+                            "filePath": "",
+                            "arguments": "",
+                            "script": "$(ttk.folder)\\Deploy-AzTemplate.ps1 `\n    -ArtifactStagingDirectory \"$(sample.folder)\" `\n    -Location \"$(Location)\" `\n    -ResourceGroupName \"$(resourceGroup.name)\" `\n    -TemplateParametersFile \"$(sample.folder)\\$(gen.parameters.filename)\" `\n    -DeploymentName \"$(mainTemplate.deployment.name)\"\n\nWrite-Host \"##vso[task.setvariable variable=result.deployment]$true\"\n\n",
                             "errorActionPreference": "stop",
                             "failOnStderr": "false",
                             "ignoreLASTEXITCODE": "false",
@@ -579,36 +568,11 @@
                     {
                         "environment": {},
                         "enabled": true,
-                        "continueOnError": false,
-                        "alwaysRun": false,
+                        "continueOnError": true,
+                        "alwaysRun": true,
                         "displayName": "Write Test Result for README.MD",
                         "timeoutInMinutes": 0,
-                        "condition": "succeeded()",
-                        "task": {
-                            "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
-                            "versionSpec": "2.*",
-                            "definitionType": "task"
-                        },
-                        "inputs": {
-                            "targetType": "inline",
-                            "filePath": "",
-                            "arguments": "",
-                            "script": "<#\n\nThis is a placeholder - for when we want to write the last test result to the readme file\n\n#>",
-                            "errorActionPreference": "stop",
-                            "failOnStderr": "false",
-                            "ignoreLASTEXITCODE": "false",
-                            "pwsh": "false",
-                            "workingDirectory": ""
-                        }
-                    },
-                    {
-                        "environment": {},
-                        "enabled": false,
-                        "continueOnError": false,
-                        "alwaysRun": false,
-                        "displayName": "Clean Up ResourceGroup (mainTemplate)",
-                        "timeoutInMinutes": 0,
-                        "condition": "always()",
+                        "condition": "succeededOrFailed()",
                         "task": {
                             "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
                             "versionSpec": "2.*",
@@ -616,8 +580,8 @@
                         },
                         "inputs": {
                             "targetType": "filePath",
-                            "filePath": "$(ttk.folder)/ci-scripts/Kill-AzResourceGroup.ps1",
-                            "arguments": "-ResourceGroupName \"$(resourceGroup.name)\"",
+                            "filePath": "$(ttk.folder)\\ci-scripts\\Write-TestResults.ps1",
+                            "arguments": "-SampleFolder $(sample.folder) -BuildSourcesDirectory $(build.sourcesdirectory) -BestPracticeResult $(result.best.practice) -CredScanResult $(result.credscan) -$(result.deployment.parameter) $(result.deployment)",
                             "script": "",
                             "errorActionPreference": "stop",
                             "failOnStderr": "false",
@@ -631,7 +595,7 @@
                         "enabled": true,
                         "continueOnError": false,
                         "alwaysRun": false,
-                        "displayName": "Clean Up ResourceGroup with Retry",
+                        "displayName": "Clean Up ResourceGroup (main)",
                         "timeoutInMinutes": 0,
                         "condition": "always()",
                         "task": {
@@ -643,7 +607,7 @@
                             "targetType": "inline",
                             "filePath": "",
                             "arguments": "",
-                            "script": "# remove the resource group\n& $(ttk.folder)/ci-scripts/Kill-AzResourceGroup.ps1 -ResourceGroupName \"$(resourceGroup.name)\" -ErrorAction SilentlyContinue\n\n# if the resource group still exists after the first attempt, try again after a few minutes\nif ((Get-AzResourceGroup -Name \"$(resourceGroup.name)\" -verbose -ErrorAction SilentlyContinue) -ne $null) {\n\n    Write-Host \"Sleeping...\" \n    Sleep 600\n    Write-Host \"Attempting Kill-AzResourceGroup…\"\n    & $(ttk.folder)/ci-scripts/Kill-AzResourceGroup.ps1 -ResourceGroupName \"$(resourceGroup.name)\"\n\n}\n",
+                            "script": "# remove the resource group\nWrite-Host \"First attempt...\"\n& $(ttk.folder)/ci-scripts/Kill-AzResourceGroup.ps1 -ResourceGroupName \"$(resourceGroup.name)\" -ErrorAction SilentlyContinue\n\n# if the resource group still exists after the first attempt, try again after a few minutes\nWrite-Host \"Checking for ResourceGroup…\"\nif ((Get-AzResourceGroup -Name \"$(resourceGroup.name)\" -verbose -ErrorAction SilentlyContinue) -ne $null) {\n\n    Write-Host \"Found the resource group - sleeping...\" \n    Sleep 600\n    Write-Host \"Attempting Kill-AzResourceGroup…\"\n    & $(ttk.folder)/ci-scripts/Kill-AzResourceGroup.ps1 -ResourceGroupName \"$(resourceGroup.name)\"\n\n}\n",
                             "errorActionPreference": "stop",
                             "failOnStderr": "false",
                             "ignoreLASTEXITCODE": "false",
@@ -653,22 +617,22 @@
                     },
                     {
                         "environment": {},
-                        "enabled": false,
+                        "enabled": true,
                         "continueOnError": false,
                         "alwaysRun": false,
                         "displayName": "Clean Up ResourceGroup (prereqs)",
                         "timeoutInMinutes": 0,
-                        "condition": "and(always(), eq(variables['deploy.prereqs'], 'true'), not(eq(variables['resourceGroup.name'], variables['prereq.resourceGroup.name'])))",
+                        "condition": "and(always(), eq(variables['deploy.prereqs'], 'true'), ne(variables['prereq.resourceGroup.name'], variables['resourceGroup.name']))",
                         "task": {
                             "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
                             "versionSpec": "2.*",
                             "definitionType": "task"
                         },
                         "inputs": {
-                            "targetType": "filePath",
-                            "filePath": "$(ttk.folder)/ci-scripts/Kill-AzResourceGroup.ps1",
-                            "arguments": "-ResourceGroupName \"$(prereq.resourceGroup.name)\"",
-                            "script": "",
+                            "targetType": "inline",
+                            "filePath": "",
+                            "arguments": "",
+                            "script": "# remove the resource group\nWrite-Host \"First attempt...\"\n& $(ttk.folder)/ci-scripts/Kill-AzResourceGroup.ps1 -ResourceGroupName \"$(prereq.resourceGroup.name)\" -ErrorAction SilentlyContinue\n\n# if the resource group still exists after the first attempt, try again after a few minutes\nWrite-Host \"Checking for ResourceGroup…\"\nif ((Get-AzResourceGroup -Name \"$(prereq.resourceGroup.name)\" -verbose -ErrorAction SilentlyContinue) -ne $null) {\n\n    Write-Host \"Found the resource group - sleeping...\" \n    Sleep 600\n    Write-Host \"Attempting Kill-AzResourceGroup…\"\n    & $(ttk.folder)/ci-scripts/Kill-AzResourceGroup.ps1 -ResourceGroupName \"$(prereq.resourceGroup.name)\"\n}\n",
                             "errorActionPreference": "stop",
                             "failOnStderr": "false",
                             "ignoreLASTEXITCODE": "false",
@@ -693,7 +657,7 @@
         ],
         "type": 1
     },
-    "repository": { },
+    "repository": {},
     "processParameters": {},
     "quality": 1,
     "authoredBy": {
@@ -710,7 +674,7 @@
         "descriptor": "aad.ZmNkYzI4MmEtZTY1My03M2Y5LThkNTgtYzgwMTY1ZDM1NTRk"
     },
     "drafts": [],
-    "queue": { },
+    "queue": {},
     "id": 5,
     "name": "Azure-QuickStart-Templates-Fork-Import",
     "path": "\\",
@@ -721,6 +685,7 @@
     "project": {
         "id": "00000000-0000-0000-0000-000000000000",
         "state": 1,
+        "revision": 21,
         "visibility": 2
     }
 }

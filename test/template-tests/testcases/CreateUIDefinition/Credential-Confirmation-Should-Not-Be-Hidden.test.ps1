@@ -17,7 +17,8 @@ $allCredentialBoxes =  @() + $passwordBoxes + $credentialComboBoxes
 
 
 foreach ($credBox in $allCredentialBoxes) { # Walk thru the list 
-    if ($credBox.options.hideConfirmation) { # If the options has hideConfirmation set to true
+   
+    if ($credBox.options.hideConfirmation -eq $true) { # If the options has hideConfirmation set to true
         # write an error
         Write-Error "Confirmation should not be hidden for credentials" -TargetObject $credBox -ErrorId Confirmation.Should.Not.Be.Hidden
     }
