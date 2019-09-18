@@ -40,6 +40,7 @@ The Autoscale rules are configured as follows
 +	A Virtual Network
 +	Six Storage Accounts for deploying up to 100 virtual machines
 +	Two public ip addresses, one for each Load Balancer
++	One Application Gateway with SSL certificate
 +	Two external Load Balancers
 +	One Virtual Machine Scale Set to contain the single virtual machine which is responsible for configuring the database
 +	One Virtual Machine Scale Set to contain the number of web servers requested by the deployer
@@ -52,6 +53,7 @@ Before deploying this template you must:
 - Construct your LANSA application using [Visual LANSA for Web Development](https://azure.microsoft.com/en-us/marketplace/partners/lansa/visuallansa/) Version 14.1 with EPCs 141010, 141011 and 141013 applied, or later.
 - Construct a deployment image MSI using the LANSA Deployment Tool provided with [Visual LANSA for Web Development](https://azure.microsoft.com/en-us/marketplace/partners/lansa/visuallansa/).
 - Upload your LANSA Web Application MSI to Azure BLOB storage and obtain the URL of the MSI. Note that the template includes a demonstration application so it is not strictly necessary to create a LANSA MSI in order to use the template.
+- Obtain an SSL certificate for your web site and convert it to a base64 encoded string. To get the certificate data from a pfx file in PowerShell you can use this: [System.Convert]::ToBase64String([System.IO.File]::ReadAllBytes("path to pfx file"))
 - Its also highly recommended to follow the usage instructions below :)
 
 ## Usage Instructions
