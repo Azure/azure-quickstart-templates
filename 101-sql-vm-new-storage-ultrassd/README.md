@@ -4,6 +4,7 @@
 Before deploying the template you must have the following
 
 1. **Virtual Network** and **Subnet** Virtual Network and Subnet in same location
+2. Follow this [this documentation](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/disks-enable-ultra-ssd) to **determine your availability zone**. 
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-sql-vm-new-storage-ultrassd%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
@@ -30,5 +31,4 @@ The following resources will be created
  - A Sql Virtual Machine resource attached to the VM
 
 ## Note
-Please follow [this documentation](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/disks-enable-ultra-ssd) to use Ultra Disks. 
-*This VM will have Ultra SSD compatibility enabled and there will be a reservation charge if no Ultra SSD Disk is attached to the VM.*
+- *This VM will have Ultra SSD compatibility enabled and there will be a reservation charge if no Ultra SSD Disk is attached to the VM.*
