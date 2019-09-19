@@ -42,7 +42,7 @@ foreach ($output in $TemplateObject.outputs.psobject.properties) {
 
     # TODO avoid [[ doesn't work here like it does below
     # TODO avoid UDFs, current regex will flag "myListKeys()" which would be ok, but current regex will match it
-    if ($outputText -match "\s{0,}\[.*?list\w{1,}\s{0,}\(") {
+    if ($outputText -match "\s{0,}\[.*?\W{0,}list\w{1,}\s{0,}\(") {
         Write-Error -Message "Output contains secret: $($output.Name)" -ErrorId Output.Contains.Secret -TargetObject $output
     }
 }
