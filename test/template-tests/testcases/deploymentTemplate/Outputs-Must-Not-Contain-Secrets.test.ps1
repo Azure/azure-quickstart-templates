@@ -1,3 +1,13 @@
+<#
+.Synopsis
+    Ensures outputs do not contain secrets.
+.Description
+    Ensures outputs do not contain expressions that would expose secrets, list*() functions or secure parameters.
+.Example
+    Test-AzureRMTemplate -TemplatePath .\100-marketplace-sample\ -Test Outputs-Must-Not-Contain-Secrets
+.Example
+    .\IDs-Should-Be-Derived-From-ResourceIDs.test.ps1 -TemplateObject (Get-Content ..\..\..\unit-tests\IOutputs-Must-Not-Contain-Secrets.test.json -Raw | ConvertFrom-Json)
+#>
 param(
 [Parameter(Mandatory=$true,Position=0)]
 [PSObject]
@@ -30,7 +40,9 @@ foreach ($output in $TemplateObject.outputs.psobject.properties) {
       DONE - literal match of open paren "("
 #>
 
-    if ($outputText -match "`"\s{0,}\[.*?list\w{0,}\s{0,}\(") { # TODO trying to avoid [[ doesn't work here like it does below
+    # TODO avoid [[ doesn't work here like it does below
+    # TODO avoid UDFs, current regex will flag "myListKeys()" which would be ok, but current regex will match it
+    if ($outputText -match "\s{0,}\[.*?list\w{1,}\s{0,}\(") {
         Write-Error -Message "Output contains secret: $($output.Name)" -ErrorId Output.Contains.Secret -TargetObject $output
     }
 }
@@ -54,6 +66,7 @@ foreach ($parameterProp in $templateObject.parameters.psobject.properties) {
             - (
             - 0 or more whitespace
             - '
+            - name of the parameter
 
             An expression could be: "[ concat ( parameters ( 'test' ), ...)]"
             #>
