@@ -3553,11 +3553,20 @@ Configuration DSCFromGPO
 
          }
 
+
          UserRightsAssignment 'UserRightsAssignment(INF): Deny_log_on_through_Remote_Desktop_Services'
          {
               Policy = 'Deny_log_on_through_Remote_Desktop_Services'
               Force = $True
               Identity = @('*S-1-5-113')
+
+         }
+
+         UserRightsAssignment 'UserRightsAssignment(INF): Allow_log_on_through_Remote_Desktop_Services'
+         {
+              Policy = 'Allow_log_on_through_Remote_Desktop_Services'
+              Force = $True
+              Identity = @('*S-1-5-32-544')
 
          }
 
