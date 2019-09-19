@@ -30,4 +30,5 @@ The following resources will be created
  - A Sql Virtual Machine resource attached to the VM
 
 ## Note
+Please follow [this documentation](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/disks-enable-ultra-ssd) to use Ultra Disks. 
 *This VM will have Ultra SSD compatibility enabled and there will be a reservation charge if no Ultra SSD Disk is attached to the VM.*
