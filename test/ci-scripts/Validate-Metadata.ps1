@@ -1,5 +1,6 @@
 param(
-    [string][Parameter(mandatory=$true)] $path
+    [string][Parameter(mandatory = $true)] $path,
+    [switch] $SkipDateCheck
 )
 
 #get the file content
@@ -13,13 +14,14 @@ $metadata | Test-Json -Schema $schema.content
 #Make sure the date has been updated
 $dateUpdated = (Get-Date ($metadata | convertfrom-json).dateUpdated)
 
-if($dateUpdated -gt (Get-Date)){
-    Write-Error "dateUpdated in metadata.json must not be in the future"
-    Write-Error "$dateUpdated is later than $(Get-Date)"
-}
-
-$oldDate = (Get-Date).AddDays(-60)
-if($dateUpdated -lt $oldDate){
-    Write-Error "dateUpdated in metadata.json needs to be updated"
-    Write-Error "$dateUpdated is older than $oldDate"
+if (!$SkipDateCheck) { #When running the scheduled tests, we don't want to check the date
+    if ($dateUpdated -gt (Get-Date)) {
+        Write-Error "dateUpdated in metadata.json must not be in the future"
+        Write-Error "$dateUpdated is later than $(Get-Date)"
+    }
+    $oldDate = (Get-Date).AddDays(-60)
+    if ($dateUpdated -lt $oldDate) {
+        Write-Error "dateUpdated in metadata.json needs to be updated"
+        Write-Error "$dateUpdated is older than $oldDate"
+    }
 }
