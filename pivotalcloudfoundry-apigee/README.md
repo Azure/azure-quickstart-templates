@@ -1,10 +1,19 @@
 # Pivotal Apigee Azure Quickstart
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/pivotalcloudfoundry-apigee/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/pivotalcloudfoundry-apigee/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/pivotalcloudfoundry-apigee/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/pivotalcloudfoundry-apigee/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/pivotalcloudfoundry-apigee/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/pivotalcloudfoundry-apigee/CredScanResult.svg" />&nbsp;
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fpivotalcloudfoundry-apigee%2Fazuredeploy.json" target="_blank">
-<img src="http://azuredeploy.net/deploybutton.png"/>
+<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fpivotalcloudfoundry-apigee%2Fazuredeploy.json" target="_blank">
-<img src="http://armviz.io/visualizebutton.png"/>
+<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
 #### IMPORTANT: Before you deploy the template make sure you have accepted Pivotal End User License Agreement:
@@ -108,7 +117,6 @@ Document DB
 SQL Server
 3 Public IP Addresses
 
-
 ## Deployment Steps
 
 You can click the “Deploy to Azure” button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
@@ -117,5 +125,4 @@ Please refer to parameter descriptions if you need more information on what need
 The deployment takes about 5 Hours. 
 
 To work with Pivotal Cloud Foundry Hands on Lab click [here](http://pcf-ignite.pcfazure.com/Labs/)
-
 

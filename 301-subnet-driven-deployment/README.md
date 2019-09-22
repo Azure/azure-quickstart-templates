@@ -1,4 +1,13 @@
-﻿# Subnet-driven test lab 
+# Subnet-driven test lab 
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-subnet-driven-deployment/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-subnet-driven-deployment/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-subnet-driven-deployment/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-subnet-driven-deployment/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-subnet-driven-deployment/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-subnet-driven-deployment/CredScanResult.svg" />&nbsp;
 
 This template creates an environment with multiple subnets and the servers (one DC and two members) associated with. If the number of subnets varies, the servers are adjusted automatically.
  
@@ -36,8 +45,6 @@ The purpose of this template is to illustrate:
   
 * Premium storage option, for thoses who are in a hurry.
 
-
-
 ## Notes
 
 * A minimum of two subnets is needed for this template to work
@@ -48,17 +55,13 @@ The purpose of this template is to illustrate:
 
 * Created subnets are C class (==> 172.16.X.0/24) 
 
-
-
 ## Deploying the template
 
-
-
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F301-subnet-driven-deployment%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fgithub.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F301-subnet-driven-deployment%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
 ## Parameters

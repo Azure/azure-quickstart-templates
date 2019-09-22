@@ -1,8 +1,17 @@
 # *Deploy and manage a Scalable Mahara Cluster on Azure*
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/mahara-autoscale-cache/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/mahara-autoscale-cache/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/mahara-autoscale-cache/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/mahara-autoscale-cache/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/mahara-autoscale-cache/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/mahara-autoscale-cache/CredScanResult.svg" />&nbsp;
+
 After deploying, these templates will provide you with a new Mahara site with caching for speed and scaling frontends to handle PHP load. The filesystem behind it is mirrored for high availability. Filesystem permissions and options have been tuned to make Mahara more secure than the default install.
 
-[![Deploy to Azure Minimally](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com/Azure/azure-quickstart-templates/master/mahara-autoscale-cache/azuredeploy.json) [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com/Azure/azure-quickstart-templates/master/mahara-autoscale-cache/azuredeploy.json)
+[![Deploy to Azure Minimally](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com/Azure/azure-quickstart-templates/master/mahara-autoscale-cache/azuredeploy.json) [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com/Azure/azure-quickstart-templates/master/mahara-autoscale-cache/azuredeploy.json)
 
 `Tags: cluster, ha, mahara, autoscale, linux, ubuntu`
 
@@ -75,7 +84,6 @@ While Azure does not currently backup up Postgres/MySQL database, by dumping it 
 ### *Azure Recovery Services*
 
 If you have set azureBackupSwitch to 1 then Azure will provide VM backups of your Gluster node. This is recommended as it contains both your Mahara code and your sitedata. Restoring a backed up VM is outside the scope of this dos, but Azure's documentation on Recovery Services can be found here: https://docs.microsoft.com/en-us/azure/backup/backup-azure-vms-first-look-arm
-
 
 ### *Resizing your database*
 
