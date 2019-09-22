@@ -1,4 +1,13 @@
 # Create a web app on Azure with Blob Storage connection string<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fwebapp-with-blobconnection%2Fazuredeploy.json" target="_blank">
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/webapp-blob-connection/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/webapp-blob-connection/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/webapp-blob-connection/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/webapp-blob-connection/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/webapp-blob-connection/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/webapp-blob-connection/CredScanResult.svg" />&nbsp;
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fwebapp-with-blobconnection%2Fazuredeploy.json" target="_blank">

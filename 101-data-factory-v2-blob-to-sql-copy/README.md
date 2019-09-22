@@ -1,4 +1,13 @@
 # Copy data from Azure Blob Storage to Azure SQL Database
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-v2-blob-to-sql-copy/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-v2-blob-to-sql-copy/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-v2-blob-to-sql-copy/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-v2-blob-to-sql-copy/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-v2-blob-to-sql-copy/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-v2-blob-to-sql-copy/CredScanResult.svg" />&nbsp;
 This template creates a data factory of version 2 with a pipeline that copies data from a folder in an Azure Blob Storage to a table in an Azure SQL database. 
 
 Here are a few important points about the template: 

@@ -1,5 +1,14 @@
 # Create a Premium Redis Cache with Redis clustering
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-redis-premium-cluster-diagnostics/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-redis-premium-cluster-diagnostics/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-redis-premium-cluster-diagnostics/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-redis-premium-cluster-diagnostics/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-redis-premium-cluster-diagnostics/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-redis-premium-cluster-diagnostics/CredScanResult.svg" />&nbsp;
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2F201-redis-premium-cluster-diagnostics%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>

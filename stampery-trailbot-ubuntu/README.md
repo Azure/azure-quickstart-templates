@@ -2,6 +2,15 @@
 
 # Secure Ubuntu by Trailbot
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/stampery-trailbot-ubuntu/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/stampery-trailbot-ubuntu/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/stampery-trailbot-ubuntu/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/stampery-trailbot-ubuntu/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/stampery-trailbot-ubuntu/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/stampery-trailbot-ubuntu/CredScanResult.svg" />&nbsp;
+
 This Ubuntu VM comes with a special demon called __Trailbot Watcher__ that monitors system files and logs, triggers __Smart Policies__ upon modification and generates a __blockchain-anchored__, __immutable audit trail__ of everything happening to them.
 
 [Smart Policies](https://github.com/trailbot/client/wiki/Smart-Policies) are simple scripts that get called every time a tracked file changes. They trigger actions such as emailing someone, rolling files back or even shutting the system down. There are [plenty of them ready to use](https://github.com/trailbot/client/wiki/Smart-Policies#ready-to-use-policies), and you can even [create your own](https://github.com/trailbot/client/wiki/Smart-Policies).

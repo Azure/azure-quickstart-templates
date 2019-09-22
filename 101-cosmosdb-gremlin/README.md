@@ -1,5 +1,14 @@
 # Create an Azure Cosmos account for Gremlin API with two graphs
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-gremlin/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-gremlin/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-gremlin/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-gremlin/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-gremlin/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-gremlin/CredScanResult.svg" />&nbsp;
+
 This template creates an Azure Cosmos DB account for Gremlin API, provisioned for two regions, then provision a database with throughput shared across 2 graphs.
 
 Below are the parameters which can be user configured in the parameters file including:

@@ -8,6 +8,15 @@
 
 # Consul on Ubuntu
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/consul-on-ubuntu/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/consul-on-ubuntu/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/consul-on-ubuntu/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/consul-on-ubuntu/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/consul-on-ubuntu/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/consul-on-ubuntu/CredScanResult.svg" />&nbsp;
+
 This will create a 3 node [Consul](https://www.consul.io/) cluster in Azure and put them into an internal load balancer.
 
 **NOTE** you will need to have an [Atlas](https://atlas.hashicorp.com/) account and token in order for auto-join to work.

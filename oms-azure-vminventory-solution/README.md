@@ -1,5 +1,14 @@
 # Azure Virtual Machine Inventory
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-azure-vminventory-solution/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-azure-vminventory-solution/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-azure-vminventory-solution/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-azure-vminventory-solution/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-azure-vminventory-solution/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-azure-vminventory-solution/CredScanResult.svg" />&nbsp;
+
 [![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Foms-azure-vminventory-solution%2Fazuredeploy.json) 
 <a href="http://armviz.io/#/?load=https%3A%2F%2raw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Foms-azure-vminventory-solution%2Fazuredeploy.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>

@@ -1,4 +1,13 @@
 # Azure Data Factory to copy data from Salesforce to Azure Blobs
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-salesforce-to-blob-copy/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-salesforce-to-blob-copy/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-salesforce-to-blob-copy/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-salesforce-to-blob-copy/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-salesforce-to-blob-copy/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-salesforce-to-blob-copy/CredScanResult.svg" />&nbsp;
 Update values for the following parameters in **azuredeploy.parameters.json** file.
 
 - storageAccountName with name of your existing Azure storage account.

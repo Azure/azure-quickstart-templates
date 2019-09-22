@@ -1,5 +1,14 @@
 # Ethereum C++ Public Node
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/ethereum-cpp-on-ubuntu/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/ethereum-cpp-on-ubuntu/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/ethereum-cpp-on-ubuntu/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/ethereum-cpp-on-ubuntu/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/ethereum-cpp-on-ubuntu/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/ethereum-cpp-on-ubuntu/CredScanResult.svg" />&nbsp;
+
 This Microsoft Azure template deploys a single C++ Ethereum client which will connect to the public Ethereum network.
 
 [![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fethereum-cpp-on-ubuntu%2Fazuredeploy.json)

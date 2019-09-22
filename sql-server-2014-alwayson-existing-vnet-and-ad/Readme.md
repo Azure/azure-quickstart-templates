@@ -1,5 +1,14 @@
 # Create a SQL Server 2014 Always On Availability Group in an existing Azure VNET and an existing Active Directory instance
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sql-server-2014-alwayson-existing-vnet-and-ad/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sql-server-2014-alwayson-existing-vnet-and-ad/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sql-server-2014-alwayson-existing-vnet-and-ad/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sql-server-2014-alwayson-existing-vnet-and-ad/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sql-server-2014-alwayson-existing-vnet-and-ad/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sql-server-2014-alwayson-existing-vnet-and-ad/CredScanResult.svg" />&nbsp;
+
 This template will create a SQL Server 2014 Always On Availability Group using the PowerShell DSC Extension in an existing Azure Virtual Network and Active Directory environment.
 
 This template creates the following resources:

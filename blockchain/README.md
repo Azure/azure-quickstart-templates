@@ -1,5 +1,14 @@
 # Blockchain Template
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/blockchain/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/blockchain/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/blockchain/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/blockchain/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/blockchain/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/blockchain/CredScanResult.svg" />&nbsp;
+
 This Microsoft Azure Resource Manager template deploys a single VM and allows you to select from a number of blockchain software options to run on the VM.
 
 [![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fblockchain%2Fazuredeploy.json)

@@ -1,5 +1,14 @@
 # Jenkins Blue-green Deployment to VMSS (Preview)
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-jenkins-vmss-blue-green/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-jenkins-vmss-blue-green/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-jenkins-vmss-blue-green/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-jenkins-vmss-blue-green/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-jenkins-vmss-blue-green/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-jenkins-vmss-blue-green/CredScanResult.svg" />&nbsp;
+
 ***Disclaimer***: The blue-green deployment to Azure Virtual Machine ScaleSet (VMSS) described here is still in
 preview. It may be changed in future as the Azure infrastructure level support is still not finalized.
 

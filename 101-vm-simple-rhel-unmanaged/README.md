@@ -1,5 +1,14 @@
 # Deployment of Red Hat Enterprise Linux VM (RHEL 7.2 or RHEL 6.7)
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-vm-simple-rhel-unmanaged/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-vm-simple-rhel-unmanaged/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-vm-simple-rhel-unmanaged/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-vm-simple-rhel-unmanaged/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-vm-simple-rhel-unmanaged/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-vm-simple-rhel-unmanaged/CredScanResult.svg" />&nbsp;
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-vm-simple-rhel-unmanaged%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>

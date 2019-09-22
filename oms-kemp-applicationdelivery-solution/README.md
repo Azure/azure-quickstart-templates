@@ -1,5 +1,14 @@
 # OMS Kemp Application Delivery Solution
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-kemp-applicationdelivery-solution/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-kemp-applicationdelivery-solution/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-kemp-applicationdelivery-solution/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-kemp-applicationdelivery-solution/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-kemp-applicationdelivery-solution/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-kemp-applicationdelivery-solution/CredScanResult.svg" />&nbsp;
+
 ## Prerequisites
 
 The solution displays data collected from the Kemp devices through an extension for [OMS agent for Linux](https://github.com/Microsoft/OMS-Agent-for-Linux). The instructions on how to install and configure the agent extension are on a separate [github repo](https://github.com/QuaeNocentDocent/omskemp)

@@ -1,4 +1,13 @@
-### Autoscale Setting for App Service Plan ###
+# Autoscale Setting for App Service Plan
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/monitor-autoscale-webappserviceplan-simplemetricbased/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/monitor-autoscale-webappserviceplan-simplemetricbased/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/monitor-autoscale-webappserviceplan-simplemetricbased/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/monitor-autoscale-webappserviceplan-simplemetricbased/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/monitor-autoscale-webappserviceplan-simplemetricbased/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/monitor-autoscale-webappserviceplan-simplemetricbased/CredScanResult.svg" />&nbsp;
 
 The following template deploys an App Service Plan + Autoscale Setting for App Service plan based on a single metric.
 

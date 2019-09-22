@@ -1,5 +1,14 @@
 # Office 365 Desktop VM
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/windows-vm-O365/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/windows-vm-O365/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/windows-vm-O365/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/windows-vm-O365/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/windows-vm-O365/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/windows-vm-O365/CredScanResult.svg" />&nbsp;
+
 ARM Template to provision a VM complete with either Office 2013 or Office 2016 pre-installed.  
 
 This is to assist the development and testing of O365 add-ins where the add-in must be tested in both versions (which cannot be installed side-by-side).

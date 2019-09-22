@@ -1,5 +1,14 @@
 # Create an Active Directory forest with 1 or 2 domains, each with 1 or 2 DCs
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-create-ad-forest-with-subdomain/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-create-ad-forest-with-subdomain/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-create-ad-forest-with-subdomain/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-create-ad-forest-with-subdomain/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-create-ad-forest-with-subdomain/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-create-ad-forest-with-subdomain/CredScanResult.svg" />&nbsp;
+
 Click the button below to deploy a forest to Azure. 
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F301-create-ad-forest-with-subdomain%2Fazuredeploy.json" target="_blank">

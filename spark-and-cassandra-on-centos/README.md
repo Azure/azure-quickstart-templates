@@ -1,5 +1,14 @@
 # Spark & Cassandra on CentOS 7.x
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/spark-and-cassandra-on-centos/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/spark-and-cassandra-on-centos/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/spark-and-cassandra-on-centos/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/spark-and-cassandra-on-centos/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/spark-and-cassandra-on-centos/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/spark-and-cassandra-on-centos/CredScanResult.svg" />&nbsp;
+
 This project configures a Spark cluster (1 master and n-slave nodes) and a single node Cassandra on Azure using CentOS 7.x.  The base image starts with CentOS 7.1 and it is updated to the latest version as part of the provisioning steps.
 
 Please note that [Azure Resource Manager][3] is used to provision the environment.

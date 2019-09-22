@@ -1,5 +1,14 @@
 # Create Splunk Enterprise standalone or cluster on Azure
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/splunk-on-ubuntu/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/splunk-on-ubuntu/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/splunk-on-ubuntu/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/splunk-on-ubuntu/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/splunk-on-ubuntu/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/splunk-on-ubuntu/CredScanResult.svg" />&nbsp;
+
 **US Government Cloud**
 
 [![Deploy to Azure Gov](https://azuredeploy.net/AzureGov.png)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fsplunk-on-ubuntu%2Fazuredeploy-gov.json)

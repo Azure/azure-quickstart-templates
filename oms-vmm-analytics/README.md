@@ -1,5 +1,14 @@
 # VMM Analytics
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-vmm-analytics/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-vmm-analytics/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-vmm-analytics/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-vmm-analytics/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-vmm-analytics/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-vmm-analytics/CredScanResult.svg" />&nbsp;
+
 [![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Foms-vmm-analytics%2Fazuredeploy.json)
 
 Virtual Machine Manager (VMM) Analytics solution in OMS provides a single view  of the jobs' status across multiple VMM instances that helps you gain insight about the health & performance of these jobs.

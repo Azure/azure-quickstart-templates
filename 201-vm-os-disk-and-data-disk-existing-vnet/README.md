@@ -1,5 +1,14 @@
 # Create a virtual machine from two disks (OS + data disk) in an existing virtual network
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vm-os-disk-and-data-disk-existing-vnet/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vm-os-disk-and-data-disk-existing-vnet/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vm-os-disk-and-data-disk-existing-vnet/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vm-os-disk-and-data-disk-existing-vnet/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vm-os-disk-and-data-disk-existing-vnet/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vm-os-disk-and-data-disk-existing-vnet/CredScanResult.svg" />&nbsp;
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2F201-os-disk-and-data-disk-existing-vnet%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>

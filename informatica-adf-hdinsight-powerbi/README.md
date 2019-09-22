@@ -1,5 +1,14 @@
 # Informatica - Informatica HDInsight Azure Partner Quickstart Template
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/informatica-adf-hdinsight-powerbi/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/informatica-adf-hdinsight-powerbi/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/informatica-adf-hdinsight-powerbi/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/informatica-adf-hdinsight-powerbi/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/informatica-adf-hdinsight-powerbi/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/informatica-adf-hdinsight-powerbi/CredScanResult.svg" />&nbsp;
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Finformatica-adf-hdinsight-powerbi%2Fazuredeploy.json" target="_blank">
 <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>

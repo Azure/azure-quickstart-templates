@@ -1,5 +1,14 @@
 # Create a Storage Account and a File Share
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-aci-storage-file-share/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-aci-storage-file-share/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-aci-storage-file-share/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-aci-storage-file-share/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-aci-storage-file-share/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-aci-storage-file-share/CredScanResult.svg" />&nbsp;
+
 Create a Storage Account and a File Share via az-cli in Container Instance
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-aci-storage-file-share%2Fazuredeploy.json" target="_blank">

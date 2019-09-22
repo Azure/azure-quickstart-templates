@@ -1,4 +1,13 @@
-### Service Health Alert ###
+# Service Health Alert
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/monitor-servicehealth-alert/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/monitor-servicehealth-alert/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/monitor-servicehealth-alert/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/monitor-servicehealth-alert/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/monitor-servicehealth-alert/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/monitor-servicehealth-alert/CredScanResult.svg" />&nbsp;
 
 The following template deploys an Activity Log Alert with Action Group integrated
 

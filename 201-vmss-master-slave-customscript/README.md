@@ -1,5 +1,14 @@
 # Deploy a VM Scale Set of Linux VMs with a custom script extension in master / slave architecture
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vmss-master-slave-customscript/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vmss-master-slave-customscript/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vmss-master-slave-customscript/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vmss-master-slave-customscript/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vmss-master-slave-customscript/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vmss-master-slave-customscript/CredScanResult.svg" />&nbsp;
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https://github.com/Azure/azure-quickstart-templates/tree/master/201-vmss-master-slave-customscript/azuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>

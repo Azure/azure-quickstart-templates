@@ -1,5 +1,14 @@
 # Create 2 Linux VMs in load balancing with port 80 open and a backend VM with SQL Server 2014 with 2 data disk as Premium Storage (SSD).
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-2fe-linux-lb80-ssh-1be-win-nsg-rdp-datadisk-ssd/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-2fe-linux-lb80-ssh-1be-win-nsg-rdp-datadisk-ssd/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-2fe-linux-lb80-ssh-1be-win-nsg-rdp-datadisk-ssd/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-2fe-linux-lb80-ssh-1be-win-nsg-rdp-datadisk-ssd/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-2fe-linux-lb80-ssh-1be-win-nsg-rdp-datadisk-ssd/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-2fe-linux-lb80-ssh-1be-win-nsg-rdp-datadisk-ssd/CredScanResult.svg" />&nbsp;
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F301-2fe-linux-lb80-ssh-1be-win-nsg-rdp-datadisk-ssd%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>

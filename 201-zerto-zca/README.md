@@ -1,5 +1,14 @@
 # Deploy Zerto Virtual Replication to Azure
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-zerto-zca/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-zerto-zca/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-zerto-zca/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-zerto-zca/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-zerto-zca/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-zerto-zca/CredScanResult.svg" />&nbsp;
+
 
 This template deploys a virtual network, public ip, network interface and a Zerto Cloud Appliance (ZCA) virtual machine. It also provisions a network security group to enable RDP to the VM.
 

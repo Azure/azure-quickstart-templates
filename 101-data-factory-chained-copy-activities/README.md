@@ -1,5 +1,14 @@
 # Two-Activity Chained Data Factory Pipeline
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-chained-copy-activities/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-chained-copy-activities/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-chained-copy-activities/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-chained-copy-activities/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-chained-copy-activities/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-chained-copy-activities/CredScanResult.svg" />&nbsp;
+
 [![deploy](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2F101-data-factory-chained-copy-activities%2Fazuredeploy.json)
 
 [![visualize](http://armviz.io/visualizebutton.png)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-data-factory-chained-copy-activities%2Fazuredeploy.json)

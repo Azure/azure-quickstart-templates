@@ -1,5 +1,14 @@
 # Create a SQL Server Virtual Machine on Azure CSP Subscription
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sqlvm-provisioning-csp/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sqlvm-provisioning-csp/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sqlvm-provisioning-csp/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sqlvm-provisioning-csp/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sqlvm-provisioning-csp/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sqlvm-provisioning-csp/CredScanResult.svg" />&nbsp;
+
 Microsoft Azure has a new subscription offering, CSP Subscriptions. Some aspects of SQL VM deployment are not yet supported in CSP subscriptions. This includes the SQL IaaS Agent Extension, which is required for features such as SQL Automated Backup and SQL Automated Patching.
 
 # Solution Overview

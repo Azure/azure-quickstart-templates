@@ -1,5 +1,14 @@
 # S2D Management Solution for OMS
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/s2d-oms-mgmt-solution/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/s2d-oms-mgmt-solution/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/s2d-oms-mgmt-solution/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/s2d-oms-mgmt-solution/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/s2d-oms-mgmt-solution/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/s2d-oms-mgmt-solution/CredScanResult.svg" />&nbsp;
+
 Version: 2.0.0.0
 
 [![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fs2d-oms-mgmt-solution%2Fazuredeploy.json) 

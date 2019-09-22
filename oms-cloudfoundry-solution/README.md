@@ -1,5 +1,14 @@
 # Azure OMS Log Analytics Solution for Cloud Foundry
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-cloudfoundry-solution/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-cloudfoundry-solution/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-cloudfoundry-solution/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-cloudfoundry-solution/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-cloudfoundry-solution/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-cloudfoundry-solution/CredScanResult.svg" />&nbsp;
+
 Version: [2018.6](./changelog.md "See change logs")
 
 [![Deploy to Azure](https://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Foms-cloudfoundry-solution%2F%2Fazuredeploy.json)

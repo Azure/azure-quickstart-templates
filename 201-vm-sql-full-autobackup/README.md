@@ -1,5 +1,14 @@
 # Create an Azure virtual machine running SQL Server 2014 SP2 Enterprise edition with Automated Backup feature enabled.
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vm-sql-full-autobackup/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vm-sql-full-autobackup/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vm-sql-full-autobackup/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vm-sql-full-autobackup/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vm-sql-full-autobackup/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vm-sql-full-autobackup/CredScanResult.svg" />&nbsp;
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vm-sql-full-autobackup%2Fazuredeploy.json" target="_blank">
   <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>

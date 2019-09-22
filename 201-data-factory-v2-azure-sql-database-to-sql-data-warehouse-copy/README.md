@@ -1,4 +1,13 @@
 # Copy multiple tables in bulk by using Azure Data Factory
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-data-factory-v2-azure-sql-database-to-sql-data-warehouse-copy/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-data-factory-v2-azure-sql-database-to-sql-data-warehouse-copy/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-data-factory-v2-azure-sql-database-to-sql-data-warehouse-copy/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-data-factory-v2-azure-sql-database-to-sql-data-warehouse-copy/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-data-factory-v2-azure-sql-database-to-sql-data-warehouse-copy/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-data-factory-v2-azure-sql-database-to-sql-data-warehouse-copy/CredScanResult.svg" />&nbsp;
 This template creates a data factory that copies a number of tables from Azure SQL Database to Azure SQL Data Warehouse. 
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-data-factory-v2-blob-to-sql-copy%2Fazuredeploy.json" target="_blank">

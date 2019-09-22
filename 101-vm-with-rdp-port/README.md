@@ -1,5 +1,14 @@
 # Create a VM with an RDP port
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-vm-with-rdp-port/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-vm-with-rdp-port/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-vm-with-rdp-port/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-vm-with-rdp-port/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-vm-with-rdp-port/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-vm-with-rdp-port/CredScanResult.svg" />&nbsp;
+
 This sample template demonstrates how to create a NAT rule in loadbalancer to allow RDP to a vm.
 
 You can connect to the vm using:

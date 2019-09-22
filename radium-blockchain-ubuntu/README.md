@@ -1,4 +1,13 @@
 # Radium Blockchain Node on Ubuntu VM
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/radium-blockchain-ubuntu/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/radium-blockchain-ubuntu/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/radium-blockchain-ubuntu/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/radium-blockchain-ubuntu/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/radium-blockchain-ubuntu/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/radium-blockchain-ubuntu/CredScanResult.svg" />&nbsp;
 This template delivers the Radium network to your VM.  Everything you need to get started using the Radium blockchain can be deployed right from the Azure console. No commandline is necessary, standard RPC connection settings can be set during deployment in the Azure portal. This template builds from source.  Once installed, 'Radiumd' will begin syncing the public blockchain. 
 You may then connect via SSH to the VM, or simply connect directly via RPC using the custom RPC values set during deployment.
                                                                          

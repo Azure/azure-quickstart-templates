@@ -1,5 +1,14 @@
 # Update RU/s for Azure Cosmos Graph - Gremlin API
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-gremlin-graph-ru-update/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-gremlin-graph-ru-update/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-gremlin-graph-ru-update/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-gremlin-graph-ru-update/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-gremlin-graph-ru-update/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-gremlin-graph-ru-update/CredScanResult.svg" />&nbsp;
+
 This template updates the RU/s (throughput) on a graph] resource for an Azure Cosmos account - Graph API.
 
 Below are the parameters which can be user configured in the parameters file including:

@@ -1,5 +1,14 @@
 # Deploy a Powershell DSC Pull Server to a Windows Server
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/dsc-pullserver-to-win-server/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/dsc-pullserver-to-win-server/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/dsc-pullserver-to-win-server/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/dsc-pullserver-to-win-server/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/dsc-pullserver-to-win-server/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/dsc-pullserver-to-win-server/CredScanResult.svg" />&nbsp;
+
 This example allows to you deploy a powershell desired state configuration pull server. This deployment creates a windows server and adds the dsc-service and deploys the powershell dsc pull server and configures the server. The server is not domain joined.
 This example uses the xPSDesiredStateConfiguration Module available in the PowerShell DSC Resource Kit available here https://gallery.technet.microsoft.com/xPSDesiredStateConfiguratio-417dc71d.
 

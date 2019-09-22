@@ -1,5 +1,14 @@
 # 5 Node secure ubuntu Service Fabric Cluster with Azure Diagnostics enabled
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/5-VM-Ubuntu-1-NodeTypes-Secure/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/5-VM-Ubuntu-1-NodeTypes-Secure/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/5-VM-Ubuntu-1-NodeTypes-Secure/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/5-VM-Ubuntu-1-NodeTypes-Secure/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/5-VM-Ubuntu-1-NodeTypes-Secure/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/5-VM-Ubuntu-1-NodeTypes-Secure/CredScanResult.svg" />&nbsp;
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure-Samples%2Fservice-fabric-cluster-templates%2Fmaster%2F5-VM-Ubuntu-1-NodeTypes-Secure%2FAzureDeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>

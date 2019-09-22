@@ -1,5 +1,14 @@
 # Create Remote Desktop Sesson Collection deployment
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/rds-deployment-existing-ad/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/rds-deployment-existing-ad/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/rds-deployment-existing-ad/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/rds-deployment-existing-ad/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/rds-deployment-existing-ad/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/rds-deployment-existing-ad/CredScanResult.svg" />&nbsp;
+
 This template deploys the following resources:
 
 <ul><li>RD Gateway/RD Web Access vm</li><li>RD Connection Broker/RD Licensing Server vm</li><li>A number of RD Session hosts (number defined by 'numberOfRdshInstances' parameter)</li></ul>

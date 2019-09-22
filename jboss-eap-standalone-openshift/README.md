@@ -1,5 +1,14 @@
 # Azure template for instantiating and deploying a standalone Red Hat JBoss EAP on OCP on Azure
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/jboss-eap-standalone-openshift/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/jboss-eap-standalone-openshift/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/jboss-eap-standalone-openshift/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/jboss-eap-standalone-openshift/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/jboss-eap-standalone-openshift/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/jboss-eap-standalone-openshift/CredScanResult.svg" />&nbsp;
+
 **NOTE: This template creates an ephemeral instance of OpenShift Container Platform and Red Hat JBoss EAP. You are responsible for backing up any data that you want to save while using this instance**
 
 1. Create a Single VM OpenShift deployment using the Azure Portal

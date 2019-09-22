@@ -1,5 +1,14 @@
 # Create HA data management gateway and make it workable in azure VMs
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-mutiple-vms-with-data-management-gateway/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-mutiple-vms-with-data-management-gateway/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-mutiple-vms-with-data-management-gateway/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-mutiple-vms-with-data-management-gateway/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-mutiple-vms-with-data-management-gateway/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-mutiple-vms-with-data-management-gateway/CredScanResult.svg" />&nbsp;
+
 Before deploying the template you must have the following
 
 1. **Data Factory.** The gateway is created in the data factory. If you don't have a data factory,  see the [Create data factory](https://docs.microsoft.com/en-us/azure/data-factory/data-factory-move-data-between-onprem-and-cloud#create-data-factory) for steps to create one.

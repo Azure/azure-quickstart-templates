@@ -1,5 +1,14 @@
 # OMS Azure Automation Job Monitoring
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-automation-solution/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-automation-solution/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-automation-solution/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-automation-solution/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-automation-solution/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-automation-solution/CredScanResult.svg" />&nbsp;
+
 
 
 This solution (currently in private preview) will allow you to visualize your Azure Automation jobs in Operations Management Suite (Log Analytics). This solution use the job status and job stream information provided by Microsoft (https://docs.microsoft.com/en-us/azure/automation/automation-manage-send-joblogs-log-analytics) to present data about your Azure Automation jobs in Log Analytics. 

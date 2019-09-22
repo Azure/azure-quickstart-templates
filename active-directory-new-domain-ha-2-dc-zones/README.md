@@ -1,5 +1,14 @@
 # Create 2 new Windows VMs, a new AD Forest, Domain and 2 DCs in separate availability zones
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/active-directory-new-domain-ha-2-dc-zones/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/active-directory-new-domain-ha-2-dc-zones/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/active-directory-new-domain-ha-2-dc-zones/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/active-directory-new-domain-ha-2-dc-zones/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/active-directory-new-domain-ha-2-dc-zones/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/active-directory-new-domain-ha-2-dc-zones/CredScanResult.svg" />&nbsp;
+
 This template will deploy 2 new VMs and create a new  AD forest and domain, each VM will be created as a DC for the new domain and will be placed in separate availability zones.
 
 Click the button below to deploy

@@ -1,5 +1,14 @@
 # Create a Multi-Region Azure Cosmos DB account for any API Type
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-create-multi-region-account/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-create-multi-region-account/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-create-multi-region-account/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-create-multi-region-account/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-create-multi-region-account/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-create-multi-region-account/CredScanResult.svg" />&nbsp;
+
 This template will create an Azure Cosmos DB account and provides multiple different configurations including:
 
 - **API Type:** Select from any of the supported API types including: SQL, Cassandra, Gremlin, MongoDB, or Table.

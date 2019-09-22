@@ -1,5 +1,14 @@
 # Deploy Airflow on a Linux web app with PostgreSQL
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-webapp-linux-airflow-postgresql/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-webapp-linux-airflow-postgresql/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-webapp-linux-airflow-postgresql/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-webapp-linux-airflow-postgresql/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-webapp-linux-airflow-postgresql/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-webapp-linux-airflow-postgresql/CredScanResult.svg" />&nbsp;
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fsavjani%2Fazure-quickstart-templates%2Fmaster%2F101-webapp-linux-airflow-postgresql%2Fazuredeploy.json" target="_blank">
   <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>

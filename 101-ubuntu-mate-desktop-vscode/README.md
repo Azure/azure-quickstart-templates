@@ -1,5 +1,14 @@
 # Deploy an Ubuntu Mate Desktop VM with VSCode
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-ubuntu-mate-desktop-vscode/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-ubuntu-mate-desktop-vscode/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-ubuntu-mate-desktop-vscode/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-ubuntu-mate-desktop-vscode/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-ubuntu-mate-desktop-vscode/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-ubuntu-mate-desktop-vscode/CredScanResult.svg" />&nbsp;
+
 This template creates a Linux developer workstation as follows:
 
 - Create a VM based on the Ubuntu 17.10 image with Mate Desktop installed

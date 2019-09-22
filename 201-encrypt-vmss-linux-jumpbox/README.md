@@ -1,5 +1,14 @@
 # This template deploys VM Scale Set of Linux VMs with a jumpbox and enables encryption on Linux VMSS
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-encrypt-vmss-linux-jumpbox/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-encrypt-vmss-linux-jumpbox/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-encrypt-vmss-linux-jumpbox/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-encrypt-vmss-linux-jumpbox/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-encrypt-vmss-linux-jumpbox/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-encrypt-vmss-linux-jumpbox/CredScanResult.svg" />&nbsp;
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2F201-encrypt-vmss-linux-jumpbox%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>

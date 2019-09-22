@@ -1,4 +1,13 @@
 # Azure Sql Database Managed Instance (SQL MI) with JumpBox Creation inside New Virtual Network
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-sqlmi-new-vnet-w-jumpbox/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-sqlmi-new-vnet-w-jumpbox/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-sqlmi-new-vnet-w-jumpbox/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-sqlmi-new-vnet-w-jumpbox/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-sqlmi-new-vnet-w-jumpbox/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-sqlmi-new-vnet-w-jumpbox/CredScanResult.svg" />&nbsp;
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-sqlmi-new-vnet-w-jumpbox%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>

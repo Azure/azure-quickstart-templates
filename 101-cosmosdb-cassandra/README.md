@@ -1,5 +1,14 @@
 # Create an Azure Cosmos account for Cassandra API with keyset and two tables
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-cassandra/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-cassandra/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-cassandra/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-cassandra/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-cassandra/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-cassandra/CredScanResult.svg" />&nbsp;
+
 This template will create an Azure Cosmos account for Cassandra API, provisioned for two regions, then provision a keyset with shared throughput across two tables.
 
 Below are the parameters which can be user configured in the parameters file including:
@@ -12,7 +21,6 @@ Below are the parameters which can be user configured in the parameters file inc
 - **Throughput:** Enter the Ru/s to share across the 2 containers (default is 400).
 - **Table 1 Name:** Enter the name for the first table.
 - **Table 2 Name:** Enter the name for the second table.
-
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-cosmosdb-cassandra%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>

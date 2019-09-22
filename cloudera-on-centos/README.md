@@ -1,4 +1,13 @@
 # Deploy a Cloudera Express cluster with the option to unlock Cloudera Enterprise features for a free 60-day trial
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/cloudera-on-centos/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/cloudera-on-centos/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/cloudera-on-centos/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/cloudera-on-centos/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/cloudera-on-centos/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/cloudera-on-centos/CredScanResult.svg" />&nbsp;
 Once the trial has concluded, the Cloudera Enterprise features will be disabled until you obtain and upload a license.
 
 # By clicking "Deploy to Azure" you agree to the Terms and Conditions below.

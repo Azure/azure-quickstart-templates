@@ -1,5 +1,14 @@
 # SQL injection attack on a Web Application Scenario 
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-SQL-Injection-Attack-Prevention/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-SQL-Injection-Attack-Prevention/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-SQL-Injection-Attack-Prevention/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-SQL-Injection-Attack-Prevention/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-SQL-Injection-Attack-Prevention/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-SQL-Injection-Attack-Prevention/CredScanResult.svg" />&nbsp;
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-SQL-Injection-Attack-Prevention%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/> 
 </a>
