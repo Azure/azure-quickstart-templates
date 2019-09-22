@@ -24,10 +24,10 @@ This template deploys SharePoint 2019, 2016 or 2013 with the following configura
 All virtual machines have a public IP address and are protected by Network Security Groups (attached to the subnets) that only allow RDP port from Internet.
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsharepoint-adfs%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsharepoint-adfs%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
 By default, virtual machines running SharePoint and SQL use SSD drives and have enough CPU and memory to be used comfortably for development and tests:

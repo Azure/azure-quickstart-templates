@@ -24,12 +24,12 @@ etc..
 
 ## Deploy Windows 2016 Data Science VM to Azure
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vmss-datascience%2Fazuredeploy-windows.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 
 ## Deploy Ubuntu 16.04 Data Science VM to Azure
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vmss-datascience%2Fazuredeploy-ubuntu.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 
 ## Additional information

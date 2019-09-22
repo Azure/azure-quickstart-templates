@@ -10,10 +10,10 @@
 <IMG SRC="https://azbotstorage.blob.core.windows.net/badges/lansa-vmss-windows-autoscale-existing-db/CredScanResult.svg" />&nbsp;
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Flansa-vmss-windows-autoscale-existing-db%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Flansa-vmss-windows-autoscale-existing-db%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
 This template deploys a Windows Virtual Machine Scale Set with a desired count of Virtual Machines in the scale set and a LANSA MSI to install into each Virtual Machine. Once the Virtual Machine Scale Set is deployed a custom script extension is used to install the LANSA MSI. The database server must already exist. The database within the database server must already exist too, unless its SQL Server, in which case it will be created. If the database does exist it must either not have any LANSA tables or already have had the same MSI installed. This is not checked by the template. Once this template has been run, it must be the only way that an upgrade to the MSI is applied. Two different MSI installs should not attempt to upgrade a LANSA install. This is very important in order that the SQL tables are upgraded correctly. Current databases supported are Azure SQL Database, Microsoft SQL Server and MySql

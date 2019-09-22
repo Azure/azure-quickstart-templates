@@ -10,10 +10,10 @@
 <IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-jenkins-aptly-spinnaker-vmss/CredScanResult.svg" />&nbsp;
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2F301-jenkins-aptly-spinnaker-vmss%2Fazuredeploy.json" target="_blank">
-  <img src="http://azuredeploy.net/deploybutton.png"/>
+  <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2F301-jenkins-aptly-spinnaker-vmss%2Fazuredeploy.json" target="_blank">
-  <img src="http://armviz.io/visualizebutton.png"/>
+  <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
 This template allows you to deploy and configure a DevOps pipeline from an Aptly repository to a VM Scale Set in Azure. It deploys an instance of Jenkins and Spinnaker on a Linux Ubuntu 16.04 LTS VM.
