@@ -1,5 +1,14 @@
 # VM-high-iops-data-disks
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-vm-32-data-disks-high-iops/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-vm-32-data-disks-high-iops/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-vm-32-data-disks-high-iops/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-vm-32-data-disks-high-iops/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-vm-32-data-disks-high-iops/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-vm-32-data-disks-high-iops/CredScanResult.svg" />&nbsp;
+
 Create a VM from 32 Data Disks configured for high IOPS
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F301-vm-32-data-disks-high-iops%2Fazuredeploy.json" target="_blank">

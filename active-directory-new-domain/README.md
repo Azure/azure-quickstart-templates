@@ -1,5 +1,14 @@
 # Create a new Windows VM and create a new AD Forest, Domain and DC
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/active-directory-new-domain/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/active-directory-new-domain/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/active-directory-new-domain/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/active-directory-new-domain/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/active-directory-new-domain/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/active-directory-new-domain/CredScanResult.svg" />&nbsp;
+
 This template will deploy a new VM (along with a new VNet and Load Balancer) and will configure it as a Domain Controller and create a new forest and domain.
 
 Click the button below to deploy

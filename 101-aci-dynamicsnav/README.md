@@ -1,5 +1,14 @@
 # MS Dynamics NAV / MS Dynamics 365 Business Central including SQL Server in Azure Container Instances
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-aci-dynamicsnav/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-aci-dynamicsnav/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-aci-dynamicsnav/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-aci-dynamicsnav/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-aci-dynamicsnav/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-aci-dynamicsnav/CredScanResult.svg" />&nbsp;
+
 This template demonstrates how you can run MS Dynamics NAV or a Sandbox of MS Dynamics 365 Business Central in [Azure Container Instances](https://docs.microsoft.com/en-us/azure/container-instances/). To find out more about Dynamics NAV / Business Central inside a Windows Container visit [Github](https://github.com/microsoft/nav-docker)
 
 To start the instance, you need to accept the [end user license agreement](https://go.microsoft.com/fwlink/?linkid=861843) by setting the param acceptEula to Y. You also need to enter which version of NAV you want to use by setting navRelease (see [this list](https://hub.docker.com/r/microsoft/dynamics-nav/tags/) for possible values for NAV and [this list](https://hub.docker.com/r/microsoft/bcsandbox/tags/) for BC. Also see [this blog post](https://blogs.msdn.microsoft.com/freddyk/2018/04/16/which-docker-image-is-the-right-for-you/) by Freddy Kristiansen to understand which image is right for you). This instance automatically will download a [LetsEncrypt](https://letsencrypt.org/) certificate, so you will also need to specify the email address to be used with LetsEncrypt and the dns prefix (the first part of the URL), which you can freely choose as long as it is not already taken.

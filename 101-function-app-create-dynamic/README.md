@@ -1,5 +1,14 @@
 # Provision a function app on a Consumption plan
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-function-app-create-dynamic/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-function-app-create-dynamic/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-function-app-create-dynamic/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-function-app-create-dynamic/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-function-app-create-dynamic/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-function-app-create-dynamic/CredScanResult.svg" />&nbsp;
+
 **Important: if using an App Service Plan, use https://github.com/Azure/azure-quickstart-templates/tree/master/101-function-app-create-dedicated instead**
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2F101-function-app-create-dynamic%2Fazuredeploy.json" target="_blank">

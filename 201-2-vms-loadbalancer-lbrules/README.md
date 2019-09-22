@@ -1,4 +1,5 @@
 # Create 2 Virtual Machines under a Load balancer and configures Load Balancing rules for the VMs
+
 <IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-2-vms-loadbalancer-lbrules/PublicLastTestDate.svg" />&nbsp;
 <IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-2-vms-loadbalancer-lbrules/PublicDeployment.svg" />&nbsp;
 

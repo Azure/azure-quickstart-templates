@@ -1,4 +1,13 @@
 # Setup Linux Dynamic data disks 
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vm-linux-dynamic-data-disks/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vm-linux-dynamic-data-disks/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vm-linux-dynamic-data-disks/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vm-linux-dynamic-data-disks/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vm-linux-dynamic-data-disks/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vm-linux-dynamic-data-disks/CredScanResult.svg" />&nbsp;
 ## A great Control Machine for All your Azure Automation Needs
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vm-linux-dynamic-data-disks%2Fazuredeploy.json" target="_blank">

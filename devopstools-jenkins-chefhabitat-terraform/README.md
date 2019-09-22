@@ -1,6 +1,15 @@
 
 # Microsoft
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/devopstools-jenkins-chefhabitat-terraform/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/devopstools-jenkins-chefhabitat-terraform/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/devopstools-jenkins-chefhabitat-terraform/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/devopstools-jenkins-chefhabitat-terraform/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/devopstools-jenkins-chefhabitat-terraform/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/devopstools-jenkins-chefhabitat-terraform/CredScanResult.svg" />&nbsp;
+
 # OSS Quickstart (Phase-1)
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdevopstools-jenkins-chefhabitat-terraform%2Fazuredeploy.json" target="_blank">

@@ -1,5 +1,14 @@
 # Deploy a Highly Available NFS Cluster with Ubuntu VMs
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/nfs-ha-cluster-ubuntu/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/nfs-ha-cluster-ubuntu/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/nfs-ha-cluster-ubuntu/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/nfs-ha-cluster-ubuntu/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/nfs-ha-cluster-ubuntu/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/nfs-ha-cluster-ubuntu/CredScanResult.svg" />&nbsp;
+
 [![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fnfs-ha-cluster-ubuntu%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fnfs-ha-cluster-ubuntu%2Fazuredeploy.json)
 
 This template allows you to create a highly available NFS cluster on Azure with 2 Ubuntu VMs. The following diagram shows the architecture of the deployed cluster.

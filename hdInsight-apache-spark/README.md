@@ -1,4 +1,13 @@
 # Create HDInsight Linux cluster and run custom script action to install Apache Spark 1.4.1
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/hdInsight-apache-spark/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/hdInsight-apache-spark/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/hdInsight-apache-spark/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/hdInsight-apache-spark/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/hdInsight-apache-spark/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/hdInsight-apache-spark/CredScanResult.svg" />&nbsp;
 Creates HDInsight Linux cluster and run custom script action to install Apache Spark 1.4.1<br>
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2FhdInsight-apache-spark%2Fazuredeploy.json" target="_blank">

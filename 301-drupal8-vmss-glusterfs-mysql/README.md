@@ -7,6 +7,15 @@
 
 # Drupal 8 VM scaleset (with GlusterFS and MySQL) Template
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-drupal8-vmss-glusterfs-mysql/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-drupal8-vmss-glusterfs-mysql/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-drupal8-vmss-glusterfs-mysql/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-drupal8-vmss-glusterfs-mysql/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-drupal8-vmss-glusterfs-mysql/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-drupal8-vmss-glusterfs-mysql/CredScanResult.svg" />&nbsp;
+
 This template deploys a Drupal 8 installation using a VM scale set.  It has the following capabilities:
 
 - Maximum and minimum number of Drupal 8 VMs in the scaleset can be configured. each of these uses Ubuntu OS

@@ -1,4 +1,13 @@
-﻿# Subnet-driven test lab 
+# Subnet-driven test lab 
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-subnet-driven-deployment/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-subnet-driven-deployment/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-subnet-driven-deployment/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-subnet-driven-deployment/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-subnet-driven-deployment/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-subnet-driven-deployment/CredScanResult.svg" />&nbsp;
 
 This template creates an environment with multiple subnets and the servers (one DC and two members) associated with. If the number of subnets varies, the servers are adjusted automatically.
  

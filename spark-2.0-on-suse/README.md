@@ -2,6 +2,15 @@
 
 # Provision a Spark 2.0 Cluster on Suse Linux Enterprise Server
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/spark-2.0-on-suse/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/spark-2.0-on-suse/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/spark-2.0-on-suse/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/spark-2.0-on-suse/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/spark-2.0-on-suse/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/spark-2.0-on-suse/CredScanResult.svg" />&nbsp;
+
 This template creates a Spark 2.0 Cluster on SUSE Linux Enterprise Server.  This is a starting point for learning Spark and in-memory computation on SUSE’s enterprise linux distribution.
 
 In Memory Cluster Computing to solve query optimization, slow Machine Learning and many other BI problems.

@@ -1,4 +1,13 @@
 # **Azure Resource Optimization(ARO) Toolkit**
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/azure-resource-optimization-toolkit/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/azure-resource-optimization-toolkit/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/azure-resource-optimization-toolkit/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/azure-resource-optimization-toolkit/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/azure-resource-optimization-toolkit/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/azure-resource-optimization-toolkit/CredScanResult.svg" />&nbsp;
 Deploy an Azure Automation account with preconfigured runbooks and schedules to your subscription and start saving money.  Azure resource optimization happens automatically on your subscription once you enable or create your own schedule including on new resources!  
 
 ***Objective:*** Provide decentralized automation capabilities for customers who want to reduce their costs.  Features include: 

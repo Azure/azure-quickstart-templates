@@ -1,4 +1,13 @@
-﻿# Azure Files template for VM scale sets
+# Azure Files template for VM scale sets
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vmss-azure-files-linux/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vmss-azure-files-linux/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vmss-azure-files-linux/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vmss-azure-files-linux/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vmss-azure-files-linux/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vmss-azure-files-linux/CredScanResult.svg" />&nbsp;
 
 This template demonstrates using Azure File with virtual machine scale sets on Ubuntu. Every VM in this scale set will have a mounted Azure Files file share at the location you specify, and a symbolic link will also be created in the user's home directory.
 

@@ -1,5 +1,14 @@
 # Create an Azure Cosmos DB containers for Core (SQL) API with two containers
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-sql/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-sql/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-sql/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-sql/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-sql/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-sql/CredScanResult.svg" />&nbsp;
+
 This template will create an Azure Cosmos account for Core (SQL) API, provisioned for two regions, then provision a database with throughput shared across 2 containers.
 
 Below are the parameters which can be user configured in the parameters file including:

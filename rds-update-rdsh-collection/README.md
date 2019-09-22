@@ -1,5 +1,14 @@
 # Update Remote Desktop Sesson Collection to new template image
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/rds-update-rdsh-collection/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/rds-update-rdsh-collection/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/rds-update-rdsh-collection/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/rds-update-rdsh-collection/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/rds-update-rdsh-collection/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/rds-update-rdsh-collection/CredScanResult.svg" />&nbsp;
+
 This template updates RDSH servers in existing session host collection with new updated template image. The URI for the image is provided as a template parameter.
 
 This template deploys the following resources:

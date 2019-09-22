@@ -1,5 +1,14 @@
 # Create an Azure SQL instance with data encryption protector activated
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sql-encryption-protector-byok/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sql-encryption-protector-byok/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sql-encryption-protector-byok/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sql-encryption-protector-byok/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sql-encryption-protector-byok/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sql-encryption-protector-byok/CredScanResult.svg" />&nbsp;
+
 This template creates an Azure SQL server, and activate the data encryption protector with the "bring your own key". For that, you will need to provide the Key Vault, and the Key to use.
 
 Click the button below to deploy

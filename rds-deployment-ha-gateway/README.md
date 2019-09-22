@@ -1,5 +1,14 @@
 # Provide High Availability to RD Gateway and RD Web Access servers in RDS deployment
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/rds-deployment-ha-gateway/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/rds-deployment-ha-gateway/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/rds-deployment-ha-gateway/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/rds-deployment-ha-gateway/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/rds-deployment-ha-gateway/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/rds-deployment-ha-gateway/CredScanResult.svg" />&nbsp;
+
 This template deploys the following resources:
 
 * a number of RD Gateway/RD Web Access VMs (number defined by 'numberOfWebGwInstances' parameter)

@@ -1,5 +1,14 @@
 # Snippet - Supported Reserved IP Use Cases
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-reserved-ip/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-reserved-ip/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-reserved-ip/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-reserved-ip/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-reserved-ip/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-reserved-ip/CredScanResult.svg" />&nbsp;
+
 This template demonstrates the currently supported use case for Reserved IP.  A Reserved IP is simply a statically allocated Public IP.  
 
 There is currently only one supported use case: assign a Reserved IP to the front end of the Azure Load Balancer.  

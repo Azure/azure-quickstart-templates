@@ -1,5 +1,14 @@
 # Create a WordPress site on a Container Instance
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-aci-wordpress/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-aci-wordpress/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-aci-wordpress/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-aci-wordpress/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-aci-wordpress/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-aci-wordpress/CredScanResult.svg" />&nbsp;
+
 Create a WordPress site (and its MySQL database) on a Container Instance
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-aci-wordpress%2Fazuredeploy.json" target="_blank">

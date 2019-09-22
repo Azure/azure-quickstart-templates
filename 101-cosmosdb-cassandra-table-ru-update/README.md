@@ -1,5 +1,14 @@
 # Update RU/s for Azure Cosmos Table - Cassandra API
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-cassandra-table-ru-update/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-cassandra-table-ru-update/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-cassandra-table-ru-update/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-cassandra-table-ru-update/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-cassandra-table-ru-update/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-cassandra-table-ru-update/CredScanResult.svg" />&nbsp;
+
 This template updates the RU/s (throughput) on a table resource for an Azure Cosmos account - Cassandra API.
 
 Below are the parameters which can be user configured in the parameters file including:

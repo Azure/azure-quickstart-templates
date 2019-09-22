@@ -1,4 +1,13 @@
 # Rancher on Azure
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/docker-rancher/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/docker-rancher/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/docker-rancher/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/docker-rancher/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/docker-rancher/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/docker-rancher/CredScanResult.svg" />&nbsp;
 This template deploys an Ubuntu system with Docker installed. In addition, if you already have a server running ; the Rancher agent will be deployed with the callback url as provided by you. If you do not have a server, you can deploy one with this script too. 
 
 [![Deploy Now](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdocker-rancher%2Fazuredeploy.json)

@@ -1,5 +1,14 @@
 # Configure ILB and create listener for an existing Always On availability group on SQL Server VMs in Azure
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-sql-vm-aglistener-setup/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-sql-vm-aglistener-setup/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-sql-vm-aglistener-setup/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-sql-vm-aglistener-setup/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-sql-vm-aglistener-setup/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-sql-vm-aglistener-setup/CredScanResult.svg" />&nbsp;
+
 Before deploying the template you must have the following
 
 1. **AlwaysON setup** Always ON setup must exist as created by azure-quickstart-templates/101-sql-vm-ag-setup. This will include the VMs over which the setup was done.

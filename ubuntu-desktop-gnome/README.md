@@ -1,5 +1,14 @@
 # Ubuntu Desktop VM in ARM
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/ubuntu-desktop-gnome/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/ubuntu-desktop-gnome/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/ubuntu-desktop-gnome/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/ubuntu-desktop-gnome/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/ubuntu-desktop-gnome/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/ubuntu-desktop-gnome/CredScanResult.svg" />&nbsp;
+
 This is an Azure template to create an Ubuntu Desktop VM.  This is great as a jumpbox behind a NAT.
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fubuntu-desktop-gnome%2Fazuredeploy.json" target="_blank">

@@ -1,5 +1,14 @@
 # Create WS Failover Cluster and join existing SQL Server Virtual Machines for setting up an Always On availability group
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-sql-vm-ag-setup/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-sql-vm-ag-setup/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-sql-vm-ag-setup/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-sql-vm-ag-setup/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-sql-vm-ag-setup/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-sql-vm-ag-setup/CredScanResult.svg" />&nbsp;
+
 Before deploying the template you must have the following
 
 1. **Domain** Domain must exist in which the underlying Windows Server Failover Cluster will be created

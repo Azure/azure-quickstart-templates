@@ -1,5 +1,14 @@
 # Domain join a VM to an existing domain
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vm-domain-join/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vm-domain-join/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vm-domain-join/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vm-domain-join/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vm-domain-join/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vm-domain-join/CredScanResult.svg" />&nbsp;
+
 This template joins the VM to an existing domain. The template requires a domain controller to already be setup.
 
 ### REQUIREMENTS

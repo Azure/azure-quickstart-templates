@@ -1,5 +1,14 @@
 # Update RU/s for Azure Cosmos Collection - MongoDB API
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-mongodb-collection-ru-update/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-mongodb-collection-ru-update/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-mongodb-collection-ru-update/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-mongodb-collection-ru-update/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-mongodb-collection-ru-update/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-mongodb-collection-ru-update/CredScanResult.svg" />&nbsp;
+
 This template updates the RU/s (throughput) on a collection resource for an Azure Cosmos account - MongoDB API.
 
 Below are the parameters which can be user configured in the parameters file including:

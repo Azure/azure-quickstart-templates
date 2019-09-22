@@ -1,5 +1,14 @@
 # Configure certificates for RDS deployment
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/rds-update-certificate/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/rds-update-certificate/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/rds-update-certificate/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/rds-update-certificate/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/rds-update-certificate/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/rds-update-certificate/CredScanResult.svg" />&nbsp;
+
 Click the button below to deploy:
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmmarch%2Fazure-quickstart-templates%2Fcerts-template%2Frds-update-certificate%2Fazuredeploy.json" target="_blank">

@@ -1,5 +1,14 @@
 # Azure template for SharePoint 2019 / 2016 / 2013
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sharepoint-adfs/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sharepoint-adfs/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sharepoint-adfs/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sharepoint-adfs/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sharepoint-adfs/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sharepoint-adfs/CredScanResult.svg" />&nbsp;
+
 This template deploys SharePoint 2019, 2016 or 2013 with the following configuration:
 
 * 1 web application created with 2 zones: Windows NTLM on Default zone and ADFS on Intranet zone.

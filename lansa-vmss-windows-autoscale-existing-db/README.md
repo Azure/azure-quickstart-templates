@@ -1,5 +1,14 @@
 # Autoscale a LANSA Windows VM Scale Set using an existing database server
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/lansa-vmss-windows-autoscale-existing-db/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/lansa-vmss-windows-autoscale-existing-db/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/lansa-vmss-windows-autoscale-existing-db/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/lansa-vmss-windows-autoscale-existing-db/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/lansa-vmss-windows-autoscale-existing-db/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/lansa-vmss-windows-autoscale-existing-db/CredScanResult.svg" />&nbsp;
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Flansa-vmss-windows-autoscale-existing-db%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>

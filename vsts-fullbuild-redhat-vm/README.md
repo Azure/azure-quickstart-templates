@@ -1,5 +1,14 @@
 # VM-Redhat - Team Services Build Agent and Cross-Platform SDKs installation
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/vsts-fullbuild-redhat-vm/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/vsts-fullbuild-redhat-vm/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/vsts-fullbuild-redhat-vm/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/vsts-fullbuild-redhat-vm/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/vsts-fullbuild-redhat-vm/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/vsts-fullbuild-redhat-vm/CredScanResult.svg" />&nbsp;
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fvsts-fullbuild-redhat-vm%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>

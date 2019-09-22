@@ -1,5 +1,14 @@
 # Create 2 Windows VMs in load balancing with port 80 open and a backend VM with SQL Server 2014.
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-2fe-lb80-rdp-1be-nsg-rdp/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-2fe-lb80-rdp-1be-nsg-rdp/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-2fe-lb80-rdp-1be-nsg-rdp/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-2fe-lb80-rdp-1be-nsg-rdp/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-2fe-lb80-rdp-1be-nsg-rdp/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-2fe-lb80-rdp-1be-nsg-rdp/CredScanResult.svg" />&nbsp;
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F301-2fe-lb80-rdp-1be-nsg-rdp%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>

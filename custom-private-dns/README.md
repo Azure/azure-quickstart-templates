@@ -1,5 +1,14 @@
 # Create a custom private DNS zone within your virtual network
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/custom-private-dns/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/custom-private-dns/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/custom-private-dns/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/custom-private-dns/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/custom-private-dns/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/custom-private-dns/CredScanResult.svg" />&nbsp;
+
 This template demonstrates how to create a highly-available pair of DNS servers hosting a private DNS zone for your virtual network.  It also shows how to configure both Windows and Linux client VMs to register their DNS records with the DNS server.  Each client registers an A record for forward (host-to-ip) DNS and a PTR record for reverse (ip-to-host) DNS.
 
 The template uses the following elements:

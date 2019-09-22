@@ -1,4 +1,13 @@
 # Copy data from on-premises SQL Server to Azure Blob Storage
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-v2-onprem-sql-to-blob-copy/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-v2-onprem-sql-to-blob-copy/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-v2-onprem-sql-to-blob-copy/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-v2-onprem-sql-to-blob-copy/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-v2-onprem-sql-to-blob-copy/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-v2-onprem-sql-to-blob-copy/CredScanResult.svg" />&nbsp;
 This template creates a data factory of version 2 with a pipeline that copies data from a table in an on-premises SQL Server database to a folder of a container in an Azure blob storage.  
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-data-factory-v2-blob-to-sql-copy%2Fazuredeploy.json" target="_blank">

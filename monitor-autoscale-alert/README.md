@@ -1,4 +1,13 @@
-### Autoscale Alert ###
+# Autoscale Alert
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/monitor-autoscale-alert/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/monitor-autoscale-alert/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/monitor-autoscale-alert/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/monitor-autoscale-alert/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/monitor-autoscale-alert/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/monitor-autoscale-alert/CredScanResult.svg" />&nbsp;
 
 The following template deploys an Activity Log Alert with Action Group integrated
 

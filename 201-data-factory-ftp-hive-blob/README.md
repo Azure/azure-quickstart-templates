@@ -1,4 +1,13 @@
 # Create a pipeline to transform data by running Hive script 
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-data-factory-ftp-hive-blob/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-data-factory-ftp-hive-blob/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-data-factory-ftp-hive-blob/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-data-factory-ftp-hive-blob/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-data-factory-ftp-hive-blob/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-data-factory-ftp-hive-blob/CredScanResult.svg" />&nbsp;
 This sample creates a data factory with a data pipeline with three activities in it. 
 
 Pipeline: Copy Activity -> HDInsight Activity -> Copy Activity 

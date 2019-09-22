@@ -1,5 +1,14 @@
 # Eris Platform
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/eris-platform/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/eris-platform/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/eris-platform/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/eris-platform/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/eris-platform/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/eris-platform/CredScanResult.svg" />&nbsp;
+
 This Microsoft Azure template deploys the Eris platform for you.
 
 ![Eris-Platform](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/eris-platform/images/eris_platform.png)

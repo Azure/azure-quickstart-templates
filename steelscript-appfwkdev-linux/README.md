@@ -1,5 +1,14 @@
 # SteelScript Application Framework developer machine
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/steelscript-appfwkdev-linux/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/steelscript-appfwkdev-linux/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/steelscript-appfwkdev-linux/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/steelscript-appfwkdev-linux/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/steelscript-appfwkdev-linux/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/steelscript-appfwkdev-linux/CredScanResult.svg" />&nbsp;
+
 ## Description
 
 This ARM template deploys Steelscript Application Framework on a fresh linux VM for development purpose. The deployment has been tested on Centos and Ubuntu linux VM.

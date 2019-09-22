@@ -1,5 +1,14 @@
 # A Visual Studio based Visual Studio Team Services (VSTS) Build Agent VM
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/visual-studio-vstsbuildagent-vm/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/visual-studio-vstsbuildagent-vm/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/visual-studio-vstsbuildagent-vm/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/visual-studio-vstsbuildagent-vm/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/visual-studio-vstsbuildagent-vm/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/visual-studio-vstsbuildagent-vm/CredScanResult.svg" />&nbsp;
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fvisual-studio-vstsbuildagent-vm%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
