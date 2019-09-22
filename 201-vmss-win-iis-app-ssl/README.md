@@ -1,5 +1,14 @@
 # Deployment of two Windows VMSS, configure windows features like IIS, .Net framework etc., download application deployment packages, URL Rewrite & SSL configuration using DSC
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vmss-win-iis-app-ssl/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vmss-win-iis-app-ssl/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vmss-win-iis-app-ssl/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vmss-win-iis-app-ssl/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vmss-win-iis-app-ssl/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vmss-win-iis-app-ssl/CredScanResult.svg" />&nbsp;
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vmss-win-iis-app-ssl%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vmss-win-iis-app-ssl/images/deploytoazure.png"/>
 </a>
@@ -32,7 +41,6 @@ This template will create the following Azure resources
 7) DSC downloads an application deployment package from an Azure Storage account and installs it in the default website <br/>
 8) DSC finds the certificate from the local store and create a 443 binding <br/>
 9) DSC creates the necessary rules so any incoming http traffic gets automatically redirected to the corresponding https end points<br/>
-
 
 The following resources are deployed as part of the solution
 

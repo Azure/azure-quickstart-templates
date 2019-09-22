@@ -1,4 +1,13 @@
 # Create a pipeline to transform data by running Hive script 
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-data-factory-ftp-hive-blob/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-data-factory-ftp-hive-blob/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-data-factory-ftp-hive-blob/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-data-factory-ftp-hive-blob/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-data-factory-ftp-hive-blob/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-data-factory-ftp-hive-blob/CredScanResult.svg" />&nbsp;
 This sample creates a data factory with a data pipeline with three activities in it. 
 
 Pipeline: Copy Activity -> HDInsight Activity -> Copy Activity 
@@ -77,10 +86,10 @@ Pipeline: Copy Activity -> HDInsight Activity -> Copy Activity
 	  
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-data-factory-ftp-hive-blob%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-data-factory-ftp-hive-blob%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
 When you deploy this Azure Resource Template, a data factory is created with the following entities: 
