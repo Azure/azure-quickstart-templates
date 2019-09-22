@@ -1,5 +1,14 @@
 # Octopus Deploy Tentacle Agent (Windows) 
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/octopus-deploy-tentacle-windows/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/octopus-deploy-tentacle-windows/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/octopus-deploy-tentacle-windows/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/octopus-deploy-tentacle-windows/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/octopus-deploy-tentacle-windows/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/octopus-deploy-tentacle-windows/CredScanResult.svg" />&nbsp;
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-octopus-deploy-tentacle-windows%2Fazuredeploy.json" target="_blank">
 <img src="images/deploytoazure.png"/>
 </a>
@@ -33,7 +42,6 @@ The following resources are deployed as part of the solution
 - 1 Virtual Network + subnet
 - 1 Virtual machine, Standard_D2_v2
 - the Octopus Deploy Tentacle Agent extension
-
 
 ## Prerequisites
 
