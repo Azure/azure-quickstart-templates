@@ -38,7 +38,6 @@
 
 ##  1. Solution Overview
 
-
 An integrated ARM Template (<a href="https://azure.microsoft.com/en-us/documentation/articles/resource-group-overview/">Azure Resource Manager</a>) that stitches all the above technology into a single deployment. The following is a feature table that is pulled together for your benefit.
 
 |Datameer and HDInsight                     |TrendMicro Deep Security                               |Chef Server and Workstation    |

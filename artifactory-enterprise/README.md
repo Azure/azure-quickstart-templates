@@ -82,5 +82,4 @@ Note: Use the load balancer's NAT entries under Azure resources, to get the allo
 Please check the Azure region support for `Standard Sku` property in load balancer for this template to work properly.  
 Check for SQL server support on specified location. If SQL server is not available in the location, Use 'DB_Location' to specify the location with SQL server support.  
 
-
  

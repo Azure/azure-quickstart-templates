@@ -29,7 +29,6 @@ Before you deploy this template, you will need an Automation Account in the Azur
 
 Automation job information needs to be sent from Azure Automation to Microsoft OMS. To acccomplish this, perform the steps documented by Microsoft at: https://docs.microsoft.com/en-us/azure/automation/automation-manage-send-joblogs-log-analytics
 
-
 **How to use the application** 
 
 Once the prerequisites are complete, you can deploy the template.

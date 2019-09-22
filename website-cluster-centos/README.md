@@ -34,19 +34,14 @@ The servers are under the same net 10.0.0.0/24, there are 4 subnets under this n
 
 - haproxy: 10.0.0.48/28
 
-
 Each server has dynamic private ip address. Web servers belong to web subnet, the ip addresses usually start from 10.0.0.4; MySQL servers belong to mysql subnet, the ip addresses start from 10.0.0.20; redis servers belong to redis subnet, the ip addresses start from 10.0.0.36; load balancer belongs to haproxy subnet, the ip address start from 10.0.0.52.
-
 
 ##Important Notice
 Each server uses raid0 to improve performance. We use 4 data disks on each server for raid0. The size of each data disk is set to 100GB. Execute the command "df -h" to find out the mount details, /dev/md0 is for the data disks. The VM size is set to Standard_A3. You can check the VM size details by clicking the URL https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-linux-sizes/ .
 
-
-
 ##After deployment, you can do below to verify if the website cluster really works or not:
 
 1. Open the URL http://your load balancer public ip/mysql.php to see if can connect to MySQL DB successfully.
-
 
 2. Check MySQL data replication status. SSH connect to load balancer, then SSH connect to MySQL slave(usually 10.0.0.21), then execute below:
   ```
@@ -77,7 +72,6 @@ Each server uses raid0 to improve performance. We use 4 data disks on each serve
   ```
   
   You should get the output as same as redis master does.
-
 
 ##Known Limitations
 - The website uses one load balancer and the load balancer uses haproxy software. You can create more load balancers and you can even use Azure's traffic manager to do the load balancing.

@@ -31,11 +31,8 @@ The nodes are under the same subnet 10.0.1.0/24. The primary node ip is 10.0.1.2
 
 - secondary node 2 ip: 10.0.1.5
 
-
 ##Important Notice
 Each VM of the replica set uses raid0 to improve performance. We use 4 data disks on each VM for raid0. The size of data disks(setup raid0) on each VM are determined by yourself. However, there is size of data disks limit per the VM size. Before you set the size of data disks, please refer to the link https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-linux-sizes/ for the correct choice.
-
-
 
 ##After deployment, you can do below to verify if the replica set really works or not:
 
@@ -49,7 +46,6 @@ Each VM of the replica set uses raid0 to improve performance. We use 4 data disk
   ```
 
   Upper rs.status() command will show the replica set details. 
-
 
 2. You can also check the data replication status. SSH connect to primary node, execute below:
   ```
@@ -76,8 +72,6 @@ Each VM of the replica set uses raid0 to improve performance. We use 4 data disk
   ```
 
 - 2.2 If db.mycol.find() command can show the result like primary node does, then means the replica set works.
-
-
 
 
 ##Known Limitations

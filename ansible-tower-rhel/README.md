@@ -27,12 +27,10 @@
 6. [Deployment Time](#deployment-time)
 7. [Support](#support)
 
-
 <!-- /TOC -->
 
 ## Solution Overview 
 Ansible Tower by Red Hat helps you scale IT automation, manage complex deployments and speed productivity. Centralize and control your IT infrastructure with a visual dashboard, role-based access control, job scheduling and graphical inventory management.
-
 
 This Azure quickstart template deploys an Ansible Tower Solution on Azure Virtual Machines running RHEL 7.2. Template will build everything starting from Azure Infrastructure components to Ansible Tower and Clients installation, configuration etc. To start with, this template will deploy one Ansible tower server vm and 2 clients.
 
@@ -50,7 +48,6 @@ This template will deploy:
 -	One Ansible Tower Virtual Machine (RHEL 7.2)
 -	Two Ansible Client Virtual Machine (RHEL 7.2)
 -	Installation and configuration of Ansible Tower Server and Clients
-
 
 ![Deployment Solution Architecture](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/ansible-tower-rhel/images/ansible-architecture.png?raw=true)
 

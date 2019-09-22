@@ -149,8 +149,3 @@ Click *Deploy to Azure* below to start the deployment
 
 
 
-
-
-
-
-

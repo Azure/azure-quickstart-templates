@@ -162,4 +162,3 @@ To test the SSL configuration on your scale set VMs without going through config
 HTH,
 Christoph
 
-

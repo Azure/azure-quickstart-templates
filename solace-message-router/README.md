@@ -25,7 +25,6 @@ Note that in production, or any environment where message loss cannot be tolerat
 
 ![alt text](images/ha-cluster.png "HA Cluster Deployment")
 
-
 This is a two step process:
 
 ### Step 1: 
@@ -101,7 +100,6 @@ In this example, the resource group is `solacerg` and the `Microsoft.Template` t
 In addition to the above resources, the deployment creates an Azure Load Balancer that gives you management and data access to the currently AD-Active message broker.
 
 Microsoft OMS (Operations Management Suite) Agents are also installed on each message broker using the OMS Agent Extension. They collect and send logs to a new or existing Azure Log Analytics workspace resource that aggregates logs and diagnostics from each virtual machine in the deployment.
-
 
 # Gaining admin access to the message broker
 

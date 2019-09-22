@@ -39,5 +39,3 @@ When your HTTP request hits backend server, you should be able to see a page lik
 ![alt text](images/serverhit.png "Backend server response")
 
 
-
-

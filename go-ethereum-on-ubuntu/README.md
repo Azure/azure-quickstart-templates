@@ -146,7 +146,6 @@ personal.unlockAccount(personal.listAccounts[0])
 var guestBook = contract.new(initializer, callback);
 ```
 
-
 Congratulations - you have a contract deployed to the Ethereum network!
 
 ...except for one little detail.

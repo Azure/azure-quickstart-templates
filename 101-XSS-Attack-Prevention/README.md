@@ -82,7 +82,6 @@ Attack on web app with
 4. Perform XSS attack by copying javascript code " **<script>alert('test script')</script>** " in MiddleName text box and click on "Save". 
  ![](images/xss-attack-script.png) 
 
-
 5. Application will save data in database and display it on dashboard.
 
     ![](images/xss-attack-dashboard.png)    
@@ -122,14 +121,11 @@ To detect the attack, execute following query in Azure Log Analytics
  
 * To detect the prevention of attack, execute following query in Azure Log Analytics
 
-
     AzureDiagnostics | where Message  contains "xss" and action_s contains "blocked"
     
     ![](images/xss-log-analytics-blocked.png)  
 
-
 You will notice events related to detection and prevention items. First time it takes few hours for OMS to pull logs for detection and prevention events. For subsequent requests it takes 10-15 mins to reflect in OMS, so if you don't get any search results, please try again after sometime.
-
 
 <a name="config"></a>
 ## Configuration Validation
@@ -150,14 +146,11 @@ Verification steps -
 2. Check if resource group name given during deployment is cleared.
 <p/>
 
-
-
 **References** 
 
 https://docs.microsoft.com/en-us/azure/application-gateway/application-gateway-introduction
  
 https://docs.microsoft.com/en-us/azure/application-gateway/application-gateway-web-application-firewall-overview
-
 
 ## Disclaimer & Acknowledgements 
 

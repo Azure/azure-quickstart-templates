@@ -87,9 +87,7 @@ Specify the name of the automation account you created earlier
 
 Select the Azure Region where your automation account is located
 
-
 You should also change the values for the *Ingest Scheduler Guid* and *Ingest Cleanup Guid*. You can generate your own using PowerShell with the following cmdlet:
-
 
 ![alt text](images/knguid.png "guid")
 
@@ -140,14 +138,12 @@ Private IP
 MAC Address
 IpForwarding
 
-
 **Input Endpointss** 
 Name
 enableDirectServerReturn
 Public Port
 Private Port
 Protocol
-
 
 **NSG Rules** 
 RuleName
@@ -164,7 +160,6 @@ NIC
 Name
 VErsion
 Publisher
-
 
 **Disk**
 StorageAccount
@@ -192,7 +187,6 @@ General Troubleshooting steps ;
 * Check if AzureStorageIngestion.......  Automation Schedules are enabled
 * Navigate to Resource group , delete AzureVMInventory[workspaceName] solution and redeploy template with a new Guid
 
-
 ## Adding Additional Subscriptions | Partial Deployment 
 
 Deploying all resources in a single resource group is the prefferred way for deploying the solution. But if you have your OMS workspace and Automation account in different resource groups  you can use the partial templates to deploy the solution. 
@@ -200,8 +194,6 @@ Deploying all resources in a single resource group is the prefferred way for dep
 First deploy the OMS Solution Views by following the link below 
 
 [![Deploy OMS Views](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Foms-azure-vminventory-solution%2Fazuredeployonlyloganalytics.json) 
-
-
 
 Second use the link below to deploy the automation components to an existing automation account.
 

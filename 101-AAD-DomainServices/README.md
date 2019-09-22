@@ -102,7 +102,6 @@ Before proceeding to the deployment of the AADDS template, we need to perform th
     # Register the resource provider for Azure AD Domain Services with Resource Manager.
     Register-AzureRmResourceProvider -ProviderNamespace Microsoft.AAD
 
-
 <a name="deployment"></a>
 
 <p></p>
@@ -120,13 +119,11 @@ After deploying AAD Domain Services it will take around 40 minutes more to be co
 To check configuration status:
 Go to the Azure portal -> Select AADDS resource group -> select Domain services resource -> health status is "Running"(refer below image)
 
-
 ![](images/aaddsstatus.png)
 
 #### 2. Update DNS on the virtual network
 
 Click on the "Configure" button from overview blade to update the DNS server settings to point to the two IP addresses where Azure Active Directory Domain Services is available on the virtual network.
-
 
 ![](images/dnsupdate.png)
 

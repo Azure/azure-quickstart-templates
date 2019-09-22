@@ -311,7 +311,6 @@ INI file parameters:
 - *SubscriptionId*
     - Subscription under which all VMs and storage accounts will be created
 
-
 To create the cluster:
 
 -   Use Azure PowerShell
@@ -323,7 +322,6 @@ To create the cluster:
 -   You will be prompted and need to enter the admin password
 -   The script will block while provisioning the cluster and return when
     the cluster has been provisioned and is ready for use.
-
 
 ## Using a Cluster
 

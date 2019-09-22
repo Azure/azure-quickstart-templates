@@ -41,6 +41,3 @@ Once you create the VM, use an SSH client (such as the Windows command prompt SS
 "vsts_ssh_info" (i.e. cat vsts_ssh_info)  in the home directory to discover the SSH private key needed when using the Team Services Copy files via SSH deployment task (when setting up the SSH endpoint).
 
 
-
-
-

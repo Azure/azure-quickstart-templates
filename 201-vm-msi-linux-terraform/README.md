@@ -35,4 +35,3 @@ Once the template is deployed, log into the vm and run the following command to 
 
      `sh ~/tfEnv.sh`
 
-

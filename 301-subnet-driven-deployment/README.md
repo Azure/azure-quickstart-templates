@@ -45,8 +45,6 @@ The purpose of this template is to illustrate:
   
 * Premium storage option, for thoses who are in a hurry.
 
-
-
 ## Notes
 
 * A minimum of two subnets is needed for this template to work
@@ -57,11 +55,7 @@ The purpose of this template is to illustrate:
 
 * Created subnets are C class (==> 172.16.X.0/24) 
 
-
-
 ## Deploying the template
-
-
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F301-subnet-driven-deployment%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>

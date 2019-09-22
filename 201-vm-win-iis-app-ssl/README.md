@@ -39,7 +39,6 @@ This template will create the following Azure resources
 8) DSC finds the certificate from the local store and create a 443 binding <br/>
 9) DSC creates the necessary rules so any incoming http traffic gets automatically redirected to the corresponding https end points<br/>
 
-
 The following resources are deployed as part of the solution
 
 #### A VNet with a single subnet 

@@ -120,7 +120,6 @@ The template expects the following parameters:
 | vmSize | The size of the VMs deployed in the cluster (Defaults to Standard_DS14) | Standard_DS14 |
 | vmImage | The OS VM Image (defaults to ClouderaCentOS6_7) | ClouderaCentOS6_7 |
 
-
 Topology
 --------
 
@@ -256,7 +255,6 @@ This will create a new profile and launch a new instance of Chrome that won’t 
 ```
 
 Now in this Chrome session you can connect to any other host on the Virtual Network using the private IP address or internal FQDN. For example, if you proxy to Cloudera EDH Master Node 0 you can connect to Cloudera Manager at `localhost:7180`.
-
 
 ### Network Security Group
 

@@ -34,14 +34,12 @@ Please select the relevant log, “AzureBackupReport” in this case, to be sent
 
 
 
-
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-backup-la-reporting%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-backup-la-reporting%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
-
 
 ## Solution overview and deployed resources
 
@@ -54,7 +52,6 @@ Clicking on any tile would let you further explore Alerts, Backups, Restores, Cl
 ![alt text](images/la-azurebackup-alertsazure.png "LA Monitoring and Reporting solution for Azure Backup alerts")
 
 ![alt text](images/la-azurebackup-backupjobsnonlog.png "LA Monitoring and Reporting solution for Azure Backup non log jobs")
-
 
 You can click on each tile to get more details about the queries used to create it and you can configure it as per your requirement. Clicking further on values appearing in the tiles will lead you to Log analytics screen where you can raise alerts for configurable event thresholds and automate actions to be performed when those thresholds are met/crossed.
 

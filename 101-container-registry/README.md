@@ -51,4 +51,3 @@ Follow [this documentation](https://docs.microsoft.com/en-us/azure/container-reg
 
 For pushing docker images on your registry, follow [this documentation](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-get-started-docker-cli)
 
-

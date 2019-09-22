@@ -77,14 +77,12 @@ Please [contact us](mailto:azuremarketplace@avyanconsulting.com) if you need fur
 You can find a quick (~3.5mins) overview of the solution in the video here
 [Enterprise_Governance_and_Operations_480p.mp4)](images/CloudWise_Enterprise_Governance_and_Operations_480p.mp4)
 
-
 <a name="overview"></a>
 ## Target Audience
 The target audience for these solution templates are IT professionals who need to stand-up and/or deploy infrastructure stacks.
 
 ## Licenses & Costs
 In its current state, solution templates come with licenses built-in – there may be a BYOL option included in the future. The solution template will be deployed in the Customer’s Azure subscription, and the Customer will incur Azure usage charges associated with running the solution stack.
-
 
 <a name="prereqs"></a>
 ## Prerequisites
@@ -109,14 +107,11 @@ Please download the link to the PowerBI dashboard
 
 <br/> &nbsp;&nbsp;&nbsp;&nbsp; ![](images/CloudWise_PowerBI_Dashboard.png)
 
-
 ### OMS Web Apps Monitoring dashboard (For Operations Teams)
 <br/> &nbsp;&nbsp;&nbsp;&nbsp; ![](images/WebAppPaaS.png)
 
 ### OMS Azure SQL Databases Monitoring dashboard (For Operations Teams)
 <br/> &nbsp;&nbsp;&nbsp;&nbsp; ![](images/SQLAzurePaaS.png)
-
-
 
 ## Deployment and Settings
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
@@ -134,8 +129,6 @@ You have now successfully deployed the application. You will have to do a few ad
     * Please navigate to your automation account. Click on Runbooks
     * Click open the scheduleIngestion runbook and click start to run the runbook. This step will kickstart the data ingestion to the OMS workspace specified.
     <br/> &nbsp;&nbsp;&nbsp;&nbsp; ![](images/StartIngestionRunbook.png)
-
-
 
 
 ## Terms of Use and Privacy Policies

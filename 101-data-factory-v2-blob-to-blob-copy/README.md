@@ -53,4 +53,3 @@ After you deploy the template, to run and monitor the pipeline, do the following
 	.\runmonitor.ps1 -resourceGroupName "<name of your resource group>" -DataFactoryName "<name of your data factory>"
 	```
 
-

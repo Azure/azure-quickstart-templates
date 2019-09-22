@@ -47,7 +47,6 @@ This template allows you to create a Deis cluster. The cluster is made up by thr
 
 		./deploy-deis.sh -n "[resource group name]" -l "West US" -f ./azuredeploy.json -e ./azuredeploy-parameters.json -c ./cloud-config.yaml
 
-
 8. Create load balancer API rule:
 
       In order to expose the API (port 80) to the network, run the following command:
@@ -137,7 +136,6 @@ The following steps show how to deploy a "Hello World" Go application to the clu
 8. Scale the application to 3 instances:
 
 		deis scale cmd=3
-
 
 ##Deis debugging tips
 

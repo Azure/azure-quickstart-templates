@@ -43,7 +43,6 @@ The following resources are deployed as part of the solution
 - 1 Virtual machine, Standard_D2_v2
 - the Octopus Deploy Tentacle Agent extension
 
-
 ## Prerequisites
 
 You will need an Octopus Deploy server, contactable from Azure. If you do not yet have one, you can use create one in Azure via [the marketplace](https://azuremarketplace.microsoft.com/en-us/marketplace/apps/octopus.octopusdeploy?tab=Overview).

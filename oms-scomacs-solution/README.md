@@ -69,8 +69,6 @@ Once you have customized all the parameters, click *Purchase*
 
 ![alt text](images/aescomacstemplatedeploy.png "template")
 
-
-
 ## Setup - Creating a new OMS Log Analytics Workspace
 
 ### Follow these instructions to deploy the OMS SCOM ACS Solution into a new OMS Log Analytics Workspace:

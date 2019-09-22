@@ -22,6 +22,5 @@ and starts a Kibana container listening on port 5601 which uses Elasticsearch da
 in a separate but linked Docker container, which are created using [Docker Compose][compose]
 capabilities of the [Azure Docker Extension][ext].
 
-
 [ext]: https://github.com/Azure/azure-docker-extension
 [compose]: https://docs.docker.com/compose

@@ -21,7 +21,6 @@ To learn more about the scenarios in which you may want to provision your own ri
 
 To learn about how to view and manage registered load agents for your Azure DevOps Services account,<a href="https://blogs.msdn.microsoft.com/visualstudioalm/2016/08/22/use-cloud-load-agents-on-your-infrastructure/" target="_blank"> click here</a>.
 
-
 <img src="images/CLTAgentsOnVnet.png"/>
 <b> Load generators inside a user's virtual network </b>
 

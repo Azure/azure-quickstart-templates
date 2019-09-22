@@ -50,5 +50,3 @@ Full URL to the test page will be: http://\<DNS name entered\>.\<resource group 
 
 
 
-
-

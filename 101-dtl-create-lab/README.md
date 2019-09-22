@@ -16,8 +16,6 @@
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
-
 This template creates a new DevTestLab instance.
-
 
 More Azure Resource Manger Quickstart Templates for Azure DevTestLab can be found at: https://github.com/Azure/azure-devtestlab 

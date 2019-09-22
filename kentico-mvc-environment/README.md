@@ -30,7 +30,6 @@ Both Kentico and the MVC application access data from the same database and use 
 
 `Tags: Kentico, cms, MVC, content management, e-commerce, online marketing`
 
-
 ## Deployed resources
 
 The template deploys the following resources:
