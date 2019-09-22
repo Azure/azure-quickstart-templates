@@ -1,10 +1,19 @@
 # Azure Backup for SQL Server in Azure Virtual Machines
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-recovery-services-vm-workload-backup/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-recovery-services-vm-workload-backup/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-recovery-services-vm-workload-backup/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-recovery-services-vm-workload-backup/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-recovery-services-vm-workload-backup/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-recovery-services-vm-workload-backup/CredScanResult.svg" />&nbsp;
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-recovery-services-vm-workload-backup%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-recovery-services-vm-workload-backup%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
 ### This template creates a Recovery Services Vault and a Workload specific Backup Policy. Registers VM with Azure Backup service and Configures Protection.

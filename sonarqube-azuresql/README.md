@@ -1,8 +1,17 @@
 # Secure SonarQube VM with Azure SQL DB  
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sonarqube-azuresql/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sonarqube-azuresql/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sonarqube-azuresql/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sonarqube-azuresql/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sonarqube-azuresql/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sonarqube-azuresql/CredScanResult.svg" />&nbsp;
 ## Version 1.0
 
-[![Deploy Button](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsonarqube-azuresql%2Fazuredeploy.json)
-[![Visualize button](http://armviz.io/visualizebutton.png)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsonarqube-azuresql%2Fazuredeploy.json)
+[![Deploy Button](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsonarqube-azuresql%2Fazuredeploy.json)
+[![Visualize button](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsonarqube-azuresql%2Fazuredeploy.json)
 
 This template deploys an Azure SQL Server, Azure SQL DB, Windows Server 2012R2 VM (Standard DS1 v2) with SonarQube installed.  This template can be deployed to a new resource group (recommended) or to an existing resource group.  
 

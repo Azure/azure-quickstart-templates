@@ -1,5 +1,14 @@
 # Create a System Center Configuration Manager Environment with the Latest General Release
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sccm-currentbranch/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sccm-currentbranch/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sccm-currentbranch/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sccm-currentbranch/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sccm-currentbranch/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sccm-currentbranch/CredScanResult.svg" />&nbsp;
+
 ## Description
 
 This template deploys the latest System Center Configuration Manager (SCCM) general release with following configuration: 

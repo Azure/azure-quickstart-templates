@@ -1,10 +1,19 @@
 # Deployment of SUSE Linux Enterprise Server VM (SLES 12)
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/vm-simple-sles/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/vm-simple-sles/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/vm-simple-sles/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/vm-simple-sles/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/vm-simple-sles/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/vm-simple-sles/CredScanResult.svg" />&nbsp;
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fvm-simple-sles%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fvm-simple-sles%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
 
