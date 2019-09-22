@@ -26,9 +26,9 @@ Deploy an Azure Automation account with preconfigured runbooks and schedules to 
 ## **From Github**
 Click Deploy to Azure and proceed to Step 2, "Configure Azure Automation Variables".
 
-[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fazure-resource-optimization-toolkit%2Fazuredeploy.json)
+[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fazure-resource-optimization-toolkit%2Fazuredeploy.json)
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FMicrosoft%2FMSITARM%2Fmaster%2Fazure-resource-optimization-toolkit%2Fazuredeploy.json" target="_blank">
-<img src="http://armviz.io/visualizebutton.png"/>
+<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
 Important!  A bootstrap runbook can take up to 15 minutes to complete setting up your Azure Automation account.  Before you use ARO Toolkit, validate the Azure Run As account is created as show below.  If not, follow the steps in Appendix D. 

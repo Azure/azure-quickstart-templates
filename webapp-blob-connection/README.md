@@ -8,10 +8,10 @@
 
 <IMG SRC="https://azbotstorage.blob.core.windows.net/badges/webapp-blob-connection/BestPracticeResult.svg" />&nbsp;
 <IMG SRC="https://azbotstorage.blob.core.windows.net/badges/webapp-blob-connection/CredScanResult.svg" />&nbsp;
-    <img src="http://azuredeploy.net/deploybutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fwebapp-with-blobconnection%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
 This template creates a web app on azure with a blob storage connection string, allowing you to deploy a web application developed to leverage Azure Blob Storage. Template was authored by Jeff Bowles Of Microsoft. 
