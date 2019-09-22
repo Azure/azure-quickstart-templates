@@ -22,4 +22,8 @@ $storageFolder = $SampleFolder.Replace("$BuildSourcesDirectory\", "").Replace("\
 $ctx = (Get-AzStorageAccount -Name $StorageAccountName -ResourceGroupName $StorageAccountResourceGroupName).Context
 
 #Get All Files from "prs" container and copy to the "badges" container
-Get-AzStorageBlob -Context $ctx -Container "prs" -Prefix $storageFolder | Start-AzStorageBlobCopy -DestContainer "badges" -Verbose
+$blobs = Get-AzStorageBlob -Context $ctx -Container "prs" -Prefix $storageFolder 
+
+$blobs | Start-AzStorageBlobCopy -DestContainer "badges" -Verbose -Force
+
+$blobs | Remove-AzStorageBlob -Verbose -Force
