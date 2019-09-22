@@ -31,5 +31,4 @@ Specifically, the template provides:
 * LB Rules
 * NAT Rules 
 
-
 ``Tags: loadbalancers, networking, lb``

@@ -117,7 +117,6 @@ Document DB
 SQL Server
 3 Public IP Addresses
 
-
 ## Deployment Steps
 
 You can click the “Deploy to Azure” button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
@@ -126,5 +125,4 @@ Please refer to parameter descriptions if you need more information on what need
 The deployment takes about 5 Hours. 
 
 To work with Pivotal Cloud Foundry Hands on Lab click [here](http://pcf-ignite.pcfazure.com/Labs/)
-
 

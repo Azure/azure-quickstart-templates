@@ -17,7 +17,6 @@
 <IMG SRC="https://azbotstorage.blob.core.windows.net/badges/nextflow-genomics-cluster-ubuntu/BestPracticeResult.svg" />&nbsp;
 <IMG SRC="https://azbotstorage.blob.core.windows.net/badges/nextflow-genomics-cluster-ubuntu/CredScanResult.svg" />&nbsp;
 
-
 ## What is Nextflow?
 [Nextflow enables scalable and reproducible](http://nextflow.io) scientific workflows using software containers. It allows the adaptation of pipelines written in the most common scripting languages.
 
@@ -25,7 +24,6 @@ Its fluent DSL simplifies the implementation and the deployment of complex paral
 
 ## What is the Purpose of this Template?
 To enable the deployment of a nextflow cluster using Ignite Executor on [Azure Scalable VMSS Machines](https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-overview)
-
 
 ## Details
 This Azure Resource Manager template and the accompanying script deploys an Azure Virtual Machine Scale Set hosting Docker and Nextflow for running scientific pipelines. 

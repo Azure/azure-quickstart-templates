@@ -22,7 +22,6 @@ Please note that [Azure Resource Manager][3] is used to provision the environmen
 | Spark | Spark | 1.6.0 with Hadoop 2.6 | The installation contains libraries needed for Hadoop 2.6 |
 | Cassandra | Cassandra | 3.2 | Installed through DataStax's YUM repository |
 
-
 ### Defaults ###
 
 | Component | Setting | Default | Notes |
@@ -91,14 +90,12 @@ New-AzureRmResourceGroupDeployment -ResourceGroupName $ResourceGroupName `
 4. Delete the Resource Group that was created to stage the provisioning scripts.
 
 
-
 ### Getting Started (For XPLAT-CLI)
 
 #### Pre-Deployment
 
 1.  Checkout the Git repository.  This folder will be known in the rest of the instructions as **CHECKOUT_DIRECTORY
 2.  Copy the scripts located in CustomScripts folder to a publically accessible location or in Azure Storage.  Once uploaded, update **artifactsLocation** and **artifactsLocationSasToken** in azuredeploy.json accordingly.
-
 
 #### Deployment
 
@@ -115,7 +112,6 @@ New-AzureRmResourceGroupDeployment -ResourceGroupName $ResourceGroupName `
 1. All servers will have a public IP and SSH port enabled by default.  These can be disabled or modified using Azure Portal.  Have a look at [Network Security Groups for more information][5].
 2. All servers are configured with the same username and password (as entered on the prompts).  SSH into each server and ensure connectivity.
 3. Spark WebUI is running on port 8080.  Access it using MASTER_WEB_UI_PUBLIC_IP:8080 on your browser.  Public IP is available through Azure Portal.
-
 
 [1]: https://azure.microsoft.com/en-us/pricing/free-trial/
 [2]: https://azure.microsoft.com/en-us/documentation/articles/powershell-install-configure/

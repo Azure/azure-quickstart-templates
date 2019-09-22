@@ -111,7 +111,6 @@ This template will create a new OMS Log Analytics Workspace in the specified reg
 
 You should also change the *INGESTSCHEDULEGUID* value. You can generate your own using PowerShell with the following cmdlet:
 
-
 ![alt text](images/knguid.png "guid")
 
 Once you have customized all the parameters, click *Create*

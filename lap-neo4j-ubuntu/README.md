@@ -44,7 +44,6 @@ Only support one Neo4j node for now.
 - Install Neo4J
 - Change the configuration to allow remote connections
 
-
 ## Known Issues and Limitations
 - The template does not currently configure SSL on the nodes.
 - The template uses username/password for provisioning and would ideally use an SSH key.

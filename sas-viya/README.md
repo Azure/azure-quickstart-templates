@@ -587,4 +587,3 @@ During installation, yum updates servers but will not automatically apply patche
 * Schedule updates on the boxes through cron 
 * Regularly log on to the system and run a "yum update" command to keep security patches up to date on the operating system
 
-

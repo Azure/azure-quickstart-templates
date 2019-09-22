@@ -22,7 +22,6 @@
 6. [Deployment Time](#deployment-time)
 7. [Support](#support)
 
-
 <!-- /TOC -->
 
 ## Solution Overview
@@ -37,7 +36,6 @@ This template will deploy:
 *	One Public IP
 *	One Ubuntu Server VM
 *   Installation and configuration of Mongo database and Nodejs application
-
 
 <img src="images/onPremApp.jpg"/> 
 

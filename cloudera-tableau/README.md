@@ -126,8 +126,6 @@ To complete the process of viewing the Cloudera Impala sample data with a Tablea
 - SSH key is not yet implemented and the template currently takes a password for the admin user
 
 
-
-
 Version 2016-12-26
 
 END USER LICENSE TERMS AND CONDITIONS

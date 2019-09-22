@@ -20,4 +20,3 @@
 This template allows you to deploy an app service plan and a basic Windows web app. 
 
 
-

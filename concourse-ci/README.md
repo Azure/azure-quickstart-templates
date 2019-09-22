@@ -37,7 +37,6 @@ Here we’ll create the following Azure resources that’s required for deployin
 
 This ARM template can help you to deploy all the above resources on Azure. Just click the button below with the following parameters:
 
-
 | Name | Required | Default Value | Description |
 |:----:|:--------:|:-------------:|:----------- |
 | vmName | **YES** | | Name of Virtual Machine |

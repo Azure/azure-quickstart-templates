@@ -26,7 +26,6 @@
 4. [Deployment Steps](#deployment-steps)
 5. [Support](#support)
 
-
 <!-- /TOC -->
 
 ## Solution Overview

@@ -42,7 +42,6 @@ Azure is a world-class cloud for hosting virtual machines running Windows or Lin
    - **_artifacts Location** - Leave it with the default value.
    - **_artifacts Location Sas Token** - Leave it with the default value.
 
-
 ## Usage
 
 ### Check Jenkins Build Job Status
@@ -66,7 +65,6 @@ Azure is a world-class cloud for hosting virtual machines running Windows or Lin
 
 5. The build console output will be shown and keep refreshed until the build completes.
    ![](images/jenkins-build-output.png)
-
 
 ### Manage Jenkins
 

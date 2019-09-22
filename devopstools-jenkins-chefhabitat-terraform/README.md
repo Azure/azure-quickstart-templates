@@ -282,7 +282,6 @@ You will receive the following output:
 
 2. Note the values for  **appId** , **password(ClientSecret)** for the parameters section.
 
-
 ## Deploy the ARM Template:
 
 1. Take the main-template from the provided GitHub URL.
@@ -330,7 +329,6 @@ The ARM template will deploy the following resources on Azure:
 | 5    |ELK Stack             | Elasticsearch, Kibana, Filebeat  | 1                    |Elasticsearch:Contains Index data, Kibana:Segregate logs to visualize as graphs, Filebeat:Forwarding logs to Kibana| 80
 | 6    |Load Balancer         | -                                | 1                    |Directs traffic to Application Nodes                                                                                  |
 | 7    |Azure Storage Account | packer,jenkins,ELK               | 3                    |Packer:To store the Packer VHD’s |
-
 
 ## Solution Workflow:
 
@@ -438,7 +436,6 @@ This job will launch a Virtual machine Scale set with three application nodes.
 5.  Once the ELKJob is successfully executed, then the MongoDBPackerJob will automatically start.
 
 6.  Click **MongoDBPackerJob** to view the job execution.
-
 
 7.  Click on **Build number** (Eg: **#1** ) as shown below.
 

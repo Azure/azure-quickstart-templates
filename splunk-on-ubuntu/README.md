@@ -56,7 +56,6 @@ Below is the list of template parameters:
 | domainNamePrefix | :heavy_check_mark: | Prefix for domain name to access Splunk |
 | publicIPName | | Name of the Search Head public IP address. Default: splunksh-publicip |
 
-
 NOTE:
 * This solution uses Splunk's default certificates to enable HTTPS which will create a browser warning. Please follow instructions in Splunk Docs to secure Splunk Web [with your own SSL certificates](http://docs.splunk.com/Documentation/Splunk/latest/Security/SecureSplunkWebusingasignedcertificate).
 

@@ -27,7 +27,6 @@ This template deploys OpenShift Container Platform on Azure.
 
 ![Console](images/parameters.png)
 
-
 #### Subscription
 Accept the default subscription ID value. Note: this field is not shown in the picture above.
 

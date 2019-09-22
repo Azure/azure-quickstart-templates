@@ -57,4 +57,3 @@ If you don't have a Red Hat subscription to install a JBoss EAP, you can go thro
 
 *  <a href="https://github.com/Azure/azure-quickstart-templates/tree/master/wildfly-standalone-centos7" target="_blank"> [Red Hat WildFly 16 on an Azure VM]</a> - Standalone WildFly 16 with a sample web app on a CentOs 7 Azure VM.
 
-

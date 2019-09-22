@@ -85,7 +85,6 @@ While Azure does not currently backup up Postgres/MySQL database, by dumping it 
 
 If you have set azureBackupSwitch to 1 then Azure will provide VM backups of your Gluster node. This is recommended as it contains both your Mahara code and your sitedata. Restoring a backed up VM is outside the scope of this dos, but Azure's documentation on Recovery Services can be found here: https://docs.microsoft.com/en-us/azure/backup/backup-azure-vms-first-look-arm
 
-
 ### *Resizing your database*
 
 Note: This involves a lengthy site downtime.

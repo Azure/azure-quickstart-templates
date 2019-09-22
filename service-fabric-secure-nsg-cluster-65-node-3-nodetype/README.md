@@ -37,4 +37,3 @@ Refer to [Deploying ARM templates using ARM PS ](https://azure.microsoft.com/doc
 [DownloadTemplate]: ./DownloadTemplate.png
 [NSG]: ./NSG1.PNG
 
-

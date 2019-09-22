@@ -47,17 +47,14 @@ To create the VM, you will need to:
 
 4. Decide on a name for your build agent (i.e. the name for your agent within the above pool).
 
-
 ## Verifying the Agent
 Once the VM is successfully provisioned, Team Services build agent installation and initialization can be verified by accessing the the *Agent pools* tab under the Control panel for the Team Services account
 (e.g. https://myaccount.visualstudio.com/_admin/_AgentPool).  You should be able to click on the build agent pool (from #3 above)
 and see your agent listed by the name (used in #4 above).  If all is well, the colored bar to the left of the pool name should be green.
 If the colored bar is red, or if the agent name does not appear in the specified pool, see below for debugging hints.
 
-
 ## Debugging Agent Failures
 For general information on administering build agents, visit https://www.visualstudio.com/en-us/docs/build/admin/.
-
 
 If the Azure portal under *Virtual machines* shows that your VM is *Running* (in the Status column) but either the build agent name does not 
 show up under the build Agent Pool in Team Services OR the agent name does show up but has a red colored bar to the left of the name,

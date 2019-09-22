@@ -36,4 +36,3 @@ etc..
 
 [Introduction to the Azure Data Science VM](https://docs.microsoft.com/azure/machine-learning/machine-learning-data-science-virtual-machine-overview)
 
-

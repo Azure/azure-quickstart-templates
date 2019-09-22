@@ -29,5 +29,3 @@ a public IP and then block off everything from the outside world accept for SSH.
 resources will be using it.
 
 
-
-

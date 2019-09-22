@@ -225,12 +225,10 @@ to the trouble of provisioning a service account to deploy ARO Toolkit.
 
      ![alt text](images/AROToolkit/image23.png "Run As Accounts")
 
-
 1.  Once this completes, navigate to the Bootstrap\_Main runbook and
     start it.
 
      ![alt text](images/AROToolkit/image24.png "Bootstrap")
-
 
      ![alt text](images/AROToolkit/image25.png "Bootstrap")
 

@@ -25,7 +25,6 @@ To enable Accelerated Networking feature ( SR-IOV ) which is a free feature, usi
 
 In network profile of VMSS , set "enableAcceleratedNetworking" to true, to have more information, please go to https://docs.microsoft.com/en-us/azure/virtual-network/create-vm-accelerated-networking-cli
 
-
 If availability zone is available in your region,  adding the following in your template to improve the availability of your VMSS :
 ```
       "zones": [
@@ -36,7 +35,6 @@ If availability zone is available in your region,  adding the following in your 
 }
 
 ```
-
 
 Note that your Load Balancer should be STANDARD tier as well as your public IP ( if you're using it ), check here to know more about it : https://docs.microsoft.com/en-us/azure/load-balancer/load-balancer-standard-availability-zones
 

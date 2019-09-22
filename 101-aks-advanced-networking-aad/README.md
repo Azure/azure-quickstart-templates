@@ -16,7 +16,6 @@
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
-
 > **Important:** The user running this template needs to be an **Owner** on the subscription or Resource Group where your Virtual Network is located.
 
 `Tags: AKS, Kubernetes, Advanced Networking, Azure Active Directory`
@@ -31,7 +30,6 @@ It will also setup Azure Active Directory as the default Authentication mechanis
 
 - Azure AD can only be enabled when you create a new, RBAC-enabled cluster. You can't enable Azure AD on an existing AKS cluster.
 - Guest users in Azure AD, such as if you are using a federated login from a different directory, are not supported.
-
 
 ## Prerequisites
 
@@ -49,7 +47,6 @@ _NOTE:  The Service Principal Client Id is the Same as the App Id_
 az ad sp create-for-rbac -n "spn_name" --skip-assignment
 az ad sp show --id <The AppId from the create-for-rbac command> --query objectId
 ```
-
 
 Please note that using the 'create-for-rbac' function would assign the SPN the 'Contributor' role on subscription level, which may not be appropriate from a security standpoint.
 

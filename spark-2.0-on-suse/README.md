@@ -76,7 +76,6 @@ VMs will be used as spark master or N-th worker on the cluster
 
 + **ns_spark**: The network security group for the Spark Cluster
 
-
 ## Usage
 
 #### Launch Spark 2.0 Application from local machine
@@ -107,7 +106,6 @@ spark-shell
 You can see how application are executed consulting Spark Web UI at **http://YOUR_MASTER_PUBLIC_IP:8080**
 
 If running application on sparkmaster you can reach Spark Application UI at **http://YOUR_MASTER_PUBLIC_IP:4040**
-
 
 #### Different Artifact Location
 

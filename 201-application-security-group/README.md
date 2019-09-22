@@ -34,4 +34,3 @@ For more information about Application Security Groups, please refer to:
 
 [Filter network traffic with a network security group using the Azure CLI](https://docs.microsoft.com/en-us/azure/virtual-network/tutorial-filter-network-traffic-cli)
 
-

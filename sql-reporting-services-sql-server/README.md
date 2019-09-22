@@ -39,5 +39,4 @@ based on the DSC package http://www.powershellgallery.com/packages/xSQLServer/1.
 
 It contains the DSC scripts from https://sqlvmgroup.blob.core.windows.net/singlevm/PrepareSqlServer.ps1.zip used by the Azure marketplace to create SQL Machines
 
-
         
