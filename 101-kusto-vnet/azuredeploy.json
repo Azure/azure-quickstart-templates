@@ -1,0 +1,144 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "clusterName": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "skuName": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "skuTier": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "subnetName": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "enginePublicIpName": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "dataManagementPublicIpName": {
+      "type": "string",
+      "defaultValue": ""
+    }
+  },
+  "variables" : {
+      "networkApiVersion": "2017-08-01",
+      "publicIpAllocationMethod" : "Static",
+      "nsgName" : "azureDataExplorerNsg",
+      "nsgId" : "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]",
+
+      "vnetId" : "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
+	  "subnetId" : "[resourceId('Microsoft.Network/virtualNetworks/subnets',parameters('virtualNetworkName'),parameters('subnetName'))]",
+      "enginePublicIpId" : "[resourceId('Microsoft.Network/publicIPAddresses', parameters('enginePublicIpName'))]",
+      "dataManagementPublicIpId" : "[resourceId('Microsoft.Network/publicIPAddresses', parameters('dataManagementPublicIpName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('nsgName')]",
+      "apiVersion": "[variables('networkApiVersion')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "AllowHTTPS",
+            "properties": {
+              "description": "Allow access using HTTPS",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "[variables('networkApiVersion')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[parameters('virtualNetworkName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": ["[variables('nsgId')]"],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/16"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('subnetName')]",
+            "properties": {
+              "addressPrefix": "10.0.0.0/20",
+              "networkSecurityGroup": {
+                "id": "[variables('nsgId')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "[variables('networkApiVersion')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[parameters('enginePublicIpName')]",
+      "sku" : {
+        "name" : "Standard"
+      },
+      "location": "[resourceGroup().location]",
+      "properties": {
+         "publicIPAllocationMethod": "[variables('publicIpAllocationMethod')]",
+         "publicIPAddressVersion" : "IPv4"
+      }
+    },
+    {
+      "apiVersion": "[variables('networkApiVersion')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[parameters('dataManagementPublicIpName')]",
+      "sku" : {
+        "name" : "Basic"
+      },
+      "location": "[resourceGroup().location]",
+      "properties": {
+         "publicIPAllocationMethod": "[variables('publicIpAllocationMethod')]",
+         "publicIPAddressVersion" : "IPv4"
+      }
+    },
+    {
+      "type": "Microsoft.Kusto/Clusters",
+      "sku": {
+          "name": "[parameters('skuName')]",
+          "tier": "[parameters('skuTier')]"
+      },
+      "name": "[parameters('clusterName')]",
+      "apiVersion": "2019-05-15",
+      "dependsOn" :[
+        "[variables('enginePublicIpId')]",
+        "[variables('dataManagementPublicIpId')]",
+		"[variables('vnetId')]"
+      ],
+      "location": "[resourceGroup().location]",
+      "properties": {
+          "virtualNetworkConfiguration": {
+            "subnetId": "[variables('subnetId')]",
+            "enginePublicIpId": "[variables('enginePublicIpId')]",
+            "dataManagementPublicIpId": "[variables('dataManagementPublicIpId')]"
+          }
+      }
+    }
+  ]
+}
