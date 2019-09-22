@@ -60,29 +60,54 @@ if ($r -eq $null) {
         $results.Add("PublicLastTestDate", $PublicLastTestDate) 
     }
 
+    $results | ft
+
     Add-AzTableRow -table $cloudTable `
         -partitionKey $PartitionKey `
         -rowKey $RowKey `
         -property $results
 }
 else {
-    # Update the existing row
+    # Update the existing row - need to check to make sure the columns exist
     if (![string]::IsNullOrWhiteSpace($BestPracticeResult)) {
-        $r.BestPracticeResult = $BestPracticeResult
+        if ($r.BestPracticeResult -eq $null) {
+            Add-Member -InputObject $r -NotePropertyName 'BestPracticeResult' -NotePropertyValue $BestPracticeResult
+        }
+        else {
+            $r.BestPracticeResult = $BestPracticeResult
+        }
     }
     if (![string]::IsNullOrWhiteSpace($CredScanResult)) {
-        $r.CredScanResult = $CredScanResult
+        if ($r.CredScanResult -eq $null) {
+            Add-Member -InputObject $r -NotePropertyName "CredScanResult" -NotePropertyValue $CredScanResult
+        }
+        else {
+            $r.CredScanResult = $CredScanResult 
+        }
     }
     # set the values for FF only if a result was passed
     if (![string]::IsNullOrWhiteSpace($FairfaxDeployment)) { 
-        $r.FairfaxDeployment = $FairfaxDeployment
-        $r.FairfaxLastTestDate = $FairfaxLastTestDate 
+        if ($r.FairfaxDeployment -eq $null) {
+            Add-Member -InputObject $r -NotePropertyName "FairfaxDeployment" -NotePropertyValue $FairfaxDeployment
+            Add-Member -InputObject $r -NotePropertyName "FairfaxLastTestDate" -NotePropertyValue $FairfaxLastTestDate
+        }
+        else {
+            $r.FairfaxDeployment = $FairfaxDeployment
+            $r.FairfaxLastTestDate = $FairfaxLastTestDate 
+        }
     }
     # set the values for MAC only if a result was passed
     if (![string]::IsNullOrWhiteSpace($PublicDeployment)) {
-        $r.PublicDeployment = $PublicDeployment 
-        $r.PublicLastTestDate = $PublicLastTestDate 
+        if ($r.PublicDeployment -eq $null) {
+            Add-Member -InputObject $r -NotePropertyName "PublicDeployment" -NotePropertyValue $PublicDeployment
+            Add-Member -InputObject $r -NotePropertyName "PublicLastTestDate" -NotePropertyValue $PublicLastTestDate
+        }
+        else {
+            $r.PublicDeployment = $PublicDeployment 
+            $r.PublicLastTestDate = $PublicLastTestDate 
+        }
     }
+    $r | ft
     $r | Update-AzTableRow -table $cloudTable
 }
 
@@ -154,8 +179,6 @@ else {
     $CredScanResultColor = "inactive"
 }
 
-$blobUri = "$($ctx.BlobEndPoint)/badges/"
-
 $badges = @(
     @{
         "url"      = "https://img.shields.io/badge/Azure%20Public%20Test%20Date-$PublicLastTestDate-/?color=$PublicLastTestDateColor";
@@ -186,7 +209,17 @@ $badges = @(
 
 foreach ($badge in $badges) {
     (Invoke-WebRequest -Uri $($badge.url)).Content | Set-Content -Path $badge.filename -Force
-    Set-AzStorageBlobContent -Container "badges" -File $badge.filename -Blob "$RowKey/$($badge.filename)" -Context $ctx -Force -Properties @{"ContentType"="image/svg+xml"}
+    <#
+        if this is just a PR, we don't want to overwrite the live badges until it's merged
+        just create the badges in the "pr" folder and they will be copied over by a CI build when merged
+        scheduled builds should be put into the "live" container (i.e. badges)
+    #>
+    if ($ENV:BUILD_REASON -eq "PullRequest") {
+        $containerName = "prs"
+    } else {
+        $containerName = "badges"
+    }
+    Set-AzStorageBlobContent -Container $containerName -File $badge.filename -Blob "$RowKey/$($badge.filename)" -Context $ctx -Force -Properties @{"ContentType" = "image/svg+xml" }
 }
 
 <#Debugging only
