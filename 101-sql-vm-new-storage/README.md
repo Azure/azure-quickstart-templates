@@ -6,7 +6,7 @@
 <IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-sql-vm-new-storage/FairfaxLastTestDate.svg" />&nbsp;
 <IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-sql-vm-new-storage/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-sql-vm-new-storage/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-sql-vm-new-storage/BestPracticeResult.svg?" />&nbsp;
 <IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-sql-vm-new-storage/CredScanResult.svg" />&nbsp;
 
 
