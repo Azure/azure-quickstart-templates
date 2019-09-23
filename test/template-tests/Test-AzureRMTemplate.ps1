@@ -133,12 +133,17 @@ Each test script has access to a set of well-known variables:
         
         # This lets our built-in groups be automatically defined by their file structure.
 
-
+        if (-not $script:AlreadyLoadedCache) { $script:AlreadyLoadedCache = @{} }
         # Next we want to load the cached items
         $cacheDir = $myLocation | Split-Path | Join-Path -ChildPath cache
         $cacheItemNames = @(foreach ($cacheFile in (Get-ChildItem -Path $cacheDir -Filter *.cache.json)) {
             $cacheName = $cacheFile.Name -replace '\.cache\.json', ''
-            $cacheData = [IO.File]::ReadAllText($cacheFile.Fullname) | ConvertFrom-Json
+            if (-not $script:AlreadyLoadedCache[$cacheFile.Name]) {
+                $script:AlreadyLoadedCache[$cacheFile.Name] = 
+                    [IO.File]::ReadAllText($cacheFile.Fullname) | ConvertFrom-Json
+                
+            }
+            $cacheData = $script:AlreadyLoadedCache[$cacheFile.Name]
             $ExecutionContext.SessionState.PSVariable.Set($cacheName, $cacheData)
             $cacheName
         })

@@ -1,5 +1,14 @@
 # Guacamole VM in existing VNet 
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/guacamole-rdp-vnc-gateway-existing-vnet/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/guacamole-rdp-vnc-gateway-existing-vnet/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/guacamole-rdp-vnc-gateway-existing-vnet/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/guacamole-rdp-vnc-gateway-existing-vnet/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/guacamole-rdp-vnc-gateway-existing-vnet/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/guacamole-rdp-vnc-gateway-existing-vnet/CredScanResult.svg" />&nbsp;
+
 This template deploys a VM with [Guacamole](http://guac-dev.org), the open source HTML5 RDP/VNC proxy.
 
 You will need an existing Virtual Network, and you will need the name of the VNet and a subnet in that VNet. This template deploys Guacamole and MariaDB using Docker containers, and it's based on CoreOS (channel "stable").

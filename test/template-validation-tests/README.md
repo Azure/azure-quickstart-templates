@@ -1,3 +1,11 @@
+```
+
+Note: these tests are being replaced by: 
+
+https://github.com/Azure/azure-quickstart-templates/tree/master/test/template-tests
+
+```
+
 # Run static validation checks for templates
 
 This folder contains mocha tests, that runs static checks against a solution template folder containing mainTemplate.json, createUiDefinition.json and other template artifacts like nested templates, etc. A sample solution template folder named "sample-template" is included, that can be used to run the checked in tests under the "test" folder.

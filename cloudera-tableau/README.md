@@ -1,4 +1,13 @@
 # Refer to install instructions Cloudera + Tableau Quickstart Deployment and Usage Guide.pdf located in the root folder
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/cloudera-tableau/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/cloudera-tableau/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/cloudera-tableau/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/cloudera-tableau/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/cloudera-tableau/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/cloudera-tableau/CredScanResult.svg" />&nbsp;
 # Deploy a Cloudera Express cluster with the option to unlock Cloudera Enterprise features for a free 60-day trial
 # Will also deploy the latest Bring Your Own License version of Tableau
 # Important!  You must increase the default 20 cores in the region you are deploying
@@ -7,10 +16,10 @@
 # By clicking "Deploy to Azure" you agree to the Terms and Conditions below.
 # Deployment to Azure (use this if you are not sure)
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcloudera-tableau%2Fazuredeploy.json" target="_blank">
-<img src="http://azuredeploy.net/deploybutton.png"/>
+<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcloudera-tableau%2Fazuredeploy.json" target="_blank">
-<img src="http://armviz.io/visualizebutton.png"/>
+<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
 # Readme
@@ -115,8 +124,6 @@ To complete the process of viewing the Cloudera Impala sample data with a Tablea
 - All nodes in the cluster have a public IP address.
 - The deployment script is not yet idempotent and cannot handle updates (although it currently works for initial provisioning only)
 - SSH key is not yet implemented and the template currently takes a password for the admin user
-
-
 
 
 Version 2016-12-26

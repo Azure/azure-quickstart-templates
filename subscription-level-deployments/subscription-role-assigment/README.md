@@ -1,5 +1,14 @@
 # Assign a Role at Subscription Scope
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/subscription-role-assigment/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/subscription-role-assigment/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/subscription-role-assigment/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/subscription-role-assigment/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/subscription-role-assigment/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/subscription-role-assigment/CredScanResult.svg" />&nbsp;
+
 This template is a subscription level template that will assign a role at subscription scope.
 
 Currently the only supported methods for deploying subscription level templates are the REST apis, some SDKS and the Azure CLI.  For the latest check [here](https://docs.microsoft.com/en-us/azure/azure-resource-manager/create-resource-group-in-template#create-empty-resource-group).

@@ -1,5 +1,14 @@
 # Shared Scripts
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/shared_scripts/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/shared_scripts/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/shared_scripts/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/shared_scripts/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/shared_scripts/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/shared_scripts/CredScanResult.svg" />&nbsp;
+
 This folder contains a set of reusable scripts to perform tasks that are common across a number of resource templates.  Given the fact that these scripts are used by multiple resource templates, please take care in making changes.  The goal is to promote reuse and have a set of very well tested, reviewed, and resilient scripts to use when performing those common tasks, like formatting a data disk.
 
 ##Versioning

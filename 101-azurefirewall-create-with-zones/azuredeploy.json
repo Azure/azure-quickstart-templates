@@ -30,11 +30,18 @@
         "description": "Azure Firewall name"
       }
     },
-    "publicIPName": {
-      "type": "string",
-      "defaultValue": "publicIP1",
+    "numberOfPublicIPAddresses": {
+      "type": "int",
+      "defaultValue": 1,
       "metadata": {
-        "description": "Public IP address name"
+        "description": "Number of public IP addresses"
+      }
+    },
+    "publicIPNamePrefix": {
+      "type": "string",
+      "defaultValue": "publicIP",
+      "metadata": {
+        "description": "Public IP address name prefix - will be auto suffixed with a number (e.g. publicIP1)"
       }
     },
     "location": {
@@ -54,8 +61,24 @@
   },
   "variables": {
     "azureFirewallSubnetName": "AzureFirewallSubnet",
-    "azureFirewallSubnetId":  "[resourceId('Microsoft.Network/virtualNetworks/subnets',parameters('virtualNetworkName'), variables('azureFirewallSubnetName'))]",
-    "azureFirewallPublicIpId": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('publicIPName'))]"
+    "azureFirewallSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets',parameters('virtualNetworkName'), variables('azureFirewallSubnetName'))]",
+    "azureFirewallPublicIpId": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('publicIPNamePrefix'))]",
+    "azureFirewallSubnetJSON": "[json(format('{{\"id\": \"{0}\"}}', variables('azureFirewallSubnetId')))]",
+    "copy": [
+      {
+        "name": "azureFirewallIpConfigurations",
+        "count": "[parameters('numberOfPublicIPAddresses')]",
+        "input": {
+          "name": "[concat('IpConf', copyIndex('azureFirewallIpConfigurations'))]",
+          "properties": {
+            "subnet": "[if(equals(copyIndex('azureFirewallIpConfigurations'), 0), variables('azureFirewallSubnetJSON'), json('null'))]",
+            "publicIPAddress": {
+              "id": "[concat(variables('azureFirewallPublicIpId'), add(copyIndex('azureFirewallIpConfigurations'), 1))]"
+            }
+          }
+        }
+      }
+    ]
   },
   "resources": [
     {
@@ -84,7 +107,7 @@
       }
     },
     {
-      "name": "[parameters('publicIPName')]",
+      "name": "[concat(parameters('publicIPNamePrefix'), add(copyIndex(), 1))]",
       "type": "Microsoft.Network/publicIPAddresses",
       "apiVersion": "2019-04-01",
       "location": "[parameters('location')]",
@@ -94,6 +117,10 @@
       "properties": {
         "publicIPAllocationMethod": "Static",
         "publicIPAddressVersion": "IPv4"
+      },
+      "copy": {
+        "name": "publicIpCopy",
+        "count": "[parameters('numberOfPublicIPAddresses')]"
       }
     },
     {
@@ -103,23 +130,11 @@
       "location": "[parameters('location')]",
       "zones": "[if(equals(length(parameters('availabilityZones')), 0), json('null'), parameters('availabilityZones'))]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
-        "[resourceId('Microsoft.Network/publicIPAddresses/', parameters('publicIPName'))]"
+        "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
+        "publicIpCopy"
       ],
       "properties": {
-        "ipConfigurations": [
-          {
-            "name": "IpConf",
-            "properties" : {
-              "subnet": {
-                "id": "[variables('azureFirewallSubnetId')]"
-              },
-              "PublicIPAddress": {
-                "id": "[variables('azureFirewallPublicIpId')]"
-              }
-            }
-          }
-        ],
+        "ipConfigurations": "[variables('azureFirewallIpConfigurations')]",
         "applicationRuleCollections": [
           {
             "name": "appRc1",
@@ -147,7 +162,7 @@
             "name": "netRc1",
             "properties": {
               "priority": 200,
-              "action":  { "type": "Allow" },
+              "action": { "type": "Allow" },
               "rules": [
                 {
                   "name": "netRule1",
