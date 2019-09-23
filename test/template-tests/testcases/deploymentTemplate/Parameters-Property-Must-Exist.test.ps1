@@ -5,5 +5,5 @@ $TemplateObject
 )
 
 if (-not $TemplateObject.psobject.properties.item('parameters')) {
-    throw "Parameters property must exist in the template"
+    Write-Error -Message "Parameters property must exist in the template"
 } 
