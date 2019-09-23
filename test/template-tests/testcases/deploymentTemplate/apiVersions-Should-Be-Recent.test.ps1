@@ -139,7 +139,7 @@ foreach ($av in $allApiVersions) {
     $timeSinceApi = $TestDate - $apiDate
     if (($timeSinceApi.TotalDays -gt $NumberOfDays) -and ($howOutOfDate -gt 0)) {
         # If it's older than two years, and there's nothing more recent
-        Write-Error "Api versions must be the latest or under $($NumberOfDays / 365) years old ($NumberOfDays days)`nAPI version $($av.ApiVersion) of $FullResourceType is $([Math]::Floor($timeSinceApi.TotalDays)) days old" -ErrorId ApiVersion.OutOfDate
+        Write-Error "Api versions must be the latest or under $($NumberOfDays / 365) years old ($NumberOfDays days) - API version $($av.ApiVersion) of $FullResourceType is $([Math]::Floor($timeSinceApi.TotalDays)) days old" -ErrorId ApiVersion.OutOfDate
         Write-Host "Valid Api Versions:`n$recentApiVersions"
     }
 }
