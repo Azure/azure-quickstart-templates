@@ -21,8 +21,12 @@ elseif ($ENV:BUILD_REASON -eq "BatchedCI" -or $ENV:BUILD_REASON -eq "IndividualC
     #>
     $pr = $ENV:BUILD_SOURCEVERSIONMESSAGE
     $begin = $pr.IndexOf("#") # look for the #
-    $end = $pr.IndexOf(" ", $begin) # look for the trailing space
-    $GitHubPRNumber = $pr.Substring($begin + 1, $end - $begin - 1)
+    if($begin -ge 0){
+        $end = $pr.IndexOf(" ", $begin) # look for the trailing space
+        $GitHubPRNumber = $pr.Substring($begin + 1, $end - $begin - 1)
+    }else{
+        Write-Error "BuildSourceVersionMessage does not contain PR #: `'$pr`'"
+    }
 }
 else {
     Write-Error "Unknown Build Reason ($ENV:BUILD_REASON) - cannot get PR number... "
