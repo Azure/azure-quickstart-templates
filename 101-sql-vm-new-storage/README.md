@@ -1,14 +1,5 @@
 # Create a SQL Server Virtual Machines with peformance optimized storage settings
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-sql-vm-new-storage/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-sql-vm-new-storage/PublicDeployment.svg" />&nbsp;
-
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-sql-vm-new-storage/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-sql-vm-new-storage/FairfaxDeployment.svg" />&nbsp;
-
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-sql-vm-new-storage/BestPracticeResult.svg?" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-sql-vm-new-storage/CredScanResult.svg" />&nbsp;
-
 
 Before deploying the template you must have the following
 
