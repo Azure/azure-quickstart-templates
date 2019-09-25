@@ -1,5 +1,14 @@
 # Container CI/CD using Jenkins and Kubernetes on Azure Container Service (AKS)
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/jenkins-cicd-container/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/jenkins-cicd-container/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/jenkins-cicd-container/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/jenkins-cicd-container/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/jenkins-cicd-container/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/jenkins-cicd-container/CredScanResult.svg" />&nbsp;
+
 ## Architecture overview
 
 Containers make it very easy for you to continuously build and deploy your applications. By orchestrating deployment of those containers using Kubernetes in Azure Container Service, you can achieve replicable, manageable clusters of containers.

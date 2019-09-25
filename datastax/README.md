@@ -1,5 +1,14 @@
 # Important Note
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/datastax/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/datastax/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/datastax/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/datastax/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/datastax/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/datastax/CredScanResult.svg" />&nbsp;
+
 For the most up to date version of this template, please do not use this repo. Instead go [here](https://github.com/DSPN/azure-resource-manager-dse).  We strongly encourage use of the latest version as it incorporates bug fixes and is more flexible.
 
 # Deploying this DataStax ARM Template
