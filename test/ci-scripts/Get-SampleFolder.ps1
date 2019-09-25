@@ -13,7 +13,7 @@ $RepoRoot = $ENV:BUILD_REPOSITORY_LOCALPATH
 if ($ENV:BUILD_REASON -eq "PullRequest") {
     $GitHubPRNumber = $ENV:SYSTEM_PULLREQUEST_PULLREQUESTNUMBER
 }
-elseif ($ENV:BUILD_REASON -eq "BatchedCI" -or $ENV:BUILD_REASON -eq "IndividualCI") {
+elseif ($ENV:BUILD_REASON -eq "BatchedCI" -or $ENV:BUILD_REASON -eq "IndividualCI" -or $ENV:BUILD_REASON -eq "Manual") {
     <#
         When a CI trigger is running, we get no information in the environment about what changed in the incoming PUSH (i.e. PR# or files changed) except...
         In the source version message - so even though this fragile, we can extract from there - the expected format is:
@@ -25,7 +25,7 @@ elseif ($ENV:BUILD_REASON -eq "BatchedCI" -or $ENV:BUILD_REASON -eq "IndividualC
     $GitHubPRNumber = $pr.Substring($begin + 1, $end - $begin - 1)
 }
 else {
-    Write-Error "Unknown Build Reason - cannot get PR number..."
+    Write-Error "Unknown Build Reason ($ENV:BUILD_REASON) - cannot get PR number... "
 }
 
 $PRUri = "https://api.github.com/repos/$($GitHubRepository)/pulls/$($GitHubPRNumber)/files"
