@@ -35,20 +35,44 @@
 
 help()
 {
-    #TODO: Add help text here
-    echo "This script installs kafka cluster on Ubuntu"
-    echo "Parameters:"
-    echo "-k kafka version like 0.8.2.1"
-    echo "-b broker id"
-    echo "-h view this help content"
-    echo "-z zookeeper not kafka"
-    echo "-i zookeeper Private IP address prefix"
+    echo "This script installs Apache Kafka cluster on Ubuntu.
+    
+Usage: $0 [-h] [-k kafka-version] [-z zookeeper-version] [-b broker-id] [-i zookeeper-ip] [-c instance-count] [-K kafka-source] [-Z zookeeper-source]
+
+Options:
+  -k
+        kafka version - Specify Apache Kafka version (like '2.3.0').
+  -z
+        zookeeper version - If Apache Zookeeper version is specified, then it
+        will be installed and it also means that Kafka will NOT be installed.
+        The version (like '3.5.5') MUST exist in the 'zookeeper-source'.
+  -b
+        broker id - It is required when installing Kafka. Every instance MUST
+        have a unique broker ID.
+  -i
+        zookeeper private IP address prefix - It is used when installing both
+        Kafka and Zookeeper (see instance count).
+  -c
+        instance count - specifies a range of IP addresses that will be 
+        configured in both Kafka and Zookeeper. The range begins at IP
+        defined using 'zookeeper-ip' and the rest of IPs are calculated.
+  -K
+        kafka source - defines the mirror for Apache Kafka. The script expects
+        the source to be a directory which contains a file in a standard format
+        defined by both directory and name like '/2.3.0/kafka_2.12-2.3.0.tgz'
+  -Z
+        zookeeper source - defines the mirror for Zookeeper. The script expects
+        the source to be a directory which contains a file in a standard format
+        like 'apache-zookeeper-3.5.5.tar.gz'
+        in both Kafka and Zookeeper. The range begins at 'zookeeper-ip'.
+  -h
+        display this help content"
 }
 
 log()
 {
 	# If you want to enable this logging add a un-comment the line below and add your account key 
-  curl -X POST -H "content-type:text/plain" --data-binary "$(date) | ${HOSTNAME} | $1" https://logs-01.loggly.com/inputs/ad167a6e-a762-41a6-aed0-4582d5e9b8a4/tag/kafka-test,${HOSTNAME}
+	#curl -X POST -H "content-type:text/plain" --data-binary "$(date) | ${HOSTNAME} | $1" https://logs-01.loggly.com/inputs/[account-key]/tag/kafka-test,${HOSTNAME}
 	echo "$1"
 }
 
@@ -57,7 +81,7 @@ log "Begin execution of kafka script extension on ${HOSTNAME}"
 if [ "${UID}" -ne 0 ];
 then
     log "Script executed without root permissions"
-    echo "You must be root to run this program." >&2
+    echo "error: You must be root to run this program." >&2
     exit 3
 fi
 
@@ -74,21 +98,8 @@ else
   log "hostname ${HOSTNAME} added to /etc/hosts"
 fi
 
-#Script Parameters
-SCALA_VERSION="2.12"
-KAFKA_VERSION="2.3.0"
-KAFKA_SOURCE="http://mirror.dkm.cz/apache/kafka/"
-BROKER_ID=0
-INSTALL_ZOOKEEPER=false
-ZOOKEEPER_VERSION="3.5.5"
-ZOOKEEPER_SOURCE="http://mirrors.ukfast.co.uk/sites/ftp.apache.org/zookeeper/stable/"
-
-ZOOKEEPER_IP_PREFIX="10.0.0.4"
-INSTANCE_COUNT=1
-ZOOKEEPER_PORT="2181"
-
 #Loop through options passed
-while getopts :k:K:b:z:Z:i:c:p:h optname; do
+while getopts :k:K:b:z:Z:i:c:h optname; do
     log "Option $optname set with value ${OPTARG}"
   case $optname in
     k)  #kafka version
@@ -111,19 +122,44 @@ while getopts :k:K:b:z:Z:i:c:p:h optname; do
       ZOOKEEPER_IP_PREFIX=${OPTARG}
       ;;
     c) # Number of instances
-	INSTANCE_COUNT=${OPTARG}
-	;;
+      INSTANCE_COUNT=${OPTARG}
+      ;;
     h)  #show help
       help
-      exit 2
+      exit 1
       ;;
     \?) #unrecognized option - show help
-      echo -e \\n"Option -${BOLD}$OPTARG${NORM} not allowed."
+      echo -e \\n"error: Option -${BOLD}$OPTARG${NORM} not allowed."
       help
       exit 2
       ;;
   esac
 done
+
+#Script Parameters
+SCALA_VERSION="2.12"
+if [ -z "$KAFKA_VERSION" ]; then
+    KAFKA_VERSION="2.3.0"
+fi
+if [ -z "$KAFKA_SOURCE" ]; then
+    KAFKA_SOURCE="http://mirror.dkm.cz/apache/kafka/"
+fi
+if [ -z "$BROKER_ID" ]; then
+    BROKER_ID=0
+fi
+if [ -z "$ZOOKEEPER_VERSION" ]; then
+    ZOOKEEPER_VERSION="3.5.5"
+fi
+if [ -z "$ZOOKEEPER_SOURCE" ]; then
+    ZOOKEEPER_SOURCE="http://mirrors.ukfast.co.uk/sites/ftp.apache.org/zookeeper/stable/"
+fi
+if [ -z "$ZOOKEEPER_IP_PREFIX" ]; then
+    ZOOKEEPER_IP_PREFIX="10.0.0.4"
+fi
+if [ -z "$INSTANCE_COUNT" ]; then
+    INSTANCE_COUNT=1
+fi
+ZOOKEEPER_PORT="2181"
 
 # Install Oracle Java
 install_java()
@@ -168,12 +204,18 @@ install_zookeeper()
 {
 	mkdir -p /var/lib/zookeeper
 	cd /var/lib/zookeeper
-	zookeeper="zookeeper-${ZOOKEEPER_VERSION}"
+	zookeeper="apache-zookeeper-${ZOOKEEPER_VERSION}"
 	zookeeper_package="${zookeeper}.tar.gz"
 	zookeeper_config="${zookeeper}/conf/zoo.cfg"
-	wget "${ZOOKEEPER_SOURCE}/$zookeeper_package"
+	zookeeper_url="${ZOOKEEPER_SOURCE}$zookeeper_package"
+	wget $zookeeper_url
 	tar -xvf $zookeeper_package
 
+	if [[ ! -d "$zookeeper" ]]; then	  
+		log "Directory '$zookeeper' not found."
+		echo "error: Unable to find installation '$zookeeper', maybe something is wrong with source file '$zookeeper_url'." >&2
+		exit 4
+	fi
 	touch $zookeeper_config
 
 	echo "tickTime=2000" >> $zookeeper_config
@@ -203,6 +245,7 @@ install_kafka()
 	package_version="-1"
 	kafka="kafka_${SCALA_VERSION}-${KAFKA_VERSION}"
 	kafka_package="${kafka}.tgz"
+	kafka_url="${KAFKA_SOURCE}/${KAFKA_VERSION}/${kafka_package}"
 
 	rm -rf kafka
 	mkdir -p kafka
@@ -210,9 +253,14 @@ install_kafka()
 	kafka_path="${pwd}/$kafka"
 	#_ MAIN _#
 	if [[ ! -f "${kafka_package}" ]]; then
-	  wget "${KAFKA_SOURCE}/${KAFKA_VERSION}/${kafka_package}"
+	  wget $kafka_url
 	fi
 	tar zxf $kafka_package
+	if [[ ! -d "$kafka_path" ]]; then	  
+		log "Directory '$kafka_path' not found."
+		echo "error: Unable to find installation '$kafka_path', maybe something is wrong with source file '$kafka_url'." >&2
+		exit 5
+	fi
 	cd $kafka_path
 	
 	sed -r -i "s/(broker.id)=(.*)/\1=${BROKER_ID}/g" config/server.properties 
