@@ -88,12 +88,11 @@ fi
 # TEMP FIX - Re-evaluate and remove when possible
 # This is an interim fix for hostname resolution in current VM
 grep -q "${HOSTNAME}" /etc/hosts
-if [ $? -eq $SUCCESS ];
-then
-  echo "${HOSTNAME}found in /etc/hosts"
+if [ $? -eq 0 ]; then
+  log "hostname ${HOSTNAME} found in /etc/hosts"
 else
-  echo "${HOSTNAME} not found in /etc/hosts"
-  # Append it to the hsots file if not there
+  log "hostname ${HOSTNAME} NOT found in /etc/hosts"
+  # Append it to the hosts file if not there
   echo "127.0.0.1 $(hostname)" >> /etc/hosts
   log "hostname ${HOSTNAME} added to /etc/hosts"
 fi
@@ -161,25 +160,36 @@ if [ -z "$INSTANCE_COUNT" ]; then
 fi
 ZOOKEEPER_PORT="2181"
 
-# Install Oracle Java
+# Install Java
 install_java()
 {
     log "Installing Java"
-    add-apt-repository -y ppa:webupd8team/java
-    apt-get -y update 
-    echo debconf shared/accepted-oracle-license-v1-1 select true | sudo debconf-set-selections
-    echo debconf shared/accepted-oracle-license-v1-1 seen true | sudo debconf-set-selections
-    apt-get -y install oracle-java7-installer
+    #add-apt-repository -y ppa:webupd8team/java
+    #echo debconf shared/accepted-oracle-license-v1-1 select true | sudo debconf-set-selections
+    #echo debconf shared/accepted-oracle-license-v1-1 seen true | sudo debconf-set-selections
+    #apt-get -y install oracle-java8-installer
+    # Installation of Oracle Java is not possible by 09/2019:
+    # Oracle Java downloads now require logging in to an Oracle account to download Java updates, like the latest Oracle Java 8u211 / Java SE 8u212. Because of this I cannot update the PPA with the latest Java (and the old links were broken by Oracle).
+    # For this reason, THIS PPA IS DISCONTINUED (unless I find some way around this limitation).
+    # Oracle Java (JDK) Installer (automatically downloads and installs Oracle JDK8). There are no actual Java files in this PPA.
+    apt-get -y update
+    apt-get -y install openjdk-8-jdk
+    java -version
+    export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+    echo "export JAVA_HOME=${JAVA_HOME}" >> /etc/profile
 }
 
 # Expand a list of successive IP range defined by a starting address prefix (e.g. 10.0.0.1) and the number of machines in the range
 # 10.0.0.1-3 would be converted to "10.0.0.10 10.0.0.11 10.0.0.12"
 
+zookeeper="apache-zookeeper-${ZOOKEEPER_VERSION}"
+zookeeper_config="${zookeeper}/conf/zoo.cfg"
+
 expand_ip_range_for_server_properties() {
     IFS='-' read -a HOST_IPS <<< "$1"
     for (( n=0 ; n<("${HOST_IPS[1]}"+0) ; n++))
     do
-        echo "server.$(expr ${n} + 1)=${HOST_IPS[0]}${n}:2888:3888" >> zookeeper-3.4.6/conf/zoo.cfg       
+        echo "server.$(expr ${n} + 1)=${HOST_IPS[0]}${n}:2888:3888" >> $zookeeper_config
     done
 }
 
@@ -204,9 +214,7 @@ install_zookeeper()
 {
 	mkdir -p /var/lib/zookeeper
 	cd /var/lib/zookeeper
-	zookeeper="apache-zookeeper-${ZOOKEEPER_VERSION}"
 	zookeeper_package="${zookeeper}.tar.gz"
-	zookeeper_config="${zookeeper}/conf/zoo.cfg"
 	zookeeper_url="${ZOOKEEPER_SOURCE}$zookeeper_package"
 	wget $zookeeper_url
 	tar -xvf $zookeeper_package
@@ -250,7 +258,7 @@ install_kafka()
 	rm -rf kafka
 	mkdir -p kafka
 	cd kafka
-	kafka_path="${pwd}/$kafka"
+	kafka_path="$(pwd)/$kafka"
 	#_ MAIN _#
 	if [[ ! -f "${kafka_package}" ]]; then
 	  wget $kafka_url
