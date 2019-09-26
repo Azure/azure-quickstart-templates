@@ -46,6 +46,7 @@ Options:
         zookeeper version - If Apache Zookeeper version is specified, then it
         will be installed and it also means that Kafka will NOT be installed.
         The version (like '3.5.5') MUST exist in the 'zookeeper-source'.
+        The version parameter is optional.
   -b
         broker id - It is required when installing Kafka. Every instance MUST
         have a unique broker ID.
@@ -82,7 +83,7 @@ if [ "${UID}" -ne 0 ];
 then
     log "Script executed without root permissions"
     echo "error: You must be root to run this program." >&2
-    exit 3
+    exit 1
 fi
 
 # TEMP FIX - Re-evaluate and remove when possible
@@ -99,7 +100,7 @@ fi
 
 #Loop through options passed
 while getopts :k:K:b:z:Z:i:c:h optname; do
-    log "Option $optname set with value ${OPTARG}"
+  log "Option '$optname' set with argument '${OPTARG}'"
   case $optname in
     k)  #kafka version
       KAFKA_VERSION=${OPTARG}
@@ -120,22 +121,41 @@ while getopts :k:K:b:z:Z:i:c:h optname; do
     i)  #zookeeper Private IP address prefix
       ZOOKEEPER_IP_PREFIX=${OPTARG}
       ;;
-    c) # Number of instances
+    c)  #number of instances
       INSTANCE_COUNT=${OPTARG}
       ;;
     h)  #show help
       help
-      exit 1
+      exit 2
       ;;
     \?) #unrecognized option - show help
       echo -e \\n"error: Option -${BOLD}$OPTARG${NORM} not allowed."
       help
-      exit 2
+      exit 3
+      ;;
+    :)  #missing argumet
+      if [ ${OPTARG} == "z" ]; then      
+        INSTALL_ZOOKEEPER=true
+      else
+        echo "error: Missing argument for option -$OPTARG" >&2;
+        help 
+        exit 4
+      fi
       ;;
   esac
 done
 
 #Script Parameters
+if [ -z "$ZOOKEEPER_VERSION" ]; then
+    ZOOKEEPER_VERSION="3.5.5"
+fi
+if [ -z "$ZOOKEEPER_SOURCE" ]; then
+    ZOOKEEPER_SOURCE="http://mirrors.ukfast.co.uk/sites/ftp.apache.org/zookeeper/stable/"
+fi
+if [ -z "$ZOOKEEPER_IP_PREFIX" ]; then
+    ZOOKEEPER_IP_PREFIX="10.0.0.4"
+fi
+ZOOKEEPER_PORT="2181"
 SCALA_VERSION="2.12"
 if [ -z "$KAFKA_VERSION" ]; then
     KAFKA_VERSION="2.3.0"
@@ -146,19 +166,9 @@ fi
 if [ -z "$BROKER_ID" ]; then
     BROKER_ID=0
 fi
-if [ -z "$ZOOKEEPER_VERSION" ]; then
-    ZOOKEEPER_VERSION="3.5.5"
-fi
-if [ -z "$ZOOKEEPER_SOURCE" ]; then
-    ZOOKEEPER_SOURCE="http://mirrors.ukfast.co.uk/sites/ftp.apache.org/zookeeper/stable/"
-fi
-if [ -z "$ZOOKEEPER_IP_PREFIX" ]; then
-    ZOOKEEPER_IP_PREFIX="10.0.0.4"
-fi
 if [ -z "$INSTANCE_COUNT" ]; then
     INSTANCE_COUNT=1
 fi
-ZOOKEEPER_PORT="2181"
 
 # Install Java
 install_java()
@@ -222,7 +232,7 @@ install_zookeeper()
 	if [[ ! -d "$zookeeper" ]]; then	  
 		log "Directory '$zookeeper' not found."
 		echo "error: Unable to find installation '$zookeeper', maybe something is wrong with source file '$zookeeper_url'." >&2
-		exit 4
+		exit 5
 	fi
 	touch $zookeeper_config
 
@@ -231,7 +241,7 @@ install_zookeeper()
 	echo "clientPort=2181" >> $zookeeper_config
 	echo "initLimit=5" >> $zookeeper_config
 	echo "syncLimit=2" >> $zookeeper_config
-	# OLD Test echo "server.1=${ZOOKEEPER_IP_PREFIX}:2888:3888" >> ${zookeeper}/conf/zoo.cfg
+	# OLD Test echo "server.1=${ZOOKEEPER_IP_PREFIX}:2888:3888" >> $zookeeper_config
 	$(expand_ip_range_for_server_properties "${ZOOKEEPER_IP_PREFIX}-${INSTANCE_COUNT}")
 
 	echo $(($1+1)) >> /var/lib/zookeeper/myid
@@ -253,7 +263,7 @@ install_kafka()
 	package_version="-1"
 	kafka="kafka_${SCALA_VERSION}-${KAFKA_VERSION}"
 	kafka_package="${kafka}.tgz"
-	kafka_url="${KAFKA_SOURCE}/${KAFKA_VERSION}/${kafka_package}"
+	kafka_url="${KAFKA_SOURCE}${KAFKA_VERSION}/${kafka_package}"
 
 	rm -rf kafka
 	mkdir -p kafka
@@ -261,13 +271,14 @@ install_kafka()
 	kafka_path="$(pwd)/$kafka"
 	#_ MAIN _#
 	if [[ ! -f "${kafka_package}" ]]; then
+	  log "Get $kafka_url"
 	  wget $kafka_url
 	fi
 	tar zxf $kafka_package
 	if [[ ! -d "$kafka_path" ]]; then	  
 		log "Directory '$kafka_path' not found."
 		echo "error: Unable to find installation '$kafka_path', maybe something is wrong with source file '$kafka_url'." >&2
-		exit 5
+		exit 6
 	fi
 	cd $kafka_path
 	
