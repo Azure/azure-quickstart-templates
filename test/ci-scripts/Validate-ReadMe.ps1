@@ -44,6 +44,6 @@ $buttons = @(
     foreach($button in $buttons){
         $searchString = $button.Replace("#sampleName#", $sampleName.Replace("\", "/")) #change \ to / due to windows path to url
         if(-not ($readme -like "*$searchString*")){
-            Write-Error "Readme/Visualize button incorrect HREF or SRC attribute: $searchString"
+            Write-Error "Readme button incorrect HREF or SRC attribute: $searchString"
         }
     }
