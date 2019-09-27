@@ -57,7 +57,6 @@ Start deployment
                     subnetName       String                     Subnet1
                     subnetPrefix     String                     10.0.0.0/24
                     kafkaVersion     String                     3.0.0
-                    kafkaClusterName  String                     kafka-arm-cluster
                     kafkaZooNodeIPAddressPrefix  String                     10.0.0.4
                     kafkaNodeIPAddressPrefix  String                     10.0.0.1
                     jumpbox          String                     enabled
