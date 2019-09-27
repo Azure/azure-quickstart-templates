@@ -7,16 +7,16 @@ Then, when the PR is merged, the CI pipeline copies the badges to the "badges" f
 #>
 
 param(
-    [string][Parameter(Mandatory = $true)]$SampleFolder, #this is the path to the sample, relative to BuildSourcesDirectory
-    [string][Parameter(Mandatory = $true)]$BuildSourcesDirectory, #this is the path to the root of the repo on disk
+    [string]$SampleName = $ENV:SAMPLE_NAME, # the name of the sample or folder path from the root of the repo e.g. "sample-type/sample-name"
     [string]$StorageAccountResourceGroupName = "ttk-gen-artifacts-storage",
     [string]$StorageAccountName = "azbotstorage"
 )
 
-$SampleFolder = $SampleFolder.TrimEnd("/").TrimEnd("\")
-$BuildSourcesDirectory = $BuildSourcesDirectory.TrimEnd("/").TrimEnd("\")
+if($SampleName = ""){
+    Write-Error "SampleName is empty"
+}
 
-$storageFolder = $SampleFolder.Replace("$BuildSourcesDirectory\", "").Replace("\", "@").Replace("/", "@")
+$storageFolder = $SampleName.Replace("\", "@").Replace("/", "@")
 
 # Get the storage table that contains the "status" for the deployment/test results
 $ctx = (Get-AzStorageAccount -Name $StorageAccountName -ResourceGroupName $StorageAccountResourceGroupName).Context
