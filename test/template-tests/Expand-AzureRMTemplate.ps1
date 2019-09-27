@@ -138,7 +138,7 @@ function Expand-AzureRMTemplate
 
             # Next, we want to pre-populate a number of well-known variables.
             # These variables will be available to every test case.   They are:
-            $WellKnownVariables = 'TemplateFullPath','TemplateText','TemplateObject',
+            $WellKnownVariables = 'TemplateFullPath','TemplateText','TemplateObject','TemplateFileName',
                 'CreateUIDefinitionFullPath','createUIDefintionText','CreateUIDefinitionObject',
                 'FolderName', 'HasCreateUIDefinition', 'IsMainTemplate','FolderFiles', 
                 'MainTemplatePath', 'MainTemplateObject', 'MainTemplateText', 
@@ -153,7 +153,7 @@ function Expand-AzureRMTemplate
             #*$TemplateFileName (the name of the azure template file)
             $templateFileName = $TemplateFullPath | Split-Path -Leaf
             #*$IsMainTemplate (if the TemplateFileName is named mainTemplate.json)
-            $isMainTemplate = 'mainTemplate.json', 'azureDeploy.json' -contains $templateFileName
+            $isMainTemplate = 'mainTemplate.json', 'azureDeploy.json', 'prereq.azuredeploy.json' -contains $templateFileName
             $templateFile = Get-Item -LiteralPath "$resolvedTemplatePath"
             $templateFolder = $templateFile.Directory
             #*$FolderName (the name of the root folder containing the template)

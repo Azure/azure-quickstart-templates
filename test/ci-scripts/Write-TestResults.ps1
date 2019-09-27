@@ -6,21 +6,19 @@ Typical scenario is that results will be passed in for only one cloud Public or 
 #>
 
 param(
-    [string][Parameter(Mandatory = $true)]$SampleFolder, #this is the path to the sample, relative to BuildSourcesDirectory
-    [string][Parameter(Mandatory = $true)]$BuildSourcesDirectory, #this is the path to the root of the repo on disk
+    [string]$SampleFolder = $ENV:SAMPLE_FOLDER, # this is the path to the sample
+    [string]$SampleName = $ENV:SAMPLE_NAME,  # the name of the sample or folder path from the root of the repo e.g. "sample-type/sample-name"
     [string]$StorageAccountResourceGroupName = "ttk-gen-artifacts-storage",
     [string]$StorageAccountName = "azbotstorage",
     [string]$TableName = "QuickStartDeploymentStatus",
-    [string]$BestPracticeResult = "",
-    [string]$CredScanResult = "",
+    [string]$BestPracticeResult = "$ENV:RESULT_BEST_PRACTICE",
+    [string]$CredScanResult = "$ENV:RESULT_CREDSCAN",
     [string]$FairfaxDeployment = "",
     [string]$FairfaxLastTestDate = (Get-Date -Format "yyyy-MM-dd").ToString(),
     [string]$PublicDeployment = "",
     [string]$PublicLastTestDate = (Get-Date -Format "yyyy-MM-dd").ToString()
 )
 
-$SampleFolder = $SampleFolder.TrimEnd("/").TrimEnd("\")
-$BuildSourcesDirectory = $BuildSourcesDirectory.TrimEnd("/").TrimEnd("\")
 
 # Get the storage table that contains the "status" for the deployment/test results
 $ctx = (Get-AzStorageAccount -Name $StorageAccountName -ResourceGroupName $StorageAccountResourceGroupName).Context
@@ -30,7 +28,7 @@ $cloudTable = (Get-AzStorageTable –Name $tableName –Context $ctx).CloudTable
 $PathToMetadata = "$SampleFolder\metadata.json"
 Write-Host "PathToMetadata: $PathToMetadata"
 
-$RowKey = $SampleFolder.Replace("$BuildSourcesDirectory\", "").Replace("\", "@").Replace("/", "@")
+$RowKey = $SampleName.Replace("\", "@").Replace("/", "@")
 Write-Host "RowKey: $RowKey"
 
 $Metadata = Get-Content $PathToMetadata -Raw | ConvertFrom-Json

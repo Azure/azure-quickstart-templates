@@ -86,3 +86,8 @@ $t | ft
 $FolderString = "$BuildSourcesDirectory\$($t[0].RowKey)"
 Write-Output "Using sample folder: $FolderString"
 Write-Host "##vso[task.setvariable variable=sample.folder]$FolderString"
+
+# Not sure we need this in the scheduled build but here it is:
+$sampleName = $FolderString.Replace("$ENV:BUILD_SOURCESDIRECTORY\", "")
+Write-Output "Using sample name: $sampleName"
+Write-Host "##vso[task.setvariable variable=sample.name]$sampleName"
