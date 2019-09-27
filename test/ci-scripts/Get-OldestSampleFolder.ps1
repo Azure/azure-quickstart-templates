@@ -1,9 +1,10 @@
 ﻿param(
-    [Parameter(Mandatory = $true)]$BuildSourcesDirectory = ".",
+    $BuildSourcesDirectory = "$ENV:BUILD_SOURCESDIRECTORY",
     $StorageAccountResourceGroupName = "ttk-gen-artifacts-storage",
     $StorageAccountName = "azbotstorage",
     $TableName = "QuickStartDeploymentStatus",
-    $TableSortKey = "PublicLastTestDate", # sort based on the cloud we're testing FF or Public
+    $ResultDeploymentLastTestDateParameter = "$ENV:RESULT_DEPLOYMENT_LAST_TEST_DATE_PARAMETER", # sort based on the cloud we're testing FF or Public
+    $ResultDeploymentParameter = "$ENV:RESULT_DEPLOYMENT_PARAMETER", #also cloud specific
     $PurgeOldRows = $true
 )
 <#
@@ -27,7 +28,7 @@ Else set the sample folder to run the test
 # Get the storage table that contains the "status" for the deployment/test results
 $ctx = (Get-AzStorageAccount -Name $StorageAccountName -ResourceGroupName $StorageAccountResourceGroupName).Context
 $cloudTable = (Get-AzStorageTable –Name $tableName –Context $ctx).CloudTable
-$t = Get-AzTableRow -table $cloudTable #| Sort-Object -Property $TableSortKey 
+$t = Get-AzTableRow -table $cloudTable
 
 # Get all the samples
 $ArtifactFilePaths = Get-ChildItem $BuildSourcesDirectory\metadata.json -Recurse -File | ForEach-Object -Process { $_.FullName }
@@ -57,14 +58,14 @@ foreach ($SourcePath in $ArtifactFilePaths) {
             -partitionKey $MetadataJson.type `
             -rowKey $RowKey `
             -property @{
-                "PublicDeployment"           = $false; `
-                "PublicLastTestDate"         = "$($MetadataJson.dateUpdated)"; 
+                "$ResultDeploymentParameter"             = $false; `
+                "$ResultDeploymentLastTestDateParameter" = "$($MetadataJson.dateUpdated)"; 
         }
     }
 }
 
 #Get the updated table
-$t = Get-AzTableRow -table $cloudTable #| Sort-Object -Property $TableSortKey 
+$t = Get-AzTableRow -table $cloudTable
 
 # for each row in the table - purge those that don't exist in the samples folder anymore
 if ($PurgeOldRows) {
@@ -79,7 +80,7 @@ if ($PurgeOldRows) {
     }
 }
 
-$t = Get-AzTableRow -table $cloudTable | Sort-Object -Property $TableSortKey 
+$t = Get-AzTableRow -table $cloudTable | Sort-Object -Property $ResultDeploymentLastTestDateParameter # sort based on the last test date for the could being tested
 $t | ft
 
 # Write the pipeline variable
