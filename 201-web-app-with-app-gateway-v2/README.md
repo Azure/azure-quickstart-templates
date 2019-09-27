@@ -18,6 +18,6 @@ This template creates an Azure Web App with Access Restriction for an Applicatio
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
-The Application Gateway is deployed in a vNet (subnet) which have 'Microsoft.Web' Service Endpoint enabled. Web App restricts access to traffic from subnet. By default, everything is created with generated names, however, you can easily modify the template to other default values or parameterize values. You can also 'bring your own' subnet, web app, application gateway or public ip, if you have either of the items already created.
+The Application Gateway is deployed in a vNet (subnet) which has the 'Microsoft.Web' Service Endpoint enabled. The Web App restricts access to traffic from a subnet. By default, everything is created with generated names, however, you can easily modify the template to use other default values or parameterize values. You can also 'bring your own' subnet, web app, application gateway or public ip, if you have any of the items already created.
 
 `Tags: web-app, application-gateway, service-endpoint`
