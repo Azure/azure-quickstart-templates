@@ -1,7 +1,7 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
-    "parameters": { 
+    "parameters": {
         "webAppName": {
             "defaultValue": "myWebApp",
             "type": "string"
@@ -17,16 +17,20 @@
         "appGatewayName": {
             "defaultValue": "myAppGateway",
             "type": "string"
+        },
+        "location": {
+            "defaultValue": "[resourceGroup().location]",
+            "type": "string"
         }
      },
-    "variables": {  
-        "location": "[resourceGroup().location]",
+    "variables": {
+        "location": "[parameters('location')]",
         "virtualNetworkName": "[concat(parameters('virtualNetworkName'), '-', uniqueString(resourceGroup().id))]",
         "virtualNetworkAddressPrefix": "10.0.0.0/20",
         "virtualNetworkSubnetName": "[parameters('appGatewaySubnetName')]",
         "virtualNetworkSubnetPrefix": "10.0.0.0/24",
-        "virtualNetworkId": "[resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-        "virtualNetworkSubnetId": "[concat(variables('virtualNetworkId'), '/subnets/', variables('virtualNetworkSubnetName'))]",
+        "virtualNetworkId": "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "virtualNetworkSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('virtualNetworkName'), variables('virtualNetworkSubnetName'))]",
         "publicIpAddressName": "[concat('myAppGatewayPublicIp', '-', uniqueString(resourceGroup().id))]",
         "publicIpAddressSku": "Standard",
         "publicIpAddressAllocationType": "Static",
@@ -36,7 +40,6 @@
         "webAppPlanSku": "S1",
         "webAppPlanId": "[resourceId('Microsoft.Web/serverfarms', variables('webAppPlanName'))]",
         "applicationGatewayName": "[concat(parameters('appGatewayName'), '-', uniqueString(resourceGroup().id))]",
-        "applicationGatewayId": "[resourceId('Microsoft.Network/applicationGateways', variables('applicationGatewayName'))]",
         "applicationGatewaySkuSize": "Standard_v2",
         "applicationGatewayTier": "Standard_v2",
         "applicationGatewayAutoScaleMinCapacity": 2,
@@ -44,16 +47,16 @@
         "appGwIpConfigName": "appGatewayIpConfigName",
         "appGwFrontendPortName": "appGatewayFrontendPort_80",
         "appGwFrontendPort": 80,
-        "appGwFrontendPortId": "[concat(variables('applicationGatewayId'), '/frontendPorts/', variables('appGwFrontendPortName'))]",
+        "appGwFrontendPortId": "[resourceId('Microsoft.Network/applicationGateways/frontendPorts/', variables('applicationGatewayName'), variables('appGwFrontendPortName'))]",
         "appGwFrontendIpConfigName": "appGatewayPublicFrontendIpConfig",
-        "appGwFrontendIpConfigId": "[concat(variables('applicationGatewayId'), '/frontendIPConfigurations/', variables('appGwFrontendIpConfigName'))]",
+        "appGwFrontendIpConfigId": "[resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations/', variables('applicationGatewayName'), variables('appGwFrontendIpConfigName'))]",
         "appGwHttpSettingName": "appGatewayHttpSetting_80",
-        "appGwHttpSettingId": "[concat(variables('applicationGatewayId'), '/backendHttpSettingsCollection/', variables('appGwHttpSettingName'))]",
+        "appGwHttpSettingId": "[resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection/', variables('applicationGatewayName'), variables('appGwHttpSettingName'))]",
         "appGwHttpSettingProbeName": "appGatewayHttpSettingProbe_80",
         "appGwBackendAddressPoolName": "[concat('appGateway', variables('webAppName'), 'BackendPool')]",
-        "appGwBackendAddressPoolId": "[concat(variables('applicationGatewayId'), '/backendAddressPools/', variables('appGwBackendAddressPoolName'))]",
+        "appGwBackendAddressPoolId": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools/', variables('applicationGatewayName'), variables('appGwBackendAddressPoolName'))]",
         "appGwListenerName": "appGatewayListener",
-        "appGwListenerId": "[concat(variables('applicationGatewayId'), '/httpListeners/', variables('appGwListenerName'))]",
+        "appGwListenerId": "[resourceId('Microsoft.Network/applicationGateways/httpListeners/', variables('applicationGatewayName'), variables('appGwListenerName'))]",
         "appGwRoutingRuleName": "appGatewayRoutingRule"
     },
     "resources": [
@@ -91,7 +94,6 @@
             "name": "[variables('webAppPlanName')]",
             "apiVersion": "2018-02-01",
             "location": "[variables('location')]",
-            "tags": {},
             "properties": {
                  "reserved": "false"
             },
@@ -117,19 +119,16 @@
                   "minTlsVersion": "1.2",
                   "ipSecurityRestrictions": [
                     {
-                    "vnetSubnetResourceId": "[variables('virtualNetworkSubnetId')]",
-                    "action": "Allow",
-                    "tag": "Default",
-                    "priority": 200,
-                    "name": "appGatewaySubnet",
-                    "description": "Isolate traffic to subnet containing Azure Application Gateway"
+                        "vnetSubnetResourceId": "[variables('virtualNetworkSubnetId')]",
+                        "action": "Allow",
+                        "tag": "Default",
+                        "priority": 200,
+                        "name": "appGatewaySubnet",
+                        "description": "Isolate traffic to subnet containing Azure Application Gateway"
                     }
                 ]
               },
               "httpsOnly": "false"
-            },
-            "identity": {
-                "type": "SystemAssigned"
             }
         },
         {
@@ -195,7 +194,7 @@
                         "properties": {
                             "backendAddresses": [
                                 {
-                                    "fqdn": "[concat(toLower(variables('webAppName')), '.azurewebsites.net')]"
+                                    "fqdn": "[reference(variables('webAppName')).hostNames[0]]"
                                 }
                             ]
                         }
@@ -245,7 +244,6 @@
                     }
                 ],
                 "enableHttp2": true,
-                "sslCertificates": [],                
                 "probes": [
                     {
                         "name": "[variables('appGwHttpSettingProbeName')]",
@@ -279,7 +277,7 @@
         },
         "webAppUrl": {
             "type": "string",
-            "value": "[concat('http://', toLower(variables('webAppName')), '.azurewebsites.net/')]"
+            "value": "[concat('http://', reference(variables('webAppName')).hostNames[0], '/')]"
         }
     }
 }
