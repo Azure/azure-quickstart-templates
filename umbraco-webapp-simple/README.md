@@ -16,4 +16,4 @@
   <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
-[Umbraco CMS](http://umbraco.org)is an open source ASP.NET-based content management system, with a beautiful, user-friendly interface, full support for your own .NET controls, and no limits to your designs. With an integrated WYSIWYG editor and full support for web standards, this fully stocked application will make designing and managing websites a joy.
+[Umbraco CMS](http://umbraco.org) is an open source ASP.NET-based content management system, with a beautiful, user-friendly interface, full support for your own .NET controls, and no limits to your designs. With an integrated WYSIWYG editor and full support for web standards, this fully stocked application will make designing and managing websites a joy.
