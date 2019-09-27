@@ -27,7 +27,8 @@ Before deploying the template you must have the following
 
 This deployment will create a VM running SQL Server with SQL Data, Log and Temp DB file on different drives.
 The user specifies the number of managed disks used for SQL Data files. Ultra SSD will be used for SQL Log files and the user will specify the disk size and expected maximum IOPS and throughput.
-TempDb would use local SSD and a scheduled task would be created to create TempDB folder structure and start default SQL Instance if local SSD is reset during VM restart.
+TempDb will use the local SSD and a scheduled task will be used to create the TempDB folder structure and start the default SQL Instance if the local SSD is reset during VM restart.
+
 SQL Server will use Windows Authentication.
 
 The following resources will be created
