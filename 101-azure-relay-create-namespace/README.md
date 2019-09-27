@@ -14,3 +14,5 @@
 </a>
 
 This template creates an Azure Relay namespace.
+
+You can access the primaryConnectionString and primaryKey using the listKeys() function in the template.
