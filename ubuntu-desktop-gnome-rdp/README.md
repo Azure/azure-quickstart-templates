@@ -12,3 +12,9 @@
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fubuntu-desktop-gnome-rdp%2Fazuredeploy.json" target="_blank"><img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/></a>
 
 This template deploys an Ubuntu Server VM, then uses the Linux CustomScript extension to install the Ubuntu Gnome Desktop and Remote Desktop support (via xrdp). The final provisioned Ubuntu VM support remote connections over RDP; just like you can with a Windows machine.
+
+Once you connect remotely to the Ubuntu VM over RDP, you will see a similar experience as if you were sitting at an Ubuntu Desktop machine.
+
+When connected over RDP, the VM will prompt you a few times for the Password for the VM. If you wish to remove these prompts for future use of the VM, then follow the instructions at this linke: <https://askubuntu.com/questions/675379/how-to-disable-the-password-prompts>
+
+When connected over RDP to the VM, if/when prompted for the Password for a user named `Ubuntu`, simply select **Cancel** and the prompt will go away.
