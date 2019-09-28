@@ -24,4 +24,4 @@ Here's a sample screenshot of an RDP session connecting to the Ubuntu VM:
 
 When connected over RDP, the VM will prompt you a few times for the Password for the VM. If you wish to remove these prompts for future use of the VM, then follow the instructions at this linke: <https://askubuntu.com/questions/675379/how-to-disable-the-password-prompts>
 
-When connected over RDP to the VM, if/when prompted for the Password for a user named `Ubuntu`, simply select **Cancel** and the prompt will go away.
+When connected over RDP to the VM the first time, it will prompt for password a couple times. If/when prompted for the Password for a user named `Ubuntu` this first time connecting, simply select "Cancel" and the prompt will go away. Once Ubuntu is configured and able to be used to run apps and other things, then the admin password for the VM will be the password for the `Ubuntu` user it will prompt for later.
