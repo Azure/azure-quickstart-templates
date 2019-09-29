@@ -19,6 +19,6 @@ if ($Publish) {
         -File $ttkFileName `
         -Blob "$folderName/$ttkFileName" `
         -Context $ctx `
-        -Force `
+        -Force -Verbose `
         -Properties @{"ContentType" = "application/x-zip-compressed"; "CacheControl" = "no-cache" }
 }

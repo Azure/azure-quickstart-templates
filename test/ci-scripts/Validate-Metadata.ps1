@@ -15,6 +15,11 @@ $metadata | Test-Json -Schema $schema.content
 $dateUpdated = (Get-Date ($metadata | convertfrom-json).dateUpdated)
 
 if (!$SkipDateCheck) { #When running the scheduled tests, we don't want to check the date
+    try {
+        [DateTime]::ParseExact($dateUpdated, 'yyyy-MM-dd', $(Get-Culture))
+    } Catch {
+        Write-Error "dateUpdate is not in the correct format: $dateUpdated must be in yyyy-MM-dd format."
+    }
     if ($dateUpdated -gt (Get-Date)) {
         Write-Error "dateUpdated in metadata.json must not be in the future -- $dateUpdated is later than $(Get-Date)"
     }

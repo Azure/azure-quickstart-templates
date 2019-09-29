@@ -59,9 +59,9 @@ foreach ($SourcePath in $ArtifactFilePaths) {
             -partitionKey $MetadataJson.type `
             -rowKey $RowKey `
             -property @{
-                "$ResultDeploymentParameter"             = $false; `
-                "PublicLastTestDate" = "$($MetadataJson.dateUpdated)"; 
-                "FairfaxLastTestData" = "$($MetadataJson.dateUpdated)"; 
+                "$ResultDeploymentParameter" = $false; `
+                "PublicLastTestDate"     = "$($MetadataJson.dateUpdated)"; `
+                "FairfaxLastTestDate"    = "$($MetadataJson.dateUpdated)"; 
         }
     }
 }

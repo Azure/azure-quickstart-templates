@@ -8,6 +8,7 @@ param(
     [string][Parameter(mandatory=$true)] $secret,
     [string][Parameter(mandatory=$true)] $tenantId,
     [string][Parameter(mandatory=$true)] $subscriptionId,
+    [string] $Environment = "AzureCloud",
     [switch] $InstallAzModule,
     [string] $ModuleVersion
 )
@@ -25,6 +26,4 @@ if ($InstallAzModule){
 
 $pscredential = New-Object System.Management.Automation.PSCredential($appId, (ConvertTo-SecureString $secret -AsPlainText -Force))
 
-Connect-AzAccount -ServicePrincipal -Credential $pscredential -TenantId $tenantId
-
-Select-AzSubscription $subscriptionId
+Connect-AzAccount -ServicePrincipal -Credential $pscredential -TenantId $tenantId -Subscription $subscriptionId -Environment $Environment

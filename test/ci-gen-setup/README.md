@@ -6,8 +6,9 @@ Use these steps to configure a subscription to run the Azure DevOps pipelines su
 
 You will need 2 service principals for the pipelines one each with the following permissions:
 
-- One Owner for the subscriptions, this principal will create resource groups and assign permissions to those resource groups to the other service principal
-- One Reader for the subscription, this principal will be used to deploy templates to the assigned resource group but also access "existing" resources in other resource groups.  If you don't use that scenario this permission can be remove and the pipeline will assign permissions as needed.
+- Owner for the subscriptions, this principal will create resource groups and assign permissions to those resource groups to the other service principal
+  - Additionally, this service principal will need to be assigned the "Directory Readers" role for the AD tenant.  In the Azure Portal you can find this under "Active Directory > Roles and Administrators"
+- Reader for the subscription, this principal will be used to deploy templates to the assigned resource group but also access "existing" resources in other resource groups.  If you don't use that scenario this permission can be remove and the pipeline will assign permissions as needed.
 
 ## KeyVault Scenarios for the Service Principal
 

@@ -88,7 +88,7 @@ else {
     if (![string]::IsNullOrWhiteSpace($FairfaxDeployment)) { 
         if ($r.FairfaxDeployment -eq $null) {
             Add-Member -InputObject $r -NotePropertyName "FairfaxDeployment" -NotePropertyValue $FairfaxDeployment
-            Add-Member -InputObject $r -NotePropertyName "FairfaxLastTestDate" -NotePropertyValue $FairfaxLastTestDate
+            Add-Member -InputObject $r -NotePropertyName "FairfaxLastTestDate" -NotePropertyValue $FairfaxLastTestDate -Force
         }
         else {
             $r.FairfaxDeployment = $FairfaxDeployment
@@ -99,7 +99,7 @@ else {
     if (![string]::IsNullOrWhiteSpace($PublicDeployment)) {
         if ($r.PublicDeployment -eq $null) {
             Add-Member -InputObject $r -NotePropertyName "PublicDeployment" -NotePropertyValue $PublicDeployment
-            Add-Member -InputObject $r -NotePropertyName "PublicLastTestDate" -NotePropertyValue $PublicLastTestDate
+            Add-Member -InputObject $r -NotePropertyName "PublicLastTestDate" -NotePropertyValue $PublicLastTestDate -Force
         }
         else {
             $r.PublicDeployment = $PublicDeployment 
