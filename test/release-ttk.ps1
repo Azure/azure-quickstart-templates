@@ -1,7 +1,7 @@
 
 param(
-    [string]$StorageAccountResourceGroupName = "ttk-gen-artifacts-storage",
-    [string]$StorageAccountName = "azbotstorage",
+    [string]$StorageAccountResourceGroupName = "azure-quickstarts-service-storage",
+    [string]$StorageAccountName = "azurequickstartsservice",
     [string]$containerName = "ttk",
     [string]$folderName = "latest",
     [string]$ttkFileName = "arm-template-toolkit.zip",
@@ -19,6 +19,6 @@ if ($Publish) {
         -File $ttkFileName `
         -Blob "$folderName/$ttkFileName" `
         -Context $ctx `
-        -Force `
+        -Force -Verbose `
         -Properties @{"ContentType" = "application/x-zip-compressed"; "CacheControl" = "no-cache" }
 }

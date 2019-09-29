@@ -1,8 +1,12 @@
 #Requires -module AzureRM
-#Requires -module pki
+#Requires -module pki 
 
 <#
-Use this script to create the GEN artifacts needed by the pipeline to test templates.  The Crypto module is not supported on PS Core so this is using older modules.
+Use this script to create the GEN artifacts needed by the pipeline to test templates.  
+
+########################################################################################
+The Crypto module (PKI) is not supported on PS Core so this is using older AzureRM modules.
+########################################################################################
 
 Be sure to set the appropriate Context before running the script
 
@@ -11,7 +15,7 @@ Be sure to set the appropriate Context before running the script
 param(
     [string] $ResourceGroupName = 'ttk-gen-artifacts',
     [string] [Parameter(mandatory = $true)] $Location, #The location where resources will be deployed in the pipeline, in many cases they need to be in the same region.
-    [string] $KeyVaultName = 'azbotvault',
+    [string] $KeyVaultName = 'azbotvault', # This must be gloablly unique
     [string] $CertPass = $("cI#" + (New-Guid).ToString().Substring(0, 17)),
     [string] $CertDNSName = 'azbot-cert-dns',
     [string] $KeyVaultSelfSignedCertName = 'azbot-sscert',
@@ -75,16 +79,19 @@ if($ServicePrincipalObjectId){
 
     New-AzureRMRoleAssignment -RoleDefinitionId $role.Id -ObjectId $ServicePrincipalObjectId -Scope $vault.ResourceId -Verbose
 
-    # Set the Data Plane Access Policy for the Principal
+    # Need contributor access to be able to add secrets during a template deployment
+    $roleDef = Get-AzureRmRoleDefinition -Name 'Contributor'
+    New-AzureRMRoleAssignment -RoleDefinitionId $roleDef.id -ObjectId $ServicePrincipalObjectId -Scope $vault.ResourceId -Verbose
 
+    # Set the Data Plane Access Policy for the Principal to retrieve secrets via reference parameters
     Set-AzureRMKeyVaultAccessPolicy -VaultName $KeyVaultName -ObjectId $ServicePrincipalObjectId `
-                               -PermissionsToKeys get,restore `
-                               -PermissionsToSecrets get,set `
-                               -PermissionsToCertificates get
+                                    -PermissionsToKeys get,restore `
+                                    -PermissionsToSecrets get,set `
+                                    -PermissionsToCertificates get
 
 }
 
-# 1) Create a sample password
+# 1) Create a sample password for the vault
 $SecretValue = ConvertTo-SecureString -String $CertPass -AsPlainText -Force
 Set-AzureKeyVaultSecret -VaultName $KeyVaultName -Name $KeyVaultNotSecretName -SecretValue $SecretValue -Verbose
 
@@ -108,7 +115,6 @@ $refParam = @"
 $json.Add("KEYVAULT-PASSWORD-REFERENCE", (ConvertFrom-Json $refParam))
 
 # 2) Create a sample cert for Service Fabric
-
 $SecurePassword = ConvertTo-SecureString -String $CertPass -AsPlainText -Force
 $CertFileFullPath = $(Join-Path (Split-Path -Parent $MyInvocation.MyCommand.Definition) "\$CertDNSName.pfx")
 
@@ -163,7 +169,6 @@ $json.Add("SELFSIGNED-CERT-CERDATA", [System.Convert]::ToBase64String([System.IO
 $json.Add("SELFSIGNED-CERT-PASSWORD", $CertPass)
 $json.Add("SELFSIGNED-CERT-THUMBPRINT", $kvCert.Thumbprint)
 $json.Add("SELFSIGNED-CERT-DNSNAME", $CertDNSName)
-
 
 #Output all the values needed for the config file
 Write-Output $($json | ConvertTo-json -Depth 30)
