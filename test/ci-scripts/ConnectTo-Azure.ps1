@@ -8,13 +8,18 @@ param(
     [string][Parameter(mandatory=$true)] $secret,
     [string][Parameter(mandatory=$true)] $tenantId,
     [string][Parameter(mandatory=$true)] $subscriptionId,
-    [switch] $InstallAzModule
+    [switch] $InstallAzModule,
+    [string] $ModuleVersion
 )
 
 Set-PSRepository -InstallationPolicy Trusted -Name PSGallery -verbose
 
 if ($InstallAzModule){
-    Install-Module -Name Az -AllowClobber -verbose
+    $VersionParam = @{}
+    if($ModuleVersion -ne $null){
+        $VersionParam.Add("RequiredVersion", "$ModuleVersion")
+    }
+    Install-Module -Name Az -AllowClobber -verbose @VersionParam
     Install-Module -Name AzTable -AllowClobber -verbose # need this for updating the deployment status table
 }
 

@@ -8,9 +8,10 @@ Typical scenario is that results will be passed in for only one cloud Public or 
 param(
     [string]$SampleFolder = $ENV:SAMPLE_FOLDER, # this is the path to the sample
     [string]$SampleName = $ENV:SAMPLE_NAME,  # the name of the sample or folder path from the root of the repo e.g. "sample-type/sample-name"
-    [string]$StorageAccountResourceGroupName = "ttk-gen-artifacts-storage",
-    [string]$StorageAccountName = "azbotstorage",
-    [string]$TableName = "QuickStartDeploymentStatus",
+    [string]$StorageAccountResourceGroupName = "azure-quickstarts-service-storage",
+    [string]$StorageAccountName = "azurequickstartsservice",
+    [string]$TableName = "QuickStartsMetadataService",
+    [Parameter(mandatory=$true)]$StorageAccountKey, 
     [string]$BestPracticeResult = "$ENV:RESULT_BEST_PRACTICE",
     [string]$CredScanResult = "$ENV:RESULT_CREDSCAN",
     [string]$FairfaxDeployment = "",
@@ -21,7 +22,7 @@ param(
 
 
 # Get the storage table that contains the "status" for the deployment/test results
-$ctx = (Get-AzStorageAccount -Name $StorageAccountName -ResourceGroupName $StorageAccountResourceGroupName).Context
+$ctx = New-AzStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey -Environment AzureCloud
 $cloudTable = (Get-AzStorageTable –Name $tableName –Context $ctx).CloudTable
 
 #Get the type of Sample from metadata.json, needed for the partition key lookup
