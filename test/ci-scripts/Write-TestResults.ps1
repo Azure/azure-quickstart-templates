@@ -41,6 +41,7 @@ $r = Get-AzTableRow -table $cloudTable -PartitionKey $PartitionKey -RowKey $RowK
 # if the record doesn't exist, this is probably a new sample and needs to be added (or we just cleaned the table)
 if ($r -eq $null) {
 
+    Write-Host "No record found, adding a new one..."
     $results = New-Object -TypeName hashtable
     if (![string]::IsNullOrWhiteSpace($BestPracticeResult)) {
         $results.Add("BestPracticeResult", $BestPracticeResult)
@@ -68,6 +69,9 @@ if ($r -eq $null) {
 }
 else {
     # Update the existing row - need to check to make sure the columns exist
+    Write-Host "Updating the existing record from:"
+    $r | ft
+
     if (![string]::IsNullOrWhiteSpace($BestPracticeResult)) {
         if ($r.BestPracticeResult -eq $null) {
             Add-Member -InputObject $r -NotePropertyName 'BestPracticeResult' -NotePropertyValue $BestPracticeResult
@@ -106,6 +110,7 @@ else {
             $r.PublicLastTestDate = $PublicLastTestDate 
         }
     }
+    Write-Host "Updating to new results:"
     $r | ft
     $r | Update-AzTableRow -table $cloudTable
 }
