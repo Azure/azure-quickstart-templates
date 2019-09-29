@@ -8,8 +8,9 @@ Then, when the PR is merged, the CI pipeline copies the badges to the "badges" f
 
 param(
     [string]$SampleName = $ENV:SAMPLE_NAME, # the name of the sample or folder path from the root of the repo e.g. "sample-type/sample-name"
-    [string]$StorageAccountResourceGroupName = "ttk-gen-artifacts-storage",
-    [string]$StorageAccountName = "azbotstorage"
+    [string]$StorageAccountResourceGroupName = "azure-quickstarts-service-storage",
+    [string]$StorageAccountName = "azurequickstartsservice",
+    [Parameter(mandatory=$true)]$StorageAccountKey
 )
 
 if($SampleName = ""){
@@ -19,7 +20,7 @@ if($SampleName = ""){
 $storageFolder = $SampleName.Replace("\", "@").Replace("/", "@")
 
 # Get the storage table that contains the "status" for the deployment/test results
-$ctx = (Get-AzStorageAccount -Name $StorageAccountName -ResourceGroupName $StorageAccountResourceGroupName).Context
+$ctx = New-AzStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey -Environment AzureCloud
 
 #Get All Files from "prs" container and copy to the "badges" container
 $blobs = Get-AzStorageBlob -Context $ctx -Container "prs" -Prefix $storageFolder 

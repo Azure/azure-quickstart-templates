@@ -1,7 +1,7 @@
 
 param(
-    [string]$StorageAccountResourceGroupName = "ttk-gen-artifacts-storage",
-    [string]$StorageAccountName = "azbotstorage",
+    [string]$StorageAccountResourceGroupName = "azure-quickstarts-service-storage",
+    [string]$StorageAccountName = "azurequickstartsservice",
     [string]$containerName = "ttk",
     [string]$folderName = "latest",
     [string]$ttkFileName = "arm-template-toolkit.zip",

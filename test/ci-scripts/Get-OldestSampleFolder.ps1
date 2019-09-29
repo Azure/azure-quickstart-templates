@@ -1,8 +1,9 @@
 ﻿param(
     $BuildSourcesDirectory = "$ENV:BUILD_SOURCESDIRECTORY",
-    $StorageAccountResourceGroupName = "ttk-gen-artifacts-storage",
-    $StorageAccountName = "azbotstorage",
-    $TableName = "QuickStartDeploymentStatus",
+    $StorageAccountResourceGroupName = "azure-quickstarts-service-storage",
+    $StorageAccountName = "azurequickstartsservice",
+    $TableName = "QuickStartsMetadataService",
+    [Parameter(mandatory=$true)]$StorageAccountKey, 
     $ResultDeploymentLastTestDateParameter = "$ENV:RESULT_DEPLOYMENT_LAST_TEST_DATE_PARAMETER", # sort based on the cloud we're testing FF or Public
     $ResultDeploymentParameter = "$ENV:RESULT_DEPLOYMENT_PARAMETER", #also cloud specific
     $PurgeOldRows = $true
@@ -13,7 +14,7 @@ Get all metadata files in the repo
 Get entire table since is has to be sorted client side
 
 For each file in the repo, check to make sure it's in the table
- - if not add it with the date found in metadata.json
+- if not add it with the date found in metadata.json
 
 sort the table by date
 
@@ -26,7 +27,7 @@ Else set the sample folder to run the test
 #>
 
 # Get the storage table that contains the "status" for the deployment/test results
-$ctx = (Get-AzStorageAccount -Name $StorageAccountName -ResourceGroupName $StorageAccountResourceGroupName).Context
+$ctx = New-AzStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey -Environment AzureCloud
 $cloudTable = (Get-AzStorageTable –Name $tableName –Context $ctx).CloudTable
 $t = Get-AzTableRow -table $cloudTable
 
@@ -59,7 +60,8 @@ foreach ($SourcePath in $ArtifactFilePaths) {
             -rowKey $RowKey `
             -property @{
                 "$ResultDeploymentParameter"             = $false; `
-                "$ResultDeploymentLastTestDateParameter" = "$($MetadataJson.dateUpdated)"; 
+                "PublicLastTestDate" = "$($MetadataJson.dateUpdated)"; 
+                "FairfaxLastTestData" = "$($MetadataJson.dateUpdated)"; 
         }
     }
 }
@@ -89,6 +91,7 @@ Write-Output "Using sample folder: $FolderString"
 Write-Host "##vso[task.setvariable variable=sample.folder]$FolderString"
 
 # Not sure we need this in the scheduled build but here it is:
+
 $sampleName = $FolderString.Replace("$ENV:BUILD_SOURCESDIRECTORY\", "")
 Write-Output "Using sample name: $sampleName"
 Write-Host "##vso[task.setvariable variable=sample.name]$sampleName"
