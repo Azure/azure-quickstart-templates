@@ -12,13 +12,14 @@ $schema = Invoke-WebRequest -Uri "https://aka.ms/azure-quickstart-templates-meta
 $metadata | Test-Json -Schema $schema.content 
 
 #Make sure the date has been updated
-$dateUpdated = (Get-Date ($metadata | convertfrom-json).dateUpdated)
+$rawDate =  ($metadata | convertfrom-json).dateUpdated
+$dateUpdated = (Get-Date $rawDate)
 
 if (!$SkipDateCheck) { #When running the scheduled tests, we don't want to check the date
     try {
-        [DateTime]::ParseExact($dateUpdated, 'yyyy-MM-dd', $(Get-Culture))
+        [DateTime]::ParseExact($rawDate, 'yyyy-MM-dd', $(Get-Culture))
     } Catch {
-        Write-Error "dateUpdate is not in the correct format: $dateUpdated must be in yyyy-MM-dd format."
+        Write-Error "dateUpdate is not in the correct format: $rawDate must be in yyyy-MM-dd format."
     }
     if ($dateUpdated -gt (Get-Date)) {
         Write-Error "dateUpdated in metadata.json must not be in the future -- $dateUpdated is later than $(Get-Date)"
