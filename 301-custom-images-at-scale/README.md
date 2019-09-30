@@ -1,13 +1,13 @@
 # Custom Images at Scale
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-custom-images-at-scale/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-custom-images-at-scale/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-custom-images-at-scale/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-custom-images-at-scale/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-custom-images-at-scale/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-custom-images-at-scale/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-custom-images-at-scale/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-custom-images-at-scale/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-custom-images-at-scale/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-custom-images-at-scale/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-custom-images-at-scale/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-custom-images-at-scale/CredScanResult.svg" />&nbsp;
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F301-custom-images-at-scale%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
@@ -29,3 +29,4 @@ For the final VM deployments, the intial option you pass the template determines
 - VMSS - This will create the VMs as a series of VM scale sets.  (final_VMSS.json)
 - Single - This will create the VMs as a series of individual VMs.  You can further customize them in the template if needed.  (final_Single.json, vm_baseSingle.json)
 - SingleAV - This will create the VMs as a series of individual VMs that are all within an availability set.  You cannot exceed 100 total VMs if using this method.  (final_SingleAV.json, vm_baseSingleAV.json)
+

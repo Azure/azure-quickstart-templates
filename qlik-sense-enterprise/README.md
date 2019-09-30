@@ -1,13 +1,13 @@
 # Qlik Sense Enterprise
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/qlik-sense-enterprise/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/qlik-sense-enterprise/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/qlik-sense-enterprise/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/qlik-sense-enterprise/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/qlik-sense-enterprise/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/qlik-sense-enterprise/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/qlik-sense-enterprise/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/qlik-sense-enterprise/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/qlik-sense-enterprise/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/qlik-sense-enterprise/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/qlik-sense-enterprise/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/qlik-sense-enterprise/CredScanResult.svg" />&nbsp;
 This template will deploy a new Virtual Machine and will configure it with Qlik Sense Enterprise.
 
 The following versions of Qlik Sense Enteprise can be provisioned:
@@ -39,3 +39,4 @@ For help please review [Qlik Sense Help](http://help.qlik.com)
 Getting started [Qlik Sense Community](http://community.qlik.com)
 
 #### The deployment of Qlik Sense Enterprise can take up to 15 minutes.
+

@@ -1,13 +1,13 @@
 # Ethereum C++ Public Node
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/ethereum-cpp-on-ubuntu/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/ethereum-cpp-on-ubuntu/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/ethereum-cpp-on-ubuntu/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/ethereum-cpp-on-ubuntu/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/ethereum-cpp-on-ubuntu/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/ethereum-cpp-on-ubuntu/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/ethereum-cpp-on-ubuntu/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/ethereum-cpp-on-ubuntu/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/ethereum-cpp-on-ubuntu/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/ethereum-cpp-on-ubuntu/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/ethereum-cpp-on-ubuntu/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/ethereum-cpp-on-ubuntu/CredScanResult.svg" />&nbsp;
 
 This Microsoft Azure template deploys a single C++ Ethereum client which will connect to the public Ethereum network.
 
@@ -44,3 +44,4 @@ When you launch the installation of the VM, you need to specify the following pa
 3. Invoke the following command to connect to the Ethereum public network:
 
 `eth`
+

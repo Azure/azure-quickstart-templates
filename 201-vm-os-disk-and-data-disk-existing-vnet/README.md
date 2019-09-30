@@ -1,13 +1,13 @@
 # Create a virtual machine from two disks (OS + data disk) in an existing virtual network
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vm-os-disk-and-data-disk-existing-vnet/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vm-os-disk-and-data-disk-existing-vnet/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vm-os-disk-and-data-disk-existing-vnet/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vm-os-disk-and-data-disk-existing-vnet/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vm-os-disk-and-data-disk-existing-vnet/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vm-os-disk-and-data-disk-existing-vnet/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vm-os-disk-and-data-disk-existing-vnet/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vm-os-disk-and-data-disk-existing-vnet/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vm-os-disk-and-data-disk-existing-vnet/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vm-os-disk-and-data-disk-existing-vnet/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vm-os-disk-and-data-disk-existing-vnet/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vm-os-disk-and-data-disk-existing-vnet/CredScanResult.svg" />&nbsp;
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2F201-os-disk-and-data-disk-existing-vnet%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
@@ -31,3 +31,4 @@ This template will create an additional Standard_LRS storage account for enablin
 This template creates a VM from a specialized VHD and a data disk and let you connect it to an existing VNET that can reside in another Resource Group then the virtual machine.
 
 Plese note: This deployment template does not create or attach an existing Network Security Group to the virtual machine. 
+

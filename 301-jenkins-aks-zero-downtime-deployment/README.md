@@ -1,13 +1,13 @@
 # Zero-downtime Deployment to AKS with Jenkins
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-jenkins-aks-zero-downtime-deployment/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-jenkins-aks-zero-downtime-deployment/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-jenkins-aks-zero-downtime-deployment/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-jenkins-aks-zero-downtime-deployment/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-jenkins-aks-zero-downtime-deployment/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-jenkins-aks-zero-downtime-deployment/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-jenkins-aks-zero-downtime-deployment/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-jenkins-aks-zero-downtime-deployment/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-jenkins-aks-zero-downtime-deployment/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-jenkins-aks-zero-downtime-deployment/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-jenkins-aks-zero-downtime-deployment/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-jenkins-aks-zero-downtime-deployment/CredScanResult.svg" />&nbsp;
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F301-jenkins-aks-zero-downtime-deployment%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
@@ -152,3 +152,4 @@ for more details.
 1. If you run the build more than once, it will cycle through BLUE and GREEN deployments. i.e., if the current
    environment is **Green**, the job will deploy/test the **Blue** environment and then update the application
    public endpoint to route traffic to the **Blue** environment if all is good with testing.
+

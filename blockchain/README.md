@@ -1,13 +1,13 @@
 # Blockchain Template
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/blockchain/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/blockchain/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/blockchain/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/blockchain/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/blockchain/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/blockchain/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/blockchain/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/blockchain/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/blockchain/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/blockchain/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/blockchain/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/blockchain/CredScanResult.svg" />&nbsp;
 
 This Microsoft Azure Resource Manager template deploys a single VM and allows you to select from a number of blockchain software options to run on the VM.
 
@@ -35,3 +35,4 @@ Options for blockchain software include:
 - [syscoin](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/syscoin.md)
 - [vcash](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/vcash.md)
 - [viacoin](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/viacoin.md)
+

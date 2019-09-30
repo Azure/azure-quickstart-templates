@@ -1,13 +1,13 @@
 # Deployment of a 3 Nodetype Service Fabric secure Cluster with NSG enabled.
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/service-fabric-secure-nsg-cluster-65-node-3-nodetype/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/service-fabric-secure-nsg-cluster-65-node-3-nodetype/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/service-fabric-secure-nsg-cluster-65-node-3-nodetype/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/service-fabric-secure-nsg-cluster-65-node-3-nodetype/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/service-fabric-secure-nsg-cluster-65-node-3-nodetype/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/service-fabric-secure-nsg-cluster-65-node-3-nodetype/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/service-fabric-secure-nsg-cluster-65-node-3-nodetype/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/service-fabric-secure-nsg-cluster-65-node-3-nodetype/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/service-fabric-secure-nsg-cluster-65-node-3-nodetype/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/service-fabric-secure-nsg-cluster-65-node-3-nodetype/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/service-fabric-secure-nsg-cluster-65-node-3-nodetype/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/service-fabric-secure-nsg-cluster-65-node-3-nodetype/CredScanResult.svg" />&nbsp;
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fservice-fabric-secure-nsg-cluster-65-node-3-nodetype%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
@@ -36,4 +36,5 @@ Refer to [Deploying ARM templates using ARM PS ](https://azure.microsoft.com/doc
 <!--Image references-->
 [DownloadTemplate]: ./DownloadTemplate.png
 [NSG]: ./NSG1.PNG
+
 

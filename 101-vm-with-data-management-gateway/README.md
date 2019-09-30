@@ -1,13 +1,13 @@
 # Create a data management gateway and make it workable in azure VM
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-vm-with-data-management-gateway/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-vm-with-data-management-gateway/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-vm-with-data-management-gateway/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-vm-with-data-management-gateway/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-vm-with-data-management-gateway/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-vm-with-data-management-gateway/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-vm-with-data-management-gateway/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-vm-with-data-management-gateway/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-vm-with-data-management-gateway/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-vm-with-data-management-gateway/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-vm-with-data-management-gateway/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-vm-with-data-management-gateway/CredScanResult.svg" />&nbsp;
 
 Before deploying the template you must have the following
 
@@ -41,3 +41,4 @@ This template must be deployed in the same resource group with data factory.
 ## Sample
 
 ![Azure Custom Deployment](images/screenshot.png)
+

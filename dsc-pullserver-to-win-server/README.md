@@ -1,13 +1,13 @@
 # Deploy a Powershell DSC Pull Server to a Windows Server
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/dsc-pullserver-to-win-server/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/dsc-pullserver-to-win-server/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/dsc-pullserver-to-win-server/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/dsc-pullserver-to-win-server/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/dsc-pullserver-to-win-server/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/dsc-pullserver-to-win-server/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/dsc-pullserver-to-win-server/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/dsc-pullserver-to-win-server/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/dsc-pullserver-to-win-server/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/dsc-pullserver-to-win-server/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/dsc-pullserver-to-win-server/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/dsc-pullserver-to-win-server/CredScanResult.svg" />&nbsp;
 
 This example allows to you deploy a powershell desired state configuration pull server. This deployment creates a windows server and adds the dsc-service and deploys the powershell dsc pull server and configures the server. The server is not domain joined.
 This example uses the xPSDesiredStateConfiguration Module available in the PowerShell DSC Resource Kit available here https://gallery.technet.microsoft.com/xPSDesiredStateConfiguratio-417dc71d.
@@ -40,3 +40,4 @@ For further information on the DSC Pull server look here:
 [PowerShell DSC Resource for configuring Pull Server environment](http://blogs.msdn.com/b/powershell/archive/2013/11/21/powershell-dsc-resource-for-configuring-pull-server-environment.aspx)
 
 [How to retrieve node information from DSC pull server](http://blogs.msdn.com/b/powershell/archive/2014/05/29/how-to-retrieve-node-information-from-pull-server.aspx)
+

@@ -1,13 +1,13 @@
 # Integration Patterns - Message Router - Service Bus
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-integrationpatterns-messagerouter-servicebus/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-integrationpatterns-messagerouter-servicebus/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-integrationpatterns-messagerouter-servicebus/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-integrationpatterns-messagerouter-servicebus/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-integrationpatterns-messagerouter-servicebus/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-integrationpatterns-messagerouter-servicebus/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-integrationpatterns-messagerouter-servicebus/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-integrationpatterns-messagerouter-servicebus/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-integrationpatterns-messagerouter-servicebus/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-integrationpatterns-messagerouter-servicebus/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-integrationpatterns-messagerouter-servicebus/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-integrationpatterns-messagerouter-servicebus/CredScanResult.svg" />&nbsp;
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-integrationpatterns-messagerouter-servicebus%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
@@ -38,3 +38,4 @@ To test, grab the connection string of the Service Bus namespace, and use a tool
 ```
 
 `Tags: Service Bus, Integration Patterns, Service Bus Topics, Message Router, ServiceBus, IntegrationPatterns`
+
