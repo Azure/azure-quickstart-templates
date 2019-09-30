@@ -1,13 +1,13 @@
 # Install a LAP node and another Neo4J node on Ubuntu Virtual Machines using Custom Script Linux Extension
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/lap-neo4j-ubuntu/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/lap-neo4j-ubuntu/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/lap-neo4j-ubuntu/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/lap-neo4j-ubuntu/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/lap-neo4j-ubuntu/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/lap-neo4j-ubuntu/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/lap-neo4j-ubuntu/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/lap-neo4j-ubuntu/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/lap-neo4j-ubuntu/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/lap-neo4j-ubuntu/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/lap-neo4j-ubuntu/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/lap-neo4j-ubuntu/CredScanResult.svg" />&nbsp;
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Flap-neo4j-ubuntu%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
@@ -50,3 +50,4 @@ Only support one Neo4j node for now.
 - The template only support one LAP node and one Mysql node now.
 - The deployment scripts are not currently idempotent and this template should only be used for provisioning new.
 - The Password for neo4j server must be changed from default, but the only way to do so could be is to open the Neo4J interface on browser using http://<serverip>:7474 which may not be as straight forward as the only means to access this server could be is from the LAP node, possible LYNX browser could be used to do so.
+

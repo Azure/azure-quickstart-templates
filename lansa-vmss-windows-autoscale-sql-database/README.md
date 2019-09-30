@@ -1,13 +1,13 @@
 # Autoscale a LANSA Windows VM Scale Set with Azure SQL Database
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/lansa-vmss-windows-autoscale-sql-database/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/lansa-vmss-windows-autoscale-sql-database/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/lansa-vmss-windows-autoscale-sql-database/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/lansa-vmss-windows-autoscale-sql-database/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/lansa-vmss-windows-autoscale-sql-database/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/lansa-vmss-windows-autoscale-sql-database/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/lansa-vmss-windows-autoscale-sql-database/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/lansa-vmss-windows-autoscale-sql-database/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/lansa-vmss-windows-autoscale-sql-database/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/lansa-vmss-windows-autoscale-sql-database/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/lansa-vmss-windows-autoscale-sql-database/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/lansa-vmss-windows-autoscale-sql-database/CredScanResult.svg" />&nbsp;
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Flansa-vmss-windows-autoscale-sql-database%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
@@ -74,4 +74,5 @@ For full instructions for using this template go to [Azure Deployment Tutorial](
 2. Scale Out fast. Scale Out action is 10% of current instances. It scales out after 5 mins of avg CPU > 60%. Another scaling event will not occur for 20 minutes. This allows time for the VM to be installed.
 
 3. Scale in slowly. Scale in action is 1 VM at a time after 5 mins of avg CPU < 30%. Another scaling event will not occur for 5 mins. Deletion does not take very long. Allows more VMs to be deleted or another to be created.
+
 

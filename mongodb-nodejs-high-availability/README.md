@@ -1,13 +1,13 @@
 # Deploy a Node js service connected to a highly available MongoDB installation on Ubuntu virtual machine
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/mongodb-nodejs-high-availability/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/mongodb-nodejs-high-availability/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/mongodb-nodejs-high-availability/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/mongodb-nodejs-high-availability/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/mongodb-nodejs-high-availability/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/mongodb-nodejs-high-availability/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/mongodb-nodejs-high-availability/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/mongodb-nodejs-high-availability/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/mongodb-nodejs-high-availability/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/mongodb-nodejs-high-availability/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/mongodb-nodejs-high-availability/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/mongodb-nodejs-high-availability/CredScanResult.svg" />&nbsp;
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmongodb-nodejs-high-availability%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
@@ -70,3 +70,4 @@ In the above deployment sequence, steps #1 and #2 will have to complete first be
 - SSH key is not yet implemented and the template currently takes a password for the admin user
 - MongoDB version 3.0.0 and above is recommended in order to take advantage of high-scale replica sets offered by this template
 - The current version of the MongoDB template is shipped with Ubuntu support only (adding support for CentOS is just a matter of creating an additional installation .sh script)
+

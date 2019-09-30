@@ -1,13 +1,13 @@
 # 1 VM in vNet - Multiple data disks
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sample-managed-disks/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sample-managed-disks/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/sample-managed-disks/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/sample-managed-disks/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sample-managed-disks/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sample-managed-disks/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/sample-managed-disks/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/sample-managed-disks/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sample-managed-disks/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sample-managed-disks/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/sample-managed-disks/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/sample-managed-disks/CredScanResult.svg" />&nbsp;
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fjamesbannan%2Fazure-quickstart-templates%2Fmaster%2Fstorage-iops-latency-throughput-demo%2Fsample-managed-disks%2FmanagedDisksDemo.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
@@ -32,3 +32,4 @@ The template also used the PowerShell Desired State Configuration (DSC) VM exten
 * Prepare and format the data disks
 * Install ioMeter using Chocolatey
 * Download and extract 20 pre-defined ioMeter tests to C:\iometerTests
+

@@ -1,13 +1,13 @@
 # VM-Ubuntu - Team Services Apache 2 Tomcat 7 installation
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/vsts-tomcat-ubuntu-vm/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/vsts-tomcat-ubuntu-vm/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/vsts-tomcat-ubuntu-vm/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/vsts-tomcat-ubuntu-vm/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/vsts-tomcat-ubuntu-vm/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/vsts-tomcat-ubuntu-vm/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/vsts-tomcat-ubuntu-vm/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/vsts-tomcat-ubuntu-vm/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/vsts-tomcat-ubuntu-vm/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/vsts-tomcat-ubuntu-vm/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/vsts-tomcat-ubuntu-vm/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/vsts-tomcat-ubuntu-vm/CredScanResult.svg" />&nbsp;
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fvsts-tomcat-ubuntu-vm%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
@@ -39,5 +39,6 @@ To create the VM, you will need to:
 
 Once you create the VM, use an SSH client (such as the Windows command prompt SSH or a tool such as MobaXterm) to login (using the admin user name and password from above) and then examine the contents of the file 
 "vsts_ssh_info" (i.e. cat vsts_ssh_info)  in the home directory to discover the SSH private key needed when using the Team Services Copy files via SSH deployment task (when setting up the SSH endpoint).
+
 
 

@@ -6,13 +6,14 @@ The Azure Container Service Engine (acs-engine) generates ARM (Azure Resource Ma
 
 # For more details refer to ACS Engine: 
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-acsengine-swarmmode/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-acsengine-swarmmode/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-acsengine-swarmmode/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-acsengine-swarmmode/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-acsengine-swarmmode/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-acsengine-swarmmode/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-acsengine-swarmmode/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-acsengine-swarmmode/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-acsengine-swarmmode/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-acsengine-swarmmode/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-acsengine-swarmmode/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-acsengine-swarmmode/CredScanResult.svg" />&nbsp;
 
 https://github.com/Azure/acs-engine/blob/master/docs/swarmmode.md
+

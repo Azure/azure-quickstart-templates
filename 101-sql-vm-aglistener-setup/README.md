@@ -1,13 +1,13 @@
 # Configure ILB and create listener for an existing Always On availability group on SQL Server VMs in Azure
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-sql-vm-aglistener-setup/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-sql-vm-aglistener-setup/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-sql-vm-aglistener-setup/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-sql-vm-aglistener-setup/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-sql-vm-aglistener-setup/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-sql-vm-aglistener-setup/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-sql-vm-aglistener-setup/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-sql-vm-aglistener-setup/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-sql-vm-aglistener-setup/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-sql-vm-aglistener-setup/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-sql-vm-aglistener-setup/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-sql-vm-aglistener-setup/CredScanResult.svg" />&nbsp;
 
 Before deploying the template you must have the following
 
@@ -33,4 +33,5 @@ This deployment will create an AG listener for a SQL Availability Group. This wi
  - Load balancer rules that will enable Listner to work in Azure.
  - Resource of type "AvailabilityGroupListener" in Microsoft.SqlVirtualMachine resource provider.
  
+
 

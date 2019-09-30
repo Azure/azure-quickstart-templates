@@ -1,13 +1,13 @@
 # Subnet-driven test lab 
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-subnet-driven-deployment/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-subnet-driven-deployment/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-subnet-driven-deployment/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-subnet-driven-deployment/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-subnet-driven-deployment/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-subnet-driven-deployment/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-subnet-driven-deployment/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-subnet-driven-deployment/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-subnet-driven-deployment/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-subnet-driven-deployment/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-subnet-driven-deployment/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-subnet-driven-deployment/CredScanResult.svg" />&nbsp;
 
 This template creates an environment with multiple subnets and the servers (one DC and two members) associated with. If the number of subnets varies, the servers are adjusted automatically.
  
@@ -79,4 +79,5 @@ wercase, should start with a letter: must conform to &#39;^[a-z][a-z0-9-]{1,61}[
 <tr><td>memberServersPerSubnet</td><td>Member servers for each subnet. Must be between 1 and 20</td><td>1</td></tr>
 <tr><td>storageCategory</td><td>Storage type. Can be either Standard (HDD) or Premium (SSD)</td><td>Standard</td></tr>
 </table>
+
 

@@ -1,13 +1,13 @@
 # Create an Active Directory forest with 1 or 2 domains, each with 1 or 2 DCs
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-create-ad-forest-with-subdomain/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-create-ad-forest-with-subdomain/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-create-ad-forest-with-subdomain/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-create-ad-forest-with-subdomain/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-create-ad-forest-with-subdomain/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-create-ad-forest-with-subdomain/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-create-ad-forest-with-subdomain/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-create-ad-forest-with-subdomain/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-create-ad-forest-with-subdomain/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/301-create-ad-forest-with-subdomain/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-create-ad-forest-with-subdomain/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-create-ad-forest-with-subdomain/CredScanResult.svg" />&nbsp;
 
 Click the button below to deploy a forest to Azure. 
 
@@ -162,3 +162,4 @@ New Features:
 Willem Kasdorp, 12-02-2018.
 
 `Tags: active directory,forest,domain,DSC`
+

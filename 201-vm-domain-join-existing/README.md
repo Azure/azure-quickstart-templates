@@ -1,13 +1,13 @@
 # Joins an Azure virtual machine into an AD Domain by using JsonADDomainExtension extension
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vm-domain-join-existing/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vm-domain-join-existing/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vm-domain-join-existing/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vm-domain-join-existing/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vm-domain-join-existing/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vm-domain-join-existing/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vm-domain-join-existing/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vm-domain-join-existing/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vm-domain-join-existing/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vm-domain-join-existing/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vm-domain-join-existing/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vm-domain-join-existing/CredScanResult.svg" />&nbsp;
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vm-domain-join-existing%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
@@ -31,5 +31,6 @@ Details about some of the parameters:
 2. location - current location of the exising virtual machine. E.g. West US.
 3. domainJoinUserName - this parameter must be in domain\username notation, where domain is the NetBios name of the domain. E.g. contoso\myAdmin
 4. ouPath - This is an optional parameter that allows you to join this virtual machine into a specific OU instead of the default Computers container. E.g. OU=MyCorpComputers,DC=Contoso,DC=com
+
 
 

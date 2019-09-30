@@ -1,13 +1,13 @@
 # Tableau Server Single Node
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/tableau-server-single-node/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/tableau-server-single-node/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/tableau-server-single-node/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/tableau-server-single-node/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/tableau-server-single-node/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/tableau-server-single-node/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/tableau-server-single-node/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/tableau-server-single-node/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/tableau-server-single-node/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/tableau-server-single-node/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/tableau-server-single-node/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/tableau-server-single-node/CredScanResult.svg" />&nbsp;
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Ftableau-server-single-node%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
@@ -116,3 +116,4 @@ Once these resources have been deployed they don't require significant managemen
 
 + Make sure that you entered all parameters correctly.  Passwords should conform to <a href="https://docs.microsoft.com/en-us/azure/virtual-machines/windows/faq#what-are-the-username-requirements-when-creating-a-vm">Azure standards</a> and source CIDR should follow official syntax (0.0.0.0/24)
 + This ARM template is made available <a href=https://www.tableau.com/support/itsupport>'as-is'</a> - please use Github or <a href=https://community.tableau.com/community/forums/content>Tableau's community forum</a> to share comments or issues you may find.
+

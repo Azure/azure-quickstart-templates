@@ -1,13 +1,13 @@
 # TFS - Single VM in existing environment
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/tfs-standard-existingsql/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/tfs-standard-existingsql/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/tfs-standard-existingsql/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/tfs-standard-existingsql/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/tfs-standard-existingsql/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/tfs-standard-existingsql/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/tfs-standard-existingsql/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/tfs-standard-existingsql/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/tfs-standard-existingsql/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/tfs-standard-existingsql/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/tfs-standard-existingsql/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/tfs-standard-existingsql/CredScanResult.svg" />&nbsp;
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Ftfs-standard-existingsql%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/> 
@@ -30,3 +30,4 @@ This template has several pre-requisites. Before deployment, you will need:
 ## After Deployment
 
 This template does not configure RDP access for the TFS VM. If you wish to access the TFS VM via RDP you will need to modify the template to allow this or access the TFS VM through a jump box. TFS will be available on port 8080 (e.g. http://vmname:8080/tfs).
+

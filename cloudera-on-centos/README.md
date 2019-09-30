@@ -1,13 +1,13 @@
 # Deploy a Cloudera Express cluster with the option to unlock Cloudera Enterprise features for a free 60-day trial
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/cloudera-on-centos/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/cloudera-on-centos/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cloudera-on-centos/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cloudera-on-centos/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/cloudera-on-centos/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/cloudera-on-centos/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cloudera-on-centos/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cloudera-on-centos/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/cloudera-on-centos/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/cloudera-on-centos/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cloudera-on-centos/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cloudera-on-centos/CredScanResult.svg" />&nbsp;
 Once the trial has concluded, the Cloudera Enterprise features will be disabled until you obtain and upload a license.
 
 # By clicking "Deploy to Azure" you agree to the Terms and Conditions below.
@@ -261,3 +261,4 @@ Now in this Chrome session you can connect to any other host on the Virtual Netw
 Warning: this method is **NOT** recommended for anything besides a PoC. If not carefully locked down the data in the cluster will be accessible to hackers and malicious entities.
 
 On [portal.azure.com](https://portal.azure.com) find the Network Security Group(s) and add inbound rules for the various services. You may have to create this rules in multiple Network Security Groups. [Here's Cloudera documentation for more information on ports used by Cloudera Manager, CDH components, managed services, and third-party components](http://www.cloudera.com/documentation/enterprise/latest/topics/cm_ig_ports.html).
+

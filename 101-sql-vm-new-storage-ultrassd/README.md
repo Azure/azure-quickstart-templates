@@ -1,13 +1,13 @@
 # Create a SQL Virtual Machines with Performance-Optimized Storage Settings using Ultra SSD For SQL Log Files
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-sql-vm-new-storage-ultrassd/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-sql-vm-new-storage-ultrassd/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-sql-vm-new-storage-ultrassd/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-sql-vm-new-storage-ultrassd/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-sql-vm-new-storage-ultrassd/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-sql-vm-new-storage-ultrassd/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-sql-vm-new-storage-ultrassd/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-sql-vm-new-storage-ultrassd/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-sql-vm-new-storage-ultrassd/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-sql-vm-new-storage-ultrassd/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-sql-vm-new-storage-ultrassd/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-sql-vm-new-storage-ultrassd/CredScanResult.svg" />&nbsp;
 
 Before deploying the template you must have the following
 
@@ -43,3 +43,4 @@ The following resources will be created
 ## Note
 
 - *This VM will have Ultra SSD compatibility enabled and there will be a reservation charge if no Ultra SSD Disk is attached to the VM.*
+

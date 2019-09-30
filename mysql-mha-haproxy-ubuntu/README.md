@@ -1,13 +1,13 @@
 # Install MySQL MHA + Haproxy Solution
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/mysql-mha-haproxy-ubuntu/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/mysql-mha-haproxy-ubuntu/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/mysql-mha-haproxy-ubuntu/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/mysql-mha-haproxy-ubuntu/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/mysql-mha-haproxy-ubuntu/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/mysql-mha-haproxy-ubuntu/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/mysql-mha-haproxy-ubuntu/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/mysql-mha-haproxy-ubuntu/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/mysql-mha-haproxy-ubuntu/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/mysql-mha-haproxy-ubuntu/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/mysql-mha-haproxy-ubuntu/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/mysql-mha-haproxy-ubuntu/CredScanResult.svg" />&nbsp;
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmysql-mha-haproxy-ubuntu%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
@@ -115,3 +115,4 @@ Now the mha plus haproxy works. Once the master fails, the candiate master 10.0.
 - sudo nohup bash /usr/local/haproxy/slave_ip_check.sh slave01ip slave02ip &    Here the parameters mean slave server ip addresses. The order is irrelevant.
 - haproxy node /var/log/masterha/app1/app1.log records the master failover details. 
 - haproxy node current directory/nohup.out records master and slave ip check info.
+

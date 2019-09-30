@@ -1,13 +1,13 @@
 # Simple deployment of an Ubuntu VM with DSC Linux Extension, configuration files are placed in public place (Github or anything else)
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-dsc-linux-public-storage-on-ubuntu/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-dsc-linux-public-storage-on-ubuntu/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-dsc-linux-public-storage-on-ubuntu/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-dsc-linux-public-storage-on-ubuntu/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-dsc-linux-public-storage-on-ubuntu/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-dsc-linux-public-storage-on-ubuntu/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-dsc-linux-public-storage-on-ubuntu/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-dsc-linux-public-storage-on-ubuntu/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-dsc-linux-public-storage-on-ubuntu/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-dsc-linux-public-storage-on-ubuntu/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-dsc-linux-public-storage-on-ubuntu/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-dsc-linux-public-storage-on-ubuntu/CredScanResult.svg" />&nbsp;
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-dsc-linux-public-storage-on-ubuntu%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
@@ -36,3 +36,4 @@ Azure CLI or Powershell is recommended to deploy the template.
 2. Using Powershell
 
   https://azure.microsoft.com/en-us/documentation/articles/powershell-azure-resource-manager/
+

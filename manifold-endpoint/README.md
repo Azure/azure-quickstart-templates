@@ -1,13 +1,13 @@
 # Manifold Platform Endpoint on CentOS
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/manifold-endpoint/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/manifold-endpoint/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/manifold-endpoint/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/manifold-endpoint/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/manifold-endpoint/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/manifold-endpoint/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/manifold-endpoint/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/manifold-endpoint/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/manifold-endpoint/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/manifold-endpoint/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/manifold-endpoint/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/manifold-endpoint/CredScanResult.svg" />&nbsp;
 By clicking "Deploy to Azure" you agree to the Terms and Conditions below.
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmanifoldtechnology%2Fazure-quickstart-templates%2Fmaster%2Fmanifold-endpoint%2Fazuredeploy.json" target="_blank"><img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/></a>
@@ -90,3 +90,4 @@ For inquiries please contact: Oracle America, Inc., 500 Oracle Parkway,
 Redwood Shores, California 94065, USA.
 
 Last updated 02 April 2013
+

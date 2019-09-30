@@ -1,13 +1,13 @@
 # Integration Patterns - Message Router - Logic App
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-integrationpatterns-messagerouter-logicapp/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-integrationpatterns-messagerouter-logicapp/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-integrationpatterns-messagerouter-logicapp/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-integrationpatterns-messagerouter-logicapp/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-integrationpatterns-messagerouter-logicapp/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-integrationpatterns-messagerouter-logicapp/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-integrationpatterns-messagerouter-logicapp/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-integrationpatterns-messagerouter-logicapp/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-integrationpatterns-messagerouter-logicapp/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-integrationpatterns-messagerouter-logicapp/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-integrationpatterns-messagerouter-logicapp/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-integrationpatterns-messagerouter-logicapp/CredScanResult.svg" />&nbsp;
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-integrationpatterns-messagerouter-logicapp%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
@@ -35,3 +35,4 @@ To test the Logic App, grab the endpoint of the Request shape in the Logic App, 
 ```
 
 `Tags: Logic Apps, Integration Patterns, Logic App, Message Router, LogicApps, IntegrationPatterns`
+

@@ -1,13 +1,13 @@
 # Enterprise Risk Analysis using Datameer, HDInsight, TrendMicro, Chef
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/datameer-trend-chef-riskanalysis/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/datameer-trend-chef-riskanalysis/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/datameer-trend-chef-riskanalysis/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/datameer-trend-chef-riskanalysis/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/datameer-trend-chef-riskanalysis/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/datameer-trend-chef-riskanalysis/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/datameer-trend-chef-riskanalysis/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/datameer-trend-chef-riskanalysis/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/datameer-trend-chef-riskanalysis/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/datameer-trend-chef-riskanalysis/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/datameer-trend-chef-riskanalysis/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/datameer-trend-chef-riskanalysis/CredScanResult.svg" />&nbsp;
 
 <h3>Composite template version 1.0</h3>
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdatameer-trend-chef-riskanalysis%2Fazuredeploy.json" target="_blank">
@@ -133,3 +133,4 @@ For any support-related issues or questions, please contact us for assistance.
 ```sh
 azuremarketplace@avyanconsulting.com
 ```
+
