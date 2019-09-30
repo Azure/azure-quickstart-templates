@@ -112,7 +112,7 @@
         "description": "Name of the sample VM to create"
       }
     },
-    "vmImageSKU":{
+    "vmImageSKU": {
       "type": "string",
       "defaultValue": "14.04.5-LTS",
       "metadata": {
@@ -132,10 +132,21 @@
         "description": "Username for sample VM"
       }
     },
-    "adminPassword": {
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
       "type": "securestring",
       "metadata": {
-        "description": "User password for sample VM"
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
     }
   },
@@ -146,7 +157,18 @@
     "gatewaySubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), 'GatewaySubnet')]",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
     "nicName": "[concat(parameters('vmName'), '-nic')]",
-    "vmPublicIPName": "[concat(parameters('vmName'), '-publicIP')]"
+    "vmPublicIPName": "[concat(parameters('vmName'), '-publicIP')]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
@@ -290,7 +312,7 @@
       }
     },
     {
-      "apiVersion": "2017-03-30", 
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
       "location": "[resourceGroup().location]",
@@ -304,7 +326,8 @@
         "osProfile": {
           "computerName": "[parameters('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
@@ -313,7 +336,7 @@
             "sku": "[variables('imageSKU')]",
             "version": "latest"
           },
-          "osDisk": {  
+          "osDisk": {
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }

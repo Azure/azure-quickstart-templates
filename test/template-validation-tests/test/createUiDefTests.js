@@ -46,9 +46,11 @@ describe('createUiDefinition.json file - ', () => {
     });
 
     /** A $handler property should be present in the file.
-    It's value MUST be 'Microsoft.Compute.MultiVm' */
-    it('handler property value should be \'Microsoft.Compute.MultiVm\'', () => {
-        createUiDefFileJSONObject.should.withMessage('handler property is expected, and it\'s value should be \'Microsoft.Compute.MultiVm\'').have.property('handler', 'microsoft.compute.multivm');
+    It's value MUST be one of the valid handlers */
+    it('handler property value should be \'Microsoft.Compute.MultiVm\' or or \'microsoft.azure.createuidef\'', () => {
+        createUiDefFileJSONObject.should.withMessage('handler property is expected, and it\'s value should be \'Microsoft.Compute.MultiVm\' or \'microsoft.azure.createuidef\'').have.property('handler', 'microsoft.compute.multivm')
+         || 
+        createUiDefFileJSONObject.should.withMessage('handler property is expected, and it\'s value should be \'Microsoft.Compute.MultiVm\' or \'microsoft.azure.createuidef\'').have.property('handler', 'microsoft.azure.createuidef');
     });
 
     /** A $version property should be present in the file.
@@ -69,7 +71,7 @@ describe('createUiDefinition.json file - ', () => {
     var outputsInCreateUiDef = Object.keys(createUiDefFileJSONObject.parameters.outputs);
     it.each(outputsInCreateUiDef, 'output %s must be present in mainTemplate parameters', ['element'], function(element, next) {
         /** if this is a managed app, applicationresourcename will be added by the RP and not in mainTemplate, so skip it */
-        if (element != 'applicationresourcename') {
+        if ((element != 'applicationresourcename') && (element != 'jitaccesspolicy') && (element != 'managedresourcegroupid')) {
             parametersInTemplate.should.contain(element);
         }
         next();

@@ -9,13 +9,6 @@
         "description": "User name for the Virtual Machine."
       }
     },
-    "adminVMPassword": {
-      "type": "securestring",
-      "minLength": 12,
-      "metadata": {
-        "description": "Password for the Virtual Machine."
-      }
-    },
     "dnsNameForPublicIP": {
       "type": "string",
       "minLength": 3,
@@ -108,6 +101,23 @@
         "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
       },
       "defaultValue": ""
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
     }
   },
   "variables": {
@@ -124,7 +134,18 @@
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
     "installScriptName": "opencanvas.sh",
     "ubuntuOSVersion": "16.04-LTS",
-    "installScriptUrl": "[uri(parameters('_artifactsLocation'), concat(variables('installScriptName'), parameters('_artifactsLocationSasToken')))]"
+    "installScriptUrl": "[uri(parameters('_artifactsLocation'), concat(variables('installScriptName'), parameters('_artifactsLocationSasToken')))]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminVMUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
@@ -213,7 +234,8 @@
         "osProfile": {
           "computerName": "[variables('vmName')]",
           "adminUsername": "[parameters('adminVMUsername')]",
-          "adminPassword": "[parameters('adminVMPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {

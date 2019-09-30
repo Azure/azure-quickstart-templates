@@ -15,12 +15,6 @@
         "description": "Username for the Virtual Machine."
       }
     },
-    "password": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Password for the Virtual Machine."
-      }
-    },
     "dnsLabelPrefix": {
       "type": "string",
       "metadata": {
@@ -47,6 +41,23 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
     }
   },
   "variables": {
@@ -55,7 +66,7 @@
     "vmStorageAccountContainerName": "vhds",
     "imagePublisher": "Canonical",
     "imageOffer": "UbuntuServer",
-    "ubuntuOSVersion": "17.10",
+    "ubuntuOSVersion": "18.04-LTS",
     "OSDiskName": "OSDisk",
     "vmName": "vm",
     "nicName": "vmNic",
@@ -66,7 +77,18 @@
     "subnetName": "netSubnet",
     "subnetPrefix": "10.0.0.0/24",
     "dnsPrefix": "[concat(parameters('dnsLabelPrefix'), uniquestring(resourceGroup().id))]",
-    "scriptFileName": "infra.sh"
+    "scriptFileName": "infra.sh",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('username'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
@@ -200,7 +222,8 @@
         "osProfile": {
           "computerName": "[variables('vmName')]",
           "adminUsername": "[parameters('username')]",
-          "adminPassword": "[parameters('password')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
@@ -210,7 +233,7 @@
             "version": "latest"
           },
           "osDisk": {
-            "name":  "[concat(variables('vmName'),'_OSDisk')]",
+            "name": "[concat(variables('vmName'),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }

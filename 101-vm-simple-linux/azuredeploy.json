@@ -8,10 +8,21 @@
         "description": "User name for the Virtual Machine."
       }
     },
-    "adminPassword": {
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
       "type": "securestring",
       "metadata": {
-        "description": "Password for the Virtual Machine."
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
     },
     "dnsLabelPrefix": {
@@ -26,8 +37,8 @@
       "allowedValues": [
         "12.04.5-LTS",
         "14.04.5-LTS",
-        "15.10",
-        "16.04.0-LTS"
+        "16.04.0-LTS",
+        "18.04-LTS"
       ],
       "metadata": {
         "description": "The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version."
@@ -55,13 +66,24 @@
     "vmName": "MyUbuntuVM",
     "vmSize": "Standard_A1",
     "virtualNetworkName": "MyVNET",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    },
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
   },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2018-11-01",
       "name": "[variables('storageAccountName')]",
-      "apiVersion": "2018-07-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "[variables('storageAccountType')]"
@@ -70,8 +92,8 @@
       "properties": {}
     },
     {
-      "apiVersion": "2018-10-01",
       "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2018-11-01",
       "name": "[variables('publicIPAddressName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -82,8 +104,8 @@
       }
     },
     {
-      "apiVersion": "2018-10-01",
       "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2018-11-01",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -103,8 +125,8 @@
       }
     },
     {
-      "apiVersion": "2018-10-01",
       "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2018-11-01",
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
@@ -129,8 +151,8 @@
       }
     },
     {
-      "apiVersion": "2018-10-01",
       "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2018-10-01",
       "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
@@ -144,7 +166,8 @@
         "osProfile": {
           "computerName": "[variables('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {

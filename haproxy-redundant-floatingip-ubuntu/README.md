@@ -1,10 +1,19 @@
 # Create a redundant haproxy setup with 2 Ubuntu VMs configured behind Azure load balancer with floating IP enabled.
 
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/haproxy-redundant-floatingip-ubuntu/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/haproxy-redundant-floatingip-ubuntu/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/haproxy-redundant-floatingip-ubuntu/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/haproxy-redundant-floatingip-ubuntu/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/haproxy-redundant-floatingip-ubuntu/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/haproxy-redundant-floatingip-ubuntu/CredScanResult.svg" />&nbsp;
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fhaproxy-redundant-floatingip-ubuntu%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fhaproxy-redundant-floatingip-ubuntu%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
 This template creates 2 ubuntu (haproxy-lb) VMs under an *Azure load-balancer* (Azure-LB) configured with *floating IP* enabled. It also creates 2 additional Ubuntu (application) VMs running Apache (default configuration) for a proof-of-concept.
