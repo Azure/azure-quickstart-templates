@@ -14,27 +14,6 @@
         "description": "Administrator password used when provisioning virtual machines"
       }
     },
-    "imagePublisher": {
-      "type": "string",
-      "defaultValue": "Canonical",
-      "metadata": {
-        "description": "Image Publisher"
-      }
-    },
-    "imageOffer": {
-      "type": "string",
-      "defaultValue": "UbuntuServer",
-      "metadata": {
-        "description": "Image Offer"
-      }
-    },
-    "imageSKU": {
-      "type": "string",
-      "defaultValue": "18.04-LTS",
-      "metadata": {
-        "description": "Image SKU"
-      }
-    },
     "storageAccountName": {
       "type": "string",
       "metadata": {
@@ -69,6 +48,20 @@
         "description": "Address space for the virtual network subnet"
       }
     },
+    "numberOfKafkaInstances": {
+      "type": "int",
+      "defaultValue": 3,
+      "metadata": {
+        "description": "How many instances of Kafka will be created? For basic setups, it is enough to have 3 Kafka, for mid-size it still enough to have 3 and for larges setups you could set-up more than 7 instances."
+      }
+    },
+    "kafkaNodeIPAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.1",
+      "metadata": {
+        "description": "The IP address prefix that will be used for constructing a static private IP address for each node in the cluster"
+      }
+    },
     "kafkaVersion": {
       "type": "string",
       "defaultValue": "2.3.0",
@@ -90,11 +83,11 @@
         "description": "The IP address prefix that will be used for constructing a static private IP address for each node in the cluster"
       }
     },
-    "kafkaNodeIPAddressPrefix": {
-      "type": "string",
-      "defaultValue": "10.0.0.1",
+    "numberOfZookeeperInstances": {
+      "type": "int",
+      "defaultValue": 1,
       "metadata": {
-        "description": "The IP address prefix that will be used for constructing a static private IP address for each node in the cluster"
+        "description": "How many instances of Zookeeper will be created? For basic setups, it is enough to have 1 Zookeeper, for mid-size you could use 3 and for larges setups you could set-up more than 5 instances."
       }
     },
     "zookeperVersion": {
@@ -122,18 +115,6 @@
         "description": "The flag allowing to enable or disable provisioning of the jumpbox VM (hop-server) that can be used to access the Kafka nodes"
       }
     },
-    "tshirtSize": {
-      "type": "string",
-      "defaultValue": "S",
-      "allowedValues": [
-        "S",
-        "M",
-        "L"
-      ],
-      "metadata": {
-        "description": "T-shirt size of the Kafka cluster"
-      }
-    },
     "vmSize": {
       "type": "string",
       "defaultValue": "Standard_A1",
@@ -146,6 +127,27 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "imagePublisher": {
+      "type": "string",
+      "defaultValue": "Canonical",
+      "metadata": {
+        "description": "Image Publisher"
+      }
+    },
+    "imageOffer": {
+      "type": "string",
+      "defaultValue": "UbuntuServer",
+      "metadata": {
+        "description": "Image Offer"
+      }
+    },
+    "imageSKU": {
+      "type": "string",
+      "defaultValue": "18.04-LTS",
+      "metadata": {
+        "description": "Image SKU"
+      }
     }
   },
   "variables": {
@@ -155,20 +157,6 @@
     "scriptUrl": "[concat(variables('templateUrl'), 'kafka-cluster-install.sh')]",
     "sharedTemplateName": "shared-resources",
     "jumpboxTemplateName": "jumpbox-resources-",
-    "tshirtSizeS": {
-      "numberOfZookeeperInstances": 1,
-      "numberOfKafkaInstances": 3
-    },
-    "tshirtSizeM": {
-      "numberOfZookeeperInstances": 3,
-      "numberOfKafkaInstances": 3
-    },
-    "tshirtSizeL": {
-      "numberOfZookeeperInstances": 5,
-      "numberOfKafkaInstances": 7
-    },
-    "numberOfZookeeperInstances": "[variables(concat('tshirtSize', parameters('tshirtSize'))).numberOfZookeeperInstances]",
-    "numberOfKafkaInstances": "[variables(concat('tshirtSize', parameters('tshirtSize'))).numberOfKafkaInstances]",
     "vmSize": "[parameters('vmSize')]"
   },
   "resources": [
@@ -197,9 +185,6 @@
           },
           "subnetPrefix": {
             "value": "[parameters('subnetPrefix')]"
-          },
-          "tshirtSizes": {
-            "value": "[concat('List of sizes because of test for Unreferenced variable in CI - it is not needed for proper function.', variables('tshirtSizeS').numberOfKafkaInstances, variables('tshirtSizeM').numberOfKafkaInstances, variables('tshirtSizeL').numberOfKafkaInstances)]"
           }
         }
       }
@@ -246,7 +231,7 @@
       "location": "[parameters('location')]",
       "copy": {
         "name": "nicLoop",
-        "count": "[variables('numberOfZookeeperInstances')]"
+        "count": "[parameters('numberOfZookeeperInstances')]"
       },
       "dependsOn": [
         "[concat('Microsoft.Resources/deployments/', 'shared-resources')]"
@@ -273,7 +258,7 @@
       "location": "[parameters('location')]",
       "copy": {
         "name": "nicLoop",
-        "count": "[variables('numberOfKafkaInstances')]"
+        "count": "[parameters('numberOfKafkaInstances')]"
       },
       "dependsOn": [
         "[concat('Microsoft.Resources/deployments/', 'shared-resources')]"
@@ -300,7 +285,7 @@
       "location": "[parameters('location')]",
       "copy": {
         "name": "virtualZookeeperMachineLoop",
-        "count": "[variables('numberOfZookeeperInstances')]"
+        "count": "[parameters('numberOfZookeeperInstances')]"
       },
       "dependsOn": [
         "[concat('Microsoft.Resources/deployments/', 'shared-resources')]",
@@ -350,7 +335,7 @@
       "location": "[parameters('location')]",
       "copy": {
         "name": "virtualMachineLoop",
-        "count": "[variables('numberOfKafkaInstances')]"
+        "count": "[parameters('numberOfKafkaInstances')]"
       },
       "dependsOn": [
         "[concat('Microsoft.Resources/deployments/', 'shared-resources')]",
@@ -380,7 +365,7 @@
             "version": "latest"
           },
           "osDisk": {
-            "name":  "[concat('brokervm', copyindex(),'_OSDisk')]",
+            "name": "[concat('brokervm', copyindex(),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -401,7 +386,7 @@
       "location": "[parameters('location')]",
       "copy": {
         "name": "virtualMachineExtensionsLoop",
-        "count": "[variables('numberOfZookeeperInstances')]"
+        "count": "[parameters('numberOfZookeeperInstances')]"
       },
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', 'zookprvm', copyindex())]",
@@ -416,7 +401,7 @@
           "fileUris": [
             "[variables('scriptUrl')]"
           ],
-          "commandToExecute": "[concat('bash kafka-cluster-install.sh -z ', parameters('zookeperVersion'),' -c ', variables('numberOfZookeeperInstances'),' -i ', parameters('kafkaZooNodeIPAddressPrefix'), ' -Z ', parameters('zookeperSource'))]"
+          "commandToExecute": "[concat('bash kafka-cluster-install.sh -z ', parameters('zookeperVersion'),' -c ', parameters('numberOfZookeeperInstances'),' -i ', parameters('kafkaZooNodeIPAddressPrefix'), ' -Z ', parameters('zookeperSource'))]"
         }
       }
     },
@@ -427,7 +412,7 @@
       "location": "[parameters('location')]",
       "copy": {
         "name": "virtualMachineExtensionsLoop",
-        "count": "[variables('numberOfKafkaInstances')]"
+        "count": "[parameters('numberOfKafkaInstances')]"
       },
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', 'brokervm', copyindex())]",
@@ -442,7 +427,7 @@
           "fileUris": [
             "[variables('scriptUrl')]"
           ],
-          "commandToExecute": "[concat('bash kafka-cluster-install.sh -b ',copyindex(),' -k ',parameters('kafkaVersion'),' -c ', variables('numberOfZookeeperInstances'),' -i ', parameters('kafkaZooNodeIPAddressPrefix'), ' -K ', parameters('kafkaSource'))]"
+          "commandToExecute": "[concat('bash kafka-cluster-install.sh -b ',copyindex(),' -k ',parameters('kafkaVersion'),' -c ', parameters('numberOfZookeeperInstances'),' -i ', parameters('kafkaZooNodeIPAddressPrefix'), ' -K ', parameters('kafkaSource'))]"
         }
       }
     }
