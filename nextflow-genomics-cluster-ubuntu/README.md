@@ -8,14 +8,14 @@
 
 # Nextflow on Azure
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/nextflow-genomics-cluster-ubuntu/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/nextflow-genomics-cluster-ubuntu/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/nextflow-genomics-cluster-ubuntu/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/nextflow-genomics-cluster-ubuntu/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/nextflow-genomics-cluster-ubuntu/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/nextflow-genomics-cluster-ubuntu/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/nextflow-genomics-cluster-ubuntu/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/nextflow-genomics-cluster-ubuntu/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/nextflow-genomics-cluster-ubuntu/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/nextflow-genomics-cluster-ubuntu/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/nextflow-genomics-cluster-ubuntu/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/nextflow-genomics-cluster-ubuntu/CredScanResult.svg" />&nbsp;
 
 ## What is Nextflow?
 [Nextflow enables scalable and reproducible](http://nextflow.io) scientific workflows using software containers. It allows the adaptation of pipelines written in the most common scripting languages.
@@ -139,3 +139,4 @@ Set the image ID as follows in your parameters file.
 You can then deploy your Nextflow cluster as follows:
 
  `az group deployment create -g [your_resource_group_here] --template-file ./azuredeploy.json --parameters @azuredeploy.customimage.parameters.json`
+

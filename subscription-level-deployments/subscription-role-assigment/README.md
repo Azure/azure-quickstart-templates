@@ -1,13 +1,13 @@
 # Assign a Role at Subscription Scope
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/subscription-role-assigment/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/subscription-role-assigment/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/subscription-role-assigment/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/subscription-role-assigment/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/subscription-role-assigment/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/subscription-role-assigment/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/subscription-role-assigment/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/subscription-role-assigment/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/subscription-role-assigment/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/subscription-role-assigment/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/subscription-role-assigment/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/subscription-role-assigment/CredScanResult.svg" />&nbsp;
 
 This template is a subscription level template that will assign a role at subscription scope.
 
@@ -21,3 +21,4 @@ For deploying this template from the CLI you can run the following command from 
 ```bash
 az deployment create -l southcentralus --template-file ./azuredeploy.json --parameters roleAssignmentName={random seed}
 ```
+

@@ -1,13 +1,13 @@
 # Deploy a VM Scale Set based on a Windows Custom Image
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vmss-windows-customimage/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vmss-windows-customimage/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vmss-windows-customimage/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vmss-windows-customimage/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vmss-windows-customimage/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vmss-windows-customimage/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vmss-windows-customimage/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vmss-windows-customimage/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vmss-windows-customimage/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vmss-windows-customimage/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vmss-windows-customimage/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vmss-windows-customimage/CredScanResult.svg" />&nbsp;
 
 This template deploys a VM Scale Set from a user provided Windows Custom Image
 
@@ -36,3 +36,4 @@ The sample Windows Custom Image is based on Windows Server 2012 R2 and has a sim
 **Note: This image may not have all the latest windows updates applied to it**
 
 **Note: The maximum number of VMs in a storage account is 20, unless you set the "overprovision" property to false, in which case it is 40**
+

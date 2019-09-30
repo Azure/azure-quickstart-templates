@@ -1,13 +1,13 @@
 # Deploy a JMeter test environment for Elasticsearch
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/elasticsearch-jmeter/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/elasticsearch-jmeter/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/elasticsearch-jmeter/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/elasticsearch-jmeter/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/elasticsearch-jmeter/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/elasticsearch-jmeter/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/elasticsearch-jmeter/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/elasticsearch-jmeter/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/elasticsearch-jmeter/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/elasticsearch-jmeter/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/elasticsearch-jmeter/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/elasticsearch-jmeter/CredScanResult.svg" />&nbsp;
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Felasticsearch-jmeter%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
@@ -27,3 +27,4 @@ The jarball should contain any JUnit tests and dependent jars which are needed b
 ##Notes
 
 Start the test run using /opt/jmeter/run.sh on the master node, and view the results in Marvel as well as in the resulting CSV logs. For more details on this test plan please see https://github.com/Azure/azure-content/blob/master/articles/guidance/guidance-elasticsearch-implementing-jmeter-test-plan.md. 
+

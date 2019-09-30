@@ -1,13 +1,13 @@
 # Autoscale a Windows VM Scale Set
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vmss-windows-autoscale/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vmss-windows-autoscale/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vmss-windows-autoscale/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vmss-windows-autoscale/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vmss-windows-autoscale/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vmss-windows-autoscale/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vmss-windows-autoscale/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vmss-windows-autoscale/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vmss-windows-autoscale/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vmss-windows-autoscale/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vmss-windows-autoscale/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vmss-windows-autoscale/CredScanResult.svg" />&nbsp;
 
 The following template deploys a Windows VM Scale Set integrated with Azure autoscale
 
@@ -25,3 +25,4 @@ The Autoscale rules are configured as follows
 - sample for CPU (\\Processor\\PercentProcessorTime) in each VM every 1 Minute
 - if the Percent Processor Time is greater than 50% for 5 Minutes, then the scale out action (add more VM instances, one at a time) is triggered
 - once the scale out action is completed, the cool down period is 1 Minute
+

@@ -1,13 +1,13 @@
 # Copy data from one folder to another folder in an Azure Blob Storage
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-v2-blob-to-blob-copy/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-v2-blob-to-blob-copy/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-v2-blob-to-blob-copy/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-v2-blob-to-blob-copy/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-v2-blob-to-blob-copy/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-v2-blob-to-blob-copy/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-v2-blob-to-blob-copy/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-v2-blob-to-blob-copy/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-v2-blob-to-blob-copy/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-v2-blob-to-blob-copy/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-v2-blob-to-blob-copy/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-v2-blob-to-blob-copy/CredScanResult.svg" />&nbsp;
 This template creates a data factory of version 2 with a pipeline that copies data from one folder to another in an Azure Blob Storage. 
 
 Here are a few important points about the template: 
@@ -52,4 +52,5 @@ After you deploy the template, to run and monitor the pipeline, do the following
 	```powershell
 	.\runmonitor.ps1 -resourceGroupName "<name of your resource group>" -DataFactoryName "<name of your data factory>"
 	```
+
 

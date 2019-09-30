@@ -1,13 +1,13 @@
 # Telegraf-influxDB-Grafana in Azure 
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-Telegraf-InfluxDB-Grafana/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-Telegraf-InfluxDB-Grafana/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-Telegraf-InfluxDB-Grafana/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-Telegraf-InfluxDB-Grafana/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-Telegraf-InfluxDB-Grafana/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-Telegraf-InfluxDB-Grafana/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-Telegraf-InfluxDB-Grafana/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-Telegraf-InfluxDB-Grafana/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-Telegraf-InfluxDB-Grafana/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-Telegraf-InfluxDB-Grafana/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-Telegraf-InfluxDB-Grafana/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-Telegraf-InfluxDB-Grafana/CredScanResult.svg" />&nbsp;
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-Telegraf-InfluxDB-Grafana%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
@@ -54,3 +54,4 @@ ssh -i <path to private key file> -L 3000:localhost:3000 -L 8083:localhost:8083 
 
 1. After you have started your tunnel, navigate to http://localhost:3000/ on your local machine, to view Grafana UI. Username: admin, Password: YOUR_PASSWORD
 2. After you have started your tunnel, navigate to http://localhost:8083/ on your local machine, to view InfluxDB UI. Username: root,Password : root. Give the host name as the full DNS name of your instance and save. Select the database "TIG".  
+

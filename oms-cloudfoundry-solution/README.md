@@ -1,13 +1,13 @@
 # Azure OMS Log Analytics Solution for Cloud Foundry
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-cloudfoundry-solution/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-cloudfoundry-solution/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-cloudfoundry-solution/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-cloudfoundry-solution/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-cloudfoundry-solution/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-cloudfoundry-solution/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-cloudfoundry-solution/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-cloudfoundry-solution/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-cloudfoundry-solution/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-cloudfoundry-solution/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-cloudfoundry-solution/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-cloudfoundry-solution/CredScanResult.svg" />&nbsp;
 
 Version: [2018.6](./changelog.md "See change logs")
 
@@ -151,3 +151,4 @@ OMS also provides mobile apps available on [Windows (Mobile devices)](https://ww
 Simply download App from your app store and login with your account, you can have experience just the same as on your workplace everywhere.
 
 ## [Change Logs](./changelog.md "See change logs")
+
