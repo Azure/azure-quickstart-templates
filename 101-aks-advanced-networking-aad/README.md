@@ -1,13 +1,13 @@
 # AKS with Advanced Networking
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-aks-advanced-networking-aad/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-aks-advanced-networking-aad/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-aks-advanced-networking-aad/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-aks-advanced-networking-aad/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-aks-advanced-networking-aad/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-aks-advanced-networking-aad/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-aks-advanced-networking-aad/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-aks-advanced-networking-aad/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-aks-advanced-networking-aad/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-aks-advanced-networking-aad/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-aks-advanced-networking-aad/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-aks-advanced-networking-aad/CredScanResult.svg" />&nbsp;
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-aks-advanced-networking-aad%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
@@ -55,3 +55,4 @@ Please note that using the 'create-for-rbac' function would assign the SPN the '
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the Azure documentation:
 - [Deploy resources with Resource Manager templates and Azure PowerShell](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy)
 - [Deploy resources with Resource Manager templates and Azure CLI](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-cli)
+

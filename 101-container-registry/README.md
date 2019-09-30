@@ -1,13 +1,13 @@
 # Solution name
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-container-registry/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-container-registry/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-container-registry/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-container-registry/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-container-registry/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-container-registry/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-container-registry/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-container-registry/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-container-registry/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-container-registry/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-container-registry/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-container-registry/CredScanResult.svg" />&nbsp;
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-container-registry%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
@@ -50,4 +50,5 @@ Follow [this documentation](https://docs.microsoft.com/en-us/azure/container-reg
 #### Push images to your registry
 
 For pushing docker images on your registry, follow [this documentation](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-get-started-docker-cli)
+
 

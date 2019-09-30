@@ -1,13 +1,13 @@
 # Create an Azure SQL instance with data encryption protector activated
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sql-encryption-protector-byok/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sql-encryption-protector-byok/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/sql-encryption-protector-byok/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/sql-encryption-protector-byok/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sql-encryption-protector-byok/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sql-encryption-protector-byok/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/sql-encryption-protector-byok/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/sql-encryption-protector-byok/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sql-encryption-protector-byok/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sql-encryption-protector-byok/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/sql-encryption-protector-byok/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/sql-encryption-protector-byok/CredScanResult.svg" />&nbsp;
 
 This template creates an Azure SQL server, and activate the data encryption protector with the "bring your own key". For that, you will need to provide the Key Vault, and the Key to use.
 
@@ -29,3 +29,4 @@ Alternatively, you can use the PowerShell file included in this directory to cre
  * Add the SQL server principalID access to the given Key Vault (permissions 'get', 'wrapLey' and 'unwrapKey')
  * Add a new key at the SQL server level, with the Key value from the Vault
  * And finally, activate the protector using the key created before
+

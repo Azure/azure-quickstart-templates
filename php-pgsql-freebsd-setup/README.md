@@ -1,13 +1,13 @@
 # Deployment of PHP based Web Site using FreeBSD
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/php-pgsql-freebsd-setup/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/php-pgsql-freebsd-setup/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/php-pgsql-freebsd-setup/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/php-pgsql-freebsd-setup/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/php-pgsql-freebsd-setup/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/php-pgsql-freebsd-setup/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/php-pgsql-freebsd-setup/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/php-pgsql-freebsd-setup/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/php-pgsql-freebsd-setup/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/php-pgsql-freebsd-setup/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/php-pgsql-freebsd-setup/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/php-pgsql-freebsd-setup/CredScanResult.svg" />&nbsp;
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fphp_pgsql-freebsd-setup%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
@@ -21,4 +21,5 @@ This template deploys a group of open source software that is typically used tog
 2.	PHP application servers, with nginx and php-fpm - Each one has 2 NICs – One NIC with a private IP in subnet 2 and the other NIC with a private IP in subnet3. 
 
 3.	Database server, with postgreqsql and pgbouncer - It has 1 NIC with a private IP in subnet3.
+
 

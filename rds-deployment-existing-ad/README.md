@@ -1,13 +1,13 @@
 # Create Remote Desktop Sesson Collection deployment
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/rds-deployment-existing-ad/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/rds-deployment-existing-ad/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/rds-deployment-existing-ad/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/rds-deployment-existing-ad/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/rds-deployment-existing-ad/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/rds-deployment-existing-ad/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/rds-deployment-existing-ad/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/rds-deployment-existing-ad/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/rds-deployment-existing-ad/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/rds-deployment-existing-ad/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/rds-deployment-existing-ad/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/rds-deployment-existing-ad/CredScanResult.svg" />&nbsp;
 
 This template deploys the following resources:
 
@@ -23,3 +23,4 @@ Click the button below to deploy
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Frds-deployment-existing-ad%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
+

@@ -1,13 +1,13 @@
 # Azure template for SharePoint 2019 / 2016 / 2013
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sharepoint-adfs/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sharepoint-adfs/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/sharepoint-adfs/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/sharepoint-adfs/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sharepoint-adfs/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sharepoint-adfs/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/sharepoint-adfs/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/sharepoint-adfs/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sharepoint-adfs/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sharepoint-adfs/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/sharepoint-adfs/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/sharepoint-adfs/CredScanResult.svg" />&nbsp;
 
 This template deploys SharePoint 2019, 2016 or 2013 with the following configuration:
 
@@ -46,3 +46,4 @@ If you wish to provision a cheaper environment, I recommended the following size
 > I strongly recommend to update SharePoint to a recent build just after the provisioning is complete.  
 > With the default setting for virtual machines, provisioning of the template takes about 1h15 to complete.  
 > The password complexity check in the form is not accurate and may validate a password that will be rejected by Azure when it provisions the VMs. Make sure to **use at least 2 special characters for the passwords**.
+

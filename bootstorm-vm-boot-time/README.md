@@ -1,13 +1,13 @@
 # VM BOOTSTORM WORKLOAD FOR AZURE (CLOUD)
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/bootstorm-vm-boot-time/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/bootstorm-vm-boot-time/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/bootstorm-vm-boot-time/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/bootstorm-vm-boot-time/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/bootstorm-vm-boot-time/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/bootstorm-vm-boot-time/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/bootstorm-vm-boot-time/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/bootstorm-vm-boot-time/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/bootstorm-vm-boot-time/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/bootstorm-vm-boot-time/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/bootstorm-vm-boot-time/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/bootstorm-vm-boot-time/CredScanResult.svg" />&nbsp;
 
 ## DESCRIPTION
 
@@ -83,3 +83,4 @@ VM Count: <Choose number of VMs to deploy>
 
 VM OS Sku: <Choose version of Windows to deploy>
 ```
+

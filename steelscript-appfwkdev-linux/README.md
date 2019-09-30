@@ -1,13 +1,13 @@
 # SteelScript Application Framework developer machine
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/steelscript-appfwkdev-linux/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/steelscript-appfwkdev-linux/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/steelscript-appfwkdev-linux/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/steelscript-appfwkdev-linux/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/steelscript-appfwkdev-linux/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/steelscript-appfwkdev-linux/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/steelscript-appfwkdev-linux/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/steelscript-appfwkdev-linux/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/steelscript-appfwkdev-linux/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/steelscript-appfwkdev-linux/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/steelscript-appfwkdev-linux/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/steelscript-appfwkdev-linux/CredScanResult.svg" />&nbsp;
 
 ## Description
 
@@ -84,3 +84,4 @@ $ ps -eo pid,command | grep "appfwk_project/manage.py" | grep -v grep
 ```
 $ sudo kill $(ps -eo pid,command | grep "appfwk_project/manage.py" | grep -v grep | awk '{ print $1 }')
 ```
+

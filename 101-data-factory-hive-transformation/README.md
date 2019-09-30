@@ -1,13 +1,13 @@
 # Create a pipeline to transform data by running Hive script 
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-hive-transformation/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-hive-transformation/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-hive-transformation/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-hive-transformation/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-hive-transformation/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-hive-transformation/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-hive-transformation/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-hive-transformation/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-hive-transformation/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-hive-transformation/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-hive-transformation/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-hive-transformation/CredScanResult.svg" />&nbsp;
 This sample creates a data factory with a data pipeline that processes data by running Hive script on an Azure HDInsight (Hadoop) cluster. 
 
 ## Prerequisites
@@ -71,4 +71,5 @@ Simply execute the script and pass in the folder name of the sample.  For exampl
 ```
 ```bash
 azure-group-deploy.sh -a 101-data-factory-hive-transformation -l eastus -u
+
 

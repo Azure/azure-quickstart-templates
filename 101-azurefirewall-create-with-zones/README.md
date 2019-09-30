@@ -1,13 +1,13 @@
 # Create Azure Firewall with Availability Zones
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-azurefirewall-create-with-zones/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-azurefirewall-create-with-zones/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-azurefirewall-create-with-zones/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-azurefirewall-create-with-zones/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-azurefirewall-create-with-zones/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-azurefirewall-create-with-zones/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-azurefirewall-create-with-zones/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-azurefirewall-create-with-zones/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-azurefirewall-create-with-zones/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-azurefirewall-create-with-zones/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-azurefirewall-create-with-zones/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-azurefirewall-create-with-zones/CredScanResult.svg" />&nbsp;
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-azurefirewall-create-with-zones%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
@@ -23,3 +23,4 @@ Azure Firewall is a managed cloud-based network security service that protects y
 The service is fully integrated with Azure Monitor for logging and analytics.
 
 Azure Firewall is currently a managed public preview that you need to explicitly enable using the Register-AzureRmProviderFeature PowerShell command. Learn more at https://docs.microsoft.com/en-us/azure/firewall.
+

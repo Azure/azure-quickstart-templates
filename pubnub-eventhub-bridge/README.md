@@ -1,13 +1,13 @@
 #  PubNub Realtime Gateway for Azure Event Hubs
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/pubnub-eventhub-bridge/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/pubnub-eventhub-bridge/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/pubnub-eventhub-bridge/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/pubnub-eventhub-bridge/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/pubnub-eventhub-bridge/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/pubnub-eventhub-bridge/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/pubnub-eventhub-bridge/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/pubnub-eventhub-bridge/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/pubnub-eventhub-bridge/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/pubnub-eventhub-bridge/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/pubnub-eventhub-bridge/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/pubnub-eventhub-bridge/CredScanResult.svg" />&nbsp;
 
 ## What does it do?
 The PubNub Realtime Gateway for Azure provides a realtime data stream bridge between the PubNub Data Stream Network and Azure Event Hubs. -- consider it a bi-directional bridge between PubNub and Azure!
@@ -257,4 +257,5 @@ If you are using Stream Analytics as an input to the Egress Event Hub, from with
 
 ### Support
 Questions about using this ARM Template?  Contact us at support@pubnub.com!
+
 

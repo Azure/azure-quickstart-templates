@@ -1,13 +1,13 @@
 # Copy data from Azure Blob Storage to Azure SQL Database
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-blob-to-sql-copy/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-blob-to-sql-copy/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-blob-to-sql-copy/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-blob-to-sql-copy/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-blob-to-sql-copy/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-blob-to-sql-copy/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-blob-to-sql-copy/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-blob-to-sql-copy/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-blob-to-sql-copy/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-blob-to-sql-copy/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-blob-to-sql-copy/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-blob-to-sql-copy/CredScanResult.svg" />&nbsp;
 Please do the following steps before deploying the template: 
 
 1. Complete the prerequisites mentioned in [Overview and prerequisites](https://azure.microsoft.com/documentation/articles/data-factory-copy-data-from-azure-blob-storage-to-sql-database/) article.
@@ -52,3 +52,4 @@ Simply execute the script and pass in the folder name of the sample.  For exampl
 ```
 ```bash
 azure-group-deploy.sh -a 101-data-factory-blob-to-sql-copy -l eastus
+

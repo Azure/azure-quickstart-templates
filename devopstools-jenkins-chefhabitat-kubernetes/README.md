@@ -1,13 +1,13 @@
 # Microsoft
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/devopstools-jenkins-chefhabitat-kubernetes/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/devopstools-jenkins-chefhabitat-kubernetes/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/devopstools-jenkins-chefhabitat-kubernetes/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/devopstools-jenkins-chefhabitat-kubernetes/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/devopstools-jenkins-chefhabitat-kubernetes/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/devopstools-jenkins-chefhabitat-kubernetes/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/devopstools-jenkins-chefhabitat-kubernetes/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/devopstools-jenkins-chefhabitat-kubernetes/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/devopstools-jenkins-chefhabitat-kubernetes/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/devopstools-jenkins-chefhabitat-kubernetes/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/devopstools-jenkins-chefhabitat-kubernetes/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/devopstools-jenkins-chefhabitat-kubernetes/CredScanResult.svg" />&nbsp;
 
 # OSS Quickstart (Phase-2)
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdevopstools-jenkins-chefhabitat-kubernetes%2Fazuredeploy.json" target="_blank">
@@ -593,3 +593,4 @@ To build the National Park application, begin by logging in to the Build Instanc
 ![alt text](/devopstools-jenkins-chefhabitat-kubernetes/images/66.PNG)
 
 ![alt text](/devopstools-jenkins-chefhabitat-kubernetes/images/67.PNG)
+

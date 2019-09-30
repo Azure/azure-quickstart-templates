@@ -1,13 +1,13 @@
 # Refer to install instructions Cloudera + Tableau Quickstart Deployment and Usage Guide.pdf located in the root folder
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/cloudera-tableau/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/cloudera-tableau/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cloudera-tableau/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cloudera-tableau/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/cloudera-tableau/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/cloudera-tableau/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cloudera-tableau/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cloudera-tableau/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/cloudera-tableau/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/cloudera-tableau/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cloudera-tableau/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cloudera-tableau/CredScanResult.svg" />&nbsp;
 # Deploy a Cloudera Express cluster with the option to unlock Cloudera Enterprise features for a free 60-day trial
 # Will also deploy the latest Bring Your Own License version of Tableau
 # Important!  You must increase the default 20 cores in the region you are deploying
@@ -189,3 +189,4 @@ THE “EFFECTIVE DATE” OF THIS AGREEMENT IS THE DATE YOU FIRST DOWNLOAD ANY OF
 17.  Miscellaneous. This Agreement will be governed by and construed in accordance with the laws of the State of California applicable to agreements made and to be entirely performed within the State of California, without resort to its conflict of law provisions. The parties agree that any action at law or in equity arising out of or relating to this Agreement will be filed only in the state and federal courts located in Santa Clara County, and the parties hereby irrevocably and unconditionally consent and submit to the exclusive jurisdiction of such courts over any suit, action or proceeding arising out of this Agreement. Upon such determination that any provision is invalid, illegal, or incapable of being enforced, the parties will negotiate in good faith to modify this Agreement so as to effect the original intent of the parties as closely as possible in an acceptable manner to the end that the transactions contemplated hereby are fulfilled. Except for payments due under this Agreement, neither party will be responsible for any failure to perform or delay attributable in whole or in part to any cause beyond its reasonable control, including but not limited to acts of God (fire, storm, floods, earthquakes, etc.), civil disturbances, disruption of telecommunications, disruption of power or other essential services, interruption or termination of service by any service providers being used by Cloudera to link its servers to the Internet, labor disturbances, vandalism, cable cut, computer viruses or other similar occurrences, or any malicious or unlawful acts of any third-party (each a “Force Majeure Event”). In the event of any such delay the date of delivery will be deferred for a period equal to the time lost by reason of the delay. Any notice or communication required or permitted to be given hereunder must be in writing signed or authorized by the party giving notice, and may be delivered by hand, deposited with an overnight courier, sent by confirmed email, confirmed facsimile or mailed by registered or certified mail, return receipt requested, postage prepaid, in each case to the address below or at such other address as may hereafter be furnished in accordance with this Section. No modification, addition or deletion, or waiver of any rights under this Agreement will be binding on a party unless made in an agreement clearly understood by the parties to be a modification or waiver and signed by a duly authorized representative of each party. No failure or delay (in whole or in part) on the part of a party to exercise any right or remedy hereunder will operate as a waiver thereof or effect any other right or remedy. All rights and remedies hereunder are cumulative and are not exclusive of any other rights or remedies provided hereunder or by law. The waiver of one breach or default or any delay in exercising any rights will not constitute a waiver of any subsequent breach or default.
 
 http://www.cloudera.com/content/www/en-us/legal/terms-and-conditions/cloudera-standard-license-v4-2016-05-26.html
+

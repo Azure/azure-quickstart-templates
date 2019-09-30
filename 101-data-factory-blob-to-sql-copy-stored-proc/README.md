@@ -1,13 +1,13 @@
 # Copy data from Azure Blob Storage to Azure SQL Db with Stored Procedure
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-blob-to-sql-copy-stored-proc/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-blob-to-sql-copy-stored-proc/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-blob-to-sql-copy-stored-proc/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-blob-to-sql-copy-stored-proc/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-blob-to-sql-copy-stored-proc/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-blob-to-sql-copy-stored-proc/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-blob-to-sql-copy-stored-proc/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-blob-to-sql-copy-stored-proc/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-blob-to-sql-copy-stored-proc/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-blob-to-sql-copy-stored-proc/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-blob-to-sql-copy-stored-proc/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-blob-to-sql-copy-stored-proc/CredScanResult.svg" />&nbsp;
 This template creates a Data Factory pipeline that copies data from a file in a Blob Storage into a SQL Database table while invoking a [Stored Procedure](https://azure.microsoft.com/en-us/documentation/articles/data-factory-stored-proc-activity/) (SProc). 
 
 Please do the following steps before deploying the template: 
@@ -53,3 +53,4 @@ Simply execute the script from the root folder and pass in the folder name of th
 ```bash
 azure-group-deploy.sh -a 101-data-factory-blob-to-sql-copy-stored-proc -l eastus
 ```
+

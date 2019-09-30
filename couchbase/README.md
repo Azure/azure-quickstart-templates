@@ -1,13 +1,13 @@
 # Couchbase
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/couchbase/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/couchbase/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/couchbase/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/couchbase/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/couchbase/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/couchbase/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/couchbase/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/couchbase/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/couchbase/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/couchbase/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/couchbase/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/couchbase/CredScanResult.svg" />&nbsp;
 
 This is an Azure Resource Manager (ARM) template that installs Couchbase Enterprise.  You can run it from the  CLI or using the [Azure Portal](https://portal.azure.com).  
 
@@ -36,3 +36,4 @@ You can deploy or inspect the template by clicking the buttons below or using a 
 Deployment typically takes six to eight minutes.  When complete the template will out URLs you can use to access Couchbase Server and Couchbase Sync Gateway.
 
 The username and password entered for the deployment will be used for both the VM administrator credentials as well as the Couchbase administrator.
+

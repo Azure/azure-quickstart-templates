@@ -1,13 +1,13 @@
 # Active Directory Security Audit Solution
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-active-directory-security-audit-solution/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-active-directory-security-audit-solution/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-active-directory-security-audit-solution/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-active-directory-security-audit-solution/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-active-directory-security-audit-solution/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-active-directory-security-audit-solution/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-active-directory-security-audit-solution/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-active-directory-security-audit-solution/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-active-directory-security-audit-solution/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-active-directory-security-audit-solution/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-active-directory-security-audit-solution/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-active-directory-security-audit-solution/CredScanResult.svg" />&nbsp;
 
 
 [![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Foms-active-directory-security-audit-solution.json) 
@@ -65,4 +65,5 @@ AD Security Audit solution is designed with number of these important use cases 
 *	Find the locked accounts. And from where the account was locked. Mainly accounts are locked by domain security policy after regularly failed attempts. But its hard to find where these attempts are made. You can use log analytics to track failed login attempts and generated IP address of those failed attempts.
 *	User accounts and groups created and by whom
 *	Any group membership changes, added to the group, removed from the group and who did this change. This is very important when domain admin group membership changes.
+
 

@@ -1,13 +1,13 @@
 # Deploy an HDInsight cluster using existing default storage account
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-hdinsight-linux-with-existing-linked-storage-account/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-hdinsight-linux-with-existing-linked-storage-account/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-hdinsight-linux-with-existing-linked-storage-account/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-hdinsight-linux-with-existing-linked-storage-account/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-hdinsight-linux-with-existing-linked-storage-account/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-hdinsight-linux-with-existing-linked-storage-account/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-hdinsight-linux-with-existing-linked-storage-account/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-hdinsight-linux-with-existing-linked-storage-account/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-hdinsight-linux-with-existing-linked-storage-account/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-hdinsight-linux-with-existing-linked-storage-account/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-hdinsight-linux-with-existing-linked-storage-account/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-hdinsight-linux-with-existing-linked-storage-account/CredScanResult.svg" />&nbsp;
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-hdinsight-linux-with-existing-linked-storage-account%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
@@ -28,3 +28,4 @@ You don't want to use the default storage account container for storing business
 After you have completed your Hadoop jobs, you can safely delete the cluster and the default storage account. The business data is retained in the linked storage account.  Before you delete the default storage account, make sure to retrieve the logs.
 
 If you want to create an HDInsight cluster with secure transfer enabled Azure storage accounts, make sure to use HDInsight version 3.6 or newer.  The default version is 3.5.  Only verion 3.6 or newer supports secure transfer enabled Azure Storage accounts.
+

@@ -1,13 +1,13 @@
 # Add a subnet to an existing VNET
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-subnet-add-vnet-existing/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-subnet-add-vnet-existing/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-subnet-add-vnet-existing/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-subnet-add-vnet-existing/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-subnet-add-vnet-existing/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-subnet-add-vnet-existing/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-subnet-add-vnet-existing/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-subnet-add-vnet-existing/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-subnet-add-vnet-existing/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-subnet-add-vnet-existing/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-subnet-add-vnet-existing/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-subnet-add-vnet-existing/CredScanResult.svg" />&nbsp;
 
 This template allows you to add a subnet to an existing VNET. 
 
@@ -19,3 +19,4 @@ This template allows you to add a subnet to an existing VNET.
 </a>
 
 `Tags: existing vnet, add subnet`
+

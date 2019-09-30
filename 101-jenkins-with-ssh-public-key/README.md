@@ -1,13 +1,13 @@
 # Jenkins on Azure (SSH key) [![Build Status](http://devops-ci.westcentralus.cloudapp.azure.com/job/qs/job/101-jenkins-with-SSH-public-key/badge/icon)](http://devops-ci.westcentralus.cloudapp.azure.com/blue/organizations/jenkins/qs%2F101-jenkins-with-SSH-public-key/activity)
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-jenkins-with-ssh-public-key/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-jenkins-with-ssh-public-key/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-jenkins-with-ssh-public-key/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-jenkins-with-ssh-public-key/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-jenkins-with-ssh-public-key/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-jenkins-with-ssh-public-key/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-jenkins-with-ssh-public-key/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-jenkins-with-ssh-public-key/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-jenkins-with-ssh-public-key/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-jenkins-with-ssh-public-key/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-jenkins-with-ssh-public-key/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-jenkins-with-ssh-public-key/CredScanResult.svg" />&nbsp;
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-jenkins-with-ssh-public-key%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
@@ -55,3 +55,4 @@ ssh -i <path to private key file> -L 8080:localhost:8080 <User name>@<Public DNS
 1. Go to http://aka.ms/azjenkinsagents if you want to build/CI from this Jenkins master using Azure VM agents.
 
 ## Questions/Comments? azdevopspub@microsoft.com
+

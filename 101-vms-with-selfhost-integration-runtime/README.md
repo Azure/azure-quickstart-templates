@@ -1,13 +1,13 @@
 # Create self host IR and make it workable in azure VMs
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-vms-with-selfhost-integration-runtime/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-vms-with-selfhost-integration-runtime/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-vms-with-selfhost-integration-runtime/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-vms-with-selfhost-integration-runtime/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-vms-with-selfhost-integration-runtime/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-vms-with-selfhost-integration-runtime/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-vms-with-selfhost-integration-runtime/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-vms-with-selfhost-integration-runtime/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-vms-with-selfhost-integration-runtime/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-vms-with-selfhost-integration-runtime/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-vms-with-selfhost-integration-runtime/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-vms-with-selfhost-integration-runtime/CredScanResult.svg" />&nbsp;
 
 Before deploying the template you must have the following
 
@@ -33,3 +33,4 @@ This template can help you create selfhost IR and make it workable in azure VMs.
 
 The below picture can help you find how to get vnet and subnet information.
 ![](images/vnet.png)
+

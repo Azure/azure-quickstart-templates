@@ -1,13 +1,13 @@
 # Create HA data management gateway and make it workable in azure VMs
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-mutiple-vms-with-data-management-gateway/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-mutiple-vms-with-data-management-gateway/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-mutiple-vms-with-data-management-gateway/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-mutiple-vms-with-data-management-gateway/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-mutiple-vms-with-data-management-gateway/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-mutiple-vms-with-data-management-gateway/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-mutiple-vms-with-data-management-gateway/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-mutiple-vms-with-data-management-gateway/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-mutiple-vms-with-data-management-gateway/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-mutiple-vms-with-data-management-gateway/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-mutiple-vms-with-data-management-gateway/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-mutiple-vms-with-data-management-gateway/CredScanResult.svg" />&nbsp;
 
 Before deploying the template you must have the following
 
@@ -31,5 +31,6 @@ When you deploy this Azure Resource Template, you will create a logical gateway 
 This template can help you create a gateway and make it workable in azure VM. The VM must join in an exsiting VNET. You will see the new gateway is online after successful deployment.
 
 ![](images/online.png)
+
 
 

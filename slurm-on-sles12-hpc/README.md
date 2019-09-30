@@ -1,13 +1,13 @@
 # Azure SLES 12 HPC ARM Template
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/slurm-on-sles12-hpc/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/slurm-on-sles12-hpc/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/slurm-on-sles12-hpc/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/slurm-on-sles12-hpc/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/slurm-on-sles12-hpc/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/slurm-on-sles12-hpc/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/slurm-on-sles12-hpc/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/slurm-on-sles12-hpc/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/slurm-on-sles12-hpc/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/slurm-on-sles12-hpc/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/slurm-on-sles12-hpc/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/slurm-on-sles12-hpc/CredScanResult.svg" />&nbsp;
 
 Deploys a SLURM cluster with head node and n worker nodes.
 
@@ -94,3 +94,4 @@ Worker nodes support any VM size.
 To run MPI applications you'll need to use the A8/A9 instances which include InfiniBand and RDMA support.  We suggest using A8 for the head node and A9 instances for worker nodes.
 
 Currently RDMA only supports Intel MPI.  You can download the Intel pieces and get an evaluation license from https://software.intel.com/en-us/intel-mpi-library.
+
