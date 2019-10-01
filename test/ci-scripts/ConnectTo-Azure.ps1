@@ -26,4 +26,9 @@ if ($InstallAzModule){
 
 $pscredential = New-Object System.Management.Automation.PSCredential($appId, (ConvertTo-SecureString $secret -AsPlainText -Force))
 
-Connect-AzAccount -ServicePrincipal -Credential $pscredential -TenantId $tenantId -Subscription $subscriptionId -Environment $Environment
+Write-Host "App Id   : $appId"
+Write-Host "Sub Id   : $subscriptionId"
+Write-Host "Tenant Id: $tenantId"
+Write-Host "Env      : $Environment"
+
+Connect-AzAccount -ServicePrincipal -Credential $pscredential -TenantId $tenantId -Subscription $subscriptionId -Environment $Environment -Verbose
