@@ -1,13 +1,13 @@
 # Rancher on Azure
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/docker-rancher/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/docker-rancher/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/docker-rancher/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/docker-rancher/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/docker-rancher/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/docker-rancher/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/docker-rancher/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/docker-rancher/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/docker-rancher/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/docker-rancher/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/docker-rancher/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/docker-rancher/CredScanResult.svg" />&nbsp;
 This template deploys an Ubuntu system with Docker installed. In addition, if you already have a server running ; the Rancher agent will be deployed with the callback url as provided by you. If you do not have a server, you can deploy one with this script too. 
 
 [![Deploy Now](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdocker-rancher%2Fazuredeploy.json)
@@ -18,3 +18,4 @@ Use this as a demo / development / source of inspiration. Do not use this as pro
 # Tutorial
 * Server : https://kvaes.wordpress.com/2016/01/22/deploying-rancher-server-via-an-azure-resource-manager-template/
 * Nodes : https://kvaes.wordpress.com/2016/01/18/deploying-rancher-hosts-via-an-azure-resource-manager-template/
+

@@ -1,13 +1,13 @@
 # Gexp Private Node
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/go-expanse-on-ubuntu/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/go-expanse-on-ubuntu/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/go-expanse-on-ubuntu/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/go-expanse-on-ubuntu/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/go-expanse-on-ubuntu/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/go-expanse-on-ubuntu/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/go-expanse-on-ubuntu/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/go-expanse-on-ubuntu/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/go-expanse-on-ubuntu/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/go-expanse-on-ubuntu/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/go-expanse-on-ubuntu/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/go-expanse-on-ubuntu/CredScanResult.svg" />&nbsp;
 
 This Microsoft Azure template deploys a single Expanse client with a private chain for development and testing.
 
@@ -47,3 +47,4 @@ When you launch the installation of the cluster, you need to specify the followi
 # Deploying your first contract
 
 Welcome to Expanse! You are one step closer becoming a decentralized application developer.
+

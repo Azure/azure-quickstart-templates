@@ -1,13 +1,13 @@
 # Create PostgreSQL 10 master-slave streaming replication on multiple Ubuntu 18.04 VMs and one jumpbox VM with a public IP
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/postgresql-on-ubuntu/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/postgresql-on-ubuntu/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/postgresql-on-ubuntu/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/postgresql-on-ubuntu/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/postgresql-on-ubuntu/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/postgresql-on-ubuntu/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/postgresql-on-ubuntu/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/postgresql-on-ubuntu/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/postgresql-on-ubuntu/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/postgresql-on-ubuntu/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/postgresql-on-ubuntu/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/postgresql-on-ubuntu/CredScanResult.svg" />&nbsp;
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fpostgresql-on-ubuntu%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
@@ -57,3 +57,4 @@ The following table outlines the deployment topology characteristics for each su
 | Medium | Standard_A3 | 4 | 7 GB | 8x1023 GB | 1 | 2 |
 | Large | Standard_A4 | 8 | 14 GB | 16x1023 GB | 2 | 2 |
 | XLarge | Standard_A4 | 8 | 14 GB | 16x1023 GB | 3 | 4 |
+

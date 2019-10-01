@@ -1,13 +1,13 @@
 # eShop Website with ILB ASE
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/e-shop-website-with-ilb-ase/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/e-shop-website-with-ilb-ase/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/e-shop-website-with-ilb-ase/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/e-shop-website-with-ilb-ase/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/e-shop-website-with-ilb-ase/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/e-shop-website-with-ilb-ase/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/e-shop-website-with-ilb-ase/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/e-shop-website-with-ilb-ase/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/e-shop-website-with-ilb-ase/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/e-shop-website-with-ilb-ase/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/e-shop-website-with-ilb-ase/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/e-shop-website-with-ilb-ase/CredScanResult.svg" />&nbsp;
 
 **Table of Contents**
 
@@ -279,3 +279,4 @@ Open the **Web App URL** you got from the outputs section in a browser.
 Open the **Admin App URL** you got from the outputs section in a browser. Then sign in with a work account in the AAD where you registered the AAD application. ![](images/admin-app.png)
 
 **Copyright (c) 2018 Microsoft. All rights reserved.**
+

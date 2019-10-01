@@ -1,13 +1,13 @@
 # Create/Upgrade a VM Scale Set Running IIS Configured For Autoscale
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vmss-windows-webapp-dsc-autoscale/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vmss-windows-webapp-dsc-autoscale/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vmss-windows-webapp-dsc-autoscale/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vmss-windows-webapp-dsc-autoscale/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vmss-windows-webapp-dsc-autoscale/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vmss-windows-webapp-dsc-autoscale/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vmss-windows-webapp-dsc-autoscale/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vmss-windows-webapp-dsc-autoscale/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vmss-windows-webapp-dsc-autoscale/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-vmss-windows-webapp-dsc-autoscale/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vmss-windows-webapp-dsc-autoscale/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vmss-windows-webapp-dsc-autoscale/CredScanResult.svg" />&nbsp;
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vmss-windows-webapp-dsc-autoscale%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
@@ -41,3 +41,4 @@ The Autoscale rules are configured as follows
 - Once the scale out action is completed, the cool down period is 1 Minute
 
 Tags: `VMSS, VM Scale Set, Windows, DSC Extension`
+

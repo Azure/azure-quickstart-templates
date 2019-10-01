@@ -1,13 +1,13 @@
 # Deployment of CKAN Containers with Docker Compose #
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/docker-ckan/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/docker-ckan/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/docker-ckan/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/docker-ckan/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/docker-ckan/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/docker-ckan/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/docker-ckan/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/docker-ckan/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/docker-ckan/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/docker-ckan/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/docker-ckan/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/docker-ckan/CredScanResult.svg" />&nbsp;
 
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdocker-ckan%2Fazuredeploy.json" target="_blank">
@@ -34,3 +34,4 @@ about this deployment method.
 [ext]: https://github.com/Azure/azure-docker-extension
 [compose]: https://docs.docker.com/compose
 [ckan_install_docs]: http://docs.ckan.org/en/latest/maintaining/installing/index.html?highlight=docker
+

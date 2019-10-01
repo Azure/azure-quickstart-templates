@@ -6,31 +6,30 @@ Typical scenario is that results will be passed in for only one cloud Public or 
 #>
 
 param(
-    [string][Parameter(Mandatory = $true)]$SampleFolder, #this is the path to the sample, relative to BuildSourcesDirectory
-    [string][Parameter(Mandatory = $true)]$BuildSourcesDirectory, #this is the path to the root of the repo on disk
-    [string]$StorageAccountResourceGroupName = "ttk-gen-artifacts-storage",
-    [string]$StorageAccountName = "azbotstorage",
-    [string]$TableName = "QuickStartDeploymentStatus",
-    [string]$BestPracticeResult = "",
-    [string]$CredScanResult = "",
+    [string]$SampleFolder = $ENV:SAMPLE_FOLDER, # this is the path to the sample
+    [string]$SampleName = $ENV:SAMPLE_NAME,  # the name of the sample or folder path from the root of the repo e.g. "sample-type/sample-name"
+    [string]$StorageAccountResourceGroupName = "azure-quickstarts-service-storage",
+    [string]$StorageAccountName = "azurequickstartsservice",
+    [string]$TableName = "QuickStartsMetadataService",
+    [Parameter(mandatory=$true)]$StorageAccountKey, 
+    [string]$BestPracticeResult = "$ENV:RESULT_BEST_PRACTICE",
+    [string]$CredScanResult = "$ENV:RESULT_CREDSCAN",
     [string]$FairfaxDeployment = "",
     [string]$FairfaxLastTestDate = (Get-Date -Format "yyyy-MM-dd").ToString(),
     [string]$PublicDeployment = "",
     [string]$PublicLastTestDate = (Get-Date -Format "yyyy-MM-dd").ToString()
 )
 
-$SampleFolder = $SampleFolder.TrimEnd("/").TrimEnd("\")
-$BuildSourcesDirectory = $BuildSourcesDirectory.TrimEnd("/").TrimEnd("\")
 
 # Get the storage table that contains the "status" for the deployment/test results
-$ctx = (Get-AzStorageAccount -Name $StorageAccountName -ResourceGroupName $StorageAccountResourceGroupName).Context
+$ctx = New-AzStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey -Environment AzureCloud
 $cloudTable = (Get-AzStorageTable –Name $tableName –Context $ctx).CloudTable
 
 #Get the type of Sample from metadata.json, needed for the partition key lookup
 $PathToMetadata = "$SampleFolder\metadata.json"
 Write-Host "PathToMetadata: $PathToMetadata"
 
-$RowKey = $SampleFolder.Replace("$BuildSourcesDirectory\", "").Replace("\", "@").Replace("/", "@")
+$RowKey = $SampleName.Replace("\", "@").Replace("/", "@")
 Write-Host "RowKey: $RowKey"
 
 $Metadata = Get-Content $PathToMetadata -Raw | ConvertFrom-Json
@@ -42,6 +41,7 @@ $r = Get-AzTableRow -table $cloudTable -PartitionKey $PartitionKey -RowKey $RowK
 # if the record doesn't exist, this is probably a new sample and needs to be added (or we just cleaned the table)
 if ($r -eq $null) {
 
+    Write-Host "No record found, adding a new one..."
     $results = New-Object -TypeName hashtable
     if (![string]::IsNullOrWhiteSpace($BestPracticeResult)) {
         $results.Add("BestPracticeResult", $BestPracticeResult)
@@ -69,6 +69,9 @@ if ($r -eq $null) {
 }
 else {
     # Update the existing row - need to check to make sure the columns exist
+    Write-Host "Updating the existing record from:"
+    $r | ft
+
     if (![string]::IsNullOrWhiteSpace($BestPracticeResult)) {
         if ($r.BestPracticeResult -eq $null) {
             Add-Member -InputObject $r -NotePropertyName 'BestPracticeResult' -NotePropertyValue $BestPracticeResult
@@ -89,7 +92,7 @@ else {
     if (![string]::IsNullOrWhiteSpace($FairfaxDeployment)) { 
         if ($r.FairfaxDeployment -eq $null) {
             Add-Member -InputObject $r -NotePropertyName "FairfaxDeployment" -NotePropertyValue $FairfaxDeployment
-            Add-Member -InputObject $r -NotePropertyName "FairfaxLastTestDate" -NotePropertyValue $FairfaxLastTestDate
+            Add-Member -InputObject $r -NotePropertyName "FairfaxLastTestDate" -NotePropertyValue $FairfaxLastTestDate -Force
         }
         else {
             $r.FairfaxDeployment = $FairfaxDeployment
@@ -100,13 +103,14 @@ else {
     if (![string]::IsNullOrWhiteSpace($PublicDeployment)) {
         if ($r.PublicDeployment -eq $null) {
             Add-Member -InputObject $r -NotePropertyName "PublicDeployment" -NotePropertyValue $PublicDeployment
-            Add-Member -InputObject $r -NotePropertyName "PublicLastTestDate" -NotePropertyValue $PublicLastTestDate
+            Add-Member -InputObject $r -NotePropertyName "PublicLastTestDate" -NotePropertyValue $PublicLastTestDate -Force
         }
         else {
             $r.PublicDeployment = $PublicDeployment 
             $r.PublicLastTestDate = $PublicLastTestDate 
         }
     }
+    Write-Host "Updating to new results:"
     $r | ft
     $r | Update-AzTableRow -table $cloudTable
 }

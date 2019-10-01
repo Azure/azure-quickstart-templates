@@ -1,13 +1,13 @@
 # Container CI/CD using Jenkins and Kubernetes on Azure Container Service (AKS)
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/jenkins-cicd-container/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/jenkins-cicd-container/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/jenkins-cicd-container/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/jenkins-cicd-container/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/jenkins-cicd-container/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/jenkins-cicd-container/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/jenkins-cicd-container/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/jenkins-cicd-container/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/jenkins-cicd-container/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/jenkins-cicd-container/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/jenkins-cicd-container/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/jenkins-cicd-container/CredScanResult.svg" />&nbsp;
 
 ## Architecture overview
 
@@ -255,3 +255,4 @@ After logged in, you will see the **Hello World Build & Deploy** pipline job. Pl
 4. You will see the graphs:
 
    ![](images/grafana-03.png)
+

@@ -1,13 +1,13 @@
 # OMS Kemp Application Delivery Solution
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-kemp-applicationdelivery-solution/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-kemp-applicationdelivery-solution/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-kemp-applicationdelivery-solution/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-kemp-applicationdelivery-solution/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-kemp-applicationdelivery-solution/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-kemp-applicationdelivery-solution/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-kemp-applicationdelivery-solution/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-kemp-applicationdelivery-solution/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-kemp-applicationdelivery-solution/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-kemp-applicationdelivery-solution/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-kemp-applicationdelivery-solution/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-kemp-applicationdelivery-solution/CredScanResult.svg" />&nbsp;
 
 ## Prerequisites
 
@@ -45,3 +45,4 @@ Ensure that the parameters reflects your setup so that you are deploying this in
 In the unfortunate case you want to remove the solution you can do it from the the Azure [portal](https://portal.azure.com) in the Log Analytics workspace blade, under solutions, currently the predefined searches and alerts are not automatically removed. If you also want to get rid of them they can be manually deleted from "Saved searches" in the Log Analytics workspace blade.
 
 `Tags: kemp, oms, msoms, solution, example, walkthrough, #msoms`
+

@@ -1,14 +1,14 @@
 
 # Video On-Demand with Wowza, Aspera, & Azure Media Services Azure Partner Quickstart Template
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/vod-aspera-wowza-azuremediaservices/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/vod-aspera-wowza-azuremediaservices/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/vod-aspera-wowza-azuremediaservices/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/vod-aspera-wowza-azuremediaservices/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/vod-aspera-wowza-azuremediaservices/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/vod-aspera-wowza-azuremediaservices/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/vod-aspera-wowza-azuremediaservices/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/vod-aspera-wowza-azuremediaservices/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/vod-aspera-wowza-azuremediaservices/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/vod-aspera-wowza-azuremediaservices/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/vod-aspera-wowza-azuremediaservices/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/vod-aspera-wowza-azuremediaservices/CredScanResult.svg" />&nbsp;
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fvod-aspera-wowza-azuremediaservices%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
@@ -98,3 +98,4 @@ You can use the “deploy to Azure” button at the beginning of this document o
 The deployment takes about 30 Minutes.
 
 Once it is deployed refer to the user guide to take you to step by step to use the Solution -- [download it here](https://github.com/sysgain/Ignite2016-HandsOnLabs/blob/master/HOL%20Video%20on%20Demand%20Services%20with%20Aspera%20Wowza%20Streaming%20Engine%20and%20Azure%20Media%20Services.pdf).
+

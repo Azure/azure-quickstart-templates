@@ -1,13 +1,13 @@
 # Two-Activity Chained Data Factory Pipeline
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-chained-copy-activities/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-chained-copy-activities/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-chained-copy-activities/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-chained-copy-activities/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-chained-copy-activities/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-chained-copy-activities/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-chained-copy-activities/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-chained-copy-activities/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-chained-copy-activities/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-chained-copy-activities/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-chained-copy-activities/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-chained-copy-activities/CredScanResult.svg" />&nbsp;
 
 [![deploy](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2F101-data-factory-chained-copy-activities%2Fazuredeploy.json)
 
@@ -48,3 +48,4 @@ azure-group-deploy.sh -a 101-data-factory-blob-to-sql-copy-stored-proc -l eastus
 4. Replace the placeholder connectionString value in your SqlLinkedService linked service with the encrypted value created above by editing the linked service in the Data Factory console's "Author and deploy" blade. This password will be encrypted using an ADF managed key.
 5. Un-pause data pipeline from the ADF [Monitor and Manage console](https://docs.microsoft.com/en-us/azure/data-factory/data-factory-monitor-manage-app).
 6. Test your new pipline out by inserting a new record into the Sales.Currency table in your on-premises database. Make sure to set the timestamp to a time that falls within an upcoming [ADF data slice](https://docs.microsoft.com/en-us/azure/data-factory/data-factory-scheduling-and-execution).
+

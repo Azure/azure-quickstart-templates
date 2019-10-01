@@ -1,13 +1,13 @@
 # Copy data from Azure Blob Storage to Azure SQL Database
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-v2-blob-to-sql-copy/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-v2-blob-to-sql-copy/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-v2-blob-to-sql-copy/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-v2-blob-to-sql-copy/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-v2-blob-to-sql-copy/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-v2-blob-to-sql-copy/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-v2-blob-to-sql-copy/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-v2-blob-to-sql-copy/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-v2-blob-to-sql-copy/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-data-factory-v2-blob-to-sql-copy/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-v2-blob-to-sql-copy/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-v2-blob-to-sql-copy/CredScanResult.svg" />&nbsp;
 This template creates a data factory of version 2 with a pipeline that copies data from a folder in an Azure Blob Storage to a table in an Azure SQL database. 
 
 Here are a few important points about the template: 
@@ -53,4 +53,5 @@ After you deploy the template, to run and monitor the pipeline, do the following
 	```powershell
 	.\runmonitor.ps1 -resourceGroupName "<name of your resource group>" -DataFactoryName "<name of your data factory>"
 	```
+
 

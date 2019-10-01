@@ -2,14 +2,14 @@
 
 # Secure Ubuntu by Trailbot
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/stampery-trailbot-ubuntu/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/stampery-trailbot-ubuntu/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/stampery-trailbot-ubuntu/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/stampery-trailbot-ubuntu/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/stampery-trailbot-ubuntu/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/stampery-trailbot-ubuntu/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/stampery-trailbot-ubuntu/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/stampery-trailbot-ubuntu/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/stampery-trailbot-ubuntu/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/stampery-trailbot-ubuntu/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/stampery-trailbot-ubuntu/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/stampery-trailbot-ubuntu/CredScanResult.svg" />&nbsp;
 
 This Ubuntu VM comes with a special demon called __Trailbot Watcher__ that monitors system files and logs, triggers __Smart Policies__ upon modification and generates a __blockchain-anchored__, __immutable audit trail__ of everything happening to them.
 
@@ -43,3 +43,4 @@ All the files and logs watched in this VM will have the [Stamper Smart Policy](h
 You can find detailed usage instructions in the [Getting Started guide](https://github.com/trailbot/client/blob/master/GETTING-STARTED.md#usage).
 
 [<img style="width:100%;" src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/images/footer.png">](https://stampery.com)
+

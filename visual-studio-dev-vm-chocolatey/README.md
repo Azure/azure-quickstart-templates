@@ -1,13 +1,13 @@
 # ARMChocolatey
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/visual-studio-dev-vm-chocolatey/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/visual-studio-dev-vm-chocolatey/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/visual-studio-dev-vm-chocolatey/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/visual-studio-dev-vm-chocolatey/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/visual-studio-dev-vm-chocolatey/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/visual-studio-dev-vm-chocolatey/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/visual-studio-dev-vm-chocolatey/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/visual-studio-dev-vm-chocolatey/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/visual-studio-dev-vm-chocolatey/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/visual-studio-dev-vm-chocolatey/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/visual-studio-dev-vm-chocolatey/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/visual-studio-dev-vm-chocolatey/CredScanResult.svg" />&nbsp;
 
 ARM Template to provision a VM complete with Visual Studio and any given Chocolatey packages.
 
@@ -17,4 +17,5 @@ ARM Template to provision a VM complete with Visual Studio and any given Chocola
 <a href="http://armviz.io/#/?load=https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/visual-studio-dev-vm-chocolatey/azuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
+
 

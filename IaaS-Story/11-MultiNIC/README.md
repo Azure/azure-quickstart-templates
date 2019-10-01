@@ -1,13 +1,13 @@
 # MultiNIC
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/11-MultiNIC/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/11-MultiNIC/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/11-MultiNIC/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/11-MultiNIC/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/11-MultiNIC/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/11-MultiNIC/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/11-MultiNIC/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/11-MultiNIC/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/11-MultiNIC/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/11-MultiNIC/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/11-MultiNIC/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/11-MultiNIC/CredScanResult.svg" />&nbsp;
 
 <table><tr><td>Parent resource group (see documentation)</td>
 <td>
@@ -25,3 +25,4 @@ This template creates a series of multiNIC VMs in a pre-existing subnet based on
 Please visit [multi NIC scenario](https://azure.microsoft.com/documentation/articles/virtual-network-deploy-multinic-arm-template/) to read the scenario and understand how to use this template.
 
 Below are the parameters that the template expects.
+

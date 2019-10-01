@@ -1,13 +1,13 @@
 # Deploying Openchain on Microsoft Azure
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/openchain-blockchain-coinprism/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/openchain-blockchain-coinprism/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/openchain-blockchain-coinprism/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/openchain-blockchain-coinprism/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/openchain-blockchain-coinprism/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/openchain-blockchain-coinprism/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/openchain-blockchain-coinprism/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/openchain-blockchain-coinprism/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/openchain-blockchain-coinprism/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/openchain-blockchain-coinprism/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/openchain-blockchain-coinprism/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/openchain-blockchain-coinprism/CredScanResult.svg" />&nbsp;
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fopenchain-blockchain-coinprism%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
@@ -54,3 +54,4 @@ If you are connecting to this wallet endpoint for the first time, you will be pr
 ## Configure the ledger information
 
 Go to the Advanced tab and click Edit Ledger Info on the left. The screen will show you a form that will let you edit the ledger name and other fields stored in the [info record](https://docs.openchain.org/en/latest/ledger-rules/general.html#ledger-info-record).
+

@@ -1,13 +1,13 @@
 # Install a Kafka cluster on Ubuntu Virtual Machines using Custom Script Linux Extension
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/kafka-ubuntu-multidisks/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/kafka-ubuntu-multidisks/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/kafka-ubuntu-multidisks/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/kafka-ubuntu-multidisks/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/kafka-ubuntu-multidisks/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/kafka-ubuntu-multidisks/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/kafka-ubuntu-multidisks/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/kafka-ubuntu-multidisks/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/kafka-ubuntu-multidisks/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/kafka-ubuntu-multidisks/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/kafka-ubuntu-multidisks/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/kafka-ubuntu-multidisks/CredScanResult.svg" />&nbsp;
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fkafka-ubuntu-multidisks%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
@@ -113,3 +113,4 @@ To check deployment errors go to the new azure portal and look under Resource Gr
 ##Known Issues and Limitations
 - Health monitoring of the Kafka instances is not currently enabled
 - SSH key is not yet implemented and the template currently takes a password for the admin user
+

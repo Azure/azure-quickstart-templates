@@ -1,13 +1,13 @@
 # Update RU/s for Azure Cosmos Keyspace - Cassandra API
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-cassandra-keyspace-ru-update/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-cassandra-keyspace-ru-update/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-cassandra-keyspace-ru-update/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-cassandra-keyspace-ru-update/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-cassandra-keyspace-ru-update/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-cassandra-keyspace-ru-update/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-cassandra-keyspace-ru-update/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-cassandra-keyspace-ru-update/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-cassandra-keyspace-ru-update/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-cosmosdb-cassandra-keyspace-ru-update/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-cassandra-keyspace-ru-update/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-cassandra-keyspace-ru-update/CredScanResult.svg" />&nbsp;
 
 This template updates the RU/s (throughput) on a keyspace resource for an Azure Cosmos account - Cassandra API.
 
@@ -23,3 +23,4 @@ Below are the parameters which can be user configured in the parameters file inc
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-cosmosdb-cassandra-keyspace-ru-update%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
+

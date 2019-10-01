@@ -1,11 +1,14 @@
 ﻿param(
-[Parameter(Mandatory=$true,Position=0)]
+[Parameter(Mandatory=$true)]
 [string]$TemplateText,
 
-[Parameter(Mandatory=$true,Position=1)]
+[Parameter(Mandatory=$true)]
 [PSObject]$TemplateObject,
 
-[Parameter(Mandatory=$true,Position=1)]
+[Parameter(Mandatory=$true)]
+[string]$TemplateFileName,
+
+[Parameter(Mandatory=$true)]
 [switch]$IsMainTemplate
 )
 

@@ -1,13 +1,13 @@
 # SAP NetWeaver 3-tier multi SID DB (managed disks)
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sap-3-tier-marketplace-image-multi-sid-db-md/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sap-3-tier-marketplace-image-multi-sid-db-md/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/sap-3-tier-marketplace-image-multi-sid-db-md/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/sap-3-tier-marketplace-image-multi-sid-db-md/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sap-3-tier-marketplace-image-multi-sid-db-md/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sap-3-tier-marketplace-image-multi-sid-db-md/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/sap-3-tier-marketplace-image-multi-sid-db-md/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/sap-3-tier-marketplace-image-multi-sid-db-md/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sap-3-tier-marketplace-image-multi-sid-db-md/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/sap-3-tier-marketplace-image-multi-sid-db-md/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/sap-3-tier-marketplace-image-multi-sid-db-md/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/sap-3-tier-marketplace-image-multi-sid-db-md/CredScanResult.svg" />&nbsp;
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsap-3-tier-marketplace-image-multi-sid-db-md%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
@@ -66,3 +66,4 @@ DB Internal Load Balancer probe port: **62504**
 		<td>1xGS5 DB Server (6xP30 1xP30)</td>
 	</tr>
 </table>
+

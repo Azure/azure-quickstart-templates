@@ -1,13 +1,13 @@
 # Ubuntu Desktop VM in ARM
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/ubuntu-desktop-gnome/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/ubuntu-desktop-gnome/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/ubuntu-desktop-gnome/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/ubuntu-desktop-gnome/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/ubuntu-desktop-gnome/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/ubuntu-desktop-gnome/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/ubuntu-desktop-gnome/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/ubuntu-desktop-gnome/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/ubuntu-desktop-gnome/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/ubuntu-desktop-gnome/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/ubuntu-desktop-gnome/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/ubuntu-desktop-gnome/CredScanResult.svg" />&nbsp;
 
 This is an Azure template to create an Ubuntu Desktop VM.  This is great as a jumpbox behind a NAT.
 
@@ -62,4 +62,5 @@ Go to Finder, and press `Cmd + K`. Then connect to the VNC tunnel, using `passwo
 ![OSX Connection Dialog](images/osx-connection-dialog.png)
 
 Enter the password and you'll be all setup.
+
 
