@@ -1,13 +1,13 @@
 # Azure template for instantiating and deploying a standalone Red Hat JBoss EAP on OCP on Azure
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/jboss-eap-standalone-openshift/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/jboss-eap-standalone-openshift/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/jboss-eap-standalone-openshift/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/jboss-eap-standalone-openshift/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/jboss-eap-standalone-openshift/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/jboss-eap-standalone-openshift/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/jboss-eap-standalone-openshift/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/jboss-eap-standalone-openshift/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/jboss-eap-standalone-openshift/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/jboss-eap-standalone-openshift/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/jboss-eap-standalone-openshift/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/jboss-eap-standalone-openshift/CredScanResult.svg" />&nbsp;
 
 **NOTE: This template creates an ephemeral instance of OpenShift Container Platform and Red Hat JBoss EAP. You are responsible for backing up any data that you want to save while using this instance**
 
@@ -121,3 +121,4 @@ You should see the webapp dukes. You have just installed Openshift Container Pla
 <img src="images/dukes_hello_world.png"/>
 
 For further information on how to run JBoss EAP on OpenShift Container Platform and Azure, please refer to the "Getting Started with JBoss EAP for OpenShift Container Platform" and "Using JBoss EAP in Microsoft Azure" of the JBoss EAP [documentation](https://access.redhat.com/documentation/en-us/red_hat_jboss_enterprise_application_platform/).
+

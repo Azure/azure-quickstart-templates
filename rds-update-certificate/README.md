@@ -1,13 +1,13 @@
 # Configure certificates for RDS deployment
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/rds-update-certificate/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/rds-update-certificate/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/rds-update-certificate/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/rds-update-certificate/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/rds-update-certificate/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/rds-update-certificate/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/rds-update-certificate/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/rds-update-certificate/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/rds-update-certificate/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/rds-update-certificate/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/rds-update-certificate/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/rds-update-certificate/CredScanResult.svg" />&nbsp;
 
 Click the button below to deploy:
 
@@ -84,3 +84,4 @@ Template performs the following steps:
 + downloads certificate from the key vault using Service Principal credentials;
 + invokes [Set-RDCertificate](https://technet.microsoft.com/en-us/library/jj215464.aspx) cmdlet to apply the certificate for each of the roles;
 + calls [Set-RDClientAccessName](https://technet.microsoft.com/en-us/library/jj215484.aspx) to update Client Access Name on RD Connection Broker to match the certificate.
+

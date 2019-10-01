@@ -1,14 +1,14 @@
 
 # Microsoft
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/devopstools-jenkins-chefhabitat-terraform/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/devopstools-jenkins-chefhabitat-terraform/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/devopstools-jenkins-chefhabitat-terraform/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/devopstools-jenkins-chefhabitat-terraform/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/devopstools-jenkins-chefhabitat-terraform/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/devopstools-jenkins-chefhabitat-terraform/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/devopstools-jenkins-chefhabitat-terraform/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/devopstools-jenkins-chefhabitat-terraform/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/devopstools-jenkins-chefhabitat-terraform/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/devopstools-jenkins-chefhabitat-terraform/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/devopstools-jenkins-chefhabitat-terraform/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/devopstools-jenkins-chefhabitat-terraform/CredScanResult.svg" />&nbsp;
 
 # OSS Quickstart (Phase-1)
 
@@ -673,3 +673,4 @@ Click **Apply** and **Save.**
 ![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p1/devopstools-jenkins-chefhabitat-terraform/images/74.PNG)
 
 ![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p1/devopstools-jenkins-chefhabitat-terraform/images/75.PNG)
+

@@ -1,13 +1,13 @@
 # VM-Ubuntu - Team Services Build Agent and Cross-Platform SDKs installation
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/vsts-fullbuild-ubuntu-vm/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/vsts-fullbuild-ubuntu-vm/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/vsts-fullbuild-ubuntu-vm/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/vsts-fullbuild-ubuntu-vm/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/vsts-fullbuild-ubuntu-vm/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/vsts-fullbuild-ubuntu-vm/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/vsts-fullbuild-ubuntu-vm/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/vsts-fullbuild-ubuntu-vm/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/vsts-fullbuild-ubuntu-vm/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/vsts-fullbuild-ubuntu-vm/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/vsts-fullbuild-ubuntu-vm/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/vsts-fullbuild-ubuntu-vm/CredScanResult.svg" />&nbsp;
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fvsts-fullbuild-ubuntu-vm%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
@@ -68,3 +68,4 @@ in starting up the VSTS build agent.  The most common mistake is not having the 
 * If the agent started sucessfully and is running but an expected tool or software is not working from a build task (e.g. a build task can't find
 maven or java or ...), then you can check the file *"install.progress.txt"* in the top level directory to see if one of the packages
 may have failed to install or had errors (**cat install.progress.txt**).
+

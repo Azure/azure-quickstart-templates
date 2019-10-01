@@ -8,14 +8,14 @@
 
 # Consul on Ubuntu
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/consul-on-ubuntu/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/consul-on-ubuntu/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/consul-on-ubuntu/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/consul-on-ubuntu/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/consul-on-ubuntu/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/consul-on-ubuntu/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/consul-on-ubuntu/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/consul-on-ubuntu/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/consul-on-ubuntu/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/consul-on-ubuntu/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/consul-on-ubuntu/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/consul-on-ubuntu/CredScanResult.svg" />&nbsp;
 
 This will create a 3 node [Consul](https://www.consul.io/) cluster in Azure and put them into an internal load balancer.
 
@@ -27,5 +27,6 @@ This template is a bit odd as it gives each of the 3 nodes a public IP but then 
 you use internally (not publically accessible) but I didn't want to include spinning up a NAT box just for this. The hack is to give each box 
 a public IP and then block off everything from the outside world accept for SSH. That is why the load balancer is internal as the idea is only internal 
 resources will be using it.
+
 
 

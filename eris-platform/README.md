@@ -1,13 +1,13 @@
 # Eris Platform
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/eris-platform/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/eris-platform/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/eris-platform/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/eris-platform/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/eris-platform/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/eris-platform/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/eris-platform/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/eris-platform/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/eris-platform/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/eris-platform/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/eris-platform/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/eris-platform/CredScanResult.svg" />&nbsp;
 
 This Microsoft Azure template deploys the Eris platform for you.
 
@@ -56,3 +56,4 @@ More will be coming soon.
 # More About Eris
 
 Please see our [extensive documentation](https://docs.erisindustries.com). You can skip the getting started tutorial and head straight for the [chain making tutorial](https://docs.erisindustries.com/tutorials/chainmaking/) if you like.
+

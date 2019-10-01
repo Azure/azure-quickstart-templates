@@ -76,3 +76,7 @@ If ($FolderArray.count -gt 1) {
 $FolderString = $FolderArray[0]
 Write-Output "Using sample folder: $FolderString"
 Write-Host "##vso[task.setvariable variable=sample.folder]$FolderString"
+
+$sampleName = $FolderString.Replace("$ENV:BUILD_SOURCESDIRECTORY\", "")
+Write-Output "Using sample name: $sampleName"
+Write-Host "##vso[task.setvariable variable=sample.name]$sampleName"

@@ -1,13 +1,13 @@
 # Azure Spinnaker to Kubernetes [DEPRECATED]
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-spinnaker-acr-k8s/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-spinnaker-acr-k8s/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-spinnaker-acr-k8s/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-spinnaker-acr-k8s/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-spinnaker-acr-k8s/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-spinnaker-acr-k8s/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-spinnaker-acr-k8s/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-spinnaker-acr-k8s/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-spinnaker-acr-k8s/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-spinnaker-acr-k8s/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-spinnaker-acr-k8s/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-spinnaker-acr-k8s/CredScanResult.svg" />&nbsp;
 
 **IMPORTANT**: This template has been deprecated. Please use the [Azure Spinnaker](https://github.com/Azure/azure-quickstart-templates/tree/master/101-spinnaker) or [Continuous Deployment to Kubernetes](https://github.com/Azure/azure-quickstart-templates/tree/master/301-jenkins-acr-spinnaker-k8s) templates instead.
 
@@ -68,3 +68,4 @@ ssh -i <path to private key file> -L 9000:localhost:9000 -L 8084:localhost:8084 
 1. Check the [Troubleshooting Guide](http://www.spinnaker.io/docs/troubleshooting-guide) if you have any issues.
 
 ## Questions/Comments? azdevopspub@microsoft.com
+

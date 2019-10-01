@@ -1,9 +1,11 @@
 ﻿param(
-    [Parameter(Mandatory = $true)]$BuildSourcesDirectory = ".",
-    $StorageAccountResourceGroupName = "ttk-gen-artifacts-storage",
-    $StorageAccountName = "azbotstorage",
-    $TableName = "QuickStartDeploymentStatus",
-    $TableSortKey = "PublicLastTestDate", # sort based on the cloud we're testing FF or Public
+    $BuildSourcesDirectory = "$ENV:BUILD_SOURCESDIRECTORY",
+    $StorageAccountResourceGroupName = "azure-quickstarts-service-storage",
+    $StorageAccountName = "azurequickstartsservice",
+    $TableName = "QuickStartsMetadataService",
+    [Parameter(mandatory=$true)]$StorageAccountKey, 
+    $ResultDeploymentLastTestDateParameter = "$ENV:RESULT_DEPLOYMENT_LAST_TEST_DATE_PARAMETER", # sort based on the cloud we're testing FF or Public
+    $ResultDeploymentParameter = "$ENV:RESULT_DEPLOYMENT_PARAMETER", #also cloud specific
     $PurgeOldRows = $true
 )
 <#
@@ -12,7 +14,7 @@ Get all metadata files in the repo
 Get entire table since is has to be sorted client side
 
 For each file in the repo, check to make sure it's in the table
- - if not add it with the date found in metadata.json
+- if not add it with the date found in metadata.json
 
 sort the table by date
 
@@ -25,9 +27,9 @@ Else set the sample folder to run the test
 #>
 
 # Get the storage table that contains the "status" for the deployment/test results
-$ctx = (Get-AzStorageAccount -Name $StorageAccountName -ResourceGroupName $StorageAccountResourceGroupName).Context
+$ctx = New-AzStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey -Environment AzureCloud
 $cloudTable = (Get-AzStorageTable –Name $tableName –Context $ctx).CloudTable
-$t = Get-AzTableRow -table $cloudTable #| Sort-Object -Property $TableSortKey 
+$t = Get-AzTableRow -table $cloudTable
 
 # Get all the samples
 $ArtifactFilePaths = Get-ChildItem $BuildSourcesDirectory\metadata.json -Recurse -File | ForEach-Object -Process { $_.FullName }
@@ -57,14 +59,15 @@ foreach ($SourcePath in $ArtifactFilePaths) {
             -partitionKey $MetadataJson.type `
             -rowKey $RowKey `
             -property @{
-                "PublicDeployment"           = $false; `
-                "PublicLastTestDate"         = "$($MetadataJson.dateUpdated)"; 
+                "$ResultDeploymentParameter" = $false; `
+                "PublicLastTestDate"     = "$($MetadataJson.dateUpdated)"; `
+                "FairfaxLastTestDate"    = "$($MetadataJson.dateUpdated)"; 
         }
     }
 }
 
 #Get the updated table
-$t = Get-AzTableRow -table $cloudTable #| Sort-Object -Property $TableSortKey 
+$t = Get-AzTableRow -table $cloudTable
 
 # for each row in the table - purge those that don't exist in the samples folder anymore
 if ($PurgeOldRows) {
@@ -79,10 +82,16 @@ if ($PurgeOldRows) {
     }
 }
 
-$t = Get-AzTableRow -table $cloudTable | Sort-Object -Property $TableSortKey 
+$t = Get-AzTableRow -table $cloudTable | Sort-Object -Property $ResultDeploymentLastTestDateParameter # sort based on the last test date for the could being tested
 $t | ft
 
 # Write the pipeline variable
 $FolderString = "$BuildSourcesDirectory\$($t[0].RowKey)"
 Write-Output "Using sample folder: $FolderString"
 Write-Host "##vso[task.setvariable variable=sample.folder]$FolderString"
+
+# Not sure we need this in the scheduled build but here it is:
+
+$sampleName = $FolderString.Replace("$ENV:BUILD_SOURCESDIRECTORY\", "")
+Write-Output "Using sample name: $sampleName"
+Write-Host "##vso[task.setvariable variable=sample.name]$sampleName"

@@ -1,13 +1,13 @@
 # Create a SQL Server Virtual Machines with peformance optimized storage settings
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-sql-vm-new-storage/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-sql-vm-new-storage/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-sql-vm-new-storage/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-sql-vm-new-storage/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-sql-vm-new-storage/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-sql-vm-new-storage/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-sql-vm-new-storage/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-sql-vm-new-storage/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-sql-vm-new-storage/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/101-sql-vm-new-storage/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-sql-vm-new-storage/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-sql-vm-new-storage/CredScanResult.svg" />&nbsp;
 
 Before deploying the template you must have the following
 
@@ -35,3 +35,4 @@ The following resources will be created
  - A Virtual Machine joined the existing vNet
  - Managed Disks for Sql Data and Log 
  - A Sql Virtual Machine resource attached to the VM
+

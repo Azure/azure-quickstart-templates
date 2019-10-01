@@ -1,13 +1,13 @@
 # Azure Storage Analytics 
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-azure-storage-analytics-solution/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-azure-storage-analytics-solution/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-azure-storage-analytics-solution/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-azure-storage-analytics-solution/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-azure-storage-analytics-solution/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-azure-storage-analytics-solution/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-azure-storage-analytics-solution/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-azure-storage-analytics-solution/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-azure-storage-analytics-solution/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-azure-storage-analytics-solution/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-azure-storage-analytics-solution/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-azure-storage-analytics-solution/CredScanResult.svg" />&nbsp;
 
 [![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Foms-azure-storage-analytics-solution%2Fazuredeploy.json) 
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Foms-azure-storage-analytics-solution%2Fazuredeploy.json" target="_blank">
@@ -107,14 +107,14 @@ In the Resource Group where you deployed the template, you should see the soluti
 
 ### Azure Storage Analytics 
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-azure-storage-analytics-solution/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-azure-storage-analytics-solution/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-azure-storage-analytics-solution/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-azure-storage-analytics-solution/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-azure-storage-analytics-solution/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-azure-storage-analytics-solution/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-azure-storage-analytics-solution/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-azure-storage-analytics-solution/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-azure-storage-analytics-solution/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/oms-azure-storage-analytics-solution/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-azure-storage-analytics-solution/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-azure-storage-analytics-solution/CredScanResult.svg" />&nbsp;
 
 The views for Azure Storage Analytics will give you an overview of all the storage accounts within your Azure Subscription. 
 
@@ -212,4 +212,5 @@ Set-AzureStorageServiceMetricsProperty -MetricsType Minute -ServiceType (Blob,Ta
 Sample script to get all storage accounts and enable metrics can be found under /Scripts/EnableMetrics.ps1
 
 Unlike metrics Storage Logs are not enabled by the solution and needs to be enabled by the admin.
+
 

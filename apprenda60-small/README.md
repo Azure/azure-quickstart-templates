@@ -1,13 +1,13 @@
 # Apprenda 6.0 Small Cluster
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/apprenda60-small/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/apprenda60-small/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/apprenda60-small/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/apprenda60-small/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/apprenda60-small/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/apprenda60-small/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/apprenda60-small/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/apprenda60-small/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/apprenda60-small/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/apprenda60-small/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/apprenda60-small/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/apprenda60-small/CredScanResult.svg" />&nbsp;
 
 ## GETTING STARTED
 
@@ -48,3 +48,4 @@ With the Apprenda 6.0 Express Cluster, you can experience most of the functional
 ## About Apprenda
 
 Apprenda is the leading enterprise Platform as a Service (PaaS) powering the next generation of enterprise software development in public, private and hybrid clouds. As a foundational software layer and application run-time environment, Apprenda abstracts away the complexities of building and delivering modern software applications, enabling enterprises to turn ideas into innovations faster. With Apprenda, enterprises can securely deliver an entire ecosystem of data, services, applications and APIs to both internal and external customers across any infrastructure. From the world’s largest banks like JPMorgan Chase to healthcare organizations including McKesson and AmerisourceBergen, Apprenda’s clients are part of a new class of software-defined enterprises, disrupting industries and winning with software. For more information, visit Apprenda at www.apprenda.com.
+

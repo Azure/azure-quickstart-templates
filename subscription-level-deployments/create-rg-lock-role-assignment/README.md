@@ -1,13 +1,13 @@
 # Create a Resource Group, Lock it and give permssions to it
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/create-rg-lock-role-assignment/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/create-rg-lock-role-assignment/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/create-rg-lock-role-assignment/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/create-rg-lock-role-assignment/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/create-rg-lock-role-assignment/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/create-rg-lock-role-assignment/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/create-rg-lock-role-assignment/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/create-rg-lock-role-assignment/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/create-rg-lock-role-assignment/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/create-rg-lock-role-assignment/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/create-rg-lock-role-assignment/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/create-rg-lock-role-assignment/CredScanResult.svg" />&nbsp;
 
 This template is a subscription level template that will create a resource group, apply a DoNotDelete lock to that group and assign the contributor role to a principal specified in a template parameters.
 
@@ -21,3 +21,4 @@ For deploying this template from the CLI you can run the following command from 
 ```bash
 az deployment create -l southcentralus --template-file ./azuredeploy.json --parameters roleAssignmentName={random seed}
 ```
+
