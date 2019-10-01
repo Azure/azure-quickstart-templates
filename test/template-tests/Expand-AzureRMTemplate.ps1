@@ -138,7 +138,7 @@ function Expand-AzureRMTemplate
 
             # Next, we want to pre-populate a number of well-known variables.
             # These variables will be available to every test case.   They are:
-            $WellKnownVariables = 'TemplateFullPath','TemplateText','TemplateObject',
+            $WellKnownVariables = 'TemplateFullPath','TemplateFileName', 'TemplateText','TemplateObject',
                 'CreateUIDefinitionFullPath','createUIDefintionText','CreateUIDefinitionObject',
                 'FolderName', 'HasCreateUIDefinition', 'IsMainTemplate','FolderFiles', 
                 'MainTemplatePath', 'MainTemplateObject', 'MainTemplateText', 
@@ -153,7 +153,8 @@ function Expand-AzureRMTemplate
             #*$TemplateFileName (the name of the azure template file)
             $templateFileName = $TemplateFullPath | Split-Path -Leaf
             #*$IsMainTemplate (if the TemplateFileName is named mainTemplate.json)
-            $isMainTemplate = 'mainTemplate.json', 'azureDeploy.json' -contains $templateFileName
+            $isMainTemplate = 'mainTemplate.json', 'azureDeploy.json' -contains $templateFileName -or
+                $templateFileName -eq 'prereq.azureDeploy.json'
             $templateFile = Get-Item -LiteralPath "$resolvedTemplatePath"
             $templateFolder = $templateFile.Directory
             #*$FolderName (the name of the root folder containing the template)
@@ -174,7 +175,7 @@ function Expand-AzureRMTemplate
             } else {                
                 $HasCreateUIDefinition = $false
                 $createUiDefinitionFullPath = $null 
-            }       
+            }
 
             #*$FolderFiles (a list of objects of each file in the directory)
             $FolderFiles = 
@@ -204,7 +205,7 @@ function Expand-AzureRMTemplate
                         if ($fileInfo.Extension -eq '.json') { 
                             # If the file is JSON, two additional properties may be present:
                             #*Object (the file's text, converted from JSON)
-                            $fileObject.Object = $fileObject.Text | ConvertFrom-Json
+                            $fileObject.Object = $fileInfo  | Import-Json
                             #*Schema (the value of the $schema property of the JSON object, if present)
                             $fileObject.schema = $fileObject.Object.'$schema'                        
                         }

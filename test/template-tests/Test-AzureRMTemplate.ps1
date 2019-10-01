@@ -88,6 +88,9 @@ Each test script has access to a set of well-known variables:
     [Collections.IDictionary]
     $TestGroup = [Ordered]@{},
 
+    [string[]]
+    $Skip,
+
     # If set, will run tests in Pester.
     [switch]
     $Pester)
@@ -139,9 +142,7 @@ Each test script has access to a set of well-known variables:
         $cacheItemNames = @(foreach ($cacheFile in (Get-ChildItem -Path $cacheDir -Filter *.cache.json)) {
             $cacheName = $cacheFile.Name -replace '\.cache\.json', ''
             if (-not $script:AlreadyLoadedCache[$cacheFile.Name]) {
-                $script:AlreadyLoadedCache[$cacheFile.Name] = 
-                    [IO.File]::ReadAllText($cacheFile.Fullname) | ConvertFrom-Json
-                
+                $script:AlreadyLoadedCache[$cacheFile.Name] = $cacheFile | Import-Json                
             }
             $cacheData = $script:AlreadyLoadedCache[$cacheFile.Name]
             $ExecutionContext.SessionState.PSVariable.Set($cacheName, $cacheData)
@@ -182,7 +183,7 @@ Each test script has access to a set of well-known variables:
         #*Test-Group (executes a group of tests)
         function Test-Group {                
             $testQueue = [Collections.Queue]::new(@($GroupName))
-            while ($testQueue.Count) {
+            :nextTest while ($testQueue.Count) {
                 $dq = $testQueue.Dequeue()
                 if ($TestGroup.$dq) {
                     foreach ($_ in $TestGroup.$dq) {
@@ -193,6 +194,12 @@ Each test script has access to a set of well-known variables:
 
                 if ($ValidTestList -and $ValidTestList -notcontains $dq) {
                     continue
+                }
+
+                if ($Skip) {
+                    foreach ($s in $skip) {
+                        if ($dq -like $s) { continue nextTest }
+                    }
                 }
 
                 if (-not $Pester) {
@@ -295,12 +302,12 @@ Each test script has access to a set of well-known variables:
         }
         
         #*Get-TestGroups (expands nested test groups)
-        function Get-TestGroups([string[]]$GroupName, [switch]$includeTest) {
-            foreach ($_ in $GroupName) {
-                if ($TestGroup[$_]) {
-                    Get-TestGroups $testGroup[$_] -includeTest:$includeTest
-                } elseif ($IncludeTest -and $TestCase[$_]) {
-                    $_
+        function Get-TestGroups([string[]]$GroupName, [switch]$includeTest, [string[]]$SkipTest) {
+            foreach ($gn in $GroupName) {
+                if ($TestGroup[$gn]) {
+                    Get-TestGroups $testGroup[$gn] -includeTest:$includeTest -Skip $SkipTest
+                } elseif ($IncludeTest -and $TestCase[$gn]) {                    
+                    $gn                    
                 }
             }
         }
