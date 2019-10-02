@@ -33,7 +33,7 @@ $RowKey = $SampleName.Replace("\", "@").Replace("/", "@")
 Write-Host "RowKey: $RowKey"
 
 $Metadata = Get-Content $PathToMetadata -Raw | ConvertFrom-Json
-$PartitionKey = $Metadata.Type
+$PartitionKey = $Metadata.Type # if the type changes we'll have an orphaned row, this is removed in Get-OldestSampleFolder.ps1
 
 #Get the row to update
 $r = Get-AzTableRow -table $cloudTable -PartitionKey $PartitionKey -RowKey $RowKey
@@ -59,6 +59,12 @@ if ($r -eq $null) {
         $results.Add("PublicDeployment", $PublicDeployment) 
         $results.Add("PublicLastTestDate", $PublicLastTestDate) 
     }
+    # add metadata columns
+    $results.Add("itemDisplayName", $Metadata.itemDisplayName)
+    $results.Add("description", $Metadata.description)
+    $results.Add("summary", $Metadata.summary)
+    $results.Add("githubUsername", $Metadata.githubUsername)
+    $results.Add("dateUpdated", $Metadata.dateUpdated)
 
     $results | ft
 
@@ -110,6 +116,14 @@ else {
             $r.PublicLastTestDate = $PublicLastTestDate 
         }
     }
+
+    # update metadata columns
+    $r.itemDisplayName = $Metadata.itemDisplayName
+    $r.description = $Metadata.description
+    $r.summary = $Metadata.summary
+    $r.githubUsername = $Metadata.githubUsername
+    $r.dateUpdated = $Metadata.dateUpdated
+
     Write-Host "Updating to new results:"
     $r | ft
     $r | Update-AzTableRow -table $cloudTable

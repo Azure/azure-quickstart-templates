@@ -34,7 +34,14 @@ $t = Get-AzTableRow -table $cloudTable
 # Get all the samples
 $ArtifactFilePaths = Get-ChildItem $BuildSourcesDirectory\metadata.json -Recurse -File | ForEach-Object -Process { $_.FullName }
 
+# if this is empty, then everything would be removed from the table which is probably not the intent
+if($ArtifactFilePaths.Count -eq 0){
+    Write-Error "No metadata.json files found in $BuildSourcesDirectory"
+    throw
+}
+
 #For each sample, make sure it's in the table before we check for the oldest
+Write-Host "Checking table to see if this is a new sample (does the row exist?)"
 foreach ($SourcePath in $ArtifactFilePaths) {
     
     #write-host $SourcePath
@@ -70,14 +77,30 @@ foreach ($SourcePath in $ArtifactFilePaths) {
 $t = Get-AzTableRow -table $cloudTable
 
 # for each row in the table - purge those that don't exist in the samples folder anymore
+# note that if this build sources directory is wrong this will remove every row in the table (which would be bad)
 if ($PurgeOldRows) {
+    Write-Host "Purging Old Rows..."
     foreach ($r in $t) {
 
         $PathToSample = ("$BuildSourcesDirectory\$($r.RowKey)\metadata.json").Replace("@", "\")
+        $MetadataJson = Get-Content $PathToSample -Raw | ConvertFrom-Json
 
+        #If the sample isn't found in the repo or the Type has changed (and it's not null) then we want to remove the record
         If (!(Test-Path -Path $PathToSample)) {
+            
             Write-Host "Sample Not Found - removing... $PathToSample"
             $r | Remove-AzTableRow -Table $cloudTable
+
+        } elseif(($r.PartitionKey -ne $MetadataJson.type -and ![string]::IsNullOrWhiteSpace($MetadataJson.type))){
+            
+            #if the type has changed, update the type - this will create a new row since we use the partition key we so need to delete the old row
+            Write-Host "Metadata type has changed from `'$($r.PartitionKey)`' to `'$($MetadataJson.type)`'"
+            $oldRowKey = $r.RowKey
+            $oldPartitionKey = $r.PartitionKey
+            $r.PartitionKey = $MetadataJson.Type
+            $r | Update-AzTableRow -table $cloudTable
+            Get-AzTableRow -table $cloudTable -PartitionKey $oldPartitionKey -RowKey $oldRowKey | Remove-AzTableRow -Table $cloudTable 
+            
         }
     }
 }
