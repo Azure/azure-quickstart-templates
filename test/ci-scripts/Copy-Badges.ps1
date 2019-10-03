@@ -10,6 +10,7 @@ param(
     [string]$SampleName = $ENV:SAMPLE_NAME, # the name of the sample or folder path from the root of the repo e.g. "sample-type/sample-name"
     [string]$StorageAccountResourceGroupName = "azure-quickstarts-service-storage",
     [string]$StorageAccountName = "azurequickstartsservice",
+    [string]$TableName = "QuickStartsMetadataService",
     [Parameter(mandatory=$true)]$StorageAccountKey
 )
 
@@ -18,13 +19,22 @@ if($SampleName = ""){
 }
 
 $storageFolder = $SampleName.Replace("\", "@").Replace("/", "@")
+$RowKey = $storageFolder
+Write-Host "RowKey: $RowKey"
 
 # Get the storage table that contains the "status" for the deployment/test results
 $ctx = New-AzStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey -Environment AzureCloud
+$cloudTable = (Get-AzStorageTable –Name $tableName –Context $ctx).CloudTable
+
+#Get the row to update
+$r = Get-AzTableRow -table $cloudTable -RowKey $RowKey
+$r.status = "Live"
+
+Write-Host "Updating to new results:"
+$r | ft
+$r | Update-AzTableRow -table $cloudTable
 
 #Get All Files from "prs" container and copy to the "badges" container
 $blobs = Get-AzStorageBlob -Context $ctx -Container "prs" -Prefix $storageFolder 
-
 $blobs | Start-AzStorageBlobCopy -DestContainer "badges" -Verbose -Force
-
 $blobs | Remove-AzStorageBlob -Verbose -Force
