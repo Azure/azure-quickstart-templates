@@ -7,11 +7,11 @@ Typical scenario is that results will be passed in for only one cloud Public or 
 
 param(
     [string]$SampleFolder = $ENV:SAMPLE_FOLDER, # this is the path to the sample
-    [string]$SampleName = $ENV:SAMPLE_NAME,  # the name of the sample or folder path from the root of the repo e.g. "sample-type/sample-name"
+    [string]$SampleName = $ENV:SAMPLE_NAME, # the name of the sample or folder path from the root of the repo e.g. "sample-type/sample-name"
     [string]$StorageAccountResourceGroupName = "azure-quickstarts-service-storage",
     [string]$StorageAccountName = "azurequickstartsservice",
     [string]$TableName = "QuickStartsMetadataService",
-    [Parameter(mandatory=$true)]$StorageAccountKey, 
+    [Parameter(mandatory = $true)]$StorageAccountKey, 
     [string]$BestPracticeResult = "$ENV:RESULT_BEST_PRACTICE",
     [string]$CredScanResult = "$ENV:RESULT_CREDSCAN",
     [string]$BuildReason = "$ENV:BUILD_REASON",
@@ -67,7 +67,7 @@ if ($r -eq $null) {
     $results.Add("githubUsername", $Metadata.githubUsername)
     $results.Add("dateUpdated", $Metadata.dateUpdated)
 
-    if($ENV:BUILD_REASON -eq "PullRequest"){
+    if ($ENV:BUILD_REASON -eq "PullRequest") {
         $results.Add("status", $ENV:BUILD_REASON)
     }
 
@@ -122,16 +122,50 @@ else {
         }
     }
 
-    if($ENV:BUILD_REASON -eq "PullRequest"){
-        $r.status = $ENV:BUILD_REASON
+    if ($ENV:BUILD_REASON -eq "PullRequest") {
+        if ($r.status -eq $null) {
+            Add-Member -InputObject $r -NotePropertyName "status" -NotePropertyValue $ENV:BUILD_REASON            
+        }
+        else {
+            $r.status = $ENV:BUILD_REASON
+        }
     }
 
     # update metadata columns
-    $r.itemDisplayName = $Metadata.itemDisplayName
-    $r.description = $Metadata.description
-    $r.summary = $Metadata.summary
-    $r.githubUsername = $Metadata.githubUsername
-    $r.dateUpdated = $Metadata.dateUpdated
+    if ($r.itemDisplayName -eq $null) { 
+        Add-Member -InputObject $r -NotePropertyName "itemDisplayName" -NotePropertyValue $Metadata.itemDisplayName
+    }
+    else {
+        $r.itemDisplayName = $Metadata.itemDisplayName
+    }
+
+    if ($r.description -eq $null) {
+        Add-Member -InputObject $r -NotePropertyName "description" -NotePropertyValue $Metadata.description
+    }
+    else {
+        $r.description = $Metadata.description
+    }
+
+    if ($r.summary -eq $null) {
+        Add-Member -InputObject $r -NotePropertyName "summary" -NotePropertyValue $Metadata.summary
+    }
+    else {
+        $r.summary = $Metadata.summary
+    }
+
+    if ($r.githubUsername -eq $null) {
+        Add-Member -InputObject $r -NotePropertyName "githubUsername" -NotePropertyValue $Metadata.githubUsername
+    }
+    else {
+        $r.githubUsername = $Metadata.githubUsername
+    }   
+    
+    if ($r.dateUpdate -eq $null) {
+        Add-Member -InputObject $r -NotePropertyName "dateUpdated" -NotePropertyValue $Metadata.dateUpdated
+    }
+    else {
+        $r.dateUpdated = $Metadata.dateUpdated
+    }
 
     Write-Host "Updating to new results:"
     $r | ft
@@ -243,7 +277,8 @@ foreach ($badge in $badges) {
     #>
     if ($ENV:BUILD_REASON -eq "PullRequest") {
         $containerName = "prs"
-    } else {
+    }
+    else {
         $containerName = "badges"
     }
     Set-AzStorageBlobContent -Container $containerName -File $badge.filename -Blob "$RowKey/$($badge.filename)" -Context $ctx -Force -Properties @{"ContentType" = "image/svg+xml"; "CacheControl" = "no-cache" }
