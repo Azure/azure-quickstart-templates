@@ -28,7 +28,13 @@ $cloudTable = (Get-AzStorageTable –Name $tableName –Context $ctx).CloudTable
 
 #Get the row to update
 $r = Get-AzTableRow -table $cloudTable -RowKey $RowKey
-$r.status = "Live"
+if ($r.status -eq $null) {
+    Add-Member -InputObject $r -NotePropertyName "status" -NotePropertyValue "Live"
+}
+else {
+    $r.status = "Live"
+}
+
 
 Write-Host "Updating to new results:"
 $r | ft
