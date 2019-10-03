@@ -1,10 +1,19 @@
-﻿# Lustre client and server node VMs deployment
+# Lustre client and server node VMs deployment
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/intel-lustre-client-server/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/intel-lustre-client-server/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/intel-lustre-client-server/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/intel-lustre-client-server/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/intel-lustre-client-server/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/intel-lustre-client-server/CredScanResult.svg" />&nbsp;
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fintel-lustre-client-server%2Fazuredeploy.json" target="_blank">
-<img src="http://azuredeploy.net/deploybutton.png"/>
+<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/intel-lustre-client-server/azuredeploy.json" target="_blank">
-<img src="http://armviz.io/visualizebutton.png"/>
+<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
 
@@ -21,3 +30,4 @@ This template creates Lustre client and server node VMs and related infrastructu
 	* Use Azure CLI to login to subscription.
 	* Execute the deploy.bat by replacing the arguments in parameters.txt file.
 	* Keep deploy.bat and parameters.txt file in same folder.
+

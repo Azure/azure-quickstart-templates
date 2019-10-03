@@ -11,4 +11,4 @@ if (-not $images) {
     return
 }
 
-$images | ConvertTo-Json -Depth 10 -Compress  | Set-Content $MyOutputFile 
+$images | ConvertTo-Json -Depth 10 | Set-Content $MyOutputFile 

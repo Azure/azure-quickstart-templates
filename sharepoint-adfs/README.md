@@ -1,5 +1,14 @@
 # Azure template for SharePoint 2019 / 2016 / 2013
 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/sharepoint-adfs/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/sharepoint-adfs/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/sharepoint-adfs/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/sharepoint-adfs/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/sharepoint-adfs/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/sharepoint-adfs/CredScanResult.svg" />&nbsp;
+
 This template deploys SharePoint 2019, 2016 or 2013 with the following configuration:
 
 * 1 web application created with 2 zones: Windows NTLM on Default zone and ADFS on Intranet zone.
@@ -15,10 +24,10 @@ This template deploys SharePoint 2019, 2016 or 2013 with the following configura
 All virtual machines have a public IP address and are protected by Network Security Groups (attached to the subnets) that only allow RDP port from Internet.
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsharepoint-adfs%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsharepoint-adfs%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
 By default, virtual machines running SharePoint and SQL use SSD drives and have enough CPU and memory to be used comfortably for development and tests:
@@ -37,3 +46,4 @@ If you wish to provision a cheaper environment, I recommended the following size
 > I strongly recommend to update SharePoint to a recent build just after the provisioning is complete.  
 > With the default setting for virtual machines, provisioning of the template takes about 1h15 to complete.  
 > The password complexity check in the form is not accurate and may validate a password that will be rejected by Azure when it provisions the VMs. Make sure to **use at least 2 special characters for the passwords**.
+

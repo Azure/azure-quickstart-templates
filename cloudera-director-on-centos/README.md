@@ -1,11 +1,20 @@
 # Deploy and Manage Cloudera Clusters on Azure with Cloudera Director
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cloudera-director-on-centos/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cloudera-director-on-centos/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cloudera-director-on-centos/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cloudera-director-on-centos/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cloudera-director-on-centos/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cloudera-director-on-centos/CredScanResult.svg" />&nbsp;
 Cloudera Director provides a simple way to deploy and manage the lifecycle of Cloudera Enterprise on Azure. Use Director to grow, shrink, monitor, and manage your transient clusters or, in conjunction with Cloudera Manager, persistent clusters.
 
 For more details regarding this template, please see the [Overview](#overview) section below.
 
 # By clicking "Deploy to Azure" you agree to the Terms and Conditions below.
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcloudera-director-on-centos%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png" />
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png" />
 </a>
 
 
@@ -221,3 +230,4 @@ Now in this Chrome session you can connect to any other host on the Virtual Netw
 Warning: this method is **NOT** recommended for anything besides a PoC. If not carefully locked down the data in the cluster will be accessible to hackers and malicious entities.
 
 On [portal.azure.com](https://portal.azure.com) find the Network Security Group(s) and add inbound rules for the various services. You may have to create this rules in multiple Network Security Groups. [Here's Cloudera documentation for more information on ports used by Cloudera Manager, CDH components, managed services, and third-party components](http://www.cloudera.com/documentation/enterprise/latest/topics/cm_ig_ports.html).
+

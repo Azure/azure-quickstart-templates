@@ -17,11 +17,8 @@
         [Parameter(Mandatory)]
         [System.Management.Automation.PSCredential]$Admincreds
     )
-    Import-DscResource -ModuleName xActiveDirectory
-    Import-DscResource -ModuleName NetworkingDsc
+    Set-ExecutionPolicy -ExecutionPolicy Bypass -Force
     Import-DscResource -ModuleName TemplateHelpDSC
-    Import-DscResource -ModuleName xSmbShare
-    Import-DscResource -ModuleName ComputerManagementDsc
 
     $LogFolder = "TempLog"
     $LogPath = "c:\$LogFolder"
@@ -40,10 +37,25 @@
             RebootNodeIfNeeded = $true
         }
 
+        SetCustomPagingFile PagingSettings
+        {
+            Drive       = 'C:'
+            InitialSize = '8192'
+            MaximumSize = '8192'
+        }
+
         SetDNS DnsServerAddress
         {
             DNSIPAddress = $DNSIPAddress
             Ensure = "Present"
+            DependsOn = "[SetCustomPagingFile]PagingSettings"
+        }
+
+        InstallFeatureForSCCM InstallFeature
+        {
+            Name = "Client"
+            Role = "Client"
+            DependsOn = "[SetCustomPagingFile]PagingSettings"
         }
 
         WaitForDomainReady WaitForDomain
@@ -53,34 +65,10 @@
             DependsOn = "[SetDNS]DnsServerAddress"
         }
 
-        WindowsFeature Rdc
-        {             
-            Ensure = "Present"             
-            Name = "Rdc"             
-        }
-
-        Firewall EnableBuiltInFirewallRule
+        JoinDomain JoinDomain
         {
-            Name = 'Windows Management Instrumentation (WMI)'
-            Ensure = 'Present'
-            Enabled = 'True'
-            DependsOn = "[Computer]JoinDomain"
-        }
-
-        Firewall EnableBuiltInFirewallRule1
-        {
-            Name = 'File and Printer Sharing'
-            Ensure = 'Present'
-            Enabled = 'True'
-            DependsOn = "[Computer]JoinDomain"
-        }
-
-
-        Computer JoinDomain
-        {
-            Name = $env:COMPUTERNAME
             DomainName = $DomainName
-            Credential = $DomainCreds # Credential to join to domain
+            Credential = $DomainCreds
             DependsOn = "[WaitForDomainReady]WaitForDomain"
         }
 
@@ -91,7 +79,7 @@
             LogFolder = $LogFolder
             ReadNode = "PSJoinDomain"
             Ensure = "Present"
-            DependsOn = "[Computer]JoinDomain"
+            DependsOn = "[JoinDomain]JoinDomain"
         }
 
         File ShareFolder
@@ -102,66 +90,31 @@
             DependsOn = "[WaitForConfigurationFile]WaitForPSJoinDomain"
         }
 
-        xSmbShare DomainSMBShare
+        FileReadAccessShare DomainSMBShare
         {
-            Ensure = "Present"
             Name   = $LogFolder
             Path = $LogPath
-            ReadAccess = @($DCComputerAccount,$PSComputerAccount)
-            Description = "This is a test SMB Share"
+            Account = $DCComputerAccount,$PSComputerAccount
             DependsOn = "[File]ShareFolder"
         }
 
-        Firewall TCPInbound
-        { 
-            Name = 'TCPInboundInbound' 
-            DisplayName = 'TCPInbound Inbound' 
-            Group = 'For SCCM Client' 
-            Ensure = 'Present' 
-            Enabled = 'True' 
-            Profile = ('Domain', 'Private') 
-            Direction = 'Inbound' 
-            LocalPort = ('2701') 
-            Protocol = 'TCP' 
-            Description = 'TCPInbound Inbound'
-            DependsOn = "[Computer]JoinDomain"
+        OpenFirewallPortForSCCM OpenFirewall
+        {
+            Name = "Client"
+            Role = "Client"
+            DependsOn = "[JoinDomain]JoinDomain"
         }
 
-        Firewall TCPOutbound
-        { 
-            Name = 'TCPOutbound' 
-            DisplayName = 'TCP Outbound' 
-            Group = 'For SCCM Client' 
-            Ensure = 'Present' 
-            Enabled = 'True' 
-            Profile = ('Domain', 'Private') 
-            Direction = 'Outbound' 
-            LocalPort = ('80','443','2701','8530','8531','10123') 
-            Protocol = 'TCP' 
-            Description = 'TCP Inbound'
-            DependsOn = "[Computer]JoinDomain"
+        AddUserToLocalAdminGroup AddADUserToLocalAdminGroup {
+            Name = $($Admincreds.UserName)
+            DomainName = $DomainName
+            DependsOn = "[FileReadAccessShare]DomainSMBShare"
         }
 
-        Firewall UDPOutbound
-        { 
-            Name = 'UDPOutbound' 
-            DisplayName = 'UDP Outbound' 
-            Group = 'For SCCM Client' 
-            Ensure = 'Present' 
-            Enabled = 'True' 
-            Profile = ('Domain', 'Private') 
-            Direction = 'Outbound' 
-            LocalPort = ('9','25536') 
-            Protocol = 'UDP' 
-            Description = 'HTTP(S) Inbound'
-            DependsOn = "[Computer]JoinDomain"
-        }
-
-        Group AddADUserToLocalAdminGroup {
-            GroupName='Administrators'
-            Ensure= 'Present'
-            MembersToInclude= @("${DomainName}\$($Admincreds.UserName)","${DomainName}\$PrimarySiteName")
-            DependsOn = "[xSmbShare]DomainSMBShare"
+        AddUserToLocalAdminGroup AddADComputerToLocalAdminGroup {
+            Name = "$PrimarySiteName"
+            DomainName = $DomainName
+            DependsOn = "[FileReadAccessShare]DomainSMBShare"
         }
 
         WriteConfigurationFile WriteClientFinished
@@ -171,7 +124,7 @@
             WriteNode = "ClientFinished"
             Status = "Passed"
             Ensure = "Present"
-            DependsOn = "[Group]AddADUserToLocalAdminGroup"
+            DependsOn = "[AddUserToLocalAdminGroup]AddADUserToLocalAdminGroup","[AddUserToLocalAdminGroup]AddADComputerToLocalAdminGroup"
         }
     }
 }
