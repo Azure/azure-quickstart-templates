@@ -16,7 +16,7 @@ param(
     [string] $ResourceGroupName = 'ttk-gen-artifacts',
     [string] [Parameter(mandatory = $true)] $Location, #The location where resources will be deployed in the pipeline, in many cases they need to be in the same region.
     [string] $KeyVaultName = 'azbotvault', # This must be gloablly unique
-    [string] $CertPass = $("cI#" + (New-Guid).ToString().Substring(0, 17)),
+    [string] $CertPass = $("cI#" + (New-Guid).ToString().Replace("-", "").Substring(0, 17)),
     [string] $CertDNSName = 'azbot-cert-dns',
     [string] $KeyVaultSelfSignedCertName = 'azbot-sscert',
     [string] $KeyVaultNotSecretName = 'notSecretPassword',
