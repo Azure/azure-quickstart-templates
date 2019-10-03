@@ -40,7 +40,7 @@
     },
     "authenticationType": {
       "type": "string",
-      "defaultValue": "password",
+      "defaultValue": "sshPublicKey",
       "allowedValues": [
         "sshPublicKey",
         "password"
@@ -54,6 +54,20 @@
       "metadata": {
         "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
+    },
+    "_artifactsLocation": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/ubuntu-desktop-gnome-rdp/"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
     }
   },
   "variables": {
@@ -117,9 +131,9 @@
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-        "[concat('Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -137,7 +151,7 @@
           }
         ],
         "networkSeurityGroup": {
-          "id": "[concat('Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]"
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
         }
       }
     },
@@ -170,7 +184,7 @@
       "name": "[parameters('vmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -214,7 +228,7 @@
       "apiVersion": "2015-06-15",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
+        "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
@@ -223,7 +237,7 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/ubuntu-desktop-gnome-rdp/install_xrdp.sh"
+            "[uri(parameters('_artifactsLocation'), concat('install_xrdp.sh', parameters('_artifactsLocationSasToken')))]"
           ],
           "commandToExecute": "bash install_xrdp.sh"
         }
