@@ -1,5 +1,14 @@
 # Create an Azure Cosmos account for MongoDB API with two collections
 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-mongodb/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-mongodb/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-mongodb/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-mongodb/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-mongodb/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-mongodb/CredScanResult.svg" />&nbsp;
+
 This template creates an Azure Cosmos account for MongoDB API, provisioned for two regions, then provision a database with throughput shared across 2 collections.
 
 Below are the parameters which can be user configured in the parameters file including:
@@ -14,8 +23,9 @@ Below are the parameters which can be user configured in the parameters file inc
 - **Collection 2 Name:** Enter the name for the second collection.
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-cosmosdb-mongodb%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-cosmosdb-mongodb%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
+

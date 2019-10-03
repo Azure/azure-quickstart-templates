@@ -1,6 +1,15 @@
 # Xfce Desktop on Ubuntu VM
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fubuntu-desktop-xfce-rdp%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/ubuntu-desktop-xfce-rdp/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/ubuntu-desktop-xfce-rdp/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/ubuntu-desktop-xfce-rdp/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/ubuntu-desktop-xfce-rdp/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/ubuntu-desktop-xfce-rdp/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/ubuntu-desktop-xfce-rdp/CredScanResult.svg" />&nbsp;
+
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fubuntu-desktop-xfce-rdp%2Fazuredeploy.json" target="_blank"><img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/></a>
 
 This template uses the Azure Linux CustomScript extension to deploy Xfce Desktop on the VM. It creates an Ubuntu VM, does a silent install of gnome xfce4 desktop and xrdp, allows you to connect it with Remote Desktop from a Windows machine.
 
@@ -23,3 +32,4 @@ Please kindly note for Ubuntu 15.10, if you face the connection issue, saying "c
 sudo service xrdp restart
 
 Then re-connect it with Remote Desktop from a Windows machine. 
+
