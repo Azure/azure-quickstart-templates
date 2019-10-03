@@ -14,6 +14,7 @@ param(
     [Parameter(mandatory=$true)]$StorageAccountKey, 
     [string]$BestPracticeResult = "$ENV:RESULT_BEST_PRACTICE",
     [string]$CredScanResult = "$ENV:RESULT_CREDSCAN",
+    [string]$BuildReason = "$ENV:BUILD_REASON",
     [string]$FairfaxDeployment = "",
     [string]$FairfaxLastTestDate = (Get-Date -Format "yyyy-MM-dd").ToString(),
     [string]$PublicDeployment = "",
@@ -66,6 +67,10 @@ if ($r -eq $null) {
     $results.Add("githubUsername", $Metadata.githubUsername)
     $results.Add("dateUpdated", $Metadata.dateUpdated)
 
+    if($ENV:BUILD_REASON -eq "PullRequest"){
+        $results.Add("status", $ENV:BUILD_REASON)
+    }
+
     $results | ft
 
     Add-AzTableRow -table $cloudTable `
@@ -115,6 +120,10 @@ else {
             $r.PublicDeployment = $PublicDeployment 
             $r.PublicLastTestDate = $PublicLastTestDate 
         }
+    }
+
+    if($ENV:BUILD_REASON -eq "PullRequest"){
+        $r.status = $ENV:BUILD_REASON
     }
 
     # update metadata columns
