@@ -83,10 +83,16 @@ if ($PurgeOldRows) {
     foreach ($r in $t) {
 
         $PathToSample = ("$BuildSourcesDirectory\$($r.RowKey)\metadata.json").Replace("@", "\")
-        $MetadataJson = Get-Content $PathToSample -Raw | ConvertFrom-Json
 
-        #If the sample isn't found in the repo or the Type has changed (and it's not null) then we want to remove the record
-        If (!(Test-Path -Path $PathToSample)) {
+        if(Test-Path -Path $PathToSample){
+            $MetadataJson = Get-Content $PathToSample -Raw | ConvertFrom-Json
+        } else {
+            $SampleNotFound = $true
+        }
+
+        # If the sample isn't found in the repo (and it's not a new sample, still in PR (i.e. it's live))
+        # or the Type of sample has changed (which changes the partitionKey) and it's not null, then we want to remove the row from the table
+        If ($SampleNotFound -and $r.status -eq "Live") {
             
             Write-Host "Sample Not Found - removing... $PathToSample"
             $r | Remove-AzTableRow -Table $cloudTable
