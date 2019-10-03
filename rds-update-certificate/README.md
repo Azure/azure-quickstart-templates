@@ -1,12 +1,21 @@
 # Configure certificates for RDS deployment
 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/rds-update-certificate/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/rds-update-certificate/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/rds-update-certificate/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/rds-update-certificate/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/rds-update-certificate/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/rds-update-certificate/CredScanResult.svg" />&nbsp;
+
 Click the button below to deploy:
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmmarch%2Fazure-quickstart-templates%2Fcerts-template%2Frds-update-certificate%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fmmarch%2Fazure-quickstart-templates%2Fcerts-template%2Frds-update-certificate%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 <br><br>
 
@@ -75,3 +84,4 @@ Template performs the following steps:
 + downloads certificate from the key vault using Service Principal credentials;
 + invokes [Set-RDCertificate](https://technet.microsoft.com/en-us/library/jj215464.aspx) cmdlet to apply the certificate for each of the roles;
 + calls [Set-RDClientAccessName](https://technet.microsoft.com/en-us/library/jj215484.aspx) to update Client Access Name on RD Connection Broker to match the certificate.
+

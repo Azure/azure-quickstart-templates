@@ -60,13 +60,16 @@ foreach ($p in $JsonParameters.psObject.Properties) {
                 $v = New-Guid
             }
             "PASSWORD" {
-                $v = "cI#" + (New-Guid).ToString().Substring(0, 17)
+                $v = "cI#" + (New-Guid).ToString().Replace("-", "").Substring(0, 17)
             }
             default {
                 $v = $config.$token
             }
         }
         
+        if($v -eq $null){
+            Write-Error "Could not find `"$($p.value.value)`" token in .config.json"
+        }
         $JsonParameters.$($p.name).value = $v
 
     }
@@ -76,8 +79,20 @@ foreach ($p in $JsonParameters.psObject.Properties) {
         $token = $p.Value.value.Replace("GET-PREREQ-", "")
         #Write-Host "Token: $token"
         $v = $PreReqConfig.$token.value
+        if($v -eq $null){
+            Write-Error "Could not find `"$($p.value.value)`" token in prereq outputs"
+        }
         $JsonParameters.$($p.name).value = $v
-    
+
+    }
+    # is this a reference parameter
+    elseif ($p.value.reference -like "GEN-*"){
+        $token = $p.value.reference.Replace("GEN-", "")
+        $v = $config.$token
+        if($v -eq $null){
+            Write-Error "Could not find reference parameter `"$($p.value.reference)`" token in .config.json"
+        }
+        $JsonParameters.$($p.name) = $v
     }
 }
 

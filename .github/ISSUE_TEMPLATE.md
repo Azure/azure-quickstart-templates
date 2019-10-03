@@ -10,8 +10,6 @@ We've created an outline of recommended sections to fill out that will help make
 
 ### Issue Details
 
-
-
 ### Repro steps (*if necessary, delete otherwise*)
 1.
 2.

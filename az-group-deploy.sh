@@ -31,7 +31,7 @@ while getopts "a:l:g:s:f:e:uvd" opt; do
     esac
 done
     
-[[ $# -eq 0 || -z $artifactsStagingDirectory || -z $location ]] && { echo "Usage: $0 <-a foldername> <-l location> [-e parameters-file] [-g resource-group-name] [-u] [-s storageAccountName] [-t templateFile] [-e parametersFile] [-v] [-d]"; exit 1; }
+[[ $# -eq 0 || -z $artifactsStagingDirectory || -z $location ]] && { echo "Usage: $0 <-a foldername> <-l location> [-e parameters-file] [-g resource-group-name] [-u] [-s storageAccountName] [-t templateFile] [-v] [-d]"; exit 1; }
 
 export AZURE_HTTP_USER_AGENT="AzureQuickStarts $AZURE_HTTP_USER_AGENT"
 
