@@ -1,5 +1,8 @@
 #!/bin/bash
+touch /etc/apt/sources.list
+sudo apt-get upgrade
 sudo apt-get update
+
 
 #install gnome desktop
 sudo apt-get install ubuntu-gnome-desktop -y
