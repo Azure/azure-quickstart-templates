@@ -22,14 +22,6 @@ begin
     } catch {
         $_ | Write-Error
     }
-
-    $JSONBlockComments = [Regex]::new('
-/\*       # The open comment
-(?<Block> # capture the comment block.  It is:
-(.|\s)+?  # anything until
-(?=\*/)   # the close comment
-)\*/      # then match the close comment
-', 'IgnoreCase, IgnorePatternWhitespace')
 }
 
 process
@@ -40,57 +32,52 @@ process
         if ($PSBoundParameters.InputObject) {
             $_ = $PSBoundParameters.InputObject
         }
-
-
-
         # Strip block comments
-        $inObj = $_
-        $in = $JSONBlockComments.Replace($inObj,'')
+        $in = $_ -replace '/\*(?<Block>(?!=\*\/)[\s\S]+)\*/', ''
         # Strip single line comments that are preceeded by whitespace
         #$in =[Regex]::Replace($in,'\s{1,}//(?<Line>.{0,})$', '', $options)
 
-        $lines = $in -split "(?>\r\n|\n)"
-        $hasComment = [regex]::new('(^|[^:])//')
-        $CommentOrQuote = [Regex]::new("(?<CommentStart>//)|(?<SingleQuote>(?<!')')|(?<DoubleQuote>(?<!\\)`")")
+        $lines = $in -split "`n|$([Environment]::NewLine)"
 
-        $in = if (-not $hasComment.IsMatch($in)) {
-            $in
-        } else {
-            @(foreach ($line in $lines) {
-                if (-not $hasComment.IsMatch($line)) { $line;continue }
+        $in = @(foreach ($line in $lines) {
+            $commentStarts = @([Regex]::Matches($line, "(?<CommentStart>//)"))
+            if (-not $commentStarts) {
+                $line
+                continue
+            }
+            $lineParts = @([Regex]::Matches($line, "(?<CommentStart>//)|(?<SingleQuote>(?<!')')|(?<DoubleQuote>(?<!\\)`")"))
+
+            if (-not $lineParts) { 
+                $line
+                continue
+            }
+            $trimAt = -1
             
-                $lineParts = $CommentOrQuote.Matches($line)
-                if (-not $lineParts) { 
-                    $line
-                    continue
+            $singleQuoteCounter = 0
+            $doubleQuoteCounter = 0  
+            foreach ($lp in $lineParts) {
+                if ($lp.Groups["SingleQuote"].Success) {
+                    $singleQuoteCounter++
                 }
-                $trimAt = -1
-            
-                $singleQuoteCounter = 0
-                $doubleQuoteCounter = 0  
-                foreach ($lp in $lineParts) {
-                    if ($lp.Groups["SingleQuote"].Success) {
-                        $singleQuoteCounter++
-                    }
-                    if ($lp.Groups["DoubleQuote"].Success) {
-                        $doubleQuoteCounter++    
-                    }
-                    if ($lp.Groups["CommentStart"].Success -and 
-                        -not ($singleQuoteCounter % 2) -and 
-                        -not ($doubleQuoteCounter % 2)) {
+                if ($lp.Groups["DoubleQuote"].Success) {
+                    $doubleQuoteCounter++    
+                }
+                if ($lp.Groups["CommentStart"].Success -and 
+                    -not ($singleQuoteCounter % 2) -and 
+                    -not ($doubleQuoteCounter % 2)) {
                     
-                        $trimAt = $lp.Index
-                        break
-                    }
+                    $trimAt = $lp.Index
+                    break
                 }
+            }
 
-                if ($trimAt -ne -1) {
-                    $line.Substring(0, $trimAt)
-                } else {
-                    $line
-                }
-            }) -join [Environment]::NewLine
-        }
+            if ($trimAt -ne -1) {
+                $line.Substring(0, $trimAt)
+            } else {
+                $line
+            }
+        }) -join [Environment]::NewLine
+
 
         if ($PSBoundParameters.InputObject) {
             $PSBoundParameters.InputObject = $in

@@ -1,7 +1,6 @@
 ﻿if ($PSVersionTable.PSEdition -ne 'Core') {
     . $psScriptRoot\ConvertFrom-Json.ps1 # Overwriting ConvertFrom-JSON to allow for comments within JSON (not on core)
 }
-. $psScriptRoot\Import-Json.ps1
 . $PSScriptRoot\Find-JsonContent.ps1
 
 
