@@ -22,7 +22,7 @@ function Expand-AzureRMTemplate
     [string]
     $TemplatePath,
     
-    # An Azure Template Expression, for example [parameters('foo')].bar.
+    # An Azure Template Expression, for example [variables('foo')].bar.
     # If this expression was expanded, it would look in -InputObject for a .Parameters object containing the property 'foo'.
     # Then it would look in that result for a property named bar.
     [Parameter(Mandatory=$true,Position=0,ValueFromPipelineByPropertyName=$true,ParameterSetName='Expression')]
@@ -39,7 +39,7 @@ function Expand-AzureRMTemplate
     # For example, passing -Exclude Parameters will not expand any [Parameters()] function.
     [Parameter(ParameterSetName='Expression')]
     [string[]]
-    $Exclude,
+    $Exclude = 'Parameters',
 
     # The object that will be used to evaluate the expression.
     [Parameter(ValueFromPipeline=$true,ParameterSetName='Expression')]
@@ -138,7 +138,7 @@ function Expand-AzureRMTemplate
 
             # Next, we want to pre-populate a number of well-known variables.
             # These variables will be available to every test case.   They are:
-            $WellKnownVariables = 'TemplateFullPath','TemplateText','TemplateObject','TemplateFileName',
+            $WellKnownVariables = 'TemplateFullPath','TemplateFileName', 'TemplateText','TemplateObject',
                 'CreateUIDefinitionFullPath','createUIDefintionText','CreateUIDefinitionObject',
                 'FolderName', 'HasCreateUIDefinition', 'IsMainTemplate','FolderFiles', 
                 'MainTemplatePath', 'MainTemplateObject', 'MainTemplateText', 
@@ -174,7 +174,7 @@ function Expand-AzureRMTemplate
             } else {                
                 $HasCreateUIDefinition = $false
                 $createUiDefinitionFullPath = $null 
-            }       
+            }
 
             #*$FolderFiles (a list of objects of each file in the directory)
             $FolderFiles = 
@@ -184,10 +184,16 @@ function Expand-AzureRMTemplate
 
                         $fileInfo = $_
                         if ($fileInfo.DirectoryName -eq '__macosx') {
-                            return # (excluding files as side-effects of MAC zips)
+                            return # (excluding files as side-effects of MAC zips).
                         }
-                        # All FolderFile objects will have the following properties:
 
+                        # If we provided a specific file to test, only take related .JSON files (not everything in the directory
+                        if ($TemplatePath -like '*.json' -and $fileInfo.Extension -ne '.json') {
+                            return
+                        }
+
+                        # All FolderFile objects will have the following properties:
+                        
                         $fileObject = [Ordered]@{
                             Name = $fileInfo.Name #*Name (the name of the file)
                             Extension = $fileInfo.Extension #*Extension (the file extension) 
@@ -198,13 +204,13 @@ function Expand-AzureRMTemplate
                         if ($fileInfo.Extension -eq '.json') { 
                             # If the file is JSON, two additional properties may be present:
                             #*Object (the file's text, converted from JSON)
-                            $fileObject.Object = $fileObject.Text | ConvertFrom-Json
+                            $fileObject.Object = $fileInfo  | Import-Json
                             #*Schema (the value of the $schema property of the JSON object, if present)
                             $fileObject.schema = $fileObject.Object.'$schema'                        
                         }
                         $fileObject
                     })
-
+                
             if ($isMainTemplate) { # If the file was a main template,
                 # we set a few more variables:
                 #*MainTemplatePath (the path to the main template file)
