@@ -14,8 +14,10 @@ param(
     [Parameter(mandatory=$true)]$StorageAccountKey
 )
 
-if($SampleName = ""){
+if([string]::IsNullOrWhiteSpace($SampleName)){
     Write-Error "SampleName is empty"
+} else {
+    Write-Host "SampleName: $SampleName"
 }
 
 $storageFolder = $SampleName.Replace("\", "@").Replace("/", "@")
@@ -26,15 +28,15 @@ Write-Host "RowKey: $RowKey"
 $ctx = New-AzStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey -Environment AzureCloud
 $cloudTable = (Get-AzStorageTable –Name $tableName –Context $ctx).CloudTable
 
-#Get the row to update
-$r = Get-AzTableRow -table $cloudTable -RowKey $RowKey
+#Get the row to update - can't search by rowkey only since we don't know the partition key, but row key is guaranteed unique
+$r = Get-AzTableRow -table $cloudTable -ColumnName "RowKey" -Value $RowKey -Operator Equal
+
 if ($r.status -eq $null) {
     Add-Member -InputObject $r -NotePropertyName "status" -NotePropertyValue "Live"
 }
 else {
     $r.status = "Live"
 }
-
 
 Write-Host "Updating to new results:"
 $r | ft
