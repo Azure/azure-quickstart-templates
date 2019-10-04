@@ -29,6 +29,22 @@ if ((Get-AzureRMResourceGroup -Name $ResourceGroupName -Location $Location -Verb
     New-AzureRMResourceGroup -Name $ResourceGroupName -Location $Location -Verbose -Force
 }
 
+# Create the storage account for staging and assign perms
+$StorageAccountName = 'stage' + ((Get-AzureRmContext).Subscription.Id).Replace('-', '').substring(0, 19)
+$StorageAccount = (Get-AzureRmStorageAccount | Where-Object { $_.StorageAccountName -eq $StorageAccountName })
+# Create the storage account if it doesn't already exist
+if ($StorageAccount -eq $null) {
+    $StorageResourceGroupName = 'ARM_Deploy_Staging'
+    New-AzureRmResourceGroup -Location "$Location" -Name $StorageResourceGroupName -Force
+    $StorageAccount = New-AzureRmStorageAccount -StorageAccountName $StorageAccountName -Type 'Standard_LRS' -ResourceGroupName $StorageResourceGroupName -Location "$Location"
+}
+# Assign perms
+if($ServicePrincipalObjectId){
+    $roleDef = Get-AzureRmRoleDefinition -Name 'Contributor'
+    New-AzureRMRoleAssignment -RoleDefinitionId $roleDef.id -ObjectId $ServicePrincipalObjectId -Scope $StorageAccount.Id -Verbose
+}
+
+
 #Create the VNET
 $subnet1 = New-AzureRMVirtualNetworkSubnetConfig -Name 'azbot-subnet-1' -AddressPrefix '10.0.1.0/24'
 $vNet = New-AzureRMVirtualNetwork -ResourceGroupName $ResourceGroupName -Name 'azbot-vnet' -AddressPrefix '10.0.0.0/16' -Location $location -Subnet $subnet1 -Verbose -Force
