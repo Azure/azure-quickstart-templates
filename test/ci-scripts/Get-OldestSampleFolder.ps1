@@ -34,7 +34,7 @@ $t = Get-AzTableRow -table $cloudTable
 # Get all the samples
 $ArtifactFilePaths = Get-ChildItem $BuildSourcesDirectory\metadata.json -Recurse -File | ForEach-Object -Process { $_.FullName }
 
-# if this is empty, then everything would be removed from the table which is probably not the intent
+# if this is empty, then everything would be removed from the table which is probably not the intent, so throw and get out
 if($ArtifactFilePaths.Count -eq 0){
     Write-Error "No metadata.json files found in $BuildSourcesDirectory"
     throw
@@ -44,19 +44,24 @@ if($ArtifactFilePaths.Count -eq 0){
 Write-Host "Checking table to see if this is a new sample (does the row exist?)"
 foreach ($SourcePath in $ArtifactFilePaths) {
     
-    #write-host $SourcePath
-
     if ($SourcePath -like "*\test\*") {
         Write-host "Skipping..."
         continue
     }
 
+    Write-Host "Reading: $SourcePath"
     $MetadataJson = Get-Content $SourcePath -Raw | ConvertFrom-Json
 
     # Get the sample's path off of the root, replace any path chars with "@" since the rowkey for table storage does not allow / or \ (among other things)
     $RowKey = (Split-Path $SourcePath -Parent).Replace("$(Resolve-Path $BuildSourcesDirectory)\", "").Replace("\", "@").Replace("/", "@")
 
+    Write-Host "RowKey from path: $RowKey"
+
     $r = $t | Where-Object { $_.RowKey -eq $RowKey }
+
+    Write-Host "Row from Where-Object:"
+    $r | Out-String
+    Write-Host "END (Row from Where-Object)"
 
     # if the row isn't found in the table, it could be a new sample, add it with the data found in metadata.json
     If ($r -eq $null) {
@@ -65,20 +70,22 @@ foreach ($SourcePath in $ArtifactFilePaths) {
 
         $p = New-Object -TypeName hashtable
         
-        $p.Add("$ResultDeploymentParameter", $false)
+        #$p.Add("$ResultDeploymentParameter", $false) - don't add this since we don't know what the result was, badge will still have it
         $p.Add("PublicLastTestDate", $MetadataJson.dateUpdated)
         $p.Add("FairfaxLastTestDate", $MetadataJson.dateUpdated)
     
-        $p.Add("itemDisplayName", $Metadata.itemDisplayName)
-        $p.Add("description", $Metadata.description)
-        $p.Add("summary", $Metadata.summary)
-        $p.Add("githubUsername", $Metadata.githubUsername)
-        $p.Add("dateUpdated", $Metadata.dateUpdated)
+        $p.Add("itemDisplayName", $MetadataJson.itemDisplayName)
+        $p.Add("description", $MetadataJson.description)
+        $p.Add("summary", $MetadataJson.summary)
+        $p.Add("githubUsername", $MetadataJson.githubUsername)
+        $p.Add("dateUpdated", $MetadataJson.dateUpdated)
+
+        $p.Add("status", "Live") # if it's in master, it's live
 
         Add-AzTableRow -table $cloudTable `
             -partitionKey $MetadataJson.type `
             -rowKey $RowKey `
-            -property @p
+            -property $p
     }
 }
 
@@ -94,7 +101,7 @@ if ($PurgeOldRows) {
 
         $PathToSample = ("$BuildSourcesDirectory\$($r.RowKey)\metadata.json").Replace("@", "\")
 
-        #Write-Host "Metadata path: $PathToSample"
+        Write-Host "Metadata path: $PathToSample"
 
         if(Test-Path -Path $PathToSample){
             $MetadataJson = Get-Content $PathToSample -Raw | ConvertFrom-Json
@@ -108,12 +115,12 @@ if ($PurgeOldRows) {
             
             Write-Host "Sample Not Found - removing... $PathToSample"
             $r | Out-String
-            #$r | Remove-AzTableRow -Table $cloudTable
+            $r | Remove-AzTableRow -Table $cloudTable
 
         } elseif(($r.PartitionKey -ne $MetadataJson.type -and ![string]::IsNullOrWhiteSpace($MetadataJson.type))){
             
             #if the type has changed, update the type - this will create a new row since we use the partition key we so need to delete the old row
-            Write-Host "Metadata type has changed from `'$($r.PartitionKey)`' to `'$($MetadataJson.type)`'"
+            Write-Host "Metadata type has changed from `'$($r.PartitionKey)`' to `'$($MetadataJson.type)`' on $PathToSample"
             $oldRowKey = $r.RowKey
             $oldPartitionKey = $r.PartitionKey
             $r.PartitionKey = $MetadataJson.Type
