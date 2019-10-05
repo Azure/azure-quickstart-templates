@@ -1,7 +1,7 @@
 # Deploy Azure Data Explorer cluster into your VNet.
 
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-kusto-vnet/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges101-kusto-vnet/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-kusto-vnet/PublicDeployment.svg" />&nbsp;
 
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-kusto-vnet/FairfaxLastTestDate.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-kusto-vnet/FairfaxDeployment.svg" />&nbsp;
