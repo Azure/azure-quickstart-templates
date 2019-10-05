@@ -1,10 +1,19 @@
 # Continuous Deployment to Kubernetes [![Build Status](http://devops-ci.westcentralus.cloudapp.azure.com/job/qs/job/301-jenkins-acr-spinnaker-k8s/badge/icon)](http://devops-ci.westcentralus.cloudapp.azure.com/blue/organizations/jenkins/qs%2F301-jenkins-acr-spinnaker-k8s/activity)
 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-jenkins-acr-spinnaker-k8s/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-jenkins-acr-spinnaker-k8s/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-jenkins-acr-spinnaker-k8s/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-jenkins-acr-spinnaker-k8s/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-jenkins-acr-spinnaker-k8s/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-jenkins-acr-spinnaker-k8s/CredScanResult.svg" />&nbsp;
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F301-jenkins-acr-spinnaker-k8s%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F301-jenkins-acr-spinnaker-k8s%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
 This template allows you to deploy and configure a DevOps pipeline from an Azure Container Registry to a Kubernetes cluster. It deploys an instance of Jenkins on a Linux Ubuntu 14.04 LTS VM and an instance of Spinnaker on the same Kubernetes cluster that your pipeline will target.
@@ -72,3 +81,4 @@ Sample scripts in this quickstart are not supported under any Microsoft standard
 
 
  
+

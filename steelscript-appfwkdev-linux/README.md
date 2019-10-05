@@ -1,5 +1,14 @@
 # SteelScript Application Framework developer machine
 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/steelscript-appfwkdev-linux/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/steelscript-appfwkdev-linux/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/steelscript-appfwkdev-linux/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/steelscript-appfwkdev-linux/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/steelscript-appfwkdev-linux/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/steelscript-appfwkdev-linux/CredScanResult.svg" />&nbsp;
+
 ## Description
 
 This ARM template deploys Steelscript Application Framework on a fresh linux VM for development purpose. The deployment has been tested on Centos and Ubuntu linux VM.
@@ -9,10 +18,10 @@ Steelscript Application Framework reference for developers: https://support.rive
 ## Quick deploy
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fsteelscript-appfwkdev-linux%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsteelscript-appfwkdev-linux%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
 1. Click the "Deploy to Azure" button, fill parameters and launch the deployment
@@ -75,3 +84,4 @@ $ ps -eo pid,command | grep "appfwk_project/manage.py" | grep -v grep
 ```
 $ sudo kill $(ps -eo pid,command | grep "appfwk_project/manage.py" | grep -v grep | awk '{ print $1 }')
 ```
+

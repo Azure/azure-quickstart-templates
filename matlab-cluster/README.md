@@ -1,5 +1,14 @@
 # Provision a MATLAB Distributed Computing Server using Azure VMs
 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/matlab-cluster/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/matlab-cluster/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/matlab-cluster/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/matlab-cluster/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/matlab-cluster/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/matlab-cluster/CredScanResult.svg" />&nbsp;
+
 Run your MATLAB compute-intensive parallel workloads by creating one or more MATLAB Distributed Computing Server clusters using Azure Virtual Machines.
 
 # Pre-Requisites
@@ -237,7 +246,7 @@ The following commands and arguments are provided:
 One way to create a cluster is from Azure portal. Click the following button will bring you to Azure portal UI to deploy MATLAB Distributed Computing Server cluster. Refer to the following section for parameter values.
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmatlab-cluster%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 
 The easiest way to specify the parameters for cluster creation is by
@@ -302,7 +311,6 @@ INI file parameters:
 - *SubscriptionId*
     - Subscription under which all VMs and storage accounts will be created
 
-
 To create the cluster:
 
 -   Use Azure PowerShell
@@ -314,7 +322,6 @@ To create the cluster:
 -   You will be prompted and need to enter the admin password
 -   The script will block while provisioning the cluster and return when
     the cluster has been provisioned and is ready for use.
-
 
 ## Using a Cluster
 
@@ -410,3 +417,4 @@ Please submit feedback using one of the following mechanisms:
     GitHub account)
 
 -   Create a post in the [Azure Batch MSDN forum](https://social.msdn.microsoft.com/forums/azure/en-US/home?forum=azurebatch).
+

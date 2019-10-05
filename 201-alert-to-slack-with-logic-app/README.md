@@ -1,10 +1,19 @@
 # Logic app that posts a message to a slack channel when an alert fires
 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-alert-to-slack-with-logic-app/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-alert-to-slack-with-logic-app/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-alert-to-slack-with-logic-app/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-alert-to-slack-with-logic-app/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-alert-to-slack-with-logic-app/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-alert-to-slack-with-logic-app/CredScanResult.svg" />&nbsp;
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-alert-to-slack-with-logic-app%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-alert-to-slack-with-logic-app%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
 This template allows you to create a Logic app that has a webhook to be used from an Azure Alert. When the Alert is triggered, it will post a message to a slack channel that you specify. You need to have a slack account to use this template.
@@ -33,3 +42,4 @@ To call this whenever your Alert fires, you need to paste in the webhook URI int
 5. Navigate to the alert you want to trigger the Logic app and select **Edit**.
 6. Scroll to the bottom and paste in the **WebHook**. 
 7. Click save.
+
