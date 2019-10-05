@@ -62,16 +62,26 @@ foreach ($SourcePath in $ArtifactFilePaths) {
     If ($r -eq $null) {
 
         Write-Host "Adding: $Rowkey"
+
+        $p = New-Object -TypeName hashtable
+        
+        $p.Add("$ResultDeploymentParameter", $false)
+        $p.Add("PublicLastTestDate", $MetadataJson.dateUpdated)
+        $p.Add("FairfaxLastTestDate", $MetadataJson.dateUpdated)
+    
+        $p.Add("itemDisplayName", $Metadata.itemDisplayName)
+        $p.Add("description", $Metadata.description)
+        $p.Add("summary", $Metadata.summary)
+        $p.Add("githubUsername", $Metadata.githubUsername)
+        $p.Add("dateUpdated", $Metadata.dateUpdated)
+
         Add-AzTableRow -table $cloudTable `
             -partitionKey $MetadataJson.type `
             -rowKey $RowKey `
-            -property @{
-                "$ResultDeploymentParameter" = $false; `
-                "PublicLastTestDate"     = "$($MetadataJson.dateUpdated)"; `
-                "FairfaxLastTestDate"    = "$($MetadataJson.dateUpdated)"; 
-        }
+            -property @p
     }
 }
+
 
 #Get the updated table
 $t = Get-AzTableRow -table $cloudTable
@@ -84,6 +94,8 @@ if ($PurgeOldRows) {
 
         $PathToSample = ("$BuildSourcesDirectory\$($r.RowKey)\metadata.json").Replace("@", "\")
 
+        #Write-Host "Metadata path: $PathToSample"
+
         if(Test-Path -Path $PathToSample){
             $MetadataJson = Get-Content $PathToSample -Raw | ConvertFrom-Json
         } else {
@@ -95,7 +107,8 @@ if ($PurgeOldRows) {
         If ($SampleNotFound -and $r.status -eq "Live") {
             
             Write-Host "Sample Not Found - removing... $PathToSample"
-            $r | Remove-AzTableRow -Table $cloudTable
+            $r | Out-String
+            #$r | Remove-AzTableRow -Table $cloudTable
 
         } elseif(($r.PartitionKey -ne $MetadataJson.type -and ![string]::IsNullOrWhiteSpace($MetadataJson.type))){
             
