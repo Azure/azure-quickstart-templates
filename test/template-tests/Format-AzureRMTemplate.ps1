@@ -25,7 +25,7 @@
             'resources', 'outputs'
 
         $resourceOrder = 'comments', 'condition', 'type', 'apiVersion', 'name', 
-            'location', 'sku','kind', 'dependsOn', 'tags', 'copy'
+            'location', 'sku', 'kind', 'dependsOn', 'tags', 'copy'
 
         $sortProperties = {
             param([Parameter(ValueFromPipeline=$true)]$in, [string[]]$order,[string[]]$LastOrder) 

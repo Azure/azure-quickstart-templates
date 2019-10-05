@@ -274,7 +274,7 @@ Each test script has access to a set of well-known variables:
 
                 if (-not $matchingGroups) { continue } 
                 if ($fileInfo.Schema -like '*deploymentTemplate*') {
-                    $isMainTemplate = 'mainTemplate.json', 'azureDeploy.json' -contains $fileInfo.Name
+                    $isMainTemplate = 'mainTemplate.json', 'azureDeploy.json', 'prereq.azuredeploy.json' -contains $fileInfo.Name
                     $templateFileName = $fileInfo.Name
                     $TemplateObject = $fileInfo.Object
                     $TemplateText = $fileInfo.Text

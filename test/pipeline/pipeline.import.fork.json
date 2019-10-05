@@ -9,7 +9,9 @@
                 "allowSecrets": true
             },
             "pathFilters": [
-                "-/test/*"
+                "-/test/*",
+                "-/1-CONTRIBUTION-GUIDE/*",
+                "-/.github/*"
             ],
             "requireCommentsForNonTeamMembersOnly": false,
             "isCommentRequiredForPullRequest": false,
@@ -59,13 +61,16 @@
             "value": "<this will set by a pipeline task>"
         },
         "result.best.practice": {
-            "value": "false"
+            "value": "False"
         },
         "result.credscan": {
-            "value": "false"
+            "value": ""
         },
         "result.deployment": {
-            "value": "false"
+            "value": "False"
+        },
+        "result.deployment.last.test.date.parameter": {
+            "value": ""
         },
         "result.deployment.parameter": {
             "value": "PublicDeployment"
@@ -87,28 +92,15 @@
             "value": "<tenantId for the subscription and service principals>"
         },
         "ttk.asset.filename": {
-            "value": "AzTemplateToolKit.zip"
+            "value": "arm-template-toolkit.zip"
         },
         "ttk.folder": {
             "value": "$(Agent.BuildDirectory)\\test"
+        },
+        "ttk.uri": {
+            "value": "https://aka.ms/arm-ttk"
         }
     },
-    "retentionRules": [
-        {
-            "branches": [
-                "+refs/heads/*"
-            ],
-            "artifacts": [],
-            "artifactTypesToDelete": [
-                "FilePath",
-                "SymbolStore"
-            ],
-            "daysToKeep": 10,
-            "minimumToKeep": 1,
-            "deleteBuildRecord": true,
-            "deleteTestResults": true
-        }
-    ],
     "properties": {},
     "tags": [],
     "jobAuthorizationScope": 1,
@@ -121,7 +113,7 @@
                 "steps": [
                     {
                         "environment": {},
-                        "enabled": true,
+                        "enabled": false,
                         "continueOnError": false,
                         "alwaysRun": false,
                         "displayName": "Download Template Toolkit Release",
@@ -146,7 +138,7 @@
                         "enabled": true,
                         "continueOnError": false,
                         "alwaysRun": false,
-                        "displayName": "Expand Files TTK Files",
+                        "displayName": "Download TTK",
                         "timeoutInMinutes": 0,
                         "condition": "succeeded()",
                         "task": {
@@ -158,7 +150,32 @@
                             "targetType": "inline",
                             "filePath": "",
                             "arguments": "",
-                            "script": "# Expand the TTK files\nGet-ChildItem \"$(ttk.folder)\" -Recurse\n\nWrite-Host \"Expanding files...\"\nExpand-Archive -Path \"$(ttk.folder)\\*.zip\" -DestinationPath \"$(ttk.folder)\" -Verbose\n\nWrite-Host \"Expanded files found:\"\nGet-ChildItem \"$(ttk.folder)\" -Recurse",
+                            "script": "New-Item '$(ttk.folder)' -ItemType Directory\nInvoke-WebRequest -uri '$(ttk.uri)' -OutFile \"$(ttk.folder)/$(ttk.asset.filename)\" -Verbose\nGet-ChildItem '$(ttk.folder)' -Recurse\n\nWrite-Host \"Expanding files...\"\nExpand-Archive -Path '$(ttk.folder)/*.zip' -DestinationPath '$(ttk.folder)' -Verbose\n\nWrite-Host \"Expanded files found:\"\nGet-ChildItem '$(ttk.folder)' -Recurse",
+                            "errorActionPreference": "stop",
+                            "failOnStderr": "false",
+                            "ignoreLASTEXITCODE": "false",
+                            "pwsh": "true",
+                            "workingDirectory": ""
+                        }
+                    },
+                    {
+                        "environment": {},
+                        "enabled": true,
+                        "continueOnError": false,
+                        "alwaysRun": false,
+                        "displayName": "Connect To Azure (Admin) To Create RGs",
+                        "timeoutInMinutes": 0,
+                        "condition": "succeeded()",
+                        "task": {
+                            "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
+                            "versionSpec": "2.*",
+                            "definitionType": "task"
+                        },
+                        "inputs": {
+                            "targetType": "filePath",
+                            "filePath": "$(ttk.folder)/ci-scripts/ConnectTo-Azure.ps1",
+                            "arguments": "-appId $(app.id.admin) -secret $(app.secret.admin) -tenantId $(tenant.id) -subscriptionId $(subscription.id) -InstallAzModule",
+                            "script": "",
                             "errorActionPreference": "stop",
                             "failOnStderr": "false",
                             "ignoreLASTEXITCODE": "false",
@@ -196,6 +213,31 @@
                         "enabled": true,
                         "continueOnError": false,
                         "alwaysRun": false,
+                        "displayName": "DEBUG: Dump ENV",
+                        "timeoutInMinutes": 0,
+                        "condition": "succeeded()",
+                        "task": {
+                            "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
+                            "versionSpec": "2.*",
+                            "definitionType": "task"
+                        },
+                        "inputs": {
+                            "targetType": "inline",
+                            "filePath": "",
+                            "arguments": "",
+                            "script": "gci \"env:\"",
+                            "errorActionPreference": "continue",
+                            "failOnStderr": "false",
+                            "ignoreLASTEXITCODE": "false",
+                            "pwsh": "true",
+                            "workingDirectory": ""
+                        }
+                    },
+                    {
+                        "environment": {},
+                        "enabled": true,
+                        "continueOnError": true,
+                        "alwaysRun": false,
                         "displayName": "Validate metadata.json",
                         "timeoutInMinutes": 0,
                         "condition": "succeeded()",
@@ -207,10 +249,35 @@
                         "inputs": {
                             "targetType": "filePath",
                             "filePath": "$(ttk.folder)\\ci-scripts\\Validate-Metadata.ps1",
-                            "arguments": "-path \"$(sample.folder)\\metadata.json\"",
-                            "script": "param(\n    [string][Parameter(mandatory=$true)] $path\n)\n\n#get the file content\n#$metadata = Get-Content -Path \"$(sample.folder)\\metadata.json\" -Raw \n$metadata = Get-Content -Path $path -Raw \n\n#Check metadata.json against the schema\n$schema = Invoke-WebRequest -Uri \"https://aka.ms/azure-quickstart-templates-metadata-schema#\" -UseBasicParsing\n$metadata | Test-Json -Schema $schema.content \n\n#Make sure the date has been updated\n$dateUpdated = (Get-Date ($metadata | convertfrom-json).dateUpdated)\n\nWrite-Host $dateUpdated\n\nif($dateUpdated -gt (Get-Date)){\n    Write-Error \"dateUpdated in metadata.json must not be in the future\"\n    Write-Error \"$dateUpdated is later than $(Get-Date)\"\n}\n\n$oldDate = (Get-Date).AddDays(-60)\n\nif($dateUpdated -lt $oldDate){\n    Write-Error \"dateUpdated in metadata.json needs to be updated\"\n    Write-Error \"$dateUpdated is older than $oldDate\"\n}\n",
-                            "errorActionPreference": "stop",
-                            "failOnStderr": "false",
+                            "arguments": "",
+                            "script": "",
+                            "errorActionPreference": "continue",
+                            "failOnStderr": "true",
+                            "ignoreLASTEXITCODE": "false",
+                            "pwsh": "true",
+                            "workingDirectory": ""
+                        }
+                    },
+                    {
+                        "environment": {},
+                        "enabled": true,
+                        "continueOnError": true,
+                        "alwaysRun": true,
+                        "displayName": "Validate README.md",
+                        "timeoutInMinutes": 0,
+                        "condition": "succeededOrFailed()",
+                        "task": {
+                            "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
+                            "versionSpec": "2.*",
+                            "definitionType": "task"
+                        },
+                        "inputs": {
+                            "targetType": "filePath",
+                            "filePath": "$(ttk.folder)\\ci-scripts\\Validate-ReadMe.ps1",
+                            "arguments": "",
+                            "script": "",
+                            "errorActionPreference": "continue",
+                            "failOnStderr": "true",
                             "ignoreLASTEXITCODE": "false",
                             "pwsh": "true",
                             "workingDirectory": ""
@@ -258,31 +325,6 @@
                             "targetType": "filePath",
                             "filePath": "$(ttk.folder)\\ci-scripts\\Gen-ResourceGroupNames.ps1",
                             "arguments": "-sampleFolder $(sample.folder)",
-                            "errorActionPreference": "stop",
-                            "failOnStderr": "false",
-                            "ignoreLASTEXITCODE": "false",
-                            "pwsh": "true",
-                            "workingDirectory": ""
-                        }
-                    },
-                    {
-                        "environment": {},
-                        "enabled": true,
-                        "continueOnError": false,
-                        "alwaysRun": false,
-                        "displayName": "Connect To Azure (Admin) To Create RGs",
-                        "timeoutInMinutes": 0,
-                        "condition": "succeeded()",
-                        "task": {
-                            "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
-                            "versionSpec": "2.*",
-                            "definitionType": "task"
-                        },
-                        "inputs": {
-                            "targetType": "filePath",
-                            "filePath": "$(ttk.folder)/ci-scripts/ConnectTo-Azure.ps1",
-                            "arguments": "-appId $(app.id.admin) -secret $(app.secret.admin) -tenantId $(tenant.id) -subscriptionId $(subscription.id) -InstallAzModule",
-                            "script": "",
                             "errorActionPreference": "stop",
                             "failOnStderr": "false",
                             "ignoreLASTEXITCODE": "false",
@@ -557,31 +599,6 @@
                             "targetType": "filePath",
                             "filePath": "$(ttk.folder)/ci-scripts/ConnectTo-Azure.ps1",
                             "arguments": "-appId $(app.id.admin) -secret $(app.secret.admin) -tenantId $(tenant.id) -subscriptionId $(subscription.id)",
-                            "script": "",
-                            "errorActionPreference": "stop",
-                            "failOnStderr": "false",
-                            "ignoreLASTEXITCODE": "false",
-                            "pwsh": "true",
-                            "workingDirectory": ""
-                        }
-                    },
-                    {
-                        "environment": {},
-                        "enabled": true,
-                        "continueOnError": true,
-                        "alwaysRun": true,
-                        "displayName": "Write Test Result for README.MD",
-                        "timeoutInMinutes": 0,
-                        "condition": "succeededOrFailed()",
-                        "task": {
-                            "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
-                            "versionSpec": "2.*",
-                            "definitionType": "task"
-                        },
-                        "inputs": {
-                            "targetType": "filePath",
-                            "filePath": "$(ttk.folder)\\ci-scripts\\Write-TestResults.ps1",
-                            "arguments": "-SampleFolder $(sample.folder) -BuildSourcesDirectory $(build.sourcesdirectory) -BestPracticeResult $(result.best.practice) -CredScanResult $(result.credscan) -$(result.deployment.parameter) $(result.deployment)",
                             "script": "",
                             "errorActionPreference": "stop",
                             "failOnStderr": "false",
