@@ -38,8 +38,8 @@ else {
     $r.status = "Live"
 }
 
-Write-Host "Updating to new results:"
-$r | ft
+Write-Host "Updating to new results: $($r.status)"
+
 $r | Update-AzTableRow -table $cloudTable
 
 #Get All Files from "prs" container and copy to the "badges" container
