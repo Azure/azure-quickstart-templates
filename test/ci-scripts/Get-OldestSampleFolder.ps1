@@ -70,6 +70,8 @@ foreach ($SourcePath in $ArtifactFilePaths) {
 
         $p = New-Object -TypeName hashtable
         
+        $MetadataJson | Out-String
+
         #$p.Add("$ResultDeploymentParameter", $false) - don't add this since we don't know what the result was, badge will still have it
         $p.Add("PublicLastTestDate", $MetadataJson.dateUpdated)
         $p.Add("FairfaxLastTestDate", $MetadataJson.dateUpdated)
@@ -101,21 +103,20 @@ if ($PurgeOldRows) {
 
         $PathToSample = ("$BuildSourcesDirectory\$($r.RowKey)\metadata.json").Replace("@", "\")
 
-        Write-Host "Metadata path: $PathToSample"
+        $SampleFound = (Test-Path -Path $PathToSample)
+        Write-Host "Metadata path: $PathToSample > Found: $SampleFound"
 
-        if(Test-Path -Path $PathToSample){
+        if($SampleFound){
             $MetadataJson = Get-Content $PathToSample -Raw | ConvertFrom-Json
-        } else {
-            $SampleNotFound = $true
         }
 
         # If the sample isn't found in the repo (and it's not a new sample, still in PR (i.e. it's live))
         # or the Type of sample has changed (which changes the partitionKey) and it's not null, then we want to remove the row from the table
-        If ($SampleNotFound -and $r.status -eq "Live") {
+        If (!$SampleFound -and $r.status -eq "Live") {
             
             Write-Host "Sample Not Found - removing... $PathToSample"
             $r | Out-String
-            $r | Remove-AzTableRow -Table $cloudTable
+            #$r | Remove-AzTableRow -Table $cloudTable # TODO This seems to be causing failures, need more testing on it
 
         } elseif(($r.PartitionKey -ne $MetadataJson.type -and ![string]::IsNullOrWhiteSpace($MetadataJson.type))){
             
