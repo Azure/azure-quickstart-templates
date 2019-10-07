@@ -61,9 +61,9 @@ createUIDefUrlEncoded=$(printf %s "$createUIDefUrl" | jq -s -R -r @uri)
 
 if [[ $gov ]] 
 then
-target="https://portal.azure.us/#blade/Microsoft_Azure_Compute/CreateMultiVmWizardBlade/internal_bladeCallId/anything/internal_bladeCallerParams/{"\""initialData"\"":{},"\""providerConfig"\"":{"\""createUiDefinition"\"":"\""$createUIDefUrlEncoded"\""}}"
+target="https://portal.azure.us/#blade/Microsoft_Azure_Compute/CreateMultiVmWizardBlade/internal_bladeCallId/anything/internal_bladeCallerParams/{"\""providerConfig"\"":{"\""createUiDefinition"\"":"\""$createUIDefUrlEncoded"\""}}"
 else
-target="https://portal.azure.com/#blade/Microsoft_Azure_Compute/CreateMultiVmWizardBlade/internal_bladeCallId/anything/internal_bladeCallerParams/{"\""initialData"\"":{},"\""providerConfig"\"":{"\""createUiDefinition"\"":"\""$createUIDefUrlEncoded"\""}}"
+target="https://portal.azure.com/#blade/Microsoft_Azure_Compute/CreateMultiVmWizardBlade/internal_bladeCallId/anything/internal_bladeCallerParams/{"\""providerConfig"\"":{"\""createUiDefinition"\"":"\""$createUIDefUrlEncoded"\""}}"
 fi
 
 echo "Launch browser with this URL:"
