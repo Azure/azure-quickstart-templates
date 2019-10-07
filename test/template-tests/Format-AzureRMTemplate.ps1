@@ -1,4 +1,4 @@
-﻿function Format-AzureRMTemplate
+function Format-AzureRMTemplate
 {
     <#
     .Synopsis
@@ -89,7 +89,6 @@
             if (-not $resolvedPath) { return } # If we couldn't, return.
         
             $templateText = [IO.File]::ReadAllText("$resolvedPath") # Read the file contents
-            
             $templateObject = $templateText | ConvertFrom-Json # convert them from JSON.
             if (-not $templateObject) { return } # If it was null, return.
 
@@ -107,9 +106,7 @@
                     $newTemplate.resources | & $sortProperties -Order $resourceOrder -LastOrder 'properties', 'resources' -Recurse
                 )
             }
-            
-            
-            return $newTemplate # then return the newly formatted object.
+            return $newObject # then return the newly formatted object.
         }
     }
 }

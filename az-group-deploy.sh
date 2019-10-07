@@ -98,7 +98,7 @@ then
     fi
     
     artifactsStorageContainerName=${resourceGroupName}"-stageartifacts"
-    artifactsStorageContainerName=$( echo "$artifactsStorageContainerName" | awk '{print tolower($0)}')
+    artifactsStorageContainerName=$( echo "${artifactsStorageContainerName:0:63}" | awk '{print tolower($0)}')
     
     artifactsStorageAccountKey=$( az storage account keys list -g "$artifactsResourceGroupName" -n "$artifactsStorageAccountName" -o json | jq -r '.[0].value' )
     az storage container create -n "$artifactsStorageContainerName" --account-name "$artifactsStorageAccountName" --account-key "$artifactsStorageAccountKey" >/dev/null 2>&1

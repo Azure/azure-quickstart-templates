@@ -1,4 +1,4 @@
-﻿function ConvertFrom-Json
+function ConvertFrom-Json
 {
 [CmdletBinding(HelpUri='https://go.microsoft.com/fwlink/?LinkID=217031', RemotingCapability='None')]
 param(
@@ -41,7 +41,6 @@ process
         }
 
 
-
         # First, strip block comments
         $inObj = $_
         $in = $JSONBlockComments.Replace($inObj,'')
@@ -81,7 +80,6 @@ process
                         break
                     }
                 }
-
                 if ($trimAt -ne -1) { # If we know where to chop the line
                     $line.Substring(0, $trimAt) # get everything up until that point
                 } else { # otherwise,

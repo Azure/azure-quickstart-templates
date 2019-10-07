@@ -31,13 +31,14 @@ foreach ($id in $ids) { # Then loop over each object with an ID
     # - 0 or more whitepace
     # - single quote on parameters and variables (resourceId first parameters may not be a literal string)
     #
-    if ($expandedId -notmatch "\s{0,}\[\s{0,}(extensionResourceId|resourceId)\s{0,}\(\s{0,}"  -and ` # this is an "or" scenario since extensionResourceId should contain resourceId and would provide non-whitespace before the function name
+    if ($expandedId -is [string] -and ` #if it happens to be an object property, skip it
+        $expandedId -notmatch "\s{0,}\[\s{0,}(extensionResourceId|resourceId)\s{0,}\(\s{0,}"  -and ` # this is an "or" scenario since extensionResourceId should contain resourceId and would provide non-whitespace before the function name
         $expandedId -notmatch "\s{0,}\[\s{0,}subscriptionResourceId\s{0,}\(\s{0,}'" -and `
         $expandedId -notmatch "\s{0,}\[\s{0,}tenantResourceId\s{0,}\(\s{0,}'" -and `
         $expandedId -notmatch "\s{0,}\[\s{0,}if\s{0,}\(\s{0,}" -and `
         $expandedId -notmatch "\s{0,}\[\s{0,}parameters\s{0,}\(\s{0,}'" -and `
         $expandedId -notmatch "\s{0,}\[\s{0,}variables\s{0,}\(\s{0,}'" ){
-            Write-Error "Property: `"$($id.propertyName)`" must use one of the following expressions for an resourceId property
+            Write-Error "Property: `"$($id.propertyName)`" must use one of the following expressions for an resourceId property:
              (resourceId(), subscriptionResourceId(), tenantResourceId(), if(), extensionResourceId(), parameters(), variables())" -TargetObject $id -ErrorId ResourceId.Should.Contain.Proper.Expression
     }
 }
