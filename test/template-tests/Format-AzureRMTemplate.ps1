@@ -28,17 +28,28 @@
             'location', 'sku', 'kind', 'dependsOn', 'tags', 'copy'
 
         $sortProperties = {
-            param([Parameter(ValueFromPipeline=$true)]$in, [string[]]$order,[string[]]$LastOrder) 
+            param([Parameter(ValueFromPipeline=$true)]$in, [string[]]$order,[string[]]$LastOrder, [switch]$Recurse) 
 
             process {
                 $newObject = [PSObject]::new() # create a new object to output.
+                if (-not $in) { return $null }
+                if ([string], [int], [float], [bool] -contains $in.GetType()) { return $in } 
+                if ($Recurse) {
+                    $recurseSplat = @{} + $PSBoundParameters
+                    $recurseSplat.Remove('In')
+                }
                 foreach ($propName in $order) { # Walk thru the properties in the preferred order.
                     if ($in.$propName) { # If the object had that property
-                        $newProp = 
-                            [Management.Automation.PSNoteProperty]::new($propName, $in.$propName)                    
+                        $newPropValue =
+                            if ($Recurse -and $in.$propName -is [Array]) { 
+                                $in.$propName | & $MyInvocation.MyCommand.ScriptBlock @recurseSplat
+                            } else {
+                                $in.$propName
+                            }
+                        $newProp = [Management.Automation.PSNoteProperty]::new($propName, $newPropValue)
                         $newObject.psobject.properties.add($newProp) # add it to the new object 
                         $in.psobject.properties.remove($propName) # and remove it from the original object.
-                    
+                        
                     }
                 }
                 if (@($in.psobject.properties).Count) { # If the template object had any properties left
@@ -52,11 +63,17 @@
                 if ($LastOrder) {
                     foreach ($propName in $LastOrder) {
                         if ($in.$propName) { # If the object had that property
+                            $newPropValue =
+                                if ($Recurse -and $in.$propName -is [Array]) { 
+                                    $in.$propName | & $MyInvocation.MyCommand.ScriptBlock @recurseSplat
+                                } else {
+                                    $in.$propName
+                                }
                             $newProp = 
-                                [Management.Automation.PSNoteProperty]::new($propName, $in.$propName)                    
+                                [Management.Automation.PSNoteProperty]::new($propName, $newPropValue)                    
                             $newObject.psobject.properties.add($newProp) # add it to the new object 
                             $in.psobject.properties.remove($propName) # and remove it from the original object.
-                    
+                            
                         }
                     }
                 }
@@ -82,12 +99,12 @@
 
         if ($PSCmdlet.ParameterSetName -eq 'TemplateObject') { # If we're provided a template object
             
-            $newTemplate = $TemplateObject | & $sortProperties -Order $topLevelPropertyOrder
+            $newTemplate = $TemplateObject | & $sortProperties -Order $topLevelPropertyOrder # sort the top-level properties.
             
             
-            if ($newTemplate.resources) {
+            if ($newTemplate.resources) { # If the template had resources, sort them 
                 $newTemplate.resources =@(
-                    $newTemplate.resources | & $sortproperties -Order $resourceOrder -LastOrder 'properties', 'resources'
+                    $newTemplate.resources | & $sortProperties -Order $resourceOrder -LastOrder 'properties', 'resources' -Recurse
                 )
             }
             
