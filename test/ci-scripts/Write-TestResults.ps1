@@ -205,39 +205,50 @@ else {
 
 if ($r.FairfaxDeployment -ne $null) {
     $FairfaxDeployment = ($r.FairfaxDeployment).ToString().ToLower().Replace("true", "PASS").Replace("false", "FAIL")
-    if ($FairfaxDeployment -eq "PASS") { $FairfaxDeploymentColor = "brightgreen" }else { $FairfaxDeploymentColor = "red" }
-
 }
-else {
-    $FairfaxDeployment = $na
-    $FairfaxDeploymentColor = "inactive"
+switch ($FairfaxDeployment) {
+    "PASS" { $FairfaxDeploymentColor = "brightgreen" }
+    "FAIL" { $FairfaxDeploymentColor = "red" }
+    default {
+        $FairfaxDeployment = $na
+        $FairfaxDeploymentColor = "inactive"    
+    }
 }
 
 if ($r.PublicDeployment -ne $null) {
     $PublicDeployment = ($r.PublicDeployment).ToString().ToLower().Replace("true", "PASS").Replace("false", "FAIL")
-    if ($PublicDeployment -eq "PASS") { $PublicDeploymentColor = "brightgreen" }else { $PublicDeploymentColor = "red" }
 }
-else {
-    $PublicDeployment = $na
-    $PublicDeploymentColor = "inactive"
+switch ($PublicDeployment) {
+    "PASS" { $PublicDeploymentColor = "brightgreen" }
+    "FAIL" { $PublicDeploymentColor = "red" }
+    default {
+        $PublicDeployment = $na
+        $PublicDeploymentColor = "inactive"    
+    }
 }
 
 if ($r.BestPracticeResult -ne $null) {
     $BestPracticeResult = ($r.BestPracticeResult).ToString().ToLower().Replace("true", "PASS").Replace("false", "FAIL")
-    if ($BestPracticeResult -eq "PASS") { $BestPracticeResultColor = "brightgreen" }else { $BestPracticeResultColor = "red" }
 }
-else {
-    $BestPracticeResult = $na
-    $BestPracticeResultColor = "inactive"
+switch ($BestPracticeResult) {
+    "PASS" { $BestPracticeResultColor = "brightgreen" }
+    "FAIL" { $BestPracticeResultColor = "red" }
+    default {
+        $BestPracticeResult = $na
+        $CredScanResultColor = "inactive"    
+    }
 }
 
 if ($r.CredScanResult -ne $null) {
     $CredScanResult = ($r.CredScanResult).ToString().ToLower().Replace("true", "PASS").Replace("false", "FAIL")
-    if ($CredScanResult -eq "PASS") { $CredScanResultColor = "brightgreen" }else { $CredScanResultColor = "red" }
 }
-else {
-    $CredScanResult = $na
-    $CredScanResultColor = "inactive"
+switch ($CredScanResult) {
+    "PASS" { $CredScanResultColor = "brightgreen" }
+    "FAIL" { $CredScanResultColor = "red" }
+    default {
+        $CredScanResult = $na
+        $CredScanResultColor = "inactive"    
+    }
 }
 
 $badges = @(
