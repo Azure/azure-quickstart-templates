@@ -1,0 +1,79 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "subscriptionId": {
+      "type": "string",
+      "defaultValue": "2498e3dd-307d-4f0d-bc19-bdc139ce0c30",
+      "metadata": {
+        "description": "Subscription ID GUID"
+      }
+    },
+     "resourceGroup": {
+      "type": "string",
+      "defaultValue": "CloudDep",
+      "metadata": {
+        "description": "Input string for resource group name."
+      }
+    },
+    "userAssignedIdentityName": {
+      "type": "string",
+      "metadata": {
+        "description": "the name of the Managed Identity resource."
+      }
+    },
+    "mapsAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "the name of the Azure Map Account"
+      }
+    },
+    "builtInRoleType": {
+      "type": "string",
+      "defaultValue": "Azure Maps Data Reader",
+      "metadata": {
+        "description": "Input string for built in role type"
+      }
+    },
+    "guid": {
+      "type": "string",
+      "defaultValue": "916369fe-4b07-4b79-aa53-add064735d33",
+      "metadata": {
+        "description": "Input string for new GUID associated with assigning built in role types"
+      }
+    }
+  },
+  "variables": {
+    "Azure Maps Data Reader": "[concat('/subscriptions/', parameters('subscriptionId'), '/providers/Microsoft.Authorization/roleDefinitions/', '423170ca-a8f6-4b0f-8487-9e4eb8f49bfa')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+      "name": "[parameters('userAssignedIdentityName')]",
+      "apiVersion": "2018-11-30",
+      "location": "[resourceGroup().location]"
+    },
+    {
+      "apiVersion": "2018-05-01",
+      "name": "[parameters('mapsAccountName')]",
+      "location": "global",
+      "type": "Microsoft.Maps/accounts",
+      "sku": {
+        "name": "S0"
+      }
+    },
+    {
+      "apiVersion": "2018-01-01-preview",
+      "name": "[concat(parameters('mapsAccountName'), '/Microsoft.Authorization/', parameters('guid'))]",
+      "type": "Microsoft.Maps/accounts/providers/roleAssignments",
+      "dependsOn": [
+        "[parameters('mapsAccountName')]",
+        "[parameters('userAssignedIdentityName')]"
+      ],
+      "properties": {
+        "roleDefinitionId": "[variables(parameters('builtInRoleType'))]",
+        "principalId": "[reference(concat(resourceGroup().id, '/providers/Microsoft.ManagedIdentity/userAssignedIdentities/', parameters('userAssignedIdentityName')), '2018-11-30').principalId]"
+      }
+    }
+  ]
+}
