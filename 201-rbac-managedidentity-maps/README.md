@@ -3,6 +3,9 @@
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-rbac-managedidentity-maps/PublicLastTestDate.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-rbac-managedidentity-maps/PublicDeployment.svg" />&nbsp;
 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-rbac-managedidentity-maps/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-rbac-managedidentity-maps/FairfaxDeployment.svg" />&nbsp;
+
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-rbac-managedidentity-maps/BestPracticeResult.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-rbac-managedidentity-maps/CredScanResult.svg" />&nbsp;
 
@@ -14,13 +17,6 @@
 </a>
 
 This template assigns Azure Maps Data Reader access for a Manaaged Identity on an Azure Maps account in a resource group. It **does not assign the identity** to an Azure resource such as `Azure App Service` or `Azure Virtual Machines`. Inputs to this template are following fields:
-
-1. Subscription ID
-2. Resource Group Name
-3. GUID
-4. Azure Managed Identity name
-5. Azure Map account name
-6. Built In Role Type
 
 ## Enable Service to Service authentication to Azure Maps
 
