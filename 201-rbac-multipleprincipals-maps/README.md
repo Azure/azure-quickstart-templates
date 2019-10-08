@@ -3,8 +3,8 @@
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-rbac-multipleprincipals-maps/PublicLastTestDate.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-rbac-multipleprincipals-maps/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-rbac-managedidentity-maps/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-rbac-managedidentity-maps/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-rbac-multipleprincipals-maps/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-rbac-multipleprincipals-maps/FairfaxDeployment.svg" />&nbsp;
 
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-rbac-multipleprincipals-maps/BestPracticeResult.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-rbac-multipleprincipals-maps/CredScanResult.svg" />&nbsp;
