@@ -51,6 +51,15 @@ All native connectors will be available by default in ISE. Refer to [documentati
 | smtp | [SMTP](https://docs.microsoft.com/en-us/connectors/smtp/) |
 | si3270 | [IBM 3270](https://docs.microsoft.com/en-us/connectors/si3270/) |
 
+Specify the values in the template (CLI or Portal UX) as a JSON array:
+```json
+["mq"]
+```
+or
+```json
+["mq", "servicebus"]
+```
+
 ## Deleting the Resource Group
 
 As the Integration Service Environment puts a subnet service delegation on the first subnet of the VNET, the resource group will fail to be deleted if you try to delete the entire resource group in one go. To delete the resource group:
