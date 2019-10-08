@@ -3,6 +3,9 @@
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-rbac-multipleprincipals-maps/PublicLastTestDate.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-rbac-multipleprincipals-maps/PublicDeployment.svg" />&nbsp;
 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-rbac-managedidentity-maps/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-rbac-managedidentity-maps/FairfaxDeployment.svg" />&nbsp;
+
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-rbac-multipleprincipals-maps/BestPracticeResult.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-rbac-multipleprincipals-maps/CredScanResult.svg" />&nbsp;
 
@@ -13,16 +16,7 @@
   <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
-This template assigns Azure Maps Data Reader access for multiple users, groups, or applications to an Azure Maps account in a resource group. Inputs to this template are following fields:
-
-1. Subscription ID
-2. Principal IDs (also known as: Object IDs)
-3. Resource Group Name
-4. Role Definition ID
-5. GUIDs
-6. Azure Map account name
-7. Built In Role Types
-8. Count of Principals
+This template assigns Azure Maps Data Reader access for multiple users, groups, or applications to an Azure Maps account in a resource group.
 
 ## Use following powershell command to get Principal ID
 
