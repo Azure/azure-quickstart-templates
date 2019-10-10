@@ -16,6 +16,8 @@
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
-This template disables encryption on a running VM Scale Set of Windows VMs.
+This template enable the Update management for Windows VMs.
+
+Scripts folder containes a script deployed the ARM template and crate One time update schedule and weekly update schedule
 
 For more information about Azure Disk Encryption, see https://docs.microsoft.com/en-us/azure/security/enable-win-update-management

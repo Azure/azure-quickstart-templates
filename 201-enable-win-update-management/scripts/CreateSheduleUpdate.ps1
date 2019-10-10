@@ -4,6 +4,10 @@ $ResourceGroup = (New-AzResourceGroup -Name VM-UpdateMgt -Location "Southeast As
 #Create ARM Deployment
 New-AzResourceGroupDeployment -Name VM-UpdateMgt -ResourceGroupName $ResourceGroup -Mode Incremental -TemplateFile ../azuredeploy.json -TemplateParameterFile ../azuredeploy.parameters.json -Verbose
 
+#Wait until the extension and config will available.
+Write-Output "Wait for 300s until extensions are provishened"
+Start-Sleep -Seconds 300
+
 #Configure Update Management
 
 $duration = New-TimeSpan -Hours 2
