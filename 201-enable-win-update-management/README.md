@@ -18,6 +18,6 @@
 
 This template enable the Update management for Windows VMs.
 
-Scripts folder containes a script deployed the ARM template and crate One time update schedule and weekly update schedule
+Scripts folder containes, a script deployed the ARM template and create One time update schedule and weekly update schedule
 
 For more information about Azure Disk Encryption, see https://docs.microsoft.com/en-us/azure/security/enable-win-update-management
