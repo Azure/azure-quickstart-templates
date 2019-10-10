@@ -1,4 +1,13 @@
 # Tableau Server Single Node
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/tableau-server-single-node/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/tableau-server-single-node/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/tableau-server-single-node/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/tableau-server-single-node/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/tableau-server-single-node/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/tableau-server-single-node/CredScanResult.svg" />&nbsp;
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Ftableau-server-single-node%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
@@ -6,7 +15,7 @@
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
-This template deploys a **Standalone Tableau Server instance on a Virtual Machine running Ubuntu 16.04.0-LTS** in its own Virtual Network.
+This template deploys a **Standalone Tableau Server instance on a Virtual Machine running Ubuntu, RHEL or CentOS** in its own Virtual Network.
 
 `Tags: Tableau, Tableau Server, Business Intelligence, Analytics, Self-Service, Data Visualization`
 
@@ -44,7 +53,7 @@ You can optionally deploy this template following the instructions found <a href
 
 #### Partially automated
 
-You can use the config-linux.sh script separately from the ARM template to perform a silent install of Tableau Server by running the following command.  This requires you to have already provisioned an Ubuntu virtual machine following Tableau's <a href=https://onlinehelp.tableau.com/current/server/en-us/server_hardware_min.htm>hardware requirements</a>.
+You can use the config-linux.sh script separately from the ARM template to perform a silent install of Tableau Server by running the following command.  This requires you to have already provisioned an Ubuntu, RHEL or CentOS virtual machine following Tableau's <a href=https://onlinehelp.tableau.com/current/server/en-us/server_hardware_min.htm>hardware requirements</a>.
 
 Bash:
 ```bash
@@ -66,7 +75,7 @@ This template deploys the following Azure resources.  For information on the cos
     + Port 80 - public TCP access to your Tableau Server.  By default this is set as open to the world, meaning anyone with the IP or DNS of the machine and Tableau Server credentials can access the deployed Tableau Server as a user.  You can limit this access to a given IP range after deployment via the Azure portal.
     + Port 223 - SSH traffic is limited to the source CIDR determined during deployment.   Best practice is to limit SSH access to the Tableau Server or machine administrator.  
     + Port 8850 - HTTPS access to Tableau Services Manager UI which allows you to perform Tableau Server administration tasks (stopping & restarting Tableau Server, adding nodes, etc.)
-+ <a href=https://docs.microsoft.com/en-us/azure/virtual-machines/linux/overview>**Virtual Machine**</a>: Standard D16 v3 (16 vCPUs, 64 GB mem) or a memory or compute optimized 16 vCPU instance running Ubuntu 16.04.0-LTS with 2 attached disks (30, 64 GiB SSD) with Tableau Server installed
++ <a href=https://docs.microsoft.com/en-us/azure/virtual-machines/linux/overview>**Virtual Machine**</a>: Standard D16 v3 (16 vCPUs, 64 GB mem) or a memory or compute optimized 16 vCPU instance running Ubuntu 16.04.0-LTS, RHEL 7.6 or CentOS 7.5 with 2 attached disks (30, 64 GiB SSD) with Tableau Server installed
     + Access to the VM is controlled by username/password authentication which you specify in the template parameters.  Please ensure you follow Azure's username and password <a href=https://docs.microsoft.com/en-us/azure/virtual-machines/windows/faq>requirements</a>
 + This template has a static GUID associated with it - allowing Azure & the template's creator to track usage and deployment statistics
 
@@ -107,3 +116,4 @@ Once these resources have been deployed they don't require significant managemen
 
 + Make sure that you entered all parameters correctly.  Passwords should conform to <a href="https://docs.microsoft.com/en-us/azure/virtual-machines/windows/faq#what-are-the-username-requirements-when-creating-a-vm">Azure standards</a> and source CIDR should follow official syntax (0.0.0.0/24)
 + This ARM template is made available <a href=https://www.tableau.com/support/itsupport>'as-is'</a> - please use Github or <a href=https://community.tableau.com/community/forums/content>Tableau's community forum</a> to share comments or issues you may find.
+

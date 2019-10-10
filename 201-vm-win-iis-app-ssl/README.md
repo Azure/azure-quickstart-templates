@@ -1,5 +1,14 @@
 # Deployment of a Windows VM, configure windows featurtes like IIS, .Net framework etc., download application deployment packages, URL Rewrite & SSL configuration using DSC
 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vm-win-iis-app-ssl/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vm-win-iis-app-ssl/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vm-win-iis-app-ssl/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vm-win-iis-app-ssl/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vm-win-iis-app-ssl/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vm-win-iis-app-ssl/CredScanResult.svg" />&nbsp;
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vm-win-iis-app-ssl%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vm-win-iis-app-ssl/images/deploytoazure.png"/>
 </a>
@@ -30,7 +39,6 @@ This template will create the following Azure resources
 8) DSC finds the certificate from the local store and create a 443 binding <br/>
 9) DSC creates the necessary rules so any incoming http traffic gets automatically redirected to the corresponding https end points<br/>
 
-
 The following resources are deployed as part of the solution
 
 #### A VNet with a single subnet 
@@ -56,3 +64,4 @@ Script to upload the combined pfx certificate to an Azure Key Vault:(replace the
 $securepfxpwd = ConvertTo-SecureString –String '<strongpassword>' –AsPlainText –Force
 $cer = Import-AzureKeyVaultCertificate -VaultName '<Azurekeyvaultname>' -Name '<CertStoreName>' -FilePath '<C:\myCerts\www_custDomain_com.pfx>' -Password $securepfxpwd
 Set-AzureRmKeyVaultAccessPolicy -VaultName '<Azurekeyvaultname>' -UserPrincipalName '<udsarm@microsoft.com>' -PermissionsToCertificates all
+

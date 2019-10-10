@@ -1482,7 +1482,10 @@ class InstallFeatureForSCCM
         
         Write-Verbose "Current Role is : $_Role"
 
-        Install-WindowsFeature -Name "Rdc"
+        if($_Role -notcontains "Client")
+        {
+            Install-WindowsFeature -Name "Rdc"
+        }
 
         if($_Role -contains "DC")
         {
@@ -1763,6 +1766,52 @@ class FileReadAccessShare
     }
 
     [FileReadAccessShare] Get()
+    {
+        return $this
+    }
+    
+}
+
+[DscResource()]
+class InstallCA
+{
+    [DscProperty(Key)]
+    [string] $HashAlgorithm
+
+    [void] Set()
+    {
+        try
+        {
+            $_HashAlgorithm = $this.HashAlgorithm
+            Write-Verbose "Installing CA..."
+            #Install CA
+            Import-Module ServerManager
+            Add-WindowsFeature Adcs-Cert-Authority -IncludeManagementTools
+            Install-AdcsCertificationAuthority -CAType EnterpriseRootCa -CryptoProviderName "RSA#Microsoft Software Key Storage Provider" -KeyLength 2048 -HashAlgorithmName $_HashAlgorithm -force
+
+            $StatusPath = "$env:windir\temp\InstallCAStatus.txt"
+            "Finished" >> $StatusPath
+
+            Write-Verbose "Finished installing CA."
+        }
+        catch
+        {
+            Write-Verbose "Failed to install CA."
+        }
+    }
+
+    [bool] Test()
+    {
+        $StatusPath = "$env:windir\temp\InstallCAStatus.txt"
+        if(Test-Path $StatusPath)
+        {
+            return $true
+        }
+
+        return $false
+    }
+
+    [InstallCA] Get()
     {
         return $this
     }

@@ -17,7 +17,7 @@ Write-FormatView -Action {
     
 
     if ($global:_LastFile -ne $testOut.File.FullPath) {
-        Write-Host -ForegroundColor Magenta "Validating $($testOut.File.Name)" 
+        Write-Host -ForegroundColor Magenta "Validating $($testOut.File.FullPath | Split-Path | split-Path -Leaf)\$($testOut.File.Name)" 
 
         $global:_LastFile = $testOut.File.FullPath    
     }
@@ -66,7 +66,7 @@ Write-FormatView -Action {
         Write-Host " " # end of line
         $azoWarnStatus = if ($ENV:Agent_ID) { "##vso[task.logissue type=error;]"} else { '' }         
         foreach ($line in $warningLines) {
-            Write-Host "$azoWarnStatus$(' ' * $indent)$line" -foregroundColor DarkYellow 
+            Write-Host "$azoWarnStatus$(' ' * $indent)$line" -foregroundColor Yellow
         }
     }
     

@@ -1,5 +1,14 @@
 # Update Remote Desktop Sesson Collection to new template image
 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/rds-update-rdsh-collection/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/rds-update-rdsh-collection/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/rds-update-rdsh-collection/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/rds-update-rdsh-collection/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/rds-update-rdsh-collection/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/rds-update-rdsh-collection/CredScanResult.svg" />&nbsp;
+
 This template updates RDSH servers in existing session host collection with new updated template image. The URI for the image is provided as a template parameter.
 
 This template deploys the following resources:
@@ -16,8 +25,9 @@ Note: Template does **not** delete or deallocate old RDSH instances, so you may 
 Click the button below to deploy:
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmmarch%2Fazure-quickstart-templates%2Fmaster%2Frds-update-rdsh-collection%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fmmarch%2Fazure-quickstart-templates%2Fmaster%2Frds-update-rdsh-collection%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
+

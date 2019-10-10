@@ -1,6 +1,15 @@
 # VMM Analytics
 
-[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Foms-vmm-analytics%2Fazuredeploy.json)
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-vmm-analytics/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-vmm-analytics/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-vmm-analytics/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-vmm-analytics/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-vmm-analytics/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-vmm-analytics/CredScanResult.svg" />&nbsp;
+
+[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Foms-vmm-analytics%2Fazuredeploy.json)
 
 Virtual Machine Manager (VMM) Analytics solution in OMS provides a single view  of the jobs' status across multiple VMM instances that helps you gain insight about the health & performance of these jobs.
 
@@ -18,7 +27,7 @@ Use the following procedure:
 
 1.	Log on to the OMS space using your Azure subscription details.
 2.	Go to the [GitHub location](https://github.com/krnese/AzureDeploy/tree/master/OMS/MSOMS/Solutions/vmm) where the solution is available.
-3. Click [![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Foms-vmm-analytics%2Fazuredeploy.json).
+3. Click [![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Foms-vmm-analytics%2Fazuredeploy.json).
 
     **Custom deployment** blade appears.
 
@@ -85,3 +94,4 @@ In case of any queries or feedback, [contact us](mailto:vmmanalytics@microsoft.c
 
 ## Related Community Articles
 [OMS Log Analytics: How to collect Virtual Machine Manager jobs](http://francescomolfese.it/en/2017/10/oms-log-analytics-come-collezionare-i-job-di-virtual-machine-manager/)
+
