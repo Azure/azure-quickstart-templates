@@ -24,7 +24,7 @@ This template deploys SharePoint 2019, 2016 or 2013 with the following configura
 You can connect to virtual machines using:
 
 * [Azure Bastion](https://azure.microsoft.com/en-us/services/azure-bastion/) if you set parameter addAzureBastion to 'Yes'.
-* RDP protocol if you set parameter addPublicIPToVMs to 'Yes'. Each machine will have a public IP, a DNS name, and will be reachable from Internet.
+* RDP protocol if you set parameter addPublicIPToVMs to 'Yes'. Each machine will have a public IP, a DNS name, and the TCP port 3389 will be allowed from Internet.
 
 In any case, all subnets connected to a virtual machine are protected by a Network Security Group that allows only RDP port from Internet.
 
