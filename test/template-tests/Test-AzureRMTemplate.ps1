@@ -1,4 +1,4 @@
-﻿function Test-AzureRMTemplate
+function Test-AzureRMTemplate
 {
     <#
     .Synopsis
@@ -87,6 +87,11 @@ Each test script has access to a set of well-known variables:
     })]
     [Collections.IDictionary]
     $TestGroup = [Ordered]@{},
+
+
+    # If provided, will skip any tests in this list.
+    [string[]]
+    $Skip,
 
     # If set, will run tests in Pester.
     [switch]
@@ -266,7 +271,7 @@ Each test script has access to a set of well-known variables:
                 }
 
                 if (-not $matchingGroups) { continue } 
-                if ($fileInfo.Schema -like '*deploymentTemplate*') {
+                if ($fileInfo.Schema -like '*deploymentTemplate*') {                     
                     $isMainTemplate = 'mainTemplate.json', 'azureDeploy.json', 'prereq.azuredeploy.json' -contains $fileInfo.Name
                     $templateFileName = $fileInfo.Name
                     $TemplateObject = $fileInfo.Object
