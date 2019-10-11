@@ -13,5 +13,4 @@
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 
-This template configures a **Front Door** to rate limit incoming traffic for a given frontend host.
-
+This template configures a **WAF** rule for **Azure Front Door** to rate limit incoming traffic for a given frontend host.

@@ -13,5 +13,4 @@
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 
-This template configure **Front Door** for client IP whitelisting or blacklisting
-
+This template configures **WAF** client IP restriction for **Azure Front Door** endpoint

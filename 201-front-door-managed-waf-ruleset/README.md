@@ -13,5 +13,4 @@
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 
-This template configures **Front Door** to enable Azure managed application firewall ruleset 
-
+This template configures **WAF** managed defaultRuleSet for **Azure Front Door**

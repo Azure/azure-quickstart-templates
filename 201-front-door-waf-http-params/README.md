@@ -13,5 +13,4 @@
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 
-This template configures a **Front Door** to allow or block certain traffic based on the http parameters in the incoming request by using custom rules for access control using http parameters.
-
+This template configures **WAF** custom rules based on specific http parameters for **Azure Front Door** endpoint.

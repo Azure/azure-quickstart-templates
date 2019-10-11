@@ -13,7 +13,7 @@
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 
-This template creates a **Front Door** that allows/blocks traffic from certain countries.
+This template creates a **WAF policy for Azure Front Door** that allows/blocks traffic from certain countries.
 
 [Country codes list which we can use for Geo Filtering](https://msdn.microsoft.com/library/mt761717.aspx)
 
