@@ -1,4 +1,4 @@
-﻿function ConvertFrom-Json
+function ConvertFrom-Json
 {
 [CmdletBinding(HelpUri='https://go.microsoft.com/fwlink/?LinkID=217031', RemotingCapability='None')]
 param(
@@ -22,62 +22,71 @@ begin
     } catch {
         $_ | Write-Error
     }
+
+    # This RegEx will match block comments in JSON.
+    $JSONBlockComments = [Regex]::new('
+/\*       # The open comment
+(?<Block> # capture the comment block.  It is:
+(.|\s)+?  # anything until
+(?=\*/)   # the close comment
+)\*/      # then match the close comment
+', 'IgnoreCase, IgnorePatternWhitespace')
 }
 
 process
 {
     try {
-        $options = 'Multiline,IgnoreCase,IgnorePatternWhitespace'
-
         if ($PSBoundParameters.InputObject) {
             $_ = $PSBoundParameters.InputObject
         }
-        # Strip block comments
-        $in = $_ -replace '/\*(?<Block>(?!=\*\/)[\s\S]+)\*/', ''
-        # Strip single line comments that are preceeded by whitespace
-        #$in =[Regex]::Replace($in,'\s{1,}//(?<Line>.{0,})$', '', $options)
 
-        $lines = $in -split "`n|$([Environment]::NewLine)"
 
-        $in = @(foreach ($line in $lines) {
-            $commentStarts = @([Regex]::Matches($line, "(?<CommentStart>//)"))
-            if (-not $commentStarts) {
-                $line
-                continue
-            }
-            $lineParts = @([Regex]::Matches($line, "(?<CommentStart>//)|(?<SingleQuote>(?<!')')|(?<DoubleQuote>(?<!\\)`")"))
+        # First, strip block comments
+        $inObj = $_
+        $in = $JSONBlockComments.Replace($inObj,'')
 
-            if (-not $lineParts) { 
-                $line
-                continue
-            }
-            $trimAt = -1
+
+        $hasComment = [regex]::new('(^|[^:])//') 
+        $CommentOrQuote = [Regex]::new("(?<CommentStart>//)|(?<SingleQuote>(?<!')')|(?<DoubleQuote>(?<!\\)`")")
+
+        $in = if (-not $hasComment.IsMatch($in)) { # If the JSON contained no comments, pass it directly down
+            $in
+        } else {
+            $lines = $in -split "(?>\r\n|\n)"
+            @(foreach ($line in $lines) { # otherwise, go line by line looking for comments.
+                if (-not $hasComment.IsMatch($line)) { $line;continue } # If the line didn't contain a comment, echo it.
             
-            $singleQuoteCounter = 0
-            $doubleQuoteCounter = 0  
-            foreach ($lp in $lineParts) {
-                if ($lp.Groups["SingleQuote"].Success) {
-                    $singleQuoteCounter++
+                $lineParts = $CommentOrQuote.Matches($line) 
+                if (-not $lineParts) { 
+                    $line
+                    continue
                 }
-                if ($lp.Groups["DoubleQuote"].Success) {
-                    $doubleQuoteCounter++    
-                }
-                if ($lp.Groups["CommentStart"].Success -and 
-                    -not ($singleQuoteCounter % 2) -and 
-                    -not ($doubleQuoteCounter % 2)) {
+                $trimAt = -1
+            
+                $singleQuoteCounter = 0
+                $doubleQuoteCounter = 0  
+                foreach ($lp in $lineParts) { # Count up thru the quotes.
+                    if ($lp.Groups["SingleQuote"].Success) {
+                        $singleQuoteCounter++
+                    }
+                    if ($lp.Groups["DoubleQuote"].Success) {
+                        $doubleQuoteCounter++    
+                    }
+                    if ($lp.Groups["CommentStart"].Success -and 
+                        -not ($singleQuoteCounter % 2) -and 
+                        -not ($doubleQuoteCounter % 2)) { # If the comment occurs while the quotes are balanced
                     
-                    $trimAt = $lp.Index
-                    break
+                        $trimAt = $lp.Index # that's where we trim.
+                        break
+                    }
                 }
-            }
-
-            if ($trimAt -ne -1) {
-                $line.Substring(0, $trimAt)
-            } else {
-                $line
-            }
-        }) -join [Environment]::NewLine
-
+                if ($trimAt -ne -1) { # If we know where to chop the line
+                    $line.Substring(0, $trimAt) # get everything up until that point
+                } else { # otherwise,
+                    $line  # echo the line.
+                }
+            }) -join [Environment]::NewLine
+        }
 
         if ($PSBoundParameters.InputObject) {
             $PSBoundParameters.InputObject = $in
