@@ -17,4 +17,3 @@
 </a>
 
 This template allows you to create a Virtual Network with two subnets.
-
