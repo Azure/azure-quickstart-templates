@@ -15,12 +15,6 @@
         "description": "User name for the Virtual Machine."
       }
     },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Password for the Virtual Machine."
-      }
-    },
     "dnsNameForPublicIP": {
       "type": "string",
       "metadata": {
@@ -29,16 +23,17 @@
     },
     "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_D2",
+      "defaultValue": "Standard_D2s_v3",
       "allowedValues": [
-        "Standard_D1",
-        "Standard_D2",
-        "Standard_D3",
-        "Standard_D4",
-        "Standard_D11",
-        "Standard_D12",
-        "Standard_D13",
-        "Standard_D14"
+        "Standard_B1ms",
+        "Standard_B1s",
+        "Standard_B2ms",
+        "Standard_B4ms",
+        "Standard_D2s_v3",
+        "Standard_D4s_v3",
+        "Standard_DS1_v2",
+        "Standard_DS2_v2",
+        "Standard_DS3_v2"
       ],
       "metadata": {
         "description": "The VM role size of the jump box"
@@ -49,6 +44,23 @@
       "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "Location for all resources."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
     }
   },
@@ -77,7 +89,18 @@
     "nodesLbID": "[resourceId('Microsoft.Network/loadBalancers',variables('nodesLbName'))]",
     "nodesLbIPConfigName": "NodesLBFrontEnd",
     "nodesLbIPConfigID": "[concat(variables('nodesLbID'),'/frontendIPConfigurations/', variables('nodesLbIPConfigName'))]",
-    "nodesLbBackendPoolName": "node-pool"
+    "nodesLbBackendPoolName": "node-pool",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
@@ -94,12 +117,13 @@
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('availabilitySetNodes')]",
       "location": "[parameters('location')]",
-      "properties": {"platformFaultDomainCount": 2,
+      "properties": {
+        "platformFaultDomainCount": 2,
         "platformUpdateDomainCount": 5
-    },
+      },
       "sku": {
-				"name": "Aligned"
-				}
+        "name": "Aligned"
+      }
     },
     {
       "apiVersion": "2015-06-15",
@@ -231,7 +255,7 @@
               "frontendIPConfiguration": {
                 "id": "[variables('nodesLbIPConfigID')]"
               },
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "frontendPort": 22,
               "backendPort": 22,
               "enableFloatingIP": false
@@ -260,7 +284,8 @@
         "osProfile": {
           "computerName": "[variables('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {

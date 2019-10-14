@@ -1,10 +1,19 @@
 # Deployment of a 3 Nodetype Service Fabric secure Cluster with NSG enabled.
 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/service-fabric-secure-nsg-cluster-65-node-3-nodetype/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/service-fabric-secure-nsg-cluster-65-node-3-nodetype/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/service-fabric-secure-nsg-cluster-65-node-3-nodetype/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/service-fabric-secure-nsg-cluster-65-node-3-nodetype/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/service-fabric-secure-nsg-cluster-65-node-3-nodetype/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/service-fabric-secure-nsg-cluster-65-node-3-nodetype/CredScanResult.svg" />&nbsp;
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fservice-fabric-secure-nsg-cluster-65-node-3-nodetype%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fservice-fabric-secure-nsg-cluster-65-node-3-nodetype%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
 Use this template as a sample for setting up a three nodetype secure cluster and to  control the inbound and outbound network traffic using Network Security Groups. 

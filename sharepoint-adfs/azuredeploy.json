@@ -2,12 +2,20 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
     "sharePointVersion": {
       "type": "string",
-      "defaultValue": "2016",
+      "defaultValue": "2019",
       "allowedValues": [
         "2013",
-        "2016"
+        "2016",
+        "2019"
       ],
       "metadata": {
         "description": "Version of SharePoint farm to create."
@@ -17,7 +25,7 @@
       "type": "string",
       "minLength": 2,
       "metadata": {
-        "description": "Prefix of public DNS names of VMs, e.g. 'dnsLabelPrefix-VMName.region.cloudapp.azure.com'"
+        "description": "[Prefix] of public DNS names of VMs, as used in \"[Prefix]-[VMName].[region].cloudapp.azure.com\""
       }
     },
     "domainFQDN": {
@@ -61,18 +69,6 @@
         "description": "Password for all service account and SharePoint passphrase. It must meet password complexity requirements as documented for property 'adminPassword' in https://docs.microsoft.com/en-us/rest/api/compute/virtualmachines/virtualmachines-create-or-update"
       }
     },
-    "vmDCStorageAccountType": {
-      "type": "string",
-      "defaultValue": "Standard_LRS",
-      "allowedValues": [
-        "Standard_LRS",
-        "Standard_GRS",
-        "Premium_LRS"
-      ],
-      "metadata": {
-        "description": "Type of storage for the managed disks. Allowed values are \"Standard_LRS\", \"Standard_GRS\" and \"Premium_LRS\""
-      }
-    },
     "vmDCSize": {
       "type": "string",
       "defaultValue": "Standard_F4",
@@ -80,9 +76,9 @@
         "description": "Size of the DC VM"
       }
     },
-    "vmSQLStorageAccountType": {
+    "vmDCStorageAccountType": {
       "type": "string",
-      "defaultValue": "Premium_LRS",
+      "defaultValue": "Standard_LRS",
       "allowedValues": [
         "Standard_LRS",
         "Standard_GRS",
@@ -99,7 +95,7 @@
         "description": "Size of the SQL VM"
       }
     },
-    "vmSPStorageAccountType": {
+    "vmSQLStorageAccountType": {
       "type": "string",
       "defaultValue": "Premium_LRS",
       "allowedValues": [
@@ -118,12 +114,24 @@
         "description": "Size of the SQL VM"
       }
     },
+    "vmSPStorageAccountType": {
+      "type": "string",
+      "defaultValue": "Premium_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS",
+        "Premium_LRS"
+      ],
+      "metadata": {
+        "description": "Type of storage for the managed disks. Allowed values are \"Standard_LRS\", \"Standard_GRS\" and \"Premium_LRS\""
+      }
+    },
     "vmsTimeZone": {
       "type": "string",
       "defaultValue": "Romance Standard Time",
       "minLength": 2,
       "metadata": {
-        "description": "Time zone of the VMs. Type '[TimeZoneInfo]::GetSystemTimeZones().Id' in PowerShell to get the list. Note that 'UTC' works but 'UTC+xx' does NOT work."
+        "description": "Time zone of the VMs. Type \"[TimeZoneInfo]::GetSystemTimeZones().Id\" in PowerShell to get the list. Note that 'UTC' works but 'UTC+xx' does NOT work."
       }
     },
     "vmsAutoShutdownTime": {
@@ -133,6 +141,35 @@
       "maxLength": 4,
       "metadata": {
         "description": "The time at which VMs will be automatically shutdown (24h HHmm format). Set value to '9999' to NOT configure the auto shutdown."
+      }
+    },
+    "enableAutomaticUpdates": {
+      "type": "string",
+      "allowedValues": [
+        "Yes",
+        "No"
+      ],
+      "defaultValue": "Yes",
+      "metadata": {
+        "description": "Enable automatic Windows Updates."
+      }
+    },
+    "enableHybridBenefitServerLicenses": {
+      "type": "string",
+      "allowedValues": [
+        "Yes",
+        "No"
+      ],
+      "defaultValue": "No",
+      "metadata": {
+        "description": "Enable Azure Hybrid Benefit to use your on-premises Windows Server licenses and reduce cost, see https://docs.microsoft.com/en-us/azure/virtual-machines/windows/hybrid-use-benefit-licensing for more information."
+      }
+    },
+    "sharePointDataDiskSize": {
+      "type": "int",
+      "defaultValue": 0,
+      "metadata": {
+        "description": "Size in Gb of the additional data disk attached to SharePoint VMs. Set to 0 to not create it"
       }
     },
     "_artifactsLocation": {
@@ -148,18 +185,10 @@
       "metadata": {
         "description": "The sasToken required to access _artifactsLocation. When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
       }
-    },
-    "location": {
-      "type": "string",
-      "defaultValue": "[resourceGroup().location]",
-      "metadata": {
-        "description": "Location for all resources."
-      }
     }
   },
   "variables": {
     "generalSettings": {
-      "dscScriptsFolder": "dsc",
       "vmDCName": "DC",
       "vmSQLName": "SQL",
       "vmSPName": "SP",
@@ -238,33 +267,53 @@
       "shutdownResourceName": "[concat('shutdown-computevm-', variables('generalSettings').vmFEName)]"
     },
     "dscConfigureDCVM": {
-      "fileName": "ConfigureDCVM.zip",
+      "scriptFileUri": "[uri(parameters('_artifactsLocation'), concat('dsc/ConfigureDCVM.zip', parameters('_artifactsLocationSasToken')))]",
       "script": "ConfigureDCVM.ps1",
       "function": "ConfigureDCVM",
       "forceUpdateTag": "1.0"
     },
     "dscConfigureSQLVM": {
-      "fileName": "ConfigureSQLVM.zip",
+      "scriptFileUri": "[uri(parameters('_artifactsLocation'), concat('dsc/ConfigureSQLVM.zip', parameters('_artifactsLocationSasToken')))]",
       "script": "ConfigureSQLVM.ps1",
       "function": "ConfigureSQLVM",
       "forceUpdateTag": "1.0"
     },
     "dscConfigureSPVM": {
-      "fileName": "ConfigureSPVM.zip",
+      "scriptFileUri": "[uri(parameters('_artifactsLocation'), concat('dsc/ConfigureSPVM.zip', parameters('_artifactsLocationSasToken')))]",
       "script": "ConfigureSPVM.ps1",
       "function": "ConfigureSPVM",
       "forceUpdateTag": "1.0"
     },
     "dscConfigureFEVM": {
-      "fileName": "ConfigureFEVM.zip",
+      "scriptFileUri": "[uri(parameters('_artifactsLocation'), concat('dsc/ConfigureFEVM.zip', parameters('_artifactsLocationSasToken')))]",
       "script": "ConfigureFEVM.ps1",
       "function": "ConfigureFEVM",
       "forceUpdateTag": "1.0"
-    }
+    },
+    "vmSPDataDisk": [
+      {
+        "lun": 0,
+        "name": "[variables('vmSP').vmDataDiskName]",
+        "caching": "ReadWrite",
+        "createOption": "Empty",
+        "diskSizeGB": "[parameters('sharePointDataDiskSize')]",
+        "managedDisk": {}
+      }
+    ],
+    "vmFEDataDisk": [
+      {
+        "lun": 0,
+        "name": "[variables('vmFE').vmDataDiskName]",
+        "caching": "ReadWrite",
+        "createOption": "Empty",
+        "diskSizeGB": "[parameters('sharePointDataDiskSize')]",
+        "managedDisk": {}
+      }
+    ]
   },
   "resources": [
     {
-      "apiVersion": "2018-08-01",
+      "apiVersion": "2018-11-01",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('networkSettings').nsgDCVNetName]",
       "location": "[parameters('location')]",
@@ -291,7 +340,7 @@
       }
     },
     {
-      "apiVersion": "2018-08-01",
+      "apiVersion": "2018-11-01",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('networkSettings').nsgSQLVNetName]",
       "location": "[parameters('location')]",
@@ -332,7 +381,7 @@
       }
     },
     {
-      "apiVersion": "2018-08-01",
+      "apiVersion": "2018-11-01",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('networkSettings').nsgSPVNetName]",
       "location": "[parameters('location')]",
@@ -362,7 +411,7 @@
       "name": "[variables('networkSettings').vNetPrivateName]",
       "type": "Microsoft.Network/virtualNetworks",
       "location": "[parameters('location')]",
-      "apiVersion": "2018-08-01",
+      "apiVersion": "2018-11-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSettings').nsgDCVNetName)]",
         "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSettings').nsgSQLVNetName)]",
@@ -412,7 +461,7 @@
       "name": "[variables('vmDC').vmPublicIPName]",
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[parameters('location')]",
-      "apiVersion": "2018-08-01",
+      "apiVersion": "2018-11-01",
       "dependsOn": [],
       "tags": {
         "displayName": "[variables('vmDC').vmPublicIPName]"
@@ -428,7 +477,7 @@
       "name": "[variables('vmDC').vmNicName]",
       "type": "Microsoft.Network/networkInterfaces",
       "location": "[parameters('location')]",
-      "apiVersion": "2018-08-01",
+      "apiVersion": "2018-11-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]",
         "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmDC').vmPublicIPName)]"
@@ -458,7 +507,7 @@
       "name": "[variables('generalSettings').vmDCName]",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[parameters('location')]",
-      "apiVersion": "2018-06-01",
+      "apiVersion": "2019-03-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', variables('vmDC').vmNicName)]"
       ],
@@ -474,7 +523,9 @@
           "adminUsername": "[parameters('adminUserName')]",
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
-            "timeZone": "[parameters('vmsTimeZone')]"
+            "timeZone": "[parameters('vmsTimeZone')]",
+            "enableAutomaticUpdates": "[if(equals(parameters('enableAutomaticUpdates'), 'Yes'), 'true', 'false')]",
+            "provisionVMAgent": true
           }
         },
         "storageProfile": {
@@ -501,14 +552,15 @@
               "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmDC').vmNicName)]"
             }
           ]
-        }
+        },
+        "licenseType": "[if(equals(parameters('enableHybridBenefitServerLicenses'), 'Yes'), 'Windows_Server', json('null'))]"
       },
       "resources": [
         {
           "name": "ConfigureDCVM",
           "type": "extensions",
           "location": "[parameters('location')]",
-          "apiVersion": "2018-06-01",
+          "apiVersion": "2019-03-01",
           "dependsOn": [
             "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmDCName)]"
           ],
@@ -524,7 +576,7 @@
             "settings": {
               "wmfVersion": "latest",
               "configuration": {
-                "url": "[uri(parameters('_artifactsLocation'), concat(variables('generalSettings').dscScriptsFolder, '/', variables('dscConfigureDCVM').fileName, parameters('_artifactsLocationSasToken')))]",
+                "url": "[variables('dscConfigureDCVM').scriptFileUri]",
                 "script": "[variables('dscConfigureDCVM').script]",
                 "function": "[variables('dscConfigureDCVM').function]"
               },
@@ -556,7 +608,7 @@
       "name": "[variables('vmSQL').vmPublicIPName]",
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[parameters('location')]",
-      "apiVersion": "2018-08-01",
+      "apiVersion": "2018-11-01",
       "dependsOn": [],
       "tags": {
         "displayName": "[variables('vmSQL').vmPublicIPName]"
@@ -572,7 +624,7 @@
       "name": "[variables('vmSQL').vmNicName]",
       "type": "Microsoft.Network/networkInterfaces",
       "location": "[parameters('location')]",
-      "apiVersion": "2018-08-01",
+      "apiVersion": "2018-11-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]",
         "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmSQL').vmPublicIPName)]"
@@ -601,7 +653,7 @@
       "name": "[variables('generalSettings').vmSQLName]",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[parameters('location')]",
-      "apiVersion": "2018-06-01",
+      "apiVersion": "2019-03-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', variables('vmSQL').vmNicName)]"
       ],
@@ -617,7 +669,9 @@
           "adminUsername": "[parameters('adminUserName')]",
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
-            "timeZone": "[parameters('vmsTimeZone')]"
+            "timeZone": "[parameters('vmsTimeZone')]",
+            "enableAutomaticUpdates": "[if(equals(parameters('enableAutomaticUpdates'), 'Yes'), 'true', 'false')]",
+            "provisionVMAgent": true
           }
         },
         "storageProfile": {
@@ -644,7 +698,8 @@
               "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmSQL').vmNicName)]"
             }
           ]
-        }
+        },
+        "licenseType": "[if(equals(parameters('enableHybridBenefitServerLicenses'), 'Yes'), 'Windows_Server', json('null'))]"
       },
       "resources": []
     },
@@ -652,7 +707,7 @@
       "name": "[variables('vmSP').vmPublicIPName]",
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[parameters('location')]",
-      "apiVersion": "2018-08-01",
+      "apiVersion": "2018-11-01",
       "dependsOn": [],
       "tags": {
         "displayName": "[variables('vmSP').vmPublicIPName]"
@@ -668,7 +723,7 @@
       "name": "[variables('vmSP').vmNicName]",
       "type": "Microsoft.Network/networkInterfaces",
       "location": "[parameters('location')]",
-      "apiVersion": "2018-08-01",
+      "apiVersion": "2018-11-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]",
         "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmSP').vmPublicIPName)]"
@@ -697,7 +752,7 @@
       "name": "[variables('generalSettings').vmSPName]",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[parameters('location')]",
-      "apiVersion": "2018-06-01",
+      "apiVersion": "2019-03-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', variables('vmSP').vmNicName)]"
       ],
@@ -713,7 +768,9 @@
           "adminUsername": "[parameters('adminUserName')]",
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
-            "timeZone": "[parameters('vmsTimeZone')]"
+            "timeZone": "[parameters('vmsTimeZone')]",
+            "enableAutomaticUpdates": "[if(equals(parameters('enableAutomaticUpdates'), 'Yes'), 'true', 'false')]",
+            "provisionVMAgent": true
           }
         },
         "storageProfile": {
@@ -733,16 +790,7 @@
               "storageAccountType": "[parameters('vmSPStorageAccountType')]"
             }
           },
-          "dataDisks": [
-            {
-              "lun": 0,
-              "name": "[variables('vmSP').vmDataDiskName]",
-              "caching": "ReadWrite",
-              "createOption": "Empty",
-              "diskSizeGB": 64,
-              "managedDisk": {}
-            }
-          ]
+          "dataDisks": "[if(equals(parameters('sharePointDataDiskSize'), 0), json('null'), variables('vmSPDataDisk'))]"
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -750,7 +798,8 @@
               "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmSP').vmNicName)]"
             }
           ]
-        }
+        },
+        "licenseType": "[if(equals(parameters('enableHybridBenefitServerLicenses'), 'Yes'), 'Windows_Server', json('null'))]"
       },
       "resources": []
     },
@@ -758,10 +807,10 @@
       "name": "[concat(variables('generalSettings').vmSQLName,'/ConfigureSQLVM')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "location": "[parameters('location')]",
-      "apiVersion": "2018-06-01",
+      "apiVersion": "2019-03-01",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmDCName)]",
-        "[concat('Microsoft.Compute/virtualMachines/', variables('generalSettings').vmDCName, '/extensions/ConfigureDCVM')]",
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('generalSettings').vmDCName, 'ConfigureDCVM')]",
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmSQLName)]"
       ],
       "tags": {
@@ -776,7 +825,7 @@
         "settings": {
           "wmfVersion": "latest",
           "configuration": {
-            "url": "[uri(parameters('_artifactsLocation'), concat(variables('generalSettings').dscScriptsFolder, '/', variables('dscConfigureSQLVM').fileName, parameters('_artifactsLocationSasToken')))]",
+            "url": "[variables('dscConfigureSQLVM').scriptFileUri]",
             "script": "[variables('dscConfigureSQLVM').script]",
             "function": "[variables('dscConfigureSQLVM').function]"
           },
@@ -810,10 +859,10 @@
       "name": "[concat(variables('generalSettings').vmSPName,'/ConfigureSPVM')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "location": "[parameters('location')]",
-      "apiVersion": "2018-06-01",
+      "apiVersion": "2019-03-01",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmDCName)]",
-        "[concat('Microsoft.Compute/virtualMachines/', variables('generalSettings').vmDCName, '/extensions/ConfigureDCVM')]",
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('generalSettings').vmDCName, 'ConfigureDCVM')]",
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmSPName)]"
       ],
       "tags": {
@@ -828,7 +877,7 @@
         "settings": {
           "wmfVersion": "latest",
           "configuration": {
-            "url": "[uri(parameters('_artifactsLocation'), concat(variables('generalSettings').dscScriptsFolder, '/', variables('dscConfigureSPVM').fileName, parameters('_artifactsLocationSasToken')))]",
+            "url": "[variables('dscConfigureSPVM').scriptFileUri]",
             "script": "[variables('dscConfigureSPVM').script]",
             "function": "[variables('dscConfigureSPVM').function]"
           },
@@ -837,7 +886,8 @@
             "DomainFQDN": "[parameters('domainFQDN')]",
             "DCName": "[variables('generalSettings').vmDCName]",
             "SQLName": "[variables('generalSettings').vmSQLName]",
-            "SQLAlias": "[variables('generalSettings').sqlAlias]"
+            "SQLAlias": "[variables('generalSettings').sqlAlias]",
+            "SharePointVersion": "[parameters('sharePointVersion')]"
           },
           "privacy": {
             "dataCollection": "enable"
@@ -886,7 +936,7 @@
       "name": "[variables('vmFE').vmPublicIPName]",
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[parameters('location')]",
-      "apiVersion": "2018-08-01",
+      "apiVersion": "2018-11-01",
       "dependsOn": [],
       "tags": {
         "displayName": "[variables('vmFE').vmPublicIPName]"
@@ -903,7 +953,7 @@
       "name": "[variables('vmFE').vmNicName]",
       "type": "Microsoft.Network/networkInterfaces",
       "location": "[parameters('location')]",
-      "apiVersion": "2018-08-01",
+      "apiVersion": "2018-11-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').vNetPrivateName)]",
         "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmFE').vmPublicIPName)]"
@@ -933,7 +983,7 @@
       "name": "[variables('generalSettings').vmFEName]",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[parameters('location')]",
-      "apiVersion": "2018-06-01",
+      "apiVersion": "2019-03-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', variables('vmFE').vmNicName)]"
       ],
@@ -949,7 +999,9 @@
           "adminUsername": "[parameters('adminUserName')]",
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
-            "timeZone": "[parameters('vmsTimeZone')]"
+            "timeZone": "[parameters('vmsTimeZone')]",
+            "enableAutomaticUpdates": "[if(equals(parameters('enableAutomaticUpdates'), 'Yes'), 'true', 'false')]",
+            "provisionVMAgent": true
           }
         },
         "storageProfile": {
@@ -969,16 +1021,7 @@
               "storageAccountType": "[parameters('vmSPStorageAccountType')]"
             }
           },
-          "dataDisks": [
-            {
-              "lun": 0,
-              "name": "[variables('vmFE').vmDataDiskName]",
-              "caching": "ReadWrite",
-              "createOption": "Empty",
-              "diskSizeGB": 64,
-              "managedDisk": {}
-            }
-          ]
+          "dataDisks": "[if(equals(parameters('sharePointDataDiskSize'), 0), json('null'), variables('vmFEDataDisk'))]"
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -986,7 +1029,8 @@
               "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmFE').vmNicName)]"
             }
           ]
-        }
+        },
+        "licenseType": "[if(equals(parameters('enableHybridBenefitServerLicenses'), 'Yes'), 'Windows_Server', json('null'))]"
       },
       "resources": []
     },
@@ -995,10 +1039,10 @@
       "name": "[concat(variables('generalSettings').vmFEName,'/ConfigureFEVM')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "location": "[parameters('location')]",
-      "apiVersion": "2018-06-01",
+      "apiVersion": "2019-03-01",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmDCName)]",
-        "[concat('Microsoft.Compute/virtualMachines/', variables('generalSettings').vmDCName, '/extensions/ConfigureDCVM')]",
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('generalSettings').vmDCName, 'ConfigureDCVM')]",
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmFEName)]"
       ],
       "tags": {
@@ -1013,7 +1057,7 @@
         "settings": {
           "wmfVersion": "latest",
           "configuration": {
-            "url": "[uri(parameters('_artifactsLocation'), concat(variables('generalSettings').dscScriptsFolder, '/', variables('dscConfigureFEVM').fileName, parameters('_artifactsLocationSasToken')))]",
+            "url": "[variables('dscConfigureFEVM').scriptFileUri]",
             "script": "[variables('dscConfigureFEVM').script]",
             "function": "[variables('dscConfigureFEVM').function]"
           },
@@ -1058,7 +1102,7 @@
       "condition": "[not(equals(parameters('vmsAutoShutdownTime'), '9999'))]",
       "type": "Microsoft.DevTestLab/schedules",
       "name": "[variables('vmDC').shutdownResourceName]",
-      "apiVersion": "2016-05-15",
+      "apiVersion": "2018-09-15",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmDCName)]"
@@ -1081,7 +1125,7 @@
       "condition": "[not(equals(parameters('vmsAutoShutdownTime'), '9999'))]",
       "type": "Microsoft.DevTestLab/schedules",
       "name": "[variables('vmSQL').shutdownResourceName]",
-      "apiVersion": "2016-05-15",
+      "apiVersion": "2018-09-15",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmSQLName)]"
@@ -1104,7 +1148,7 @@
       "condition": "[not(equals(parameters('vmsAutoShutdownTime'), '9999'))]",
       "type": "Microsoft.DevTestLab/schedules",
       "name": "[variables('vmSP').shutdownResourceName]",
-      "apiVersion": "2016-05-15",
+      "apiVersion": "2018-09-15",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmSPName)]"
@@ -1127,7 +1171,7 @@
       "condition": "[and(equals(parameters('addFrontEndToFarm'), 'Yes'), not(equals(parameters('vmsAutoShutdownTime'), '9999')))]",
       "type": "Microsoft.DevTestLab/schedules",
       "name": "[variables('vmFE').shutdownResourceName]",
-      "apiVersion": "2016-05-15",
+      "apiVersion": "2018-09-15",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', variables('generalSettings').vmFEName)]"
