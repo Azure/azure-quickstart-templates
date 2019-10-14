@@ -2,6 +2,15 @@
 
 # Provision a Spark 2.0 Cluster on Suse Linux Enterprise Server
 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/spark-2.0-on-suse/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/spark-2.0-on-suse/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/spark-2.0-on-suse/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/spark-2.0-on-suse/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/spark-2.0-on-suse/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/spark-2.0-on-suse/CredScanResult.svg" />&nbsp;
+
 This template creates a Spark 2.0 Cluster on SUSE Linux Enterprise Server.  This is a starting point for learning Spark and in-memory computation on SUSE’s enterprise linux distribution.
 
 In Memory Cluster Computing to solve query optimization, slow Machine Learning and many other BI problems.
@@ -9,11 +18,11 @@ In Memory Cluster Computing to solve query optimization, slow Machine Learning a
 To master this template and Spark 2.0 on SUSE Linux Enterprise Server you can leverage hands on workshop from [Value Amplify](http://www.valueamplify.com) 
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fspark-2.0-on-suse%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fspark-2.0-on-suse%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
 ### To deploy this sample using a script in the root of this repo
@@ -67,7 +76,6 @@ VMs will be used as spark master or N-th worker on the cluster
 
 + **ns_spark**: The network security group for the Spark Cluster
 
-
 ## Usage
 
 #### Launch Spark 2.0 Application from local machine
@@ -98,7 +106,6 @@ spark-shell
 You can see how application are executed consulting Spark Web UI at **http://YOUR_MASTER_PUBLIC_IP:8080**
 
 If running application on sparkmaster you can reach Spark Application UI at **http://YOUR_MASTER_PUBLIC_IP:4040**
-
 
 #### Different Artifact Location
 
@@ -131,3 +138,4 @@ You can see on VM Spark 2.0 processes running
 <pre>
 sudo jps -l -m
 <pre>
+

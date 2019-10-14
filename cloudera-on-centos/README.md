@@ -1,24 +1,33 @@
 # Deploy a Cloudera Express cluster with the option to unlock Cloudera Enterprise features for a free 60-day trial
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cloudera-on-centos/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cloudera-on-centos/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cloudera-on-centos/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cloudera-on-centos/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cloudera-on-centos/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cloudera-on-centos/CredScanResult.svg" />&nbsp;
 Once the trial has concluded, the Cloudera Enterprise features will be disabled until you obtain and upload a license.
 
 # By clicking "Deploy to Azure" you agree to the Terms and Conditions below.
 # DS14 Deployment(use this if you are not sure)
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcloudera-on-centos%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png" />
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png" />
 </a>  <a href="https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcloudera-on-centos%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/AzureGov.png" />
 </a>
 
 # DS13 Deployment(smaller size machine for batch and poc)
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcloudera-on-centos%2Fazuredeployds13.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png" />
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png" />
 </a> <a href="https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcloudera-on-centos%2Fazuredeployds13.json" target="_blank">
     <img src="http://azuredeploy.net/AzureGov.png" />
 </a>
 
 # Deploy to Azure Germany (Select VM Instance Size with vmSize Parameter)
 <a href="https://portal.microsoftazure.de/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcloudera-on-centos%2FazuredeployGermany.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png" />
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png" />
 </a>
 
 Version 2016-05-26
@@ -110,7 +119,6 @@ The template expects the following parameters:
 | tshirtSize | T-shirt size of the Cloudera cluster (Eval, Prod) | Eval |
 | vmSize | The size of the VMs deployed in the cluster (Defaults to Standard_DS14) | Standard_DS14 |
 | vmImage | The OS VM Image (defaults to ClouderaCentOS6_7) | ClouderaCentOS6_7 |
-
 
 Topology
 --------
@@ -248,9 +256,9 @@ This will create a new profile and launch a new instance of Chrome that won’t 
 
 Now in this Chrome session you can connect to any other host on the Virtual Network using the private IP address or internal FQDN. For example, if you proxy to Cloudera EDH Master Node 0 you can connect to Cloudera Manager at `localhost:7180`.
 
-
 ### Network Security Group
 
 Warning: this method is **NOT** recommended for anything besides a PoC. If not carefully locked down the data in the cluster will be accessible to hackers and malicious entities.
 
 On [portal.azure.com](https://portal.azure.com) find the Network Security Group(s) and add inbound rules for the various services. You may have to create this rules in multiple Network Security Groups. [Here's Cloudera documentation for more information on ports used by Cloudera Manager, CDH components, managed services, and third-party components](http://www.cloudera.com/documentation/enterprise/latest/topics/cm_ig_ports.html).
+

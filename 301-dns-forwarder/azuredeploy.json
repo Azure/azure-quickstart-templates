@@ -15,12 +15,6 @@
         "description": "User name for the Virtual Machine."
       }
     },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Password for the Virtual Machine."
-      }
-    },
     "storageAccName": {
       "type": "string",
       "metadata": {
@@ -40,6 +34,23 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
     }
   },
   "variables": {
@@ -56,7 +67,18 @@
     "nicName": "[concat(parameters('vmName'), '-', 'nic')]",
     "pipName": "[concat(parameters('vmName'), '-', 'pip')]",
     "artifactsBaseUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/301-dns-forwarder",
-    "scriptUrl": "[concat(variables('artifactsBaseUrl'),'/','forwarderSetup.sh')]"
+    "scriptUrl": "[concat(variables('artifactsBaseUrl'),'/','forwarderSetup.sh')]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
@@ -73,11 +95,11 @@
       "type": "Microsoft.Compute/availabilitySets",
       "comments": "availability set for creating a HA cluster, run the template multiple times to get multiple DNS servers",
       "name": "[variables('asetName')]",
-      "apiVersion": "2017-12-01", 
+      "apiVersion": "2017-12-01",
       "location": "[variables('location')]",
       "sku": {
         "name": "Aligned"
-        },
+      },
       "properties": {
         "platformFaultDomainCount": 2,
         "platformUpdateDomainCount": 2
@@ -192,7 +214,8 @@
         "osProfile": {
           "computerName": "[parameters('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
@@ -215,7 +238,7 @@
         },
         "diagnosticsProfile": {
           "bootDiagnostics": {
-            "enabled": "true",
+            "enabled": true,
             "storageUri": "[concat('http://',parameters('storageAccName'),'.blob.core.windows.net')]"
           }
         }

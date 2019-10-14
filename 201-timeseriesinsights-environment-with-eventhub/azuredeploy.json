@@ -2,41 +2,52 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "eventHubNewOrExisting": {
+      "type": "string",
+      "defaultValue": "new",
+      "metadata": {
+        "description": "Determines whether or not a new Event Hub is provisioned."
+      }
+    },
+    "eventHubResourceGroup": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().name]",
+        "metadata": {
+          "description": "If you have an existing Event Hub provide the Resource Group name here."
+        }
+    },
     "eventHubNamespaceName": {
       "type": "string",
+      "defaultValue": "tsiquickstartns",
       "metadata": {
         "description": "The namespace of the source event hub."
       }
     },
     "eventHubName": {
       "type": "string",
+      "defaultValue": "tsiquickstarteh",
       "metadata": {
         "description": "The name of the source event hub."
       }
     },
     "consumerGroupName": {
       "type": "string",
+      "defaultValue": "tsiquickstart",
       "metadata": {
         "description": "The name of the consumer group that the Time Series Insights service will use to read the data from the event hub. NOTE: To avoid resource contention, this consumer group must be dedicated to the Time Series Insights service and not shared with other readers."
-      }
-    },
-    "existingEventHubResourceId": {
-      "type": "string",
-      "defaultValue": "",
-      "metadata": {
-        "description": "An optional resource id of an existing Event Hub that will be connected to the Time Series Insights environment through the event source. NOTE: The user deploying the template must have privliges to perform the listkeys operation on the Event Hub. If no value is passed, a new event hub will be created by the template."
       }
     },
     "environmentName": {
       "type": "string",
       "maxLength": 90,
+      "defaultValue": "tsiquickstart",
       "metadata": {
         "description": "Name of the environment. The name cannot include:   '<', '>', '%', '&', ':', '\\', '?', '/' and any control characters. All other characters are allowed."
       }
     },
     "environmentDisplayName": {
       "type": "string",
-      "defaultValue": "",
+      "defaultValue": "tsiquickstart",
       "maxLength": 90,
       "metadata": {
         "description": "An optional friendly name to show in tooling or user interfaces instead of the environment name."
@@ -45,10 +56,7 @@
     "environmentSkuName": {
       "type": "string",
       "defaultValue": "S1",
-      "allowedValues": [
-        "S1",
-        "S2"
-      ],
+      "allowedValues": ["S1", "S2"],
       "metadata": {
         "description": "The name of the sku. For more information, see https://azure.microsoft.com/pricing/details/time-series-insights/"
       }
@@ -71,6 +79,7 @@
     },
     "eventSourceName": {
       "type": "string",
+      "defaultValue": "tsiquickstart",
       "maxLength": 90,
       "metadata": {
         "description": "Name of the event source child resource. The name cannot include:   '<', '>', '%', '&', ':', '\\', '?', '/' and any control characters. All other characters are allowed."
@@ -78,7 +87,7 @@
     },
     "eventSourceDisplayName": {
       "type": "string",
-      "defaultValue": "",
+      "defaultValue": "tsiquickstart",
       "maxLength": 90,
       "metadata": {
         "description": "An optional friendly name to show in tooling or user interfaces instead of the event source name."
@@ -136,62 +145,51 @@
       }
     ],
     "eventSourceTagsValue": "[variables('eventSourceTagsOptions')[length(take(parameters('eventSourceDisplayName'), 1))]]",
-    "eventSourceResourceId": "[if(empty(parameters('existingEventHubResourceId')), resourceId('Microsoft.EventHub/Namespaces/EventHubs', parameters('eventHubNamespaceName'), parameters('eventHubName')), parameters('existingEventHubResourceId'))]",
-    "authorizationRuleResourceId": "[if(empty(parameters('existingEventHubResourceId')), resourceId('Microsoft.EventHub/Namespaces/EventHubs/AuthorizationRules', parameters('eventHubNamespaceName'), parameters('eventHubName'), parameters('eventSourceKeyName')), concat(parameters('existingEventHubResourceId'), '/authorizationRules/', parameters('eventSourceKeyName')))]"
+    "eventSourceResourceId": "[resourceId(parameters('eventHubResourceGroup'), 'Microsoft.EventHub/Namespaces/EventHubs', parameters('eventHubNamespaceName'), parameters('eventHubName'))]"
   },
   "resources": [
     {
-      "condition": "[empty(parameters('existingEventHubResourceId'))]",
+      "condition": "[equals(parameters('eventHubNewOrExisting'), 'new')]",
       "apiVersion": "2017-04-01",
       "name": "[parameters('eventHubNamespaceName')]",
-      "type": "Microsoft.EventHub/Namespaces",
+      "type": "Microsoft.EventHub/namespaces",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Standard"
       },
       "properties": {
-        "isAutoInflateEnabled": "true",
-        "maximumThroughputUnits": "20"
+        "isAutoInflateEnabled": true,
+        "maximumThroughputUnits": 20
       },
       "resources": [
         {
-          "condition": "[empty(parameters('existingEventHubResourceId'))]",
+          "condition": "[equals(parameters('eventHubNewOrExisting'), 'new')]",
           "apiVersion": "2017-04-01",
           "name": "[parameters('eventHubName')]",
-          "type": "EventHubs",
-          "dependsOn": [
-            "[concat('Microsoft.EventHub/namespaces/', parameters('eventHubNamespaceName'))]"
-          ],
+          "type": "eventhubs",
+          "dependsOn": ["[parameters('eventHubNamespaceName')]"],
           "properties": {
-            "messageRetentionInDays": "7",
-            "partitionCount": "4"
+            "messageRetentionInDays": 7,
+            "partitionCount": 4
           },
           "resources": [
             {
-              "condition": "[empty(parameters('existingEventHubResourceId'))]",
-              "type": "AuthorizationRules",
+              "condition": "[equals(parameters('eventHubNewOrExisting'), 'new')]",
+              "type": "authorizationRules",
               "name": "[parameters('eventSourceKeyName')]",
               "apiVersion": "2017-04-01",
               "location": "[parameters('location')]",
-              "dependsOn": [
-                "[parameters('eventHubName')]"
-              ],
+              "dependsOn": ["[parameters('eventHubName')]"],
               "properties": {
-                "rights": [
-                  "Listen",
-                  "Send",
-                  "Manage"
-                ]
+                "rights": ["Listen", "Send", "Manage"]
               }
             },
             {
-              "condition": "[empty(parameters('existingEventHubResourceId'))]",
+              "condition": "[equals(parameters('eventHubNewOrExisting'), 'new')]",
               "apiVersion": "2017-04-01",
               "name": "[parameters('consumerGroupName')]",
-              "type": "ConsumerGroups",
-              "dependsOn": [
-                "[parameters('eventHubName')]"
-              ]
+              "type": "consumergroups",
+              "dependsOn": ["[parameters('eventHubName')]"]
             }
           ]
         }
@@ -217,61 +215,58 @@
           "apiVersion": "2017-11-15",
           "location": "[parameters('location')]",
           "kind": "Microsoft.EventHub",
+          "dependsOn": [
+            "[resourceId('Microsoft.TimeSeriesInsights/environments/', parameters('environmentName'))]",
+            "[resourceId('Microsoft.EventHub/Namespaces', parameters('eventHubNamespaceName'))]",
+            "[resourceId('Microsoft.EventHub/Namespaces/EventHubs/ConsumerGroups', parameters('eventHubNamespaceName'), parameters('eventHubName'), parameters('consumerGroupName'))]",
+            "[resourceId('Microsoft.EventHub/Namespaces/EventHubs/AuthorizationRules', parameters('eventHubNamespaceName'), parameters('eventHubName'), parameters('eventSourceKeyName'))]"
+          ],
           "properties": {
             "eventSourceResourceId": "[variables('eventSourceResourceId')]",
             "eventHubName": "[parameters('eventHubName')]",
             "serviceBusNamespace": "[parameters('eventHubNamespaceName')]",
             "consumerGroupName": "[parameters('consumerGroupName')]",
             "keyName": "[parameters('eventSourceKeyName')]",
-            "sharedAccessKey": "[listkeys(variables('authorizationRuleResourceId'), '2017-04-01').primaryKey]",
+            "sharedAccessKey": "[listkeys(resourceId(parameters('eventHubResourceGroup'), 'Microsoft.EventHub/Namespaces/EventHubs/AuthorizationRules', parameters('eventHubNamespaceName'), parameters('eventHubName'), parameters('eventSourceKeyName')), '2017-04-01').primaryKey]",
             "timestampPropertyName": "[parameters('eventSourceTimestampPropertyName')]"
           },
-          "tags": "[variables('eventSourceTagsValue')]",
-          "dependsOn": [
-            "[concat('Microsoft.TimeSeriesInsights/environments/', parameters('environmentName'))]",
-            "[resourceId('Microsoft.EventHub/Namespaces/EventHubs/ConsumerGroups', parameters('eventHubNamespaceName'), parameters('eventHubName'), parameters('consumerGroupName'))]",
-            "[resourceId('Microsoft.EventHub/Namespaces/EventHubs/AuthorizationRules', parameters('eventHubNamespaceName'), parameters('eventHubName'), parameters('eventSourceKeyName'))]"
-          ]
+          "tags": "[variables('eventSourceTagsValue')]"
         }
       ]
     },
     {
       "condition": "[not(empty(parameters('accessPolicyReaderObjectIds')))]",
-      "type": "Microsoft.TimeSeriesInsights/environments/accesspolicies",
+      "type": "Microsoft.TimeSeriesInsights/environments/accessPolicies",
       "name": "[concat(parameters('environmentName'), '/', 'readerAccessPolicy', copyIndex())]",
       "copy": {
         "name": "accessPolicyReaderCopy",
         "count": "[if(empty(parameters('accessPolicyReaderObjectIds')), 1, length(parameters('accessPolicyReaderObjectIds')))]"
       },
-      "apiVersion": "2017-11-15",
+      "apiVersion": "2017-11-15",      
+      "dependsOn": [
+        "[resourceId('Microsoft.TimeSeriesInsights/environments/', parameters('environmentName'))]"
+      ],
       "properties": {
         "principalObjectId": "[parameters('accessPolicyReaderObjectIds')[copyIndex()]]",
-        "roles": [
-          "Reader"
-        ]
-      },
-      "dependsOn": [
-        "[concat('Microsoft.TimeSeriesInsights/environments/', parameters('environmentName'))]"
-      ]
+        "roles": ["Reader"]
+      }
     },
     {
       "condition": "[not(empty(parameters('accessPolicyContributorObjectIds')))]",
-      "type": "Microsoft.TimeSeriesInsights/environments/accesspolicies",
+      "type": "Microsoft.TimeSeriesInsights/environments/accessPolicies",
       "name": "[concat(parameters('environmentName'), '/', 'contributorAccessPolicy', copyIndex())]",
       "copy": {
-        "name": "accessPolicyReaderCopy",
+        "name": "accessPolicyContributorCopy",
         "count": "[if(empty(parameters('accessPolicyContributorObjectIds')), 1, length(parameters('accessPolicyContributorObjectIds')))]"
       },
       "apiVersion": "2017-11-15",
+      "dependsOn": [
+        "[resourceId('Microsoft.TimeSeriesInsights/environments/', parameters('environmentName'))]"
+      ],
       "properties": {
         "principalObjectId": "[parameters('accessPolicyContributorObjectIds')[copyIndex()]]",
-        "roles": [
-          "Contributor"
-        ]
-      },
-      "dependsOn": [
-        "[concat('Microsoft.TimeSeriesInsights/environments/', parameters('environmentName'))]"
-      ]
+        "roles": ["Contributor"]
+      }
     }
   ],
   "outputs": {

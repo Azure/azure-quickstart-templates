@@ -26,12 +26,19 @@
                 "description": "The DNS prefix for the public IP address used by the Load Balancer"
             }
         },
+        "vmSize": {
+            "type": "string",
+            "defaultValue": "Standard_D2s_v3",
+            "metadata": {
+                "description": "Size of the VM for the controller"
+            }
+        },
         "_artifactsLocation": {
             "type": "string",
             "metadata": {
                 "description": "The location of resources, such as templates and DSC modules, that the template depends on"
             },
-            "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/active-directory-new-domain"
+            "defaultValue": "[deployment().properties.templateLink.uri]"
         },
         "_artifactsLocationSasToken": {
             "type": "securestring",
@@ -66,19 +73,19 @@
     "resources": [
         {
             "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2019-02-01",
             "name": "[variables('publicIPAddressName')]",
-            "apiVersion": "2016-03-30",
             "location": "[parameters('location')]",
             "properties": {
-                "publicIPAllocationMethod": "Dynamic",
+                "publicIPAllocationMethod": "Static",
                 "dnsSettings": {
                     "domainNameLabel": "[parameters('dnsPrefix')]"
                 }
             }
         },
         {
-            "apiVersion": "2017-03-30",
             "type": "Microsoft.Compute/availabilitySets",
+            "apiVersion": "2019-03-01",
             "location": "[parameters('location')]",
             "name": "[variables('adAvailabilitySetName')]",
             "properties": {
@@ -91,12 +98,12 @@
         },
         {
             "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2018-11-01",
             "name": "VNet",
-            "apiVersion": "2016-02-01",
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[concat(parameters('_artifactsLocation'), '/nestedtemplates/vnet.json', parameters('_artifactsLocationSasToken'))]",
+                    "uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/vnet.json', parameters('_artifactsLocationSasToken')))]",
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
@@ -111,17 +118,20 @@
                     },
                     "subnetRange": {
                         "value": "[variables('adSubnetAddressPrefix')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
                     }
                 }
             }
         },
         {
             "type": "Microsoft.Network/loadBalancers",
+            "apiVersion": "2019-02-01",
             "name": "[variables('adLBName')]",
-            "apiVersion": "2016-03-30",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
+                "[variables('publicIPAddressName')]"
             ],
             "properties": {
                 "frontendIPConfigurations": [
@@ -146,7 +156,7 @@
                             "frontendIPConfiguration": {
                                 "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('adLBName'), variables('adLBFE'))]"
                             },
-                            "protocol": "tcp",
+                            "protocol": "Tcp",
                             "frontendPort": 3389,
                             "backendPort": 3389,
                             "enableFloatingIP": false
@@ -157,12 +167,12 @@
         },
         {
             "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2019-02-01",
             "name": "[variables('adNicName')]",
-            "apiVersion": "2016-03-30",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "Microsoft.Resources/deployments/VNet",
-                "[resourceId('Microsoft.Network/loadBalancers', variables('adLBName'))]"
+                "VNet",
+                "[variables('adLBName')]"
             ],
             "properties": {
                 "ipConfigurations": [
@@ -191,17 +201,17 @@
         },
         {
             "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2019-03-01",
             "name": "[variables('adVMName')]",
-            "apiVersion": "2017-03-30",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/networkInterfaces', variables('adNicName'))]",
-                "[resourceId('Microsoft.Compute/availabilitySets', variables('adAvailabilitySetName'))]",
-                "[resourceId('Microsoft.Network/loadBalancers', variables('adLBName'))]"
+                "[variables('adNicName')]",
+                "[variables('adAvailabilitySetName')]",
+                "[variables('adLBName')]"
             ],
             "properties": {
                 "hardwareProfile": {
-                    "vmSize": "Standard_D2_v2"
+                    "vmSize": "[parameters('vmSize')]"
                 },
                 "availabilitySet": {
                     "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('adAvailabilitySetName'))]"
@@ -220,20 +230,20 @@
                     },
                     "osDisk": {
                         "name": "[concat(variables('adVMName'),'_OSDisk')]",
-                        "caching": "ReadWrite",
+                        "caching": "ReadOnly",
                         "createOption": "FromImage",
                         "managedDisk": {
-                            "storageAccountType": "Standard_LRS"
+                            "storageAccountType": "StandardSSD_LRS"
                         }
                     },
                     "dataDisks": [
                         {
                             "name": "[concat(variables('adVMName'), '_DataDisk')]",
-                            "caching": "None",
+                            "caching": "ReadWrite",
                             "createOption": "Empty",
                             "diskSizeGB": 20,
                             "managedDisk": {
-                                "storageAccountType": "Standard_LRS"
+                                "storageAccountType": "StandardSSD_LRS"
                             },
                             "lun": 0
                         }
@@ -250,11 +260,11 @@
             "resources": [
                 {
                     "type": "extensions",
+                    "apiVersion": "2019-03-01",
                     "name": "CreateADForest",
-                    "apiVersion": "2017-03-30",
                     "location": "[parameters('location')]",
                     "dependsOn": [
-                        "[resourceId('Microsoft.Compute/virtualMachines', variables('adVMName'))]"
+                        "[variables('adVMName')]"
                     ],
                     "properties": {
                         "publisher": "Microsoft.Powershell",
@@ -262,7 +272,7 @@
                         "typeHandlerVersion": "2.19",
                         "autoUpgradeMinorVersion": true,
                         "settings": {
-                            "ModulesUrl": "[concat(parameters('_artifactsLocation'), '/DSC/CreateADPDC.zip', parameters('_artifactsLocationSasToken'))]",
+                            "ModulesUrl": "[uri(parameters('_artifactsLocation'), concat('DSC/CreateADPDC.zip', parameters('_artifactsLocationSasToken')))]",
                             "ConfigurationFunction": "CreateADPDC.ps1\\CreateADPDC",
                             "Properties": {
                                 "DomainName": "[parameters('domainName')]",
@@ -283,15 +293,15 @@
         },
         {
             "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2018-11-01",
             "name": "UpdateVNetDNS",
-            "apiVersion": "2016-02-01",
             "dependsOn": [
-                "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('adVMName'), 'CreateADForest')]"
+                "CreateADForest"
             ],
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[concat(parameters('_artifactsLocation'), '/nestedtemplates/vnet-with-dns-server.json', parameters('_artifactsLocationSasToken'))]",
+                    "uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/vnet-with-dns-server.json', parameters('_artifactsLocationSasToken')))]",
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
@@ -311,6 +321,9 @@
                         "value": [
                             "[variables('adNicIPAddress')]"
                         ]
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
                     }
                 }
             }

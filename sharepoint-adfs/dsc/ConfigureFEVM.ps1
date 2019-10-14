@@ -43,17 +43,15 @@ configuration ConfigureFEVM
         #**********************************************************
         # Initialization of VM
         #**********************************************************
-        WaitforDisk WaitForDataDisk   { DiskId = 2; RetryIntervalSec = $RetryIntervalSec; RetryCount = $RetryCount }
-        Disk PrepareDataDisk          { DiskId = 2; DriveLetter = "F"; DependsOn = "[WaitforDisk]WaitForDataDisk" }
-        WindowsFeature ADTools  { Name = "RSAT-AD-Tools";      Ensure = "Present"; DependsOn = "[Disk]PrepareDataDisk" }
-        WindowsFeature ADPS     { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; DependsOn = "[Disk]PrepareDataDisk" }
-        WindowsFeature DnsTools { Name = "RSAT-DNS-Server";    Ensure = "Present"; DependsOn = "[Disk]PrepareDataDisk" }
+        WindowsFeature ADTools  { Name = "RSAT-AD-Tools";      Ensure = "Present"; }
+        WindowsFeature ADPS     { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; }
+        WindowsFeature DnsTools { Name = "RSAT-DNS-Server";    Ensure = "Present"; }
         DnsServerAddress DnsServerAddress
         {
             Address        = $DNSServer
             InterfaceAlias = $InterfaceAlias
             AddressFamily  = 'IPv4'
-            DependsOn      ="[WindowsFeature]ADPS"
+            DependsOn      = "[WindowsFeature]ADPS"
         }
 
         xCredSSP CredSSPServer { Ensure = "Present"; Role = "Server"; DependsOn = "[DnsServerAddress]DnsServerAddress" }
@@ -249,6 +247,7 @@ configuration ConfigureFEVM
             CentralAdministrationPort = 5000
             # If RunCentralAdmin is false and configdb does not exist, SPFarm checks during 30 mins if configdb got created and joins the farm
             RunCentralAdmin           = $false
+            IsSingleInstance          = "Yes"
             Ensure                    = "Present"
             DependsOn                 = "[Group]AddSPSetupAccountToAdminGroup"
         }
@@ -330,44 +329,17 @@ configuration ConfigureFEVM
             DependsOn              = "[SPFarm]JoinSPFarm", "[xScript]UpdateGPOToTrustRootCACert"
         }
 
-        xScript SetHTTPSCertificate
+        xWebsite SetHTTPSCertificate
         {
-            SetScript =
+            Name                 = "SharePoint - 443"
+            BindingInfo          = MSFT_xWebBindingInformation
             {
-                $siteCert = Get-ChildItem -Path "cert:\LocalMachine\My\" -DnsName "*.$using:DomainFQDN"
-
-                $website = Get-WebConfiguration -Filter '/system.applicationHost/sites/site' |
-                    Where-Object -FilterScript {$_.Name -eq "SharePoint - 443"}
-
-                $properties = @{
-                    protocol = "https"
-                    bindingInformation = ":443:"
-                    certificateStoreName = "MY"
-                    certificateHash = $siteCert.Thumbprint
-                }
-
-                Clear-WebConfiguration -Filter "$($website.ItemXPath)/bindings" -Force -ErrorAction Stop
-                Add-WebConfiguration -Filter "$($website.ItemXPath)/bindings" -Value @{
-                    protocol = $properties.protocol
-                    bindingInformation = $properties.bindingInformation
-                    certificateStoreName = $properties.certificateStoreName
-                    certificateHash = $properties.certificateHash
-                } -Force -ErrorAction Stop
-
-                if (!(Get-Item IIS:\SslBindings\*!443)) {
-                    New-Item IIS:\SslBindings\*!443 -value $siteCert
-                }
-
-                <# To implement only when the TestScript will be implemented and will determine that current config must be overwritten
-                # Otherwise, assume the right certificate is already used and binding doesn't need to be recreated
-                if ((Get-Item IIS:\SslBindings\*!443)) {
-                    Remove-Item IIS:\SslBindings\*!443 -Confirm:$false
-                }
-                New-Item IIS:\SslBindings\*!443 -value $siteCert
-                #>
+                Protocol             = "HTTPS"
+                Port                 = 443
+                CertificateStoreName = "My"
+                CertificateSubject   = "$SPTrustedSitesName.$DomainFQDN"
             }
-            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+            Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[CertReq]SPSSiteCert"
         }

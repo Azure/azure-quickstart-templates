@@ -11,11 +11,7 @@
     "storageAccountType": {
       "type": "string",
       "defaultValue": "Standard_LRS",
-      "allowedValues": [
-        "Standard_LRS",
-        "Standard_GRS",
-        "Standard_RAGRS"
-      ],
+      "allowedValues": ["Standard_LRS", "Standard_GRS", "Standard_RAGRS"],
       "metadata": {
         "description": "Storage Account type"
       }
@@ -26,6 +22,14 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "runtime": {
+      "type": "string",
+      "defaultValue": "node",
+      "allowedValues": ["node", "dotnet", "java"],
+      "metadata": {
+        "description": "The language worker runtime to load in the function app."
+      }
     }
   },
   "variables": {
@@ -33,7 +37,8 @@
     "hostingPlanName": "[parameters('appName')]",
     "applicationInsightsName": "[parameters('appName')]",
     "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'azfunctions')]",
-    "storageAccountid": "[concat(resourceGroup().id,'/providers/','Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
+    "storageAccountid": "[concat(resourceGroup().id,'/providers/','Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+    "functionWorkerRuntime": "[parameters('runtime')]"
   },
   "resources": [
     {
@@ -48,13 +53,16 @@
     },
     {
       "type": "Microsoft.Web/serverfarms",
-      "apiVersion": "2015-04-01",
+      "apiVersion": "2018-02-01",
       "name": "[variables('hostingPlanName')]",
       "location": "[parameters('location')]",
+      "sku": {
+        "name": "Y1",
+        "tier": "Dynamic"
+      },
       "properties": {
         "name": "[variables('hostingPlanName')]",
-        "computeMode": "Dynamic",
-        "sku": "Dynamic"
+        "computeMode": "Dynamic"
       }
     },
     {
@@ -89,15 +97,19 @@
             },
             {
               "name": "FUNCTIONS_EXTENSION_VERSION",
-              "value": "~1"
+              "value": "~2"
             },
             {
               "name": "WEBSITE_NODE_DEFAULT_VERSION",
-              "value": "6.5.0"
+              "value": "8.11.1"
             },
             {
               "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
               "value": "[reference(resourceId('microsoft.insights/components/', variables('applicationInsightsName')), '2015-05-01').InstrumentationKey]"
+            },
+            {
+              "name": "FUNCTIONS_WORKER_RUNTIME",
+              "value": "[variables('functionWorkerRuntime')]"
             }
           ]
         }

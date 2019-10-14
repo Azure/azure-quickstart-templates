@@ -40,17 +40,28 @@
         "description": "Admin username on all VMs."
       }
     },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Admin password on all VMs."
-      }
-    },
     "location": {
       "type": "string",
       "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "Location for all resources."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
     }
   },
@@ -87,7 +98,18 @@
       "sku": "[parameters('ubuntuOSVersion')]",
       "version": "latest"
     },
-    "imageReference": "[variables('osType')]"
+    "imageReference": "[variables('osType')]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
@@ -175,7 +197,8 @@
         "osProfile": {
           "computerName": "[variables('jumpBoxName')]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": "[variables('imageReference')]",
@@ -194,7 +217,7 @@
         },
         "diagnosticsProfile": {
           "bootDiagnostics": {
-            "enabled": "true",
+            "enabled": true,
             "storageUri": "[concat('http://',variables('jumpBoxSAName'),'.blob.core.windows.net')]"
           }
         }
@@ -231,7 +254,7 @@
               "frontendIPConfiguration": {
                 "id": "[variables('frontEndIPConfigID')]"
               },
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "frontendPortRangeStart": "[variables('natStartPort')]",
               "frontendPortRangeEnd": "[variables('natEndPort')]",
               "backendPort": "[variables('natBackendPort')]"
@@ -269,7 +292,8 @@
           "osProfile": {
             "computerNamePrefix": "[variables('namingInfix')]",
             "adminUsername": "[parameters('adminUsername')]",
-            "adminPassword": "[parameters('adminPassword')]"
+            "adminPassword": "[parameters('adminPasswordOrKey')]",
+            "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
           },
           "networkProfile": {
             "networkInterfaceConfigurations": [

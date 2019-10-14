@@ -2,642 +2,285 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "domainNamePrefix": {
+    "location": {
       "type": "string",
       "metadata": {
-        "description": "The public DNS name label for the service.  The pattern will follow: <domainNamePrefix>.<region>.cloudapp.azure.com"
-      }
-    },
-    "vmSku": {
-      "type": "string",
-      "defaultValue": "Standard_A2",
-      "metadata": {
-        "description": "VM size for the VM Scale Set + the mgmt VM"
-      }
-    },
-    "windowsOSVersion": {
-      "type": "string",
-      "defaultValue": "2012-R2-Datacenter",
-      "metadata": {
-        "description": "The Windows Server version for the VM. This will pick a fully patched image of this given Windows version"
-      }
+        "description": "The Azure location to deploy all resources"
+      },
+      "allowedValues": [
+        "japaneast",
+        "eastus2",
+        "westeurope",
+        "southeastasia",
+        "southcentralus",
+        "australiaeast",
+        "koreacentral",
+        "westus2",
+        "brazilsouth",
+        "uksouth",
+        "westcentralus",
+        "northeurope",
+        "canadacentral",
+        "australiasoutheast",
+        "centralindia",
+        "francecentral"
+        ]
     },
     "vmssName": {
       "type": "string",
       "metadata": {
-        "description": "String used as a base for naming resources (9 characters or less). A hash is prepended to this string for some resources, and resource-specific information is appended."
+        "description": "Naming convention for the vm scale set"
       },
-      "maxLength": 9
+      "defaultValue": "srv"
     },
     "instanceCount": {
       "type": "int",
-      "defaultValue": 5,
       "metadata": {
-        "description": "Number of VM instances (100 or less)."
+        "description": "The number of vms to  provision initially in the scale set"
       },
-      "maxValue": 100
+      "defaultValue": "2"
+    },
+    "virtualNetworkAddressRange": {
+      "type": "string",
+      "metadata": {
+        "description": "The address range of the new virtual network "
+      },
+      "defaultValue": "10.0.0.0/16"
+    },
+    "virtualNetworkSubnet": {
+      "type": "string",
+      "metadata": {
+        "description": "The address range of the subnet created in the new virtual network"
+      },
+      "defaultValue": "10.0.0.0/24"
+    },
+    "nicIPAddress": {
+      "type": "string",
+      "metadata": {
+        "description": "The IP address of the new AD VM"
+      },
+      "defaultValue": "10.0.0.4"
     },
     "adminUsername": {
       "type": "string",
       "metadata": {
-        "description": "Admin username on all VMs."
+        "description": "The name of the Administrator of the new VM and Domain"
       }
     },
     "adminPassword": {
       "type": "securestring",
       "metadata": {
-        "description": "Admin password on all VMs."
+        "description": "The password for the Administrator account of the new VM and Domain"
       }
     },
-    "registrationKey": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Registration key to use to onboard to the Azure Automation DSC pull/reporting server"
-      }
-    },
-    "registrationUrl": {
+    "VMSize": {
       "type": "string",
       "metadata": {
-        "description": "Registration url of the Azure Automation DSC pull/reporting server"
-      }
+        "description": "The size of the VM Created"
+      },
+      "defaultValue": "Standard_B2s"
     },
-    "nodeConfigurationName": {
-      "type": "string",
-      "defaultValue": "MyService.webServer",
-      "metadata": {
-        "description": "The name of the node configuration, on the Azure Automation DSC pull server, that this node will be configured as"
-      }
-    },
-    "configurationMode": {
-      "type": "string",
-      "defaultValue": "ApplyAndAutoCorrect",
-      "allowedValues": [
-        "ApplyOnly",
-        "ApplyAndMonitor",
-        "ApplyAndAutoCorrect"
-      ],
-      "metadata": {
-        "description": "DSC agent (LCM) configuration mode setting. ApplyOnly, ApplyAndMonitor, or ApplyAndAutoCorrect"
-      }
-    },
-    "configurationModeFrequencyMins": {
-      "type": "int",
-      "defaultValue": 15,
-      "metadata": {
-        "description": "DSC agent (LCM) configuration mode frequency setting, in minutes"
-      }
-    },
-    "refreshFrequencyMins": {
-      "type": "int",
-      "defaultValue": 30,
-      "metadata": {
-        "description": "DSC agent (LCM) refresh frequency setting, in minutes"
-      }
-    },
-    "rebootNodeIfNeeded": {
-      "type": "bool",
-      "defaultValue": true,
-      "metadata": {
-        "description": "DSC agent (LCM) rebootNodeIfNeeded setting"
-      }
-    },
-    "actionAfterReboot": {
-      "type": "string",
-      "defaultValue": "ContinueConfiguration",
-      "allowedValues": [
-        "ContinueConfiguration",
-        "StopConfiguration"
-      ],
-      "metadata": {
-        "description": "DSC agent (LCM) actionAfterReboot setting. ContinueConfiguration or StopConfiguration"
-      }
-    },
-    "allowModuleOverwrite": {
-      "type": "bool",
-      "defaultValue": false,
-      "metadata": {
-        "description": "DSC agent (LCM) allowModuleOverwrite setting"
-      }
-    },
-    "timestamp": {
-      "type": "string",
-      "defaultValue": "MM/dd/yyyy H:mm:ss tt",
-      "metadata": {
-        "description": "The current datetime, as a string, to force the request to go through ARM even if all fields are the same as last ARM deployment of this template; example in parameters file is in MM/dd/yyyy H:mm:ss tt format"
-      }
-    },
-    "automationAccountName": {
-      "type": "string",
-      "defaultValue": "myAutomationAccount",
-      "metadata": {
-        "description": "The name of the Automation account to use.  Check the SKU and tags to make sure they match the existing account."
-      }
-    },
-    "automationRegionId": {
-      "type": "string",
-      "defaultValue": "East US 2",
-      "allowedValues": [
-        "Japan East",
-        "East US 2",
-        "West Europe",
-        "Southeast Asia",
-        "South Central US",
-        "Central India"
-      ],
-      "metadata": {
-        "description": "The region the Automation account is located in."
-      }
-    },
-    "configurationName": {
-      "type": "string",
-      "defaultValue": "MyService",
-      "metadata": {
-        "description": "The name of the DSC Configuration. The name must match the name in the URI."
-      }
-    },
-    "configurationURI": {
-      "type": "string",
-      "defaultValue": "https://raw.github.com/Azure/azure-quickstart-templates/master/201-vmss-automation-dsc/webServer.ps1",
-      "metadata": {
-        "description": "The URI for the DSC configuration "
-      }
-    },
-    "configurationDescription": {
-      "type": "string",
-      "defaultValue": "Web Server",
-      "metadata": {
-        "description": "The description of the configuration."
-      }
-    },
-    "jobid": {
+    "domainName": {
       "type": "string",
       "metadata": {
-        "description": "The job id to compile the configuration"
-      }
+        "description": "The full qualified domain name to be created"
+      },
+      "defaultValue": "contoso.local"
     },
-    "location": {
+    "_artifactsLocation": {
       "type": "string",
-      "defaultValue": "[resourceGroup().location]",
       "metadata": {
-        "description": "Location for all resources."
-      }
+        "description": "Path to the nested templates used in this deployment"
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vmss-automation-dsc/"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "string",
+      "metadata": {
+        "description": "SAS token to access artifacts location, if required"
+      },
+      "defaultValue": ""
+    },
+    "compileName": {
+      "type": "string",
+      "metadata": {
+        "description": "Unique value to identify compilation job"
+      },
+      "defaultValue": "[guid(resourceGroup().id, deployment().name)]"
     }
   },
   "variables": {
-    "automationApiVersion": "2015-10-31",
-    "namingInfix": "[toLower(parameters('vmssName'))]",
-    "virtualNetworkName": "[concat(variables('namingInfix'), 'vnet')]",
-    "addressPrefix": "192.168.0.0/16",
-    "subnetName": "[concat(variables('namingInfix'), 'subnet')]",
-    "subnetID": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
-    "subnetPrefix": "192.168.0.0/24",
-    "publicIPAddressName": "[concat(variables('namingInfix'), 'pip')]",
-    "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses/',variables('publicIPAddressName'))]",
-    "loadBalancerName": "[concat(variables('namingInfix'), 'loadBalancer')]",
-    "loadBalancerID": "[resourceId('Microsoft.Network/loadBalancers/',variables('loadBalancerName'))]",
-    "frontendIPConfigurationsName": "[concat(variables('loadBalancerName'), 'frontendIPConfigurations')]",
-    "frontEndIPConfigurationsID": "[concat(variables('loadBalancerID'),'/frontendIPConfigurations/',variables('frontendIPConfigurationsName'))]",
-    "loadBalancingRulesName": "[concat(variables('loadBalancerName'), 'loadBalancingRules')]",
-    "backendAddressPoolsName": "[concat(variables('loadBalancerName'), 'backendAddressPools')]",
-    "backendAddressPoolID": "[concat(variables('loadBalancerID'),'/backendAddressPools/',variables('backendAddressPoolsName'))]",
-    "httpProbeName": "[concat(variables('loadBalancerName'),'httpProbe')]",
-    "httpProbeID": "[concat(variables('loadBalancerID'),'/probes/',variables('httpProbeName'))]",
-    "httpProbeRequestPath": "/iisstart.htm",
-    "natRDPPoolName": "[concat(variables('loadBalancerName'), 'natRDP')]",
-    "natRDPPoolID": "[concat(variables('loadBalancerID'),'/inboundNatPools/',variables('natRDPPoolName'))]",
-    "natRDPStartPort": 50000,
-    "natRDPEndPort": 50119,
-    "natRDPBackendPort": 3389,
-    "natWinRMPoolName": "[concat(variables('loadBalancerName'), 'natWinRM')]",
-    "natWinRMPoolID": "[concat(variables('loadBalancerID'),'/inboundNatPools/',variables('natWinRMPoolName'))]",
-    "natWinRMStartPort": 51000,
-    "natWinRMEndPort": 51119,
-    "natWinRMBackendPort": 5896,
-    "nicName": "[concat(variables('namingInfix'), 'nic')]",
-    "ipConfigName": "[concat(variables('namingInfix'), 'ipconfig')]",
-    "osType": {
-      "publisher": "MicrosoftWindowsServer",
-      "offer": "WindowsServer",
-      "sku": "[parameters('windowsOSVersion')]",
-      "version": "latest"
-    },
-    "imageReference": "[variables('osType')]",
-    "automationPricingTier": "Free",
-    "dscOverwrite": "true",
-    "dscModules": {
-      "xNetworking": {
-        "moduleName": "xNetworking",
-        "moduleUri": "https://raw.github.com/Azure/azure-quickstart-templates/master/201-vmss-automation-dsc/xNetworking.zip"
+    "automationAccountName": "[concat('DSC-',take(guid(resourceGroup().id),5))]",
+    "publicIPAddressName": "PIP",
+    "publicIPAddressType": "Dynamic",
+    "virtualNetworkName": "Network",
+    "virtualNetworkSubnetName": "Subnet",
+    "virtualNetworkSubnets": [
+      {
+        "name": "[variables('virtualNetworkSubnetName')]",
+        "properties": {
+          "addressPrefix": "[parameters('virtualNetworkSubnet')]"
+        }
       }
-    }
+    ],
+    "loadBalancerName": "LoadBalancer",
+    "nicName": "NIC",
+    "nicSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('virtualNetworkSubnetName'))]",
+    "provisionConfigurationURL": "[uri(parameters('_artifactsLocation'), concat('nested/provisionConfiguration.json', parameters('_artifactsLocationSasToken')))]",
+    "provisionNetworkURL": "[uri(parameters('_artifactsLocation'), concat('nested/provisionNetwork.json', parameters('_artifactsLocationSasToken')))]",
+    "provisionServerUrl": "[uri(parameters('_artifactsLocation'), concat('nested/provisionServer.json', parameters('_artifactsLocationSasToken')))]",
+    "provisionDNSUrl": "[uri(parameters('_artifactsLocation'), concat('nested/provisionDNS.json', parameters('_artifactsLocationSasToken')))]"
   },
   "resources": [
     {
-      "type": "Microsoft.Automation/automationAccounts",
-      "name": "[parameters('automationAccountName')]",
-      "apiVersion": "2015-10-31",
-      "location": "[parameters('automationRegionId')]",
-      "dependsOn": [],
-      "tags": {},
+      "name": "provisionConfiguration",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2018-02-01",
       "properties": {
-        "sku": {
-          "name": "[variables('automationPricingTier')]"
-        }
-      },
-      "resources": [
-        {
-          "name": "[concat(parameters('automationAccountName'), '/', variables('dscModules').xNetworking.ModuleName)]",
-          "type": "microsoft.automation/automationAccounts/Modules",
-          "apiVersion": "[variables('automationApiVersion')]",
-          "tags": {},
-          "dependsOn": [
-            "[concat('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]"
-          ],
-          "properties": {
-            "contentLink": {
-              "uri": "[variables('dscModules').xNetworking.ModuleUri]"
-            }
-          }
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('provisionConfigurationURL')]",
+          "contentVersion": "1.0.0.0"
         },
-        {
-          "name": "[parameters('configurationName')]",
-          "type": "Configurations",
-          "apiVersion": "[variables('automationApiVersion')]",
-          "location": "[parameters('automationRegionId')]",
-          "tags": {},
-          "dependsOn": [
-            "[concat('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]"
-          ],
-          "properties": {
-            "logVerbose": "false",
-            "description": "[parameters('configurationDescription')]",
-            "state": "Published",
-            "overwrite": "[variables('dscOverwrite')]",
-            "Source": {
-              "type": "uri",
-              "Value": "[parameters('configurationURI')]"
-            }
+        "parameters": {
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          },
+          "automationAccountName": {
+            "value": "[variables('automationAccountName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "compileName": {
+            "value": "[parameters('compileName')]"
           }
-        },
-        {
-          "name": "[parameters('jobid')]",
-          "type": "Compilationjobs",
-          "apiVersion": "[variables('automationApiVersion')]",
-          "location": "parameters('automationRegionId')]",
-          "tags": {},
-          "dependsOn": [
-            "[concat('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]",
-            "[concat('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'),'/Modules/',variables('dscModules').xNetworking.ModuleName)]",
-            "[concat('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'),'/Configurations/', parameters('configurationName'))]"
-          ],
-          "properties": {
-            "configuration": {
-              "name": "[parameters('configurationName')]"
-            }
-          }
-        }
-      ]
-    },
-    {
-      "type": "Microsoft.Network/virtualNetworks",
-      "name": "[variables('virtualNetworkName')]",
-      "location": "[parameters('location')]",
-      "apiVersion": "2017-04-01",
-      "properties": {
-        "addressSpace": {
-          "addressPrefixes": [
-            "[variables('addressPrefix')]"
-          ]
-        },
-        "subnets": [
-          {
-            "name": "[variables('subnetName')]",
-            "properties": {
-              "addressPrefix": "[variables('subnetPrefix')]"
-            }
-          }
-        ]
-      }
-    },
-    {
-      "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[variables('publicIPAddressName')]",
-      "location": "[parameters('location')]",
-      "apiVersion": "2017-04-01",
-      "properties": {
-        "publicIPAllocationMethod": "Dynamic",
-        "dnsSettings": {
-          "domainNameLabel": "[parameters('domainNamePrefix')]"
         }
       }
     },
     {
-      "type": "Microsoft.Network/loadBalancers",
-      "name": "[variables('loadBalancerName')]",
-      "location": "[parameters('location')]",
-      "apiVersion": "2017-04-01",
+      "name": "provisionNetwork",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2018-02-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('provisionNetworkURL')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "virtualNetworkName": {
+            "value": "[variables('virtualNetworkName')]"
+          },
+          "virtualNetworkAddressRange": {
+            "value": "[parameters('virtualNetworkAddressRange')]"
+          },
+          "virtualNetworkSubnets": {
+            "value": "[variables('virtualNetworkSubnets')]"
+          },
+          "publicIPAddressName": {
+            "value": "[variables('publicIPAddressName')]"
+          },
+          "publicIPAddressType": {
+            "value": "[variables('publicIPAddressType')]"
+          },
+          "loadBalancerName": {
+            "value": "[variables('loadBalancerName')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "provisionServer",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2018-02-01",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
+        "provisionNetwork",
+        "provisionConfiguration"
       ],
       "properties": {
-        "frontendIPConfigurations": [
-          {
-            "name": "[variables('frontendIPConfigurationsName')]",
-            "properties": {
-              "publicIPAddress": {
-                "id": "[variables('publicIPAddressID')]"
-              }
-            }
-          }
-        ],
-        "backendAddressPools": [
-          {
-            "name": "[variables('backendAddressPoolsName')]"
-          }
-        ],
-        "loadBalancingRules": [
-          {
-            "name": "[variables('loadBalancingRulesName')]",
-            "properties": {
-              "frontendIPConfiguration": {
-                "id": "[variables('frontEndIPConfigurationsID')]"
-              },
-              "backendAddressPool": {
-                "id": "[variables('backendAddressPoolID')]"
-              },
-              "protocol": "tcp",
-              "frontendPort": 80,
-              "backendPort": 80,
-              "enableFloatingIP": false,
-              "idleTimeoutInMinutes": 5,
-              "probe": {
-                "id": "[variables('httpProbeID')]"
-              }
-            }
-          }
-        ],
-        "probes": [
-          {
-            "name": "[variables('httpProbeName')]",
-            "properties": {
-              "protocol": "Http",
-              "port": 80,
-              "intervalInSeconds": 5,
-              "numberOfProbes": 2,
-              "requestPath": "[variables('httpProbeRequestPath')]"
-            }
-          }
-        ],
-        "inboundNatPools": [
-          {
-            "name": "[variables('natRDPPoolName')]",
-            "properties": {
-              "frontendIPConfiguration": {
-                "id": "[variables('frontEndIPConfigurationsID')]"
-              },
-              "protocol": "tcp",
-              "frontendPortRangeStart": "[variables('natRDPStartPort')]",
-              "frontendPortRangeEnd": "[variables('natRDPEndPort')]",
-              "backendPort": "[variables('natRDPBackendPort')]"
-            }
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('provisionServerUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
           },
-          {
-            "name": "[variables('natWinRMPoolName')]",
-            "properties": {
-              "frontendIPConfiguration": {
-                "id": "[variables('frontEndIPConfigurationsID')]"
-              },
-              "protocol": "tcp",
-              "frontendPortRangeStart": "[variables('natWinRMStartPort')]",
-              "frontendPortRangeEnd": "[variables('natWinRMEndPort')]",
-              "backendPort": "[variables('natWinRMBackendPort')]"
-            }
+          "vmssName": {
+            "value": "[parameters('vmssName')]"
+          },
+          "instanceCount": {
+            "value": "[parameters('instanceCount')]"
+          },
+          "VMSize": {
+            "value": "[parameters('VMSize')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "NicName": {
+            "value": "[variables('NicName')]"
+          },
+          "virtualNetworkName": {
+            "value": "[variables('virtualNetworkName')]"
+          },
+          "subnetName": {
+            "value": "[variables('virtualNetworkSubnetName')]"
+          },
+          "loadBalancerName": {
+            "value": "[variables('loadBalancerName')]"
+          },
+          "automationAccountName": {
+            "value": "[variables('automationAccountName')]"
           }
-        ]
+        }
       }
     },
     {
-      "type": "Microsoft.Compute/virtualMachineScaleSets",
-      "name": "[variables('namingInfix')]",
-      "location": "[parameters('location')]",
-      "apiVersion": "2017-03-30",
+      "name": "provisionDNS",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2018-02-01",
       "dependsOn": [
-        "[concat('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]",
-        "[concat('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'),'/Modules/',variables('dscModules').xNetworking.ModuleName)]",
-        "[concat('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'),'/Configurations/', parameters('configurationName'))]",
-        "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "provisionServer"
       ],
-      "sku": {
-        "name": "[parameters('vmSku')]",
-        "tier": "Standard",
-        "capacity": "[parameters('instanceCount')]"
-      },
       "properties": {
-        "overprovision": true,
-        "upgradePolicy": {
-          "mode": "Manual"
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('provisionDNSUrl')]",
+          "contentVersion": "1.0.0.0"
         },
-        "virtualMachineProfile": {
-          "storageProfile": {
-            "osDisk": {
-              "caching": "ReadOnly",
-              "createOption": "FromImage"
-            },
-            "imageReference": "[variables('imageReference')]"
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
           },
-          "extensionProfile": {
-            "extensions": [
-              {
-                "name": "Microsoft.Powershell.DSC",
-                "properties": {
-                  "publisher": "Microsoft.Powershell",
-                  "type": "DSC",
-                  "typeHandlerVersion": "2.19",
-                  "autoUpgradeMinorVersion": true,
-                  "protectedSettings": {
-                    "Items": {
-                      "registrationKeyPrivate": "[parameters('registrationKey')]"
-                    }
-                  },
-                  "settings": {
-                    "ModulesUrl": "https://raw.github.com/Azure/azure-quickstart-templates/master/201-vmss-automation-dsc/UpdateLCMforAAPull.zip",
-                    "SasToken": "",
-                    "ConfigurationFunction": "UpdateLCMforAAPull.ps1\\ConfigureLCMforAAPull",
-                    "Properties": [
-                      {
-                        "Name": "RegistrationKey",
-                        "Value": {
-                          "UserName": "PLACEHOLDER_DONOTUSE",
-                          "Password": "PrivateSettingsRef:registrationKeyPrivate"
-                        },
-                        "TypeName": "System.Management.Automation.PSCredential"
-                      },
-                      {
-                        "Name": "RegistrationUrl",
-                        "Value": "[parameters('registrationUrl')]",
-                        "TypeName": "System.String"
-                      },
-                      {
-                        "Name": "NodeConfigurationName",
-                        "Value": "[parameters('nodeConfigurationName')]",
-                        "TypeName": "System.String"
-                      },
-                      {
-                        "Name": "ConfigurationMode",
-                        "Value": "[parameters('configurationMode')]",
-                        "TypeName": "System.String"
-                      },
-                      {
-                        "Name": "ConfigurationModeFrequencyMins",
-                        "Value": "[parameters('configurationModeFrequencyMins')]",
-                        "TypeName": "System.Int32"
-                      },
-                      {
-                        "Name": "RefreshFrequencyMins",
-                        "Value": "[parameters('refreshFrequencyMins')]",
-                        "TypeName": "System.Int32"
-                      },
-                      {
-                        "Name": "RebootNodeIfNeeded",
-                        "Value": "[parameters('rebootNodeIfNeeded')]",
-                        "TypeName": "System.Boolean"
-                      },
-                      {
-                        "Name": "ActionAfterReboot",
-                        "Value": "[parameters('actionAfterReboot')]",
-                        "TypeName": "System.String"
-                      },
-                      {
-                        "Name": "AllowModuleOverwrite",
-                        "Value": "[parameters('allowModuleOverwrite')]",
-                        "TypeName": "System.Boolean"
-                      },
-                      {
-                        "Name": "Timestamp",
-                        "Value": "[parameters('timestamp')]",
-                        "TypeName": "System.String"
-                      }
-                    ]
-                  }
-                }
-              }
-            ]
+          "virtualNetworkName": {
+            "value": "[variables('virtualNetworkName')]"
           },
-          "osProfile": {
-            "computerNamePrefix": "[variables('namingInfix')]",
-            "adminUsername": "[parameters('adminUsername')]",
-            "adminPassword": "[parameters('adminPassword')]"
+          "virtualNetworkAddressRange": {
+            "value": "[parameters('virtualNetworkAddressRange')]"
           },
-          "networkProfile": {
-            "networkInterfaceConfigurations": [
-              {
-                "name": "[variables('nicName')]",
-                "properties": {
-                  "primary": true,
-                  "ipConfigurations": [
-                    {
-                      "name": "[variables('ipConfigName')]",
-                      "properties": {
-                        "subnet": {
-                          "id": "[variables('subnetID')]"
-                        },
-                        "loadBalancerBackendAddressPools": [
-                          {
-                            "id": "[variables('backendAddressPoolID')]"
-                          }
-                        ],
-                        "loadBalancerInboundNatPools": [
-                          {
-                            "id": "[variables('natRDPPoolID')]"
-                          },
-                          {
-                            "id": "[variables('natWinRMPoolID')]"
-                          }
-                        ]
-                      }
-                    }
-                  ]
-                }
-              }
+          "virtualNetworkSubnets": {
+            "value": "[variables('virtualNetworkSubnets')]"
+          },
+          "dnsAddress": {
+            "value": [
+              "[parameters('nicIPAddress')]"
             ]
           }
         }
-      }
-    },
-    {
-      "type": "Microsoft.Insights/autoscaleSettings",
-      "apiVersion": "2015-04-01",
-      "name": "autoscalehost",
-      "location": "[parameters('location')]",
-      "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachineScaleSets/', parameters('vmSSName'))]"
-      ],
-      "properties": {
-        "name": "autoscalehost",
-        "targetResourceUri": "[concat('/subscriptions/',subscription().subscriptionId, '/resourceGroups/',  resourceGroup().name, '/providers/Microsoft.Compute/virtualMachineScaleSets/', parameters('vmSSName'))]",
-        "enabled": true,
-        "profiles": [
-          {
-            "name": "Profile1",
-            "capacity": {
-              "minimum": "2",
-              "maximum": "25",
-              "default": "2"
-            },
-            "rules": [
-              {
-                "metricTrigger": {
-                  "metricName": "Percentage CPU",
-                  "metricNamespace": "",
-                  "metricResourceUri": "[concat('/subscriptions/',subscription().subscriptionId, '/resourceGroups/',  resourceGroup().name, '/providers/Microsoft.Compute/virtualMachineScaleSets/', parameters('vmSSName'))]",
-                  "timeGrain": "PT1M",
-                  "statistic": "Average",
-                  "timeWindow": "PT5M",
-                  "timeAggregation": "Average",
-                  "operator": "GreaterThan",
-                  "threshold": 60
-                },
-                "scaleAction": {
-                  "direction": "Increase",
-                  "type": "ChangeCount",
-                  "value": "1",
-                  "cooldown": "PT1M"
-                }
-              },
-              {
-                "metricTrigger": {
-                  "metricName": "Percentage CPU",
-                  "metricNamespace": "",
-                  "metricResourceUri": "[concat('/subscriptions/',subscription().subscriptionId, '/resourceGroups/',  resourceGroup().name, '/providers/Microsoft.Compute/virtualMachineScaleSets/', parameters('vmSSName'))]",
-                  "timeGrain": "PT1M",
-                  "statistic": "Average",
-                  "timeWindow": "PT5M",
-                  "timeAggregation": "Average",
-                  "operator": "LessThan",
-                  "threshold": 30
-                },
-                "scaleAction": {
-                  "direction": "Decrease",
-                  "type": "ChangeCount",
-                  "value": "1",
-                  "cooldown": "PT1M"
-                }
-              }
-            ]
-          }
-        ]
       }
     }
   ],
-  "outputs": {
-    "fqdn": {
-      "value": "[reference(variables('publicIPAddressID'),'2017-04-01').dnsSettings.fqdn]",
-      "type": "string"
-    },
-    "ipaddress": {
-      "value": "[reference(variables('publicIPAddressID'),'2017-04-01').ipAddress]",
-      "type": "string"
-    }
-  }
+  "outputs": {}
 }

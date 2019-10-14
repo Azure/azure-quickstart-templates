@@ -1,0 +1,69 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {},
+	"variables": {
+        "accountName": "[concat('mongodb-', uniqueString(resourceGroup().id))]",
+        "databaseName": "myDatabase",
+        "databaseThroughput": 1000,
+        "collectionName": "myCollection",
+        "containerThroughput": 400
+	},
+	"resources": 
+	[
+		{
+			"type": "Microsoft.DocumentDB/databaseAccounts",
+			"name": "[variables('accountName')]",
+			"apiVersion": "2016-03-31",
+			"location": "West US 2",
+			"kind": "MongoDB",
+			"properties": {
+				"consistencyPolicy": { "defaultConsistencyLevel": "Eventual" },
+				"locations": [ { "locationName": "West US 2", "failoverPriority": 0 }, { "locationName": "East US 2", "failoverPriority": 1 } ],
+				"databaseAccountOfferType": "Standard",
+				"enableAutomaticFailover": false,
+				"enableMultipleWriteLocations": true
+			}
+		},
+		{
+			"type": "Microsoft.DocumentDB/databaseAccounts/apis/databases",
+			"name": "[concat(variables('accountName'), '/mongodb/', variables('databaseName'))]",
+			"apiVersion": "2016-03-31",
+			"dependsOn": [ "[resourceId('Microsoft.DocumentDB/databaseAccounts/', variables('accountName'))]" ],
+			"properties":{
+				"resource":{
+					"id": "[variables('databaseName')]"
+				},
+				"options": { "throughput": "[variables('databaseThroughput')]" }
+			}
+		},
+		{
+			"type": "Microsoft.DocumentDb/databaseAccounts/apis/databases/collections",
+			"name": "[concat(variables('accountName'), '/mongodb/', variables('databaseName'), '/', variables('collectionName'))]",
+			"apiVersion": "2016-03-31",
+			"dependsOn": [ "[resourceId('Microsoft.DocumentDB/databaseAccounts/apis/databases', variables('accountName'), 'mongodb', variables('databaseName'))]" ],
+			"properties":
+			{
+				"resource":{
+					"id":  "[variables('collectionName')]",
+					"shardKey": { "myShardKey": "Hash" }
+				},
+				"options": { "throughput": "[variables('containerThroughput')]" }
+			}
+		}
+    ],
+    "outputs": {
+        "accountName": {
+            "type": "string",
+            "value": "[variables('accountName')]"
+        },
+        "databaseName": {
+            "type": "string",
+            "value": "[variables('databaseName')]"
+		},
+		"collectionName": {
+            "type": "string",
+            "value": "[variables('collectionName')]"
+        }
+    }
+}
