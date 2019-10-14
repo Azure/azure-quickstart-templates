@@ -18,7 +18,7 @@ configuration ConfigureSPVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSuperReaderCreds
     )
 
-    Import-DscResource -ModuleName ComputerManagementDsc, StorageDsc, NetworkingDsc, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, CertificateDsc, SqlServerDsc, xPendingReboot
+    Import-DscResource -ModuleName ComputerManagementDsc, StorageDsc, NetworkingDsc, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, CertificateDsc, SqlServerDsc
 
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
@@ -494,7 +494,7 @@ configuration ConfigureSPVM
                 DependsOn = "[SPFarmSolution]InstallLdapcp"
             }
 
-            xPendingReboot RebootBeforeCreatingSPTrust
+            PendingReboot RebootBeforeCreatingSPTrust
             {
                 Name             = "BeforeCreatingSPTrust"
                 SkipCcmClientSDK = $true
@@ -1267,7 +1267,7 @@ function Get-SPDSCInstalledProductVersion
 # Azure DSC extension logging: C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.21.0.0
 # Azure DSC extension configuration: C:\Packages\Plugins\Microsoft.Powershell.DSC\2.21.0.0\DSCWork
 
-Install-Module -Name xPendingReboot
+Install-Module -Name PendingReboot
 help ConfigureSPVM
 
 $DomainAdminCreds = Get-Credential -Credential "yvand"
