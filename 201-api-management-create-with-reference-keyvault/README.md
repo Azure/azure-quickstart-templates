@@ -1,10 +1,19 @@
 # Azure API Management Service
 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-api-management-create-with-reference-keyvault/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-api-management-create-with-reference-keyvault/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-api-management-create-with-reference-keyvault/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-api-management-create-with-reference-keyvault/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-api-management-create-with-reference-keyvault/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-api-management-create-with-reference-keyvault/CredScanResult.svg" />&nbsp;
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2F201-api-management-create-with-reference-keyvault%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-api-management-create-with-reference-keyvault%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
 This template shows an example of how to deploy an Azure API Management service with SSL Certificate from [KeyVault as Resource Manager Reference]((https://azure.microsoft.com/en-us/documentation/articles/resource-manager-keyvault-parameter/).
@@ -30,3 +39,4 @@ $secret = ConvertTo-SecureString -String $fileContentEncoded -AsPlainText –For
 $secretContentType = 'application/x-pkcs12'
 Set-AzureKeyVaultSecret -VaultName KEY_VAULT_NAME -Name KEY_VAULT_SECRET_NAME -SecretValue $Secret -ContentType $secretContentType # Change Key Vault name and Secret name
 ```
+

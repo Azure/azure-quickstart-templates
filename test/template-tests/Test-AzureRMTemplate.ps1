@@ -1,4 +1,4 @@
-﻿function Test-AzureRMTemplate
+function Test-AzureRMTemplate
 {
     <#
     .Synopsis
@@ -88,9 +88,14 @@ Each test script has access to a set of well-known variables:
     [Collections.IDictionary]
     $TestGroup = [Ordered]@{},
 
-    # If set, will not run tests in Pester.
+
+    # If provided, will skip any tests in this list.
+    [string[]]
+    $Skip,
+
+    # If set, will run tests in Pester.
     [switch]
-    $NoPester)
+    $Pester)
 
     begin {
         # First off, let's get all of the built-in test scripts.   
@@ -133,12 +138,17 @@ Each test script has access to a set of well-known variables:
         
         # This lets our built-in groups be automatically defined by their file structure.
 
-
+        if (-not $script:AlreadyLoadedCache) { $script:AlreadyLoadedCache = @{} }
         # Next we want to load the cached items
         $cacheDir = $myLocation | Split-Path | Join-Path -ChildPath cache
         $cacheItemNames = @(foreach ($cacheFile in (Get-ChildItem -Path $cacheDir -Filter *.cache.json)) {
             $cacheName = $cacheFile.Name -replace '\.cache\.json', ''
-            $cacheData = [IO.File]::ReadAllText($cacheFile.Fullname) | ConvertFrom-Json
+            if (-not $script:AlreadyLoadedCache[$cacheFile.Name]) {
+                $script:AlreadyLoadedCache[$cacheFile.Name] = 
+                    [IO.File]::ReadAllText($cacheFile.Fullname) | ConvertFrom-Json
+                
+            }
+            $cacheData = $script:AlreadyLoadedCache[$cacheFile.Name]
             $ExecutionContext.SessionState.PSVariable.Set($cacheName, $cacheData)
             $cacheName
         })
@@ -167,7 +177,7 @@ Each test script has access to a set of well-known variables:
                 }
             }
             
-            if ($NoPester) {
+            if (-not $Pester) {
                 & $TheTest @testInput 2>&1 3>&1
             } else {
                 & $TheTest @testInput
@@ -190,7 +200,7 @@ Each test script has access to a set of well-known variables:
                     continue
                 }
 
-                if ($NoPester) {
+                if (-not $Pester) {
                     $testStartedAt = [DateTime]::Now
                     $testCaseOutput = Test-Case $testCase.$dq $TestInput 2>&1 3>&1
                     $testTook = [DateTime]::Now - $testStartedAt
@@ -261,8 +271,8 @@ Each test script has access to a set of well-known variables:
                 }
 
                 if (-not $matchingGroups) { continue } 
-                if ($fileInfo.Schema -like '*deploymentTemplate*') {
-                    $isMainTemplate = 'mainTemplate.json', 'azureDeploy.json' -contains $fileInfo.Name
+                if ($fileInfo.Schema -like '*deploymentTemplate*') {                     
+                    $isMainTemplate = 'mainTemplate.json', 'azureDeploy.json', 'prereq.azuredeploy.json' -contains $fileInfo.Name
                     $templateFileName = $fileInfo.Name
                     $TemplateObject = $fileInfo.Object
                     $TemplateText = $fileInfo.Text
@@ -277,7 +287,7 @@ Each test script has access to a set of well-known variables:
                     } else {
                         $null
                     }
-                    if ($NoPester) {
+                    if (-not $Pester) {
                         $context = "$($fileInfo.Name)->$groupName"
                         Test-Group
                     } else {
@@ -383,7 +393,7 @@ Each test script has access to a set of well-known variables:
         
         
             # Now that the filelist and test groups are set up, we use Test-FileList to test the list of files.                   
-            if (-not $NoPester) {
+            if ($Pester) {
                 $IsPesterLoaded? = $(
                     $loadedModules = Get-module
                     foreach ($_ in $loadedModules) { 
@@ -404,11 +414,11 @@ Each test script has access to a set of well-known variables:
 
                 if (-not $DoesPesterExist?){
                     Write-Warning "Pester not found.  Please install Pester (Install-Module Pester)"
-                    $NoPester = $true
+                    $Pester = $false
                 }
             }
         
-            if ($NoPester) { # If we're not running Pester, 
+            if (-not $Pester) { # If we're not running Pester, 
                 Test-FileList # we just call it directly.
             }
             else { 

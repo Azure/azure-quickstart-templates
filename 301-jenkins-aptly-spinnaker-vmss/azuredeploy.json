@@ -14,12 +14,6 @@
         "description": "Username for the DevOps Virtual Machine, the Jenkins instance, and the VM Scale Sets deployed by Spinnaker."
       }
     },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Password for the DevOps Virtual Machine, the Jenkins instance, and the VM Scale Sets deployed by Spinnaker."
-      }
-    },
     "servicePrincipalAppId": {
       "type": "string",
       "metadata": {
@@ -38,13 +32,29 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
     }
   },
   "variables": {
     "scenarioPrefix": "devops",
     "storageAccountName": "[concat(variables('scenarioPrefix'), uniqueString(resourceGroup().id))]",
     "vmStorageAccountContainerName": "vhds",
-    "packerStorageAccountName": "[concat('packer', uniqueString(resourceGroup().id))]",
     "keyVaultName": "[concat('vault', uniqueString(resourceGroup().id))]",
     "vnetName": "[concat(variables('scenarioPrefix'), 'Vnet')]",
     "subnet0Name": "[concat(variables('scenarioPrefix'), 'Subnet0')]",
@@ -55,27 +65,26 @@
     "publicIPAddressName": "[concat(variables('scenarioPrefix'), 'PublicIP')]",
     "vmName": "[concat(variables('scenarioPrefix'), 'VM')]",
     "vmExtensionName": "[concat(variables('scenarioPrefix'), 'Init')]",
-    "spinnakerOSDiskName": "[concat(variables('scenarioPrefix'), 'OSDisk')]",
-    "_artifactsLocation": "https://raw.githubusercontent.com/Azure/azure-devops-utils/v0.24.0/",
+    "_artifactsLocation": "https://raw.githubusercontent.com/Azure/azure-devops-utils/master/",
     "_extensionScript": "301-jenkins-aptly-spinnaker-vmss.sh",
-    "_artifactsLocationSasToken": ""
+    "_artifactsLocationSasToken": "",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountName')]",
-      "apiVersion": "2016-01-01",
-      "location": "[parameters('location')]",
-      "kind": "Storage",
-      "sku": {
-        "name": "Standard_LRS"
-      },
-      "properties": {}
-    },
-    {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('packerStorageAccountName')]",
-      "apiVersion": "2016-01-01",
+      "apiVersion": "2019-04-01",
       "location": "[parameters('location')]",
       "kind": "Storage",
       "sku": {
@@ -85,9 +94,44 @@
     },
     {
       "type": "Microsoft.KeyVault/vaults",
-      "apiVersion": "2015-06-01",
+      "apiVersion": "2018-02-14",
       "name": "[variables('keyVaultName')]",
       "location": "[parameters('location')]",
+      "resources": [
+        {
+          "type": "secrets",
+          "name": "VMUsername",
+          "apiVersion": "2018-02-14",
+          "dependsOn": [
+            "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
+          ],
+          "properties": {
+            "value": "[parameters('adminUsername')]"
+          }
+        },
+        {
+          "type": "secrets",
+          "name": "VMPassword",
+          "apiVersion": "2018-02-14",
+          "dependsOn": [
+            "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
+          ],
+          "properties": {
+            "value": "[parameters('adminPassword')]"
+          }
+        },
+        {
+          "type": "secrets",
+          "name": "VMSshPublicKey",
+          "apiVersion": "2018-02-14",
+          "dependsOn": [
+            "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
+          ],
+          "properties": {
+            "value": "[parameters('sshPublicKey')]"
+          }
+        }
+      ],
       "properties": {
         "enabledForDeployment": true,
         "enabledForTemplateDeployment": true,
@@ -111,34 +155,10 @@
           "name": "standard",
           "family": "A"
         }
-      },
-      "resources": [
-        {
-          "type": "secrets",
-          "name": "VMUsername",
-          "apiVersion": "2015-06-01",
-          "properties": {
-            "value": "[parameters('adminUsername')]"
-          },
-          "dependsOn": [
-            "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
-          ]
-        },
-        {
-          "type": "secrets",
-          "name": "VMPassword",
-          "apiVersion": "2015-06-01",
-          "properties": {
-            "value": "[parameters('adminPassword')]"
-          },
-          "dependsOn": [
-            "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
-          ]
-        }
-      ]
+      }
     },
     {
-      "apiVersion": "2016-09-01",
+      "apiVersion": "2018-11-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('vnetName')]",
       "location": "[parameters('location')]",
@@ -177,7 +197,7 @@
       ]
     },
     {
-      "apiVersion": "2016-09-01",
+      "apiVersion": "2018-11-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
       "location": "[parameters('location')]",
@@ -189,7 +209,7 @@
       }
     },
     {
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2018-11-01",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('frontEndNSGName')]",
       "location": "[parameters('location')]",
@@ -244,7 +264,7 @@
       }
     },
     {
-      "apiVersion": "2016-09-01",
+      "apiVersion": "2018-11-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
@@ -270,7 +290,7 @@
       }
     },
     {
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2019-03-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
@@ -280,23 +300,24 @@
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "Standard_D1_v2"
+          "vmSize": "Standard_D4_v2"
         },
         "osProfile": {
           "computerName": "[variables('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
             "publisher": "Canonical",
             "offer": "UbuntuServer",
-            "sku": "14.04.5-LTS",
+            "sku": "16.04-LTS",
             "version": "latest"
           },
           "osDisk": {
             "name": "[concat(variables('vmName'),'_OSDisk')]",
-           "caching": "ReadWrite",
+            "caching": "ReadWrite",
             "createOption": "FromImage"
           }
         },
@@ -312,11 +333,10 @@
         {
           "type": "extensions",
           "name": "[variables('vmExtensionName')]",
-          "apiVersion": "2016-03-30",
+          "apiVersion": "2019-03-01",
           "location": "[parameters('location')]",
           "dependsOn": [
-            "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]",
-            "[resourceId('Microsoft.Storage/storageAccounts', variables('packerStorageAccountName'))]"
+            "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
           ],
           "properties": {
             "publisher": "Microsoft.Azure.Extensions",
@@ -329,7 +349,7 @@
               ]
             },
             "protectedSettings": {
-              "commandToExecute": "[concat('./', variables('_extensionScript'), ' -ju \"', parameters('adminUsername'), '\" -jp \"', parameters('adminPassword'), '\" -ai \"', parameters('servicePrincipalAppId'), '\" -ak \"', parameters('servicePrincipalAppKey'), '\" -ti \"', subscription().tenantId, '\" -si \"', subscription().subscriptionId, '\" -rg \"', resourceGroup().name, '\" -vn \"', variables('keyVaultName'), '\" -san \"', variables('storageAccountName'), '\" -sak \"', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2016-01-01').keys[0].value, '\" -psa \"', variables('packerStorageAccountName'), '\" -vf \"', reference(variables('publicIPAddressName')).dnsSettings.fqdn, '\" -r \"', parameters('location'), '\" -al \"', variables('_artifactsLocation'), '\" -st \"', variables('_artifactsLocationSasToken'), '\"')]"
+              "commandToExecute": "[concat('./', variables('_extensionScript'), ' -ju \"', parameters('adminUsername'), '\" -jp ''', parameters('adminPassword'), ''' -ai \"', parameters('servicePrincipalAppId'), '\" -ak \"', parameters('servicePrincipalAppKey'), '\" -ti \"', subscription().tenantId, '\" -si \"', subscription().subscriptionId, '\" -rg \"', resourceGroup().name, '\" -vn \"', variables('keyVaultName'), '\" -san \"', variables('storageAccountName'), '\" -sak \"', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2019-04-01').keys[0].value, '\" -vf \"', reference(variables('publicIPAddressName')).dnsSettings.fqdn, '\" -r \"', parameters('location'), '\" -al \"', variables('_artifactsLocation'), '\" -st \"', variables('_artifactsLocationSasToken'), '\"')]"
             }
           }
         }

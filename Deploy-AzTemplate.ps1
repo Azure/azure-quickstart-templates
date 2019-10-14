@@ -115,6 +115,9 @@ if ($UploadArtifacts -Or $ArtifactsLocationParameter -ne $null) {
         $StorageAccount = New-AzStorageAccount -StorageAccountName $StorageAccountName -Type 'Standard_LRS' -ResourceGroupName $StorageResourceGroupName -Location "$Location"
     }
 
+    if ($StorageContainerName.length -gt 63) {
+        $StorageContainerName = $StorageContainerName.Substring(0, 63)
+    }
     $ArtifactStagingLocation = $StorageAccount.Context.BlobEndPoint + $StorageContainerName + "/"   
 
     # Generate the value for artifacts location if it is not provided in the parameter file
@@ -159,6 +162,9 @@ else {
 
 $TemplateArgs.Add('TemplateParameterFile', $TemplateParametersFile)
 
+Write-Host ($TemplateArgs | Out-String)
+Write-Host ($OptionalParameters | Out-String)
+
 # Create the resource group only when it doesn't already exist - and only in RG scoped deployments
 if ($deploymentScope -eq "ResourceGroup") {
     if ((Get-AzResourceGroup -Name $ResourceGroupName -Location $Location -Verbose -ErrorAction SilentlyContinue) -eq $null) {
@@ -182,6 +188,8 @@ if ($ValidateOnly) {
     }
 }
 else {
+
+    $ErrorActionPreference = 'Continue' # Switch to Continue" so multiple errors can be formatted and output
     if ($deploymentScope -eq "Subscription") {
         #subscription scoped deployment
         New-AzDeployment -Name $DeploymentName `
@@ -199,7 +207,10 @@ else {
             -Force -Verbose `
             -ErrorVariable ErrorMessages
     }
+    $ErrorActionPreference = 'Stop' 
     if ($ErrorMessages) {
-        Write-Output '', 'Template deployment returned the following errors:', @(@($ErrorMessages) | ForEach-Object { $_.Exception.Message.TrimEnd("`r`n") })
+        Write-Output '', 'Template deployment returned the following errors:', '', @(@($ErrorMessages) | ForEach-Object { $_.Exception.Message })
+        Write-Error "Deployment failed."
     }
+
 }
