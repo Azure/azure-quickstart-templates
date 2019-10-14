@@ -5,10 +5,10 @@ $myRoot = $MyFile | Split-Path
 $MyOutputFile = Join-Path $myRoot "$myName.cache.json"
 
 
-$azEnv = Get-AzureRmEnvironment
+$azEnv = Get-AzEnvironment
 if (-not $azEnv) {
     Write-Error "Could not list providers.  You may not be logged in."
     return
 }
 
-$azEnv | ConvertTo-Json -Depth 10 -Compress  | Set-Content $MyOutputFile 
+$azEnv | ConvertTo-Json -Depth 10 | Set-Content $MyOutputFile 

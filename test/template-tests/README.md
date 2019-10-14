@@ -6,7 +6,6 @@ You can run the full suite of tests by using Test-AzureRMTemplate.cmd (on Window
 
 This will run the full suite of applicable tests on your template.  To run a specific group of tests, use:
 
-
     Test-AzureRMTemplate -TemplatePath $thePathToYourTemplate -Test deploymentTemplate 
     # This will run deployment template tests on all appropriate files
     <# There are currently three groups of tests:
@@ -21,7 +20,6 @@ This will run the full suite of applicable tests on your template.  To run a spe
     Test-AzureRMTemplate -TemplatePath $thePathToYourTemplate -Test "Resources Should Have Location" -File MyNestedTemplate.json 
     # This will run the specific test, 'Resources Should have Location', but only on MyNestedTemplate.json        
       
-
 
 #### Running Tests on Linux
 
@@ -41,7 +39,6 @@ You can then test a particular path by using:
 
 You can use a BASH file or Command Script to run on the command line.  To do so, simply call Test-AzureRMTemplate.sh (or .cmd).  This will pass the arguments down to the PowerShell script.  To get help, pass a -?
 
-
 ### Inspecting Test Results
 
 By default, tests are run in Pester, which displays output in a colorized format, but does not return individual failures to the pipeline.  
@@ -59,6 +56,5 @@ Many test failures will return a TargetObject, for instance, the exact property 
     $FailureTargetObjects = $TestFailures |
         Select-Object -ExpandProperty Errors | 
         Select-Object -ExpandProperty TargetObject
-
 
 Please note that not all test cases will return a target object.  If no target object is returned, the target should be clear from the text of the error.

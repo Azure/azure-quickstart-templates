@@ -1,5 +1,14 @@
 # Immutable Infrastructure CI/CD using Jenkins and Terraform on Azure Virtual Machine Scale Sets
 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/jenkins-cicd-vmss/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/jenkins-cicd-vmss/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/jenkins-cicd-vmss/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/jenkins-cicd-vmss/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/jenkins-cicd-vmss/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/jenkins-cicd-vmss/CredScanResult.svg" />&nbsp;
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fjenkins-cicd-vmss%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
@@ -33,7 +42,6 @@ Azure is a world-class cloud for hosting virtual machines running Windows or Lin
    - **_artifacts Location** - Leave it with the default value.
    - **_artifacts Location Sas Token** - Leave it with the default value.
 
-
 ## Usage
 
 ### Check Jenkins Build Job Status
@@ -57,7 +65,6 @@ Azure is a world-class cloud for hosting virtual machines running Windows or Lin
 
 5. The build console output will be shown and keep refreshed until the build completes.
    ![](images/jenkins-build-output.png)
-
 
 ### Manage Jenkins
 
@@ -112,3 +119,4 @@ The VMSS components are created in a separate resource group whose name is postf
 2. Navigate to the HelloWorld web app.
 
    ![](images/vmss-webapp.png)
+

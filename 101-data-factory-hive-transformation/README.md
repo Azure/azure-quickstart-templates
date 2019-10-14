@@ -1,4 +1,13 @@
 # Create a pipeline to transform data by running Hive script 
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-hive-transformation/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-hive-transformation/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-hive-transformation/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-hive-transformation/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-hive-transformation/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-hive-transformation/CredScanResult.svg" />&nbsp;
 This sample creates a data factory with a data pipeline that processes data by running Hive script on an Azure HDInsight (Hadoop) cluster. 
 
 ## Prerequisites
@@ -16,10 +25,10 @@ This sample creates a data factory with a data pipeline that processes data by r
     - hiveScriptFile is the name of the hive script file (HQL). For the sample, it is **partitionweblogs.hql**. 
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-data-factory-hive-transformation%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-data-factory-hive-transformation%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
 When you deploy this Azure Resource Template, a data factory is created with the following entities: 
@@ -62,4 +71,5 @@ Simply execute the script and pass in the folder name of the sample.  For exampl
 ```
 ```bash
 azure-group-deploy.sh -a 101-data-factory-hive-transformation -l eastus -u
+
 
