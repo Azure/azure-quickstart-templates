@@ -1,5 +1,14 @@
 # Create an Azure Cosmos DB SQL API container with stored procedure, trigger and user defined function
 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-sql-container-sprocs/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-sql-container-sprocs/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-sql-container-sprocs/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-sql-container-sprocs/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-sql-container-sprocs/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-sql-container-sprocs/CredScanResult.svg" />&nbsp;
+
 This template creates an Azure Cosmos account for SQL (Core) API and a container with a stored procedure, trigger and user defined function.
 
 Below are the parameters which can be user configured in the parameters file including:
