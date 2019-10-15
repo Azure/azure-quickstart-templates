@@ -20,6 +20,6 @@ Set-DhcpServerv4OptionValue -DnsServer 168.63.129.16 -Router $NestedSubnet.HostA
 
 Install-RemoteAccess -VpnType RoutingOnly
 cmd.exe /c "netsh routing ip nat install"
-cmd.exe /c "netsh routing ip nat add interface '$($NIC1IP.InterfaceAlias)'"
+cmd.exe /c "netsh routing ip nat add interface $($NIC1IP.InterfaceAlias)"
 cmd.exe /c "netsh routing ip add persistentroute dest=$($NatSubnet.NetworkAddress) mask=$($NATSubnet.SubnetMask) name=$($NIC1IP.InterfaceAlias) nhop=$($NATSubnet.HostAddresses[0])"
-cmd.exe /c "netsh routing ip add persistentroute dest=$($VirtualNetwork.NetworkAddress) mask=$($VirtualNetwork.SubnetMask) name=$($NIC2IP.InterfaceAlias) nhop=$($HyperVSubnet.HostAddresses[0])"
+cmd.exe /c "netsh routing ip add persistentroute dest=$($VirtualNetwork.NetworkAddress) mask=$($VirtualNetwork.SubnetMask) name=""$($NIC2IP.InterfaceAlias)"" nhop=$($HyperVSubnet.HostAddresses[0])"
