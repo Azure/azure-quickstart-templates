@@ -1,8 +1,14 @@
 [cmdletbinding()]
 param (
-    [string]$GhostedSubnetPrefix = "172.16.2.0/24",
-    [string]$VirtualNetworkPrefix = "172.16.0.0/22"
+    [string]$GhostedSubnetPrefix,
+    [string]$VirtualNetworkPrefix
 )
+
+Start-Transcript C:\HVHostSetup\ScriptLog.log -Force -Append
+
+Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
+Install-Module Subnet -Force
+Install-WindowsFeature -Name Hyper-V,DHCP,RemoteAccess,Routing -IncludeManagementTools
 
 New-VMSwitch -Name "NestedSwitch" -SwitchType Internal
 
@@ -23,3 +29,5 @@ cmd.exe /c "netsh routing ip nat install"
 cmd.exe /c "netsh routing ip nat add interface $($NIC1IP.InterfaceAlias)"
 cmd.exe /c "netsh routing ip add persistentroute dest=$($NatSubnet.NetworkAddress) mask=$($NATSubnet.SubnetMask) name=$($NIC1IP.InterfaceAlias) nhop=$($NATSubnet.HostAddresses[0])"
 cmd.exe /c "netsh routing ip add persistentroute dest=$($VirtualNetwork.NetworkAddress) mask=$($VirtualNetwork.SubnetMask) name=""$($NIC2IP.InterfaceAlias)"" nhop=$($HyperVSubnet.HostAddresses[0])"
+
+Stop-Transcript
