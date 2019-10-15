@@ -31,3 +31,5 @@ cmd.exe /c "netsh routing ip add persistentroute dest=$($NatSubnet.NetworkAddres
 cmd.exe /c "netsh routing ip add persistentroute dest=$($VirtualNetwork.NetworkAddress) mask=$($VirtualNetwork.SubnetMask) name=""$($NIC2IP.InterfaceAlias)"" nhop=$($HyperVSubnet.HostAddresses[0])"
 
 Stop-Transcript
+
+Restart-Computer
