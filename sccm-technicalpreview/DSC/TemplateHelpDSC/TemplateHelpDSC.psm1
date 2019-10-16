@@ -726,8 +726,7 @@ class WaitForDomainReady
             Start-Sleep -Seconds 30
             $testconnection = test-connection -ComputerName $_DCName -ErrorAction Ignore
         }
-        Write-Verbose "Domain is ready now. Sleep: $_WaitSeconds"
-        Start-Sleep -Seconds $_WaitSeconds
+        Write-Verbose "Domain is ready now."
     }
 
     [bool] Test()
@@ -1166,8 +1165,41 @@ class JoinDomain
     {
         $_credential = $this.Credential
         $_DomainName = $this.DomainName
-        Add-Computer -DomainName $_DomainName -Credential $_credential
-		$global:DSCMachineStatus = 1
+        $_retryCount = 100
+        try
+        {       
+            Add-Computer -DomainName $_DomainName -Credential $_credential -ErrorAction Stop
+            $global:DSCMachineStatus = 1
+        }
+        catch
+        {
+            Write-Verbose "Failed to join into the domain , retry..."
+            $CurrentDomain = (Get-WmiObject -Class Win32_ComputerSystem).Domain
+            $count = 0
+            $flag = $false
+            while($CurrentDomain -ne $_DomainName)
+            {
+                if($count -lt $_retryCount)
+                {
+                    $count++
+                    Write-Verbose "retry count: $count"
+                    Start-Sleep -Seconds 30
+                    Add-Computer -DomainName $_DomainName -Credential $_credential -ErrorAction Ignore
+                    
+                    $CurrentDomain = (Get-WmiObject -Class Win32_ComputerSystem).Domain
+                }
+                else
+                {
+                    $flag = $true
+                    break
+                }
+            }
+            if($flag)
+            {
+                Add-Computer -DomainName $_DomainName -Credential $_credential
+            }
+            $global:DSCMachineStatus = 1
+        }
     }
 
     [bool] Test()
