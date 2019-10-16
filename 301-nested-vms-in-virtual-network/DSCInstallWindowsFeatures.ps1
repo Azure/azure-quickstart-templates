@@ -4,20 +4,25 @@ Configuration InstallWindowsFeatures {
 
     Node "localhost" {
 
+        LocalConfigurationManager {
+            RebootNodeIfNeeded = $true
+            ActionAfterReboot  = 'ContinueConfiguration'
+        }
+
         WindowsFeature Hyper-V {
-            Name = "Hyper-V"
+            Name   = "Hyper-V"
             Ensure = "Present"
         }
         WindowsFeature DHCP {
-            Name = "DHCP"
+            Name   = "DHCP"
             Ensure = "Present"
         }
         WindowsFeature RemoteAccess {
-            Name = "RemoteAccess"
+            Name   = "RemoteAccess"
             Ensure = "Present"
         }
         WindowsFeature Routing {
-            Name = "Routing"
+            Name   = "Routing"
             Ensure = "Present"
         }
         
