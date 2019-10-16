@@ -182,7 +182,7 @@
   },
   "variables": {
     "updateNetworkingTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/updatenetworking.json', parameters('_artifactsLocationSasToken')))]",
-    "DSCInstallWindowsFeaturesUri": "[uri(parameters('_artifactsLocation'), concat('scripts/DSCInstallWindowsFeatures.zip', parameters('_artifactsLocationSasToken')))]",
+    "installWindowsFeaturesScriptUri": "[uri(parameters('_artifactsLocation'), concat('InstallWindowsFeatures.ps1', parameters('_artifactsLocationSasToken')))]",
     "HVHostSetupScriptUri": "[uri(parameters('_artifactsLocation'), concat('HVHostSetup.ps1', parameters('_artifactsLocationSasToken')))]",
     "NATSubnetNSGName": "[concat(parameters('NATSubnetName'), 'NSG')]",
     "hyperVSubnetNSGName": "[concat(parameters('hyperVSubnetName'), 'NSG')]",
@@ -445,27 +445,25 @@
     },
     {
       "condition": true,
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "apiVersion": "2019-03-01",
-      "location": "[parameters('location')]",
-      "name": "[concat(parameters('HostVirtualMachineName'), '/InstallWindowsFeatures')]",
-      "dependsOn":[
+       "type": "Microsoft.Compute/virtualMachines/extensions",
+       "apiVersion": "2019-03-01",
+       "location": "[parameters('location')]",
+       "name": "[concat(parameters('HostVirtualMachineName'), '/InstallWindowsFeatures')]",
+       "dependsOn":[
         "[parameters('HostVirtualMachineName')]"
       ],
       "properties": {
-        "publisher": "Microsoft.Powershell",
-        "type": "DSC",
-        "typeHandlerVersion": "2.77",
+        "publisher": "Microsoft.Compute",
+        "type": "CustomScriptExtension",
+        "typeHandlerVersion": "1.9",
         "autoUpgradeMinorVersion": true,
-        "settings": {
-          "wmfVersion": "latest",
-          "configuration": {
-            "url": "[variables('DSCInstallWindowsFeaturesUri')]",
-            "script": "InstallWindowsFeatures.ps1",
-            "function": "InstallWindowsFeatures"
-          }
+        "settings":{
+          "fileUris": [
+            "[variables('HVHostSetupScriptUri')]"
+          ],
+          "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File HVHostSetup.ps1 -GhostedSubnetPrefix ', parameters('ghostedSubnetPrefix'), ' -VirtualNetworkPrefix ', parameters('virtualNetworkAddressPrefix'))]"
         }
-      } 
+      }
     }
   ],
   "outputs": {
