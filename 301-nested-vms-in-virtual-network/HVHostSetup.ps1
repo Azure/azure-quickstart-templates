@@ -1,5 +1,7 @@
 [cmdletbinding()]
 param (
+    [string]$NATSUbnetPrefix,
+    [string]$HyperVSubnetPrefix,
     [string]$GhostedSubnetPrefix,
     [string]$VirtualNetworkPrefix
 )
@@ -12,12 +14,12 @@ Install-Module Subnet -Force
 
 New-VMSwitch -Name "NestedSwitch" -SwitchType Internal
 
-$NIC1IP = Get-NetIPAddress | Where-Object -Property AddressFamily -EQ IPv4 | Where-Object -Property InterfaceAlias -EQ Ethernet
-$NIC2IP = Get-NetIPAddress | Where-Object -Property AddressFamily -EQ IPv4 | Where-Object -Property InterfaceAlias -EQ "Ethernet 2"
-$NATSubnet = Get-Subnet -IP $NIC1IP.IPAddress -MaskBits $NIC1IP.PrefixLength
-$HyperVSubnet = Get-Subnet -IP $NIC2IP.IPAddress -MaskBits $NIC2IP.PrefixLength
+$NATSubnet = Get-Subnet $NATSubnetPrefix
+$HyperVSubnet = Get-Subnet $HyperVSubnetPrefix
 $NestedSubnet = Get-Subnet $GhostedSubnetPrefix
 $VirtualNetwork = Get-Subnet $VirtualNetworkPrefix
+$NIC1IP = Get-NetIPAddress | Where-Object -Property AddressFamily -EQ IPv4 | Where-Object -Property IPAddress -EQ $NATSubnet.HostAddresses[3]
+$NIC2IP = Get-NetIPAddress | Where-Object -Property AddressFamily -EQ IPv4 | Where-Object -Property IPAddress -EQ $HyperVSubnet.HostAddresses[3]
 
 New-NetIPAddress -IPAddress $NestedSubnet.HostAddresses[0] -InterfaceAlias "vEthernet (NestedSwitch)"
 
