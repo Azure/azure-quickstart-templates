@@ -181,14 +181,14 @@
     }
   },
   "variables": {
-    "updateNetworkingTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/updatenetworking.json', parameters('_artifactsLocationSasToken')))]",
-    "DSCInstallWindowsFeaturesUri": "[uri(parameters('_artifactsLocation'), concat('DSCInstallWindowsFeatures.zip', parameters('_artifactsLocationSasToken')))]",
-    "HVHostSetupScriptUri": "[uri(parameters('_artifactsLocation'), concat('HVHostSetup.ps1', parameters('_artifactsLocationSasToken')))]",
     "NATSubnetNSGName": "[concat(parameters('NATSubnetName'), 'NSG')]",
     "hyperVSubnetNSGName": "[concat(parameters('hyperVSubnetName'), 'NSG')]",
     "ghostedSubnetNSGName": "[concat(parameters('ghostedSubnetName'), 'NSG')]",
     "azureVMsSubnetNSGName": "[concat(parameters('azureVMsSubnetName'), 'NSG')]",
-    "azureVMsSubnetUDRName": "[concat(parameters('azureVMsSubnetName'), 'UDR')]"
+    "azureVMsSubnetUDRName": "[concat(parameters('azureVMsSubnetName'), 'UDR')]",
+    "DSCExtensionName": "[concat(parameters('HostVirtualMachineName'), '/InstallWindowsFeatures')]",
+    "DSCInstallWindowsFeaturesUri": "[uri(parameters('_artifactsLocation'), concat('DSCInstallWindowsFeatures.zip', parameters('_artifactsLocationSasToken')))]",
+    "HVHostSetupScriptUri": "[uri(parameters('_artifactsLocation'), concat('HVHostSetup.ps1', parameters('_artifactsLocationSasToken')))]"
   },
   "resources": [
     {
@@ -448,7 +448,7 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "apiVersion": "2019-03-01",
       "location": "[parameters('location')]",
-      "name": "[concat(parameters('HostVirtualMachineName'), '/InstallWindowsFeatures')]",
+      "name": "[variables('DSCExtensionName')]",
       "dependsOn": [
         "[parameters('HostVirtualMachineName')]"
       ],
@@ -464,6 +464,29 @@
             "script": "DSCInstallWindowsFeatures.ps1",
             "function": "InstallWindowsFeatures"
           }
+        }
+      }
+    },
+    {
+      "condition": true,
+       "type": "Microsoft.Compute/virtualMachines/extensions",
+       "apiVersion": "2019-03-01",
+       "location": "[parameters('location')]",
+       "name": "[concat(parameters('HostVirtualMachineName'), '/HVHOSTSetup')]",
+       "dependsOn":[
+        "[parameters('HostVirtualMachineName')]",
+        "[variables('DSCExtensionName')]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "CustomScriptExtension",
+        "typeHandlerVersion": "1.9",
+        "autoUpgradeMinorVersion": true,
+        "settings":{
+          "fileUris": [
+            "[variables('HVHostSetupScriptUri')]"
+          ],
+          "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File HVHostSetup.ps1 -GhostedSubnetPrefix ', parameters('ghostedSubnetPrefix'), ' -VirtualNetworkPrefix ', parameters('virtualNetworkAddressPrefix'))]"
         }
       }
     }
