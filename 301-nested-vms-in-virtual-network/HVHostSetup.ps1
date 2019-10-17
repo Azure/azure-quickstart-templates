@@ -6,17 +6,13 @@ param (
     [string]$VirtualNetworkPrefix
 )
 
-Start-Transcript C:\HVHostSetup\ScriptLog.log -Force -Append
-
 Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
 Install-Module Subnet -Force
-
 
 New-VMSwitch -Name "NestedSwitch" -SwitchType Internal
 
 $NIC1IP = Get-NetIPAddress | Where-Object -Property AddressFamily -EQ IPv4 | Where-Object -Property IPAddress -EQ $NIC1IPAddress
 $NIC2IP = Get-NetIPAddress | Where-Object -Property AddressFamily -EQ IPv4 | Where-Object -Property IPAddress -EQ $NIC2IPAddress
-
 
 $NATSubnet = Get-Subnet -IP $NIC1IP.IPAddress -MaskBits $NIC1IP.PrefixLength
 $HyperVSubnet = Get-Subnet -IP $NIC2IP.IPAddress -MaskBits $NIC2IP.PrefixLength
@@ -30,8 +26,6 @@ Set-DhcpServerv4OptionValue -DnsServer 168.63.129.16 -Router $NestedSubnet.HostA
 
 Install-RemoteAccess -VpnType RoutingOnly
 cmd.exe /c "netsh routing ip nat install"
-cmd.exe /c "netsh routing ip nat add interface $($NIC1IP.InterfaceAlias)"
-cmd.exe /c "netsh routing ip add persistentroute dest=$($NatSubnet.NetworkAddress) mask=$($NATSubnet.SubnetMask) name=$($NIC1IP.InterfaceAlias) nhop=$($NATSubnet.HostAddresses[0])"
+cmd.exe /c "netsh routing ip nat add interface ""$($NIC1IP.InterfaceAlias)"""
+cmd.exe /c "netsh routing ip add persistentroute dest=$($NatSubnet.NetworkAddress) mask=$($NATSubnet.SubnetMask) name=""$($NIC1IP.InterfaceAlias)"" nhop=$($NATSubnet.HostAddresses[0])"
 cmd.exe /c "netsh routing ip add persistentroute dest=$($VirtualNetwork.NetworkAddress) mask=$($VirtualNetwork.SubnetMask) name=""$($NIC2IP.InterfaceAlias)"" nhop=$($HyperVSubnet.HostAddresses[0])"
-
-Stop-Transcript
