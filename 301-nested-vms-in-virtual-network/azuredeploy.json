@@ -385,13 +385,99 @@
     },
     {
       "condition": true,
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-05-01",
+      "name": "UpdateNetworking",
+      "dependsOn": [
+        "[variables('azureVmsSubnetUDRName')]",
+        "[parameters('HostNetworkInterface1Name')]",
+        "[parameters('HostNetworkInterface2Name')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "resources": [
+            {
+              "condition": true,
+              "type": "Microsoft.Network/routeTables",
+              "apiVersion": "2019-04-01",
+              "name": "[variables('azureVMsSubnetUDRName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "routes": [
+                  {
+                    "name": "Nested-VMs",
+                    "properties": {
+                      "addressPrefix": "[parameters('ghostedSubnetPrefix')]",
+                      "nextHopType": "VirtualAppliance",
+                      "nextHopIPAddress": "[reference(parameters('HostNetworkInterface2Name')).ipconfigurations[0].properties.privateIPAddress]"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "condition": true,
+              "type": "Microsoft.Network/networkInterfaces",
+              "apiVersion": "2019-04-01",
+              "name": "[parameters('HostNetworkInterface1Name')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "ipConfigurations": [
+                  {
+                    "name": "ipconfig",
+                    "properties": {
+                      "primary": "true",
+                      "privateIPAllocationMethod": "Static",
+                      "privateIPAddress": "[reference(parameters('HostNetworkInterface1Name')).ipconfigurations[0].properties.privateIPAddress]",
+                      "subnet": {
+                        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('NATSubnetName'))]"
+                      },
+                      "publicIPAddress": {
+                        "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('HostPublicIPAddressName'))]"
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "condition": true,
+              "type": "Microsoft.Network/networkInterfaces",
+              "apiVersion": "2019-04-01",
+              "name": "[parameters('HostNetworkInterface2Name')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "ipConfigurations": [
+                  {
+                    "name": "ipconfig",
+                    "properties": {
+                      "primary": "true",
+                      "privateIPAllocationMethod": "Static",
+                      "privateIPAddress": "[reference(parameters('HostNetworkInterface2Name')).ipconfigurations[0].properties.privateIPAddress]",
+                      "subnet": {
+                        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('hyperVSubnetName'))]"
+                      }
+                    }
+                  }
+                ],
+                "enableIPForwarding": true
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "condition": true,
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2019-03-01",
       "location": "[parameters('location')]",
       "name": "[parameters('HostVirtualMachineName')]",
       "dependsOn": [
-        "[parameters('HostNetworkInterface1Name')]",
-        "[parameters('HostNetworkInterface2Name')]"
+        "[resourceId('Microsoft.Resources/deployments', 'UpdateNetworking')]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -486,7 +572,7 @@
           "fileUris": [
             "[variables('HVHostSetupScriptUri')]"
           ],
-          "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File HVHostSetup.ps1 -NATSubnetPrefix', parameters('NATSubnetPrefix'), ' -HyperVSubnetPrefix ', parameters('HyperVSubnetPrefix'), ' -GhostedSubnetPrefix ', parameters('ghostedSubnetPrefix'), ' -VirtualNetworkPrefix ', parameters('virtualNetworkAddressPrefix'))]"
+          "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File HVHostSetup.ps1 -NIC1IPAddress ', reference(parameters('HostNetworkInterface1Name')).ipconfigurations[0].properties.privateIPAddress, ' -NIC2IPAddress ', reference(parameters('HostNetworkInterface2Name')).ipconfigurations[0].properties.privateIPAddress, ' -GhostedSubnetPrefix ', parameters('ghostedSubnetPrefix'), ' -VirtualNetworkPrefix ', parameters('virtualNetworkAddressPrefix'))]"
         }
       }
     }

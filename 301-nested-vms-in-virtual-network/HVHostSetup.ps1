@@ -1,7 +1,7 @@
 [cmdletbinding()]
 param (
-    [string]$NATSUbnetPrefix,
-    [string]$HyperVSubnetPrefix,
+    [string]$NIC1IPAddress,
+    [string]$NIC2IPAddress,
     [string]$GhostedSubnetPrefix,
     [string]$VirtualNetworkPrefix
 )
@@ -14,16 +14,18 @@ Install-Module Subnet -Force
 
 New-VMSwitch -Name "NestedSwitch" -SwitchType Internal
 
-$NATSubnet = Get-Subnet $NATSubnetPrefix
-$HyperVSubnet = Get-Subnet $HyperVSubnetPrefix
+$NIC1IP = Get-NetIPAddress | Where-Object -Property AddressFamily -EQ IPv4 | Where-Object -Property IPAddress -EQ $NIC1IPAddress
+$NIC2IP = Get-NetIPAddress | Where-Object -Property AddressFamily -EQ IPv4 | Where-Object -Property IPAddress -EQ $NIC2IPAddress
+
+
+$NATSubnet = Get-Subnet -IP $NIC1IP.IPAddress -MaskBits $NIC1IP.PrefixLength
+$HyperVSubnet = Get-Subnet -IP $NIC2IP.IPAddress -MaskBits $NIC2IP.PrefixLength
 $NestedSubnet = Get-Subnet $GhostedSubnetPrefix
 $VirtualNetwork = Get-Subnet $VirtualNetworkPrefix
-$NIC1IP = Get-NetIPAddress | Where-Object -Property AddressFamily -EQ IPv4 | Where-Object -Property IPAddress -EQ $NATSubnet.HostAddresses[3]
-$NIC2IP = Get-NetIPAddress | Where-Object -Property AddressFamily -EQ IPv4 | Where-Object -Property IPAddress -EQ $HyperVSubnet.HostAddresses[3]
 
-New-NetIPAddress -IPAddress $NestedSubnet.HostAddresses[0] -InterfaceAlias "vEthernet (NestedSwitch)"
+New-NetIPAddress -IPAddress $NestedSubnet.HostAddresses[0] -PrefixLength $NestedSubnet.MaskBits -InterfaceAlias "vEthernet (NestedSwitch)"
 
-Add-DhcpServerv4Scope -Name "Nested VMs" -StartRange $NestedSubnet.HostAddresses[1] -EndRange $NestedSubnet.HostAddresses[-1] -SubnetMask $NestedSubnet.SubnetMask.IPAddressToString
+Add-DhcpServerv4Scope -Name "Nested VMs" -StartRange $NestedSubnet.HostAddresses[1] -EndRange $NestedSubnet.HostAddresses[-1] -SubnetMask $NestedSubnet.SubnetMask
 Set-DhcpServerv4OptionValue -DnsServer 168.63.129.16 -Router $NestedSubnet.HostAddresses[0]
 
 Install-RemoteAccess -VpnType RoutingOnly
