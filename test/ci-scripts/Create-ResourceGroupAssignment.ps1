@@ -8,10 +8,11 @@ param(
     [string][Parameter(mandatory=$true)] $appId
 )
 
-#Create the group only if it doesn't already exist
+# Create the group only if it doesn't already exist
 if ((Get-AzResourceGroup -Name $ResourceGroupName -Location $Location -Verbose -ErrorAction SilentlyContinue) -eq $null) {
     New-AzResourceGroup -Name $ResourceGroupName -Location $Location -Verbose -Force
 }
 
-#Note that the service principal assigning the role must have AAD perms to query AD for the objectId
-New-AzRoleAssignment -ObjectId $(Get-AzADServicePrincipal -ApplicationId $appId).Id -RoleDefinitionName Contributor  -ResourceGroupName $ResourceGroupName -Verbose
+# Note that the service principal assigning the role must have AAD perms to query AD for the objectId
+# Owner is used on the ResourceGroup in order to delegate permissions to that group
+New-AzRoleAssignment -ObjectId $(Get-AzADServicePrincipal -ApplicationId $appId).Id -RoleDefinitionName Owner -ResourceGroupName $ResourceGroupName -Verbose
