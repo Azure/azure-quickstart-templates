@@ -122,13 +122,22 @@
       "metadata": {
         "description": "A Capture Name Format must contain {Namespace}, {EventHub}, {PartitionId}, {Year}, {Month}, {Day}, {Hour}, {Minute} and {Second} fields. These can be arranged in any order with or without delimeters. E.g.  Prod_{EventHub}/{Namespace}\\{PartitionId}_{Year}_{Month}/{Day}/{Hour}/{Minute}/{Second}"
       }
+    },
+	"keyVaultName": {
+      "type": "string",
+      "metadata": {
+        "description": "Specifies the name of the key vault."
+      }
     }
   },
   "variables": {
     "RawOrderOutputContainerName": "raw",
     "DataCleaningOutputContainerName": "transformed",
     "defaultSASKeyName": "RootManageSharedAccessKey",
-    "authRuleResourceId": "[resourceId('Microsoft.EventHub/namespaces/authorizationRules', parameters('eventHubNamespaceName'), variables('defaultSASKeyName'))]"
+    "authRuleResourceId": "[resourceId('Microsoft.EventHub/namespaces/authorizationRules', parameters('eventHubNamespaceName'), variables('defaultSASKeyName'))]",
+	"subscriptionid": "[subscription().subscriptionId]",
+	"rgName":"[resourcegroup().name]",
+	"keyVaultURL":"[concat('/subscriptions/',parameters('subscriptionid'), '/resourceGroups/',parameters('rgName'),'/providers/Microsoft.KeyVault/vaults/',parameters('keyVaultName'))]"
   },
   "resources": [
     {
@@ -197,18 +206,45 @@
               }
             }
           }
-        }
+        },
+		
+		{
+		  "type": "Microsoft.KeyVault/vaults/secrets",
+		  "name": "[parameters('NamespaceConnectionString')]",
+		  "apiVersion": "2018-02-14",
+		  "location": "[parameters('location')]",
+		  "properties": {
+			"value": "[listkeys(variables('authRuleResourceId'), '2018-01-01').primaryConnectionString]"
+		  }
+		},
+		{
+		  "type": "Microsoft.KeyVault/vaults/secrets",
+		  "name": "[parameters('SharedAccessPolicyPrimaryKey')]",
+		  "apiVersion": "2018-02-14",
+		  "location": "[parameters('location')]",
+		  "properties": {
+			"value": "[listkeys(variables('authRuleResourceId'), '2018-01-01').primaryKey]"
+		  }
+		}
       ]
     }
   ],
   "outputs": {
     "NamespaceConnectionString": {
-      "type": "secureString",
-      "value": "[listkeys(variables('authRuleResourceId'), '2018-01-01').primaryConnectionString]"
+            "reference": {
+              "keyVault": {
+                "id":"[parameters('keyVaultURL')]"
+              },
+              "secretName": "NamespaceConnectionString"
+            }
     },
     "SharedAccessPolicyPrimaryKey": {
-      "type": "secureString",
-      "value": "[listkeys(variables('authRuleResourceId'), '2018-01-01').primaryKey]"
+            "reference": {
+              "keyVault": {
+                "id":"[parameters('keyVaultURL')]"
+              },
+              "secretName": "SharedAccessPolicyPrimaryKey"
+            }
     }
   }
 }
