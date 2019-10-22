@@ -1,4 +1,4 @@
-# Deployment of Virtual Machine to be a Hyper-V Host
+# 301-nested-vms-in-virtual-network
 
 <IMG SRC="https://azbotstorage.blob.core.windows.net/badges/100-blank-template/PublicLastTestDate.svg" />&nbsp;
 <IMG SRC="https://azbotstorage.blob.core.windows.net/badges/100-blank-template/PublicDeployment.svg" />&nbsp;
@@ -9,7 +9,7 @@
 <IMG SRC="https://azbotstorage.blob.core.windows.net/badges/100-blank-template/BestPracticeResult.svg" />&nbsp;
 <IMG SRC="https://azbotstorage.blob.core.windows.net/badges/100-blank-template/CredScanResult.svg" />&nbsp;
 
-This template will automate the deployment of a Virtual Machine to be a Hyper-V Host to be used for nested virtualization. Nested Virtual Machines will be able to communicate out to the internet and to other resoruces on your network.
+This template will automate the deployment of a Virtual Machine to be a Hyper-V Host to be used for nested virtualization. Nested Virtual Machines will be able to communicate out to the internet and to other resources on your network.
 
 The setup is completed based on the procedure from the article [Nested VMs in Azure Virtual Networks](https://docs.microsoft.com/en-gb/virtualization/hyper-v-on-windows/user-guide/nested-virtualization-azure-virtual-network)
 
