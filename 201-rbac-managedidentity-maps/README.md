@@ -1,4 +1,4 @@
-# "RBAC - Grant Azure AD authorization access on Azure Maps for a Managed Identity
+# RBAC - Grant Azure AD authorization access on Azure Maps for a Managed Identity
 
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-rbac-managedidentity-maps/PublicLastTestDate.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-rbac-managedidentity-maps/PublicDeployment.svg" />&nbsp;
