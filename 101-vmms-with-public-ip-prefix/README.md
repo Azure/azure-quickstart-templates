@@ -19,7 +19,7 @@
 This template deploys a VMSS with Public IP Prefix attached. 
 
 ## Parameters + Tips
-Make sure to replace the parameters with your own information. You can configure the VM SKU for the VMSS and the public IP prefix length as you desire. Be aware of naming conventions and restrictions - 400 errors encountered during deployment may be due to issues with your VMSS's name.  
+Make sure to replace the parameters with your own information. You can configure the VM SKU for the VMSS and the public IP prefix length as you desire. Be aware of naming conventions and restrictions - HTTP 400 and authenticaiton errors encountered during deployment may be due to issues with your VMSS's name.  
 
 
 
