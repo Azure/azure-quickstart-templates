@@ -129,6 +129,13 @@ else {
         else {
             $r.status = $ENV:BUILD_REASON
         }
+    } else { # if this isn't a PR, then it's a scheduled build so set the status back to "live" as the test is complete
+        if ($r.status -eq $null) {
+            Add-Member -InputObject $r -NotePropertyName "status" -NotePropertyValue "Live"
+        }
+        else {
+            $r.status = "Live"
+        }
     }
 
     # update metadata columns
