@@ -132,8 +132,12 @@ if ($PurgeOldRows) {
     }
 }
 
-$t = Get-AzTableRow -table $cloudTable | Sort-Object -Property $ResultDeploymentLastTestDateParameter # sort based on the last test date for the could being tested
-$t | ft
+$t = Get-AzTableRow -table $cloudTable -ColumnName "status" -Value "Live" -Operator Equal | Sort-Object -Property $ResultDeploymentLastTestDateParameter # sort based on the last test date for the could being tested
+
+$t[0].Status = "Testing" # Set the status to "Testing" in case the build takes more than an hour, so the next scheduled build doesn't pick up the same sample
+$t[0] | Update-AzTableRow -Table $cloudTable
+
+$t | ft RowKey, Status, dateUpdated, PublicLastTestDate, PublicDeployment, FairfaxLastTestDate, FairfaxDeployment, dateUpdated
 
 # Write the pipeline variable
 $FolderString = "$BuildSourcesDirectory\$($t[0].RowKey)"
