@@ -2,13 +2,7 @@
   "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "storageAccountName": {
-      "type": "string",
-      "metadata": {
-        "description": "Your existing storage account name where you want the blobs be archived"
-      }
-    },
-	"location": {
+    "location": {
       "type": "string",
       "metadata": {
         "description": "lcoation for the EventHub namespace"
@@ -18,6 +12,22 @@
       "type": "string",
       "metadata": {
         "description": "Name of the EventHub namespace"
+      }
+    },
+    "captureTime": {
+      "type": "int",
+      "minValue": 60,
+      "maxValue": 900,
+      "metadata": {
+        "description": "the time window in seconds for the archival"
+      }
+    },
+    "captureSize": {
+      "type": "int",
+      "minValue": 10485760,
+      "maxValue": 524288000,
+      "metadata": {
+        "description": "the size window in bytes for evetn hub capture"
       }
     },
     "eventhubSku": {
@@ -51,26 +61,6 @@
         "description": "Enable or disable AutoInflate"
       }
     },
-    "maximumThroughputUnits": {
-      "type": "int",
-      "minValue": 0,
-      "maxValue": 20,
-      "metadata": {
-        "description": "Upper limit of throughput units when AutoInflate is enabled, vaule should be within 0 to 20 throughput units."
-      }
-    },
-    "DataCleaningInputStream": {
-      "type": "string",
-      "metadata": {
-        "description": "Name of the Event Hub"
-      }
-    },
-    "DataCleaningOutputStream": {
-      "type": "string",
-      "metadata": {
-        "description": "Name of the second Event Hub"
-      }
-    },
     "messageRetentionInDays": {
       "type": "int",
       "minValue": 1,
@@ -96,20 +86,30 @@
         "description": "The encoding format Eventhub capture serializes the EventData when archiving to your storage"
       }
     },
-    "captureTime": {
-      "type": "int",
-      "minValue": 60,
-      "maxValue": 900,
+    "storageAccountName": {
+      "type": "string",
       "metadata": {
-        "description": "the time window in seconds for the archival"
+        "description": "Your existing storage account name where you want the blobs be archived"
       }
     },
-    "captureSize": {
+    "maximumThroughputUnits": {
       "type": "int",
-      "minValue": 10485760,
-      "maxValue": 524288000,
+      "minValue": 0,
+      "maxValue": 20,
       "metadata": {
-        "description": "the size window in bytes for evetn hub capture"
+        "description": "Upper limit of throughput units when AutoInflate is enabled, vaule should be within 0 to 20 throughput units."
+      }
+    },
+    "DataCleaningInputStream": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Event Hub"
+      }
+    },
+    "DataCleaningOutputStream": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the second Event Hub"
       }
     },
     "captureNameFormat": {
@@ -122,12 +122,6 @@
       "metadata": {
         "description": "A Capture Name Format must contain {Namespace}, {EventHub}, {PartitionId}, {Year}, {Month}, {Day}, {Hour}, {Minute} and {Second} fields. These can be arranged in any order with or without delimeters. E.g.  Prod_{EventHub}/{Namespace}\\{PartitionId}_{Year}_{Month}/{Day}/{Hour}/{Minute}/{Second}"
       }
-    },
-	"keyVaultName": {
-      "type": "string",
-      "metadata": {
-        "description": "Specifies the name of the key vault."
-      }
     }
   },
   "variables": {
@@ -135,7 +129,7 @@
     "DataCleaningOutputContainerName": "transformed",
     "defaultSASKeyName": "RootManageSharedAccessKey",
     "authRuleResourceId": "[resourceId('Microsoft.EventHub/namespaces/authorizationRules', parameters('eventHubNamespaceName'), variables('defaultSASKeyName'))]",
-	"rgName":"[resourcegroup().name]",
+    "rgName": "[resourcegroup().name]",
     "keyVault": {
       "resourceId": "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
       "secrets": {
@@ -148,11 +142,11 @@
       "type": "Microsoft.EventHub/Namespaces",
       "name": "[parameters('eventHubNamespaceName')]",
       "apiVersion": "2018-01-01",
-      "location": "[parameters('location')]",
       "properties": {
         "isAutoInflateEnabled": "[parameters('isAutoInflateEnabled')]",
         "maximumThroughputUnits": "[parameters('maximumThroughputUnits')]"
       },
+      "location": "[parameters('location')]",
       "sku": {
         "name": "[parameters('eventhubSku')]",
         "tier": "[parameters('eventhubSku')]",
@@ -210,45 +204,14 @@
               }
             }
           }
-        },
-		
-		{
-		  "type": "Microsoft.KeyVault/vaults/secrets",
-		  "name": "NamespaceConnectionString",
-		  "apiVersion": "2018-02-14",
-		  "location": "[parameters('location')]",
-		  "properties": {
-			"value": "[listkeys(variables('authRuleResourceId'), '2018-01-01').primaryConnectionString]"
-		  }
-		},
-		{
-		  "type": "Microsoft.KeyVault/vaults/secrets",
-		  "name": "SharedAccessPolicyPrimaryKey",
-		  "apiVersion": "2018-02-14",
-		  "location": "[parameters('location')]",
-		  "properties": {
-			"value": "[listkeys(variables('authRuleResourceId'), '2018-01-01').primaryKey]"
-		  }
-		}
+        }
       ]
     }
   ],
   "outputs": {
-    "NamespaceConnectionString": {
-            "reference": {
-              "keyVault": {
-                "id": "[variables('keyVault').resourceId]"
-              },
-              "secretName": "[variables('keyVault').secrets.name]"
-            }
-    },
-    "SharedAccessPolicyPrimaryKey": {
-            "reference": {
-              "keyVault": {
-                "id":"[resourceId(variables('rgName'), 'Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
-              },
-              "secretName": "SharedAccessPolicyPrimaryKey"
-            }
+    "authRuleResourceId": {
+      "type": "string",
+      "value": "[variables('authRuleResourceId')]"
     }
   }
 }
