@@ -9,19 +9,99 @@
       },
       "defaultValue": "[resourceGroup().location]"
     },
-    "keyVaultName": {
-      "type": "string",
-      "metadata": {
-        "description": "Specifies the name of the key vault."
-      },
-      "defaultValue": "keyvault1"
-    },
     "eventHubNamespaceName": {
       "type": "string",
       "metadata": {
         "description": "Name of the EventHub namespace"
       },
       "defaultValue": "[toLower(uniqueString(resourceGroup().id, 'eventhubs'))]"
+    },
+    "captureTime": {
+      "type": "int",
+      "minValue": 60,
+      "maxValue": 900,
+      "metadata": {
+        "description": "the time window in seconds for the archival"
+      },
+      "defaultValue": 300
+    },
+    "captureSize": {
+      "type": "int",
+      "minValue": 10485760,
+      "maxValue": 524288000,
+      "metadata": {
+        "description": "the size window in bytes for evetn hub capture"
+      },
+      "defaultValue": 10485760
+    },
+    "eventhubSku": {
+      "type": "string",
+      "allowedValues": [
+        "Basic",
+        "Standard"
+      ],
+      "metadata": {
+        "description": "The messaging tier for service Bus namespace"
+      },
+      "defaultValue": "Standard"
+    },
+    "skuCapacity": {
+      "type": "int",
+      "allowedValues": [
+        1,
+        2,
+        4
+      ],
+      "metadata": {
+        "description": "MessagingUnits for premium namespace"
+      },
+      "defaultValue": 1
+    },
+    "isAutoInflateEnabled": {
+      "type": "string",
+      "allowedValues": [
+        "True",
+        "False"
+      ],
+      "metadata": {
+        "description": "Enable or disable AutoInflate"
+      },
+      "defaultValue": "True"
+    },
+    "messageRetentionInDays": {
+      "type": "int",
+      "minValue": 1,
+      "maxValue": 7,
+      "metadata": {
+        "description": "How long to retain the data in Event Hub"
+      },
+      "defaultValue": 1
+    },
+    "partitionCount": {
+      "type": "int",
+      "minValue": 2,
+      "maxValue": 32,
+      "metadata": {
+        "description": "Number of partitions chosen"
+      },
+      "defaultValue": 2
+    },
+    "captureEncodingFormat": {
+      "type": "string",
+      "allowedValues": [
+        "Avro"
+      ],
+      "metadata": {
+        "description": "The encoding format Eventhub capture serializes the EventData when archiving to your storage"
+      },
+      "defaultValue": "Avro"
+    },
+    "keyVaultName": {
+      "type": "string",
+      "metadata": {
+        "description": "Specifies the name of the key vault."
+      },
+      "defaultValue": "keyvault1"
     },
     "dataFactoryLocation": {
       "type": "string",
@@ -46,24 +126,6 @@
       "defaultValue": "datalakedemoadls",
       "metadata": {
         "description": "The name of the Data Lake Store account to create."
-      }
-    },
-    "captureTime": {
-      "type": "int",
-      "defaultValue": 300,
-      "minValue": 60,
-      "maxValue": 900,
-      "metadata": {
-        "description": "the time window in seconds for the archival"
-      }
-    },
-    "captureSize": {
-      "type": "int",
-      "defaultValue": 10485760,
-      "minValue": 10485760,
-      "maxValue": 524288000,
-      "metadata": {
-        "description": "the size window in bytes for evetn hub capture"
       }
     },
     "vmSize": {
@@ -127,68 +189,6 @@
       "defaultValue": "null",
       "metadata": {
         "description": "The access key of the service principal that has permissions to create HDInsight clusters in your subscription."
-      }
-    },
-    "eventhubSku": {
-      "type": "string",
-      "defaultValue": "Standard",
-      "allowedValues": [
-        "Basic",
-        "Standard"
-      ],
-      "metadata": {
-        "description": "The messaging tier for service Bus namespace"
-      }
-    },
-    "skuCapacity": {
-      "type": "int",
-      "defaultValue": 1,
-      "allowedValues": [
-        1,
-        2,
-        4
-      ],
-      "metadata": {
-        "description": "MessagingUnits for premium namespace"
-      }
-    },
-    "isAutoInflateEnabled": {
-      "type": "string",
-      "defaultValue": "True",
-      "allowedValues": [
-        "True",
-        "False"
-      ],
-      "metadata": {
-        "description": "Enable or disable AutoInflate"
-      }
-    },
-    "messageRetentionInDays": {
-      "type": "int",
-      "minValue": 1,
-      "defaultValue": 1,
-      "maxValue": 7,
-      "metadata": {
-        "description": "How long to retain the data in Event Hub"
-      }
-    },
-    "partitionCount": {
-      "type": "int",
-      "minValue": 2,
-      "maxValue": 32,
-      "defaultValue": 2,
-      "metadata": {
-        "description": "Number of partitions chosen"
-      }
-    },
-    "captureEncodingFormat": {
-      "type": "string",
-      "defaultValue": "Avro",
-      "allowedValues": [
-        "Avro"
-      ],
-      "metadata": {
-        "description": "The encoding format Eventhub capture serializes the EventData when archiving to your storage"
       }
     },
     "_artifactsLocationSasToken": {
@@ -393,8 +393,8 @@
       "type": "Microsoft.Resources/deployments",
       "name": "EventHubTemplate",
       "apiVersion": "2018-02-01",
-       "dependsOn": [
-        "[concat('Microsoft.KeyVault/vaults/', parameters('keyVaultName'))]"
+      "dependsOn": [
+        "dataLakeAnalytics"
       ],
       "properties": {
         "mode": "Incremental",
@@ -452,10 +452,7 @@
             "value": "[parameters('keyVaultName')]"
           }
         }
-      },
-      "dependsOn": [
-        "dataLakeAnalytics"
-      ]
+      }
     },
     {
       "type": "Microsoft.Resources/deployments",
@@ -487,7 +484,7 @@
             "value": "[variables('storageAccountName')]"
           },
           "sharedAccessPolicyKey": {
-            "value": "[reference('EventHubTemplate').outputs.SharedAccessPolicyPrimaryKey.value]"
+            "value": "[listkeys(reference('EventHubTemplate').outputs.authRuleResourceId.value, '2017-04-01').primaryConnectionString]"
           },
           "DataCleaningStreamAnalyticsJob": {
             "value": "[variables('DataCleaningStreamAnalyticsJob')]"
@@ -556,7 +553,7 @@
             "value": "[parameters('eventHubNamespaceName')]"
           },
           "sas_key": {
-            "value": "[reference('EventHubTemplate').outputs.SharedAccessPolicyPrimaryKey.value]"
+            "value": "[listkeys(reference('EventHubTemplate').outputs.authRuleResourceId.value, '2017-04-01').primaryConnectionString]"
           },
           "adla_account_name": {
             "value": "[parameters('adlAnalyticsName')]"
