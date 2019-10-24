@@ -29,7 +29,7 @@ Before you run the tests on Linux, you'll need to [install PowerShell Core](http
 
 To run the tests in PowerShell, you'll need to import the module.
 
-    Import-Module .\AzRMTester.psd1 # assuming you're in the same directory as .\AzRMTester.psd1
+    Import-Module .\arm-ttk.psd1 # assuming you're in the same directory as .\arm-ttk.psd1
 
 You can then test a particular path by using:
 
