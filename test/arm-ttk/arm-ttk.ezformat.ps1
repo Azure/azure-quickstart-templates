@@ -31,6 +31,7 @@ Write-FormatView -Action {
     $foregroundColor = 'Green'
     $statusChar = '+'
 
+    
     $errorLines = @(
         foreach ($_ in $testOut.Errors) {
             "$_"
@@ -54,22 +55,31 @@ Write-FormatView -Action {
     $statusLine = "    [$statusChar] $($testOut.Name) ($([Math]::Round($testOut.Timespan.TotalMilliseconds)) ms)"
     Write-Host $statusLine -ForegroundColor $foregroundColor -NoNewline
 
-    $indent = 4
-    if ($errorLines) {
-        Write-Host " " # end of line
-        $azoErrorStatus = if ($ENV:Agent_ID) { "##vso[task.logissue type=error;]"} else { '' }         
-        foreach ($line in $errorLines) {
-            Write-Host "$azoErrorStatus$(' ' * $indent)$line" -foregroundColor Red    
-        }
-    }
-    if ($warningLines) {
-        Write-Host " " # end of line
-        $azoWarnStatus = if ($ENV:Agent_ID) { "##vso[task.logissue type=error;]"} else { '' }         
-        foreach ($line in $warningLines) {
-            Write-Host "$azoWarnStatus$(' ' * $indent)$line" -foregroundColor Yellow
-        }
-    }
+    $azoErrorStatus = if ($ENV:Agent_ID) { "##vso[task.logissue type=error;]"} else { '' }
     
+    $indent = 8
+    if ($testOut.AllOutput) {
+        Write-Host " " # end of line
+         
+        foreach ($line in $testOut.AllOutput) {
+            if ($line -is [Management.Automation.ErrorRecord] -or $line -is [Exception]) {
+                Write-Host "$azoErrorStatus$(' ' * $indent)$line" -foregroundColor Red
+            }
+            elseif ($line -is [Management.Automation.WarningRecord]) {
+                Write-Host "$azoWarnStatus$(' ' * $indent)$line" -foregroundColor Yellow
+            }
+            elseif ($line -is [string]) {
+                Write-Host "$(' ' * $indent)$line"
+            } 
+            else {
+                $line | 
+                    Out-String -Width ($Host.UI.RawUI.BufferSize.Width - $indent) |
+                    & { process {
+                        Write-Host "$(' ' * $indent)$_"
+                    } } 
+            }
+        }
+    }    
 } -TypeName 'Template.Validation.Test.Result' |
     Out-FormatData |
     Set-Content -Path (Join-Path $myRoot "$myName.format.ps1xml") -Encoding UTF8
