@@ -22,7 +22,7 @@ function Expand-AzureRMTemplate
     [string]
     $TemplatePath,
     
-    # An Azure Template Expression, for example [variables('foo')].bar.
+    # An Azure Template Expression, for example [parameters('foo')].bar.
     # If this expression was expanded, it would look in -InputObject for a .Parameters object containing the property 'foo'.
     # Then it would look in that result for a property named bar.
     [Parameter(Mandatory=$true,Position=0,ValueFromPipelineByPropertyName=$true,ParameterSetName='Expression')]
@@ -39,7 +39,7 @@ function Expand-AzureRMTemplate
     # For example, passing -Exclude Parameters will not expand any [Parameters()] function.
     [Parameter(ParameterSetName='Expression')]
     [string[]]
-    $Exclude = 'Parameters',
+    $Exclude,
 
     # The object that will be used to evaluate the expression.
     [Parameter(ValueFromPipeline=$true,ParameterSetName='Expression')]
@@ -184,16 +184,10 @@ function Expand-AzureRMTemplate
 
                         $fileInfo = $_
                         if ($fileInfo.DirectoryName -eq '__macosx') {
-                            return # (excluding files as side-effects of MAC zips).
+                            return # (excluding files as side-effects of MAC zips)
                         }
-
-                        # If we provided a specific file to test, only take related .JSON files (not everything in the directory
-                        if ($TemplatePath -like '*.json' -and $fileInfo.Extension -ne '.json') {
-                            return
-                        }
-
                         # All FolderFile objects will have the following properties:
-                        
+
                         $fileObject = [Ordered]@{
                             Name = $fileInfo.Name #*Name (the name of the file)
                             Extension = $fileInfo.Extension #*Extension (the file extension) 
@@ -210,7 +204,7 @@ function Expand-AzureRMTemplate
                         }
                         $fileObject
                     })
-                
+
             if ($isMainTemplate) { # If the file was a main template,
                 # we set a few more variables:
                 #*MainTemplatePath (the path to the main template file)

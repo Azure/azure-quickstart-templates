@@ -16,7 +16,7 @@ param(
     [string] $ResourceGroupName = 'ttk-gen-artifacts',
     [string] [Parameter(mandatory = $true)] $Location, #The location where resources will be deployed in the pipeline, in many cases they need to be in the same region.
     [string] $KeyVaultName = 'azbotvault', # This must be gloablly unique
-    [string] $CertPass = $("cI#" + (New-Guid).ToString().Substring(0, 17)),
+    [string] $CertPass = $("cI#" + (New-Guid).ToString().Replace("-", "").Substring(0, 17)),
     [string] $CertDNSName = 'azbot-cert-dns',
     [string] $KeyVaultSelfSignedCertName = 'azbot-sscert',
     [string] $KeyVaultNotSecretName = 'notSecretPassword',
@@ -28,6 +28,22 @@ param(
 if ((Get-AzureRMResourceGroup -Name $ResourceGroupName -Location $Location -Verbose -ErrorAction SilentlyContinue) -eq $null) {
     New-AzureRMResourceGroup -Name $ResourceGroupName -Location $Location -Verbose -Force
 }
+
+# Create the storage account for staging and assign perms
+$StorageAccountName = 'stage' + ((Get-AzureRmContext).Subscription.Id).Replace('-', '').substring(0, 19)
+$StorageAccount = (Get-AzureRmStorageAccount | Where-Object { $_.StorageAccountName -eq $StorageAccountName })
+# Create the storage account if it doesn't already exist
+if ($StorageAccount -eq $null) {
+    $StorageResourceGroupName = 'ARM_Deploy_Staging'
+    New-AzureRmResourceGroup -Location "$Location" -Name $StorageResourceGroupName -Force
+    $StorageAccount = New-AzureRmStorageAccount -StorageAccountName $StorageAccountName -Type 'Standard_LRS' -ResourceGroupName $StorageResourceGroupName -Location "$Location"
+}
+# Assign perms
+if($ServicePrincipalObjectId){
+    $roleDef = Get-AzureRmRoleDefinition -Name 'Contributor'
+    New-AzureRMRoleAssignment -RoleDefinitionId $roleDef.id -ObjectId $ServicePrincipalObjectId -Scope $StorageAccount.Id -Verbose
+}
+
 
 #Create the VNET
 $subnet1 = New-AzureRMVirtualNetworkSubnetConfig -Name 'azbot-subnet-1' -AddressPrefix '10.0.1.0/24'

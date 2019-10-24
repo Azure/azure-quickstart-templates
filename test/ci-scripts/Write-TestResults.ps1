@@ -7,13 +7,14 @@ Typical scenario is that results will be passed in for only one cloud Public or 
 
 param(
     [string]$SampleFolder = $ENV:SAMPLE_FOLDER, # this is the path to the sample
-    [string]$SampleName = $ENV:SAMPLE_NAME,  # the name of the sample or folder path from the root of the repo e.g. "sample-type/sample-name"
+    [string]$SampleName = $ENV:SAMPLE_NAME, # the name of the sample or folder path from the root of the repo e.g. "sample-type/sample-name"
     [string]$StorageAccountResourceGroupName = "azure-quickstarts-service-storage",
     [string]$StorageAccountName = "azurequickstartsservice",
     [string]$TableName = "QuickStartsMetadataService",
-    [Parameter(mandatory=$true)]$StorageAccountKey, 
+    [Parameter(mandatory = $true)]$StorageAccountKey, 
     [string]$BestPracticeResult = "$ENV:RESULT_BEST_PRACTICE",
     [string]$CredScanResult = "$ENV:RESULT_CREDSCAN",
+    [string]$BuildReason = "$ENV:BUILD_REASON",
     [string]$FairfaxDeployment = "",
     [string]$FairfaxLastTestDate = (Get-Date -Format "yyyy-MM-dd").ToString(),
     [string]$PublicDeployment = "",
@@ -33,7 +34,7 @@ $RowKey = $SampleName.Replace("\", "@").Replace("/", "@")
 Write-Host "RowKey: $RowKey"
 
 $Metadata = Get-Content $PathToMetadata -Raw | ConvertFrom-Json
-$PartitionKey = $Metadata.Type
+$PartitionKey = $Metadata.Type # if the type changes we'll have an orphaned row, this is removed in Get-OldestSampleFolder.ps1
 
 #Get the row to update
 $r = Get-AzTableRow -table $cloudTable -PartitionKey $PartitionKey -RowKey $RowKey
@@ -58,6 +59,16 @@ if ($r -eq $null) {
     if (![string]::IsNullOrWhiteSpace($PublicDeployment)) {
         $results.Add("PublicDeployment", $PublicDeployment) 
         $results.Add("PublicLastTestDate", $PublicLastTestDate) 
+    }
+    # add metadata columns
+    $results.Add("itemDisplayName", $Metadata.itemDisplayName)
+    $results.Add("description", $Metadata.description)
+    $results.Add("summary", $Metadata.summary)
+    $results.Add("githubUsername", $Metadata.githubUsername)
+    $results.Add("dateUpdated", $Metadata.dateUpdated)
+
+    if ($ENV:BUILD_REASON -eq "PullRequest") {
+        $results.Add("status", $ENV:BUILD_REASON)
     }
 
     $results | ft
@@ -110,6 +121,59 @@ else {
             $r.PublicLastTestDate = $PublicLastTestDate 
         }
     }
+
+    if ($ENV:BUILD_REASON -eq "PullRequest") {
+        if ($r.status -eq $null) {
+            Add-Member -InputObject $r -NotePropertyName "status" -NotePropertyValue $ENV:BUILD_REASON            
+        }
+        else {
+            $r.status = $ENV:BUILD_REASON
+        }
+    } else { # if this isn't a PR, then it's a scheduled build so set the status back to "live" as the test is complete
+        if ($r.status -eq $null) {
+            Add-Member -InputObject $r -NotePropertyName "status" -NotePropertyValue "Live"
+        }
+        else {
+            $r.status = "Live"
+        }
+    }
+
+    # update metadata columns
+    if ($r.itemDisplayName -eq $null) { 
+        Add-Member -InputObject $r -NotePropertyName "itemDisplayName" -NotePropertyValue $Metadata.itemDisplayName
+    }
+    else {
+        $r.itemDisplayName = $Metadata.itemDisplayName
+    }
+
+    if ($r.description -eq $null) {
+        Add-Member -InputObject $r -NotePropertyName "description" -NotePropertyValue $Metadata.description
+    }
+    else {
+        $r.description = $Metadata.description
+    }
+
+    if ($r.summary -eq $null) {
+        Add-Member -InputObject $r -NotePropertyName "summary" -NotePropertyValue $Metadata.summary
+    }
+    else {
+        $r.summary = $Metadata.summary
+    }
+
+    if ($r.githubUsername -eq $null) {
+        Add-Member -InputObject $r -NotePropertyName "githubUsername" -NotePropertyValue $Metadata.githubUsername
+    }
+    else {
+        $r.githubUsername = $Metadata.githubUsername
+    }   
+    
+    if ($r.dateUpdated -eq $null) {
+        Add-Member -InputObject $r -NotePropertyName "dateUpdated" -NotePropertyValue $Metadata.dateUpdated
+    }
+    else {
+        $r.dateUpdated = $Metadata.dateUpdated
+    }
+
     Write-Host "Updating to new results:"
     $r | ft
     $r | Update-AzTableRow -table $cloudTable
@@ -148,39 +212,50 @@ else {
 
 if ($r.FairfaxDeployment -ne $null) {
     $FairfaxDeployment = ($r.FairfaxDeployment).ToString().ToLower().Replace("true", "PASS").Replace("false", "FAIL")
-    if ($FairfaxDeployment -eq "PASS") { $FairfaxDeploymentColor = "brightgreen" }else { $FairfaxDeploymentColor = "red" }
-
 }
-else {
-    $FairfaxDeployment = $na
-    $FairfaxDeploymentColor = "inactive"
+switch ($FairfaxDeployment) {
+    "PASS" { $FairfaxDeploymentColor = "brightgreen" }
+    "FAIL" { $FairfaxDeploymentColor = "red" }
+    default {
+        $FairfaxDeployment = $na
+        $FairfaxDeploymentColor = "inactive"    
+    }
 }
 
 if ($r.PublicDeployment -ne $null) {
     $PublicDeployment = ($r.PublicDeployment).ToString().ToLower().Replace("true", "PASS").Replace("false", "FAIL")
-    if ($PublicDeployment -eq "PASS") { $PublicDeploymentColor = "brightgreen" }else { $PublicDeploymentColor = "red" }
 }
-else {
-    $PublicDeployment = $na
-    $PublicDeploymentColor = "inactive"
+switch ($PublicDeployment) {
+    "PASS" { $PublicDeploymentColor = "brightgreen" }
+    "FAIL" { $PublicDeploymentColor = "red" }
+    default {
+        $PublicDeployment = $na
+        $PublicDeploymentColor = "inactive"    
+    }
 }
 
 if ($r.BestPracticeResult -ne $null) {
     $BestPracticeResult = ($r.BestPracticeResult).ToString().ToLower().Replace("true", "PASS").Replace("false", "FAIL")
-    if ($BestPracticeResult -eq "PASS") { $BestPracticeResultColor = "brightgreen" }else { $BestPracticeResultColor = "red" }
 }
-else {
-    $BestPracticeResult = $na
-    $BestPracticeResultColor = "inactive"
+switch ($BestPracticeResult) {
+    "PASS" { $BestPracticeResultColor = "brightgreen" }
+    "FAIL" { $BestPracticeResultColor = "red" }
+    default {
+        $BestPracticeResult = $na
+        $CredScanResultColor = "inactive"    
+    }
 }
 
 if ($r.CredScanResult -ne $null) {
     $CredScanResult = ($r.CredScanResult).ToString().ToLower().Replace("true", "PASS").Replace("false", "FAIL")
-    if ($CredScanResult -eq "PASS") { $CredScanResultColor = "brightgreen" }else { $CredScanResultColor = "red" }
 }
-else {
-    $CredScanResult = $na
-    $CredScanResultColor = "inactive"
+switch ($CredScanResult) {
+    "PASS" { $CredScanResultColor = "brightgreen" }
+    "FAIL" { $CredScanResultColor = "red" }
+    default {
+        $CredScanResult = $na
+        $CredScanResultColor = "inactive"    
+    }
 }
 
 $badges = @(
@@ -220,7 +295,8 @@ foreach ($badge in $badges) {
     #>
     if ($ENV:BUILD_REASON -eq "PullRequest") {
         $containerName = "prs"
-    } else {
+    }
+    else {
         $containerName = "badges"
     }
     Set-AzStorageBlobContent -Container $containerName -File $badge.filename -Blob "$RowKey/$($badge.filename)" -Context $ctx -Force -Properties @{"ContentType" = "image/svg+xml"; "CacheControl" = "no-cache" }
@@ -239,13 +315,13 @@ $HTML | Set-Content -path "test.html"
 
 Snippet that will be placed in the README.md files
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/100-blank-template/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/100-blank-template/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/100-blank-template/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/100-blank-template/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/100-blank-template/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/100-blank-template/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/100-blank-template/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/100-blank-template/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/100-blank-template/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/100-blank-template/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/100-blank-template/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/100-blank-template/CredScanResult.svg" />&nbsp;
 
 #>

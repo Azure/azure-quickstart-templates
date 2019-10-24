@@ -9,12 +9,12 @@ TODO linting - is there a pipeline tool for this ?
 #>
 
 $badges = @(
-    "https://azbotstorage.blob.core.windows.net/badges/#sampleName#/PublicLastTestDate.svg",
-    "https://azbotstorage.blob.core.windows.net/badges/#sampleName#/PublicDeployment.svg",
-    "https://azbotstorage.blob.core.windows.net/badges/#sampleName#/FairfaxLastTestDate.svg",
-    "https://azbotstorage.blob.core.windows.net/badges/#sampleName#/FairfaxDeployment.svg",
-    "https://azbotstorage.blob.core.windows.net/badges/#sampleName#/BestPracticeResult.svg",
-    "https://azbotstorage.blob.core.windows.net/badges/#sampleName#/CredScanResult.svg"
+    "https://azurequickstartsservice.blob.core.windows.net/badges/#sampleName#/PublicLastTestDate.svg",
+    "https://azurequickstartsservice.blob.core.windows.net/badges/#sampleName#/PublicDeployment.svg",
+    "https://azurequickstartsservice.blob.core.windows.net/badges/#sampleName#/FairfaxLastTestDate.svg",
+    "https://azurequickstartsservice.blob.core.windows.net/badges/#sampleName#/FairfaxDeployment.svg",
+    "https://azurequickstartsservice.blob.core.windows.net/badges/#sampleName#/BestPracticeResult.svg",
+    "https://azurequickstartsservice.blob.core.windows.net/badges/#sampleName#/CredScanResult.svg"
 )
 
 $buttons = @(

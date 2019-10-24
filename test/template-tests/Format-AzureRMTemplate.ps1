@@ -1,4 +1,4 @@
-﻿function Format-AzureRMTemplate
+function Format-AzureRMTemplate
 {
     <#
     .Synopsis
@@ -23,6 +23,63 @@
             '$schema','contentVersion', 'apiProfile', 
             'parameters','functions','variables',
             'resources', 'outputs'
+
+        $resourceOrder = 'comments', 'condition', 'type', 'apiVersion', 'name', 
+            'location', 'sku', 'kind', 'dependsOn', 'tags', 'copy'
+
+        $sortProperties = {
+            param([Parameter(ValueFromPipeline=$true)]$in, [string[]]$order,[string[]]$LastOrder, [switch]$Recurse) 
+
+            process {
+                $newObject = [PSObject]::new() # create a new object to output.
+                if (-not $in) { return $null }
+                if ([string], [int], [float], [bool] -contains $in.GetType()) { return $in } 
+                if ($Recurse) {
+                    $recurseSplat = @{} + $PSBoundParameters
+                    $recurseSplat.Remove('In')
+                }
+                foreach ($propName in $order) { # Walk thru the properties in the preferred order.
+                    if ($in.$propName) { # If the object had that property
+                        $newPropValue =
+                            if ($Recurse -and $in.$propName -is [Array]) { 
+                                $in.$propName | & $MyInvocation.MyCommand.ScriptBlock @recurseSplat
+                            } else {
+                                $in.$propName
+                            }
+                        $newProp = [Management.Automation.PSNoteProperty]::new($propName, $newPropValue)
+                        $newObject.psobject.properties.add($newProp) # add it to the new object 
+                        $in.psobject.properties.remove($propName) # and remove it from the original object.
+                        
+                    }
+                }
+                if (@($in.psobject.properties).Count) { # If the template object had any properties left
+                    foreach ($prop in $in.psobject.properties) { # add them to the new object in the order they were found.
+                        if ($LastOrder -contains $prop.Name) { continue } 
+                        $newProp = 
+                            [Management.Automation.PSNoteProperty]::new($prop.Name, $in.($prop.Name))                    
+                        $newObject.psobject.properties.add($newProp)
+                    } 
+                }
+                if ($LastOrder) {
+                    foreach ($propName in $LastOrder) {
+                        if ($in.$propName) { # If the object had that property
+                            $newPropValue =
+                                if ($Recurse -and $in.$propName -is [Array]) { 
+                                    $in.$propName | & $MyInvocation.MyCommand.ScriptBlock @recurseSplat
+                                } else {
+                                    $in.$propName
+                                }
+                            $newProp = 
+                                [Management.Automation.PSNoteProperty]::new($propName, $newPropValue)                    
+                            $newObject.psobject.properties.add($newProp) # add it to the new object 
+                            $in.psobject.properties.remove($propName) # and remove it from the original object.
+                            
+                        }
+                    }
+                }
+                $newObject
+            }
+        }
     }
 
     process {
@@ -40,22 +97,14 @@
         }
 
         if ($PSCmdlet.ParameterSetName -eq 'TemplateObject') { # If we're provided a template object
-            $newObject = [PSObject]::new() # create a new object to output.
-            foreach ($propName in $topLevelPropertyOrder) { # Walk thru the properties in the preferred order.
-                if ($templateObject.$propName) { # If the template object had that property
-                    $newProp = 
-                        [Management.Automation.PSNoteProperty]::new($propName, $TemplateObject.$propName)                    
-                    $newObject.psobject.properties.add($newProp) # add it to the new object 
-                    $TemplateObject.psobject.properties.remove($propName) # and remove it from the template object.
-                    
-                }
-            }
-            if (@($templateObject.psobject.properties).Count) { # If the template object had any properties left
-                foreach ($prop in $templateObject.psobject.properties) { # add them to the new object in the order they were found.
-                    $newProp = 
-                        [Management.Automation.PSNoteProperty]::new($prop.Name, $TemplateObject.$prop.Name)                    
-                    $newObject.psobject.properties.add($newProp)
-                } 
+            
+            $newTemplate = $TemplateObject | & $sortProperties -Order $topLevelPropertyOrder # sort the top-level properties.
+            
+            
+            if ($newTemplate.resources) { # If the template had resources, sort them 
+                $newTemplate.resources =@(
+                    $newTemplate.resources | & $sortProperties -Order $resourceOrder -LastOrder 'properties', 'resources' -Recurse
+                )
             }
             return $newObject # then return the newly formatted object.
         }

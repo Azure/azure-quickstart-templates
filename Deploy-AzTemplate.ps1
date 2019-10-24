@@ -115,6 +115,9 @@ if ($UploadArtifacts -Or $ArtifactsLocationParameter -ne $null) {
         $StorageAccount = New-AzStorageAccount -StorageAccountName $StorageAccountName -Type 'Standard_LRS' -ResourceGroupName $StorageResourceGroupName -Location "$Location"
     }
 
+    if ($StorageContainerName.length -gt 63) {
+        $StorageContainerName = $StorageContainerName.Substring(0, 63)
+    }
     $ArtifactStagingLocation = $StorageAccount.Context.BlobEndPoint + $StorageContainerName + "/"   
 
     # Generate the value for artifacts location if it is not provided in the parameter file
