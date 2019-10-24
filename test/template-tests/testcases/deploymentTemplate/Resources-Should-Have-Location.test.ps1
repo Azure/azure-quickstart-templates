@@ -1,5 +1,5 @@
 ﻿param(
-[Parameter(Mandatory=$true,Position=0)]
+[Parameter(Mandatory=$false,Position=0)] #not mandatory for case of an empty resource array
 [PSObject]
 $MainTemplateResources
 )
