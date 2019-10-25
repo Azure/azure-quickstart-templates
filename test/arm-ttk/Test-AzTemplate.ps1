@@ -1,4 +1,4 @@
-function Test-AzureRMTemplate
+function Test-AzTemplate
 {
     <#
     .Synopsis
@@ -6,7 +6,7 @@ Tests an Azure Resource Manager Template
     .Description
 Validates one or more Azure Resource Manager Templates.
     .Notes
-Test-AzureRMTemplate validates an Azure Resource Manager template using a number of small test scripts.
+Test-AzTemplate validates an Azure Resource Manager template using a number of small test scripts.
 
 Test scripts can be found in /testcases/GroupName, or provided with the -TestScript parameter.
 
@@ -354,7 +354,7 @@ Each test script has access to a set of well-known variables:
             # If we could find a potential json file, recursively call yourself.
             $possibleJsonFiles | 
                 Select-Object -First 1 |
-                Test-AzureRMTemplate @PSBoundParameters
+                Test-AzTemplate @PSBoundParameters
                              
             return
         }
@@ -383,7 +383,7 @@ Each test script has access to a set of well-known variables:
             $p = $c * 100 / $t
             $templateFileName = $TemplatePath | Split-Path -Leaf
             Write-Progress "Validating Templates" "$templateFileName" -PercentComplete $p -Id $progId
-            $expandedTemplate =Expand-AzureRMTemplate -TemplatePath $templatePath
+            $expandedTemplate =Expand-AzTemplate -TemplatePath $templatePath
             if (-not $expandedTemplate) { continue }
             foreach ($kv in $expandedTemplate.GetEnumerator()) {
                 $ExecutionContext.SessionState.PSVariable.Set($kv.Key, $kv.Value)

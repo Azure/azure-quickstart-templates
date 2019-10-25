@@ -1,4 +1,4 @@
-function Format-AzureRMTemplate
+function Format-AzTemplate
 {
     <#
     .Synopsis
@@ -92,7 +92,7 @@ function Format-AzureRMTemplate
             $templateObject = $templateText | ConvertFrom-Json # convert them from JSON.
             if (-not $templateObject) { return } # If it was null, return.
 
-            Format-AzureRMTemplate -TemplateObject $TemplateObject # Call ourself, passing in the contents of the file. 
+            Format-AzTemplate -TemplateObject $TemplateObject # Call ourself, passing in the contents of the file. 
             return
         }
 

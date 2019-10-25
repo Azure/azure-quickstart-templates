@@ -4,7 +4,7 @@
 .Description
     Ensures that the .location field exists in .outputs, and is [location()]
 .Example
-    Test-AzureRMTemplate -TemplatePath .\100-marketplace-sample -Test Location-Should-Be-In-Outputs
+    Test-AzTemplate -TemplatePath .\100-marketplace-sample -Test Location-Should-Be-In-Outputs
 .Example
     .\Location-Should-Be-In-Outputs.test.ps1 ([PSCustomObject]@{BadInput=$true})
 #>
