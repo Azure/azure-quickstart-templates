@@ -4,7 +4,7 @@
 .Description
     Ensures that the artifacts parameters have correct defaults in all templates.
 .Example
-    Test-AzureRMTemplate -TemplatePath .\100-marketplace-sample\ -Test artifacts-location-default-value
+    Test-AzTemplate -TemplatePath .\100-marketplace-sample\ -Test artifacts-location-default-value
 .Example
     .\artifacts-location-default-value.test.ps1 -TemplateObject (Get-Content ..\..\..\unit-tests\artifacts-location-default-value.json -Raw | ConvertFrom-Json) -IsMainTemplate
 #>
@@ -51,7 +51,7 @@ if ($artifactslocationParameter -ne $null) {
             if($SampleName -ne ""){ #if the sample folder is blank skip the test
                 $allowedDefaultValues += "$RawRepoPath$SampleName/"
             }
-            Write-Host $allowedDefaultValues
+            Write-Output $allowedDefaultValues
             # example: https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-automation-configuration/
             if (!($allowedDefaultValues -contains $artifactslocationParameter.defaultValue)) {
                 Write-Error "The _artifactsLocation in `"$TemplateFileName`" has an incorrect defaultValue, found: $($artifactsLocationParameter.defaultValue)`nMust be one of: $allowedDefaultValues`nFound: `"$($artifactslocationParameter.defaultValue)`"" -ErrorId ArtifactsLocation.Parameter.DefaultValue.Incorrect -TargetObject $artifactslocationParameter

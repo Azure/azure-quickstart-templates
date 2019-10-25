@@ -1,4 +1,4 @@
-function Test-AzureRMTemplate
+function Test-AzTemplate
 {
     <#
     .Synopsis
@@ -6,7 +6,7 @@ Tests an Azure Resource Manager Template
     .Description
 Validates one or more Azure Resource Manager Templates.
     .Notes
-Test-AzureRMTemplate validates an Azure Resource Manager template using a number of small test scripts.
+Test-AzTemplate validates an Azure Resource Manager template using a number of small test scripts.
 
 Test scripts can be found in /testcases/GroupName, or provided with the -TestScript parameter.
 
@@ -205,20 +205,27 @@ Each test script has access to a set of well-known variables:
                     $testCaseOutput = Test-Case $testCase.$dq $TestInput 2>&1 3>&1
                     $testTook = [DateTime]::Now - $testStartedAt
                     
-                    $testErrors = 
-                        @(foreach ($_ in $testCaseOutput) {
-                            if ($_ -is [Exception] -or $_ -is [Management.Automation.ErrorRecord]) { $_ }
-                        })
-
-                    $testWarnings = 
-                        @(foreach ($_ in $testCaseOutput) {
-                            if ($_ -is [Management.Automation.WarningRecord]) { $_ }
-                        })
-                    
+                    $testErrors = [Collections.ArrayList]::new() 
+                    $testWarnings = [Collections.ArrayList]::new()
+                    $testOutput = [Collections.ArrayList]::new()
+                    foreach ($_ in $testCaseOutput) {
+                        $null=
+                            if ($_ -is [Exception] -or $_ -is [Management.Automation.ErrorRecord]) { 
+                                $testErrors.Add($_) 
+                            }
+                            elseif ($_ -is [Management.Automation.WarningRecord]) {
+                                $testWarnings.Add($_)
+                            } else {
+                                $testOutput.Add($_)
+                            }
+                    }
+                                        
                     New-Object PSObject -Property ([Ordered]@{
                         pstypename = 'Template.Validation.Test.Result'
                         Errors = $testErrors
                         Warnings = $testWarnings
+                        Output = $testOutput
+                        AllOutput = $testCaseOutput
                         Passed = $testErrors.Count -lt 1
                         Group = $GroupName
                         Name = $dq
@@ -244,23 +251,29 @@ Each test script has access to a set of well-known variables:
 
         #*Test-FileList (tests a list of files)
         function Test-FileList {
-            foreach ($fileInfo in $FolderFiles) {
+            foreach ($fileInfo in $FolderFiles) { # We loop over each file in the folder.
                 $matchingGroups = 
-                    @(if ($fileInfo.Schema) {
-                        foreach ($key in $TestGroup.Keys) {
+                    @(if ($fileInfo.Schema) { # If a given file has a schema,
+                        foreach ($key in $TestGroup.Keys) { # and it matches the name of the testgroup
                             if ("$key".StartsWith("_") -or "$key".StartsWith('.')) { continue } 
                             if ($fileInfo.Schema -match $key) {
-                                $key
+                                $key # then run that group of tests.
                             }
                         }
                     } else {
-                        foreach ($key in $TestGroup.Keys) {
-                            if ($fileInfo.Extension -eq '.json' -and 
-                                ($fileInfo.Name -ireplace '\.test\.ps1', '') -match $key) {
-                                $key; continue
-                            }
-                            if (-not ("$key".StartsWith('_') -or "$key".StartsWith('.'))) { continue } 
-                            if ($fileInfo.Extension -eq "$key".Replace('_', '.')) {
+                        foreach ($key in $TestGroup.Keys) { # If it didn't have a schema
+                            if ($fileInfo.Extension -eq '.json') { # and it was a JSON file
+                                $fn = $fileInfo.Name -ireplace '\.json$',''
+                                if ($fn -match $key) { # check to see if it's name matches the key
+                                    $key; continue # (this handles CreateUIDefinition.json, even if no schema is present). 
+                                }
+                                if ($key -eq 'DeploymentTemplate' -and # Otherwise, if we're checking the deploymentTemplate
+                                    'mainTemplate.json', 'azuredeploy.json', 'prereq.azuredeploy.json' -contains $fn) { # and the file name is something we _know_ will be an ARM template
+                                    $key; continue # then run the deployment tests regardless of schema.
+                                }
+                            }                            
+                            if (-not ("$key".StartsWith('_') -or "$key".StartsWith('.'))) { continue } # Last, check if the test group is for a file extension.
+                            if ($fileInfo.Extension -eq "$key".Replace('_', '.')) { # If it was, run tests associated with that extension.
                                 $key
                             }
                         }
@@ -341,7 +354,7 @@ Each test script has access to a set of well-known variables:
             # If we could find a potential json file, recursively call yourself.
             $possibleJsonFiles | 
                 Select-Object -First 1 |
-                Test-AzureRMTemplate @PSBoundParameters
+                Test-AzTemplate @PSBoundParameters
                              
             return
         }
@@ -370,7 +383,7 @@ Each test script has access to a set of well-known variables:
             $p = $c * 100 / $t
             $templateFileName = $TemplatePath | Split-Path -Leaf
             Write-Progress "Validating Templates" "$templateFileName" -PercentComplete $p -Id $progId
-            $expandedTemplate =Expand-AzureRMTemplate -TemplatePath $templatePath
+            $expandedTemplate =Expand-AzTemplate -TemplatePath $templatePath
             if (-not $expandedTemplate) { continue }
             foreach ($kv in $expandedTemplate.GetEnumerator()) {
                 $ExecutionContext.SessionState.PSVariable.Set($kv.Key, $kv.Value)
