@@ -16,7 +16,7 @@ $emptyItems = @([Regex]::Matches($TemplateText, "\{\s{0,}\}")) + # Empty objects
 $lineBreaks = [Regex]::Matches($TemplateText, "`n|$([Environment]::NewLine)")
 
 # Some properties can be empty for readability
-$PropertiesThatCanBeEmpty = 'resources', 'outputs', 'variables', 'parameters', 'functions', 'properties', 'defaultValue'
+$PropertiesThatCanBeEmpty = 'resources', 'outputs', 'variables', 'parameters', 'functions', 'properties', 'defaultValue', 'accessPolicies'
 
 if ($emptyItems) {
     foreach ($emptyItem in $emptyItems) {
