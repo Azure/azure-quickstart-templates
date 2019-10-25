@@ -4,7 +4,7 @@
 .Description
     Ensures that .outputs are present in the .parameters of CreateUIDefinition.json, and that those parameters exist on the template object
 .Example
-    Test-AzureRMTemplate .\100-marketplace-sample -Test Outputs-Must-Be-Present-In-Template-Parameters
+    Test-AzTemplate .\100-marketplace-sample -Test Outputs-Must-Be-Present-In-Template-Parameters
 .Example
     .\Outputs-Must-Be-Present-In-Template-Parameters.test.ps1 -CreateUIDefinitionObject @([PSCustomObject]@{badinput=$true}) -TemplateObject ([PSCustomObject]@{})
 #>

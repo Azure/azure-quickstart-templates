@@ -4,7 +4,7 @@
 .Description
     Ensures that the artifacts parameters have correct defaults in all templates.
 .Example
-    Test-AzureRMTemplate -TemplatePath .\100-marketplace-sample\ -Test artifacts-location-default-value
+    Test-AzTemplate -TemplatePath .\100-marketplace-sample\ -Test artifacts-location-default-value
 .Example
     .\artifacts-location-default-value.test.ps1 -TemplateObject (Get-Content ..\..\..\unit-tests\artifacts-location-default-value.json -Raw | ConvertFrom-Json) -IsMainTemplate
 #>

@@ -8,9 +8,9 @@ if ($PSVersionTable.PSEdition -ne 'Core') {
 #endregion JSON Functions
 
 #region Template Functions
-. $PSScriptRoot\Expand-AzureRMTemplate.ps1
-. $PSScriptRoot\Test-AzureRMTemplate.ps1
+. $PSScriptRoot\Expand-AzTemplate.ps1
+. $PSScriptRoot\Test-AzTemplate.ps1
 
-. $PSScriptRoot\Format-AzureRMTemplate.ps1
+. $PSScriptRoot\Format-AzTemplate.ps1
 #endregion Template Functions
-Set-Alias Sort-AzureRMTemplate Format-AzureRMTemplate
+Set-Alias Sort-AzTemplate Format-AzTemplate
