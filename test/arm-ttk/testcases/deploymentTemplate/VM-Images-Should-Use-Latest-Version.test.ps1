@@ -12,7 +12,7 @@ foreach ($vm in $vms) {
 
     if ($storageProfile -is [string]) { # If the storageProfile was a string,
         # set storageProfile to the resolved expression
-        $storageProfile = Expand-AzureRMTemplate -Expression $storageProfile -InputObject $TemplateObject
+        $storageProfile = Expand-AzTemplate -Expression $storageProfile -InputObject $TemplateObject
     }
 
     if (-not $storageProfile) { # If the storageProfile didn't resolve
@@ -24,7 +24,7 @@ foreach ($vm in $vms) {
 
     if ($imageReference -is [string]) { # If the image reference was a string
         # set it to the resolved expression
-        $imageReference = Expand-AzureRMTemplate -Expression $imageReference -InputObject $TemplateObject
+        $imageReference = Expand-AzTemplate -Expression $imageReference -InputObject $TemplateObject
     }
 
     if (-not $imageReference) { # If no image reference was found
@@ -36,7 +36,7 @@ foreach ($vm in $vms) {
 
     if ($imageVersion -ne 'latest') { # If the image version isn't latest
         # try resolving it
-        $resolvedImageVersion = Expand-AzureRMTemplate -Expression $imageVersion -InputObject $TemplateObject
+        $resolvedImageVersion = Expand-AzTemplate -Expression $imageVersion -InputObject $TemplateObject
         if ($resolvedImageVersion -ne 'latest') { # If it still wasn't latest
             Write-Error "VM Image versions should be Latest, not $($resolvedImageVersion)" -TargetObject $vm # write an error.
         }

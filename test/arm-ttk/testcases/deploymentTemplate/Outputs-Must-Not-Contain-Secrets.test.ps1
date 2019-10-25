@@ -4,7 +4,7 @@
 .Description
     Ensures outputs do not contain expressions that would expose secrets, list*() functions or secure parameters.
 .Example
-    Test-AzureRMTemplate -TemplatePath .\100-marketplace-sample\ -Test Outputs-Must-Not-Contain-Secrets
+    Test-AzTemplate -TemplatePath .\100-marketplace-sample\ -Test Outputs-Must-Not-Contain-Secrets
 .Example
     .\IDs-Should-Be-Derived-From-ResourceIDs.test.ps1 -TemplateObject (Get-Content ..\..\..\unit-tests\IOutputs-Must-Not-Contain-Secrets.test.json -Raw | ConvertFrom-Json)
 #>
