@@ -4,7 +4,7 @@
 .Description
     Ensures that there is no function used for a default parameter in the resourceId function (e.g. resourceGroup().namd, subscription().subscriptionId).
 .Example
-    Test-AzureRMTemplate -TemplatePath .\100-marketplace-sample\ -Test ResourceId-should-not-contain-resourcegroup-function
+    Test-AzTemplate -TemplatePath .\100-marketplace-sample\ -Test ResourceId-should-not-contain-resourcegroup-function
 .Example
     .\ResourceIds-should-not-contain.test.ps1 -TemplateText (Get-Content -path ..\..\..\unit-tests\ResourceIds-should-not-contain.json -Raw)
     

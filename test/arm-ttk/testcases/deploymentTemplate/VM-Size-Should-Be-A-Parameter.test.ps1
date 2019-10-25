@@ -16,7 +16,7 @@ foreach ($vm in $vms) {
 
     if ($hardwareProfile -is [string]) { # If the hardwareProfile was a string,
         # set hardwareProfile to the resolved expression
-        $hardwareProfile = Expand-AzureRMTemplate -Expression $hardwareProfile -InputObject $TemplateObject
+        $hardwareProfile = Expand-AzTemplate -Expression $hardwareProfile -InputObject $TemplateObject
     }
 
     if (-not $hardwareProfile) { # If the hardwareProfile didn't resolve
@@ -29,7 +29,7 @@ foreach ($vm in $vms) {
 
     if ($vmSize -notmatch "\s{0,}\[.*?parameters\s{0,}\(\s{0,}'") {
         if ($vmSize -match "\s{0,}\[.*?variables\s{0,}\(\s{0,}'") { 
-            $resolvedVmSize = Expand-AzureRMTemplate -Expression $vmSize -InputObject $TemplateObject
+            $resolvedVmSize = Expand-AzTemplate -Expression $vmSize -InputObject $TemplateObject
             if ($resolvedVmSize -notmatch "\s{0,}\[.*?parameters\s{0,}\(\s{0,}'") {
                 Write-Error "VM Size must be a parameter" -TargetObject $vm
             }

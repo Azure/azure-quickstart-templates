@@ -1,4 +1,4 @@
-function Expand-AzureRMTemplate
+function Expand-AzTemplate
 {
     <#
     .Synopsis
@@ -10,7 +10,7 @@ function Expand-AzureRMTemplate
 
         Expands an Azure Resource Manager template expression
     .Notes
-        Expand-AzureRMTemplate -Expression expands expressions the resolve to a top-level property (e.g. variables or parameters).
+        Expand-AzTemplate -Expression expands expressions the resolve to a top-level property (e.g. variables or parameters).
 
         It does not expand recursively, and it does not attempt to evaluate complex expressions.
     #>

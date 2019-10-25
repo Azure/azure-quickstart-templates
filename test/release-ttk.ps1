@@ -9,7 +9,7 @@ param(
 )
 
 # this must be run from the "test" folder
-$releaseFiles = ".\ci-scripts", "template-tests", "..\Deploy-AzTemplate.ps1"
+$releaseFiles = ".\ci-scripts", "arm-ttk", "..\Deploy-AzTemplate.ps1"
 
 Compress-Archive -DestinationPath $ttkFileName -Path $releaseFiles -Force
 

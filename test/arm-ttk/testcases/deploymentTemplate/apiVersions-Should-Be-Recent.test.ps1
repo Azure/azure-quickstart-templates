@@ -4,7 +4,7 @@
 .Description
     Ensures the apiVersions of any resources are recent and non-preview.
 .Example
-    Test-AzureRMTemplate -TemplatePath .\100-marketplace-sample\ -Test apiVersions-Should-Be-Recent
+    Test-AzTemplate -TemplatePath .\100-marketplace-sample\ -Test apiVersions-Should-Be-Recent
 .Example
     .\apiVersions-Should-Be-Recent.test.ps1 -TemplateObject (
         Get-Content ..\..\..\..\100-marketplace-sample\azureDeploy.json | ConvertFrom-Json
