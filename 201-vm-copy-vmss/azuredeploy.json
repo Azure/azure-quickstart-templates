@@ -26,6 +26,8 @@
     "virtualMachineCount": {
       "type": "int",
       "defaultValue": 3,
+      "minValue": 1,
+      "maxValue": 200,
       "metadata": {
         "description": "Number of  virtual machines to be created"
       }
@@ -34,11 +36,18 @@
       "type": "string",
       "defaultValue": "Standard_DS2_v2",
       "allowedValues": [
+        "Standard_B1ls",
+        "Standard_B1s",
+        "Standard_B1ms",
+        "Standard_B2s",
+        "Standard_B2ms",
         "Standard_DS1_v2",
         "Standard_DS2_v2",
         "Standard_DS3_v2",
         "Standard_DS4_v2",
-        "Standard_DS5_v2"
+        "Standard_DS5_v2",
+        "Standard_D2s_v3",
+        "Standard_D4s_v3"
       ],
       "metadata": {
         "description": "Virtual Machine Size"
@@ -51,8 +60,9 @@
         "description": "Operating System of the Server"
       },
       "allowedValues": [
-        "Server2012R2",
-        "Server2016"
+        "Win2019DataCenter",
+        "Win2016DataCenter",
+        "UbuntuLTS"
       ]
     },
     "virtualMachineScaleSetName": {
@@ -62,11 +72,17 @@
         "description": "Virtual Machine Scale Set Name where the VM will be placed"
       }
     },
+    "virtualMachineScaleSetPlatformFaultDomainCount": {
+      "defaultValue": 2,
+      "type": "int",
+      "minValue": 2,
+      "maxValue": 3
+    },
     "dnsPrefixForPublicIP": {
       "type": "string",
       "minLength": 1,
       "maxLength": 14,
-      "defaultValue": "[uniqueString(resourceGroup().id)]",
+      "defaultValue": "[concat('d',uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "Globally unique DNS prefix for the Public IPs used to access the Virtual Machines"
       }
@@ -86,18 +102,22 @@
     "myVNETSubnet1Prefix": "10.0.0.0/24",
     "diagnosticStorageAccountName": "[concat('diagst', uniqueString(resourceGroup().id))]",
     "operatingSystemValues": {
-      "Server2012R2": {
+      "Win2019DataCenter": {
         "PublisherValue": "MicrosoftWindowsServer",
         "OfferValue": "WindowsServer",
-        "SkuValue": "2012-R2-Datacenter"
+        "SkuValue": "2019-Datacenter"
       },
-      "Server2016": {
+      "Win2016DataCenter": {
         "PublisherValue": "MicrosoftWindowsServer",
         "OfferValue": "WindowsServer",
         "SkuValue": "2016-Datacenter"
+      },
+      "UbuntuLTS": {
+        "PublisherValue": "Canonical",
+        "OfferValue": "UbuntuServer",
+        "SkuValue": "18.04-LTS"
       }
     },
-    "virtualMachineScaleSetPlatformFaultDomainCount": "2",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('myVNETName'),  variables('myVNETSubnet1Name'))]"
   },
   "resources": [
@@ -146,7 +166,8 @@
       "apiVersion": "2019-07-01",
       "location": "[parameters('location')]",
       "properties": {
-        "platformFaultDomainCount": "[variables('virtualMachineScaleSetPlatformFaultDomainCount')]"
+        "singlePlacementGroup": "true",
+        "platformFaultDomainCount": "[parameters('virtualMachineScaleSetPlatformFaultDomainCount')]"
       }
     },
     {
@@ -181,9 +202,6 @@
         "osProfile": {
           "computerName": "[concat(parameters('virtualMachineNamePrefix'),copyIndex(1))]",
           "adminUsername": "[parameters('virtualMachineAdminUserName')]",
-          "windowsConfiguration": {
-            "provisionVMAgent": true
-          },
           "secrets": [],
           "adminPassword": "[parameters('virtualMachineAdminPassword')]"
         },
