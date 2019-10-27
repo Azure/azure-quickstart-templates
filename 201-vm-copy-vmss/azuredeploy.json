@@ -76,7 +76,17 @@
       "defaultValue": 2,
       "type": "int",
       "minValue": 2,
-      "maxValue": 3
+      "maxValue": 5,
+      "metadata": {
+        "description": "The number of Fault Domains for the scale set. Different regions may have different max Fault Domain count"
+      }
+    },
+    "virtualMachineScaleSetAvailabilityZone": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Specify an Availability Zone for the Virtual Machine Scale Set. All Virtual Machines added the the scale set will inherit this zone. Not all Azure regions support Availability zones"
+      }
     },
     "dnsPrefixForPublicIP": {
       "type": "string",
@@ -118,7 +128,14 @@
         "SkuValue": "18.04-LTS"
       }
     },
-    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('myVNETName'),  variables('myVNETSubnet1Name'))]"
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('myVNETName'),  variables('myVNETSubnet1Name'))]",
+    "zoneObj" : {
+      "none": null,
+      "1": [1],
+      "2": [2],
+      "3": [3]
+    },
+    "selectedZone": "[if(empty(parameters('virtualMachineScaleSetAvailabilityZone')), variables('zoneObj').none, array(parameters('virtualMachineScaleSetAvailabilityZone')))]"
   },
   "resources": [
     {
@@ -168,7 +185,8 @@
       "properties": {
         "singlePlacementGroup": "true",
         "platformFaultDomainCount": "[parameters('virtualMachineScaleSetPlatformFaultDomainCount')]"
-      }
+      },
+      "zones": "[variables('selectedZone')]"
     },
     {
       "type": "Microsoft.Compute/virtualMachines",
@@ -263,10 +281,11 @@
       ]
     },
     {
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2019-09-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat(parameters('virtualMachineNamePrefix'), copyIndex(1), '-PIP1')]",
       "location": "[parameters('location')]",
+      "zones": "[variables('selectedZone')]",
       "copy": {
         "name": "PIPCopy",
         "count": "[parameters('virtualMachineCount')]"
