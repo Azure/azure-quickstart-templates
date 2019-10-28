@@ -28,8 +28,5 @@ The template creates the following Azure resources:
 - an IPv4 Public IP address for each VM to facilitate remote connection to the VM (RDP)
 - two virtual machines with both IPv4 and IPv6 endpoints in the VNET/subnet
 
-Note:  Use of this template requires your subscription is registered for the following features:   AllowIPv6VirtualNetwork, AllowIPv6CAOnStandardLB
-           The registration process is described in the documentation linked to below.  
-
-For a more information about this template, see [What is IPv6 for Azure Virtual Network?](https://docs.microsoft.com/en-us/azure/virtual-network/ipv6-overview/)
+For more information about this template, see [What is IPv6 for Azure Virtual Network?](https://docs.microsoft.com/en-us/azure/virtual-network/ipv6-overview/)
 
