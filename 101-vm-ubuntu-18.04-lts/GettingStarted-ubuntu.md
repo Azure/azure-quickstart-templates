@@ -1,6 +1,6 @@
 ##Ubuntu Server 18.04-LTS Virtual Machine
 
-The intent of this README is to guide you in a deployment a **Ubuntu Server 18.04-LTS Standard-D2s-v3** (Two VCPUs and 8 GIB RAM). 
+The intent of this README is to guide you in a deployment a **Standard_DS1 _v2**.
  
 It's good to bear in mind that there are different ways to deploy resources in Azure, here a few options if you want to dig on the Azure Universe. You can run this template either using [PowerShell](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy), [Azure CLI](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-cli), [Azure Portal](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-portal) or your favorite SDK.
 
