@@ -9,14 +9,18 @@
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/100-blank-template/BestPracticeResult.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/100-blank-template/CredScanResult.svg" />&nbsp;
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FKrisnatagoras%2Ftemplates%2Fmaster%2FsimpleLinux-VM%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure4StudentQSTemplates%2Fazure-quickstart-templates%2Fmaster%2F101-vm-ubuntu-18.04-lts%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
-</a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FKrisnatagoras%2Ftemplates%2Fmaster%2FsimpleLinux-VM%2Fazuredeploy.json" target="_blank">
+</a><a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure4StudentQSTemplates%2Fazure-quickstart-templates%2Fmaster%2F101-vm-ubuntu-18.04-lts%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
-This template deploys a **Linux VM Ubuntu 18.04-LTS.**, informing only two parameters **adminUsername** and **adminPassword**. This will deploy a **Standard_DS1 _v2** size VM in the resource group location and return the fully qualified domain name of the VM.
+This template deploys a **Linux VM Ubuntu 18.04-LTS.**, informing only two parameters **adminUsername**, **adminPassword** and **vmName**. This will deploy a **Standard_DS1 _v2** size VM in the resource group location and return the fully qualified domain name of the VM.
+
+## Parameters
+- **adminUsername:** Usernames can be a maximum of 20 characters in length and cannot end in a period (".").
+- **adminPassword:** Complex password for your Virtual Machine. For more information about use this [link:](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/faq#what-are-the-password-requirements-when-creating-a-vm)
+- **vmName:** The name of you Virtual Machine. Keep in mind that the Virtual Machine Name is key for you to deploy multiple resources at the same group. It will come with a default value, but you can change it when deploying your resource.
 
 
 If you are new to Azure virtual machines, see:

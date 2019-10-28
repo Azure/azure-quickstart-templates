@@ -7,7 +7,7 @@ It's good to bear in mind that there are different ways to deploy resources in A
 ###The Template
 Don't let the size of the template scares you. The structure is very intuitive and once that you get the gist of it, you gonna see how easier your life will be regarding creating resources on Azure.
 
-The only two parameters that we need to inform are  **adminUsername** and **adminPassword**.
+The only parameters that we need to inform are  **adminUsername**, **adminPassword** and **vmName**.
 
 Don't worry about changing anything on the file, either on the portal or using Azure CLI, you gonna be asked to insert this information, but bear in mind that there is some requirement for those two parameters:
 
@@ -43,6 +43,8 @@ test2     |test3     |user4     |user5
 
 >abc@123     iloveyou!     P@$$w0rd     P@ssw0rd     P@ssword123
 Pa$$word     pass@word1     Password!     Password1     Password22
+
+- *vmName:* The name of you Virtual Machine. Keep in mind that the Virtual Machine Name is key for you to deploy multiple resources at the same group. It will come with a default value, but you can change it when deploying your resource.
 
 Keeping that in mind, let's rock with the Deployment.         
         
