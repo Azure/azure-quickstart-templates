@@ -1,13 +1,13 @@
 # Create a Web App protected by Application Gateway v2
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-web-app-with-app-gateway-v2/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-web-app-with-app-gateway-v2/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-web-app-with-app-gateway-v2/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-web-app-with-app-gateway-v2/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-web-app-with-app-gateway-v2/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-web-app-with-app-gateway-v2/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-web-app-with-app-gateway-v2/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-web-app-with-app-gateway-v2/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-web-app-with-app-gateway-v2/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azbotstorage.blob.core.windows.net/badges/201-web-app-with-app-gateway-v2/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-web-app-with-app-gateway-v2/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-web-app-with-app-gateway-v2/CredScanResult.svg" />&nbsp;
 
 This template creates an Azure Web App with Access Restriction for an Application Gateway v2.
 
