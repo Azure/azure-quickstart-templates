@@ -1,10 +1,18 @@
 {
 
-  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for resources. Default is the current resource group location."
+      }
+    },
     "vmSku": {
       "type": "string",
+      "defaultValue": "Standard_D1_v2",
       "metadata": {
         "description": "Size of VMs in the VM Scale Set."
       }
@@ -18,10 +26,12 @@
     },
     "instanceCount": {
       "type": "int",
+      "defaultValue": 5,
       "metadata": {
         "description": "Number of VM instances (100 or less)."
       },
-      "maxValue": 100
+      "maxValue": 100,
+      "minValue": 1
     },
     "adminUsername": {
       "type": "string",
@@ -36,19 +46,21 @@
       }
     },
     "publicIPPrefixLength": {
-      "type": "string",
-      "metadata":{
-        "description":"Length of public IP prefix."
-      }
+      "type": "int",
+      "defaultValue": 28,
+      "metadata": {
+        "description": "Length of public IP prefix."
+      },
+      "maxValue": 31,
+      "minValue": 28
     }
-    
+
   },
   "variables": {
-    "location": "[resourceGroup().location]",
     "addressPrefix": "10.0.0.0/16",
     "subnetPrefix": "10.0.0.0/24",
     "publicIPPrefixName": "[concat(parameters('vmssName'), 'pubipprefix')]",
-    "dnsName":"[concat('dns', toLower(parameters('vmssName')))]",
+    "dnsName": "[concat('dns', toLower(parameters('vmssName')))]",
     "virtualNetworkName": "[concat(parameters('vmssName'), 'vnet')]",
     "publicIPAddressName": "[concat(parameters('vmssName'), 'pip')]",
     "subnetName": "[concat(parameters('vmssName'), 'subnet')]",
@@ -62,7 +74,7 @@
     "natBackendPort": 22,
     "nicName": "[concat(parameters('vmssName'), 'nic')]",
     "ipConfigName": "[concat(parameters('vmssName'), 'ipconfig')]",
-    "frontEndIPConfigID": "[concat(variables('lbID'),'/frontendIPConfigurations/loadBalancerFrontEnd')]",
+    "frontEndIPConfigID": "[resourceId(subscription().subscriptionId, resourceGroup().name,'Microsoft.Network/loadBalancers/frontendIPConfigurations/',variables('loadBalancerName'),'loadBalancerFrontEnd')]",
     "osType": {
       "publisher": "Canonical",
       "offer": "UbuntuServer",
@@ -76,23 +88,20 @@
       "type": "Microsoft.Network/publicIPPrefixes",
       "apiVersion": "2018-07-01",
       "name": "[variables('publicIPPrefixName')]",
-      "location": "[variables('location')]",
-      "dependsOn": [],
-      "tags": {},
+      "location": "[parameters('location')]",
       "sku": {
         "name": "Standard",
         "tier": "Regional"
       },
       "properties": {
-      "prefixLength": "[parameters('publicIPPrefixLength')]",
-      "publicIPAddressVersion": "IPv4",
-      "ipTags": []
+        "prefixLength": "[parameters('publicIPPrefixLength')]",
+        "publicIPAddressVersion": "IPv4"
       }
     },
     {
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
-      "location": "[variables('location')]",
+      "location": "[parameters('location')]",
       "apiVersion": "2018-08-01",
       "properties": {
         "addressSpace": {
@@ -113,12 +122,12 @@
     {
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
-      "location": "[variables('location')]",
+      "location": "[parameters('location')]",
       "apiVersion": "2018-08-01",
-        "sku": {
-    "name": "Standard",
-    "tier": "Regional"
-  },
+      "sku": {
+        "name": "Standard",
+        "tier": "Regional"
+      },
       "properties": {
         "publicIPAllocationMethod": "Static",
         "dnsSettings": {
@@ -129,7 +138,7 @@
     {
       "type": "Microsoft.Network/loadBalancers",
       "name": "[variables('loadBalancerName')]",
-      "location": "[variables('location')]",
+      "location": "[parameters('location')]",
       "sku": {
         "name": "Standard"
       },
@@ -172,7 +181,7 @@
     {
       "type": "Microsoft.Compute/virtualMachineScaleSets",
       "name": "[parameters('vmssName')]",
-      "location": "[variables('location')]",
+      "location": "[parameters('location')]",
       "apiVersion": "2018-10-01",
       "dependsOn": [
         "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]",
@@ -217,25 +226,25 @@
                       "name": "[variables('ipConfigName')]",
                       "properties": {
                         "subnet": {
-                          "id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'), '/subnets/', variables('subnetName'))]"
+                          "id": "[resourceId(subscription().subscriptionId,resourceGroup().name, 'Microsoft.Network/virtualNetworks/subnets/', variables('virtualNetworkName'), variables('subnetName'))]"
                         },
                         "publicipaddressconfiguration": {
                           "name": "pub1",
                           "properties": {
                             "idleTimeoutInMinutes": 15,
-                            "PublicIpPrefix":  {
-                                "Id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/publicIPPrefixes/', variables('publicIpPrefixName'))]"
+                            "PublicIpPrefix": {
+                              "Id": "[resourceId(subscription().subscriptionId,resourceGroup().name, 'Microsoft.Network/publicIPPrefixes/', variables('publicIpPrefixName'))]"
                             }
                           }
                         },
                         "loadBalancerBackendAddressPools": [
                           {
-                            "id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('loadBalancerName'), '/backendAddressPools/', variables('bePoolName'))]"
+                            "id": "[resourceId(subscription().subscriptionId, resourceGroup().name, 'Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancerName'),variables('bePoolName'))]"
                           }
                         ],
-                       "loadBalancerInboundNatPools": [
+                        "loadBalancerInboundNatPools": [
                           {
-                            "id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('loadBalancerName'), '/inboundNatPools/', variables('natPoolName'))]"
+                            "id": "[resourceId(subscription().subscriptionId, resourceGroup().name, 'Microsoft.Network/loadBalancers/inboundNatPools/',variables('loadBalancerName'), variables('natPoolName'))]"
                           }
                         ]
                       }
