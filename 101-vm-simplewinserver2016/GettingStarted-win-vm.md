@@ -7,7 +7,7 @@ It's good to bear in mind that there are different ways to deploy resources in A
 ###The Template
 Don't let the size of the template scares you. The structure is very intuitive and once that you get the gist of it, you gonna see how easier your life will be regarding creating resources on Azure.
 
-The only parameters that we need to inform are:  **adminUsername**, **adminPassword** and **windowsOSVersion**. The windows version though comes in the template with the Default Value: **"2016-Datacenter"** which means that your O.S. version will be a Windows Server 2016 Datacenter. You will see that there are also other options.
+The only parameters that we need to inform are:  **adminUsername**, **adminPassword**, **vmName** and **windowsOSVersion**. The windows version though comes in the template with the Default Value: **"2016-Datacenter"** which means that your O.S. version will be a Windows Server 2016 Datacenter. You will see that there are also other options.
 
 Don't worry about changing anything on the file, either on the portal or using Azure CLI, you gonna be asked to insert this information, but bear in mind that there is some requirement for those two parameters:
 
@@ -176,7 +176,7 @@ Now is time to get your hands dirty, don't forget that you are in the cloud now 
 Just click on the button below and it will automatically deploy the VM on your Azure Portal.**
 
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FKrisnatagoras%2Ftemplates%2Fmaster%2FsimpleWindows-VM%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure4StudentQSTemplates%2Fazure-quickstart-templates%2Fmaster%2F101-vm-simplewinserver2016%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 
