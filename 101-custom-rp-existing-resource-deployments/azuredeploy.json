@@ -27,7 +27,14 @@
                 "description": "Name of the custom provider to be created."
             }
         },
-        "customResourceName": {
+        "customResourceProviderId": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "The resource id of an existing custom provider. Provide this to skip deployment of new logic app and custom provider."
+            }
+        },
+        "associationName": {
             "type": "string",
             "defaultValue": "myDemoCustomResource",
             "metadata": {
@@ -39,6 +46,7 @@
         {
             "type": "Microsoft.Logic/workflows",
             "apiVersion": "2017-07-01",
+            "condition": "[empty(parameters('customResourceProviderId'))]",
             "name": "[parameters('logicAppName')]",
             "location": "[parameters('location')]",
             "properties": {
@@ -97,14 +105,15 @@
         {
             "type": "Microsoft.CustomProviders/resourceProviders",
             "apiVersion": "2018-09-01-preview",
+            "condition": "[empty(parameters('customResourceProviderId'))]",
             "name": "[parameters('customResourceProviderName')]",
             "location": "[parameters('location')]",
             "properties": {
                 "resourceTypes": [
                     {
-                        "name": "customResources",
+                        "name": "associations",
                         "mode": "Secure",
-                        "routingType": "Webhook,Cache",
+                        "routingType": "Webhook,Cache,Extension",
                         "endpoint": "[listCallbackURL(concat(resourceId('Microsoft.Logic/workflows', parameters('logicAppName')), '/triggers/CustomProviderWebhook'), '2017-07-01').value]"
                     }
                 ]
@@ -114,11 +123,12 @@
             ]
         },
         {
-            "type": "Microsoft.CustomProviders/resourceProviders/customResources",
+            "type": "Microsoft.CustomProviders/associations",
             "apiVersion": "2018-09-01-preview",
-            "name": "[concat(parameters('customResourceProviderName'), '/', parameters('customResourceName'))]",
+            "name": "[parameters('associationName')]",
             "location": "[parameters('location')]",
             "properties": {
+                "targetResourceId": "[if(empty(parameters('customResourceProviderId')), resourceId(parameters('customResourceProviderName')), parameters('customResourceProviderId'))]",
                 "myCustomInputProperty": "myCustomInputValue",
                 "myCustomInputObject": {
                     "Property1": "Value1"
@@ -132,7 +142,7 @@
     "outputs": {
         "customResource": {
             "type": "object",
-            "value": "[reference(parameters('customResourceName'), '2018-09-01-preview', 'Full')]"
+            "value": "[reference(parameters('associationName'), '2018-09-01-preview', 'Full')]"
         }
     }
 }
