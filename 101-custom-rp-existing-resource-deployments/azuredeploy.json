@@ -1,0 +1,148 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "allowedValues": [
+                "australiaeast",
+                "eastus",
+                "westeurope"
+            ],
+            "metadata": {
+                "description": "Location for the resources."
+            }
+        },
+        "logicAppName": {
+            "type": "string",
+            "defaultValue": "[uniqueString(resourceGroup().id)]",
+            "metadata": {
+                "description": "Name of the logic app to be created."
+            }
+        },
+        "customResourceProviderName": {
+            "type": "string",
+            "defaultValue": "[uniqueString(resourceGroup().id)]",
+            "metadata": {
+                "description": "Name of the custom provider to be created."
+            }
+        },
+        "customResourceProviderId": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "The resource id of an existing custom provider. Provide this to skip deployment of new logic app and custom provider."
+            }
+        },
+        "associationName": {
+            "type": "string",
+            "defaultValue": "myDemoCustomResource",
+            "metadata": {
+                "description": "Name of the custom resource that is being created."
+            }
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Logic/workflows",
+            "apiVersion": "2017-07-01",
+            "condition": "[empty(parameters('customResourceProviderId'))]",
+            "name": "[parameters('logicAppName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "state": "Enabled",
+                "definition": {
+                    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+                    "actions": {
+                        "Switch": {
+                            "cases": {
+                                "Case": {
+                                    "actions": {
+                                        "CreateCustomResource": {
+                                            "inputs": {
+                                                "body": {
+                                                    "properties": "@addProperty(triggerBody().Body['properties'], 'myDynamicProperty', 'myDynamicValue')"
+                                                },
+                                                "statusCode": 200
+                                            },
+                                            "kind": "Http",
+                                            "type": "Response"
+                                        }
+                                    },
+                                    "case": "CREATE"
+                                }
+                            },
+                            "default": {
+                                "actions": {
+                                    "DefaultHttpResponse": {
+                                        "inputs": {
+                                            "statusCode": 200
+                                        },
+                                        "kind": "Http",
+                                        "type": "Response"
+                                    }
+                                }
+                            },
+                            "expression": "@triggerBody().operationType",
+                            "type": "Switch"
+                        }
+                    },
+                    "contentVersion": "1.0.0.0",
+                    "outputs": {},
+                    "parameters": {},
+                    "triggers": {
+                        "CustomProviderWebhook": {
+                            "inputs": {
+                                "schema": {}
+                            },
+                            "kind": "Http",
+                            "type": "Request"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.CustomProviders/resourceProviders",
+            "apiVersion": "2018-09-01-preview",
+            "condition": "[empty(parameters('customResourceProviderId'))]",
+            "name": "[parameters('customResourceProviderName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "resourceTypes": [
+                    {
+                        "name": "associations",
+                        "mode": "Secure",
+                        "routingType": "Webhook,Cache,Extension",
+                        "endpoint": "[listCallbackURL(concat(resourceId('Microsoft.Logic/workflows', parameters('logicAppName')), '/triggers/CustomProviderWebhook'), '2017-07-01').value]"
+                    }
+                ]
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Logic/workflows/', parameters('logicAppName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.CustomProviders/associations",
+            "apiVersion": "2018-09-01-preview",
+            "name": "[parameters('associationName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "targetResourceId": "[if(empty(parameters('customResourceProviderId')), resourceId(parameters('customResourceProviderName')), parameters('customResourceProviderId'))]",
+                "myCustomInputProperty": "myCustomInputValue",
+                "myCustomInputObject": {
+                    "Property1": "Value1"
+                }
+            },
+            "dependsOn": [
+                "[concat('Microsoft.CustomProviders/resourceProviders/', parameters('customResourceProviderName'))]"
+            ]
+        }
+    ],
+    "outputs": {
+        "customResource": {
+            "type": "object",
+            "value": "[reference(parameters('associationName'), '2018-09-01-preview', 'Full')]"
+        }
+    }
+}
