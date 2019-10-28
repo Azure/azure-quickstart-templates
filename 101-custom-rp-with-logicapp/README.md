@@ -68,11 +68,10 @@ The Azure Resource Manager template also utilizes the new Azure extension to cre
 Navigating to the deployment details on the Azure Resource Manager template will show a new resource type called resourceproviders/customResources created on the custom resource provider.
 ![](images/createdcustomresource.PNG)
 
-To confirm that the custom resource has been created , you can use a rest api client such as postman and run the following query and see the results:
+The outputs section of the template deployment also will display the created resource, which can be accessed through the *reference* template function.
+![](images/customresourcetemplateoutput.png)
 
-```
-GET  
-https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CustomProviders/resourceProviders/{resourceProviderName}/customResources/{customResourceName}?api-version=2018-09-01-preview
-```
+In addition, you can navigate to the deployed Azure Logic App resource in the template resource group and check the *run history* tab to see the HTTP calls.
+![](images/logicapprun.png)
 
-You can also create\delete additional "customResources".
+Additional "customResources" can be created through deploying another Azure Resource Manager Template or directly interfacing with the Azure REST API.
