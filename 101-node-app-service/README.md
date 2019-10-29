@@ -42,7 +42,7 @@ So, here we have differents options:
 
 **Option 1**
 
-If you have already a webapp deployed, instead of use the template, use Azure CLI and use the command "az webapp up" like we used on the [GettingStarted](https://github.com/jose-mart/templates/blob/master/101-node-app-service/GettingStarted.md).
+If you have already a webapp deployed, instead of use the template, use Azure CLI and use the command "az webapp up" like we used on the [GettingStarted](https://github.com/Azure4StudentQSTemplates/azure-quickstart-templates/blob/master/101-node-app-service/GettingStarted.md).
 
 **Option 2**
 
