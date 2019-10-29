@@ -16,13 +16,13 @@
 </a>
 
 This template deploys a **simple Windows VM**, using a few different options for the Windows Version, using the latest patched version.  
- 
+
 The only parameters that we need to inform are:  **adminUsername**, **adminPassword**, **vmName** and **windowsOSVersion**. This will deploy a Standard_D2 _v2 size VM in the resource group location.
 
 ## Parameters
 - **adminUsername:** Usernames can be a maximum of 20 characters in length and cannot end in a period (".").
 - **adminPassword:** Complex password for your Virtual Machine. For more information about use this [link:](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/faq#what-are-the-password-requirements-when-creating-a-vm)
-- **vmName:** The name of you Virtual Machine. Keep in mind that the Virtual Machine Name is key for you to deploy multiple resources at the same group. It will come with a default value, but you can change it when deploying your resource.
+- **vmName:** The name of you Virtual Machine. Keep in mind that the Virtual Machine Name is key for you to deploy multiple resources at the same group. It will come with a default value, but you can change it when deploying your resource. Also know that the maximum characters allowed are 15.
 - **windowsOSVersion:** The following values are allowed:  
 
     	- "2008-R2-SP1"
@@ -45,6 +45,3 @@ If you are new to Azure virtual machines, see:
 If you are new to template deployment, see:
 
 [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
-
-
-

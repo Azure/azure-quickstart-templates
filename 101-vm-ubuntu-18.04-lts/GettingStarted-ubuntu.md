@@ -1,7 +1,7 @@
 ##Ubuntu Server 18.04-LTS Virtual Machine
 
 The intent of this README is to guide you in a deployment a **Standard_DS1 _v2**.
- 
+
 It's good to bear in mind that there are different ways to deploy resources in Azure, here a few options if you want to dig on the Azure Universe. You can run this template either using [PowerShell](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy), [Azure CLI](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-cli), [Azure Portal](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-portal) or your favorite SDK.
 
 ###The Template
@@ -44,33 +44,33 @@ test2     |test3     |user4     |user5
 >abc@123     iloveyou!     P@$$w0rd     P@ssw0rd     P@ssword123
 Pa$$word     pass@word1     Password!     Password1     Password22
 
-- *vmName:* The name of you Virtual Machine. Keep in mind that the Virtual Machine Name is key for you to deploy multiple resources at the same group. It will come with a default value, but you can change it when deploying your resource.
+- *vmName:* The name of you Virtual Machine. Keep in mind that the Virtual Machine Name is key for you to deploy multiple resources at the same group. It will come with a default value, but you can change it when deploying your resource. Also know that the maximum characters allowed are 15.
 
 Keeping that in mind, let's rock with the Deployment.         
-        
+
 
 ##Deployment
 There are a few ways to deploy this template.
 You can use [PowerShell](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy), [Azure CLI](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-cli), [Azure Portal](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-portal) or your favorite SDK.
 
-For this task, we gonna deploy using Visual Code and the portal and a little surprise for you at the end. :D 
+For this task, we gonna deploy using Visual Code and the portal and a little surprise for you at the end. :D
 
 For Azure CLI I choose to use the Visual Code with Azure CLI extensions, if you like, you can find more information [here](https://code.visualstudio.com/docs/azure/extensions). But bare in mind that you don't need to use the Visual Code, you can stick with the old good always present **Command Line** on Windows or any **bash terminal**.
 
 ###Using Azure CLI with Visual Code
 type on the terminal windows: **az login**
 
-![Screen](./images/azlogin.png) 
+![Screen](./images/azlogin.png)
 
 You gonna be redirected to the Azure Portal where you can use your credentials to login in.
 
-After login, you gonna have your credentials. 
+After login, you gonna have your credentials.
 
 In order to set the right subscription, you can use the following command:
 
 **az account set --subscription "< your subscription id >"**
 
-![Screen](./images/azlogin2.png) 
+![Screen](./images/azlogin2.png)
 
 ####Resource Group
 
@@ -80,8 +80,8 @@ To create a Resource Group, you need a name and the location for your Resource G
 
 For a list of locations, type: **az account list-locations**
 
-To create the Resource group, just type the command: 
- 
+To create the Resource group, just type the command:
+
 **az group create --name simpleLinuxVM-RG --location < yourlocation >**
 
 ![Screen](./images/azgroup.png)
@@ -94,7 +94,7 @@ Super simple, right? Now that we have our **Resource Group** created, let's depl
 
 As you can see, it's running. Go grab a cup of coffee, have some fresh air and I'm sure that before you come back you gonna have your Ubuntu Server Virtual Machine ready.
 
- 
+
 And there we go, our deploy is Succeeded:  
 
 ![Screen](./images/azdeploy2.png)
@@ -117,14 +117,14 @@ Compare these resources with your ARM Template is a good exercise to have a bett
 
 Open your Virtual Machine and then click on the button **connect**.
 
-There you gonna see the ssh command to connect to your Virtual Machine. Copy the command and open your terminal. 
+There you gonna see the ssh command to connect to your Virtual Machine. Copy the command and open your terminal.
 ![Screen](./images/azdeployportal3.png)
 
 Paste the command and press **Enter**.  
 
 Insert the password you've created.  
 
-And Voilà, there you have a brandy new Windows Virtual Machine with Visual Studio. 
+And Voilà, there you have a brandy new Windows Virtual Machine with Visual Studio.
 
 ![Screen](./images/azubuntu.png)
 
@@ -144,7 +144,7 @@ On General, type a name and a description for your template, and click on [OK].
 
 On ARM Template, replace the contents of the template with your template, and click on [OK].
 
-![Screen](./images/aztemplate2.png) 
+![Screen](./images/aztemplate2.png)
 
 Click on the refresh button and there is your template:
 
@@ -152,7 +152,7 @@ Click on the refresh button and there is your template:
 
 Open the template and click in [Deploy]
 
-![Screen](./images/azportaldepoy2.png) 
+![Screen](./images/azportaldepoy2.png)
 
 On the screen Custom Deployment, check your information and if you don't have the Resource Group you can click and [create new]:
 
@@ -183,6 +183,6 @@ On the portal, open your Resource Group, if you will not use the service or VM a
 
 You can also just stop the service or Virtual Machine in case you gonna need the resource. Open the resource and click on Stop.
 
-![Screen](./images/off2.png) 
+![Screen](./images/off2.png)
 
 Just refresh your screen and you are good to go.

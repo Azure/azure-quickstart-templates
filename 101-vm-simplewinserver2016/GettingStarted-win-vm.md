@@ -1,7 +1,7 @@
 # Simple Windows Virtual Machine
 
 We gonna deploy a simple Windows Virtual Machine. In order to complete this task, all you gonna need is the azuredeploy.json file and a couple of commands if you deploy using Azure CLI.
- 
+
 It's good to bear in mind that there are different ways to deploy resources in Azure, here a few options if you want to dig on the Azure Universe. You can run this template either using [PowerShell](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy), [Azure CLI](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-cli), [Azure Portal](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-portal) or your favorite SDK.
 
 ###The Template
@@ -28,7 +28,7 @@ sql     |support     |support_388945a0     |sys
 test2     |test3     |user4     |user5
 
 
-- *adminPassword:* There are varying password length requirements, depending on the tool you are using:
+- **adminPassword:** There are varying password length requirements, depending on the tool you are using:
 
     Portal - between 12 - 72 characters  
     PowerShell - between 8 - 123 characters  
@@ -44,7 +44,7 @@ test2     |test3     |user4     |user5
 >abc@123     iloveyou!     P@$$w0rd     P@ssw0rd     P@ssword123
 Pa$$word     pass@word1     Password!     Password1     Password22
 
-- *windowsOSVersion:* The following values are allowed:
+- **windowsOSVersion:** The following values are allowed:
     - "2008-R2-SP1"
        - "2012-Datacenter"
        - "2012-R2-Datacenter"
@@ -55,32 +55,34 @@ Pa$$word     pass@word1     Password!     Password1     Password22
 
 Keep this in mind and let's roll with the Deployment.
 
+- **vmName:** The name of you Virtual Machine. Keep in mind that the Virtual Machine Name is key for you to deploy multiple resources at the same group. It will come with a default value, but you can change it when deploying your resource. Also know that the maximum characters allowed are 15.
+
 ##Deployment
 There are a few ways to deploy your template.
 You can use [PowerShell](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy), [Azure CLI](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-cli), [Azure Portal](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-portal) or your favorite SDK.
 
-For this task, we gonna deploy using Visual Code and the portal and a little surprise for you at the end. :D 
+For this task, we gonna deploy using Visual Code and the portal and a little surprise for you at the end. :D
 
 For Azure CLI I choose to use the Visual Code with Azure CLI extensions, if you like, you can find more information [here](https://code.visualstudio.com/docs/azure/extensions). But bare in mind that you don't need to use the Visual Code, you can stick with the old good always present **Command Line** on Windows or any **bash terminal**.
 
 ###Visual Code
 type on the terminal windows: **az login**
 
-![Screen](./images/azlogin.png) 
+![Screen](./images/azlogin.png)
 
 You gonna be redirected to the Azure Portal where you can use your credentials to login into.
 
-After login, you gonna have your credentials. 
+After login, you gonna have your credentials.
 
 In order to set the right subscription, you can use the following command:
 
 **az account set --subscription "< your subscription id >"**
 
-![Screen](./images/azlogin2.png) 
+![Screen](./images/azlogin2.png)
 
 If you haven't yet created a Resource Group, we gonna do that now! A Resource Group is a container that holds related resources for an Azure solution. The resource group includes those resources that you want to manage as a group. You decide which resources belong in a resource group based on what makes the most sense for you or your organization.
 
-That is the command sintax: 
+That is the command sintax:
 
 **az group create --name simpleWindowsVM-RG --location < yourlocation >**
 
@@ -95,7 +97,7 @@ With the Resource Group created, we can deploy our VM using the template:
 Note that it's running:
 
 ![Screen](./images/azdeploy.png)
- 
+
 And there we go, our deploy is Succeeded:  
 
 ![Screen](./images/azdeploy2.png)
@@ -133,7 +135,7 @@ Click on [Continue]
 Type your user and password and Voilà, you are connected in your Windows Virtual Machine... how cool is that uh?
 
 ![Screen](./images/azconnect2.png)
- 
+
 Now you are ready to practice, make your hand dirty buddy!
 
 ###Using the Portal
@@ -150,11 +152,11 @@ On General, type a name and a description for your template, and click on [OK].
 
 On ARM Template, replace the contents of the template with your template, and click on [OK].
 
-![Screen](./images/aztemplate2.png) 
+![Screen](./images/aztemplate2.png)
 
 Click on the refresh button and there is your template:
 
-![Screen](./images/aztemplate3.png) 
+![Screen](./images/aztemplate3.png)
 
 Open the template and click in [Deploy]
 
@@ -163,13 +165,13 @@ The name of the Resource Group is: simpleWindowsVM-RG, select your location and 
 
 By now you shall be familiar with these parameters, select [I agree] and click on [Purchase].
 
-![Screen](./images/azportaldeploy.png) 
+![Screen](./images/azportaldeploy.png)
 
 And voilà, you have your new VM deployed.
 
 To connect with the Virtual Machine you can repeat the same process as before, using the RDP file.
 
-Now is time to get your hands dirty, don't forget that you are in the cloud now :D 
+Now is time to get your hands dirty, don't forget that you are in the cloud now :D
 
 
 **p.s.: Pretty easy to create resources on Azure, right? But if you are the sort of IT guy that always looks for automating things on the extreme :D Surprise, surprise!.
@@ -192,6 +194,6 @@ On the portal, open your Resource Group, if you will not use the service or VM a
 
 You can also just stop the service or Virtual Machine in case you gonna need the resource. Open the resource and click on Stop.
 
-![Screen](./images/off2.png) 
+![Screen](./images/off2.png)
 
 Just refresh your screen and you are good to go.
