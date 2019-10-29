@@ -113,7 +113,7 @@ And there we go, our deploy is Succeeded:
 
 Let's go and check the resource at the [Azure Portal](https://portal.azure.com).
 
-On the portal, go to Resource Groups. On this blade, you can see the Resource Group we've created. 
+On the portal, go to Resource Groups. On this blade, you can see the Resource Group we've created.
 
 ![Screen](./images/azdeployportal.png)
 
@@ -131,7 +131,7 @@ Here you can check our external git hub account linked with your Web App.
 
 ![Screen](./images/azdeployportal3.png)
 
-And that is just the tip of the iceberg. You can start to deploy code to your new Web Application or Web Site. 
+And that is just the tip of the iceberg. You can start to deploy code to your new Web Application or Web Site.
 
 Most important, don't forget to have fun!
 
@@ -176,7 +176,7 @@ Go to the Resource. Repeat the test you have done before and enjoy your coding.
 **p.s.: Pretty easy to create resources on Azure, right? But if you are the sort of IT guy that always looks for automating things on the extreme :D Surprise, surprise!.
 Just click on the button below and it will automatically deploy the VM on your Azure Portal.**
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FKrisnatagoras%2Ftemplates%2Fmaster%2FWebAppGitRepo%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure4StudentQSTemplates%2Fazure-quickstart-templates%2Fmaster%2F101-webapp-github%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 
@@ -193,6 +193,6 @@ On the portal, open your Resource Group, if you will not use the Web App anymore
 
 You can also just stop the Web App in case you gonna need the resource. Open the resource and click on Stop.
 
-![Screen](./images/off.png) 
+![Screen](./images/off.png)
 
 Just refresh your screen and you are good to go.
