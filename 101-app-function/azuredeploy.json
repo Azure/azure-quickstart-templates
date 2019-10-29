@@ -2,15 +2,18 @@
     "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "name": {
-            "type": "string"
+        "funcName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of you Web Site."
+            }
         }
     },
 
      "variables": {
         "location": "[resourceGroup().location]",
-        "hostingPlanName": "[concat('hostPlan-', uniqueString(parameters('name')))]",
-        "storageAccountName": "[concat('stoacc', uniqueString(parameters('name')))]", 
+        "hostingPlanName": "[concat('hostPlan-', parameters('funcName'))]",
+        "storageAccountName": "[concat('stoacc',  substring(toLower(parameters('funcName')),0,7))]",
         "subscriptionId": "[subscription().subscriptionId]",
         "serverFarmResourceGroup": "[resourceGroup().name]"
     },
@@ -18,20 +21,19 @@
     "resources": [
         {
             "apiVersion": "2018-11-01",
-            "name": "[parameters('name')]",
+            "name": "[parameters('funcName')]",
             "type": "Microsoft.Web/sites",
             "kind": "functionapp,linux",
             "location": "[variables('location')]",
             "tags": null,
             "dependsOn": [
-                "[concat('microsoft.insights/components/', parameters('name'))]",
                 "[concat('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]",
                 "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
             ],
             "properties": {
-                "name": "[parameters('name')]",
+                "name": "[parameters('funcName')]",
                 "siteConfig": {
-                    "appSettings": [
+                     "appSettings": [
                         {
                             "name": "FUNCTIONS_WORKER_RUNTIME",
                             "value": "python"
@@ -39,14 +41,6 @@
                         {
                             "name": "FUNCTIONS_EXTENSION_VERSION",
                             "value": "~2"
-                        },
-                        {
-                            "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
-                            "value": "[reference('microsoft.insights/components/uks-functionapp', '2015-05-01').InstrumentationKey]"
-                        },
-                        {
-                            "name": "AzureWebJobsStorage",
-                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2019-06-01').keys[0].value,';EndpointSuffix=','core.windows.net')]"
                         }
                     ]
                 },
@@ -76,17 +70,7 @@
                 "Name": "Y1"
             }
         },
-        {
-            "apiVersion": "2015-05-01",
-            "name": "uks-functionapp",
-            "type": "microsoft.insights/components",
-            "location": "[variables('location')]",
-            "tags": null,
-            "properties": {
-                "ApplicationId": "[parameters('name')]",
-                "Request_Source": "IbizaWebAppExtensionCreate"
-            }
-        },
+        
         {
             "apiVersion": "2019-06-01",
             "type": "Microsoft.Storage/storageAccounts",
