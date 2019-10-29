@@ -3,7 +3,7 @@
 The intent of this README is to guide you in a deployment a **Windows Server 2016 - Datacenter Standard-D2-v2** (Two VCPUs and 7 GIB RAM) with the **Visual Studio Community 2019**.  
 
 This template was designed to be an easy and fast way to create a Virtual Machine ready for you to start coding with Visual Studio.  
- 
+
 You can deploy this template either using the [Azure Portal](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-portal) or [Azure CLI](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-cli). Let's dig on the template and have some fun.
 
 ###The Template
@@ -57,17 +57,17 @@ For this task, we will deploy using the Portal and Azure CLI, I choose to use th
 ###Using Azure CLI with Visual Code
 type on the terminal windows: **az login**
 
-![Screen](./images/azlogin.png) 
+![Screen](./images/azlogin.png)
 
 You gonna be redirected to the Azure Portal where you can use your credentials to login into.
 
-After login, you gonna have your credentials. 
+After login, you gonna have your credentials.
 
 In order to set the right subscription, you can use the following command:
 
 **az account set --subscription "< your subscription id >"**
 
-![Screen](./images/azlogin2.png) 
+![Screen](./images/azlogin2.png)
 
 ####Resource Group
 
@@ -77,11 +77,11 @@ To create a Resource Group, you need a name and the location for your Resource G
 
 For a list of locations, type: **az account list-locations**
 
-To create the Resource group, just type the command: 
- 
+To create the Resource group, just type the command:
+
 **az group create --name < mygroupname> --location < yourlocation >**
 
-![Screen](./images/azgroup.png) 
+![Screen](./images/azgroup.png)
 
 Super simple, right? Now that we have our **Resource Group** created, let's deploy our Virtual Machine.
 
@@ -91,7 +91,7 @@ Super simple, right? Now that we have our **Resource Group** created, let's depl
 
 As you can see, it's running. Go grab a cup of coffee, have some fresh air and I'm sure that before you come back you gonna have your Windows Virtual Machine with Visual Studio ready.
 
- 
+
 And there we go, our deploy is Succeeded:  
 
 ![Screen](./images/azdeploy2.png)
@@ -109,7 +109,7 @@ Open your Virtual Machine and then click on the button **connect**.
 Download the RDP File (you gonna need an RDP software to connect), double click on the file, insert your **login** and **password**.
 ![Screen](./images/azwinlogin.png)
 
-And Voilà, there you have a brandy new Windows Virtual Machine with Visual Studio. 
+And Voilà, there you have a brandy new Windows Virtual Machine with Visual Studio.
 
 ![Screen](./images/azwin.png)
 
@@ -132,7 +132,7 @@ On General, type a name and a description for your template, and click on [OK].
 
 On ARM Template, replace the contents of the template with your template, and click on [OK].
 
-![Screen](./images/aztemplate3.png) 
+![Screen](./images/aztemplate3.png)
 
 Click on the refresh button and there is your template:
 
@@ -140,7 +140,7 @@ Click on the refresh button and there is your template:
 
 Open the template and click in [Deploy]
 
-![Screen](./images/azportaldepoy2.png) 
+![Screen](./images/azportaldepoy2.png)
 
 On the screen Custom Deployment, check your information and if you don't have the Resource Group you can click and [create new]:
 
@@ -151,11 +151,11 @@ And voilà, you have your new VM deployed. How easy was that, uhn?
 
 To connect with the Virtual Machine you can repeat the same process as before, using the RDP file.
 
-Now it is time to get your hands dirty, don't forget that you are in the cloud now, happy coding! :D 
+Now it is time to get your hands dirty, don't forget that you are in the cloud now, happy coding! :D
 
 **p.s.: If by any chance you felt a bit overloaded with all these processes or perhaps you are asking yourself if there is a simple way to deploy your Virtual Machine? Good news for you bud! Just click on the button below and it will automatically deploy the VM on your Azure Portal.**
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FKrisnatagoras%2Ftemplates%2Fmaster%2F101-vm-ws2016-visualstudio2019%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure4StudentQSTemplates%2Fazure-quickstart-templates%2Fmaster%2F101-vm-ws2016-visualstudio2019%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 
@@ -175,7 +175,7 @@ And voilà, you have your new VM deployed. How easy was that, uhn?
 
 To connect with the Virtual Machine you can repeat the same process as before, using the RDP file.
 
-Now it is time to get your hands dirty, don't forget that you are in the cloud now, happy coding! :D 
+Now it is time to get your hands dirty, don't forget that you are in the cloud now, happy coding! :D
 
 ####Important disclaimer: Azure charges you for the resources you are using, and you don't want to finish all your credits at once, right? So, for not running out of credit, don't forget to stop the VM at the portal or even delete the Resource Group you create to avoid any unnecessary charges.
 
@@ -188,6 +188,6 @@ On the portal, open your Resource Group, if you will not use the service or VM a
 
 You can also just stop the service or Virtual Machine in case you gonna need the resource. Open the resource and click on Stop.
 
-![Screen](./images/off2.png) 
+![Screen](./images/off2.png)
 
 Just refresh your screen and you are good to go.
