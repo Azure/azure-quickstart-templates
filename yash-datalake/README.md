@@ -9,12 +9,11 @@
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/yash-datalake/BestPracticeResult.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/yash-datalake/CredScanResult.svg" />&nbsp;
 
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fyash-datalake%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fajos1993%2Fazure-quickstart-templates%2Fmaster%2Fyash-datalake%2Fazuredeploy.json" target="_blank">
  
 </a>
 <a href="
-https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fyash-datalake%2FazureDeploy.json" target="_blank">
-
+https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fajos1993%2Fazure-quickstart-templates%2Fmaster%2Fyash-datalake%2Fazuredeploy.json" target="_blank">
 </a>
 
 --------------------------------------------------------------------------
