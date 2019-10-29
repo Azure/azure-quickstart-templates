@@ -27,7 +27,7 @@
       "type": "int",
       "defaultValue": 3,
       "minValue": 1,
-      "maxValue": 200,
+      "maxValue": 150,
       "metadata": {
         "description": "Number of  virtual machines to be created"
       }
@@ -72,20 +72,11 @@
         "description": "Virtual Machine Scale Set Name where the VM will be placed"
       }
     },
-    "virtualMachineScaleSetPlatformFaultDomainCount": {
-      "defaultValue": 2,
-      "type": "int",
-      "minValue": 2,
-      "maxValue": 5,
-      "metadata": {
-        "description": "The number of Fault Domains for the scale set. Different regions may have different max Fault Domain count"
-      }
-    },
     "virtualMachineScaleSetAvailabilityZone": {
       "type": "string",
       "defaultValue": "",
       "metadata": {
-        "description": "Specify an Availability Zone for the Virtual Machine Scale Set. All Virtual Machines added the the scale set will inherit this zone. Not all Azure regions support Availability zones"
+        "description": "Specify an Availability Zone for the Virtual Machine Scale Set. All Virtual Machines added the the scale set will inherit this zone. Not all Azure regions support Availability zones. VMSS deployed into a zone must have a platformFaultDomainCount = 5. Learn more about maximum fault domain count by region: https://aka.ms/azurefdcountbyregion"
       }
     },
     "dnsPrefixForPublicIP": {
@@ -135,7 +126,12 @@
       "2": [2],
       "3": [3]
     },
-    "selectedZone": "[if(empty(parameters('virtualMachineScaleSetAvailabilityZone')), variables('zoneObj').none, array(parameters('virtualMachineScaleSetAvailabilityZone')))]"
+    "fdCountOptions": {
+      "zonal": 5,
+      "nonzonal": 2
+    },
+    "selectedZone": "[if(empty(parameters('virtualMachineScaleSetAvailabilityZone')), variables('zoneObj').none, array(parameters('virtualMachineScaleSetAvailabilityZone')))]",
+    "virtualMachineScaleSetPlatformFaultDomainCount": "[if(empty(parameters('virtualMachineScaleSetAvailabilityZone')), variables('fdCountOptions').nonzonal, variables('fdCountOptions').zonal)]"
   },
   "resources": [
     {
@@ -184,7 +180,7 @@
       "location": "[parameters('location')]",
       "properties": {
         "singlePlacementGroup": "true",
-        "platformFaultDomainCount": "[parameters('virtualMachineScaleSetPlatformFaultDomainCount')]"
+        "platformFaultDomainCount": "[variables('virtualMachineScaleSetPlatformFaultDomainCount')]"
       },
       "zones": "[variables('selectedZone')]"
     },
@@ -293,8 +289,11 @@
       "tags": {
         "displayName": "[concat(parameters('virtualMachineNamePrefix'), copyIndex(1), '-PIP1')]"
       },
+      "sku": {
+        "name": "Standard"
+      },
       "properties": {
-        "publicIPAllocationMethod": "Dynamic",
+        "publicIPAllocationMethod": "Static",
         "dnsSettings": {
           "domainNameLabel": "[concat(parameters('dnsPrefixForPublicIP'), copyIndex(1))]"
         }
