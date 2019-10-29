@@ -13,6 +13,31 @@
                 "description": "Location for the resources."
             }
         },
+        "serviceNowInstance": {
+            "type": "string",
+            "metadata": {
+                "description": "The service now instance name."
+            }
+        },
+        "serviceNowUserName": {
+            "type": "string",
+            "metadata": {
+                "description": "The service now user name."
+            }
+        },
+        "serviceNowPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The service now password."
+            }
+        },
+        "serviceNowConnectionName": {
+            "type": "string",
+            "defaultValue": "[uniqueString(resourceGroup().id)]",
+            "metadata": {
+                "description": "Name of the logic app service now connector to be created."
+            }
+        },
         "logicAppName": {
             "type": "string",
             "defaultValue": "[uniqueString(resourceGroup().id)]",
@@ -57,9 +82,38 @@
                         "logicAppName": {
                             "type": "string",
                             "defaultValue": "[parameters('logicAppName')]"
+                        },
+                        "serviceNowInstance": {
+                            "type": "string",
+                            "defaultValue": "[parameters('serviceNowInstance')]"
+                        },
+                        "serviceNowUserName": {
+                            "type": "string",
+                            "defaultValue": "[parameters('serviceNowUserName')]"
+                        },
+                        "serviceNowPassword": {
+                            "type": "securestring",
+                            "defaultValue": "[parameters('serviceNowPassword')]"
                         }
                     },
                     "resources": [
+                        {
+                            "type": "Microsoft.Web/connections",
+                            "apiVersion": "2018-07-01",
+                            "name": "[parameters('serviceNowConnectionName')]",
+                            "location": "[parameters('location')]",
+                            "properties": {
+                                "api": {
+                                    "id": "[subscriptionResourceId('Microsoft.Web/locations/managedApis', parameters('location'), 'service-now')]"
+                                },
+                                "displayName": "[parameters('serviceNowConnectionName')]",
+                                "parameterValues": {
+                                    "instance": "[[parameters('serviceNowInstance')]",
+                                    "password": "[[parameters('serviceNowPassword')]",
+                                    "username": "[[parameters('serviceNowUserName')]"
+                                }
+                            }
+                        },
                         {
                             "type": "Microsoft.Logic/workflows",
                             "apiVersion": "2017-07-01",
@@ -77,12 +131,41 @@
                                                         "CreateCustomResource": {
                                                             "inputs": {
                                                                 "body": {
-                                                                    "properties": "@addProperty(triggerBody().Body['properties'], 'myDynamicProperty', 'myDynamicValue')"
+                                                                    "properties": "@{addProperty(triggerBody().Body['properties'], 'myDynamicProperty', body('CreateTicket')?['result']?['sys_id'])}"
                                                                 },
                                                                 "statusCode": 200
                                                             },
                                                             "kind": "Http",
+                                                            "runAfter": {
+                                                                "CreateTicket": [
+                                                                    "Succeeded"
+                                                                ]
+                                                            },
                                                             "type": "Response"
+                                                        },
+                                                        "CreateTicket": {
+                                                            "inputs": {
+                                                                "body": {
+                                                                    "correlation_id": "@{triggerOutputs()?['headers']?['x-ms-correlation-request-id']}",
+                                                                    "cost_center": "Custom Association Costs",
+                                                                    "install_status": "@{triggerBody().OperationType}",
+                                                                    "name": "@{last(split(triggerOutputs()?['headers']?['x-ms-customproviders-extendedresource'], '/'))}",
+                                                                    "owned_by": "Foo Bar"
+                                                                },
+                                                                "host": {
+                                                                    "connection": {
+                                                                        "name": "@parameters('$connections')['service-now']['connectionId']"
+                                                                    }
+                                                                },
+                                                                "method": "post",
+                                                                "path": "/api/now/v2/table/@{encodeURIComponent('cmdb_ci_infra_service')}",
+                                                                "queries": {
+                                                                    "sysparm_display_value": false,
+                                                                    "sysparm_exclude_reference_link": true
+                                                                }
+                                                            },
+                                                            "runAfter": {},
+                                                            "type": "ApiConnection"
                                                         }
                                                     },
                                                     "case": "CREATE"
@@ -95,17 +178,22 @@
                                                             "statusCode": 200
                                                         },
                                                         "kind": "Http",
+                                                        "runAfter": {},
                                                         "type": "Response"
                                                     }
                                                 }
                                             },
                                             "expression": "@triggerBody().operationType",
+                                            "runAfter": {},
                                             "type": "Switch"
                                         }
                                     },
-                                    "contentVersion": "1.0.0.0",
-                                    "outputs": {},
-                                    "parameters": {},
+                                    "parameters": {
+                                        "$connections": {
+                                            "defaultValue": {},
+                                            "type": "Object"
+                                        }
+                                    },
                                     "triggers": {
                                         "CustomProviderWebhook": {
                                             "inputs": {
@@ -113,6 +201,17 @@
                                             },
                                             "kind": "Http",
                                             "type": "Request"
+                                        }
+                                    }
+                                },
+                                "parameters": {
+                                    "$connections": {
+                                        "value": {
+                                            "service-now": {
+                                                "connectionId": "[resourceId('Microsoft.Web/connections', parameters('serviceNowConnectionName'))]",
+                                                "connectionName": "service-now",
+                                                "id": "[subscriptionResourceId('Microsoft.Web/locations/managedApis', parameters('location'), 'service-now')]"
+                                            }
                                         }
                                     }
                                 }
