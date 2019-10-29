@@ -63,7 +63,7 @@ Parameter         | Suggested value     | Description
 **blockchainMemberName** |*yourname*-*organization* i.e.:  krisnatagoras-mseducation  | Blockchain member name.
 **memberPassword**  | Complex password|"Password for the BlockChain Administrator. The password must be at least 12 characters long and have a lower case, upper characters, digit and a special character (Regex match)
 **Location**| One of these Locations | "eastus", "southeastasia", "westeurope", "northeurope",  "westus2", "japaneast"
-                
+
 ##Deployment
 There are a few ways to deploy this template.
 You can use [PowerShell](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy), [Azure CLI](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-cli), [Azure Portal](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-portal) or your favorite SDK.
@@ -124,7 +124,7 @@ And there we go, our deploy is Succeeded:
 
 Let's go and check the resource at the [Azure Portal](https://portal.azure.com).
 
-On the portal, go to Resource Groups. On this blade, you can see the Resource Group we've created. 
+On the portal, go to Resource Groups. On this blade, you can see the Resource Group we've created.
 
 ![Screen](./images/azdeployportal.png)
 
@@ -184,7 +184,7 @@ Go to the Resource. Repeat the test you have done before and enjoy your coding.
 **p.s.: Pretty easy to create resources on Azure, right? But if you are the sort of IT guy that always looks for automating things on the extreme :D Surprise, surprise!.
 Just click on the button below and it will automatically deploy the VM on your Azure Portal.**
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FKrisnatagoras%2Ftemplates%2Fmaster%2FBlockChain%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure4StudentQSTemplates%2Fazure-quickstart-templates%2Fmaster%2F101-app-blockchain%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 
