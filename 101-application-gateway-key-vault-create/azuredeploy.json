@@ -1,0 +1,285 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "addressPrefix": {
+            "type": "string",
+            "defaultValue": "10.0.0.0/16",
+            "metadata": {
+                "description": "Address prefix for the Virtual Network"
+            }
+        },
+        "subnetPrefix": {
+            "type": "string",
+            "defaultValue": "10.0.0.0/28",
+            "metadata": {
+                "description": "Subnet prefix"
+            }
+        },
+        "skuName": {
+            "type": "string",
+            "defaultValue": "Standard_Medium",
+            "metadata": {
+                "description": "Sku Name"
+            }
+        },
+        "backendIpAddress1": {
+            "type": "string",
+            "metadata": {
+                "description": "IP Address for Backend Server 1"
+            }
+        },
+        "backendIpAddress2": {
+            "type": "string",
+            "metadata": {
+                "description": "IP Address for Backend Server 2"
+            }
+        },
+        "MSIVersion": {
+            "type": "string",
+            "defaultValue": "2018-11-30",
+            "metadata": {
+                "description": "API version for msi extension"
+            }
+        },
+        "MSIPort": {
+            "type": "int",
+            "defaultValue": 50342,
+            "metadata": {
+                "description": "Default port for msi extension"
+            }
+        },
+        "KeyVaultVersion": {
+            "type": "string",
+            "defaultValue": "2018-02-14",
+            "metadata": {
+                "description": "API version for key vault resources and access policy resources"
+            }
+        },
+        "Secrets": {
+            "type": "array",
+            "metadata": {
+                "description": "An array of json objects like this : {'name':name, 'value':value}"
+            }
+        }
+    },
+    "variables": {
+        "applicationGatewayName": "amitgw1",
+        "idName": "identity1",
+        "keyVaultName": "keyvault0000139",
+        "publicIPAddressName": "amitPip1",
+        "virtualNetworkName": "vnet1",
+        "subnetName": "subnet1",
+        "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
+        "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
+        "publicIPRef": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]",
+        "applicationGatewayID": "[resourceId('Microsoft.Network/applicationGateways',variables('applicationGatewayName'))]",
+        "apiVersion": "2019-07-01",
+        "identityID": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities',variables('idName'))]",
+        "keyVaultID": "[resourceId('Microsoft.KeyVault/vaults',variables('keyVaultName'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+            "name": "[variables('idName')]",
+            "apiVersion": "2015-08-31-PREVIEW",
+            "location": "[resourceGroup().location]"
+        },
+        {
+            "type": "Microsoft.KeyVault/vaults",
+            "name": "[variables('keyVaultName')]",
+            "apiVersion": "[parameters('KeyVaultVersion')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.ManagedIdentity/userAssignedIdentities/', variables('idName'))]"
+            ],
+            "properties": {
+                "sku": {
+                    "name": "standard",
+                    "family": "A"
+                },
+                "tenantId": "[reference(variables('identityID'), parameters('MSIVersion')).tenantId]",
+                "accessPolicies": [
+                    {
+                        "tenantId": "[reference(variables('identityID'), parameters('MSIVersion')).tenantId]",
+                        "objectId": "[reference(variables('identityID'), parameters('MSIVersion')).principalId]",
+                        "permissions": {
+                            "secrets": [
+                                "get"
+                            ]
+                        }
+                    }
+                ],
+                "enableSoftDelete": true
+            }
+        },
+        {
+            "type": "Microsoft.KeyVault/vaults/secrets",
+            "dependsOn": [
+                "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
+            ],
+            "apiVersion": "[parameters('KeyVaultVersion')]",
+            "copy": {
+                "name": "secretcopy",
+                "count": "[length(parameters('Secrets'))]"
+            },
+            "name": "[concat(variables('keyVaultName'), '/', parameters('Secrets')[copyIndex()].name)]",
+            "properties": {
+                "value": "[parameters('Secrets')[copyIndex()].value]",
+                "recoveryLevel": "Purgeable"
+            }
+        },
+        {
+            "apiVersion": "[variables('apiVersion')]",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[variables('publicIPAddressName')]",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Standard"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Static"
+            }
+        },
+        {
+            "apiVersion": "[variables('apiVersion')]",
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[variables('virtualNetworkName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[parameters('addressPrefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('subnetName')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('subnetPrefix')]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "[variables('apiVersion')]",
+            "name": "[variables('applicationGatewayName')]",
+            "type": "Microsoft.Network/applicationGateways",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+                "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+                "[concat('Microsoft.KeyVault/vaults/', variables('keyVaultName'))]"
+            ],
+            "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": {
+                    "[variables('identityID')]": {}
+                }
+            },
+            "properties": {
+                "sku": {
+                    "name": "[parameters('skuName')]",
+                    "tier": "Standard_v2",
+                    "capacity": 2
+                },
+                "sslCertificates": [
+                    {
+                        "name": "appGatewaySslCert",
+                        "properties": {
+                            "keyVaultSecretId": "[concat(reference(variables('keyVaultID')).vaultUri,'secrets/sslcert')]"
+                        }
+                    }
+                ],
+                "gatewayIPConfigurations": [
+                    {
+                        "name": "appGatewayIpConfig",
+                        "properties": {
+                            "subnet": {
+                                "id": "[variables('subnetRef')]"
+                            }
+                        }
+                    }
+                ],
+                "frontendIPConfigurations": [
+                    {
+                        "name": "appGatewayFrontendIP",
+                        "properties": {
+                            "PublicIPAddress": {
+                                "id": "[variables('publicIPRef')]"
+                            }
+                        }
+                    }
+                ],
+                "frontendPorts": [
+                    {
+                        "name": "appGatewayFrontendPort",
+                        "properties": {
+                            "Port": 443
+                        }
+                    }
+                ],
+                "backendAddressPools": [
+                    {
+                        "name": "appGatewayBackendPool",
+                        "properties": {
+                            "BackendAddresses": [
+                                {
+                                    "IpAddress": "[parameters('backendIpAddress1')]"
+                                },
+                                {
+                                    "IpAddress": "[parameters('backendIpAddress2')]"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "backendHttpSettingsCollection": [
+                    {
+                        "name": "appGatewayBackendHttpSettings",
+                        "properties": {
+                            "Port": 80,
+                            "Protocol": "Http",
+                            "CookieBasedAffinity": "Disabled"
+                        }
+                    }
+                ],
+                "httpListeners": [
+                    {
+                        "name": "appGatewayHttpListener",
+                        "properties": {
+                            "FrontendIPConfiguration": {
+                                "Id": "[concat(variables('applicationGatewayID'), '/frontendIPConfigurations/appGatewayFrontendIP')]"
+                            },
+                            "FrontendPort": {
+                                "Id": "[concat(variables('applicationGatewayID'), '/frontendPorts/appGatewayFrontendPort')]"
+                            },
+                            "Protocol": "Https",
+                            "SslCertificate": {
+                                "Id": "[concat(variables('applicationGatewayID'), '/sslCertificates/appGatewaySslCert')]"
+                            }
+                        }
+                    }
+                ],
+                "requestRoutingRules": [
+                    {
+                        "Name": "rule1",
+                        "properties": {
+                            "RuleType": "Basic",
+                            "httpListener": {
+                                "id": "[concat(variables('applicationGatewayID'), '/httpListeners/appGatewayHttpListener')]"
+                            },
+                            "backendAddressPool": {
+                                "id": "[concat(variables('applicationGatewayID'), '/backendAddressPools/appGatewayBackendPool')]"
+                            },
+                            "backendHttpSettings": {
+                                "id": "[concat(variables('applicationGatewayID'), '/backendHttpSettingsCollection/appGatewayBackendHttpSettings')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}
