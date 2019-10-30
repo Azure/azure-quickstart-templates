@@ -127,7 +127,7 @@ Congratulations! You have deployed the template succesfully. We can see our web 
 <app-name>.azurewebsites.net
 ```
 
-![Screen](./images/django-app-service.png)
+![Screen](./images/django-app-service.PNG)
 
 You can redeploy it automatically with just click on this button:
 
@@ -154,11 +154,11 @@ Select next ... And then select the repository and the branch.
 
 If we make all good, the system will recognize our dockerfile automatically. Finally, we will have to create an Azure DevOps and a Container Registry on the last step of the deployment or use an existing one.
 
-![Screen](./images/build.png)
+![Screen](./images/build.PNG)
 
 Make sure that it is deployed succesfully to production. Now we can see our own django app deployed in our app services.
 
-![Screen](./images/new-django-app-service.png)
+![Screen](./images/new-django-app-service.PNG)
 
 ### How to delete your resources
 
