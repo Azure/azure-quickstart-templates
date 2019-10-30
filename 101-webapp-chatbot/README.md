@@ -1,4 +1,4 @@
-# Azure Web Chat Bot ARM Template
+# Azure Web Chat Bot 
 
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/100-blank-template/PublicLastTestDate.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/100-blank-template/PublicDeployment.svg" />&nbsp;
@@ -9,10 +9,9 @@
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/100-blank-template/BestPracticeResult.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/100-blank-template/CredScanResult.svg" />&nbsp;
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FKrisnatagoras%2Ftemplates%2Fmaster%2FWebAppBot%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure4StudentQSTemplates%2Fazure-quickstart-templates%2Fmaster%2F101-webapp-chatbot%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
-</a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FKrisnatagoras%2Ftemplates%2Fmaster%2FWebAppBot%2Fazuredeploy.json" target="_blank">
+</a><a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure4StudentQSTemplates%2Fazure-quickstart-templates%2Fmaster%2F101-webapp-chatbot2019%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
@@ -57,3 +56,14 @@ Parameter         | Suggested value     | Description
 **Web App Name** |*location*-*name*-*enviroment* i.e.:  uks-mybot-test  | The unique URL name of the bot. For example, if you name your bot uks-mybot-test, then your bot's URL will be http://uks-mybot-test.azurewebsites.net. The name must use alphanumeric and underscore characters only. There is a 35 character limit to this field. The App name cannot be changed once the bot is created. I personally like to add the location of the app into the name, and also the environment. That is the reason that my Web App Name is: uks-mybot-test
 **App ID**| Your App ID | The App ID that you've created in the previous section.
 **App Secret**| Complex Password| The secret that you've created in the previous section.
+
+
+If you are new to **Azure Bot Service**, see:
+
+- [Azure Bot Service](https://azure.microsoft.com/en-us/services/bot-service/).
+- [Azure Bot Service Documentation](https://docs.microsoft.com/en-us/azure/bot-service/?view=azure-bot-service-4.0)
+- [Template reference](https://docs.microsoft.com/azure/templates/microsoft.compute/allversions)
+
+If you are new to template deployment, see:
+
+[Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)

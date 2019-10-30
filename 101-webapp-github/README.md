@@ -33,3 +33,14 @@ Parameter         | Suggested value     | Description
 **branch**  | master     |The branch of the GitHub repository to use.
 **Resource Group**| simpleWebAppGit-RG|  That is the Resource Group you gonna need to deploy your resources.
 **Location**| The default location | Select the geographic location for your resource group. Your location choice can be any location listed, though it's often best to choose a location closest to your customer. The location cannot be changed once the bot is created.
+
+
+If you are new to **Web App Service**, see:
+
+- [Web App](https://azure.microsoft.com/en-gb/services/app-service/web/)
+- [Web App Documentation](https://docs.microsoft.com/en-gb/azure/app-service/).
+- [Template reference](https://docs.microsoft.com/azure/templates/microsoft.compute/allversions)
+
+If you are new to template deployment, see:
+
+[Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)

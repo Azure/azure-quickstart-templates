@@ -28,13 +28,11 @@ Parameter         | Suggested value     | Description
 **funcName** |*location*-*name*-*enviroment* i.e.:  uks-functionapp-test  | The unique URL name of the WebApp. I recommend you to use the notation above, that helps to create a unique name for your Web Application. The name must use alphanumeric and underscore characters only. There is a 35 character limit to this field. The App name cannot be changed once the bot is created.
 
 
-If you are new to Azure virtual machines, see:
+If you are new to Function Apps, see:
 
-- [Azure Virtual Machines](https://azure.microsoft.com/services/virtual-machines/).
-- [Azure Linux Virtual Machines documentation](https://docs.microsoft.com/azure/virtual-machines/linux/)
-- [Azure Windows Virtual Machines documentation](https://docs.microsoft.com/azure/virtual-machines/windows/)
+- [Azure Functions](https://azure.microsoft.com/en-us/services/functions/).
+- [Azure Function Documentation](https://docs.microsoft.com/en-gb/azure/azure-functions/)
 - [Template reference](https://docs.microsoft.com/azure/templates/microsoft.compute/allversions)
-- [Quickstart templates](https://azure.microsoft.com/resources/templates/?resourceType=Microsoft.Compute&pageNumber=1&sort=Popular)
 
 If you are new to template deployment, see:
 

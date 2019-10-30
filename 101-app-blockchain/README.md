@@ -31,3 +31,13 @@ Available locations:
 	"northeurope",
 	"westus2",
 	"japaneast"
+
+
+If you are new to BlockChain Services, see:
+
+- [Azure BlockChain Services](https://azure.microsoft.com/en-gb/services/blockchain-service/).
+- [Template reference](https://docs.microsoft.com/azure/templates/microsoft.compute/allversions)
+
+If you are new to template deployment, see:
+
+[Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
