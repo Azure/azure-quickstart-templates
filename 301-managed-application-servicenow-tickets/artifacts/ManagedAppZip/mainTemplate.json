@@ -49,6 +49,11 @@
             }
         }
     },
+    "variables": {
+        "managedApplicationId": "[resourceGroup().managedBy]",
+        "managedApplicationName": "[last(split(variables('managedApplicationId'), '/'))]",
+        "applicationResourceGroupName": "[split(variables('managedApplicationId'), '/')[4]]"
+    },
     "resources": [
         {
             "type": "Microsoft.Web/connections",
@@ -77,24 +82,38 @@
                 "definition": {
                     "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
                     "actions": {
+                        "ListManagedApplicationToken": {
+                            "inputs": {
+                                "authentication": {
+                                    "type": "ManagedServiceIdentity"
+                                },
+                                "body": {},
+                                "method": "POST",
+                                "queries": {
+                                    "api-version": "2018-09-01-preview"
+                                },
+                                "uri": "https://management.azure.com/@{parameters('managedApplicationId')}/listTokens"
+                            },
+                            "runAfter": {},
+                            "type": "Http"
+                        },
                         "Switch": {
                             "cases": {
                                 "Case": {
                                     "actions": {
-                                        "CreateCustomResource": {
+                                        "GetAssociatedResource": {
                                             "inputs": {
-                                                "body": {
-                                                    "properties": "@addProperty(triggerBody().Body['properties'], 'myDynamicProperty', body('CreateTicket')?['result']?['sys_id'])"
+                                                "headers": {
+                                                    "Authorization": "Bearer @{first(body('ListManagedApplicationToken').value).access_token}"
                                                 },
-                                                "statusCode": 200
+                                                "method": "GET",
+                                                "queries": {
+                                                    "api-version": "2018-02-01"
+                                                },
+                                                "uri": "https://management.azure.com/@{triggerOutputs()['headers']?['x-ms-customproviders-extendedresource']}"
                                             },
-                                            "kind": "Http",
-                                            "runAfter": {
-                                                "CreateTicket": [
-                                                    "Succeeded"
-                                                ]
-                                            },
-                                            "type": "Response"
+                                            "runAfter": {},
+                                            "type": "Http"
                                         },
                                         "CreateTicket": {
                                             "inputs": {
@@ -103,7 +122,11 @@
                                                     "cost_center": "Custom Association Costs",
                                                     "install_status": "@{triggerBody().OperationType}",
                                                     "name": "@{last(split(triggerOutputs()?['headers']?['x-ms-customproviders-extendedresource'], '/'))}",
-                                                    "owned_by": "Foo Bar"
+                                                    "owned_by": "Foo Bar",
+                                                    "short_description": "Storage Account Resource: @{triggerOutputs()?['headers']?['x-ms-customproviders-extendedresource']}",
+                                                    "sys_class_name": "@{body('GetAssociatedResource').sku.name}",
+                                                    "asset_tag": "@{body('GetAssociatedResource').tags}",
+                                                    "location": "@{body('GetAssociatedResource').location}"
                                                 },
                                                 "host": {
                                                     "connection": {
@@ -117,8 +140,27 @@
                                                     "sysparm_exclude_reference_link": true
                                                 }
                                             },
-                                            "runAfter": {},
+                                            "runAfter": {
+                                                "GetAssociatedResource": [
+                                                    "Succeeded"
+                                                ]
+                                            },
                                             "type": "ApiConnection"
+                                        },
+                                        "CreateAssociationResponse": {
+                                            "inputs": {
+                                                "body": {
+                                                    "properties": "@addProperty(triggerBody().Body['properties'], 'systemId', body('CreateTicket')?['result']?['sys_id'])"
+                                                },
+                                                "statusCode": 200
+                                            },
+                                            "kind": "Http",
+                                            "runAfter": {
+                                                "CreateTicket": [
+                                                    "Succeeded"
+                                                ]
+                                            },
+                                            "type": "Response"
                                         }
                                     },
                                     "case": "CREATE"
@@ -126,22 +168,68 @@
                             },
                             "default": {
                                 "actions": {
-                                    "DefaultHttpResponse": {
+                                    "GetAssociationResource": {
+                                        "inputs": {
+                                            "headers": {
+                                                "Authorization": "Bearer @{first(body('ListManagedApplicationToken').value).access_token}"
+                                            },
+                                            "method": "GET",
+                                            "queries": {
+                                                "api-version": "2018-02-01"
+                                            },
+                                            "uri": "https://management.azure.com/@{triggerOutputs()['headers']?['x-ms-customproviders-extensionpath']}"
+                                        },
+                                        "runAfter": {},
+                                        "type": "Http"
+                                    },
+                                    "UpdateServiceNowRecord": {
+                                        "inputs": {
+                                            "body": {
+                                                "install_status": "@{triggerBody()['OperationType']}"
+                                            },
+                                            "host": {
+                                                "connection": {
+                                                    "name": "@parameters('$connections')['service-now']['connectionId']"
+                                                }
+                                            },
+                                            "method": "put",
+                                            "path": "/api/now/v2/table/@{encodeURIComponent('cmdb_ci_azure_subscription')}/@{encodeURIComponent(body('GetAssociationResource').properties.systemId)}",
+                                            "queries": {
+                                                "sysparm_display_value": false,
+                                                "sysparm_exclude_reference_link": true
+                                            }
+                                        },
+                                        "runAfter": { },
+                                        "type": "ApiConnection"
+                                    },
+                                    "DeleteAssociationResponse": {
                                         "inputs": {
                                             "statusCode": 200
                                         },
                                         "kind": "Http",
-                                        "runAfter": {},
+                                        "runAfter": {
+                                            "UpdateServiceNowRecord": [
+                                                "Succeeded"
+                                            ]
+                                        },
                                         "type": "Response"
                                     }
                                 }
                             },
                             "expression": "@triggerBody().operationType",
-                            "runAfter": {},
+                            "runAfter": {
+                                "ListManagedApplicationToken": [
+                                    "Succeeded"
+                                ]
+                            },
                             "type": "Switch"
                         }
                     },
                     "parameters": {
+                        "managedApplicationId": {
+                            "defaultValue": "",
+                            "type": "string"
+                        },
                         "$connections": {
                             "defaultValue": {},
                             "type": "Object"
@@ -158,6 +246,9 @@
                     }
                 },
                 "parameters": {
+                    "managedApplicationId": {
+                        "value": "[variables('managedApplicationId')]"
+                    },
                     "$connections": {
                         "value": {
                             "service-now": {
@@ -188,6 +279,35 @@
                     }
                 ]
             }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2017-05-10",
+            "name": "roleAssignmentNestedTemplate",
+            "resourceGroup": "[variables('applicationResourceGroupName')]",
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "resources": [
+                        {
+                            "type": "Microsoft.Solutions/applications/providers/roleAssignments",
+                            "apiVersion": "2019-04-01-preview",
+                            "name": "[concat(variables('managedApplicationName'), '/Microsoft.Authorization/', guid(resourceGroup().id))]",
+                            "properties": {
+                                "roleDefinitionId": "[concat(subscription().id, '/providers/Microsoft.Authorization/roleDefinitions/', '8e3af657-a8ff-443c-a75c-2fe8c4bcb635')]",
+                                "principalId": "[reference(parameters('logicAppName'), '2017-07-01', 'Full').identity.principalId]",
+                                "scope": "[variables('managedApplicationId')]",
+                                "principalType": "ServicePrincipal"
+                            }
+                        }
+                    ]
+                }
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Logic/workflows/', parameters('logicAppName'))]"
+            ]
         }
     ],
     "outputs": {}
