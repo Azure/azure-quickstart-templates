@@ -1,0 +1,90 @@
+{
+    "contentVersion": "1.0.0.0",
+    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+    "parameters": {
+        "name": {
+            "type": "string",
+            "metadata": {
+                "description": "That name is the name of our application. It has to be unique.Type a name followed by your resource group name. (<name>-<resourceGroupName>)"
+            }
+        }
+    },
+    "variables": {
+        "subscriptionId": "[subscription().subscriptionId]",
+        "hostingPlanName": "[concat(parameters('name'), '-hpn')]",
+        "hostingEnvironment": "",
+        "location": "[resourceGroup().location]",
+        "sku": "Free",
+        "skuCode": "F1",
+        "workerSize": "0",
+        "serverFarmResourceGroup": "[resourceGroup().name]"
+    },
+    "resources": [
+        {
+            "name": "[parameters('name')]",
+            "type": "Microsoft.Web/sites",
+            "properties": {
+                "siteConfig": {
+                    "appSettings": [
+                        {
+                            "name": "WEBSITES_ENABLE_APP_SERVICE_STORAGE",
+                            "value": "false"
+                        },
+                        {
+                            "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+                            "value": "[reference(concat('microsoft.insights/components/', parameters('name'), '-insights'), '2015-05-01').InstrumentationKey]"
+                        },
+                        {
+                            "name": "XDT_MicrosoftApplicationInsights_Mode",
+                            "value": "default"
+                        },
+                        {
+                            "name": "ApplicationInsightsAgent_EXTENSION_VERSION",
+                            "value": "~2"
+                        }
+                    ],
+                    "appCommandLine": "",
+                    "linuxFxVersion": "DOCKER|appsvcorg/django-python:0.1"
+                },
+                "name": "[parameters('name')]",
+                "clientAffinityEnabled": false,
+                "serverFarmId": "[concat('/subscriptions/', variables('subscriptionId'),'/resourcegroups/', variables('serverFarmResourceGroup'), '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]",
+                "hostingEnvironment": "[variables('hostingEnvironment')]"
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]",
+                "[concat('microsoft.insights/components/', parameters('name'), '-insights')]"
+            ],
+            "apiVersion": "2018-11-01",
+            "location": "[variables('location')]"
+        },
+        {
+            "apiVersion": "2016-09-01",
+            "name": "[variables('hostingPlanName')]",
+            "type": "Microsoft.Web/serverfarms",
+            "location": "[variables('location')]",
+            "properties": {
+                "name": "[variables('hostingPlanName')]",
+                "workerSizeId": "[variables('workerSize')]",
+                "reserved": true,
+                "numberOfWorkers": "1",
+                "hostingEnvironment": "[variables('hostingEnvironment')]"
+            },
+            "sku": {
+                "Tier": "[variables('sku')]",
+                "Name": "[variables('skuCode')]"
+            },
+            "kind": "linux"
+        },
+        {
+            "apiVersion": "2015-05-01",
+            "name": "[concat(parameters('name'), '-insights')]",
+            "type": "microsoft.insights/components",
+            "location": "[variables('location')]",
+            "properties": {
+                "ApplicationId": "[parameters('name')]",
+                "Request_Source": "IbizaWebAppExtensionCreate"
+            }
+        }
+    ]
+}
