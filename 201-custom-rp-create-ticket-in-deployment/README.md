@@ -17,62 +17,24 @@ This sample deployment creates the following apis on the resource.
 
 1) An Azure Resource Manager extended API called "associations".
 
-### CustomResources
+### Associations
 
-"associations" is a special API extension contained within the custom resource provider. The "associations" API must be named "associations" and marked as "Extension". Once, these prerequisites are met the "associations" API can be used to extend existing resources in Azure. This extension can exist outside the resource group that contains the custom provider instance. This extension is defined in the following part of the ARM template under the "resourceProviders" resource:
+If you are unfamiliar with "associations" or custom providers, this sample builds off of the [custom provider existing resource deployment sample](../101-custom-rp-existing-resource-deployments\README.md), which has more information. In this sample, existing resource deployments will be expanded to work with an external service. In this case, the custom provider creates a connection to service now. However, any service or public HTTP endpoint can be used as an extension.
 
-```json
-"resourceTypes": [
-    {
-        "name": "associations",
-        "mode": "Secure",
-        "routingType": "Webhook,Cache,Extension",
-        "endpoint": "[[listCallbackURL(concat(resourceId('Microsoft.Logic/workflows', parameters('logicAppName')), '/triggers/CustomProviderWebhook'), '2017-07-01').value]"
-    }
-]
-```
+### Starting from scratch
 
-| Property | Required | Description |
-|---|---|---|
-| name | *yes* | The name is the new "resourceType" extension that is added to the Azure Resource Manager API. For resource onboarding and cross resource group extension, the name must be "associations". This creates new APIs in Azure off any resource type. Example: {existingResourceId}/providers/Microsoft.CustomProviders/**associations**/{associationName} |
-| mode | *no* | Hides the **endpoint** property on reads if set to "Secure". |
-| routingType | *no* | Determines the HTTP structure and strategy for HTTP requests to the **endpoint**. The property is structured as flags. The "Webhook" flag changes all requests to *POST*. The "Cache" flag allows the custom provider to store request responses and automatically return them on subsequent *GET* requests. The "Extension" flag allows this type to extend existing resources outside the resource group of the custom provider. The name must be set to "associations" to use the "Extension" flag. |
-| endpoint | *yes* | The public HTTP endpoint that handles all incoming reuqests. |
+If you don't have an existing custom provider with logic deployed, you can deploy the custom provider infrastructure by providing the service now template parameter information. If you don't have a service now account, you can create a free test account:
 
-In the above template, we can see that the "associations" API has been defined as a "Webhook,Cache,Extension" resource which means that it is backed by a Webhook API endpoint. In this sample, we set the callback URL for the Azure Logic App to handle the incoming request and provide a response. Because we defined the "Cache" flag, the endpoint only needs to handle the PUT and DELETE calls, while the GET calls will automatically be handled by the custom provider. In addition, we specify the "Extension" flag, which combined with the name "associations" allows the new functionality to target existing resource groups and resources. In the above case, the following calls will be added to the Azure Resource Manager API:
+![](images/customprovidertemplateparameters.PNG)
 
-```
-(PUT|GET|DELETE) {existingResourceId}/providers/Microsoft.CustomProviders/associations/{associationName}?api-version=2018-09-01-preview
-```
+The resulting deployment should consist of two parts: the custom provider infrastructure and the association resource. The custom provider infrastructure deploys the web connector to service now, logic app, and custom provider. The association triggers the custom provider to perform an action. In this sample, the action is creating a service now record.
 
-The Azure Resource Manager template also utilizes the new Azure extension to create an instance of the "associations". If the "customResourceProviderId" is provided then a new custom provider instance and logic app will not be created:
-
-```json
-{
-    "type": "Microsoft.CustomProviders/associations",
-    "apiVersion": "2018-09-01-preview",
-    "name": "[parameters('associationName')]",
-    "location": "global",
-    "properties": {
-        "targetResourceId": "[if(empty(parameters('customResourceProviderId')), reference('customProviderInfrastructureTemplate').outputs.customProviderResourceId.value, parameters('customResourceProviderId'))]",
-        "myCustomInputProperty": "myCustomInputValue",
-        "myCustomInputObject": {
-            "Property1": "Value1"
-        }
-    }
-}
-```
-
-| Property | Required | Description |
-|---|---|---|
-| targetResourceId | *yes* | The "targetResourceId" property is the resource id of the custom provider or managed application (that contains a custom provider). In order to create an association, write access to the "targetResourceId" is required. |
-
-The "Microsoft.CustomProviders/associations" is an extension API and can exist on any resource type. In this sample, the "associations" resource on a resource group. In order to create a new "associations" resource a valid "targetResourceId" that points to an existing custom provider must be provided. In addition, write access to the "targetResourceId" is also required.
-
-If the "customResourceProviderId" template parameter is not provided, the deployment should look like:
 ![](images/createdcustomprovider.PNG)
 
-When providing the "customResourceProviderId", the template will consist of:
+### Existing custom provider
+
+Once the sample is initially deployed, instead of recreating everything from scratch, it can just use an existing custom provider resource. When deploying with an existing custom provider resource, the "Custom Resource Provider Id" and "Association Name" are the only required fields. This will only deploy the "associations" resource.
+
 ![](images/createdassociationresource.PNG)
 
 The outputs section of the template deployment also will display the created resource, which can be accessed through the *reference* template function.

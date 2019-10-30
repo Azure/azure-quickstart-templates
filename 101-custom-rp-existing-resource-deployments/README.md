@@ -17,7 +17,7 @@ This sample deployment creates the following apis on the resource.
 
 1) An Azure Resource Manager extended API called "associations".
 
-### CustomResources
+### Associations
 
 "associations" is a special API extension contained within the custom resource provider. The "associations" API must be named "associations" and marked as "Extension". Once, these prerequisites are met the "associations" API can be used to extend existing resources in Azure. This extension can exist outside the resource group that contains the custom provider instance. This extension is defined in the following part of the ARM template under the "resourceProviders" resource:
 
