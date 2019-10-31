@@ -86,8 +86,14 @@ Each test script has access to a set of well-known variables:
         return $true
     })]
     [Collections.IDictionary]
+    [Alias('TestGroups')]
     $TestGroup = [Ordered]@{},
 
+    # Any additional parameters to pass to each test.  
+    # If the parameter does not exist for a given test case, it will be ignored.
+    [Collections.IDictionary]
+    [Alias('TestParameters')]
+    $TestParameter,
 
     # If provided, will skip any tests in this list.
     [string[]]
@@ -145,7 +151,7 @@ Each test script has access to a set of well-known variables:
             $cacheName = $cacheFile.Name -replace '\.cache\.json', ''
             if (-not $script:AlreadyLoadedCache[$cacheFile.Name]) {
                 $script:AlreadyLoadedCache[$cacheFile.Name] = 
-                    [IO.File]::ReadAllText($cacheFile.Fullname) | ConvertFrom-Json
+                    [IO.File]::ReadAllText($cacheFile.Fullname) | Microsoft.PowerShell.Utility\ConvertFrom-Json
                 
             }
             $cacheData = $script:AlreadyLoadedCache[$cacheFile.Name]
@@ -389,6 +395,13 @@ Each test script has access to a set of well-known variables:
                 $ExecutionContext.SessionState.PSVariable.Set($kv.Key, $kv.Value)
             }
             $wellKnownVariables = @($expandedTemplate.Keys) + $cacheItemNames
+
+            if ($testParameter) {
+                $wellKnownVariables += foreach ($kv in $testParameter.GetEnumerator()) {
+                    $ExecutionContext.SessionState.PSVariable.Set($kv.Key, $kv.Value)
+                    $kv.Key
+                }                
+            }
 
             # If a file list was provided,
             if ($PSBoundParameters.File) {
