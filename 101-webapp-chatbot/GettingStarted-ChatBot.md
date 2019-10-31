@@ -197,10 +197,9 @@ Go to the Resource. Repeat the test you have done before and enjoy your coding.
 **p.s.: Pretty easy to create resources on Azure, right? But if you are the sort of IT guy that always looks for automating things on the extreme :D Surprise, surprise!.
 Just click on the button below and it will automatically deploy the VM on your Azure Portal.**
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FKrisnatagoras%2Ftemplates%2Fmaster%2FWebAppBot%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure4StudentQSTemplates%2Fazure-quickstart-templates%2Fmaster%2F101-webapp-chatbot%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
-
 
 #####Important disclaimer: For bot Service, we are using the F0 free tier of access, which means that we have a limited amount of access, by the time of writing this guide is 10K of messages that you can use in the Web ChatBot. Anyway if you exceed that access you may be charged, in order to avoid that you can delete the resource and deploy it again, you don't want to finish all your credits at once, right? 
 
