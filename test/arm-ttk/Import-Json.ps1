@@ -21,12 +21,15 @@
         if (-not $resolvedPath) { return }
 
         $convertProblems = $null
-        [IO.File]::ReadAllText($resolvedPath) | 
+        [IO.File]::ReadAllText("$resolvedPath") | 
             ConvertFrom-Json -ErrorAction SilentlyContinue -ErrorVariable ConvertProblems
 
         if ($convertProblems) {
-            $PSCmdlet.WriteError([Management.Automation.ErrorRecord]::new($convertProblems[0].InnerException, 'Import.Json.Failed', 'InvalidOperation', $FilePath))
+            if ($convertProblems[0].InnerException) {
+                $PSCmdlet.WriteError([Management.Automation.ErrorRecord]::new($convertProblems[0].InnerException, 'Import.Json.Failed', 'InvalidOperation', $FilePath))
+            } else {
+                $PSCmdlet.WriteError([Management.Automation.ErrorRecord]::new("$($convertProblems)", 'Import.Json.Failed', 'InvalidOperation', $FilePath))
+            }
         }
-
     }
 }
