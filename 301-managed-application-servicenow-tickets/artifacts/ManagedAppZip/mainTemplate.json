@@ -283,6 +283,129 @@
             ]
         },
         {
+            "type": "Microsoft.Logic/workflows",
+            "apiVersion": "2017-07-01",
+            "name": "[parameters('serviceTicketsLogicAppName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "state": "Enabled",
+                "definition": {
+                    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+                    "actions": {
+                        "Switch": {
+                            "cases": {
+                                "Case": {
+                                    "actions": {
+                                        "ListServiceNowTickets": {
+                                            "inputs": {
+                                                "host": {
+                                                    "connection": {
+                                                        "name": "@parameters('$connections')['service-now']['connectionId']"
+                                                    }
+                                                },
+                                                "method": "get",
+                                                "path": "/api/now/v2/table/@{encodeURIComponent('cmdb_ci_azure_subscription')}",
+                                                "queries": {
+                                                    "sysparm_display_value": false,
+                                                    "sysparm_exclude_reference_link": true
+                                                }
+                                            },
+                                            "runAfter": {
+                                                "GetAssociatedResource": [
+                                                    "Succeeded"
+                                                ]
+                                            },
+                                            "type": "ApiConnection"
+                                        },
+                                        "ConvertToAzureREST": {
+                                            "inputs": {
+                                                "from": "@body('ListServiceNowTickets')?['result']",
+                                                "select": {
+                                                    "name": "@item()?['sys_id']",
+                                                    "properties": {
+                                                        "description": "@item()?['short_description']",
+                                                        "displayName": "@item()?['name']"
+                                                    },
+                                                    "type": "@triggerBody().resourceType",
+                                                    "id": "@concat(triggerOutputs()?['headers']?['x-ms-customproviders-requestpath'], item()?['sys_id'])"
+                                                }
+                                            },
+                                            "runAfter": {
+                                                "List_Records": [
+                                                    "Succeeded"
+                                                ]
+                                            },
+                                            "type": "Select"
+                                        },
+                                        "ListTicketsResponse": {
+                                            "inputs": {
+                                                "body": {
+                                                    "value": "@body('Select')"
+                                                },
+                                                "statusCode": 200
+                                            },
+                                            "kind": "Http",
+                                            "runAfter": {
+                                                "ConvertToAzureREST": [
+                                                    "Succeeded"
+                                                ]
+                                            },
+                                            "type": "Response"
+                                        }
+                                    },
+                                    "case": "LIST"
+                                }
+                            },
+                            "default": {
+                                "actions": {
+                                    "DefaultResponse": {
+                                        "inputs": {
+                                            "statusCode": 200
+                                        },
+                                        "kind": "Http",
+                                        "runAfter": {},
+                                        "type": "Response"
+                                    }
+                                }
+                            },
+                            "expression": "@triggerBody().operationType",
+                            "runAfter": {},
+                            "type": "Switch"
+                        }
+                    },
+                    "parameters": {
+                        "$connections": {
+                            "defaultValue": {},
+                            "type": "Object"
+                        }
+                    },
+                    "triggers": {
+                        "CustomProviderWebhook": {
+                            "inputs": {
+                                "schema": {}
+                            },
+                            "kind": "Http",
+                            "type": "Request"
+                        }
+                    }
+                },
+                "parameters": {
+                    "$connections": {
+                        "value": {
+                            "service-now": {
+                                "connectionId": "[resourceId('Microsoft.Web/connections', parameters('serviceNowConnectionName'))]",
+                                "connectionName": "service-now",
+                                "id": "[subscriptionResourceId('Microsoft.Web/locations/managedApis', parameters('location'), 'service-now')]"
+                            }
+                        }
+                    }
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/connections', parameters('serviceNowConnectionName'))]"
+            ]
+        },
+        {
             "type": "Microsoft.CustomProviders/resourceProviders",
             "apiVersion": "2018-09-01-preview",
             "name": "public",
@@ -294,6 +417,12 @@
                         "mode": "Secure",
                         "routingType": "Webhook,Cache,Extension",
                         "endpoint": "[listCallbackURL(concat(resourceId('Microsoft.Logic/workflows', parameters('serviceRequestsLogicAppName')), '/triggers/CustomProviderWebhook'), '2017-07-01').value]"
+                    },
+                    {
+                        "name": "tickets",
+                        "mode": "Secure",
+                        "routingType": "Webhook",
+                        "endpoint": "[listCallbackURL(concat(resourceId('Microsoft.Logic/workflows', parameters('serviceTicketsLogicAppName')), '/triggers/CustomProviderWebhook'), '2017-07-01').value]"
                     }
                 ]
             }
