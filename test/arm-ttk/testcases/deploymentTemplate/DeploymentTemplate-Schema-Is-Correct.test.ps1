@@ -17,7 +17,10 @@ if (-not $templateSchema) {
 
 $validSchemas = 
     'https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#',
-    'https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#'
+    'https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#',
+    'https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#',
+    'https://schema.management.azure.com/schemas/2019-08-01/tenantDeploymentTemplate.json#',
+    'https://schema.management.azure.com/schemas/2019-08-01/managementGroupDeploymentTemplate.json#'
 
 
 if ($validSchemas -notcontains $templateSchema) {
