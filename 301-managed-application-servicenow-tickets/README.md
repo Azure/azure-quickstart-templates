@@ -5,17 +5,19 @@
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
-This sample Azure Resource Manager template deploys a custom resource provider to Azure that extends the Azure Resource Manager API. This sample shows how to extend existing resources that are outside the resource group where the custom provider instance lives. In this sample, the custom resource provider is powered by an Azure Logic App, but any public API endpoint can be used.
+This sample deploys an Azure Managed Application, which uses a custom provider to extend Azure Resource Manager APIs with Service Now. This is an advanced sample and builds off the follow:
 
-The custom resource provider is a hidden Azure resource so to confirm that the custom resource provider has been deployed you will have to check the box that says *Show hidden types* in the Azure portal Overview page for the resource group.
+* [201 managed application post deployment updates](../201-managed-application-post-deployment-updates/README.md)
+* [201 custom providers creating tickets for deployments](../201-custom-rp-create-ticket-for-deployment/README.md)
 
-![](images/showhidden.png)
+## Details on the managed application
 
-## Details on the custom resource provider created
+The managed application introduces several new Azure Resource Manager REST APIs as well as several custom views.
 
-This sample deployment creates the following apis on the resource.
+Azure Resource Manager REST APIs:
 
-1) An Azure Resource Manager extended API called "associations".
+1) An extension API called "associations", which allows creating service requests.
+2) An custom API called "customTickets", which allows creation, update, and deletion of tickets.
 
 ### Associations
 
