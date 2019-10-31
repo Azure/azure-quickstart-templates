@@ -1,4 +1,4 @@
-# Azure Machine Learning Workspace
+# Azure Machine Learning Workspace.
 
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-machine-learning-create/PublicLastTestDate.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-machine-learning-create/PublicDeployment.svg" />&nbsp;
