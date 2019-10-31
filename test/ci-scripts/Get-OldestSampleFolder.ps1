@@ -139,8 +139,10 @@ $t[0] | Update-AzTableRow -Table $cloudTable
 
 $t | ft RowKey, Status, dateUpdated, PublicLastTestDate, PublicDeployment, FairfaxLastTestDate, FairfaxDeployment, dateUpdated
 
+$samplePath = $($t[0].RowKey).Replace("@", "\")
+
 # Write the pipeline variable
-$FolderString = "$BuildSourcesDirectory\$($t[0].RowKey)"
+$FolderString = "$BuildSourcesDirectory\$samplePath"
 Write-Output "Using sample folder: $FolderString"
 Write-Host "##vso[task.setvariable variable=sample.folder]$FolderString"
 
