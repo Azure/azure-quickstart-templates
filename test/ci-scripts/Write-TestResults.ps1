@@ -299,7 +299,15 @@ foreach ($badge in $badges) {
     else {
         $containerName = "badges"
     }
-    Set-AzStorageBlobContent -Container $containerName -File $badge.filename -Blob "$RowKey/$($badge.filename)" -Context $ctx -Force -Properties @{"ContentType" = "image/svg+xml"; "CacheControl" = "no-cache" }
+
+    $badgePath = $RowKey.Replace("@", "/")
+
+    Set-AzStorageBlobContent -Container $containerName `
+                             -File $badge.filename `
+                             -Blob "$badgePath/$($badge.filename)" `
+                             -Context $ctx `
+                             -Properties @{"ContentType" = "image/svg+xml"; "CacheControl" = "no-cache" } `
+                             -Force -Verbose
 }
 
 <#Debugging only
