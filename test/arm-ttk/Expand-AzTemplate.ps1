@@ -104,6 +104,7 @@ function Expand-AzTemplate
 "
 
         $regexOptions = 'Multiline,IgnoreCase,IgnorePatternWhitespace'
+        $regexTimeout = [Timespan]::FromSeconds(5)
     }
 
     process {
@@ -120,7 +121,7 @@ function Expand-AzTemplate
                     $preferredJsonFile = $TemplatePath | 
                         Get-ChildItem -Filter *.json |
                         # for a file named azureDeploy.json or mainTemplate.json
-                        Where-Object { 'azureDeploy.json', 'mainTemplate.json' -contains $_.Name } |
+                        Where-Object { 'azureDeploy.json', 'mainTemplate.json', 'prereq.azureDeploy.json' -contains $_.Name } |
                         Select-Object -First 1 -ExpandProperty Fullname
                     # If no file was found, write an error and return.
                     if (-not $preferredJsonFile) {
@@ -139,7 +140,7 @@ function Expand-AzTemplate
             # Next, we want to pre-populate a number of well-known variables.
             # These variables will be available to every test case.   They are:
             $WellKnownVariables = 'TemplateFullPath','TemplateText','TemplateObject','TemplateFileName',
-                'CreateUIDefinitionFullPath','createUIDefintionText','CreateUIDefinitionObject',
+                'CreateUIDefinitionFullPath','createUIDefinitionText','CreateUIDefinitionObject',
                 'FolderName', 'HasCreateUIDefinition', 'IsMainTemplate','FolderFiles', 
                 'MainTemplatePath', 'MainTemplateObject', 'MainTemplateText', 
                 'MainTemplateResources','MainTemplateVariables','MainTemplateParameters', 'MainTemplateOutputs'
@@ -161,14 +162,14 @@ function Expand-AzTemplate
             #*$TemplateText (the text contents of the template file)
             $TemplateText = [IO.File]::ReadAllText($resolvedTemplatePath)
             #*$TemplateObject (the template text, converted from JSON)
-            $TemplateObject = $TemplateText | ConvertFrom-Json    
+            $TemplateObject = Import-Json -FilePath $TemplateFullPath 
             #*$CreateUIDefinitionFullPath (the path to CreateUIDefinition.json)
             $createUiDefinitionFullPath = Join-Path -childPath 'createUiDefinition.json' -Path $templateFolder
             if (Test-Path $createUiDefinitionFullPath) {
                 #*$CreateUIDefinitionText (the text contents of CreateUIDefinition.json)
-                $createUIDefintionText = [IO.File]::ReadAllText($createUiDefinitionFullPath)
+                $createUIDefinitionText = [IO.File]::ReadAllText($createUiDefinitionFullPath)
                 #*$CreateUIDefinitionObject (the createuidefinition text, converted from json)
-                $createUIDefinitionObject =  $createUIDefintionText | ConvertFrom-Json
+                $createUIDefinitionObject =  Import-Json -FilePath $createUiDefinitionFullPath
                 #*$HasCreateUIDefinition (indicates if a CreateUIDefinition.json file exists)
                 $HasCreateUIDefinition = $true            
             } else {                
@@ -191,14 +192,13 @@ function Expand-AzTemplate
                         $fileObject = [Ordered]@{
                             Name = $fileInfo.Name #*Name (the name of the file)
                             Extension = $fileInfo.Extension #*Extension (the file extension) 
-                            Bytes = [IO.File]::ReadAllBytes($fileInfo.FullName)#*Bytes (the file content as a byte array)
                             Text = [IO.File]::ReadAllText($fileInfo.FullName)#*Text (the file content as text)
                             FullPath = $fileInfo.Fullname#*FullPath (the full path to the file)
                         }
                         if ($fileInfo.Extension -eq '.json') { 
                             # If the file is JSON, two additional properties may be present:
                             #*Object (the file's text, converted from JSON)
-                            $fileObject.Object = $fileObject.Text | ConvertFrom-Json
+                            $fileObject.Object = Import-Json $fileObject.FullPath 
                             #*Schema (the value of the $schema property of the JSON object, if present)
                             $fileObject.schema = $fileObject.Object.'$schema'                        
                         }
@@ -212,7 +212,7 @@ function Expand-AzTemplate
                 #*MainTemplateText (the text of the main template file)
                 $MainTemplateText = [IO.File]::ReadAllText($MainTemplatePath)
                 #*MainTemplateObject (the main template, converted from JSON)
-                $MainTemplateObject = $MainTemplateText | ConvertFrom-Json
+                $MainTemplateObject = Import-Json -FilePath $MainTemplatePath
                 #*MainTemplateResources (the resources and child resources in the main template)
                 $MainTemplateResources = if ($mainTemplateObject.Resources) {
                     Expand-Resource -Resource $MainTemplateObject.resources
@@ -256,9 +256,10 @@ function Expand-AzTemplate
             $out
         }
         elseif ($PSCmdlet.ParameterSetName -eq 'Expression') {
+            
             # First, we need to see if the expression provided looks like a template language expression
             $matched? = 
-                [Regex]::Match($Expression, $TemplateLanguageExpression, $regexOptions)
+                [Regex]::Match($Expression, $TemplateLanguageExpression, $regexOptions, $regexTimeout)
             if (-not $matched?.Success) { # If it wasn't
                 Write-Verbose "$Expression is not an expression" # Write to the verbose stream
                 return $Expression # and return the original expression 
@@ -277,7 +278,7 @@ function Expand-AzTemplate
             # strip off the () (don't use trim, or we might hurt subexpressions)
             $parametersExpression = $parametersExpression.Substring(1,$parametersExpression.Length - 1)
             
-            $functionParameters = @([Regex]::Matches($parametersExpression, $TemplateParametersExpression, $regexOptions))
+            $functionParameters = @([Regex]::Matches($parametersExpression, $TemplateParametersExpression, $regexOptions, $regexTimeout))
             if (-not $functionParameters) { # If there were no parameters
                 return $matched?.Value      # return the partially resolved expression.
             }
