@@ -41,11 +41,18 @@
                 "description": "Name of the logic app service now connector to be created."
             }
         },
-        "logicAppName": {
+        "serviceRequestsLogicAppName": {
             "type": "string",
-            "defaultValue": "[uniqueString(resourceGroup().id)]",
+            "defaultValue": "[concat('serviceRequests-', uniqueString(resourceGroup().id))]",
             "metadata": {
-                "description": "Name of the logic app to be created."
+                "description": "Name of the service request logic app to be created."
+            }
+        },
+        "serviceTicketsLogicAppName": {
+            "type": "string",
+            "defaultValue": "[concat('serviceTickets-', uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "Name of the service ticket logic app to be created."
             }
         }
     },
@@ -75,7 +82,7 @@
         {
             "type": "Microsoft.Logic/workflows",
             "apiVersion": "2017-07-01",
-            "name": "[parameters('logicAppName')]",
+            "name": "[parameters('serviceRequestsLogicAppName')]",
             "location": "[parameters('location')]",
             "identity": {
                 "type": "SystemAssigned"
@@ -122,11 +129,9 @@
                                             "inputs": {
                                                 "body": {
                                                     "correlation_id": "@{triggerOutputs()?['headers']?['x-ms-correlation-request-id']}",
-                                                    "cost_center": "Custom Association Costs",
                                                     "install_status": "@{triggerBody().OperationType}",
                                                     "name": "@{last(split(triggerOutputs()?['headers']?['x-ms-customproviders-extendedresource'], '/'))}",
-                                                    "owned_by": "Foo Bar",
-                                                    "short_description": "Storage Account Resource: @{triggerOutputs()?['headers']?['x-ms-customproviders-extendedresource']}",
+                                                    "short_description": "Azure Resource: @{triggerOutputs()?['headers']?['x-ms-customproviders-extendedresource']}",
                                                     "sys_class_name": "@{body('GetAssociatedResource').sku.name}",
                                                     "asset_tag": "@{body('GetAssociatedResource').tags}",
                                                     "location": "@{body('GetAssociatedResource').location}"
@@ -153,7 +158,13 @@
                                         "CreateAssociationResponse": {
                                             "inputs": {
                                                 "body": {
-                                                    "properties": "@addProperty(triggerBody().Body['properties'], 'systemId', body('CreateTicket')?['result']?['sys_id'])"
+                                                    "properties": {
+                                                        "ticketType": "@{triggerBody()?.body?.properties?.ticketType ?? 'ChangeRequest'}",
+                                                        "resourceType": "@{body('GetAssociatedResource').type}",
+                                                        "resourceName": "@{body('GetAssociatedResource').name}",
+                                                        "resourceLocation": "@{body('GetAssociatedResource').location}",
+                                                        "serviceNowSystemId": "@{body('CreateTicket')?['result']?['sys_id']}"
+                                                    }
                                                 },
                                                 "statusCode": 200
                                             },
@@ -282,7 +293,7 @@
                         "name": "associations",
                         "mode": "Secure",
                         "routingType": "Webhook,Cache,Extension",
-                        "endpoint": "[listCallbackURL(concat(resourceId('Microsoft.Logic/workflows', parameters('logicAppName')), '/triggers/CustomProviderWebhook'), '2017-07-01').value]"
+                        "endpoint": "[listCallbackURL(concat(resourceId('Microsoft.Logic/workflows', parameters('serviceRequestsLogicAppName')), '/triggers/CustomProviderWebhook'), '2017-07-01').value]"
                     }
                 ]
             }
@@ -304,7 +315,7 @@
                             "name": "[concat(variables('managedApplicationName'), '/Microsoft.Authorization/', guid(resourceGroup().id))]",
                             "properties": {
                                 "roleDefinitionId": "[concat(subscription().id, '/providers/Microsoft.Authorization/roleDefinitions/', '8e3af657-a8ff-443c-a75c-2fe8c4bcb635')]",
-                                "principalId": "[reference(resourceId('Microsoft.Logic/workflows', parameters('logicAppName')), '2017-07-01', 'Full').identity.principalId]",
+                                "principalId": "[reference(resourceId('Microsoft.Logic/workflows', parameters('serviceRequestsLogicAppName')), '2017-07-01', 'Full').identity.principalId]",
                                 "scope": "[variables('managedApplicationId')]",
                                 "principalType": "ServicePrincipal"
                             }
@@ -313,7 +324,7 @@
                 }
             },
             "dependsOn": [
-                "[resourceId('Microsoft.Logic/workflows', parameters('logicAppName'))]"
+                "[resourceId('Microsoft.Logic/workflows', parameters('serviceRequestsLogicAppName'))]"
             ]
         }
     ],
