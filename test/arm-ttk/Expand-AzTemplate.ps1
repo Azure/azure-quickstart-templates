@@ -120,12 +120,12 @@ function Expand-AzTemplate
                     # Then, go looking beneath that template path
                     $preferredJsonFile = $TemplatePath | 
                         Get-ChildItem -Filter *.json |
-                        # for a file named azureDeploy.json or mainTemplate.json
-                        Where-Object { 'azureDeploy.json', 'mainTemplate.json', 'prereq.azureDeploy.json' -contains $_.Name } |
+                        # for a file named azuredeploy.json, prereq.azuredeploy.json or mainTemplate.json
+                        Where-Object { 'azuredeploy.json', 'mainTemplate.json', 'prereq.azuredeploy.json' -contains $_.Name } |
                         Select-Object -First 1 -ExpandProperty Fullname
                     # If no file was found, write an error and return.
                     if (-not $preferredJsonFile) {
-                        Write-Error "No azureDeploy.json or mainTemplate.json found beneath $TemplatePath"
+                        Write-Error "No azuredeploy.json or mainTemplate.json found beneath $TemplatePath"
                         return
                     }
                     $preferredJsonFile
