@@ -23,14 +23,16 @@ begin
         $_ | Write-Error
     }
 
+    $regexTimeout = [Timespan]'00:00:02.5'
+
     # This RegEx will match block comments in JSON.
     $JSONBlockComments = [Regex]::new('
-/\*       # The open comment
-(?<Block> # capture the comment block.  It is:
-(.|\s)+?  # anything until
-(?=\*/)   # the close comment
-)\*/      # then match the close comment
-', 'IgnoreCase, IgnorePatternWhitespace')
+/\*         # The open comment
+(?<Block>   # capture the comment block.  It is:
+(?:.|\s)+?  # anything until
+(?=\z|\*/)  # the end of the string or the closing comment
+)\*/        # Then match the close comment
+', 'IgnoreCase, IgnorePatternWhitespace', $regexTimeout)    
 }
 
 process
@@ -43,20 +45,31 @@ process
 
         # First, strip block comments
         $inObj = $_
-        $in = $JSONBlockComments.Replace($inObj,'')
+        $in = if ($InputObject.Contains('*/')) { 
+            $JSONBlockComments.Replace($inObj,'')
+        } else {
+            $InputObject
+        }
 
-
-        $hasComment = [regex]::new('(^|[^:])//') 
-        $CommentOrQuote = [Regex]::new("(?<CommentStart>//)|(?<SingleQuote>(?<!')')|(?<DoubleQuote>(?<!\\)`")")
+        $hasComment = [regex]::new('(?:^|[^:])//','IgnoreCase',$regexTimeout) 
+        $CommentOrQuote = [Regex]::new("(?>(?<CommentStart>//)|(?<SingleQuote>(?<!')')|(?<DoubleQuote>(?<!\\)`"))", 'IgnoreCase', '00:00:15')
 
         $in = if (-not $hasComment.IsMatch($in)) { # If the JSON contained no comments, pass it directly down
             $in
         } else {
             $lines = $in -split "(?>\r\n|\n)"
-            @(foreach ($line in $lines) { # otherwise, go line by line looking for comments.
-                if (-not $hasComment.IsMatch($line)) { $line;continue } # If the line didn't contain a comment, echo it.
+            $newlines = foreach ($line in $lines) { # otherwise, go line by line looking for comments.
+                $lineHasComments = try { $hasComment.IsMatch($line) } catch {
+                    $timeOut = $_ 
+                    $false
+                } 
+                if (-not $lineHasComments) { $line;continue } # If the line didn't contain a comment, echo it.
             
-                $lineParts = $CommentOrQuote.Matches($line) 
+                $lineParts =
+                    try { $CommentOrQuote.Matches($line) }
+                    catch{ 
+                        $timeOut = $_
+                    }  
                 if (-not $lineParts) { 
                     $line
                     continue
@@ -85,7 +98,8 @@ process
                 } else { # otherwise,
                     $line  # echo the line.
                 }
-            }) -join [Environment]::NewLine
+            }
+            $newlines -join [Environment]::NewLine
         }
 
         if ($PSBoundParameters.InputObject) {
