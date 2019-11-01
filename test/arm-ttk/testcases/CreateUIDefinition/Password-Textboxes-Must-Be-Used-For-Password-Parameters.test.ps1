@@ -14,10 +14,8 @@ $passwordBoxes = $CreateUIDefinitionObject |
     
 foreach ($pwb in $passwordBoxes) { # Loop over each password box
     $controlName = $pwb.Name # and find the output it maps to.
-    $stepName = $pwb.ParentObject[0].name
-    $lookingFor= if ($stepName) { "*steps(*$stepName*).$controlName*"} else {"*basics(*$($controlName)*"} 
     $theOutput = foreach ($out in $CreateUIDefinitionObject.parameters.outputs.psobject.properties) {
-        if ($out.Value -like $lookingFor) { 
+        if (($out.Value -like "*steps(*$controlName*") -or ($out.Value -like "*basics(*$controlName*")) { 
             $out; break
         }
     }
@@ -35,9 +33,9 @@ foreach ($pwb in $passwordBoxes) { # Loop over each password box
         continue
     }
 
-    # If the main template parameter type is not a Secure String
-    if ($MainTemplateParam.type -ne 'SecureString') {
+    # If the main template parameter type is neither a Secure String nor a Secure Object
+    if (($MainTemplateParam.type -ne 'SecureString') -and ($MainTemplateParam.type -ne 'SecureObject')) {
         # write an error.
-        Write-Error "Password boxes must be used for secure string parameters.  The Main template parameter $($pwb.Name) is a $($MainTemplateParam.type)" -TargetObject @($pwb, $MainTemplateParam)
+        Write-Error "Password boxes must be used for secure string or secure object parameters.  The Main template parameter $($pwb.Name) is a $($MainTemplateParam.type)" -TargetObject @($pwb, $MainTemplateParam)
     }
 }
