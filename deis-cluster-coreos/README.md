@@ -1,10 +1,19 @@
 # Deploy a Deis cluster
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/deis-cluster-coreos/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/deis-cluster-coreos/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/deis-cluster-coreos/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/deis-cluster-coreos/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/deis-cluster-coreos/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/deis-cluster-coreos/CredScanResult.svg" />&nbsp;
   
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdeis-cluster-coreos%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdeis-cluster-coreos%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
 This template allows you to create a Deis cluster. The cluster is made up by three nodes, which are joined behind a load balancer with a public IP.
@@ -37,7 +46,6 @@ This template allows you to create a Deis cluster. The cluster is made up by thr
 	Or use the Shell script:
 
 		./deploy-deis.sh -n "[resource group name]" -l "West US" -f ./azuredeploy.json -e ./azuredeploy-parameters.json -c ./cloud-config.yaml
-
 
 8. Create load balancer API rule:
 
@@ -129,7 +137,6 @@ The following steps show how to deploy a "Hello World" Go application to the clu
 
 		deis scale cmd=3
 
-
 ##Deis debugging tips
 
 1. First, verify that the VM machines have been provisioned correctly. When you SSH into the machines, you should see the Deis logo as ASCII art. If you don't see it, something has gone wrong with the cloud-init process. You probably have an invalid cloud-init file.
@@ -146,3 +153,4 @@ The following steps show how to deploy a "Hello World" Go application to the clu
 			deisctl restart [service] #example: deisctl restart controller
 
 	>Note: For more information, see http://docs.deis.io/en/latest/troubleshooting_deis/
+

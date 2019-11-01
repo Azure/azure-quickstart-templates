@@ -36,10 +36,17 @@
             ConfigurationMode = 'ApplyOnly'
             RebootNodeIfNeeded = $true
         }
-
+        SetCustomPagingFile PagingSettings
+        {
+            Drive       = 'C:'
+            InitialSize = '8192'
+            MaximumSize = '8192'
+        }
+        
         AddBuiltinPermission AddSQLPermission
         {
             Ensure = "Present"
+            DependsOn = "[SetCustomPagingFile]PagingSettings"
         }
 
         InstallFeatureForSCCM InstallFeature

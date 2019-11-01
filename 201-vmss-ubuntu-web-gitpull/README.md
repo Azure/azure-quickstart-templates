@@ -1,10 +1,19 @@
 # Confgure Git Deployment to VMSS 
 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vmss-ubuntu-web-gitpull/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vmss-ubuntu-web-gitpull/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vmss-ubuntu-web-gitpull/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vmss-ubuntu-web-gitpull/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vmss-ubuntu-web-gitpull/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vmss-ubuntu-web-gitpull/CredScanResult.svg" />&nbsp;
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vmss-ubuntu-web-gitpull%2Fazuredeploy.json" target="_blank">
-<img src="http://azuredeploy.net/deploybutton.png"/>
+<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vmss-ubuntu-web-gitpull%2Fazuredeploy.json" target="_blank">
-<img src="http://armviz.io/visualizebutton.png"/>
+<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
 My team mate [Scott Semyan](http://github.com//ssemyan) and I recently worked on the web site for the [2016 DNCC](http://demconvention.com).
@@ -70,4 +79,5 @@ If you're looking for a sample that illustrates secure deployment of secrets. To
       }
   ```
   * The Inbound NAT rule on the load balancer is for dev purposes. Remove before deploying to production.
+
 

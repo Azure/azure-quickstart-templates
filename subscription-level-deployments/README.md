@@ -4,3 +4,4 @@ This folder contains sample templates that must be deployed at the subscription 
 
 For for more information see the documentation [here](https://docs.microsoft.com/en-us/azure/azure-resource-manager/deploy-to-subscription).
 
+
