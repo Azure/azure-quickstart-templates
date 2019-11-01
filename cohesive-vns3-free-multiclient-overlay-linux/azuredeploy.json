@@ -47,6 +47,20 @@
                 "description": "Size of VM instance, defaults to Standard_B1ms to keep within core limits while giving reasonable performance"
             },
             "defaultValue": "Standard_B1ms"
+        },
+        "_artifactsLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+            },
+            "defaultValue": ""
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+            },
+            "defaultValue": ""
         }
              
     },
@@ -63,8 +77,7 @@
         "vnetSubnet":"10.10.10.0/28",
         "vnsStaticIp": "10.10.10.10",
         "CustomScriptForLinux": "CustomScript",
-        "artifactsLocation":"https://raw.githubusercontent.com/Cohesive-DevTeam/Quickstart/master/",
-        "scriptFileUri": "[uri(variables('artifactsLocation'), concat('customextensionlinux.sh'))]",
+        "scriptFileUri": "[uri(parameters('_artifactsLocation'), concat('customextensionlinux.sh', parameters('_artifactsLocationSasToken')))]",
         "CustomScriptCommandToExecute": "sudo bash customextensionlinux.sh",
         "ubuntu": {
             "publisher": "Canonical",
@@ -76,18 +89,21 @@
     "resources": [
         {
             "type": "Microsoft.Compute/virtualMachines",
-            "name": "[variables('vns3ControllerName')]",
             "apiVersion": "2019-03-01",
+            "name": "[variables('vns3ControllerName')]",
             "location": "[parameters('location')]",
             "plan": {
                 "name": "cohesive-vns3-4_4_x-free",
                 "product": "vns3_4x_network_security",
                 "publisher": "cohesive"
             },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccount'))]"
+            ],
             "tags": {
                 "Name": "VNS3 Controller"
             },
-            "scale": null,
             "properties": {
                 "hardwareProfile": {
                     "vmSize": "[parameters('instanceSize')]"
@@ -131,24 +147,24 @@
                 "diagnosticsProfile": {
                     "bootDiagnostics": {
                         "enabled": true,
-                        "storageUri": "[reference(variables('storageAccount'),'2017-10-01').primaryEndpoints['blob']]"
+                        "storageUri": "[reference(variables('storageAccount'),'2019-04-01').primaryEndpoints['blob']]"
                     }
                 }
-            },
-            "dependsOn": [
-                "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]",
-                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccount'))]"
-            ]
+            }
         },
         {
             "type": "Microsoft.Network/networkInterfaces",
-            "name": "[variables('networkInterfaceName')]",
             "apiVersion": "2019-04-01",
+            "name": "[variables('networkInterfaceName')]",
             "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddresseName'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('virtualSubnetName'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+            ],
             "tags": {
                 "Name": "VNS3 Controller"
             },
-            "scale": null,
             "properties": {
                 "ipConfigurations": [
                     {
@@ -162,7 +178,6 @@
                             "subnet": {
                                 "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('virtualSubnetName'))]"
                             },
-                            "primary": true,
                             "privateIPAddressVersion": "IPv4"
                         }
                     }
@@ -171,24 +186,17 @@
                 "enableIPForwarding": true,
                 "networkSecurityGroup": {
                     "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
-                },
-                "primary": true
-            },
-            "dependsOn": [
-                "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddresseName'))]",
-                "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('virtualSubnetName'))]",
-                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
-            ]
+                }
+            }
         },
         {
             "type": "Microsoft.Network/networkSecurityGroups",
-            "name": "[variables('networkSecurityGroupName')]",
             "apiVersion": "2018-10-01",
+            "name": "[variables('networkSecurityGroupName')]",
             "location": "[parameters('location')]",
             "tags": {
                 "Name": "VNS3 Controller"
             },
-            "scale": null,
             "properties": {
                 "securityRules": [
                     {
@@ -248,17 +256,16 @@
         },
         {
             "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2018-10-01",
+            "name": "[variables('publicIPAddresseName')]",
+            "location": "[parameters('location')]",
             "sku": {
                 "name": "Basic",
                 "tier": "Regional"
             },
-            "name": "[variables('publicIPAddresseName')]",
-            "apiVersion": "2018-10-01",
-            "location": "[parameters('location')]",
             "tags": {
                 "Name": "VNS3 Controller"
             },
-            "scale": null,
             "properties": {
                 "publicIPAddressVersion": "IPv4",
                 "publicIPAllocationMethod": "Static",
@@ -267,10 +274,9 @@
         },
         {
             "type": "Microsoft.Network/virtualNetworks",
-            "name": "[variables('virtualNetworkName')]",
             "apiVersion": "2018-10-01",
+            "name": "[variables('virtualNetworkName')]",
             "location": "[parameters('location')]",
-            "scale": null,
             "properties": {
                 "addressSpace": {
                     "addressPrefixes": [
@@ -291,15 +297,14 @@
         },
         {
             "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2018-07-01",
+            "name": "[variables('storageAccount')]",
+            "location": "[parameters('location')]",
             "sku": {
                 "name": "Standard_LRS",
                 "tier": "Standard"
             },
             "kind": "Storage",
-            "name": "[variables('storageAccount')]",
-            "apiVersion": "2018-07-01",
-            "location": "[parameters('location')]",
-            "scale": null,
             "properties": {
                 "networkAcls": {
                     "bypass": "AzureServices",
@@ -321,9 +326,8 @@
         },
         {
             "type": "Microsoft.Network/virtualNetworks/subnets",
-            "name": "[concat(variables('virtualNetworkName'), '/', variables('virtualSubnetName'))]",
             "apiVersion": "2019-06-01",
-            "scale": null,
+            "name": "[concat(variables('virtualNetworkName'), '/', variables('virtualSubnetName'))]",
             "properties": {
                 "addressPrefix": "[variables('vnetSubnet')]"
             },
@@ -333,13 +337,13 @@
         },
         {
             "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2018-10-01",
+            "name": "[concat('pip-ubuntuvm', copyindex())]",
+            "location": "[parameters('location')]",
             "sku": {
                 "name": "Basic",
                 "tier": "Regional"
             },
-            "name": "[concat('pip-ubuntuvm', copyindex())]",
-            "apiVersion": "2018-10-01",
-            "location": "[parameters('location')]",
             "copy": {
                 "name": "PublicIpLoop",
                 "count": "[parameters('numberOfInstances')]"
@@ -347,7 +351,6 @@
             "tags": {
                 "Name": "VNS3 Controller"
             },
-            "scale": null,
             "properties": {
                 "publicIPAddressVersion": "IPv4",
                 "publicIPAllocationMethod": "Static",
@@ -356,8 +359,8 @@
         },
         {
             "type": "Microsoft.Network/networkInterfaces",
-            "name": "[concat('nic-ubuntuvm', copyindex())]",
             "apiVersion": "2019-04-01",
+            "name": "[concat('nic-ubuntuvm', copyindex())]",
             "location": "[parameters('location')]",
             "copy": {
               "name": "NicLoop",
@@ -390,8 +393,8 @@
         },
         {
             "type": "Microsoft.Network/networkSecurityGroups",
-            "name": "[concat('nsg-ubuntuvm', copyindex())]",
             "apiVersion": "2018-12-01",
+            "name": "[concat('nsg-ubuntuvm', copyindex())]",
             "location": "[parameters('location')]",
             "copy": {
                 "name": "SecurityLoop",
@@ -400,7 +403,6 @@
             "tags": {
                 "Name": "VNS3 Controller"
             },
-            "scale": null,
             "properties": {
                 "securityRules": [
                     {
@@ -421,8 +423,8 @@
         },
         {
             "type": "Microsoft.Compute/virtualMachines",
-            "name": "[concat('ubuntuvm', copyIndex())]",
             "apiVersion": "2019-03-01",
+            "name": "[concat('ubuntuvm', copyIndex())]",
             "location": "[parameters('location')]",
             "copy": {
               "name": "virtualMachineLoop",
@@ -457,14 +459,16 @@
         },
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "[concat('ubuntuvm', copyIndex(), '/', variables('CustomScriptForLinux'))]",
             "apiVersion": "2019-03-01",
+            "name": "[concat('ubuntuvm', copyIndex(), '/', variables('CustomScriptForLinux'))]",
             "location": "[parameters('location')]",
             "copy": {
                 "name": "CustomScripLoop",
                 "count": "[parameters('numberOfInstances')]"
-              },
-            "scale": null,
+            },
+             "dependsOn": [
+                "virtualMachineLoop"
+            ],
             "properties": {
                 "publisher": "Microsoft.Azure.Extensions",
                 "type": "[variables('CustomScriptForLinux')]",
@@ -476,10 +480,7 @@
                     ],
                     "commandToExecute": "[variables('CustomScriptCommandToExecute')]"
                 }
-            },
-            "dependsOn": [
-                "virtualMachineLoop"
-            ]
+            }
         }
     ]
 }

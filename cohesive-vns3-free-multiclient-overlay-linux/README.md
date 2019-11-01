@@ -1,13 +1,11 @@
+# VNS3 cloud networking appliance for security, connectivity and federation in the clouds
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcohesive-vns3-free-multiclient-overlay-linux%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcohesive-vns3-free-multiclient-overlay-linux%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
-
-`Tags: VPN, HA, Multicast, Network Traffic Analysis, Network Visibility, Federation, Security, Isolation, Segmentation, Firewall, NIDS, WAF, Load-balancer, multi-cloud, hybrid, UTM, overlay, awesome`
-
-# VNS3 cloud networking appliance for security, connectivity and federation in the clouds
 
 ### Introduction
 This Quickstart automates the process of deploying a Cohesive Networks VNS3 overlay network in Azure.
@@ -91,3 +89,4 @@ Once the deployment is complete, you can access the VNS3 Controller Web UI by na
 
 For comprehesive documentation please visit our website https://www.cohesive.net/support/documentation	
 
+`Tags: VPN, HA, Multicast, Network Traffic Analysis, Network Visibility, Federation, Security, Isolation, Segmentation, Firewall, NIDS, WAF, Load-balancer, multi-cloud, hybrid, UTM, overlay, awesome`
