@@ -28,3 +28,5 @@ If you are new to Azure virtual machines, see:
 If you are new to template deployment, see:
 
 [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
+
+`Tags: Azure4Student, virtual machine, windows server, Beginner`
