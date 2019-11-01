@@ -1,10 +1,19 @@
 # Provision an Integration Service Environment with a VNET, subnets, and managed connectors
 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-integration-service-environment/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-integration-service-environment/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-integration-service-environment/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-integration-service-environment/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-integration-service-environment/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-integration-service-environment/CredScanResult.svg" />&nbsp;
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2F201-integration-service-environment%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-integration-service-environment%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
 ## Overview
@@ -42,6 +51,15 @@ All native connectors will be available by default in ISE. Refer to [documentati
 | smtp | [SMTP](https://docs.microsoft.com/en-us/connectors/smtp/) |
 | si3270 | [IBM 3270](https://docs.microsoft.com/en-us/connectors/si3270/) |
 
+Specify the values in the template (CLI or Portal UX) as a JSON array:
+```json
+["mq"]
+```
+or
+```json
+["mq", "servicebus"]
+```
+
 ## Deleting the Resource Group
 
 As the Integration Service Environment puts a subnet service delegation on the first subnet of the VNET, the resource group will fail to be deleted if you try to delete the entire resource group in one go. To delete the resource group:
@@ -56,3 +74,4 @@ As the Integration Service Environment puts a subnet service delegation on the f
 * There is a `rebuildVNET` parameter in the template. If the VNET has already been deployed, this should be changed to false so it doesn't try deleting and recreating the VNET (it will attempt it even if the deployment mode is set to Incremental).
 
 ``Tags: logic-apps, ise, vnet``
+

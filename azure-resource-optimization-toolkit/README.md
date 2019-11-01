@@ -1,4 +1,13 @@
 # **Azure Resource Optimization(ARO) Toolkit**
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/azure-resource-optimization-toolkit/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/azure-resource-optimization-toolkit/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/azure-resource-optimization-toolkit/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/azure-resource-optimization-toolkit/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/azure-resource-optimization-toolkit/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/azure-resource-optimization-toolkit/CredScanResult.svg" />&nbsp;
 Deploy an Azure Automation account with preconfigured runbooks and schedules to your subscription and start saving money.  Azure resource optimization happens automatically on your subscription once you enable or create your own schedule including on new resources!  
 
 ***Objective:*** Provide decentralized automation capabilities for customers who want to reduce their costs.  Features include: 
@@ -17,9 +26,9 @@ Deploy an Azure Automation account with preconfigured runbooks and schedules to 
 ## **From Github**
 Click Deploy to Azure and proceed to Step 2, "Configure Azure Automation Variables".
 
-[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fazure-resource-optimization-toolkit%2Fazuredeploy.json)
+[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fazure-resource-optimization-toolkit%2Fazuredeploy.json)
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FMicrosoft%2FMSITARM%2Fmaster%2Fazure-resource-optimization-toolkit%2Fazuredeploy.json" target="_blank">
-<img src="http://armviz.io/visualizebutton.png"/>
+<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
 Important!  A bootstrap runbook can take up to 15 minutes to complete setting up your Azure Automation account.  Before you use ARO Toolkit, validate the Azure Run As account is created as show below.  If not, follow the steps in Appendix D. 
@@ -216,13 +225,12 @@ to the trouble of provisioning a service account to deploy ARO Toolkit.
 
      ![alt text](images/AROToolkit/image23.png "Run As Accounts")
 
-
 1.  Once this completes, navigate to the Bootstrap\_Main runbook and
     start it.
 
      ![alt text](images/AROToolkit/image24.png "Bootstrap")
 
-
      ![alt text](images/AROToolkit/image25.png "Bootstrap")
 
 2. After this runs successfully, you should be all set up
+

@@ -1,10 +1,19 @@
 # Deploy Nylas email sync engine on Debian
 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/nylas-email-sync-engine/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/nylas-email-sync-engine/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/nylas-email-sync-engine/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/nylas-email-sync-engine/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/nylas-email-sync-engine/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/nylas-email-sync-engine/CredScanResult.svg" />&nbsp;
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fnylas-email-sync-engine%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fnylas-email-sync-engine%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
 This template deploys the Nylas Sync Engine on a Debian VM in Azure. This allows you to sync your email with the Nylas N1 email client on a Linux OS like Ubuntu.
@@ -49,3 +58,4 @@ After the sync engine is setup, you'll need to point your installation of the N1
 `https://github.com/nylas/N1/blob/master/CONFIGURATION.md`
 
 For more information on the Nylas sync engine, see https://github.com/nylas/sync-engine
+

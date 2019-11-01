@@ -1,9 +1,18 @@
 # Docker Data Center - Continuous Integration & Deployment Azure Partner Quickstart Template
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cloudbeesjenkins-dockerdatacenter/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cloudbeesjenkins-dockerdatacenter/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cloudbeesjenkins-dockerdatacenter/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cloudbeesjenkins-dockerdatacenter/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cloudbeesjenkins-dockerdatacenter/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cloudbeesjenkins-dockerdatacenter/CredScanResult.svg" />&nbsp;
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcloudbeesjenkins-dockerdatacenter%2Fazuredeploy.json" target="_blank">
-<img src="http://azuredeploy.net/deploybutton.png"/>
+<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcloudbeesjenkins-dockerdatacenter%2Fazuredeploy.json" target="_blank">
-<img src="http://armviz.io/visualizebutton.png"/>
+<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/cloudbeesjenkins-dockerdatacenter
 ## Azure Partner Quickstarts Overview
@@ -73,3 +82,4 @@ You can follwo the instructions in [this downloadable guide](https://github.com/
 
 ##Support
 For any support-related issues or questions, please contact azuremarketplace@sysgain.com for assistance.
+

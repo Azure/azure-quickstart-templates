@@ -1,10 +1,19 @@
 # CoScale Single VM Template : Setup the CoScale platform on a single VM.
 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/coscale-dev-env/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/coscale-dev-env/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/coscale-dev-env/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/coscale-dev-env/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/coscale-dev-env/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/coscale-dev-env/CredScanResult.svg" />&nbsp;
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcoscale-dev-env%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcoscale-dev-env%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
 CoScale is a full-stack monitoring solution tailored towards production environments running microservices, see https://www.coscale.com/ for more information.
@@ -26,3 +35,4 @@ This directory also contains a deploy-agent.sh script to deploy the CoScale agen
 - This single VM deployment should only be used for Proof-Of-Concept environments.
 - There is no backup of the data that is collected using this setup.
 - Since the created objects have fixed names they can be deployed only once per resource group.
+

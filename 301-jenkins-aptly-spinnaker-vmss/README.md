@@ -1,10 +1,19 @@
 # Continuous Deployment to VM Scale Sets [![Build Status](http://devops-ci.westcentralus.cloudapp.azure.com/job/qs/job/301-jenkins-aptly-spinnaker-vmss/badge/icon)](http://devops-ci.westcentralus.cloudapp.azure.com/blue/organizations/jenkins/qs%2F301-jenkins-aptly-spinnaker-vmss/activity)
 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-jenkins-aptly-spinnaker-vmss/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-jenkins-aptly-spinnaker-vmss/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-jenkins-aptly-spinnaker-vmss/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-jenkins-aptly-spinnaker-vmss/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-jenkins-aptly-spinnaker-vmss/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-jenkins-aptly-spinnaker-vmss/CredScanResult.svg" />&nbsp;
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2F301-jenkins-aptly-spinnaker-vmss%2Fazuredeploy.json" target="_blank">
-  <img src="http://azuredeploy.net/deploybutton.png"/>
+  <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2F301-jenkins-aptly-spinnaker-vmss%2Fazuredeploy.json" target="_blank">
-  <img src="http://armviz.io/visualizebutton.png"/>
+  <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
 This template allows you to deploy and configure a DevOps pipeline from an Aptly repository to a VM Scale Set in Azure. It deploys an instance of Jenkins and Spinnaker on a Linux Ubuntu 16.04 LTS VM.
@@ -73,3 +82,4 @@ ssh -i <path to private key file> -L 8082:localhost:8082 -L 9000:localhost:9000 
 1. Documention to create a sample pipeline is forthcoming.
 
 ## Questions/Comments? azurespinnaker@microsoft.com
+
