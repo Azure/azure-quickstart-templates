@@ -25,7 +25,7 @@ param (
 if(-not($resourceGroupName)) { Throw "You must supply a value for -resourceGroupName" }
 if(-not($DataFactoryName)) { Throw "You must supply a value for -DataFactoryName" }
 
-$runId = Invoke-AzureRmDataFactoryV2Pipeline -DataFactoryName $DataFactoryName -ResourceGroupName $resourceGroupName -PipelineName "ArmtemplateSampleCopyPipeline"
+$runId = Invoke-AzureRmDataFactoryV2Pipeline -DataFactoryName $DataFactoryName -ResourceGroupName $resourceGroupName -PipelineName "Tutorial2-CopyFromBlobToPostgreSqlPipeline"
 
 while ($True) {
 $run = Get-AzureRmDataFactoryV2PipelineRun -ResourceGroupName $resourceGroupName -DataFactoryName $DataFactoryName -PipelineRunId $runId
