@@ -1,6 +1,15 @@
 # Two-tier Nodejs app migration to Azure Container and PaaS DB
 
-[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Ftwo-tier-nodejsapp-migration-to-containers-on-Azure%2Fazuredeploy.json)
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/two-tier-nodejsapp-migration-to-containers-on-Azure/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/two-tier-nodejsapp-migration-to-containers-on-Azure/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/two-tier-nodejsapp-migration-to-containers-on-Azure/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/two-tier-nodejsapp-migration-to-containers-on-Azure/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/two-tier-nodejsapp-migration-to-containers-on-Azure/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/two-tier-nodejsapp-migration-to-containers-on-Azure/CredScanResult.svg" />&nbsp;
+
+[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Ftwo-tier-nodejsapp-migration-to-containers-on-Azure%2Fazuredeploy.json)
 
 
 <!-- TOC -->
@@ -12,7 +21,6 @@
 5. [Deployment Steps](#deployment-steps)
 6. [Deployment Time](#deployment-time)
 7. [Support](#support)
-
 
 <!-- /TOC -->
 
@@ -28,7 +36,6 @@ This template will deploy:
 *	One Public IP
 *	One Ubuntu Server VM
 *   Installation and configuration of Mongo database and Nodejs application
-
 
 <img src="images/onPremApp.jpg"/> 
 
@@ -54,3 +61,4 @@ The deployment takes about 20 minutes to complete.
 ## Support
 For any support related questions, issues or customization requirements, please contact info@spektrasystems.com <br/>
 ****End****
+

@@ -12,8 +12,10 @@ Param(
     [string] $TemplateFile = $ArtifactStagingDirectory + '\mainTemplate.json',
     [string] $TemplateParametersFile = $ArtifactStagingDirectory + '.\azuredeploy.parameters.json',
     [string] $DSCSourceFolder = $ArtifactStagingDirectory + '.\DSC',
+    [switch] $BuildDscPackage,
     [switch] $ValidateOnly,
     [string] $DebugOptions = "None",
+    [string] $DeploymentName = ((Split-Path $TemplateFile -LeafBase) + '-' + ((Get-Date).ToUniversalTime()).ToString('MMdd-HHmm')),
     [switch] $Dev
 )
 
@@ -33,11 +35,14 @@ function Format-ValidationOutput {
 
 $OptionalParameters = New-Object -TypeName Hashtable
 $TemplateArgs = New-Object -TypeName Hashtable
+$ArtifactStagingDirectory = ($ArtifactStagingDirectory.TrimEnd('/')).TrimEnd('\')
 
 # if the template file isn't found, try the another default
 if (!(Test-Path $TemplateFile)) { 
     $TemplateFile = $ArtifactStagingDirectory + '\azuredeploy.json'
 }
+
+Write-Host "Using template file:  $TemplateFile"
 
 #try a few different default options for param files when the -dev switch is use
 if ($Dev) {
@@ -88,8 +93,8 @@ if ($UploadArtifacts -Or $ArtifactsLocationParameter -ne $null) {
     $OptionalParameters[$ArtifactsLocationSasTokenName] = $JsonParameters | Select-Object -Expand $ArtifactsLocationSasTokenName -ErrorAction Ignore | Select-Object -Expand 'value' -ErrorAction Ignore
 
     # Create DSC configuration archive
-    if (Test-Path $DSCSourceFolder) {
-        $DSCSourceFilePaths = @(Get-ChildItem $DSCSourceFolder -File -Filter '*.ps1' | ForEach-Object -Process {$_.FullName})
+    if ((Test-Path $DSCSourceFolder) -and ($BuildDscPackage)) {
+        $DSCSourceFilePaths = @(Get-ChildItem $DSCSourceFolder -File -Filter '*.ps1' | ForEach-Object -Process { $_.FullName })
         foreach ($DSCSourceFilePath in $DSCSourceFilePaths) {
             $DSCArchiveFilePath = $DSCSourceFilePath.Substring(0, $DSCSourceFilePath.Length - 4) + '.zip'
             Publish-AzVMDscConfiguration $DSCSourceFilePath -OutputArchivePath $DSCArchiveFilePath -Force -Verbose
@@ -101,7 +106,7 @@ if ($UploadArtifacts -Or $ArtifactsLocationParameter -ne $null) {
         $StorageAccountName = 'stage' + ((Get-AzContext).Subscription.Id).Replace('-', '').substring(0, 19)
     }
 
-    $StorageAccount = (Get-AzStorageAccount | Where-Object {$_.StorageAccountName -eq $StorageAccountName})
+    $StorageAccount = (Get-AzStorageAccount | Where-Object { $_.StorageAccountName -eq $StorageAccountName })
 
     # Create the storage account if it doesn't already exist
     if ($StorageAccount -eq $null) {
@@ -110,6 +115,9 @@ if ($UploadArtifacts -Or $ArtifactsLocationParameter -ne $null) {
         $StorageAccount = New-AzStorageAccount -StorageAccountName $StorageAccountName -Type 'Standard_LRS' -ResourceGroupName $StorageResourceGroupName -Location "$Location"
     }
 
+    if ($StorageContainerName.length -gt 63) {
+        $StorageContainerName = $StorageContainerName.Substring(0, 63)
+    }
     $ArtifactStagingLocation = $StorageAccount.Context.BlobEndPoint + $StorageContainerName + "/"   
 
     # Generate the value for artifacts location if it is not provided in the parameter file
@@ -127,12 +135,13 @@ if ($UploadArtifacts -Or $ArtifactsLocationParameter -ne $null) {
     # Copy files from the local storage staging location to the storage account container
     New-AzStorageContainer -Name $StorageContainerName -Context $StorageAccount.Context -ErrorAction SilentlyContinue *>&1
 
-    $ArtifactFilePaths = Get-ChildItem $ArtifactStagingDirectory -Recurse -File | ForEach-Object -Process {$_.FullName}
+    $ArtifactFilePaths = Get-ChildItem $ArtifactStagingDirectory -Recurse -File | ForEach-Object -Process { $_.FullName }
     foreach ($SourcePath in $ArtifactFilePaths) {
         
         if ($SourcePath -like "$DSCSourceFolder*" -and $SourcePath -like "*.zip" -or !($SourcePath -like "$DSCSourceFolder*")) {
             #When using DSC, just copy the DSC archive, not all the modules and source files
-            Set-AzStorageBlobContent -File $SourcePath -Blob $SourcePath.Replace($ArtifactStagingDirectory, "") -Container $StorageContainerName -Context $StorageAccount.Context -Force
+            $blobName = ($SourcePath -ireplace [regex]::Escape($ArtifactStagingDirectory), "").TrimStart("/").TrimStart("\")
+            Set-AzStorageBlobContent -File $SourcePath -Blob $blobName -Container $StorageContainerName -Context $StorageAccount.Context -Force
         }
     }
     # Generate a 4 hour SAS token for the artifacts location if one was not provided in the parameters file
@@ -153,24 +162,23 @@ else {
 
 $TemplateArgs.Add('TemplateParameterFile', $TemplateParametersFile)
 
+Write-Host ($TemplateArgs | Out-String)
+Write-Host ($OptionalParameters | Out-String)
+
 # Create the resource group only when it doesn't already exist - and only in RG scoped deployments
 if ($deploymentScope -eq "ResourceGroup") {
-    if ((Get-AzResourcegroup -Name $ResourceGroupName -Location $Location -Verbose -ErrorAction SilentlyContinue) -eq $null) {
+    if ((Get-AzResourceGroup -Name $ResourceGroupName -Location $Location -Verbose -ErrorAction SilentlyContinue) -eq $null) {
         New-AzResourceGroup -Name $ResourceGroupName -Location $Location -Verbose -Force -ErrorAction Stop
     }
 }
 if ($ValidateOnly) {
     if ($deploymentScope -eq "Subscription") {
         #subscription scoped deployment
-        $ErrorMessages = Format-ValidationOutput (Test-AzDeployment -Location $Location `
-                @TemplateArgs `
-                @OptionalParameters)
+        $ErrorMessages = Format-ValidationOutput (Test-AzDeployment -Location $Location @TemplateArgs @OptionalParameters)
     }
     else {
         #resourceGroup deployment 
-        $ErrorMessages = Format-ValidationOutput (Test-AzResourceGroupDeployment -ResourceGroupName $ResourceGroupName `
-                @TemplateArgs `
-                @OptionalParameters)
+        $ErrorMessages = Format-ValidationOutput (Test-AzResourceGroupDeployment -ResourceGroupName $ResourceGroupName @TemplateArgs @OptionalParameters)
     }
     if ($ErrorMessages) {
         Write-Output '', 'Validation returned the following errors:', @($ErrorMessages), '', 'Template is invalid.'
@@ -180,9 +188,11 @@ if ($ValidateOnly) {
     }
 }
 else {
+
+    $ErrorActionPreference = 'Continue' # Switch to Continue" so multiple errors can be formatted and output
     if ($deploymentScope -eq "Subscription") {
         #subscription scoped deployment
-        New-AzDeployment -Name ((Get-ChildItem $TemplateFile).BaseName + '-' + ((Get-Date).ToUniversalTime()).ToString('MMdd-HHmm')) `
+        New-AzDeployment -Name $DeploymentName `
             -Location $Location `
             @TemplateArgs `
             @OptionalParameters `
@@ -190,14 +200,17 @@ else {
             -ErrorVariable ErrorMessages
     }
     else {
-        New-AzResourceGroupDeployment -Name ((Get-ChildItem $TemplateFile).BaseName + '-' + ((Get-Date).ToUniversalTime()).ToString('MMdd-HHmm')) `
+        New-AzResourceGroupDeployment -Name $DeploymentName `
             -ResourceGroupName $ResourceGroupName `
             @TemplateArgs `
             @OptionalParameters `
             -Force -Verbose `
             -ErrorVariable ErrorMessages
     }
+    $ErrorActionPreference = 'Stop' 
     if ($ErrorMessages) {
-        Write-Output '', 'Template deployment returned the following errors:', @(@($ErrorMessages) | ForEach-Object { $_.Exception.Message.TrimEnd("`r`n") })
+        Write-Output '', 'Template deployment returned the following errors:', '', @(@($ErrorMessages) | ForEach-Object { $_.Exception.Message })
+        Write-Error "Deployment failed."
     }
+
 }
