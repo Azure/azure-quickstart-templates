@@ -1,6 +1,15 @@
 # Deploy a specified number of Ubuntu VMs configured with Chef Client
 
-[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmulti-vm-chef-template-ubuntu-vm%2Fazuredeploy.json) [![Visualize](http://armviz.io/visualizebutton.png)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmulti-vm-chef-template-ubuntu-vm%2Fazuredeploy.json)
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/multi-vm-chef-template-ubuntu-vm/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/multi-vm-chef-template-ubuntu-vm/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/multi-vm-chef-template-ubuntu-vm/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/multi-vm-chef-template-ubuntu-vm/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/multi-vm-chef-template-ubuntu-vm/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/multi-vm-chef-template-ubuntu-vm/CredScanResult.svg" />&nbsp;
+
+[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmulti-vm-chef-template-ubuntu-vm%2Fazuredeploy.json) [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmulti-vm-chef-template-ubuntu-vm%2Fazuredeploy.json)
 
 ## Description
 
@@ -17,3 +26,4 @@ This template provides the minimum settings to get started. For a full list of c
 - [Chef Training](https://www.chef.io/training/)
 - [Using Chef Server in the Azure Marketplace](https://docs.chef.io/azure_portal.html)
 - [Chef Documentation](http://docs.chef.io/)
+

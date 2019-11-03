@@ -1,5 +1,14 @@
 # Create a High Availabilty SharePoint Farm with 9 VMs using the Powershell DSC Extension
 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/sharepoint-server-farm-ha/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/sharepoint-server-farm-ha/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/sharepoint-server-farm-ha/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/sharepoint-server-farm-ha/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/sharepoint-server-farm-ha/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/sharepoint-server-farm-ha/CredScanResult.svg" />&nbsp;
+
 This template will create a SQL Server 2014 Always On Availability Group using the PowerShell DSC Extension it creates the following resources:
 
 +	A Virtual Network
@@ -43,10 +52,10 @@ This template will create a SQL Server 2014 Always On Availability Group using t
 
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsharepoint-server-farm-ha%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsharepoint-server-farm-ha%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
 ## Notable Variables
@@ -72,3 +81,4 @@ This template will create a SQL Server 2014 Always On Availability Group using t
 |windowsDiskSize|The size of the VHD allocated for AD and Witness VMs Data Disk|
 |sqlDiskSize|The size of the the VHD allocated for SQL VMs Data and Log Disks|
 |spDiskSize|The size of the VHD allocated for the SP VMs Data Disk|
+

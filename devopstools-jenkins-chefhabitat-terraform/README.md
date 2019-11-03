@@ -1,13 +1,22 @@
 
 # Microsoft
 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/devopstools-jenkins-chefhabitat-terraform/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/devopstools-jenkins-chefhabitat-terraform/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/devopstools-jenkins-chefhabitat-terraform/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/devopstools-jenkins-chefhabitat-terraform/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/devopstools-jenkins-chefhabitat-terraform/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/devopstools-jenkins-chefhabitat-terraform/CredScanResult.svg" />&nbsp;
+
 # OSS Quickstart (Phase-1)
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdevopstools-jenkins-chefhabitat-terraform%2Fazuredeploy.json" target="_blank">
-<img src="http://azuredeploy.net/deploybutton.png"/>
+<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdevopstools-jenkins-chefhabitat-terraform%2Fazuredeploy.json" target="_blank">
-<img src="http://armviz.io/visualizebutton.png"/>
+<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
 **Table of Contents**  
@@ -273,7 +282,6 @@ You will receive the following output:
 
 2. Note the values for  **appId** , **password(ClientSecret)** for the parameters section.
 
-
 ## Deploy the ARM Template:
 
 1. Take the main-template from the provided GitHub URL.
@@ -321,7 +329,6 @@ The ARM template will deploy the following resources on Azure:
 | 5    |ELK Stack             | Elasticsearch, Kibana, Filebeat  | 1                    |Elasticsearch:Contains Index data, Kibana:Segregate logs to visualize as graphs, Filebeat:Forwarding logs to Kibana| 80
 | 6    |Load Balancer         | -                                | 1                    |Directs traffic to Application Nodes                                                                                  |
 | 7    |Azure Storage Account | packer,jenkins,ELK               | 3                    |Packer:To store the Packer VHD’s |
-
 
 ## Solution Workflow:
 
@@ -429,7 +436,6 @@ This job will launch a Virtual machine Scale set with three application nodes.
 5.  Once the ELKJob is successfully executed, then the MongoDBPackerJob will automatically start.
 
 6.  Click **MongoDBPackerJob** to view the job execution.
-
 
 7.  Click on **Build number** (Eg: **#1** ) as shown below.
 
@@ -667,3 +673,4 @@ Click **Apply** and **Save.**
 ![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p1/devopstools-jenkins-chefhabitat-terraform/images/74.PNG)
 
 ![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p1/devopstools-jenkins-chefhabitat-terraform/images/75.PNG)
+

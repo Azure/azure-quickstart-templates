@@ -1,0 +1,75 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {},
+	"variables": {
+        "accountName": "[concat('gremlin-', uniqueString(resourceGroup().id))]",
+        "databaseName": "myDatabase",
+        "databaseThroughput": 1000,
+        "graphName": "myGraph",
+        "graphThroughput": 400
+	},
+	"resources": 
+	[
+		{
+			"type": "Microsoft.DocumentDB/databaseAccounts",
+			"name": "[variables('accountName')]",
+			"apiVersion": "2016-03-31",
+			"location": "West US 2",
+			"kind": "GlobalDocumentDB",
+			"properties": {
+				"capabilities": [{ "name": "EnableGremlin" }],
+				"consistencyPolicy": { "defaultConsistencyLevel": "Eventual" },
+				"locations": [ { "locationName": "West US 2", "failoverPriority": 0 }, { "locationName": "East US 2", "failoverPriority": 1 } ],
+				"databaseAccountOfferType": "Standard",
+				"enableAutomaticFailover": false,
+				"enableMultipleWriteLocations": true
+			}
+		},
+		{
+			"type": "Microsoft.DocumentDB/databaseAccounts/apis/databases",
+			"name": "[concat(variables('accountName'), '/gremlin/', variables('databaseName'))]",
+			"apiVersion": "2016-03-31",
+			"dependsOn": [ "[resourceId('Microsoft.DocumentDB/databaseAccounts/', variables('accountName'))]" ],
+			"properties":{
+				"resource":{
+					"id": "[variables('databaseName')]"
+				},
+				"options": { "throughput": "[variables('databaseThroughput')]" }
+			}
+		},
+		{
+			"type": "Microsoft.DocumentDb/databaseAccounts/apis/databases/graphs",
+			"name": "[concat(variables('accountName'), '/gremlin/', variables('databaseName'), '/', variables('graphName'))]",
+			"apiVersion": "2016-03-31",
+			"dependsOn": [ "[resourceId('Microsoft.DocumentDB/databaseAccounts/apis/databases', variables('accountName'), 'gremlin', variables('databaseName'))]" ],
+			"properties":
+			{
+				"resource":{
+					"id":  "[variables('graphName')]",
+					"partitionKey": {
+						"paths": [
+						"/MyPartitionKey1"
+						],
+						"kind": "Hash"
+					}
+				},
+				"options": { "throughput": "[variables('graphThroughput')]" }
+			}
+		}
+    ],
+    "outputs": {
+        "accountName": {
+            "type": "string",
+            "value": "[variables('accountName')]"
+        },
+        "databaseName": {
+            "type": "string",
+            "value": "[variables('databaseName')]"
+		},
+		"graphName": {
+            "type": "string",
+            "value": "[variables('graphName')]"
+        }
+    }
+}

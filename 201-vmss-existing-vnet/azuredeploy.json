@@ -30,12 +30,6 @@
         "description": "Admin username on all VMs."
       }
     },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Admin password on all VMs."
-      }
-    },
     "existingVnetResourceGroupName": {
       "type": "string",
       "metadata": {
@@ -53,6 +47,23 @@
       "metadata": {
         "description": "Name of the existing subnet to deploy the scale set into."
       }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
     }
   },
   "variables": {
@@ -61,7 +72,18 @@
     "loadBalancerFrontEndName": "loadBalancerFrontEnd",
     "loadBalancerBackEndName": "loadBalancerBackEnd",
     "loadBalancerProbeName": "loadBalancerHttpProbe",
-    "loadBalancerNatPoolName": "loadBalancerNatPool"
+    "loadBalancerNatPoolName": "loadBalancerNatPool",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
@@ -97,7 +119,8 @@
           "osProfile": {
             "computerNamePrefix": "[parameters('vmssName')]",
             "adminUsername": "[parameters('adminUsername')]",
-            "adminPassword": "[parameters('adminPassword')]"
+            "adminPassword": "[parameters('adminPasswordOrKey')]",
+            "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
           },
           "networkProfile": {
             "networkInterfaceConfigurations": [

@@ -2,6 +2,15 @@
 
 # How to Deploy Standalone or HA Clusters of Solace PubSub+ Software Message Brokers onto Azure
 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/solace-message-router/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/solace-message-router/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/solace-message-router/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/solace-message-router/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/solace-message-router/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/solace-message-router/CredScanResult.svg" />&nbsp;
+
 The Solace PubSub+ software message broker meets the needs of big data, cloud migration, and Internet-of-Things initiatives, and enables microservices and event-driven architecture. Capabilities include topic-based publish/subscribe, request/reply, message queues/queueing, and data streaming for IoT devices and mobile/web apps. The message broker supports open APIs and standard protocols including AMQP, JMS, MQTT, REST, and WebSocket. As well, it can be deployed in on-premise datacenters, natively within private and public clouds, and across complex hybrid cloud environments.
 
 
@@ -15,7 +24,6 @@ Message brokers can be deployed in three node HA clusters or as single, standalo
 Note that in production, or any environment where message loss cannot be tolerated, an HA cluster is required.
 
 ![alt text](images/ha-cluster.png "HA Cluster Deployment")
-
 
 This is a two step process:
 
@@ -44,10 +52,10 @@ The Docker image reference can be:
 Hit the "Deploy to Azure" button, and in the deployment template add the link to the Solace PubSub+ software message broker. 
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FSolaceProducts%2Fsolace-azure-quickstart-template%2Fmaster%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FSolaceProducts%2Fsolace-azure-quickstart-template%2Fmaster%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
 You need to fill in the following fields (* marks the mandatory ones):
@@ -92,7 +100,6 @@ In this example, the resource group is `solacerg` and the `Microsoft.Template` t
 In addition to the above resources, the deployment creates an Azure Load Balancer that gives you management and data access to the currently AD-Active message broker.
 
 Microsoft OMS (Operations Management Suite) Agents are also installed on each message broker using the OMS Agent Extension. They collect and send logs to a new or existing Azure Log Analytics workspace resource that aggregates logs and diagnostics from each virtual machine in the deployment.
-
 
 # Gaining admin access to the message broker
 
@@ -160,3 +167,4 @@ For more information about Solace technology in general please visit these resou
 - [Solace Developer Portal](http://dev.solace.com )
 - [Intro Solace technology](http://dev.solace.com/tech/ )
 - [Solace community on Stack Overflow](http://dev.solace.com/community/ ).
+
