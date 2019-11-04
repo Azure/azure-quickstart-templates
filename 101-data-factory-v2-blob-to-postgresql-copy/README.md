@@ -10,9 +10,11 @@
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-v2-blob-to-postgresql-copy/CredScanResult.svg" />&nbsp;
 This template creates a data factory of version 2 with a pipeline that copies data from a folder in an Azure Blob Storage to a table in an Azure Database for PostgreSQL. 
 
-Here are a few important points about the template: 
+## Prerequisites ##
 
-- The prerequisites for this template are mentioned in the [Quickstart: Create a data factory by using Azure PowerShell](https://docs.microsoft.com/azure/data-factory/tutorial-copy-data-portal#prerequisites) article.
+* Azure subscription. If you don't have an Azure subscription, create a [free Azure account](https://azure.microsoft.com/free/) before you begin.
+* Azure storage account. You use Blob storage as a source data store. If you don't have a storage account, see [Create an Azure storage account](https://docs.microsoft.com/en-us/azure/storage/common/storage-quickstart-create-account) for steps to create one.
+* Azure Database for PostgreSQL. You use the database as a sink data store. If you don't have a PostgreSQL database, see [Create a PostgreSQL database](https://docs.microsoft.com/en-us/azure/postgresql/quickstart-create-server-database-portal) for steps to create one.
 
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-data-factory-v2-blob-to-postgresql-copy%2Fazuredeploy.json" target="_blank">
