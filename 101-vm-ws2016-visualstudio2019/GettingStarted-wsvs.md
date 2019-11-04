@@ -134,7 +134,7 @@ Just click on this button: [Deploy to Azure]
 
 Insert your credentials to log in to the Portal.
 
-Create the group if you haven't yet, select the location and insert the **admin user** and **password**:
+Create the group if you haven't yet, insert the parameters **adminUsername**, **adminPassword** and **vmName**.
 
 Select [I agree..] and then click in [Purchase].
 
