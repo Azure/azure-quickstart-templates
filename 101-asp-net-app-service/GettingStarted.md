@@ -22,6 +22,7 @@ Here, we will find only a parameters:
 |**PARAMETERS NAME**   |**DESCRIPTION**   |
 |---|---|
 |name   |Name for your application. It has to be unique.   |
+|location   |Location for the deploy of our resources.   |
 
 
 Like this names has to be unique, we will ensure that by adding the name of the resource group where we will deploy the App Service to the name field. The format will be like follows:
@@ -39,7 +40,6 @@ On that template, we have the following variables:
 |**VARIABLES NAME**   |**DESCRIPTION**   |
 |---|---|
 |subscriptionId   |ID of our subscription   |
-|location   |Variable to retrieve the location from your Resource Group and apply for all other resources.   |
 |hostingEnvironment   |Name of the App Service Environment. If you don't know if you need it, you should leave it empty. Here you can see some [documentation](https://docs.microsoft.com/en-in/azure/app-service/environment/intro)   |
 |serverFarmResourceGroup   |Name of the resource group where our serverFarm is.   |
 |alwaysOn   |It allows us to have the app On even if it is no traffic.   |

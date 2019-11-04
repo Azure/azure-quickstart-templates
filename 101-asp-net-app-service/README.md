@@ -14,6 +14,7 @@ This template allows you to deploy your own ASP.NET app using App Service. This 
 |**PARAMETERS NAME**   |**DESCRIPTION**   |
 |---|---|
 |name   |Name for your application.   |
+|location   |Location for the deploy of our resources.   |
 
 
 ## Variables
@@ -21,7 +22,6 @@ This template allows you to deploy your own ASP.NET app using App Service. This 
 |**VARIABLES NAME**   |**DESCRIPTION**   |
 |---|---|
 |subscriptionId   |ID of our subscription   |
-|location   |Variable to retrieve the location from your Resource Group and apply for all other resources.   |
 |hostingEnvironment   |Name of the App Service Environment. If you don't know if you need it, you should leave it empty. Here you can see some [documentation](https://docs.microsoft.com/en-in/azure/app-service/environment/intro)   |
 |serverFarmResourceGroup   |Name of the resource group where our serverFarm is.   |
 |alwaysOn   |It allows us to have the app On even if it is no traffic.   |
