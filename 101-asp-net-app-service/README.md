@@ -18,17 +18,12 @@
 
 This template allows you to deploy your own ASP.NET app using App Service. This will deploy a Free App Service in a Resource Group that we should create before launch our template.
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fjose-mart%2Ftemplates%2Fmaster%2F101-asp-net-app-service%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
-</a>
-
 ## Parameters
 
 |**PARAMETERS NAME**   |**DESCRIPTION**   |
 |---|---|
 |name   |Name for your application.   |
 |location   |Location for the deploy of our resources.   |
-
 
 ## Variables
 
