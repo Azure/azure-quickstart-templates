@@ -3,7 +3,6 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "virtualMachineAdminUserName": {
-      "defaultValue": "azadmin",
       "type": "string",
       "metadata": {
         "description": "Administrator Username for the local admin account"
@@ -34,7 +33,7 @@
     },
     "virtualMachineSize": {
       "type": "string",
-      "defaultValue": "Standard_DS2_v2",
+      "defaultValue": "Standard_DS1_v2",
       "allowedValues": [
         "Standard_B1ls",
         "Standard_B1s",
@@ -55,7 +54,7 @@
     },
     "operatingSystem": {
       "type": "string",
-      "defaultValue": "Server2016",
+      "defaultValue": "UbuntuLTS",
       "metadata": {
         "description": "Operating System of the Server"
       },
@@ -77,7 +76,13 @@
       "defaultValue": "",
       "metadata": {
         "description": "Specify an Availability Zone for the Virtual Machine Scale Set. All Virtual Machines added the the scale set will inherit this zone. Not all Azure regions support Availability zones. VMSS deployed into a zone must have a platformFaultDomainCount = 5. Learn more about maximum fault domain count by region: https://aka.ms/azurefdcountbyregion"
-      }
+      },
+      "allowedValues": [
+        "",
+        "1",
+        "2",
+        "3"
+      ]
     },
     "dnsPrefixForPublicIP": {
       "type": "string",
@@ -163,7 +168,7 @@
       "name": "[variables('diagnosticStorageAccountName')]",
       "type": "Microsoft.Storage/storageAccounts",
       "location": "[parameters('location')]",
-      "apiVersion": "2016-01-01",
+      "apiVersion": "2019-06-01",
       "sku": {
         "name": "Standard_LRS"
       },
@@ -193,6 +198,11 @@
         "name": "VMcopy",
         "count": "[parameters('virtualMachineCount')]"
       },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachineScaleSets/', parameters('virtualMachineScaleSetName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('diagnosticStorageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('virtualMachineNamePrefix'), copyIndex(1), '-NIC1'))]"
+      ],
       "properties": {
         "hardwareProfile": {
           "vmSize": "[parameters('virtualMachineSize')]"
@@ -232,15 +242,10 @@
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": true,
-            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('diagnosticStorageAccountName')), '2016-01-01').primaryEndpoints.blob]"
+            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('diagnosticStorageAccountName')), '2019-06-01').primaryEndpoints.blob]"
           }
         }
-      },
-      "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachineScaleSets/', parameters('virtualMachineScaleSetName'))]",
-        "[concat('Microsoft.Storage/storageAccounts/', variables('diagnosticStorageAccountName'))]",
-        "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('virtualMachineNamePrefix'), copyIndex(1), '-NIC1'))]"
-      ]
+      }
     },
     {
       "type": "Microsoft.Network/networkInterfaces",
