@@ -11,7 +11,7 @@
 
 
  
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https://raw.githubusercontent.com/ajos1993/azure-quickstart-templates/master/yash-datalake/azureDeploy.json" target="_blank">
+<a href="" target="_blank">
 <img src="https://rawcdn.githack.com/ajos1993/azure-quickstart-templates/0caaf0fd95a69cd27d15f0bb70e831cbc3a531e6/yash-datalake/scripts/images/deploytoazure.png"/>
 </a>
 
