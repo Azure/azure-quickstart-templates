@@ -1,10 +1,10 @@
-## Node App - App Service
+# ASP.NET App - App Service
 
 The intent of this README is to deploy an ASP-NET App. This template was designed to be an easy and fast way to create an App Service to deploy your ASP-NET App.
 
 You can deploy this template by using the [Azure Portal](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-portal) or [Azure CLI](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-cli). Let's dig on the template and have some fun coding.
 
-### The template
+## THE TEMPLATE
 
 In the template we have 3 different sections. These sections are:
 
@@ -14,21 +14,20 @@ In the template we have 3 different sections. These sections are:
 
 Let's see each section.
 
-#### Parameters
+### Parameters
 
 The parameters are fields that we should modify of our App Service.
-Here, we will find only a parameters: 
+Here, we will find only a parameters:
 
 |**PARAMETERS NAME**   |**DESCRIPTION**   |
 |---|---|
 |name   |Name for your application. It has to be unique.   |
 |location   |Location for the deploy of our resources.   |
 
-
 Like this names has to be unique, we will ensure that by adding the name of the resource group where we will deploy the App Service to the name field. The format will be like follows:
 
 ```
-<appServiceName>-<resourceGroupName>
+    <appServiceName>-<resourceGroupName>
 ```
 
 #### Variables
@@ -52,7 +51,6 @@ On that template, we have the following variables:
 |currentStack   |Framework used on the hosting   |
 |netFrameworkVersion   |Framework version   |
 
-
 #### Resources
 
 The resources are the services that we will to deploy into Azure. In this template we will deploy three resources:
@@ -71,7 +69,8 @@ You can use [PowerShell](https://docs.microsoft.com/en-us/azure/azure-resource-m
 For this task, we will deploy using the Portal and Azure CLI, I choose to use the Visual Code with Azure CLI extensions, if you like, you can find more information [here](https://code.visualstudio.com/docs/azure/extensions). But bare in mind that you don't need to use the Visual Code, you can stick with the old good always present **Command Line** on Windows or any **bash terminal**.
 
 ### Using Azure CLI with Visual Code
-Type on the terminal windows: 
+
+Type on the terminal windows:
 
 ```
 az login
@@ -79,10 +78,9 @@ az login
 
 ![Screen](./images/az-log.png)
 
+You gonna be redirected to the browser where you can use your credentials to login into.
 
-You gonna be redirected to the Azure Portal where you can use your credentials to login into.
-
-After login, you gonna have your credentials. 
+After login, you gonna have your credentials.
 
 In order to set the right subscription, you can use the follow command:
 
@@ -132,21 +130,20 @@ Congratulations! You have deployed the template succesfully. We can see our web 
 
 You can redeploy it automatically with just click on this button: 
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure4StudentQSTemplates%2Fazure-quickstart-templates%2Fmaster%2F101-asp-net-app-service%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-asp-net-app-service%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure4StudentQSTemplates%2Fazure-quickstart-templates%2Fmaster%2F101-asp-net-app-service%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-asp-net-app-service%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
-
 ### Deploy your app
 
-To deploy your our ASP.NET app you can follow that [tutorial](https://docs.microsoft.com/en-in/azure/app-service/app-service-web-get-started-dotnet#create-an-aspnet-core-web-app). 
+To deploy your our ASP.NET app you can follow that [tutorial](https://docs.microsoft.com/en-in/azure/app-service/app-service-web-get-started-dotnet#create-an-aspnet-core-web-app).
 
 Just take care when you want to publish your application, because you have to select an existing app service (the one que have created).
 
-### How to shutdown your resources
+### How to delete your resources
 
 On the portal, open your resource group and click on the Delete button.
 
