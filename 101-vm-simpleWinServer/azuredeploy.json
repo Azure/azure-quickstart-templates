@@ -45,7 +45,7 @@
         },
         "windowsOSVersion": {
             "type": "string",
-            "defaultValue": "2016-Datacenter",
+            "defaultValue": "2019-Datacenter",
             "allowedValues": [
                 "2008-R2-SP1",
                 "2012-Datacenter",
@@ -58,15 +58,55 @@
             "metadata": {
                 "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version."
             }
+        },
+        "dnsLabelPrefix": {
+            "type": "string",
+            "defaultValue": "[toLower(parameters('vmName'))]",
+            "metadata": {
+                "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
+            }
+        },
+        "sharedResources": {
+            "type": "string",
+            "defaultValue": "new",
+            "allowedValues": [
+                "new",
+                "existing"
+            ],
+            "metadata": {
+                "description": "Specify whether to create a new or existing NSG and vNet."
+            }
+        },
+        "virtualNetworkName": {
+            "type": "string",
+            "defaultValue": "vNet-1",
+            "metadata": {
+                "description": "Name of the VNET"
+            }
+        },
+        "subnetName": {
+            "type": "string",
+            "defaultValue": "subnet-1",
+            "metadata": {
+                "description": "Name of the subnet in the virtual network"
+            }
+        },
+        "networkSecurityGroupName": {
+            "type": "string",
+            "defaultValue": "SecGroupNet-1",
+            "metadata": {
+                "description": "Name of the Network Security Group"
+            }
+
         }
     },
     "variables": {
-        "virtualNetworkName": "[concat('MyVNet-', parameters('vmName'))]",
-        "publicIpAddressName":  "[concat('myPublicIP-', parameters('vmName'))]",
-        "subnetName": "[concat('mySubnet-', parameters('vmName'))]",
-        "networkInterfaceName": "[concat('myNetInt-', parameters('vmName'))]",
-        "networkSecurityGroupName": "[concat('mySecGroup-', parameters('vmName'))]",
-        "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
+        "publicIpAddressName": "[concat(parameters('vmName'), 'PublicIP' )]",
+        "networkInterfaceName": "[concat(parameters('vmName'),'NetInt')]",
+        "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
+        "osDiskType": "Standard_LRS", 
+        "subnetAddressPrefix": "10.1.0.0/24",
+        "addressPrefix":  "10.1.0.0/24"        
     },
     "resources": [
         {
@@ -75,8 +115,8 @@
             "apiVersion": "2018-10-01",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroupName'))]",
-                "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups/', parameters('networkSecurityGroupName'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
                 "[resourceId('Microsoft.Network/publicIpAddresses/', variables('publicIpAddressName'))]"
             ],
             "properties": {
@@ -95,12 +135,13 @@
                     }
                 ],
                 "networkSecurityGroup": {
-                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('networkSecurityGroupName'))]"
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups',parameters('networkSecurityGroupName'))]"
                 }
             }
         },
         {
-            "name": "[variables('networkSecurityGroupName')]",
+            "condition": "[equals(parameters('sharedResources'), 'new')]",
+            "name": "[parameters('networkSecurityGroupName')]",
             "type": "Microsoft.Network/networkSecurityGroups",
             "apiVersion": "2019-02-01",
             "location": "[parameters('location')]",
@@ -123,21 +164,22 @@
             }
         },
         {
+            "condition": "[equals(parameters('sharedResources'), 'new')]",            
             "type": "Microsoft.Network/virtualNetworks",
             "apiVersion": "2019-04-01",
-            "name": "[variables('virtualNetworkName')]",
+            "name": "[parameters('virtualNetworkName')]",
             "location": "[parameters('location')]",
             "properties": {
                 "addressSpace": {
                     "addressPrefixes": [
-                        "10.0.0.0/24"
+                       "[variables('addressPrefix')]"
                     ]
                 },
                 "subnets": [
                     {
-                        "name": "[variables('subnetName')]",
+                        "name": "[parameters('subnetName')]",
                         "properties": {
-                            "addressPrefix": "10.0.0.0/24",
+                            "addressPrefix": "[variables('subnetAddressPrefix')]",
                             "privateEndpointNetworkPolicies": "Enabled",
                             "privateLinkServiceNetworkPolicies": "Enabled"
                         }
@@ -154,6 +196,9 @@
             "location": "[parameters('location')]",
             "properties":  {
                 "publicIpAllocationMethod": "Dynamic",
+                "dnsSettings": {
+                     "domainNameLabel": "[parameters('dnsLabelPrefix')]"
+                },
                 "publicIPAddressVersion": "IPv4",
                 "idleTimeoutInMinutes": 4
             },
@@ -168,7 +213,7 @@
             "apiVersion": "2019-03-01",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[concat('Microsoft.Network/networkInterfaces/', variables('networkInterfaceName'))]"
+                "[resourceId('Microsoft.Network/networkInterfaces/', variables('networkInterfaceName'))]"
             ],
             "properties": {
                 "hardwareProfile": {
@@ -178,7 +223,7 @@
                     "osDisk": {
                         "createOption": "fromImage",
                         "managedDisk": {
-                            "storageAccountType": "Standard_LRS"
+                            "storageAccountType":  "[variables('osDiskType')]" 
                         }
                     },
                     "imageReference": {
@@ -211,6 +256,18 @@
         "adminUsername": {
             "type": "string",
             "value": "[parameters('adminUsername')]"
+        },
+        "virtualNetworkName": {
+            "type": "string",
+            "value": "[parameters('virtualNetworkName')]"
+        },
+        "networkSecurityGroupName": {
+            "type": "string",
+            "value": "[parameters('networkSecurityGroupName')]"
+        },
+        "hostname": {
+            "type": "string",
+            "value": "[reference(parameters('dnsLabelPrefix')).dnsSettings.fqdn]"
         }
     }
 }
