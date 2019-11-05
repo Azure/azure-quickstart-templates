@@ -1,28 +1,23 @@
 {
-    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "name": {
+        "appName": {
             "type": "string",
+            "defaultValue": "[uniqueString(resourceGroup().name)]",
             "metadata":{
                 "description": "That name is the name of our application. It has to be unique.Type a name followed by your resource group name. (<name>-<resourceGroupName>)"
             }
         },
         "location": {
             "type": "string",
-            "allowedValues":["Central US", "North Europe", "West Europe", "Southeast Asia", "East Asia", "West US", "East US", "Japan West", "Japan East", "East US 2", 
-            "North Central US", "South Central US", "Brazil South", "Australia East", "Australia Southeast", "Central India", "West India", "South India", "Canada Central",
-            "Canada East", "West Central US", "West US 2", "UK West", "UK South", "Korea South", "Korea Central", "France South", "France Central", "Australia Central 2", 
-            "Australia Central", "South Africa North", "South Africa West", "Switzerland North", "Germany West Central"], 
+            "defaultValue": "[resourceGroup().location]",
             "metadata":{
                 "description": "Location where the App Service Plan will be deployed."
             }
         }
     },
     "variables": {
-        "subscriptionId": "[subscription().subscriptionId]",
-        "hostingEnvironment": "",
-        "serverFarmResourceGroup": "[resourceGroup().name]",
         "alwaysOn": false,
         "sku": "Free",
         "skuCode": "F1",
@@ -31,26 +26,26 @@
         "numberOfWorkers": "1",
         "currentStack": "dotnet",
         "netFrameworkVersion": "v4.0",
-        "hostingPlanName": "[concat(parameters('name'), '-hpn')]"
+        "hostingPlanName": "[concat(parameters('appName'), '-hpn')]",
+        "appInsight": "[concat(parameters('appName'), '-insights')]"
     },
     "resources": [
         {
             "apiVersion": "2018-02-01",
-            "name": "[parameters('name')]",
+            "name": "[parameters('appName')]",
             "type": "Microsoft.Web/sites",
             "location": "[parameters('location')]",
-            "tags": null,
             "dependsOn": [
-                "[concat('microsoft.insights/components/', parameters('name'), '-insights')]",
-                "[concat('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
+                "[resourceId('Microsoft.Insights/components/', variables('appInsight'))]",
+                "[resourceId('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
             ],
             "properties": {
-                "name": "[parameters('name')]",
+                "name": "[parameters('appName')]",
                 "siteConfig": {
                     "appSettings": [
                         {
                             "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
-                            "value": "[reference(concat('microsoft.insights/components/', parameters('name'), '-insights'), '2015-05-01').InstrumentationKey]"
+                            "value": "[reference(resourceId('microsoft.insights/components/', variables('appInsight')), '2018-05-01-preview').InstrumentationKey]"
                         },
                         {
                             "name": "ApplicationInsightsAgent_EXTENSION_VERSION",
@@ -94,8 +89,7 @@
                     "netFrameworkVersion": "[variables('netFrameworkVersion')]",
                     "alwaysOn": "[variables('alwaysOn')]"
                 },
-                "serverFarmId": "[concat('/subscriptions/', variables('subscriptionId'),'/resourcegroups/', variables('serverFarmResourceGroup'), '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]",
-                "hostingEnvironment": "[variables('hostingEnvironment')]",
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
                 "clientAffinityEnabled": true
             }
         },
@@ -104,15 +98,11 @@
             "name": "[variables('hostingPlanName')]",
             "type": "Microsoft.Web/serverfarms",
             "location": "[parameters('location')]",
-            "kind": "",
-            "tags": null,
-            "dependsOn": [],
             "properties": {
                 "name": "[variables('hostingPlanName')]",
                 "workerSize": "[variables('workerSize')]",
                 "workerSizeId": "[variables('workerSizeId')]",
-                "numberOfWorkers": "[variables('numberOfWorkers')]",
-                "hostingEnvironment": "[variables('hostingEnvironment')]"
+                "numberOfWorkers": "[variables('numberOfWorkers')]"
             },
             "sku": {
                 "Tier": "[variables('sku')]",
@@ -120,14 +110,12 @@
             }
         },
         {
-            "apiVersion": "2015-05-01",
-            "name": "[concat(parameters('name'), '-insights')]",
+            "apiVersion": "2018-05-01-preview",
+            "name": "[variables('appInsight')]",
             "type": "microsoft.insights/components",
             "location": "[parameters('location')]",
-            "tags": null,
             "properties": {
-                "ApplicationId": "[parameters('name')]",
-                "Request_Source": "IbizaWebAppExtensionCreate"
+                "ApplicationId": "[parameters('appName')]"
             }
         }
     ]

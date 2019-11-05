@@ -25,7 +25,6 @@ This template allows you to deploy your own ASP.NET app using App Service. This 
 |name   |Name for your application.   |
 |location   |Location for the deploy of our resources.   |
 
-
 ## Variables
 
 |**VARIABLES NAME**   |**DESCRIPTION**   |
@@ -52,7 +51,7 @@ New-AzResourceGroup -Name <resource-group-name> -Location <resource-group-locati
 New-AzResourceGroupDeployment -ResourceGroupName <resource-group-name> -TemplateUri 
 ```
 
-[Install and configure Azure PowerShell]()
+[Install and configure Azure PowerShell](https://docs.microsoft.com/es-es/powershell/azure/?view=azps-2.8.0)
 
 ### Command line
 
@@ -61,7 +60,4 @@ az group create --name <resource-group-name> --location <resource-group-location
 az group deployment create --resource-group <my-resource-group> --template-uri https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-asp-net-app-service/azuredeploy.json
 ```
 
-After a couple of minutes, we will have our Node app ready.
-
-
-[Install and configure the Azure Cross-Platform Command-Line Interface]()
+[Install and configure the Azure Cross-Platform Command-Line Interface](https://docs.microsoft.com/es-es/cli/azure/install-azure-cli?view=azure-cli-latest)
