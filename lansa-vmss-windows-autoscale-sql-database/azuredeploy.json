@@ -1,5 +1,5 @@
 {
-   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json",
+   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
    "contentVersion": "1.0.0.0",
    "parameters": {
       "location": {
@@ -275,13 +275,12 @@
     "subnetName": "[concat(variables('namingInfix'), 'subnet')]",
     "loadBalancerName": "[concat(variables('namingInfix'), 'lb')]",
     "lbFrontEndName": "LoadBalancerFrontEnd",
-    "lbBackendPoolName": "LoadBalancerBackEndPool",
-    "lbProbeName": "loadBalancerHealthProbe",
+    "lbProbeName": "LoadBalancerProbe",
     "dbloadBalancerName": "[concat(variables('namingInfix'), 'dblb')]",
+    "dblbFrontEndName": "dbLoadBalancerFrontEnd",
+    "dblbProbeName": "dbLoadBalancerProbe",
     "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]",
     "dbpublicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('dbpublicIPAddressName'))]",
-    "lbID": "[resourceId('Microsoft.Network/loadBalancers',variables('loadBalancerName'))]",
-    "dblbID": "[resourceId('Microsoft.Network/loadBalancers',variables('dbloadBalancerName'))]",
     "natPoolName": "[concat(variables('namingInfix'), 'natpool')]",
     "bePoolName": "[concat(variables('namingInfix'), 'bepool')]",
     "dbbePoolName": "[concat(variables('namingInfix'), 'dbbepool')]",
@@ -312,7 +311,6 @@
    "agSubnetName": "[concat(variables('namingInfix'), '-agsubnet')]",
    "agSubnetID": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('agsubnetName'))]",
    "agName": "[concat(variables('namingInfix'), '-ag')]",
-   "agID": "[resourceId('Microsoft.Network/applicationgateways',variables('agName'))]",
    "agBackendAddressPoolName": "[concat(variables('namingInfix'), '-agpool')]"
   },
    "resources": [
@@ -401,10 +399,10 @@
                         "id": "[variables('frontEndIPConfigID')]"
                      },
                      "backendAddressPool": {
-                        "id": "[concat(variables('lbID'), '/backendAddressPools/', variables('bePoolName'))]"
+                        "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadbalancerName'), variables('bePoolName'))]"
                      },
                      "probe": {
-                        "id": "[concat(variables('lbID'), '/probes/lbprobe')]"
+                        "id": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('loadbalancerName'), variables('lbProbeName'))]"
                      },
                      "protocol": "Tcp",
                      "loadDistribution": "SourceIP",
@@ -416,7 +414,7 @@
             ],
             "probes": [
                {
-                  "name": "lbprobe",
+                  "name": "[variables('lbProbeName')]",
                   "properties": {
                      "protocol": "Http",
                      "port": 80,
@@ -451,7 +449,7 @@
          "properties": {
             "frontendIPConfigurations": [
                {
-                  "name": "LoadBalancerFrontEnd",
+                  "name": "[variables('dblbFrontEndName')]",
                   "properties": {
                      "publicIPAddress": {
                         "id": "[variables('dbpublicIPAddressID')]"
@@ -469,13 +467,13 @@
                   "name": "lbrule",
                   "properties": {
                      "frontendIPConfiguration": {
-                        "id": "[concat(variables('dblbID'),'/frontendIPConfigurations/loadBalancerFrontEnd')]"
+                        "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('dbloadBalancerName'), variables('dblbFrontEndName'))]"
                      },
                      "backendAddressPool": {
-                        "id": "[concat(variables('dblbID'), '/backendAddressPools/', variables('dbbePoolName'))]"
+                        "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('dbloadBalancerName'), variables('dbbePoolName'))]"
                      },
                      "probe": {
-                        "id": "[concat(variables('dblbID'), '/probes/lbprobe')]"
+                        "id": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('dbloadBalancerName'), variables('dblbProbeName'))]"
                      },
                      "protocol": "Tcp",
                      "loadDistribution": "SourceIP",
@@ -487,7 +485,7 @@
             ],
             "probes": [
                {
-                  "name": "lbprobe",
+                  "name": "[variables('dblbProbeName')]",
                   "properties": {
                      "protocol": "Tcp",
                      "port": 3389,
@@ -552,11 +550,11 @@
                                  "name": "[concat( 'db',variables('ipConfigName'))]",
                                  "properties": {
                                     "subnet": {
-                                       "id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'), '/subnets/', variables('subnetName'))]"
+                                       "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
                                     },
                                     "loadBalancerBackendAddressPools": [
                                        {
-                                          "id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('dbloadBalancerName'), '/backendAddressPools/', variables('dbbePoolName'))]"
+                                          "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('dbloadBalancerName'), variables('dbbePoolName'))]"
                                        }
                                     ]
                                  }
@@ -643,21 +641,21 @@
                                  "name": "[variables('ipConfigName')]",
                                  "properties": {
                                     "subnet": {
-                                       "id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'), '/subnets/', variables('subnetName'))]"
-                                    },
-                                    "loadBalancerBackendAddressPools": [
-                                       {
-                                          "id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('loadBalancerName'), '/backendAddressPools/', variables('bePoolName'))]"
-                                       }
-                                    ],
+                                        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
+                                     },
+                                     "loadBalancerBackendAddressPools": [
+                                        {
+                                           "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancerName'), variables('bePoolName'))]"
+                                        }
+                                     ],
                                     "loadBalancerInboundNatPools": [
                                        {
-                                          "id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('loadBalancerName'), '/inboundNatPools/', variables('natPoolName'))]"
+                                          "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatPools', variables('loadBalancerName'), variables('natPoolName'))]"
                                        }
                                     ],
                                     "applicationGatewayBackendAddressPools": [
                                        {
-                                          "id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/applicationGateways/', variables('agName'), '/backendAddressPools/', variables('agBackendAddressPoolName'))]"
+                                          "id": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools', variables('agName'), variables('agBackendAddressPoolName'))]"
                                        }
                                     ]
                                  }
@@ -861,14 +859,15 @@
                   "name": "appGatewayHttpListener",
                   "properties": {
                      "FrontendIPConfiguration": {
-                        "Id": "[concat(variables('agID'), '/frontendIPConfigurations/appGatewayFrontendIP')]"
+                        "Id": "[resourceId('Microsoft.Network/applicationgateways/frontendIPConfigurations',variables('agName'),'appGatewayFrontendIP')]"
+
                      },
                      "FrontendPort": {
-                        "Id": "[concat(variables('agID'), '/frontendPorts/appGatewayFrontendPort')]"
+                        "Id": "[resourceId('Microsoft.Network/applicationgateways/frontendPorts',variables('agName'),'appGatewayFrontendPort')]"
                      },
                      "Protocol": "Https",
                      "SslCertificate": {
-                        "Id": "[concat(variables('agID'), '/sslCertificates/appGatewaySslCert')]"
+                        "Id": "[resourceId('Microsoft.Network/applicationgateways/sslCertificates',variables('agName'),'appGatewaySslCert')]"
                      }
                   }
                }
@@ -879,13 +878,13 @@
                   "properties": {
                      "RuleType": "Basic",
                      "httpListener": {
-                        "id": "[concat(variables('agID'), '/httpListeners/appGatewayHttpListener')]"
+                        "id": "[resourceId('Microsoft.Network/applicationgateways/httpListeners',variables('agName'),'appGatewayHttpListener')]"
                      },
                      "backendAddressPool": {
-                        "id": "[concat(variables('agID'), '/backendAddressPools/', variables('agBackendAddressPoolName'))]"
+                        "id": "[resourceId('Microsoft.Network/applicationgateways/backendAddressPools',variables('agName'),variables('agBackendAddressPoolName'))]"
                      },
                      "backendHttpSettings": {
-                        "id": "[concat(variables('agID'), '/backendHttpSettingsCollection/appGatewayBackendHttpSettings')]"
+                        "id": "[resourceId('Microsoft.Network/applicationgateways/backendHttpSettingsCollection',variables('agName'),'appGatewayBackendHttpSettings')]"
                      }
                   }
                }
