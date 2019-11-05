@@ -1,8 +1,17 @@
-<h1>Enterprise Azure Governance and Operations </h1>
+# >Enterprise Azure Governance and Operations
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/azure-governance-operations-automation/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/azure-governance-operations-automation/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/azure-governance-operations-automation/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/azure-governance-operations-automation/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/azure-governance-operations-automation/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/azure-governance-operations-automation/CredScanResult.svg" />&nbsp;
 <h2>Composite template version 1.0</h2>
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fazure-governance-operations-automation%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fazure-governance-operations-automation%2Fazuredeploy.json" target="_blank"> <img src="http://armviz.io/visualizebutton.png"/></a>
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fazure-governance-operations-automation%2Fazuredeploy.json" target="_blank"><img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/></a>
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fazure-governance-operations-automation%2Fazuredeploy.json" target="_blank"> <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/></a>
 
 ----------
 <h2> Table of Contents </h2>
@@ -68,14 +77,12 @@ Please [contact us](mailto:azuremarketplace@avyanconsulting.com) if you need fur
 You can find a quick (~3.5mins) overview of the solution in the video here
 [Enterprise_Governance_and_Operations_480p.mp4)](images/CloudWise_Enterprise_Governance_and_Operations_480p.mp4)
 
-
 <a name="overview"></a>
 ## Target Audience
 The target audience for these solution templates are IT professionals who need to stand-up and/or deploy infrastructure stacks.
 
 ## Licenses & Costs
 In its current state, solution templates come with licenses built-in – there may be a BYOL option included in the future. The solution template will be deployed in the Customer’s Azure subscription, and the Customer will incur Azure usage charges associated with running the solution stack.
-
 
 <a name="prereqs"></a>
 ## Prerequisites
@@ -100,14 +107,11 @@ Please download the link to the PowerBI dashboard
 
 <br/> &nbsp;&nbsp;&nbsp;&nbsp; ![](images/CloudWise_PowerBI_Dashboard.png)
 
-
 ### OMS Web Apps Monitoring dashboard (For Operations Teams)
 <br/> &nbsp;&nbsp;&nbsp;&nbsp; ![](images/WebAppPaaS.png)
 
 ### OMS Azure SQL Databases Monitoring dashboard (For Operations Teams)
 <br/> &nbsp;&nbsp;&nbsp;&nbsp; ![](images/SQLAzurePaaS.png)
-
-
 
 ## Deployment and Settings
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
@@ -127,8 +131,6 @@ You have now successfully deployed the application. You will have to do a few ad
     <br/> &nbsp;&nbsp;&nbsp;&nbsp; ![](images/StartIngestionRunbook.png)
 
 
-
-
 ## Terms of Use and Privacy Policies
 As the solution contains IP owned by Avyan Consulting Corp, please refer to
 * [Terms of Service](termsofuse/CloudWise_Terms_Of_Service.pdf)
@@ -140,3 +142,4 @@ For any support-related issues or questions, please contact us for assistance.
 ```sh
 > azuremarketplace@avyanconsulting.com 
 ```
+

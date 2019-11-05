@@ -1,10 +1,24 @@
-# Important Note
+# DataStax
 
-For the most up to date version of this template, please do not use this repo. Instead go [here](https://github.com/DSPN/azure-resource-manager-dse).  We strongly encourage use of the latest version as it incorporates bug fixes and is more flexible.
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/datastax/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/datastax/PublicDeployment.svg" />&nbsp;
 
-# Deploying this DataStax ARM Template
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/datastax/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/datastax/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/datastax/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/datastax/CredScanResult.svg" />&nbsp;
+
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdatastax%2Fazuredeploy.json" target="_blank">
+<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
+</a>
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdatastax%2Fazuredeploy.json" target="_blank">
+<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
+</a>
 
 This template deploys a DataStax Enterprise (DSE) cluster to Azure running on Ubuntu virtual machines in a single datacenter.  The template can provision a cluster from 1 to 40 nodes.  Creating a greater number of nodes may cause issues with storage account I/O contention.
+
+For the most up to date version of this template, please do not use this repo. Instead go [here](https://github.com/DSPN/azure-resource-manager-dse).  We strongly encourage use of the latest version as it incorporates bug fixes and is more flexible.
 
 The template also provisions a storage account, virtual network and public IP addresses required by the installation.  The template will deploy to the location that the resourceGroup it is part of is located in.
 

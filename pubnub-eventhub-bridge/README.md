@@ -1,5 +1,14 @@
 #  PubNub Realtime Gateway for Azure Event Hubs
 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/pubnub-eventhub-bridge/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/pubnub-eventhub-bridge/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/pubnub-eventhub-bridge/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/pubnub-eventhub-bridge/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/pubnub-eventhub-bridge/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/pubnub-eventhub-bridge/CredScanResult.svg" />&nbsp;
+
 ## What does it do?
 The PubNub Realtime Gateway for Azure provides a realtime data stream bridge between the PubNub Data Stream Network and Azure Event Hubs. -- consider it a bi-directional bridge between PubNub and Azure!
 
@@ -13,11 +22,11 @@ Then this is the ARM template for you!
 Tags: ``Event Hubs, Event Hub, Realtime, PubNub, PubSub, Pub/Sub, Publish/Subscribe, Node.js, Web Jobs``
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fpubnub-eventhub-bridge%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>    
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>    
 </a>
 
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fpubnub-eventhub-bridge%2Fazuredeploy.json">
-    <img src="https://camo.githubusercontent.com/536ab4f9bc823c2e0ce72fb610aafda57d8c6c12/687474703a2f2f61726d76697a2e696f2f76697375616c697a65627574746f6e2e706e67" data-canonical-src="http://armviz.io/visualizebutton.png" style="max-width:100%;">
+    <img src="https://camo.githubusercontent.com/536ab4f9bc823c2e0ce72fb610aafda57d8c6c12/687474703a2f2f61726d76697a2e696f2f76697375616c697a65627574746f6e2e706e67" data-canonical-src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png" style="max-width:100%;">
 </a>
 
 
@@ -50,11 +59,10 @@ The Ingress Event Hub is populated via PubNub subscribe data, and should serve a
 
 The Egress Event Hub should serve as an "Output" from Azure Cloud services of your choice, and all data sent to it will be published out via PubNub.
 
-
 ## How to Deploy
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fpubnub-eventhub-bridge%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 
 1. Be sure you are logged in to <a href="https://portal.azure.com">https://portal.azure.com</a>
@@ -204,7 +212,6 @@ Waiting for messages to arrive via Event Hubs...
 Message Received on Ingress Event Hub:   : {"guess what?":"this message arrived via PubNub into the ingress Event Hub!"}
 ```
 
-
 In addition, a handy re-usable command line (to copy and paste later) is displayed to use to reconnect to the Event Hubs any time:
 
 #### Monitor
@@ -239,7 +246,6 @@ For production environments, set *disabled* for the PubNub Announcement Channel 
 
 ##### Delays
 Although Azure may state the deployment has completed, there may be a delay in the provisioningListener.js script announcing the configuration information.  This can be due to not only asyncronous Azure deployment processes completing, including the npm install process which must run, and install supporting Node.js libraries.
-
 
 ### Location
 Some Azure services rely on all participating Azure components being located in the same region.  The way this template is currently coded, it's required to use West US for all location variables.  If this is showstopping for you, please fork the repo, and edit any hardcoded "West US" values in the template to the locations you desire, and then be sure the form values match when deploying.

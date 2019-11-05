@@ -1,11 +1,20 @@
 # Install MongoDB Sharding Cluster
 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/mongodb-sharding-centos/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/mongodb-sharding-centos/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/mongodb-sharding-centos/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/mongodb-sharding-centos/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/mongodb-sharding-centos/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/mongodb-sharding-centos/CredScanResult.svg" />&nbsp;
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmongodb-sharding-centos%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 <a href="
 http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmongodb-sharding-centos%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
 
@@ -17,16 +26,12 @@ The config server replica set stores sharding cluster metadata. MongoDB suggests
 
 2 shards each is a 3 node replica set. You can shard the data on the two replica sets. You can also add more replica sets into the sharding cluster.
 
-
 The nodes are under the same subnet 10.0.0.0/24. Except the 2 router server nodes, the other nodes only have private IP address.
 
 This template also allows you to input your existing zabbix server IP address to monitor these MongoDB router servers.
 
-
 ##Important Notice
 Each VM of the shard uses raid0 to improve performance. The number and the size of data disks(setup raid0) on each shard VM are determined by yourself. However, there is number and size of data disks limit per the VM size. Before you set number and size of data disks, please refer to the link https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-linux-sizes/ for the correct choice.
-
-
 
 ##After deployment, you can do below to verify if the sharding cluster really works or not:
 
@@ -41,7 +46,6 @@ Each VM of the shard uses raid0 to improve performance. The number and the size 
 
   Upper db.runCommand( { listshards : 1 } ) command will show the sharding cluster details. 
 
-
 2. You can "shard" any database and collections you want. SSH connect to one of the router server, execute below:
   ```
   $mongo -u "<mongouser>" -p "<mongopassword>" "admin"
@@ -55,7 +59,6 @@ Each VM of the shard uses raid0 to improve performance. The number and the size 
   exit
   ```
 
-
 3. You can add more shards into this sharding cluster. SSH connect to one of the router server, execute below:
   ```
   $mongo -u "<mongouser>" -p "<mongopassword>" "admin"
@@ -67,7 +70,6 @@ Each VM of the shard uses raid0 to improve performance. The number and the size 
 
   Before adding your own replica set into the sharding cluster, you should enable internal authentication in your replica set first, and make sure the replica set is accessiable through this sharding cluster.
 
-
 ##Known Limitations
 - The MongoDB version is 3.2.
 - We expose 2 router server nodes on public addresses so that you can access MongoDB service through internet directly.
@@ -75,3 +77,4 @@ Each VM of the shard uses raid0 to improve performance. The number and the size 
 - The nodes use internal authentication. So if you want to add your own replica set into this sharding cluster, you should enable the internal authentication in your replica set first. Check any node /etc/mongokeyfile for more details.
 - The replica set is composed with 1 primary node, 2 secondary nodes.
 - More MongoDB usage details please visit MongoDB website https://www.mongodb.org/ .
+

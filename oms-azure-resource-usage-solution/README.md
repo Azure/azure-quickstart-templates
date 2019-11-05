@@ -1,8 +1,17 @@
 # Azure Resource Usage Solution
 
-[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Foms-azure-resource-usage-solution%2Fazuredeploy.json) 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-azure-resource-usage-solution/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-azure-resource-usage-solution/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-azure-resource-usage-solution/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-azure-resource-usage-solution/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-azure-resource-usage-solution/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-azure-resource-usage-solution/CredScanResult.svg" />&nbsp;
+
+[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Foms-azure-resource-usage-solution%2Fazuredeploy.json) 
 <a href="http://armviz.io/#/?load=https%3A%2F%2raw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Foms-azure-resource-usage-solution%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
 >[AZURE.NOTE]This is preliminary documentation for Azure Resource Usage Solution, a management solution you can deploy into OMS that will provide insights of virtual machines across subscriptions. 
@@ -16,8 +25,6 @@ Azure Resource Usage   Solution collects and visualizes Azure Usage from Azure B
 * Resouce ( VM, Storage Account , Website)
 * Reosuce Group 
 * Resource Tags 
-
-
 
 ![alt text](images/azureusagetile.png "Overview")
 
@@ -54,7 +61,7 @@ Once the deployment has completed, you should see the Automation account and the
 ![alt text](images/omsrgaa.png "Resource Group")
 
 ###You can now deploy the template   
-[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Foms-azure-resource-usage-solution%2Fazuredeploy.json) 
+[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Foms-azure-resource-usage-solution%2Fazuredeploy.json) 
 
 This will send you to the Azure Portal with some default values for the template parameters. 
 Ensure that the parameters reflects your setup so that you are deploying this into the *existing* Resource Group containing the Log Analytics Workspace and the Automation account.
@@ -80,9 +87,7 @@ Specify the name of the automation account you created earlier
 
 Select the Azure Region where your automation account is located
 
-
 You should also change the values for the *Ingest Scheduler Guid* and *Ingest Cleanup Guid*. You can generate your own using PowerShell with the following cmdlet:
-
 
 ![alt text](images/knguid.png "guid")
 
@@ -123,22 +128,20 @@ General Troubleshooting steps ;
 * Check if AzureStorageIngestion.......  Automation Schedules are enabled
 * Navigate to Resource group , delete AzureUsage[workspaceName] solution and redeploy template with a new Guid
 
-
 ## Adding Additional Subscriptions | Partial Deployment 
 
 Deploying all resources in a single resource group is the prefferred way for deploying the solution. But if you have your OMS workspace and Automation account in different resource groups  you can use the partial templates to deploy the solution. 
 
 First deploy the OMS Solution Views by following the link below 
 
-[![Deploy OMS Views](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Foms-azure-resource-usage-solution%2Fazuredeployonlyloganalytics.json) 
-
-
+[![Deploy OMS Views](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Foms-azure-resource-usage-solution%2Fazuredeployonlyloganalytics.json) 
 
 Second use the link below to deploy the automation components to an existing automation account.
 
 This second template also used to onboard additional subscriptions to the solution !
 
-[![Deploy Automation/ Add Subscriptions](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Foms-azure-resource-usage-solution%2Fazuredeployonlyautomation.json) 
+[![Deploy Automation/ Add Subscriptions](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Foms-azure-resource-usage-solution%2Fazuredeployonlyautomation.json) 
 
 Template requires OMS Log Analytics workspace ID and Key  from the  workspace where solution is already deployed. Navigate to Log Analytics Portal / Settings / Connected Sources  to get worspace Id and Key.
 This solution will deploy only the automation components used in data collection and push data to existing log analytics workspace. 
+

@@ -1,8 +1,12 @@
 #Requires -module AzureRM
-#Requires -module pki
+#Requires -module pki 
 
 <#
-Use this script to create the GEN artifacts needed by the pipeline to test templates.  The Crypto module is not supported on PS Core so this is using older modules.
+Use this script to create the GEN artifacts needed by the pipeline to test templates.  
+
+########################################################################################
+The Crypto module (PKI) is not supported on PS Core so this is using older AzureRM modules.
+########################################################################################
 
 Be sure to set the appropriate Context before running the script
 
@@ -11,8 +15,8 @@ Be sure to set the appropriate Context before running the script
 param(
     [string] $ResourceGroupName = 'ttk-gen-artifacts',
     [string] [Parameter(mandatory = $true)] $Location, #The location where resources will be deployed in the pipeline, in many cases they need to be in the same region.
-    [string] $KeyVaultName = 'azbotvault',
-    [string] $CertPass = $("cI#" + (New-Guid).ToString().Substring(0, 17)),
+    [string] $KeyVaultName = 'azbotvault', # This must be gloablly unique
+    [string] $CertPass = $("cI#" + (New-Guid).ToString().Replace("-", "").Substring(0, 17)),
     [string] $CertDNSName = 'azbot-cert-dns',
     [string] $KeyVaultSelfSignedCertName = 'azbot-sscert',
     [string] $KeyVaultNotSecretName = 'notSecretPassword',
@@ -24,6 +28,22 @@ param(
 if ((Get-AzureRMResourceGroup -Name $ResourceGroupName -Location $Location -Verbose -ErrorAction SilentlyContinue) -eq $null) {
     New-AzureRMResourceGroup -Name $ResourceGroupName -Location $Location -Verbose -Force
 }
+
+# Create the storage account for staging and assign perms
+$StorageAccountName = 'stage' + ((Get-AzureRmContext).Subscription.Id).Replace('-', '').substring(0, 19)
+$StorageAccount = (Get-AzureRmStorageAccount | Where-Object { $_.StorageAccountName -eq $StorageAccountName })
+# Create the storage account if it doesn't already exist
+if ($StorageAccount -eq $null) {
+    $StorageResourceGroupName = 'ARM_Deploy_Staging'
+    New-AzureRmResourceGroup -Location "$Location" -Name $StorageResourceGroupName -Force
+    $StorageAccount = New-AzureRmStorageAccount -StorageAccountName $StorageAccountName -Type 'Standard_LRS' -ResourceGroupName $StorageResourceGroupName -Location "$Location"
+}
+# Assign perms
+if($ServicePrincipalObjectId){
+    $roleDef = Get-AzureRmRoleDefinition -Name 'Contributor'
+    New-AzureRMRoleAssignment -RoleDefinitionId $roleDef.id -ObjectId $ServicePrincipalObjectId -Scope $StorageAccount.Id -Verbose
+}
+
 
 #Create the VNET
 $subnet1 = New-AzureRMVirtualNetworkSubnetConfig -Name 'azbot-subnet-1' -AddressPrefix '10.0.1.0/24'
@@ -50,7 +70,10 @@ if($vault -eq $null) {
     $vault = New-AzureRMKeyVault -VaultName $KeyVaultName `
                                  -ResourceGroupName $ResourceGroupName `
                                  -Location $Location `
-                                 -EnabledForTemplateDeployment -EnabledForDiskEncryption -EnabledForDeployment `
+                                 -EnabledForTemplateDeployment `
+                                 -EnabledForDiskEncryption `
+                                 -EnabledForDeployment `
+                                 -EnableSoftDelete `
                                  -Verbose
 }
 
@@ -72,16 +95,19 @@ if($ServicePrincipalObjectId){
 
     New-AzureRMRoleAssignment -RoleDefinitionId $role.Id -ObjectId $ServicePrincipalObjectId -Scope $vault.ResourceId -Verbose
 
-    # Set the Data Plane Access Policy for the Principal
+    # Need contributor access to be able to add secrets during a template deployment
+    $roleDef = Get-AzureRmRoleDefinition -Name 'Contributor'
+    New-AzureRMRoleAssignment -RoleDefinitionId $roleDef.id -ObjectId $ServicePrincipalObjectId -Scope $vault.ResourceId -Verbose
 
+    # Set the Data Plane Access Policy for the Principal to retrieve secrets via reference parameters
     Set-AzureRMKeyVaultAccessPolicy -VaultName $KeyVaultName -ObjectId $ServicePrincipalObjectId `
-                               -PermissionsToKeys get,restore `
-                               -PermissionsToSecrets get,set `
-                               -PermissionsToCertificates get
+                                    -PermissionsToKeys get,restore `
+                                    -PermissionsToSecrets get,set `
+                                    -PermissionsToCertificates get
 
 }
 
-# 1) Create a sample password
+# 1) Create a sample password for the vault
 $SecretValue = ConvertTo-SecureString -String $CertPass -AsPlainText -Force
 Set-AzureKeyVaultSecret -VaultName $KeyVaultName -Name $KeyVaultNotSecretName -SecretValue $SecretValue -Verbose
 
@@ -91,9 +117,20 @@ $json.Add("KEYVAULT-PASSWORD-SECRET-NAME", $KeyVaultNotSecretName)
 $json.Add("KEYVAULT-SUBSCRIPTION-ID", $vault.ResourceId.Split('/')[2])
 $json.Add("KEYVAULT-RESOURCE-ID", $vault.ResourceId)
 
+$refParam = @"
+{
+    "reference": {
+      "keyVault": {
+        "id": "$($vault.ResourceId)"
+      },
+      "secretName": "$KeyVaultNotSecretName"
+    }
+}
+"@
+
+$json.Add("KEYVAULT-PASSWORD-REFERENCE", (ConvertFrom-Json $refParam))
 
 # 2) Create a sample cert for Service Fabric
-
 $SecurePassword = ConvertTo-SecureString -String $CertPass -AsPlainText -Force
 $CertFileFullPath = $(Join-Path (Split-Path -Parent $MyInvocation.MyCommand.Definition) "\$CertDNSName.pfx")
 
@@ -149,6 +186,5 @@ $json.Add("SELFSIGNED-CERT-PASSWORD", $CertPass)
 $json.Add("SELFSIGNED-CERT-THUMBPRINT", $kvCert.Thumbprint)
 $json.Add("SELFSIGNED-CERT-DNSNAME", $CertDNSName)
 
-
 #Output all the values needed for the config file
-Write-Output $($json | ConvertTo-json)
+Write-Output $($json | ConvertTo-json -Depth 30)
