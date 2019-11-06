@@ -1,12 +1,12 @@
 # ASP.NET App - App Service
 
-The intent of this README is to deploy an ASP-NET App. This template was designed to be an easy and fast way to create an App Service to deploy your ASP-NET App.
+This README intends to deploy an ASP-NET App. This template was designed to be an easy and fast way to create an App Service to deploy your ASP-NET App.
 
 You can deploy this template by using the [Azure Portal](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-portal) or [Azure CLI](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-cli). Let's dig on the template and have some fun coding.
 
 ## THE TEMPLATE
 
-In the template we have 3 different sections. These sections are:
+In the template, we have 3 different sections. These sections are:
 
     - Parameters
     - Variables
@@ -16,15 +16,15 @@ Let's see each section.
 
 ### Parameters
 
-The parameters are fields that we should modify of our App Service.
-Here, we will find only a parameters:
+The parameters are fields that we should modify our App Service.
+Here, we will find only parameters:
 
 |**PARAMETERS NAME**   |**DESCRIPTION**   |
 |---|---|
 |name   |Name for your application. It has to be unique.   |
 |location   |Location for the deploy of our resources.   |
 
-Like this names has to be unique, we will ensure that by adding the name of the resource group where we will deploy the App Service to the name field. The format will be like follows:
+Like these names has to be unique, we will ensure that by adding the name of the resource group where we will deploy the App Service to the name field. The format will be like follows:
 
 ```
     <appServiceName>-<resourceGroupName>
@@ -47,13 +47,13 @@ On that template, we have the following variables:
 |workerSize   |Optional. The worker size. Possible values are Small, Medium, and Large. For JSON, the equivalents are 0 = Small, 1 = Medium, and 2 = Large   |
 |workerSizeId   |Gets or sets size ID of machines: 0 - Small 1 - Medium 2 - Large   |
 |numberOfWorkers   |Gets or sets number of workers.   |
-|hostingPlanName   |Name for the hosting plan. On free tier, you can only have 1 linux hosting environment.   |
+|hostingPlanName   |Name for the hosting plan. On a free tier, you can only have 1 Linux hosting environment.   |
 |currentStack   |Framework used on the hosting   |
 |netFrameworkVersion   |Framework version   |
 
 #### Resources
 
-The resources are the services that we will to deploy into Azure. In this template we will deploy three resources:
+The resources are the services that we will deploy into Azure. In this template we will deploy three resources:
 
 |**RESOURCE NAME**   |**DESCRIPTION**   |
 |---|---|
@@ -80,9 +80,7 @@ az login
 
 You gonna be redirected to the browser where you can use your credentials to login into.
 
-After login, you gonna have your credentials.
-
-In order to set the right subscription, you can use the follow command:
+To set the right subscription, you can use the following command:
 
 ```
 az account set --subscription "< your subscription id >"
@@ -90,9 +88,9 @@ az account set --subscription "< your subscription id >"
 
 ### Resource Group
 
-A resource group is a container that holds related resources for an Azure solution. The resource group includes those resources that you want to manage as a group. 
+A resource group is a container that holds related resources for an Azure solution. The resource group includes those resources that you want to manage as a group.
 
-We gonna need to create a resource group for our deployment if we haven't yet create a resource group.
+We will have to create a resource group for our deployment if we haven't a resource group yet.
 
 To create a resource group, we will need a name and the location. For a list of locations, type:
 
@@ -122,7 +120,7 @@ When it finished, let's go to the Portal, and let's see our App Services.
 
 ![Screen](./images/portal-resource.png)
 
-Congratulations! You have deployed the template succesfully. We can see our web visiting an url like that:
+Congratulations! You have deployed the template successfully. We can see our web visiting an URL like that:
 
 ```
 <app-name>.azurewebsites.net
@@ -141,7 +139,7 @@ You can redeploy it automatically with just click on this button:
 
 To deploy your our ASP.NET app you can follow that [tutorial](https://docs.microsoft.com/en-in/azure/app-service/app-service-web-get-started-dotnet#create-an-aspnet-core-web-app).
 
-Just take care when you want to publish your application, because you have to select an existing app service (the one que have created).
+Just take care when you want to publish your application because you have to select an existing app service (the one that we have created).
 
 ### How to delete your resources
 
@@ -149,8 +147,8 @@ On the portal, open your resource group and click on the Delete button.
 
 ![Screen](./images/delete-rsc.png)
 
-### What to do if deployment fails
+### What to do if the deployment fails
 
 When we are trying to deploy our template, we can find that this fails. If that happens, what we will do it is to delete the resource group and then redeploy our template.
 
-To delete the resource group, we will go to our resource group, and then, we will delete it exactly the same that we made on the last section.
+To delete the resource group, we will go to our resource group, and then, we will delete it the same that we made in the last section.
