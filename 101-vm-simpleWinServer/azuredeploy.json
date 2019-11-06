@@ -4,7 +4,7 @@
     "parameters": {
         "vmName": {
             "type": "string",
-            "defaultValue": "WinSvVisualVM",
+            "defaultValue": "WinServerVM",
             "metadata": {
                 "description": "The name of you Virtual Machine."
             }
@@ -17,8 +17,7 @@
                 "Standard_D3_v2",
                 "Standard_D1_v2",
                 "Standard_D4_v2",
-                "Standard_D5_v2"
-                
+                "Standard_D5_v2"      
         ],
             "metadata": {
                 "description": "The size of the VM"
@@ -38,10 +37,26 @@
             }
         },
         "location": {
+        "type": "string",
+        "defaultValue": "[resourceGroup().location]",
+        "metadata": {
+                "description": "Location for all resources."
+            }
+        },
+        "windowsOSVersion": {
             "type": "string",
-            "defaultValue": "[resourceGroup().location]",
+            "defaultValue": "2019-Datacenter",
+            "allowedValues": [
+                "2008-R2-SP1",
+                "2012-Datacenter",
+                "2012-R2-Datacenter",
+                "2016-Nano-Server",
+                "2016-Datacenter-with-Containers",
+                "2016-Datacenter",
+                "2019-Datacenter"
+            ],
             "metadata": {
-                    "description": "Location for all resources."
+                "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version."
             }
         },
         "dnsLabelPrefix": {
@@ -60,7 +75,7 @@
         },
         "subnetName": {
             "type": "string",
-            "defaultValue": "Subnet",
+            "defaultValue": "subnet",
             "metadata": {
                 "description": "Name of the subnet in the virtual network"
             }
@@ -78,14 +93,14 @@
         "publicIpAddressName": "[concat(parameters('vmName'), 'PublicIP' )]",
         "networkInterfaceName": "[concat(parameters('vmName'),'NetInt')]",
         "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
-        "osDiskType": "StandardSSD_LRS",
+        "osDiskType": "Standard_LRS", 
         "subnetAddressPrefix": "10.1.0.0/24",
-        "addressPrefix":  "10.1.0.0/16"   
+        "addressPrefix":  "10.1.0.0/16"      
     },
     "resources": [
         {
             "type": "Microsoft.Network/networkInterfaces",
-            "apiVersion": "2018-11-01",
+            "apiVersion": "2018-10-01",
             "name": "[variables('networkInterfaceName')]",
             "location": "[parameters('location')]",
             "dependsOn": [
@@ -112,7 +127,7 @@
                     "id": "[resourceId('Microsoft.Network/networkSecurityGroups',parameters('networkSecurityGroupName'))]"
                 }
             }
-        },     
+        },
         {
             "type": "Microsoft.Network/networkSecurityGroups",
             "apiVersion": "2019-02-01",
@@ -136,15 +151,15 @@
                 ]
             }
         },
-        {
+        {          
             "type": "Microsoft.Network/virtualNetworks",
-            "apiVersion": "2018-08-01",
+            "apiVersion": "2019-04-01",
             "name": "[parameters('virtualNetworkName')]",
             "location": "[parameters('location')]",
             "properties": {
                 "addressSpace": {
-                    "addressPrefixes": [ 
-                        "[variables('addressPrefix')]"   
+                    "addressPrefixes": [
+                        "[variables('addressPrefix')]"
                     ]
                 },
                 "subnets": [
@@ -166,7 +181,7 @@
             "apiVersion": "2019-04-01",
             "name": "[variables('publicIpAddressName')]",
             "location": "[parameters('location')]",
-            "properties": {
+            "properties":  {
                 "publicIpAllocationMethod": "Dynamic",
                 "dnsSettings": {
                      "domainNameLabel": "[parameters('dnsLabelPrefix')]"
@@ -178,7 +193,7 @@
                 "name": "Basic",
                 "tier": "Regional"
             }
-        },     
+        },
         {
             "type": "Microsoft.Compute/virtualMachines",
             "apiVersion": "2019-03-01",
@@ -189,19 +204,19 @@
             ],
             "properties": {
                 "hardwareProfile": {
-                    "vmSize": "[parameters('vmSize')]"
+                    "vmSize": "[parameters('VmSize')]"
                 },
                 "storageProfile": {
                     "osDisk": {
                         "createOption": "fromImage",
                         "managedDisk": {
-                            "storageAccountType": "[variables('osDiskType')]"
+                            "storageAccountType":  "[variables('osDiskType')]" 
                         }
                     },
                     "imageReference": {
-                        "publisher": "MicrosoftVisualStudio",
-                        "offer": "visualstudio2019latest",
-                        "sku": "vs-2019-comm-latest-ws2019",
+                        "publisher": "MicrosoftWindowsServer",
+                        "offer": "WindowsServer",
+                        "sku": "[parameters('windowsOSVersion')]",
                         "version": "latest"
                     }
                 },
