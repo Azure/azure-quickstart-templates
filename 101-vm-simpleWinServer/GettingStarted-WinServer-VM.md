@@ -8,7 +8,7 @@ It's good to bear in mind that there are different ways to deploy resources in A
 
 Don't let the size of the template scares you. The structure is very intuitive and once that you get the gist of it, you will see how easier your life will be regarding creating resources on Azure.
 
-The only parameters that we need to inform are:  **adminUsername**, **adminPassword** and **vmName**.
+The only parameters that you need to inform are:  **adminUsername**, **adminPassword** and **resourceGroup**. All the other parameters will be already informed.
 
 Don't worry about changing anything on the file, either on the portal or using Azure CLI, you need to inform just the following parameters. There are some requirements for username and password.
 
@@ -16,7 +16,7 @@ Don't worry about changing anything on the file, either on the portal or using A
 
 - *adminPassword:* Password requirements between 12 to 72 characters and have lower and upper characters, a digit and a special character (Regex match [\W_])
 
-- *vmName:* The name of your Virtual Machine. There is a default value, but you can change it during your deployment. Also, know that the maximum characters allowed are 15.
+- *resourceGroup:* The Resource Group that will have your deployment. We go in details on the next section
 
 Let's rock with the Deployment.
 
@@ -82,6 +82,7 @@ Open your Virtual Machine and then click on the button **connect**.
 ![Screen](./images/azdeployportal.png)
 
 Download the RDP File (you need an RDP software to connect), double click on the file, insert your **login** and **password**.
+
 ![Screen](./images/azwinlogin.png)
 
 And Voilà, there you have a brandy new Windows Server Virtual Machine.
@@ -113,7 +114,6 @@ Click on the refresh button and there is your template:
 Open the template and click in [Deploy]
 
 On the screen Custom Deployment, check your information and if you don't have the Resource Group you can click and [create new]:
-The name of the Resource Group is: simpleWindowsVM-RG, select your location and click on [OK]. Insert the rest of the information for the parameters, note that it shows for your option to choose which Windows version you want.
 
 By now you shall be familiar with these parameters, select [I agree] and click on [Purchase].
 
@@ -135,11 +135,7 @@ Now that you have done the hard work, with the Portal is even easier to create o
 
 Just click on this button: [Deploy to Azure]
 
-Insert your credentials to log in to the Portal.
-
-Create the group if you haven't yet, insert the parameters **adminUsername**, **adminPassword** and **vmName**.
-
-Select [I agree..] and then click in [Purchase].
+Insert your credentials to log in to the Portal. Inform the parameters. Select [I agree..] and then click in [Purchase].
 
 ![Screen](./images/azdeploy3.png)
 

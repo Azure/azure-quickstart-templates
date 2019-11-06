@@ -15,7 +15,7 @@
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
-This template deploys a **simple Windows Server VM**,  using the latest patched version. This will deploy a Standard_D2_v2 size VM and a 2016-Datacenter Version as defaultValue in the resource group location and will return the admin user name.
+This template deploys a **simple Windows Server VM**,  using the latest patched version. This will deploy a Standard_D2_v2 size VM and a 2016-Datacenter Version as defaultValue in the resource group location and will return the admin user name, Virtual Network Name, Network Security Group Name and FQDN.
 
 If you are new to Azure virtual machines, see:
 
