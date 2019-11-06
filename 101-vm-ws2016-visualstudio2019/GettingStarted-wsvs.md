@@ -8,9 +8,9 @@ You can deploy this template either using the [Azure Portal](https://docs.micros
 
 ## The Template
 
-Don't let the size of the template scares you. The structure is very intuitive and once that you get the gist of it, you gonna see how easier your life will be regarding creating resources on Azure.
+Don't let the size of the template scares you. The structure is very intuitive and once that you get the gist of it, you will see how easier your life will be regarding creating resources on Azure.
 
-The only parameters that we need to inform are:  **adminUsername**, **adminPassword** and **vmName**.
+The only parameters that you need to inform are:  **adminUsername**, **adminPassword** and **resourceGroup**. All the other parameters will be already informed.
 
 Don't worry about changing anything on the file, either on the portal or using Azure CLI, you need to inform just the following parameters. There are some requirements for username and password.
 
@@ -18,16 +18,18 @@ Don't worry about changing anything on the file, either on the portal or using A
 
 - *adminPassword:* Password requirements between 12 to 72 characters and have lower and upper characters, a digit and a special character (Regex match [\W_])
 
-- *vmName:* The name of your Virtual Machine. There is a default value, but you can change it during your deployment. Also, know that the maximum characters allowed are 15.
+- *resourceGroup:* The Resource Group that will have your deployment. We go in details on the next section.
 
-Let's rock with the Deployment.
+Let's rock with the Deployment.  
 
 ## Deployment
 
-There are a few ways to deploy this template.
+There are a few ways to deploy your template.
 You can use [PowerShell](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy), [Azure CLI](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-cli), [Azure Portal](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-portal) or your favorite SDK.
 
-For this task, we will deploy using the Portal and Azure CLI, I choose to use the Visual Code with Azure CLI extensions, if you like, you can find more information [here](https://code.visualstudio.com/docs/azure/extensions). You don't need to use the Visual Code, you can stick with the old good always present **Command Line** on Windows or any **bash terminal**.
+For this task, we going to deploy using Visual Code and the portal and a little surprise for you at the end. :D
+
+For Azure CLI I choose to use the Visual Code with Azure CLI extensions, if you like, you can find more information [here](https://code.visualstudio.com/docs/azure/extensions). But bare in mind that you don't need to use the Visual Code, you can stick with the old good always present **Command Line** on Windows or any **bash terminal**.
 
 ### Using Azure CLI with Visual Code
 
@@ -57,7 +59,7 @@ To create the Resource group, just type the command:
 
 ![Screen](./images/azgroup.png)
 
-Super simple, right? Now that we have our **Resource Group** created, let's deploy our Virtual Machine.
+Super simple, right? Now that we have our **Resource Group** created, let's deploy the Virtual Machine.
 
 #### az group deployment create --name "name of your deployment" --resource-group "resource-group" --template-file "./azuredeploy.json"
 
@@ -102,25 +104,25 @@ On General, type a name and a description for your template, and click on [OK].
 
 On ARM Template, replace the contents of the template with your template, and click on [OK].
 
+![Screen](./images/aztemplate2.png)
+
+Click on the refresh button and there is your template:
+
 ![Screen](./images/aztemplate3.png)
-
-Click on the refresh button and to see your template:
-
-![Screen](./images/azportaldepoy.png)
 
 Open the template and click in [Deploy]
 
-![Screen](./images/azportaldepoy2.png)
+On the screen Custom Deployment, check your information and if you don't have the Resource Group you can click and [create new]:
 
-On the screen Custom Deployment, check your information and if you don't have the Resource Group you can click and [Create New].
+By now you shall be familiar with these parameters, select [I agree] and click on [Purchase].
 
-Insert all the information, by now you should be familiar with it, select [I agree] and click on [Purchase].
+![Screen](./images/azportaldeploy.png)
 
-And voilà, you have your new VM deployed. How easy was that, uhn?
+And voilà, you have your new VM deployed.
 
 To connect with the Virtual Machine you can repeat the same process as before, using the RDP file.
 
-Now it is time to get your hands dirty, don't forget that you are in the cloud now, happy coding! :D
+Now is time to get your hands dirty, don't forget that you are in the cloud now :D
 
 **p.s.: If by any chance you felt a bit overloaded with all these processes or perhaps you are asking yourself if there is a simple way to deploy your Virtual Machine? Good news for you bud! Just click on the button below and it will automatically deploy the VM on your Azure Portal.**
 
@@ -132,11 +134,7 @@ Now that you have done the hard work, with the Portal is even easier to create o
 
 Just click on this button: [Deploy to Azure]
 
-Insert your credentials to log in to the Portal.
-
-Create the group if you haven't yet, insert the parameters **adminUsername**, **adminPassword** and **vmName**.
-
-Select [I agree..] and then click in [Purchase].
+Insert your credentials to log in to the Portal. Inform the parameters. Select [I agree..] and then click in [Purchase].
 
 ![Screen](./images/azdeploy3.png)
 

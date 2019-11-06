@@ -15,7 +15,7 @@
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
-This template deploys a **Windows Server Datacenter 2016 VM with Visual Studio 2019 Community Edition**, using the latest patched version. This will deploy a Standard_D2_v2 size VM in the resource group location and return the admin user name.
+This template deploys a **Windows Server Datacenter 2016 VM with Visual Studio 2019 Community Edition**, using the latest patched version. This will deploy a Standard_D2_v2 VM size as defaultValue in the resource group location and will return the admin user name, Virtual Network Name, Network Security Group Name and FQDN.
 
 If you are new to Azure virtual machines, see:
 
@@ -29,4 +29,4 @@ If you are new to template deployment, see:
 
 [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
 
-`Tags: Azure4Student, virtual machine, windows server, Beginner`  
+`Tags: Azure4Student, virtual machine, windows server, Visual Studio, Beginner`  
