@@ -1,6 +1,6 @@
 # Azure Functions App
 
-This time we gonna deploy a **Function App**. Azure Functions is a serverless compute service that lets you run event-triggered code without having to explicitly provision or manage infrastructure.  
+This time we will deploy a **Function App**. Azure Functions is a serverless compute service that lets you run event-triggered code without having to explicitly provision or manage infrastructure.  
 
 With a **Function App** you also deploy a hosting Web Plan and a Storage account. The WebPlan is settled for Consumption. For more information about hosting Plans click [here!](https://docs.microsoft.com/en-gb/azure/azure-functions/functions-scale)  
 
@@ -34,9 +34,9 @@ Parameter         | Suggested value     | Description
 There are a few ways to deploy this template.
 You can use [PowerShell](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy), [Azure CLI](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-cli), [Azure Portal](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-portal) or your favorite SDK.
 
-For this task, we gonna deploy using Visual Code and the portal and a little surprise for you at the end. :D
+For this task, we will deploy using Visual Code with CLI extension and the portal. There is little surprise for you at the end of this tutorial.
 
-For Azure CLI I choose to use the Visual Code with Azure CLI extensions, if you like, you can find more information [here](https://code.visualstudio.com/docs/azure/extensions). But bare in mind that you don't need to use the Visual Code, you can stick with the old good always present **Command Line** on Windows or any **bash terminal**.
+For Azure CLI I'm using the Visual Code with Azure CLI extensions, if you like, you can find more information [here](https://code.visualstudio.com/docs/azure/extensions). But bare in mind that you don't need to use the Visual Code, you can stick with the old good always present **Command Line** on Windows or any **bash terminal**.
 
 ### Using Azure CLI with Visual Code
 
@@ -44,11 +44,11 @@ type on the terminal windows: **az login**
 
 ![Screen](./images/azlogin.png)
 
-You gonna be redirected to the Azure Portal where you can use your credentials to login into.
+You will be redirected to the Azure Portal where you can use your credentials to login into.
 
 After login, you gonna have your credentials.
 
-In order to set the right subscription, you can use the following command:
+To to set the right subscription, you can use the following command:
 
 #### az account set --subscription "your subscription id"
 
@@ -56,7 +56,7 @@ In order to set the right subscription, you can use the following command:
 
 ### Resource Group
 
-After you logged in, we gonna need to create a Resource Group for our deployment. If you haven't yet created a Resource Group, we gonna do that now! But what is a Resource Group, one might ask. Bare with me! A Resource Group is a container that holds related resources for an Azure solution. The resource group includes those resources that you want to manage as a group. Simply saying, it's like a folder that contains files. Simple as that ;-)
+After you logged in, you need to create a Resource Group for our deployment. If you haven't yet created a Resource Group, do that now! But before, what is a Resource Group? Bare with me! A Resource Group is a container that holds related resources for an Azure solution. The resource group includes those resources that you want to manage as a group. Simply saying, it's like a folder that contains files. Simple as that.
 
 To create a Resource Group, you need a name and the location for your Resource Group.
 
@@ -68,20 +68,20 @@ To create the Resource group, just type the command:
 
 ![Screen](./images/azgroup.png)
 
-Super simple, right? Now that we have our **Resource Group** created, let's deploy our Web Application.
+Super simple, right? Now that we have our **Resource Group** created, let's deploy our Function App.
 
 #### az group deployment create --name "name of your deployment" --resource-group "resource-group" --template-file "./azuredeploy.json"
 
 ![Screen](./images/azdeploy.png)
 
-You gonna need to insert the parameter information.
+You need to insert the values for the parameters.
 As you can see, it's running.
 
 ![Screen](./images/azdeploy2.png)
 
-Go grab a cup of coffee, have some fresh air and I'm sure that before you come back you gonna have your Web App with GitHub Account will be deployed.
+Go grab a cup of coffee, have some fresh air. Before you come back you will have your Function App.
 
-And there we go, our deploy is Succeeded:  
+And there we go, our deployment is Succeeded:
 
 ![Screen](./images/azdeploy3.png)
 
