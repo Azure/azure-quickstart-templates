@@ -21,7 +21,7 @@ Here, we will find only parameters:
 
 |**PARAMETERS NAME**   |**DESCRIPTION**   |
 |---|---|
-|name   |Name for your application. It has to be unique.   |
+|webAppName   |Name for your application. It has to be unique.   |
 |location   |Location for the deploy of our resources.   |
 
 Like these names has to be unique, we will ensure that by adding the name of the resource group where we will deploy the App Service to the name field. The format will be like follows:
@@ -128,10 +128,10 @@ Congratulations! You have deployed the template successfully. We can see our web
 
 You can redeploy it automatically with just click on this button: 
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-asp-net-app-service%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-webapp-with-aspnet%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-asp-net-app-service%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-webapp-with-aspnet%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
