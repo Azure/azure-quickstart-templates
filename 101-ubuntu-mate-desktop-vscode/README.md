@@ -18,9 +18,28 @@ This template creates a Linux developer workstation as follows:
 
 This template creates a new Ubuntu VM with Mate desktop enabled. Mate desktop is light weight and has a simple UI. In addition to a nice GUI, this template also installs developer tools like Azure CLI and Visual Studio Code for editing files. Users can connect to the Desktop UI using remote destop.
 
-To connect, run "mstsc" from windows desktop and connect to the fqdn/public ip of the VM. 
-
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vm-msi-linux-terraform%2Fazuredeploy.json" target="_blank">
+To connect, run "mstsc" from windows desktop and connect to the fqdn/public ip of the VM.
+ 
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-ubuntu-mate-desktop-vscode%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
-</a>
 
+# Running at terminal 
+
+To open a terminal with Ctrl + Alt + t 
+
+# Running VSCode
+
+### Manage IDE from the Command Line
+The vscode IDE includes a command line tool called code which can use to manage the IDE directly from the Ubuntu terminal.
+
+### To open a new file, Execute:
+code file_name
+
+### To open a folder with vscode, Type:
+code dir_name
+
+### You can also use command line to add new extensions.For example, Following command will add eslint JavaScript extension to the vscode:
+code --install-extension dbaeumer.vscode-eslint
+
+### To list installed extensions, Type:
+code --list-extensions
