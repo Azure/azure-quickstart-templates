@@ -1,18 +1,18 @@
 # Deploy an ASP.NET app service
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-asp-net-app-service/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-asp-net-app-service/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-with-aspnet/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-with-aspnet/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-asp-net-app-service/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-asp-net-app-service/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-with-aspnet/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-with-aspnet/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-asp-net-app-service/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-asp-net-app-service/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-with-aspnet/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-with-aspnet/CredScanResult.svg" />&nbsp;
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-asp-net-app-service%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-webapp-with-aspnet%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-asp-net-app-service%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-webapp-with-aspnet%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
@@ -22,7 +22,7 @@ This template allows you to deploy your ASP.NET app using App Service. This will
 
 |**PARAMETERS NAME**   |**DESCRIPTION**   |
 |---|---|
-|name   |Name for your application.   |
+|webAppName   |Name for your application.   |
 |location   |Location for the deploy of our resources.   |
 
 ## Variables
@@ -41,23 +41,3 @@ This template allows you to deploy your ASP.NET app using App Service. This will
 |currentStack   |Platform for our deploy..   |
 |netFrameworkVersion   |Version of our .NET framework   |
 |hostingPlanName   |Name for the hosting plan.   |
-
-## Use the template
-
-### PowerShell
-
-```
-New-AzResourceGroup -Name <resource-group-name> -Location <resource-group-location> #use this command when you need to create a new resource group for your deployment
-New-AzResourceGroupDeployment -ResourceGroupName <resource-group-name> -TemplateUri 
-```
-
-[Install and configure Azure PowerShell](https://docs.microsoft.com/es-es/powershell/azure/?view=azps-2.8.0)
-
-### Command line
-
-```
-az group create --name <resource-group-name> --location <resource-group-location> #use this command when you need to create a new resource group for your deployment
-az group deployment create --resource-group <my-resource-group> --template-uri https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-asp-net-app-service/azuredeploy.json
-```
-
-[Install and configure the Azure Cross-Platform Command-Line Interface](https://docs.microsoft.com/es-es/cli/azure/install-azure-cli?view=azure-cli-latest)

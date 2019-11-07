@@ -21,9 +21,8 @@ Here, we will find only a parameter:
 
 |**PARAMETERS NAME**   |**DESCRIPTION**   |
 |---|---|
-|name   |Name for your application. It has to be unique.   |
+|webAppName   |Name for your application. It has to be unique.   |
 |location   |Location for the deploy of our resources.   |
-|appServicePlanNewOrExisting  |Condition that checks if we have already an App Service Plan  |
 
 To ensure that this name is unique, we will add to that name, the name of the resource group where we will deploy the App Service to the name field. The format will be like follows:
 **'appServiceName'-'resourceGroupName'**
@@ -68,7 +67,7 @@ Type on the terminal windows:
 
 You gonna be redirected to the Azure Portal where you can use your credentials to login into.
 
-After login, you gonna have your credentials. 
+After login, you gonna have your credentials.
 
 To set the right subscription, you can use the following command:
 **az account set --subscription 'your subscription id'**
@@ -105,10 +104,10 @@ Congratulations! You have deployed the template successfully. We can see our web
 
 You can redeploy it automatically with just click on this button:
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure4StudentQSTemplates%2Fazure-quickstart-templates%2Fmaster%2F101-django-app-service%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure4StudentQSTemplates%2Fazure-quickstart-templates%2Fmaster%2F101-webapp-with-django%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure4StudentQSTemplates%2Fazure-quickstart-templates%2Fmaster%2F101-django-app-service%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure4StudentQSTemplates%2Fazure-quickstart-templates%2Fmaster%2F101-webapp-with-django%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
@@ -143,4 +142,4 @@ On the portal, open your resource group and click on the Delete button.
 
 When we are trying to deploy our template, we can find that this fails. If that happens, what we will do it is to delete the resource group and then redeploy our template.
 
-To delete the resource group, we will go to our resource group, and then, we will delete it the same that we made on the last section.
+To delete the resource group, we will go to our resource group, and then, we will delete it the same that we made in the last section.
