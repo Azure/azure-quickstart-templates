@@ -23,32 +23,34 @@ Azure Functions has two kinds of pricing plans. Choose the one that best fits yo
 
 ### The Template
 
-The parameter you need to inform is:
+Don't let the size of the template scares you. The structure is very intuitive and once that you get the gist of it, you will see how easier your life will be regarding deploying resources to Azure.
+
+Those are the parameters on the template, most of them are already with the values, the ones that you need to inform are: **siteName**
+
+Here the list of all parameters:
 
 Parameter         | Suggested value     | Description
 :--------------- | :-------------      |:---------------------
-**funcName** |*location**name**enviroment* i.e.:  uksmyfunctiontst  | The unique name of Function App. I recommend you to use the notation above, which helps to create a unique name for your Web Application. The name must use alphanumeric and underscore characters only. There is a 35 character limit to this field. The App name cannot be changed once the bot is created.
+**siteName** |*location**name**enviroment* i.e.:  uksmyfunctiontst  | The unique name of Function App. I recommend you to use the notation above, which helps to create a unique name for your Web Application. The name must use alphanumeric and underscore characters only. There is a 35 character limit to this field. The App name cannot be changed once the bot is created.
 
 ## Deployment
 
 There are a few ways to deploy this template.
 You can use [PowerShell](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy), [Azure CLI](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-cli), [Azure Portal](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-portal) or your favorite SDK.
 
-For this task, I'm using Visual Code with CLI extension and the portal. There is little surprise for you at the end of this tutorial.
-
 For Azure CLI I'm using the Visual Code with Azure CLI extensions, if you like, you can find more information [here](https://code.visualstudio.com/docs/azure/extensions). But bare in mind that you don't need to use the Visual Code, you can stick with the old good always present **Command Line** on Windows or any **bash terminal**.
 
 ### Using Azure CLI with Visual Code
 
-type on the terminal window: **az login**
+On the terminal window type: **az login**
 
 ![Screen](./images/azlogin.png)
 
 You will be redirected to the Azure Portal where you can insert your credentials and log in.
 
-After logged in, you can see your credentials on the terminal.
+After logged in, you will see your credentials on the terminal.
 
-To to set the right subscription, you can use the following command:
+To set the right subscription, type following command:
 
 #### az account set --subscription "your subscription id"
 
@@ -56,7 +58,7 @@ To to set the right subscription, you can use the following command:
 
 ### Resource Group
 
-Now you need a Resource Group for our deployment. If you haven't yet created a Resource Group, you can do that now. If you are new on Azure and wonder what is a Resource Group? Bare with me! A Resource Group is a container that holds related resources for an Azure solution. The resource group includes those resources that you want to manage as a group. Simply saying, it's like a folder that contains files. Simple as that.
+Now you need a Resource Group for our deployment. If you haven't yet created a Resource Group, you can do it now. If you are new on Azure and wonder what is a Resource Group? Bare with me! A Resource Group is a container that holds related resources for an Azure solution. The resource group includes those resources that you want to manage as a group. Simply saying, it's like a folder that contains files. Simple as that.
 
 To create a Resource Group, you need a name and a location for your Resource Group.
 
@@ -85,9 +87,9 @@ And there we go, your deployment is Succeeded:
 
 ![Screen](./images/azdeploy3.png)
 
-Let's check the resource at the [Azure Portal](https://portal.azure.com).
+Let's check the resource on the [Azure Portal](https://portal.azure.com).
 
-On the portal, go to Resource Groups. On this blade, you can see the Resource Group that you created.
+On the portal, go to Resource Groups. In this blade, you can see the Resource Group that you created.
 
 Click on the Resource Group and there it's the resources **Resources**:
 
@@ -135,7 +137,7 @@ After a couple of minutes, voilà, you have your Function App deployed.
 
 ![Screen](./images/azportaldeploy3.png)
 
-Go to the Resource. Repeat the test you have done before and enjoy your coding.
+Go to the Resource. Repeat the test that you have done before.
 
 **p.s.: Pretty easy to create resources on Azure, right? But if you are the sort of IT guy that always loves automation, here is the surprise. Just click on the button below and it will automatically deploy the VM through the  Azure Portal.**
 
