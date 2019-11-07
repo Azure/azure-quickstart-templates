@@ -9,24 +9,24 @@
             "description": "Resource Group Location."
          }
       },
-      "msiUri": {
+      "msiURL": {
          "type": "string",
          "defaultValue": "https://lansalpcmsdn.blob.core.windows.net/app/test/AWAMAPP_v14.1.2_en-us.msi",
          "metadata": {
-            "description": "URL of the LANSA MSI to install on each VM."
+            "description": "URL of the LANSA MSI which will be installed on each virtual machine."
          }
       },
-      "vmSku": {
+      "virtualMachineSize": {
          "type": "string",
          "defaultValue": "Standard_B4ms",
          "metadata": {
-            "description": "Size of VMs in the VM Scale Set."
+            "description": "Size of the Virtual Machines in the Virtual Machine Scale Set."
          }
       },
-      "vmssName": {
+      "stackName": {
          "type": "string",
          "metadata": {
-            "description": "String used as a base for naming resources. Must be 3-61 characters in length and globally unique across Azure. A hash is prepended to this string for some resources, and resource-specific information is appended."
+            "description": "String used as a base for naming resources. Must be 3-61 characters in length and globally unique across Azure. A hash is prepended to this string for some resources, and resource-specific information is appended. Some identifiers use precisely 9 characters from this name and so it can be useful to use exactly 9. The template pads it out or truncates it as necessary to make it 9 characters long where required."
          },
          "minLength" : 3,
          "maxLength": 61
@@ -76,36 +76,79 @@
             "description": "SSL certificate password"
          }
       },
-      "minInstanceCount": {
+      "minimumInstanceCount": {
          "type": "int",
          "defaultValue": 1,
          "metadata": {
-            "description": "Minimum number of VM instances (1 or more)."
+            "description": "Minimum number of Virtual Machine instances (1 or more)."
          },
          "minValue": 1,
          "maxValue": 100
       },
-      "maxInstanceCount": {
+      "maximumInstanceCount": {
          "type": "int",
          "defaultValue": 100,
          "metadata": {
-            "description": "Maximum number of VM instances (100 or less)."
+            "description": "Maximum number of Virtual Machine instances (100 or less)."
          },
          "minValue": 1,
          "maxValue": 100
+      },
+      "databaseNewOrExisting": {
+        "type": "string",
+        "defaultValue": "new",
+        "allowedValues": [
+            "new",
+            "existing"
+         ],
+        "metadata": {
+          "description": "Determines whether a new SQL database should be provisioned or to use an existing database. Parameters which are relevant to choosing 'new' are prefixed 'New DB'. Parameters which are relevant to choosing 'existing' are prefixed 'Existing DB'."
+        }
+      },
+      "databaseType": {
+         "type": "string",
+         "defaultValue": "SQLAZURE",
+         "allowedValues": [
+            "MSSQLS",
+            "SQLAZURE",
+            "MYSQL"
+         ],
+         "metadata": {
+            "description": "Existing DB. Refer to LANSA documentation for an explanation of each Database Type and the supported versions of the database servers. DO NOT CHANGE THIS IF CREATING A NEW DATABASE. IT MUST BE SET TO SQLAZURE."
+         }
+      },
+      "databaseServerName": {
+         "type": "string",
+         "defaultValue": "lansa",
+         "metadata": {
+            "description": "Existing DB. The name of the existing Database Server to connect to. If the name has /MSSQLSERVER appended, omit it."
+         }
       },
       "databaseName": {
          "type": "string",
          "defaultValue": "lansa",
          "metadata": {
-            "description": "The name of the new database to create."
+            "description": "The name of the new database to create or name of the existing database to connect to."
          }
+      },
+      "databaseLogin": {
+         "type": "string",
+         "metadata": {
+            "description": "The admin user of the Azure SQL Database"
+         }
+      },
+      "databaseLoginPassword": {
+         "type": "securestring",
+         "metadata": {
+            "description": "The password of the admin user of the Azure SQL Database"
+         }
+
       },
       "collation": {
          "type": "string",
          "defaultValue": "SQL_Latin1_General_CP1_CI_AS",
          "metadata": {
-            "description": "The database collation for governing the proper use of characters."
+            "description": "New DB. The new database collation for governing the proper use of characters."
          }
       },
       "edition": {
@@ -117,7 +160,7 @@
             "Premium"
          ],
          "metadata": {
-            "description": "The type of database to create."
+            "description": "New DB. The type of database to create."
          }
       },
       "requestedServiceObjectiveName": {
@@ -142,14 +185,14 @@
             "P15"
          ],
          "metadata": {
-            "description": "Describes the performance level for Edition"
+            "description": "New DB. Describes the performance level for Edition"
          }
       },
       "maxSizeBytes": {
          "type": "string",
          "defaultValue": "1073741824",
          "metadata": {
-            "description": "The maximum size, in bytes, for the database"
+            "description": "New DB. The maximum size, in bytes, for the new database"
          }
       },
       "adminUsername": {
@@ -175,19 +218,6 @@
          "metadata": {
             "description": "Web Server password on all VMs."
          }
-      },
-      "databaseLogin": {
-         "type": "string",
-         "metadata": {
-            "description": "The admin user of the Azure SQL Database"
-         }
-      },
-      "databaseLoginPassword": {
-         "type": "securestring",
-         "metadata": {
-            "description": "The password of the admin user of the Azure SQL Database"
-         }
-
       },
       "webServerMaxConnect": {
          "type": "string",
@@ -257,16 +287,17 @@
          "type": "string",
          "defaultValue": "0",
          "metadata": {
-            "description": "Re-run licensing"
+            "description": "Re-run licensing. It is unlikely that this parameter needs to be used"
          }
       }
    },
   "variables": {
-    "namingInfix": "[toLower(substring(concat(parameters('vmssName'), uniqueString(resourceGroup().id)), 0, 9))]",
-    "longNamingInfix": "[toLower(parameters('vmssName'))]",
-    "dblongNamingInfix": "[toLower(concat('db',parameters('vmssName')))]",
-    "aglongNamingInfix": "[toLower(concat('ag',parameters('vmssName')))]",
-    "dbvmssName": "[toLower(substring(concat('db',parameters('vmssName'), uniqueString(resourceGroup().id)), 0, 9))]",
+    "isNewDatabase": "[equals(parameters('databaseNewOrExisting'), 'new')]",
+    "namingInfix": "[toLower(substring(concat(parameters('stackName'), uniqueString(resourceGroup().id)), 0, 9))]",
+    "longNamingInfix": "[toLower(parameters('stackName'))]",
+    "dblongNamingInfix": "[toLower(concat('db',parameters('stackName')))]",
+    "aglongNamingInfix": "[toLower(concat('ag',parameters('stackName')))]",
+    "dbvmssName": "[toLower(substring(concat('db',parameters('stackName'), uniqueString(resourceGroup().id)), 0, 9))]",
     "addressPrefix": "10.0.0.0/16",
     "subnetPrefix": "10.0.0.0/24",
     "virtualNetworkName": "[concat(variables('namingInfix'), 'vnet')]",
@@ -583,7 +614,7 @@
                               "fileUris": [ "[variables('gitRefreshUri')]" ]
                            },
                            "protectedSettings": {
-                              "commandToExecute": "[concat('powershell -NoProfile -ExecutionPolicy unrestricted -command \"& {pushd;./',variables('gitRefreshName'), ' ', parameters('gitBranch'), ';popd;', 'pushd;c:\\lansa\\scripts\\azure-custom-script.ps1 ', '-server_name ',variables('Q'), reference(variables('sqlserverName')).fullyQualifiedDomainName, variables('Q'), ' -DBUT ', variables('Q'), 'SQLAZURE', variables('Q'), ' -dbname ', variables('Q'), parameters('databaseName'), variables('Q'), ' -dbuser ', variables('Q'), parameters('databaseLogin'), variables('Q'), ' -dbpassword ', variables('Q'),  parameters('databaseLoginPassword'), variables('Q'), ' -webuser ', variables('Q'),  parameters('webUsername'), variables('Q'), ' -webpassword ', variables('Q'),  parameters('webPassword'), variables('Q'), ' -MSIuri ', variables('Q'),  parameters('msiUri'), variables('Q'),  ' -maxconnections ', variables('Q'),  parameters('webServerMaxConnect'), variables('Q'), ' -trace ', variables('Q'),  parameters('trace'), variables('Q'), ' -installMSI ', variables('Q'),  parameters('installMSI'), variables('Q'), ' -updateMSI ', variables('Q'),  parameters('updateMSI'), variables('Q'),' -triggerWebConfig ', variables('Q'),  parameters('triggerWebConfig'), variables('Q'),' -UninstallMSI ', variables('Q'),  parameters('UninstallMSI'), variables('Q'), ' -fixLicense ', variables('Q'),  parameters('fixLicense'), variables('Q'), ';if ($LASTEXITCODE -ne 0) {Write-Error (\"MSI Install failed\");exit $LASTEXITCODE}; exit 0;popd;}\"')]"
+                              "commandToExecute": "[concat('powershell -NoProfile -ExecutionPolicy unrestricted -command \"& {pushd;./',variables('gitRefreshName'), ' ', parameters('gitBranch'), ';popd;', 'pushd;c:\\lansa\\scripts\\azure-custom-script.ps1 ', '-server_name ',variables('Q'), if(variables('isNewDatabase'), reference(variables('sqlserverName')).fullyQualifiedDomainName, parameters('databaseServerName')), variables('Q'), ' -DBUT ', variables('Q'), parameters('databaseType'), variables('Q'), ' -dbname ', variables('Q'), parameters('databaseName'), variables('Q'), ' -dbuser ', variables('Q'), parameters('databaseLogin'), variables('Q'), ' -dbpassword ', variables('Q'),  parameters('databaseLoginPassword'), variables('Q'), ' -webuser ', variables('Q'),  parameters('webUsername'), variables('Q'), ' -webpassword ', variables('Q'),  parameters('webPassword'), variables('Q'), ' -MSIuri ', variables('Q'),  parameters('msiURL'), variables('Q'),  ' -maxconnections ', variables('Q'),  parameters('webServerMaxConnect'), variables('Q'), ' -trace ', variables('Q'),  parameters('trace'), variables('Q'), ' -installMSI ', variables('Q'),  parameters('installMSI'), variables('Q'), ' -updateMSI ', variables('Q'),  parameters('updateMSI'), variables('Q'),' -triggerWebConfig ', variables('Q'),  parameters('triggerWebConfig'), variables('Q'),' -UninstallMSI ', variables('Q'),  parameters('UninstallMSI'), variables('Q'), ' -fixLicense ', variables('Q'),  parameters('fixLicense'), variables('Q'), ';if ($LASTEXITCODE -ne 0) {Write-Error (\"MSI Install failed\");exit $LASTEXITCODE}; exit 0;popd;}\"')]"
                            }
                         }
                      }
@@ -605,9 +636,9 @@
             "[concat('Microsoft.Compute/virtualMachineScaleSets/', variables('dbvmssName'))]"
          ],
          "sku": {
-            "name": "[parameters('vmSku')]",
+            "name": "[parameters('virtualMachineSize')]",
             "tier": "Standard",
-            "capacity": "[parameters('minInstanceCount')]"
+            "capacity": "[parameters('minimumInstanceCount')]"
          },
          "plan": {
             "name": "[variables('imageSKU')]",
@@ -684,7 +715,7 @@
                               "fileUris": [ "[variables('gitRefreshUri')]" ]
                            },
                            "protectedSettings": {
-                              "commandToExecute": "[concat('powershell -NoProfile -ExecutionPolicy unrestricted -command \"& {pushd;./',variables('gitRefreshName'), ' ', parameters('gitBranch'), ';popd;', 'pushd;c:\\lansa\\scripts\\azure-custom-script.ps1 ', '-SUDB \"0\" -server_name ', variables('Q'),  reference(variables('sqlserverName')).fullyQualifiedDomainName, variables('Q'), ' -DBUT ', variables('Q'), 'SQLAZURE', variables('Q'),  ' -dbname ', variables('Q'),  parameters('databaseName'), variables('Q'), ' -dbuser ', variables('Q'),  parameters('databaseLogin'), variables('Q'), ' -dbpassword ', variables('Q'),  parameters('databaseLoginPassword'), variables('Q'), ' -webuser ', variables('Q'),  parameters('webUsername'), variables('Q'), ' -webpassword ', variables('Q'),  parameters('webPassword'), variables('Q'), ' -MSIuri ', variables('Q'),  parameters('msiUri'), variables('Q'),  ' -maxconnections ', variables('Q'),  parameters('webServerMaxConnect'), variables('Q'), ' -trace ', variables('Q'),  parameters('trace'), variables('Q'), ' -installMSI ', variables('Q'),  parameters('installMSI'), variables('Q'), ' -updateMSI ', variables('Q'),  parameters('updateMSI'), variables('Q'),' -triggerWebConfig ', variables('Q'),  parameters('triggerWebConfig'), variables('Q'), ' -UninstallMSI ', variables('Q'),  parameters('UninstallMSI'), variables('Q'), ' -fixLicense ', variables('Q'),  parameters('fixLicense'), variables('Q'),  ';if ($LASTEXITCODE -ne 0) {Write-Error (\"MSI Install failed\");exit $LASTEXITCODE}; exit 0;popd;}\"')]"
+                              "commandToExecute": "[concat('powershell -NoProfile -ExecutionPolicy unrestricted -command \"& {pushd;./',variables('gitRefreshName'), ' ', parameters('gitBranch'), ';popd;', 'pushd;c:\\lansa\\scripts\\azure-custom-script.ps1 ', '-SUDB \"0\" -server_name ', variables('Q'),  if(variables('isNewDatabase'), reference(variables('sqlserverName')).fullyQualifiedDomainName, parameters('databaseServerName')), variables('Q'), ' -DBUT ', variables('Q'), parameters('databaseType'), variables('Q'),  ' -dbname ', variables('Q'),  parameters('databaseName'), variables('Q'), ' -dbuser ', variables('Q'),  parameters('databaseLogin'), variables('Q'), ' -dbpassword ', variables('Q'),  parameters('databaseLoginPassword'), variables('Q'), ' -webuser ', variables('Q'),  parameters('webUsername'), variables('Q'), ' -webpassword ', variables('Q'),  parameters('webPassword'), variables('Q'), ' -MSIuri ', variables('Q'),  parameters('msiURL'), variables('Q'),  ' -maxconnections ', variables('Q'),  parameters('webServerMaxConnect'), variables('Q'), ' -trace ', variables('Q'),  parameters('trace'), variables('Q'), ' -installMSI ', variables('Q'),  parameters('installMSI'), variables('Q'), ' -updateMSI ', variables('Q'),  parameters('updateMSI'), variables('Q'),' -triggerWebConfig ', variables('Q'),  parameters('triggerWebConfig'), variables('Q'), ' -UninstallMSI ', variables('Q'),  parameters('UninstallMSI'), variables('Q'), ' -fixLicense ', variables('Q'),  parameters('fixLicense'), variables('Q'),  ';if ($LASTEXITCODE -ne 0) {Write-Error (\"MSI Install failed\");exit $LASTEXITCODE}; exit 0;popd;}\"')]"
                            }
                         }
                      }
@@ -709,9 +740,9 @@
                {
                   "name": "Profile1",
                   "capacity": {
-                     "minimum": "[parameters('minInstanceCount')]",
-                     "maximum": "[parameters('maxInstanceCount')]",
-                     "default": "[parameters('minInstanceCount')]"
+                     "minimum": "[parameters('minimumInstanceCount')]",
+                     "maximum": "[parameters('maximumInstanceCount')]",
+                     "default": "[parameters('minimumInstanceCount')]"
                   },
                   "rules": [
                      {
@@ -897,6 +928,7 @@
          }
       },
       {
+         "condition": "[equals(parameters('databaseNewOrExisting'), 'new')]",
          "name": "[variables('sqlserverName')]",
          "type": "Microsoft.Sql/servers",
          "location": "[parameters('location')]",
@@ -951,7 +983,7 @@
    "outputs": {
       "dbServerName": {
          "type": "string",
-         "value": "[reference(variables('sqlserverName')).fullyQualifiedDomainName]"
+         "value": "[if(variables('isNewDatabase'), reference(variables('sqlserverName')).fullyQualifiedDomainName, parameters('databaseServerName'))]"
       },
       "dbName": {
          "type": "string",
