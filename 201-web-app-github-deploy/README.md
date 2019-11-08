@@ -32,3 +32,5 @@ If you are new to **Web App Service**, see:
 If you are new to template deployment, see:
 
 [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
+
+`Tags: Azure4Student, WebApp, Git Hub, Beginner`  

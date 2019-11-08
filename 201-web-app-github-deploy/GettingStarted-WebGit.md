@@ -179,7 +179,7 @@ Go to the Resource. Repeat the test that you have done before.
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 
-#### Important disclaimer: Azure charges you for the resources you are using, and you don't want to finish all your credits at once, right? So, don't forget to stop the Web App at the portal or even delete the Resource Group you have created to avoid unnecessary charges
+#### Important disclaimer: Azure charges you for the resources you are using, and you don't want to finish all your credits at once, right? So, don't forget to stop the Web App at the portal or even delete the Resource Group you have created to avoid unnecessary charging
 
 ### How to shutdown your resources
 
