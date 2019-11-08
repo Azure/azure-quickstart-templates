@@ -19,7 +19,7 @@
 This template allows you to deploy your own Django app using App Service. This will deploy a Free App Service in a Resource Group that we should create before launch our template.
 
 # Temporal button for test
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%Azure4StudentQSTemplates%2Fazure-quickstart-templates%2Fmaster%2F101-webapp-with-django%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure4StudentQSTemplates%2Fazure-quickstart-templates%2Fmaster%2F101-webapp-with-django%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 
