@@ -16,7 +16,7 @@
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
-This template deploys an Cognitive Services Translation API. see  https://azure.microsoft.com/en-us/services/cognitive-services/translator-text-api/ 
+This template deploys an Cognitive Services Translation API. see  https://azure.microsoft.com/services/cognitive-services/translator-text-api/ 
 
 | SKU  | Feature                                                      | Price                                                        |
 | ---- | ------------------------------------------------------------ | ------------------------------------------------------------ |
@@ -29,8 +29,8 @@ This template deploys an Cognitive Services Translation API. see  https://azure.
 If you are new to Azure Cognitive Services, see:
 
 - [Azure Cognitive Services](https://azure.microsoft.com/en-us/services/cognitive-services/).
-- [Azure Cognitive Services Text Translator](https://azure.microsoft.com/en-us/services/cognitive-services/translator-text-api/)
-- [Whats is the Microsoft Cognitive Test Translator](https://docs.microsoft.com/en-us/azure/cognitive-services/Translator/translator-info-overview)
-- [Template reference](https://azure.microsoft.com/en-us/resources/templates/?referenceType=Microsoft.Cognitiveservices)
-- [Quick Start templates](https://azure.microsoft.com/en-us/resources/templates/?resourceType=Microsoft.Cognitiveservices)
-- [Microsoft Learn Modules](https://docs.microsoft.com/en-us/learn/browse/?products=azure&term=cognitive)
+- [Azure Cognitive Services Text Translator](https://azure.microsoft.com/services/cognitive-services/translator-text-api/)
+- [Whats is the Microsoft Cognitive Test Translator](https://docs.microsoft.com/azure/cognitive-services/Translator/translator-info-overview)
+- [Template reference](https://azure.microsoft.com/resources/templates/?referenceType=Microsoft.Cognitiveservices)
+- [Quick Start templates](https://azure.microsoft.com/resources/templates/?resourceType=Microsoft.Cognitiveservices)
+- [Microsoft Learn Modules](https://docs.microsoft.com/learn/browse/?products=azure&term=cognitive)
