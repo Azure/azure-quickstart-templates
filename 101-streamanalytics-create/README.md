@@ -16,7 +16,18 @@
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
-This template creates a Standard Stream Analytics Job. For more information, see here:
+This template creates a Standard Stream Analytics Job. For more information, Azure Stream Analytics is a real-time analytics and complex event-processing engine that is designed to analyze and process high volumes of fast streaming data from multiple sources simultaneously. Patterns and relationships can be identified in information extracted from a number of input sources including devices, sensors, clickstreams, social media feeds, and applications. These patterns can be used to trigger actions and initiate workflows such creating alerts, feeding information to a reporting tool, or storing transformed data for later use. Also, Stream Analytics is available on Azure IoT Edge runtime, and supports the same exact language or syntax as cloud.
 
-https://docs.microsoft.com/en-us/azure/stream-analytics/stream-analytics-create-a-job
+The following scenarios are examples of when you can use Azure Stream Analytics:
 
+- Analyze real-time telemetry streams from IoT devices
+- Web logs/clickstream analytics
+- Geospatial analytics for fleet management and driverless vehicles
+- Remote monitoring and predictive maintenance of high value assets
+- Real-time analytics on Point of Sale data for inventory control and anomaly detection
+
+see here:
+
+- [Introduction to Stream Analytics](https://docs.microsoft.com/azure/stream-analytics/stream-analytics-introduction)
+- [Microsoft Stream Analytics](https://docs.microsoft.com/azure/stream-analytics/stream-analytics-create-a-job)
+- [Microsoft Learn Stream Analytics Modules](https://docs.microsoft.com/learn/browse/?term=Stream%20Analytics)
