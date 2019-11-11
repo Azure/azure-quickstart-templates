@@ -1,4 +1,4 @@
-# Create a System Center Configuration Manager Technical Preview Lab environment in Azure
+# Create a Microsoft Endpoint Configuration Manager Technical Preview Lab environment in Azure
 
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/sccm-technicalpreview/PublicLastTestDate.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/sccm-technicalpreview/PublicDeployment.svg" />&nbsp;
@@ -11,13 +11,13 @@
 
 ## Description
 
-This template deploys the latest System Center Configuration Manager (SCCM) Technical Preview with following configuration: 
+This template deploys the latest Microsoft Endpoint Configuration Manager (ConfigMgr) Technical Preview with following configuration: 
 
 * a new AD domain controller. 
-* a standalone primary site with SQL Server, ADK and SCCM installed. SCCM is the latest Technical Preview release.
+* a standalone primary site with SQL Server, ADK and ConfigMgr installed. ConfigMgr is the latest Technical Preview release.
 * a remote site system server to host managemenent point and distribution point. 
 
 Each VM has its own public IP address and is added to a subnet protected with a Network Security Group, which only allows RDP from the Internet. 
 
-Each VM has a private network IP which is for SCCM communication. 
+Each VM has a private network IP which is for ConfigMgr communication. 
 
