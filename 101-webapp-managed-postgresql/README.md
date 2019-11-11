@@ -16,5 +16,10 @@
   <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
-This template provides a easy way to deploy web app on Azure Web Apps on Windows with Azure database for PostgreSQL(Preview) .
+This template provides a easy way to deploy web app on Azure Web Apps on Windows with Azure database for PostgreSQL.
 
+Azure Database for PostgreSQL is a relational database service in the Microsoft cloud built for developers. It is based on the community version of open-source PostgreSQL database engine, and is available in two deployment options: Single Server and Hyperscale (Citus).
+
+- [Microsoft Azure ProstgreSQL](https://docs.microsoft.com/azure/postgresql/)
+- [Microsoft Azure PostgresSQL Overview](https://azure.microsoft.com/en-us/services/postgresql/)
+- [Microsoft Learn PostgreSQL](https://docs.microsoft.com/learn/modules/create-azure-db-for-postgresql-server/)
