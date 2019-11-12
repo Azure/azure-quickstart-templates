@@ -90,27 +90,27 @@ Click in **Add** to add your template:
 
 On General, type the name and the description for your template, and click on [Ok].
 
-![Screen](./images/aztemplate2.png)
+![Screen](./images/aztemplate2.PNG)
 
 On ARM Template, replace the contents of the template with your template, and click on [OK] and then on [Add].
 
-![Screen](./images/aztemplate3.png)
+![Screen](./images/aztemplate3.PNG)
 
 Click on the refresh button and you will find your template. Click on it and the click in [Deploy].
 
-![Screen](./images/azportaldepoy.png)
+![Screen](./images/azportaldepoy.PNG)
 
 On the screen Custom Deployment, inform the values for the parameters, by now you must be already familiar with.
 
 Select [Agree] and click on [Purchase].
 
-![Screen](./images/azportaldeploy2.png)
+![Screen](./images/azportaldeploy2.PNG)
 
 As you can see, it's deploying.
 
 After a couple of minutes, voilà, you have your Web App deployed.
 
-![Screen](./images/azportaldeploy3.png)
+![Screen](./images/azportaldeploy3.PNG)
 
 Go to the Resource. Repeat the test that you have done before.
 
