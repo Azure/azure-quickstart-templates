@@ -1,54 +1,55 @@
 # Azure Functions App
 
-This time we will deploy a **Function App**. Azure Functions is a serverless compute service that lets you run event-triggered code without having to explicitly provision or manage infrastructure.  
+The purpose of this ARM Template is to deploy an empty **Function App** and a **hosting Plan**.
 
-With a **Function App** you also deploy a hosting Web Plan and a Storage account. The WebPlan is settled for Consumption. For more information about hosting Plans click [here!](https://docs.microsoft.com/en-gb/azure/azure-functions/functions-scale)  
+But let's understand a bit better how all this will work.
 
-And the Storage Account is for General Purpose **Standard_LRS**, for more information about Storage Accounts, click [here!](https://docs.microsoft.com/en-us/azure/storage/common/storage-account-overview)
+## Overview
 
-## How Functions App works in Azure
+### How Functions App works in Azure
 
 Azure Functions is a solution for easily running small pieces of code, or "functions," in the cloud. You can write just the code you need for the problem at hand, without worrying about a whole application or the infrastructure to run it. Functions can make development even more productive, and you can use your development languages of choice, such as C#, Java, JavaScript, PowerShell, and Python. Pay only for the time your code runs and trust Azure to scale as needed. Azure Functions lets you develop serverless applications on Microsoft Azure.
 
-## What can I do with Functions
+### What can I do with Functions
 
 Functions are a great solution for processing data, integrating systems, working with the internet-of-things (IoT), and building simple APIs and microservices. Consider Functions for tasks like image or order processing, file maintenance, or for any tasks that you want to run on a schedule.
 
-## How much does Functions cost
+### How much does Functions cost
 
 Azure Functions has two kinds of pricing plans. Choose the one that best fits your needs:
 
 - **Consumption plan** - When your function runs, Azure provides all of the necessary computational resources. You don't have to worry about resource management, and you only pay for the time that your code runs.
 - **App Service plan** - Run your functions just like your web apps. When you are already using App Service for your other applications, you can run your functions on the same plan at no additional cost.
 
-### The Template
+## The Template
 
-Don't let the size of the template scares you. The structure is very intuitive and once that you get the gist of it, you will see how easier your life will be regarding deploying resources to Azure.
+Don't let the size of the template scares you. The structure is very intuitive and once that you get the gist of it, you will see how much easier your life will be deploying resources to Azure.
 
-Those are the parameters on the template, most of them are already with the values, the ones that you need to inform are: **siteName**
+These are the parameters on the template, they already have values inserted, so you don't need to worry about change them.
 
 Here the list of all parameters:
 
 Parameter         | Suggested value     | Description
 :--------------- | :-------------      |:---------------------
-**siteName** |*location**name**enviroment* i.e.:  uksmyfunctiontst  | The unique name of Function App. I recommend you to use the notation above, which helps to create a unique name for your Web Application. The name must use alphanumeric and underscore characters only. There is a 35 character limit to this field. The App name cannot be changed once the bot is created.
+**siteName** | globally unique name  | The unique name of Function App. The name must use alphanumeric and underscore characters only. There is a 35 character limit to this field. The App name cannot be changed once the bot is created.
+**location** | location | This template takes the location of your Resource Group.
 
 ## Deployment
 
 There are a few ways to deploy this template.
 You can use [PowerShell](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy), [Azure CLI](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-cli), [Azure Portal](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-portal) or your favorite SDK.
 
-For Azure CLI I'm using the Visual Code with Azure CLI extensions, if you like, you can find more information [here](https://code.visualstudio.com/docs/azure/extensions). But bare in mind that you don't need to use the Visual Code, you can stick with the old good always present **Command Line** on Windows or any **bash terminal**.
+For Azure CLI I'm using the Visual Code with Azure CLI extensions. If you would like you can find more information [here](https://code.visualstudio.com/docs/azure/extensions). But bare in mind that you don't need to use the Visual Code app, you can stick with the always present **Command Line** on Windows or the Linux **bash terminal**.
 
 ### Using Azure CLI with Visual Code
 
-On the terminal window type: **az login**
+In the terminal window type: **az login**
 
 ![Screen](./images/azlogin.png)
 
-You will be redirected to the Azure Portal where you can insert your credentials and log in.
+You will be redirected to the Azure Portal in your web browser where you can insert your credentials and log in.
 
-After logged in, you will see your credentials on the terminal.
+After logging in, you will see your credentials on the terminal.
 
 To set the right subscription, type following command:
 
@@ -58,7 +59,7 @@ To set the right subscription, type following command:
 
 ### Resource Group
 
-Now you need a Resource Group for our deployment. If you haven't yet created a Resource Group, you can do it now. If you are new on Azure and wonder what is a Resource Group? Bare with me! A Resource Group is a container that holds related resources for an Azure solution. The resource group includes those resources that you want to manage as a group. Simply saying, it's like a folder that contains files. Simple as that.
+Now you need a Resource Group for our deployment. If you haven't already created a Resource Group, you can do it now. If you are new to Azure and wonder what is a Resource Group? Bare with me! A Resource Group is a container that holds related resources for an Azure solution. The resource group includes those resources that you want to manage as a group. Simply saying: it's like a folder that contains files. Simple as that.
 
 To create a Resource Group, you need a name and a location for your Resource Group.
 
@@ -70,7 +71,7 @@ To create the Resource group, type the command:
 
 ![Screen](./images/azgroup.png)
 
-Super simple, right? Now that you have a **Resource Group** created, let's deploy the Function App.
+Super simple, right? Now that we have our **Resource Group** created, let's deploy the Function App using the az cli.
 
 #### az group deployment create --name "name of your deployment" --resource-group "resource-group" --template-file "./azuredeploy.json"
 
@@ -83,49 +84,48 @@ As you can see, it's running.
 
 Go grab a cup of coffee, have some fresh air. Before you come back you will have your Function App.
 
-And there we go, your deployment is Succeeded:
+And there we go, your deployment has Succeeded:
 
 ![Screen](./images/azdeploy3.png)
 
-Let's check the resource on the [Azure Portal](https://portal.azure.com).
+Let's check the resource in the [Azure Portal](https://portal.azure.com).
 
-On the portal, go to Resource Groups. In this blade, you can see the Resource Group that you created.
-
-Click on the Resource Group and there it's the resources **Resources**:
-
-- App Service plan
-- Storage Account
-- App Service
+On the portal, navigate to Resource Groups. On this blade, you can see the Resource Group we've created.
 
 ![Screen](./images/azdeployportal.png)
+
+Click on the Resource Group to expand and show the **Resources**:
+
+- App Service plan
+- App Service
 
 Click on the App Service and you have an overview of your **Function App**.
 
 ![Screen](./images/azdeployportal2.png)
 
-And that is just the tip of the iceberg. Now you can practice with your functions.
+And that is just the tip of the iceberg. You can start to deploy code to your new **Function App**.
 
-And the most important, don't forget to have fun!
+Most important, don't forget to have fun!
 
 ### Using the Portal
 
-At the Portal, in All Services look for **Templates**, you can favorite this service.
+Using your favorite web browser Navigate to the Portal, in All Services look for **Templates**, you may want to add this service to favorites.
 
-Click in **Add** to add your template:
+Click on **Add** to add your template:
 
 On General, type the name and the description for your template, and click on [OK].
 
 ![Screen](./images/aztemplate2.png)
 
-On ARM Template, replace the contents of the template with yours, and click on [OK].
+On ARM Template, replace the contents of the template with your template, and click on [OK].
 
 ![Screen](./images/aztemplate3.png)
 
-Click on the refresh button and you there is your template. Click on it and then click in [Deploy]
+Click on the refresh button and you will find your template. Click on your template and then click in [Deploy]
 
 ![Screen](./images/azportaldeploy.png)
 
-On the screen Custom Deployment, inform the values for the parameters, by now you must be already familiar with.
+On the screen Custom Deployment, inform the values for the parameters, by now you must be already familiar with these.
 
 Select [I agree] and click on [Purchase].
 
@@ -139,21 +139,21 @@ After a couple of minutes, voilà, you have your Function App deployed.
 
 Go to the Resource. Repeat the test that you have done before.
 
-**p.s.: Pretty easy to create resources on Azure, right? But if you are the sort of IT guy that always loves automation, here is the surprise. Just click on the button below and it will automatically deploy the VM through the  Azure Portal.**
+**p.s.: It's pretty easy to create resources on Azure, right? But if you are the sort of IT guy that always loves automation, here is the surprise. Just click on the button below and it will automatically deploy the Function App through the Azure Portal.**
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-app-function%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 
-#### Important disclaimer: Azure charges you for the resources you are using, and you don't want to finish all your credits at once, right? So, don't forget to stop the Function App at the portal or even delete the Resource Group you have created to avoid unnecessary charges
+#### Important disclaimer: Azure charges you for the resources you are using, and you don't want to use all your credits at once, right? So, don't forget to stop the Function App at the portal or even delete the Resource Group you have created to avoid unnecessary charges
 
 ### How to shutdown your resources
 
 #### Using the portal
 
-On the portal, go to your Resource Group, if you will not use the Function App anymore, you can just click on the [Delete] Button.
+On the portal, open your Resource Group, if you want to remove the Function App, you can just click on the [Delete] Button.
 
-You can also just stop the Function App if you want to keep the resource. Open the resource and click on Stop.
+If you would like to just stop the Function App. Open the resource and click on Stop.
 
 ![Screen](./images/off.png)
 

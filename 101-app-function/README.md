@@ -15,8 +15,8 @@
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
-This template deploys a **Function App**. Azure Functions is a serverless compute service that lets you run event-triggered code without having to explicitly provision or manage infrastructure.
-With a **Function App** you also deploy a Web Hosting Plan and a Storage account. The Web Plan is settled for Consumption. For more information about Hosting Plans click [here!](https://docs.microsoft.com/en-gb/azure/azure-functions/functions-scale)
+This template deploys an empty **Function App**. Azure Functions is a serverless compute service that lets you run event-triggered code without having to explicitly provision or manage infrastructure.
+With a **Function App** you also deploy a Web Hosting Plan. The Web Plan is charged by Consumption. For more information about Hosting Plans click [here!](https://docs.microsoft.com/en-gb/azure/azure-functions/functions-scale)
 
 If you are new to Function Apps, see:
 
@@ -27,3 +27,5 @@ If you are new to Function Apps, see:
 If you are new to template deployment, see:
 
 [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
+
+`Tags: Azure4Student, FunctionApp, Beginner`
