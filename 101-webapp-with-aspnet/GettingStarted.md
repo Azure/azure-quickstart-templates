@@ -1,12 +1,12 @@
 # WebApp with ASPNET
 
-The purpose of this ARM Template is **deploy a webapp with aspnet** using a **web app**.
+The purpose of this ARM Template is **deploy a web app with ASP.NET** using a **web app**.
 
-But let¡s undertand a bit better how all this work.
+But let¡s understand a bit better how all this work.
 
 ## Overview
 
-Azure App Service is an HTTP-based service for hosting web applications, REST APIs, and mobile back ends. You can develop in your favorite language, be it .NET, .NET Core, Java, Ruby, Node.js, PHP, or Python. Applications run and scale with ease on both Windows and Linux-based environments.
+Azure App Service is an HTTP-based service for hosting web applications, REST APIs, and mobile back ends. You can develop in your favourite language, be it .NET, .NET Core, Java, Ruby, Node.js, PHP, or Python. Applications run and scale with ease on both Windows and Linux-based environments.
 
 ## Pre Deployment Steps
 
@@ -16,13 +16,13 @@ Before proceeding to the deployment of the template, we need to perform the foll
 
 Don't let the size of the template scares you. The structure is very intuitive and once that you get the gist of it, you will see how easier your life will be regarding deploying resources to Azure.
 
-Those are the parameters on the template. Most of them are already with the values, the ones that you need to inform are: **webAppName** and **location**.
+Those are the parameters on the template. Most of them are already with the values, the ones that you need to inform are **web app name** and **location**.
 
 Parameter         | Suggested value     | Description
-:--------------- | :-------------      |:---------------------
+:--------------- |:-------------      |:---------------------
 **webAppName** |*location*-*name*-*enviroment* i.e.:  uks-name-tst  | A globally unique name of azure web app. I recommend you to use the notation above, that will help to create a unique name for your Web Application. The name must use alphanumeric and underscore characters only. There is a 35 character limit to this field. The App name cannot be changed once the Web App is created.
 **location**| The default location | Select the geographic location for your resource group.
-**Resource Group**| yourresourcegroup |  That is the Resource Group that you need to deploy your resources.
+**Resource Group**| your resource group |  That is the Resource Group that you need to deploy your resources.
 
 ## Deployment
 
@@ -84,7 +84,7 @@ Congratulations! You have deployed the template successfully. We can see our web
 
 ### Using the Portal
 
-At the Portal, in All Services look for **Templates**, you can favorite this service.
+At the Portal, in All Services look for **Templates**, you can favourite this service.
 
 Click in **Add** to add your template: 
 
