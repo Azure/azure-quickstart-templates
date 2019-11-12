@@ -1,4 +1,4 @@
-# Deploy a Django app
+# Deploy a Django app service
 
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-with-django/PublicLastTestDate.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-with-django/PublicDeployment.svg" />&nbsp;
@@ -16,21 +16,20 @@
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
-This template allows you to deploy your own Django app using App Service. This will deploy a Free App Service in a Resource Group that we should create before launch our template.
+This template deploys a web app with Python support to let us to upload a Django app. The web app with Python is an app serice that allows you to deploy your Django website. This will deploy a free tier Linux App Service Plan where you will host your App Service.
 
-## Parameters
+If you are new to Azure App Service, see:
 
-|**PARAMETERS NAME**   |**DESCRIPTION**   |
-|---|---|
-|webAppName   |Name for your application. It has to be unique.   |
-|location   |Location for the deploy of our resources.   |
+- [Azure App Service](https://azure.microsoft.com/en-us/services/app-service/web/)
+- [Template reference](https://docs.microsoft.com/es-es/azure/templates/microsoft.web/allversions)
+- [Quickstart templates](https://azure.microsoft.com/es-es/resources/templates/?resourceType=Microsoft.Compute&pageNumber=1&sort=Popular&term=web+apps)
 
-## Variables
+If you are new to template deployment, see:
 
-|**VARIABLES NAME**   |**DESCRIPTION**   |
-|---|---|
-|sku   |Shape for our product.   |
-|skuCode   |Code to identify our product.   |
-|workerSize   |Optional. The worker size. Possible values are Small, Medium, and Large. For JSON, the equivalents are 0 = Small, 1 = Medium, and 2 = Large   |
-|hostingPlanName   |Name for the hosting plan. On the free tier, you can only have 1 Linux hosting environment.   |
-|appInsights  |Name for the application insights  |
+[Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
+
+## Prerequisites
+
+If you have already a Linux App Service Plan, you will have to deploy they new web app into the same resource group that the other web app is. That's because Student accounts has a limit of only 1 free tier linux app service plan.
+
+`Tags: Azure4Student, appServices , Django, linux, Beginner`
