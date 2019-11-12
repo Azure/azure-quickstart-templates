@@ -1,6 +1,6 @@
-# Azure Web App with Git Hub Account
+# Azure Web App linked to a GitHub Repo
 
-The purpose of this ARM Template is **deploy a WebApp** with a **GitHub Account liked**.
+The purpose of this ARM Template is **deploy a WebApp** linked to a **GitHub Repo**.
 
 But let's understand a bit better how all this will work.
 
@@ -21,7 +21,7 @@ Python     | 2.7, 3.6, 3.7
 .NET Core     | 1.0, 1.1, 2.0, 2.1, 2.2
 Ruby     | 2.3, 2.4, 2.5, 2.6
 
-## Deployments
+## Code deployments
 
 To deploy your code you can use:  
 
@@ -30,11 +30,13 @@ To deploy your code you can use:
 - GitHub
 - Bitbucket
 
-## Prerequisites
+## Pre Deployment Steps
 
-### Have a Git Hub Account
+Before proceeding to the deployment of the **Azure Web App linked to a GitHub Account** template, we need to perform the following steps.
 
-If you don't have yet a Git Hub account, you can create your account on [Git Hub](https://github.com/).
+### A GitHub Account
+
+If you don't have yet a GitHub account, you can create your account on [GitHub](https://github.com/).
 
 What you need for this task is the address of the GitRepo.
 
@@ -44,11 +46,11 @@ Copy this address, you will need it to inform as a parameter during the deployme
 
 ## The Template
 
-Don't let the size of the template scares you. The structure is very intuitive and once that you get the gist of it, you will see how easier your life will be regarding deploying resources to Azure.
+Don't let the size of the template scares you. The structure is very intuitive and once that you get the gist of it, you will see how much easier your life will be deploying resources to Azure.
 
-Those are the parameters on the template, most of them are already with the values, the ones that you need to inform are: **webAppName** , **repoURL**  and **branch**.
+These are the parameters on the template, most of them already have values inserted, the ones that you need to inform are: **webAppName** , **repoURL**  and **branch**.
 
-Here the list of all parameters:
+Here is the full list parameters in this template:
 
 Parameter         | Suggested value     | Description
 :--------------- | :-------------      |:---------------------
@@ -65,17 +67,17 @@ Parameter         | Suggested value     | Description
 There are a few ways to deploy this template.
 You can use [PowerShell](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy), [Azure CLI](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-cli), [Azure Portal](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-portal) or your favorite SDK.
 
-For Azure CLI I'm using the Visual Code with Azure CLI extensions, if you like, you can find more information [here](https://code.visualstudio.com/docs/azure/extensions). But bare in mind that you don't need to use the Visual Code, you can stick with the old good always present **Command Line** on Windows or any **bash terminal**.
+For Azure CLI I'm using the Visual Code with Azure CLI extensions. If you would like you can find more information [here](https://code.visualstudio.com/docs/azure/extensions). But bare in mind that you don't need to use the Visual Code app, you can stick with the always present **Command Line** on Windows or the Linux **bash terminal**.
 
 ### Using Azure CLI with Visual Code
 
-type on the terminal window: **az login**
+In the terminal window type: **az login**
 
 ![Screen](./images/azlogin.png)
 
-You will be redirected to the Azure Portal where you can insert your credentials and log in.
+You will be redirected to the Azure Portal in your web browser where you can insert your credentials and log in.
 
-After logged in, you will see your credentials on the terminal.
+After logging in, you will see your credentials on the terminal.
 
 To set the right subscription, type following command:
 
@@ -85,7 +87,7 @@ To set the right subscription, type following command:
 
 ### Resource Group
 
-Now you need a Resource Group for our deployment. If you haven't yet created a Resource Group, you can do it now. If you are new on Azure and wonder what is a Resource Group? Bare with me! A Resource Group is a container that holds related resources for an Azure solution. The resource group includes those resources that you want to manage as a group. Simply saying, it's like a folder that contains files. Simple as that.
+Now you need a Resource Group for our deployment. If you haven't already created a Resource Group, you can do it now. If you are new to Azure and wonder what is a Resource Group? Bare with me! A Resource Group is a container that holds related resources for an Azure solution. The resource group includes those resources that you want to manage as a group. Simply saying: it's like a folder that contains files. Simple as that.
 
 To create a Resource Group, you need a name and a location for your Resource Group.
 
@@ -97,7 +99,7 @@ To create the Resource group, type the command:
 
 ![Screen](./images/azgroup.png)
 
-Super simple, right? Now that we have our **Resource Group** created, let's deploy the Web Application with Git Repo.
+Super simple, right? Now that we have our **Resource Group** created, let's deploy the **Azure Web App linked to a GitHub Account** using the az cli.
 
 #### az group deployment create --name "name of your deployment" --resource-group "resource-group" --template-file "./azuredeploy.json"
 
@@ -108,9 +110,9 @@ As you can see, it's running.
 
 ![Screen](./images/azdeploy2.png)
 
-Go grab a cup of coffee, have some fresh air. Before you come back you will have your Function App.
+Go grab a cup of coffee, have some fresh air. Before you come back you will have your **Azure Web App linked to a GitHub Account**
 
-And there we go, your deployment is Succeeded:
+And there we go, your deployment has Succeeded:
 
 ![Screen](./images/azdeploy4.png)
 
@@ -120,11 +122,11 @@ On the portal, go to Resource Groups. On this blade, you can see the Resource Gr
 
 ![Screen](./images/azdeployportal.png)
 
-Let's check the resource on the [Azure Portal](https://portal.azure.com).
+Let's check the resource in the [Azure Portal](https://portal.azure.com).
 
-On the portal, go to Resource Groups. In this blade, you can see the Resource Group that you created.
+On the portal, navigate to Resource Groups. On this blade, you can see the Resource Group we've created.
 
-Click on the Resource Group and there it's the resources **Resources**:
+Click on the Resource Group to expand and show the **Resources**:
 
 - App Service plan
 - App Service
@@ -133,19 +135,19 @@ Click on the Resource Group and there it's the resources **Resources**:
 
 Click on the Web Plan and then look for **Deployment Center**.
 
-Here you can check the external git hub account linked with your Web App.
+Here you can check the external Github account linked to your Web App.
 
 ![Screen](./images/azdeployportal3.png)
 
-And that is just the tip of the iceberg. You can start to deploy code to your new Web Application or Web Site.
+And that is just the tip of the iceberg. You can start to deploy code to your new **Azure Web App linked to a GitHub Account**.
 
 Most important, don't forget to have fun!
 
 ### Using the Portal
 
-At the Portal, in All Services look for **Templates**, you can favorite this service.
+Using your favorite web browser Navigate to the Portal, in All Services look for **Templates**, you may want to add this service to favorites.
 
-Click in **Add** to add your template:
+Click on **Add** to add your template:
 
 On General, type the name and the description for your template, and click on [OK].
 
@@ -159,7 +161,7 @@ Click on the refresh button and you will find your template. Click on it and the
 
 ![Screen](./images/azportaldepoy.png)
 
-On the screen Custom Deployment, inform the values for the parameters, by now you must be already familiar with.
+On the screen Custom Deployment, inform the values for the parameters, by now you must be already familiar with these.
 
 Select [I agree] and click on [Purchase].
 
@@ -167,19 +169,19 @@ Select [I agree] and click on [Purchase].
 
 As you can see, it's deploying.
 
-After a couple of minutes, voilà, you have your Web App with GitHub Repo deployed.
+After a couple of minutes, voilà, you have your **Azure Web App linked to a GitHub Account**.
 
 ![Screen](./images/azportaldeploy3.png)
 
 Go to the Resource. Repeat the test that you have done before.
 
-**p.s.: Pretty easy to create resources on Azure, right? But if you are the sort of IT guy that always loves automation, here is the surprise. Just click on the button below and it will automatically deploy the VM through the  Azure Portal.**
+**p.s.: Pretty easy to create resources on Azure, right? But if you are the sort of IT guy that always loves automation, here is the surprise. Just click on the button below and it will automatically deploy the Azure Web App linked to a GitHub Account through the  Azure Portal.**
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-web-app-github-deploy%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 
-#### Important disclaimer: Azure charges you for the resources you are using, and you don't want to finish all your credits at once, right? So, don't forget to stop the Web App at the portal or even delete the Resource Group you have created to avoid unnecessary charging
+#### Important disclaimer: Azure charges you for the resources you are using, and you don't want to use all your credits at once, right? So, don't forget to stop the Web App at the portal or even delete the Resource Group you have created to avoid unnecessary charges
 
 ### How to shutdown your resources
 
