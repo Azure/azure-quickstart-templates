@@ -1,39 +1,35 @@
-# Deploy a Flask app
+# Deploy a Flask app service
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-with-flask/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-with-flask/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-linux-flask/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-linux-flask/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-with-flask/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-with-flask/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-linux-flask/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-linux-flask/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-with-flask/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-with-flask/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-linux-flask/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-linux-flask/CredScanResult.svg" />&nbsp;
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure4StudentQSTemplates%2Fazure-quickstart-templates%2Fmaster%2F101-webapp-with-flask%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-webapp-linux-flask%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure4StudentQSTemplates%2Fazure-quickstart-templates%2Fmaster%2F101-webapp-with-flask%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-webapp-linux-flask%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
-This template allows you to deploy your Flask app using App Service. This will deploy a Free App Service in a Resource Group that we should create before launch our template.
+This template deploys a web app with Python support to let us to upload a Flask app. The web app with Python is an app service that allow you to deploy your Django website. This will deploy a free tier Linux App Service Plan where you will host your App Service.
 
-## Parameters
+If you are new to Azure App Service, see:
 
-|**PARAMETERS NAME**   |**DESCRIPTION**   |
-|---|---|
-|webAppName   |Name for your application. It has to be unique.   |
-|location   |Location for the deploy of our resources.   |
+- [Azure App Service](https://azure.microsoft.com/en-us/services/app-service/web/)
+- [Template reference](https://docs.microsoft.com/es-es/azure/templates/microsoft.web/allversions)
+- [Quickstart templates](https://azure.microsoft.com/es-es/resources/templates/?resourceType=Microsoft.Compute&pageNumber=1&sort=Popular&term=web+apps)
 
-## Variables
+If you are new to template deployment, see:
 
-|**VARIABLES NAME**   |**DESCRIPTION**   |
-|---|---|
-|alwaysOn   |It allows us to have the app On even if it is no traffic.   |
-|sku   |Shape for our product.   |
-|skuCode   |Code to identify our product.   |
-|workerSize   |Optional. The worker size. Possible values are Small, Medium, and Large. For JSON, the equivalents are 0 = Small, 1 = Medium, and 2 = Large   |
-|workerSizeId   |Gets or sets size ID of machines: 0 - Small 1 - Medium 2 - Large   |
-|numberOfWorkers   |Gets or sets number of workers.   |
-|linuxFxVersion   |The Linux APP Framework and version.   |
-|hostingPlanName   |Name for the hosting plan. On free tier, you can only have 1 Linux hosting environment in your subscription.   |
+[Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
+
+## Prerequisites
+
+If you have already a Linux App Service Plan, you will have to deploy the new web app into the same resource group that the other web app is. That's because Student accounts has a limit of only 1 free tier Linux app service plan.
+
+`Tags: Azure4Student, appServices , flask, linux, Beginner`
