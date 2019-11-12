@@ -1,10 +1,12 @@
 # Azure Blockchain Service
 
-The purpose of this ARM Template is **deploy a Blockchain Service**.
+The purpose of this ARM Template is deploy a **Blockchain Service**.
 
 But let's understand a bit better how all this will work.
 
-## What is Azure Blockchain Service
+## Overview
+
+### What is Azure Blockchain Service
 
 Azure Blockchain Service is a fully managed ledger service that enables users the ability to grow and operate blockchain networks at scale in Azure. By providing unified control for both infrastructure management as well as blockchain network governance, Azure Blockchain Service provides:
 
@@ -16,9 +18,9 @@ Azure Blockchain Service is designed to support multiple ledger protocols. Curre
 
 These capabilities require almost no administration and all are provided at no additional cost. You can focus on app development and business logic rather than allocating time and resources to managing virtual machines and infrastructure. In addition, you can continue to develop your application with the open-source tools and platform of your choice to deliver your solutions without having to learn new skills.
 
-## Concepts
+### Concepts
 
-### Azure Blockchain Service Consortium
+#### Azure Blockchain Service Consortium
 
 Using Azure Blockchain Service, you can create private consortium blockchain networks where each blockchain network can be limited to specific participants in the network. Only participants in the private consortium blockchain network can view and interact with the blockchain. Consortium networks in Azure Blockchain Service can contain two types of member participant roles:
 
@@ -27,11 +29,11 @@ Using Azure Blockchain Service, you can create private consortium blockchain net
 
 Consortium networks can be a mix of participant roles and can have an arbitrary number of each role type. There must be at least one administrator.
 
-### Azure Blockchain Service security
+#### Azure Blockchain Service security
 
 Azure Blockchain Service uses several Azure capabilities to keep your data secure and available. Data is secured using isolation, encryption, and authentication.
 
-#### Isolation
+##### Isolation
 
 Azure Blockchain Service resources are isolated in a private virtual network. Each transaction and validation node is a virtual machine (VM). VMs in one virtual network cannot communicate directly to VMs in a different virtual network. Isolation ensures communication remains private within the virtual network.
 
@@ -53,11 +55,13 @@ When provisioning an Azure Blockchain Service member, an Ethereum account, publi
 
 Now that you got a good idea of how the service works, let's dig on the template file.
 
-### The Template
+## The Template
 
 Don't let the size of the template scares you. The structure is very intuitive and once that you get the gist of it, you will see how much easier your life will be deploying resources to Azure.
 
-These are the parameters on the template, most of them already have values inserted, the ones that you need to inform are:
+These are the parameters on the template, most of them already have values inserted, the ones that you need to inform are: **bcMemberName** and **memberPassword**.
+
+Here is the full list parameters in this template:
 
 Parameter         | Suggested value     | Description
 :--------------- | :-------------      |:---------------------
@@ -65,7 +69,7 @@ Parameter         | Suggested value     | Description
 **memberPassword**  | Complex password|"Password for the BlockChain Administrator. The password must be at least 12 characters long and have a lower case, upper characters, digit and a special character (Regex match)
 **Location**| One of these Locations | "eastus", "southeastasia", "westeurope", "northeurope",  "westus2", "japaneast"
 
-### Deployment
+## Deployment
 
 There are a few ways to deploy this template.
 You can use [PowerShell](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy), [Azure CLI](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-cli), [Azure Portal](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-portal) or your favorite SDK.
@@ -102,7 +106,7 @@ To create the Resource group, type the command:
 
 ![Screen](./images/azgroup.png)
 
-Super simple, right? Now that we have our **Resource Group** created, let's deploy the BlockChain Service.
+Super simple, right? Now that we have our **Resource Group** created, let's deploy the the BlockChain Service.
 
 #### az group deployment create --name "name of your deployment" --resource-group "resource-group" --template-file "./azuredeploy.json"
 
@@ -173,7 +177,7 @@ Go to the Resource. Repeat the test that you have done before.
 
 **p.s.: It's pretty easy to create resources on Azure, right? But if you are the sort of IT guy that always loves automation, here is the surprise. Just click on the button below and it will automatically deploy the VM through the  Azure Portal.**
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-blockchain-asaservice%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-app-blockchain-service%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 
