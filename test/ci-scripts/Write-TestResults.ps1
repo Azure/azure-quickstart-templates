@@ -69,9 +69,10 @@ if ($r -eq $null) {
 
     if ($ENV:BUILD_REASON -eq "PullRequest") {
         $results.Add("status", $ENV:BUILD_REASON)
+        $results.Add("BuildNumber", $ENV:BUILD_BUILDNUMBER)
     }
 
-    $results | ft
+    $results | fl *
 
     Add-AzTableRow -table $cloudTable `
         -partitionKey $PartitionKey `
@@ -81,7 +82,7 @@ if ($r -eq $null) {
 else {
     # Update the existing row - need to check to make sure the columns exist
     Write-Host "Updating the existing record from:"
-    $r | ft
+    $r | fl *
 
     if (![string]::IsNullOrWhiteSpace($BestPracticeResult)) {
         if ($r.BestPracticeResult -eq $null) {
@@ -129,6 +130,14 @@ else {
         else {
             $r.status = $ENV:BUILD_REASON
         }
+        # if it's a PR, set the build number, since it's not set before this outside of a scheduled build
+        if ($r.BuildNumber -eq $null) {
+            Add-Member -InputObject $r -NotePropertyName "BuildNumber" -NotePropertyValue $ENV:BUILD_BUILDNUMBER           
+        }
+        else {
+            $r.BuildNumber = $ENV:BUILD_BUILDNUMBER
+        }
+        
     } else { # if this isn't a PR, then it's a scheduled build so set the status back to "live" as the test is complete
         if ($r.status -eq $null) {
             Add-Member -InputObject $r -NotePropertyName "status" -NotePropertyValue "Live"
@@ -175,7 +184,7 @@ else {
     }
 
     Write-Host "Updating to new results:"
-    $r | ft
+    $r | fl *
     $r | Update-AzTableRow -table $cloudTable
 }
 
