@@ -90,36 +90,36 @@ Click in **Add** to add your template:
 
 On General, type the name and the description for your template, and click on [Ok].
 
-![Screen](./images/aztemplate2.PNG)
+![Screen](./images/aztemplate2.png)
 
 On ARM Template, replace the contents of the template with your template, and click on [OK] and then on [Add].
 
-![Screen](./images/aztemplate3.PNG)
+![Screen](./images/aztemplate3.png)
 
 Click on the refresh button and you will find your template. Click on it and the click in [Deploy].
 
-![Screen](./images/azportaldeploy.PNG)
+![Screen](./images/azportaldeploy.png)
 
 On the screen Custom Deployment, inform the values for the parameters, by now you must be already familiar with.
 
 Select [Agree] and click on [Purchase].
 
-![Screen](./images/azportaldeploy2.PNG)
+![Screen](./images/azportaldeploy2.png)
 
 As you can see, it's deploying.
 
 After a couple of minutes, voilà, you have your Web App deployed.
 
-![Screen](./images/azportaldeploy3.PNG)
+![Screen](./images/azportaldeploy3.png)
 
 Go to the Resource. Repeat the test that you have done before.
 
 **p.s.: Pretty easy to create resources on Azure, right? But if you are the sort of IT guy that always loves automation, here is the surprise. Just click on the button below and it will automatically deploy the VM through the  Azure Portal.**
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-webapp-with-django%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure4StudentQSTemplates%2Fazure-quickstart-templates%2Fmaster%2F101-webapp-linux-django%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-webapp-with-django%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure4StudentQSTemplates%2Fazure-quickstart-templates%2Fmaster%2F101-webapp-linux-django%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
@@ -140,11 +140,11 @@ Select next ... And then select the repository and the branch.
 
 If we make all good, the system will recognize our dockerfile automatically. Finally, we will have to create an Azure DevOps and a Container Registry on the last step of the deployment or use an existing one.
 
-![Screen](./images/build.PNG)
+![Screen](./images/build.png)
 
 Make sure that it is deployed successfully to production. Now we can see our Django app deployed in our app services.
 
-![Screen](./images/new-django-app-service.PNG)
+![Screen](./images/new-django-app-service.png)
 
 ### How to delete your resources
 
