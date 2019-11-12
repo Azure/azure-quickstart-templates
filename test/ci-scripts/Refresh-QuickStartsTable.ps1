@@ -39,7 +39,7 @@ $cloudTable = (Get-AzStorageTable –Name $tableName –Context $ctx).CloudTable
 
 # Dump table rows before the update
 $t = Get-AzTableRow -table $cloudTable
-$t | ft
+$t | fl *
 
 #For each sample, make sure it's in the table before we check for the oldest
 Write-Host "Checking table to see if this is a new sample (does the row exist?)"
@@ -77,6 +77,7 @@ foreach ($SourcePath in $ArtifactFilePaths) {
         $p.Add("dateUpdated", $MetadataJson.dateUpdated)
 
         $p.Add("status", "Live") # if it's in master, it's live
+        $p.Add("BuildNumber", "0") # if it's in master, it's live
 
         #add status from badges
 
@@ -134,4 +135,4 @@ foreach ($SourcePath in $ArtifactFilePaths) {
 
 #Get the updated table
 $t = Get-AzTableRow -table $cloudTable
-$t | ft
+$t | fl *
