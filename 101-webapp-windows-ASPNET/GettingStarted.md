@@ -2,7 +2,7 @@
 
 The purpose of this ARM Template is **deploy a web app with ASP.NET** using a **web app**.
 
-But let¡s understand a bit better how all this work.
+But let's understand a bit better how all this work.
 
 ## Overview
 
