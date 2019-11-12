@@ -2,7 +2,7 @@
 
 The purpose of this ARM Template is **deploy a web app with Django** using a **web app**.
 
-But let's undertand a bit better how all this work.
+But let's understand a bit better how all this work.
 
 ## Overview
 
@@ -10,7 +10,7 @@ Azure App Service is an HTTP-based service for hosting web applications, REST AP
 
 ## Pre Deployment Steps
 
-Before proceeding to the deployment of the template, we need to perfrom the following steps.
+Before proceeding to the deployment of the template, we need to perform the following steps.
 
 ### The Template
 

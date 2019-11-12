@@ -16,7 +16,7 @@
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
-This template deploys a web app with Python support to let us to upload a Django app. The web app with Python is an app serice that allows you to deploy your Django website. This will deploy a free tier Linux App Service Plan where you will host your App Service.
+This template deploys a web app with Python support to let us to upload a Django app. The web app with Python is an app service that allows you to deploy your Django website. This will deploy a free tier Linux App Service Plan where you will host your App Service.
 
 If you are new to Azure App Service, see:
 
@@ -30,6 +30,6 @@ If you are new to template deployment, see:
 
 ## Prerequisites
 
-If you have already a Linux App Service Plan, you will have to deploy they new web app into the same resource group that the other web app is. That's because Student accounts has a limit of only 1 free tier linux app service plan.
+If you have already a Linux App Service Plan, you will have to deploy the new web app into the same resource group that the other web app is. That's because Student accounts has a limit of only 1 free tier Linux app service plan.
 
 `Tags: Azure4Student, appServices , Django, linux, Beginner`
