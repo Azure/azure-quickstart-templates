@@ -16,7 +16,7 @@
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
-This template deploys a webapp with ASP.NET support. THe webapp with ASP.NET is an app service that allows you to deploy your own ASP.NET website. This will deploy a free tier Windows App Service Plan where you will host your App Service.
+This template deploys a web app with ASP.NET support. The web app with ASP.NET is an app service that allows you to deploy your ASP.NET website. This will deploy a free tier Windows App Service Plan where you will host your App Service.
 
 If you are new to Azure App Service, see:
 
