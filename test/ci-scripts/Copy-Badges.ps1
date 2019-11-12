@@ -28,7 +28,7 @@ Write-Host "RowKey: $RowKey"
 $ctx = New-AzStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey -Environment AzureCloud
 $cloudTable = (Get-AzStorageTable –Name $tableName –Context $ctx).CloudTable
 
-#Get the row to update - can't search by rowkey only since we don't know the partition key, but row key is guaranteed unique
+#Get the row to update - can't search by rowkey only since we don't know the partition key, but row key is guaranteed unique in our scenario
 $r = Get-AzTableRow -table $cloudTable -ColumnName "RowKey" -Value $RowKey -Operator Equal
 
 if ($r.status -eq $null) {
