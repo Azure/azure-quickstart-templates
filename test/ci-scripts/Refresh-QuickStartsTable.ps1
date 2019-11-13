@@ -77,7 +77,7 @@ foreach ($SourcePath in $ArtifactFilePaths) {
         $p.Add("dateUpdated", $MetadataJson.dateUpdated)
 
         $p.Add("status", "Live") # if it's in master, it's live
-        $p.Add("BuildNumber", "0") # if it's in master, it's live
+        $p.Add($($ResultDeploymentParameter + "BuildNumber"), "0") # if it's in master, it's live
 
         #add status from badges
 
