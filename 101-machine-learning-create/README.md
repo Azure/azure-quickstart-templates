@@ -16,7 +16,7 @@
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
-This template creates an Azure Machine Learning service workspace. 
+This template creates an **Azure Machine Learning workspace**. The workspace is the top-level resource for Azure The purpose of this ARM Template is deploy a **Azure Machine Learning workspace** with a **Storage account**, **Container registry**, **Key vault** and **Application Insights**.
 
 If you are new to Azure Machine Learning, see:
 
@@ -32,3 +32,4 @@ If you are new to template development, see:
 
 Tags: Azure Machine Learning, Machine Learning, Secrets, Resource Manager, Resource Manager templates, ARM templates
 
+`Tags: Azure4Student, Azure Machine Learning, Machine Learning, Secrets, Resource Manager, Resource Manager templates, ARM templates, Beginner`
