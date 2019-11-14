@@ -83,7 +83,7 @@ foreach ($SourcePath in $ArtifactFilePaths) {
         $p.Add("dateUpdated", $MetadataJson.dateUpdated)
 
         $p.Add("status", "Live") # if it's in master, it's live
-        $p.Add("BuildNumber", $ENV:BUILD_BUILDNUMBER)
+        $p.Add($($ResultDeploymentParameter + "BuildNumber"), $ENV:BUILD_BUILDNUMBER)
 
         Add-AzTableRow -table $cloudTable `
             -partitionKey $MetadataJson.type `
@@ -136,12 +136,13 @@ if ($PurgeOldRows) {
 $t = Get-AzTableRow -table $cloudTable -ColumnName "status" -Value "Live" -Operator Equal | Sort-Object -Property $ResultDeploymentLastTestDateParameter # sort based on the last test date for the could being tested
 
 $t[0].Status = "Testing" # Set the status to "Testing" in case the build takes more than an hour, so the next scheduled build doesn't pick up the same sample
-if ($t[0].BuildNumber -eq $null) {
-    Add-Member -InputObject $t[0] -NotePropertyName "BuildNumber" -NotePropertyValue $ENV:BUILD_BUILDNUMBER
+if ($t[0].($ResultDeploymentParameter + "BuildNumber") -eq $null) {
+    Add-Member -InputObject $t[0] -NotePropertyName ($ResultDeploymentParameter + "BuildNumber") -NotePropertyValue $ENV:BUILD_BUILDNUMBER
 }
 else {
-    $t[0].BuildNumber = $ENV:BUILD_BUILDNUMBER
+    $t[0].($ResultDeploymentParameter + "BuildNumber") = $ENV:BUILD_BUILDNUMBER
 }
+
 $t[0] | Update-AzTableRow -Table $cloudTable
 
 $t | ft RowKey, Status, dateUpdated, PublicLastTestDate, PublicDeployment, FairfaxLastTestDate, FairfaxDeployment, dateUpdated

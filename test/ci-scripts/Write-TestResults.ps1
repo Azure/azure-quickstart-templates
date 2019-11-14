@@ -69,7 +69,7 @@ if ($r -eq $null) {
 
     if ($ENV:BUILD_REASON -eq "PullRequest") {
         $results.Add("status", $ENV:BUILD_REASON)
-        $results.Add("BuildNumber", $ENV:BUILD_BUILDNUMBER)
+        $results.Add($($ResultDeploymentParameter + "BuildNumber"), $ENV:BUILD_BUILDNUMBER)
     }
 
     $results | fl *
@@ -131,11 +131,11 @@ else {
             $r.status = $ENV:BUILD_REASON
         }
         # if it's a PR, set the build number, since it's not set before this outside of a scheduled build
-        if ($r.BuildNumber -eq $null) {
-            Add-Member -InputObject $r -NotePropertyName "BuildNumber" -NotePropertyValue $ENV:BUILD_BUILDNUMBER           
+        if ($r.($ResultDeploymentParameter + "BuildNumber") -eq $null) {
+            Add-Member -InputObject $r -NotePropertyName ($ResultDeploymentParameter + "BuildNumber") -NotePropertyValue $ENV:BUILD_BUILDNUMBER           
         }
         else {
-            $r.BuildNumber = $ENV:BUILD_BUILDNUMBER
+            $r.($ResultDeploymentParameter + "BuildNumber") = $ENV:BUILD_BUILDNUMBER
         }
         
     } else { # if this isn't a PR, then it's a scheduled build so set the status back to "live" as the test is complete
