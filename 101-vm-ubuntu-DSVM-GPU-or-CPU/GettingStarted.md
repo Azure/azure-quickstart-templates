@@ -55,19 +55,19 @@ To create the Resource group, type the command:
 
 #### az group create --name "resource-group" --location "your location"
 
-![Screen](./images/azgroup.PNG)
+![Screen](./images/azgroup.png)
 
 Super simple, right? Now that you have your **Resource Group** created, let's deploy the Virtual Machine.
 
 #### az group deployment create --resource-group "resource-group" --template-file "path file"
 
-![Screen](./images/azdeploy.PNG)
+![Screen](./images/azdeploy.png)
 
 As you can see, it's running. Go grab a cup of coffee, have some fresh air and I'm sure that before you come back you will have your Virtual Machine ready.
 
 And there we go, the deployment is succeeded:
 
-![Screen](./images/azdeploy2.PNG)
+![Screen](./images/azdeploy2.png)
 
 ### Using the Portal
 
