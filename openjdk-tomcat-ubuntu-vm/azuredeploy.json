@@ -78,13 +78,6 @@
                 "description": "Username for the Virtual Machine."
             }
         },
-        "location": {
-             "type": "string",
-             "defaultValue": "[resourceGroup().location]",
-             "metadata": {
-                "description": "Location for all resources."
-            }
-        },
         "ubuntuOSVersion": {
              "type": "string",
              "defaultValue": "18.04-LTS",
@@ -105,44 +98,34 @@
                 "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
             }
         },
-        "virtualNetworkName": {
-             "type": "string",
-             "defaultValue": "vNet",
-             "metadata": {
-                "description": "Name of the VNET"
-            }
-        },
          "networkSecurityGroup": {
-          "id": "[variables('nsgId')]"
-        },
-         "subnetName": {
-             "type": "string",
-             "defaultValue": "Subnet",
-             "metadata": {
-                "description": "Name of the subnet in the virtual network"
-            }
+          "id": "[variables('nsgId')]"    
         }
     },    
     "variables": {
+        "location": "[resourceGroup().location]",
         "networkInterfaceName": "[concat(parameters('vmName'),'NetInt')]",
-        "vmName": "[parameters('vmName')]",
+        "virtualMachineName": "[parameters('vmName')]",
         "publicIpAddressName": "[concat(parameters('vmName'), 'PublicIP' )]",
+        "networkSecurityGroupName": "[concat('mySecGroup-', parameters('vmName'))]",
+        "virtualNetworkName": "[concat('MyVNet-', parameters('vmName'))]",
+        "subnetName": "[concat('mySubnet-', parameters('vmName'))]",
         "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
         "nsgID": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]",
         "osDiskType": "Standard_LRS",
     },
     "resources": [
         {
-             "type": "Microsoft.Network/networkInterfaces",
-             "apiVersion": "2018-10-01",
-             "name": "[variables('networkInterfaceName')]",
-             "location": "[parameters('location')]",
-             "dependsOn": [
-                "[resourceId('Microsoft.Network/networkSecurityGroups/', parameters('networkSecurityGroupName'))]",
-                "[resourceId('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
-                "[resourceId('Microsoft.Network/publicIpAddresses/', variables('publicIpAddressName'))]"
+            "name": "[variables('networkInterfaceName')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2018-10-01",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroupName'))]",
+                "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+                "[concat('Microsoft.Network/publicIpAddresses/', variables('publicIpAddressName'))]"
             ],
-             "properties": {
+            "properties": {
                 "ipConfigurations": [
                     {
                         "name": "ipconfig1",
@@ -152,22 +135,22 @@
                             },
                             "privateIPAllocationMethod": "Dynamic",
                             "publicIpAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+                                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', variables('publicIpAddressName'))]"
                             }
                         }
                     }
                 ],
                 "networkSecurityGroup": {
-                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups',parameters('networkSecurityGroupName'))]"
+                    "id": "[variables('nsgId')]"
                 }
             }
         },
         {
-             "type": "Microsoft.Network/networkSecurityGroups",
-             "apiVersion": "2019-02-01",
-             "name": "[parameters('networkSecurityGroupName')]",
-             "location": "[parameters('location')]",
-             "properties": {
+            "name": "[variables('networkSecurityGroupName')]",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2019-02-01",
+            "location": "[variables('location')]",
+            "properties": {
                 "securityRules": [
                 {
                     "name": "SSH",
@@ -186,21 +169,22 @@
             }
         },
         {
-             "type": "Microsoft.Network/virtualNetworks",
-             "apiVersion": "2019-04-01",
-             "name": "[parameters('virtualNetworkName')]",
-             "location": "[parameters('location')]",
-             "properties": {
+            "name": "[variables('virtualNetworkName')]",
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2019-04-01",
+            "location": "[variables('location')]",
+            "properties": {
                 "addressSpace": {
                     "addressPrefixes": [
-                        "[variables('addressPrefix')]"
+                        "10.0.0.0/24"
                     ]
                 },
                 "subnets": [
                     {
-                        "name": "[parameters('subnetName')]",
+                        "name": "[variables('subnetName')]",
                         "properties": {
-                            "addressPrefix": "[variables('subnetAddressPrefix')]",
+                            "addressPrefix": "10.0.0.0/24",
+                            "delegations": [],
                             "privateEndpointNetworkPolicies": "Enabled",
                             "privateLinkServiceNetworkPolicies": "Enabled"
                         }
@@ -209,17 +193,15 @@
             }
         },
         {
-             "type": "Microsoft.Network/publicIpAddresses",
-             "apiVersion": "2019-02-01",
-             "name": "[variables('publicIpAddressName')]",
-             "location": "[parameters('location')]",
-             "properties": {
+            "name": "[variables('publicIpAddressName')]",
+            "type": "Microsoft.Network/publicIpAddresses",
+            "apiVersion": "2019-02-01",
+            "location": "[variables('location')]",
+            "properties": {
                 "publicIpAllocationMethod": "Dynamic",
                 "publicIPAddressVersion": "IPv4",
-                "dnsSettings": {
-                     "domainNameLabel": "[parameters('dnsLabelPrefix')]"
-                },
-                "idleTimeoutInMinutes": 4
+                "idleTimeoutInMinutes": 4,
+                "ipTags": []
             },
             "sku": {
                 "name": "Basic",
@@ -227,22 +209,17 @@
             }
         },
         {
-             "type": "Microsoft.Compute/virtualMachines",
-             "apiVersion": "2019-03-01",
-             "name": "[parameters('vmName')]",
-             "location": "[parameters('location')]",
-             "dependsOn": [
-                "[resourceId('Microsoft.Network/networkInterfaces/', variables('networkInterfaceName'))]"
+            "name": "[variables('virtualMachineName')]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2019-03-01",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkInterfaces/', variables('networkInterfaceName'))]"
             ],
-             "properties": {
+            "properties": {
                 "hardwareProfile": {
-                    "vmSize": "[parameters('VmSize')]"
+                    "vmSize": "[variables('virtualMachineSize')]"
                 },
-                "osProfile": {
-                    "computerName": "[parameters('vmName')]",
-                    "adminUsername": "[parameters('adminUsername')]",
-                    "adminPassword": "[parameters('adminPasswordorKey')]",
-                    },
                 "storageProfile": {
                     "osDisk": {
                         "createOption": "fromImage",
@@ -253,20 +230,22 @@
                     "imageReference": {
                         "publisher": "Canonical",
                         "offer": "UbuntuServer",
-                        "sku": "[parameters('ubuntuOSVersion')]",
+                        "sku": "18.04-LTS",
                         "version": "latest"
                     }
                 },
+                "osProfile": {
+                    "computerName": "[variables('virtualMachineName')]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]"
+                    },   
                 "networkProfile": {
                     "networkInterfaces": [
                         {
                             "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
                         }
                     ]
-                }
-            }
-        },
-        {
+                },
              "type": "Microsoft.Compute/virtualMachines/extensions",
              "name": "[concat(variables('vmName'),'/newuserscript')]",
              "apiVersion": "2019-07-01",
@@ -284,10 +263,11 @@
                   "[concat(parameters('_artifactsLocation'), '/', variables('ScriptFileName'), parameters('_artifactsLocationSasToken'))]"
                   ],
                 "commandToExecute": "[concat('sh java-tomcat-install.sh',' ',parameters('javaPackageName'),' ',parameters('tomcatPackageName'))]"
-              }
-            }
-        }    
-    ],
+                   }
+                }
+            }    
+        }
+    ],    
     "outputs": {
          "adminUsername": {
             "type": "string",
