@@ -1,5 +1,6 @@
 function Test-AzTemplate
 {
+[Alias('Test-AzureRMTemplate')] # Added for backward compat with MP
     <#
     .Synopsis
 Tests an Azure Resource Manager Template
