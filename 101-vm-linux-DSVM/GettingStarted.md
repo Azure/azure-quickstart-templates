@@ -16,7 +16,7 @@ Don't worry about changing anything on the file, either on the portal or using A
 
 - *resourceGroup:* The Resource Group that will have your deployment. We go in detail in the next section.
 
-- *cpu-gpu:* Choose between cpu or gpu based virtual machine.
+- *cpu-gpu:* Choose between CPU or GPU based virtual machine.
 
 Let's rock with the Deployment.  
 
@@ -69,13 +69,106 @@ And there we go, the deployment is succeeded:
 
 ![Screen](./images/azdeploy2.png)
 
+### Using the Portal
+
+At the Portal, in All Services look for **Templates**, you can favourite this service.
+
+Click in **Add** to add your template. On General, type a name and a description for your template, and click on [OK].
+
+![Screen](./images/aztemplate.png)
+
+On ARM Template, replace the contents of the template with your template, and click on [OK].
+
+![Screen](./images/aztemplate2.png)
+
+Click on the refresh button and there is your template:
+
+![Screen](./images/aztemplate3.png)
+
+Open the template and click in [Deploy]
+
+On the screen Custom Deployment, insert the information that you must be already familiar with.
+
+Select [I agree] and click on [Purchase].
+
+![Screen](./images/azportaldeploy3.png)
+
+And voilà, you have your new VM deployed.
+
 **p.s.: Pretty easy to create resources on Azure, right? But if you are the sort of IT guy that always loves automation, here is the surprise. Just click on the button below and it will automatically deploy the VM through the  Azure Portal.**
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-vm-linux-DSVM%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
+</a><a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-vm-linux-DSVM%2Fazuredeploy.json" target="_blank">
+<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
 #### Important disclaimer: Azure charges you for the resources you are using, and you don't want to finish all your credits immediately, right? So, for not running out of credit, don't forget to stop the VM at the portal or even delete the Resource Group you create to avoid any unnecessary charges
+
+## Usage
+
+### Connect
+
+You have two different ways to connect to the DSVM. You can connect to the solution via SSH or using the X2Go Client.
+
+#### Connecting via SSH
+
+You can connect to your virtual machine using SSH.
+
+First, go to your resource (the VM) and click on connect. After that, go to the SSH tab. Finally, copy the command to connect to the VM.
+
+![Screen](./images/connect-ssh.png)
+
+Now, open any **bash terminal** and paste the command.
+
+![Screen](./images/connect-ssh2.png)
+
+It will ask you to type your password. After that, you will be connected to the VM:
+
+![Screen](./images/connect-ssh3.png)
+
+#### Connecting via X2Go Client
+
+You can connect to your virtual machine using the X2Go Client. If you don't have the program, you can download it from [here](https://wiki.x2go.org/doku.php/doc:installation:x2goclient).
+
+Then, go to your resource, and copy the virtual machine's public IP address.
+
+![Screen](./images/connect-x2go.png)
+
+Now, it's time to open the X2Go client. If the "New Session" window does not pop up automatically, go to Session -> New Session.
+
+![Screen](./images/connect-x2go2.png)
+
+On the resulting configuration window, enter the following configuration parameters on the session tab:
+
+- Host: Enter the IP address of your VM.
+- Login: Enter the username of the Linux VM.
+- SSH port: Leave it at 22, the default value.
+- Session Type: Change the value to XFCE.
+
+![Screen](./images/connect-x2go3.png)
+
+Then, click [Ok]. You will see your VM added to the right of the X2Go window. Click on the box of your VM to bring up the log-in screen. 
+
+![Screen](./images/connect-x2go4.png)
+
+Then enter the password and select [Ok]. You may have to give X2Go permission to bypass your firewall to finish connecting.
+
+![Screen](./images/connect-x2go5.png)
+
+Now, you should see the graphical interface for your Ubuntu DSVM.
+
+![Screen](./images/connect-x2go6.png)
+
+### How to reset your password
+
+If you forget your password to connect to the virtual machine, you will be able to change this password in a very easy way.
+
+Go to your resource and click on **Reset Password**:
+
+![Screen](./images/resetPassword.png)
+
+Here, select the "Reset password" mode, and type your **username** and the **new password**. Then, update.
 
 ### How to remove your resources
 
