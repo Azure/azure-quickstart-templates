@@ -127,7 +127,7 @@ Go to the Resource. Repeat the test that you have done before.
 
 ### Deploy your code
 
-It will be really easy. First of all, download the basic Django project configuration from [Azure-Sample](https://github.com/Azure-Samples/docker-django-webapp-linux.git). You can clone the repository using git.
+It will be really easy. First of all, download the basic Django project configuration from [Azure-Sample](https://github.com/microsoft/python-sample-vscode-django-tutorial). You can clone the repository using git.
 
 ![Screen](./images/git-clone.png)
 
