@@ -91,4 +91,4 @@ Now, you should see the graphical interface for your Ubuntu DSVM.
 
 ![Screen](./images/connect-x2go6.png)
 
-`Tags: Azure4Student, virtual machine, Linux, Ubuntu Server, Advanced, Data Science`
+`Tags: Azure4Student, virtual machine, Linux, Ubuntu Server, Beginner, Data Science`
