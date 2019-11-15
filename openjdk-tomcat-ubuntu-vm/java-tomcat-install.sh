@@ -2,12 +2,12 @@
 # Install Java
 sudo apt-get -y update
 sudo apt-get -y upgrade
-sudo apt-get install -y openjdk-13-jdk
+sudo apt-get install -y $1
 sudo apt-get -y update --fix-missing
-sudo apt-get install -y openjdk-13-jdk
+sudo apt-get install -y $1
 
 # Install tomcat
-sudo apt-get install -y  tomcat9
+sudo apt-get install -y  $2
 
 # Update and then close
 sudo apt-get -y update
