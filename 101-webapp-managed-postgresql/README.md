@@ -1,4 +1,3 @@
-
 # Build a Web App with PostgreSQL
 
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-managed-postgresql/PublicLastTestDate.svg" />&nbsp;
