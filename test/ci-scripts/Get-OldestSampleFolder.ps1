@@ -85,6 +85,7 @@ foreach ($SourcePath in $ArtifactFilePaths) {
         $p.Add("status", "Live") # if it's in master, it's live
         $p.Add($($ResultDeploymentParameter + "BuildNumber"), $ENV:BUILD_BUILDNUMBER)
 
+        Write-Host "Adding new row..."
         Add-AzTableRow -table $cloudTable `
             -partitionKey $MetadataJson.type `
             -rowKey $RowKey `
@@ -143,6 +144,8 @@ else {
     $t[0].($ResultDeploymentParameter + "BuildNumber") = $ENV:BUILD_BUILDNUMBER
 }
 
+Write-Host "Setting Testing Status..."
+$t[0] | fl *
 $t[0] | Update-AzTableRow -Table $cloudTable
 
 $t | ft RowKey, Status, dateUpdated, PublicLastTestDate, PublicDeployment, FairfaxLastTestDate, FairfaxDeployment, dateUpdated

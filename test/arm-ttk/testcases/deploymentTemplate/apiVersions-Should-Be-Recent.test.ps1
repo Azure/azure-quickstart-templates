@@ -125,8 +125,8 @@ foreach ($av in $allApiVersions) {
         # Removing the error for this now - this is happening with the latest versions and outdated manifests
         # We can assume that if the version is indeed invalid, deployment will fail
         # Write-Error "$fullResourceType is using an invalid apiVersion." -ErrorId ApiVersion.Not.Valid
-        Write-Output "ApiVersion not found for: $fullResourceType and version $($av.apiVersion)" 
-        Write-Output "Valid Api Versions found:`n$recentApiVersions"
+        # Write-Output "ApiVersion not found for: $fullResourceType and version $($av.apiVersion)" 
+        # Write-Output "Valid Api Versions found:`n$recentApiVersions"
     }
 
     if ($av.ApiVersion -like '*-*-*-*') {
