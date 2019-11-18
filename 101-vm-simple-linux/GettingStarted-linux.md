@@ -16,6 +16,7 @@ Parameter         | Suggested value     | Description
 **adminPassword** | Complex Password | Password requirements between 12 to 72 characters and have lower and upper characters, a digit and a special character (Regex match [\W_])
 **Location**| The default location | Select the geographic location for your resource group.
 **ubuntuOSVersion** | 18.04-LTS | The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version.
+**authenticationType** | password | Type of authentication to use on the Virtual Machine.
 **dnsLabelPrefix** | [toLower(parameters('vmName'))] | DNS Name for the Public IP used to access the Virtual Machine
 **virtualNetworkName** | vNet | Name of the VNET
 **subnetName** | subnet | Name of the subnet in the virtual network
