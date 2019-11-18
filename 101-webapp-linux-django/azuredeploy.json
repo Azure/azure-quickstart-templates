@@ -4,7 +4,7 @@
     "parameters": {
         "webAppName": {
             "type": "string",
-            "defaultValue": "[concat('Django-', uniqueString(resourceGroup().name, utcNow('F')))]",
+            "defaultValue": "[concat('Django-', uniqueString(resourceGroup().id))]",
             "metadata": {
                 "description": "That name is the name of our application. It has to be unique.Type a name followed by your resource group name. (<name>-<resourceGroupName>)"
             }
@@ -26,8 +26,14 @@
     },
     "resources": [
         {
-            "name": "[parameters('webAppName')]",
             "type": "Microsoft.Web/sites",
+            "apiVersion": "2018-02-01",
+            "name": "[parameters('webAppName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]",
+                "[resourceId('microsoft.insights/components', variables('appInsights'))]"
+            ], 
             "properties": {
                 "siteConfig": {
                     "appSettings": [
@@ -37,7 +43,7 @@
                         },
                         {
                             "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
-                            "value": "[reference(resourceId('microsoft.insights/components/', variables('appInsights')), '2018-05-01-preview').InstrumentationKey]"
+                            "value": "[reference(resourceId('microsoft.insights/components/', variables('appInsights'))).InstrumentationKey]"
                         },
                         {
                             "name": "XDT_MicrosoftApplicationInsights_Mode",
@@ -53,35 +59,29 @@
                 "name": "[parameters('webAppName')]",
                 "clientAffinityEnabled": false,
                 "serverFarmId": "[resourceId('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
-            },
-            "dependsOn": [
-                "[resourceId('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]",
-                "[resourceId('microsoft.insights/components', variables('appInsights'))]"
-            ],
-            "apiVersion": "2018-02-01",
-            "location": "[parameters('location')]"
+            }                       
         },
         {
+            "type": "Microsoft.Web/serverfarms",
             "apiVersion": "2018-02-01",
             "name": "[variables('hostingPlanName')]",
-            "type": "Microsoft.Web/serverfarms",
             "location": "[parameters('location')]",
+            "sku": {
+                "Tier": "[variables('sku')]",
+                "Name": "[variables('skuCode')]"
+            },
+            "kind": "linux",
             "properties": {
                 "name": "[variables('hostingPlanName')]",
                 "workerSizeId": "[variables('workerSize')]",
                 "reserved": true,
                 "numberOfWorkers": "1"
-            },
-            "sku": {
-                "Tier": "[variables('sku')]",
-                "Name": "[variables('skuCode')]"
-            },
-            "kind": "linux"
+            }            
         },
         {
+            "type": "microsoft.insights/components",
             "apiVersion": "2018-05-01-preview",
             "name": "[variables('appInsights')]",
-            "type": "microsoft.insights/components",
             "location": "[parameters('location')]",
             "properties": {
                 "ApplicationId": "[parameters('webAppName')]"
