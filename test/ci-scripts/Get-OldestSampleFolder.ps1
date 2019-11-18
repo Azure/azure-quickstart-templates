@@ -83,7 +83,9 @@ foreach ($SourcePath in $ArtifactFilePaths) {
         $p.Add("dateUpdated", $MetadataJson.dateUpdated)
 
         $p.Add("status", "Live") # if it's in master, it's live
+        $p.Add($($ResultDeploymentParameter + "BuildNumber"), $ENV:BUILD_BUILDNUMBER)
 
+        Write-Host "Adding new row..."
         Add-AzTableRow -table $cloudTable `
             -partitionKey $MetadataJson.type `
             -rowKey $RowKey `
@@ -116,7 +118,7 @@ if ($PurgeOldRows) {
             
             Write-Host "Sample Not Found - removing... $PathToSample"
             $r | Out-String
-            #$r | Remove-AzTableRow -Table $cloudTable # TODO This seems to be causing failures, need more testing on it
+            $r | Remove-AzTableRow -Table $cloudTable # TODO This seems to be causing failures, need more testing on it
 
         } elseif(($r.PartitionKey -ne $MetadataJson.type -and ![string]::IsNullOrWhiteSpace($MetadataJson.type))){
             
@@ -135,6 +137,15 @@ if ($PurgeOldRows) {
 $t = Get-AzTableRow -table $cloudTable -ColumnName "status" -Value "Live" -Operator Equal | Sort-Object -Property $ResultDeploymentLastTestDateParameter # sort based on the last test date for the could being tested
 
 $t[0].Status = "Testing" # Set the status to "Testing" in case the build takes more than an hour, so the next scheduled build doesn't pick up the same sample
+if ($t[0].($ResultDeploymentParameter + "BuildNumber") -eq $null) {
+    Add-Member -InputObject $t[0] -NotePropertyName ($ResultDeploymentParameter + "BuildNumber") -NotePropertyValue $ENV:BUILD_BUILDNUMBER
+}
+else {
+    $t[0].($ResultDeploymentParameter + "BuildNumber") = $ENV:BUILD_BUILDNUMBER
+}
+
+Write-Host "Setting Testing Status..."
+$t[0] | fl *
 $t[0] | Update-AzTableRow -Table $cloudTable
 
 $t | ft RowKey, Status, dateUpdated, PublicLastTestDate, PublicDeployment, FairfaxLastTestDate, FairfaxDeployment, dateUpdated

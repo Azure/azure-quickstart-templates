@@ -18,3 +18,9 @@
 
 This template allows you to create a Logic app that listens to a folder on an FTP server and will copy it to an Azure Blob container. You can add an additional triggers or actions to customize it to your needs.
 
+Azure Logic Apps is a cloud service that automates the execution of your business processes. You use a graphical design tool called the Logic Apps Designer to arrange pre-made components into the sequence you need. The Designer sends a definition of your workflow to the Logic Apps execution engine. The execution engine launches your app when conditions are right and manages the compute resources needed to run it.
+
+- [Microsoft Logic Apps](https://azure.microsoft.com/services/logic-apps/)
+- [Microsoft Logic Apps Documentation](https://docs.microsoft.com/azure/logic-apps/)
+- [Microsoft Learn Logic App Modules](https://docs.microsoft.com/learn/browse/?term=logic%20app)
+- [Microsoft Learn Logic App Module - building workflow](https://docs.microsoft.com/learn/paths/build-workflows-with-logic-apps/)
