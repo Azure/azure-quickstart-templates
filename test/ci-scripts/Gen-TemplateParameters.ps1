@@ -30,8 +30,21 @@ if ($prereqOutputsFileName) { #Test-Path doesn't work on an empty string
     }
 }
 
-Write-Host "Using parameter file: $TemplateParametersFile"
+# if a different param file value has been passed (e.g. for Fairfax) look for that file, if it's not found, revert to the default
+$preferredTemplateParametersFile = $TemplateParametersFile
 $TemplateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $TemplateParametersFile))
+Write-Host "Searching for parameter file: $TemplateParametersFile"
+
+if (!(Test-Path $TemplateParametersFile)) {
+    # if the requested file has \prereqs\ in the path the default filename is different
+    if($TemplateParametersFile -like "*\prereqs\*"){
+        $defaultParamFile = "\prereq.azuredeploy.parameters.json"
+    }else{
+        $defaultParamFile = "\azuredeploy.parameters.json"
+    }
+    $TemplateParametersFile = (Split-Path $TemplateParametersFile) + $defaultParamFile
+    Write-Host "Param file not found, using: $TemplateParametersFile"
+}
 
 $JsonParameters = Get-Content $TemplateParametersFile -Raw | ConvertFrom-Json
 if (($JsonParameters | Get-Member -Type NoteProperty 'parameters') -ne $null) {

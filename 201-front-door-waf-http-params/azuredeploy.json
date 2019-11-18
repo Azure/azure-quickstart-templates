@@ -2,22 +2,21 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "frontDoorName": {
-            "type": "string",
-            "metadata": {
-                "description": "The name of the frontdoor resource."
-            }
-        },
-        "backendAddress": {
-            "type": "string",
-            "metadata": {
-                "description": "The hostname of the backend. Must be an IP address or FQDN."
-            }
-        },
         "wafPolicyName": {
             "type": "string",
             "metadata": {
                 "description": "The name of the WAF policy"
+            }
+        },
+        "wafMode": {
+            "type": "string",
+            "allowedValues": [
+                "Detection",
+                "Prevention"
+            ],
+            "defaultValue": "Detection",
+            "metadata": {
+                "description": "Describes if it is in detection mode or prevention mode at policy level."
             }
         },
         "httpRule1": {
@@ -34,23 +33,25 @@
         }
     },
     "variables": {
-        "frontdoorref": "[resourceId('Microsoft.Network/frontDoors', parameters('frontDoorName'))]",
-        "wafpolicyref": "[resourceId('Microsoft.Network/FrontDoorWebApplicationFirewallPolicies', parameters('wafPolicyName'))]",
-        "frontdoorLocation": "global"
+        "wafLocation": "global"
     },
     "resources": [
         {
-            "apiVersion": "2018-08-01",
+            "apiVersion": "2019-03-01",
             "type": "Microsoft.Network/FrontDoorWebApplicationFirewallPolicies",
             "name": "[parameters('wafPolicyName')]",
-            "location": "[variables('frontdoorLocation')]",
-            "tags": {},
+            "location": "[variables('wafLocation')]",            
             "properties": {
+                "policySettings": {
+                    "mode": "[parameters('wafMode')]",
+                    "enabledState": "Enabled"
+                },
                 "customRules": {
                     "rules": [
                         {
                             "name": "[parameters('httpRule1').name]",
                             "priority": "[parameters('httpRule1').priority]",
+                            "enabledState": "[parameters('httpRule1').enabledState]",
                             "ruleType": "[parameters('httpRule1').ruleType]",
                             "copy": [
                                 {
@@ -69,6 +70,7 @@
                         {
                             "name": "[parameters('httpRule2').name]",
                             "priority": "[parameters('httpRule2').priority]",
+                            "enabledState": "[parameters('httpRule2').enabledState]",
                             "ruleType": "[parameters('httpRule2').ruleType]",
                             "copy": [
                                 {
@@ -86,98 +88,6 @@
                         }
                     ]
                 }
-            }
-        },
-        {
-            "apiVersion": "2018-08-01",
-            "type": "Microsoft.Network/frontDoors",
-            "name": "[parameters('frontDoorName')]",
-            "location": "[variables('frontdoorLocation')]",
-            "dependsOn": [
-                "[concat('Microsoft.Network/FrontDoorWebApplicationFirewallPolicies/', parameters('wafPolicyName'))]"
-            ],
-            "tags": {},
-            "properties": {
-                "routingRules": [
-                    {
-                        "name": "routingRule1",
-                        "properties": {
-                            "frontendEndpoints": [
-                                {
-                                    "id": "[concat(variables('frontdoorref'),'/frontendEndpoints/frontendEndpoint1')]"
-                                }
-                            ],
-                            "acceptedProtocols": [
-                                "Http",
-                                "Https"
-                            ],
-                            "patternsToMatch": [
-                                "/*"
-                            ],
-                            "forwardingProtocol": "MatchRequest",
-                            "backendPool": {
-                                "id": "[concat(variables('frontdoorref'),'/backendPools/backendPool1')]"
-                            },
-                            "enabledState": "Enabled"
-                        }
-                    }
-                ],
-                "healthProbeSettings": [
-                    {
-                        "name": "healthProbeSettings1",
-                        "properties": {
-                            "path": "/",
-                            "protocol": "Http",
-                            "intervalInSeconds": 120
-                        }
-                    }
-                ],
-                "loadBalancingSettings": [
-                    {
-                        "name": "loadBalancingSettings1",
-                        "properties": {
-                            "sampleSize": 4,
-                            "successfulSamplesRequired": 2
-                        }
-                    }
-                ],
-                "backendPools": [
-                    {
-                        "name": "backendPool1",
-                        "properties": {
-                            "backends": [
-                                {
-                                    "address": "[parameters('backendAddress')]",
-                                    "httpPort": 80,
-                                    "httpsPort": 443,
-                                    "weight": 1,
-                                    "priority": 1,
-                                    "enabledState": "Enabled"
-                                }
-                            ],
-                            "loadBalancingSettings": {
-                                "id": "[concat(variables('frontdoorref'),'/loadBalancingSettings/loadBalancingSettings1')]"
-                            },
-                            "healthProbeSettings": {
-                                "id": "[concat(variables('frontdoorref'),'/healthProbeSettings/healthProbeSettings1')]"
-                            }
-                        }
-                    }
-                ],
-                "frontendEndpoints": [
-                    {
-                        "name": "frontendEndpoint1",
-                        "properties": {
-                            "hostName": "[concat(parameters('frontDoorName'), '.azurefd.net')]",
-                            "sessionAffinityEnabledState": "Disabled",
-                            "sessionAffinityTtlSeconds": 0,
-                            "webApplicationFirewallPolicyLink": {
-                                "id": "[variables('wafpolicyref')]"
-                            }
-                        }
-                    }
-                ],
-                "enabledState": "Enabled"
             }
         }
     ],
