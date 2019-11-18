@@ -6,15 +6,17 @@ Typical scenario is that results will be passed in for only one cloud Public or 
 #>
 
 param(
-    [string]$SampleFolder = $ENV:SAMPLE_FOLDER, # this is the path to the sample
-    [string]$SampleName = $ENV:SAMPLE_NAME, # the name of the sample or folder path from the root of the repo e.g. "sample-type/sample-name"
+    [string]$SampleFolder = $ENV:SAMPLE_FOLDER, # this is the full absolute path to the sample
+    [string]$SampleName = $ENV:SAMPLE_NAME, # the name of the sample or folder path from the root of the repo (i.e. relative path) e.g. "sample-type/sample-name"
     [string]$StorageAccountResourceGroupName = "azure-quickstarts-service-storage",
     [string]$StorageAccountName = "azurequickstartsservice",
     [string]$TableName = "QuickStartsMetadataService",
+    [string]$TableNamePRs = "QuickStartsMetadataServicePRs",
     [Parameter(mandatory = $true)]$StorageAccountKey, 
     [string]$BestPracticeResult = "$ENV:RESULT_BEST_PRACTICE",
     [string]$CredScanResult = "$ENV:RESULT_CREDSCAN",
     [string]$BuildReason = "$ENV:BUILD_REASON",
+    [string]$ResultDeploymentParameter = "$ENV:RESULT_DEPLOYMENT_PARAMETER", #also cloud specific
     [string]$FairfaxDeployment = "",
     [string]$FairfaxLastTestDate = (Get-Date -Format "yyyy-MM-dd").ToString(),
     [string]$PublicDeployment = "",
@@ -24,7 +26,14 @@ param(
 
 # Get the storage table that contains the "status" for the deployment/test results
 $ctx = New-AzStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey -Environment AzureCloud
-$cloudTable = (Get-AzStorageTable –Name $tableName –Context $ctx).CloudTable
+
+if ($ENV:BUILD_REASON -eq "PullRequest") {
+    $t = $TableNamePRs
+}else{
+    $t = $TableName
+}
+
+$cloudTable = (Get-AzStorageTable –Name $t –Context $ctx).CloudTable
 
 #Get the type of Sample from metadata.json, needed for the partition key lookup
 $PathToMetadata = "$SampleFolder\metadata.json"
@@ -69,9 +78,10 @@ if ($r -eq $null) {
 
     if ($ENV:BUILD_REASON -eq "PullRequest") {
         $results.Add("status", $ENV:BUILD_REASON)
+        $results.Add($($ResultDeploymentParameter + "BuildNumber"), $ENV:BUILD_BUILDNUMBER)
     }
 
-    $results | ft
+    $results | fl *
 
     Add-AzTableRow -table $cloudTable `
         -partitionKey $PartitionKey `
@@ -81,7 +91,7 @@ if ($r -eq $null) {
 else {
     # Update the existing row - need to check to make sure the columns exist
     Write-Host "Updating the existing record from:"
-    $r | ft
+    $r | fl *
 
     if (![string]::IsNullOrWhiteSpace($BestPracticeResult)) {
         if ($r.BestPracticeResult -eq $null) {
@@ -129,6 +139,14 @@ else {
         else {
             $r.status = $ENV:BUILD_REASON
         }
+        # if it's a PR, set the build number, since it's not set before this outside of a scheduled build
+        if ($r.($ResultDeploymentParameter + "BuildNumber") -eq $null) {
+            Add-Member -InputObject $r -NotePropertyName ($ResultDeploymentParameter + "BuildNumber") -NotePropertyValue $ENV:BUILD_BUILDNUMBER           
+        }
+        else {
+            $r.($ResultDeploymentParameter + "BuildNumber") = $ENV:BUILD_BUILDNUMBER
+        }
+        
     } else { # if this isn't a PR, then it's a scheduled build so set the status back to "live" as the test is complete
         if ($r.status -eq $null) {
             Add-Member -InputObject $r -NotePropertyName "status" -NotePropertyValue "Live"
@@ -175,7 +193,7 @@ else {
     }
 
     Write-Host "Updating to new results:"
-    $r | ft
+    $r | fl *
     $r | Update-AzTableRow -table $cloudTable
 }
 
