@@ -45,8 +45,8 @@ foreach ($t in $TestsToRun) {
     $TemplateFileName = $t.Replace(".\", "")
     $SampleName = "101-automation-configuration" # this needs to match the value in the test
     if($IsMainTemplate){
-        & ..\..\template-tests\testcases\deploymentTemplate\artifacts-parameter.test.ps1 -TemplateObject $TemplateObject -TemplateFileName $TemplateFileName -SampleName $SampleName -IsMainTemplate
+        & ..\..\arm-ttk\testcases\deploymentTemplate\artifacts-parameter.test.ps1 -TemplateObject $TemplateObject -TemplateFileName $TemplateFileName -SampleName $SampleName -IsMainTemplate
     } else {
-        & ..\..\template-tests\testcases\deploymentTemplate\artifacts-parameter.test.ps1 -TemplateObject $TemplateObject -TemplateFileName $TemplateFileName -SampleName $SampleName
+        & ..\..\arm-ttk\testcases\deploymentTemplate\artifacts-parameter.test.ps1 -TemplateObject $TemplateObject -TemplateFileName $TemplateFileName -SampleName $SampleName
     }
 }
