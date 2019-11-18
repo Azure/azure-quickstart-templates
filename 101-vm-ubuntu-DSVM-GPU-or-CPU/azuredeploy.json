@@ -16,7 +16,7 @@
         },
         "vmName": {
             "type": "string",
-            "defaultValue": "[concat('DataScienceVM-', uniqueString(utcNow('F')))]",
+            "defaultValue": "vmName",
             "metadata": {
                 "description": "The name of you Virtual Machine."
             }
@@ -30,7 +30,7 @@
         },
         "Cpu-Gpu": {
             "type": "string",
-            "defaultValue": "cpu",
+            "defaultValue": "gpu",
             "allowedValues": [
                 "cpu",
                 "gpu"
@@ -59,24 +59,6 @@
             "metadata": {
                 "description": "Name of the Network Security Group"
             }
-        },
-        "virtualMachineSizeCPU": {
-            "type": "string",
-            "defaultValue": "Standard_DS1_v2",
-            "allowedValues": [
-                "Standard_DS1_v2"
-            ],
-            "metadata":{
-                "description": "CPU VM size."
-            }
-        },
-        "virtualMachineSizeGPU": {
-            "type": "string",
-            "defaultValue": "Standard_NC6_Promo",
-            "allowedValues": ["Standard_NC6_Promo"],
-            "metadata":{
-                "description": "GPU VM size."
-            }
         }
     },
     "variables": {
@@ -88,13 +70,17 @@
         "osDiskType": "Standard_LRS",
         "storageAccountName": "[concat('storage', uniqueString(resourceGroup().id))]",
         "storageAccountType": "Standard_LRS",
-        "storageAccountKind": "Storage"
+        "storageAccountKind": "Storage",
+        "vmSize": {
+            "cpu": "Standard_DS1_v2",
+            "gpu": "Standard_NC6_Promo"
+        }
     },
     "resources": [
         {
-            "name": "[variables('networkInterfaceName')]",
             "type": "Microsoft.Network/networkInterfaces",
             "apiVersion": "2018-10-01",
+            "name": "[variables('networkInterfaceName')]",
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/networkSecurityGroups/', parameters('networkSecurityGroupName'))]",
@@ -122,9 +108,9 @@
             }
         },
         {
-            "name": "[parameters('networkSecurityGroupName')]",
             "type": "Microsoft.Network/networkSecurityGroups",
             "apiVersion": "2019-02-01",
+            "name": "[parameters('networkSecurityGroupName')]",
             "location": "[parameters('location')]",
             "properties": {
                 "securityRules": [
@@ -171,9 +157,9 @@
             }
         },
         {
-            "name": "[parameters('virtualNetworkName')]",
             "type": "Microsoft.Network/virtualNetworks",
             "apiVersion": "2019-04-01",
+            "name": "[parameters('virtualNetworkName')]",
             "location": "[parameters('location')]",
             "properties": {
                 "addressSpace": {
@@ -194,9 +180,10 @@
             }
         },
         {
-            "name": "[variables('publicIpAddressName')]",
+            
             "type": "Microsoft.Network/publicIpAddresses",
             "apiVersion": "2019-02-01",
+            "name": "[variables('publicIpAddressName')]",
             "location": "[parameters('location')]",
             "properties": {
                 "publicIpAllocationMethod": "Dynamic"
@@ -207,21 +194,20 @@
             }
         },
         {
-            "name": "[variables('storageAccountName')]",
+            
             "type": "Microsoft.Storage/storageAccounts",
             "apiVersion": "2019-06-01",
+            "name": "[variables('storageAccountName')]",
             "location": "[parameters('location')]",
-            "properties": {},
-            "kind": "[variables('storageAccountKind')]",
             "sku": {
                 "name": "[variables('storageAccountType')]"
-            }
+            },
+            "kind": "[variables('storageAccountKind')]"
         },
         {
-            "name": "[concat(variables('virtualMachineName'),'-cpu')]",
-            "condition": "[equals(parameters('Cpu-Gpu'), 'cpu')]",
             "type": "Microsoft.Compute/virtualMachines",
             "apiVersion": "2019-03-01",
+            "name": "[concat(variables('virtualMachineName'),'-', parameters('Cpu-Gpu'))]",
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/networkInterfaces/', variables('networkInterfaceName'))]",
@@ -229,49 +215,7 @@
             ],
             "properties": {
                 "hardwareProfile": {
-                    "vmSize": "[parameters('virtualMachineSizeCPU')]"
-                },
-                "storageProfile": {
-                    "osDisk": {
-                        "createOption": "fromImage",
-                        "managedDisk": {
-                            "storageAccountType": "[variables('osDiskType')]"
-                        }
-                    },
-                    "imageReference": {
-                        "publisher": "microsoft-dsvm",
-                        "offer": "linux-data-science-vm-ubuntu",
-                        "sku": "linuxdsvmubuntu",
-                        "version": "latest"
-                    }
-                },
-                "networkProfile": {
-                    "networkInterfaces": [
-                        {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
-                        }
-                    ]
-                },
-                "osProfile": {
-                    "computerName": "[variables('virtualMachineName')]",
-                    "adminUsername": "[parameters('adminUsername')]",
-                    "adminPassword": "[parameters('adminPassword')]"
-                }
-            }
-        },
-        {
-            "name": "[concat(variables('virtualMachineName'),'-gpu')]",
-            "condition": "[equals(parameters('Cpu-Gpu'), 'gpu')]",
-            "type": "Microsoft.Compute/virtualMachines",
-            "apiVersion": "2019-03-01",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Network/networkInterfaces/', variables('networkInterfaceName'))]",
-                "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
-            ],
-            "properties": {
-                "hardwareProfile": {
-                    "vmSize": "[parameters('virtualMachineSizeGPU')]"
+                    "vmSize": "[variables('vmSize')[parameters('Cpu-Gpu')]]"
                 },
                 "storageProfile": {
                     "osDisk": {
