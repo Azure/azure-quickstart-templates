@@ -52,7 +52,7 @@ Before proceeding to the deployment of the AADDS template, we need to perform th
 
 **Note:** You can perform these steps through the Azure portal as well.
 
-#### 1. Install the required Powershell modules
+#### 1. Install the required PowerShell modules
 
 * Install and configure the Azure AD PowerShell module
 
