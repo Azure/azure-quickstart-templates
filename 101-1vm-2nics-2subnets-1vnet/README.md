@@ -22,5 +22,5 @@ This template creates a new VM with two NICs which connect to two different subn
 1. If running under PowerShell you may update the **azuredeploy.parameters** file with the **allowedValues** for the subnet name of the Primary NIC and Secondary NIC for a nice dropdown list.
 2. Customize parameters in **azuredeploy.parameters** as you see appropriate, at the very least the **adminPassword**.
 
-Feel free to post qeustions and enjoy!
+Feel free to post questions and enjoy!
 

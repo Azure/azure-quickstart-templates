@@ -20,11 +20,11 @@
 
 The template creates and configures the following Azure resources:
 
-- a Standard Load Balancer
-- a network security group
-- a virtual network
-- three NICs associated with the backend pool of the load balancer
-- three virtual machines with each vm in a different zone
+- A standard Load Balancer
+- A Network Security Group
+- A Virtual Network
+- Three NICs associated with the backend pool of the load balancer
+- Three virtual machines with each vm in a different zone
 
 For a more information about this template, see [Quickstart: Create a Standard Load Balancer to load balance VMs using the Azure portal](https://docs.microsoft.com/azure/load-balancer/quickstart-load-balancer-standard-public-portal)
 
