@@ -39,7 +39,17 @@ If you need or want to create a highly available NFS cluster in your own templat
 
 ### Deploying the whole Infrastrucuture at once
 
-USEEEEEEEEEEEEE THEEEEEEEEEEEEEEE SCRIPPPPPPPPPPPPPPPTTTTTTTTTTTTTTTTTT
+In order to deploy the whole nfs server infrastructure, you will need to deploy the
+solutions on the ```prereqs``` folder, get its outputs and use as inputs in the
+```nfs-ha.json``` file, that is inside the ```nested``` folder. In order to help in
+this process, we created a script called ```deploy_everything.sh``` inside the
+```scripts``` folder that does this job. In order to run this script, inside
+the ```scripts``` folder, run:
+
+``` shell
+chmod +x deploy_everything.sh
+./deploy_everything.sh <name_of_the_resource_group_to_deploy>
+```
 
 ## Brief Explanation
 
