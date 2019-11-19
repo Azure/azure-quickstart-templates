@@ -1,6 +1,6 @@
 # Azure Machine Learning Workspace
 
-We will deploy an **Azure Machine Learning workspace**. The workspace is the top-level resource for Azure The purpose of this ARM Template is deploy a **Azure Machine Learning workspace** with a **Storage account**, **Container registry**, **Key vault** and **Application Insights**.
+The purpose of this ARM Template is to deploy an **Azure Machine Learning workspace** with a **Storage account**, **Container registry**, **Key vault** and **Application Insights**.
 
 But let's understand a bit better how **Azure Machine Learning workspace** work.
 
@@ -14,12 +14,12 @@ Forecasts or predictions from machine learning can make apps and devices smarter
 
 ### What is Azure Machine Learning
 
-Azure Machine Learning provides a cloud-based environment you can use to prep data, train, test, deploy, manage, and track machine learning models. Start training on your local machine and then scale out to the cloud. The service fully supports open-source technologies such as PyTorch, TensorFlow, and scikit-learn and can be used for any kind of machine learning, from classical ml to deep learning, supervised and unsupervised learning.
+Azure Machine Learning provides a cloud-based environment you can use to prep data, train, test, deploy, manage, and track machine learning models. Start training on your local machine and then scale out to the cloud. The service fully supports open-source technologies such as PyTorch, TensorFlow, and sci-kit-learn and can be used for any kind of machine learning, from classical ml to deep learning, supervised and unsupervised learning.
 
 Explore and prepare data, train and test models, and deploy them using rich tools such as:
 
 - A visual interface in which you can drag-n-drop modules to build your experiments and then deploy models
-- Jupyter notebooks in which you use the SDKs to write your own code, such as these sample notebooks
+- Jupyter notebooks in which you use the SDKs to write your code, such as these sample notebooks
 - Visual Studio Code extension
 
 For more information, you can consult [Azure Machine Learning Documentation](https://docs.microsoft.com/en-gb/azure/machine-learning/)
@@ -28,20 +28,20 @@ For more information, you can consult [Azure Machine Learning Documentation](htt
 
 The workspace is the top-level resource for Azure Machine Learning, providing a centralized place to work with all the artifacts you create when you use Azure Machine Learning. The workspace keeps a history of all training runs, including logs, metrics, output, and a snapshot of your scripts. You use this information to determine which training run produces the best model.
 
-Once you have a model you like, you register it with the workspace. You then use the registered model and scoring scripts to deploy to Azure Container Instances, Azure Kubernetes Service, or to a field-programmable gate array (FPGA) as a REST-based HTTP endpoint. You can also deploy the model to an Azure IoT Edge device as a module.
+Once you have a model you like, you register it with the workspace. You then use the registered model and scoring scripts to deploy to Azure Container Instances, Azure Kubernetes Service, or a field-programmable gate array (FPGA) as a REST-based HTTP endpoint. You can also deploy the model to an Azure IoT Edge device as a module.
 
 ## The Template
 
 Don't let the size of the template scares you. The structure is very intuitive and once that you get the gist of it, you will see how much easier your life will be deploying resources to Azure.
 
-These are the parameters on the template, they already have values inserted, so you don't need to worry about change them.
+These are the parameters on the template, they already have values inserted, so you don't need to worry about changing them.
 
 Here the list of all parameters:
 
-Parameter         | Suggested value     | Description
-:--------------- | :-------------      |:---------------------
-**workspaceName** | globally unique name  | The name of the machine learning workspace.
-**location** | location | This template takes the location of your Resource Group. Treating apropriately the available locations for each resource.
+Parameter | Suggested value | Description
+:--------------- | :------------- |:---------------------
+**workspaceName** | globally unique name | The name of the machine learning workspace.
+**location** | location | This template takes the location of your Resource Group. Treating appropriately the available locations for each resource.
 
 ## Deployment
 
@@ -80,7 +80,7 @@ To create the Resource group, type the command:
 
 ![Screen](./images/azgroup.png)
 
-Super simple, right? Now that we have our **Resource Group** created, let's deploy the **Azure Machine Learning workspace** using the az cli.
+Super simple, right? Now that we have our **Resource Group** created, let's deploy the **Azure Machine Learning workspace** using the az CLI.
 
 #### az group deployment create --name "name of your deployment" --resource-group "resource-group" --template-file "./azuredeploy.json"
 
@@ -148,7 +148,7 @@ After a couple of minutes, voilà, you have your **Azure Machine Learning worksp
 
 Go to the Resource. Repeat the test that you have done before.
 
-**p.s.: It's pretty easy to create resources on Azure, right? But if you are the sort of IT guy that always loves automation, here is the surprise. Just click on the button below and it will automatically deploy Azure Machine Learning workspace through the  Azure Portal.**
+**p.s.: It's pretty easy to create resources on Azure, right? But if you are the sort of IT guy that always loves automation, here is the surprise. Just click on the button below and it will automatically deploy Azure Machine Learning workspace through the Azure Portal.**
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-machine-learning-create%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
@@ -160,7 +160,7 @@ Go to the Resource. Repeat the test that you have done before.
 
 #### Using the portal
 
-On the portal, open your Resource Group, if you want to remove the **Azure Machine Learning workspace** , you can just click on the [Delete] Button.
+On the portal, open your Resource Group, if you want to remove the **Azure Machine Learning workspace **, you can just click on the [Delete] Button.
 
 ![Screen](./images/off.png)
 
