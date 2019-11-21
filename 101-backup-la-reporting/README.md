@@ -1,4 +1,4 @@
-# LA Monitoring and Reporting solution for Azure Backup
+# Azure Backup LA Reporting solution
 
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-backup-la-reporting/PublicLastTestDate.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-backup-la-reporting/PublicDeployment.svg" />&nbsp;
