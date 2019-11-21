@@ -25,7 +25,7 @@ For this task you will:
 2. Register an IoT Edge device to your IoT hub.
 3. Install and start the IoT Edge runtime on your virtual device.
 
-Look at the [GettingStarted](./GettingStarted-Iot-EdgeEmulator.md) for a step by step demo.
+Look at the our GettingStarted Tutorial for a step by step demo.
 
 If you are new to Azure IoT Edge, see:
 
