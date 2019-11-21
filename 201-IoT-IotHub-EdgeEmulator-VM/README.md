@@ -35,6 +35,5 @@ If you are new to Azure IoT Edge, see:
 If you are new to template development, see:
 
 - [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
-- [Create an Azure Machine Learning service workspace by using a template](https://docs.microsoft.com/azure/machine-learning/service/how-to-create-workspace-template)
 
 `Tags: Azure4Student, IoT, Azure IoT Edge, Azure IoT Hub, Intermediate`
