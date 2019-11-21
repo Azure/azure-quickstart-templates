@@ -1,6 +1,6 @@
 # Azure Kubernetes Service (AKS)
 
-The purpose of this ARM Template is deploy a **AKS Cluster**.
+The purpose of this ARM Template is to deploy an **AKS Cluster**.
 
 But let's understand a bit better how **Azure Kubernetes Service (AKS)** work.
 
@@ -32,7 +32,7 @@ To create your own App ID, follow the steps below.
 
 1. Using your favorite web browser sign in to the [Azure Portal](https://portal.azure.com/).
 
-2. Go to **All Services** and search for **app registrations**. You can favorite this service by clicking on the star.  
+2. Go to **All Services** and search for **app registrations**. You can favorite this service by clicking on the star. 
 ![Screen](./images/azappreg.png)
 
 3. Go to the app registrations blade and click **New registration** in the action bar at the top.
@@ -49,13 +49,13 @@ To create your own App ID, follow the steps below.
 
 ### Create an SSH key pair
 
-Configure all linux machines with the SSH RSA public key string. Use the ssh-keygen command to generate SSH public and private key files. By default, these files are created in the ~/.ssh directory. Your key should include three parts, for example 'ssh-rsa AAAAB...snip...UcyupgH azureuser@linuxvm'
+Configure all Linux machines with the SSH RSA public key string. Use the ssh-keygen command to generate SSH public and private key files. By default, these files are created in the ~/.ssh directory. Your key should include three parts, for example, 'ssh-rsa AAAAB...snip...UcyupgH azureuser@linuxvm'
 
 The following command creates an SSH key pair using RSA encryption and a bit length of 2048:
 
 #### ssh-keygen -t rsa -b 2048
 
-For more information about SSH Key for authentication to Linux VM in azure, click [here](https://docs.microsoft.com/en-gb/azure/virtual-machines/linux/create-ssh-keys-detailed)
+For more information about SSH Key for authentication to Linux VM in Azure, click [here](https://docs.microsoft.com/en-gb/azure/virtual-machines/linux/create-ssh-keys-detailed)
 
 ## The Template
 
@@ -63,10 +63,10 @@ Don't let the size of the template scares you. The structure is very intuitive a
 
 These are the parameters on the template, most of them already have values inserted, the ones that you need to inform are: **linuxAdminUsername**, **Resource Group**, **sshRSAPublicKey**, **servicePrincipalClientId** and **servicePrincipalClientSecret** (The App ID and secret that you created from the **App Registration**).
 
-Here is the full list parameters in this template:
+Here are the full list parameters in this template:
 
-Parameter         | Suggested value     | Description
-:--------------- | :-------------      |:---------------------
+Parameter | Suggested value | Description
+:--------------- | :------------- |:---------------------
 **clusterName** | [concat('aksclus', resourceGroup().name)] | Specifies the name of the AKS Cluster.
 **Resource Group**| your Resource Group | You can create a new resource group or choose from an existing one.
 **Location**| location | The location of your Resource Group.
@@ -75,11 +75,11 @@ Parameter         | Suggested value     | Description
 **agentCount** | 3 | The number of nodes for the cluster.
 **agentVMSize** | Standard_B2s | The size of the Virtual Machine.
 **linuxAdminUsername** | adminusername | User name for the Linux Virtual Machines. Usernames can be a maximum of 20 characters and cannot end in a period (".").
-**sshRSAPublicKey** | you public key | Configure all linux machines with the SSH RSA public key string. Your key should include three parts, for example 'ssh-rsa AAAAB...snip...UcyupgH azureuser@linuxvm'
+**sshRSAPublicKey** | you public key | Configure all Linux machines with the SSH RSA public key string. Your key should include three parts, for example 'ssh-rsa AAAAB...snip...UcyupgH azureuser@linuxvm'
 **servicePrincipalClientId**| Your App ID | The App ID that you've created in the [Pre Deployment Steps].
 **servicePrincipalClientSecret** | Your Secret | The Secret you've created in the [Pre Deployment Steps].
-**osType** | linux | The type of operating system.
-**kubernetesVersion** | 1.13.12 | The version of Kubernetes. For more information about kubernetes versions, click [here](https://docs.microsoft.com/en-gb/azure/aks/supported-kubernetes-versions).
+**osType** | Linux | The type of operating system.
+**kubernetesVersion** | 1.13.12 | The version of Kubernetes. For more information about Kubernetes versions, click [here](https://docs.microsoft.com/en-gb/azure/aks/supported-kubernetes-versions).
 
 ## Deployment
 
@@ -148,7 +148,7 @@ Click on the Kubernetes service.
 
 On this blade an overview of Kubernetes service.
 
-Congratulations, you have deployed a **AKS Cluster** and that is just the tip of the Iceberg.
+Congratulations, you have deployed an **AKS Cluster** and that is just the tip of the Iceberg.
 
 Most important, don't forget to have fun!
 
@@ -184,7 +184,7 @@ After a couple of minutes, voilà, you have your **Azure Bot Service** deployed.
 
 Go to the Resource and check your Cluster.
 
-**p.s.: It's pretty easy to create resources on Azure, right? But if you are the sort of IT guy that always loves automation, here is the surprise. Just click on the button below and it will automatically deploy Azure Bot Service through the  Azure Portal.**
+**p.s.: It's pretty easy to create resources on Azure, right? But if you are the sort of IT guy that always loves automation, here is the surprise. Just click on the button below and it will automatically deploy Azure Bot Service through the Azure Portal.**
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2201-aks%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
@@ -196,11 +196,11 @@ Go to the Resource and check your Cluster.
 
 #### Using the portal
 
-On the portal, open your Resource Group, if you want to remove the **AKS Cluster** , you can just click on the [Delete] Button.
+On the portal, open your Resource Group, open the **AKS Cluster** and click on the [Delete] Button.
 
 ![Screen](./images/off.png)
 
-Alternatively you can delete the Resource Group, clicking on [Delete Resource Group] buttton.
+Alternatively, you can delete the Resource Group, clicking on [Delete Resource Group] button at the Resource Group Blade.
 
 ![Screen](./images/off2.png)
 
