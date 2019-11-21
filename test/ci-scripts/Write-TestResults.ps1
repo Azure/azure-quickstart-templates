@@ -54,18 +54,22 @@ if ($r -eq $null) {
     Write-Host "No record found, adding a new one..."
     $results = New-Object -TypeName hashtable
     if (![string]::IsNullOrWhiteSpace($BestPracticeResult)) {
+        $BestPracticeResult = ($r.BestPracticeResult).ToString().ToLower().Replace("true", "PASS").Replace("false", "FAIL")
         $results.Add("BestPracticeResult", $BestPracticeResult)
     }
     if (![string]::IsNullOrWhiteSpace($CredScanResult)) {
+        $CredScanResult = ($r.CredScanResult).ToString().ToLower().Replace("true", "PASS").Replace("false", "FAIL")
         $results.Add("CredScanResult", $CredScanResult)
     }
     # set the values for Fairfax only if a result was passed
     if (![string]::IsNullOrWhiteSpace($FairfaxDeployment)) { 
+        $FairfaxDeployment = ($r.FairfaxDeployment).ToString().ToLower().Replace("true", "PASS").Replace("false", "FAIL")
         $results.Add("FairfaxDeployment", $FairfaxDeployment) 
         $results.Add("FairfaxLastTestDate", $FairfaxLastTestDate) 
     }
     # set the values for MAC only if a result was passed
     if (![string]::IsNullOrWhiteSpace($PublicDeployment)) {
+        $PublicDeployment = ($r.PublicDeployment).ToString().ToLower().Replace("true", "PASS").Replace("false", "FAIL")
         $results.Add("PublicDeployment", $PublicDeployment) 
         $results.Add("PublicLastTestDate", $PublicLastTestDate) 
     }
@@ -229,11 +233,13 @@ else {
 }
 
 if ($r.FairfaxDeployment -ne $null) {
+    # TODO can be removed when table is updated to string
     $FairfaxDeployment = ($r.FairfaxDeployment).ToString().ToLower().Replace("true", "PASS").Replace("false", "FAIL")
 }
 switch ($FairfaxDeployment) {
     "PASS" { $FairfaxDeploymentColor = "brightgreen" }
     "FAIL" { $FairfaxDeploymentColor = "red" }
+    "Not Supported" {$FairfaxDeploymentColor = "yellow"}
     default {
         $FairfaxDeployment = $na
         $FairfaxDeploymentColor = "inactive"    
@@ -241,11 +247,13 @@ switch ($FairfaxDeployment) {
 }
 
 if ($r.PublicDeployment -ne $null) {
+    # TODO can be removed when table is updated to string
     $PublicDeployment = ($r.PublicDeployment).ToString().ToLower().Replace("true", "PASS").Replace("false", "FAIL")
 }
 switch ($PublicDeployment) {
     "PASS" { $PublicDeploymentColor = "brightgreen" }
     "FAIL" { $PublicDeploymentColor = "red" }
+    "Not Supported" {$PublicDeploymentColor = "yellow"}
     default {
         $PublicDeployment = $na
         $PublicDeploymentColor = "inactive"    
@@ -253,6 +261,7 @@ switch ($PublicDeployment) {
 }
 
 if ($r.BestPracticeResult -ne $null) {
+    # TODO can be removed when table is updated to string
     $BestPracticeResult = ($r.BestPracticeResult).ToString().ToLower().Replace("true", "PASS").Replace("false", "FAIL")
 }
 switch ($BestPracticeResult) {
@@ -265,6 +274,7 @@ switch ($BestPracticeResult) {
 }
 
 if ($r.CredScanResult -ne $null) {
+    # TODO can be removed when table is updated to string
     $CredScanResult = ($r.CredScanResult).ToString().ToLower().Replace("true", "PASS").Replace("false", "FAIL")
 }
 switch ($CredScanResult) {
