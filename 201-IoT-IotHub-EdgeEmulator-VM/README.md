@@ -1,19 +1,18 @@
 # IoT Hub and Ubuntu edge simulator
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-IoT-IotHub-EdgeEmulator-VM/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-IoT-IotHub-EdgeEmulator-VM/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-IoT-IotHub-EdgeEmulator-vm/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-IoT-IotHub-EdgeEmulator-vm/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-IoT-IotHub-EdgeEmulator-VM/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-IoT-IotHub-EdgeEmulator-VM/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-IoT-IotHub-EdgeEmulator-vm/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-IoT-IotHub-EdgeEmulator-vm/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-IoT-IotHub-EdgeEmulator-VM/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-IoT-IotHub-EdgeEmulator-VM/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-IoT-IotHub-EdgeEmulator-vm/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-IoT-IotHub-EdgeEmulator-vm/CredScanResult.svg" />&nbsp;
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-IoT-IotHub-EdgeEmulator-VM%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
-</a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-IoT-IotHub-EdgeEmulator-VM%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-IoT-IotHub-EdgeEmulator-vm%2Fazuredeploy.json" target="_blank">
+<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
+</a><a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-IoT-IotHub-EdgeEmulator-vm%2Fazuredeploy.json" target="_blank">
+<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
 The purpose of this ARM Template is **deploy an IoT Hub** with an **Ubuntu Edge Simulator**.
