@@ -37,7 +37,7 @@ if (!$SkipDateCheck) {
 Write-Host $metadata
 $environments = ($metadata | convertfrom-json).environments
 Write-Host "environments: $environments"
-$
+
 if ($null -ne $environments) {
     Write-Host "Checking cloud..."
     $IsCloudSupported = ($environments -contains $CloudEnvironment)
