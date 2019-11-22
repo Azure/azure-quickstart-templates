@@ -1,14 +1,5 @@
 # Create an Azure Cosmos DB account for Core (SQL) API, a database, and a container 
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-create/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-create/PublicDeployment.svg" />&nbsp;
-
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-create/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-create/FairfaxDeployment.svg" />&nbsp;
-
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-create/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-create/CredScanResult.svg" />&nbsp;
-
 This template will create an Azure Cosmos account for Core (SQL) API, provisioned for two regions, then provision a database, a container with dedicated throughput showing multiple indexing options.
 
 Below are the parameters which can be user configured in the parameters file including:
