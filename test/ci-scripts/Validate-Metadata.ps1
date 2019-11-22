@@ -1,5 +1,6 @@
 param(
     [string] $SampleFolder = $ENV:SAMPLE_FOLDER,
+    [string] $CloudEnvironment = $ENV:ENVIRONMENT,
     [switch] $SkipDateCheck
 )
 
@@ -12,13 +13,15 @@ $schema = Invoke-WebRequest -Uri "https://aka.ms/azure-quickstart-templates-meta
 $metadata | Test-Json -Schema $schema.content 
 
 #Make sure the date has been updated
-$rawDate =  ($metadata | convertfrom-json).dateUpdated
+$rawDate = ($metadata | convertfrom-json).dateUpdated
 $dateUpdated = (Get-Date $rawDate)
 
-if (!$SkipDateCheck) { #When running the scheduled tests, we don't want to check the date
+if (!$SkipDateCheck) {
+    #When running the scheduled tests, we don't want to check the date
     try {
         [DateTime]::ParseExact($rawDate, 'yyyy-MM-dd', $(Get-Culture))
-    } Catch {
+    }
+    Catch {
         Write-Error "dateUpdate is not in the correct format: $rawDate must be in yyyy-MM-dd format."
     }
     if ($dateUpdated -gt (Get-Date)) {
@@ -28,4 +31,21 @@ if (!$SkipDateCheck) { #When running the scheduled tests, we don't want to check
     if ($dateUpdated -lt $oldDate) {
         Write-Error "dateUpdated in metadata.json needs to be updated -- $dateUpdated is older than $oldDate"
     }
+}
+
+# check to see which clouds are supported, if not specified, test all clouds
+$environments = ($metadata | convertfrom-json).environments
+
+if ($null -ne $environments) {
+    $IsCloudSupported = ($environments -contains $CloudEnvironment)
+}
+else {
+    $IsCloudSupported = $true
+}
+
+Write-Output "Is cloud supported: $IsCloudSupported"
+# if the cloud is not supported, set the result var to "Not Supported", else leave the default of "False" 
+# and then the result.deployment will indeed be the result of the test if supported
+if (!$IsCloudSupported) {
+    Write-Host "##vso[task.setvariable variable=result.deployment]Not Supported"
 }
