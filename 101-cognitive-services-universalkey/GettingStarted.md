@@ -6,17 +6,17 @@ Let's understand a bit better how all this work.
 
 ## Overview
 
-Azure Cognitive Services are APIs, SDKs, and services available to help developers build intelligent applications without having direct AI or data science skills or knowledge. Azure Cognitive Services enable developers to easily add cognitive features into their applications. The goal of Azure Cognitive Services is to help developers create applications that can see, hear, speak, understand, and even begin to reason. The catalog of services within Azure Cognitive Services can be categorized into five main pillars - Vision, Speech, Language, Web Search, and Decision.
+Azure Cognitive Services are APIs, SDKs, and services available to help developers build intelligent applications without having direct AI or data science skills or knowledge. Azure Cognitive Services enable developers to easily add cognitive features into their applications. The goal of Azure Cognitive Services is to help developers create applications that can see, hear, speak, understand, and even begin to reason. The catalogue of services within Azure Cognitive Services can be categorized into five main pillars - Vision, Speech, Language, Web Search, and Decision.
 
 ## Pre Deployment Steps
 
-Before proceesing to the deployment of the template, we need to perform the following steps.
+Before processing the deployment of the template, we need to perform the following steps.
 
 ### The template
 
 Don't let the size of the template scares you. The structure is very intuitive and once that you get the gist of it, you will see how easier your life will be regarding deploying resources to Azure.
 
-Those are the parameters on the template. Some of them are aready with the values, the ones that you need to inform are **cognitiveServiceName** and the **sku** in case that need a powerful service.
+Those are the parameters on the template. Some of them are already with the values, the ones that you need to inform are **cognitiveServiceName** and the **SKU** in case that need a powerful service.
 
 Parameter         | Suggested value     | Description
 :--------------- |:-------------      |:---------------------
@@ -74,7 +74,7 @@ Click on the Resource Group and there it's the resources
 
 ![Screen](./images/portal-resource.png)
 
-Congratulations! You have deployed the template succesfully.
+Congratulations! You have deployed the template successfully.
 
 ### Using the Portal
 
