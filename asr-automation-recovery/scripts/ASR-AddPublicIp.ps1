@@ -89,7 +89,7 @@ Try
  {
     foreach ($VM in $VMs)
     {
-        $ARMNic = Get-AzureRmResource -ResourceId $VM.NetworkInterfaceIDs[0]
+        $ARMNic = Get-AzureRmResource -ResourceId $VM.NetworkProfile.NetworkInterfaces[0].Id
         $NIC = Get-AzureRmNetworkInterface -Name $ARMNic.Name -ResourceGroupName $ARMNic.ResourceGroupName
         $PIP = New-AzureRmPublicIpAddress -Name $VM.Name -ResourceGroupName $RGName -Location $VM.Location -AllocationMethod Dynamic
         $NIC.IpConfigurations[0].PublicIpAddress = $PIP

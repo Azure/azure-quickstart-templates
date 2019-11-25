@@ -96,10 +96,13 @@ foreach ($SourcePath in $ArtifactFilePaths) {
                 # set the value in the table based on the value in the badge
                 switch ($v) {
                     "PASS" {
-                        $v = $true
+                        $v = "PASS"
                     }
                     "FAIL" {
-                        $v = $false
+                        $v = "FAIL"
+                    }
+                    "Not Supported" {
+                        $v = "Not Supported"
                     }
                     "Not Tested" {
                         $v = $null

@@ -13,6 +13,7 @@ You will need 2 service principals for the pipelines one each with the following
 ## KeyVault Scenarios for the Service Principal
 
 If using KeyVault scenarios in deployment the principal used for deploying must have the following roles assigned - these will be assigned by the Create-GEN-Artifacts.ps1 script if the objectId is passed to the script
+
 - Microsoft.KeyVault/vaults/deploy/action for deploying secrets from the vault
 - Contributor Role in order to be able to add secrets during deployment
 
@@ -27,10 +28,14 @@ The output of the script will be a JSON blob on the console, you can take that o
 ### Manually Creating the Remaining Artifacts
 
 For everything not in **Section 2** of the .config.json, you have two options:
+
 1. Leave all of these urls "as is" - the artifacts from the public QuickStart repo are generic and you should be able to use them in any generic test
 1. Create your own set of artifacts - you can to this by copying the public ones or simply creating your own as appropriate.
 
+### Creating a Service Principal for AKS
+
+If you need to test AKS a service principal needs to be created - until AKS supports Managed Identity.  For most tests, this Service Principal needs no permission but the secret needs to be passed to the deployment from the config.  See the [docs](https://docs.microsoft.com/en-us/azure/aks/kubernetes-service-principal) for details on how to create the principal and then add the tokens of your choosing to the .config.json
+
 ## Using Your Configuration
 
-Make sure your pipeline variable for the .config.json file, is updated to reference your config.  The file must be publicly accessible.
-
+Make sure your pipeline variable for the .config.json file, is updated to reference your config.  The file must be publicly accessible or you need to update the task the downloads it.
