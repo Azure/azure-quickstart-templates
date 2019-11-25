@@ -53,23 +53,32 @@ if ($r -eq $null) {
 
     Write-Host "No record found, adding a new one..."
     $results = New-Object -TypeName hashtable
+    Write-Host "BP Result"
     if (![string]::IsNullOrWhiteSpace($BestPracticeResult)) {
+        $BestPracticeResult = ($BestPracticeResult).ToString().ToLower().Replace("true", "PASS").Replace("false", "FAIL")
         $results.Add("BestPracticeResult", $BestPracticeResult)
     }
+    Write-Host "CredScan Result"
     if (![string]::IsNullOrWhiteSpace($CredScanResult)) {
+        $CredScanResult = ($CredScanResult).ToString().ToLower().Replace("true", "PASS").Replace("false", "FAIL")
         $results.Add("CredScanResult", $CredScanResult)
     }
     # set the values for Fairfax only if a result was passed
+    Write-Host "FF Result"
     if (![string]::IsNullOrWhiteSpace($FairfaxDeployment)) { 
+        $FairfaxDeployment = ($FairfaxDeployment).ToString().ToLower().Replace("true", "PASS").Replace("false", "FAIL")
         $results.Add("FairfaxDeployment", $FairfaxDeployment) 
         $results.Add("FairfaxLastTestDate", $FairfaxLastTestDate) 
     }
     # set the values for MAC only if a result was passed
+    Write-Host "Mac Result"
     if (![string]::IsNullOrWhiteSpace($PublicDeployment)) {
+        $PublicDeployment = ($PublicDeployment).ToString().ToLower().Replace("true", "PASS").Replace("false", "FAIL")
         $results.Add("PublicDeployment", $PublicDeployment) 
         $results.Add("PublicLastTestDate", $PublicLastTestDate) 
     }
     # add metadata columns
+    Write-Host "New Record: adding metadata"
     $results.Add("itemDisplayName", $Metadata.itemDisplayName)
     $results.Add("description", $Metadata.description)
     $results.Add("summary", $Metadata.summary)
@@ -81,12 +90,16 @@ if ($r -eq $null) {
         $results.Add($($ResultDeploymentParameter + "BuildNumber"), $ENV:BUILD_BUILDNUMBER)
     }
 
+    Write-Host "New Record: Dump results variable"
+
     $results | fl *
+    Write-Host "New Record: Add-AzTableRow"
 
     Add-AzTableRow -table $cloudTable `
         -partitionKey $PartitionKey `
         -rowKey $RowKey `
-        -property $results
+        -property $results `
+        -Verbose
 }
 else {
     # Update the existing row - need to check to make sure the columns exist
@@ -229,11 +242,13 @@ else {
 }
 
 if ($r.FairfaxDeployment -ne $null) {
+    # TODO can be removed when table is updated to string
     $FairfaxDeployment = ($r.FairfaxDeployment).ToString().ToLower().Replace("true", "PASS").Replace("false", "FAIL")
 }
 switch ($FairfaxDeployment) {
     "PASS" { $FairfaxDeploymentColor = "brightgreen" }
     "FAIL" { $FairfaxDeploymentColor = "red" }
+    "Not Supported" {$FairfaxDeploymentColor = "yellow"}
     default {
         $FairfaxDeployment = $na
         $FairfaxDeploymentColor = "inactive"    
@@ -241,11 +256,13 @@ switch ($FairfaxDeployment) {
 }
 
 if ($r.PublicDeployment -ne $null) {
+    # TODO can be removed when table is updated to string
     $PublicDeployment = ($r.PublicDeployment).ToString().ToLower().Replace("true", "PASS").Replace("false", "FAIL")
 }
 switch ($PublicDeployment) {
     "PASS" { $PublicDeploymentColor = "brightgreen" }
     "FAIL" { $PublicDeploymentColor = "red" }
+    "Not Supported" {$PublicDeploymentColor = "yellow"}
     default {
         $PublicDeployment = $na
         $PublicDeploymentColor = "inactive"    
@@ -253,6 +270,7 @@ switch ($PublicDeployment) {
 }
 
 if ($r.BestPracticeResult -ne $null) {
+    # TODO can be removed when table is updated to string
     $BestPracticeResult = ($r.BestPracticeResult).ToString().ToLower().Replace("true", "PASS").Replace("false", "FAIL")
 }
 switch ($BestPracticeResult) {
@@ -265,6 +283,7 @@ switch ($BestPracticeResult) {
 }
 
 if ($r.CredScanResult -ne $null) {
+    # TODO can be removed when table is updated to string
     $CredScanResult = ($r.CredScanResult).ToString().ToLower().Replace("true", "PASS").Replace("false", "FAIL")
 }
 switch ($CredScanResult) {
@@ -304,6 +323,7 @@ $badges = @(
     }
 )
 
+Write-Host "Uploading Badges..."
 foreach ($badge in $badges) {
     (Invoke-WebRequest -Uri $($badge.url)).Content | Set-Content -Path $badge.filename -Force
     <#
