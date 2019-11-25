@@ -37,6 +37,20 @@ To test the deployed cluster, you'll need an SSH-accessible VM on the subnet tha
 
 If you need or want to create a highly available NFS cluster in your own templates, you can do so by deploying the templates in this directory. However, you can just copy the `nested/nfs-ha.json` and the `nested/nfs-ha-vm.json` template files only to your own nested templates directory and deployed the `nested/nfs-ha.json` directly, instead of copying and deployging the `azuredeploy.json` in this directory. That's because the `azuredeploy.json` in this directory is just a shell mainly for the Azure quickstart repo's CI (that requires a subnet to be provided, so one needs to be created in CI using the `azuredeploy.json` and `nested/nfs-ha-vnet-default.json`) In your own templates, a subnet should be created in advance and its resource ID should be provided as a template parameter. See the [Moodle-on-Azure](https://github.com/Azure/Moodle) [template](https://github.com/Azure/Moodle/blob/master/azuredeploy.json) (search for `nfsHaTemplate` deployment).
 
+### Deploying the whole Infrastrucuture at once
+
+In order to deploy the whole nfs server infrastructure, you will need to deploy the
+solutions on the ```prereqs``` folder, get its outputs and use as inputs in the
+```nfs-ha.json``` file, that is inside the ```nested``` folder. In order to help in
+this process, we created a script called ```deploy_everything.sh``` inside the
+```scripts``` folder that does this job. In order to run this script, inside
+the ```scripts``` folder, run:
+
+``` shell
+chmod +x deploy_everything.sh
+./deploy_everything.sh <name_of_the_resource_group_to_deploy>
+```
+
 ## Brief Explanation
 
 As illustrated in the cluster diagram above, the deployed HA-NFS cluster consists of 2 Ubuntu VMs and one Azure load balancer (internal). Each cluster is configured with the following software stack:
