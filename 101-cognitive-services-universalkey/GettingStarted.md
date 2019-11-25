@@ -1,6 +1,6 @@
-# Cognitive services
+# Cognitive Services Universal Key
 
-The purpose of this ARM Template is **deploy a General Cognitive Service**.
+The purpose of this ARM Template is **deploy a Cognitive Services Universal Key**.
 
 Let's understand a bit better how all this work.
 
@@ -102,7 +102,7 @@ Select [Agree] and click on [Purchase].
 
 As you can see, it's deploying.
 
-After a couple of minutes, voilà, you have your Cognitive Service deployed.
+After a couple of minutes, voilà, you have your Cognitive Services Universal Key deployed.
 
 ![Screen](./images/azportaldeploy3.png)
 
