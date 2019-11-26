@@ -1,4 +1,4 @@
-# Linux Ubuntu 18.04-LTS
+# Very simple deployment of a Linux Ubuntu VM
 
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-vm-simple-linux/PublicLastTestDate.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-vm-simple-linux/PublicDeployment.svg" />&nbsp;
