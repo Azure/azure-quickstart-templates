@@ -28,12 +28,19 @@
                     "description": "Location for all resources."  
             }  
         },
-        "Cpu-Gpu": {
+        "vmSize": {
             "type": "string",
-            "defaultValue": "cpu",
+            "defaultValue": "CPU-4GB",
             "allowedValues": [
-                "cpu",
-                "gpu"
+                "CPU-1GB",
+                "CPU-2GB",
+                "CPU-4GB",
+                "CPU-7GB",
+                "CPU-8GB",
+                "CPU-14GB",
+                "CPU-16GB",
+                "CPU-32GB",
+                "GPU-56GB"
             ],
             "metadata": {
                 "description": "Choose between CPU or GPU processing"
@@ -62,8 +69,7 @@
         }
     },
     "variables": {
-        "networkInterfaceName": "[concat(parameters('vmName'),'NetInt')]",
-        "virtualMachineName": "[parameters('vmName')]",
+        "networkInterfaceName": "[concat(variables('vmName'),'NetInt')]",
         "publicIpAddressName": "[concat(parameters('vmName'), 'PublicIP' )]",
         "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
         "nsgId": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]",
@@ -71,9 +77,17 @@
         "storageAccountType": "Standard_LRS",
         "storageAccountKind": "Storage",
         "vmSize": {
-            "cpu": "Standard_DS1_v2",
-            "gpu": "Standard_NC6_Promo"
-        }
+            "CPU-1GB": "Standard_B1s",
+            "CPU-2GB": "Standard_A1_v2",
+            "CPU-4GB": "Standard_A2_v2",
+            "CPU-7GB": "Standard_DS2_v2",
+            "CPU-8GB": "Standard_D2s_v3",
+            "CPU-14GB": "Standard_DS3_v2",
+            "CPU-16GB": "Standard_D4s_v3",
+            "CPU-32GB": "Standard_A4m_v2",
+            "GPU-56GB": "Standard_NC6_Promo"
+        },
+        "vmName": "[concat(parameters('vmName'),'-', parameters('vmSize'))]"
     },
     "resources": [
         {
@@ -217,7 +231,7 @@
         {
             "type": "Microsoft.Compute/virtualMachines",
             "apiVersion": "2019-03-01",
-            "name": "[concat(variables('virtualMachineName'),'-', parameters('Cpu-Gpu'))]",
+            "name": "[variables('vmName')]",
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/networkInterfaces/', variables('networkInterfaceName'))]",
@@ -225,7 +239,7 @@
             ],
             "properties": {
                 "hardwareProfile": {
-                    "vmSize": "[variables('vmSize')[parameters('Cpu-Gpu')]]"
+                    "vmSize": "[variables('vmSize')[parameters('vmSize')]]"
                 },
                 "storageProfile": {
                     "osDisk": {
@@ -249,12 +263,35 @@
                     ]
                 },
                 "osProfile": {
-                    "computerName": "[variables('virtualMachineName')]",
+                    "computerName": "[parameters('vmName')]",
                     "adminUsername": "[parameters('adminUsername')]",
-                    "adminPassword": "[parameters('adminPassword')]",
-                    "customData": "[base64(concat('#!/bin/bash \n curl https://raw.githubusercontent.com/jupyterhub/the-littlest-jupyterhub/master/bootstrap/bootstrap.py | sudo python3 - --admin ', parameters('adminUsername'),' >> /var/log/TLJH_install.log 2>&1\n'))]"
+                    "adminPassword": "[parameters('adminPassword')]"
                 }
-            }
+            },
+            "resources":[
+            {
+                "name": "my-custom-script",
+                "type": "extensions",
+                "location": "[resourceGroup().location]",
+                "apiVersion": "2018-10-01",
+                "dependsOn": [
+                    "[variables('vmName')]"
+                ],
+                "tags": {
+                  "displayName": "Execute my custom script"
+                },
+                "properties": {
+                  "publisher": "Microsoft.Azure.Extensions",
+                  "type": "CustomScript",
+                  "typeHandlerVersion": "2.0",
+                  "autoUpgradeMinorVersion": true,
+                  "protectedSettings": {
+                    "commandToExecute": "[concat('./install.sh ', parameters('adminUsername'))]",
+                    "fileUris": ["https://raw.githubusercontent.com/jose-mart/templates/master/101-vm-linux-Jupyterhub/scripts/install.sh"]  
+                  }
+                }
+              }
+            ]
         }
     ],
     "outputs": {
