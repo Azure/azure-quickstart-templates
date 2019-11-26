@@ -48,3 +48,8 @@ Write-Verbose "Post settings for the swapfile(s)"
 wmic pagefile list /format:list
 
 Write-Verbose "Settings will be effective after the next reboot."
+
+#
+# required to satisfy the Travis CI QA check at Quicktemplates
+#
+exit 0
