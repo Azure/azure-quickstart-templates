@@ -70,6 +70,7 @@
     },
     "variables": {
         "networkInterfaceName": "[concat(parameters('vmName'),'NetInt')]",
+        "virtualMachineName": "[parameters('vmName')]",
         "publicIpAddressName": "[concat(parameters('vmName'), 'PublicIP' )]",
         "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
         "nsgId": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]",
@@ -86,8 +87,7 @@
             "CPU-16GB": "Standard_D4s_v3",
             "CPU-32GB": "Standard_A4m_v2",
             "GPU-56GB": "Standard_NC6_Promo"
-        },
-        "vmName": "[concat(parameters('vmName'),'-', parameters('vmSize'))]"
+        }
     },
     "resources": [
         {
@@ -231,7 +231,7 @@
         {
             "type": "Microsoft.Compute/virtualMachines",
             "apiVersion": "2019-03-01",
-            "name": "[variables('vmName')]",
+            "name": "[concat(variables('virtualMachineName'),'-', parameters('vmSize'))]",
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/networkInterfaces/', variables('networkInterfaceName'))]",
@@ -263,35 +263,12 @@
                     ]
                 },
                 "osProfile": {
-                    "computerName": "[parameters('vmName')]",
+                    "computerName": "[variables('virtualMachineName')]",
                     "adminUsername": "[parameters('adminUsername')]",
-                    "adminPassword": "[parameters('adminPassword')]"
+                    "adminPassword": "[parameters('adminPassword')]",
+                    "customData": "[base64(concat('#!/bin/bash \n curl https://raw.githubusercontent.com/jupyterhub/the-littlest-jupyterhub/master/bootstrap/bootstrap.py | sudo python3 - --admin ', parameters('adminUsername'),' >> /var/log/TLJH_install.log 2>&1\n'))]"
                 }
-            },
-            "resources":[
-            {
-                "name": "my-custom-script",
-                "type": "extensions",
-                "location": "[parameters('location')]",
-                "apiVersion": "2018-10-01",
-                "dependsOn": [
-                    "[variables('vmName')]"
-                ],
-                "tags": {
-                  "displayName": "Execute my custom script"
-                },
-                "properties": {
-                  "publisher": "Microsoft.Azure.Extensions",
-                  "type": "CustomScript",
-                  "typeHandlerVersion": "2.0",
-                  "autoUpgradeMinorVersion": true,
-                  "protectedSettings": {
-                    "commandToExecute": "[concat('./install.sh ', parameters('adminUsername'))]",
-                    "fileUris": ["https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-vm-linux-Jupyterhub/scripts/install.sh"]  
-                  }
-                }
-              }
-            ]
+            }
         }
     ],
     "outputs": {
