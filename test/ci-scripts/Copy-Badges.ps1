@@ -12,12 +12,13 @@ param(
     [string]$StorageAccountName = "azurequickstartsservice",
     [string]$TableName = "QuickStartsMetadataService",
     [string]$TableNamePRs = "QuickStartsMetadataServicePRs",
-    [Parameter(mandatory=$true)]$StorageAccountKey
+    [Parameter(mandatory = $true)]$StorageAccountKey
 )
 
-if([string]::IsNullOrWhiteSpace($SampleName)){
+if ([string]::IsNullOrWhiteSpace($SampleName)) {
     Write-Error "SampleName is empty"
-} else {
+}
+else {
     Write-Host "SampleName: $SampleName"
 }
 
@@ -51,11 +52,19 @@ else {
 Write-Host "Updating LIVE table with..."
 $r | fl *
 
-$p = @{}
-foreach($i in $r.PSObject.Properties){
-
-    if($i.Name -ne "Etag"){
-        $p.Add($i.Name, $i.Value)
+$p = @{ }
+foreach ($i in $r.PSObject.Properties) {
+    if ($i.Name -ne "Etag") {
+        if ($i.value -eq "true") {
+            $newValue = "PASS"
+        }
+        elseif ($i.value -eq "false") {
+            $newValue = "FAIL"
+        }
+        else { 
+            $newValue = $i.Value
+        }
+        $p.Add($i.Name, $newValue)
     }
 }
 
@@ -65,10 +74,10 @@ $p | out-string
 # TODO if there is no row in the PR table, this won't end well...
 Write-Host "Add/Update Row in live table..."
 Add-AzTableRow -table $cloudTable `
-               -partitionKey $r.partitionKey `
-               -rowKey $r.rowKey `
-               -property $p `
-               -UpdateExisting
+    -partitionKey $r.partitionKey `
+    -rowKey $r.rowKey `
+    -property $p `
+    -UpdateExisting
                
 Write-Host "Removing row from PR table..."
 #$r | Remove-AzTableRow -Table $cloudTablePRs
