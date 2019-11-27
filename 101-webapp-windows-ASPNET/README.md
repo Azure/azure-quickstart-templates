@@ -1,7 +1,7 @@
 # Deploy an ASP.NET app service
 
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-windows-ASPNET/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-with-aspnet/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-windows-ASPNET/PublicDeployment.svg" />&nbsp;
 
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-windows-ASPNET/FairfaxLastTestDate.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-windows-ASPNET/FairfaxDeployment.svg" />&nbsp;
