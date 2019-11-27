@@ -1,29 +1,29 @@
-# Cognitive Services Universal Key
+# Cognitive Services Computer Vision API
 
-The purpose of this ARM Template is **deploy a Cognitive Services Universal Key**.
+The purpose of this ARM Template is **deploy a Cognitive Service Vision Service**.
 
 Let's understand a bit better how all this work.
 
 ## Overview
 
-Azure Cognitive Services are APIs, SDKs, and services available to help developers build intelligent applications without having direct AI or data science skills or knowledge. Azure Cognitive Services enable developers to easily add cognitive features into their applications. The goal of Azure Cognitive Services is to help developers create applications that can see, hear, speak, understand, and even begin to reason. The catalogue of services within Azure Cognitive Services can be categorized into five main pillars - Vision, Speech, Language, Web Search, and Decision.
+Azure Cognitive Services are APIs, SDKs, and services available to help developers build intelligent applications without having direct AI or data science skills or knowledge. Azure Cognitive Services enable developers to easily add cognitive features into their applications. The goal of Azure Cognitive Services is to help developers create applications that can see, hear, speak, understand, and even begin to reason. The catalog of services within Azure Cognitive Services can be categorized into five main pillars - Vision, Speech, Language, Web Search, and Decision.
 
 ## Pre Deployment Steps
 
-Before processing the deployment of the template, we need to perform the following steps.
+Before processing to the deployment of the template, we need to perform the following steps.
 
 ### The template
 
 Don't let the size of the template scares you. The structure is very intuitive and once that you get the gist of it, you will see how easier your life will be regarding deploying resources to Azure.
 
-Those are the parameters on the template. Some of them are already with the values, the ones that you need to inform are **cognitiveServiceName** and the **SKU** in case that need a powerful service.
+Those are the parameters on the template. Some of them are already with the values, the ones that you need to inform are **cognitiveServiceName** and the **sku** in case that need a powerful service.
 
 Parameter         | Suggested value     | Description
 :--------------- |:-------------      |:---------------------
 **cognitiveServiceName** |*location*-*name*-*enviroment* i.e.:  uks-name-tst  | A globally unique name of azure cognitive services. I recommend you to use the notation above, that will help to create a unique name for your Cognitive Service. The name must use alphanumeric and underscore characters only. There is a 35 character limit to this field.
 **location**| The default location | Select the geographic location for your resource group.
 **Resource Group**| your resource group |  That is the Resource Group that you need to deploy your resources.
-**sku**| S0  |  Sku is an identifier for the product that we need. F0 is for the most basic characteristics.
+**sku**| F0  |  Sku is an identifier for the product that we need. F0 is for the most basic characteristics.
 
 ## Deployment
 
@@ -60,7 +60,7 @@ To create the Resource group, type the command:
 
 ![Screen](./images/az-groupcreate.png)
 
-Super simple, right? Now that we have our **Resource Group** created, let's deploy the **Cognitive Service**.
+Super simple, right? Now that we have our **Resource Group** created, let's deploy the **Cognitive Service Translation**.
 
 ![Screen](./images/az-group-deploy.png)
 
@@ -102,7 +102,7 @@ Select [Agree] and click on [Purchase].
 
 As you can see, it's deploying.
 
-After a couple of minutes, voilà, you have your Cognitive Services Universal Key deployed.
+After a couple of minutes, voilà, you have your Cognitive Service deployed.
 
 ![Screen](./images/azportaldeploy3.png)
 
@@ -110,10 +110,10 @@ Go to the Resource. Repeat the test that you have done before.
 
 **p.s.: Pretty easy to create resources on Azure, right? But if you are the sort of IT guy that always loves automation, here is the surprise. Just click on the button below and it will automatically deploy the VM through the  Azure Portal.**
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-cognitive-services-universalkey%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-cognitive-services-Computer-vision-API%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-cognitive-services-universalkey%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-cognitive-services-Computer-vision-API%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
