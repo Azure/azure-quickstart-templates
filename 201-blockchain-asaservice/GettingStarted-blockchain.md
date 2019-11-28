@@ -100,6 +100,8 @@ To create a Resource Group, you need a name and a location for your Resource Gro
 
 For a list of locations, type: **az account list-locations**
 
+The Blockchain Service isn't yet available for all locations. Check the availability of locations [here](https://azure.microsoft.com/en-gb/global-infrastructure/services/?products=).
+
 To create the Resource group, type the command:
 
 #### az group create --name "resource-group" --location "your location"
