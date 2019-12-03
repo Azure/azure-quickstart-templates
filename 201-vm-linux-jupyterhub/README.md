@@ -1,4 +1,4 @@
-# Jupyter Server Linux Ubuntu 18.04-LTS
+# JupyterHub Classroom Server Linux Ubuntu 18.04-LTS
 
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vm-linux-Jupyterhub/PublicLastTestDate.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vm-linux-Jupyterhub/PublicDeployment.svg" />&nbsp;
