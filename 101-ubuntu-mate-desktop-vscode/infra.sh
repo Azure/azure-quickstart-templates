@@ -39,15 +39,13 @@ echo mate-session >~/.xsession
 
 sudo service xrdp restart
 
-# FIxes the issue with Ubuntu desktop being blank.
+# Fixes the issue with Ubuntu desktop being blank.
 
 sudo sed -i -e 's/console/anybody/g' /etc/X11/Xwrapper.config
-
 
 logger -t devvm "Mate Desktop configured. $?"
 
 logger -t devvm "Installing VSCode: $?"
-
 
 curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg
 
