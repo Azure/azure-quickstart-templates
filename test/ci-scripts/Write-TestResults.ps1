@@ -62,11 +62,14 @@ if($r -ne $null -and $AgentJobStatus -eq "Canceled" -and $BuildReason -ne "PullR
     exit
 }
 
-$BestPracticeResult = ($BestPracticeResult).ToString().ToLower().Replace("true", "PASS").Replace("false", "FAIL")
-$CredScanResult = ($CredScanResult).ToString().ToLower().Replace("true", "PASS").Replace("false", "FAIL")
-$FairfaxDeployment = ($FairfaxDeployment).ToString().ToLower().Replace("true", "PASS").Replace("false", "FAIL")
-$PublicDeployment = ($PublicDeployment).ToString().ToLower().Replace("true", "PASS").Replace("false", "FAIL")
-
+$BestPracticeResult = $BestPracticeResult -ireplace [regex]::Escape("true"), "PASS"
+$BestPracticeResult = $BestPracticeResult -ireplace [regex]::Escape("false"), "FAIL"
+$CredScanResult = $CredScanResult -ireplace [regex]::Escape("true"), "PASS"
+$CredScanResult = $CredScanResult -ireplace [regex]::Escape("false"), "FAIL"
+$FairfaxDeployment = $FairfaxDeployment -ireplace [regex]::Escape("true"), "PASS"
+$FairfaxDeployment = $FairfaxDeployment -ireplace [regex]::Escape("false"), "FAIL"
+$PublicDeployment = $PublicDeployment -ireplace [regex]::Escape("true"), "PASS"
+$PublicDeployment = $PublicDeployment -ireplace [regex]::Escape("false"), "FAIL"
 
 # if the record doesn't exist, this is probably a new sample and needs to be added (or we just cleaned the table)
 if ($r -eq $null) {
@@ -105,6 +108,7 @@ if ($r -eq $null) {
     if ($BuildReason -eq "PullRequest") {
         $results.Add("status", $BuildReason)
         $results.Add($($ResultDeploymentParameter + "BuildNumber"), $ENV:BUILD_BUILDNUMBER)
+        $results.Add("pr", $ENV:SYSTEM_PULLREQUEST_PULLREQUESTID)
     }
 
     Write-Host "New Record: Dump results variable"

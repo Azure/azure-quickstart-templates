@@ -80,5 +80,5 @@ Add-AzTableRow -table $cloudTable `
     -UpdateExisting
                
 Write-Host "Removing row from PR table..."
-#$r | Remove-AzTableRow -Table $cloudTablePRs
+$r | Remove-AzTableRow -Table $cloudTablePRs
 
