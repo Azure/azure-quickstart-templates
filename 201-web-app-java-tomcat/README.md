@@ -13,5 +13,10 @@
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 
-This template creates a web app on azure with Java 8 and Tomcat 8 enabled allowing you to run Java applications in Azure.  Template was authored by [Donovan Brown](http://twitter.com/DonovanBrown) of Microsoft. 
+This template deploys a simple Linux Web Application with Java 13 and Tomcat 9 enabled allowing you to run Java applications in Azure.  
 
+ The WebPlan is settled for Consumption. For more information about [hosting Plans](https://azure.microsoft.com/pricing/details/app-service/linux)
+ 
+ As a default, this template deploys the web app using the F1" (free tier) as the pricing tier for the hosting plan.
+ 
+ It is ideal for development and test environments, for production environments you must consider different plans.
