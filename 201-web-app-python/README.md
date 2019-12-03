@@ -1,4 +1,4 @@
-# Create a web app on Azure with Python enabled.
+# Create a web app on Azure with Python 3.7 enabled.
 
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-web-app-python/PublicLastTestDate.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-web-app-python/PublicDeployment.svg" />&nbsp;
