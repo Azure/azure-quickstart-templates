@@ -36,25 +36,24 @@
             ConfigurationMode = 'ApplyOnly'
             RebootNodeIfNeeded = $true
         }
-
-        AddBuiltinPermission AddSQLPermission
-        {
-            Ensure = "Present"
-        }
-
         SetCustomPagingFile PagingSettings
         {
             Drive       = 'C:'
             InitialSize = '8192'
             MaximumSize = '8192'
-            DependsOn = "[AddBuiltinPermission]AddSQLPermission"
+        }
+        
+        AddBuiltinPermission AddSQLPermission
+        {
+            Ensure = "Present"
+            DependsOn = "[SetCustomPagingFile]PagingSettings"
         }
 
         InstallFeatureForSCCM InstallFeature
         {
             NAME = "PS"
             Role = "Site Server"
-            DependsOn = "[SetCustomPagingFile]PagingSettings"
+            DependsOn = "[AddBuiltinPermission]AddSQLPermission"
         }
 
         InstallADK ADKInstall

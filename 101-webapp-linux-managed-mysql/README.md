@@ -17,10 +17,9 @@ This template provides a easy way to deploy **Web App and MySQL app** in Azure A
 
 If you are new to **Web App Services**, see:
 
-- [Web App](https://azure.microsoft.com/en-gb/services/app-service/web/)
-- [Web App Documentation](https://docs.microsoft.com/en-gb/azure/app-service/).
-- [PHP and MySQL](https://docs.microsoft.com/en-gb/azure/app-service/containers/tutorial-php-mysql-app)
-- [Template reference](https://docs.microsoft.com/azure/templates/microsoft.compute/allversions)
+- [Microsoft MySQL Documentation](https://docs.microsoft.com/azure/mysql/)
+- [Microsoft Learn Resources](https://docs.microsoft.com/learn/browse/?products=azure-app-service )
+- [Microsoft MySQL Pricing](https://azure.microsoft.com/pricing/details/mysql/)
 
 If you are new to template deployment, see:
 
