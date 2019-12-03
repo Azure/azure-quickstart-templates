@@ -59,25 +59,31 @@
             DependsOn = "[InstallFeatureForSCCM]InstallFeature"
         }
 
+        InstallCA InstallCA
+        {
+            HashAlgorithm = "SHA256"
+            DependsOn = "[SetupDomain]FirstDS"
+        }
+
         VerifyComputerJoinDomain WaitForPS
         {
             ComputerName = $PSName
             Ensure = "Present"
-            DependsOn = "[SetupDomain]FirstDS"
+            DependsOn = "[InstallCA]InstallCA"
         }
 
         VerifyComputerJoinDomain WaitForDPMP
         {
             ComputerName = $DPMPName
             Ensure = "Present"
-            DependsOn = "[SetupDomain]FirstDS"
+            DependsOn = "[InstallCA]InstallCA"
         }
 
         VerifyComputerJoinDomain WaitForClient
         {
             ComputerName = $ClientName
             Ensure = "Present"
-            DependsOn = "[SetupDomain]FirstDS"
+            DependsOn = "[InstallCA]InstallCA"
         }
 
         File ShareFolder

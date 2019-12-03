@@ -1,5 +1,14 @@
 # Puppet Enterprise on Azure with RHEL & Windows Nodes 
 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/puppet-enterprise-rhel-win/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/puppet-enterprise-rhel-win/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/puppet-enterprise-rhel-win/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/puppet-enterprise-rhel-win/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/puppet-enterprise-rhel-win/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/puppet-enterprise-rhel-win/CredScanResult.svg" />&nbsp;
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fpuppet-enterprise-rhel-win%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
@@ -42,7 +51,6 @@ This template will deploy:
 -	Multiple Windows Puppet Agent Virtual Machines (Windows Server 2016 Datacenter)
 -	Installation and configuration of Puppet Master Server and Agents
 
-
 ![Deployment Solution Architecture](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/puppet-enterprise-rhel-win/images/puppet-enterprise-architecture.png?raw=true)
 
 ## Licenses and Costs 
@@ -54,7 +62,6 @@ A complimentary license for Puppet Enterprise is included with this template whi
 ## Prerequisites 
 
 Azure Subscription with specified payment method (RHEL 7.2 & Puppet is a market place product and requires payment method to be specified in Azure Subscription)
-
 
 ## Deployment Steps  
 
@@ -71,7 +78,7 @@ Build your Puppet Enterprise environment on Azure in a few simple steps:
 ## Deployment Time
 The deployment takes about 20 minutes to complete. 
 
-
 ## Support 
 
 For any support related questions, issues or customization requirements, please contact info@spektrasystems.com
+

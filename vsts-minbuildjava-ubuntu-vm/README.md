@@ -1,10 +1,19 @@
 # VM-Ubuntu - Team Services Build Agent and Open JDK 7 and 8 with Maven installation
 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/vsts-minbuildjava-ubuntu-vm/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/vsts-minbuildjava-ubuntu-vm/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/vsts-minbuildjava-ubuntu-vm/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/vsts-minbuildjava-ubuntu-vm/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/vsts-minbuildjava-ubuntu-vm/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/vsts-minbuildjava-ubuntu-vm/CredScanResult.svg" />&nbsp;
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fvsts-minbuildjava-ubuntu-vm%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fvsts-minbuildjava-ubuntu-vm%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
 This template allows you to create an Ubuntu VM with OpenJDK and Vistual Studio Team Services Linux Build Agent.
@@ -31,13 +40,11 @@ To create the VM, you will need to:
 
 4. Decide on a name for your build agent (i.e. the name for your agent within the above pool).
 
-
 ## Verifying the Agent
 Once the VM is successfully provisioned, Team Services build agent installation and initialization can be verified by accessing the the *Agent pools* tab under the Control panel for the Team Services account
 (e.g. https://myaccount.visualstudio.com/_admin/_AgentPool).  You should be able to click on the build agent pool (from #3 above)
 and see your agent listed by the name (used in #4 above).  If all is well, the colored bar to the left of the pool name should be green.
 If the colored bar is red, or if the agent name does not appear in the specified pool, see below for debugging hints.
-
 
 ## Debugging Agent Failures
 If the Azure portal under *Virtual machines* shows that your VM is *Running* (in the Status column) but either the build agent name does not 
@@ -51,4 +58,5 @@ in starting up the VSTS build agent.  The most common mistake is not having the 
 * If the agent started sucessfully and is running but an expected tool or software is not working from a build task (e.g. a build task can't find
 maven or java or ...), then you can check the file *"install.progress.txt"* in the top level directory to see if one of the packages
 may have failed to install or had errors (**cat install.progress.txt**).  
+
 

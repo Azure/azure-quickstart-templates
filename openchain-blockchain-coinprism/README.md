@@ -1,10 +1,19 @@
 # Deploying Openchain on Microsoft Azure
 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/openchain-blockchain-coinprism/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/openchain-blockchain-coinprism/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/openchain-blockchain-coinprism/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/openchain-blockchain-coinprism/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/openchain-blockchain-coinprism/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/openchain-blockchain-coinprism/CredScanResult.svg" />&nbsp;
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fopenchain-blockchain-coinprism%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fopenchain-blockchain-coinprism%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
 Openchain is an open source distributed ledger technology. It is suited for organizations wishing to issue and manage digital assets in a robust, secure and scalable way.
@@ -45,3 +54,4 @@ If you are connecting to this wallet endpoint for the first time, you will be pr
 ## Configure the ledger information
 
 Go to the Advanced tab and click Edit Ledger Info on the left. The screen will show you a form that will let you edit the ledger name and other fields stored in the [info record](https://docs.openchain.org/en/latest/ledger-rules/general.html#ledger-info-record).
+

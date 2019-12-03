@@ -30,8 +30,20 @@ if ($prereqOutputsFileName) { #Test-Path doesn't work on an empty string
     }
 }
 
-Write-Host "Using parameter file: $TemplateParametersFile"
+# if a different param file value has been passed (e.g. for Fairfax) look for that file, if it's not found, revert to the default
 $TemplateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $TemplateParametersFile))
+Write-Host "Searching for parameter file: $TemplateParametersFile"
+
+if (!(Test-Path $TemplateParametersFile)) {
+    # if the requested file has \prereqs\ in the path the default filename is different
+    if($TemplateParametersFile -like "*\prereqs\*"){
+        $defaultParamFile = "\prereq.azuredeploy.parameters.json"
+    }else{
+        $defaultParamFile = "\azuredeploy.parameters.json"
+    }
+    $TemplateParametersFile = (Split-Path $TemplateParametersFile) + $defaultParamFile
+    Write-Host "Param file not found, using: $TemplateParametersFile"
+}
 
 $JsonParameters = Get-Content $TemplateParametersFile -Raw | ConvertFrom-Json
 if (($JsonParameters | Get-Member -Type NoteProperty 'parameters') -ne $null) {
@@ -67,6 +79,9 @@ foreach ($p in $JsonParameters.psObject.Properties) {
             }
         }
         
+        if($v -eq $null){
+            Write-Error "Could not find `"$($p.value.value)`" token in .config.json"
+        }
         $JsonParameters.$($p.name).value = $v
 
     }
@@ -76,8 +91,20 @@ foreach ($p in $JsonParameters.psObject.Properties) {
         $token = $p.Value.value.Replace("GET-PREREQ-", "")
         #Write-Host "Token: $token"
         $v = $PreReqConfig.$token.value
+        if($v -eq $null){
+            Write-Error "Could not find `"$($p.value.value)`" token in prereq outputs"
+        }
         $JsonParameters.$($p.name).value = $v
-    
+
+    }
+    # is this a reference parameter
+    elseif ($p.value.reference -like "GEN-*"){
+        $token = $p.value.reference.Replace("GEN-", "")
+        $v = $config.$token
+        if($v -eq $null){
+            Write-Error "Could not find reference parameter `"$($p.value.reference)`" token in .config.json"
+        }
+        $JsonParameters.$($p.name) = $v
     }
 }
 

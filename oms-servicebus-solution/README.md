@@ -1,7 +1,16 @@
 # Azure Service Bus Monitoring
 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-servicebus-solution/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-servicebus-solution/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-servicebus-solution/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-servicebus-solution/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-servicebus-solution/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-servicebus-solution/CredScanResult.svg" />&nbsp;
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Foms-servicebus-solution%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 
 This community based solution (not offically supported by Microsoft) will allow you to capture your Azure Service Bus metrics and visualize them in Operations Management Suite (Log Analytics). This solution leverages an automation runbook in Azure Automation, the Log Analytics Ingestion API, together with Log Analytics views to present data about all your Azure Service Bus instances in a single Log Analytics workspace. 
@@ -18,7 +27,6 @@ This community based solution (not offically supported by Microsoft) will allow 
 + The scheduleIngestion runbook and its schedule can be removed after deployment, the schedule will be expired
 + When the 6 schedules for the servicebusIngestion runbook have been created, the runbook will run according the schedule - in worse case scenario after 10 mins after the creation of the schedules
 + The first time that the servicebusIngestion runbook runs, it can take up to 30mins for the data to be ingested, during this time you will see the home tile saying "Waiting on initial service bus ingestion"
-
 
 **Updates in this version (May 2017):**
 + Converted to ARM PowerShell cmdlets - no longer requires a classic Azure Automation RunAs account (still requires SPN RunAs certificate)
@@ -61,7 +69,6 @@ Click the button that says **Deploy to Azure**. This will launch the ARM Templat
 
 ![alt text](images/step3deploy.png "Deployment in the portal")
 
-
 **Deployment Settings**
 
 1. Provide the name of the resource group in which your new Azure Automation account resides **so select "Use existing"** . The resource group location will be automatically filled in.
@@ -89,7 +96,6 @@ To do so, you simply have to deploy this template and provide the workspace Id a
 
 Due to specific dependencies related to modules, variables and more, the solution requires that you create additional Azure Automation accounts when scaling the solution to collect data from multiple subscriptions. You must create an Automation Account in the Azure portal with the default settings so that the SPN account will be created.
 
-
 - **OMS workspace Id and Key**
 
 This template will have parameters that will ask for the WorkspaceID and the WorkspaceKey, so that the runbooks are able to authenticate and ingest data.
@@ -105,8 +111,7 @@ Once you have completed the pre-reqs, you can click on the deploy button below
 4. Enter an unique jobID (use PowerShell's New-Guid command to generate one)
 5. Accept the terms and conditions and click on Purchase
 
-[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Foms-servicebus-solution%2Fnestedtemplates%2FaddMultipleSubscriptions.json) 
-
+[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Foms-servicebus-solution%2Fnestedtemplates%2FaddMultipleSubscriptions.json) 
 
 Once deployed you should start to see data from your additional subscriptions flowing into your workspace.
 
@@ -116,4 +121,5 @@ Since the May 2017 release is a major update (the custom log schema has been cha
 If you have deployed the May 2017 update and you would like to re-deploy make sure that you remove the schedules from the following runbooks **before** deploying:
 + scheduleIngestion (1 schedule)
 + servicebusIngestion (6 schedules)
+
 

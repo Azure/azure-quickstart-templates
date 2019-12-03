@@ -1,5 +1,14 @@
 # eShop Website with ILB ASE
 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/e-shop-website-with-ilb-ase/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/e-shop-website-with-ilb-ase/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/e-shop-website-with-ilb-ase/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/e-shop-website-with-ilb-ase/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/e-shop-website-with-ilb-ase/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/e-shop-website-with-ilb-ase/CredScanResult.svg" />&nbsp;
+
 **Table of Contents**
 
 [Architecture](#architecture)
@@ -19,7 +28,6 @@
 
 
 * [Add DNS Records](#add-dns-records)
-
 
 * [Add Reply URL to the Admin Web App](#add-reply-url-to-the-admin-web-app)
 
@@ -90,7 +98,7 @@ It takes about 70 minutes to create a new App Service Environment in Azure.
 1. Click the **Deploy to Azure** Button:
 
    <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fe-shop-website-with-ilb-ase%2Fprereqs%2Fprereq.azuredeploy.json" target="_blank">
-     <img src="http://azuredeploy.net/deploybutton.png"/>
+     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
    </a>
 
 2. Fill in the values on the custom deployment page:
@@ -161,11 +169,11 @@ After the App Service Environment is deployed, follow the steps below to deploy 
 2. Click the **Deploy to Azure** Button:
 
    <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fe-shop-website-with-ilb-ase%2Fazuredeploy.json" target="_blank">
-     <img src="http://azuredeploy.net/deploybutton.png"/>
+     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
    </a>
 
    <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fe-shop-website-with-ilb-ase%2Fazuredeploy.json" target="_blank">
-     <img src="http://armviz.io/visualizebutton.png"/>
+     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
    </a>
 
 3. Fill in the values on the deployment page:
@@ -270,6 +278,5 @@ Open the **Web App URL** you got from the outputs section in a browser.
 
 Open the **Admin App URL** you got from the outputs section in a browser. Then sign in with a work account in the AAD where you registered the AAD application. ![](images/admin-app.png)
 
-
-
 **Copyright (c) 2018 Microsoft. All rights reserved.**
+

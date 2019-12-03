@@ -1,10 +1,19 @@
 # SQL injection attack on a Web Application Scenario 
 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-SQL-Injection-Attack-Prevention/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-SQL-Injection-Attack-Prevention/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-SQL-Injection-Attack-Prevention/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-SQL-Injection-Attack-Prevention/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-SQL-Injection-Attack-Prevention/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-SQL-Injection-Attack-Prevention/CredScanResult.svg" />&nbsp;
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-SQL-Injection-Attack-Prevention%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/> 
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/> 
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-SQL-Injection-Attack-Prevention%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/> 
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/> 
 </a>
 
 # Table of Contents
@@ -38,11 +47,9 @@ It showcases following use cases
     * Application Gateway (WAF enabled-Prevention mode)
     * SQL DB with Threat Detection enabled and Send Alert To selected
 
-
 # Important Notes <a name="notes"></a>
 Although the deployment takes 10-15mins, the log aggregation by OMS take a few hours to get configured in the backend. You may not see attack/mitigation logs for detection and prevention events during the aggregation time window.   
 Subsequently logs will take 10-15 mins to reflect in OMS.
-
 
 <a name="prerequisites"></a>
 # Prerequisites
@@ -120,7 +127,6 @@ Once Auditing & Threat Detection is database is enabled for SQL database, Azure 
 
 ![](images/sql-inj-detection-mail.png)
 
-
 <a name="mitigate"></a>
 # Mitigate 
 
@@ -133,17 +139,14 @@ Once Auditing & Threat Detection is database is enabled for SQL database, Azure 
 ## Detection after Mitigation
 * Execute the step 4,5, 6 and 7 to perform SQL Injection attack with Application Gateway having WAF Enabled and Firewall in Prevention
 
-
     ![](images/403-forbidden-access-denied.png)  
 
  
 * To detect the prevention of attack, execute following query in Azure Log Analytics
 
-
     ```AzureDiagnostics | where Message  contains "injection" and action_s contains "blocked"```
     
     ![](images/sql-inj-log-analytics-blocked.png)  
-
 
     You will notice events related to detection and prevention items. First time it takes few hours for OMS to pull logs for detection and prevention events. For subsequent requests it takes 10-15 mins to reflect in OMS, so if you don't get any search results, please try again after sometime.
     
@@ -174,7 +177,6 @@ https://docs.microsoft.com/en-us/azure/application-gateway/application-gateway-w
  
 https://docs.microsoft.com/en-us/azure/sql-database/
 
-
 ## Disclaimer & Acknowledgements 
 
 Avyan Consulting Corp conceptualized and developed the software in guidance and consultations with Microsoft Azure Security Engineering teams.
@@ -185,3 +187,4 @@ AVYAN MAKE NO WARRANTIES, EXPRESS, IMPLIED, OR STATUTORY, AS TO THE INFORMATION 
 *	Certain recommendations in this solution may result in increased data, network, or compute resource usage in Azure. The solution may increase a customer’s Azure license or subscription costs.
 *	The solution in this document is intended as reference samples and must not be used as-is for production purposes. Recommending that the customer’s consult with their internal SOC / Operations teams for using specific or all parts of the solutions.
 *	All customer names, transaction records, and any related data on this page are fictitious, created for the purpose of this architecture, and provided for illustration only. No real association or connection is intended, and none should be inferred.
+
