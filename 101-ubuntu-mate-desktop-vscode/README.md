@@ -11,7 +11,7 @@
 
 This template creates a Linux developer workstation as follows:
 
-- Create a VM based on the Ubuntu 17.10 image with Mate Desktop installed
+- Create a VM based on the Ubuntu 18.04 image with Mate Desktop installed
 - Installs Azure CLI v2
 - Install Visual Studio Code editor
 - Opens the RDP port for users to connect using remote desktop
@@ -29,7 +29,7 @@ To connect, run "mstsc" from windows desktop and connect to the fqdn/public ip o
 
 # Running at terminal 
 
-To open a terminal with Ctrl + Alt + t 
+To open a terminal with Ctrl + Alt + t
 
 # Running VSCode
 
@@ -47,3 +47,17 @@ code --install-extension dbaeumer.vscode-eslint
 
 ### To list installed extensions, Type:
 code --list-extensions
+
+### Getting Started with VS Code
+
+Visual Studio Code is a lightweight but powerful source code editor which runs on your desktop and is available for Windows, macOS and Linux. It comes with built-in support for JavaScript, TypeScript and Node.js and has a rich ecosystem of extensions for other languages (such as C++, C#, Java, Python, PHP, Go) and runtimes (such as .NET and Unity). 
+
+Begin your journey with VS Code with these [introductory videos](https://code.visualstudio.com/docs/introvideos/overview)
+
+[Visual Studio Code - Getting Started documents](https://code.visualstudio.com/docs)
+
+### Microsoft Learn - Learning Modules
+
+[Visual Studio Code](https://docs.microsoft.com/en-us/learn/browse/?term=Visual%20Studio%20Code)
+[Linux Virtual Machines on Azure](https://docs.microsoft.com/en-us/learn/browse/?term=Linux%20Virtual%20Machine)
+[Azure CLI](https://docs.microsoft.com/en-us/learn/browse/?term=Azure%20CLI)
