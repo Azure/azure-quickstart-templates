@@ -165,11 +165,17 @@ Go to the Resource. Repeat the test that you have done before.
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-machine-learning-create%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
+
 #### Important disclaimer: Azure charges you for the resources you are using, and you don't want to use all your credits at once, right? So, don't forget to stop the Azure Machine Learning workspace at the portal or even delete the Resource Group you have created to avoid unnecessary charges
-### How to shutdown your resources
-#### Using the portal
+
+## How to shutdown your resources
+
+## Using the portal
+
 On the portal, open your Resource Group, if you want to remove the **Azure Machine Learning workspace **, you can just click on the [Delete] Button.
+
 ![Screen](./images/off.png)
+
 Just refresh your screen and you are good to go.
 
 ## Create Additional Resources Needed
@@ -212,9 +218,9 @@ Once you have created the base Azure Machine Learning Service Workspace we need 
 
 ![Screen](./images/AKSCompute.gif)
 
-In order to run the demos you will need to retrieve the following information:
+## In order to run the demos you will need to retrieve the following information:
 
-subscription id: You can get this by going to <azure.portal.com> and logging into your account. Search for subscriptions using the search bar, click on your subscription and copy the id.
+subscription id: You can get this by going to <azure.portal.com> and logging into your account. Search for subscriptions using the search bar,click on your subscription and copy the id.
 resource group: the name of the resource group you created in the setup steps
 compute target name: the name of the compute target you created in the setup steps
 Make sure to never commit any of these details to Git / GitHub
