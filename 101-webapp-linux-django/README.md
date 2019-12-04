@@ -1,4 +1,4 @@
-# Deploy a Django app service
+# Deploy a Django App Service
 
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-linux-django/PublicLastTestDate.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-linux-django/PublicDeployment.svg" />&nbsp;
