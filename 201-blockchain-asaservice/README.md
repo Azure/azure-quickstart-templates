@@ -28,7 +28,7 @@ This template deploys a **Azure Blockchain Service**. Azure Blockchain Service i
 
 If you are new to BlockChain Services, see:
 
-- [Azure BlockChain Services](https://azure.microsoft.com/en-gb/services/blockchain-service/).
+- [Azure BlockChain Services](https://azure.microsoft.com/services/blockchain-service/).
 - [Template reference](https://docs.microsoft.com/azure/templates/microsoft.compute/allversions)
 
 If you are new to template deployment, see:
