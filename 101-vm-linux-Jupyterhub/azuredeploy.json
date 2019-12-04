@@ -77,6 +77,21 @@
                 "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
             },
             "defaultValue": ""
+        },
+        "diskSizeGB":{
+            "type": "string",
+            "metadata":{
+                "description": "The size for an atached disk."
+            },
+            "defaultValue": "1024",
+            "allowedValues":[
+                "1024",
+                "2048",
+                "4096",
+                "8192",
+                "16384",
+                "32767"
+            ]
         }
     },
     "variables": {
@@ -95,7 +110,28 @@
             "CPU-16GB": "Standard_D4s_v3",
             "GPU-56GB": "Standard_NC6_Promo"
         },
-        "vmName": "[concat(parameters('vmName'),'-', parameters('cpu-gpu'))]"
+        "vmName": "[concat(parameters('vmName'),'-', parameters('cpu-gpu'))]",
+        "dataDisks": {
+            "lun": 0,
+            "createOption": "attach",
+            "caching": "None",
+            "writeAcceleratorEnabled": false,
+            "id": null,
+            "name": "[concat('Datadisk', parameters('vmName'))]",
+            "storageAccountType": null,
+            "diskSizeGB": null    
+        },
+        "dataDiskResources": {
+            "name": "[concat('Datadisk', parameters('vmName'))]",
+            "sku": "Premium_LRS",
+            "properties": {
+                "diskSizeGB": "[parameters('diskSizeGB')]",
+                "creationData": {
+                    "createOption": "empty"
+                }
+            }
+        
+        }
     },
     "resources": [
         {
@@ -237,13 +273,28 @@
             "kind": "[variables('storageAccountKind')]"
         },
         {
+            "name": "[variables('dataDiskResources')['name']]",
+            "type": "Microsoft.Compute/disks",
+            "apiVersion": "2019-07-01",
+            "location": "[parameters('location')]",
+            "properties": "[variables('dataDiskResources')['properties']]",
+            "sku": {
+                "name": "[variables('dataDiskResources')['sku']]"
+            },
+            "copy": {
+                "name": "managedDiskResources",
+                "count": 1
+            }
+        },
+        {
             "type": "Microsoft.Compute/virtualMachines",
             "apiVersion": "2019-07-01",
             "name": "[variables('vmName')]",
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/networkInterfaces/', variables('networkInterfaceName'))]",
-                "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
+                "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+                "[resourceId('Microsoft.Compute/disks/', variables('dataDiskResources')['name'])]"
             ],
             "properties": {
                 "hardwareProfile": {
@@ -261,7 +312,24 @@
                         "offer": "UbuntuServer",
                         "sku": "18.04-LTS",
                         "version": "latest"
-                    }
+                    },
+                    "copy": [
+                        {
+                            "name": "dataDisks",
+                            "count": 1,
+                            "input": {
+                                "lun": "[variables('dataDisks')['lun']]",
+                                "createOption": "[variables('dataDisks')['createOption']]",
+                                "caching": "[variables('dataDisks')['caching']]",
+                                "writeAcceleratorEnabled": "[variables('dataDisks')['writeAcceleratorEnabled']]",
+                                "diskSizeGB": "[variables('dataDisks')['diskSizeGB']]",
+                                "managedDisk": {
+                                    "id": "[coalesce(variables('dataDisks')['id'], if(equals(variables('dataDisks')['name'], json('null')), json('null'), resourceId('Microsoft.Compute/disks', variables('dataDisks')['name'])))]",
+                                    "storageAccountType": "[variables('dataDisks')['storageAccountType']]"
+                                }
+                            }
+                        }
+                    ]
                 },
                 "networkProfile": {
                     "networkInterfaces": [
@@ -274,6 +342,12 @@
                     "computerName": "[parameters('vmName')]",
                     "adminUsername": "[parameters('adminUsername')]",
                     "adminPassword": "[parameters('adminPassword')]"
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true,
+                        "storageUri": "[concat('https://', variables('storageAccountName'), '.blob.core.windows.net/')]"
+                    }
                 }
             },
             "resources":[
