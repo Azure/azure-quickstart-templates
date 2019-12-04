@@ -27,7 +27,7 @@ Parameter         | Suggested value     | Description
 ## Deployment
 
 There are a few ways to deploy this template.
-You can use [PowerShell](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy), [Azure CLI](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-cli), [Azure Portal](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-portal) or your favorite SDK.
+You can use [PowerShell](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy), [Azure CLI](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy-cli), [Azure Portal](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy-portal) or your favorite SDK.
 
 For Azure CLI I'm using the Visual Code with Azure CLI extensions, if you like, you can find more information [here](https://code.visualstudio.com/docs/azure/extensions). But bare in mind that you don't need to use the Visual Code, you can stick with the old good always present **Command Line** on Windows or any **bash terminal**.
 
@@ -127,7 +127,7 @@ Go to the Resource. Repeat the test that you have done before.
 
 ### Deploy your app
 
-To deploy your our ASP.NET app you can follow that [tutorial](https://docs.microsoft.com/en-in/azure/app-service/app-service-web-get-started-dotnet#create-an-aspnet-core-web-app).
+To deploy your our ASP.NET app you can follow that [tutorial](https://docs.microsoft.com/azure/app-service/app-service-web-get-started-dotnet#create-an-aspnet-core-web-app).
 
 Just take care when you want to publish your application because you have to select an existing app service (the one that we have created).
 
