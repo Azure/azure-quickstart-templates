@@ -1,4 +1,4 @@
-# Deploy a Flask app service
+# Deploy a Flask App Service
 
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-linux-flask/PublicLastTestDate.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-linux-flask/PublicDeployment.svg" />&nbsp;
@@ -20,9 +20,9 @@ This template deploys a web app with Python support to let us to upload a Flask 
 
 If you are new to Azure App Service, see:
 
-- [Azure App Service](https://azure.microsoft.com/en-us/services/app-service/web/)
-- [Template reference](https://docs.microsoft.com/es-es/azure/templates/microsoft.web/allversions)
-- [Quickstart templates](https://azure.microsoft.com/es-es/resources/templates/?resourceType=Microsoft.Compute&pageNumber=1&sort=Popular&term=web+apps)
+- [Azure App Service](https://azure.microsoft.com/services/app-service/web/)
+- [Template reference](https://docs.microsoft.com/azure/templates/microsoft.web/allversions)
+- [Quickstart templates](https://azure.microsoft.com/resources/templates/?resourceType=Microsoft.Compute&pageNumber=1&sort=Popular&term=web+apps)
 
 If you are new to template deployment, see:
 
