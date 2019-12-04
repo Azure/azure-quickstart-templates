@@ -34,7 +34,7 @@ For Azure CLI I'm using the Visual Code with Azure CLI extensions. If you would 
 
 In the terminal window type: **az login**
 
-![Screen](./images/azlogin.png)
+![Screen](./Images/azlogin.png)
 
 You will be redirected to the Azure Portal in your web browser where you can insert your credentials and log in.
 
@@ -44,7 +44,7 @@ To set the right subscription, type following command:
 
 #### az account set --subscription "your subscription id"
 
-![Screen](./images/azsetsub.png)
+![Screen](./Images/azsetsub.png)
 
 ### Resource Group
 
@@ -58,13 +58,13 @@ To create the Resource group, type the command:
 
 #### az group create --name "resource-group" --location "your location"
 
-![Screen](./images/azgroup.png)
+![Screen](./Images/azgroup.png)
 
 Super simple, right? Now that we have our **Resource Group** created, let's deploy the **Simple Linux Virtual Machine** using the az cli.
 
 #### az group deployment create --name "name of your deployment" --resource-group "resource-group" --template-file "./azuredeploy.json"
 
-![Screen](./images/azdeploy.png)
+![Screen](./Images/azdeploy.png)
 
 Insert the values for the parameters.
 As you can see, it's running.
@@ -73,13 +73,13 @@ Go grab a cup of coffee, have some fresh air. Before you come back you will have
 
 And there we go, your deployment has Succeeded:
 
-![Screen](./images/azdeploy2.png)
+![Screen](./Images/azdeploy2.png)
 
 Let's check the resource in the [Azure Portal](https://portal.azure.com).
 
 On the portal, navigate to Resource Groups. On this blade, you can see the Resource Group we've created.
 
-![Screen](./images/azdeployportal.png)
+![Screen](./Images/azdeployportal.png)
 
 Click on the Resource Group to expand and show the **Resources**:
 
@@ -94,17 +94,17 @@ Click on the Virtual Machine and then click in **connect**.
 
 Where you have **Login using VM Local account** copy the ssh command and open your terminal.
 
-![Screen](./images/azdeployportal3.png)
+![Screen](./Images/azdeployportal3.png)
 
 Paste the command and press **Enter**.  
 
 Insert the password you've created.  
 
-![Screen](./images/azssh.png)
+![Screen](./Images/azssh.png)
 
 And Voilà, there you have a brandy new Ubuntu Virtual Machine.
 
-![Screen](./images/azubuntu.png)
+![Screen](./Images/azubuntu.png)
 
 Most important, don't forget to have fun!
 
@@ -120,15 +120,15 @@ Click on **Add** to add your template:
 
 On General, type the name and the description for your template, and click on [OK].
 
-![Screen](./images/aztemplate.png)
+![Screen](./Images/aztemplate.png)
 
 On ARM Template, replace the contents of the template with your template, and click on [OK].
 
-![Screen](./images/aztemplate2.png)
+![Screen](./Images/aztemplate2.png)
 
 Click on the refresh button and there is your template:
 
-![Screen](./images/aztemplate3.png)
+![Screen](./Images/aztemplate3.png)
 
 Open the template and click in [Deploy]
 
@@ -140,7 +140,7 @@ As you can see, it's deploying.
 
 After a couple of minutes, voilà, you have your Virtual Machine deployed.
 
-![Screen](./images/azportaldeploy3.png)
+![Screen](./Images/azportaldeploy3.png)
 
 Go to the Resource. Repeat the test that you have done before.
 
@@ -158,10 +158,10 @@ Go to the Resource. Repeat the test that you have done before.
 
 On the portal, open your Resource Group, you can either stop the Virtual Machine clicking on [Stop] or delete the Virtual Machine clicking on [Delete].
 
-![Screen](./images/off1.png)
+![Screen](./Images/off1.png)
 
 You can also delete the Resource Group. Click on the Resource Group and then in [Delete].
 
-![Screen](./images/off2.png)
+![Screen](./Images/off2.png)
 
 Just refresh your screen and you are good to go.
