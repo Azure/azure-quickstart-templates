@@ -23,7 +23,7 @@ If you are new to Azure virtual machines, see:
 - [Azure Linux Virtual Machines documentation](https://docs.microsoft.com/azure/virtual-machines/linux/)
 - [Template reference](https://docs.microsoft.com/azure/templates/microsoft.compute/allversions)
 - [Quickstart templates](https://azure.microsoft.com/resources/templates/?resourceType=Microsoft.Compute&pageNumber=1&sort=Popular)
-- [Microsoft learn](https://docs.microsoft.com/en-us/learn/modules/interactive-deep-learning/)
+- [Microsoft learn](https://docs.microsoft.com/learn/modules/interactive-deep-learning/)
 
 If you are new to template deployment, see:
 
