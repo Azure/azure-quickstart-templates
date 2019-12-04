@@ -1,4 +1,4 @@
-# Deploy an ASP.NET app service
+# Deploy an ASP.NET App Service
 
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-windows-ASPNET/PublicLastTestDate.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-windows-ASPNET/PublicDeployment.svg" />&nbsp;
