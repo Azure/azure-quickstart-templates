@@ -1,4 +1,4 @@
-# Deploy an ASP.NET app service
+# Deploy an ASP.NET App Service
 
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-windows-ASPNET/PublicLastTestDate.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-windows-ASPNET/PublicDeployment.svg" />&nbsp;
@@ -20,9 +20,9 @@ This template deploys a web app with ASP.NET support. The web app with ASP.NET i
 
 If you are new to Azure App Service, see:
 
-- [Azure App Service](https://azure.microsoft.com/en-us/services/app-service/web/)
-- [Template reference](https://docs.microsoft.com/es-es/azure/templates/microsoft.web/allversions)
-- [Quickstart templates](https://azure.microsoft.com/es-es/resources/templates/?resourceType=Microsoft.Compute&pageNumber=1&sort=Popular&term=web+apps)
+- [Azure App Service](https://azure.microsoft.com/services/app-service/web/)
+- [Template reference](https://docs.microsoft.com/azure/templates/microsoft.web/allversions)
+- [Quickstart templates](https://azure.microsoft.com/resources/templates/?resourceType=Microsoft.Compute&pageNumber=1&sort=Popular&term=web+apps)
 
 If you are new to template deployment, see:
 
