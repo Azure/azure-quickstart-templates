@@ -22,7 +22,7 @@ Explore and prepare data, train and test models, and deploy them using rich tool
 - Jupyter notebooks in which you use the SDKs to write your code, such as these sample notebooks
 - Visual Studio Code extension
 
-For more information, you can consult [Azure Machine Learning Documentation](https://docs.microsoft.com/en-gb/azure/machine-learning/)
+For more information, you can consult [Azure Machine Learning Documentation](https://docs.microsoft.com/azure/machine-learning/)
 
 ### What is an Azure Machine Learning workspace
 
@@ -46,7 +46,7 @@ Parameter | Suggested value | Description
 ## Deployment
 
 There are a few ways to deploy this template.
-You can use [PowerShell](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy), [Azure CLI](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-cli), [Azure Portal](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-portal) or your favorite SDK.
+You can use [PowerShell](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy), [Azure CLI](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy-cli), [Azure Portal](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy-portal) or your favorite SDK.
 
 For Azure CLI I'm using the Visual Code with Azure CLI extensions. If you would like you can find more information [here](https://code.visualstudio.com/docs/azure/extensions). But bare in mind that you don't need to use the Visual Code app, you can stick with the always present **Command Line** on Windows or the Linux **bash terminal**.
 
@@ -74,7 +74,7 @@ To create a Resource Group, you need a name and a location for your Resource Gro
 
 For a list of locations, type: **az account list-locations**
 
-The Machine Learning service isn't yet available for all locations. Check the availability of locations [here](https://azure.microsoft.com/en-gb/global-infrastructure/services/?products=).
+The Machine Learning service isn't yet available for all locations. Check the availability of locations [here](https://azure.microsoft.com/global-infrastructure/services/?products=).
 
 To create the Resource group, type the command:
 
