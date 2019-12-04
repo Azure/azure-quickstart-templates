@@ -36,7 +36,7 @@ For Azure CLI I'm using the Visual Code with Azure CLI extensions. If you would 
 
 In the terminal window type: **az login**
 
-![Screen](./images/azlogin.png)
+![Screen](./Images/azlogin.png)
 
 You will be redirected to the Azure Portal in your web browser where you can insert your credentials and log in.
 
@@ -46,7 +46,7 @@ To set the right subscription, type following command:
 
 #### az account set --subscription "your subscription id"
 
-![Screen](./images/azsetsub.png)
+![Screen](./Images/azsetsub.png)
 
 ### Resource Group
 
@@ -60,13 +60,13 @@ To create the Resource group, type the command:
 
 #### az group create --name "resource-group" --location "your location"
 
-![Screen](./images/azgroup.png)
+![Screen](./Images/azgroup.png)
 
 Super simple, right? Now that we have our **Resource Group** created, let's deploy the **Simple Linux Virtual Machine** using the az cli.
 
 #### az group deployment create --name "name of your deployment" --resource-group "resource-group" --template-file "./azuredeploy.json"
 
-![Screen](./images/azdeploy.png)
+![Screen](./Images/azdeploy.png)
 
 Insert the values for the parameters.
 As you can see, it's running.
