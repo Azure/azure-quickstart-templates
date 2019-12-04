@@ -47,29 +47,41 @@ It is recommended 1 GB of memory per user if you are using a CPU based VM and 2 
 
 - [Azure VMs disks](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/disks-types)
 
-The template supports the following VM Sizes
+The template supports the following VM Sizes which have been optimized for multi-user experiences.
 
 ### CPU Machines
 
-- "CPU-4GB": "Standard_B2s"
-- "CPU-7GB": "Standard_DS2_v2"
-- "CPU-8GB": "Standard_D2s_v3"
+- "CPU-8GB": "Standard_F4s_v2"
 - "CPU-14GB": "Standard_DS3_v2"
 - "CPU-16GB": "Standard_D4s_v3"
-- "CPU-32GB": "Standard__F16",
+- "CPU-28GB": "Standard_DS4_v2"
+- "CPU-32GB": "Standard_F4s_v2"
 - "CPU-64GB": "Standard_D16s_v3"
-- "CPU-112": "Standard_DS14-4_v2"
-- "CPU-128GB": "Standard_E16_v3"
+- "CPU-112GB": "Standard_DS14-4_v2"
+- "CPU-128GB": "Standard_E16s_v3"
 - "CPU-256Gb": "Standard_E32_v3"
-- "CPU-432Gb": "Standard E64_v3"
+- "CPU-432Gb":"Standard E64_v3"
 
 ### GPU Machines
 
-- "GPU-56GB": "Standard_NC6_Promo",
-- "GPU-112GB":"Standard_NV12",
+- "GPU-56GB": "Standard_NC6_Promo"
+- "GPU-112GB":"Standard_NV12"
 - "GPU-224GB":"Standard_NV24"
 
 i.e. if you want a CPU based VM to be used by 80 users, you will need a VM with 100 GB of memory.
+
+For more details on [Azure Compute Sizes](https://docs.microsoft.com/azure/virtual-machines/linux/sizes-compute)
+
+### Storage Support 
+
+It is recommended that you store all data on the external storage provided to the Virtual Machine, you can setup a external disk of the following size.
+
+- 1024
+- 2048
+- 4096
+- 8192
+- 16384
+- 32767
 
 ### Architecture of the Deployment
 
