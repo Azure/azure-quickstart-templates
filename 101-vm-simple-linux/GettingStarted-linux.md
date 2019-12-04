@@ -10,14 +10,14 @@ These are the parameters on the template, most of them already have values inser
 
 Parameter         | Suggested value     | Description
 :--------------- | :-------------      |:---------------------
-**vmName** |[concat('VM', uniqueString(resourceGroup().name))]  | The name of you Virtual Machine.
+**vmName** | The name of your Virtual Machine | The name of you Virtual Machine.
 **VmSize** | Standard_B2s | The size of the VM.
 **adminUsername** | adminusername | Usernames can be a maximum of 20 characters and cannot end in a period (".").
 **adminPassword** | Complex Password | Password requirements between 12 to 72 characters and have lower and upper characters, a digit and a special character (Regex match [\W_])
 **Location**| The default location | Select the geographic location for your resource group.
 **ubuntuOSVersion** | 18.04-LTS | The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version.
 **authenticationType** | password | Type of authentication to use on the Virtual Machine.
-**dnsLabelPrefix** | [toLower(parameters('vmName'))] | DNS Name for the Public IP used to access the Virtual Machine
+**dnsLabelPrefix** | dns-vmName | Unique DNS Name for the Public IP used to access the Virtual Machine
 **virtualNetworkName** | vNet | Name of the VNET
 **subnetName** | subnet | Name of the subnet in the virtual network
 **networkSecurityGroupName** | SecGroupNet | Name of the Network Security Group
@@ -26,7 +26,7 @@ Parameter         | Suggested value     | Description
 ## Deployment
 
 There are a few ways to deploy this template.
-You can use [PowerShell](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy), [Azure CLI](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-cli), [Azure Portal](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-portal) or your favorite SDK.
+You can use [PowerShell](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy), [Azure CLI](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy-cli), [Azure Portal](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy-portal) or your favorite SDK.
 
 For Azure CLI I'm using the Visual Code with Azure CLI extensions. If you would like you can find more information [here](https://code.visualstudio.com/docs/azure/extensions). But bare in mind that you don't need to use the Visual Code app, you can stick with the always present **Command Line** on Windows or the Linux **bash terminal**.
 
