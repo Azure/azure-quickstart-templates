@@ -45,7 +45,7 @@ It is recommended 1 GB of memory per user if you are using a CPU based VM and 2 
 
 - [Azure VM sizes](https://docs.microsoft.com/azure/virtual-machines/linux/sizes-general)
 
-- [Azure VMs disks](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/disks-types)
+- [Azure VMs disks](https://docs.microsoft.com/azure/virtual-machines/windows/disks-types)
 
 The template supports the following VM Sizes which have been optimized for multi-user experiences.
 
