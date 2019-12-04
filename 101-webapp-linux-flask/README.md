@@ -1,4 +1,4 @@
-# Deploy a Flask app service
+# Deploy a Flask App Service
 
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-linux-flask/PublicLastTestDate.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-linux-flask/PublicDeployment.svg" />&nbsp;
