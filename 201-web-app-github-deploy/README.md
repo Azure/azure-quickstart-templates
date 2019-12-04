@@ -15,7 +15,7 @@
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
-This template deploys a **simple Linux Web Application linked to a GitHub Repository**. The WebPlan is settled for Consumption. For more information about hosting Plans click [here!](https://azure.microsoft.com/en-gb/pricing/details/app-service/linux/). As a default, this template deploys the web app using the "S1" (free tier) as the pricing tier for the hosting plan. It is ideal for development and test environments, for production environments you must consider different plans.
+This template deploys a **simple Linux Web Application linked to a GitHub Repository**. The WebPlan is settled for Consumption. For more information about hosting Plans click [here!](https://azure.microsoft.com/pricing/details/app-service/linux/). As a default, this template deploys the web app using the "S1" (free tier) as the pricing tier for the hosting plan. It is ideal for development and test environments, for production environments you must consider different plans.
 
 ## Prerequisites
 
@@ -25,8 +25,8 @@ If you don't have yet a GitHub account, you can create your account on [GitHub](
 
 If you are new to **Web App Services**, see:
 
-- [Web App](https://azure.microsoft.com/en-gb/services/app-service/web/)
-- [Web App Documentation](https://docs.microsoft.com/en-gb/azure/app-service/).
+- [Web App](https://azure.microsoft.com/services/app-service/web/)
+- [Web App Documentation](https://docs.microsoft.com/azure/app-service/).
 - [Template reference](https://docs.microsoft.com/azure/templates/microsoft.compute/allversions)
 
 If you are new to template deployment, see:
