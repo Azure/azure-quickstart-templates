@@ -12,7 +12,7 @@ Azure App Service is a fully managed compute platform that is optimized for host
 
 App Service on Linux supports a number of Built-in images in order to increase developer productivity. Languages include: Node.js, Java (JRE 8 & JRE 11), PHP, Python, .NET Core and Ruby.
 
-For more information about Web Apps on Linux, click [here](https://docs.microsoft.com/en-gb/azure/app-service/overview).
+For more information about Web Apps on Linux, click [here](https://docs.microsoft.com/azure/app-service/overview).
 
 ## The Template
 
@@ -39,7 +39,7 @@ Parameter         | Suggested value     | Description
 ## Deployment
 
 There are a few ways to deploy this template.
-You can use [PowerShell](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy), [Azure CLI](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-cli), [Azure Portal](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-portal) or your favorite SDK.
+You can use [PowerShell](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy), [Azure CLI](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy-cli), [Azure Portal](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy-portal) or your favorite SDK.
 
 For Azure CLI I'm using the Visual Code with Azure CLI extensions. If you would like you can find more information [here](https://code.visualstudio.com/docs/azure/extensions). But bare in mind that you don't need to use the Visual Code app, you can stick with the always present **Command Line** on Windows or the Linux **bash terminal**.
 
