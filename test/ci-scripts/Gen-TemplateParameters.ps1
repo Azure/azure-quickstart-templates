@@ -31,7 +31,6 @@ if ($prereqOutputsFileName) { #Test-Path doesn't work on an empty string
 }
 
 # if a different param file value has been passed (e.g. for Fairfax) look for that file, if it's not found, revert to the default
-$preferredTemplateParametersFile = $TemplateParametersFile
 $TemplateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $TemplateParametersFile))
 Write-Host "Searching for parameter file: $TemplateParametersFile"
 
