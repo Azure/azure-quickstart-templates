@@ -1,4 +1,4 @@
-# Linux WebApp with Python 3.7 support
+# Create a web app on Azure with Python 3.7 enabled.
 
 The purpose of this ARM Template is **deploy a web app with Python** using a **web app**.
 
