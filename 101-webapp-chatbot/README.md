@@ -20,8 +20,8 @@ This template creates an **Web Chat Bot**, using **Azure Bot Service**. Also dep
 
 If you are new to Azure Machine Learning, see:
 
-- [Azure Bot Service](https://azure.microsoft.com/en-us/services/bot-service/)
-- [Azure Bot Service Documentation](https://docs.microsoft.com/en-us/azure/bot-service/?view=azure-bot-service-4.0)
+- [Azure Bot Service](https://azure.microsoft.com/services/bot-service/)
+- [Azure Bot Service Documentation](https://docs.microsoft.com/azure/bot-service/?view=azure-bot-service-4.0)
 - [Quickstart templates](https://azure.microsoft.com/resources/templates/)
 
 If you are new to template development, see:
