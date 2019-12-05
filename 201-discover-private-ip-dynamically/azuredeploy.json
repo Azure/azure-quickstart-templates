@@ -62,12 +62,6 @@
         "description": "VM Admin Username"
       }
     },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "VM Password"
-      }
-    },
     "customScriptFilePath": {
       "type": "string",
       "metadata": {
@@ -86,6 +80,23 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
     }
   },
   "variables": {
@@ -98,7 +109,18 @@
     "subnet1Prefix": "10.0.0.0/24",
     "subnet1Ref": "[concat(variables('vnetID'),'/subnets/', variables('subnet1Name'))]",
     "nicName": "myNic",
-    "vmExtensionName": "myCustomScriptExtension"
+    "vmExtensionName": "myCustomScriptExtension",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
@@ -231,7 +253,8 @@
         "osProfile": {
           "computerName": "[concat(parameters('vmName'), copyIndex())]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
