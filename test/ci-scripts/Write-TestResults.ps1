@@ -108,7 +108,7 @@ if ($r -eq $null) {
     if ($BuildReason -eq "PullRequest") {
         $results.Add("status", $BuildReason)
         $results.Add($($ResultDeploymentParameter + "BuildNumber"), $ENV:BUILD_BUILDNUMBER)
-        $results.Add("pr", $ENV:SYSTEM_PULLREQUEST_PULLREQUESTID)
+        $results.Add("pr", $ENV:SYSTEM_PULLREQUEST_PULLREQUESTNUMBER)
     }
 
     Write-Host "New Record: Dump results variable"

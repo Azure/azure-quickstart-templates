@@ -16,13 +16,15 @@ param(
 )
 
 # Check for any functions as parameters - PowerShell handles empty differently in objects so check the JSON source (i.e. text)
-$items = @([Regex]::Matches($TemplateText, "\s{0,}\[\s{0,}resourceId\s{0,}\(\s{0,}resourceGroup\(")) +   # resourceId(resourceGroup(
-         @([Regex]::Matches($TemplateText, "\s{0,}\[\s{0,}resourceId\s{0,}\(\s{0,}subscription\(")) +    # resourceId(subscription(
-         @([Regex]::Matches($TemplateText, "\s{0,}\[\s{0,}resourceId\s{0,}\(\s{0,}concat\(")) +          # resourceId(concat(
-         @([Regex]::Matches($TemplateText, "\s{0,}\[\s{0,}tenantResourceId\s{0,}\(\s{0,}concat\(")) +    # tenantResourceId(concat(
-         @([Regex]::Matches($TemplateText, "\s{0,}\[\s{0,}extensionResourceId\s{0,}\(\s{0,}concat\(")) + # extensionResourceId(concat(
+$items = @([Regex]::Matches($TemplateText, "\s{0,}\[\s{0,}resourceId\s{0,}\(\s{0,}resourceGroup\(")) +            # resourceId(resourceGroup(
+         @([Regex]::Matches($TemplateText, "\s{0,}\[\s{0,}resourceId\s{0,}\(\s{0,}subscription\(")) +             # resourceId(subscription(
+         @([Regex]::Matches($TemplateText, "\s{0,}\[\s{0,}resourceId\s{0,}\(\s{0,}concat\s{0,}\(")) +             # resourceId(concat(
+         @([Regex]::Matches($TemplateText, "\s{0,}\[\s{0,}tenantResourceId\s{0,}\(\s{0,}concat\s{0,}\(")) +       # tenantResourceId(concat(
+         @([Regex]::Matches($TemplateText, "\s{0,}\[\s{0,}extensionResourceId\s{0,}\(\s{0,}concat\s{0,}\(")) +    # extensionResourceId(concat(
          @([Regex]::Matches($TemplateText, "\s{0,}\[\s{0,}subscriptionResourceId\s{0,}\(\s{0,}subscription\(")) + # subscriptionResourceId(subscription(
-         @([Regex]::Matches($TemplateText, "\s{0,}\[\s{0,}subscriptionResourceId\s{0,}\(\s{0,}concat\("))         # subscriptionResourceId(concat(
+         @([Regex]::Matches($TemplateText, "\s{0,}\[\s{0,}subscriptionResourceId\s{0,}\(\s{0,}concat\s{0,}\(")) + # subscriptionResourceId(concat(
+         @([Regex]::Matches($TemplateText, "\s{0,}\[\s{0,}reference\s{0,}\(\s{0,}concat\s{0,}\(")) +              # reference(concat(
+         @([Regex]::Matches($TemplateText, "\s{0,}\[\s{0,}list\w{1,}\s{0,}\(\s{0,}concat\s{0,}\("))               # list*(concat(
        
 $lineBreaks = [Regex]::Matches($TemplateText, "`n|$([Environment]::NewLine)")
 
