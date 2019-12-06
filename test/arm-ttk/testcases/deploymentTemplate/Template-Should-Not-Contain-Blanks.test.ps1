@@ -16,7 +16,15 @@ $emptyItems = @([Regex]::Matches($TemplateText, "\{\s{0,}\}")) + # Empty objects
 $lineBreaks = [Regex]::Matches($TemplateText, "`n|$([Environment]::NewLine)")
 
 # Some properties can be empty for readability
-$PropertiesThatCanBeEmpty = 'resources', 'outputs', 'variables', 'parameters', 'functions', 'properties', 'defaultValue', 'accessPolicies'
+$PropertiesThatCanBeEmpty = 'resources', 
+                            'outputs', 
+                            'variables', 
+                            'parameters', 
+                            'functions', 
+                            'properties', 
+                            'defaultValue', # optional parameters
+                            'accessPolicies',  # keyVault requires this
+                            'value' # passing empty strings to a nested deployment
 
 if ($emptyItems) {
     foreach ($emptyItem in $emptyItems) {
