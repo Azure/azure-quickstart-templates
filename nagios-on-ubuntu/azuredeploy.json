@@ -8,12 +8,6 @@
         "description": "Administrator user name used when provisioning virtual machines"
       }
     },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Administrator password used when provisioning virtual machines"
-      }
-    },
     "virtualNetworkName": {
       "type": "string",
       "defaultValue": "myVNET",
@@ -68,6 +62,23 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
     }
   },
   "variables": {
@@ -101,7 +112,18 @@
     "numberOfInstances": "[variables(concat('tshirtSize', parameters('tshirtSize'))).numberOfInstances]",
     "vmSize": "[variables(concat('tshirtSize', parameters('tshirtSize'))).vmSize]",
     "securityGroupName": "nagiosNSG",
-    "apiVersion": "2015-06-15"
+    "apiVersion": "2015-06-15",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
@@ -218,7 +240,8 @@
         "osProfile": {
           "computerName": "[concat(variables('computerNamePrefix'), copyIndex())]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
