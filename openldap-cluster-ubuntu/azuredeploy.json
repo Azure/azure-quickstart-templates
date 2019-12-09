@@ -8,12 +8,6 @@
         "description": "User name for the Virtual Machine administrator. Do not use simple names such as 'admin'."
       }
     },
-    "vmAdminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Password for the Virtual Machine administrator."
-      }
-    },
     "directoryAdminPassword": {
       "type": "securestring",
       "metadata": {
@@ -81,6 +75,23 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
     }
   },
   "variables": {
@@ -112,7 +123,18 @@
     "fileUriBase": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/openldap-cluster-ubuntu/",
     "ldifUriBase": "[concat(variables('fileUriBase'), 'ldif/')]",
     "installScriptUri": "[concat(variables('fileUriBase'), variables('installScriptName'))]",
-    "installCommand": "[concat('bash ', variables('installScriptName'), ' ', parameters('vmAdminUsername'), ' ', parameters('vmAdminPassword'), ' ', parameters('directoryAdminPassword'), ' ', parameters('namePrefix'), ' ', parameters('location'), ' ', parameters('organization'), ' ',variables('privateIPAddressPrefix'), ' ', parameters('vmCount'))]"
+    "installCommand": "[concat('bash ', variables('installScriptName'), ' ', parameters('vmAdminUsername'), ' ', parameters('vmAdminPassword'), ' ', parameters('directoryAdminPassword'), ' ', parameters('namePrefix'), ' ', parameters('location'), ' ', parameters('organization'), ' ',variables('privateIPAddressPrefix'), ' ', parameters('vmCount'))]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('vmAdminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
@@ -131,12 +153,11 @@
       "location": "[parameters('location')]",
       "sku": {
         "name": "Aligned"
-          },
-        "properties": { 
-            "platformFaultDomainCount": 2,
-            "platformUpdateDomainCount": 5
-            }
-        
+      },
+      "properties": {
+        "platformFaultDomainCount": 2,
+        "platformUpdateDomainCount": 5
+      }
     },
     {
       "apiVersion": "2015-06-15",
@@ -371,7 +392,7 @@
       }
     },
     {
-      "apiVersion":"2017-03-30", 
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('vmName'),copyIndex())]",
       "location": "[parameters('location')]",
@@ -390,7 +411,8 @@
         "osProfile": {
           "computerName": "[concat(variables('vmName'),copyIndex())]",
           "adminUsername": "[parameters('vmAdminUsername')]",
-          "adminPassword": "[parameters('vmAdminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
@@ -400,7 +422,7 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[concat(variables('vmName'),copyIndex(),'_OSDisk')]",  
+            "name": "[concat(variables('vmName'),copyIndex(),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
