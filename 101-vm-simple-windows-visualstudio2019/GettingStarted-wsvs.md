@@ -6,11 +6,11 @@ The purpose of this ARM Template is **simple Windows Server 2019 Datacenter** wi
 
 Don't let the size of the template scares you. The structure is very intuitive and once that you get the gist of it, you will see how much easier your life will be deploying resources to Azure.
 
-These are the parameters on the template, most of them already have values inserted, the ones that you need to inform are: **adminUsername**, **adminPassword** and **resourceGroup**.
+These are the parameters on the template, most of them already have values inserted, the ones that you need to inform are: **adminUsername**, **adminPassword**, **vmName**  and **resourceGroup**.
 
 Parameter         | Suggested value     | Description
 :--------------- | :-------------      |:---------------------
-**vmName** |[concat('VM', uniqueString(resourceGroup().name))]  | The name of you Virtual Machine.
+**vmName** | Name of your VM | The name of you Virtual Machine.
 **VmSize** | Standard_D2_v2 | The size of the VM.
 **adminUsername** | adminusername | Usernames can be a maximum of 20 characters and cannot end in a period (".").
 **adminPassword** | Complex Password | Password requirements between 12 to 72 characters and have lower and upper characters, a digit and a special character (Regex match [\W_])
