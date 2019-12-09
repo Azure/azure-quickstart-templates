@@ -8,12 +8,6 @@
         "description": "Admin username"
       }
     },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Admin password"
-      }
-    },
     "vmPrefix": {
       "type": "string",
       "metadata": {
@@ -31,6 +25,23 @@
       "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "Location for all resources."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
     }
   },
@@ -65,7 +76,18 @@
     "jumpboxScripts": [
       "[concat(variables('scriptBaseUrl'), variables('jumpboxScript'))]",
       "[concat(variables('scriptBaseUrl'), 'get-started.ps1')]"
-    ]
+    ],
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
@@ -98,12 +120,12 @@
         "displayName": "AvailabilitySet"
       },
       "sku": {
-              "name": "Aligned"
-            },
-      "properties": { 
-                    "platformFaultDomainCount": 2,
-                    "platformUpdateDomainCount": 5
-                    }
+        "name": "Aligned"
+      },
+      "properties": {
+        "platformFaultDomainCount": 2,
+        "platformUpdateDomainCount": 5
+      }
     },
     {
       "apiVersion": "2015-06-15",
@@ -222,7 +244,8 @@
         "osProfile": {
           "computerName": "[concat(parameters('vmPrefix'), copyIndex())]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
@@ -232,7 +255,7 @@
             "version": "latest"
           },
           "osDisk": {
-            "name":  "[concat(parameters('vmPrefix'), copyindex(),'_OSDisk')]",
+            "name": "[concat(parameters('vmPrefix'), copyindex(),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           },
