@@ -53,13 +53,13 @@
       }
   },
   "variables": {
-       "serverResourceGroupName": "[resourceGroup().name]",
-       "subscriptionId": "[subscription().subscriptionId]",
-       "uniqueStorage": "[uniqueString(variables('subscriptionId'), variables('serverResourceGroupName'), parameters('location'))]",
-       "storageName": "[tolower(concat('sqlva', variables('uniqueStorage')))]",
-       "uniqueRoleGuid": "[guid(uniqueString(variables('subscriptionId'), variables('serverResourceGroupName'), parameters('serverName'), parameters('location')))]",
-       "StorageBlobContributor": "[concat('/subscriptions/', variables('subscriptionId'), '/providers/Microsoft.Authorization/roleDefinitions/', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]"
-   },
+    "serverResourceGroupName": "[resourceGroup().name]",
+    "subscriptionId": "[subscription().subscriptionId]",
+    "uniqueStorage": "[uniqueString(variables('subscriptionId'), variables('serverResourceGroupName'), parameters('location'))]",
+    "storageName": "[tolower(concat('sqlva', variables('uniqueStorage')))]",
+    "uniqueRoleGuid": "[guid(resourceId('Microsoft.Sql/servers', parameters('serverName')))]",
+    "StorageBlobContributor": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]"
+  },
   "resources": [
       {
           "type": "Microsoft.Sql/servers",
@@ -114,7 +114,6 @@
                   ],
                   "properties": {
                       "storageContainerPath": "[if(parameters('enableADS'), concat(reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageName')), '2018-07-01').primaryEndpoints.blob, 'vulnerability-assessment'), '')]",
-                      "storageAccountAccessKey": "",
                       "recurringScans": {
                           "isEnabled": true,
                           "emailSubscriptionAdmins": true
@@ -154,10 +153,11 @@
               "[resourceId('Microsoft.Sql/servers', parameters('serverName'))]",
               "[resourceId('Microsoft.Storage/storageAccounts', variables('storageName'))]"
           ],
-          "properties": {
-              "roleDefinitionId": "[variables('StorageBlobContributor')]",
-              "principalId": "[reference(resourceId('Microsoft.Sql/servers', parameters('serverName')), '2015-05-01-preview' , 'Full').identity.principalId]",
-              "scope": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageName'))]"
+      "properties": {
+           "roleDefinitionId": "[variables('StorageBlobContributor')]",
+           "principalId": "[reference(resourceId('Microsoft.Sql/servers', parameters('serverName')), 'Full').identity.principalId]",
+           "scope": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageName'))]",
+           "principalType": "ServicePrincipal"
       }
     }
   ]
