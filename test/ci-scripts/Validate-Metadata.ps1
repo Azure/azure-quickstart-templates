@@ -34,9 +34,12 @@ if (!$SkipDateCheck) {
 }
 
 # check to see which clouds are supported, if not specified, test all clouds
+Write-Host $metadata
 $environments = ($metadata | convertfrom-json).environments
+Write-Host "environments: $environments"
 
 if ($null -ne $environments) {
+    Write-Host "Checking cloud..."
     $IsCloudSupported = ($environments -contains $CloudEnvironment)
 }
 else {
@@ -49,3 +52,4 @@ Write-Output "Is cloud supported: $IsCloudSupported"
 if (!$IsCloudSupported) {
     Write-Host "##vso[task.setvariable variable=result.deployment]Not Supported"
 }
+

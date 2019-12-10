@@ -35,10 +35,12 @@ sed -i -e '/Defaults    requiretty/{ s/.*/# Defaults    requiretty/ }' /etc/sudo
 
 echo "$(date)"
 echo "Creating the share on the storage account."
-rpm --import https://packages.microsoft.com/keys/microsoft.asc
-sh -c 'echo -e "[azure-cli]\nname=Azure CLI\nbaseurl=https://packages.microsoft.com/yumrepos/azure-cli\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/azure-cli.repo'
-yum install -y azure-cli --nogpgcheck
-az storage share create --name ${azure_storage_files_share} --connection-string "DefaultEndpointsProtocol=https;EndpointSuffix=core.windows.net;AccountName=${azure_storage_account};AccountKey=${azure_storage_files_password}"
+# rpm --import https://packages.microsoft.com/keys/microsoft.asc
+# sh -c 'echo -e "[azure-cli]\nname=Azure CLI\nbaseurl=https://packages.microsoft.com/yumrepos/azure-cli\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/azure-cli.repo'
+# yum install -y azure-cli --nogpgcheck
+yum install -y rh-python36 gcc
+/opt/rh/rh-python36/root/usr/bin/pip3 install azure-cli
+/opt/rh/rh-python36/root/usr/bin/az storage share create --name ${azure_storage_files_share} --connection-string "DefaultEndpointsProtocol=https;EndpointSuffix=core.windows.net;AccountName=${azure_storage_account};AccountKey=${azure_storage_files_password}"
 
 echo "setup cifs"
 cifs_server_fqdn="${azure_storage_account}.file.core.windows.net"

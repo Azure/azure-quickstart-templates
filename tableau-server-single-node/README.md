@@ -85,7 +85,7 @@ When the resource template creates the Virtual Machine listed above it executes 
 
 The steps performed by the configuration script are as follows:
 + Create secrets, registration.json & config.json files to reflect the parametrized inputs from the template
-+ Download the Tableau Server <a href=https://www.tableau.com/support/releases/server>installer</a> - this tempalte is currently using Linux version 2019.2.1
++ Download the Tableau Server <a href=https://www.tableau.com/support/releases/server>installer</a> - this template is currently using Linux version 2019.4.0
 + Download the automated installer script (maintained in a separate <a href=https://github.com/tableau/server-install-script-samples/tree/master/linux/automated-installer>github repo</a>) and modify permissions.
 + Execute command to perform a silent install (refer to previous bullet for additional documentation)
 + Clean up all installation & configuration files
@@ -116,4 +116,3 @@ Once these resources have been deployed they don't require significant managemen
 
 + Make sure that you entered all parameters correctly.  Passwords should conform to <a href="https://docs.microsoft.com/en-us/azure/virtual-machines/windows/faq#what-are-the-username-requirements-when-creating-a-vm">Azure standards</a> and source CIDR should follow official syntax (0.0.0.0/24)
 + This ARM template is made available <a href=https://www.tableau.com/support/itsupport>'as-is'</a> - please use Github or <a href=https://community.tableau.com/community/forums/content>Tableau's community forum</a> to share comments or issues you may find.
-
