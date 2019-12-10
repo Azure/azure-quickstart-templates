@@ -5,14 +5,14 @@
     "_artifactsLocation": {
       "type": "string",
       "metadata": {
-          "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
       },
       "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/tableau-server-single-node/"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
       "metadata": {
-          "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
       },
       "defaultValue": ""
     },
@@ -25,14 +25,23 @@
     },
     "OS": {
       "type": "string",
-      "allowedValues": ["Ubuntu 16.04 LTS", "CentOS 7.5", "RHEL 7.6"],
+      "allowedValues": [
+        "Ubuntu 16.04 LTS",
+        "CentOS 7.5",
+        "RHEL 7.6"
+      ],
       "metadata": {
         "description": "The operating system of the VM."
       }
     },
     "VMSize": {
       "type": "string",
-      "allowedValues": ["Standard_D16s_v3","Standard_E16s_v3","Standard_F16s_v2","Standard_D4s_v3"],
+      "allowedValues": [
+        "Standard_D16s_v3",
+        "Standard_E16s_v3",
+        "Standard_F16s_v2",
+        "Standard_D4s_v3"
+      ],
       "metadata": {
         "description": "Please select the size of the VM you wish to deploy.  Tableau Server should be deployed on a machine with at least 16 vCPUs.  Standard_D4s_v3 is provided for testing only.  Read more about sizing options here: https://docs.microsoft.com/en-us/azure/virtual-machines/linux/sizes-general"
       },
@@ -42,12 +51,6 @@
       "type": "string",
       "metadata": {
         "description": "Admin username for Virtual Machine"
-      }
-    },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Password for the Virtual Machine."
       }
     },
     "source_CIDR": {
@@ -156,6 +159,23 @@
       "metadata": {
         "description": "Please type 'Yes' to accept the Tableau EULA which can be found here: https://mkt.tableau.com/files/tableau_eula.pdf. If you type No then the Azure resources will still be deployed but Tableau Server will not be installed."
       }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
     }
   },
   "variables": {
@@ -235,7 +255,18 @@
           "direction": "Inbound"
         }
       }
-    ]
+    ],
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
@@ -358,7 +389,8 @@
         "osProfile": {
           "computerName": "[concat('tableauvm', copyIndex(1))]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": "[variables('imageReference')[parameters('OS')]]",
