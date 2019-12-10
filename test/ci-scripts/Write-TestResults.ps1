@@ -16,6 +16,7 @@ param(
     [string]$BestPracticeResult = "$ENV:RESULT_BEST_PRACTICE",
     [string]$CredScanResult = "$ENV:RESULT_CREDSCAN",
     [string]$BuildReason = "$ENV:BUILD_REASON",
+    [string]$AgentJobStatus = "$ENV:AGENT_JOBSTATUS",
     [string]$ResultDeploymentParameter = "$ENV:RESULT_DEPLOYMENT_PARAMETER", #also cloud specific
     [string]$FairfaxDeployment = "",
     [string]$FairfaxLastTestDate = (Get-Date -Format "yyyy-MM-dd").ToString(),
@@ -27,7 +28,7 @@ param(
 # Get the storage table that contains the "status" for the deployment/test results
 $ctx = New-AzStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey -Environment AzureCloud
 
-if ($ENV:BUILD_REASON -eq "PullRequest") {
+if ($BuildReason -eq "PullRequest") {
     $t = $TableNamePRs
 }else{
     $t = $TableName
@@ -48,32 +49,51 @@ $PartitionKey = $Metadata.Type # if the type changes we'll have an orphaned row,
 #Get the row to update
 $r = Get-AzTableRow -table $cloudTable -PartitionKey $PartitionKey -RowKey $RowKey
 
+# if the build was cancelled and this was a scheduled build, we need to set the metadata status back to "Live"
+if($r -ne $null -and $AgentJobStatus -eq "Canceled" -and $BuildReason -ne "PullRequest"){
+    if ($r.status -eq $null) {
+        Add-Member -InputObject $r -NotePropertyName "status" -NotePropertyValue "Live"
+    }
+    else {
+        $r.status = "Live"
+    }
+    Write-Host "Build Canceled, setting status back to Live"
+    $r | Update-AzTableRow -table $cloudTable
+    exit
+}
+
+$BestPracticeResult = $BestPracticeResult -ireplace [regex]::Escape("true"), "PASS"
+$BestPracticeResult = $BestPracticeResult -ireplace [regex]::Escape("false"), "FAIL"
+$CredScanResult = $CredScanResult -ireplace [regex]::Escape("true"), "PASS"
+$CredScanResult = $CredScanResult -ireplace [regex]::Escape("false"), "FAIL"
+$FairfaxDeployment = $FairfaxDeployment -ireplace [regex]::Escape("true"), "PASS"
+$FairfaxDeployment = $FairfaxDeployment -ireplace [regex]::Escape("false"), "FAIL"
+$PublicDeployment = $PublicDeployment -ireplace [regex]::Escape("true"), "PASS"
+$PublicDeployment = $PublicDeployment -ireplace [regex]::Escape("false"), "FAIL"
+
 # if the record doesn't exist, this is probably a new sample and needs to be added (or we just cleaned the table)
 if ($r -eq $null) {
 
     Write-Host "No record found, adding a new one..."
     $results = New-Object -TypeName hashtable
-    Write-Host "BP Result"
+    Write-Host "BP Result: $BestPracticeResult"
     if (![string]::IsNullOrWhiteSpace($BestPracticeResult)) {
-        $BestPracticeResult = ($BestPracticeResult).ToString().ToLower().Replace("true", "PASS").Replace("false", "FAIL")
+        Write-Host "Adding BP results to hashtable..."
         $results.Add("BestPracticeResult", $BestPracticeResult)
     }
-    Write-Host "CredScan Result"
+    Write-Host "CredScan Result: $CredScanResult"
     if (![string]::IsNullOrWhiteSpace($CredScanResult)) {
-        $CredScanResult = ($CredScanResult).ToString().ToLower().Replace("true", "PASS").Replace("false", "FAIL")
         $results.Add("CredScanResult", $CredScanResult)
     }
     # set the values for Fairfax only if a result was passed
     Write-Host "FF Result"
     if (![string]::IsNullOrWhiteSpace($FairfaxDeployment)) { 
-        $FairfaxDeployment = ($FairfaxDeployment).ToString().ToLower().Replace("true", "PASS").Replace("false", "FAIL")
         $results.Add("FairfaxDeployment", $FairfaxDeployment) 
         $results.Add("FairfaxLastTestDate", $FairfaxLastTestDate) 
     }
     # set the values for MAC only if a result was passed
     Write-Host "Mac Result"
     if (![string]::IsNullOrWhiteSpace($PublicDeployment)) {
-        $PublicDeployment = ($PublicDeployment).ToString().ToLower().Replace("true", "PASS").Replace("false", "FAIL")
         $results.Add("PublicDeployment", $PublicDeployment) 
         $results.Add("PublicLastTestDate", $PublicLastTestDate) 
     }
@@ -85,9 +105,10 @@ if ($r -eq $null) {
     $results.Add("githubUsername", $Metadata.githubUsername)
     $results.Add("dateUpdated", $Metadata.dateUpdated)
 
-    if ($ENV:BUILD_REASON -eq "PullRequest") {
-        $results.Add("status", $ENV:BUILD_REASON)
+    if ($BuildReason -eq "PullRequest") {
+        $results.Add("status", $BuildReason)
         $results.Add($($ResultDeploymentParameter + "BuildNumber"), $ENV:BUILD_BUILDNUMBER)
+        $results.Add("pr", $ENV:SYSTEM_PULLREQUEST_PULLREQUESTNUMBER)
     }
 
     Write-Host "New Record: Dump results variable"
@@ -145,12 +166,12 @@ else {
         }
     }
 
-    if ($ENV:BUILD_REASON -eq "PullRequest") {
+    if ($BuildReason -eq "PullRequest") {
         if ($r.status -eq $null) {
-            Add-Member -InputObject $r -NotePropertyName "status" -NotePropertyValue $ENV:BUILD_REASON            
+            Add-Member -InputObject $r -NotePropertyName "status" -NotePropertyValue $BuildReason            
         }
         else {
-            $r.status = $ENV:BUILD_REASON
+            $r.status = $BuildReason
         }
         # if it's a PR, set the build number, since it's not set before this outside of a scheduled build
         if ($r.($ResultDeploymentParameter + "BuildNumber") -eq $null) {
@@ -331,7 +352,7 @@ foreach ($badge in $badges) {
         just create the badges in the "pr" folder and they will be copied over by a CI build when merged
         scheduled builds should be put into the "live" container (i.e. badges)
     #>
-    if ($ENV:BUILD_REASON -eq "PullRequest") {
+    if ($BuildReason -eq "PullRequest") {
         $containerName = "prs"
     }
     else {
