@@ -16,7 +16,7 @@ sudo sed -i 's/allowed_users=console/allowed_users=anybody/' /etc/X11/Xwrapper.c
 #start remote desktop session
 sudo service xrdp restart
 
-#install Azure CLI 
+#install Azure CLI
 apt-get update && sudo apt-get install -y azure-cli
 logger -t devvm "Azure-cli installed: $?"
 sudo apt-get -y update

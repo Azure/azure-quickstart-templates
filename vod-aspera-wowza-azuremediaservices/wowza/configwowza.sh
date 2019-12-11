@@ -1,6 +1,6 @@
 #!/bin/bash
 #arguments: username, storage account, storage access key, container name
-#Install azure CLI for storage 
+#Install azure CLI for storage
 sudo su
 cd /home/$1
 sudo apt-get update
@@ -15,7 +15,7 @@ export AZURE_STORAGE_ACCOUNT=$2
 export AZURE_STORAGE_ACCESS_KEY=$3
 export CONTAINER_NAME=$4
 export DESTINATION_FOLDER=/usr/local/WowzaStreamingEngine/content/
-export EDITOR=vi 
+export EDITOR=vi
 
 echo "export AZURE_STORAGE_ACCOUNT="$2 >>.profile
 echo "export AZURE_STORAGE_ACCESS_KEY="$3 >>.profile

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e 
+set -e
 
 date
 ps axjf
@@ -43,7 +43,7 @@ fi
 sudo cp /usr/local/syscoin2/src/syscoind /usr/bin/syscoind
 sudo cp /usr/local/syscoin2/src/syscoin-cli /usr/bin/syscoin-cli
 
-else    
+else
 #################################################################
 # Install Syscoin from PPA                                      #
 #################################################################
@@ -56,7 +56,7 @@ fi
 ################################################################
 # Configure to auto start at boot					    #
 ################################################################
-file=$HOME/.syscoin 
+file=$HOME/.syscoin
 if [ ! -e "$file" ]
 then
 	sudo mkdir $HOME/.syscoin
@@ -67,7 +67,7 @@ if [ ! -e "$file" ]
 then
 	printf '%s\n%s\n' '#!/bin/sh' 'sudo syscoind' | sudo tee /etc/init.d/syscoin
 	sudo chmod +x /etc/init.d/syscoin
-	sudo update-rc.d syscoin defaults	
+	sudo update-rc.d syscoin defaults
 fi
 
 /usr/bin/syscoind

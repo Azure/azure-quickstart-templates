@@ -1,6 +1,6 @@
-#!/bin/bash 
+#!/bin/bash
 
-sudo apt-get update 
+sudo apt-get update
 sudo apt-get install -y --no-install-recommends \
         apt-utils \
         software-properties-common \
@@ -18,7 +18,7 @@ sudo apt-get install -y --no-install-recommends \
 # Install docker
 which docker
 if [ $? -eq 0 ]
-then 
+then
 docker --version
 ## docker already installed
 else

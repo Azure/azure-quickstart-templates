@@ -6,8 +6,8 @@ osUser=$2
 apt-get update
 
 #another way of installing mysql server in a Non-Interactive mode
-echo "mysql-server-5.6 mysql-server/root_password password $mysqlPassword" | sudo debconf-set-selections 
-echo "mysql-server-5.6 mysql-server/root_password_again password $mysqlPassword" | sudo debconf-set-selections 
+echo "mysql-server-5.6 mysql-server/root_password password $mysqlPassword" | sudo debconf-set-selections
+echo "mysql-server-5.6 mysql-server/root_password_again password $mysqlPassword" | sudo debconf-set-selections
 
 #install mysql-server 5.5
 apt-get -y install mysql-server
