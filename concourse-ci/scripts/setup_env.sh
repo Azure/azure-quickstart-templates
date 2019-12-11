@@ -161,7 +161,7 @@ bosh -n update-cloud-config ~/example_manifests/cloud-config.yml \\
   -v vnet_name=$(get_setting VNET_NAME) \\
   -v subnet_name=$(get_setting SUBNET_NAME_FOR_CONCOURSE) \\
   -v security_group=$(get_setting NSG_NAME_FOR_CONCOURSE) \\
-  -v ephemeral_disk_size=${concourse_worker_disk_size_in_mb} 
+  -v ephemeral_disk_size=${concourse_worker_disk_size_in_mb}
 
 bosh upload-stemcell --sha1=$(get_setting STEMCELL_SHA1) $(get_setting STEMCELL_URL)
 bosh -e azure -n deploy -d concourse ~/example_manifests/concourse.yml \\

@@ -10,10 +10,10 @@
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -53,22 +53,22 @@ install_java() {
 install_kibana() {
     # default - ES 2.3.1
 	kibana_url="https://download.elastic.co/kibana/kibana/kibana-4.5.0-linux-x64.tar.gz"
-	
-	if [[ "${ES_VERSION}" == "2.2.2" ]]; 
+
+	if [[ "${ES_VERSION}" == "2.2.2" ]];
     then
 		kibana_url="https://download.elastic.co/kibana/kibana/kibana-4.4.2-linux-x64.tar.gz"
 	fi
-    
-    if [[ "${ES_VERSION}" == "2.1.2" ]]; 
+
+    if [[ "${ES_VERSION}" == "2.1.2" ]];
     then
         kibana_url="https://download.elastic.co/kibana/kibana/kibana-4.3.3-linux-x64.tar.gz"
     fi
-    
-    if [[ "${ES_VERSION}" == "1.7.5" ]]; 
+
+    if [[ "${ES_VERSION}" == "1.7.5" ]];
     then
         kibana_url="https://download.elastic.co/kibana/kibana/kibana-4.1.6-linux-x64.tar.gz"
     fi
-    
+
     groupadd -g 999 kibana
     useradd -u 999 -g 999 kibana
 
@@ -83,7 +83,7 @@ install_kibana() {
     then
         echo "elasticsearch.url: \"$ELASTICSEARCH_URL\"" >> /opt/kibana/config/kibana.yml
     else
-        cat /opt/kibana/config/kibana.yml.bak | sed "s|http://localhost:9200|${ELASTICSEARCH_URL}|" >> /opt/kibana/config/kibana.yml 
+        cat /opt/kibana/config/kibana.yml.bak | sed "s|http://localhost:9200|${ELASTICSEARCH_URL}|" >> /opt/kibana/config/kibana.yml
     fi
 
     # install the marvel plugin for 2.x
@@ -94,9 +94,9 @@ install_kibana() {
             /opt/kibana/bin/kibana plugin --install elasticsearch/marvel/${ES_VERSION}
         fi
 
-        # for 1.x marvel is installed only within the cluster, not on the kibana node 
+        # for 1.x marvel is installed only within the cluster, not on the kibana node
     fi
-    
+
     # install the sense plugin for 2.x
     if [ ${INSTALL_SENSE} -ne 0 ];
     then
@@ -104,8 +104,8 @@ install_kibana() {
         then
             /opt/kibana/bin/kibana plugin --install elastic/sense
         fi
-                
-        # for 1.x sense is not supported 
+
+        # for 1.x sense is not supported
     fi
 
 # Add upstart task and start kibana service
@@ -140,7 +140,7 @@ while getopts :v:t:msh optname; do
     v) ES_VERSION=${OPTARG};;
     m) INSTALL_MARVEL=1;;
     s) INSTALL_SENSE=1;;
-    t) ELASTICSEARCH_URL=${OPTARG};; 
+    t) ELASTICSEARCH_URL=${OPTARG};;
     h) help; exit 1;;
    \?) help; error "Option -${OPTARG} not supported.";;
     :) help; error "Option -${OPTARG} requires an argument.";;

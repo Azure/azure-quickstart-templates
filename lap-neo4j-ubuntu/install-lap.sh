@@ -6,7 +6,7 @@ apt-get -y update
 export DEBIAN_FRONTEND=noninteractive
 
 #install php apache
-apt-get -y install apache2 
+apt-get -y install apache2
 
 apt-get -y install php
 
@@ -22,7 +22,7 @@ apt-get -y install libapache2-mod-php
 #php -r "unlink('composer-setup.php');"
 #echo "Composer is installed"
 curl -sS https://getcomposer.org/installer | php
-mv composer.phar /usr/local/bin/composer 
+mv composer.phar /usr/local/bin/composer
 
 
 #php test file
@@ -32,7 +32,7 @@ phpinfo();
 ?>
 EOF
 
-#neo4j code test 
+#neo4j code test
 #creating the composer.json file which uses the neoclient
 cat > /var/www/html/composer.json <<EOF
 {

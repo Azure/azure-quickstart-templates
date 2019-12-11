@@ -12,12 +12,12 @@ function addtofstab()
   log "addtofstab"
   partPath=$1
   mount=$2
-  
+
   local blkid=$(/sbin/blkid $partPath)
-  
+
   if [[ $blkid =~  UUID=\"(.{36})\" ]]
   then
-  
+
     log "Adding fstab entry"
     local uuid=${BASH_REMATCH[1]};
     local mountCmd=""
@@ -25,12 +25,12 @@ function addtofstab()
     mountCmd="/dev/disk/by-uuid/$uuid $mount xfs  defaults,nofail  0  2"
     echo "$mountCmd" >> /etc/fstab
     $(mount $partPath $mount)
-  
+
   else
     log "no UUID found"
     exit -1;
   fi
-  
+
   log "addtofstab done"
 }
 
@@ -60,7 +60,7 @@ function getdevicepath()
 
 function createlvm()
 {
-  
+
   log "createlvm"
 
   local lunsA=(${1//,/ })
@@ -80,14 +80,14 @@ function createlvm()
     local numRaidDevices=0
     local raidDevices=""
     log "num luns $lunsCount"
-    
+
     for ((i=0; i<lunsCount; i++))
     do
       log "trying to find device path"
       local lun=${lunsA[$i]}
       getdevicepath $lun
       local devicePath=$getdevicepathresult;
-      
+
       if [ -n "$devicePath" ];
       then
         log " Device Path is $devicePath"
@@ -111,7 +111,7 @@ function createlvm()
       $(lvcreate --extents $sizeLoc%FREE --stripes $numRaidDevices --name $lvNameLoc $vgName)
       $(mkfs -t xfs /dev/$vgName/$lvNameLoc)
       $(mkdir -p $mountPathLoc)
-    
+
       addtofstab /dev/$vgName/$lvNameLoc $mountPathLoc
     done
 
@@ -148,7 +148,7 @@ names=""
 paths=""
 sizes=""
 
-while true; 
+while true;
 do
   case "$1" in
     "-luns")  luns=$2;shift 2;log "found luns"
@@ -164,8 +164,8 @@ do
   esac
 
   if [[ -z "$1" ]];
-  then 
-    break; 
+  then
+    break;
   fi
 done
 

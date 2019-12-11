@@ -12,9 +12,9 @@
 #  3 - k: Storage account key (password)
 #  4 - l: MSI client id (principal id)
 #  5 - u: User account name
-#  6 - d: Ubuntu Desktop GUI for developement 
+#  6 - d: Ubuntu Desktop GUI for developement
 #  7 - h: help
-# Note : 
+# Note :
 # This script has only been tested on Ubuntu 12.04 LTS & 14.04 LTS and must be root
 
 set -e
@@ -58,7 +58,7 @@ while getopts :s:t:a:k:l:u:d: optname; do
     s) #azure subscription id
       SUBSCRIPTION_ID=${OPTARG}
       ;;
-    t) #azure tenant id 
+    t) #azure tenant id
       TENANT_ID=${OPTARG}
       ;;
     a) #storage account name
