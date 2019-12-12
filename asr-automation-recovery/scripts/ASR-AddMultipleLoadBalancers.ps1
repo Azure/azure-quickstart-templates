@@ -123,7 +123,7 @@ Try
                 Write-Output "Availability Set is present for VM: `n" $AzureVm.Name
             }
             #Join the VMs NICs to backend pool of the Load Balancer
-            $ARMNic = Get-AzureRmResource -ResourceId $AzureVm.NetworkInterfaceIDs[0]
+            $ARMNic = Get-AzureRmResource -ResourceId $AzureVm.NetworkProfile.NetworkInterfaces[0].Id
             $Nic = Get-AzureRmNetworkInterface -Name $ARMNic.Name -ResourceGroupName $ARMNic.ResourceGroupName
             $Nic.IpConfigurations[0].LoadBalancerBackendAddressPools.Add($LoadBalancer.BackendAddressPools[0]);        
             $Nic | Set-AzureRmNetworkInterface    

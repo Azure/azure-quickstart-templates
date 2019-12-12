@@ -16,7 +16,7 @@
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
-This template creates an Azure Machine Learning service workspace. 
+This template creates an Azure Machine Learning service workspace.
 
 If you are new to Azure Machine Learning, see:
 
