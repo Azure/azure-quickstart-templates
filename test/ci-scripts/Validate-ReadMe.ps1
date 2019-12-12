@@ -8,42 +8,72 @@ param(
 TODO linting - is there a pipeline tool for this ?
 #>
 
+$s = $sampleName.Replace("\", "/")
+
 $badges = @(
-    "https://azurequickstartsservice.blob.core.windows.net/badges/#sampleName#/PublicLastTestDate.svg",
-    "https://azurequickstartsservice.blob.core.windows.net/badges/#sampleName#/PublicDeployment.svg",
-    "https://azurequickstartsservice.blob.core.windows.net/badges/#sampleName#/FairfaxLastTestDate.svg",
-    "https://azurequickstartsservice.blob.core.windows.net/badges/#sampleName#/FairfaxDeployment.svg",
-    "https://azurequickstartsservice.blob.core.windows.net/badges/#sampleName#/BestPracticeResult.svg",
-    "https://azurequickstartsservice.blob.core.windows.net/badges/#sampleName#/CredScanResult.svg"
+    "https://azurequickstartsservice.blob.core.windows.net/badges/$s/PublicLastTestDate.svg",
+    "https://azurequickstartsservice.blob.core.windows.net/badges/$s/PublicDeployment.svg",
+    "https://azurequickstartsservice.blob.core.windows.net/badges/$s/FairfaxLastTestDate.svg",
+    "https://azurequickstartsservice.blob.core.windows.net/badges/$s/FairfaxDeployment.svg",
+    "https://azurequickstartsservice.blob.core.windows.net/badges/$s/BestPracticeResult.svg",
+    "https://azurequickstartsservice.blob.core.windows.net/badges/$s/CredScanResult.svg"
 )
+#$badges.Replace("#sampleName#", $sampleName.Replace("\", "/"))
 
 $buttons = @(
-    "https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F#sampleName#%2Fazuredeploy.json"
+    "https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F$s%2Fazuredeploy.json"
     "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"
-    "http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F#sampleName#%2Fazuredeploy.json"
+    "http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F$s%2Fazuredeploy.json"
     "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"
 )
+#$buttons.Replace("#sampleName#", $sampleName.Replace("\", "/"))
 
-    Write-Output "Testing file: $SampleFolder/$ReadMeFileName"
-    $readme = Get-Content "$SampleFolder/$ReadMeFileName" -Raw
+Write-Output "Testing file: $SampleFolder/$ReadMeFileName"
+$readme = Get-Content "$SampleFolder/$ReadMeFileName" -Raw
 
-    # header on first line
-    if(-not ($readme.StartsWith("# "))){
-        Write-Error "Readme must start with # header, not: $($readme[0])"
+$dumpHelp = $false
+# header on first line
+if(-not ($readme.StartsWith("# "))){
+    Write-Error "Readme must start with # header, not: $($readme[0])"
+}
+
+#proper src attribute for badges
+foreach($badge in $badges){
+    if(-not ($readme -like "*$badge*")){
+        $dumpHelp = $true
+        Write-Error "Readme is missing badge: $badge"
     }
+}
 
-    #proper src attribute for badges
-    foreach($badge in $badges){
-        $searchString = $badge.Replace("#sampleName#", $sampleName.Replace("\", "/")) #change \ to / due to windows path to url
-        if(-not ($readme -like "*$searchString*")){
-            Write-Error "Readme is missing badge: $searchString"
-        }
+#Proper href and src attribute for buttons
+foreach($button in $buttons){
+    if(-not ($readme -like "*$button*")){
+        $dumpHelp = $true
+        Write-Error "Readme button incorrect HREF or SRC attribute: $button"
     }
+}
 
-    #Proper href and src attribute for buttons
-    foreach($button in $buttons){
-        $searchString = $button.Replace("#sampleName#", $sampleName.Replace("\", "/")) #change \ to / due to windows path to url
-        if(-not ($readme -like "*$searchString*")){
-            Write-Error "Readme button incorrect HREF or SRC attribute: $searchString"
-        }
-    }
+if( $dumpHelp ){
+    $md = @"
+    <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/$s/PublicLastTestDate.svg" />&nbsp;
+    <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/$s/PublicDeployment.svg" />&nbsp;
+
+    <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/$s/FairfaxLastTestDate.svg" />&nbsp;
+    <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/$s/FairfaxDeployment.svg" />&nbsp;
+    
+    <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/$s/BestPracticeResult.svg" />&nbsp;
+    <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/$s/CredScanResult.svg" />&nbsp;
+    
+    
+    <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F$s%2Fazuredeploy.json" target="_blank">
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
+    </a>
+    <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F$s%2Fazuredeploy.json" target="_blank">
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
+    </a>
+"@
+
+    Write-Output "Ensure the following markdown is at the top of the README under the heading:`n"
+    Write-Output $md
+
+}

@@ -18,5 +18,24 @@
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
+Azure Event Hubs is a Big Data streaming platform and event ingestion service, capable of receiving and processing millions of events per second. Event Hubs can process and store events, data, or telemetry produced by distributed software and devices. Data sent to an event hub can be transformed and stored using any real-time analytics provider or batching/storage adapters. 
+
+- [For detailed overview of Event Hubs, see [Event Hubs](https://docs.microsoft.com/azure/event-hubs/event-hubs-about) overview and [Event Hubs features](https://docs.microsoft.com/en-us/azure/event-hubs/event-hubs-features).
+
 For information about using this template, see [Create a EventHubs namespace with EventHub and ConsumerGroup using an ARM template](http://azure.microsoft.com/documentation/articles/service-bus-resource-manager-namespace-event-hub/).
 
+### Next steps
+
+In this article, you created an Event Hubs namespace, and an event hub in the namespace. For step-by-step instructions to send events to (or) receive events from an event hub, see the Send and receive events tutorials:
+
+- [Examples](https://docs.microsoft.com/azure/event-hubs/event-hubs-resource-manager-namespace-event-hub)
+.NET Core
+.NET Framework
+Java
+Python
+Node.js
+Go
+C (send only)
+Apache Storm (receive only)
+
+- [Microsoft Learn Modules for Event Hub](https://docs.microsoft.com/learn/browse/?term=event%20hub)
