@@ -1,5 +1,6 @@
 function Test-AzTemplate
 {
+[Alias('Test-AzureRMTemplate')] # Added for backward compat with MP
     <#
     .Synopsis
 Tests an Azure Resource Manager Template
@@ -433,9 +434,16 @@ Each test script has access to a set of well-known variables:
                     if ($IsPesterLoaded?) {
                         $true
                     } else {
-                        $env:PSModulePath -split ';' | 
-                            Get-ChildItem -Filter Pester |
-                            Import-Module -Global -PassThru        
+                    
+                        if ($PSVersionTable.Platform -eq 'Unix') {
+                            $delimiter = ':' # used for bash
+                        } else {
+                            $delimiter = ';' # used for windows
+                        }
+
+                        $env:PSModulePath -split $delimiter | 
+                        Get-ChildItem -Filter Pester |
+                        Import-Module -Global -PassThru     
                     }
 
                 if (-not $DoesPesterExist?){

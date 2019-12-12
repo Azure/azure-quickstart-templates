@@ -8,12 +8,6 @@
         "description": "Admin username for VM"
       }
     },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Admin password for VMs"
-      }
-    },
     "numberOfInstances": {
       "type": "int",
       "defaultValue": 2,
@@ -39,6 +33,23 @@
       "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "Location for all resources."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
     }
   },
@@ -67,7 +78,17 @@
       "Ubuntu": "22",
       "Windows": "3389"
     },
-    "nsgAllowPort": "[variables('nsgOsPort')[parameters('OS')]]"
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
@@ -95,7 +116,7 @@
               "priority": 1000,
               "access": "Allow",
               "direction": "Inbound",
-              "destinationPortRange": "[variables('nsgAllowPort')]",
+              "destinationPortRange": "[variables('nsgOsPort')[parameters('OS')]]",
               "protocol": "Tcp",
               "sourceAddressPrefix": "*",
               "sourcePortRange": "*",
@@ -180,7 +201,8 @@
         "osProfile": {
           "computerName": "[concat('vm', copyIndex())]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": "[variables('imageReference')]",
