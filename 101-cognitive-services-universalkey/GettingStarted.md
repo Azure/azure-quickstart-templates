@@ -1,22 +1,22 @@
-# Cognitive services
+# Cognitive Services Universal Key
 
-The purpose of this ARM Template is **deploy a General Cognitive Service**.
+The purpose of this ARM Template is **deploy a Cognitive Services Universal Key**.
 
 Let's understand a bit better how all this work.
 
 ## Overview
 
-Azure Cognitive Services are APIs, SDKs, and services available to help developers build intelligent applications without having direct AI or data science skills or knowledge. Azure Cognitive Services enable developers to easily add cognitive features into their applications. The goal of Azure Cognitive Services is to help developers create applications that can see, hear, speak, understand, and even begin to reason. The catalog of services within Azure Cognitive Services can be categorized into five main pillars - Vision, Speech, Language, Web Search, and Decision.
+Azure Cognitive Services are APIs, SDKs, and services available to help developers build intelligent applications without having direct AI or data science skills or knowledge. Azure Cognitive Services enable developers to easily add cognitive features into their applications. The goal of Azure Cognitive Services is to help developers create applications that can see, hear, speak, understand, and even begin to reason. The catalogue of services within Azure Cognitive Services can be categorized into five main pillars - Vision, Speech, Language, Web Search, and Decision.
 
 ## Pre Deployment Steps
 
-Before proceesing to the deployment of the template, we need to perform the following steps.
+Before processing the deployment of the template, we need to perform the following steps.
 
 ### The template
 
 Don't let the size of the template scares you. The structure is very intuitive and once that you get the gist of it, you will see how easier your life will be regarding deploying resources to Azure.
 
-Those are the parameters on the template. Some of them are aready with the values, the ones that you need to inform are **cognitiveServiceName** and the **sku** in case that need a powerful service.
+Those are the parameters on the template. Some of them are already with the values, the ones that you need to inform are **cognitiveServiceName** and the **SKU** in case that need a powerful service.
 
 Parameter         | Suggested value     | Description
 :--------------- |:-------------      |:---------------------
@@ -28,7 +28,7 @@ Parameter         | Suggested value     | Description
 ## Deployment
 
 There are a few ways to deploy this template.
-You can use [PowerShell](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy), [Azure CLI](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-cli), [Azure Portal](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-portal) or your favorite SDK.
+You can use [PowerShell](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy), [Azure CLI](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy-cli), [Azure Portal](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy-portal) or your favorite SDK.
 
 For Azure CLI I'm using the Visual Code with Azure CLI extensions, if you like, you can find more information [here](https://code.visualstudio.com/docs/azure/extensions). But bare in mind that you don't need to use the Visual Code, you can stick with the old good always present **Command Line** on Windows or any **bash terminal**
 
@@ -74,7 +74,7 @@ Click on the Resource Group and there it's the resources
 
 ![Screen](./images/portal-resource.png)
 
-Congratulations! You have deployed the template succesfully.
+Congratulations! You have deployed the template successfully.
 
 ### Using the Portal
 
@@ -102,7 +102,7 @@ Select [Agree] and click on [Purchase].
 
 As you can see, it's deploying.
 
-After a couple of minutes, voilà, you have your Cognitive Service deployed.
+After a couple of minutes, voilà, you have your Cognitive Services Universal Key deployed.
 
 ![Screen](./images/azportaldeploy3.png)
 
