@@ -118,7 +118,7 @@
                       "[resourceId('Microsoft.Storage/storageAccounts', variables('storageName'))]"
                   ],
                   "properties": {
-                      "storageContainerPath": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageName')), '2018-07-01').primaryEndpoints.blob, 'vulnerability-assessment')]",
+                      "storageContainerPath": "[if(and(parameters('enableADS'),parameters('enableVA')), concat(reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageName')), '2018-07-01').primaryEndpoints.blob, 'vulnerability-assessment'), '')]",
                       "recurringScans": {
                           "isEnabled": true,
                           "emailSubscriptionAdmins": true
@@ -147,23 +147,25 @@
           "sku": {
               "name": "Standard_LRS"
           },
-          "kind": "StorageV2"
-      },
-      {
-          "type": "Microsoft.Storage/storageAccounts/providers/roleAssignments",
-          "apiVersion": "2018-09-01-preview",
-          "name": "[concat(variables('storageName'), '/Microsoft.Authorization/', variables('uniqueRoleGuid') )]",
-          "dependsOn": [
-              "[resourceId('Microsoft.Sql/servers', parameters('serverName'))]",
-              "[resourceId('Microsoft.Storage/storageAccounts', variables('storageName'))]"
-          ],
-          "properties": {
-              "roleDefinitionId": "[variables('StorageBlobContributor')]",
-              "principalId": "[reference(resourceId('Microsoft.Sql/servers', parameters('serverName')), '2018-06-01-preview', 'Full').identity.principalId]",
-              "scope": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageName'))]",
-              "principalType": "ServicePrincipal"
-          },
-          "condition": "[and(parameters('enableADS'),parameters('enableVA'))]"
-       }
+          "kind": "StorageV2",
+          "resources": [
+              {
+                    "type": "Microsoft.Storage/storageAccounts/providers/roleAssignments",
+                    "apiVersion": "2018-09-01-preview",
+                    "name": "[concat(variables('storageName'), '/Microsoft.Authorization/', variables('uniqueRoleGuid') )]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Sql/servers', parameters('serverName'))]",
+                        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageName'))]"
+                    ],
+                    "properties": {
+                        "roleDefinitionId": "[variables('StorageBlobContributor')]",
+                        "principalId": "[reference(resourceId('Microsoft.Sql/servers', parameters('serverName')), '2018-06-01-preview', 'Full').identity.principalId]",
+                        "scope": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageName'))]",
+                        "principalType": "ServicePrincipal"
+                    },
+                    "condition": "[and(parameters('enableADS'),parameters('enableVA'))]"
+              }
+          ]
+      } 
   ]
 }
