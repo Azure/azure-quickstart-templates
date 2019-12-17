@@ -14,12 +14,6 @@
         "description": "user name to ssh to the VMs"
       }
     },
-    "password": {
-      "type": "securestring",
-      "metadata": {
-        "description": "password to ssh to the VMs"
-      }
-    },
     "vmSize": {
       "type": "string",
       "defaultValue": "Standard_A1",
@@ -221,6 +215,23 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
     }
   },
   "variables": {
@@ -250,7 +261,6 @@
     "nicId1": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName1'))]",
     "nicId2": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName2'))]",
     "nicId3": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName3'))]",
-
     "vmName1": "[concat('a-', parameters('vmNamePrefix'))]",
     "vmName2": "[concat('k-', parameters('vmNamePrefix'))]",
     "vmName3": "[concat('z-', parameters('vmNamePrefix'))]",
@@ -258,10 +268,21 @@
     "vmExtensionName": "[concat(parameters('vmNamePrefix'), '-ext')]",
     "pxcClusterAddress": "[concat(parameters('vmIP1'), ',', parameters('vmIP2'), ',', parameters('vmIP3'))]",
     "customScriptCommandCommon": "[concat(parameters('customScriptCommandToExecute'), ' ', variables('pxcClusterAddress'), ' ')]",
-     "customScriptParamVm1": "[concat(parameters('vmIP1'), ' bootstrap-pxc ', parameters('mysqlConfigFilePath'))]",
+    "customScriptParamVm1": "[concat(parameters('vmIP1'), ' bootstrap-pxc ', parameters('mysqlConfigFilePath'))]",
     "vmExtensionName1": "[concat(variables('vmName1'),'/', variables('vmExtensionName'))]",
-      "customScriptParamVm2": "[concat(parameters('vmIP2'), ' start ', parameters('mysqlConfigFilePath'))]",
-    "customScriptParamVm3": "[concat(parameters('vmIP3'), ' start ', parameters('mysqlConfigFilePath'))]"
+    "customScriptParamVm2": "[concat(parameters('vmIP2'), ' start ', parameters('mysqlConfigFilePath'))]",
+    "customScriptParamVm3": "[concat(parameters('vmIP3'), ' start ', parameters('mysqlConfigFilePath'))]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('userName'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
@@ -283,11 +304,11 @@
       "location": "[parameters('location')]",
       "sku": {
         "name": "Aligned"
-        },
-        "properties": { 
+      },
+      "properties": {
         "platformFaultDomainCount": 2,
         "platformUpdateDomainCount": 5
-        }
+      }
     },
     {
       "apiVersion": "2015-06-15",
@@ -431,7 +452,8 @@
         "osProfile": {
           "computerName": "[variables('vmName1')]",
           "adminUsername": "[parameters('userName')]",
-          "adminPassword": "[parameters('password')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
@@ -441,7 +463,7 @@
             "version": "latest"
           },
           "osDisk": {
-            "name":"[concat(variables('vmName1'),'_OSDisk')]",
+            "name": "[concat(variables('vmName1'),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           },
@@ -511,7 +533,8 @@
         "osProfile": {
           "computerName": "[variables('vmName2')]",
           "adminUsername": "[parameters('userName')]",
-          "adminPassword": "[parameters('password')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
@@ -592,7 +615,8 @@
         "osProfile": {
           "computerName": "[variables('vmName3')]",
           "adminUsername": "[parameters('userName')]",
-          "adminPassword": "[parameters('password')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
