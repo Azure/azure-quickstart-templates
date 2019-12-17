@@ -8,12 +8,6 @@
         "description": "Username for the virtual Machine(s) hosting the Solace message router instance(s). Do not use special characters."
       }
     },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Password for the Virtual Machine(s) and for the 'admin' SolOS CLI user."
-      }
-    },
     "securityGroupName": {
       "type": "string",
       "defaultValue": "solace-security",
@@ -130,7 +124,7 @@
       "type": "string",
       "defaultValue": "solace/solace-pubsub-standard:latest",
       "metadata": {
-          "description": "Solace PubSub+ message broker docker image reference: a docker registry name with optional tag or a download URL. The download URL can be obtained from http://dev.solace.com/downloads/ or it can be a url to a remotely hosted load version. Default will use the latest image available from Docker Hub."
+        "description": "Solace PubSub+ message broker docker image reference: a docker registry name with optional tag or a download URL. The download URL can be obtained from http://dev.solace.com/downloads/ or it can be a url to a remotely hosted load version. Default will use the latest image available from Docker Hub."
       }
     },
     "deploymentModel": {
@@ -198,6 +192,23 @@
         "description": "Optional: The Shared Access Signatures (SAS) token if required for the artifacts location, otherwise leave it at default blank."
       },
       "defaultValue": ""
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
     }
   },
   "variables": {
@@ -233,13 +244,15 @@
     "subnetName": "[if(not(empty(parameters('existingSubnetName'))), parameters('existingSubnetName'), 'solace-subnet')]",
     "nicName": "nicd",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
-    "deploymentModelHighAvailability": { "numberOfNodes": 3 },
+    "deploymentModelHighAvailability": {
+      "numberOfNodes": 3
+    },
     "deploymentModelSingleNode": {
       "numberOfNodes": 1
     },
     "numberOfInstances": "[variables(concat('deploymentModel', parameters('deploymentModel'))).numberOfNodes]",
     "monitorNodeIndex": 2,
-    "lbName" : "solace-ha-group-loadbalancer",
+    "lbName": "solace-ha-group-loadbalancer",
     "lbPoolName": "solace-ha-group",
     "lbPoolID": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('lbName'), variables('lbPoolName'))]",
     "dataDisksChoices": {
@@ -261,10 +274,21 @@
           "createOption": "Empty"
         }
       ],
-      "2": [ ]
+      "2": []
     },
-    "adminPasswordDir" : "/mnt/resource/secrets",
-    "adminPasswordFile" : "[concat(variables('adminPasswordDir'),'/solOSpasswd')]"
+    "adminPasswordDir": "/mnt/resource/secrets",
+    "adminPasswordFile": "[concat(variables('adminPasswordDir'),'/solOSpasswd')]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
@@ -459,14 +483,14 @@
       "location": "[parameters('location')]",
       "sku": {
         "name": "Aligned"
-        },
+      },
       "properties": {
         "platformFaultDomainCount": "[variables('platformFaultDomainCount')]",
         "platformUpdateDomainCount": "[variables('platformUpdateDomainCount')]"
       }
     },
     {
-      "apiVersion":"2017-03-30",
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(parameters('dnsLabelForVmIp'), copyindex())]",
       "location": "[parameters('location')]",
@@ -488,7 +512,8 @@
         "osProfile": {
           "computerName": "[concat(parameters('dnsLabelForVmIp'), copyindex())]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
@@ -584,7 +609,7 @@
         },
         "protectedSettings": {
           "commandToExecute": "[concat('mkdir -p -m 600 ', variables('adminPasswordDir'), '; echo ', parameters('adminPassword'), ' > ', variables('adminPasswordFile'), '; bash ', variables('solaceInstallScriptName'), ' -c ', copyindex(), ' -d ', parameters('dnsLabelForVmIp'), ' -n ', variables('numberOfInstances'), ' -p ', variables('adminPasswordFile'), ' -s ', if(equals(copyindex(), variables('monitorNodeIndex')), '0', parameters('dataDiskSize')), if(empty(parameters('workspaceName')), '', concat(' -w ', reference(variables('solaceWorkspaceName')).outputs.workspaceId.value)), ' -u ', parameters('solaceMessageBrokerDockerImageReference'))]"
-         }
+        }
       }
     }
   ]
