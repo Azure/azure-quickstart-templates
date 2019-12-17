@@ -14,12 +14,6 @@
         "description": "user name to ssh to the VMs"
       }
     },
-    "vmPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "password to ssh to the VMs"
-      }
-    },
     "mysqlRootPassword": {
       "type": "securestring",
       "metadata": {
@@ -198,6 +192,12 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "authenticationType": {
+      "type": "string"
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring"
     }
   },
   "variables": {
@@ -222,7 +222,18 @@
     "ipOctet01": "[concat(split(variables('sa'), '.')[0], '.', split(variables('sa'), '.')[1], '.')]",
     "ipOctet2": "[int(split(variables('sa'), '.')[2])]",
     "ipOctet3": "[int(split(variables('sa'), '.')[3])]",
-    "DBName": "[concat(uniquestring(resourceGroup().id),'wordpress')]"
+    "DBName": "[concat(uniquestring(resourceGroup().id),'wordpress')]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('vmUserName'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
@@ -273,11 +284,11 @@
       "location": "[parameters('location')]",
       "sku": {
         "name": "Aligned"
-        },
-        "properties": { 
+      },
+      "properties": {
         "platformFaultDomainCount": 2,
         "platformUpdateDomainCount": 5
-        }
+      }
     },
     {
       "apiVersion": "2015-06-15",
@@ -346,7 +357,8 @@
         "osProfile": {
           "computerName": "[concat(parameters('dnsName'), copyIndex())]",
           "adminUsername": "[parameters('vmUserName')]",
-          "adminPassword": "[parameters('vmPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
