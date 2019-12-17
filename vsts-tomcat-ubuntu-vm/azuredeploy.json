@@ -9,12 +9,6 @@
         "description": "Linux VM User Account Name"
       }
     },
-    "adminPassword": {
-      "type": "securestring",
-            "metadata": { 
-        "description": "Administrator Password" 
-       }
-    },
     "dnsLabelPrefix": {
       "type": "string",
       "metadata": {
@@ -46,6 +40,23 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
     }
   },
   "variables": {
@@ -58,13 +69,24 @@
     "subnet1Name": "Subnet-1",
     "subnet1Prefix": "10.0.0.0/24",
     "publicIPAddressName": "[concat('myIP7',variables('baseName'))]",
-    "publicIPAddressType": "Dynamic", 
+    "publicIPAddressType": "Dynamic",
     "vmName": "[parameters('dnsLabelPrefix')]",
     "vmSize": "Standard_F1",
     "virtualNetworkName": "MyVNET7",
     "frontEndNSGName": "[concat(parameters('dnsLabelPrefix'),'-nsg7')]",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]", 
-    "subnet1Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]"
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
+    "subnet1Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
@@ -206,11 +228,11 @@
       }
     },
     {
-      "apiVersion":  "2017-03-30",
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [ 
+      "dependsOn": [
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
       ],
       "properties": {
@@ -220,8 +242,9 @@
         "osProfile": {
           "computerName": "[variables('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]",
-          "customData": "[base64(variables('publicIPAddressName'))]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "customData": "[base64(variables('publicIPAddressName'))]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
