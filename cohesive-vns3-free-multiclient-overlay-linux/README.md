@@ -3,9 +3,6 @@
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cohesive-vns3-free-multiclient-overlay-linux/PublicLastTestDate.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cohesive-vns3-free-multiclient-overlay-linux/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cohesive-vns3-free-multiclient-overlay-linux/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cohesive-vns3-free-multiclient-overlay-linux/FairfaxDeployment.svg" />&nbsp;
-
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cohesive-vns3-free-multiclient-overlay-linux/BestPracticeResult.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/cohesive-vns3-free-multiclient-overlay-linux/CredScanResult.svg" />&nbsp;
 
