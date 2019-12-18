@@ -24,6 +24,7 @@ elseif ($ENV:BUILD_REASON -eq "BatchedCI" -or $ENV:BUILD_REASON -eq "IndividualC
         $begin = 0
         $begin = $pr.IndexOf("#") # look for the #
     }
+    catch { }
     if ($begin -ge 0) {
         $end = $pr.IndexOf(" ", $begin) # look for the trailing space
         $GitHubPRNumber = $pr.Substring($begin + 1, $end - $begin - 1)
