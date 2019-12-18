@@ -188,20 +188,6 @@
         "description": "private ssh port for the VMs"
       }
     },
-    "customScriptFilePath": {
-      "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/mysql-ha-pxc/azurepxc.sh",
-      "metadata": {
-        "description": "bash file location to configure the cluster"
-      }
-    },
-    "mysqlConfigFilePath": {
-      "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/mysql-ha-pxc/my.cnf.template",
-      "metadata": {
-        "description": "my.cnf file location"
-      }
-    },
     "customScriptCommandToExecute": {
       "type": "string",
       "defaultValue": "bash azurepxc.sh",
@@ -232,6 +218,20 @@
       "metadata": {
         "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/mysql-ha-pxc/",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
     }
   },
   "variables": {
@@ -268,10 +268,11 @@
     "vmExtensionName": "[concat(parameters('vmNamePrefix'), '-ext')]",
     "pxcClusterAddress": "[concat(parameters('vmIP1'), ',', parameters('vmIP2'), ',', parameters('vmIP3'))]",
     "customScriptCommandCommon": "[concat(parameters('customScriptCommandToExecute'), ' ', variables('pxcClusterAddress'), ' ')]",
-    "customScriptParamVm1": "[concat(parameters('vmIP1'), ' bootstrap-pxc ', parameters('mysqlConfigFilePath'))]",
+    "mysqlConfigFilePath": "[uri(parameters('_artifactsLocation'), concat('my.cnf.template', parameters('_artifactsLocationSasToken')))]",
+    "customScriptParamVm1": "[concat(parameters('vmIP1'), ' bootstrap-pxc ', variables('mysqlConfigFilePath'))]",
     "vmExtensionName1": "[concat(variables('vmName1'),'/', variables('vmExtensionName'))]",
-    "customScriptParamVm2": "[concat(parameters('vmIP2'), ' start ', parameters('mysqlConfigFilePath'))]",
-    "customScriptParamVm3": "[concat(parameters('vmIP3'), ' start ', parameters('mysqlConfigFilePath'))]",
+    "customScriptParamVm2": "[concat(parameters('vmIP2'), ' start ', variables('mysqlConfigFilePath'))]",
+    "customScriptParamVm3": "[concat(parameters('vmIP3'), ' start ', variables('mysqlConfigFilePath'))]",
     "linuxConfiguration": {
       "disablePasswordAuthentication": true,
       "ssh": {
@@ -506,7 +507,7 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[parameters('customScriptFilePath')]"
+            "[uri(parameters('_artifactsLocation'), concat('azurepxc.sh', parameters('_artifactsLocationSasToken')))]"
           ]
         },
         "protectedSettings": {
@@ -588,7 +589,7 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[parameters('customScriptFilePath')]"
+            "[uri(parameters('_artifactsLocation'), concat('azurepxc.sh', parameters('_artifactsLocationSasToken')))]"
           ]
         },
         "protectedSettings": {
@@ -670,7 +671,7 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[parameters('customScriptFilePath')]"
+            "[uri(parameters('_artifactsLocation'), concat('azurepxc.sh', parameters('_artifactsLocationSasToken')))]"
           ]
         },
         "protectedSettings": {
