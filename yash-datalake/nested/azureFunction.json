@@ -85,6 +85,18 @@
       "metadata": {
         "description": " Azure stream analytics job name 3"
       }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "SecureString",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      }
     }
   },
   "variables": {
@@ -98,7 +110,7 @@
   "resources": [
     {
       "type": "Microsoft.Web/serverfarms",
-      "name": "[toLower(uniqueString(resourceGroup().id, variables('hostingPlanName'))]",
+      "name": "[toLower(uniqueString(resourceGroup().id, variables('hostingPlanName')))]",
       "apiVersion": "2018-02-01",
       "sku": {
         "name": "Y1",
@@ -119,7 +131,7 @@
     },
     {
       "type": "Microsoft.Web/sites",
-      "name": "[toLower(uniqueString(resourceGroup().id, variables('hostingPlanName')))]",
+      "name": "[variables('functionAppName')]",
       "apiVersion": "2018-02-01",
       "dependsOn": [
         "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]"
@@ -131,10 +143,10 @@
           "name": "[variables('pythonExtension')]",
           "type": "siteextensions",
           "apiVersion": "2018-02-01",
+          "properties": {},
           "dependsOn": [
             "[resourceId('Microsoft.Web/sites',variables('functionAppName'))]"
-          ],
-	"properties": {},  
+          ]
         },
         {
           "name": "MSDeploy",
@@ -150,7 +162,7 @@
             "displayName": "pythonextension"
           },
           "properties": {
-            "packageUri": "https://github.com/ajos1993/azure-quickstart-templates/raw/master/yash-datalake/scripts/quickstart_function_app.zip",
+            "packageUri": "[uri(parameters('_artifactsLocation'), concat('scripts/quickstart_function_app.zip', parameters('_artifactsLocationSasToken')))]",
             "dbType": "None"
           }
         }
@@ -169,7 +181,7 @@
           "appSettings": [
             {
               "name": "AzureWebJobsStorage",
-              "value": "[Concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storageAccountName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')),'2018-07-01').keys[0].value)]"
+              "value": "[parameters('storageAccountConnectionString')]"
             },
             {
               "name": "datafactory_name",
@@ -221,7 +233,7 @@
             },
             {
               "name": "sas_key",
-              "value": "[listkeys(resourceId('Microsoft.EventHub/namespaces/authorizationRules', parameters('eventhub_namespace'), 'RootManageSharedAccessKey'), '2017-04-01').primaryKey]"
+              "value": "[parameters('sas_key')]"
             },
             {
               "name": "DataCleaningStreamAnalyticsJob",
