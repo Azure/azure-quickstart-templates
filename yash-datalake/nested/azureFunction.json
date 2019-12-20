@@ -8,6 +8,12 @@
         "description": "Deployment location"
       }
     },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      }
+    },
     "KibanaESDeployedVMIP": {
       "type": "string",
       "metadata": {
@@ -21,7 +27,7 @@
       }
     },
     "web_app_secret": {
-      "type": "securestring",
+      "type": "string",
       "metadata": {
         "description": "The ID of the service principal web/api"
       }
@@ -44,6 +50,12 @@
         "description": "storage account name"
       }
     },
+    "storageAccountConnectionString": {
+      "type": "string",
+      "metadata": {
+        "description": "storage account connection string"
+      }
+    },
     "eventhub_name": {
       "type": "string",
       "metadata": {
@@ -54,6 +66,12 @@
       "type": "string",
       "metadata": {
         "description": "eventhub namespace name"
+      }
+    },
+    "sas_key": {
+      "type": "string",
+      "metadata": {
+        "description": " event hub SharedAccessPolicyPrimaryKey"
       }
     },
     "adla_account_name": {
@@ -86,12 +104,6 @@
         "description": " Azure stream analytics job name 3"
       }
     },
-    "_artifactsLocation": {
-      "type": "string",
-      "metadata": {
-        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
-      }
-    },
     "_artifactsLocationSasToken": {
       "type": "SecureString",
       "metadata": {
@@ -111,6 +123,13 @@
       "type": "Microsoft.Web/serverfarms",
       "name": "[toLower(uniqueString(resourceGroup().id, variables('hostingPlanName')))]",
       "apiVersion": "2018-02-01",
+      "properties": {
+        "name": "[variables('hostingPlanName')]",
+        "perSiteScaling": false,
+        "reserved": false,
+        "targetWorkerCount": 0,
+        "targetWorkerSizeId": 0
+      },
       "sku": {
         "name": "Y1",
         "tier": "Dynamic",
@@ -119,14 +138,7 @@
         "capacity": 0
       },
       "kind": "functionapp",
-      "location": "[parameters('location')]",
-      "properties": {
-        "name": "[variables('hostingPlanName')]",
-        "perSiteScaling": false,
-        "reserved": false,
-        "targetWorkerCount": 0,
-        "targetWorkerSizeId": 0
-      }
+      "location": "[parameters('location')]"
     },
     {
       "type": "Microsoft.Web/sites",
@@ -142,10 +154,10 @@
           "name": "[variables('pythonExtension')]",
           "type": "siteextensions",
           "apiVersion": "2018-02-01",
-          "properties": {},
           "dependsOn": [
             "[resourceId('Microsoft.Web/sites',variables('functionAppName'))]"
-          ]
+          ],
+          "properties": {}
         },
         {
           "name": "MSDeploy",
@@ -268,7 +280,7 @@
       "dependsOn": [
         "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]",
         "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
-        "[resourceId('Microsoft.Web/sites/extensions', variables('functionAppName'), 'MSDeploy')]"
+        "[concat('Microsoft.Web/sites/',variables('functionAppName'),'/Extensions/MSDeploy')]"
       ],
       "properties": {
         "numberOfWorkers": 1,
@@ -318,6 +330,13 @@
           "clientId": "[parameters('web_app_id')]",
           "issuer": "[concat('https://sts.windows.net/',variables('tenant'))]",
           "isAadAutoProvisioned": false
+        },
+        "cors": {
+          "allowedOrigins": [
+            "https://functions.azure.com",
+            "https://functions-staging.azure.com",
+            "https://functions-next.azure.com"
+          ]
         },
         "localMySqlEnabled": false,
         "http20Enabled": false,
