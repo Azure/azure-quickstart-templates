@@ -86,7 +86,7 @@
         "description": " Azure stream analytics job name 3"
       }
     },
-    "_artifactsLocation": {
+	"_artifactsLocation": {
       "type": "string",
       "metadata": {
         "description": "The base URI where artifacts required by this template are located including a trailing '/'"
@@ -104,13 +104,13 @@
     "pythonExtension": "azureappservice-python2714x64",
     "functionAppName": "[parameters('appName')]",
     "hostingPlanName": "[parameters('appName')]",
-    "tenant": "[subscription().tenantId]",
-    "msd": "MSDeploy"
+    "tenant": "[subscription().tenantId]"
+					
   },
   "resources": [
     {
       "type": "Microsoft.Web/serverfarms",
-      "name": "[toLower(uniqueString(resourceGroup().id, variables('hostingPlanName')))]",
+      "name": "[variables('hostingPlanName')]",
       "apiVersion": "2018-02-01",
       "sku": {
         "name": "Y1",
@@ -131,12 +131,12 @@
     },
     {
       "type": "Microsoft.Web/sites",
-      "name": "[toLower(uniqueString(resourceGroup().id, variables('hostingPlanName')))]",
+      "name": "[variables('functionAppName')]",
       "apiVersion": "2018-02-01",
       "dependsOn": [
         "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]"
       ],
-      "kind": "functionapp",
+	  "kind": "functionapp",
       "location": "[parameters('location')]",
       "resources": [
         {
@@ -148,25 +148,6 @@
             "[resourceId('Microsoft.Web/sites',variables('functionAppName'))]"
           ]
         },
-        {
-          "name": "MSDeploy",
-          "type": "extensions",
-          "location": "[parameters('location')]",
-          "apiVersion": "2018-02-01",
-          "dependsOn": [
-            "[resourceId('Microsoft.Web/sites/', variables('functionAppName'))]",
-            "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
-            "[resourceId('Microsoft.Web/sites/siteextensions', variables('functionAppName'), variables('pythonExtension'))]"
-          ],
-          "tags": {
-            "displayName": "pythonextension"
-          },
-          "properties": {
-            "packageUri": "[uri(parameters('_artifactsLocation'), concat('scripts/quickstart_function_app.zip', parameters('_artifactsLocationSasToken')))]",
-            "dbType": "None"
-          }
-        }
-      ],
       "properties": {
         "enabled": true,
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
@@ -181,7 +162,7 @@
           "appSettings": [
             {
               "name": "AzureWebJobsStorage",
-              "value": "[parameters('storageAccountConnectionString')]"
+              "value": "[Concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storageAccountName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')),'2018-07-01').keys[0].value)]"
             },
             {
               "name": "datafactory_name",
@@ -233,7 +214,7 @@
             },
             {
               "name": "sas_key",
-              "value": "[parameters('sas_key')]"
+              "value": "[listkeys(resourceId('Microsoft.EventHub/namespaces/authorizationRules', parameters('eventhub_namespace'), 'RootManageSharedAccessKey'), '2017-04-01').primaryKey]"
             },
             {
               "name": "DataCleaningStreamAnalyticsJob",
@@ -260,7 +241,26 @@
         "hostNamesDisabled": false,
         "containerSize": 1536,
         "dailyMemoryTimeQuota": 0
-      }
+      },
+        {
+          "name": "MSDeploy",
+          "type": "extensions",
+          "location": "[parameters('location')]",
+          "apiVersion": "2018-02-01",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites/', variables('functionAppName'))]",
+            "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
+            "[resourceId('Microsoft.Web/sites/siteextensions', variables('functionAppName'), variables('pythonExtension'))]"
+          ],
+          "tags": {
+            "displayName": "pythonextension"
+          },
+          "properties": {
+            "packageUri":"[uri(parameters('_artifactsLocation'), concat('scripts/quickstart_function_app.zip', parameters('_artifactsLocationSasToken')))]",
+            "dbType": "None"
+          }
+        }
+      ]
     },
     {
       "type": "Microsoft.Web/sites/config",
@@ -269,7 +269,7 @@
       "dependsOn": [
         "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]",
         "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
-        "[resourceId('Microsoft.Web/sites/extensions', variables('functionAppName'), variables('msd'))]"
+        "[concat('Microsoft.Web/sites/',variables('functionAppName'),'/Extensions/MSDeploy')]"
       ],
       "properties": {
         "numberOfWorkers": 1,
@@ -319,6 +319,13 @@
           "clientId": "[parameters('web_app_id')]",
           "issuer": "[concat('https://sts.windows.net/',variables('tenant'))]",
           "isAadAutoProvisioned": false
+        },
+        "cors": {
+          "allowedOrigins": [
+            "https://functions.azure.com",
+            "https://functions-staging.azure.com",
+            "https://functions-next.azure.com"
+          ]
         },
         "localMySqlEnabled": false,
         "http20Enabled": false,
