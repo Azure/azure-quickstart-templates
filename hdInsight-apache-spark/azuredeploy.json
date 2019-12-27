@@ -22,11 +22,11 @@
     },
     "clusterNodeSize": {
       "type": "string",
-      "defaultValue": "Standard_D12",
+      "defaultValue": "Standard_D12_v2",
       "allowedValues": [
-        "Standard_D12",
-        "Standard_D13",
-        "Standard_D14"
+        "Standard_D12_v2",
+        "Standard_D13_v2",
+        "Standard_D14_v2"
       ],
       "metadata": {
         "description": "All nodes will be deployed using the specified hardware profile: D12(4 CPU Cores, 28GB of RAM), D13(8 CPU Cores, 56GB of RAM), D14(16 CPU Cores, 112 GB of RAM)."
@@ -45,26 +45,36 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/hdInsight-apache-spark/"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
     }
   },
   "variables": {
-    "defaultApiVersion": "2015-06-15",
     "clusterType": "hadoop",
     "clusterVnetSubnetName": "[concat(parameters('clusterName'),'-subnet')]",
     "clusterVnetAddressSpace": "172.16.228.0/23",
     "clusterVNetSubnetAddressRange": "172.16.229.0/24",
-    "clusterStorageAccountName": "[concat(parameters('clusterName'),'storeacc')]",
+    "clusterStorageAccountName": "[take(concat('store', parameters('clusterName')), 24)]",
     "clusterVNetName": "[concat(parameters('clusterName'),'-vnet')]"
-    
   },
   "resources": [
     {
       "name": "[variables('clusterVNetName')]",
       "type": "Microsoft.Network/virtualNetworks",
       "location": "[parameters('location')]",
-      "apiVersion": "2015-06-15",
-      "dependsOn": [],
-      "tags": {},
+      "apiVersion": "2019-06-01",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -85,28 +95,29 @@
       "name": "[variables('clusterStorageAccountName')]",
       "type": "Microsoft.Storage/storageAccounts",
       "location": "[parameters('location')]",
-      "apiVersion": "2015-06-15",
-      "dependsOn": [],
-      "tags": {},
-      "properties": {
-        "accountType": "Standard_LRS"
+      "apiVersion": "2019-04-01",
+      "kind": "Storage",
+      "sku": {
+        "name": "Standard_LRS"
       }
     },
     {
       "name": "[parameters('clusterName')]",
       "type": "Microsoft.HDInsight/clusters",
       "location": "[parameters('location')]",
-      "apiVersion": "2015-03-01-preview",
+      "apiVersion": "2018-06-01-preview",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/',variables('clusterStorageAccountName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/',variables('clusterVNetName'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('clusterStorageAccountName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName'))]"
       ],
-      "tags": {},
       "properties": {
-        "clusterVersion": "3.2",
+        "clusterVersion": "3.6",
         "osType": "Linux",
         "clusterDefinition": {
           "kind": "[variables('clusterType')]",
+          "componentVersion": {
+            "Spark": "2.3"
+          },
           "configurations": {
             "gateway": {
               "restAuthCredential.isEnabled": true,
@@ -123,10 +134,10 @@
         "storageProfile": {
           "storageaccounts": [
             {
-              "name": "[concat(variables('clusterStorageAccountName'),'.blob.core.windows.net')]",
+              "name": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', variables('clusterStorageAccountName'))).primaryEndpoints.blob, 'https://', ''), '/', '')]",
               "isDefault": true,
               "container": "[parameters('clusterName')]",
-              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('clusterStorageAccountName')), variables('defaultApiVersion')).key1]"
+              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('clusterStorageAccountName')), '2019-04-01').keys[0].value]"
             }
           ]
         },
@@ -146,13 +157,12 @@
               },
               "virtualNetworkProfile": {
                 "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName'))]",
-                "subnet": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName')), '/subnets/', variables('clusterVNetSubnetName'))]"
+                "subnet": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('clusterVNetName'), variables('clusterVNetSubnetName'))]"
               },
               "scriptActions": [
                 {
                   "name": "Apache Spark 1.4.1",
-                  "uri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/hdInsight-apache-spark/spark141-installer-v04.sh",
-                  "parameters": ""
+                  "uri": "[uri(parameters('_artifactsLocation'), concat('spark141-installer-v04.sh', parameters('_artifactsLocationSasToken')))]"
                 }
               ]
             },
@@ -170,14 +180,14 @@
               },
               "virtualNetworkProfile": {
                 "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName'))]",
-                "subnet": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName')), '/subnets/', variables('clusterVNetSubnetName'))]"
+                "subnet": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('clusterVNetName'), variables('clusterVNetSubnetName'))]"
               }
             },
             {
               "name": "zookeepernode",
               "targetInstanceCount": 3,
               "hardwareProfile": {
-                "vmSize": "[variables(concat(variables('clusterType'),'ZookeeperSize'))]"
+                "vmSize": "[parameters('clusterNodeSize')]"
               },
               "osProfile": {
                 "linuxOperatingSystemProfile": {
@@ -187,7 +197,7 @@
               },
               "virtualNetworkProfile": {
                 "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName'))]",
-                "subnet": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName')), '/subnets/', variables('clusterVNetSubnetName'))]"
+                "subnet": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('clusterVNetName'), variables('clusterVNetSubnetName'))]"
               }
             }
           ]
@@ -198,11 +208,11 @@
   "outputs": {
     "vnet": {
       "type": "object",
-      "value": "[reference(resourceId('Microsoft.Network/virtualNetworks',variables('clusterVNetName')))]"
+      "value": "[reference(resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName')))]"
     },
     "cluster": {
       "type": "object",
-      "value": "[reference(resourceId('Microsoft.HDInsight/clusters',parameters('clusterName')))]"
+      "value": "[reference(resourceId('Microsoft.HDInsight/clusters', parameters('clusterName')))]"
     }
   }
 }

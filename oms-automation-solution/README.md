@@ -1,5 +1,14 @@
 # OMS Azure Automation Job Monitoring
 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-automation-solution/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-automation-solution/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-automation-solution/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-automation-solution/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-automation-solution/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/oms-automation-solution/CredScanResult.svg" />&nbsp;
+
 
 
 This solution (currently in private preview) will allow you to visualize your Azure Automation jobs in Operations Management Suite (Log Analytics). This solution use the job status and job stream information provided by Microsoft (https://docs.microsoft.com/en-us/azure/automation/automation-manage-send-joblogs-log-analytics) to present data about your Azure Automation jobs in Log Analytics. 
@@ -20,14 +29,13 @@ Before you deploy this template, you will need an Automation Account in the Azur
 
 Automation job information needs to be sent from Azure Automation to Microsoft OMS. To acccomplish this, perform the steps documented by Microsoft at: https://docs.microsoft.com/en-us/azure/automation/automation-manage-send-joblogs-log-analytics
 
-
 **How to use the application** 
 
 Once the prerequisites are complete, you can deploy the template.
 
-[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Foms-automation-solution%2Fazuredeploy.json) 
+[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Foms-automation-solution%2Fazuredeploy.json) 
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Foms-automation-solution%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
 Once the template is successfully deployed the following solution should now be visable in your OMS workspace.
@@ -37,4 +45,5 @@ Once the template is successfully deployed the following solution should now be 
 **Notes** 
 
 To see data in this solution jobs will have to have run after the automation job information was sent to OMS. Any job data from before the prerequisite step "Automation job information sent to OMS" will not be displayed in this solution. 
+
 

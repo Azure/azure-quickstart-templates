@@ -1,10 +1,19 @@
 # Setup Concourse CI with Bosh
 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/concourse-ci/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/concourse-ci/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/concourse-ci/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/concourse-ci/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/concourse-ci/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/concourse-ci/CredScanResult.svg" />&nbsp;
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fconcourse-ci%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fconcourse-ci%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
 >Significant updated on 2018-6-21, see [ChangeLog](.\CHANGELOG.md)
@@ -27,7 +36,6 @@ Here we’ll create the following Azure resources that’s required for deployin
 * A Bosh director if you need
 
 This ARM template can help you to deploy all the above resources on Azure. Just click the button below with the following parameters:
-
 
 | Name | Required | Default Value | Description |
 |:----:|:--------:|:-------------:|:----------- |
@@ -187,3 +195,4 @@ After Concourse had been successfully deployed, you can find the output `CONCOUR
 ![Deployment Result 1](https://raw.githubusercontent.com/CloudFoundryOnAzure/pictures/master/concourse-ci-template/concourse_template_1.PNG)
 
 ![Deployment Result 2](https://raw.githubusercontent.com/CloudFoundryOnAzure/pictures/master/concourse-ci-template/concourse_template_2.PNG)
+
