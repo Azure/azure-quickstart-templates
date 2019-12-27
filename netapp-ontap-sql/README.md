@@ -1,5 +1,14 @@
 # NetApp ONTAP Cloud on Azure with SQL 
 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/netapp-ontap-sql/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/netapp-ontap-sql/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/netapp-ontap-sql/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/netapp-ontap-sql/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/netapp-ontap-sql/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/netapp-ontap-sql/CredScanResult.svg" />&nbsp;
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fnetapp-ontap-sql%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
@@ -18,7 +27,6 @@
 6. [Deployment Guide](#deployment-guide)
 7. [Deployment Time](#deployment-time)
 8. [Support](#support)
-
 
 <!-- /TOC -->
 
@@ -80,3 +88,4 @@ The deployment takes around 40 to 45 minutes.
 ## Support 
 
 For any support related questions, issues or customization requirements, please contact ng-azure-quickstarts@netapp.com
+

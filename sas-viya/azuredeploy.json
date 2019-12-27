@@ -1,5 +1,5 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "0.1.0.0",
   "parameters": {
     "DeploymentDataLocation": {
@@ -52,7 +52,7 @@
       "type": "string",
       "defaultValue": "",
       "metadata": {
-        "description": "OPTIONAL: Specifies the https location of a SAS mirror. Mirror should be in the form of a .tgz/.tar.gz file or path to a mirror directory tree in blob storage."
+        "description": "OPTIONAL: Specifies the https location of a SAS mirror. Mirror should be a path to a mirror directory tree in blob storage."
       }
     },
     "Ansible VM SKU": {
@@ -69,8 +69,15 @@
         "description": "This is the SKU for the Services VM. The default SKU value represents the minimum recommended size for system stability in most SAS software license sets. The selected SKU must support premium disks."
       }
     },
-    "_artifactsLocationSasToken": {
+    "Controller VM SKU": {
       "type": "string",
+      "defaultValue": "Standard_E8s_v3",
+      "metadata": {
+        "description": "This is the SKU for the Controller VM. The default SKU value represents the minimum recommended size for system stability in most SAS software license sets. The selected SKU must support premium disks."
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
       "defaultValue": "",
       "metadata": {
         "description": "For a standard deployment, leave empty. If you are running from a blob template, then provide the Shared Access Signature token (starting with a ?) that grants authorization to the private template. "
@@ -88,13 +95,10 @@
     "resourceGroupUniqueString": "[uniqueString(resourceGroup().id)]",
     "VirtualNetworkName": "[concat('viyanetwork_',variables('resourceGroupUniqueString'))]",
     "VirtualNetworkPrivateSubnet": "[concat(variables('VirtualNetworkName'), '_private')]",
-    "VirtualNetworkPrivateSubnetFull": "[concat(variables('VirtualNetworkName'), '/', variables('VirtualNetworkPrivateSubnet'))]",
     "VirtualNetworkPrivateSubnetCIDR": "10.0.127.0/24",
     "VirtualNetworkPublicSubnet": "[concat(variables('VirtualNetworkName'), '_public')]",
-    "VirtualNetworkPublicSubnetFull": "[concat(variables('VirtualNetworkName'), '/', variables('VirtualNetworkPublicSubnet'))]",
     "VirtualNetworkPublicSubnetCIDR": "10.0.128.0/24",
     "VirtualNetworkApplicationGatewaySubnet": "[concat(variables('VirtualNetworkName'), '_applicationGateway')]",
-    "VirtualNetworkApplicationGatewaySubnetFull": "[concat(variables('VirtualNetworkName'), '/', variables('VirtualNetworkApplicationGatewaySubnet'))]",
     "VirtualNetworkApplicationGatewaySubnetCIDR": "10.0.129.0/24",
 
     "LoadBalancerName": "PrimaryViyaLoadbalancer",
@@ -324,6 +328,16 @@
           "tier": "Standard",
           "capacity": 1
         },
+        "sslPolicy": {
+          "policyType": "Custom",
+          "cipherSuites": [
+            "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+            "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+            "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+            "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+          ],
+          "minProtocolVersion": "TLSv1_2"
+        },
         "gatewayIPConfigurations": [
           {
             "name": "appGatewayIpConfig",
@@ -338,8 +352,8 @@
           {
             "name": "appGatewayFrontendCertificate",
             "properties": {
-              "data": "[json(concat(split(reference('AnsiblePhase3GetLBCertPart1').outputs.instanceView.value.statuses[0].message, '#DATA#')[1],split(reference('AnsiblePhase4GetLBCertPart2').outputs.instanceView.value.statuses[0].message, '#DATA#')[1])).data]",
-              "password": "[json(concat(split(reference('AnsiblePhase3GetLBCertPart1').outputs.instanceView.value.statuses[0].message, '#DATA#')[1],split(reference('AnsiblePhase4GetLBCertPart2').outputs.instanceView.value.statuses[0].message, '#DATA#')[1])).password]"
+              "data": "[json(concat(split(reference('AnsiblePhase2GetLBCertPart1').outputs.instanceView.value.statuses[0].message, '#DATA#')[1],split(reference('AnsiblePhase3GetLBCertPart2').outputs.instanceView.value.statuses[0].message, '#DATA#')[1])).data]",
+              "password": "[json(concat(split(reference('AnsiblePhase2GetLBCertPart1').outputs.instanceView.value.statuses[0].message, '#DATA#')[1],split(reference('AnsiblePhase3GetLBCertPart2').outputs.instanceView.value.statuses[0].message, '#DATA#')[1])).password]"
             }
           }
         ],
@@ -347,7 +361,7 @@
           {
             "name": "viya-ca.cer",
             "properties": {
-              "data": "[split(reference('AnsiblePhase6GetCACert').outputs.instanceView.value.statuses[0].message, '#DATA#')[1]]"
+              "data": "[split(reference('AnsiblePhase5GetCACert').outputs.instanceView.value.statuses[0].message, '#DATA#')[1]]"
             }
           }
         ],
@@ -434,7 +448,7 @@
             }
           }
         ],
-        "enableHttp2": false
+        "enableHttp2": true
       }
     },
     {
@@ -607,7 +621,7 @@
       "comments": "The Ansible controller and bastion server for this environment.",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('AnsibleController_name')]",
-      "apiVersion": "2017-12-01",
+      "apiVersion": "2019-07-01",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', 'AnsibleController_NetworkInterface')]",
@@ -621,7 +635,7 @@
           "imageReference": {
             "publisher": "RedHat",
             "offer": "RHEL",
-            "sku": "7.4",
+            "sku": "7.6",
             "version": "latest"
           },
           "osDisk": {
@@ -633,9 +647,7 @@
               "storageAccountType": "Premium_LRS"
             },
             "diskSizeGB": 32
-          },
-          "dataDisks": [
-          ]
+          }
         },
         "osProfile": {
           "computerName": "[variables('AnsibleController_name')]",
@@ -662,7 +674,7 @@
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": true,
-            "storageUri": "[reference(concat('Microsoft.Storage/storageAccounts/', variables('DiagnosticStorageGroupName')), '2018-07-01').primaryEndpoints.blob]"
+            "storageUri": "[reference(variables('DiagnosticStorageGroupName')).primaryEndpoints.blob]"
           }
         }
       },
@@ -690,7 +702,7 @@
             "value": "[variables('AnsibleController_name')]"
           },
           "commandToExecute": {
-            "value": "[concat('set -o pipefail; ./ansiblecontroller_startup.sh \"1\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', variables('VirtualNetworkPrivateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" \"', parameters('DeploymentMirror'), '\" \"', variables('DiagnosticStorageGroupName'), '\" \"', variables('AzureFilesViyaShare'), '\" \"', listKeys(variables('DiagnosticStorageGroupName'),'2017-10-01').keys[0].value, '\" 2>&1 | tee /tmp/runAnsiblePhase1_SetupPrerequisites.log')]"
+            "value": "[concat('set -o pipefail; ./ansiblecontroller_startup.sh \"1\" \"',                       parameters('_artifactsLocation'), '\" \"',                        parameters('_artifactsLocationSasToken'), '\" \"',                        parameters('DeploymentDataLocation'),  '\" \"',                        variables('PrimaryUserName'),'\" \"',                        variables('Base64AdminPass'),'\" \"',                        variables('Base64UserPass'), '\" \"',                        variables('VirtualNetworkPrivateSubnetCIDR'), '\" \"',                        reference(concat(variables('LoadBalancerName'), '_PublicIP')).dnsSettings.fqdn, '\" \"',                        parameters('DeploymentMirror'), '\" \"',                        variables('DiagnosticStorageGroupName'), '\" \"',                        variables('AzureFilesViyaShare'), '\" \"',                        listKeys(variables('DiagnosticStorageGroupName'),'2019-06-01').keys[0].value, '\" 2>&1 | tee /tmp/runAnsiblePhase1_SetupPrerequisites.log')]"
           },
           "_artifactsLocation": {
             "value": "[parameters('_artifactsLocation')]"
@@ -701,8 +713,9 @@
         }
       }
     },
+
     {
-      "name": "AnsiblePhase2GetCASSizingFromLicense",
+      "name": "AnsiblePhase2GetLBCertPart1",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2018-05-01",
       "dependsOn": [
@@ -722,7 +735,7 @@
             "value": "[variables('AnsibleController_name')]"
           },
           "commandToExecute": {
-            "value": "[concat('set -o pipefail; ./ansiblecontroller_startup.sh \"2\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', variables('VirtualNetworkPrivateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" \"', parameters('DeploymentMirror'), '\" \"', variables('DiagnosticStorageGroupName'), '\" \"', variables('AzureFilesViyaShare'), '\" \"', listKeys(variables('DiagnosticStorageGroupName'),'2017-10-01').keys[0].value, '\" 2>&1 | tee /tmp/runAnsiblePhase2_ReturnCasSize.log')]"
+            "value": "[concat('set -o pipefail; ./ansiblecontroller_startup.sh \"3\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', variables('VirtualNetworkPrivateSubnetCIDR'), '\" \"', reference(concat(variables('LoadBalancerName'), '_PublicIP')).dnsSettings.fqdn, '\" \"', parameters('DeploymentMirror'), '\" \"', variables('DiagnosticStorageGroupName'), '\" \"', variables('AzureFilesViyaShare'), '\" \"', listKeys(variables('DiagnosticStorageGroupName'),'2019-06-01').keys[0].value, '\" 2>&1 | tee /tmp/runAnsiblePhase2_CertificateExport_1.log')]"
           },
           "_artifactsLocation": {
             "value": "[parameters('_artifactsLocation')]"
@@ -734,11 +747,11 @@
       }
     },
     {
-      "name": "AnsiblePhase3GetLBCertPart1",
+      "name": "AnsiblePhase3GetLBCertPart2",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2018-05-01",
       "dependsOn": [
-        "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase2GetCASSizingFromLicense')]"
+        "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase2GetLBCertPart1')]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -754,7 +767,7 @@
             "value": "[variables('AnsibleController_name')]"
           },
           "commandToExecute": {
-            "value": "[concat('set -o pipefail; ./ansiblecontroller_startup.sh \"3\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', variables('VirtualNetworkPrivateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" \"', parameters('DeploymentMirror'), '\" \"', variables('DiagnosticStorageGroupName'), '\" \"', variables('AzureFilesViyaShare'), '\" \"', listKeys(variables('DiagnosticStorageGroupName'),'2017-10-01').keys[0].value, '\" 2>&1 | tee /tmp/runAnsiblePhase3_CertificateExport_1.log')]"
+            "value": "[concat('set -o pipefail; ./ansiblecontroller_startup.sh \"4\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', variables('VirtualNetworkPrivateSubnetCIDR'), '\" \"', reference(concat(variables('LoadBalancerName'), '_PublicIP')).dnsSettings.fqdn, '\" \"', parameters('DeploymentMirror'), '\" \"', variables('DiagnosticStorageGroupName'), '\" \"', variables('AzureFilesViyaShare'), '\" \"', listKeys(variables('DiagnosticStorageGroupName'),'2019-06-01').keys[0].value, '\" 2>&1 | tee /tmp/runAnsiblePhase3_CertificateExport_2.log')]"
           },
           "_artifactsLocation": {
             "value": "[parameters('_artifactsLocation')]"
@@ -766,11 +779,11 @@
       }
     },
     {
-      "name": "AnsiblePhase4GetLBCertPart2",
+      "name": "AnsiblePhase4PreViyaInstall",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2018-05-01",
       "dependsOn": [
-        "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase3GetLBCertPart1')]"
+        "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase3GetLBCertPart2')]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -786,7 +799,7 @@
             "value": "[variables('AnsibleController_name')]"
           },
           "commandToExecute": {
-            "value": "[concat('set -o pipefail; ./ansiblecontroller_startup.sh \"4\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', variables('VirtualNetworkPrivateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" \"', parameters('DeploymentMirror'), '\" \"', variables('DiagnosticStorageGroupName'), '\" \"', variables('AzureFilesViyaShare'), '\" \"', listKeys(variables('DiagnosticStorageGroupName'),'2017-10-01').keys[0].value, '\" 2>&1 | tee /tmp/runAnsiblePhase4_CertificateExport_2.log')]"
+            "value": "[concat('set -o pipefail; ./ansiblecontroller_startup.sh \"5\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', variables('VirtualNetworkPrivateSubnetCIDR'), '\" \"', reference(concat(variables('LoadBalancerName'), '_PublicIP')).dnsSettings.fqdn, '\" \"', parameters('DeploymentMirror'), '\" \"', variables('DiagnosticStorageGroupName'), '\" \"', variables('AzureFilesViyaShare'), '\" \"', listKeys(variables('DiagnosticStorageGroupName'),'2019-06-01').keys[0].value, '\" 2>&1 | tee /tmp/runAnsiblePhase4_PRE_INSTALL.log')]"
           },
           "_artifactsLocation": {
             "value": "[parameters('_artifactsLocation')]"
@@ -798,11 +811,11 @@
       }
     },
     {
-      "name": "AnsiblePhase5PreViyaInstall",
+      "name": "AnsiblePhase5GetCACert",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2018-05-01",
       "dependsOn": [
-        "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase4GetLBCertPart2')]"
+        "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase4PreViyaInstall')]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -818,7 +831,7 @@
             "value": "[variables('AnsibleController_name')]"
           },
           "commandToExecute": {
-            "value": "[concat('set -o pipefail; ./ansiblecontroller_startup.sh \"5\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', variables('VirtualNetworkPrivateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" \"', parameters('DeploymentMirror'), '\" \"', variables('DiagnosticStorageGroupName'), '\" \"', variables('AzureFilesViyaShare'), '\" \"', listKeys(variables('DiagnosticStorageGroupName'),'2017-10-01').keys[0].value, '\" 2>&1 | tee /tmp/runAnsiblePhase5_PRE_INSTALL.log')]"
+            "value": "[concat('set -o pipefail; ./ansiblecontroller_startup.sh \"6\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', variables('VirtualNetworkPrivateSubnetCIDR'), '\" \"', reference(concat(variables('LoadBalancerName'), '_PublicIP')).dnsSettings.fqdn, '\" \"', parameters('DeploymentMirror'), '\" \"', variables('DiagnosticStorageGroupName'), '\" \"', variables('AzureFilesViyaShare'), '\" \"', listKeys(variables('DiagnosticStorageGroupName'),'2019-06-01').keys[0].value, '\" 2>&1 | tee /tmp/runAnsiblePhase5_SAS_CA_CRT.log')]"
           },
           "_artifactsLocation": {
             "value": "[parameters('_artifactsLocation')]"
@@ -830,11 +843,11 @@
       }
     },
     {
-      "name": "AnsiblePhase6GetCACert",
+      "name": "AnsiblePhase6Part1RunViyaInstall",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2018-05-01",
       "dependsOn": [
-        "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase5PreViyaInstall')]"
+        "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase5GetCACert')]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -850,7 +863,7 @@
             "value": "[variables('AnsibleController_name')]"
           },
           "commandToExecute": {
-            "value": "[concat('set -o pipefail; ./ansiblecontroller_startup.sh \"6\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', variables('VirtualNetworkPrivateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" \"', parameters('DeploymentMirror'), '\" \"', variables('DiagnosticStorageGroupName'), '\" \"', variables('AzureFilesViyaShare'), '\" \"', listKeys(variables('DiagnosticStorageGroupName'),'2017-10-01').keys[0].value, '\" 2>&1 | tee /tmp/runAnsiblePhase6_SAS_CA_CRT.log')]"
+            "value": "[concat('set -o pipefail; ./ansiblecontroller_startup.sh \"7\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', variables('VirtualNetworkPrivateSubnetCIDR'), '\" \"', reference(concat(variables('LoadBalancerName'), '_PublicIP')).dnsSettings.fqdn, '\" \"', parameters('DeploymentMirror'), '\" \"', variables('DiagnosticStorageGroupName'), '\" \"', variables('AzureFilesViyaShare'), '\" \"', listKeys(variables('DiagnosticStorageGroupName'),'2019-06-01').keys[0].value, '\" 2>&1 | tee /tmp/runAnsiblePhase6Part1_SAS_INSTALL.log')]"
           },
           "_artifactsLocation": {
             "value": "[parameters('_artifactsLocation')]"
@@ -862,11 +875,11 @@
       }
     },
     {
-      "name": "AnsiblePhase7Part1RunViyaInstall",
+      "name": "AnsiblePhase6Part2RunViyaInstall",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2018-05-01",
       "dependsOn": [
-        "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase6GetCACert')]"
+        "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase6Part1RunViyaInstall')]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -882,7 +895,7 @@
             "value": "[variables('AnsibleController_name')]"
           },
           "commandToExecute": {
-            "value": "[concat('set -o pipefail; ./ansiblecontroller_startup.sh \"7\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', variables('VirtualNetworkPrivateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" \"', parameters('DeploymentMirror'), '\" \"', variables('DiagnosticStorageGroupName'), '\" \"', variables('AzureFilesViyaShare'), '\" \"', listKeys(variables('DiagnosticStorageGroupName'),'2017-10-01').keys[0].value, '\" 2>&1 | tee /tmp/runAnsiblePhase7Part1_SAS_INSTALL.log')]"
+            "value": "[concat('set -o pipefail; ./ansiblecontroller_startup.sh \"7\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', variables('VirtualNetworkPrivateSubnetCIDR'), '\" \"', reference(concat(variables('LoadBalancerName'), '_PublicIP')).dnsSettings.fqdn, '\" \"', parameters('DeploymentMirror'), '\" \"', variables('DiagnosticStorageGroupName'), '\" \"', variables('AzureFilesViyaShare'), '\" \"', listKeys(variables('DiagnosticStorageGroupName'),'2019-06-01').keys[0].value, '\" 2>&1 | tee /tmp/runAnsiblePhase6Part2_SAS_INSTALL.log')]"
           },
           "_artifactsLocation": {
             "value": "[parameters('_artifactsLocation')]"
@@ -894,11 +907,11 @@
       }
     },
     {
-      "name": "AnsiblePhase7Part2RunViyaInstall",
+      "name": "AnsiblePhase6Part3RunViyaInstall",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2018-05-01",
       "dependsOn": [
-        "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase7Part1RunViyaInstall')]"
+        "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase6Part2RunViyaInstall')]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -914,7 +927,7 @@
             "value": "[variables('AnsibleController_name')]"
           },
           "commandToExecute": {
-            "value": "[concat('set -o pipefail; ./ansiblecontroller_startup.sh \"7\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', variables('VirtualNetworkPrivateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" \"', parameters('DeploymentMirror'), '\" \"', variables('DiagnosticStorageGroupName'), '\" \"', variables('AzureFilesViyaShare'), '\" \"', listKeys(variables('DiagnosticStorageGroupName'),'2017-10-01').keys[0].value, '\" 2>&1 | tee /tmp/runAnsiblePhase7Part2_SAS_INSTALL.log')]"
+            "value": "[concat('set -o pipefail; ./ansiblecontroller_startup.sh \"7\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', variables('VirtualNetworkPrivateSubnetCIDR'), '\" \"', reference(concat(variables('LoadBalancerName'), '_PublicIP')).dnsSettings.fqdn, '\" \"', parameters('DeploymentMirror'), '\" \"', variables('DiagnosticStorageGroupName'), '\" \"', variables('AzureFilesViyaShare'), '\" \"', listKeys(variables('DiagnosticStorageGroupName'),'2019-06-01').keys[0].value, '\" 2>&1 | tee /tmp/runAnsiblePhase6Part3_SAS_INSTALL.log')]"
           },
           "_artifactsLocation": {
             "value": "[parameters('_artifactsLocation')]"
@@ -926,11 +939,11 @@
       }
     },
     {
-      "name": "AnsiblePhase7Part3RunViyaInstall",
+      "name": "AnsiblePhase7PostViyaInstall",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2018-05-01",
       "dependsOn": [
-        "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase7Part2RunViyaInstall')]"
+        "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase6Part3RunViyaInstall')]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -946,7 +959,7 @@
             "value": "[variables('AnsibleController_name')]"
           },
           "commandToExecute": {
-            "value": "[concat('set -o pipefail; ./ansiblecontroller_startup.sh \"7\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', variables('VirtualNetworkPrivateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" \"', parameters('DeploymentMirror'), '\" \"', variables('DiagnosticStorageGroupName'), '\" \"', variables('AzureFilesViyaShare'), '\" \"', listKeys(variables('DiagnosticStorageGroupName'),'2017-10-01').keys[0].value, '\" 2>&1 | tee /tmp/runAnsiblePhase7Part3_SAS_INSTALL.log')]"
+            "value": "[concat('set -o pipefail; ./ansiblecontroller_startup.sh \"8\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', variables('VirtualNetworkPrivateSubnetCIDR'), '\" \"', reference(concat(variables('LoadBalancerName'), '_PublicIP')).dnsSettings.fqdn, '\" \"', parameters('DeploymentMirror'), '\" \"', variables('DiagnosticStorageGroupName'), '\" \"', variables('AzureFilesViyaShare'), '\" \"', listKeys(variables('DiagnosticStorageGroupName'),'2019-06-01').keys[0].value, '\" 2>&1 | tee /tmp/runAnsiblePhase7_POST_INSTALL.log')]"
           },
           "_artifactsLocation": {
             "value": "[parameters('_artifactsLocation')]"
@@ -958,11 +971,11 @@
       }
     },
     {
-      "name": "AnsiblePhase8PostViyaInstall",
+      "name": "AnsiblePhase8GetCASURIsFromLicense",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2018-05-01",
       "dependsOn": [
-        "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase7Part3RunViyaInstall')]"
+        "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase7PostViyaInstall')]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -978,7 +991,7 @@
             "value": "[variables('AnsibleController_name')]"
           },
           "commandToExecute": {
-            "value": "[concat('set -o pipefail; ./ansiblecontroller_startup.sh \"8\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', variables('VirtualNetworkPrivateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" \"', parameters('DeploymentMirror'), '\" \"', variables('DiagnosticStorageGroupName'), '\" \"', variables('AzureFilesViyaShare'), '\" \"', listKeys(variables('DiagnosticStorageGroupName'),'2017-10-01').keys[0].value, '\" 2>&1 | tee /tmp/runAnsiblePhase8_POST_INSTALL.log')]"
+            "value": "[concat('set -o pipefail; ./ansiblecontroller_startup.sh \"9\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"',   variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', variables('VirtualNetworkPrivateSubnetCIDR'), '\" \"',  reference(concat(variables('LoadBalancerName'), '_PublicIP')).dnsSettings.fqdn, '\" \"',   parameters('DeploymentMirror'), '\" \"',    variables('DiagnosticStorageGroupName'), '\" \"',     variables('AzureFilesViyaShare'), '\" \"',   listKeys(variables('DiagnosticStorageGroupName'),'2019-06-01').keys[0].value, '\" 2>&1 | tee /tmp/runAnsiblePhase8_ReturnCasSize.log')]"
           },
           "_artifactsLocation": {
             "value": "[parameters('_artifactsLocation')]"
@@ -1071,18 +1084,17 @@
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', 'CASController_NetworkInterface')]",
-        "[resourceId('Microsoft.Storage/storageAccounts', variables('DiagnosticStorageGroupName'))]",
-        "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase2GetCASSizingFromLicense')]"
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('DiagnosticStorageGroupName'))]"
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[json(split(reference('AnsiblePhase2GetCASSizingFromLicense').outputs.instanceView.value.statuses[0].message, '#DATA#')[1]).CAS_VM_SIZE]"
+          "vmSize": "[parameters('Controller VM SKU')]"
         },
         "storageProfile": {
           "imageReference": {
             "publisher": "RedHat",
             "offer": "RHEL",
-            "sku": "7.4",
+            "sku": "7.6",
             "version": "latest"
           },
           "osDisk": {
@@ -1120,7 +1132,8 @@
                 }
               ]
             }
-          }
+          },
+          "customData": "[base64(concat('#include\n', uri(parameters('_artifactsLocation'), concat('cloudinit/controller.txt', parameters('_artifactsLocationSasToken')))))]"
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -1132,7 +1145,7 @@
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": true,
-            "storageUri": "[reference(concat('Microsoft.Storage/storageAccounts/', variables('DiagnosticStorageGroupName')), '2018-07-01').primaryEndpoints.blob]"
+            "storageUri": "[reference(variables('DiagnosticStorageGroupName')).primaryEndpoints.blob]"
           }
         }
       },
@@ -1143,11 +1156,11 @@
       "name": "[concat(variables('CASController_name'), '/CASStartup')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "location": "[parameters('location')]",
-      "apiVersion": "2017-12-01",
+      "apiVersion": "2019-07-01",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', variables('CASController_name'))]",
         "[resourceId('Microsoft.Compute/virtualMachines', variables('AnsibleController_name'))]",
-        "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase2GetCASSizingFromLicense')]"
+        "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase1SetupHostForAnsible')]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
@@ -1158,7 +1171,7 @@
           "skipDos2Unix": false
         },
         "protectedSettings": {
-          "commandToExecute": "[ concat('set -o pipefail; ./nonansiblecontroller_prereqs.sh \"', variables('PrimaryUserName'), '\" \"', variables('DiagnosticStorageGroupName'), '\" \"', variables('AzureFilesViyaShare'), '\" \"', listKeys(variables('DiagnosticStorageGroupName'),'2017-10-01').keys[0].value,'\" \"CasControllerServers\" 2>&1 | tee /tmp/prerequisites.log')]",
+          "commandToExecute": "[ concat('set -o pipefail; ./nonansiblecontroller_prereqs.sh \"', variables('PrimaryUserName'), '\" \"', variables('DiagnosticStorageGroupName'), '\" \"', variables('AzureFilesViyaShare'), '\" \"', listKeys(variables('DiagnosticStorageGroupName'),'2019-06-01').keys[0].value,'\" \"CasControllerServers\" 2>&1 | tee /tmp/prerequisites.log')]",
           "fileUris": [
             "[concat(parameters('_artifactsLocation'), 'scripts/nonansiblecontroller_prereqs.sh', parameters('_artifactsLocationSasToken'))]"
           ]
@@ -1308,7 +1321,7 @@
       "comments": "The services server for this environment.",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('Services_name')]",
-      "apiVersion": "2017-12-01",
+      "apiVersion": "2019-07-01",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', 'Services_NetworkInterface')]",
@@ -1322,7 +1335,7 @@
           "imageReference": {
             "publisher": "RedHat",
             "offer": "RHEL",
-            "sku": "7.4",
+            "sku": "7.6",
             "version": "latest"
           },
           "osDisk": {
@@ -1372,7 +1385,7 @@
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": true,
-            "storageUri": "[reference(concat('Microsoft.Storage/storageAccounts/', variables('DiagnosticStorageGroupName')), '2018-07-01').primaryEndpoints.blob]"
+            "storageUri": "[reference(variables('DiagnosticStorageGroupName')).primaryEndpoints.blob]"
           }
         }
       },
@@ -1383,11 +1396,11 @@
       "name": "[concat(variables('Services_name'), '/ServicesStartup')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "location": "[parameters('location')]",
-      "apiVersion": "2017-12-01",
+      "apiVersion": "2019-07-01",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', variables('Services_name'))]",
         "[resourceId('Microsoft.Compute/virtualMachines', variables('AnsibleController_name'))]",
-        "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase2GetCASSizingFromLicense')]"
+        "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase1SetupHostForAnsible')]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
@@ -1398,7 +1411,7 @@
           "skipDos2Unix": false
         },
         "protectedSettings": {
-          "commandToExecute": "[ concat('set -o pipefail; ./nonansiblecontroller_prereqs.sh \"', variables('PrimaryUserName'), '\" \"', variables('DiagnosticStorageGroupName'), '\" \"', variables('AzureFilesViyaShare'), '\" \"', listKeys(variables('DiagnosticStorageGroupName'),'2017-10-01').keys[0].value, '\" \"VisualServicesServers,ProgrammingServicesServers,StatefulServicesServers\" 2>&1 | tee /tmp/prerequisites.log')]",
+          "commandToExecute": "[ concat('set -o pipefail; ./nonansiblecontroller_prereqs.sh \"', variables('PrimaryUserName'), '\" \"', variables('DiagnosticStorageGroupName'), '\" \"', variables('AzureFilesViyaShare'), '\" \"', listKeys(variables('DiagnosticStorageGroupName'),'2019-06-01').keys[0].value, '\" \"VisualServicesServers,ProgrammingServicesServers,StatefulServicesServers\" 2>&1 | tee /tmp/prerequisites.log')]",
           "fileUris": [
             "[concat(parameters('_artifactsLocation'), 'scripts/nonansiblecontroller_prereqs.sh', parameters('_artifactsLocationSasToken'))]"
           ]
@@ -1453,11 +1466,11 @@
      },
     "SASDrive": {
        "type": "string",
-       "value": "[concat('https://', reference(concat(variables('LoadBalancerName'), '_PublicIP')).dnsSettings.fqdn, json(split(reference('AnsiblePhase2GetCASSizingFromLicense').outputs.instanceView.value.statuses[0].message, '#DATA#')[1]).SAS_DRIVE)]"
+       "value": "[concat('https://', reference(concat(variables('LoadBalancerName'), '_PublicIP')).dnsSettings.fqdn, json(split(reference('AnsiblePhase8GetCASURIsFromLicense').outputs.instanceView.value.statuses[0].message, '#DATA#')[1]).SAS_DRIVE)]"
      },
     "SASStudio": {
        "type": "string",
-       "value": "[concat('https://', reference(concat(variables('LoadBalancerName'), '_PublicIP')).dnsSettings.fqdn, json(split(reference('AnsiblePhase2GetCASSizingFromLicense').outputs.instanceView.value.statuses[0].message, '#DATA#')[1]).SAS_STUDIO)]"
+       "value": "[concat('https://', reference(concat(variables('LoadBalancerName'), '_PublicIP')).dnsSettings.fqdn, json(split(reference('AnsiblePhase8GetCASURIsFromLicense').outputs.instanceView.value.statuses[0].message, '#DATA#')[1]).SAS_STUDIO)]"
      }
   }
 }

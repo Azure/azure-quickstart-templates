@@ -2,7 +2,7 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "FailoverClusterName": {
+        "failoverClusterName": {
             "type": "string",
             "metadata": {
                 "description": "Specify the Windows Failover Cluster Name"
@@ -14,6 +14,13 @@
                 "description": "Specify comma separated list of names of SQL Server VM's to participate in the Availability Group (e.g. SQLVM1, SQLVM2). OS underneath should be at least WS 2016."
             }
         },
+        "sqlServerLicenseType": {
+            "allowedValues": [ "PAYG", "AHUB" ],
+            "type": "string",
+            "metadata": {
+                "description": "Specify the SQL Server License type for all VM's."
+            }
+        },
         "existingVmResourceGroup": {
             "type": "string",
             "metadata": {
@@ -21,7 +28,7 @@
             },
             "defaultValue": "[resourceGroup().name]"
         },
-        "SqlServerVersion": {
+        "sqlServerVersion": {
             "allowedValues": [ "SQL2017", "SQL2016" ],
             "type": "string",
             "metadata": {
@@ -47,7 +54,7 @@
                 "description": "Specify the account for WS failover cluster creation in UPN format (e.g. example@contoso.com). This account can either be a Domain Admin or at least have permissions to create Computer Objects in default or specified OU."
             }
         },
-        "DomainAccountPassword": {
+        "domainAccountPassword": {
             "type": "SecureString",
             "metadata": {
                 "description": "Specify the password for the domain account"
@@ -59,13 +66,13 @@
                 "description": "Specify the domain account under which SQL Server service will run for AG setup in UPN format (e.g. sqlservice@contoso.com)"
             }
         },
-        "SqlServicePassword": {
+        "sqlServicePassword": {
             "type": "SecureString",
             "metadata": {
                 "description": "Specify the password for Sql Server service account"
             }
         },
-        "CloudWitnessName": {
+        "cloudWitnessName": {
             "type": "string",
             "metadata": {
                 "description": "Specify the name of the storage account to be used for creating Cloud Witness for Windows server failover cluster"
@@ -86,7 +93,7 @@
             },
             "defaultValue": ""
         },
-        "Location": {
+        "location": {
             "type": "string",
             "metadata": {
                 "description": "Location for all resources."
@@ -96,7 +103,7 @@
     },
     "variables": {
         "existingVMListArray": "[split(parameters('existingVmList'),',')]",
-        "GroupResourceId": "[resourceId('Microsoft.SqlVirtualMachine/SqlVirtualMachineGroups', parameters('FailoverClusterName'))]",
+        "GroupResourceId": "[resourceId('Microsoft.SqlVirtualMachine/SqlVirtualMachineGroups', parameters('failoverClusterName'))]",
         "joinClusterTemplateURL": "[concat(parameters('_artifactsLocation'),'/nested/join-cluster.json',parameters('_artifactsLocationSasToken'))]"
     },
     "resources": [
@@ -104,24 +111,25 @@
             "type": "Microsoft.SqlVirtualMachine/SqlVirtualMachines",
             "apiVersion": "2017-03-01-preview",
             "name": "[trim(variables('existingVMListArray')[copyIndex()])]",
-            "location": "[parameters('Location')]",
+            "location": "[parameters('location')]",
             "copy": {
                 "name": "sqlvirtualMachineLoop",
                 "count": "[length(variables('existingVMListArray'))]"
             },
             "properties": {
-                "virtualMachineResourceId": "[resourceId(parameters('existingVmResourceGroup'), 'Microsoft.Compute/virtualMachines', trim(variables('existingVMListArray')[copyIndex()]))]"
+                "virtualMachineResourceId": "[resourceId(parameters('existingVmResourceGroup'), 'Microsoft.Compute/virtualMachines', trim(variables('existingVMListArray')[copyIndex()]))]",
+                "sqlServerLicenseType": "[parameters('sqlServerLicenseType')]"
             }
         },
         {
             "type": "Microsoft.Storage/storageAccounts",
             "apiVersion": "2018-07-01",
-            "name": "[parameters('CloudWitnessName')]",
+            "name": "[parameters('cloudWitnessName')]",
             "sku": {
                 "name": "Standard_LRS"
             },
             "kind": "StorageV2",
-            "location": "[parameters('Location')]",
+            "location": "[parameters('location')]",
             "properties": {
                 "accessTier": "Hot",
                 "supportsHttpsTrafficOnly": true
@@ -130,10 +138,10 @@
         {
             "type": "Microsoft.SqlVirtualMachine/SqlVirtualMachineGroups",
             "apiVersion": "2017-03-01-preview",
-            "name": "[parameters('FailoverClusterName')]",
-            "location": "[parameters('Location')]",
+            "name": "[parameters('failoverClusterName')]",
+            "location": "[parameters('location')]",
             "properties": {
-                "SqlImageOffer": "[concat(parameters('SqlServerVersion'),'-WS2016')]",
+                "SqlImageOffer": "[concat(parameters('sqlServerVersion'),'-WS2016')]",
                 "SqlImageSku": "Enterprise",
                 "WsfcDomainProfile": {
                     "DomainFqdn": "[parameters('existingFullyQualifiedDomainName')]",
@@ -141,8 +149,8 @@
                     "ClusterBootstrapAccount": "[parameters('existingDomainAccount')]",
                     "ClusterOperatorAccount": "[parameters('existingDomainAccount')]",
                     "SqlServiceAccount": "[parameters('existingSqlServiceAccount')]",
-                    "StorageAccountUrl": "[reference(resourceId('Microsoft.Storage/storageAccounts', parameters('CloudWitnessName')), '2018-07-01').primaryEndpoints['blob']]",
-                    "StorageAccountPrimaryKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('CloudWitnessName')), '2018-07-01').keys[0].value]"
+                    "StorageAccountUrl": "[reference(resourceId('Microsoft.Storage/storageAccounts', parameters('cloudWitnessName')), '2018-07-01').primaryEndpoints['blob']]",
+                    "StorageAccountPrimaryKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('cloudWitnessName')), '2018-07-01').keys[0].value]"
                 }
             }
         },
@@ -151,8 +159,8 @@
             "apiVersion": "2017-05-10",
             "name": "joincluster",
             "dependsOn": [
-                "[parameters('FailoverClusterName')]",
-                "[parameters('CloudWitnessName')]",
+                "[parameters('failoverClusterName')]",
+                "[parameters('cloudWitnessName')]",
                 "sqlvirtualMachineLoop"
             ],
             "properties": {
@@ -165,20 +173,23 @@
                     "existingVirtualMachineNames": {
                         "value": "[variables('existingVMListArray')]"
                     },
-                    "Location": {
-                        "value": "[parameters('Location')]"
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "sqlServerLicenseType": {
+                        "value": "[parameters('sqlServerLicenseType')]"
                     },
                     "existingVmResourceGroup": {
                         "value": "[parameters('existingVmResourceGroup')]"
                     },
-                    "GroupResourceId": {
-                        "value": "[variables('GroupResourceId')]"
+                    "groupResourceId": {
+                        "value": "[variables('groupResourceId')]"
                     },
-                    "DomainAccountPassword": {
-                        "value": "[parameters('DomainAccountPassword')]"
+                    "domainAccountPassword": {
+                        "value": "[parameters('domainAccountPassword')]"
                     },
-                    "SqlServicePassword": {
-                        "value": "[parameters('SqlServicePassword')]"
+                    "sqlServicePassword": {
+                        "value": "[parameters('sqlServicePassword')]"
                     }
                 }
             }

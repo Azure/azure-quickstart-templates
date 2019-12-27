@@ -1,11 +1,20 @@
+# Enterprise Risk Analysis using Datameer, HDInsight, TrendMicro, Chef
 
-<h1> Enterprise Risk Analysis using Datameer, HDInsight, TrendMicro, Chef </h1>
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/datameer-trend-chef-riskanalysis/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/datameer-trend-chef-riskanalysis/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/datameer-trend-chef-riskanalysis/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/datameer-trend-chef-riskanalysis/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/datameer-trend-chef-riskanalysis/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/datameer-trend-chef-riskanalysis/CredScanResult.svg" />&nbsp;
+
 <h3>Composite template version 1.0</h3>
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdatameer-trend-chef-riskanalysis%2Fazuredeploy.json" target="_blank">
-<img src="http://azuredeploy.net/deploybutton.png"/>
+<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAAzure%2Fazure-quickstart-templates%2Fmaster%2Fdatameer-trend-chef-riskanalysis%2Fazuredeploy.json" target="_blank">
-<img src="http://armviz.io/visualizebutton.png"/>
+<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
 
@@ -28,7 +37,6 @@
 <!-- /TOC -->
 
 ##  1. Solution Overview
-
 
 An integrated ARM Template (<a href="https://azure.microsoft.com/en-us/documentation/articles/resource-group-overview/">Azure Resource Manager</a>) that stitches all the above technology into a single deployment. The following is a feature table that is pulled together for your benefit.
 
@@ -125,3 +133,4 @@ For any support-related issues or questions, please contact us for assistance.
 ```sh
 azuremarketplace@avyanconsulting.com
 ```
+
