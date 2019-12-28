@@ -65,6 +65,11 @@ When you create the package that is used to create the service catalog managed a
 
 Since the entire package is uploaded as a blob you can use the relative path "linkedtemplates/storageAccountdeploy.json" to access the linked template. Just for illustration the uri "uri(variables('_deploymentLink'), 'viewdefinition.json')" would access the viewdefinition.json file in the blob storage. Similarly you can access any other file from the blob using relative paths. 
 
+To verify that the linked deployment is trigerred, you can navigate to the managed resourcegroup created by the managed application. For this, navigate to the "Managed resource group" link when you click on the managed application in the azure portal. Here you can take a look at the deployments and you will see that there are 2 deployments created for this managed application as intended. 
+
+![](images/linkeddeployments.png)
+
+
 To learn how to create application with metrics and alerts please visit:
 + [Creating managed application with metrics and alerts](https://github.com/Azure/azure-quickstart-templates/tree/master/101-managed-application-with-metrics-and-alerts)
 
