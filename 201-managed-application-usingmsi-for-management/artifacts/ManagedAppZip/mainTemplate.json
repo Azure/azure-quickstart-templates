@@ -27,20 +27,102 @@
     },
     "resources": [
         {
-            "apiVersion": "2017-05-10",
-            "name": "[variables('appdeploymentName')]",
-            "type": "Microsoft.Resources/deployments",
+            "type": "Microsoft.Logic/workflows",
+            "apiVersion": "2017-07-01",
+            "name": "[parameters('logicAppName')]",
+            "location": "[parameters('location')]",
+            "identity": {
+                "type": "SystemAssigned"
+            },
             "properties": {
-                "mode": "Incremental",
-                "templateLink": {                    
-                    "uri" : "[uri(variables('_deploymentLink'), 'linkedtemplates/deploylogicApp.json')]",
-                    "contentVersion":"1.0.0.0"
+                "state": "Enabled",
+                "definition": {
+                    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+                    "actions": {
+                        "HTTP_Request_To_create_Container_in_provided_storage_account": {
+                            "inputs": {
+                                "authentication": {
+                                    "audience": "https://@{coalesce(triggerBody()?['properties']?['storageAccountName'], parameters('storagename'))}.blob.core.windows.net",
+                                    "type": "ManagedServiceIdentity"
+                                },
+                                "headers": {
+                                    "x-ms-version": "2017-11-09"
+                                },
+                                "method": "PUT",
+                                "uri": "https://@{coalesce(triggerBody()?['properties']?['storageAccountName'],parameters('storagename'))}.blob.core.windows.net/@{triggerBody()?['properties']?['containerName']}?restype=container"
+                            },
+                            "runAfter": {},
+                            "type": "Http"
+                        },
+                        "Initialize_variable": {
+                            "inputs": {
+                                "variables": [
+                                    {
+                                        "name": "Emptyjson",
+                                        "type": "string",
+                                        "value": "\"{}\""
+                                    }
+                                ]
+                            },
+                            "runAfter": {
+                                "HTTP_Request_To_create_Container_in_provided_storage_account": [
+                                    "Succeeded",
+                                    "Failed"
+                                ]
+                            },
+                            "type": "InitializeVariable"
+                        },
+                        "Response": {
+                            "inputs": {
+                                "body": "@json(coalesce(body('HTTP_Request_To_create_Container_in_provided_storage_account'), variables('Emptyjson')))",
+                                "headers": {
+                                    "Content-Type": "application/json"
+                                },
+                                "statusCode": "@outputs('HTTP_Request_To_create_Container_in_provided_storage_account')['statusCode']"
+                            },
+                            "kind": "Http",
+                            "runAfter": {
+                                "Initialize_variable": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "Response"
+                        }
+                    },
+                    "contentVersion": "1.0.0.0",
+                    "outputs": {},
+                    "parameters": {
+                        "storagename": {
+                            "defaultValue": "[parameters('storageaccountname')]",
+                            "type": "String"
+                        }
+                    },
+                    "triggers": {
+                        "CustomProviderWebhook": {
+                            "inputs": {
+                                "schema": {
+                                    "properties": {
+                                        "properties": {
+                                            "properties": {
+                                                "containerName": {
+                                                    "type": "string"
+                                                },
+                                                "storageAccountName": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            },
+                            "kind": "Http",
+                            "type": "Request"
+                        }
+                    }
                 },
-                "parameters": {
-                    "location":{"value": "[parameters('location')]"},
-                    "logicAppName":{"value": "[parameters('logicAppName')]"},
-                    "storageAccountName":{"value": "[parameters('storageAccountName')]"}
-                  }
+                "parameters": {}
             }
         },
         {
@@ -69,7 +151,7 @@
                 ]
             },
             "dependsOn": [
-                "[variables('appdeploymentName')]"
+                "[parameters('logicAppName')]"
             ]
         },
         {
@@ -78,11 +160,11 @@
             "name": "[parameters('rolenameguid')]",
             "properties": {
                 "roleDefinitionId": "[variables('ownerRoleId')]",
-                "principalId": "[reference(variables('appdeploymentName')).outputs.appprincipalid.value]",
+                "principalId": "[reference(parameters('logicAppName'), '2017-07-01', 'Full').identity.principalId]",
                 "scope": "[resourceGroup().id]"
             },
              "dependsOn": [
-                "[variables('appdeploymentName')]"
+                "[parameters('logicAppName')]"
             ]
         }
     ],
