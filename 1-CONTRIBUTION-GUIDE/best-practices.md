@@ -120,8 +120,11 @@ The common properties should be authored consistently to provide for understanda
             "apiVersion": "2017-12-01",
             "name": "[concat(parameters('virtualMachineName'), copyIndex(1))]",
             "location": "[parameters('location')]",
-            "sku": { ... },
+            "zones": [],
+            "sku": {},
             "kind": "",
+            "scale": "",
+            "plan": {},
             "copy": {
                 "name": "vmLoop",
                 "count": "[parameters('numberOfVMs')]"
@@ -129,7 +132,7 @@ The common properties should be authored consistently to provide for understanda
             "dependsOn": [
                 "nicLoop"
             ],
-            "tags": { ... },
+            "tags": {},
             "properties": {}
 ```
 
