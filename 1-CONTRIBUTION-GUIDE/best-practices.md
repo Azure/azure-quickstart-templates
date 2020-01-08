@@ -126,6 +126,7 @@ The common properties should be authored consistently to provide for understanda
             "kind": "",
             "scale": "",
             "plan": {},
+            "identity": {},
             "copy": {
                 "name": "vmLoop",
                 "count": "[parameters('numberOfVMs')]"
