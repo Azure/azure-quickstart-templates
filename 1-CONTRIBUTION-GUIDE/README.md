@@ -153,6 +153,35 @@ A valid metadata.json must adhere to the following structure
 
 + Type of template; in this case, QuickStart
 
+### environments
+
++ An array of the clouds supported by the sample, if omitted all clouds should be supported and will be tested.  See the schema for the allowed values.
+
+## Cloud Support
+
+If the sample does not support all clouds add the environments property to metadata.json indicating the clouds that are supported.  If omitted, the following is the default value of the environments property.
+
+```json
+{
+  ...
+  "environments": [
+    "AzureCloud",
+    "AzureUSGovernment"
+  ]
+}
+```
+
+### Cloud Specific Parameter Files
+
+If the sample needs separate parameter files for each cloud you can add each to the sample:
+
+| Cloud       | Parameter Filename |
+|:---------------------------------------- |:---------------------------------------- |
+| Azure Public Cloud  | azuredeploy.parameters.json |  
+| Azure US Government Cloud | azuredeploy.parameters.us.json |  
+
+If only one is provided it will be used for testing in all clouds.
+
 ## Azure DevOps CI
 
 We have automated template validation through Azure DevOps CI. These builds can be accessed by clicking the 'Details' link at the bottom of the pull-request dialog. This process will ensure that your template conforms to all the rules mentioned above and will also deploy your template to our test subscription.

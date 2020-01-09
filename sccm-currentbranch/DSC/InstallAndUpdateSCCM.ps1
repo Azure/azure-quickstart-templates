@@ -385,9 +385,21 @@ while($updatepack -ne "")
 if($upgradingfailed -eq $true)
 {
     ("[$(Get-Date -format HH:mm:ss)] Upgrade " + $updatepack.Name + " failed") | Out-File -Append $logpath
-    throw
+    if($($updatepack.Name).ToLower().Contains("hotfix"))
+    {
+        ("[$(Get-Date -format HH:mm:ss)] This is a hotfix, skip it and continue...") | Out-File -Append $logpath
+        $Configuration.UpgradeSCCM.Status = 'CompletedWithHotfixInstallFailed'
+    }
+    else
+    {
+        $Configuration.UpgradeSCCM.Status = 'Error'
+        throw
+    }
+}
+else
+{
+    $Configuration.UpgradeSCCM.Status = 'Completed'
 }
 
-$Configuration.UpgradeSCCM.Status = 'Completed'
 $Configuration.UpgradeSCCM.EndTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
 $Configuration | ConvertTo-Json | Out-File -FilePath $ConfigurationFile -Force

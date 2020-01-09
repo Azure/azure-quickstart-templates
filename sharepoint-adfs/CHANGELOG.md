@@ -1,5 +1,24 @@
 # Change log for Azure template for SharePoint 2019 / 2016 / 2013
 
+## October 2019 update
+
+* Add optional service Azure Bastion
+* Add parameter addPublicIPAddressToEachVM to set if virtual machines should have a public IP address and be reachable from Internet. If set to No, no inbound traffic is allowed from Internet. If set to Yes, only RDP port is allowed.
+* Replace SQL Server 2016 with SQL Server 2017
+* Use SQL Server Developer edition instead of Standard edition. More info: <https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sql/virtual-machines-windows-sql-server-pricing-guidance>
+* Update DC to run with Windows Server 2019
+* Change default sizes of virtual machines SQL and SP
+* Update DSC module SharePointDSC from 3.5 (custom) to 3.6
+* Update DSC module xPSDesiredStateConfiguration from 8.8 (custom) to 8.10
+* Update DSC module NetworkingDsc from 7.3 to 7.4
+* Update DSC module ActiveDirectoryCSDsc from 3.3 to 4.1
+* Update DSC module xDnsServer from 1.13 to 1.15
+* Update DSC module ComputerManagementDsc from 6.4 to 7.0
+* Remove DSC module xPendingReboot, which is replaced by PendingReboot in ComputerManagementDsc 7.0
+* Update DSC module SqlServerDsc from 13.0 to 13.2
+* Update DSC module StorageDsc from 4.7 to 4.8
+* Update DSC module xWebAdministration from 2.6 to 2.8
+
 ## July 2019 update
 
 * Significantly improve reliability of the deployment by mitigating its main source of failures: Add a retry mechanism to resource xRemoteFile when the download fails.
@@ -9,7 +28,7 @@
 * Update apiVersion of all ARM resources to latest version
 * Update some property descriptions in the ARM template
 * Update DSC module SharePointDSC to 3.5
-* Update DSC module xPSDesiredStateConfiguration to 8.8, wich a customization on resource xRemoteFile to deal with random connection errors while downloading LDAPCP
+* Update DSC module xPSDesiredStateConfiguration to 8.8, with a customization on resource xRemoteFile to deal with random connection errors while downloading LDAPCP
 * Update xActiveDirectory from 2.23 to 3.0
 * Update NetworkingDsc from 6.3 to 7.3
 * Update ActiveDirectoryCSDsc from 3.1 to 3.3

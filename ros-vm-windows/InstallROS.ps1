@@ -1,8 +1,10 @@
 # download and unzip the ROS to the desired location
 $outputPath = Join-Path $(Get-Location) -ChildPath "output"
 $downloadPath = Join-Path $outputPath -ChildPath "sfx-installer.zip"
+$vcRedistPath = Join-Path $outputPath -ChildPath "vc_redist.x64.exe"
 
 $latestBuildUrl = 'https://dev.azure.com/ros-win/ros-win/_apis/build/builds?definitions=54&$top=1&resultFilter=succeeded&api-version=5.1'
+$vcRedistUrl = 'https://aka.ms/vs/16/release/vc_redist.x64.exe'
 
 New-Item -ItemType directory -Path $outputPath
 
@@ -20,6 +22,7 @@ do
 
         $download = New-Object net.webclient
         $download.Downloadfile($artifactUrl, $downloadPath)
+        $download.DownloadFile($vcRedistUrl, $vcRedistPath)
         Write-Verbose "Downloaded install files successfully on attempt $retries" -verbose
         break
     }
@@ -36,6 +39,10 @@ while ($retries -le $retryCount)
 Expand-Archive -path $downloadPath -destinationpath $outputPath
 $sfxPath = Join-Path $outputPath -ChildPath "sfx-installer/ros-melodic-desktop_full.exe"
 
+Write-Verbose "Installing Visual C++ redistributable packages" -verbose
+Start-Process "$vcRedistPath" -ArgumentList "/q","/norestart","/log","vcredistinstall.log" -NoNewWindow -Wait
+
+Write-Verbose "Installing ROS binaries" -verbose
 Start-Process "$sfxPath" -ArgumentList "-oc:\","-y" -NoNewWindow -Wait
 
 # finally enable RemotePS

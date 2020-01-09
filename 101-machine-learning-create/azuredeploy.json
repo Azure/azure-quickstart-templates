@@ -10,19 +10,41 @@
     },
     "location": {
       "type": "string",
-      "defaultValue": "southcentralus",
       "allowedValues": [
+        "australiaeast",
+        "brazilsouth",
+        "canadacentral",
+        "centralus",
+        "eastasia",
         "eastus",
         "eastus2",
-        "southcentralus",
+        "francecentral",
+        "japaneast",
+        "koreacentral",
+        "northcentralus",
+        "northeurope",
         "southeastasia",
+        "southcentralus",
+        "uksouth",
         "westcentralus",
-        "westeurope",
-        "westus2"
+        "westus",
+        "westus2",
+        "westeurope"
       ],
       "metadata": {
         "description": "Specifies the location for all resources."
       }
+    },
+    "sku":{
+      "type": "string",
+      "defaultValue": "basic",
+        "allowedValues": [
+          "basic",
+          "enterprise"
+        ],
+        "metadata": {
+          "description": "Specifies the sku, also referred as 'edition' of the Azure Machine Learning workspace."
+        }
     }
   },
   "variables": {
@@ -30,13 +52,12 @@
     "storageAccountType": "Standard_LRS",
     "keyVaultName": "[concat('kv',uniqueString(resourceGroup().id))]",
     "tenantId": "[subscription().tenantId]",
-    "applicationInsightsName": "[concat('ai',uniqueString(resourceGroup().id))]",
-    "containerRegistryName": "[concat('cr',uniqueString(resourceGroup().id))]"
+    "applicationInsightsName": "[concat('ai',uniqueString(resourceGroup().id))]"
   },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2018-07-01",
+      "apiVersion": "2019-04-01",
       "name": "[variables('storageAccountName')]",
       "location": "[parameters('location')]",
       "sku": {
@@ -69,12 +90,13 @@
           "name": "standard",
           "family": "A"
         },
-        "accessPolicies": []
+        "accessPolicies": [
+        ]
       }
     },
     {
       "type": "Microsoft.Insights/components",
-      "apiVersion": "2015-05-01",
+      "apiVersion": "2018-05-01-preview",
       "name": "[variables('applicationInsightsName')]",
       "location": "[if(or(equals(parameters('location'),'eastus2'),equals(parameters('location'),'westcentralus')),'southcentralus',parameters('location'))]",
       "kind": "web",
@@ -83,36 +105,26 @@
       }
     },
     {
-      "type": "Microsoft.ContainerRegistry/registries",
-      "apiVersion": "2017-10-01",
-      "name": "[variables('containerRegistryName')]",
-      "location": "[parameters('location')]",
-      "sku": {
-        "name": "Standard"
-      },
-      "properties": {
-        "adminUserEnabled": true
-      }
-    },
-    {
       "type": "Microsoft.MachineLearningServices/workspaces",
-      "apiVersion": "2018-11-19",
+      "apiVersion": "2019-11-01",
       "name": "[parameters('workspaceName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
         "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]",
-        "[resourceId('Microsoft.Insights/components', variables('applicationInsightsName'))]",
-        "[resourceId('Microsoft.ContainerRegistry/registries', variables('containerRegistryName'))]"
+        "[resourceId('Microsoft.Insights/components', variables('applicationInsightsName'))]"
       ],
       "identity": {
         "type": "systemAssigned"
+      },
+      "sku": {
+        "tier": "[parameters('sku')]",
+        "name": "[parameters('sku')]"
       },
       "properties": {
         "friendlyName": "[parameters('workspaceName')]",
         "keyVault": "[resourceId('Microsoft.KeyVault/vaults',variables('keyVaultName'))]",
         "applicationInsights": "[resourceId('Microsoft.Insights/components',variables('applicationInsightsName'))]",
-        "containerRegistry": "[resourceId('Microsoft.ContainerRegistry/registries',variables('containerRegistryName'))]",
         "storageAccount": "[resourceId('Microsoft.Storage/storageAccounts/',variables('storageAccountName'))]"
       }
     }
