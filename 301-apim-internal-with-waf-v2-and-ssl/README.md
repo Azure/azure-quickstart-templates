@@ -1,4 +1,12 @@
 # ARM Template to deploy WAF (v2) and Internal APIM
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-apim-internal-with-waf-v2-and-ssl/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-apim-internal-with-waf-v2-and-ssl/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-apim-internal-with-waf-v2-and-ssl/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-apim-internal-with-waf-v2-and-ssl/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-apim-internal-with-waf-v2-and-ssl/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-apim-internal-with-waf-v2-and-ssl/CredScanResult.svg" />&nbsp;
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F301-apim-internal-with-waf-v2-and-ssl%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
