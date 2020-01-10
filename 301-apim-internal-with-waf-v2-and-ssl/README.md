@@ -1,8 +1,13 @@
 # ARM Template to deploy WAF (v2) and Internal APIM
 
-TODO
-[] Explain the prerequisites
-[x] Add NSG for Sandbox
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-apim-internal-with-waf-v2-and-ssl/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-apim-internal-with-waf-v2-and-ssl/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-apim-internal-with-waf-v2-and-ssl/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-apim-internal-with-waf-v2-and-ssl/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-apim-internal-with-waf-v2-and-ssl/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-apim-internal-with-waf-v2-and-ssl/CredScanResult.svg" />&nbsp;
 
 ## Summary
 With this ARM template, you will be able to deploy these resources:
