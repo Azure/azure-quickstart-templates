@@ -12,7 +12,7 @@
 ## Summary
 With this ARM template, you will be able to deploy these resources:
 
-![Architecture](docs/archi-sandbox.png)
+![Architecture](docs/result.png)
 
 
 ## How to deploy it?
