@@ -1,13 +1,9 @@
 # ARM Template to deploy WAF (v2) and Internal APIM
 
-TODO
-[] Explain the prerequisites
-[x] Add NSG for Sandbox
-
 ## Summary
 With this ARM template, you will be able to deploy these resources:
 
-![Architecture](docs/archi-sandbox.png)
+![Architecture](docs/result.png)
 
 
 ## How to deploy it?
