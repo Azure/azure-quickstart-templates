@@ -30,10 +30,14 @@ With this ARM template, you will be able to deploy these resources:
 * A Keyvault with a wildcard certificate for the DNS zone. 
 
 Inside KeyVault, there are 2 configurations to do:
-- Allow `Azure Resource Manager for template deployment` in `Access policies`
+- Allow `Azure Resource Manager for template deployment`
+```
+az keyvault update  --name ExampleVault --enabled-for-template-deployment true
+```
+
 - Activate Azure Key Vault soft-delete with this command
 ```
-az resource update --id $(az keyvault show --name KeyVaultNAME -o tsv | awk '{print $1}') --set properties.enableSoftDelete=true
+az resource update --id $(az keyvault show --name ExampleVault -o tsv | awk '{print $1}') --set properties.enableSoftDelete=true
 ```
 
 Once it's done, in `azuredeploy.parameters.json`, you can define this value:
