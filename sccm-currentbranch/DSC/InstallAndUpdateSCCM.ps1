@@ -105,7 +105,7 @@ $Configuration.UpgradeSCCM.Status = 'Running'
 $Configuration.UpgradeSCCM.StartTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
 $Configuration | ConvertTo-Json | Out-File -FilePath $ConfigurationFile -Force
 
-Start-Sleep -econds 120
+Start-Sleep -Seconds 120
 $logpath = $ProvisionToolPath+"\UpgradeCMlog.txt"
 $SiteCode =  Get-ItemPropertyValue -Path 'HKLM:\SOFTWARE\Microsoft\SMS\Identification' -Name 'Site Code'
 
@@ -263,6 +263,7 @@ if($originalbuildnumber -eq "")
 
 #----------------------------------------------------
 $retrytimes = 0
+$downloadretrycount = 0
 $updatepack = getupdate
 if($updatepack -ne "")
 {
@@ -291,6 +292,7 @@ while($updatepack -ne "")
             $downloadstarttime = get-date
             while($updatepack.State -eq 327682)
             {
+                
                 "[$(Get-Date -format HH:mm:ss)] Waiting SCCM Upgrade package start to download, sleep 2 min..." | Out-File -Append $logpath
                 Start-Sleep 120
                 $updatepack = Get-CMSiteUpdate -Name $updatepack.Name -Fast
@@ -298,11 +300,23 @@ while($updatepack -ne "")
                 if($downloadspan.Hours -ge 1)
                 {
                     Restart-Service -DisplayName "SMS_Executive"
+                    $downloadretrycount++
                     Start-Sleep 120
                     $downloadstarttime = get-date
                 }
+                if($downloadretrycount -ge 2)
+                {
+                    "[$(Get-Date -format HH:mm:ss)] Update package " + $updatepack.Name + " failed to start downloading in 2 hours."| Out-File -Append $logpath
+                    break
+                }
             }
         }
+        
+        if($downloadretrycount -ge 2)
+        {
+            break
+        }
+        
         #waiting package downloaded
         $downloadstarttime = get-date
         while($updatepack.State -eq 262145)
@@ -327,6 +341,12 @@ while($updatepack -ne "")
             continue
         }
     }
+    
+    if($downloadretrycount -ge 2)
+    {
+        break
+    }
+    
     #trigger prerequisites check after the package downloaded
     Invoke-CMSiteUpdatePrerequisiteCheck -Name $updatepack.Name
     while($updatepack.State -ne 196607 -and $updatepack.State -ne 131074 -and $updatepack.State -ne 131075)
@@ -369,25 +389,51 @@ while($updatepack -ne "")
         }
         #Get if there are any other updates need to be installed
         $updatepack = getupdate 
+        if($updatepack -ne "")
+        {
+            "[$(Get-Date -format HH:mm:ss)] Found another update package : " + $updatepack.Name | Out-File -Append $logpath
+        }
     }
     if($updatepack.State -eq 196607 -or $updatepack.State -eq 262143 )
     {
         if($retrytimes -le 3)
         {
-            $upgradingfailed = $true
+            $retrytimes++
             Start-Sleep 300
             continue
         }
-        $retrytimes = $retrytimes + 1
     }
 }
 
 if($upgradingfailed -eq $true)
 {
     ("[$(Get-Date -format HH:mm:ss)] Upgrade " + $updatepack.Name + " failed") | Out-File -Append $logpath
+    if($($updatepack.Name).ToLower().Contains("hotfix"))
+    {
+        ("[$(Get-Date -format HH:mm:ss)] This is a hotfix, skip it and continue...") | Out-File -Append $logpath
+        $Configuration.UpgradeSCCM.Status = 'CompletedWithHotfixInstallFailed'
+    }
+    else
+    {
+        $Configuration.UpgradeSCCM.Status = 'Error'
+        $Configuration.UpgradeSCCM.EndTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
+        $Configuration | ConvertTo-Json | Out-File -FilePath $ConfigurationFile -Force
+        throw
+    }
+}
+else
+{
+    $Configuration.UpgradeSCCM.Status = 'Completed'
+}
+
+if($downloadretrycount -ge 2)
+{
+    ("[$(Get-Date -format HH:mm:ss)] Upgrade " + $updatepack.Name + " failed to start downloading") | Out-File -Append $logpath
+    $Configuration.UpgradeSCCM.Status = 'CompletedWithDownloadFailed'
+    $Configuration.UpgradeSCCM.EndTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
+    $Configuration | ConvertTo-Json | Out-File -FilePath $ConfigurationFile -Force
     throw
 }
 
-$Configuration.UpgradeSCCM.Status = 'Completed'
 $Configuration.UpgradeSCCM.EndTime = Get-Date -format "yyyy-MM-dd HH:mm:ss"
 $Configuration | ConvertTo-Json | Out-File -FilePath $ConfigurationFile -Force

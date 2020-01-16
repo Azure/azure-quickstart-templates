@@ -1,11 +1,11 @@
 ﻿param(
-[Parameter(Mandatory=$true,Position=0)]
-[PSObject]
-$TemplateObject,
+    [Parameter(Mandatory = $true, Position = 0)]
+    [PSObject]
+    $TemplateObject,
 
-[Parameter(Mandatory=$true,Position=0)]
-[PSObject]
-$TemplateText
+    [Parameter(Mandatory = $true, Position = 0)]
+    [PSObject]
+    $TemplateText
 )
 
 <# REGEX
@@ -24,8 +24,13 @@ An expression could be: "[ concat ( parameters ( 'test' ), ...)]"
 #>
 
 foreach ($parameter in $TemplateObject.parameters.psobject.properties) {
-    if ($TemplateText -notmatch "`"\s{0,}\[.*?parameters\s{0,}\(\s{0,}'$($Parameter.Name)'") {
-        Write-Error -Message "Unreferenced parameter: $($Parameter.Name)" -ErrorId Parameters.Must.Be.Referenced -TargetObject $parameter
+
+    if (!($parameter.name.startswith('__'))) {
+        
+        if ($TemplateText -notmatch "(?s)`"\s{0,}\[.*?parameters\s{0,}\(\s{0,}'$($Parameter.Name)'") {
+            Write-Error -Message "Unreferenced parameter: $($Parameter.Name)" -ErrorId Parameters.Must.Be.Referenced -TargetObject $parameter
+        }
+
     }
 }
  
