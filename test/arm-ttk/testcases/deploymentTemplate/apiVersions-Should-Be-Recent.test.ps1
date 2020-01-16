@@ -105,22 +105,24 @@ foreach ($av in $allApiVersions) {
             }
         })
 
-    #Create a string of recent or allowed apiVersions for display in the error message
+    # Create a string of recent or allowed apiVersions for display in the error message
     $recentApiVersions = ""
     foreach ($v in $validApiVersions) {
 
         $hasDate = $v -match "(?<Year>\d{4,4})-(?<Month>\d{2,2})-(?<Day>\d{2,2})"
         $vDate = [DateTime]::new($matches.Year, $matches.Month, $matches.Day) 
 
-        #if the apiVersion is "recent" or the latest one add it to the list (note $validApiVersions is sorted)
+        # if the apiVersion is "recent" or the latest one add it to the list (note $validApiVersions is sorted)
+        # note "recent" means is it new enough that it's allowed by the test
         if ($($TestDate - $vDate).TotalDays -lt $NumberOfDays -or $v -eq $validApiVersions[0]) {
-            $recentApiVersions += "      $v`n"
+            # TODO: when the only recent versions are a preview version and a non-preview of the same date, $recentApiVersions will only contain the preview
+            # due to sorting, which is incorrect
+            $recentApiVersions += "        $v`n"
         }
-
     }
 
     $howOutOfDate = $validApiVersions.IndexOf($av.ApiVersion) # Find out how out of date we are.
-    #Is the apiVersion even in the list?
+    # Is the apiVersion even in the list?
     if ($howOutOfDate -eq -1 -and $validApiVersions) {
         # Removing the error for this now - this is happening with the latest versions and outdated manifests
         # We can assume that if the version is indeed invalid, deployment will fail
@@ -140,8 +142,17 @@ foreach ($av in $allApiVersions) {
     # Finally, check how long it's been since the ApiVersion's date
     $timeSinceApi = $TestDate - $apiDate
     if (($timeSinceApi.TotalDays -gt $NumberOfDays) -and ($howOutOfDate -gt 0)) {
-        # If it's older than two years, and there's nothing more recent
-        Write-Error "Api versions must be the latest or under $($NumberOfDays / 365) years old ($NumberOfDays days) - API version $($av.ApiVersion) of $FullResourceType is $([Math]::Floor($timeSinceApi.TotalDays)) days old" -ErrorId ApiVersion.OutOfDate
-        Write-Output "Valid Api Versions:`n$recentApiVersions"
+        # if the used apiVersion is the second in the list, check to see if the first in the list is the same preview version (due to sorting)
+        # for example: "2017-12-01-preview" and "2017-12-01" - the preview is sorted first so we think we're out of date
+        $nonPreviewVersionInUse = $false
+        if ($howOutOfDate -eq 1) { 
+            $trimmedApiVersion = $validApiVersions[0].ToString().Substring(0, $validApiVersions[0].ToString().LastIndexOf("-"))
+            $nonPreviewVersionInUse = ($trimmedApiVersion -eq $av.apiVersion)
+        }
+        if (-not $nonPreviewVersionInUse) {
+            # If it's older than two years, and there's nothing more recent
+            Write-Error "Api versions must be the latest or under $($NumberOfDays / 365) years old ($NumberOfDays days) - API version $($av.ApiVersion) of $FullResourceType is $([Math]::Floor($timeSinceApi.TotalDays)) days old" -ErrorId ApiVersion.OutOfDate
+            Write-Output "Valid Api Versions:`n$recentApiVersions"
+        }
     }
 }

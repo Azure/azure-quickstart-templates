@@ -20,9 +20,9 @@ This template deploys a Cognitive Services Universal Key.
 
 If you are new to Azure Cognitive Services, see:
 
-- [Azure Cognitive Service](https://docs.microsoft.com/en-us/azure/cognitive-services/)
-- [Template reference](https://docs.microsoft.com/es-es/azure/templates/microsoft.cognitiveservices/2017-04-18/accounts)
-- [Microsoft Learn - Cognitive Services](https://docs.microsoft.com/es-es/learn/browse/?term=cognitive%20service)
+- [Azure Cognitive Service](https://docs.microsoft.com/azure/cognitive-services/)
+- [Template reference](https://docs.microsoft.com/azure/templates/microsoft.cognitiveservices/2017-04-18/accounts)
+- [Microsoft Learn - Cognitive Services](https://docs.microsoft.com/learn/browse/?term=cognitive%20service)
 
 If you are new to template deployment, see:
 

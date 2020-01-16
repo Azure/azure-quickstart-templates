@@ -28,7 +28,7 @@ NOTE
 This template will create an additional Standard_LRS storage account for enabling boot diagnostics each time you execute this template. To avoid running into storage account limits, it's best to delete the storage account when the VM is deleted.
 ```
 
-This template creates a VM from a specialized VHD and a data disk and let you connect it to an existing VNET that can reside in another Resource Group then the virtual machine.
+This template creates a VM from a specialized VHD and a data disk and let you connect it to an existing VNET that can reside in another Resource Group than the virtual machine.
 
 Plese note: This deployment template does not create or attach an existing Network Security Group to the virtual machine. 
 
