@@ -3,8 +3,14 @@
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-create/PublicLastTestDate.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-create/PublicDeployment.svg" />&nbsp;
 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-create/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-create/FairfaxDeployment.svg" />&nbsp;
+
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-create/BestPracticeResult.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-create/CredScanResult.svg" />&nbsp;
+
+##[error]D:\_work\1\test\ci-scripts\Validate-ReadMe.ps1 : Readme is missing badge: https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-create/FairfaxLastTestDate.svg
+
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-cosmosdb-create%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
