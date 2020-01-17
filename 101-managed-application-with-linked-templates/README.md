@@ -1,11 +1,21 @@
 # Deploying your managed application with linked templates
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-managed-application-with-linked-templates%2Fazuredeploy.json" target="_blank">
+   <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-managed-application-with-linked-templates/PublicLastTestDate.svg" />&nbsp;
+    <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-managed-application-with-linked-templates/PublicDeployment.svg" />&nbsp;
+
+    <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-managed-application-with-linked-templates/FairfaxLastTestDate.svg" />&nbsp;
+    <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-managed-application-with-linked-templates/FairfaxDeployment.svg" />&nbsp;
+    
+    <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-managed-application-with-linked-templates/BestPracticeResult.svg" />&nbsp;
+    <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-managed-application-with-linked-templates/CredScanResult.svg" />&nbsp;
+    
+    
+    <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-managed-application-with-linked-templates%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
-</a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-managed-application-with-linked-templates%2Fazuredeploy.json" target="_blank">
+    </a>
+    <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-managed-application-with-linked-templates%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
-</a>
+    </a>
 
 This sample template deploys a Service catalog managed application along with the definition that creates a linked deployment for the managed application. While creating managed application packages your scenario might require a complex deployment scenario which needs the ARM template to be broken down in to simpler templates that can be called by the main template. Managed Applications allow this by utilizing linked ARM template deployments and providing a location to store your linked templates.
 
