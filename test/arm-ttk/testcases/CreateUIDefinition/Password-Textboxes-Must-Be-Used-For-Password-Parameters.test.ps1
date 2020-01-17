@@ -36,6 +36,6 @@ foreach ($pwb in $passwordBoxes) { # Loop over each password box
     # If the main template parameter type is neither a Secure String nor a Secure Object
     if (($MainTemplateParam.type -ne 'SecureString') -and ($MainTemplateParam.type -ne 'SecureObject')) {
         # write an error.
-        Write-Error "Password boxes must be used for secure string or secure object parameters.  The Main template parameter $($pwb.Name) is a $($MainTemplateParam.type)" -TargetObject @($pwb, $MainTemplateParam)
+        Write-Error "PasswordBox controls must use secureString or secureObject parameter types.  The Main template parameter '$($pwb.Name)' is a '$($MainTemplateParam.type)'" -TargetObject @($pwb, $MainTemplateParam)
     }
 }
