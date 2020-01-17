@@ -159,7 +159,28 @@ A valid metadata.json must adhere to the following structure
 
 ## Cloud Support
 
-If the sample does not support all clouds add the environments property to metadata.json indicating the clouds that are supported.
+If the sample does not support all clouds add the environments property to metadata.json indicating the clouds that are supported.  If omitted, the following is the default value of the environments property.
+
+```json
+{
+  ...
+  "environments": [
+    "AzureCloud",
+    "AzureUSGovernment"
+  ]
+}
+```
+
+### Cloud Specific Parameter Files
+
+If the sample needs separate parameter files for each cloud you can add each to the sample:
+
+| Cloud       | Parameter Filename |
+|:---------------------------------------- |:---------------------------------------- |
+| Azure Public Cloud  | azuredeploy.parameters.json |  
+| Azure US Government Cloud | azuredeploy.parameters.us.json |  
+
+If only one is provided it will be used for testing in all clouds.
 
 ## Azure DevOps CI
 

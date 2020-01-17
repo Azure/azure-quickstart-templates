@@ -18,8 +18,18 @@
 
 This sample creates a free Azure Web App and SQL Database at the "Basic" service level.  The template can support other tiers of service, details for each service can be found here:
 
-[App Service Pricing](https://azure.microsoft.com/en-us/pricing/details/app-service/)    
-[SQL Database Pricing](https://azure.microsoft.com/en-us/pricing/details/sql-database/)
+### Microsoft App Services 
 
-For more information about using this template, see [Provision a web app with a SQL Database](https://azure.microsoft.com/en-us/documentation/articles/app-service-web-arm-with-sql-database-provision/).
+- [App Service Pricing](https://azure.microsoft.com/pricing/details/app-service/)
 
+### Microsoft SQL
+
+- [SQL Database Pricing](https://azure.microsoft.com/pricing/details/sql-database/)
+
+For more information about using this template, see [Provision a web app with a SQL Database](https://azure.microsoft.com/documentation/articles/app-service-web-arm-with-sql-database-provision/).
+
+### Microsoft Learn Resources
+
+- [Learn SQL Server](https://docs.microsoft.com/learn/browse/?term=SQL)
+
+- [Learn App Services](https://docs.microsoft.com/en-us/learn/browse/?term=web%20app)
