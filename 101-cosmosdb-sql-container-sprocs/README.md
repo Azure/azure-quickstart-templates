@@ -1,4 +1,4 @@
-# Create an Azure Cosmos DB SQL API container with stored procedure, trigger and user defined function
+# Create an Azure Cosmos DB Core (SQL) API container with stored procedure, trigger and user defined function
 
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-sql-container-sprocs/PublicLastTestDate.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-sql-container-sprocs/PublicDeployment.svg" />&nbsp;
@@ -9,7 +9,7 @@
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-sql-container-sprocs/BestPracticeResult.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-sql-container-sprocs/CredScanResult.svg" />&nbsp;
 
-This template creates an Azure Cosmos account for SQL (Core) API and a container with a stored procedure, trigger and user defined function.
+This template creates an Azure Cosmos account for Core (SQL) API and a container with a stored procedure, trigger and user defined function.
 
 Below are the parameters which can be user configured in the parameters file including:
 
@@ -19,7 +19,7 @@ Below are the parameters which can be user configured in the parameters file inc
 - **Automatic Failover:** Select whether to enable automatic failover on the account (Ignored when Multi-Master is enabled).
 - **Database Name:** Enter the database name for the account.
 - **Container Name:** Enter the name for the container.
-- **Throughput:** Enter the Ru/s for the container (default is 400).
+- **Throughput:** Enter the RU/s for the container (default is 400).
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-cosmosdb-sql-container-sprocs%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
