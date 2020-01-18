@@ -67,7 +67,6 @@
         "targetServerName": "[concat('targetservername', uniqueString(resourceGroup().id))]",
         "scriptLocation": "AddDatabaseToSqlServer.ps1 ",
         "bakFileLocation": "AdventureWorks2016.bak",
-        "bacpacFileLocation": "AdventureWorks2016.bacpac",
         "scriptFiles": "[createarray(concat(parameters('_artifactsLocation'), variables('scriptLocation')), concat(parameters('_artifactsLocation'), variables('bakFileLocation')))]",
         "scriptParameters": "[concat('-userName ', parameters('sourceWindowsAdminUserName'), ' -password \"', parameters('sourceWindowsAdminPassword'))]",
         "storageAccountNamePrefix": "storage",
@@ -229,10 +228,10 @@
         {
             "type": "Microsoft.DataMigration/services",
             "sku": {
-        "name": "Standard_1vCores",
-        "tier": "Standard",
-        "size": "1 vCores"
-      },
+                "name": "Standard_1vCores",
+                "tier": "Standard",
+                "size": "1 vCores"
+            },
             "name": "[variables('DMSServiceName')]",
             "apiVersion": "2017-11-15-privatepreview",
             "location": "[parameters('location')]",
@@ -264,7 +263,8 @@
             "apiVersion": "2018-02-01",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('adVNet'), variables('defaultSubnetName'))]"
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('adVNet'), variables('defaultSubnetName'))]",
+                "[resourceId('Microsoft.Network/publicIpAddresses', variables('publicIPSourceServer'))]"
             ],
             "properties": {
                 "ipConfigurations": [
@@ -481,7 +481,7 @@
                     "apiVersion": "2017-10-01-preview",
                     "location": "[parameters('location')]",
                     "dependsOn": [
-                        "[concat('Microsoft.Sql/servers/', concat(variables('targetServerName')))]"
+                        "[resourceId('Microsoft.Sql/servers', concat(variables('targetServerName')))]"
                     ],
                     "properties": {
                         "collation": "SQL_Latin1_General_CP1_CI_AS",
@@ -494,12 +494,12 @@
                             "type": "extensions",
                             "apiVersion": "2014-04-01-preview",
                             "dependsOn": [
-                                "[concat('Microsoft.Sql/servers/', concat(variables('targetServerName')), '/databases/', variables('databaseName'))]"
+                                "[resourceId('Microsoft.Sql/servers/databases', variables('targetServerName'), variables('databaseName'))]"
                             ],
                             "properties": {
                                 "storageKey": "?",
                                 "storageKeyType": "[variables('storageKeyType')]",
-                                "storageUri": "https://templatebotstorage.blob.core.windows.net/bacpacs/AdventureWorks2016.bacpac",
+                                "storageUri": "[uri(parameters('_artifactsLocation'), concat('AdventureWorks2016.bacpac', parameters('_artifactsLocationSasToken')))]",
                                 "administratorLogin": "[parameters('targetSqlDbAdministratorLogin')]",
                                 "administratorLoginPassword": "[parameters('targetSqlDbAdministratorPassword')]",
                                 "operationMode": "Import"
@@ -513,7 +513,7 @@
                     "apiVersion": "2014-04-01-preview",
                     "location": "[parameters('location')]",
                     "dependsOn": [
-                        "[concat('Microsoft.Sql/servers/', concat(variables('targetServerName')))]"
+                        "[resourceId('Microsoft.Sql/servers', concat(variables('targetServerName')))]"
                     ],
                     "properties": {
                         "endIpAddress": "0.0.0.0",
