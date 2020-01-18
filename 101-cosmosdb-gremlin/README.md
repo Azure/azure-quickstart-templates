@@ -1,4 +1,4 @@
-# Create an Azure Cosmos account for Gremlin API with two graphs
+# Create an Azure Cosmos account for Gremlin API with database and a graph
 
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-gremlin/PublicLastTestDate.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-gremlin/PublicDeployment.svg" />&nbsp;
