@@ -27,7 +27,7 @@ foreach ($selector in $sizeSelectors) { # Then walk each selector,
     }
 
     if (-not $theOutput) {
-        Write-Error "Could not find $($selector.Name) in outputs" -TargetObject $selector
+        Write-Error "Could not find VM SizeSelector $($selector.Name) in outputs" -TargetObject $selector
         continue
     }
 
