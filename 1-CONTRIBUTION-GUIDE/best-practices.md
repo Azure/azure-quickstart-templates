@@ -32,7 +32,8 @@ An Azure Application or QuickStart sample must contain, at a minimum, the follow
 |:---------------------------------------- |:----------------------------------------------------- |:---------------------------------------- |
 | UI Definition File    | createUiDefinition.json | n/a |  
 | Template File | mainTemplate.json | azuredeploy.json |  
-| Parameters File | n/a | azuredeploy.parameters.json |  
+| Parameters File (Public) | n/a | azuredeploy.parameters.json  |  
+| Parameters File (US Gov) | n/a | azuredeploy.parameters.us.json |
 | Read Me File | Not required | README.md |  
 | [SECURITY.md file](https://help.github.com/en/articles/adding-a-security-policy-to-your-repository) | Not required | SECURITY.md |
 | QuickStart Description | n/a | metadata.json |
@@ -120,8 +121,12 @@ The common properties should be authored consistently to provide for understanda
             "apiVersion": "2017-12-01",
             "name": "[concat(parameters('virtualMachineName'), copyIndex(1))]",
             "location": "[parameters('location')]",
-            "sku": { ... },
+            "zones": [],
+            "sku": {},
             "kind": "",
+            "scale": "",
+            "plan": {},
+            "identity": {},
             "copy": {
                 "name": "vmLoop",
                 "count": "[parameters('numberOfVMs')]"
@@ -129,7 +134,7 @@ The common properties should be authored consistently to provide for understanda
             "dependsOn": [
                 "nicLoop"
             ],
-            "tags": { ... },
+            "tags": {},
             "properties": {}
 ```
 
