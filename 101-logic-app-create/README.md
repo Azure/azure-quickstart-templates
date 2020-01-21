@@ -25,3 +25,4 @@ For information about using this template, see [Create Azure Resource Manager te
 - [Microsoft Logic Apps](https://azure.microsoft.com/services/logic-apps/)
 - [Microsoft Logic Apps Documentation](https://docs.microsoft.com/azure/logic-apps/)
 - [Microsoft Learn Logic App Modules](https://docs.microsoft.com/learn/browse/?term=logic%20app)
+
