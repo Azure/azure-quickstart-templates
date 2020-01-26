@@ -3,7 +3,7 @@
     [PSObject]
     $TemplateObject,
 
-    [Parameter(Mandatory = $true, Position = 0)]
+    [Parameter(Mandatory = $true, Position = 1)]
     [PSObject]
     $TemplateText
 )
@@ -19,7 +19,7 @@
 - 0 or more whitespace
 - opening '
 
-An expression could be: "[ concat ( parameters ( 'test' ), ...)]"
+An expression could be: "[ concat ( variables ( 'test' ), ...)]"
 
 #>
 
