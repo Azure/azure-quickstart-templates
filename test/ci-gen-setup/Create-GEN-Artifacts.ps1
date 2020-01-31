@@ -105,6 +105,12 @@ if($ServicePrincipalObjectId){
                                     -PermissionsToSecrets get,set `
                                     -PermissionsToCertificates get
 
+    # Assign the SP perms to the NetworkWatcherRG for deploying flowlogs
+    New-AzureRMRoleAssignment -RoleDefinitionId 'b24988ac-6180-42a0-ab88-20f7382dd24c' `
+                              -ObjectId $ServicePrincipalObjectId `
+                              -Scope $(Get-AzureRmResourceGroup -Name 'NetworkWatcherRG').ResourceId `
+                              -Verbose
+
 }
 
 # 1) Create a sample password for the vault
