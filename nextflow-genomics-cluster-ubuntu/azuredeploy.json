@@ -160,14 +160,14 @@
       "metadata": {
         "description": "*Advanced* This should be left as default unless you are an advanced user. The folder in the artifacts location were shared scripts are stored."
       },
-      "defaultValue": "/shared_scripts/ubuntu"
+      "defaultValue": "shared_scripts/ubuntu"
     },
     "_artifactsNextflowFolder": {
       "type": "string",
       "metadata": {
         "description": "*Advanced* This should be left as default unless you are an advanced user. The folder in the artifacts location were nextflow scripts are stored."
       },
-      "defaultValue": "/nextflow-genomics-cluster-ubuntu/scripts"
+      "defaultValue": "nextflow-genomics-cluster-ubuntu/scripts"
     },
     "authenticationType": {
       "type": "string",
@@ -188,8 +188,8 @@
     }
   },
   "variables": {
-    "nextflowInitScript": "[concat(parameters('_artifactsLocation'), parameters('_artifactsNextflowFolder'), '/init.sh', parameters('_artifactsLocationSasToken'))]",
-    "diskInitScript": "[concat(parameters('_artifactsLocation'), parameters('_artifactsSharedFolder'), '/vm-disk-utils-0.1.sh', parameters('_artifactsLocationSasToken'))]",
+    "nextflowInitScript": "[uri(parameters('_artifactsLocation'), concat(parameters('_artifactsNextflowFolder'), '/init.sh', parameters('_artifactsLocationSasToken')))]",
+    "diskInitScript": "[uri(parameters('_artifactsLocation'), concat(parameters('_artifactsSharedFolder'), '/vm-disk-utils-0.1.sh', parameters('_artifactsLocationSasToken')))]",
     "jumpboxNICName": "jumpboxNIC",
     "addressPrefix": "10.0.0.0/16",
     "subnetPrefix": "10.0.0.0/24",
@@ -210,7 +210,8 @@
           }
         ]
       }
-    }
+    },
+    "networkSecurityGroupName": "default-NSG"
   },
   "resources": [
     {
@@ -236,10 +237,37 @@
       }
     },
     {
+      "comments": "Default Network Security Group for template",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2019-08-01",
+      "name": "[variables('networkSecurityGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-22",
+            "properties": {
+              "priority": 1000,
+              "access": "Allow",
+              "direction": "Inbound",
+              "destinationPortRange": "22",
+              "protocol": "Tcp",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+          }
+        ]
+      }
+    },
+    {
       "apiVersion": "2017-06-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[parameters('vnetName')]",
       "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+      ],
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -250,7 +278,10 @@
           {
             "name": "[parameters('subnetName')]",
             "properties": {
-              "addressPrefix": "[variables('subnetPrefix')]"
+              "addressPrefix": "[variables('subnetPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+              }
             }
           }
         ]
