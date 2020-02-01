@@ -22,7 +22,7 @@ echo "dataDir=/var/lib/zookeeper" >> zookeeper-3.4.12/conf/zoo.cfg
 echo "clientPort=2181" >> zookeeper-3.4.12/conf/zoo.cfg
 echo "initLimit=5" >> zookeeper-3.4.12/conf/zoo.cfg
 echo "syncLimit=2" >> zookeeper-3.4.12/conf/zoo.cfg
- 
+
 i=1
 while [ $i -le $2 ]
 do

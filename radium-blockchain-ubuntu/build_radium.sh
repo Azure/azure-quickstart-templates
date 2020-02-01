@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e 
+set -e
 date
 ps axjf
 NPROC=$(nproc)
@@ -40,9 +40,9 @@ cd /usr/local
 time git clone https://github.com/tm2013/Radium.git
 chmod -R 777 /usr/local/Radium/
 
-# Build  source                                
+# Build  source
 
-cd /usr/local/Radium/src 
+cd /usr/local/Radium/src
 make -f makefile.unix USE_UPNP=-
 cp /usr/local/Radium/src/Radiumd /usr/bin/Radiumd
 

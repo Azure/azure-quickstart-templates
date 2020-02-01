@@ -26,7 +26,7 @@ while getopts "c:n:p:q:u:v:" opt; do
     u)  url=$OPTARG
         ;;
     v)  value_search=$OPTARG
-        ;;        
+        ;;
     esac
 done
 

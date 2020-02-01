@@ -21,13 +21,13 @@ if [ $1 = 'From_Source' ]; then
 sudo apt-get update
 sudo apt-get -y install git build-essential libssl-dev libdb-dev libdb++-dev libboost-all-dev libqrencode-dev unzip pwgen
 cd /usr/local/src/
-sudo git clone https://github.com/ShadowProject/shadow 
-cd shadow/src 
-sudo make -f makefile.unix 
+sudo git clone https://github.com/ShadowProject/shadow
+cd shadow/src
+sudo make -f makefile.unix
 
 sudo cp shadowcoind /usr/bin/shadowcoind
 
-else    
+else
 ## Download Binaries
 sudo apt-get update
 sudo apt-get -y install git build-essential libssl-dev libdb-dev libdb++-dev libboost-all-dev libqrencode-dev unzip pwgen
