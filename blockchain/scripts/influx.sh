@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -e 
 
 date
 ps axjf
@@ -41,7 +41,7 @@ sudo cp /usr/local/Influx/src/Influxd /usr/bin/Influxd
 ################################################################
 # Configure to auto start at boot		                           #
 ################################################################
-file=$HOME/.Influx
+file=$HOME/.Influx 
 if [ ! -e "$file" ]
 then
 	sudo mkdir $HOME/.Influx
@@ -52,7 +52,7 @@ if [ ! -e "$file" ]
 then
 	printf '%s\n%s\n' '#!/bin/sh' 'sudo Influxd' | sudo tee /etc/init.d/Influx
 	sudo chmod +x /etc/init.d/Influx
-	sudo update-rc.d Influx defaults
+	sudo update-rc.d Influx defaults	
 fi
 
 /usr/bin/Influxd
