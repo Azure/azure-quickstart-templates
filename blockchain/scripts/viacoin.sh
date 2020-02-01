@@ -15,7 +15,7 @@ file=/usr/local/viacoin
 if [ ! -e "$file" ]; then
     sudo git clone https://github.com/viacoin/viacoin.git viacoin
 fi
-
+ 
 cd /usr/local/viacoin
 file=/usr/local/viacoin/src/viacoind
 if [ ! -e "$file" ]; then
