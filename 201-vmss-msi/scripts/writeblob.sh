@@ -6,7 +6,7 @@ else
     CONTAINER_NAME=$(echo "$CONTAINER_NAME"|tr '[:upper:]' '[:lower:]')
 fi
 
-for var in STORAGE_ACCOUNT RESOURCE_GROUP 
+for var in STORAGE_ACCOUNT RESOURCE_GROUP
 do
 
     if [ -z ${!var} ]; then
@@ -16,7 +16,7 @@ do
 
 done
 
-# login using msi 
+# login using msi
 az login --identity
 
 # create a file and upload it to storage account using a key obtained via the logged in MSI , the MSI must have permission to perfrm these operations

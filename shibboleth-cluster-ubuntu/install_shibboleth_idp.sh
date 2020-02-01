@@ -23,7 +23,7 @@ echo $SITENAME
 #install Oracle JDK 7
 echo debconf shared/accepted-oracle-license-v1-1 select true | \
 sudo debconf-set-selections
-  
+
 echo debconf shared/accepted-oracle-license-v1-1 seen true | \
 sudo debconf-set-selections
 

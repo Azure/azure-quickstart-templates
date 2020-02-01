@@ -21,7 +21,7 @@ then
         rm -rf Configfiles.*
 	rm -rf /home/Configfiles
 	echo "directory delete"
-  fi  
+  fi
 fi
 wget $configfile
 unzip Configfiles.zip -d /home/Configfiles/

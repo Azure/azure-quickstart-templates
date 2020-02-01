@@ -28,7 +28,7 @@ yum install sshpass -y
 #Disable SSH Copy prompt#
 echo "StrictHostKeyChecking no" >> /etc/ssh/ssh_config
 
-## The following code generates SSH Keys and copies it to other hosts ##  
+## The following code generates SSH Keys and copies it to other hosts ##
 ssh-keygen -f $HOME/.ssh/id_rsa -t rsa -b 4096 -N ''
 sshpass -p "$4" ssh-copy-id "$3"@"$5"
 sshpass -p "$4" ssh-copy-id "$3"@"$6"
@@ -83,7 +83,7 @@ EOF
 # Changing hostname of Ansible Tower VM #
 hostnamectl set-hostname tower
 
-ANSIBLE_BECOME_METHOD=’sudo’ 
+ANSIBLE_BECOME_METHOD=’sudo’
 ANSIBLE_BECOME=True
 
 ### Install Ansible Tower ###

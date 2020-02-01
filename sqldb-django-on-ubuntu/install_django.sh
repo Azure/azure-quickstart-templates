@@ -48,10 +48,10 @@ def home(request):
     cursor.execute('SELECT * FROM votes')
     result = ''
     row = cursor.fetchone()
-    
+
     while row:
         result += str(row[0]) + str(' : ') + str(row[1]) + str('votes')
-        
+
         row = cursor.fetchone()
     html ='<html><body><h2><pre>'
     html+= str(result)
