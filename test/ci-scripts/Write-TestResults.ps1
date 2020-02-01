@@ -30,7 +30,8 @@ $ctx = New-AzStorageContext -StorageAccountName $StorageAccountName -StorageAcco
 
 if ($BuildReason -eq "PullRequest") {
     $t = $TableNamePRs
-}else{
+}
+else {
     $t = $TableName
 }
 
@@ -50,7 +51,7 @@ $PartitionKey = $Metadata.Type # if the type changes we'll have an orphaned row,
 $r = Get-AzTableRow -table $cloudTable -PartitionKey $PartitionKey -RowKey $RowKey
 
 # if the build was cancelled and this was a scheduled build, we need to set the metadata status back to "Live"
-if($r -ne $null -and $AgentJobStatus -eq "Canceled" -and $BuildReason -ne "PullRequest"){
+if ($r -ne $null -and $AgentJobStatus -eq "Canceled" -and $BuildReason -ne "PullRequest") {
     if ($r.status -eq $null) {
         Add-Member -InputObject $r -NotePropertyName "status" -NotePropertyValue "Live"
     }
@@ -180,55 +181,63 @@ else {
         else {
             $r.($ResultDeploymentParameter + "BuildNumber") = $ENV:BUILD_BUILDNUMBER
         }
-        
-    } else { # if this isn't a PR, then it's a scheduled build so set the status back to "live" as the test is complete
-        if ($r.status -eq $null) {
-            Add-Member -InputObject $r -NotePropertyName "status" -NotePropertyValue "Live"
+
+        if ($r.pr -eq $null) {
+            Add-Member -InputObject $r -NotePropertyName "pr" -NotePropertyValue $ENV:SYSTEM_PULLREQUEST_PULLREQUESTNUMBER
         }
         else {
-            $r.status = "Live"
-        }
+            $r.pr = $ENV:SYSTEM_PULLREQUEST_PULLREQUESTNUMBER
+        }   
     }
-
-    # update metadata columns
-    if ($r.itemDisplayName -eq $null) { 
-        Add-Member -InputObject $r -NotePropertyName "itemDisplayName" -NotePropertyValue $Metadata.itemDisplayName
-    }
-    else {
-        $r.itemDisplayName = $Metadata.itemDisplayName
-    }
-
-    if ($r.description -eq $null) {
-        Add-Member -InputObject $r -NotePropertyName "description" -NotePropertyValue $Metadata.description
+}
+else { # if this isn't a PR, then it's a scheduled build so set the status back to "live" as the test is complete
+    if ($r.status -eq $null) {
+        Add-Member -InputObject $r -NotePropertyName "status" -NotePropertyValue "Live"
     }
     else {
-        $r.description = $Metadata.description
+        $r.status = "Live"
     }
+}
 
-    if ($r.summary -eq $null) {
-        Add-Member -InputObject $r -NotePropertyName "summary" -NotePropertyValue $Metadata.summary
-    }
-    else {
-        $r.summary = $Metadata.summary
-    }
+# update metadata columns
+if ($r.itemDisplayName -eq $null) { 
+    Add-Member -InputObject $r -NotePropertyName "itemDisplayName" -NotePropertyValue $Metadata.itemDisplayName
+}
+else {
+    $r.itemDisplayName = $Metadata.itemDisplayName
+}
 
-    if ($r.githubUsername -eq $null) {
-        Add-Member -InputObject $r -NotePropertyName "githubUsername" -NotePropertyValue $Metadata.githubUsername
-    }
-    else {
-        $r.githubUsername = $Metadata.githubUsername
-    }   
+if ($r.description -eq $null) {
+    Add-Member -InputObject $r -NotePropertyName "description" -NotePropertyValue $Metadata.description
+}
+else {
+    $r.description = $Metadata.description
+}
+
+if ($r.summary -eq $null) {
+    Add-Member -InputObject $r -NotePropertyName "summary" -NotePropertyValue $Metadata.summary
+}
+else {
+    $r.summary = $Metadata.summary
+}
+
+if ($r.githubUsername -eq $null) {
+    Add-Member -InputObject $r -NotePropertyName "githubUsername" -NotePropertyValue $Metadata.githubUsername
+}
+else {
+    $r.githubUsername = $Metadata.githubUsername
+}   
     
-    if ($r.dateUpdated -eq $null) {
-        Add-Member -InputObject $r -NotePropertyName "dateUpdated" -NotePropertyValue $Metadata.dateUpdated
-    }
-    else {
-        $r.dateUpdated = $Metadata.dateUpdated
-    }
+if ($r.dateUpdated -eq $null) {
+    Add-Member -InputObject $r -NotePropertyName "dateUpdated" -NotePropertyValue $Metadata.dateUpdated
+}
+else {
+    $r.dateUpdated = $Metadata.dateUpdated
+}
 
-    Write-Host "Updating to new results:"
-    $r | fl *
-    $r | Update-AzTableRow -table $cloudTable
+Write-Host "Updating to new results:"
+$r | fl *
+$r | Update-AzTableRow -table $cloudTable
 }
 
 <#
@@ -269,7 +278,7 @@ if ($r.FairfaxDeployment -ne $null) {
 switch ($FairfaxDeployment) {
     "PASS" { $FairfaxDeploymentColor = "brightgreen" }
     "FAIL" { $FairfaxDeploymentColor = "red" }
-    "Not Supported" {$FairfaxDeploymentColor = "yellow"}
+    "Not Supported" { $FairfaxDeploymentColor = "yellow" }
     default {
         $FairfaxDeployment = $na
         $FairfaxDeploymentColor = "inactive"    
@@ -283,7 +292,7 @@ if ($r.PublicDeployment -ne $null) {
 switch ($PublicDeployment) {
     "PASS" { $PublicDeploymentColor = "brightgreen" }
     "FAIL" { $PublicDeploymentColor = "red" }
-    "Not Supported" {$PublicDeploymentColor = "yellow"}
+    "Not Supported" { $PublicDeploymentColor = "yellow" }
     default {
         $PublicDeployment = $na
         $PublicDeploymentColor = "inactive"    
@@ -362,11 +371,11 @@ foreach ($badge in $badges) {
     $badgePath = $RowKey.Replace("@", "/")
 
     Set-AzStorageBlobContent -Container $containerName `
-                             -File $badge.filename `
-                             -Blob "$badgePath/$($badge.filename)" `
-                             -Context $ctx `
-                             -Properties @{"ContentType" = "image/svg+xml"; "CacheControl" = "no-cache" } `
-                             -Force -Verbose
+        -File $badge.filename `
+        -Blob "$badgePath/$($badge.filename)" `
+        -Context $ctx `
+        -Properties @{"ContentType" = "image/svg+xml"; "CacheControl" = "no-cache" } `
+        -Force -Verbose
 }
 
 <#Debugging only
