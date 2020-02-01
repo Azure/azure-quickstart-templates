@@ -73,8 +73,8 @@
     "dnsLabelPrefix": "[concat('msi',uniquestring(resourceGroup().id))]",
     "infraStorageAccountName": "[take(concat('storeinfra', uniquestring(resourceGroup().id), variables('dnsLabelPrefix')),24)]",
     "stateStorageAccountName": "[take(concat('storestate', uniquestring(resourceGroup().id), variables('dnsLabelPrefix')),24)]",
-    "nicName": "[concat('nic',uniquestring(resourceGroup().id))]",
-    "networkSecurityGroupName": "[concat('nsg',uniquestring(resourceGroup().id))]",
+    "nicName": "[concat('nic', variables('vmName'))]",
+    "networkSecurityGroupName": "[concat('nsg', variables('vmName'))]",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
     "subnetPrefix": "10.0.0.0/24",
@@ -200,7 +200,8 @@
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
-        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -227,6 +228,9 @@
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
+      "dependsOn": [
+          "[resourceId('Microsoft.Network/networkinterfaces', variables('nicName'))]"
+      ],
       "identity": {
         "type": "SystemAssigned"
       },
@@ -272,7 +276,7 @@
       ],
       "properties": {
         "roleDefinitionId": "[variables('contributor')]",
-        "principalId": "[reference(variables('vmName'), '2015-08-31-PREVIEW', 'Full').identityt.principalId]",
+        "principalId": "[reference(variables('vmName'), '2019-07-01', 'Full').identityt.principalId]",
         "scope": "[subscriptionResourceId('Microsoft.Resources/resourceGroups', resourceGroup().name)]",
         "principalType": "ServicePrincipal"
 
@@ -281,7 +285,7 @@
     {
       "name": "[concat(variables('vmName'),'/customscriptextension')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2019-07-01",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Authorization/roleAssignments', guid(resourceGroup().id, variables('contributor')))]"
