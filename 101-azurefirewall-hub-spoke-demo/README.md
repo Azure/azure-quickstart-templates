@@ -38,5 +38,3 @@ Remember to turn Windows Defender Firewall off manually on all VMs.
 ![Topology](images/azfwdemo.png)
 
 ![Topology](images/topology.png)
-
-
