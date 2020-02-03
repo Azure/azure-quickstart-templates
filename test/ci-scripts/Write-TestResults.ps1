@@ -181,63 +181,63 @@ else {
         else {
             $r.($ResultDeploymentParameter + "BuildNumber") = $ENV:BUILD_BUILDNUMBER
         }
-
         if ($r.pr -eq $null) {
             Add-Member -InputObject $r -NotePropertyName "pr" -NotePropertyValue $ENV:SYSTEM_PULLREQUEST_PULLREQUESTNUMBER
         }
         else {
             $r.pr = $ENV:SYSTEM_PULLREQUEST_PULLREQUESTNUMBER
         }   
-    }
-}
-else { # if this isn't a PR, then it's a scheduled build so set the status back to "live" as the test is complete
-    if ($r.status -eq $null) {
-        Add-Member -InputObject $r -NotePropertyName "status" -NotePropertyValue "Live"
+    
     }
     else {
-        $r.status = "Live"
+        # if this isn't a PR, then it's a scheduled build so set the status back to "live" as the test is complete
+        if ($r.status -eq $null) {
+            Add-Member -InputObject $r -NotePropertyName "status" -NotePropertyValue "Live"
+        }
+        else {
+            $r.status = "Live"
+        }
     }
-}
 
-# update metadata columns
-if ($r.itemDisplayName -eq $null) { 
-    Add-Member -InputObject $r -NotePropertyName "itemDisplayName" -NotePropertyValue $Metadata.itemDisplayName
-}
-else {
-    $r.itemDisplayName = $Metadata.itemDisplayName
-}
+    # update metadata columns
+    if ($r.itemDisplayName -eq $null) { 
+        Add-Member -InputObject $r -NotePropertyName "itemDisplayName" -NotePropertyValue $Metadata.itemDisplayName
+    }
+    else {
+        $r.itemDisplayName = $Metadata.itemDisplayName
+    }
 
-if ($r.description -eq $null) {
-    Add-Member -InputObject $r -NotePropertyName "description" -NotePropertyValue $Metadata.description
-}
-else {
-    $r.description = $Metadata.description
-}
+    if ($r.description -eq $null) {
+        Add-Member -InputObject $r -NotePropertyName "description" -NotePropertyValue $Metadata.description
+    }
+    else {
+        $r.description = $Metadata.description
+    }
 
-if ($r.summary -eq $null) {
-    Add-Member -InputObject $r -NotePropertyName "summary" -NotePropertyValue $Metadata.summary
-}
-else {
-    $r.summary = $Metadata.summary
-}
+    if ($r.summary -eq $null) {
+        Add-Member -InputObject $r -NotePropertyName "summary" -NotePropertyValue $Metadata.summary
+    }
+    else {
+        $r.summary = $Metadata.summary
+    }
 
-if ($r.githubUsername -eq $null) {
-    Add-Member -InputObject $r -NotePropertyName "githubUsername" -NotePropertyValue $Metadata.githubUsername
-}
-else {
-    $r.githubUsername = $Metadata.githubUsername
-}   
+    if ($r.githubUsername -eq $null) {
+        Add-Member -InputObject $r -NotePropertyName "githubUsername" -NotePropertyValue $Metadata.githubUsername
+    }
+    else {
+        $r.githubUsername = $Metadata.githubUsername
+    }   
     
-if ($r.dateUpdated -eq $null) {
-    Add-Member -InputObject $r -NotePropertyName "dateUpdated" -NotePropertyValue $Metadata.dateUpdated
-}
-else {
-    $r.dateUpdated = $Metadata.dateUpdated
-}
+    if ($r.dateUpdated -eq $null) {
+        Add-Member -InputObject $r -NotePropertyName "dateUpdated" -NotePropertyValue $Metadata.dateUpdated
+    }
+    else {
+        $r.dateUpdated = $Metadata.dateUpdated
+    }
 
-Write-Host "Updating to new results:"
-$r | fl *
-$r | Update-AzTableRow -table $cloudTable
+    Write-Host "Updating to new results:"
+    $r | fl *
+    $r | Update-AzTableRow -table $cloudTable
 }
 
 <#

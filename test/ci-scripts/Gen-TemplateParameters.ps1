@@ -74,6 +74,9 @@ foreach ($p in $JsonParameters.psObject.Properties) {
             "PASSWORD" {
                 $v = "cI#" + (New-Guid).ToString().Replace("-", "").Substring(0, 17)
             }
+            "PASSWORD-AMP" {
+                $v = "cI&" + (New-Guid).ToString().Replace("-", "").Substring(0, 17) # some passwords don't like # so providing an option
+            }
             default {
                 $v = $config.$token
             }
