@@ -22,17 +22,16 @@ This template deploys a **NSG Flow Logs resource** in Network Watcher.
 
 ## Overview
 
-This template enables the NSG Flow Logs on an existing NSG. The logs are stored in the provided storage account.
-It deploys a new resource of type "Microsoft.Network/networkWatchers/flowLogs".
-
+This template enables a new NSG Flow Logs resource (type "Microsoft.Network/networkWatchers/flowLogs").
+The Flow Logs resource is enabled in the (hidden) NetworkWatcherRG resource group that contains the Network Watcher service and related resources. 
+[Read more Network Watcher Resources](<link.to.faq>)
+Role/Permissions needed to deploy to NetworkWatcherRG are XXXX. 
+The logs are written to a storage account which is also deployed by the template. 
 
 
 ## Prerequisites
 
-1. Network Watcher must be enabled for your subscription. Network Watcher is enabled by default, so unless you have disabled it, this should not be an issue.
-2. You must have an existing NSG to log traffic from.
-3. You must have a working Storage account for storing the logs.
-
+Network Watcher must be enabled for your subscription. Network Watcher is enabled by default, so unless you have disabled it, this should not be an issue.
 
 
 `Tags: Network Watcher, NSG Flow Logs`
