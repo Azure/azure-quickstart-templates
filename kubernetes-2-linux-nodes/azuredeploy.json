@@ -2,32 +2,12 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "extensions_CustomScript_storageAccountName": {
-            "type": "SecureString"
-        },
-        "extensions_CustomScript_storageAccountKey": {
-            "type": "SecureString"
-        },
-        "extensions_CustomScript_commandToExecute": {
-            "type": "SecureString"
-        },
-        "extensions_CustomScript_storageAccountName_1": {
-            "type": "SecureString"
-        },
-        "extensions_CustomScript_storageAccountKey_1": {
-            "type": "SecureString"
-        },
-        "extensions_CustomScript_commandToExecute_1": {
-            "type": "SecureString"
-        },
-        "extensions_CustomScript_storageAccountName_2": {
-            "type": "SecureString"
-        },
-        "extensions_CustomScript_storageAccountKey_2": {
-            "type": "SecureString"
-        },
-        "extensions_CustomScript_commandToExecute_2": {
-            "type": "SecureString"
+        "dnsPrefix":{
+            "defaultValue": "my-k8s-1",
+            "type": "string",
+            "metadata": {
+              "description": "DNS Label for the kubernetes api server (master). Must be lowercase. It should match with the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ or it will raise an error."
+            }
         },
         "workerVM_1_Name": {
             "defaultValue": "worker1",
@@ -76,16 +56,26 @@
         "master-PublicIp": {
             "defaultValue": "master.k8s-ip",
             "type": "String"
+        },
+        "adminUsername":{
+            "defaultValue":"mahendra",
+            "type": "string"
+        },
+        "adminPassword":{
+            "defaultValue":"password@1234",
+            "type": "securestring"
         }
       
     },
-    "variables": {},
+    "variables": {
+        "scriptUrl": "https://raw.githubusercontent.com/mahendra-shinde/azure-quickstart-templates/master/kubernetes-2-linux-nodes/kubeadm.sh"
+    },
     "resources": [
         {
             "type": "Microsoft.Network/networkSecurityGroups",
             "apiVersion": "2019-04-01",
             "name": "master-NSG",
-            "location": "southeastasia",
+            "location": "[resourceGroup().location]",
             "tags": {
                 "cluster-name": "kubernetes",
                 "cluster-role": "master"
@@ -133,7 +123,7 @@
             "type": "Microsoft.Network/networkSecurityGroups",
             "apiVersion": "2019-04-01",
             "name": "worker1-NSG",
-            "location": "southeastasia",
+            "location": "[resourceGroup().location]",
             "tags": {
                 "cluster-role": "worker"
             },
@@ -145,7 +135,7 @@
             "type": "Microsoft.Network/networkSecurityGroups",
             "apiVersion": "2019-04-01",
             "name": "worker2-NSG",
-            "location": "southeastasia",
+            "location": "[resourceGroup().location]",
             "tags": {
                 "cluster-role": "worker"
             },
@@ -157,7 +147,7 @@
             "type": "Microsoft.Network/publicIPAddresses",
             "apiVersion": "2019-04-01",
             "name": "[parameters('master-PublicIp')]",
-            "location": "southeastasia",
+            "location": "[resourceGroup().location]",
             "tags": {
                 "cluster-name": "kubernetes",
                 "cluster-role": "master"
@@ -170,8 +160,7 @@
                 "publicIPAllocationMethod": "Dynamic",
                 "idleTimeoutInMinutes": 4,
                 "dnsSettings": {
-                    "domainNameLabel": "my-k8s",
-                    "fqdn": "my-k8s.southeastasia.cloudapp.azure.com"
+                    "domainNameLabel":"[parameters('dnsPrefix')]"
                 },
                 "ipTags": []
             }
@@ -180,7 +169,7 @@
             "type": "Microsoft.Network/publicIPAddresses",
             "apiVersion": "2019-04-01",
             "name": "[parameters('worker_lb_publicIp')]",
-            "location": "southeastasia",
+            "location": "[resourceGroup().location]",
             "sku": {
                 "name": "Basic"
             },
@@ -195,7 +184,7 @@
             "type": "Microsoft.Network/virtualNetworks",
             "apiVersion": "2019-04-01",
             "name": "[parameters('vnet')]",
-            "location": "southeastasia",
+            "location": "[resourceGroup().location]",
             "properties": {
                 "addressSpace": {
                     "addressPrefixes": [
@@ -233,7 +222,7 @@
             "type": "Microsoft.Storage/storageAccounts",
             "apiVersion": "2019-04-01",
             "name": "[parameters('storageAccountName')]",
-            "location": "southeastasia",
+            "location": "[resourceGroup().location]",
             "tags": {
                 "cluster-name": "kubernetes"
             },
@@ -271,7 +260,7 @@
             "type": "Microsoft.Compute/virtualMachines",
             "apiVersion": "2019-03-01",
             "name": "[parameters('masterVMName')]",
-            "location": "southeastasia",
+            "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/networkInterfaces', parameters('masterNicName'))]"
             ],
@@ -296,8 +285,7 @@
                         "createOption": "FromImage",
                         "caching": "ReadWrite",
                         "managedDisk": {
-                            "storageAccountType": "Standard_LRS",
-                            "id": "[resourceId('Microsoft.Compute/disks', concat(parameters('masterVMName'), '_OsDisk_1'))]"
+                            "storageAccountType": "Standard_LRS"
                         },
                         "diskSizeGB": 30
                     },
@@ -305,14 +293,14 @@
                 },
                 "osProfile": {
                     "computerName": "[parameters('masterVMName')]",
-                    "adminUsername": "mahendra",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword":"[parameters('adminPassword')]",
                     "linuxConfiguration": {
                         "disablePasswordAuthentication": false,
                         "provisionVMAgent": true
                     },
                     "secrets": [],
-                    "allowExtensionOperations": true,
-                    "requireGuestProvisionSignal": true
+                    "allowExtensionOperations": true
                 },
                 "networkProfile": {
                     "networkInterfaces": [
@@ -327,7 +315,7 @@
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "apiVersion": "2019-03-01",
             "name": "[concat(parameters('masterVMName'), '/CustomScript')]",
-            "location": "southeastasia",
+            "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[resourceId('Microsoft.Compute/virtualMachines', parameters('masterVMName'))]"
             ],
@@ -338,13 +326,11 @@
                 "typeHandlerVersion": "2.0",
                 "settings": {
                     "fileUris": [
-                        "https://iaasv2tempstoreseasia.blob.core.windows.net/vmextensionstemporary-000640008e70df95-20200205085118145/kubeadm.sh?sv=2017-04-17&sr=c&sig=ZtwH8zkD0x62CNEGhMNI84f%2FivQLLxAMFia84ED7RXk%3D&se=2020-02-06T08%3A51%3A18Z&sp=rw"
+                            "[variables('scriptUrl')]"  
                     ]
                 },
                 "protectedSettings": {
-                    "storageAccountName": "[parameters('extensions_CustomScript_storageAccountName')]",
-                    "storageAccountKey": "[parameters('extensions_CustomScript_storageAccountKey')]",
-                    "commandToExecute": "[parameters('extensions_CustomScript_commandToExecute')]"
+                    "commandToExecute": "sh kubeadm.sh"
                 }
             }
         },
@@ -352,7 +338,7 @@
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "apiVersion": "2019-03-01",
             "name": "[concat(parameters('workerVM_1_Name'), '/CustomScript')]",
-            "location": "southeastasia",
+            "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[resourceId('Microsoft.Compute/virtualMachines', parameters('workerVM_1_Name'))]"
             ],
@@ -363,13 +349,11 @@
                 "typeHandlerVersion": "2.0",
                 "settings": {
                     "fileUris": [
-                        "https://iaasv2tempstoreseasia.blob.core.windows.net/vmextensionstemporary-000640008e70df95-20200205090611370/kubeadm.sh?sv=2017-04-17&sr=c&sig=JI%2BGplHHnN1G6inlXdlT0K73HZv9zfgG%2BFWi1O%2B4%2Fbk%3D&se=2020-02-06T09%3A06%3A11Z&sp=rw"
+                            "[variables('scriptUrl')]"  
                     ]
                 },
                 "protectedSettings": {
-                    "storageAccountName": "[parameters('extensions_CustomScript_storageAccountName_1')]",
-                    "storageAccountKey": "[parameters('extensions_CustomScript_storageAccountKey_1')]",
-                    "commandToExecute": "[parameters('extensions_CustomScript_commandToExecute_1')]"
+                    "commandToExecute": "sh kubeadm.sh"
                 }
             }
         },
@@ -377,7 +361,7 @@
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "apiVersion": "2019-03-01",
             "name": "[concat(parameters('workerVM_2_Name'), '/CustomScript')]",
-            "location": "southeastasia",
+            "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[resourceId('Microsoft.Compute/virtualMachines', parameters('workerVM_2_Name'))]"
             ],
@@ -388,13 +372,11 @@
                 "typeHandlerVersion": "2.0",
                 "settings": {
                     "fileUris": [
-                        "https://iaasv2tempstoreseasia.blob.core.windows.net/vmextensionstemporary-000640008e70df95-20200205091705823/kubeadm.sh?sv=2017-04-17&sr=c&sig=F%2B4BQGt%2Fg3wV222v%2B1i5xzm5RjvyXM7CW3zFdsTZJk0%3D&se=2020-02-06T09%3A17%3A05Z&sp=rw"
+                         "[variables('scriptUrl')]"   
                     ]
                 },
                 "protectedSettings": {
-                    "storageAccountName": "[parameters('extensions_CustomScript_storageAccountName_2')]",
-                    "storageAccountKey": "[parameters('extensions_CustomScript_storageAccountKey_2')]",
-                    "commandToExecute": "[parameters('extensions_CustomScript_commandToExecute_2')]"
+                    "commandToExecute": "sh kubeadm.sh"
                 }
             }
         },
@@ -496,7 +478,7 @@
             "type": "Microsoft.Compute/availabilitySets",
             "apiVersion": "2019-03-01",
             "name": "[parameters('worker_AVSET_Name')]",
-            "location": "southeastasia",
+            "location": "[resourceGroup().location]",
             "tags": {
                 "cluster-role": "worker"
             },
@@ -544,7 +526,7 @@
             "type": "Microsoft.Compute/virtualMachines",
             "apiVersion": "2019-03-01",
             "name": "[parameters('workerVM_1_Name')]",
-            "location": "southeastasia",
+            "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[resourceId('Microsoft.Compute/availabilitySets', parameters('worker_AVSET_Name'))]",
                 "[resourceId('Microsoft.Network/networkInterfaces', parameters('worker1_NIC'))]",
@@ -573,8 +555,7 @@
                         "createOption": "FromImage",
                         "caching": "ReadWrite",
                         "managedDisk": {
-                            "storageAccountType": "Standard_LRS",
-                            "id": "[resourceId('Microsoft.Compute/disks', concat(parameters('workerVM_1_Name'), '_OsDisk_1'))]"
+                            "storageAccountType": "Standard_LRS"
                         },
                         "diskSizeGB": 30
                     },
@@ -582,14 +563,14 @@
                 },
                 "osProfile": {
                     "computerName": "[parameters('workerVM_1_Name')]",
-                    "adminUsername": "mahendra",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword":"[parameters('adminPassword')]",
                     "linuxConfiguration": {
                         "disablePasswordAuthentication": false,
                         "provisionVMAgent": true
                     },
                     "secrets": [],
-                    "allowExtensionOperations": true,
-                    "requireGuestProvisionSignal": true
+                    "allowExtensionOperations": true
                 },
                 "networkProfile": {
                     "networkInterfaces": [
@@ -610,7 +591,7 @@
             "type": "Microsoft.Compute/virtualMachines",
             "apiVersion": "2019-03-01",
             "name": "[parameters('workerVM_2_Name')]",
-            "location": "southeastasia",
+            "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[resourceId('Microsoft.Compute/availabilitySets', parameters('worker_AVSET_Name'))]",
                 "[resourceId('Microsoft.Network/networkInterfaces', parameters('worker2_NIC'))]",
@@ -639,8 +620,8 @@
                         "createOption": "FromImage",
                         "caching": "ReadWrite",
                         "managedDisk": {
-                            "storageAccountType": "Standard_LRS",
-                            "id": "[resourceId('Microsoft.Compute/disks', concat(parameters('workerVM_2_Name'), '_OsDisk_1'))]"
+                            "storageAccountType": "Standard_LRS"
+                           
                         },
                         "diskSizeGB": 30
                     },
@@ -648,14 +629,14 @@
                 },
                 "osProfile": {
                     "computerName": "[parameters('workerVM_2_Name')]",
-                    "adminUsername": "mahendra",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword":"[parameters('adminPassword')]",
                     "linuxConfiguration": {
                         "disablePasswordAuthentication": false,
                         "provisionVMAgent": true
                     },
                     "secrets": [],
-                    "allowExtensionOperations": true,
-                    "requireGuestProvisionSignal": true
+                    "allowExtensionOperations": true
                 },
                 "networkProfile": {
                     "networkInterfaces": [
@@ -676,7 +657,7 @@
             "type": "Microsoft.Network/loadBalancers",
             "apiVersion": "2019-04-01",
             "name": "[parameters('loadBalancers_worker_lb_name')]",
-            "location": "southeastasia",
+            "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/publicIPAddresses', parameters('worker_lb_publicIp'))]"
             ],
@@ -722,7 +703,7 @@
             "type": "Microsoft.Network/networkInterfaces",
             "apiVersion": "2019-04-01",
             "name": "[parameters('masterNicName')]",
-            "location": "southeastasia",
+            "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/publicIPAddresses', parameters('master-PublicIp'))]",
                 "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnet'), 'masterSubnet')]",
@@ -764,7 +745,7 @@
             "type": "Microsoft.Network/networkInterfaces",
             "apiVersion": "2019-04-01",
             "name": "[parameters('worker1_NIC')]",
-            "location": "southeastasia",
+            "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnet'), 'workerSubnet')]",
                 "[resourceId('Microsoft.Network/networkSecurityGroups', 'worker1-NSG')]"
@@ -806,7 +787,7 @@
             "type": "Microsoft.Network/networkInterfaces",
             "apiVersion": "2019-04-01",
             "name": "[parameters('worker2_NIC')]",
-            "location": "southeastasia",
+            "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnet'), 'workerSubnet')]",
                 "[resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancers_worker_lb_name'))]",

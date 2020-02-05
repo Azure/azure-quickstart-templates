@@ -1,2 +1,2 @@
 ## Run the test
-Test-AzResourceGroupDeployment -TemplateParameterFile .\parameters.json -TemplateFile .\template.json -Debug
+New-AzResourceGroupDeployment -ResourceGroupName testgrp1 -TemplateParameterFile .\azuredeploy.parameters.json -TemplateFile .\azuredeploy.json -Debug
