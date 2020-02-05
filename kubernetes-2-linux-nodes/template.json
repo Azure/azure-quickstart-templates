@@ -1,0 +1,849 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "extensions_CustomScript_storageAccountName": {
+            "type": "SecureString"
+        },
+        "extensions_CustomScript_storageAccountKey": {
+            "type": "SecureString"
+        },
+        "extensions_CustomScript_commandToExecute": {
+            "type": "SecureString"
+        },
+        "extensions_CustomScript_storageAccountName_1": {
+            "type": "SecureString"
+        },
+        "extensions_CustomScript_storageAccountKey_1": {
+            "type": "SecureString"
+        },
+        "extensions_CustomScript_commandToExecute_1": {
+            "type": "SecureString"
+        },
+        "extensions_CustomScript_storageAccountName_2": {
+            "type": "SecureString"
+        },
+        "extensions_CustomScript_storageAccountKey_2": {
+            "type": "SecureString"
+        },
+        "extensions_CustomScript_commandToExecute_2": {
+            "type": "SecureString"
+        },
+        "workerVM_1_Name": {
+            "defaultValue": "worker1",
+            "type": "String"
+        },
+        "workerVM_2_Name": {
+            "defaultValue": "worker2",
+            "type": "String"
+        },
+        "loadBalancers_worker_lb_name": {
+            "defaultValue": "worker-lb",
+            "type": "String"
+        },
+        "vnet": {
+            "defaultValue": "k8s-vnet",
+            "type": "String"
+        },
+        "storageAccountName": {
+            "defaultValue": "k8storage",
+            "type": "String"
+        },
+        "masterVMName": {
+            "defaultValue": "master.k8s",
+            "type": "String"
+        },
+        "worker1_NIC": {
+            "defaultValue": "worker1-NIC",
+            "type": "String"
+        },
+        "worker2_NIC": {
+            "defaultValue": "worker2-NIC",
+            "type": "String"
+        },
+        "worker_lb_publicIp": {
+            "defaultValue": "my-k8s-svc",
+            "type": "String"
+        },
+        "worker_AVSET_Name": {
+            "defaultValue": "worker-avset",
+            "type": "String"
+        },
+        "masterNicName": {
+            "defaultValue": "master.k8s787",
+            "type": "String"
+        },
+        "master-PublicIp": {
+            "defaultValue": "master.k8s-ip",
+            "type": "String"
+        }
+      
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2019-04-01",
+            "name": "master-NSG",
+            "location": "southeastasia",
+            "tags": {
+                "cluster-name": "kubernetes",
+                "cluster-role": "master"
+            },
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "SSH",
+                        "properties": {
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 300,
+                            "direction": "Inbound",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    },
+                    {
+                        "name": "kube-api",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "6443",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 290,
+                            "direction": "Inbound",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2019-04-01",
+            "name": "worker1-NSG",
+            "location": "southeastasia",
+            "tags": {
+                "cluster-role": "worker"
+            },
+            "properties": {
+                "securityRules": []
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2019-04-01",
+            "name": "worker2-NSG",
+            "location": "southeastasia",
+            "tags": {
+                "cluster-role": "worker"
+            },
+            "properties": {
+                "securityRules": []
+            }
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2019-04-01",
+            "name": "[parameters('master-PublicIp')]",
+            "location": "southeastasia",
+            "tags": {
+                "cluster-name": "kubernetes",
+                "cluster-role": "master"
+            },
+            "sku": {
+                "name": "Basic"
+            },
+            "properties": {
+                "publicIPAddressVersion": "IPv4",
+                "publicIPAllocationMethod": "Dynamic",
+                "idleTimeoutInMinutes": 4,
+                "dnsSettings": {
+                    "domainNameLabel": "my-k8s",
+                    "fqdn": "my-k8s.southeastasia.cloudapp.azure.com"
+                },
+                "ipTags": []
+            }
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2019-04-01",
+            "name": "[parameters('worker_lb_publicIp')]",
+            "location": "southeastasia",
+            "sku": {
+                "name": "Basic"
+            },
+            "properties": {
+                "publicIPAddressVersion": "IPv4",
+                "publicIPAllocationMethod": "Dynamic",
+                "idleTimeoutInMinutes": 4,
+                "ipTags": []
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2019-04-01",
+            "name": "[parameters('vnet')]",
+            "location": "southeastasia",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "20.0.0.0/16"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "workerSubnet",
+                        "properties": {
+                            "addressPrefix": "20.0.2.0/24",
+                            "serviceEndpoints": [],
+                            "delegations": [],
+                            "privateEndpointNetworkPolicies": "Enabled",
+                            "privateLinkServiceNetworkPolicies": "Enabled"
+                        }
+                    },
+                    {
+                        "name": "masterSubnet",
+                        "properties": {
+                            "addressPrefix": "20.0.1.0/28",
+                            "serviceEndpoints": [],
+                            "delegations": [],
+                            "privateEndpointNetworkPolicies": "Enabled",
+                            "privateLinkServiceNetworkPolicies": "Enabled"
+                        }
+                    }
+                ],
+                "virtualNetworkPeerings": [],
+                "enableDdosProtection": false,
+                "enableVmProtection": false
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2019-04-01",
+            "name": "[parameters('storageAccountName')]",
+            "location": "southeastasia",
+            "tags": {
+                "cluster-name": "kubernetes"
+            },
+            "sku": {
+                "name": "Standard_LRS",
+                "tier": "Standard"
+            },
+            "kind": "StorageV2",
+            "properties": {
+                "largeFileSharesState": "Disabled",
+                "networkAcls": {
+                    "bypass": "AzureServices",
+                    "virtualNetworkRules": [],
+                    "ipRules": [],
+                    "defaultAction": "Allow"
+                },
+                "supportsHttpsTrafficOnly": true,
+                "encryption": {
+                    "services": {
+                        "file": {
+                            "keyType": "Account",
+                            "enabled": true
+                        },
+                        "blob": {
+                            "keyType": "Account",
+                            "enabled": true
+                        }
+                    },
+                    "keySource": "Microsoft.Storage"
+                },
+                "accessTier": "Hot"
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2019-03-01",
+            "name": "[parameters('masterVMName')]",
+            "location": "southeastasia",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces', parameters('masterNicName'))]"
+            ],
+            "tags": {
+                "cluster-name": "kubernetes",
+                "cluster-role": "master"
+            },
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "Standard_DS2_v2"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "Canonical",
+                        "offer": "UbuntuServer",
+                        "sku": "18.04-LTS",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "osType": "Linux",
+                        "name": "[concat(parameters('masterVMName'), '_OsDisk_1')]",
+                        "createOption": "FromImage",
+                        "caching": "ReadWrite",
+                        "managedDisk": {
+                            "storageAccountType": "Standard_LRS",
+                            "id": "[resourceId('Microsoft.Compute/disks', concat(parameters('masterVMName'), '_OsDisk_1'))]"
+                        },
+                        "diskSizeGB": 30
+                    },
+                    "dataDisks": []
+                },
+                "osProfile": {
+                    "computerName": "[parameters('masterVMName')]",
+                    "adminUsername": "mahendra",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": false,
+                        "provisionVMAgent": true
+                    },
+                    "secrets": [],
+                    "allowExtensionOperations": true,
+                    "requireGuestProvisionSignal": true
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('masterNicName'))]"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "apiVersion": "2019-03-01",
+            "name": "[concat(parameters('masterVMName'), '/CustomScript')]",
+            "location": "southeastasia",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', parameters('masterVMName'))]"
+            ],
+            "properties": {
+                "autoUpgradeMinorVersion": true,
+                "publisher": "Microsoft.Azure.Extensions",
+                "type": "CustomScript",
+                "typeHandlerVersion": "2.0",
+                "settings": {
+                    "fileUris": [
+                        "https://iaasv2tempstoreseasia.blob.core.windows.net/vmextensionstemporary-000640008e70df95-20200205085118145/kubeadm.sh?sv=2017-04-17&sr=c&sig=ZtwH8zkD0x62CNEGhMNI84f%2FivQLLxAMFia84ED7RXk%3D&se=2020-02-06T08%3A51%3A18Z&sp=rw"
+                    ]
+                },
+                "protectedSettings": {
+                    "storageAccountName": "[parameters('extensions_CustomScript_storageAccountName')]",
+                    "storageAccountKey": "[parameters('extensions_CustomScript_storageAccountKey')]",
+                    "commandToExecute": "[parameters('extensions_CustomScript_commandToExecute')]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "apiVersion": "2019-03-01",
+            "name": "[concat(parameters('workerVM_1_Name'), '/CustomScript')]",
+            "location": "southeastasia",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', parameters('workerVM_1_Name'))]"
+            ],
+            "properties": {
+                "autoUpgradeMinorVersion": true,
+                "publisher": "Microsoft.Azure.Extensions",
+                "type": "CustomScript",
+                "typeHandlerVersion": "2.0",
+                "settings": {
+                    "fileUris": [
+                        "https://iaasv2tempstoreseasia.blob.core.windows.net/vmextensionstemporary-000640008e70df95-20200205090611370/kubeadm.sh?sv=2017-04-17&sr=c&sig=JI%2BGplHHnN1G6inlXdlT0K73HZv9zfgG%2BFWi1O%2B4%2Fbk%3D&se=2020-02-06T09%3A06%3A11Z&sp=rw"
+                    ]
+                },
+                "protectedSettings": {
+                    "storageAccountName": "[parameters('extensions_CustomScript_storageAccountName_1')]",
+                    "storageAccountKey": "[parameters('extensions_CustomScript_storageAccountKey_1')]",
+                    "commandToExecute": "[parameters('extensions_CustomScript_commandToExecute_1')]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "apiVersion": "2019-03-01",
+            "name": "[concat(parameters('workerVM_2_Name'), '/CustomScript')]",
+            "location": "southeastasia",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', parameters('workerVM_2_Name'))]"
+            ],
+            "properties": {
+                "autoUpgradeMinorVersion": true,
+                "publisher": "Microsoft.Azure.Extensions",
+                "type": "CustomScript",
+                "typeHandlerVersion": "2.0",
+                "settings": {
+                    "fileUris": [
+                        "https://iaasv2tempstoreseasia.blob.core.windows.net/vmextensionstemporary-000640008e70df95-20200205091705823/kubeadm.sh?sv=2017-04-17&sr=c&sig=F%2B4BQGt%2Fg3wV222v%2B1i5xzm5RjvyXM7CW3zFdsTZJk0%3D&se=2020-02-06T09%3A17%3A05Z&sp=rw"
+                    ]
+                },
+                "protectedSettings": {
+                    "storageAccountName": "[parameters('extensions_CustomScript_storageAccountName_2')]",
+                    "storageAccountKey": "[parameters('extensions_CustomScript_storageAccountKey_2')]",
+                    "commandToExecute": "[parameters('extensions_CustomScript_commandToExecute_2')]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+            "apiVersion": "2019-04-01",
+            "name": "[concat('master-NSG', '/kube-api')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', 'master-NSG')]"
+            ],
+            "properties": {
+                "protocol": "*",
+                "sourcePortRange": "*",
+                "destinationPortRange": "6443",
+                "sourceAddressPrefix": "*",
+                "destinationAddressPrefix": "*",
+                "access": "Allow",
+                "priority": 290,
+                "direction": "Inbound",
+                "sourcePortRanges": [],
+                "destinationPortRanges": [],
+                "sourceAddressPrefixes": [],
+                "destinationAddressPrefixes": []
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+            "apiVersion": "2019-04-01",
+            "name": "[concat('master-NSG', '/SSH')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', 'master-NSG')]"
+            ],
+            "properties": {
+                "protocol": "TCP",
+                "sourcePortRange": "*",
+                "destinationPortRange": "22",
+                "sourceAddressPrefix": "*",
+                "destinationAddressPrefix": "*",
+                "access": "Allow",
+                "priority": 300,
+                "direction": "Inbound",
+                "sourcePortRanges": [],
+                "destinationPortRanges": [],
+                "sourceAddressPrefixes": [],
+                "destinationAddressPrefixes": []
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "apiVersion": "2019-04-01",
+            "name": "[concat(parameters('vnet'), '/masterSubnet')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnet'))]"
+            ],
+            "properties": {
+                "addressPrefix": "20.0.1.0/28",
+                "serviceEndpoints": [],
+                "delegations": [],
+                "privateEndpointNetworkPolicies": "Enabled",
+                "privateLinkServiceNetworkPolicies": "Enabled"
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "apiVersion": "2019-04-01",
+            "name": "[concat(parameters('vnet'), '/workerSubnet')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnet'))]"
+            ],
+            "properties": {
+                "addressPrefix": "20.0.2.0/24",
+                "serviceEndpoints": [],
+                "delegations": [],
+                "privateEndpointNetworkPolicies": "Enabled",
+                "privateLinkServiceNetworkPolicies": "Enabled"
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts/blobServices",
+            "apiVersion": "2019-04-01",
+            "name": "[concat(parameters('storageAccountName'), '/default')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+            ],
+            "sku": {
+                "name": "Standard_LRS"
+            },
+            "properties": {
+                "cors": {
+                    "corsRules": []
+                },
+                "deleteRetentionPolicy": {
+                    "enabled": false
+                }
+            }
+        },
+        
+        {
+            "type": "Microsoft.Compute/availabilitySets",
+            "apiVersion": "2019-03-01",
+            "name": "[parameters('worker_AVSET_Name')]",
+            "location": "southeastasia",
+            "tags": {
+                "cluster-role": "worker"
+            },
+            "sku": {
+                "name": "Aligned"
+            },
+            "properties": {
+                "platformUpdateDomainCount": 5,
+                "platformFaultDomainCount": 2,
+                "virtualMachines": [
+                    {
+                        "id": "[resourceId('Microsoft.Compute/virtualMachines', parameters('workerVM_1_Name'))]"
+                    },
+                    {
+                        "id": "[resourceId('Microsoft.Compute/virtualMachines', parameters('workerVM_2_Name'))]"
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+            "apiVersion": "2019-04-01",
+            "name": "[concat(parameters('storageAccountName'), '/default/bootdiagnostics-worker1')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/blobServices', parameters('storageAccountName'), 'default')]",
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+            ],
+            "properties": {
+                "publicAccess": "None"
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+            "apiVersion": "2019-04-01",
+            "name": "[concat(parameters('storageAccountName'), '/default/bootdiagnostics-worker2')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/blobServices', parameters('storageAccountName'), 'default')]",
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+            ],
+            "properties": {
+                "publicAccess": "None"
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2019-03-01",
+            "name": "[parameters('workerVM_1_Name')]",
+            "location": "southeastasia",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/availabilitySets', parameters('worker_AVSET_Name'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces', parameters('worker1_NIC'))]",
+                "[resourceId('Microsoft.Storage/StorageAccounts', parameters('storageAccountName'))]"
+            ],
+            "tags": {
+                "cluster-role": "worker"
+            },
+            "properties": {
+                "availabilitySet": {
+                    "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('worker_AVSET_Name'))]"
+                },
+                "hardwareProfile": {
+                    "vmSize": "Standard_D2s_v3"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "Canonical",
+                        "offer": "UbuntuServer",
+                        "sku": "18.04-LTS",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "osType": "Linux",
+                        "name": "[concat(parameters('workerVM_1_Name'), '_OsDisk_1')]",
+                        "createOption": "FromImage",
+                        "caching": "ReadWrite",
+                        "managedDisk": {
+                            "storageAccountType": "Standard_LRS",
+                            "id": "[resourceId('Microsoft.Compute/disks', concat(parameters('workerVM_1_Name'), '_OsDisk_1'))]"
+                        },
+                        "diskSizeGB": 30
+                    },
+                    "dataDisks": []
+                },
+                "osProfile": {
+                    "computerName": "[parameters('workerVM_1_Name')]",
+                    "adminUsername": "mahendra",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": false,
+                        "provisionVMAgent": true
+                    },
+                    "secrets": [],
+                    "allowExtensionOperations": true,
+                    "requireGuestProvisionSignal": true
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('worker1_NIC'))]"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true,
+                        "storageUri": "[concat('https://', parameters('storageAccountName'), '.blob.core.windows.net/')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2019-03-01",
+            "name": "[parameters('workerVM_2_Name')]",
+            "location": "southeastasia",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/availabilitySets', parameters('worker_AVSET_Name'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces', parameters('worker2_NIC'))]",
+                "[resourceId('Microsoft.Storage/StorageAccounts', parameters('storageAccountName'))]"
+            ],
+            "tags": {
+                "cluster-role": "worker"
+            },
+            "properties": {
+                "availabilitySet": {
+                    "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('worker_AVSET_Name'))]"
+                },
+                "hardwareProfile": {
+                    "vmSize": "Standard_D2s_v3"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "Canonical",
+                        "offer": "UbuntuServer",
+                        "sku": "18.04-LTS",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "osType": "Linux",
+                        "name": "[concat(parameters('workerVM_2_Name'), '_OsDisk_1')]",
+                        "createOption": "FromImage",
+                        "caching": "ReadWrite",
+                        "managedDisk": {
+                            "storageAccountType": "Standard_LRS",
+                            "id": "[resourceId('Microsoft.Compute/disks', concat(parameters('workerVM_2_Name'), '_OsDisk_1'))]"
+                        },
+                        "diskSizeGB": 30
+                    },
+                    "dataDisks": []
+                },
+                "osProfile": {
+                    "computerName": "[parameters('workerVM_2_Name')]",
+                    "adminUsername": "mahendra",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": false,
+                        "provisionVMAgent": true
+                    },
+                    "secrets": [],
+                    "allowExtensionOperations": true,
+                    "requireGuestProvisionSignal": true
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('worker2_NIC'))]"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true,
+                        "storageUri": "[concat('https://', parameters('storageAccountName'), '.blob.core.windows.net/')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/loadBalancers",
+            "apiVersion": "2019-04-01",
+            "name": "[parameters('loadBalancers_worker_lb_name')]",
+            "location": "southeastasia",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', parameters('worker_lb_publicIp'))]"
+            ],
+            "sku": {
+                "name": "Basic"
+            },
+            "properties": {
+                "frontendIPConfigurations": [
+                    {
+                        "name": "LoadBalancerFrontEnd",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('worker_lb_publicIp'))]"
+                            },
+                            "privateIPAddressVersion": "IPv4"
+                        }
+                    }
+                ],
+                "backendAddressPools": [
+                    {
+                        "name": "backend",
+                        "properties": {
+                            "provisioningState": "Succeeded",
+                            "backendIPConfigurations": [
+                                {
+                                    "id": "[concat(resourceId('Microsoft.Network/networkInterfaces', parameters('worker2_NIC')), '/ipConfigurations/ipconfig1')]"
+                                },
+                                {
+                                    "id": "[concat(resourceId('Microsoft.Network/networkInterfaces', parameters('worker1_NIC')), '/ipConfigurations/ipconfig1')]"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "loadBalancingRules": [],
+                "probes": [],
+                "inboundNatRules": [],
+                "inboundNatPools": []
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2019-04-01",
+            "name": "[parameters('masterNicName')]",
+            "location": "southeastasia",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', parameters('master-PublicIp'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnet'), 'masterSubnet')]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', 'master-NSG')]"
+            ],
+            "tags": {
+                "cluster-name": "kubernetes",
+                "cluster-role": "master"
+            },
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAddress": "20.0.1.4",
+                            "privateIPAllocationMethod": "Static",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('master-PublicIp'))]"
+                            },
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnet'), 'masterSubnet')]"
+                            },
+                            "primary": true,
+                            "privateIPAddressVersion": "IPv4"
+                        }
+                    }
+                ],
+                "dnsSettings": {
+                    "dnsServers": []
+                },
+                "enableAcceleratedNetworking": false,
+                "enableIPForwarding": false,
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'master-NSG')]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2019-04-01",
+            "name": "[parameters('worker1_NIC')]",
+            "location": "southeastasia",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnet'), 'workerSubnet')]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', 'worker1-NSG')]"
+            ],
+            "tags": {
+                "cluster-role": "worker"
+            },
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAddress": "20.0.2.4",
+                            "privateIPAllocationMethod": "Static",
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnet'), 'workerSubnet')]"
+                            },
+                            "primary": true,
+                            "privateIPAddressVersion": "IPv4",
+                            "loadBalancerBackendAddressPools": [
+                                {
+                                    "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancers_worker_lb_name')), '/backendAddressPools/backend')]"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "dnsSettings": {
+                    "dnsServers": []
+                },
+                "enableAcceleratedNetworking": false,
+                "enableIPForwarding": false,
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'worker1-NSG')]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2019-04-01",
+            "name": "[parameters('worker2_NIC')]",
+            "location": "southeastasia",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnet'), 'workerSubnet')]",
+                "[resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancers_worker_lb_name'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', 'worker2-NSG')]"
+            ],
+            "tags": {
+                "cluster-role": "worker"
+            },
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAddress": "20.0.2.5",
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnet'), 'workerSubnet')]"
+                            },
+                            "primary": true,
+                            "privateIPAddressVersion": "IPv4",
+                            "loadBalancerBackendAddressPools": [
+                                {
+                                    "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancers_worker_lb_name')), '/backendAddressPools/backend')]"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "dnsSettings": {
+                    "dnsServers": []
+                },
+                "enableAcceleratedNetworking": false,
+                "enableIPForwarding": false,
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'worker2-NSG')]"
+                }
+            }
+        }
+    ]
+}
