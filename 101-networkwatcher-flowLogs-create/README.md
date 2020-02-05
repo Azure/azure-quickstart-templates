@@ -26,7 +26,7 @@ The Flow Logs resource is enabled in the (hidden) NetworkWatcherRG resource grou
 
 Useful links
 * [Enable NSG Flow logs through an ARM template](https://docs.microsoft.com/azure/network-watcher/network-watcher-nsg-flow-logging-azure-resource-manager)
-* [Network Watcher Deployment model](https://docs.microsoft.com/azure/network-watcher/frequently-asked-questions#what-is-the Network-Watcher-deployment-model)
+* [Network Watcher Deployment model](https://docs.microsoft.com/azure/network-watcher/frequently-asked-questions#what-is-the-Network-Watcher-deployment-model)
 * [What is the NetworkWatcherRG](https://docs.microsoft.com/azure/network-watcher/frequently-asked-questions#what-is-the-NetworkWatcherRG)
 * [Permissions needed to deploy to NetworkWatcherRG ](https://docs.microsoft.com/azure/network-watcher/frequently-asked-questions#which-permissions-are-needed-to-use-network-watcher)
 
