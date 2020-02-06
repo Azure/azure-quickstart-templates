@@ -17,16 +17,18 @@
 </a>
 
 
-
-This template deploys a **NSG Flow Logs resource** in Network Watcher.
+This template deploys an **NSG Flow Logs resource** inside the Network Watcher resource group.
 
 ## Overview
 
 This template enables a new NSG Flow Logs resource (type "Microsoft.Network/networkWatchers/flowLogs").
-The Flow Logs resource is enabled in the (hidden) NetworkWatcherRG resource group that contains the Network Watcher service and related resources. 
-[Read more Network Watcher Resources](<link.to.faq>)
-Role/Permissions needed to deploy to NetworkWatcherRG are XXXX. 
-The logs are written to a storage account which is also deployed by the template. 
+The Flow Logs resource is enabled in the (hidden) NetworkWatcherRG resource group that contains the Network Watcher service and related resources. The logs are written to a storage account which is also deployed by the template.
+
+Useful links
+* [Enable NSG Flow logs through an ARM template](https://docs.microsoft.com/azure/network-watcher/network-watcher-nsg-flow-logging-azure-resource-manager)
+* [Network Watcher Deployment model](https://docs.microsoft.com/azure/network-watcher/frequently-asked-questions#what-is-the-Network-Watcher-deployment-model)
+* [What is the NetworkWatcherRG](https://docs.microsoft.com/azure/network-watcher/frequently-asked-questions#what-is-the-NetworkWatcherRG)
+* [Permissions needed to deploy to NetworkWatcherRG ](https://docs.microsoft.com/azure/network-watcher/frequently-asked-questions#which-permissions-are-needed-to-use-network-watcher)
 
 
 ## Prerequisites
