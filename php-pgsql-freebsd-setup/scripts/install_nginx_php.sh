@@ -4,7 +4,7 @@ env ASSUME_ALWAYS_YES=YES pkg bootstrap
 pkg update
 pkg install -y nginx
 pkg install -y php56
-pkg install -y php56-pgsql-5.6.30 
+pkg install -y php56-pgsql-5.6.30
 
 echo 'nginx_enable="YES"' >> /etc/rc.conf
 echo 'php_fpm_enable="YES"' >> /etc/rc.conf

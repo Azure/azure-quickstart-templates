@@ -4,8 +4,8 @@
 # You can customize variables such as MOUNTPOINT, RAIDCHUNKSIZE and so on to your needs.
 # You can also customize it to work with other Linux flavours and versions.
 # If you customize it, copy it to either Azure blob storage or Github so that Azure
-# custom script Linux VM extension can access it, and specify its location in the 
-# parameters of powershell script or runbook or Azure Resource Manager CRP template.   
+# custom script Linux VM extension can access it, and specify its location in the
+# parameters of powershell script or runbook or Azure Resource Manager CRP template.
 
 AZUREVMOFFSET=4
 
@@ -63,16 +63,16 @@ sudo apt-get -y install unattended-upgrades
         get_disk_count() {
             DISKCOUNT=0
             for DISK in "${DISKS[@]}";
-            do 
+            do
                 DISKCOUNT+=1
             done;
             echo "$DISKCOUNT"
         }
 
         create_raid0_ubuntu() {
-            dpkg -s mdadm 
+            dpkg -s mdadm
             if [ ${?} -eq 1 ];
-            then 
+            then
                 echo "installing mdadm"
                 sudo apt-get -y -q install mdadm
             fi
@@ -89,7 +89,7 @@ sudo apt-get -y install unattended-upgrades
         # disk, using all available space
             DISK=${1}
             echo "Partitioning disk $DISK"
-            echo -ne "n\np\n1\n\n\nw\n" | fdisk "${DISK}" 
+            echo -ne "n\np\n1\n\n\nw\n" | fdisk "${DISK}"
         #> /dev/null 2>&1
 
         #
@@ -119,13 +119,13 @@ sudo apt-get -y install unattended-upgrades
         configure_disks() {
             ls "${MOUNTPOINT}"
             if [ ${?} -eq 0 ]
-            then 
+            then
                 return
             fi
             DISKS=($(scan_for_new_disks))
             echo "Disks are ${DISKS[@]}"
             declare -i DISKCOUNT
-            DISKCOUNT=$(get_disk_count) 
+            DISKCOUNT=$(get_disk_count)
             echo "Disk count is $DISKCOUNT"
             if [ $DISKCOUNT -gt 1 ];
             then
@@ -191,10 +191,10 @@ sudo apt-get -y install unattended-upgrades
                 apt-add-repository -y ppa:gluster/glusterfs-3.8
                 apt-get -y update
             fi
-            
+
             echo "installing gluster"
             apt-get -y install glusterfs-server
-            
+
             return
         }
 
@@ -224,7 +224,7 @@ sudo apt-get -y install unattended-upgrades
             then
                 return
             fi
-            
+
             echo "gluster step3"
             allNodes="${NODENAME}:${GLUSTERDIR}"
 			echo $allNodes
@@ -234,7 +234,7 @@ sudo apt-get -y install unattended-upgrades
             while [ $retry -gt 0 ] && [ $failed -gt 0 ]; do
                 failed=0
                 index=0
-                echo retrying $retry 
+                echo retrying $retry
                 while [ $index -lt $(($NODECOUNT-1)) ]; do
 					glustervm=${PEERNODEPREFIX}${index}
 					echo $glustervm
@@ -249,13 +249,13 @@ sudo apt-get -y install unattended-upgrades
 
                     gluster peer status
                     gluster peer status | grep $glustervm
-                    
+
 					if [ ${?} -ne 0 ];
                     then
                         failed=1
                         echo "gluster peer status $glustervm failed"
                     fi
-                    
+
 					if [ $retry -eq 10 ]; then
                         allNodes="${allNodes} $glustervm:${GLUSTERDIR}"
                     fi
@@ -268,9 +268,9 @@ sudo apt-get -y install unattended-upgrades
             echo "gluster step4"
 			echo $allnodes
             sleep 60
-            gluster volume create ${VOLUMENAME} rep 2 transport tcp ${allNodes} 
-            gluster volume info 
-            gluster volume start ${VOLUMENAME} 
+            gluster volume create ${VOLUMENAME} rep 2 transport tcp ${allNodes}
+            gluster volume info
+            gluster volume start ${VOLUMENAME}
             echo "gluster complete"
         }
 

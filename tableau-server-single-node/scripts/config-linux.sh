@@ -82,7 +82,7 @@ fi
 
 # download automated-installer
 wget --remote-encoding=UTF-8 --output-document=automated-installer.sh $INSTALL_SCRIPT_URL
-                                                              
+
 wait
 chmod +x automated-installer.sh
 
@@ -98,7 +98,7 @@ then
   then
     sudo ./automated-installer.sh -s secrets -f config.json -r registration.json -a "$USER" --accepteula tableau-installer.deb --force
   else
-    sudo ./automated-installer.sh -s secrets -f config.json -r registration.json -a "$USER" --accepteula tableau-installer.rpm --force    
+    sudo ./automated-installer.sh -s secrets -f config.json -r registration.json -a "$USER" --accepteula tableau-installer.rpm --force
   fi
 else
   if [ "$OS" == "Ubuntu 16.04 LTS" ]

@@ -6,7 +6,7 @@ sudo useradd -r faspex
 sudo useradd -r faspex -s /bin/aspshell -r -g faspex
 sudo mkdir -p /home/faspex/faspex_packages
 sudo chown faspex:faspex /home/faspex/
-sudo chown faspex:faspex /home/faspex/faspex_packages 
+sudo chown faspex:faspex /home/faspex/faspex_packages
 #sudo echo hostname >> /opt/aspera/etc/aspera.conf
 sudo service asperacentral restart
 sudo service asperanoded restart
@@ -15,7 +15,7 @@ sudo /opt/aspera/bin/asnodeadmin -a -u nodeuser -p nodepasswd -x sysgain --acl-s
 sudo /opt/aspera/bin/asnodeadmin -l
 sudo mkdir -p /home/faspex/.ssh
 sudo cat /opt/aspera/var/aspera_id_dsa.pub >> /home/faspex/.ssh/authorized_keys
-sudo chown faspex:faspex /home/faspex/.ssh  
+sudo chown faspex:faspex /home/faspex/.ssh
 sudo chown faspex:faspex /home/faspex/.ssh/authorized_keys
 sudo chmod 600 /home/faspex/.ssh/authorized_keys
 sudo chmod 700 /home/faspex

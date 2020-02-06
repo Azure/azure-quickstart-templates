@@ -10,10 +10,10 @@
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -68,26 +68,26 @@ install_kibana() {
     # default - ES 2.3.1
     KIBANA_VERSION='4.5'
     if [[ "${ES_VERSION}" == \2.\2* ]]; then
-        KIBANA_VERSION='4.4'    
-    fi 
-    
+        KIBANA_VERSION='4.4'
+    fi
+
     # TODO: Install Kibana 4.3 for ES 2.1.*
     if [[ "${ES_VERSION}" == \2.\1* ]]; then
         echo "Kibana installation for ES_VERSION 2.1.* is unimplemented."
         exit 1
-    fi 
-    
+    fi
+
     if [[ "${ES_VERSION}" == \1.\7* ]]; then
-        KIBANA_VERSION='4.1'    
-    fi 
-    
+        KIBANA_VERSION='4.1'
+    fi
+
     echo "[kibana-${KIBANA_VERSION}]
 name=Kibana repository for ${KIBANA_VERSION}.x packages
 baseurl=http://packages.elastic.co/kibana/${KIBANA_VERSION}/centos
 gpgcheck=1
 gpgkey=http://packages.elastic.co/GPG-KEY-elasticsearch
 enabled=1" | tee /etc/yum.repos.d/kibana.repo
-    
+
     RETRY=0
     while [ $RETRY -lt $MAX_RETRY ]; do
         echo "Retry $RETRY: installing kibana..."
@@ -101,13 +101,13 @@ enabled=1" | tee /etc/yum.repos.d/kibana.repo
     if [ $RETRY -eq $MAX_RETRY ]; then
         echo "Failed to install kibana."
         exit 1
-    fi   
-    
+    fi
+
     mv /opt/kibana/config/kibana.yml /opt/kibana/config/kibana.yml.bak
 
     if [[ "${KIBANA_VERSION}" == "4.1" ]];
     then
-        cat /opt/kibana/config/kibana.yml.bak | sed "s|http://localhost:9200|${ELASTICSEARCH_URL}|" >> /opt/kibana/config/kibana.yml 
+        cat /opt/kibana/config/kibana.yml.bak | sed "s|http://localhost:9200|${ELASTICSEARCH_URL}|" >> /opt/kibana/config/kibana.yml
     else
         echo "elasticsearch.url: \"$ELASTICSEARCH_URL\"" >> /opt/kibana/config/kibana.yml
     fi
@@ -116,7 +116,7 @@ enabled=1" | tee /etc/yum.repos.d/kibana.repo
     if [ ${INSTALL_MARVEL} -ne 0 ];
     then
 		if [[ "${ES_VERSION}" == \2* ]];
-        then 
+        then
             RETRY=0
             while [ $RETRY -lt $MAX_RETRY ]; do
                 echo "Retry $RETRY: installing Marvel plugin..."
@@ -133,9 +133,9 @@ enabled=1" | tee /etc/yum.repos.d/kibana.repo
             fi
         fi
 
-        # for 1.x marvel is installed only within the cluster, not on the kibana node 
+        # for 1.x marvel is installed only within the cluster, not on the kibana node
     fi
-    
+
     # install the sense plugin for 2.x
     if [ ${INSTALL_SENSE} -ne 0 ];
     then
@@ -156,16 +156,16 @@ enabled=1" | tee /etc/yum.repos.d/kibana.repo
                 exit 1
             fi
         fi
-                
-        # for 1.x sense is not supported 
+
+        # for 1.x sense is not supported
     fi
 
     chown -R kibana: /opt/kibana
-        
+
     # Add start and enable kibana service
     systemctl start kibana
     systemctl enable kibana
-       
+
     exit 0
 }
 
@@ -186,7 +186,7 @@ while getopts :v:t:msh optname; do
     v) ES_VERSION=${OPTARG};;
     m) INSTALL_MARVEL=1;;
     s) INSTALL_SENSE=1;;
-    t) ELASTICSEARCH_URL=${OPTARG};; 
+    t) ELASTICSEARCH_URL=${OPTARG};;
     h) help; exit 1;;
    \?) help; error "Option -${OPTARG} not supported.";;
     :) help; error "Option -${OPTARG} requires an argument.";;
