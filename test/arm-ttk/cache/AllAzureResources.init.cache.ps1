@@ -23,4 +23,4 @@ $allResources =foreach ($provider in $providers) {
 }
 
 $allResourcesByType = $allResources | Group-Object ResourceType -AsHashTable
-$allResourcesByType | ConvertTo-Json -Depth 10 | Set-Content $MyOutputFile 
+$allResourcesByType | ConvertTo-Json -Depth 20 | Set-Content $MyOutputFile 

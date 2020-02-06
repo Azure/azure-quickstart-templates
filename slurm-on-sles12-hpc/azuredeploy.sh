@@ -56,14 +56,14 @@ is_master()
 add_sdk_repo()
 {
     repoFile="/etc/zypp/repos.d/SMT-http_smt-azure_susecloud_net:SLE-SDK12-Pool.repo"
-	
+
     if [ -e "$repoFile" ]; then
         echo "SLES 12 SDK Repository already installed"
         return 0
     fi
-	
+
 	wget $TEMPLATE_BASE_URL/sles12sdk.repo
-	
+
 	cp sles12sdk.repo "$repoFile"
 
     # init new repo
@@ -143,9 +143,9 @@ setup_shares()
     fi
 }
 
-# Downloads/builds/installs munged on the node.  
-# The munge key is generated on the master node and placed 
-# in the data share.  
+# Downloads/builds/installs munged on the node.
+# The munge key is generated on the master node and placed
+# in the data share.
 # Worker nodes copy the existing key from the data share.
 #
 install_munge()
@@ -226,7 +226,7 @@ install_slurm()
     tar xvfz slurm-$SLURM_VERSION.tar.gz
 
     cd slurm-slurm-$SLURM_VERSION
-	
+
     ./configure -libdir=/usr/lib64 --prefix=/usr --sysconfdir=/etc/slurm && make && make install
 
     install_slurm_config

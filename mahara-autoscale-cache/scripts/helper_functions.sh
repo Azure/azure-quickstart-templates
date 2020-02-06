@@ -34,7 +34,7 @@ username=$storageAccountName
 password=$storageAccountKey
 EOF
     chmod 600 /etc/mahara_azure_files.credential
-    
+
     grep "^//$storageAccountName.file.core.windows.net/mahara\s\s*/mahara\s\s*cifs" /etc/fstab
     if [ $? != "0" ]; then
         echo -e "\n//$storageAccountName.file.core.windows.net/mahara   /mahara cifs    credentials=/etc/mahara_azure_files.credential,uid=www-data,gid=www-data,nofail,vers=3.0,dir_mode=0770,file_mode=0660,serverino,mfsymlinks" >> /etc/fstab
@@ -71,9 +71,9 @@ function create_raid0_ubuntu {
     shift
     local DISKS="$@"
 
-    dpkg -s mdadm 
+    dpkg -s mdadm
     if [ ${?} -eq 1 ];
-    then 
+    then
         echo "installing mdadm"
         sudo apt-get -y -q install mdadm
     fi
@@ -90,7 +90,7 @@ function do_partition {
     local DISK=${1}   # E.g., /dev/sdc
 
     echo "Partitioning disk $DISK"
-    echo -ne "n\np\n1\n\n\nw\n" | fdisk "${DISK}" 
+    echo -ne "n\np\n1\n\n\nw\n" | fdisk "${DISK}"
     #> /dev/null 2>&1
 
     #
@@ -128,7 +128,7 @@ function create_filesystem_with_raid {
     local DISKS=$(scan_for_new_disks "/dev/sda|/dev/sdb")
     echo "Disks are ${DISKS}"
     declare -i DISKCOUNT
-    local DISKCOUNT=$(echo "$DISKS" | wc -w) 
+    local DISKCOUNT=$(echo "$DISKS" | wc -w)
     echo "Disk count is $DISKCOUNT"
     if [ $DISKCOUNT = "0" ];
     then
@@ -179,7 +179,7 @@ function configure_site_url {
        siteFQDN=${AZ_FQDN}
     fi
 }
-	
+
 
 function configure_nfs_client_and_mount {
     local NFS_SERVER=${1}     # E.g., controller-vm-ab12cd
