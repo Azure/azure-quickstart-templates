@@ -370,7 +370,8 @@ If your deployment fails:
 2.	If you created a mirror, verify that the mirror is correct.
 3.	Review the failed deployment steps and see 
 ["Deployment errors"](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-manager-common-deployment-errors#deployment-errors) in the Azure troubleshooting documentation.
-
+4. If the value of the DeploymentDataLocation is left as *\<REPLACE THIS WITH A LINK TO YOUR LICENSE\>*, then the Azure resources have been allocated, but SAS Viya has not been installed. You must delete the deployment and redeploy with a valid link to your license.
+For more information, see ["Upload the License Zip file."](#License) 
 
 * In general, issues that occur in the primary deployment but do not originate from a sub-deployment are platform issues such as the inability to obtain sufficient resources in a timely manner. In these cases, you must redeploy your software.  When the deployment is run via the CLI, the primary deployment is called "azure-deploy". When the deployment is run via the UI template, the primary deployment is called "Microsoft.Template". The names of sub-deployments usually begin with "AnsiblePhase".
 
