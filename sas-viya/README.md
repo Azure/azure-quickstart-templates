@@ -150,7 +150,7 @@ We recommend the following as best practices:
 
 <a name="Deployment"></a>
 ## Deployment Steps
-You can click the "Deploy to Azure" button at the beginning of this document or follow the instructions for a command-line deployment using the scripts in the root of this repository.
+You can click the "Deploy to Azure" button at the beginning of this document or follow the instructions for a command-line (CLI) deployment using the scripts in the root of this repository.
 
 The deployment takes between 1 and 4 hours, depending on the quantity of software licensed.
 
@@ -397,7 +397,7 @@ If your deployment fails:
 ["Deployment errors"](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-manager-common-deployment-errors#deployment-errors) in the Azure troubleshooting documentation.
 
 
-* In general, issues that occur in the primary deployment but do not originate from a sub-deployment are platform issues such as the inability to obtain sufficient resources in a timely manner. In these cases, you must redeploy your software.  The primary deployment is often called "azure-deploy", and the names of sub-deployments usually begin with "AnsiblePhase".
+* In general, issues that occur in the primary deployment but do not originate from a sub-deployment are platform issues such as the inability to obtain sufficient resources in a timely manner. In these cases, you must redeploy your software.  When the deployment is run via the CLI, the primary deployment is called "azure-deploy". When the deployment is run via the UI template, the primary deployment is called "Microsoft.Template". The names of sub-deployments usually begin with "AnsiblePhase".
 
 * If the error comes from a sub-deployment (for example, “AnsiblePhase4PreViyaInstall”), review the log files.
 
