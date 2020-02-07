@@ -312,7 +312,7 @@ EnableQuotedIdentifiers=0
    ``` 
    
    ``` 
-   ansible-playbook ansible.dataprep2dataagent.yml \
+   ansible-playbook dataprep2dataagent.yml \
        -e "adminuser=sasadmin adminpw=<password of admin user>" \
        -e "data_agent_host=<FQDN(DNS)-of-SAS-Data-Agent-machine>" \
        -e "secret=<handshake-string>" \
