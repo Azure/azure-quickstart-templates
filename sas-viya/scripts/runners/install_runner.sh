@@ -43,11 +43,6 @@ pushd "${CODE_DIRECTORY}/ansible/playbooks"
 # we need to map the inventory file from common, so lets symlink it
 ln -s "$INVENTORY_FILE" "inventory.ini"
 
-ANSIBLE_LOG_PATH=/var/log/sas/install/prepare_inventory.log \
-                    export ANSIBLE_CONFIG=/sas/install/common/ansible/playbooks/ansible.cfg
-                    ansible-playbook -v /sas/install/common/ansible/playbooks/assemble_main_inventory.yml \
-                      -e "CAS_INSTANCE_COUNT=${CASInstanceCount}"
-
 echo "Create LB certificate files"
 time ansible-playbook -v create_load_balancer_cert.yml -i $INVENTORY_FILE -e "SSL_HOSTNAME=${PUBLIC_DNS_NAME}" -e "SSL_WORKING_FOLDER=${DIRECTORY_SSL_JSON_FILE}" -e "ARM_CERTIFICATE_FILE=${FILE_SSL_JSON_FILE}"
 
@@ -109,8 +104,7 @@ export ANSIBLE_CONFIG=/sas/install/ansible/sas_viya_playbook/ansible.cfg
 ANSIBLE_LOG_PATH=/var/log/sas/install/virk.log \
     time ansible-playbook -v /sas/install/ansible/sas_viya_playbook/viya-ark/playbooks/pre-install-playbook/viya_pre_install_playbook.yml \
         -e "use_pause=false" \
-        --skip-tags skipmemfail,skipcoresfail,skipstoragefail,skipnicssfail,bandwidth \
-        -e "DefaultTimeoutStartSec=3600s"
+        --skip-tags skipmemfail,skipcoresfail,skipstoragefail,skipnicssfail,bandwidth
 ran_virk_time="$(date -u +%s)"
 
 
