@@ -96,7 +96,7 @@ ln -s /mnt/resource/sastmp /sastmp
 
 #Disable selinux since viya-ark no longer does this?
 setenforce 0
-sed -i 's/^SELINUX=.*/SELINUX=disabled/g' /etc/sysconfig/selinux && cat /etc/sysconfig/selinux
+sed -i 's/^SELINUX=.*/SELINUX=disabled/g' /etc/selinux/config && cat /etc/sysconfig/selinux
 
 #
 # semaphore that we are ready
