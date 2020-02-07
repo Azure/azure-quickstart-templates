@@ -90,7 +90,7 @@ fi
 openldap_installed_time="$(date -u +%s)"
 
 
-if [[ "$DUMMY_LICENSE_STRING" == "$" ]]; then
+if [[ "$DUMMY_LICENSE_STRING" != "$license_file_uri" ]]; then
 
     ANSIBLE_LOG_PATH=/var/log/sas/install/prepare_deployment.log \
         time ansible-playbook -v /sas/install/ansible/playbooks/prepare_deployment.yml \
