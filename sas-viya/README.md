@@ -107,9 +107,9 @@ Before deploying SAS Viya Quickstart Template for Azure, you must have the follo
 * Sufficient quota of at least 28 Cores, based on four licensed SAS cores in an SMP environment.  In MPP environments, apply this sizing to the CAS workers as well as the CAS controller.
 * A SAS Software Order Confirmation Email that contains supported Quickstart products:
 
- 		SAS Visual Analytics 8.3.1 on Linux
-		SAS Visual Statistics 8.3.1 on Linux
-        SAS Visual Data Mining and Machine Learning 8.3.1 on Linux
+ 		SAS Visual Analytics 8.5 on Linux
+		SAS Visual Statistics 8.5 on Linux
+        SAS Visual Data Mining and Machine Learning 8.5 on Linux
 *  The license file in .zip format from your software order uploaded to an Azure blob
 *  Verification that your required SAS Viya file upload sizes do not exceed the limits of the Application Gateway. For details about limits, see 
 ["Application Gateway limits."](https://docs.microsoft.com/en-us/azure/azure-subscription-service-limits?toc=%2fazure%2fapplication-gateway%2ftoc.json#application-gateway-limits)
@@ -371,7 +371,7 @@ CryptoLibName=/usr/lib64/libcrypto.so.1.0.2k
 8. To access the data sources through SAS/ACCESS, see ["Configure Data Access"](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=p03m8khzllmphsn17iubdbx6fjpq.htm&docsetVersion=3.5&locale=en)
 in the SAS Data Agent for Linux: Deployment Guide.
 
-9. Validate the environment, including round-trip communication. For details, see the ["Validation"](https://go.documentation.sas.com/?docsetId=dplydagent0phy0lax&docsetTarget=n1v7mc6ox8omgfn1qzjjjektc7te.htm&docsetVersion=2.3&locale=en ) chapter in the SAS Data Agent for Linux: Deployment Guide.
+9. Validate the environment, including round-trip communication. For details, see the ["Validation"](https://go.documentation.sas.com/?docsetId=dplydagent0phy0lax&docsetTarget=n1v7mc6ox8omgfn1qzjjjektc7te.htm&docsetVersion=2.5&locale=en ) chapter in the SAS Data Agent for Linux: Deployment Guide.
 
 <a name="Usage"></a>
 ## Usage 
