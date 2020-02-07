@@ -62,9 +62,17 @@ By default, Quickstart deployments enable Transport Layer Security (TLS) for sec
 
 This SAS Viya Quickstart Template for Azure will take a generic license for SAS Viya and deploy SAS into its own network. The deployment creates the network and other infrastructure.  After the deployment process completes, you will have the outputs for the web endpoints for a SAS Viya deployment on recommended virtual machines (VMs). 
 
-When you deploy the Quickstart with default parameters, the following SAS Viya environment is built in the Microsoft Azure cloud:
+When you deploy the Quickstart with default parameters in a symmetric multiprocessing (SMP) environment, the following SAS Viya environment is built in the Microsoft Azure cloud, shown in Figure 1.  In SMP environments, the **CAS Node Count** parameter is set to one, indicating that only one CAS controller is configured.
 
-![Network Diagram](AzureNetworkDiagram.jpg)
+![Network Diagram](sas-viya-smp-architecture-diagram.svg)
+
+Figure 1: Quickstart architecture for SAS Viya on Azure in an SMP Environment
+
+When you deploy the Quickstart with default parameters in a massively parallel processing (MPP) environment, the following SAS Viya environment is built in the Microsoft Azure cloud, shown in Figure 2.  In MPP environments, the **CAS Node Count** parameter is set to a value of 2 or more, indicating the number of CAS workers that are configured in addition to the CAS controller. 
+
+![Network Diagram](sas-viya-mpp-architecture-diagram.svg)
+
+Figure 2: Quickstart architecture for SAS Viya on Azure in an MPP Environment
 
 For details, see [SAS Viya 3.4 for Linux: Deployment Guide](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=titlepage.htm&docsetVersion=3.4&locale=en).
 
@@ -95,7 +103,7 @@ If you are installing VDMML or a similarly large installation, we  recommend tha
 ## Prerequisites
 Before deploying SAS Viya Quickstart Template for Azure, you must have the following:
 * Azure user account with Contributor and Admin Roles
-* Sufficient quota of at least 28 Cores, based on four licensed SAS cores
+* Sufficient quota of at least 28 Cores, based on four licensed SAS cores in an SMP environment.  In MPP environments, apply this sizing to the CAS workers as well as the CAS controller.
 * A SAS Software Order Confirmation Email that contains supported Quickstart products:
 
  		SAS Visual Analytics 8.3.1 on Linux
@@ -150,7 +158,7 @@ We recommend the following as best practices:
 
 <a name="Deployment"></a>
 ## Deployment Steps
-You can click the "Deploy to Azure" button at the beginning of this document or follow the instructions for a command-line deployment using the scripts in the root of this repository.
+You can click the "Deploy to Azure" button at the beginning of this document or follow the instructions for a command-line (CLI) deployment using the scripts in the root of this repository.
 
 The deployment takes between 1 and 4 hours, depending on the quantity of software licensed.
 
@@ -397,7 +405,7 @@ If your deployment fails:
 ["Deployment errors"](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-manager-common-deployment-errors#deployment-errors) in the Azure troubleshooting documentation.
 
 
-* In general, issues that occur in the primary deployment but do not originate from a sub-deployment are platform issues such as the inability to obtain sufficient resources in a timely manner. In these cases, you must redeploy your software.  The primary deployment is often called "azure-deploy", and the names of sub-deployments usually begin with "AnsiblePhase".
+* In general, issues that occur in the primary deployment but do not originate from a sub-deployment are platform issues such as the inability to obtain sufficient resources in a timely manner. In these cases, you must redeploy your software.  When the deployment is run via the CLI, the primary deployment is called "azure-deploy". When the deployment is run via the UI template, the primary deployment is called "Microsoft.Template". The names of sub-deployments usually begin with "AnsiblePhase".
 
 * If the error comes from a sub-deployment (for example, “AnsiblePhase4PreViyaInstall”), review the log files.
 
