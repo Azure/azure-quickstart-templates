@@ -1,9 +1,17 @@
+# SAS Viya Quickstart Template for Azure
 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/sas-viya/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/sas-viya/PublicDeployment.svg" />&nbsp;
 
-## SAS Viya Quickstart Template for Azure
-[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsas-viya%2Fazuredeploy.json) 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/sas-viya/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/sas-viya/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/sas-viya/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/sas-viya/CredScanResult.svg" />&nbsp;
+
+[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsas-viya%2Fazuredeploy.json) 
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsas-viya%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
 **Note:** For the current operational status of this Quickstart, click [here](https://github.com/sassoftware/quickstart-sas-viya-azure/tree/master) to redirect to the SAS repository.
@@ -107,9 +115,9 @@ Before deploying SAS Viya Quickstart Template for Azure, you must have the follo
 * Sufficient quota of at least 28 Cores, based on four licensed SAS cores in an SMP environment.  In MPP environments, apply this sizing to the CAS workers as well as the CAS controller.
 * A SAS Software Order Confirmation Email that contains supported Quickstart products:
 
- 		SAS Visual Analytics 8.5 on Linux
-		SAS Visual Statistics 8.5 on Linux
-        SAS Visual Data Mining and Machine Learning 8.5 on Linux
+ 		SAS Visual Analytics 8.3.1 on Linux
+		SAS Visual Statistics 8.3.1 on Linux
+        SAS Visual Data Mining and Machine Learning 8.3.1 on Linux
 *  The license file in .zip format from your software order uploaded to an Azure blob
 *  Verification that your required SAS Viya file upload sizes do not exceed the limits of the Application Gateway. For details about limits, see 
 ["Application Gateway limits."](https://docs.microsoft.com/en-us/azure/azure-subscription-service-limits?toc=%2fazure%2fapplication-gateway%2ftoc.json#application-gateway-limits)
@@ -371,7 +379,7 @@ CryptoLibName=/usr/lib64/libcrypto.so.1.0.2k
 8. To access the data sources through SAS/ACCESS, see ["Configure Data Access"](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=p03m8khzllmphsn17iubdbx6fjpq.htm&docsetVersion=3.5&locale=en)
 in the SAS Data Agent for Linux: Deployment Guide.
 
-9. Validate the environment, including round-trip communication. For details, see the ["Validation"](https://go.documentation.sas.com/?docsetId=dplydagent0phy0lax&docsetTarget=n1v7mc6ox8omgfn1qzjjjektc7te.htm&docsetVersion=2.5&locale=en ) chapter in the SAS Data Agent for Linux: Deployment Guide.
+9. Validate the environment, including round-trip communication. For details, see the ["Validation"](https://go.documentation.sas.com/?docsetId=dplydagent0phy0lax&docsetTarget=n1v7mc6ox8omgfn1qzjjjektc7te.htm&docsetVersion=2.3&locale=en ) chapter in the SAS Data Agent for Linux: Deployment Guide.
 
 <a name="Usage"></a>
 ## Usage 
