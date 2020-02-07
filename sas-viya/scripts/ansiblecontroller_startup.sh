@@ -36,7 +36,6 @@ export azure_storage_account="${11}"
 export azure_storage_files_share="${12}"
 export azure_storage_files_password="${13}"
 export CASInstanceCount="${14}"
-export DUMMY_LICENSE_STRING="${15}"
 
 export LOGS_DIR=/var/log/sas/install
 export DIRECTORY_NFS_SHARE="/mnt/\${azure_storage_files_share}"
@@ -62,8 +61,6 @@ export UTILITIES_DIR="\${INSTALL_DIR}/bin"
 
 export TOUCHPOINT_PREREQUISITES="/tmp/prerequisites.touch"
 export TOUCHPOINT_PREORCHESTRATION="/tmp/preorchestration.touch"
-
-
 
 EOF
 . "$environmentLocation"
