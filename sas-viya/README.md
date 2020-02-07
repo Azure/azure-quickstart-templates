@@ -367,13 +367,26 @@ in the SAS Data Agent for Linux: Deployment Guide.
 <a name="Usage"></a>
 ## Usage 
 
-To log in to any machine via SSH to check on a deployment or to perform maintenance, log in as *vmuser*.
+* To log in to any machine via SSH to check on a deployment or to perform maintenance, log in as *vmuser*.
 
-To log in to SAS Viya initially, use one of the following default user accounts: *sasadmin* (administrative user) or *sasuser*.
+* To log in to SAS Viya initially, use one of the following default user accounts: *sasadmin* (administrative user) or *sasuser*.
 
-To access SAS Viya applications, navigate to the **Outputs** screen and access SASDrive or SASStudio. 
+* To access SAS Viya applications, navigate to the **Outputs** screen and access SASDrive or SASStudio. 
 
 ![Outputs Screen](outputs.jpg) 
+
+* To connect to VMs through Azure Bastion:
+1. Log in to the Azure Bastion server as *vmuser*:
+```
+ssh vmuser@<AnsibleControllerIP>
+```
+2. From the Azure Bastion server, connect to the services, controller, and worker VMs as *vmuser*:
+```
+ssh vmuser@services
+ssh vmuser@controller
+ssh vmuser@worker01
+ssh vmuser@worker02
+```
 
 <a name="Tshoot"></a>
 ## Troubleshooting
