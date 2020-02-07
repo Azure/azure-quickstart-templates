@@ -10,9 +10,10 @@
 
 This README for  SAS Viya Quickstart Template for Azure is used to deploy the following SAS Viya products in the Azure cloud:
 
-* SAS Visual Analytics 8.3.1 on Linux
-* SAS Visual Statistics 8.3.1 on Linux
-* SAS Visual Data Mining and Machine Learning 8.3.1 on Linux
+* SAS Visual Analytics 8.5 on Linux
+* SAS Visual Statistics 8.5 on Linux
+* SAS Visual Data Mining and Machine Learning 8.5 on Linux
+* SAS Data Preparation 2.5
 
 This Quickstart is a reference architecture for users who want to deploy the SAS platform, using microservices and other cloud-friendly technologies. By deploying the SAS platform in Azure, you get SAS analytics, data visualization, and machine-learning capabilities in an Azure-validated environment. 
 
@@ -74,7 +75,7 @@ When you deploy the Quickstart with default parameters in a massively parallel p
 
 Figure 2: Quickstart architecture for SAS Viya on Azure in an MPP Environment
 
-For details, see [SAS Viya 3.4 for Linux: Deployment Guide](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=titlepage.htm&docsetVersion=3.4&locale=en).
+For details, see [SAS Viya 3.5 for Linux: Deployment Guide](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=soe.htm&docsetVersion=3.5&locale=en).
 
 <a name="Costs"></a>
 ### Costs and Licenses
@@ -135,7 +136,7 @@ For your repository, you can do either:
 * Use the default method, which downloads the installation files directly from SAS.
 * Upload an entire mirror to Azure blob storage.
 
-To use a mirror repository, create a mirror repository as documented in ["Create a Mirror Repository"](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=p1ilrw734naazfn119i2rqik91r0.htm&docsetVersion=3.4&locale=en) in the SAS Viya 3.4 for Linux: Deployment Guide.  
+To use a mirror repository, create a mirror repository as documented in ["Create a Mirror Repository"](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=p1ilrw734naazfn119i2rqik91r0.htm&docsetVersion=3.5&locale=en) in the SAS Viya 3.5 for Linux: Deployment Guide.  
 
 **Note:** For the deployment to recognize the mirror directory, the URL must end with a "/" directly before the SAS key.
 
@@ -211,7 +212,7 @@ To access an existing data source from your SAS Viya deployment, add an inbound 
 * If you have peered the virtual network, add a rule to "Allow the private subnet CIDR range" for the SAS Viya network. (By default, 10.0.127.0/24). For details, see 
  ["Virtual network peering."](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-network-peering-overview)
 
-Data sources accessed through SAS/ACCESS should use the [SAS Data Agent for Linux Deployment Guide](https://go.documentation.sas.com/?docsetId=dplydagent0phy0lax&docsetTarget=p06vsqpjpj2motn1qhi5t40u8xf4.htm&docsetVersion=2.3&locale=en) instructions to  ["Configure Data Access"](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=p03m8khzllmphsn17iubdbx6fjpq.htm&docsetVersion=3.4&locale=en) and ["Validate the Deployment."](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=n18cthgsfyxndyn1imqkbfjisxsv.htm&docsetVersion=3.4&locale=en)
+Data sources accessed through SAS/ACCESS should use the [SAS Data Agent for Linux Deployment Guide](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=titlepage.htm&docsetVersion=3.5&locale=en) instructions to  ["Configure Data Access"](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=p03m8khzllmphsn17iubdbx6fjpq.htm&docsetVersion=3.5&locale=en) and ["Validate the Deployment."](https://go.documentation.sas.com/?docsetId=dplydagent0phy0lax&docsetTarget=n1v7mc6ox8omgfn1qzjjjektc7te.htm&docsetVersion=2.5&locale=en)
 
 <a name="ACCESSCertWarn"></a>
 ### Validate the Server Certificate if Using SAS/ACCESS
@@ -229,7 +230,7 @@ If you are using SAS/ACCESS with SSL/TLS, unvalidated SSL certificates are not s
 
 2. For each file, modify the parameters. 
 * For detailed information about configuring data access, see 
- ["Configure Data Access"](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=p03m8khzllmphsn17iubdbx6fjpq.htm&docsetVersion=3.4&locale=en) in SAS Data Agent for Linux: Deployment Guide. 
+ ["Configure Data Access"](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=p03m8khzllmphsn17iubdbx6fjpq.htm&docsetVersion=3.5&locale=en) in SAS Data Agent for Linux: Deployment Guide. 
   
 * For specific DataDirect information, see ["Configuration Through the System Information (odbc.ini) File."](https://documentation.progress.com/output/DataDirect/odbcsqlserverhelp/index.html#page/odbcsqlserver%2Fconfiguration-through-the-system-information-(od.html%23))
 
@@ -306,7 +307,7 @@ CryptoLibName=/usr/lib64/libcrypto.so.1.0.2k
 <a name="DataAgent"></a>
 ### Set Up SAS Data Agent
 
-1. Perform the pre-installation and installation steps in [SAS Data Agent for Linux: Deployment Guide.](https://go.documentation.sas.com/?docsetId=dplydagent0phy0lax&docsetTarget=p06vsqpjpj2motn1qhi5t40u8xf4.htm&docsetVersion=2.3&locale=en) For the post-installation tasks, you can either:
+1. Perform the pre-installation and installation steps in [SAS Data Agent for Linux: Deployment Guide.](https://go.documentation.sas.com/?docsetId=dplydagent0phy0lax&docsetTarget=p06vsqpjpj2motn1qhi5t40u8xf4.htm&docsetVersion=2.5&locale=en) For the post-installation tasks, you can either:
     * (Recommended) Use the post-installation playbooks as specified in steps 6 and 7 below.
     * Perform the manual steps in the SAS Data Agent for Linux: Deployment Guide.
 
@@ -367,7 +368,7 @@ CryptoLibName=/usr/lib64/libcrypto.so.1.0.2k
     
       **Note:** The DNS of the SAS Viya endpoint is the value of the SASDrive output parameter, without the " prefix and the "/SASDrive" suffix.
 
-8. To access the data sources through SAS/ACCESS, see ["Configure Data Access"](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=p03m8khzllmphsn17iubdbx6fjpq.htm&docsetVersion=3.4&locale=en)
+8. To access the data sources through SAS/ACCESS, see ["Configure Data Access"](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=p03m8khzllmphsn17iubdbx6fjpq.htm&docsetVersion=3.5&locale=en)
 in the SAS Data Agent for Linux: Deployment Guide.
 
 9. Validate the environment, including round-trip communication. For details, see the ["Validation"](https://go.documentation.sas.com/?docsetId=dplydagent0phy0lax&docsetTarget=n1v7mc6ox8omgfn1qzjjjektc7te.htm&docsetVersion=2.3&locale=en ) chapter in the SAS Data Agent for Linux: Deployment Guide.
@@ -462,7 +463,7 @@ This error is the result of RHEL RPM mirrors that are not always correct in Azur
 ### Verify Security Settings
 Ensure that the correct port on your Lightweight Directory Access Protocol (LDAP) or secure LDAP (LDAPS) machine can be accessed by the SAS Viya machines:
 * Port 389 if using LDAP
-* Port 636 if using secure LDAP (LDAPS). For more information about securing LDAP connections, see [Encrypt LDAP Connections](https://go.documentation.sas.com/?docsetId=calencryptmotion&docsetTarget=n1xdqv1sezyrahn17erzcunxwix9.htm&docsetVersion=3.4&locale=en#p1bai319815977n1bzdyyxr3d5he) in the Encryption in SAS Viya: Data in Motion.
+* Port 636 if using secure LDAP (LDAPS). For more information about securing LDAP connections, see [Encrypt LDAP Connections](https://go.documentation.sas.com/?docsetId=calencryptmotion&docsetTarget=n1xdqv1sezyrahn17erzcunxwix9.htm&docsetVersion=3.5&locale=en#p1bai319815977n1bzdyyxr3d5he) in the Encryption in SAS Viya: Data in Motion.
 
 <a name="AddACreateServiceAccount"></a>
 ### Create a Service Account
@@ -471,8 +472,8 @@ Create a service account in your LDAP system. The service account must have perm
 <a name="AddAConfigureIdentitiesService"></a>
 ### Configure the Identities Service
 **Note:**   OpenLDAP systems and customized AD setups might require additional configuration that is beyond the scope of this guide.
-* See [Configure the Connection to Your Identity Provider ](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=p0dt267jhkqh3un178jzupyyetsa.htm&docsetVersion=3.4&locale=en#n1p4yydj6grbban1kl1te52gv0kf) in the SAS Viya for Linux: Deployment Guide for more information about configuring the identities service. 
-* See [Encrypt LDAP Connections](https://go.documentation.sas.com/?docsetId=calencryptmotion&docsetTarget=n1xdqv1sezyrahn17erzcunxwix9.htm&docsetVersion=3.4&locale=en#p1bai319815977n1bzdyyxr3d5he) in  Encryption in SAS Viya: Data in Motion for more information about securing LDAP connections.
+* See [Configure the Connection to Your Identity Provider ](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=p0dt267jhkqh3un178jzupyyetsa.htm&docsetVersion=3.5&locale=en#n1p4yydj6grbban1kl1te52gv0kf) in the SAS Viya for Linux: Deployment Guide for more information about configuring the identities service. 
+* See [Encrypt LDAP Connections](https://go.documentation.sas.com/?docsetId=calencryptmotion&docsetTarget=n1xdqv1sezyrahn17erzcunxwix9.htm&docsetVersion=3.5&locale=en#p1bai319815977n1bzdyyxr3d5he) in  Encryption in SAS Viya: Data in Motion for more information about securing LDAP connections.
 
 In the SAS Environment Manager, on the Configuration tab, select the Identities service. There are three sections to configure: connection, user, and group. 
 #### Connection
