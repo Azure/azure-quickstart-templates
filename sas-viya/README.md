@@ -27,6 +27,8 @@ For assistance with SAS software, contact  [SAS Technical Support](https://suppo
 1. [Best Practices When Deploying SAS Viya on Azure](#Best-Practices)
 1. [Deployment Steps](#Deployment)
 1. [Additional Deployment Details](#deployment-details)
+    1. [User Accounts](#useraccounts)
+    1. [Important File and Folder Locations](#filefolderlocations)
 1. [Optional Post-Deployment](#Post-Deployment)
     1. [Configure a Certificate Authority-Signed Digital Certificate and Custom DNS Name](#DNS)
     1. [Enable Access to Existing Data Sources](#DataSources)
@@ -155,10 +157,28 @@ The deployment takes between 1 and 4 hours, depending on the quantity of softwar
 <a name="deployment-details"></a>
 
 ## Additional Deployment Details
+## User Accounts
+<a name="useraccounts"></a>
 The *vmuser* host operating system account is created during deployment. Use this account to log in via SSH to any of the machines.
 
 The *sasadmin* and *sasuser* SAS Viya user accounts are also created during deployment.  These accounts exist in LDAP, and are the default user accounts for logging in to SAS Viya.  You cannot directly log on to the host operating system with these accounts.
 
+### Important File and Folder Locations
+<a name="filefolderlocations"></a>
+
+Here are the location and sizes of key files and folders that are useful for troubleshooting and performing maintenance tasks:
+
+| Storage Type  | Description/Purpose| Location/Size|
+| ------------- | ------------- | ------------- | 
+|OS  |  Standard operating system files and server build<br>software location. Standard company defragmentation policy should apply to OS volumes. |  *Ansible controller:* 32GB <br> *Services VM:* 32GB <br> *Controller VM:* 32GB    |
+|PLAYBOOKS | Location of Ansible playbooks. |*Ansible controller:*<br>  Main SAS deployment- /sas/install/ansible/sas_viya_playbook <br>  Pre- and Post-Deployment Playbooks- <br>/sas/install/ansible/ <br>  /sas/install/comon/ansible/ |
+|SASDEPLOYMENT  | Location of SAS deployment. |*Services VM*, *Controller VM*, *Worker VM:*<br> /opt/sas – 256 GB   | 
+|SASREPO | Location of local mirror of SAS repository (if mirror is used). | *Visual VM:* /mnt/viyashare/mirror <br>(mounted shared directory on an Azure files share)|
+|SASDATA|Location of SAS data, projects, source code, and applications.|*Services VM:*<br>Default locations under /opt/sas<br>*Controller VM:*<br>User CASLIB locations-<br> /opt/sas/viya/config/data/cas|
+|SASWORK/SASUTIL| Location of SAS workspace and temporary scratch area. This area will predominantly be used for transient and volatile data and technically emptied after the completion of job processing.|*Services VM:* /sastmp/saswork<br>Symlink to  /mnt/resource/sastmp/saswork,<br> which is on the ephemeral disks for this machine.<br>Size depends on the machine selected and is set by Azure.|
+|SASCACHE|Location of CAS disk cache.|*Controller VM:* /sastmp/cascache<br>Symlink to /mnt/resource/sastmp/cascache, <br>which is on the ephemeral disks for this machine. <br>Size depends on the machine selected and is set by Azure.|
+|SASLOGS|Location of the SAS application log files.|*Services VM* and *Controller VM:*<br>/opt/sas/viya/config/var/log<br>(also at /var/log/sas/viya)|
+|SASBACKUP|Location for SAS Backup and Recovery Tool backup vault.|*Services VM:*<br>/opt/sas/backups<br>(part of the 256 GB of /opt/sas)|
 <a name="Post-Deployment"></a>
 ## Optional Post-Deployment 
 <a name="DNS"></a>
