@@ -243,8 +243,8 @@ If you are using SAS/ACCESS with SSL/TLS, unvalidated SSL certificates are not s
 * For specific DataDirect information, see ["Configuration Through the System Information (odbc.ini) File."](https://documentation.progress.com/output/DataDirect/odbcsqlserverhelp/index.html#page/odbcsqlserver%2Fconfiguration-through-the-system-information-(od.html%23))
 
 3. For SQLServer, specify the appropriate driver location:
-* For SAS Viya: /opt/sas/spre/home/lib64/accessclients/lib/S0sqls27.so 
-* For CAS controller: /opt/sas/viya/home/lib64/accessclients/lib/S0sqls27.so 
+* For SAS Viya: /opt/sas/spre/home/lib64/accessclients/lib/S0sqls28.so 
+* For CAS controller: /opt/sas/viya/home/lib64/accessclients/lib/S0sqls28.so 
 ```
 [SQLServerTest] 
 Driver=<driver location>
