@@ -64,4 +64,4 @@ ssh -o StrictHostKeyChecking=no  services ldapadd -x -h localhost -D "cn=admin,d
 ssh -o StrictHostKeyChecking=no  services sudo mkdir -p /home/$USER
 ssh -o StrictHostKeyChecking=no  services sudo chown $USER:sasusers /home/$USER
 
-
+      
