@@ -230,6 +230,45 @@ If you are using SAS/ACCESS with SSL/TLS, unvalidated SSL certificates are not s
 ```
 /etc/pki/ca-trust/extracted/openssl/ca-bundle.trust.crt
 ```
+<a name="MSSQL"></a>
+### Set Up ODBC and Microsoft SQL Server
+1. Locate the following two odbc.ini files:
+* CAS controller: /opt/sas/viya/home/lib64/accessclients/odbc.ini
+* SAS Viya services: /opt/sas/spre/home/lib64/accessclients/odbc.ini
+
+2. For each file, modify the parameters. 
+* For detailed information about configuring data access, see 
+ ["Configure Data Access"](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=p03m8khzllmphsn17iubdbx6fjpq.htm&docsetVersion=3.5&locale=en) in SAS Data Agent for Linux: Deployment Guide. 
+  
+* For specific DataDirect information, see ["Configuration Through the System Information (odbc.ini) File."](https://documentation.progress.com/output/DataDirect/odbcsqlserverhelp/index.html#page/odbcsqlserver%2Fconfiguration-through-the-system-information-(od.html%23))
+
+3. For SQLServer, specify the appropriate driver location:
+* For SAS Viya: /opt/sas/spre/home/lib64/accessclients/lib/S0sqls27.so 
+* For CAS controller: /opt/sas/viya/home/lib64/accessclients/lib/S0sqls27.so 
+```
+[SQLServerTest] 
+Driver=<driver location>
+Description=SAS Institute, Inc 7.1 SQL Server Wire Protocol 
+AlternateServers= 
+AlwaysReportTriggerResults=0 
+AnsiNPW=1 
+ApplicationName= 
+ApplicationUsingThreads=1 
+AuthenticationMethod=1 
+BulkBinaryThreshold=32 
+BulkCharacterThreshold=-1 
+BulkLoadBatchSize=1024 
+BulkLoadFieldDelimiter= 
+BulkLoadOptions=2 
+BulkLoadRecordDelimiter= 
+ConnectionReset=0 
+ConnectionRetryCount=0 
+ConnectionRetryDelay=3 
+Database=sqlserver 
+EnableBulkLoad=0 
+EnableQuotedIdentifiers=0
+```
+4. Save the odbc.ini files.
 
 <a name="DataAgent"></a>
 ### Set Up SAS Data Agent
