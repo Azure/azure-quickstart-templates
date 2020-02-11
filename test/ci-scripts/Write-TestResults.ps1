@@ -174,6 +174,11 @@ else {
         else {
             $r.status = $BuildReason
         }
+        # set the pr number only if the column isn't present (should be true only for older prs before this column was added)
+        if ($r.pr -eq $null) {
+            Add-Member -InputObject $r -NotePropertyName "pr" -NotePropertyValue $ENV:SYSTEM_PULLREQUEST_PULLREQUESTNUMBER            
+        }
+        
         # if it's a PR, set the build number, since it's not set before this outside of a scheduled build
         if ($r.($ResultDeploymentParameter + "BuildNumber") -eq $null) {
             Add-Member -InputObject $r -NotePropertyName ($ResultDeploymentParameter + "BuildNumber") -NotePropertyValue $ENV:BUILD_BUILDNUMBER           
