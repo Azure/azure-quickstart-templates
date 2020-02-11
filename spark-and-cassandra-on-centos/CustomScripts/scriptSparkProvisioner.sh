@@ -49,7 +49,7 @@ install_spark()
 	useradd -g spark spark
 
 	echo "Setting up password-less access"
-    rm -f ~/.ssh/id_rsa 
+    rm -f ~/.ssh/id_rsa
 	ssh-keygen -q -t rsa -N '' -f ~/.ssh/id_rsa && cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
 
 	echo "Setting up work directory"

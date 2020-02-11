@@ -22,10 +22,11 @@ $PropertiesThatCanBeEmpty = 'resources',
                             'parameters', 
                             'functions', 
                             'properties', 
-                            'defaultValue', # optional parameters
+                            'defaultValue', # enables optional parameters
                             'accessPolicies',  # keyVault requires this
-                            'value', # passing empty strings to a nested deployment
-                            'promotionCode' # Microsoft.OperationsManagement/soltuions/plan object
+                            'value', # Microsoft.Resources/deployments - passing empty strings to a nested deployment
+                            'promotionCode', # Microsoft.OperationsManagement/soltuions/plan object
+                            'inputs' # Microsoft.Portal/dashboard
 
 if ($emptyItems) {
     foreach ($emptyItem in $emptyItems) {

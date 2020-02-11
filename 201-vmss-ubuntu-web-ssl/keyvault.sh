@@ -11,9 +11,9 @@ usage()
 creategroup()
 {
 
-    azure group show $rgname 2> /dev/null  
+    azure group show $rgname 2> /dev/null
     if [ $? -eq 0 ]
-    then    
+    then
         echo Resource Group $rgname already exists. Skipping creation.
     else
         # Create a resource group for the keyvault
@@ -27,15 +27,15 @@ createkeyvault()
 
     azure keyvault show $vaultname 2> /dev/null
     if [ $? -eq 0 ]
-    then    
+    then
         echo Key Vault $vaultname already exists. Skipping creation.
-    else   
+    else
         echo Creating Key Vault $vaultname.
 
-        creategroup 
+        creategroup
         # Create the key vault
         azure keyvault create --vault-name $vaultname --resource-group $rgname --location $location
-    fi  
+    fi
 
     azure keyvault set-policy -u $vaultname -g $rgname --enabled-for-template-deployment true --enabled-for-deployment true
 
@@ -54,7 +54,7 @@ convertcert()
     then
         echo problem converting $key and $cert to pfx
         exit 1
-    fi    
+    fi
 
     fingerprint=$(openssl x509 -in $cert -noout -fingerprint | cut -d= -f2 | sed 's/://g' )
 }
@@ -71,7 +71,7 @@ convertcacert()
     then
         echo problem converting $cert to pfx
         exit 1
-    fi    
+    fi
 
     fingerprint=$(openssl x509 -in $cert -noout -fingerprint | cut -d= -f2 | sed 's/://g' )
 }
@@ -96,9 +96,9 @@ EOF
     r=$(azure keyvault secret set --vault-name $vaultname --secret-name $name --value $jsonEncoded)
     if [ $? -eq 1 ]
     then
-        echo problem storing secret $name in $vaultname 
+        echo problem storing secret $name in $vaultname
         exit 1
-    fi    
+    fi
 
     id=$(echo $r | grep -o 'https:\/\/[a-z0-9.]*/secrets\/[a-z0-9]*/[a-z0-9]*')
     echo Secret ID is $id
@@ -139,7 +139,7 @@ echo $certpfxfile fingerprint is $fingerprint
 # storing pfx in keyvault
 echo Storing $certpfxfile as $secretname
 storesecret $certpfxfile $secretname
-certid=$id   
+certid=$id
 rm -f $certpfxfile
 
 if [ ! -z $cacertfile ]
@@ -150,12 +150,12 @@ then
     cacertprint=$fingerprint
     # storing pfx in key vault
     echo Storing $cacertpfxfile as $casecretname
-    storesecret $cacertpfxfile $casecretname   
+    storesecret $cacertpfxfile $casecretname
     cacertid=$id
     rm -f $cacertpfxfile
 fi
 
-# update parameters file 
+# update parameters file
 sed -e 's|REPLACE_CERTURL|'$certid'|g' \
     -e 's|REPLACE_CACERTURL|'$cacertid'|g' \
     -e 's/REPLACE_CERTPRINT/'$certprint'/g' \

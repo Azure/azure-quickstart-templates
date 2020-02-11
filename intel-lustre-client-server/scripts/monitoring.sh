@@ -86,7 +86,7 @@ add_to_fstab() {
 	device="${1}"
 	mount_point="${2}"
 	filesystem_type="${3}"
-	
+
 	if grep -q "$device" /etc/fstab
 	then
 		log "Not adding $device to /etc/fstab (it's  already there)"
@@ -102,14 +102,14 @@ setup_ganglia_collector() {
 	# Device /dev/sdd on MGS node is reserved for the Ganglia round-robin database files
 	device="/dev/sdd"
 	device_label="GANGLIA_RRDS"
-	
+
 	# Format volume (if necessary) as ext4 (i.e. not lustre)
 	mount_ganglia="/mnt/ganglia/"
 	mount_rrds="/mnt/ganglia/rrds"
-	
+
 	# Check device label
 	label=$(blkid -c/dev/null -o value -s LABEL $device)
-	
+
 	if [ -z "$label" ];
 	then
 		# Format the device ext4
@@ -118,20 +118,20 @@ setup_ganglia_collector() {
 	else
 		log "Device $device is already formatted with label $label"
 	fi
-	
+
 	# Store ganglia RRDs here in /mnt/ganglia/rrds
 	mkdir -p $mount_ganglia
-	
+
 	# Add to /etc/fstab so that mount persists across reboots
 	add_to_fstab $device $mount_ganglia "ext4"
 
 	# Mount
 	mount -a
 	log "Mounted $device with label $device_label as $mount_ganglia"
-	
+
 	mkdir -p $mount_rrds
 	chown ganglia.ganglia $mount_rrds
-	
+
 	line="rrd_rootdir $mount_rrds"
 	if grep -q "$line" /etc/ganglia/gmetad.conf
 	then
@@ -140,7 +140,7 @@ setup_ganglia_collector() {
 		log "${line}"
 		echo -e  "${line}" >> /etc/ganglia/gmetad.conf
 	fi
-	
+
 	# Point ganglia_web to the proper RRDs location
 	if grep -q "$mount_rrds" /etc/ganglia/conf.php
 	then
@@ -155,52 +155,52 @@ setup_ganglia() {
 	master_ip="${1}"
 	cluster_name="${2}"
 	is_collector="${3}"
-	
+
 	# Configure gmond on the local node
 	# Multicast is disabled and unicast will be used to send metrics to master_ip
-	
+
 	# Comment out lines that start with "mcast_join"" or "bind"
 	sed -i '/mcast_join/s/^/#/' /etc/ganglia/gmond.conf
 	sed -i '/bind/s/^/#/' /etc/ganglia/gmond.conf
-	
+
 	# Replace substrings for cluster name, send interval, and udp send channel host
 	sed -i "s/name\s*=\s*\"unspecified\"/name = \"$cluster_name\"/" /etc/ganglia/gmond.conf
 	sed -i "s/owner\s*=\s*\"unspecified\"/owner = \"$cluster_name\"/" /etc/ganglia/gmond.conf
 	sed -i "s/send_metadata_interval\s*=\s*0/send_metadata_interval = 10/" /etc/ganglia/gmond.conf
 	sed -i "s/udp_send_channel\s*{.*$/udp_send_channel {\n host = $master_ip/" /etc/ganglia/gmond.conf
-	
+
 	# Disable modules (by appending -disabled to its config file name) that result in many /var/log/messages errors
 	if [ -e /etc/ganglia/conf.d/netstats.pyconf ]; then
 		mv /etc/ganglia/conf.d/netstats.pyconf /etc/ganglia/conf.d/netstats.pyconf-disabled
 	fi
-	
+
 	if [ -e /etc/ganglia/conf.d/diskstat.pyconf ]; then
 		mv /etc/ganglia/conf.d/diskstat.pyconf /etc/ganglia/conf.d/diskstat.pyconf-disabled
 	fi
-	
+
 	service gmond restart
 	chkconfig gmond on
-	
+
 	# Allow gmond service time to start before starting the gmetad
 	sleep 10
-	
+
 	if [ "$is_collector" = true ] ; then
 		service gmetad restart
 		chkconfig gmetad on
 	fi
 }
 
-setup_ganglia_web() {	
+setup_ganglia_web() {
 	# Comment out the Deny from all line
 	sed -i '/Deny from all/s/^/#/' /etc/httpd/conf.d/ganglia.conf
-	
+
 	if grep -q "strip_domainname" /etc/ganglia/conf.php
 	then
 		log "Not adding strip_domainname to /etc/ganglia/conf.php (it's already there)"
 	else
 		sed -i "s/<?php.*$/<?php\n\$conf['strip_domainname'] = true;/" /etc/ganglia/conf.php
 	fi
-	
+
 	service httpd restart
 	chkconfig httpd on
 }
@@ -217,7 +217,7 @@ ganglia_gmetad_add_source() {
 		log "${line}"
 		echo -e  "${line}" >> /etc/ganglia/gmetad.conf
 	fi
-	
+
 	line="data_source \"$cluster_name\" $ip_to_poll"
 	if grep -q "$line" /etc/ganglia/gmetad.conf
 	then
@@ -225,7 +225,7 @@ ganglia_gmetad_add_source() {
 	else
 		log "${line}"
 		echo -e  "${line}" >> /etc/ganglia/gmetad.conf
-		
+
 		service gmetad restart
 		chkconfig gmetad on
 	fi
@@ -233,7 +233,7 @@ ganglia_gmetad_add_source() {
 
 setup_lmt_collector() {
 	mgs_ip="${MGSIP}"
-	
+
 	# LMT collector is the MGS node (master LMT server)
 	line="cerebrod_speak_message_config $mgs_ip"
 	if grep -q "$line" /etc/cerebro.conf
@@ -242,11 +242,11 @@ setup_lmt_collector() {
 	else
 		log "${line}"
 		echo -e  "${line}" >> /etc/cerebro.conf
-		
+
 		line="cerebrod_listen_message_config $mgs_ip"
 		log "${line}"
 		echo -e "${line}" >> /etc/cerebro.conf
-		
+
 		service cerebrod restart
 		chkconfig cerebrod on
 	fi
@@ -254,7 +254,7 @@ setup_lmt_collector() {
 
 setup_lmt_agent() {
 	mgs_ip="${1}"
-	
+
 	# LMT agent is on MDS and OSS nodes
 	line="cerebrod_speak_message_config $mgs_ip"
 	if grep -q "$line" /etc/cerebro.conf
@@ -263,7 +263,7 @@ setup_lmt_agent() {
 	else
 		log "${line}"
 		echo -e  "${line}" >> /etc/cerebro.conf
-		
+
 		service cerebrod restart
 		chkconfig cerebrod on
 	fi
@@ -271,29 +271,29 @@ setup_lmt_agent() {
 
 configure_mgs() {
 	log "Configure monitoring on MGS"
-	
+
 	setup_ganglia_collector
 	setup_ganglia $MGSIP "MGS" false
 	setup_ganglia_web
 	ganglia_gmetad_add_source $MDSIP0 "MDS"
 	ganglia_gmetad_add_source $OSSIP0 "OSS"
-	
+
 	setup_lmt_collector $MGSIP
 }
 
 configure_mds() {
 	log "Configuring monitoring on MDS"
-	
+
 	setup_ganglia $MDSIP0 "MDS" false
-	
+
 	setup_lmt_agent $MGSIP
 }
 
 configure_oss() {
 	log "Configure monitoring on OSS"
-	
+
 	setup_ganglia $OSSIP0 "OSS" false
-	
+
 	setup_lmt_agent $MGSIP
 }
 

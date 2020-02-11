@@ -10,10 +10,10 @@
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -43,7 +43,7 @@ help()
 
 log()
 {
-	# If you want to enable this logging add a un-comment the line below and add your account key 
+	# If you want to enable this logging add a un-comment the line below and add your account key
 	#curl -X POST -H "content-type:text/plain" --data-binary "$(date) | ${HOSTNAME} | $1" https://logs-01.loggly.com/inputs/${LOGGING_KEY}/tag/redis-extension,${HOSTNAME}
 	echo "$1"
 }
@@ -54,13 +54,13 @@ expand_ip_range() {
     IFS='-' read -a HOST_IPS <<< "$1"
 
     declare -a EXPAND_STATICIP_RANGE_RESULTS=()
-	
+
     for (( n=0 ; n<("${HOST_IPS[1]}"+0) ; n++))
     do
         HOST="${HOST_IPS[0]}${n}:${REDIS_PORT}"
 		EXPAND_STATICIP_RANGE_RESULTS+=($HOST)
     done
-	
+
     echo "${EXPAND_STATICIP_RANGE_RESULTS[@]}"
 }
 
@@ -76,17 +76,17 @@ fi
 # Parse script parameters
 while getopts :c:s:p:h optname; do
   log "Option $optname set with value ${OPTARG}"
-  
+
   case $optname in
 	c) # Number of instances
 		INSTANCE_COUNT=${OPTARG}
 		;;
 	s) # Number of slave nodes
 		SLAVE_COUNT=${OPTARG}
-		;;		
+		;;
 	p) # Private IP address prefix
 		IP_PREFIX=${OPTARG}
-		;;		
+		;;
     h)  # Helpful hints
 		help
 		exit 2

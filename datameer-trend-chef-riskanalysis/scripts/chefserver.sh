@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#1 - USER_NAME 
+#1 - USER_NAME
 #2 - FIRST_NAME
 #3 - LAST_NAME
 #4 - EMAIL
@@ -8,7 +8,7 @@
 #6 - short_name
 #7 - 'full_organization_name'
 #8 - 'FQDN of the orchestrator'
-##Checking availability of file pivotal.pem before creating organisation and user. 
+##Checking availability of file pivotal.pem before creating organisation and user.
 #while [ ! -f /etc/opscode/pivotal.pem ]; do
 #sleep 60s; done
 #while [ ! -f /etc/opscode/pivotal.pem ]
@@ -16,7 +16,7 @@
 #	sleep 180
 #done
 sleep 600
-##pull files from repo  
+##pull files from repo
 wget https://trendmicrop2p.blob.core.windows.net/trendmicropushtopilot/files/validatorkey.txt  -O /tmp/validatorkey.txt
 wget https://trendmicrop2p.blob.core.windows.net/trendmicropushtopilot/files/userkey.txt -O /tmp/userkey.txt
 

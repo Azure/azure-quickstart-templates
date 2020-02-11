@@ -79,9 +79,9 @@ do
     sleep 15s
 done
 if [ $n -ge 5 ]
-then 
+then
     log "yum install error, exiting..."
-    log "------- initialize-cloudera-server.sh failed -------" 
+    log "------- initialize-cloudera-server.sh failed -------"
     exit 1
 fi
 
@@ -133,12 +133,12 @@ log "END: CM deployment ended with status '$status'"
 
 if [ $status -eq 0 ]
 then
-    log "------- initialize-cloudera-server.sh succeeded -------" 
+    log "------- initialize-cloudera-server.sh succeeded -------"
     # always `exit 0` on success
     exit 0
 
 else
-    log "------- initialize-cloudera-server.sh failed -------" 
+    log "------- initialize-cloudera-server.sh failed -------"
     exit 1
 fi
 
