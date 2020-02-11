@@ -5,7 +5,7 @@
 #.DESCRIPTION
 #    @Version: 2.0.0.10
 #    @Author: Gwen Blum
-#    @Date: 20160520 
+#    @Date: 20160520
 #    @Changelog:
 #       20170622    Add progressd check
 #       20170609    Merge ubuntu and centos scripts, add password param
@@ -15,7 +15,7 @@
 #    Steelscript Application Framework reference: https://support.riverbed.com/apis/steelscript/appfwk/toc.html
 #    Tested on CentOS 7.0.1406,7.2,7.3 and Ubuntu 17.04
 #.EXAMPLE
-#    ./install-ssappfwkdev.sh 
+#    ./install-ssappfwkdev.sh
 #
 #   # Then the appfwk server can be started manually from the project dir (/appfwk_project)
 #   cd /appfwk_project ; sudo python "/appfwk_project/manage.py" runserver 0.0.0.0:8000
@@ -50,7 +50,7 @@ fi
 echo "$(date +%H:%M:%S) 1/3 INSTALL PREREQUISITES"
 
 case $linuxos in
-"redhat-release") 
+"redhat-release")
     echo "Centos prerequisites..."
     sudo yum clean all
     sudo yum -y groupinstall "Development tools"
@@ -116,7 +116,7 @@ daemonfile=/etc/init.d/progressd
 sudo wget "https://github.com/riverbed/steelscript-vm-config/raw/master/provisioning/roles/appfwk_webserver/templates/etc.init.d.progressd.distrib.j2" -O $daemonfile
 sudo chmod +xxx /etc/init.d/progressd
 
-### Configure progressd Daemon 
+### Configure progressd Daemon
 #    Set following variables in /etc/init.d/progressd
 #     dir="{{ virtualenv_apache }}/lib/python2.7/site-packages/steelscript/appfwk/progressd"
 #     user="{{ project_owner_apache }}"
@@ -150,7 +150,7 @@ fi
 
 ### Set progressd service startup
 case $linuxos in
-"redhat-release") 
+"redhat-release")
     sudo chkconfig --add progressd
 ;;
 "lsb-release")
@@ -161,7 +161,7 @@ case $linuxos in
 ;;
 esac
 
-### Start progressd 
+### Start progressd
 sudo service progressd restart
 
 ############################################################################################

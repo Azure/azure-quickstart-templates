@@ -15,17 +15,28 @@
         "description": "These credentials can be used to remotely access the cluster."
       }
     },
-    "sshPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "The password must be at least 10 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter."
-      }
-    },
     "location": {
       "type": "string",
       "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "Location for all resources."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
     }
   },
@@ -38,7 +49,7 @@
     },
     "vNet1": {
       "name": "[concat(parameters('clusterNamePrefix'),'-vnet1')]",
-      "location": "West US",      
+      "location": "West US",
       "addressSpacePrefix": "10.1.0.0/16",
       "subnetName": "subnet1",
       "subnetPrefix": "10.1.0.0/24",
@@ -70,6 +81,17 @@
       "name1": "vnet1tovnet2",
       "name2": "vnet2tovnet1",
       "sharedKey": "A1b2C3D4"
+    },
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('sshUserName'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
     }
   },
   "resources": [
@@ -84,7 +106,7 @@
             "[variables('vNet1').addressSpacePrefix]"
           ]
         },
-        "dhcpOptions":{
+        "dhcpOptions": {
           "dnsServers": [
             "[variables('vNet1').dnsIPAddress]"
           ]
@@ -157,7 +179,7 @@
             "[variables('vNet2').addressSpacePrefix]"
           ]
         },
-        "dhcpOptions":{
+        "dhcpOptions": {
           "dnsServers": [
             "[variables('vNet2').dnsIPAddress]"
           ]
@@ -273,7 +295,7 @@
       "location": "[variables('vNet1').location]",
       "apiVersion": "2017-08-01",
       "properties": {
-          "publicIPAllocationMethod": "Dynamic"
+        "publicIPAllocationMethod": "Dynamic"
       }
     },
     {
@@ -284,7 +306,6 @@
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/',variables('vNet1').name)]",
         "[concat('Microsoft.Network/publicIPAddresses/', variables('vNet1').dnsIPName)]"
-
       ],
       "properties": {
         "ipConfigurations": [
@@ -318,7 +339,8 @@
         "osProfile": {
           "computerName": "[variables('vNet1').dnsName]",
           "adminUsername": "[parameters('sshUserName')]",
-          "adminPassword": "[parameters('sshPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": "[variables('ubuntu')]",
@@ -341,7 +363,7 @@
       "location": "[variables('vNet2').location]",
       "apiVersion": "2017-08-01",
       "properties": {
-          "publicIPAllocationMethod": "Dynamic"
+        "publicIPAllocationMethod": "Dynamic"
       }
     },
     {
@@ -385,7 +407,8 @@
         "osProfile": {
           "computerName": "[variables('vNet2').dnsName]",
           "adminUsername": "[parameters('sshUserName')]",
-          "adminPassword": "[parameters('sshPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": "[variables('ubuntu')]",

@@ -20,7 +20,7 @@ yum install -y powershell
 mkdir /replicated
 echo "This is a replicated file" >/replicated/repfile.txt
 
-if [ -f "installAzureRM.ps1" ]; then 
+if [ -f "installAzureRM.ps1" ]; then
 	pwsh ./installAzureRM.ps1 -linux
 fi
 echo "starting CA helper service"

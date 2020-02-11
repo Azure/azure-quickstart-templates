@@ -9,7 +9,7 @@ then
     exit 3
 fi
 
-wget -O /opt/trend-micro-deep-security-for-splunk_152.tgz https://trendmicrop2p.blob.core.windows.net/trendmicropushtopilot/trend-micro-deep-security-for-splunk_152.tgz 
+wget -O /opt/trend-micro-deep-security-for-splunk_152.tgz https://trendmicrop2p.blob.core.windows.net/trendmicropushtopilot/trend-micro-deep-security-for-splunk_152.tgz
 
 /opt/splunk/bin/splunk install app /opt/trend-micro-deep-security-for-splunk_152.tgz -update 1 -auth admin:$1
 
