@@ -8,8 +8,22 @@
 				"description": "The base URL where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated.",
 				"artifactsBaseUrl": ""
 			},
-			"defaultValue": "https://devocpartifacts.blob.core.windows.net"
+			"defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/ibm-cloud-pak-for-data/"
 		},
+		"_artifactsLocationSasToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+            },
+            "defaultValue": ""
+		},
+		"location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+              "description": "Location for all resources."
+            }
+        },
 		"bastionVmSize": {
 			"type": "string",
 			"defaultValue": "Standard_D8s_v3",
@@ -372,8 +386,6 @@
 		}
 	},
 	"variables": {
-		"location": "[resourceGroup().location]",
-		"resourceGroupName": "[resourceGroup().id]",
 		"apiVersionCompute": "2017-03-30",
 		"apiVersionNetwork": "2017-09-01",
 		"apiVersionStorage": "2017-06-01",
@@ -415,11 +427,7 @@
 			{ "name": "nodeavailabilityset", "tagName": "NodeAvailabilitySet" },
 			{ "name": "bastionavailabilityset", "tagName": "BastionAvailabilitySet" }
 		],
-		"unmanagedAvailabilitySetSku": "Classic",
-		"managedAvailabilitySetSku": "Aligned",
 		"availabilitySetSku": "[concat(parameters('storageKind'), 'AvailabilitySetSku')]",
-		"unmanagedPlatformFaultDomainCount": 3,
-		"managedPlatformFaultDomainCount": 2,
 		"platformFaultDomainCount": "[concat(parameters('storageKind'), 'PlatformFaultDomainCount')]",
 		"nfsVmSize": "Standard_D16s_v3",
 		"nfsInstanceCount": 1,
@@ -461,17 +469,7 @@
 				"skuTier": "Standard"
 			}
 		},
-		"managedStorageCount": 6,
-		"unmanagedStorageCount": "[length(variables('newStorageAccountArray'))]",
 		"storageLoopCount": "[concat(parameters('storageKind'), 'StorageCount')]",
-		"unmanagedMasterUri": "[variables('newStorageAccountMaster')]",
-		"managedMasterUri": "[variables('diagStorageAccount1')]",
-		"unmanagedInfraUri": "[variables('newStorageAccountInfra')]",
-		"managedInfraUri": "[variables('diagStorageAccount1')]",
-		"unmanagedNodeOsUri": "[variables('newStorageAccountNodeOs')]",
-		"managedNodeOsUri": "[variables('diagStorageAccount1')]",
-		"unmanagedNodeDataUri": "[variables('newStorageAccountNodeData')]",
-		"managedNodeDataUri": "[variables('diagStorageAccount1')]",
 		"masterUri": "[concat(parameters('storageKind'), 'MasterUri')]",
 		"infraUri": "[concat(parameters('storageKind'), 'InfraUri')]",
 		"nodeOsUri": "[concat(parameters('storageKind'), 'NodeOsUri')]",
@@ -496,7 +494,6 @@
 		"masterLbId": "[resourceId('Microsoft.Network/loadBalancers', variables('masterLoadBalancerName'))]",
 		"masterLbFrontEndConfigId": "[concat(variables('masterLbId'), '/frontendIPConfigurations/loadBalancerFrontEnd')]",
 		"masterLbBackendPoolId": "[concat(variables('masterLbId'),'/backendAddressPools/loadBalancerBackend')]",
-		"masterLbHttpProbeId": "[concat(variables('masterLbId'),'/probes/httpProbe')]",
 		"masterLbHttpsProbeId": "[concat(variables('masterLbId'),'/probes/httpsProbe')]",
 
 		"infraLoadBalancerName": "[concat(variables('openshiftInfraHostname'), 'lb')]",
@@ -713,7 +710,7 @@
 			}
 		},
 		{
-			"apiVersion": "[variables('apiVersionNetwork')]",
+			"apiVersion": "2017-09-01",
 			"type": "Microsoft.Network/networkSecurityGroups",
 			"name": "[concat(variables('bastionHostname'), '-nsg')]",
 			"location": "[variables('location')]",
@@ -743,7 +740,7 @@
 			}
 		},{
 			"condition": "[equals(parameters('storageOption'), 'nfs')]",
-			"apiVersion": "[variables('apiVersionNetwork')]",
+			"apiVersion": "2017-09-01",
 			"type": "Microsoft.Network/networkSecurityGroups",
 			"name": "[concat(variables('nfsHostname'), '-nsg')]",
 			"location": "[variables('location')]",
@@ -785,7 +782,7 @@
 				}]
 			}
 		},{
-			"apiVersion": "[variables('apiVersionNetwork')]",
+			"apiVersion": "2017-09-01",
 			"type": "Microsoft.Network/networkSecurityGroups",
 			"name": "[concat(variables('openshiftMasterHostname'), '-nsg')]",
 			"location": "[variables('location')]",
@@ -827,7 +824,7 @@
 				}]
 			}
 		},{
-			"apiVersion": "[variables('apiVersionNetwork')]",
+			"apiVersion": "2017-09-01",
 			"type": "Microsoft.Network/networkSecurityGroups",
 			"name": "[concat(variables('openshiftInfraHostname'), '-nsg')]",
 			"location": "[variables('location')]",
@@ -881,7 +878,7 @@
 				}]
 			}
 		},{
-			"apiVersion": "[variables('apiVersionNetwork')]",
+			"apiVersion": "2017-09-01",
 			"type": "Microsoft.Network/networkSecurityGroups",
 			"name": "[concat(variables('openshiftNodeHostname'), '-nsg')]",
 			"location": "[variables('location')]",
@@ -945,7 +942,7 @@
 				"version": "[variables('redHatTags').version]",
 				"platform": "[variables('redHatTags').platform]"
 			},
-			"apiVersion": "[variables('apiVersionNetwork')]",
+			"apiVersion": "2017-09-01",
 			"properties": {
 				"addressSpace": {
 					"addressPrefixes": [
@@ -979,7 +976,7 @@
 			"name": "[variables('newStorageAccountArray')[copyIndex()].name]",
 			"location": "[variables('location')]",
 			"kind": "Storage",
-			"apiVersion": "[variables('apiVersionStorage')]",
+			"apiVersion": "2017-06-01",
 			"tags": {
 				"displayName": "[variables('newStorageAccountArray')[copyIndex()].tagName]",
 				"provider": "[variables('redHatTags').provider]",
@@ -999,7 +996,7 @@
 			"type": "Microsoft.Network/publicIPAddresses",
 			"name": "[variables('infraLbPublicIpDnsLabel')]",
 			"location": "[variables('location')]",
-			"apiVersion": "[variables('apiVersionNetwork')]",
+			"apiVersion": "2017-09-01",
 			"sku": {
 				"name": "Standard"
 			},
@@ -1023,7 +1020,7 @@
 			"sku": {
 				"name": "Standard"
 			},
-			"apiVersion": "[variables('apiVersionNetwork')]",
+			"apiVersion": "2017-09-01",
 			"tags": {
 				"displayName": "OpenShiftMasterPublicIP",
 				"provider": "[variables('redHatTags').provider]",
@@ -1044,7 +1041,7 @@
 			"sku":  {
 				"name": "Standard"
 			},
-			"apiVersion": "[variables('apiVersionNetwork')]",
+			"apiVersion": "2017-09-01",
 			"tags": {
 				"displayName": "BastionPublicIP",
 				"provider": "[variables('redHatTags').provider]",
@@ -1062,7 +1059,7 @@
 			"type": "Microsoft.Network/publicIPAddresses",
 			"name": "[variables('nfsPublicIpDnsLabel')]",
 			"location": "[variables('location')]",
-			"apiVersion": "[variables('apiVersionNetwork')]",
+			"apiVersion": "2017-09-01",
 			"tags": {
 				"displayName": "nfsPublicIP",
 				"provider": "[variables('redHatTags').provider]",
@@ -1081,7 +1078,7 @@
 			"type": "Microsoft.Compute/availabilitySets",
 			"name": "[variables('availabilitySetArray')[copyIndex()].name]",
 			"location": "[variables('location')]",
-			"apiVersion": "[variables('apiVersionCompute')]",
+			"apiVersion": "2017-03-30",
             "sku": {
 				"name": "[variables(variables('availabilitySetSku'))]"
 			},
@@ -1105,7 +1102,7 @@
 			"type": "Microsoft.Compute/availabilitySets",
 			"name": "nfsavailabilityset",
 			"location": "[variables('location')]",
-			"apiVersion": "[variables('apiVersionCompute')]",
+			"apiVersion": "2017-03-30",
             "sku": {
 				"name": "[variables(variables('availabilitySetSku'))]"
 			},
@@ -1127,7 +1124,7 @@
 			"sku": {
 				"name": "Standard"
 			},
-			"apiVersion": "[variables('apiVersionNetwork')]",
+			"apiVersion": "2017-09-01",
 			"tags": {
 				"displayName": "OpenShiftMasterLB",
 				"provider": "[variables('redHatTags').provider]",
@@ -1186,7 +1183,7 @@
 			"sku": {
 				"name": "Standard"
 			},
-			"apiVersion": "[variables('apiVersionNetwork')]",
+			"apiVersion": "2017-09-01",
 			"tags": {
 				"displayName": "OpenShiftInfraLB",
 				"provider": "[variables('redHatTags').provider]",
@@ -1264,7 +1261,7 @@
 			"type": "Microsoft.Network/networkInterfaces",
 			"name": "[concat(variables('bastionHostname'), '-', copyIndex(), '-nic')]",
 			"location": "[variables('location')]",
-			"apiVersion": "[variables('apiVersionNetwork')]",
+			"apiVersion": "2017-09-01",
 			"tags": {
 				"displayName": "BastionNetworkInterface",
 				"provider": "[variables('redHatTags').provider]",
@@ -1302,7 +1299,7 @@
 			"type": "Microsoft.Network/networkInterfaces",
 			"name": "[concat(variables('nfsHostname'), '-', copyIndex(), '-nic')]",
 			"location": "[variables('location')]",
-			"apiVersion": "[variables('apiVersionNetwork')]",
+			"apiVersion": "2017-09-01",
 			"tags": {
 				"displayName": "nfsNetworkInterface",
 				"provider": "[variables('redHatTags').provider]",
@@ -1340,7 +1337,7 @@
 			"type": "Microsoft.Network/networkInterfaces",
 			"name": "[concat(variables('openshiftMasterHostname'), '-', copyIndex(), '-nic')]",
 			"location": "[variables('location')]",
-			"apiVersion": "[variables('apiVersionNetwork')]",
+			"apiVersion": "2017-09-01",
 			"tags": {
 				"displayName": "OpenShiftMasterNetworkInterface",
 				"provider": "[variables('redHatTags').provider]",
@@ -1378,7 +1375,7 @@
 			"type": "Microsoft.Network/networkInterfaces",
 			"name": "[concat(variables('openshiftInfraHostname'), '-', copyIndex(), '-nic')]",
 			"location": "[variables('location')]",
-			"apiVersion": "[variables('apiVersionNetwork')]",
+			"apiVersion": "2017-09-01",
 			"tags": {
 				"displayName": "OpenShiftInfraNetworkInterfaces",
 				"provider": "[variables('redHatTags').provider]",
@@ -1416,7 +1413,7 @@
 			"type": "Microsoft.Network/networkInterfaces",
 			"name": "[concat(variables('openshiftNodeHostname'), '-', copyIndex(), '-nic')]",
 			"location": "[variables('location')]",
-			"apiVersion": "[variables('apiVersionNetwork')]",
+			"apiVersion": "2017-09-01",
 			"tags": {
 				"displayName": "OpenShiftNodeNetworkInterfaces",
 				"provider": "[variables('redHatTags').provider]",
@@ -1449,7 +1446,7 @@
 		},{
 			"name": "[concat('masterVmDeployment', copyindex())]",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "[variables('apiVersionLinkTemplate')]",
+			"apiVersion": "2015-01-01",
 			"dependsOn": [
 				"[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccount1'))]",
 				"masterNicLoop",
@@ -1540,7 +1537,7 @@
 		},{
 			"name": "[concat('infraVmDeployment', copyindex())]",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "[variables('apiVersionLinkTemplate')]",
+			"apiVersion": "2015-01-01",
 			"dependsOn": [
 				"[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccount1'))]",
 				"infraNicLoop",
@@ -1631,7 +1628,7 @@
 		},{
 			"name": "[concat('nodeVmDeployment', copyindex())]",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "[variables('apiVersionLinkTemplate')]",
+			"apiVersion": "2015-01-01",
 			"dependsOn": [
 				"[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccount2'))]",
 				"nodeNicLoop",
@@ -1722,7 +1719,7 @@
 		},{
 			"name": "[concat('BastionVmDeployment', copyindex())]",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "[variables('apiVersionLinkTemplate')]",
+			"apiVersion": "2015-01-01",
 			"dependsOn": [
 				"[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccount3'))]",
 				"bastionNicLoop",
@@ -1813,7 +1810,7 @@
 		},{
 			"name": "[concat('nfsVmDeployment', copyindex())]",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "[variables('apiVersionLinkTemplate')]",
+			"apiVersion": "2015-01-01",
 			"dependsOn": [
 				"[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccount4'))]",
 				"nfsNicLoop",
@@ -1882,7 +1879,7 @@
 			"type": "Microsoft.Compute/virtualMachines/extensions",
 			"name": "[concat(variables('nfsHostname'), '-', copyIndex(), '/prepNodes')]",
 			"location": "[variables('location')]",
-			"apiVersion": "[variables('apiVersionCompute')]",
+			"apiVersion": "2017-03-30",
 			"tags": {
 				"displayName": "PrepNodes",
 				"provider": "[variables('redHatTags').provider]",
@@ -1915,7 +1912,7 @@
 			"type": "Microsoft.Compute/virtualMachines/extensions",
 			"name": "[concat(variables('openshiftMasterHostname'), '-', copyIndex(), '/prepMaster')]",
 			"location": "[variables('location')]",
-			"apiVersion": "[variables('apiVersionCompute')]",
+			"apiVersion": "2017-03-30",
 			"tags": {
 				"displayName": "PrepMaster",
 				"provider": "[variables('redHatTags').provider]",
@@ -1948,7 +1945,7 @@
 			"type": "Microsoft.Compute/virtualMachines/extensions",
 			"name": "[concat(variables('openshiftInfraHostname'), '-', copyIndex(), '/prepNodes')]",
 			"location": "[variables('location')]",
-			"apiVersion": "[variables('apiVersionCompute')]",
+			"apiVersion": "2017-03-30",
 			"tags": {
 				"displayName": "PrepInfra",
 				"provider": "[variables('redHatTags').provider]",
@@ -1981,7 +1978,7 @@
 			"type": "Microsoft.Compute/virtualMachines/extensions",
 			"name": "[concat(variables('openshiftNodeHostname'), '-', copyIndex(), '/prepNodes')]",
 			"location": "[variables('location')]",
-			"apiVersion": "[variables('apiVersionCompute')]",
+			"apiVersion": "2017-03-30",
 			"tags": {
 				"displayName": "PrepNodes",
 				"provider": "[variables('redHatTags').provider]",
@@ -2014,7 +2011,7 @@
 			"type": "Microsoft.Compute/virtualMachines/extensions",
 			"name": "[concat(variables('bastionHostname'), '-', copyIndex(), '/deployOpenShift')]",
 			"location": "[variables('location')]",
-			"apiVersion": "[variables('apiVersionCompute')]",
+			"apiVersion": "2017-03-30",
 			"tags": {
 				"displayName": "PrepBastion",
 				"provider": "[variables('redHatTags').provider]",
@@ -2046,7 +2043,7 @@
 		},{
 			"name": "OpenShiftDeployment",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "[variables('apiVersionLinkTemplate')]",
+			"apiVersion": "2015-01-01",
 			"dependsOn": [
 				"[resourceId('Microsoft.Storage/storageAccounts', variables('newStorageAccountRegistry'))]",
 				"masterPrepLoop",
@@ -2186,7 +2183,7 @@
 			"name": "CloudPakLiteDeployment",
 			"condition": "[equals(parameters('cloudPakLicenseAgreement'), 'yes')]",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "[variables('apiVersionLinkTemplate')]",
+			"apiVersion": "2015-01-01",
 			"dependsOn": [
 				"[resourceId('Microsoft.Storage/storageAccounts', variables('newStorageAccountRegistry'))]",
 				"[resourceId('Microsoft.Storage/storageAccounts', variables('dataStorageAccount'))]",
@@ -2250,7 +2247,7 @@
 			"name": "CloudPakWSLDeployment",
 			"condition": "[and(equals(parameters('cloudPakLicenseAgreement'), 'yes'), equals(parameters('installWatsonStudioLibrary'), 'yes'))]",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "[variables('apiVersionLinkTemplate')]",
+			"apiVersion": "2015-01-01",
 			"dependsOn": [
 				"[resourceId('Microsoft.Storage/storageAccounts', variables('newStorageAccountRegistry'))]",
 				"[resourceId('Microsoft.Storage/storageAccounts', variables('dataStorageAccount'))]",
@@ -2315,7 +2312,7 @@
 			"name": "CloudPakWMLDeployment",
 			"condition": "[and(equals(parameters('cloudPakLicenseAgreement'), 'yes'), or(equals(parameters('installWatsonMachineLearning'), 'yes'), equals(parameters('installWatsonOpenscaleAndWatsonMachineLearning'), 'yes')))]",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "[variables('apiVersionLinkTemplate')]",
+			"apiVersion": "2015-01-01",
 			"dependsOn": [
 				"[resourceId('Microsoft.Storage/storageAccounts', variables('newStorageAccountRegistry'))]",
 				"[resourceId('Microsoft.Storage/storageAccounts', variables('dataStorageAccount'))]",
@@ -2380,7 +2377,7 @@
 			"name": "CloudPakPreWKCDeployment",
 			"condition": "[and(equals(parameters('cloudPakLicenseAgreement'), 'yes'), equals(parameters('installWatsonKnowledgeCatalog'), 'yes'))]",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "[variables('apiVersionLinkTemplate')]",
+			"apiVersion": "2015-01-01",
 			"dependsOn": [
 				"[resourceId('Microsoft.Storage/storageAccounts', variables('newStorageAccountRegistry'))]",
 				"[resourceId('Microsoft.Storage/storageAccounts', variables('dataStorageAccount'))]",
@@ -2445,7 +2442,7 @@
 			"name": "CloudPakWKCDeployment",
 			"condition": "[and(equals(parameters('cloudPakLicenseAgreement'), 'yes'), equals(parameters('installWatsonKnowledgeCatalog'), 'yes'))]",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "[variables('apiVersionLinkTemplate')]",
+			"apiVersion": "2015-01-01",
 			"dependsOn": [
 				"[resourceId('Microsoft.Storage/storageAccounts', variables('newStorageAccountRegistry'))]",
 				"[resourceId('Microsoft.Storage/storageAccounts', variables('dataStorageAccount'))]",
@@ -2510,7 +2507,7 @@
 			"name": "CloudPakDVDeployment",
 			"condition": "[and(equals(parameters('cloudPakLicenseAgreement'), 'yes'), equals(parameters('installDataVirtualization'), 'yes'))]",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "[variables('apiVersionLinkTemplate')]",
+			"apiVersion": "2015-01-01",
 			"dependsOn": [
 				"[resourceId('Microsoft.Storage/storageAccounts', variables('newStorageAccountRegistry'))]",
 				"[resourceId('Microsoft.Storage/storageAccounts', variables('dataStorageAccount'))]",
@@ -2575,7 +2572,7 @@
 			"name": "CloudPakWOSDeployment",
 			"condition": "[and(equals(parameters('cloudPakLicenseAgreement'), 'yes'), equals(parameters('installWatsonOpenscaleAndWatsonMachineLearning'), 'yes'))]",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "[variables('apiVersionLinkTemplate')]",
+			"apiVersion": "2015-01-01",
 			"dependsOn": [
 				"[resourceId('Microsoft.Storage/storageAccounts', variables('newStorageAccountRegistry'))]",
 				"[resourceId('Microsoft.Storage/storageAccounts', variables('dataStorageAccount'))]",
@@ -2640,7 +2637,7 @@
 		},{
 			"condition": "[equals(parameters('enableBackup'), 'true')]",
 			"type": "Microsoft.RecoveryServices/vaults",
-			"apiVersion": "2016-06-01",
+			"apiVersion": "2018-07-10",
 			"location": "[variables('location')]",
 			"name": "[variables('vaultName')]",
 			"sku": {
