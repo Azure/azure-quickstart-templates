@@ -1,5 +1,5 @@
 {
-	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
 	"contentVersion": "1.0.0.0",
 	"parameters": {
 		"_artifactsLocation": {
@@ -8,6 +8,19 @@
 				"description": "The base URL where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
 			}
 		},
+		"_artifactsLocationSasToken": {
+			"type": "secureString",
+			"metadata": {
+				"description": "Token for the base URL where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated.",
+			},
+			"defaultValue": ""
+		},
+		"location": {
+            "type": "string",
+            "metadata": {
+              "description": "Location for all resources."
+            }
+        },
 		"additionalInstanceCount": {
 			"type": "int",
 			"defaultValue": 1,
@@ -159,7 +172,6 @@
 	"variables": {
 		"apiVersionCompute": "2017-03-30",
 		"apiVersionStorage": "2017-06-01",
-		"location": "[resourceGroup().location]",
 		"redHatTags": {
 			"app": "OpenShiftEnterprise",
 			"version": "3.11",
@@ -569,7 +581,7 @@
 		{
 			"type": "Microsoft.Storage/storageAccounts",
 			"name": "[variables('newStorageAccountArray')[0].name]",
-			"location": "[variables('location')]",
+			"location": "[parameters('location')]",
 			"kind": "Storage",
 			"apiVersion": "2019-06-01",
 			"tags": {
@@ -586,7 +598,7 @@
 		},{
 			"type": "Microsoft.Network/networkInterfaces",
 			"name": "[concat(variables('hostname'), '-', copyIndex(), '-nic')]",
-			"location": "[variables('location')]",
+			"location": "[parameters('location')]",
 			"apiVersion": "2019-11-01",
 			"tags": {
 				"displayName": "OpenShiftNodeNetworkInterfaces",
@@ -611,7 +623,7 @@
 		},{
 			"name": "[concat('additionalVmDeployment', copyindex())]",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2019-09-01",
+			"apiVersion": "2019-05-01",
 			"dependsOn": [
 				"nodeNicLoop",
 				"[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccount'))]"
@@ -628,7 +640,10 @@
 				},
 				"parameters": {
 					"location": {
-						"value": "[variables('location')]"
+						"value": "[parameters('location')]"
+					},
+					"_artifactsLocationSasToken": {
+						"value": "[parameters('_artifactsLocationSasToken')]"
 					},
 					"sshKeyPath": {
 						"value": "[variables('sshKeyPath')]"
@@ -702,7 +717,7 @@
 			"type": "Microsoft.Compute/virtualMachines/extensions",
 			"condition": "[equals(parameters('nodeOrMaster'), 'master')]",
 			"name": "[concat(parameters('newNodesClusterPrefix'), '-master-', copyIndex(), '/prepMaster')]",
-			"location": "[variables('location')]",
+			"location": "[parameters('location')]",
 			"apiVersion": "2019-07-01",
 			"tags": {
 				"displayName": "PrepMaster",
@@ -729,14 +744,14 @@
 					]
 				},
 				"protectedSettings": {
-					"commandToExecute": "[concat('bash ', variables('masterPrepScriptFileName'), ' ', variables('newStorageAccountPersistentVolume1'), ' ', parameters('adminUsername'), ' ', variables('location'))]"
+					"commandToExecute": "[concat('bash ', variables('masterPrepScriptFileName'), ' ', variables('newStorageAccountPersistentVolume1'), ' ', parameters('adminUsername'), ' ', parameters('location'))]"
 				}
 			}
 		},{
 			"type": "Microsoft.Compute/virtualMachines/extensions",
 			"condition": "[equals(parameters('nodeOrMaster'), 'node')]",
 			"name": "[concat(parameters('newNodesClusterPrefix'), '-node-', copyIndex(), '/prepNodes')]",
-			"location": "[variables('location')]",
+			"location": "[parameters('location')]",
 			"apiVersion": "2019-07-01",
 			"tags": {
 				"displayName": "PrepNodes",
@@ -770,7 +785,7 @@
 			"type": "Microsoft.Compute/virtualMachines/extensions",
 			"condition": "[equals(parameters('nodeOrMaster'), 'infra')]",
 			"name": "[concat(parameters('newNodesClusterPrefix'), '-infra-', copyIndex(), '/prepNodes')]",
-			"location": "[variables('location')]",
+			"location": "[parameters('location')]",
 			"apiVersion": "2019-07-01",
 			"tags": {
 				"displayName": "PrepInfra",
@@ -803,7 +818,7 @@
 		},{
 			"type": "Microsoft.Compute/virtualMachines/extensions",
 			"name": "[concat(parameters('openshiftClusterPrefix'), '-bastion-0', '/deployOpenShift')]",
-			"location": "[variables('location')]",
+			"location": "[parameters('location')]",
 			"apiVersion": "2019-07-01",
 			"tags": {
 				"displayName": "AddNodes",
