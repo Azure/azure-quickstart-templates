@@ -1,0 +1,121 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"_artifactsLocation": {
+			"type": "string",
+			"metadata": {
+				"description": "The base URL where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+			}
+		},
+		"apiVersionCompute": {
+			"type": "string",
+			"metadata": {
+				"description": "API version for compute resources"
+			}
+		},
+		"cloudPakDeploymentScriptUrl": {
+			"type": "string",
+			"metadata": {
+				"description": "Bastion prep script Url"
+			}
+		},
+		"cloudPakDeploymentScriptFileName": {
+			"type": "string",
+			"metadata": {
+				"description": "Bastion prep script file name"
+			}
+		},
+		"openshiftMasterHostname": {
+			"type": "string",
+			"metadata": {
+				"description": "OpenShift Master hostname"
+			}
+		},
+		"redHatTags": {
+			"type": "object",
+			"metadata": {
+				"description": "Red Hat Tags"
+			}
+        },
+        "ocuser": {
+			"type": "string",
+			"metadata": {
+				"description": "OpenShift Username"
+			}
+        },
+        "ocpassword": {
+			"type": "string",
+			"metadata": {
+				"description": "OpenShift Password"
+			}
+		},
+		"storageOption": {
+			"type": "string",
+			"metadata": {
+				"description": "Storage for CPD installation"
+			}
+		},
+		"masterPublicHostname": {
+			"type": "string",
+			"metadata": {
+				"description": "Storage for CPD installation"
+			}
+		},
+		"bastionHostname": {
+			"type": "string",
+			"metadata": {
+				"description": "Bastion Hostname"
+			}
+		},
+		"projectName": {
+			"type": "string",
+			"metadata": {
+				"description": "Project name to deploy CloudPak for Data to"
+			}
+		},
+		"apiKeyUsername": {
+			"type": "string",
+			"defaultValue": "iamapikey",
+			"metadata": {
+				"description": "registry entitlement key username"
+			}
+		},
+		"apiKey": {
+			"type": "string",
+			"defaultValue": "",
+			"metadata": {
+				"description": "registry entitlement key"
+			}
+		}
+	},
+	"variables": {},
+	"resources": [{
+		"type": "Microsoft.Compute/virtualMachines/extensions",
+		"name": "[concat(parameters('bastionHostname'), '-0/deployOpenShift')]",
+		"location": "[resourceGroup().location]",
+		"apiVersion": "[parameters('apiVersionCompute')]",
+		"tags": {
+			"displayName": "DeployCloudPak",
+			"provider": "[parameters('redHatTags').provider]",
+			"app": "[parameters('redHatTags').app]",
+			"version": "[parameters('redHatTags').version]",
+			"platform": "[parameters('redHatTags').platform]"
+		},
+		"properties": {
+			"publisher": "Microsoft.Azure.Extensions",
+			"type": "CustomScript",
+			"typeHandlerVersion": "2.0",
+			"autoUpgradeMinorVersion": true,
+			"settings": {
+				"fileUris": [
+					"[parameters('cloudPakDeploymentScriptUrl')]"
+				]
+			},
+			"protectedSettings": {
+				"commandToExecute": "[concat('bash ', parameters('cloudPakDeploymentScriptFileName'), ' \"', parameters('ocuser'), '\"', ' \"', parameters('ocpassword'), '\"', ' \"', parameters('masterPublicHostname'), '\"', ' \"', parameters('projectName'), '\"', ' \"', parameters('apiKeyUsername'), '\"', ' \"', parameters('apiKey'), '\"' )]"
+			}
+		}
+	}],
+	"outputs": {}
+}
