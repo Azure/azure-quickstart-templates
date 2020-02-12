@@ -1,5 +1,5 @@
 #!/bin/bash
-## Do initial preperation of the non-ansible boxes. This should be restricted to preparing for ansible to
+## Do initial preperation of the non-ansible boxes. This should be restricted to preparing for ansible to 
 ## reach onto the box by installing its prerequest (should already be present on redhat), installing nfs to
 ## mount the ansible controller share, and copying the public key there into the authorized keys.
 #
@@ -24,16 +24,16 @@ CIFS_ANSIBLE_KEYS="${CIFS_MOUNT_POINT}/setup/ansible_key"
 #CIFS_ANSIBLE_GROUPS_DIR="${CIFS_MOUNT_POINT}/setup/ansible/groups"
 cifs_server_fqdn="${azure_storage_account}.file.core.windows.net"
 
-
+yum install -y yum-utils
 # on 4/17, we started having intermittent issues with this repository being present for updates, so configuring to skip
 yum-config-manager --save --setopt=rhui-microsoft-azure-rhel7-eus.skip_if_unavailable=true
 
 
-# remove the requiretty from the sudoers file. Per bug https://bugzilla.redhat.com/show_bug.cgi?id=1020147 this is unnecessary and has been removed on future releases of redhat,
+# remove the requiretty from the sudoers file. Per bug https://bugzilla.redhat.com/show_bug.cgi?id=1020147 this is unnecessary and has been removed on future releases of redhat, 
 # so is just a slowdown that denies pipelining and makes the non-tty session from azure extentions break on sudo without faking one (my prefered method is ssh back into the same user, but seriously..)
 sed -i -e '/Defaults    requiretty/{ s/.*/# Defaults    requiretty/ }' /etc/sudoers
 
-yum install -y cifs-utils
+yum install -y cifs-utils time
 
 if [ ! -d "/etc/smbcredentials" ]; then
     sudo mkdir /etc/smbcredentials
@@ -94,7 +94,9 @@ chmod 777 /mnt/resource/sastmp/cascache
 chmod 777 /mnt/resource/sastmp/saswork
 ln -s /mnt/resource/sastmp /sastmp
 
-
+#Disable selinux since viya-ark no longer does this?
+setenforce 0
+sed -i 's/^SELINUX=.*/SELINUX=disabled/g' /etc/selinux/config && cat /etc/sysconfig/selinux
 
 #
 # semaphore that we are ready
