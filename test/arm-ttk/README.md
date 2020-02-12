@@ -1,5 +1,7 @@
 ﻿# Running Tests
 
+**NOTE: the arm-ttk will soon be moving to https://github.com/Azure/arm-ttk**
+
 Tests can be run directly in PowerShell, or run from the command line using a wrapper script.
 
 You can run the full suite of tests by using Test-AzTemplate.cmd (on Windows) or Test-AzTemplate.sh (on Linux), and passing in the path to a template.
