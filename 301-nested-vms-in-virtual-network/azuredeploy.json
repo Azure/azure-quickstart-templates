@@ -1,0 +1,547 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/301-nested-vms-in-virtual-network/"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+      },
+      "defaultValue": ""
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "HostPublicIPAddressName": {
+      "type": "string",
+      "defaultValue": "HVHOSTPIP",
+      "metadata": {
+        "description": "Resource Name for Public IP address attached to Hyper-V Host"
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "VirtualNetwork",
+      "metadata": {
+        "description": "Hyper-V Host and Guest VMs Virtual Network"
+      }
+    },
+    "virtualNetworkAddressPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual Network Address Space"
+      },
+      "defaultValue": "10.0.0.0/22"
+    },
+    "NATSubnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "NAT Subnet Name"
+      },
+      "defaultValue": "NAT"
+    },
+    "NATSubnetPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "NAT Subnet Address Space"
+      },
+      "defaultValue": "10.0.0.0/24"
+    },
+    "hyperVSubnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Hyper-V Host Subnet Name"
+      },
+      "defaultValue": "Hyper-V-LAN"
+    },
+    "hyperVSubnetPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Hyper-V Host Subnet Address Space"
+      },
+      "defaultValue": "10.0.1.0/24"
+    },
+    "ghostedSubnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Ghosted Subnet Name"
+      },
+      "defaultValue": "Ghosted"
+    },
+    "ghostedSubnetPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Ghosted Subnet Address Space"
+      },
+      "defaultValue": "10.0.2.0/24"
+    },
+    "azureVMsSubnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Azure VMs Subnet Name"
+      },
+      "defaultValue": "Azure-VMs"
+    },
+    "azureVMsSubnetPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Azure VMs Address Space"
+      },
+      "defaultValue": "10.0.3.0/24"
+    },
+    "HostNetworkInterface1Name": {
+      "type": "string",
+      "metadata": {
+        "description": "Hyper-V Host Network Interface 1 Name, attached to NAT Subnet"
+      },
+      "defaultValue": "HVHOSTNIC1"
+    },
+    "HostNetworkInterface2Name": {
+      "type": "string",
+      "metadata": {
+        "description": "Hyper-V Host Network Interface 2 Name, attached to Hyper-V LAN Subnet"
+      },
+      "defaultValue": "HVHOSTNIC2"
+    },
+    "HostVirtualMachineName": {
+      "type": "string",
+      "defaultValue": "HVHOST",
+      "maxLength": 15,
+      "metadata": {
+        "description": "Name of Hyper-V Host Virtual Machine, Maximum of 15 characters, use letters and numbers only."
+      }
+    },
+    "HostVirtualMachineSize": {
+      "type": "string",
+      "defaultValue": "Standard_D4s_v3",
+      "allowedValues": [
+        "Standard_D2_v3",
+        "Standard_D4_v3",
+        "Standard_D8_v3",
+        "Standard_D16_v3",
+        "Standard_D32_v3",
+        "Standard_D2s_v3",
+        "Standard_D4s_v3",
+        "Standard_D8s_v3",
+        "Standard_D16s_v3",
+        "Standard_D32s_v3",
+        "Standard_D48_v3",
+        "Standard_D64_v3",
+        "Standard_E2_v3",
+        "Standard_E4_v3",
+        "Standard_E8_v3",
+        "Standard_E16_v3",
+        "Standard_E20_v3",
+        "Standard_E32_v3",
+        "Standard_E48_v3",
+        "Standard_E64_v3",
+        "Standard_D48s_v3",
+        "Standard_D64s_v3",
+        "Standard_E2s_v3",
+        "Standard_E4s_v3",
+        "Standard_E8s_v3",
+        "Standard_E16s_v3",
+        "Standard_E20s_v3",
+        "Standard_E32s_v3",
+        "Standard_E48s_v3",
+        "Standard_E64s_v3"
+      ],
+      "metadata": {
+        "description": "Size of the Host Virtual Machine"
+      }
+    },
+    "HostAdminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Admin Username for the Host Virtual Machine"
+      }
+    },
+    "HostAdminPassword": {
+      "type": "secureString",
+      "metadata": {
+        "description": "Admin User Password for the Host Virtual Machine"
+      }
+    }
+  },
+  "variables": {
+    "NATSubnetNSGName": "[concat(parameters('NATSubnetName'), 'NSG')]",
+    "hyperVSubnetNSGName": "[concat(parameters('hyperVSubnetName'), 'NSG')]",
+    "ghostedSubnetNSGName": "[concat(parameters('ghostedSubnetName'), 'NSG')]",
+    "azureVMsSubnetNSGName": "[concat(parameters('azureVMsSubnetName'), 'NSG')]",
+    "azureVMsSubnetUDRName": "[concat(parameters('azureVMsSubnetName'), 'UDR')]",
+    "DSCInstallWindowsFeaturesUri": "[uri(parameters('_artifactsLocation'), concat('dsc/dscinstallwindowsfeatures.zip', parameters('_artifactsLocationSasToken')))]",
+    "HVHostSetupScriptUri": "[uri(parameters('_artifactsLocation'), concat('hvhostsetup.ps1', parameters('_artifactsLocationSasToken')))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2019-04-01",
+      "name": "[parameters('HostPublicIPAddressName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "basic"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[toLower(parameters('HostVirtualMachineName'))]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2019-04-01",
+      "name": "[variables('NATSubnetNSGName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2019-04-01",
+      "name": "[variables('hyperVSubnetNSGName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2019-04-01",
+      "name": "[variables('ghostedSubnetNSGName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2019-04-01",
+      "name": "[variables('azureVMsSubnetNSGName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+      }
+    },
+    {
+      "type": "Microsoft.Network/routeTables",
+      "apiVersion": "2019-04-01",
+      "name": "[variables('azureVMsSubnetUDRName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2019-04-01",
+      "name": "[parameters('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[variables('NATSubnetNSGName')]",
+        "[variables('hyperVSubnetNSGName')]",
+        "[variables('ghostedSubnetNSGName')]",
+        "[variables('azureVMsSubnetNSGName')]",
+        "[variables('azureVMsSubnetUDRName')]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('virtualNetworkAddressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('NATSubnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('NATSubnetPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('NATSubnetNSGName'))]"
+              }
+            }
+          },
+          {
+            "name": "[parameters('hyperVSubnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('hyperVSubnetPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('hyperVSubnetNSGName'))]"
+              }
+            }
+          },
+          {
+            "name": "[parameters('ghostedSubnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('ghostedSubnetPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('ghostedSubnetNSGName'))]"
+              }
+            }
+          },
+          {
+            "name": "[parameters('azureVMsSubnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('azureVMsSubnetPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('azureVMsSubnetNSGName'))]"
+              },
+              "routeTable": {
+                "id": "[resourceId('Microsoft.Network/routeTables', variables('azureVMsSubnetUDRName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2019-04-01",
+      "name": "[parameters('HostNetworkInterface1Name')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[parameters('virtualNetworkName')]",
+        "[parameters('HostPublicIPAddressName')]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig",
+            "properties": {
+              "primary": "true",
+              "privateIPAllocationMethod": "dynamic",
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('NATSubnetName'))]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('HostPublicIPAddressName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2019-04-01",
+      "name": "[parameters('HostNetworkInterface2Name')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[parameters('virtualNetworkName')]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig",
+            "properties": {
+              "primary": "true",
+              "privateIPAllocationMethod": "dynamic",
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('hyperVSubnetName'))]"
+              }
+            }
+          }
+        ],
+        "enableIPForwarding": true
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-05-01",
+      "name": "UpdateNetworking",
+      "dependsOn": [
+        "[parameters('HostNetworkInterface1Name')]",
+        "[parameters('HostNetworkInterface2Name')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "resources": [
+            {
+              "type": "Microsoft.Network/routeTables",
+              "apiVersion": "2019-04-01",
+              "name": "[variables('azureVMsSubnetUDRName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "routes": [
+                  {
+                    "name": "Nested-VMs",
+                    "properties": {
+                      "addressPrefix": "[parameters('ghostedSubnetPrefix')]",
+                      "nextHopType": "VirtualAppliance",
+                      "nextHopIPAddress": "[reference(parameters('HostNetworkInterface2Name')).ipconfigurations[0].properties.privateIPAddress]"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.Network/networkInterfaces",
+              "apiVersion": "2019-04-01",
+              "name": "[parameters('HostNetworkInterface1Name')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "ipConfigurations": [
+                  {
+                    "name": "ipconfig",
+                    "properties": {
+                      "primary": "true",
+                      "privateIPAllocationMethod": "Static",
+                      "privateIPAddress": "[reference(parameters('HostNetworkInterface1Name')).ipconfigurations[0].properties.privateIPAddress]",
+                      "subnet": {
+                        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('NATSubnetName'))]"
+                      },
+                      "publicIPAddress": {
+                        "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('HostPublicIPAddressName'))]"
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.Network/networkInterfaces",
+              "apiVersion": "2019-04-01",
+              "name": "[parameters('HostNetworkInterface2Name')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "ipConfigurations": [
+                  {
+                    "name": "ipconfig",
+                    "properties": {
+                      "primary": "true",
+                      "privateIPAllocationMethod": "Static",
+                      "privateIPAddress": "[reference(parameters('HostNetworkInterface2Name')).ipconfigurations[0].properties.privateIPAddress]",
+                      "subnet": {
+                        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('hyperVSubnetName'))]"
+                      }
+                    }
+                  }
+                ],
+                "enableIPForwarding": true
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2019-03-01",
+      "location": "[parameters('location')]",
+      "name": "[parameters('HostVirtualMachineName')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'UpdateNetworking')]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('HostVirtualMachineSize')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "MicrosoftWindowsServer",
+            "offer": "WindowsServer",
+            "Sku": "2016-Datacenter",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(parameters('HostVirtualMachineName'), 'OsDisk')]",
+            "createOption": "fromImage",
+            "managedDisk": {
+              "storageAccountType": "Premium_LRS"
+            },
+            "caching": "ReadWrite"
+          },
+          "DataDisks": [
+            {
+              "lun": 0,
+              "name": "[concat(parameters('HostVirtualMachineName'), 'DataDisk1')]",
+              "createOption": "Empty",
+              "diskSizeGB": 1024,
+              "caching": "ReadOnly",
+              "managedDisk": {
+                "storageAccountType": "Premium_LRS"
+              }
+            }
+          ]
+        },
+        "osProfile": {
+          "computerName": "[parameters('HostVirtualMachineName')]",
+          "adminUsername": "[parameters('HostAdminUsername')]",
+          "adminPassword": "[parameters('hostAdminPassword')]"
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('HostNetworkInterface1Name'))]",
+              "properties": {
+                "primary": true
+              }
+            },
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('HostNetworkInterface2Name'))]",
+              "properties": {
+                "primary": false
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2019-03-01",
+      "location": "[parameters('location')]",
+      "name": "[concat(parameters('HostVirtualMachineName'), '/InstallWindowsFeatures')]",
+      "dependsOn": [
+        "[parameters('HostVirtualMachineName')]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.77",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "wmfVersion": "latest",
+          "configuration": {
+            "url": "[variables('DSCInstallWindowsFeaturesUri')]",
+            "script": "DSCInstallWindowsFeatures.ps1",
+            "function": "InstallWindowsFeatures"
+          }
+        }
+      }
+    },
+    {
+       "type": "Microsoft.Compute/virtualMachines/extensions",
+       "apiVersion": "2019-03-01",
+       "location": "[parameters('location')]",
+       "name": "[concat(parameters('HostVirtualMachineName'), '/HVHOSTSetup')]",
+       "dependsOn":[
+        "[parameters('HostVirtualMachineName')]",
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('HostVirtualMachineName'), 'InstallWindowsFeatures')]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "CustomScriptExtension",
+        "typeHandlerVersion": "1.9",
+        "autoUpgradeMinorVersion": true,
+        "settings":{
+          "fileUris": [
+            "[variables('HVHostSetupScriptUri')]"
+          ],
+          "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File HVHostSetup.ps1 -NIC1IPAddress ', reference(parameters('HostNetworkInterface1Name')).ipconfigurations[0].properties.privateIPAddress, ' -NIC2IPAddress ', reference(parameters('HostNetworkInterface2Name')).ipconfigurations[0].properties.privateIPAddress, ' -GhostedSubnetPrefix ', parameters('ghostedSubnetPrefix'), ' -VirtualNetworkPrefix ', parameters('virtualNetworkAddressPrefix'))]"
+        }
+      }
+    }
+  ],
+  "outputs": {
+  }
+}
