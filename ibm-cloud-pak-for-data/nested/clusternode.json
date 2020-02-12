@@ -1,0 +1,298 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"location": {
+			"type": "string",
+			"minLength": 1,
+			"metadata": {
+				"description": "Datacenter Region Location"
+			}
+		},
+		"sshKeyPath": {
+			"type": "string",
+			"minLength": 1,
+			"metadata": {
+				"description": "SSH Public Key Path"
+			}
+		},
+		"sshPublicKey": {
+			"type": "string",
+			"minLength": 1,
+			"metadata": {
+				"description": "SSH Public Key"
+			}
+		},
+		"dataDiskSize": {
+			"type": "int",
+			"metadata": {
+				"description": "Size of Data Disk"
+			}
+		},
+		"adminUsername": {
+			"type": "string",
+			"minLength": 1,
+			"metadata": {
+				"description": "Admin Username"
+			}
+		},
+		"vmSize": {
+			"type": "string",
+			"minLength": 1,
+			"metadata": {
+				"description": "VM Size"
+			}
+		},
+		"availabilitySet": {
+			"type": "string",
+			"minLength": 1,
+			"metadata": {
+				"description": "Name of Availibility Set"
+			}
+		},
+		"hostname": {
+			"type": "string",
+			"minLength": 1,
+			"metadata": {
+				"description": "VM Hostname"
+			}
+		},
+		"unmanagedOsDiskUri": {
+			"type": "string",
+			"metadata": {
+				"description": "Unmanaged OS disk uri"
+			}
+		},
+		"unmanagedDataDiskUri": {
+			"type": "string",
+			"metadata": {
+				"description": "Unmanaged data disk uri"
+			}
+		},
+		"role": {
+			"type": "string",
+			"metadata": {
+				"description": "VM Role for tag"
+			}
+		},
+		"vmStorageType": {
+			"type": "string",
+			"metadata": {
+				"description": "VM Storage Type"
+			}
+		},
+		"storageKind": {
+			"type": "string",
+			"metadata": {
+				"description": "Managed or Unmanaged disk"
+			}
+		},
+		"newStorageAccountOs": {
+			"type": "string",
+			"metadata": {
+				"description": "Storage Account for OS disk"
+			}
+		},
+		"newStorageAccountData": {
+			"type": "string",
+			"metadata": {
+				"description": "Storage Account for data disk"
+			}
+		},
+		"diagStorageAccount": {
+			"type": "string",
+			"metadata": {
+				"description": "Diagnostics Storage Account"
+			}
+		},
+		"apiVersionStorage": {
+			"type": "string",
+			"metadata": {
+				"description": "Storage API Version"
+			}
+		},
+		"apiVersionCompute": {
+			"type": "string",
+			"metadata": {
+				"description": "Compute API Version"
+			}
+		},
+		"imageReference": {
+			"type": "object",
+			"metadata": {
+				"description": "Image Reference"
+			}
+		},
+		"redHatTags": {
+			"type": "object",
+			"metadata": {
+				"description": "Red Hat Tags"
+			}
+		},
+		"storageType": {
+			"type": "string",
+			"metadata":{
+				"description": "nfs or portworx"
+			}
+		},
+		"singleZoneOrMultiZone": {
+			"type": "string",
+			"defaultValue": "single",
+			"allowedValues": [
+				"single", "multi"
+			],
+			"metadata": {
+				"description": "Deploy to a Single AZ or multiple AZs"
+			}
+		},
+		"zone": {
+			"type": "int",
+			"metadata":{
+				"description": "Availability Zone"
+			}
+		}
+	},
+	"variables": {
+		"storagePrefix": "[if(equals(parameters('storageType'), 'nfs'), '', 'data')]",
+		"managedStorageProfile": {
+			"imageReference": "[parameters('imageReference')]",
+			"osDisk": {
+				"name": "[concat(parameters('hostName'), '-osdisk')]",
+				"managedDisk": {
+					"storageAccountType": "[parameters('vmStorageType')]"
+				},
+				"caching": "ReadWrite",
+				"createOption": "FromImage",
+				"diskSizeGB": 256,
+				"osType": "Linux"
+			}
+		},
+		"datamanagedStorageProfile": {
+			"imageReference": "[parameters('imageReference')]",
+			"osDisk": {
+				"name": "[concat(parameters('hostName'), '-osdisk')]",
+				"managedDisk": {
+					"storageAccountType": "[parameters('vmStorageType')]"
+				},
+				"caching": "ReadWrite",
+				"createOption": "FromImage",
+				"diskSizeGB": 256,
+				"osType": "Linux"
+			},
+			"dataDisks": [{
+				"name": "[concat(parameters('hostName'), '-docker-pool')]",
+				"diskSizeGB": "[parameters('dataDiskSize')]",
+				"lun": 0,
+				"managedDisk": {
+					"storageAccountType": "[parameters('vmStorageType')]"
+				},
+				"createOption": "Empty"
+			}]
+		},
+		"dataunmanagedStorageProfile": {
+			"imageReference": "[parameters('imageReference')]",
+			"osDisk": {
+				"name": "[concat(parameters('hostName'), '-osdisk')]",
+				"vhd": {
+					"uri": "[concat(parameters('unmanagedOsDiskUri'), 'vhds/', parameters('hostname'), '-osdisk.vhd')]"
+				},
+				"caching": "ReadWrite",
+				"createOption": "FromImage",
+				"diskSizeGB": 512
+			}
+		},
+		"unmanagedStorageProfile": {
+			"imageReference": "[parameters('imageReference')]",
+			"osDisk": {
+				"name": "[concat(parameters('hostName'), '-osdisk')]",
+				"vhd": {
+					"uri": "[concat(parameters('unmanagedOsDiskUri'), 'vhds/', parameters('hostname'), '-osdisk.vhd')]"
+				},
+				"caching": "ReadWrite",
+				"createOption": "FromImage",
+				"diskSizeGB": 512
+			},
+			"dataDisks": [{
+				"name": "[concat(parameters('hostname'), '-docker-pool')]",
+				"diskSizeGB": "[parameters('dataDiskSize')]",
+				"lun": 0,
+				"vhd": {
+					"uri": "[concat(parameters('unmanagedDataDiskUri'), 'vhds/', parameters('hostname'), '-docker-pool.vhd')]"
+				},
+				"createOption": "Empty"
+			}]
+		},
+		"storageProfile": "[concat(parameters('storageKind'), 'StorageProfile')]",
+		"singleZone" : [],
+		"multiZone": ["[parameters('zone')]"],
+		"multiProperties": {
+			"hardwareProfile": {
+				"vmSize": "[parameters('vmSize')]"
+			},
+			"osProfile": {
+				"computerName": "[parameters('hostname')]",
+				"adminUsername": "[parameters('adminUsername')]",
+				"linuxConfiguration": {
+					"disablePasswordAuthentication": true,
+					"ssh": {
+						"publicKeys": [{
+							"path": "[parameters('sshKeyPath')]",
+							"keyData": "[parameters('sshPublicKey')]"
+						}]
+					}
+				}
+			},
+			"storageProfile": "[variables(concat(variables('storagePrefix'),variables('storageProfile')))]",
+			"networkProfile": {
+				"networkInterfaces": [{
+					"id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('hostname'), '-nic'))]"
+				}]
+			}
+		},
+		"singleProperties": {
+			"availabilitySet" : {
+				"id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySet'))]"
+			},
+			"hardwareProfile": {
+				"vmSize": "[parameters('vmSize')]"
+			},
+			"osProfile": {
+				"computerName": "[parameters('hostname')]",
+				"adminUsername": "[parameters('adminUsername')]",
+				"linuxConfiguration": {
+					"disablePasswordAuthentication": true,
+					"ssh": {
+						"publicKeys": [{
+							"path": "[parameters('sshKeyPath')]",
+							"keyData": "[parameters('sshPublicKey')]"
+						}]
+					}
+				}
+			},
+			"storageProfile": "[variables(concat(variables('storagePrefix'),variables('storageProfile')))]",
+			"networkProfile": {
+				"networkInterfaces": [{
+					"id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('hostname'), '-nic'))]"
+				}]
+			}
+		}
+	},
+	"resources": [
+		{
+			"type": "Microsoft.Compute/virtualMachines",
+			"name": "[parameters('hostname')]",
+			"zones" : "[variables(concat(parameters('singleZoneOrMultiZone'),'Zone'))]",
+			"location": "[parameters('location')]",
+			"apiVersion": "[parameters('apiVersionCompute')]",
+			"tags": {
+				"Role": "[parameters('role')]",
+				"provider": "[parameters('redHatTags').provider]",
+				"app": "[parameters('redHatTags').app]",
+				"version": "[parameters('redHatTags').version]",
+				"platform": "[parameters('redHatTags').platform]"
+			},
+			"properties": "[variables(concat(parameters('singleZoneOrMultiZone'),'Properties'))]"
+		}
+	],
+	"outputs": {}
+}
