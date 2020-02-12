@@ -14,7 +14,7 @@ ScriptDirectory="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 #Setup the watcher locations to target
 PID_FILE="/tmp/install_runner.pid"
 RETURN_FILE="/tmp/install_runner.out"
-FILE_OF_RECORD="/tmp/install_runner.log"
+FILE_OF_RECORD="/var/log/sas/install/install_runner.log"
 if [ -z "$TOUCHPOINT_FILE" ]; then
     TOUCHPOINT_FILE="$RETURN_FILE"
 fi

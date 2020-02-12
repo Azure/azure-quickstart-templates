@@ -18,9 +18,10 @@
 
 This README for  SAS Viya Quickstart Template for Azure is used to deploy the following SAS Viya products in the Azure cloud:
 
-* SAS Visual Analytics 8.3.1 on Linux
-* SAS Visual Statistics 8.3.1 on Linux
-* SAS Visual Data Mining and Machine Learning 8.3.1 on Linux
+* SAS Visual Analytics 8.5 on Linux
+* SAS Visual Statistics 8.5 on Linux
+* SAS Visual Data Mining and Machine Learning 8.5 on Linux
+* SAS Data Preparation 2.5
 
 This Quickstart is a reference architecture for users who want to deploy the SAS platform, using microservices and other cloud-friendly technologies. By deploying the SAS platform in Azure, you get SAS analytics, data visualization, and machine-learning capabilities in an Azure-validated environment. 
 
@@ -35,6 +36,8 @@ For assistance with SAS software, contact  [SAS Technical Support](https://suppo
 1. [Best Practices When Deploying SAS Viya on Azure](#Best-Practices)
 1. [Deployment Steps](#Deployment)
 1. [Additional Deployment Details](#deployment-details)
+    1. [User Accounts](#useraccounts)
+    1. [Important File and Folder Locations](#filefolderlocations)
 1. [Optional Post-Deployment](#Post-Deployment)
     1. [Configure a Certificate Authority-Signed Digital Certificate and Custom DNS Name](#DNS)
     1. [Enable Access to Existing Data Sources](#DataSources)
@@ -68,11 +71,19 @@ By default, Quickstart deployments enable Transport Layer Security (TLS) for sec
 
 This SAS Viya Quickstart Template for Azure will take a generic license for SAS Viya and deploy SAS into its own network. The deployment creates the network and other infrastructure.  After the deployment process completes, you will have the outputs for the web endpoints for a SAS Viya deployment on recommended virtual machines (VMs). 
 
-When you deploy the Quickstart with default parameters, the following SAS Viya environment is built in the Microsoft Azure cloud:
+When you deploy the Quickstart with default parameters in a symmetric multiprocessing (SMP) environment, the following SAS Viya environment is built in the Microsoft Azure cloud, shown in Figure 1.  In SMP environments, the **CAS Node Count** parameter is set to one, indicating that only one CAS controller is configured.
 
-![Network Diagram](AzureNetworkDiagram.jpg)
+![Network Diagram](sas-viya-smp-architecture-diagram.svg)
 
-For details, see [SAS Viya 3.4 for Linux: Deployment Guide](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=titlepage.htm&docsetVersion=3.4&locale=en).
+Figure 1: Quickstart architecture for SAS Viya on Azure in an SMP Environment
+
+When you deploy the Quickstart with default parameters in a massively parallel processing (MPP) environment, the following SAS Viya environment is built in the Microsoft Azure cloud, shown in Figure 2.  In MPP environments, the **CAS Node Count** parameter is set to a value of 2 or more, indicating the number of CAS workers that are configured in addition to the CAS controller. 
+
+![Network Diagram](sas-viya-mpp-architecture-diagram.svg)
+
+Figure 2: Quickstart architecture for SAS Viya on Azure in an MPP Environment
+
+For details, see [SAS Viya 3.5 for Linux: Deployment Guide](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=soe.htm&docsetVersion=3.5&locale=en).
 
 <a name="Costs"></a>
 ### Costs and Licenses
@@ -101,12 +112,12 @@ If you are installing VDMML or a similarly large installation, we  recommend tha
 ## Prerequisites
 Before deploying SAS Viya Quickstart Template for Azure, you must have the following:
 * Azure user account with Contributor and Admin Roles
-* Sufficient quota of at least 28 Cores, based on four licensed SAS cores
+* Sufficient quota of at least 28 Cores, based on four licensed SAS cores in an SMP environment.  In MPP environments, apply this sizing to the CAS workers as well as the CAS controller.
 * A SAS Software Order Confirmation Email that contains supported Quickstart products:
 
- 		SAS Visual Analytics 8.3.1 on Linux
-		SAS Visual Statistics 8.3.1 on Linux
-        SAS Visual Data Mining and Machine Learning 8.3.1 on Linux
+ 		SAS Visual Analytics 8.5 on Linux
+		SAS Visual Statistics 8.5 on Linux
+        SAS Visual Data Mining and Machine Learning 8.5 on Linux
 *  The license file in .zip format from your software order uploaded to an Azure blob
 *  Verification that your required SAS Viya file upload sizes do not exceed the limits of the Application Gateway. For details about limits, see 
 ["Application Gateway limits."](https://docs.microsoft.com/en-us/azure/azure-subscription-service-limits?toc=%2fazure%2fapplication-gateway%2ftoc.json#application-gateway-limits)
@@ -133,7 +144,7 @@ For your repository, you can do either:
 * Use the default method, which downloads the installation files directly from SAS.
 * Upload an entire mirror to Azure blob storage.
 
-To use a mirror repository, create a mirror repository as documented in ["Create a Mirror Repository"](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=p1ilrw734naazfn119i2rqik91r0.htm&docsetVersion=3.4&locale=en) in the SAS Viya 3.4 for Linux: Deployment Guide.  
+To use a mirror repository, create a mirror repository as documented in ["Create a Mirror Repository"](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=p1ilrw734naazfn119i2rqik91r0.htm&docsetVersion=3.5&locale=en) in the SAS Viya 3.5 for Linux: Deployment Guide.  
 
 **Note:** For the deployment to recognize the mirror directory, the URL must end with a "/" directly before the SAS key.
 
@@ -156,17 +167,35 @@ We recommend the following as best practices:
 
 <a name="Deployment"></a>
 ## Deployment Steps
-You can click the "Deploy to Azure" button at the beginning of this document or follow the instructions for a command-line deployment using the scripts in the root of this repository.
+You can click the "Deploy to Azure" button at the beginning of this document or follow the instructions for a command-line (CLI) deployment using the scripts in the root of this repository.
 
 The deployment takes between 1 and 4 hours, depending on the quantity of software licensed.
 
 <a name="deployment-details"></a>
 
 ## Additional Deployment Details
+## User Accounts
+<a name="useraccounts"></a>
 The *vmuser* host operating system account is created during deployment. Use this account to log in via SSH to any of the machines.
 
 The *sasadmin* and *sasuser* SAS Viya user accounts are also created during deployment.  These accounts exist in LDAP, and are the default user accounts for logging in to SAS Viya.  You cannot directly log on to the host operating system with these accounts.
 
+### Important File and Folder Locations
+<a name="filefolderlocations"></a>
+
+Here are the location and sizes of key files and folders that are useful for troubleshooting and performing maintenance tasks:
+
+| Storage Type  | Description/Purpose| Location/Size|
+| ------------- | ------------- | ------------- | 
+|OS  |  Standard operating system files and server build<br>software location. Standard company defragmentation policy should apply to OS volumes. |  *Ansible controller:* 32GB <br> *Services VM:* 32GB <br> *Controller VM:* 32GB    |
+|PLAYBOOKS | Location of Ansible playbooks. |*Ansible controller:*<br>  Main SAS deployment- /sas/install/ansible/sas_viya_playbook <br>  Pre- and Post-Deployment Playbooks- <br>/sas/install/ansible/ <br>  /sas/install/comon/ansible/ |
+|SASDEPLOYMENT  | Location of SAS deployment. |*Services VM*, *Controller VM*, *Worker VM:*<br> /opt/sas – 256 GB   | 
+|SASREPO | Location of local mirror of SAS repository (if mirror is used). | *Visual VM:* /mnt/viyashare/mirror <br>(mounted shared directory on an Azure files share)|
+|SASDATA|Location of SAS data, projects, source code, and applications.|*Services VM:*<br>Default locations under /opt/sas<br>*Controller VM:*<br>User CASLIB locations-<br> /opt/sas/viya/config/data/cas|
+|SASWORK/SASUTIL| Location of SAS workspace and temporary scratch area. This area will predominantly be used for transient and volatile data and technically emptied after the completion of job processing.|*Services VM:* /sastmp/saswork<br>Symlink to  /mnt/resource/sastmp/saswork,<br> which is on the ephemeral disks for this machine.<br>Size depends on the machine selected and is set by Azure.|
+|SASCACHE|Location of CAS disk cache.|*Controller VM:* /sastmp/cascache<br>Symlink to /mnt/resource/sastmp/cascache, <br>which is on the ephemeral disks for this machine. <br>Size depends on the machine selected and is set by Azure.|
+|SASLOGS|Location of the SAS application log files.|*Services VM* and *Controller VM:*<br>/opt/sas/viya/config/var/log<br>(also at /var/log/sas/viya)|
+|SASBACKUP|Location for SAS Backup and Recovery Tool backup vault.|*Services VM:*<br>/opt/sas/backups<br>(part of the 256 GB of /opt/sas)|
 <a name="Post-Deployment"></a>
 ## Optional Post-Deployment 
 <a name="DNS"></a>
@@ -191,7 +220,7 @@ To access an existing data source from your SAS Viya deployment, add an inbound 
 * If you have peered the virtual network, add a rule to "Allow the private subnet CIDR range" for the SAS Viya network. (By default, 10.0.127.0/24). For details, see 
  ["Virtual network peering."](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-network-peering-overview)
 
-Data sources accessed through SAS/ACCESS should use the [SAS Data Agent for Linux Deployment Guide](https://go.documentation.sas.com/?docsetId=dplydagent0phy0lax&docsetTarget=p06vsqpjpj2motn1qhi5t40u8xf4.htm&docsetVersion=2.3&locale=en) instructions to  ["Configure Data Access"](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=p03m8khzllmphsn17iubdbx6fjpq.htm&docsetVersion=3.4&locale=en) and ["Validate the Deployment."](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=n18cthgsfyxndyn1imqkbfjisxsv.htm&docsetVersion=3.4&locale=en)
+Data sources accessed through SAS/ACCESS should use the [SAS Data Agent for Linux Deployment Guide](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=titlepage.htm&docsetVersion=3.5&locale=en) instructions to  ["Configure Data Access"](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=p03m8khzllmphsn17iubdbx6fjpq.htm&docsetVersion=3.5&locale=en) and ["Validate the Deployment."](https://go.documentation.sas.com/?docsetId=dplydagent0phy0lax&docsetTarget=n1v7mc6ox8omgfn1qzjjjektc7te.htm&docsetVersion=2.5&locale=en)
 
 <a name="ACCESSCertWarn"></a>
 ### Validate the Server Certificate if Using SAS/ACCESS
@@ -209,13 +238,13 @@ If you are using SAS/ACCESS with SSL/TLS, unvalidated SSL certificates are not s
 
 2. For each file, modify the parameters. 
 * For detailed information about configuring data access, see 
- ["Configure Data Access"](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=p03m8khzllmphsn17iubdbx6fjpq.htm&docsetVersion=3.4&locale=en) in SAS Data Agent for Linux: Deployment Guide. 
+ ["Configure Data Access"](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=p03m8khzllmphsn17iubdbx6fjpq.htm&docsetVersion=3.5&locale=en) in SAS Data Agent for Linux: Deployment Guide. 
   
 * For specific DataDirect information, see ["Configuration Through the System Information (odbc.ini) File."](https://documentation.progress.com/output/DataDirect/odbcsqlserverhelp/index.html#page/odbcsqlserver%2Fconfiguration-through-the-system-information-(od.html%23))
 
 3. For SQLServer, specify the appropriate driver location:
-* For SAS Viya: /opt/sas/spre/home/lib64/accessclients/lib/S0sqls27.so 
-* For CAS controller: /opt/sas/viya/home/lib64/accessclients/lib/S0sqls27.so 
+* For SAS Viya: /opt/sas/spre/home/lib64/accessclients/lib/S0sqls28.so 
+* For CAS controller: /opt/sas/viya/home/lib64/accessclients/lib/S0sqls28.so 
 ```
 [SQLServerTest] 
 Driver=<driver location>
@@ -239,54 +268,12 @@ Database=sqlserver
 EnableBulkLoad=0 
 EnableQuotedIdentifiers=0
 ```
-
-4. To specify the encryption method, set EncryptionMethod to 0 for no SSL or 1 for SSL. 
-
-```
-EncryptionMethod=1 
-FailoverGranularity=0 
-FailoverMode=0 
-FailoverPreconnect=0 
-FetchTSWTZasTimestamp=0 
-FetchTWFSasTime=1 
-GSSClient=native 
-HostName= <host name of the SQL Server>
-HostNameInCertificate= 
-InitializationString= 
-Language= 
-LoadBalanceTimeout=0 
-LoadBalancing=0 
-LoginTimeout=15 
-LogonID= 
-MaxPoolSize=100 
-MinPoolSize=0 
-PacketSize=-1 
-Password= 
-Pooling=0 
-PortNumber=1433 
-QueryTimeout=0 
-ReportCodePageConversionErrors=0 
-SnapshotSerializable=0 
-TrustStore= 
-TrustStorePassword=
-```
-
-5. Ensure that ValidateServerCertificate is set to a value of 1. 
-
-``` 
-ValidateServerCertificate=1 
-WorkStationID= 
-XMLDescribeType=-10 
-SSLLibName=/usr/lib64/libssl.so.1.0.2k 
-CryptoLibName=/usr/lib64/libcrypto.so.1.0.2k
-```
-
-6. Save the odbc.ini files. 
+4. Save the odbc.ini files.
 
 <a name="DataAgent"></a>
 ### Set Up SAS Data Agent
 
-1. Perform the pre-installation and installation steps in [SAS Data Agent for Linux: Deployment Guide.](https://go.documentation.sas.com/?docsetId=dplydagent0phy0lax&docsetTarget=p06vsqpjpj2motn1qhi5t40u8xf4.htm&docsetVersion=2.3&locale=en) For the post-installation tasks, you can either:
+1. Perform the pre-installation and installation steps in [SAS Data Agent for Linux: Deployment Guide.](https://go.documentation.sas.com/?docsetId=dplydagent0phy0lax&docsetTarget=p06vsqpjpj2motn1qhi5t40u8xf4.htm&docsetVersion=2.5&locale=en) For the post-installation tasks, you can either:
     * (Recommended) Use the post-installation playbooks as specified in steps 6 and 7 below.
     * Perform the manual steps in the SAS Data Agent for Linux: Deployment Guide.
 
@@ -325,7 +312,7 @@ CryptoLibName=/usr/lib64/libcrypto.so.1.0.2k
    ``` 
    
    ``` 
-   ansible-playbook ansible.dataprep2dataagent.yml \
+   ansible-playbook dataprep2dataagent.yml \
        -e "adminuser=sasadmin adminpw=<password of admin user>" \
        -e "data_agent_host=<FQDN(DNS)-of-SAS-Data-Agent-machine>" \
        -e "secret=<handshake-string>" \
@@ -347,21 +334,34 @@ CryptoLibName=/usr/lib64/libcrypto.so.1.0.2k
     
       **Note:** The DNS of the SAS Viya endpoint is the value of the SASDrive output parameter, without the " prefix and the "/SASDrive" suffix.
 
-8. To access the data sources through SAS/ACCESS, see ["Configure Data Access"](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=p03m8khzllmphsn17iubdbx6fjpq.htm&docsetVersion=3.4&locale=en)
+8. To access the data sources through SAS/ACCESS, see ["Configure Data Access"](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=p03m8khzllmphsn17iubdbx6fjpq.htm&docsetVersion=3.5&locale=en)
 in the SAS Data Agent for Linux: Deployment Guide.
 
-9. Validate the environment, including round-trip communication. For details, see the ["Validation"](https://go.documentation.sas.com/?docsetId=dplydagent0phy0lax&docsetTarget=n1v7mc6ox8omgfn1qzjjjektc7te.htm&docsetVersion=2.3&locale=en ) chapter in the SAS Data Agent for Linux: Deployment Guide.
+9. Validate the environment, including round-trip communication. For details, see the ["Validation"](https://go.documentation.sas.com/?docsetId=dplydagent0phy0lax&docsetTarget=n1v7mc6ox8omgfn1qzjjjektc7te.htm&docsetVersion=2.5&locale=en ) chapter in the SAS Data Agent for Linux: Deployment Guide.
 
 <a name="Usage"></a>
 ## Usage 
 
-To log in to any machine via SSH to check on a deployment or to perform maintenance, log in as *vmuser*.
+* To log in to any machine via SSH to check on a deployment or to perform maintenance, log in as *vmuser*.
 
-To log in to SAS Viya initially, use one of the following default user accounts: *sasadmin* (administrative user) or *sasuser*.
+* To log in to SAS Viya initially, use one of the following default user accounts: *sasadmin* (administrative user) or *sasuser*.
 
-To access SAS Viya applications, navigate to the **Outputs** screen and access SASDrive or SASStudio. 
+* To access SAS Viya applications, navigate to the **Outputs** screen and access SASDrive or SASStudio. 
 
 ![Outputs Screen](outputs.jpg) 
+
+* To connect to VMs through Azure Bastion:
+1. Log in to the Azure Bastion server as *vmuser*:
+```
+ssh vmuser@<AnsibleControllerIP>
+```
+2. From the Azure Bastion server, connect to the services, controller, and worker VMs as *vmuser*:
+```
+ssh vmuser@services
+ssh vmuser@controller
+ssh vmuser@worker01
+ssh vmuser@worker02
+```
 
 <a name="Tshoot"></a>
 ## Troubleshooting
@@ -370,9 +370,10 @@ If your deployment fails:
 2.	If you created a mirror, verify that the mirror is correct.
 3.	Review the failed deployment steps and see 
 ["Deployment errors"](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-manager-common-deployment-errors#deployment-errors) in the Azure troubleshooting documentation.
+4. If the value of the DeploymentDataLocation is left as *""*, then the Azure resources have been allocated, but SAS Viya has not been installed. You must delete the deployment and redeploy with a valid link to your license.
+For more information, see ["Upload the License Zip file."](#License) 
 
-
-* In general, issues that occur in the primary deployment but do not originate from a sub-deployment are platform issues such as the inability to obtain sufficient resources in a timely manner. In these cases, you must redeploy your software.  The primary deployment is often called "azure-deploy", and the names of sub-deployments usually begin with "AnsiblePhase".
+* In general, issues that occur in the primary deployment but do not originate from a sub-deployment are platform issues such as the inability to obtain sufficient resources in a timely manner. In these cases, you must redeploy your software.  When the deployment is run via the CLI, the primary deployment is called "azure-deploy". When the deployment is run via the UI template, the primary deployment is called "Microsoft.Template". The names of sub-deployments usually begin with "AnsiblePhase".
 
 * If the error comes from a sub-deployment (for example, “AnsiblePhase4PreViyaInstall”), review the log files.
 
@@ -429,7 +430,7 @@ This error is the result of RHEL RPM mirrors that are not always correct in Azur
 ### Verify Security Settings
 Ensure that the correct port on your Lightweight Directory Access Protocol (LDAP) or secure LDAP (LDAPS) machine can be accessed by the SAS Viya machines:
 * Port 389 if using LDAP
-* Port 636 if using secure LDAP (LDAPS). For more information about securing LDAP connections, see [Encrypt LDAP Connections](https://go.documentation.sas.com/?docsetId=calencryptmotion&docsetTarget=n1xdqv1sezyrahn17erzcunxwix9.htm&docsetVersion=3.4&locale=en#p1bai319815977n1bzdyyxr3d5he) in the Encryption in SAS Viya: Data in Motion.
+* Port 636 if using secure LDAP (LDAPS). For more information about securing LDAP connections, see [Encrypt LDAP Connections](https://go.documentation.sas.com/?docsetId=calencryptmotion&docsetTarget=n1xdqv1sezyrahn17erzcunxwix9.htm&docsetVersion=3.5&locale=en#p1bai319815977n1bzdyyxr3d5he) in the Encryption in SAS Viya: Data in Motion.
 
 <a name="AddACreateServiceAccount"></a>
 ### Create a Service Account
@@ -438,8 +439,8 @@ Create a service account in your LDAP system. The service account must have perm
 <a name="AddAConfigureIdentitiesService"></a>
 ### Configure the Identities Service
 **Note:**   OpenLDAP systems and customized AD setups might require additional configuration that is beyond the scope of this guide.
-* See [Configure the Connection to Your Identity Provider ](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=p0dt267jhkqh3un178jzupyyetsa.htm&docsetVersion=3.4&locale=en#n1p4yydj6grbban1kl1te52gv0kf) in the SAS Viya for Linux: Deployment Guide for more information about configuring the identities service. 
-* See [Encrypt LDAP Connections](https://go.documentation.sas.com/?docsetId=calencryptmotion&docsetTarget=n1xdqv1sezyrahn17erzcunxwix9.htm&docsetVersion=3.4&locale=en#p1bai319815977n1bzdyyxr3d5he) in  Encryption in SAS Viya: Data in Motion for more information about securing LDAP connections.
+* See [Configure the Connection to Your Identity Provider ](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=p0dt267jhkqh3un178jzupyyetsa.htm&docsetVersion=3.5&locale=en#n1p4yydj6grbban1kl1te52gv0kf) in the SAS Viya for Linux: Deployment Guide for more information about configuring the identities service. 
+* See [Encrypt LDAP Connections](https://go.documentation.sas.com/?docsetId=calencryptmotion&docsetTarget=n1xdqv1sezyrahn17erzcunxwix9.htm&docsetVersion=3.5&locale=en#p1bai319815977n1bzdyyxr3d5he) in  Encryption in SAS Viya: Data in Motion for more information about securing LDAP connections.
 
 In the SAS Environment Manager, on the Configuration tab, select the Identities service. There are three sections to configure: connection, user, and group. 
 #### Connection
@@ -586,5 +587,3 @@ The Quickstart deployment is built to get you "up and running" quickly. However,
 During installation, yum updates servers but will not automatically apply patches after deployment is complete. To apply patches either:
 * Schedule updates on the boxes through cron 
 * Regularly log on to the system and run a "yum update" command to keep security patches up to date on the operating system
-
-
