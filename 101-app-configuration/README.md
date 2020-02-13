@@ -1,4 +1,4 @@
-# Blank Template
+# Azure App Configuration
 
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-app-configuration/PublicLastTestDate.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-app-configuration/PublicDeployment.svg" />&nbsp;
@@ -9,8 +9,6 @@
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-app-configuration/BestPracticeResult.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-app-configuration/CredScanResult.svg" />&nbsp;
 
-This is an empty template and parameters file with the schema reference and top-level properties defined.
-
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-app-configuration%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
@@ -18,7 +16,7 @@ This is an empty template and parameters file with the schema reference and top-
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
-This template references (reads) existing key-value configurations from an existing config store from the Azure Resource Manager template. The retrieved values are used to set properties of the resources created by the template. This template does not create an App Configuration store or modify key-values in an App Configuration store.
+This template references (reads) existing key-value configurations from an existing config store from the Azure Resource Manager template. The retrieved values are used to set properties of the resources created by the template. This template does not create an App Configuration store or modify key-values in an App Configuration store. Use the prerequisite template to create an App Configuration store, and then add key-values into the store using the Azure portal or Azure CLI.
 
 If you are new to App Configurations, see:
 
