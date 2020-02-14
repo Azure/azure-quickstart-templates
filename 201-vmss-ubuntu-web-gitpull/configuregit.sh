@@ -7,7 +7,7 @@ echo "Welcome to configuressl.sh"
 echo "Number of parameters was: " $#
 
 if [ $# -ne 3 ]; then
-    echo usage: $0 {git private key} {git reponame} {git user id}      
+    echo usage: $0 {git private key} {git reponame} {git user id}
 	exit 1
 fi
 
@@ -23,7 +23,7 @@ configure_git_cron()
 
     echo 'Writing to crontab'
     crontab /tmp/tmp_gitcron
-    rm /tmp/tmp_gitcron 
+    rm /tmp/tmp_gitcron
 }
 
 setup_sshkey()
@@ -80,7 +80,7 @@ configure_git()
         git clone git@$host:$user/$repo.git /var/www/html
     else
         echo "no SSH private key. Skipping setup"
-    fi 
+    fi
 }
 
 echo "Checking for apache2 already installed"
@@ -100,7 +100,7 @@ do
 done
 
 # turn off apache until we are done with setup
-# Azure LB HTTP/s Probe will fail and not direct traffic to VM 
+# Azure LB HTTP/s Probe will fail and not direct traffic to VM
 apachectl stop
 
 configure_git $gitSshPrivateKey github.com $gitUserId $gitRepoName

@@ -13,8 +13,16 @@ environmentLocation="/sas/install/env.ini"
 echo "$@" >> /tmp/commands.log
 mkdir -p "/sas/install"
 
+. "$environmentLocation"
+chmod 700 "$INSTALL_DIR"
+chown $INSTALL_USER "/sas/install"
+set -e
+if [[ -z "$SCRIPT_PHASE" ]]; then
+SCRIPT_PHASE="$1"
+fi
+if [[ "$SCRIPT_PHASE" -eq "1" ]]; then
 cat << EOF > "$environmentLocation"
-export SCRIPT_PHASE="$1"
+# export SCRIPT_PHASE="$1"
 export https_location="$2"
 export https_sas_key="$3"
 export license_file_uri="$4"
@@ -27,6 +35,8 @@ export MIRROR_HTTP="${10}"
 export azure_storage_account="${11}"
 export azure_storage_files_share="${12}"
 export azure_storage_files_password="${13}"
+export CASInstanceCount="${14}"
+export DUMMY_LICENSE_STRING="${15}"
 
 export LOGS_DIR=/var/log/sas/install
 export DIRECTORY_NFS_SHARE="/mnt/\${azure_storage_files_share}"
@@ -53,32 +63,31 @@ export UTILITIES_DIR="\${INSTALL_DIR}/bin"
 export TOUCHPOINT_PREREQUISITES="/tmp/prerequisites.touch"
 export TOUCHPOINT_PREORCHESTRATION="/tmp/preorchestration.touch"
 
+
+
 EOF
 . "$environmentLocation"
-chmod 700 "$INSTALL_DIR"
-chown $INSTALL_USER "/sas/install"
-set -e
-if [ "$SCRIPT_PHASE" -eq "1" ]; then
+
 	echo "running ansible prerequisites install"
 	${ScriptDirectory}/ansiblecontroller_prereqs.sh
 	su $INSTALL_USER -c	"${CODE_DIRECTORY}/scripts/wrapper_01_prereq.sh"
 # here we return the sizing for the cas controller
 
 # here we return the ssl certificate for the system (has to be done in 2 pieces because we only get to return 4096 charectors)
-elif [ "$SCRIPT_PHASE" -eq "3" ]; then
+elif [[ "$SCRIPT_PHASE" -eq "3" ]]; then
 	cat "${FILE_SSL_JSON_FILE}.1" |tr -d '\n'
-elif [ "$SCRIPT_PHASE" -eq "4" ]; then
+elif [[ "$SCRIPT_PHASE" -eq "4" ]]; then
 	cat "${FILE_SSL_JSON_FILE}.2" |tr -d '\n'
-elif [ "$SCRIPT_PHASE" -eq "5" ]; then
+elif [[ "$SCRIPT_PHASE" -eq "5" ]]; then
 	su $INSTALL_USER -c	"${CODE_DIRECTORY}/scripts/wrapper_02_preorchestration.sh"
-elif [ "$SCRIPT_PHASE" -eq "6" ]; then
+elif [[ "$SCRIPT_PHASE" -eq "6" ]]; then
     cat "$FILE_CA_B64_FILE"|tr -d '\n'
-elif [ "$SCRIPT_PHASE" -eq "7" ]; then
+elif [[ "$SCRIPT_PHASE" -eq "7" ]]; then
 	echo "Starting/Continuing Actual Install"
 	su $INSTALL_USER -c	"${CODE_DIRECTORY}/scripts/wrapper_03_orchestration.sh"
-elif [ "$SCRIPT_PHASE" -eq "8" ]; then
+elif [[ "$SCRIPT_PHASE" -eq "8" ]]; then
 	echo "Finishing Actual Install"
 	su $INSTALL_USER -c	"${CODE_DIRECTORY}/scripts/wrapper_04_final.sh"
-elif [ "$SCRIPT_PHASE" -eq "9" ]; then
+elif [[ "$SCRIPT_PHASE" -eq "9" ]]; then
 	cat "${CAS_URI_FILE}" |tr -d '\n'
 fi

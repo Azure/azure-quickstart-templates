@@ -8,8 +8,35 @@ pass the build in order to trigger a manual review
 # Get-ChildItem env: # debugging
 
 $GitHubRepository = $ENV:BUILD_REPOSITORY_NAME
-$GitHubPRNumber = $ENV:SYSTEM_PULLREQUEST_PULLREQUESTNUMBER
 $RepoRoot = $ENV:BUILD_REPOSITORY_LOCALPATH
+
+if ($ENV:BUILD_REASON -eq "PullRequest") {
+    $GitHubPRNumber = $ENV:SYSTEM_PULLREQUEST_PULLREQUESTNUMBER
+}
+elseif ($ENV:BUILD_REASON -eq "BatchedCI" -or $ENV:BUILD_REASON -eq "IndividualCI" -or $ENV:BUILD_REASON -eq "Manual") {
+    <#
+        When a CI trigger is running, we get no information in the environment about what changed in the incoming PUSH (i.e. PR# or files changed) except...
+        In the source version message - so even though this fragile, we can extract from there - the expected format is:
+        BUILD_SOURCEVERSIONMESSAGE = "Merge pull request #9 from bmoore-msft/bmoore-msft-patch-2…"
+    #>
+    try {
+        $pr = $ENV:BUILD_SOURCEVERSIONMESSAGE # TODO: sometimes AzDO is not setting the message, not clear why...
+        $begin = 0
+        $begin = $pr.IndexOf("#") # look for the #
+    }
+    catch { }
+    if ($begin -ge 0) {
+        $end = $pr.IndexOf(" ", $begin) # look for the trailing space
+        $GitHubPRNumber = $pr.Substring($begin + 1, $end - $begin - 1)
+    }
+    else {
+        Write-Error "BuildSourceVersionMessage does not contain PR #: `'$pr`'"
+    }
+}
+else {
+    Write-Error "Unknown Build Reason ($ENV:BUILD_REASON) - cannot get PR number... "
+}
+
 $PRUri = "https://api.github.com/repos/$($GitHubRepository)/pulls/$($GitHubPRNumber)/files"
 
 # Get all of the files changed in the PR
@@ -19,7 +46,8 @@ $ChangedFile = Invoke-Restmethod "$PRUri"
 $FolderArray = @()
 $ChangedFile | ForEach-Object {
     Write-Output $_.blob_url
-    if ($_.status -ne "removed") {  # ignore deleted files, for example when a sample folder is renamed
+    if ($_.status -ne "removed") {
+        # ignore deleted files, for example when a sample folder is renamed
         $CurrentPath = Split-Path (Join-Path -path $RepoRoot -ChildPath $_.filename)
  
         # File in root of repo - TODO: should we block this?
@@ -53,3 +81,7 @@ If ($FolderArray.count -gt 1) {
 $FolderString = $FolderArray[0]
 Write-Output "Using sample folder: $FolderString"
 Write-Host "##vso[task.setvariable variable=sample.folder]$FolderString"
+
+$sampleName = $FolderString.Replace("$ENV:BUILD_SOURCESDIRECTORY\", "")
+Write-Output "Using sample name: $sampleName"
+Write-Host "##vso[task.setvariable variable=sample.name]$sampleName"

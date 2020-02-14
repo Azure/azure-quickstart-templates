@@ -22,15 +22,15 @@ done
 
 #you must be logged into azure before running this script - run "az login"
 subscriptionId=$( az account show -o json | jq -r '.id' )
-subscriptionId="${subscriptionId//-/}" 
+subscriptionId="${subscriptionId//-/}"
 subscriptionId="${subscriptionId:0:19}"
 artifactsStorageAccountName="stage$subscriptionId"
-artifactsResourceGroupName="ARM_Deploy_Staging"    
+artifactsResourceGroupName="ARM_Deploy_Staging"
 
 echo "Checking for storage account..."
 if [[ -z $( az storage account list -o json | jq -r '.[].name | select(. == '\"$artifactsStorageAccountName\"')' ) ]]
 then
-    if [[ -z $storageLocation ]] 
+    if [[ -z $storageLocation ]]
     then
         echo "-l (storageLocation) must be specified when storageAccount needs to be created, usually on first run for a subscription."
         exit 1
@@ -59,17 +59,17 @@ createUIDefUrl=$blobEndpoint$artifactsStorageContainerName/$createUIDefFile?$sas
 
 createUIDefUrlEncoded=$(printf %s "$createUIDefUrl" | jq -s -R -r @uri)
 
-if [[ $gov ]] 
+if [[ $gov ]]
 then
-target="https://portal.azure.us/#blade/Microsoft_Azure_Compute/CreateMultiVmWizardBlade/internal_bladeCallId/anything/internal_bladeCallerParams/{"\""initialData"\"":{},"\""providerConfig"\"":{"\""createUiDefinition"\"":"\""$createUIDefUrlEncoded"\""}}"
+target="https://portal.azure.us/#blade/Microsoft_Azure_Compute/CreateMultiVmWizardBlade/internal_bladeCallId/anything/internal_bladeCallerParams/{"\""providerConfig"\"":{"\""createUiDefinition"\"":"\""$createUIDefUrlEncoded"\""}}"
 else
-target="https://portal.azure.com/#blade/Microsoft_Azure_Compute/CreateMultiVmWizardBlade/internal_bladeCallId/anything/internal_bladeCallerParams/{"\""initialData"\"":{},"\""providerConfig"\"":{"\""createUiDefinition"\"":"\""$createUIDefUrlEncoded"\""}}"
+target="https://portal.azure.com/#blade/Microsoft_Azure_Compute/CreateMultiVmWizardBlade/internal_bladeCallId/anything/internal_bladeCallerParams/{"\""providerConfig"\"":{"\""createUiDefinition"\"":"\""$createUIDefUrlEncoded"\""}}"
 fi
 
 echo "Launch browser with this URL:"
 echo
 echo $target
-echo 
+echo
 
 #note chrome will not launch with the encoded url no idea why - copy/paste works (or safari)
 python -mwebbrowser $target

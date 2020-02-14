@@ -1,8 +1,17 @@
 # Azure Application Gateway Log Analyzer using GoAccess
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-gateway-logviewer-goaccess%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/application-gateway-logviewer-goaccess/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/application-gateway-logviewer-goaccess/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/application-gateway-logviewer-goaccess/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/application-gateway-logviewer-goaccess/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/application-gateway-logviewer-goaccess/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/application-gateway-logviewer-goaccess/CredScanResult.svg" />&nbsp;
+
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-gateway-logviewer-goaccess%2Fazuredeploy.json" target="_blank"><img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/></a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-gateway-logviewer-goaccess%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
 <h2>Introduction</h2>
@@ -76,3 +85,4 @@ For any feature requests or general help with GoAccess itself, please file an is
 GoAccess is distributed under the MIT License. For details of the licensing terms, please refer to the <a href="https://github.com/allinurl/goaccess/blob/master/COPYING">GoAccess License</a> terms.
 
 Apache HTTP Web Server is distributed under the Apache 2.0 License. For details of the licensing terms, please refer to <a href="http://www.apache.org/licenses/LICENSE-2.0">the Apache 2.0 License</a> terms.
+

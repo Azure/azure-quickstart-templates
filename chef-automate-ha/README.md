@@ -1,5 +1,14 @@
 # chef-automate-ha
 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/chef-automate-ha/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/chef-automate-ha/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/chef-automate-ha/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/chef-automate-ha/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/chef-automate-ha/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/chef-automate-ha/CredScanResult.svg" />&nbsp;
+
 This Azure Quickstart provides an 'unmanaged' full installation of Chef Server configured for high availability mode and a separate instance of Chef Automate.
 
 Whilst the template is fully functional, it is expected that some customization may be required for your particular environment.  It is aimed at experienced administrators of Chef.
@@ -104,3 +113,4 @@ New users may try the features of this template (including Chef Automate and Che
 Contact the [Partner Engineering team at Chef](mailto:partnereng@chef.io) for queries relating to thie template.
 
 (c) 2017 Chef Software, Inc.
+

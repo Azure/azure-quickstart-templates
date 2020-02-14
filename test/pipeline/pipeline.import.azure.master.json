@@ -9,7 +9,9 @@
                 "allowSecrets": true
             },
             "pathFilters": [
-                "-/test/*"
+                "-/test/*",
+                "-/1-CONTRIBUTION-GUIDE/*",
+                "-/.github/*"
             ],
             "requireCommentsForNonTeamMembersOnly": false,
             "isCommentRequiredForPullRequest": false,
@@ -58,6 +60,21 @@
         "resourceGroup.name": {
             "value": "<this will set by a pipeline task>"
         },
+        "result.best.practice": {
+            "value": "False"
+        },
+        "result.credscan": {
+            "value": ""
+        },
+        "result.deployment": {
+            "value": "False"
+        },
+        "result.deployment.last.test.date.parameter": {
+            "value": ""
+        },
+        "result.deployment.parameter": {
+            "value": "PublicDeployment"
+        },
         "sample.folder": {
             "value": "<this will set by a pipeline task>"
         },
@@ -75,40 +92,28 @@
             "value": "6457d1f2-4394-4fc2-b163-e46ffcbbec5c"
         },
         "ttk.asset.filename": {
-            "value": "AzTemplateToolKit.zip"
+            "value": "arm-template-toolkit.zip"
         },
         "ttk.folder": {
             "value": "$(Agent.BuildDirectory)\\test"
+        },
+        "ttk.uri": {
+            "value": "https://aka.ms/arm-ttk"
         }
     },
-    "retentionRules": [
-        {
-            "branches": [
-                "+refs/heads/*"
-            ],
-            "artifacts": [],
-            "artifactTypesToDelete": [
-                "FilePath",
-                "SymbolStore"
-            ],
-            "daysToKeep": 10,
-            "minimumToKeep": 1,
-            "deleteBuildRecord": true,
-            "deleteTestResults": true
-        }
-    ],
     "properties": {},
     "tags": [],
     "jobAuthorizationScope": 1,
     "jobTimeoutInMinutes": 360,
-    "jobCancelTimeoutInMinutes": 5,
+    "jobCancelTimeoutInMinutes": 15,
+    "badgeEnabled": false,
     "process": {
         "phases": [
             {
                 "steps": [
                     {
                         "environment": {},
-                        "enabled": true,
+                        "enabled": false,
                         "continueOnError": false,
                         "alwaysRun": false,
                         "displayName": "Download Template Toolkit Release",
@@ -133,7 +138,7 @@
                         "enabled": true,
                         "continueOnError": false,
                         "alwaysRun": false,
-                        "displayName": "Expand Files TTK Files",
+                        "displayName": "Download TTK",
                         "timeoutInMinutes": 0,
                         "condition": "succeeded()",
                         "task": {
@@ -145,7 +150,7 @@
                             "targetType": "inline",
                             "filePath": "",
                             "arguments": "",
-                            "script": "# Expand the TTK files\nGet-ChildItem \"$(ttk.folder)\" -Recurse\n\nWrite-Host \"Expanding files...\"\nExpand-Archive -Path \"$(ttk.folder)\\*.zip\" -DestinationPath \"$(ttk.folder)\" -Verbose\n\nWrite-Host \"Expanded files found:\"\nGet-ChildItem \"$(ttk.folder)\" -Recurse",
+                            "script": "New-Item '$(ttk.folder)' -ItemType Directory\nInvoke-WebRequest -uri '$(ttk.uri)' -OutFile \"$(ttk.folder)/$(ttk.asset.filename)\" -Verbose\nGet-ChildItem '$(ttk.folder)' -Recurse\n\nWrite-Host \"Expanding files...\"\nExpand-Archive -Path '$(ttk.folder)/*.zip' -DestinationPath '$(ttk.folder)' -Verbose\n\nWrite-Host \"Expanded files found:\"\nGet-ChildItem '$(ttk.folder)' -Recurse",
                             "errorActionPreference": "stop",
                             "failOnStderr": "false",
                             "ignoreLASTEXITCODE": "false",
@@ -158,7 +163,32 @@
                         "enabled": true,
                         "continueOnError": false,
                         "alwaysRun": false,
-                        "displayName": "Get Folder for Sample & ResourceGroup Name",
+                        "displayName": "Connect To Azure (Admin) To Create RGs",
+                        "timeoutInMinutes": 0,
+                        "condition": "succeeded()",
+                        "task": {
+                            "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
+                            "versionSpec": "2.*",
+                            "definitionType": "task"
+                        },
+                        "inputs": {
+                            "targetType": "filePath",
+                            "filePath": "$(ttk.folder)/ci-scripts/ConnectTo-Azure.ps1",
+                            "arguments": "-appId $(app.id.admin) -secret $(app.secret.admin) -tenantId $(tenant.id) -subscriptionId $(subscription.id) -InstallAzModule",
+                            "script": "",
+                            "errorActionPreference": "stop",
+                            "failOnStderr": "false",
+                            "ignoreLASTEXITCODE": "false",
+                            "pwsh": "true",
+                            "workingDirectory": ""
+                        }
+                    },
+                    {
+                        "environment": {},
+                        "enabled": true,
+                        "continueOnError": false,
+                        "alwaysRun": false,
+                        "displayName": "Get Folder for Sample",
                         "timeoutInMinutes": 0,
                         "condition": "succeeded()",
                         "task": {
@@ -183,32 +213,7 @@
                         "enabled": true,
                         "continueOnError": false,
                         "alwaysRun": false,
-                        "displayName": "Validate metadata.json",
-                        "timeoutInMinutes": 0,
-                        "condition": "succeeded()",
-                        "task": {
-                            "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
-                            "versionSpec": "2.*",
-                            "definitionType": "task"
-                        },
-                        "inputs": {
-                            "targetType": "filePath",
-                            "filePath": "$(ttk.folder)\\ci-scripts\\Validate-Metadata.ps1",
-                            "arguments": "-path \"$(sample.folder)\\metadata.json\"",
-                            "script": "param(\n    [string][Parameter(mandatory=$true)] $path\n)\n\n#get the file content\n#$metadata = Get-Content -Path \"$(sample.folder)\\metadata.json\" -Raw \n$metadata = Get-Content -Path $path -Raw \n\n#Check metadata.json against the schema\n$schema = Invoke-WebRequest -Uri \"https://aka.ms/azure-quickstart-templates-metadata-schema#\" -UseBasicParsing\n$metadata | Test-Json -Schema $schema.content \n\n#Make sure the date has been updated\n$dateUpdated = (Get-Date ($metadata | convertfrom-json).dateUpdated)\n\nWrite-Host $dateUpdated\n\nif($dateUpdated -gt (Get-Date)){\n    Write-Error \"dateUpdated in metadata.json must not be in the future\"\n    Write-Error \"$dateUpdated is later than $(Get-Date)\"\n}\n\n$oldDate = (Get-Date).AddDays(-60)\n\nif($dateUpdated -lt $oldDate){\n    Write-Error \"dateUpdated in metadata.json needs to be updated\"\n    Write-Error \"$dateUpdated is older than $oldDate\"\n}\n",
-                            "errorActionPreference": "stop",
-                            "failOnStderr": "false",
-                            "ignoreLASTEXITCODE": "false",
-                            "pwsh": "true",
-                            "workingDirectory": ""
-                        }
-                    },
-                    {
-                        "environment": {},
-                        "enabled": true,
-                        "continueOnError": false,
-                        "alwaysRun": false,
-                        "displayName": "TODO: Workaround for prereq resource group",
+                        "displayName": "DEBUG: Dump ENV",
                         "timeoutInMinutes": 0,
                         "condition": "succeeded()",
                         "task": {
@@ -220,11 +225,61 @@
                             "targetType": "inline",
                             "filePath": "",
                             "arguments": "",
-                            "script": "#workaround until we fix the pipeline to use the same resourceGroup for prereqs... or figure out a solution for resources that must be in the same group\n\nWrite-Host \"##vso[task.setvariable variable=prereq.resourceGroup.name]$(resourceGroup.name)\"",
-                            "errorActionPreference": "stop",
+                            "script": "gci \"env:\"",
+                            "errorActionPreference": "continue",
                             "failOnStderr": "false",
                             "ignoreLASTEXITCODE": "false",
-                            "pwsh": "false",
+                            "pwsh": "true",
+                            "workingDirectory": ""
+                        }
+                    },
+                    {
+                        "environment": {},
+                        "enabled": true,
+                        "continueOnError": true,
+                        "alwaysRun": false,
+                        "displayName": "Validate metadata.json",
+                        "timeoutInMinutes": 0,
+                        "condition": "succeeded()",
+                        "task": {
+                            "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
+                            "versionSpec": "2.*",
+                            "definitionType": "task"
+                        },
+                        "inputs": {
+                            "targetType": "filePath",
+                            "filePath": "$(ttk.folder)\\ci-scripts\\Validate-Metadata.ps1",
+                            "arguments": "",
+                            "script": "",
+                            "errorActionPreference": "continue",
+                            "failOnStderr": "true",
+                            "ignoreLASTEXITCODE": "false",
+                            "pwsh": "true",
+                            "workingDirectory": ""
+                        }
+                    },
+                    {
+                        "environment": {},
+                        "enabled": true,
+                        "continueOnError": true,
+                        "alwaysRun": true,
+                        "displayName": "Validate README.md",
+                        "timeoutInMinutes": 0,
+                        "condition": "succeededOrFailed()",
+                        "task": {
+                            "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
+                            "versionSpec": "2.*",
+                            "definitionType": "task"
+                        },
+                        "inputs": {
+                            "targetType": "filePath",
+                            "filePath": "$(ttk.folder)\\ci-scripts\\Validate-ReadMe.ps1",
+                            "arguments": "",
+                            "script": "",
+                            "errorActionPreference": "continue",
+                            "failOnStderr": "true",
+                            "ignoreLASTEXITCODE": "false",
+                            "pwsh": "true",
                             "workingDirectory": ""
                         }
                     },
@@ -243,9 +298,9 @@
                         },
                         "inputs": {
                             "targetType": "inline",
-                            "filePath": "test/template-tests/Test-AzureRMTemplate.ps1",
-                            "arguments": "-TemplatePath \"$(sample.folder)\"",
-                            "script": "Import-Module $(ttk.folder)/template-tests/AzRMTester.psd1 -Verbose\n$testOutput = @(Test-AzureRMTemplate -TemplatePath \"$(sample.folder)\")\n\n$testOutput \n\nif ($testOutput | ? {$_.Errors }) {\n   exit 1 \n} else {\n   exit 0\n} \n",
+                            "filePath": "",
+                            "arguments": "",
+                            "script": "Import-Module $(ttk.folder)/arm-ttk/arm-ttk.psd1 -Verbose\n$testOutput = @(Test-AzTemplate -TemplatePath \"$(sample.folder)\")\n$testOutput\n\nif ($testOutput | ? {$_.Errors }) {\n   exit 1 \n} else {\n    Write-Host \"##vso[task.setvariable variable=result.best.practice]$true\"\n    exit 0\n} \n",
                             "errorActionPreference": "continue",
                             "failOnStderr": "true",
                             "ignoreLASTEXITCODE": "false",
@@ -258,32 +313,7 @@
                         "enabled": true,
                         "continueOnError": false,
                         "alwaysRun": false,
-                        "displayName": "Check for Prereq Deployment",
-                        "timeoutInMinutes": 0,
-                        "condition": "succeeded()",
-                        "task": {
-                            "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
-                            "versionSpec": "2.*",
-                            "definitionType": "task"
-                        },
-                        "inputs": {
-                            "targetType": "inline",
-                            "filePath": "",
-                            "arguments": "",
-                            "script": "#checks to see if there are prereqs that need to be deployed and sets the env variable to trigger prereq tasks\n\n$result = Test-Path \"$(sample.folder)\\prereqs\\prereq.azuredeploy.json\"\n\nWrite-Host \"Result: $result\"\n\nWrite-Host \"##vso[task.setvariable variable=deploy.prereqs]$result\"\n\n#Write-Host \"Deploy Prereqs: $(deploy.prereqs)\"\n",
-                            "errorActionPreference": "stop",
-                            "failOnStderr": "false",
-                            "ignoreLASTEXITCODE": "false",
-                            "pwsh": "true",
-                            "workingDirectory": ""
-                        }
-                    },
-                    {
-                        "environment": {},
-                        "enabled": true,
-                        "continueOnError": false,
-                        "alwaysRun": false,
-                        "displayName": "Connect To Azure (Admin) To Create RG",
+                        "displayName": "Generate RG Names and Check for Prereqs",
                         "timeoutInMinutes": 0,
                         "condition": "succeeded()",
                         "task": {
@@ -293,9 +323,8 @@
                         },
                         "inputs": {
                             "targetType": "filePath",
-                            "filePath": "$(ttk.folder)/ci-scripts/ConnectTo-Azure.ps1",
-                            "arguments": "-appId $(app.id.admin) -secret $(app.secret.admin) -tenantId $(tenant.id) -subscriptionId $(subscription.id) -InstallAzModule",
-                            "script": "",
+                            "filePath": "$(ttk.folder)\\ci-scripts\\Gen-ResourceGroupNames.ps1",
+                            "arguments": "-sampleFolder $(sample.folder)",
                             "errorActionPreference": "stop",
                             "failOnStderr": "false",
                             "ignoreLASTEXITCODE": "false",
@@ -330,12 +359,12 @@
                     },
                     {
                         "environment": {},
-                        "enabled": false,
+                        "enabled": true,
                         "continueOnError": true,
                         "alwaysRun": false,
                         "displayName": "Create ResourceGroup - Assign RBAC (prereqs RG) ",
                         "timeoutInMinutes": 0,
-                        "condition": "and(succeeded(), eq(variables['deploy.prereqs'], 'true'), not(eq(variables['resourceGroup.name'], variables['prereq.resourceGroup.name'])))",
+                        "condition": "and(succeeded(), eq(variables['deploy.prereqs'], 'true'), ne(variables['prereq.resourceGroup.name'], variables['resourceGroup.name']))",
                         "task": {
                             "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
                             "versionSpec": "2.*",
@@ -542,10 +571,10 @@
                             "definitionType": "task"
                         },
                         "inputs": {
-                            "targetType": "filePath",
-                            "filePath": "$(ttk.folder)\\Deploy-AzTemplate.ps1",
-                            "arguments": "-ArtifactStagingDirectory \"$(sample.folder)\" -Location \"$(Location)\" -ResourceGroupName \"$(resourceGroup.name)\" -TemplateParametersFile \"$(sample.folder)\\$(gen.parameters.filename)\" -DeploymentName \"$(mainTemplate.deployment.name)\"",
-                            "script": "",
+                            "targetType": "inline",
+                            "filePath": "",
+                            "arguments": "",
+                            "script": "$(ttk.folder)\\Deploy-AzTemplate.ps1 `\n    -ArtifactStagingDirectory \"$(sample.folder)\" `\n    -Location \"$(Location)\" `\n    -ResourceGroupName \"$(resourceGroup.name)\" `\n    -TemplateParametersFile \"$(sample.folder)\\$(gen.parameters.filename)\" `\n    -DeploymentName \"$(mainTemplate.deployment.name)\"\n\nWrite-Host \"##vso[task.setvariable variable=result.deployment]$true\"\n\n",
                             "errorActionPreference": "stop",
                             "failOnStderr": "false",
                             "ignoreLASTEXITCODE": "false",
@@ -581,36 +610,11 @@
                     {
                         "environment": {},
                         "enabled": true,
-                        "continueOnError": false,
-                        "alwaysRun": false,
+                        "continueOnError": true,
+                        "alwaysRun": true,
                         "displayName": "Write Test Result for README.MD",
                         "timeoutInMinutes": 0,
-                        "condition": "succeeded()",
-                        "task": {
-                            "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
-                            "versionSpec": "2.*",
-                            "definitionType": "task"
-                        },
-                        "inputs": {
-                            "targetType": "inline",
-                            "filePath": "",
-                            "arguments": "",
-                            "script": "<#\n\nThis is a placeholder - for when we want to write the last test result to the readme file\n\n#>",
-                            "errorActionPreference": "stop",
-                            "failOnStderr": "false",
-                            "ignoreLASTEXITCODE": "false",
-                            "pwsh": "false",
-                            "workingDirectory": ""
-                        }
-                    },
-                    {
-                        "environment": {},
-                        "enabled": false,
-                        "continueOnError": false,
-                        "alwaysRun": false,
-                        "displayName": "Clean Up ResourceGroup (mainTemplate)",
-                        "timeoutInMinutes": 0,
-                        "condition": "always()",
+                        "condition": "succeededOrFailed()",
                         "task": {
                             "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
                             "versionSpec": "2.*",
@@ -618,8 +622,8 @@
                         },
                         "inputs": {
                             "targetType": "filePath",
-                            "filePath": "$(ttk.folder)/ci-scripts/Kill-AzResourceGroup.ps1",
-                            "arguments": "-ResourceGroupName \"$(resourceGroup.name)\"",
+                            "filePath": "$(ttk.folder)\\ci-scripts\\Write-TestResults.ps1",
+                            "arguments": "-$(result.deployment.parameter) $(result.deployment)",
                             "script": "",
                             "errorActionPreference": "stop",
                             "failOnStderr": "false",
@@ -633,7 +637,7 @@
                         "enabled": true,
                         "continueOnError": false,
                         "alwaysRun": false,
-                        "displayName": "Clean Up ResourceGroup with Retry",
+                        "displayName": "Clean Up ResourceGroup (main)",
                         "timeoutInMinutes": 0,
                         "condition": "always()",
                         "task": {
@@ -645,7 +649,7 @@
                             "targetType": "inline",
                             "filePath": "",
                             "arguments": "",
-                            "script": "# remove the resource group\n& $(ttk.folder)/ci-scripts/Kill-AzResourceGroup.ps1 -ResourceGroupName \"$(resourceGroup.name)\" -ErrorAction SilentlyContinue\n\n# if the resource group still exists after the first attempt, try again after a few minutes\nif ((Get-AzResourceGroup -Name \"$(resourceGroup.name)\" -verbose -ErrorAction SilentlyContinue) -ne $null) {\n\n    Write-Host \"Sleeping...\" \n    Sleep 600\n    Write-Host \"Attempting Kill-AzResourceGroup…\"\n    & $(ttk.folder)/ci-scripts/Kill-AzResourceGroup.ps1 -ResourceGroupName \"$(resourceGroup.name)\"\n\n}\n",
+                            "script": "# remove the resource group\nWrite-Host \"First attempt...\"\n& $(ttk.folder)/ci-scripts/Kill-AzResourceGroup.ps1 -ResourceGroupName \"$(resourceGroup.name)\" -ErrorAction SilentlyContinue\n\n# if the resource group still exists after the first attempt, try again after a few minutes\nWrite-Host \"Checking for ResourceGroup…\"\nif ((Get-AzResourceGroup -Name \"$(resourceGroup.name)\" -verbose -ErrorAction SilentlyContinue) -ne $null) {\n\n    Write-Host \"Found the resource group - sleeping...\" \n    Sleep 600\n    Write-Host \"Attempting Kill-AzResourceGroup…\"\n    & $(ttk.folder)/ci-scripts/Kill-AzResourceGroup.ps1 -ResourceGroupName \"$(resourceGroup.name)\"\n\n}\n",
                             "errorActionPreference": "stop",
                             "failOnStderr": "false",
                             "ignoreLASTEXITCODE": "false",
@@ -655,22 +659,22 @@
                     },
                     {
                         "environment": {},
-                        "enabled": false,
+                        "enabled": true,
                         "continueOnError": false,
                         "alwaysRun": false,
                         "displayName": "Clean Up ResourceGroup (prereqs)",
                         "timeoutInMinutes": 0,
-                        "condition": "and(always(), eq(variables['deploy.prereqs'], 'true'), not(eq(variables['resourceGroup.name'], variables['prereq.resourceGroup.name'])))",
+                        "condition": "and(always(), eq(variables['deploy.prereqs'], 'true'), ne(variables['prereq.resourceGroup.name'], variables['resourceGroup.name']))",
                         "task": {
                             "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
                             "versionSpec": "2.*",
                             "definitionType": "task"
                         },
                         "inputs": {
-                            "targetType": "filePath",
-                            "filePath": "$(ttk.folder)/ci-scripts/Kill-AzResourceGroup.ps1",
-                            "arguments": "-ResourceGroupName \"$(prereq.resourceGroup.name)\"",
-                            "script": "",
+                            "targetType": "inline",
+                            "filePath": "",
+                            "arguments": "",
+                            "script": "# remove the resource group\nWrite-Host \"First attempt...\"\n& $(ttk.folder)/ci-scripts/Kill-AzResourceGroup.ps1 -ResourceGroupName \"$(prereq.resourceGroup.name)\" -ErrorAction SilentlyContinue\n\n# if the resource group still exists after the first attempt, try again after a few minutes\nWrite-Host \"Checking for ResourceGroup…\"\nif ((Get-AzResourceGroup -Name \"$(prereq.resourceGroup.name)\" -verbose -ErrorAction SilentlyContinue) -ne $null) {\n\n    Write-Host \"Found the resource group - sleeping...\" \n    Sleep 600\n    Write-Host \"Attempting Kill-AzResourceGroup…\"\n    & $(ttk.folder)/ci-scripts/Kill-AzResourceGroup.ps1 -ResourceGroupName \"$(prereq.resourceGroup.name)\"\n}\n",
                             "errorActionPreference": "stop",
                             "failOnStderr": "false",
                             "ignoreLASTEXITCODE": "false",
@@ -706,7 +710,7 @@
             "hasAdminPermissions": "True",
             "isFork": "False",
             "isPrivate": "False",
-            "lastUpdated": "08/11/2019 20:00:50",
+            "lastUpdated": "09/17/2019 18:39:56",
             "manageUrl": "https://github.com/Azure/azure-quickstart-templates",
             "nodeId": "MDEwOlJlcG9zaXRvcnkzNDQwNzY1MQ==",
             "ownerId": "6844498",
@@ -739,7 +743,7 @@
     "quality": 1,
     "authoredBy": {
         "displayName": "Brian Moore (AZURE RESOURCE MANAGER)",
-        "url": "https://app.vssps.visualstudio.com/Ac8aef736-af44-4df8-8ee0-e3f71ba093b7/_apis/Identities/a776ea98-0041-458d-a782-55b352492e1e",
+        "url": "https://spsprodcus1.vssps.visualstudio.com/Ac8aef736-af44-4df8-8ee0-e3f71ba093b7/_apis/Identities/a776ea98-0041-458d-a782-55b352492e1e",
         "_links": {
             "avatar": {
                 "href": "https://dev.azure.com/azurequickstarts/_apis/GraphProfile/MemberAvatars/aad.ZmNkYzI4MmEtZTY1My03M2Y5LThkNTgtYzgwMTY1ZDM1NTRk"
@@ -767,12 +771,11 @@
         }
     },
     "id": 5,
-    "name": "Azure-QuickStart-Templates-Import",
     "path": "\\",
     "type": 2,
     "queueStatus": 0,
-    "revision": 18,
-    "createdDate": "2019-08-11T20:57:04.300Z",
+    "revision": 36,
+    "createdDate": "2019-09-17T18:50:03.973Z",
     "project": {
         "id": "b191bd7a-37bb-47b0-870c-3f1270a79b3d",
         "name": "azure-quickstart-templates",
