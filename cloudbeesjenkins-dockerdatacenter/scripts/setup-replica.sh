@@ -73,7 +73,7 @@ else
 fi
 
 
-# Configure NginX for Interlock  
+# Configure NginX for Interlock
 
 echo $(date) " - Initiating NginX and interlock configuration on the master"
 

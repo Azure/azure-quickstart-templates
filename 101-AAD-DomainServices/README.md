@@ -1,11 +1,20 @@
 # Azure Active Directory Domain Service (AADDS) template
 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-AAD-DomainServices/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-AAD-DomainServices/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-AAD-DomainServices/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-AAD-DomainServices/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-AAD-DomainServices/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-AAD-DomainServices/CredScanResult.svg" />&nbsp;
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-AAD-DomainServices%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/> 
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/> 
 </a>
 
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-AAD-DomainServices%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/> 
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/> 
 </a>
 
 ## Table of Contents
@@ -43,7 +52,7 @@ Before proceeding to the deployment of the AADDS template, we need to perform th
 
 **Note:** You can perform these steps through the Azure portal as well.
 
-#### 1. Install the required Powershell modules
+#### 1. Install the required PowerShell modules
 
 * Install and configure the Azure AD PowerShell module
 
@@ -93,7 +102,6 @@ Before proceeding to the deployment of the AADDS template, we need to perform th
     # Register the resource provider for Azure AD Domain Services with Resource Manager.
     Register-AzureRmResourceProvider -ProviderNamespace Microsoft.AAD
 
-
 <a name="deployment"></a>
 
 <p></p>
@@ -111,13 +119,11 @@ After deploying AAD Domain Services it will take around 40 minutes more to be co
 To check configuration status:
 Go to the Azure portal -> Select AADDS resource group -> select Domain services resource -> health status is "Running"(refer below image)
 
-
 ![](images/aaddsstatus.png)
 
 #### 2. Update DNS on the virtual network
 
 Click on the "Configure" button from overview blade to update the DNS server settings to point to the two IP addresses where Azure Active Directory Domain Services is available on the virtual network.
-
 
 ![](images/dnsupdate.png)
 
@@ -141,3 +147,4 @@ To remove this deployment simply remove the resource group that contains this sa
 2. Networking Considerations: https://docs.microsoft.com/en-us/azure/active-directory-domain-services/active-directory-ds-networking
 3. Password Synchronization: https://docs.microsoft.com/en-us/azure/active-directory-domain-services/active-directory-ds-getting-started-password-sync
 4. Troubleshooting Guide: https://docs.microsoft.com/en-us/azure/active-directory-domain-services/active-directory-ds-troubleshooting
+

@@ -1,4 +1,13 @@
 # Kentico MVC environment
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/kentico-mvc-environment/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/kentico-mvc-environment/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/kentico-mvc-environment/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/kentico-mvc-environment/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/kentico-mvc-environment/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/kentico-mvc-environment/CredScanResult.svg" />&nbsp;
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fkentico-mvc-environment%2Fazuredeploy.json" target="_blank">
 
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
@@ -20,7 +29,6 @@ Kentico supports website development using ASP.&#8203;NET MVC 5. The support is 
 Both Kentico and the MVC application access data from the same database and use the Kentico API. Web farms handle content synchronization of smart search indexes and other data. This approach allows the live site (MVC application) and the administration (Kentico) to exist separately, providing finer control over each website's presentation layer.
 
 `Tags: Kentico, cms, MVC, content management, e-commerce, online marketing`
-
 
 ## Deployed resources
 
@@ -93,3 +101,4 @@ You can specify the connection strings after deployment in **Azure Portal -> App
 `Type: SQLServer`
 
 Substitute the *<SQL_SERVER_NAME>*, *<DATABASE_NAME>*, *<USER_NAME>*, and *<USER_PASSWORD>* placeholders with the information you provided during template deployment.
+

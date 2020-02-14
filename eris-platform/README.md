@@ -1,10 +1,19 @@
 # Eris Platform
 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/eris-platform/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/eris-platform/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/eris-platform/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/eris-platform/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/eris-platform/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/eris-platform/CredScanResult.svg" />&nbsp;
+
 This Microsoft Azure template deploys the Eris platform for you.
 
 ![Eris-Platform](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/eris-platform/images/eris_platform.png)
 
-[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Feris-platform%2Fazuredeploy.json)
+[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Feris-platform%2Fazuredeploy.json)
 
 # What is Eris?
 
@@ -47,3 +56,4 @@ More will be coming soon.
 # More About Eris
 
 Please see our [extensive documentation](https://docs.erisindustries.com). You can skip the getting started tutorial and head straight for the [chain making tutorial](https://docs.erisindustries.com/tutorials/chainmaking/) if you like.
+
