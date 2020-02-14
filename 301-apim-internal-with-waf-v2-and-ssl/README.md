@@ -25,9 +25,10 @@ With this ARM template, you will be able to deploy these resources:
 ## How to deploy it?
 ### Prerequisites
 
-* A DNS Zone in another resource group. In `azuredeploy.parameters.json`, you have to define `dns_zone` and `dns_resource_group` with DNS Zone information
+* A DNS Zone. In `azuredeploy.parameters.json`, you have to define `dns_zone` and `dns_resource_group` with DNS Zone information
 
-* A Keyvault with a wildcard certificate for the DNS zone. 
+* A Keyvault with a wildcard certificate for the DNS zone.
+To create the wilcard certificate associated to the DNS zone, please follow [this tutorial](https://docs.microsoft.com/en-us/azure/app-service/configure-ssl-certificate#import-an-app-service-certificate).
 
 Inside KeyVault, there are 2 configurations to do:
 - Allow `Azure Resource Manager for template deployment`
