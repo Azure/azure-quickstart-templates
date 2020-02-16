@@ -13,7 +13,7 @@ export HOME=/root
 # Download Installer files
 assembly="dv"
 version="v1.3.0.0"
-storageclass="nfs"
+storageclass=$STORAGEOPTION
 namespace=$NAMESPACE
 mkdir -p /ibm/$assembly
 export INSTALLERHOME=/ibm/$assembly
