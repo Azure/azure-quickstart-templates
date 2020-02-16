@@ -13,7 +13,7 @@ export HOME=/root
 # Download Installer files
 assembly="wkc"
 version="3.0.333"
-storageclass="nfs"
+storageclass=$STORAGEOPTION
 namespace=$NAMESPACE
 mkdir -p /ibm/$assembly
 export INSTALLERHOME=/ibm/$assembly
