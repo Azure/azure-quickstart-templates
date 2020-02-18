@@ -381,22 +381,21 @@ For more information, see ["Upload the License Zip file."](#License)
 ### Review the Log Files
 Ansible is the primary virtual machine that is used for the installation. Most of the deployment log files reside on the Ansible virtual machine.   
 #### Ansible Server Log Files:
-The /tmp directory is the primary deployment log directory. Other logs follow:
+The /var/log/sas/install directory is the primary deployment log directory. Other logs follow:
 * runAnsiblePhase*.log files: logs that are produced by the extensions 
 * install_runner.log: logs that are created by an asynchronous task started in phase 1 and ending in phase 7. Sections of the text are returned as the results in the runAnsiblePhase* logs.
 
 * Commands.log: a listing of the parameters supplied to the Ansible start script.
-*	/var/log/sas/install: logs created by the SAS installation. The content should be duplicated in the /tmp/install_runner.log.
 
 #### Services Server Log Files
 *	/var/log/sas: parent folder for SAS Viya application logs. If there is a startup issue after installation, the information in these logs might be helpful. 
-*	/tmp
+*	/var/log/sas/install
     * prerequisites.log: log that is created by the first setup script on the services VM that prepares it for Ansible to run against it and to mount /mnt/viyashare
     * viya_mirror_download.log: If no deployment mirror is specified, then this is the location of the mirror manager log
 
 ####  Controller Server Log Files
 *	/var/log/sas: SAS logs. If there is a  startup issue after installation, this will be the location for the information.
-*	/tmp	
+*	/var/log/sas/install	
     * prerequisites.log: log that is created by the first setup script on the CAS Controller VM that prepares it for Ansible to run against and to mount /mnt/viyashare
     
 <a name="RestartServices"></a>
