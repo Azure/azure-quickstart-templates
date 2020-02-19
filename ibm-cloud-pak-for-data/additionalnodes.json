@@ -11,7 +11,7 @@
 		"_artifactsLocationSasToken": {
 			"type": "secureString",
 			"metadata": {
-				"description": "Token for the base URL where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated.",
+				"description": "Token for the base URL where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
 			},
 			"defaultValue": ""
 		},
@@ -547,34 +547,46 @@
 		"nodePrepScriptUrl": "[concat(parameters('_artifactsLocation'), '/scripts/nodePrep.sh')]",
 		"nodePrepScriptFileName": "nodePrep.sh",
 		"loadBalancerName": "[concat(parameters('openshiftClusterPrefix'), '-', parameters('nodeOrMaster'), 'lb')]",
-		"nodeIpProperties": {
-			"privateIPAllocationMethod": "Dynamic",
-			"subnet": {
-				"id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
+		"nameToNumber": {
+			"node": 0,
+			"master": 1,
+			"infra": 2
+		},
+		"IpProperties": [
+			{
+				"properties": {
+					"privateIPAllocationMethod": "Dynamic",
+					"subnet": {
+						"id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
+					}
+				}
+			},{
+				"properties": {
+					"privateIPAllocationMethod": "Dynamic",
+					"subnet": {
+						"id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
+					},
+					"loadBalancerBackendAddressPools":[
+						{
+							"id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancerName'), '/backendAddressPools/loadBalancerBackEnd')]"
+						}
+					]
+				}
+			},
+			{
+				"properties": {
+					"privateIPAllocationMethod": "Dynamic",
+					"subnet": {
+						"id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
+					},
+					"loadBalancerBackendAddressPools":[
+						{
+							"id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancerName'), '/backendAddressPools/loadBalancerBackEnd')]"
+						}
+					]
+				}
 			}
-		},
-		"masterIpProperties": {
-			"privateIPAllocationMethod": "Dynamic",
-			"subnet": {
-				"id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
-			},
-			"loadBalancerBackendAddressPools":[
-				{
-					"id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancerName'), '/backendAddressPools/loadBalancerBackEnd')]"
-				}
-			]
-		},
-		"infraIpProperties": {
-			"privateIPAllocationMethod": "Dynamic",
-			"subnet": {
-				"id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
-			},
-			"loadBalancerBackendAddressPools":[
-				{
-					"id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancerName'), '/backendAddressPools/loadBalancerBackEnd')]"
-				}
-			]
-		},
+		],
 		"offset": "[sub(parameters('zone'), 1)]"
     },
 	"resources": [
@@ -614,7 +626,7 @@
 			"properties": {
 				"ipConfigurations": [{
 					"name": "[concat(variables('hostname'), copyIndex(), 'ipconfig')]",
-					"properties": "[variables(concat(parameters('nodeOrMaster'), 'IpProperties'))]"
+					"properties": "[variables('IpProperties')[variables('nameToNumber')[parameters('nodeOrMaster')]].properties]"
 				}],
 				"networkSecurityGroup": {
 					"id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(parameters('openshiftClusterPrefix'), '-', parameters('nodeOrMaster'), '-nsg'))]"
