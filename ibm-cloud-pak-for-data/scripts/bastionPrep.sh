@@ -34,34 +34,34 @@ else
     exit 3
 fi
 
-subscription-manager attach --pool=$POOL_ID > attach.log
-if [ $? -eq 0 ]
-then
-    echo "Pool attached successfully"
-else
-    grep attached attach.log
-    if [ $? -eq 0 ]
-    then
-        echo "Pool $POOL_ID was already attached and was not attached again."
-    else
-        echo "Incorrect Pool ID or no entitlements available"
-        exit 4
-    fi
-fi
+# subscription-manager attach --pool=$POOL_ID > attach.log
+# if [ $? -eq 0 ]
+# then
+#     echo "Pool attached successfully"
+# else
+#     grep attached attach.log
+#     if [ $? -eq 0 ]
+#     then
+#         echo "Pool $POOL_ID was already attached and was not attached again."
+#     else
+#         echo "Incorrect Pool ID or no entitlements available"
+#         exit 4
+#     fi
+# fi
 
-# Disable all repositories and enable only the required ones
-echo $(date) " - Disabling all repositories and enabling only the required repos"
+# # Disable all repositories and enable only the required ones
+# echo $(date) " - Disabling all repositories and enabling only the required repos"
 
-subscription-manager repos --disable="*"
+# subscription-manager repos --disable="*"
 
-subscription-manager repos \
-    --enable="rhel-7-server-rpms" \
-    --enable="rhel-7-server-extras-rpms" \
-    --enable="rhel-7-server-ose-3.11-rpms" \
-    --enable="rhel-7-server-ansible-2.6-rpms" \
-    --enable="rhel-7-fast-datapath-rpms" \
-    --enable="rh-gluster-3-client-for-rhel-7-server-rpms" \
-    --enable="rhel-7-server-optional-rpms"
+# subscription-manager repos \
+#     --enable="rhel-7-server-rpms" \
+#     --enable="rhel-7-server-extras-rpms" \
+#     --enable="rhel-7-server-ose-3.11-rpms" \
+#     --enable="rhel-7-server-ansible-2.6-rpms" \
+#     --enable="rhel-7-fast-datapath-rpms" \
+#     --enable="rh-gluster-3-client-for-rhel-7-server-rpms" \
+#     --enable="rhel-7-server-optional-rpms"
 
 # Update system to latest packages
 echo $(date) " - Update system to latest packages"
