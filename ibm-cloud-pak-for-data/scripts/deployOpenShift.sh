@@ -39,7 +39,7 @@ export STORAGEOPTION=${32}
 export NFSHOST=${33}
 export SINGLEMULTI=${34}
 export DEPLOYMODE=${35}
-export ARTIFACTSLOCATION=${36}
+export ARTIFACTSLOCATION=${36::-1}
 export ARTIFACTSLOCATIONTOKEN=${37}
 export OCUSER=$1
 export OCPASSWORD="$2"
@@ -177,11 +177,13 @@ then
 	export HAMODE="openshift_master_cluster_method=native"
 fi
 
-if [[ $DEPLOYMODE == "public" ]];then
-export PUBLICDEPLOY="openshift_master_default_subdomain=$ROUTING
+if [[ $ROUTING == "nipio" ]];then
+export PUBLICDEPLOY="openshift_master_default_subdomain=$MASTERPUBLICIPADDRESS.nip.io
 openshift_master_cluster_hostname=$MASTERPUBLICIPHOSTNAME
 openshift_master_cluster_public_hostname=$MASTERPUBLICIPHOSTNAME
-openshift_master_cluster_public_vip=$MASTERPUBLICIPADDRESS"
+openshift_master_cluster_public_vip=$MASTERPUBLICIPADDRESS
+openshift_master_logging_public_url=https://kibana.$MASTERPUBLICIPADDRESS.nip.io
+openshift_logging_master_public_url=https://$MASTERPUBLICIPHOSTNAME:443"
 fi
 
 #GlusterFS Vars
@@ -274,7 +276,7 @@ openshift_metrics_start_cluster=true
 openshift_metrics_hawkular_nodeselector={"node-role.kubernetes.io/infra":"true"}
 openshift_metrics_cassandra_nodeselector={"node-role.kubernetes.io/infra":"true"}
 openshift_metrics_heapster_nodeselector={"node-role.kubernetes.io/infra":"true"}
-# openshift_metrics_hawkular_hostname=https://hawkular-metrics.$ROUTING/hawkular/metrics
+# openshift_metrics_hawkular_hostname=https://hawkular-metrics.$MASTERPUBLICIPADDRESS.nip.io/hawkular/metrics
 
 # Setup logging
 openshift_logging_install_logging=false
@@ -284,8 +286,6 @@ openshift_logging_kibana_nodeselector={"node-role.kubernetes.io/infra":"true"}
 openshift_logging_curator_nodeselector={"node-role.kubernetes.io/infra":"true"}
 openshift_logging_elasticsearch_memory_limit=1Gi
 #openshift_logging_es_number_of_shards=3
-openshift_master_logging_public_url=https://kibana.$ROUTING
-openshift_logging_master_public_url=https://$MASTERPUBLICIPHOSTNAME:443
 
 # host group for masters
 [masters]
@@ -316,7 +316,7 @@ EOF
 
 echo $(date) " - Download ansible config files"
 echo $(date) " - Cloning openshift-ansible repo for use in installation"
-runuser -l $SUDOUSER -c "(cd /home/$SUDOUSER && curl -O https://devocpartifacts.blob.core.windows.net/ansible-config/config.yml)"
+runuser -l $SUDOUSER -c "(cd /home/$SUDOUSER && wget $ARTIFACTSLOCATION/ansible-config/config.yml?$ARTIFACTSLOCATIONTOKEN -O config.yml)"
 
 runuser -l $SUDOUSER -c "git clone -b release-3.11 https://github.com/openshift/openshift-ansible /home/$SUDOUSER/openshift-ansible"
 chmod -R 777 /home/$SUDOUSER/openshift-ansible
@@ -355,7 +355,7 @@ runuser -l $SUDOUSER -c "ansible-playbook /home/$SUDOUSER/config.yml --extra-var
 
 if [[ $STORAGEOPTION != "portworx" ]]
 then
-	runuser -l $SUDOUSER -c "(cd /home/$SUDOUSER && curl -O https://devocpartifacts.blob.core.windows.net/ansible-config/$STORAGEOPTION.yml)"
+	runuser -l $SUDOUSER -c "(cd /home/$SUDOUSER && wget $ARTIFACTSLOCATION/ansible-config/$STORAGEOPTION.yml?$ARTIFACTSLOCATIONTOKEN -O $STORAGEOPTION.yml)"
 	runuser -l $SUDOUSER -c "ansible-playbook /home/$SUDOUSER/$STORAGEOPTION.yml"
 fi
 
@@ -418,7 +418,7 @@ then
 														--from-literal=AZURE_CLIENT_SECRET=$AADCLIENTSECRET"
 
 	# Deploy Portworx
-	runuser -l $SUDOUSER -c "(cd /home/$SUDOUSER && curl -O https://devocpartifacts.blob.core.windows.net/ansible-config/px-spec.yaml)"
+	runuser -l $SUDOUSER -c "(cd /home/$SUDOUSER && wget $ARTIFACTSLOCATION/ansible-config/px-spec.yaml?$ARTIFACTSLOCATIONTOKEN -O px-spec.yaml)"
 	runuser -l $SUDOUSER -c "oc create -f /home/$SUDOUSER/px-spec.yaml"
 
 cat > /home/$SUDOUSER/px-sc.yaml << EOF
@@ -440,7 +440,7 @@ fi
 
 if [[ $STORAGEOPTION == "nfs" ]]; then
   runuser -l $SUDOUSER -c "oc adm policy add-scc-to-user hostmount-anyuid system:serviceaccount:kube-system:nfs-client-provisioner"
-  runuser -l $SUDOUSER -c "(cd /home/$SUDOUSER && curl -O https://devocpartifacts.blob.core.windows.net/ansible-config/nfs-template.yaml)"
+  runuser -l $SUDOUSER -c "(cd /home/$SUDOUSER && curl -O $ARTIFACTSLOCATION/ansible-config/nfs-template.yaml?$ARTIFACTSLOCATIONTOKEN)"
   runuser -l $SUDOUSER -c "oc process -f /home/$SUDOUSER/nfs-template.yaml -p NFS_SERVER=$(getent hosts $storagegroup | awk '{ print $1 }') -p NFS_PATH=/exports/home | oc create -n kube-system -f -"
   echo $(date) "Set NFS as default"
   runuser -l $SUDOUSER -c "kubectl patch storageclass nfs -p '{\"metadata\": {\"annotations\":{\"storageclass.kubernetes.io/is-default-class\":\"true\"}}}'"

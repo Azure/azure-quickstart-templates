@@ -4,10 +4,9 @@ export MASTERPUBLICHOSTNAME=$3
 export NAMESPACE=$4
 export APIKEYUSERNAME=$5
 export APIKEY=$6
-export ARTIFACTSTOKEN=$7
-export ARTIFACTSLOCATION=$8
-export STORAGEOPTION=$9
+export STORAGEOPTION=$7
 export INSTALLERARTIFACTSLOCATION="https://prodcpdartifacts.blob.core.windows.net"
+export INSTALLERARTIFACTSTOKEN="se=2020-12-31T23%3A59%3A00Z&sp=r&sv=2018-11-09&sr=c&sig=7Kh6HtbULEnm8DSjFkQ5UphUK9R%2Busk%2BxhkGlIIpCQE%3D"
 export HOME=/root
 
 # Download Installer files
@@ -17,10 +16,10 @@ storageclass=$STORAGEOPTION
 namespace=$NAMESPACE
 mkdir -p /ibm/$assembly
 export INSTALLERHOME=/ibm/$assembly
-(cd $INSTALLERHOME && wget $INSTALLERARTIFACTSLOCATION/cpdinstaller/cpd-linux?$ARTIFACTSTOKEN -O cpd-linux)
+(cd $INSTALLERHOME && wget $INSTALLERARTIFACTSLOCATION/cpdinstaller/cpd-linux?$INSTALLERARTIFACTSTOKEN -O cpd-linux)
 
 if [[ $APIKEY == "" ]]; then
-(cd $INSTALLERHOME && wget $INSTALLERARTIFACTSLOCATION/cpdinstaller/repo.yaml?$ARTIFACTSTOKEN -O repo.yaml)
+(cd $INSTALLERHOME && wget $INSTALLERARTIFACTSLOCATION/cpdinstaller/repo.yaml?$INSTALLERARTIFACTSTOKEN -O repo.yaml)
 else
 
 (cd $INSTALLERHOME &&
