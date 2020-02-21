@@ -315,6 +315,7 @@ EOF
 
 echo $(date) " - Download ansible config files"
 echo $(date) " - Cloning openshift-ansible repo for use in installation"
+echo "LOCATION: $ARTIFACTSLOCATION, token: $ARTIFACTSLOCATIONTOKEN"
 runuser -l $SUDOUSER -c "(cd /home/$SUDOUSER && wget $ARTIFACTSLOCATION/ansible-config/config.yml?$ARTIFACTSLOCATIONTOKEN -O config.yml)"
 echo $(date) " - config.yml successfully downloaded"
 runuser -l $SUDOUSER -c "git clone -b release-3.11 https://github.com/openshift/openshift-ansible /home/$SUDOUSER/openshift-ansible"
