@@ -54,14 +54,14 @@ fi
 
 # subscription-manager repos --disable="*"
 
-# subscription-manager repos \
-#     --enable="rhel-7-server-rpms" \
-#     --enable="rhel-7-server-extras-rpms" \
-#     --enable="rhel-7-server-ose-3.11-rpms" \
-#     --enable="rhel-7-server-ansible-2.6-rpms" \
-#     --enable="rhel-7-fast-datapath-rpms" \
-#     --enable="rh-gluster-3-client-for-rhel-7-server-rpms" \
-#     --enable="rhel-7-server-optional-rpms"
+subscription-manager repos \
+    --enable="rhel-7-server-rpms" \
+    --enable="rhel-7-server-extras-rpms" \
+    --enable="rhel-7-server-ose-3.11-rpms" \
+    --enable="rhel-7-server-ansible-2.6-rpms" \
+    --enable="rhel-7-fast-datapath-rpms" \
+    --enable="rh-gluster-3-client-for-rhel-7-server-rpms" \
+    --enable="rhel-7-server-optional-rpms"
 
 # Update system to latest packages
 echo $(date) " - Update system to latest packages"
@@ -79,6 +79,8 @@ echo $(date) " - Base package installation complete"
 echo $(date) " - Installing Ansible, pyOpenSSL and python-passlib"
 yum -y install pyOpenSSL python-passlib
 yum -y install ansible python-pip vim pyOpenSSL
+curl --retry 10 --max-time 60 --fail --silent --show-error "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
+python get-pip.py
 pip install ansible==2.6.11
 echo $(date) " - Installation Complete"
 
