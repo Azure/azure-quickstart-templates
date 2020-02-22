@@ -312,13 +312,14 @@ EOF
 
 echo $(date) " - Download ansible config files"
 echo $(date) " - Cloning openshift-ansible repo for use in installation"
-echo "#####################"
-echo " wget $ARTIFACTSLOCATION/ansible-config/config.yml$ARTIFACTSLOCATIONTOKEN -O config.yml "
+
 runuser -l $SUDOUSER -c "(cd /home/$SUDOUSER && wget $ARTIFACTSLOCATION/ansible-config/config.yml$ARTIFACTSLOCATIONTOKEN)"
-echo $(date) " - config.yml successfully downloaded"
+echo $(ls -la /home/$SUDOUSER/config*) " - Confirm download"
 runuser -l $SUDOUSER -c "git clone -b release-3.11 https://github.com/openshift/openshift-ansible /home/$SUDOUSER/openshift-ansible"
 chmod -R 777 /home/$SUDOUSER/openshift-ansible
+echo $(ls -la /home/$SUDOUSER/openshift-ansible) " - Confirm download"
 echo $(date) " - Cloning openshift-ansible repo for use in installation - COMPLETED"
+
 # Create Azure File Storage Class
 cat > /home/$SUDOUSER/azure-file.yml <<EOF
 apiVersion: storage.k8s.io/v1
@@ -349,6 +350,7 @@ then
 fi
 
 # Configure Cluster
+echo $(date) " - Configure Cluster"
 runuser -l $SUDOUSER -c "ansible-playbook /home/$SUDOUSER/config.yml --extra-vars \"poolid=$RHELPOOLID\""
 
 if [[ $STORAGEOPTION != "portworx" ]]
