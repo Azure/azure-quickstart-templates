@@ -21,4 +21,5 @@ This is a starter template that shows how to create a private Azure DNS.
 ## Notes
 
 [Private DNS FAQ](https://docs.microsoft.com/en-us/azure/dns/dns-faq-private)
+
 [privateDnsZones template format](https://docs.microsoft.com/en-us/azure/templates/microsoft.network/2018-09-01/privatednszones)
