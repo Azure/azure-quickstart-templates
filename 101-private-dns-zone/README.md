@@ -8,7 +8,7 @@
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
-This is a starter template that shows how to create a private Azure DNS.  
+This is a starter template that shows how to create a private Azure DNS zone.  
 
 ## Notes
 
