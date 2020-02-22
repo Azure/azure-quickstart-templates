@@ -75,7 +75,6 @@ else
 fi
 
 # Create playbook to update ansible.cfg file
-
 cat > updateansiblecfg.yaml <<EOF
 #!/usr/bin/ansible-playbook
 
@@ -90,9 +89,7 @@ cat > updateansiblecfg.yaml <<EOF
 EOF
 
 # Run Ansible Playbook to update ansible.cfg file
-
 echo $(date) " - Updating ansible.cfg file"
-
 ansible-playbook ./updateansiblecfg.yaml
 
 # Create docker registry config based on Commercial Azure or Azure Government
