@@ -1,4 +1,4 @@
-# Azure private DNS new zone
+# Azure private DNS zone
 
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-azure-dns-new-zone%2Fazuredeploy.json" target="_blank">
