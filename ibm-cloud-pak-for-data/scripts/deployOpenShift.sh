@@ -386,8 +386,7 @@ echo $(date) "- Configuring Docker Registry Completed"
 
 # Login User
 echo $(date) "Login User"
-masterip=$(getent hosts $MASTER-0 | awk '{ print $1 }')
-runuser -l $SUDOUSER -c "oc login https://$masterip:443 -u $OCUSER -p $OCPASSWORD --insecure-skip-tls-verify=true"
+runuser -l $SUDOUSER -c "oc login https://$MASTERPUBLICIPADDRESS:443 -u $OCUSER -p $OCPASSWORD --insecure-skip-tls-verify=true"
 ########################## POST INSTALL ###################
 
 echo $(date) "Installing helm"
