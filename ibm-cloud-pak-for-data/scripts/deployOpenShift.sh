@@ -75,22 +75,22 @@ else
 fi
 
 # Create playbook to update ansible.cfg file
-cat > updateansiblecfg.yaml <<EOF
-#!/usr/bin/ansible-playbook
+# cat > updateansiblecfg.yaml <<EOF
+# #!/usr/bin/ansible-playbook
 
-- hosts: localhost
-  gather_facts: no
-  tasks:
-  - lineinfile:
-      dest: /etc/ansible/ansible.cfg
-      regexp: '^library '
-      insertafter: '#library        = /usr/share/my_modules/'
-      line: 'library = /home/$SUDOUSER/openshift-ansible/roles/lib_utils/library/'
-EOF
+# - hosts: localhost
+#   gather_facts: no
+#   tasks:
+#   - lineinfile:
+#       dest: /etc/ansible/ansible.cfg
+#       regexp: '^library '
+#       insertafter: '#library        = /usr/share/my_modules/'
+#       line: 'library = /home/$SUDOUSER/openshift-ansible/roles/lib_utils/library/'
+# EOF
 
 # Run Ansible Playbook to update ansible.cfg file
-echo $(date) " - Updating ansible.cfg file"
-ansible-playbook ./updateansiblecfg.yaml
+# echo $(date) " - Updating ansible.cfg file"
+# ansible-playbook ./updateansiblecfg.yaml
 
 # Create docker registry config based on Commercial Azure or Azure Government
 if [[ $CLOUD == "US" ]]
@@ -314,10 +314,10 @@ echo $(date) " - Download ansible config files"
 echo $(date) " - Cloning openshift-ansible repo for use in installation"
 
 runuser -l $SUDOUSER -c "(cd /home/$SUDOUSER && wget $ARTIFACTSLOCATION/ansible-config/config.yml$ARTIFACTSLOCATIONTOKEN)"
-echo $(ls -la /home/$SUDOUSER/config*) " - Confirm download"
+echo $(ls /home/$SUDOUSER/) " - Confirm download"
 runuser -l $SUDOUSER -c "git clone -b release-3.11 https://github.com/openshift/openshift-ansible /home/$SUDOUSER/openshift-ansible"
 chmod -R 777 /home/$SUDOUSER/openshift-ansible
-echo $(ls -la /home/$SUDOUSER/openshift-ansible) " - Confirm download"
+echo $(ls /home/$SUDOUSER/ " - Confirm download"
 echo $(date) " - Cloning openshift-ansible repo for use in installation - COMPLETED"
 
 # Create Azure File Storage Class
