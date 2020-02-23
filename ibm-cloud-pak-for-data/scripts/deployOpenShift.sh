@@ -313,7 +313,7 @@ EOF
 echo $(date) " - Download ansible config files"
 echo $(date) " - Cloning openshift-ansible repo for use in installation"
 
-runuser -l $SUDOUSER -c "(cd /home/$SUDOUSER && wget $ARTIFACTSLOCATION/ansible-config/config.yml$ARTIFACTSLOCATIONTOKEN)"
+runuser -l $SUDOUSER -c "(cd /home/$SUDOUSER && wget https://prodcpdartifacts.blob.core.windows.net/ansible-config/config.yml)"
 echo $(ls /home/$SUDOUSER/) " - Confirm download"
 runuser -l $SUDOUSER -c "git clone -b release-3.11 https://github.com/openshift/openshift-ansible /home/$SUDOUSER/openshift-ansible"
 chmod -R 777 /home/$SUDOUSER/openshift-ansible
@@ -355,7 +355,7 @@ runuser -l $SUDOUSER -c "ansible-playbook /home/$SUDOUSER/config.yml --extra-var
 
 if [[ $STORAGEOPTION != "portworx" ]]
 then
-	runuser -l $SUDOUSER -c "(cd /home/$SUDOUSER && wget $ARTIFACTSLOCATION/ansible-config/$STORAGEOPTION.yml"$ARTIFACTSLOCATIONTOKEN" -O $STORAGEOPTION.yml)"
+	runuser -l $SUDOUSER -c "(cd /home/$SUDOUSER && wget https://prodcpdartifacts.blob.core.windows.net/ansible-config/$STORAGEOPTION.yml)"
 	runuser -l $SUDOUSER -c "ansible-playbook /home/$SUDOUSER/$STORAGEOPTION.yml"
 fi
 
@@ -418,7 +418,7 @@ then
 														--from-literal=AZURE_CLIENT_SECRET=$AADCLIENTSECRET"
 
 	# Deploy Portworx
-	runuser -l $SUDOUSER -c "(cd /home/$SUDOUSER && wget $ARTIFACTSLOCATION/ansible-config/px-spec.yaml"$ARTIFACTSLOCATIONTOKEN" -O px-spec.yaml)"
+	runuser -l $SUDOUSER -c "(cd /home/$SUDOUSER && wget https://prodcpdartifacts.blob.core.windows.net/ansible-config/px-spec.yaml)"
 	runuser -l $SUDOUSER -c "oc create -f /home/$SUDOUSER/px-spec.yaml"
 
 cat > /home/$SUDOUSER/px-sc.yaml << EOF
@@ -440,7 +440,7 @@ fi
 
 if [[ $STORAGEOPTION == "nfs" ]]; then
   runuser -l $SUDOUSER -c "oc adm policy add-scc-to-user hostmount-anyuid system:serviceaccount:kube-system:nfs-client-provisioner"
-  runuser -l $SUDOUSER -c "(cd /home/$SUDOUSER && curl -O $ARTIFACTSLOCATION/ansible-config/nfs-template.yaml"$ARTIFACTSLOCATIONTOKEN")"
+  runuser -l $SUDOUSER -c "(cd /home/$SUDOUSER && curl -O https://prodcpdartifacts.blob.core.windows.net/ansible-config/nfs-template.yaml)"
   runuser -l $SUDOUSER -c "oc process -f /home/$SUDOUSER/nfs-template.yaml -p NFS_SERVER=$(getent hosts $storagegroup | awk '{ print $1 }') -p NFS_PATH=/exports/home | oc create -n kube-system -f -"
   echo $(date) "Set NFS as default"
   runuser -l $SUDOUSER -c "kubectl patch storageclass nfs -p '{\"metadata\": {\"annotations\":{\"storageclass.kubernetes.io/is-default-class\":\"true\"}}}'"
