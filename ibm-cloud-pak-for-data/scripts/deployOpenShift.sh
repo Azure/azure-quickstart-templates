@@ -315,9 +315,9 @@ echo $(date) " - Cloning openshift-ansible repo for use in installation"
 
 runuser -l $SUDOUSER -c "(cd /home/$SUDOUSER && wget https://prodcpdartifacts.blob.core.windows.net/ansible-config/config.yml)"
 echo $(ls /home/$SUDOUSER/) " - Confirm download"
+
 runuser -l $SUDOUSER -c "git clone -b release-3.11 https://github.com/openshift/openshift-ansible /home/$SUDOUSER/openshift-ansible"
 chmod -R 777 /home/$SUDOUSER/openshift-ansible
-echo $(ls /home/$SUDOUSER/ " - Confirm download"
 echo $(date) " - Cloning openshift-ansible repo for use in installation - COMPLETED"
 
 # Create Azure File Storage Class
