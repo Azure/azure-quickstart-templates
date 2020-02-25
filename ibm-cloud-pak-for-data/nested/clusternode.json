@@ -97,119 +97,12 @@
 			}
 		}
 	},
-	"variables": {
-		"nameToNumber": {
-			"single": 1,
-			"multi": 0
-		},
-		"machineZone": [
-			{"zone": ["[parameters('zone')]"]},
-			{"zone": []}
-		],
-		"machineProperties": [
-			{
-				"properties": {
-					"hardwareProfile": {
-						"vmSize": "[parameters('vmSize')]"
-					},
-					"osProfile": {
-						"computerName": "[parameters('hostname')]",
-						"adminUsername": "[parameters('adminUsername')]",
-						"linuxConfiguration": {
-							"disablePasswordAuthentication": true,
-							"ssh": {
-								"publicKeys": [{
-									"path": "[parameters('sshKeyPath')]",
-									"keyData": "[parameters('sshPublicKey')]"
-								}]
-							}
-						}
-					},
-					"storageProfile": {
-						"imageReference": "[parameters('imageReference')]",
-						"osDisk": {
-							"name": "[concat(parameters('hostName'), '-osdisk')]",
-							"managedDisk": {
-								"storageAccountType": "[parameters('vmStorageType')]"
-							},
-							"caching": "ReadWrite",
-							"createOption": "FromImage",
-							"diskSizeGB": 256,
-							"osType": "Linux"
-						},
-						"dataDisks": [{
-							"name": "[concat(parameters('hostName'), '-docker-pool')]",
-							"diskSizeGB": "[parameters('dataDiskSize')]",
-							"lun": 0,
-							"managedDisk": {
-								"storageAccountType": "[parameters('vmStorageType')]"
-							},
-							"createOption": "Empty"
-						}]
-					},
-					"networkProfile": {
-						"networkInterfaces": [{
-							"id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('hostname'), '-nic'))]"
-						}]
-					}
-				}
-			},{
-				"properties": {
-					"availabilitySet" : {
-						"id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySet'))]"
-					},
-					"hardwareProfile": {
-						"vmSize": "[parameters('vmSize')]"
-					},
-					"osProfile": {
-						"computerName": "[parameters('hostname')]",
-						"adminUsername": "[parameters('adminUsername')]",
-						"linuxConfiguration": {
-							"disablePasswordAuthentication": true,
-							"ssh": {
-								"publicKeys": [{
-									"path": "[parameters('sshKeyPath')]",
-									"keyData": "[parameters('sshPublicKey')]"
-								}]
-							}
-						}
-					},
-					"storageProfile": {
-						"imageReference": "[parameters('imageReference')]",
-						"osDisk": {
-							"name": "[concat(parameters('hostName'), '-osdisk')]",
-							"managedDisk": {
-								"storageAccountType": "[parameters('vmStorageType')]"
-							},
-							"caching": "ReadWrite",
-							"createOption": "FromImage",
-							"diskSizeGB": 256,
-							"osType": "Linux"
-						},
-						"dataDisks": [{
-							"name": "[concat(parameters('hostName'), '-docker-pool')]",
-							"diskSizeGB": "[parameters('dataDiskSize')]",
-							"lun": 0,
-							"managedDisk": {
-								"storageAccountType": "[parameters('vmStorageType')]"
-							},
-							"createOption": "Empty"
-						}]
-					},
-					"networkProfile": {
-						"networkInterfaces": [{
-							"id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('hostname'), '-nic'))]"
-						}]
-					}
-				}
-			}
-		]
-	},
+	"variables": {},
 	"resources": [
 		{
 			"type": "Microsoft.Compute/virtualMachines",
 			"name": "[parameters('hostname')]",
-			"zones" : "[variables('machineZone')[variables('nameToNumber')[parameters('singleZoneOrMultiZone')]].zone]",
+			"zones": "[if(equals(parameters('singleZoneOrMultiZone'), 'single'), json('null'), array(parameters('zone')))]",
 			"location": "[parameters('location')]",
 			"apiVersion": "2019-07-01",
 			"tags": {
@@ -219,7 +112,52 @@
 				"version": "[parameters('redHatTags').version]",
 				"platform": "[parameters('redHatTags').platform]"
 			},
-			"properties": "[variables('machineProperties')[variables('nameToNumber')[parameters('singleZoneOrMultiZone')]].properties]"
+			"properties": {
+				"availabilitySet": "[if(equals(parameters('singleZoneOrMultiZone'), 'single'), json('null'), parameters('availabilitySet'))]",
+				"hardwareProfile": {
+					"vmSize": "[parameters('vmSize')]"
+				},
+				"osProfile": {
+					"computerName": "[parameters('hostname')]",
+					"adminUsername": "[parameters('adminUsername')]",
+					"linuxConfiguration": {
+						"disablePasswordAuthentication": true,
+						"ssh": {
+							"publicKeys": [{
+								"path": "[parameters('sshKeyPath')]",
+								"keyData": "[parameters('sshPublicKey')]"
+							}]
+						}
+					}
+				},
+				"storageProfile": {
+					"imageReference": "[parameters('imageReference')]",
+					"osDisk": {
+						"name": "[concat(parameters('hostName'), '-osdisk')]",
+						"managedDisk": {
+							"storageAccountType": "[parameters('vmStorageType')]"
+						},
+						"caching": "ReadWrite",
+						"createOption": "FromImage",
+						"diskSizeGB": 256,
+						"osType": "Linux"
+					},
+					"dataDisks": [{
+						"name": "[concat(parameters('hostName'), '-docker-pool')]",
+						"diskSizeGB": "[parameters('dataDiskSize')]",
+						"lun": 0,
+						"managedDisk": {
+							"storageAccountType": "[parameters('vmStorageType')]"
+						},
+						"createOption": "Empty"
+					}]
+				},
+				"networkProfile": {
+					"networkInterfaces": [{
+						"id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('hostname'), '-nic'))]"
+					}]
+				}
+			}
 		}
 	],
 	"outputs": {}
