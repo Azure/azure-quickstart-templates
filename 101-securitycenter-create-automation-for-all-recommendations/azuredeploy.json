@@ -1,0 +1,84 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"automationName": {
+		  "type": "string",
+		  "minLength": 3,
+		  "maxLength": 24
+		},
+		"LogicAppResourceId": {
+			"type": "string",
+			"minLength": 12
+		},
+		"subscriptionAzureResourceId": {
+			"type": "string",
+			"defaultValue": "[subscription().id]",
+			"metadata": {
+				"description": "The Azure resource id of the subscription"
+			}
+		},
+		"subscriptionId": {
+			"type": "string",
+			"defaultValue": "[subscription().subscriptionId]",
+			"metadata": {
+				"description": "The Azure resource GUID id of the subscription"
+			}
+		},
+		"assessmentSettings": {
+			"type":"object",
+			"metadata": {
+				"description": "The object used for deploying the automation"
+			}
+		}
+	  },
+	"variables": {
+		"descriptionDescription": "scope for subscription {0}"
+	},
+	"resources": [
+		{
+			"tags":{},
+			"apiVersion": "2019-01-01-preview",
+			"location":"North Europe",
+			"name":"[parameters('automationName')]",
+			"type":"Microsoft.Security/automations",
+			"properties":{
+				"description":"",
+				"isEnabled":true,
+					"actions":[{
+						"actionType":"LogicApp",
+						"logicAppResourceId":"[parameters('LogicAppResourceId')]",
+						"uri":"[listCallbackUrl(concat(parameters('LogicAppResourceId'), '/triggers/manual'),'2016-06-01').value]"
+						}],
+					"scopes":[{
+						"description": "[replace(variables('descriptionDescription'),'{0}', parameters('subscriptionId'))]",
+						"scopePath":"[parameters('subscriptionAzureResourceId')]"
+						}],
+					"sources":[{
+						"eventSource":"Assessments",
+						"eventVersionType":"Api",
+						"copy": [{
+						  "name": "ruleSets",
+						  "count": "[length(parameters('assessmentSettings').assessmentSeverityMapping)]",
+						  "input": {
+						  "rules":[
+							  	{
+									"propertyJPath":"[parameters('assessmentSettings').assessmentSeverityMapping[copyIndex('ruleSets')].jpath]",
+									"propertyType":"string",
+									"expectedValue": "[parameters('assessmentSettings').assessmentSeverityMapping[copyIndex('ruleSets')].assessmentName]",
+									"operator":"[parameters('assessmentSettings').assessmentSeverityMapping[copyIndex('ruleSets')].operator]"
+								},
+								{
+									"propertyJPath":"properties.status.code",
+									"propertyType":"string",
+									"expectedValue": "[parameters('assessmentSettings').assessmentSeverityMapping[copyIndex('ruleSets')].state]",
+									"operator":"Contains"	
+								}
+							]
+						  }
+						}]
+					}]
+			}
+		}
+	]
+}
