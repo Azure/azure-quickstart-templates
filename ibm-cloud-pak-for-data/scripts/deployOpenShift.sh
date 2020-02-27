@@ -40,6 +40,7 @@ export NFSHOST=${33}
 export SINGLEMULTI=${34}
 export ARTIFACTSLOCATIONTOKEN="${35}"
 export ARTIFACTSLOCATION=${36::-1}
+export INFRAPUBLICIP=${37}
 export OCUSER=$1
 export OCPASSWORD="$2"
 
@@ -174,11 +175,11 @@ then
 fi
 
 if [[ $ROUTING == "nipio" ]];then
-export PUBLICDEPLOY="openshift_master_default_subdomain=$MASTERPUBLICIPADDRESS.nip.io
+export PUBLICDEPLOY="openshift_master_default_subdomain=$INFRAPUBLICIP.nip.io
 openshift_master_cluster_hostname=$MASTERPUBLICIPHOSTNAME
 openshift_master_cluster_public_hostname=$MASTERPUBLICIPHOSTNAME
 openshift_master_cluster_public_vip=$MASTERPUBLICIPADDRESS
-openshift_master_logging_public_url=https://kibana.$MASTERPUBLICIPADDRESS.nip.io
+openshift_master_logging_public_url=https://kibana.$INFRAPUBLICIP.nip.io
 openshift_logging_master_public_url=https://$MASTERPUBLICIPHOSTNAME:443"
 fi
 
@@ -272,7 +273,7 @@ openshift_metrics_start_cluster=true
 openshift_metrics_hawkular_nodeselector={"node-role.kubernetes.io/infra":"true"}
 openshift_metrics_cassandra_nodeselector={"node-role.kubernetes.io/infra":"true"}
 openshift_metrics_heapster_nodeselector={"node-role.kubernetes.io/infra":"true"}
-# openshift_metrics_hawkular_hostname=https://hawkular-metrics.$MASTERPUBLICIPADDRESS.nip.io/hawkular/metrics
+# openshift_metrics_hawkular_hostname=https://hawkular-metrics.$INFRAPUBLICIP.nip.io/hawkular/metrics
 
 # Setup logging
 openshift_logging_install_logging=false
