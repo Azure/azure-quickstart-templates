@@ -16,7 +16,14 @@
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
-This template references (reads) existing key-value configurations from an existing config store from the Azure Resource Manager template. The retrieved values are used to set properties of the resources created by the template. This template does not create an App Configuration store or modify key-values in an App Configuration store. Use the prerequisite template to create an App Configuration store, and then add key-values into the store using the Azure portal or Azure CLI.
+This template references (reads) existing key-value configurations from an existing config store from the Azure Resource Manager template. The retrieved values are used to set properties of the resources created by the template. This template does not create an App Configuration store or modify key-values in an App Configuration store. You must first create an App Configuration store, and then add key-values into the store using the Azure portal or Azure CLI.
+
+To use this template, add the following key-values to your Azure App Configuration store:
+
+|Key|Value|
+|-|-|
+|windowsOsVersion|2019-Datacenter|
+|diskSizeGB|1023|
 
 If you are new to App Configurations, see:
 
