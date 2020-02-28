@@ -1,7 +1,7 @@
 param(
     [string] $SampleFolder = $ENV:SAMPLE_FOLDER,
     [string] $CloudEnvironment = $ENV:ENVIRONMENT,
-    [switch] $BuildReason = $ENV:BUILD_REASON
+    [string] $BuildReason = $ENV:BUILD_REASON
 )
 
 #get the file content
