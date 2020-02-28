@@ -16,5 +16,5 @@
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
-This template creates a subnet, a Network Security Group and attaches it to the subnet in the VNET. For more information on how to configure the Network Security Group, go here: https://msdn.microsoft.com/en-us/library/azure/dn848316.aspx
+This template creates a subnet, a Network Security Group and attaches it to the subnet in the VNET. For more information on how to configure the Network Security Group, go here: https://docs.microsoft.com/en-us/azure/templates/microsoft.network/2018-11-01/networksecuritygroups
 

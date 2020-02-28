@@ -39,7 +39,7 @@ if(-not ($readme.StartsWith("# "))){
 
 #proper src attribute for badges
 foreach($badge in $badges){
-    if(-not ($readme -like "*$badge*")){
+    if(-not ($readme -clike "*$badge*")){
         $dumpHelp = $true
         Write-Error "Readme is missing badge: $badge"
     }
@@ -47,7 +47,7 @@ foreach($badge in $badges){
 
 #Proper href and src attribute for buttons
 foreach($button in $buttons){
-    if(-not ($readme -like "*$button*")){
+    if(-not ($readme -clike "*$button*")){
         $dumpHelp = $true
         Write-Error "Readme button incorrect HREF or SRC attribute: $button"
     }
