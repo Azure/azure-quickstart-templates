@@ -1,15 +1,10 @@
-![Dynamic-Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/blockchain/images/dynamic.svg)
+![Dynamic-Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/blockchain/images/dynamic.png)
 
 # Dynamic Blockchain Node on Ubuntu VM
 
 This template delivers the Dynamic network to your VM in about 15 minutes. Everything you need to get started using the Dynamic blockchain from the command line is included. Once installed, 'dynamicd' will begin syncing the public blockchain. You may then connect via SSH to the VM and launch 'dynamicd' to interface with the blockchain.
 
-# What is Dynamic?
-
-What is Dynamic?
-----------------
-
-What is [Dynamic](https://duality.solutions/dynamic)?
+# What is [Dynamic](https://duality.solutions/dynamic)?
 ----------------
 * Coin Suffix: DYN
 * PoW Mining Algorithm: Argon2d
