@@ -1,7 +1,7 @@
 param(
     [string] $SampleFolder = $ENV:SAMPLE_FOLDER,
     [string] $CloudEnvironment = $ENV:ENVIRONMENT,
-    [switch] $SkipDateCheck
+    [string] $BuildReason = $ENV:BUILD_REASON
 )
 
 #get the file content
@@ -16,7 +16,7 @@ $metadata | Test-Json -Schema $schema.content
 $rawDate = ($metadata | convertfrom-json).dateUpdated
 $dateUpdated = (Get-Date $rawDate)
 
-if (!$SkipDateCheck) {
+if (!($ENV:BUILD_REASON -eq "Scheduled")) {
     #When running the scheduled tests, we don't want to check the date
     try {
         [DateTime]::ParseExact($rawDate, 'yyyy-MM-dd', $(Get-Culture))
