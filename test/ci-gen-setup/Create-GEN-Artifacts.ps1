@@ -20,7 +20,8 @@ param(
     [string] $CertDNSName = 'azbot-cert-dns',
     [string] $KeyVaultSelfSignedCertName = 'azbot-sscert',
     [string] $KeyVaultNotSecretName = 'notSecretPassword',
-    [string] $ServicePrincipalObjectId #if not provided assigning perms to the Vault must be done manually
+    [string] $ServicePrincipalObjectId, #if not provided assigning perms to the Vault must be done manually
+    [string] $appConfigStoreName = 'azbotappconfigstore' # This must be gloablly unique
 
 )
 
@@ -192,5 +193,17 @@ $json.Add("SELFSIGNED-CERT-PASSWORD", $CertPass)
 $json.Add("SELFSIGNED-CERT-THUMBPRINT", $kvCert.Thumbprint)
 $json.Add("SELFSIGNED-CERT-DNSNAME", $CertDNSName)
 
-#Output all the values needed for the config file
+# Create the Microsoft.appConfiguration/configurationStores
+$appConfigStoreKey1 = "key1"
+
+# There are no PS cmdlets for app config store yet - use context must be set with "az account set ..."
+# Also, not available in Fairfax
+az appconfig create -g $ResourceGroupName -n $appConfigStoreName -l $Location --verbose 
+az appconfig kv set -n $appConfigStoreName --key $appConfigStoreKey1 --value "value1" -y --verbose
+
+$json.Add("APPCONFIGSTORE-NAME", $appConfigStoreName)
+$json.Add("APPCONFIGSTORE-RESOURCEGROUP-NAME", $ResourceGroupName)
+$json.Add("APPCONFIGSTORE-KEY1", $appConfigStoreKey1)
+
+# Output all the values needed for the config file
 Write-Output $($json | ConvertTo-json -Depth 30)
