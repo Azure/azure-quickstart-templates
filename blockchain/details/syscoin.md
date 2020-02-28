@@ -1,3 +1,5 @@
+![Syscoin-Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/blockchain/images/syscoin.png)
+
 # Syscoin Blockchain Node on Ubuntu VM
 
 This template delivers the Syscoin network to your VM in about 15 minutes (PPA install).  Everything you need to get started using the Syscoin blockchain from the command line is included. 

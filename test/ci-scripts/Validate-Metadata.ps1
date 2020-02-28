@@ -52,4 +52,3 @@ Write-Output "Is cloud supported: $IsCloudSupported"
 if (!$IsCloudSupported) {
     Write-Host "##vso[task.setvariable variable=result.deployment]Not Supported"
 }
-
