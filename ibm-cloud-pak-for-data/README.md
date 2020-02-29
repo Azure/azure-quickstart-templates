@@ -31,6 +31,7 @@ This Template requires a Red Hat subscription. To procure a 60 day evaluation li
 When you deploy the Template, you receive a trial license of Cloud Pak for Data for up to 60 days. After 60 days, you must either purchase or uninstall.
 
 To get pricing information, or to use your existing Cloud Pak for Data entitlements, contact your IBM sales representative at 1-877-426-3774. If you already have the Cloud Pak for Data license file, you can follow the instructions in [Activating your IBM Cloud Pak for Data License to activate the license](#activating-your-ibm-cloud-pak-for-data-license).
+You can also register for a 60-day trial key using this link - [IBM Cloud Pak for Data Trial](https://www.ibm.com/account/reg/us-en/signup?formid=urx-42212).
 
 ## Architecture
 Deploying this template builds the following Cloud Pak for Data cluster in single zone or multi zone.
@@ -98,7 +99,16 @@ The following RedHat subscription details are required at the time of deployment
 
 To procure a 60 day evaluation license for OpenShift you can follow the instructions at [Evaluate Redhat Openshift Container Platform](https://www.redhat.com/en/technologies/cloud-computing/openshift/try-it)
 
-The deployment can be done using Azure CLI or can be done from your Azure Portal.
+
+#### IBM Cloud Pak for Data Trial key
+If you don't have a license for IBM Cloud Pak for Data, you may procure a 60 day trial key by signing up on the following link:
+[IBM Cloud Pak for Data Trial](https://www.ibm.com/account/reg/us-en/signup?formid=urx-42212),
+and use this key in the corresponding deployment parameter.
+<br />
+eg: the value for "apiKeyUsername" could be "iamapikey" or "cp", and for "apiKey", use the trial key that is generated (or sent to your email) after signing up with the above link.
+<br/><br/>
+
+#### The deployment can be done using Azure CLI or can be done from your Azure Portal.
 
 ### Method 1: Using Azure CLI
 
@@ -179,7 +189,7 @@ az group deployment create --resource-group <resource_group> --template-file azu
 
 * Specify the add-ons needed- Watson Studio Library, Watson Machine Learning, Watson Knowledge Catalog, Data Virtualization (select 'yes' to install)
 
-* Specify Api Key Username and Api Key
+* Specify Api Key Username and Api Key. (See [Pre-requisites](#prerequisites))
 
 * Cloud Pak License Agreement (select 'yes' to agree)
 
