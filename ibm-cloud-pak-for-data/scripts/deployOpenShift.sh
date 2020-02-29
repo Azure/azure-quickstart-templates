@@ -41,6 +41,7 @@ export SINGLEMULTI=${34}
 export ARTIFACTSLOCATIONTOKEN="${35}"
 export ARTIFACTSLOCATION=${36::-1}
 export INFRAPUBLICIP=${37}
+#TEMPPASSWORD=${38}
 export OCUSER=$1
 export OCPASSWORD="$2"
 
@@ -241,6 +242,7 @@ $STORAGEOPTION
 [OSEv3:vars]
 ansible_ssh_user=$SUDOUSER
 ansible_become=yes
+ansible_ssh_pass=${38}
 oreg_auth_user=$RHEL_USERNAME
 oreg_auth_password=$RHEL_PASSWORD
 openshift_deployment_type=openshift-enterprise
