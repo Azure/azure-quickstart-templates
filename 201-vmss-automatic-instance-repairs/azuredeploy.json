@@ -1,0 +1,266 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+      "vmSku": {
+      "type": "string",
+      "defaultValue": "Standard_A2_V2",
+      "metadata": {
+        "description": "Size of VMs in the VM Scale Set."
+      }
+    },
+    "imagePublisher": {
+      "type": "string",
+      "defaultValue": "Canonical"
+    },
+    "imageOffer": {
+      "type": "string",
+      "defaultValue": "UbuntuServer"
+    },
+    "imageSku": {
+      "type": "string",
+      "defaultValue": "16.04-LTS"
+    },
+    "imageOSVersion": {
+      "type": "string",
+      "defaultValue": "latest"
+    },
+    "vmssName": {
+      "type":"string",
+      "metadata":{
+        "description":"String used as a base for naming resources. Must be 3-61 characters in length and globally unique across Azure. A hash is prepended to this string for some resources, and resource-specific information is appended."
+      },
+      "maxLength": 61
+    },
+    "instanceCount": {
+      "type": "int",
+      "defaultValue": 30,
+      "metadata": {
+        "description": "Number of VM instances (100 or less)."
+      },
+      "maxValue": 100
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Admin username on all VMs."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Admin password on all VMs."
+      }
+    },
+    "healthExtensionPort": {
+      "type": "int",
+      "defaultValue": 80,
+      "metadata": {
+        "description": "Local http port on VM at which health extension to probe"
+      }
+    },
+    "healthExtensionProtocol": {
+      "type": "string",
+      "defaultValue": "http",
+      "metadata": {
+        "description": "Protocol used by health extension to probe app health"
+      }
+    }
+  },
+  "variables": {
+    "addressPrefix": "10.0.0.0/16",
+    "subnetName": "Subnet",
+    "subnetPrefix": "10.0.0.0/24",
+
+    "namingInfix": "[toLower(substring(concat(parameters('vmssName'), uniqueString(resourceGroup().id)), 0, 9))]",
+
+    "virtualNetworkName": "[concat(variables('namingInfix'), 'vnet')]",
+    "lbName": "[concat(variables('namingInfix'), 'lb')]",
+    "bepoolName": "[concat(variables('lbName'), 'bepool')]",
+    "fepoolName": "[concat(variables('lbName'), 'fepool')]",
+    "feIpConfigName": "[concat(variables('fepoolName'), 'IpConfig')]",
+    "lbID": "[resourceId('Microsoft.Network/loadBalancers',variables('lbName'))]",
+    "bepoolID": "[concat(variables('lbID'),'/backendAddressPools/', variables('bepoolName'))]",
+    "feIpConfigId": "[concat(variables('lbID'),'/frontendIPConfigurations/', variables('feIpConfigName'))]",
+    
+    "platformImageReference": {
+      "publisher": "[parameters('imagePublisher')]",
+      "offer": "[parameters('imageOffer')]",
+      "sku": "[parameters('imageSku')]",
+      "version": "[parameters('imageOSVersion')]"
+    },
+    "imageReference": "[variables('platformImageReference')]",
+
+    "networkApiVersion": "2016-06-01",
+    "computeApiVersion": "2019-03-01"
+  },
+  "resources": [
+    {
+      "apiVersion": "[variables('networkApiVersion')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/loadBalancers",
+      "name": "[variables('lbName')]",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "[variables('networkApiVersion')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "[variables('feIpConfigName')]",
+            "properties": {
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "[variables('bepoolName')]"
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "name": "ProbeRule",
+            "properties": {
+              "loadDistribution": "Default",
+              "frontendIPConfiguration": {
+                "id": "[variables('feIpConfigId')]"
+              },
+              "backendAddressPool": {
+                "id": "[variables('bepoolID')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 80,
+              "backendPort": 80,
+              "enableFloatingIP": false,
+              "idleTimeoutInMinutes": 5
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachineScaleSets",
+      "apiVersion": "[variables('computeApiVersion')]",
+      "name": "[parameters('vmssName')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "vmsstag": "automaticrepairs"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/loadBalancers/', variables('lbName'))]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "sku": {
+        "name": "[parameters('vmSku')]",
+        "tier": "Standard",
+        "capacity": "[parameters('instanceCount')]"
+      },
+      "properties": {
+        "upgradePolicy": {
+          "mode": "Manual"
+        },
+        "automaticRepairsPolicy": {
+          "enabled": "true",
+          "gracePeriod": "PT30M"
+        },
+        "virtualMachineProfile": {
+          "storageProfile": {
+            "imageReference": "[variables('imageReference')]"
+          },
+          "osProfile": {
+            "computerNamePrefix": "vmss",
+            "adminUsername": "[parameters('adminUsername')]",
+            "adminPassword": "[parameters('adminPassword')]"
+          },
+          "extensionProfile": {
+            "extensions": [
+                {
+                  "name": "CustomScriptToInstallApache",
+                  "properties": {
+                    "publisher": "Microsoft.Azure.Extensions",
+                    "type": "CustomScript",
+                    "typeHandlerVersion": "2.0",
+                    "autoUpgradeMinorVersion": "true",
+                    "settings": {
+                        "fileUris": [
+                          "./scripts/ApacheInstallScript.sh"
+                        ],
+                        "commandToExecute": "sh ApacheInstallScript.sh"
+                    }
+                  }
+                },
+                {
+                  "name": "HealthExtension",
+                  "properties": {
+                    "publisher": "Microsoft.ManagedServices",
+                    "type": "ApplicationHealthLinux",
+                    "typeHandlerVersion": "1.0",
+                    "autoUpgradeMinorVersion": "true",
+                    "settings": {
+                      "port": "[parameters('healthExtensionPort')]",
+                      "protocol": "[parameters('healthExtensionProtocol')]",
+                      "requestPath": "/"
+                    }
+                  }
+                }
+            ]
+          },
+          "networkProfile": {
+            "networkInterfaceConfigurations": [
+              {
+                "name": "nic1",
+                "properties": {
+                  "primary": "true",
+                  "ipConfigurations": [
+                    {
+                      "name": "ip1",
+                      "properties": {
+                        "subnet": {
+                          "id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'), '/subnets/', variables('subnetName'))]"
+                        },
+                        "loadBalancerBackendAddressPools": [
+                          {
+                            "id": "[variables('bepoolID')]"
+                          }
+                        ],
+                        "publicipaddressconfiguration": {
+                          "name": "pub1",
+                          "properties": {
+                            "idleTimeoutInMinutes": 15
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
