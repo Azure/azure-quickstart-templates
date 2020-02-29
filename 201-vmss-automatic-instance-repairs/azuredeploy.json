@@ -1,5 +1,5 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
       "vmSku": {
@@ -38,7 +38,8 @@
       "metadata": {
         "description": "Number of VM instances (100 or less)."
       },
-      "maxValue": 100
+      "maxValue": 100,
+      "minValue": 30
     },
     "adminUsername": {
       "type": "string",
@@ -89,14 +90,11 @@
       "sku": "[parameters('imageSku')]",
       "version": "[parameters('imageOSVersion')]"
     },
-    "imageReference": "[variables('platformImageReference')]",
-
-    "networkApiVersion": "2016-06-01",
-    "computeApiVersion": "2019-03-01"
+    "imageReference": "[variables('platformImageReference')]"
   },
   "resources": [
     {
-      "apiVersion": "[variables('networkApiVersion')]",
+      "apiVersion": "2016-06-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[resourceGroup().location]",
@@ -120,7 +118,7 @@
       "type": "Microsoft.Network/loadBalancers",
       "name": "[variables('lbName')]",
       "location": "[resourceGroup().location]",
-      "apiVersion": "[variables('networkApiVersion')]",
+      "apiVersion": "2016-06-01",
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
       ],
@@ -163,7 +161,7 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachineScaleSets",
-      "apiVersion": "[variables('computeApiVersion')]",
+      "apiVersion": "2019-03-01",
       "name": "[parameters('vmssName')]",
       "location": "[resourceGroup().location]",
       "tags": {
@@ -183,7 +181,7 @@
           "mode": "Manual"
         },
         "automaticRepairsPolicy": {
-          "enabled": "true",
+          "enabled": true,
           "gracePeriod": "PT30M"
         },
         "virtualMachineProfile": {
@@ -203,12 +201,15 @@
                     "publisher": "Microsoft.Azure.Extensions",
                     "type": "CustomScript",
                     "typeHandlerVersion": "2.0",
-                    "autoUpgradeMinorVersion": "true",
+                    "autoUpgradeMinorVersion": true,
                     "settings": {
-                        "fileUris": [
+                      "skipDos2Unix":false,
+                    "fileUris": [
                           "./scripts/ApacheInstallScript.sh"
-                        ],
-                        "commandToExecute": "sh ApacheInstallScript.sh"
+                        ]
+                    },
+                    "protectedSettings": {
+                    "commandToExecute": "sh ApacheInstallScript.sh"
                     }
                   }
                 },
@@ -233,7 +234,7 @@
               {
                 "name": "nic1",
                 "properties": {
-                  "primary": "true",
+                  "primary": true,
                   "ipConfigurations": [
                     {
                       "name": "ip1",
