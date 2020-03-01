@@ -23,6 +23,77 @@
 			},
 			"defaultValue": "[resourceGroup().location]"
 		},
+		"newOrExistingNetwork": {
+			"type": "string",
+			"defaultValue": "new",
+			"allowedValues": ["new", "existing"],
+			"metadata": {
+				"description": "Deploy in new cluster or in existing cluster"
+			}
+		},
+		"existingVnetResourceGroupName": {
+			"type": "string",
+			"defaultValue": "myResourceGroup",
+			"metadata": {
+				"description": "Resource Group for Existing Vnet."
+			}
+		},
+		"virtualNetworkName": {
+			"type": "string",
+			"defaultValue": "myVNet",
+			"metadata": {
+				"description": "Name of new or existing virtual network"
+			}
+		},
+		"addressPrefix": {
+			"type": "string",
+			"defaultValue": "10.0.0.0/8",
+			"metadata": {
+				"description": "VNet Address Prefix"
+			}
+		},
+		"masterSubnetName": {
+			"type": "string",
+			"defaultValue": "masterSubnet",
+			"metadata": {
+				"description": "Name of new or existing master subnet"
+			}
+		},
+		"masterSubnetPrefix": {
+			"type": "string",
+			"defaultValue": "10.1.0.0/16",
+			"metadata": {
+				"description": "Master subnet address prefix"
+			}
+		},
+		"workerSubnetName": {
+			"type": "string",
+			"defaultValue": "workerSubnet",
+			"metadata": {
+				"description": "Name of new or existing worker subnet"
+			}
+		},
+		"workerSubnetPrefix": {
+			"type": "string",
+			"defaultValue": "10.2.0.0/16",
+			"metadata": {
+				"description": "Worker subnet address prefix"
+			}
+		},
+		"bastionSubnetName": {
+			"type": "string",
+			"defaultValue": "bastionSubnet",
+			"metadata": {
+				"description": "Name of new or existing bastion subnet"
+			}
+		},
+		"bastionSubnetPrefix": {
+			"type": "string",
+			"defaultValue": "10.3.0.0/27",
+			"metadata": {
+				"description": "Worker subnet address prefix"
+			}
+		},
 		"bastionVmSize": {
 			"type": "string",
 			"defaultValue": "Standard_D8s_v3",
@@ -171,7 +242,7 @@
 		},
 		"enableMetrics": {
 			"type": "string",
-			"defaultValue": "true",
+			"defaultValue": "false",
 			"allowedValues": [
 				"true", "false"
 			],
@@ -181,7 +252,7 @@
 		},
 		"enableLogging": {
 			"type": "string",
-			"defaultValue": "true",
+			"defaultValue": "false",
 			"allowedValues": [
 				"true", "false"
 			],
@@ -387,6 +458,16 @@
 		}
 	},
 	"variables": {
+		"networkResourceGroup": "[if(equals(parameters('newOrExistingNetwork'), 'existing'), parameters('existingVnetResourceGroupName'), resourceGroup().name)]",
+		"virtualNetworkName": "[parameters('virtualNetworkName')]",
+		"masterSubnetName": "[parameters('masterSubnetName')]",
+		"nodeSubnetName": "[parameters('workerSubnetName')]",
+		"bastionSubnetName": "[parameters('bastionSubnetName')]",
+		"nfsSubnetName": "[parameters('workerSubnetName')]",
+		"addressPrefix": "[parameters('addressPrefix')]",
+		"masterSubnetPrefix": "[parameters('masterSubnetPrefix')]",
+		"nodeSubnetPrefix": "[parameters('workerSubnetPrefix')]",
+		"bastionSubnetPrefix": "[parameters('bastionSubnetPrefix')]",
 		"apiVersionStorage": "2017-06-01",
 		"location": "[parameters('location')]",
 		"namingInfix": "[toLower(parameters('openshiftClusterPrefix'))]",
@@ -468,16 +549,6 @@
 			}
 		},
 		"storageLoopCount": 6,
-		"addressPrefix": "10.0.0.0/8",
-		"masterSubnetPrefix": "10.1.0.0/16",
-		"nodeSubnetPrefix": "10.2.0.0/16",
-		"bastionSubnetPrefix": "10.3.0.0/27",
-		"nfsSubnetPrefix": "10.4.0.0/27",
-		"virtualNetworkName": "openshiftvnet",
-		"masterSubnetName": "mastersubnet",
-		"nodeSubnetName": "nodesubnet",
-		"bastionSubnetName": "bastionsubnet",
-		"nfsSubnetName": "nfssubnet",
 		"bastionPublicIpDnsLabel": "[concat('bastiondns', uniqueString(concat(resourceGroup().id, 'bastion')))]",
 		"infraLbPublicIpDnsLabel": "[concat('infradns', uniqueString(concat(resourceGroup().id, 'infra')))]",
 		"openshiftMasterPublicIpDnsLabel": "[concat('masterdns', uniqueString(concat(resourceGroup().id, 'master')))]",
@@ -916,6 +987,7 @@
 				}]
 			}
 		},{
+			"condition": "[equals(parameters('newOrExistingNetwork'), 'new')]",
 			"type": "Microsoft.Network/virtualNetworks",
 			"name": "[variables('virtualNetworkName')]",
 			"location": "[variables('location')]",
@@ -947,11 +1019,6 @@
 					"name": "[variables('bastionSubnetName')]",
 					"properties": {
 						"addressPrefix": "[variables('bastionSubnetPrefix')]"
-					}
-				}, {
-					"name": "[variables('nfsSubnetName')]",
-					"properties": {
-						"addressPrefix": "[variables('nfsSubnetPrefix')]"
 					}
 				}]
 			}
@@ -1268,7 +1335,7 @@
 					"properties": {
 						"privateIPAllocationMethod": "Dynamic",
 						"subnet": {
-							"id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('bastionSubnetName'))]"
+							"id": "[resourceId(variables('networkResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('bastionSubnetName'))]"
 						},
 						"publicIPAddress": {
 							"id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('bastionPublicIpDnsLabel'))]"
@@ -1306,7 +1373,7 @@
 					"properties": {
 						"privateIPAllocationMethod": "Dynamic",
 						"subnet": {
-							"id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('nfsSubnetName'))]"
+							"id": "[resourceId(variables('networkResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('nfsSubnetName'))]"
 						},
 						"publicIPAddress": {
 							"id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('nfsPublicIpDnsLabel'))]"
@@ -1344,7 +1411,7 @@
 					"properties": {
 						"privateIPAllocationMethod": "Dynamic",
 						"subnet": {
-							"id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('masterSubnetName'))]"
+							"id": "[resourceId(variables('networkResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('masterSubnetName'))]"
 						},
 						"loadBalancerBackendAddressPools": [{
 							"id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('masterLoadBalancerName'), 'loadBalancerBackEnd')]"
@@ -1382,10 +1449,10 @@
 					"properties": {
 						"privateIPAllocationMethod": "Dynamic",
 						"subnet": {
-							"id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('masterSubnetName'))]"
+							"id": "[resourceId(variables('networkResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('masterSubnetName'))]"
 						},
 						"loadBalancerBackendAddressPools": [{
-							"id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('infraLoadBalancerName'), 'loadBalancerBackEnd')]"
+							"id": "[resourceId(variables('networkResourceGroup'), 'Microsoft.Network/loadBalancers/backendAddressPools', variables('infraLoadBalancerName'), 'loadBalancerBackEnd')]"
 						}]
 					}
 				}],
@@ -1419,7 +1486,7 @@
 					"properties": {
 						"privateIPAllocationMethod": "Dynamic",
 						"subnet": {
-							"id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('nodeSubnetName'))]"
+							"id": "[resourceId(variables('networkResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('nodeSubnetName'))]"
 						}
 					}
 				}],
