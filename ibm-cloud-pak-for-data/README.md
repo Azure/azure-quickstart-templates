@@ -154,8 +154,12 @@ az group deployment create --resource-group <resource_group> --template-file azu
 <br/><br/>
 ![Alt text](images/template1.png?raw=true "parameters1")
 
+![Alt text](images/template1.1.png?raw=true "parameters1.1")
+
 
 * Specify the resource group or create new using the given option
+
+* Select 'new' network if you wish to deploy on a new network or you may deploy on an 'existing' network. In case of 'existing' network, make sure the new resources are also in the same region.
 
 * Specify the VM sizes for Bastion, Master, Infra and Worker nodes
 
