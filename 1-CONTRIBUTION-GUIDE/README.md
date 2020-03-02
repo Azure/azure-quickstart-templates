@@ -249,7 +249,9 @@ Quickstart CI engine provides few pre-created azure components which can be used
 
 + **GEN-APPCONFIGSTORE-NAME** - placeholder for the Microsoft.AppConfiguration/configurationStores
 + **GEN-APPCONFIGSTORE-RESOURCEGROUP-NAME** - resource group name for the AppConfig store
-+ **GEN-APPCONFIGSTORE-KEY1** - sample key/value stored in the AppConfig store
++ **GEN-APPCONFIGSTORE-KEY1** - sample key/value stored in the AppConfig store, label is "template"
++ **GEN-APPCONFIGSTORE-WINDOWSOSVERSION** - sample key/value with a SKU Name for a windows server image, label is "template"
++ **GEN-APPCONFIGSTORE-DISKSIZEGB** - sample key/value with a disk size, in GB for a VM disk, label is "template"
 
 Here's an example in an `azuredeploy.parameters.json` file:
 

@@ -80,6 +80,11 @@ if($vault -eq $null) {
 
 # 0) Give the svc principal that will be deploying templates RBAC and Access Policy Access to the Vault
 
+# Create the Microsoft.appConfiguration/configurationStores
+# There are no PS cmdlets for app config store yet - use context must be set with "az account set ..."
+# Also, not available in Fairfax
+$appConfigStore = $(az appconfig create -g appconfig -n bjmappconf1 -l westus -o json --verbose) | ConvertFrom-Json
+
 if($ServicePrincipalObjectId){
 
     $roleDef = New-Object -TypeName "Microsoft.Azure.Commands.Resources.Models.Authorization.PSRoleDefinition"
@@ -98,7 +103,12 @@ if($ServicePrincipalObjectId){
 
     # Need contributor access to be able to add secrets during a template deployment
     $roleDef = Get-AzureRmRoleDefinition -Name 'Contributor'
+
+    # Need contributor rights on vault to run pull reference params - some samples also add secrets
     New-AzureRMRoleAssignment -RoleDefinitionId $roleDef.id -ObjectId $ServicePrincipalObjectId -Scope $vault.ResourceId -Verbose
+
+    # Need contributor rights on config store to run list*() actions
+    New-AzureRMRoleAssignment -RoleDefinitionId $roleDef.id -ObjectId $ServicePrincipalObjectId -Scope $appConfigStore.id -Verbose
 
     # Set the Data Plane Access Policy for the Principal to retrieve secrets via reference parameters
     Set-AzureRMKeyVaultAccessPolicy -VaultName $KeyVaultName -ObjectId $ServicePrincipalObjectId `
@@ -194,16 +204,18 @@ $json.Add("SELFSIGNED-CERT-THUMBPRINT", $kvCert.Thumbprint)
 $json.Add("SELFSIGNED-CERT-DNSNAME", $CertDNSName)
 
 # Create the Microsoft.appConfiguration/configurationStores
-$appConfigStoreKey1 = "key1"
-
 # There are no PS cmdlets for app config store yet - use context must be set with "az account set ..."
 # Also, not available in Fairfax
 az appconfig create -g $ResourceGroupName -n $appConfigStoreName -l $Location --verbose 
-az appconfig kv set -n $appConfigStoreName --key $appConfigStoreKey1 --value "value1" -y --verbose
+az appconfig kv set -n $appConfigStoreName --key 'key1' --value "value1" --label 'template' -y --verbose
+az appconfig kv set -n $appConfigStoreName --key 'windowsOSVersion' --value '2019-Datacenter' --label 'template' -y --verbose
+az appconfig kv set -n $appConfigStoreName --key 'diskSizeGB' --value "1023" --label 'template' -y --verbose
 
 $json.Add("APPCONFIGSTORE-NAME", $appConfigStoreName)
 $json.Add("APPCONFIGSTORE-RESOURCEGROUP-NAME", $ResourceGroupName)
-$json.Add("APPCONFIGSTORE-KEY1", $appConfigStoreKey1)
+$json.Add("APPCONFIGSTORE-KEY1", "key1")
+$json.Add("APPCONFIGSTORE-KEY1", "windowsOSVersion")
+$json.Add("APPCONFIGSTORE-KEY1", "diskSizeGB")
 
 # Output all the values needed for the config file
 Write-Output $($json | ConvertTo-json -Depth 30)
