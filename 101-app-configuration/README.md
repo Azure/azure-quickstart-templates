@@ -22,7 +22,7 @@ To use this template, add the following key-values to your Azure App Configurati
 
 |Key|Value|
 |-|-|
-|windowsOsVersion|2019-Datacenter|
+|windowsOSVersion|2019-Datacenter|
 |diskSizeGB|1023|
 
 If you are new to App Configurations, see:
