@@ -25,6 +25,8 @@ To use this template, add the following key-values to your Azure App Configurati
 |windowsOSVersion|2019-Datacenter|
 |diskSizeGB|1023|
 
+NOTE: The principal deploying the template must have contributor access to the App Configuration Store.
+
 If you are new to App Configurations, see:
 
 - [Azure App Configuration](https://azure.microsoft.com/services/app-configuration/).
