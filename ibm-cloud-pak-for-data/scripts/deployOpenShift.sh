@@ -76,24 +76,6 @@ else
   exit 99
 fi
 
-# Create playbook to update ansible.cfg file
-# cat > updateansiblecfg.yaml <<EOF
-# #!/usr/bin/ansible-playbook
-
-# - hosts: localhost
-#   gather_facts: no
-#   tasks:
-#   - lineinfile:
-#       dest: /etc/ansible/ansible.cfg
-#       regexp: '^library '
-#       insertafter: '#library        = /usr/share/my_modules/'
-#       line: 'library = /home/$SUDOUSER/openshift-ansible/roles/lib_utils/library/'
-# EOF
-
-# Run Ansible Playbook to update ansible.cfg file
-# echo $(date) " - Updating ansible.cfg file"
-# ansible-playbook ./updateansiblecfg.yaml
-
 # Create docker registry config based on Commercial Azure or Azure Government
 if [[ $CLOUD == "US" ]]
 then
@@ -397,14 +379,6 @@ runuser -l $SUDOUSER -c "oc login https://$MASTERPUBLICIPADDRESS:443 -u $OCUSER 
 
 echo $(date) "Installing helm"
 runuser -l $SUDOUSER -c "curl -L https://git.io/get_helm.sh | bash"
-
-# Azure Standard will be deployed in a Single zone configuration
-# if [[ $SINGLEMULTI == 'single' ]]
-# then
-# 	echo $(date) "Remove default from azure-standard"
-# 	runuser -l $SUDOUSER -c "kubectl patch storageclass azure-standard -p '{\"metadata\": {\"annotations\":{\"storageclass.kubernetes.io/is-default-class\":\"false\"}}}'"
-# 	echo $(date) "Remove default from azure-standard complete"
-# fi
 
 if [ $STORAGEOPTION == "portworx" ]
 then
