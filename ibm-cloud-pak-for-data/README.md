@@ -29,14 +29,14 @@ Cloud Pak for Data offers a try and buy experience.
 The automated template deploys the Cloud Pak for Data environment by using Azure Resource Manager templates.
 The deployment template includes configuration parameters that you can customize. Some of these settings, such as instance count, will affect the cost of the deployment. For cost estimates, see the pricing page for each Azure service you will be using. Prices are subject to change.
 
-TRIAL:
+**TRIAL:**<br/>
 This Template requires a Red Hat subscription. To procure a 60 day evaluation license for Openshift you can follow the instructions at [Evaluate Redhat Openshift Container Platform](https://www.redhat.com/en/technologies/cloud-computing/openshift/try-it). See [this section](#Evaluation-OpenShift-Subscription-License) for more details.
 
 Additionally, to request a 60 day trial license of Cloud Pak for Data please use the following link - [IBM Cloud Pak for Data Trial](https://www.ibm.com/account/reg/us-en/signup?formid=urx-42212).
 Instructions to use your trial license/key are provided in the section - [IBM Cloud Pak for Data Trial key](#IBM-Cloud-Pak-for-Data-Trial-key).
 Beyond the 60 day period, you will need to purchase the Cloud Pak for Data by following the instructions in the 'Purchase' section below.
 
-PURCHASE:
+**PURCHASE:**<br/>
 To get pricing information, or to use your existing Cloud Pak for Data entitlements, contact your IBM sales representative at 1-877-426-3774. If you already have the Cloud Pak for Data license file, you can follow the instructions in [Activating your IBM Cloud Pak for Data License to activate the license](#activating-your-ibm-cloud-pak-for-data-license).
 Note: Cloud Pak for Data license will include entitlements to RHEL and Openshift. 
 
@@ -107,10 +107,11 @@ When you buy Cloud Pak for Data you will automatically get RHEL and OpenShift en
 The following RedHat subscription details are required at the time of deployment:
 - RedHat Account Username & Password
 - OpenShift subscription pool ID
-TRIAL:
+
+**TRIAL:**<br/>
 To procure a 60 day trial license for OpenShift you can follow the instructions at [Evaluate Redhat Openshift Container Platform](https://www.redhat.com/en/technologies/cloud-computing/openshift/try-it)
 
-PURCHASE:
+**PURCHASE:**<br/>
 You will get an automated email from Red Hat with the OpenShift subscription details when you buy Cloud Pak for Data.
 
 #### IBM Cloud Pak for Data Trial key
