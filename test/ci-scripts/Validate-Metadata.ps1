@@ -57,6 +57,6 @@ $validationType = ($metadata | convertfrom-json).validationType
 Write-Output "Sample type from metadata.json: $validationType"
 
 if($validationType -eq "Manual"){
-    Write-Host "##vso[task.setvariable variable=validationType]$validationType"
+    Write-Host "##vso[task.setvariable variable=validation.type]$validationType"
     Write-Host "##vso[task.setvariable variable=result.deployment]Not Supported" # set this so the pipeline does not run deployment will be overridden in the test results step
 }
