@@ -32,7 +32,7 @@ $cloudTable = (Get-AzStorageTable –Name $tableName –Context $ctx).CloudTable
 $cloudTablePRs = (Get-AzStorageTable –Name $tableNamePRs –Context $ctx).CloudTable
 
 #Get All Files from "prs" container and copy to the "badges" container
-$blobs = Get-AzStorageBlob -Context $ctx -Container "prs" -Prefix $storageFolder 
+$blobs = Get-AzStorageBlob -Context $ctx -Container "prs" -Prefix $storageFolder.Replace("@", "/") 
 $blobs | Start-AzStorageBlobCopy -DestContainer "badges" -Verbose -Force
 $blobs | Remove-AzStorageBlob -Verbose -Force
 
