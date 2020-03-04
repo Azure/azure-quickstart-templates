@@ -52,3 +52,11 @@ Write-Output "Is cloud supported: $IsCloudSupported"
 if (!$IsCloudSupported) {
     Write-Host "##vso[task.setvariable variable=result.deployment]Not Supported"
 }
+
+$type = ($metadata | convertfrom-json).type
+Write-Output "Sample type from metadata.json: $type"
+
+if($type -ne "QuickStart"){
+    Write-Host "##vso[task.setvariable variable=result.samplesupport]No"
+    Write-Host "##vso[task.setvariable variable=result.deployment]Not Supported" # set this so the pipeline does not run deployment will be overridden in the test results step
+}
