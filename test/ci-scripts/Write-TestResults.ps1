@@ -17,7 +17,7 @@ param(
     [string]$CredScanResult = "$ENV:RESULT_CREDSCAN",
     [string]$BuildReason = "$ENV:BUILD_REASON",
     [string]$AgentJobStatus = "$ENV:AGENT_JOBSTATUS",
-    [string]$SampleSupport = "$ENV:RESULT_SAMPLESUPPORT",
+    [string]$ValidationType = "$ENV:VALIDATION_TYPE",
     [string]$ResultDeploymentParameter = "$ENV:RESULT_DEPLOYMENT_PARAMETER", #also cloud specific
     [string]$FairfaxDeployment = "",
     [string]$FairfaxLastTestDate = (Get-Date -Format "yyyy-MM-dd").ToString(),
@@ -73,7 +73,7 @@ $FairfaxDeployment = $FairfaxDeployment -ireplace [regex]::Escape("false"), "FAI
 $PublicDeployment = $PublicDeployment -ireplace [regex]::Escape("true"), "PASS"
 $PublicDeployment = $PublicDeployment -ireplace [regex]::Escape("false"), "FAIL"
 
-if($SampleSupport -eq "No"){
+if($ValidationType -eq "Manual"){
     $FairfaxDeployment = "Manual Test"
     $PublicDeployment = "Manual Test"
 }
