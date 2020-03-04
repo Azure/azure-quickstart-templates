@@ -32,7 +32,7 @@ If you are new to App Configurations, see:
 - [Azure App Configuration](https://azure.microsoft.com/services/app-configuration/).
 - [Azure App Configuration Documentation](https://docs.microsoft.com/azure/azure-app-configuration/
 )
-- [Template reference](https://docs.microsoft.com/azure/templates/microsoft.compute/allversions)
+- [Template reference](https://docs.microsoft.com/azure/templates/microsoft.appconfiguration/allversions)
 
 If you are new to template deployment, see:
 
