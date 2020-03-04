@@ -27,6 +27,8 @@ This template creates a Windows VM and installs the latest nightly build of [ROS
 This VM will expose Windows Remote Management over HTTPS.
 Please see the below to learn how to connect to it.
 
+Optionally, with Visual Studio Team Services information provided, this template will deploy a build agent and register with the specified agent pool.
+
 For any support related questions or issues, please go to our [GitHub repository](https://github.com/ms-iot/ROSOnWindows).
 
 ## How to connect to a Target Azure VM over WinRM HTTPS
