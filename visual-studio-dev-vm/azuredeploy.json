@@ -67,7 +67,8 @@
     "vmSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'Vnet01', variables('Vnet01Subnet1Name'))]",
     "vmStorageAccountContainerName": "vhds",
     "vmNicName": "[concat(variables('vmName'), '-nic')]",
-    "vmIP01Name": "VMIP01"
+    "vmIP01Name": "VMIP01",
+    "networkSecurityGroupName": "[concat(variables('vnet01Subnet1Name'), '-nsg')]"
   },
   "resources": [
     {
@@ -84,11 +85,37 @@
       }
     },
     {
+      "comments": "Simple Network Security Group for subnet [variables('vnet01Subnet1Name')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2019-08-01",
+      "name": "[variables('networkSecurityGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-3389",
+            "properties": {
+              "priority": 1000,
+              "access": "Allow",
+              "direction": "Inbound",
+              "destinationPortRange": "3389",
+              "protocol": "Tcp",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+          }
+        ]
+      }
+    },
+    {
       "name": "VNet01",
       "type": "Microsoft.Network/virtualNetworks",
       "location": "[parameters('location')]",
       "apiVersion": "2015-06-15",
-      "dependsOn": [],
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+      ],
       "tags": {
         "displayName": "VNet01"
       },
@@ -102,7 +129,10 @@
           {
             "name": "[variables('vnet01Subnet1Name')]",
             "properties": {
-              "addressPrefix": "[variables('vnet01Subnet1Prefix')]"
+              "addressPrefix": "[variables('vnet01Subnet1Prefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+              }
             }
           }
         ]
