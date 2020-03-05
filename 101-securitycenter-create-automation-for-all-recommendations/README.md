@@ -1,4 +1,4 @@
-# Sample name
+# Deploy an Azure Security Center Automation for any of Azure Security Center's recommendations 
 
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-securitycenter-create-automation-for-all-recommendations/PublicLastTestDate.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-securitycenter-create-automation-for-all-recommendations/PublicDeployment.svg" />&nbsp;
@@ -13,7 +13,7 @@
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
-This template deploys an Azure Security Center Automation for any of Azure Seucrity Center's recommendations.
+This template deploys an Azure Security Center Automation for any of Azure Security Center's recommendations.
 Automation is an Azure Resource which triggers a Logic App.
 
 ## Overview and deployed resources
@@ -33,7 +33,7 @@ The Microsoft.Logic Resource provider is used to create an empty triggerable Log
 
 The Microsoft.Security Resource provider (Azure Security Center ) is where the Automation which will trigger the logic app will be created. 
 
-+ **Automation**: The Automation which will trigger the empty Logic App, upon reciving any Azure Security Center recommendation.
++ **Automation**: The Automation which will trigger the empty Logic App, upon receiving any Azure Security Center recommendation.
 
 ## Prerequisites
 
