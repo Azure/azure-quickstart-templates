@@ -112,7 +112,8 @@
     "lbIPConfig": "[concat(variables('lbID'),'/frontendIPConfigurations/',variables('loadBalancerIPConfigName'))]",
     "apiProbeID": "[concat(variables('lbID'),'/probes/',variables('apiProbeName'))]",
     "builderProbeID": "[concat(variables('lbID'),'/probes/',variables('builderProbeName'))]",
-    "lbPoolID": "[concat(variables('lbID'),'/backendAddressPools/',variables('lbBackendAddressPoolName'))]"
+    "lbPoolID": "[concat(variables('lbID'),'/backendAddressPools/',variables('lbBackendAddressPoolName'))]",
+    "networkSecurityGroupName": "[concat(variables('subnet1Name'), '-nsg')]"
   },
   "resources": [
     {
@@ -122,11 +123,11 @@
       "location": "[resourceGroup().location]",
       "sku": {
         "name": "Aligned"
-          },
-        "properties": { 
-            "platformFaultDomainCount": 2,
-            "platformUpdateDomainCount": 5
-        }
+      },
+      "properties": {
+        "platformFaultDomainCount": 2,
+        "platformUpdateDomainCount": 5
+      }
     },
     {
       "type": "Microsoft.Storage/storageAccounts",
@@ -254,10 +255,21 @@
       }
     },
     {
+      "comments": "Simple Network Security Group for subnet [variables('subnet1Name')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2019-08-01",
+      "name": "[variables('networkSecurityGroupName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {}
+    },
+    {
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-05-01-preview",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+      ],
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -268,7 +280,10 @@
           {
             "name": "[variables('subnet1Name')]",
             "properties": {
-              "addressPrefix": "[variables('subnet1Prefix')]"
+              "addressPrefix": "[variables('subnet1Prefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+              }
             }
           }
         ]
