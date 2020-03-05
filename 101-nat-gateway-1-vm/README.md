@@ -24,6 +24,39 @@ This template deploys a **NAT gateway** and supporting resources.
 
 This template is a resource manager implementation of a quickstart for deploying a NAT gateway.  A Ubuntu virtual machine is deployed to the subnet that is associated with the NAT gateway.
 
+> [!IMPORTANT]
+>Virtual Network NAT is available as public preview at this time. Currently it's only available in a limited set of [regions](https://docs.microsoft.com/azure/virtual-network/nat-overview#region-availability). This preview is provided without a service level agreement and isn't recommended for production workloads. Certain features may not be supported or may have constrained capabilities. See the [Supplemental Terms of Use for Microsoft Azure Previews](https://azure.microsoft.com/support/legal/preview-supplemental-terms) for details.
+
+Subscriptions must be registered to allow participation in the Public Preview.  Participation requires a two-step process and instructions are provided below for Azure CLI and Azure PowerShell.  The activation may take several minutes to complete.
+
+### Azure CLI
+
+1. register subscription for Public Preview
+
+    ```azurecli-interactive
+      az feature register --namespace Microsoft.Network --name AllowNatGateway
+    ```
+
+2. activate registration
+
+    ```azurecli-interactive
+      az provider register --namespace Microsoft.Network
+    ```
+
+### Azure PowerShell
+
+1. register subscription for Public Preview
+
+    ```azurepowershell-interactive
+      Register-AzProviderFeature -ProviderNamespace Microsoft.Network -FeatureName AllowNatGateway
+    ```
+
+2. activate registration
+
+    ```azurepowershell-interactive
+      Register-AzResourceProvider -ProviderNamespace Microsoft.Network
+
+
 For more information on **Virtual Network NAT** service and **NAT gateway** see:
 
 * [What is Virtual Network NAT (Public Preview)?](https://docs.microsoft.com/azure/virtual-network/nat-overview)
