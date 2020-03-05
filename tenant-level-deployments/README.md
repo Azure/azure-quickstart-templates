@@ -21,7 +21,7 @@ New-AzRoleAssignment -SignInName "[userId]" -Scope "/" -RoleDefinitionName "Owne
 ```
 
 ```bash
-az role assignment create --role "Owner" --assignee "[userId]" --scope '/'
+az role assignment create --role "Owner" --assignee "[userId]" --scope "/"
 ```
 
 Now, with owner (or contributor) permissions, the principal with the above roles assigned, can now deploy tenant level templates.
