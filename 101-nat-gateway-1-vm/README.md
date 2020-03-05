@@ -31,13 +31,13 @@ Subscriptions must be registered to allow participation in the Public Preview.  
 
 ### Azure CLI
 
-1. register subscription for Public Preview
+1. Register subscription for Public Preview
 
     ```azurecli-interactive
       az feature register --namespace Microsoft.Network --name AllowNatGateway
     ```
 
-2. activate registration
+2. Activate registration
 
     ```azurecli-interactive
       az provider register --namespace Microsoft.Network
@@ -45,13 +45,13 @@ Subscriptions must be registered to allow participation in the Public Preview.  
 
 ### Azure PowerShell
 
-1. register subscription for Public Preview
+1. Register subscription for Public Preview
 
     ```azurepowershell-interactive
       Register-AzProviderFeature -ProviderNamespace Microsoft.Network -FeatureName AllowNatGateway
     ```
 
-2. activate registration
+2. Activate registration
 
     ```azurepowershell-interactive
       Register-AzResourceProvider -ProviderNamespace Microsoft.Network
