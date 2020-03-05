@@ -84,14 +84,3 @@ Description
 
 + **virtualMachines**: Virtual machine for solution
 
-## Deployment steps
-
-You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
-
-## Usage
-
-### Connect
-
-Retrieve public IP of virtual machine after deployment and SSH to virtual machine.
-
-`Tags: virtual-network, nat, nat-gateway`
