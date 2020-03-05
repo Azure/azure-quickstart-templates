@@ -4,6 +4,7 @@
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-securitycenter-create-automation-for-all-recommendations/PublicDeployment.svg" />&nbsp;
 
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-securitycenter-create-automation-for-all-recommendations/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-securitycenter-create-automation-for-all-recommendations/FairfaxDeployment.svg" />&nbsp;
 
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-securitycenter-create-automation-for-all-recommendations/BestPracticeResult.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-securitycenter-create-automation-for-all-recommendations/CredScanResult.svg" />&nbsp;
