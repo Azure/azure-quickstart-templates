@@ -84,3 +84,4 @@ Description
 
 + **virtualMachines**: Virtual machine for solution
 
+`Tags: virtual network, vnet, nat, nat gateway, virtual machine`
