@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.2",
   "parameters": {
     "vmAdminUserName": {
@@ -45,39 +45,29 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2s_v3",
+      "metadata": {
+        "description": "VM Size"
+      }
     }
   },
   "variables": {
-    "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'visstudiovm')]",
-    "storageType": "Premium_LRS",
-    "vmSize": "Standard_D2s_v3",
     "vmName": "[concat(substring(parameters('vmVisualStudioVersion'),0,8), 'vm')]",
     "vnet01Prefix": "10.0.0.0/16",
     "vnet01Subnet1Name": "Subnet-1",
+    "vnetName": "vnet",
     "vnet01Subnet1Prefix": "10.0.0.0/24",
     "vmImagePublisher": "MicrosoftVisualStudio",
     "vmImageOffer": "VisualStudio",
-    "vmOSDiskName": "VMOSDisk",
-    "vmSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'Vnet01', variables('Vnet01Subnet1Name'))]",
-    "vmStorageAccountContainerName": "vhds",
+    "vmSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('Vnet01Subnet1Name'))]",
     "vmNicName": "[concat(variables('vmName'), '-nic')]",
     "vmIP01Name": "VMIP01",
     "networkSecurityGroupName": "[concat(variables('vnet01Subnet1Name'), '-nsg')]"
   },
   "resources": [
-    {
-      "name": "[variables('storageAccountName')]",
-      "type": "Microsoft.Storage/storageAccounts",
-      "location": "[parameters('location')]",
-      "apiVersion": "2015-06-15",
-      "dependsOn": [],
-      "tags": {
-        "displayName": "Storage01"
-      },
-      "properties": {
-        "accountType": "[variables('storageType')]"
-      }
-    },
     {
       "comments": "Simple Network Security Group for subnet [variables('vnet01Subnet1Name')]",
       "type": "Microsoft.Network/networkSecurityGroups",
@@ -103,10 +93,10 @@
       }
     },
     {
-      "name": "VNet01",
+      "name": "[variables('vnetName')]",
       "type": "Microsoft.Network/virtualNetworks",
       "location": "[parameters('location')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2019-11-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
       ],
@@ -136,10 +126,10 @@
       "name": "[variables('vmNicName')]",
       "type": "Microsoft.Network/networkInterfaces",
       "location": "[parameters('location')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2020-03-01",
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', 'Vnet01')]",
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('vmIP01Name'))]"
+        "[variables('vnetName')]",
+        "[variables('vmIP01Name')]"
       ],
       "tags": {
         "displayName": "VMNic01"
@@ -165,17 +155,16 @@
       "name": "[variables('vmName')]",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[parameters('location')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2019-12-01",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('vmNicName'))]"
+        "[variables('vmNicName')]"
       ],
       "tags": {
         "displayName": "VM01"
       },
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[variables('vmSize')]"
+          "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
           "computerName": "[variables('vmName')]",
@@ -190,12 +179,11 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "VMOSDisk",
-            "vhd": {
-              "uri": "[concat('http://', variables('storageAccountName'), '.blob.core.windows.net/', variables('vmStorageAccountContainerName'), '/', variables('vmOSDiskName'), '.vhd')]"
-            },
             "caching": "ReadWrite",
-            "createOption": "FromImage"
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "Standard_SSD"
+            }
           }
         },
         "networkProfile": {
@@ -206,14 +194,14 @@
           ]
         }
       },
-      "resources": []
+      "resources": [
+      ]
     },
     {
       "name": "[variables('vmIP01Name')]",
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[parameters('location')]",
-      "apiVersion": "2015-06-15",
-      "dependsOn": [],
+      "apiVersion": "2020-03-01",
       "tags": {
         "displayName": "VMIP01"
       },
