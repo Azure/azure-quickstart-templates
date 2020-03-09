@@ -35,7 +35,7 @@ The Microsoft.Logic Resource provider is used to create an empty triggerable Log
 
 ### Microsoft.Security Resource provider
 
-The Microsoft.Security Resource provider (Azure Security Center) is where the Automation which will trigger the logic app created. 
+The Microsoft.Security Resource provider (Azure Security Center) is where the Automation which will trigger the logic app will be created. 
 
 + **Automation**: The Automation which will trigger the empty Logic App, upon receiving an Azure Security Center alert which contains a specific string(in our example the alert triggering rule is “Virtual Machine” and has a severity of either "Medium", "High", "Low").
 
