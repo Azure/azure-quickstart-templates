@@ -63,7 +63,7 @@
         "subnet-id": "[resourceId('Microsoft.Network/virtualNetworks/subnets','VNET',variables('subnetName'))]",
         "imagePublisher": "Canonical",
         "imageOffer": "UbuntuServer",
-        "imageSku": "14.04.5-LTS",
+        "imageSku": "14.04.2-LTS",
         "SQLimagePublisher": "MicrosoftSQLServer",
         "SQLimageOffer": "sql2019-ws2019",
         "SQLimageSku": "Standard",
@@ -71,7 +71,7 @@
     },
     "resources": [
         {
-            "apiVersion": "2015-06-15",
+            "apiVersion": "2019-08-01",
             "type": "Microsoft.Network/publicIPAddresses",
             "name": "publicIp",
             "location": "[parameters('location')]",
@@ -83,7 +83,7 @@
             }
         },
         {
-            "apiVersion": "2015-06-15",
+            "apiVersion": "2019-08-01",
             "type": "Microsoft.Network/publicIPAddresses",
             "name": "vmsqlIp",
             "location": "[parameters('location')]",
@@ -94,21 +94,24 @@
         {
             "type": "Microsoft.Compute/availabilitySets",
             "name": "myavlset",
-            "apiVersion": "2016-04-30-preview",
+            "apiVersion": "2019-12-01",
             "location": "[parameters('location')]",
+            "sku": {
+                "name": "Aligned"
+            },
             "properties": {
                 "platformFaultDomainCount": 2,
-                "platformUpdateDomainCount": 2,
-                "managed": true
+                "platformUpdateDomainCount": 2
             }
         },
         {
-            "apiVersion": "2015-06-15",
+            "apiVersion": "2019-06-01",
             "type": "Microsoft.Storage/storageAccounts",
             "name": "[variables('storageAccountNameDiag')]",
             "location": "[parameters('location')]",
-            "properties": {
-                "accountType": "Standard_LRS"
+            "kind": "StorageV2",
+            "sku": {
+                "name": "Standard_LRS"
             }
         },
         {
@@ -121,7 +124,7 @@
             }
         },
         {
-            "apiVersion": "2015-06-15",
+            "apiVersion": "2019-08-01",
             "type": "Microsoft.Network/virtualNetworks",
             "name": "VNET",
             "location": "[parameters('location')]",
@@ -153,7 +156,7 @@
             "type": "Microsoft.Network/loadBalancers",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "Microsoft.Network/publicIPAddresses/publicIp"
+                "publicIp"
             ],
             "properties": {
                 "frontendIpConfigurations": [
@@ -231,7 +234,7 @@
             }
         },
         {
-            "apiVersion": "2015-06-15",
+            "apiVersion": "2019-08-01",
             "type": "Microsoft.Network/networkSecurityGroups",
             "name": "vmsql",
             "location": "[parameters('location')]",
@@ -255,7 +258,7 @@
             }
         },
         {
-            "apiVersion": "2015-06-15",
+            "apiVersion": "2019-08-01",
             "type": "Microsoft.Network/networkInterfaces",
             "name": "[concat(variables('vmName'),copyindex())]",
             "copy": {
@@ -264,8 +267,8 @@
             },
             "location": "[parameters('location')]",
             "dependsOn": [
-                "Microsoft.Network/virtualNetworks/VNET",
-                "Microsoft.Network/loadBalancers/loadBalancer"
+                "VNET",
+                "loadBalancer"
             ],
             "properties": {
                 "ipConfigurations": [
@@ -292,13 +295,13 @@
             }
         },
         {
-            "apiVersion": "2015-06-15",
+            "apiVersion": "2019-08-01",
             "type": "Microsoft.Network/networkInterfaces",
             "name": "[variables('nicsql')]",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "Microsoft.Network/virtualNetworks/VNET",
-                "Microsoft.Network/networkSecurityGroups/vmsql"
+                "VNET",
+                "vmsql"
             ],
             "properties": {
                 "networkSecurityGroup": {
@@ -321,7 +324,7 @@
             }
         },
         {
-            "apiVersion": "2016-04-30-preview",
+            "apiVersion": "2019-12-01",
             "type": "Microsoft.Compute/virtualMachines",
             "name": "[concat(variables('vmName'), copyindex())]",
             "copy": {
@@ -367,13 +370,13 @@
                 "diagnosticsProfile": {
                     "bootDiagnostics": {
                         "enabled": true,
-                        "storageUri": "[reference(variables('storageAccountNameDiag'), '2018-02-01').primaryEndpoints.blob]"
+                        "storageUri": "[reference(variables('storageAccountNameDiag'), '2019-06-01').primaryEndpoints.blob]"
                     }
                 }
             }
         },
         {
-            "apiVersion": "2016-04-30-preview",
+            "apiVersion": "2019-12-01",
             "type": "Microsoft.Compute/virtualMachines",
             "name": "vmsql",
             "location": "[parameters('location')]",
@@ -424,7 +427,7 @@
                 "diagnosticsProfile": {
                     "bootDiagnostics": {
                         "enabled": true,
-                        "storageUri": "[reference(variables('storageAccountNameDiag'), '2018-02-01').primaryEndpoints.blob]"
+                        "storageUri": "[reference(variables('storageAccountNameDiag'), '2019-06-01').primaryEndpoints.blob]"
                     }
                 }
             }
