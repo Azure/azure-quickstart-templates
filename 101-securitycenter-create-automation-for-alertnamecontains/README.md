@@ -1,23 +1,23 @@
 # Deploy an Azure Security Center Automation for a specific Azure Security Center alerts
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-securitycenter-create-automation-for-all-alerts/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-securitycenter-create-automation-for-all-alerts/PublicDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-securitycenter-create-automation-for-alertnamecontains/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-securitycenter-create-automation-for-alertnamecontains/PublicDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-securitycenter-create-automation-for-all-alerts/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-securitycenter-create-automation-for-all-alerts/FairfaxDeployment.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-securitycenter-create-automation-for-alertnamecontains/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-securitycenter-create-automation-for-alertnamecontains/FairfaxDeployment.svg" />&nbsp;
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-securitycenter-create-automation-for-all-alerts/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-securitycenter-create-automation-for-all-alerts/CredScanResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-securitycenter-create-automation-for-alertnamecontains/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-securitycenter-create-automation-for-alertnamecontains/CredScanResult.svg" />&nbsp;
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-securitycenter-create-automation-for-all-alerts%2Fazuredeploy.json" target="_blank">
-  <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-securitycenter-create-automation-for-alertnamecontains%2Fazuredeploy.json" target="_blank">
+	<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-securitycenter-create-automation-for-all-alerts%2Fazuredeploy.json" target="_blank">
-  <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-securitycenter-create-automation-for-alertnamecontains%2Fazuredeploy.json" target="_blank">
+	<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
 
-This template deploys an Azure Security Center Automation for which will be triggered by Azure Security alerts which their display name contains a specific string.
+This template deploys an Azure Security Center Automation which will be triggered by Azure Security alerts which their display name contains a specific string.
 Automation is an Azure Resource which triggers a Logic App.
 
 ## Overview and deployed resources
@@ -35,7 +35,7 @@ The Microsoft.Logic Resource provider is used to create an empty triggerable Log
 
 ### Microsoft.Security Resource provider
 
-The Microsoft.Security Resource provider (Azure Security Center) is where the Automation which will trigger the logic app will be created. 
+The Microsoft.Security Resource provider (Azure Security Center) is where the Automation which will trigger the logic app created. 
 
 + **Automation**: The Automation which will trigger the empty Logic App, upon receiving an Azure Security Center alert which contains a specific string(in our example the alert triggering rule is “Virtual Machine” and has a severity of either "Medium", "High", "Low").
 
