@@ -137,10 +137,10 @@ $json.Add("KEYVAULT-RESOURCE-ID", $vault.ResourceId)
 $refParam = @"
 {
     "reference": {
-      "keyVault": {
+        "keyVault": {
         "id": "$($vault.ResourceId)"
-      },
-      "secretName": "$KeyVaultNotSecretName"
+        },
+        "secretName": "$KeyVaultNotSecretName"
     }
 }
 "@
@@ -180,8 +180,47 @@ $json.Add("KEYVAULT-ENCRYPTION-KEY", $key.Name)
 $json.Add("KEYVAULT-ENCRYPTION-KEY-URI", $key.id)
 $json.Add("KEYVAULT-ENCRYPTION-KEY-VERSION", $key.Version)
 
+# 4) Create a Public/Private Key Pair
+$sshPublicKeySecretName = "sshPublicKey"
+$sshPrivateKeySecretName = "sshPrivateKey"
 
-#3 ) SSL Cert (TODO not sure if this is making the correct cert, need to test it) 
+write-host 'y' | ssh-keygen -t rsa -b 4096 -N 'scratch' -f scratch
+
+$sshPublicKeyValue = ConvertTo-SecureString -String (Get-Content -Path scratch.pub -Raw) -AsPlainText -Force
+Set-AzureKeyVaultSecret -VaultName $KeyVaultName -Name $sshPublicKeySecretName -SecretValue $sshPublicKeyValue -Verbose
+
+$sshPrivateKeyValue = ConvertTo-SecureString -String (Get-Content -Path scratch -Raw) -AsPlainText -Force
+Set-AzureKeyVaultSecret -VaultName $KeyVaultName -Name $sshPrivateKeySecretName -SecretValue $sshPrivateKeyValue -Verbose
+
+$json.Add("KEYVAULT-SSH-PRIVATE-KEY-NAME", $sshPrivateKeySecretName)
+$json.Add("KEYVAULT-SSH-PUBLIC-KEY-NAME", $sshPublicKeySecretName)
+
+$refParam = @"
+{
+    "reference": {
+        "keyVault": {
+        "id": "$($vault.ResourceId)"
+        },
+        "secretName": "$sshPrivateKeySecretName"
+    }
+}
+"@
+$json.Add("KEYVAULT-SSH-PRIVATE-KEY-REFERENCE", (ConvertFrom-Json $refParam))
+
+$refParam = @"
+{
+    "reference": {
+        "keyVault": {
+        "id": "$($vault.ResourceId)"
+        },
+        "secretName": "$sshPublicKeySecretName"
+    }
+}
+"@
+$json.Add("KEYVAULT-SSH-PUBLIC-KEY-REFERENCE", (ConvertFrom-Json $refParam))
+
+
+#5 ) SSL Cert (TODO not sure if this is making the correct cert, need to test it) 
 #https://docs.microsoft.com/en-us/azure/virtual-machines/windows/tutorial-secure-web-server#generate-a-certificate-and-store-in-key-vault
 #$policy = New-AzureKeyVaultCertificatePolicy -SubjectName "CN=www.contoso.com" -SecretContentType "application/x-pkcs12" -IssuerName Self -ValidityInMonths 120
 #Add-AzureKeyVaultCertificate -VaultName $keyvaultName -Name "mycert" -CertificatePolicy $policy
