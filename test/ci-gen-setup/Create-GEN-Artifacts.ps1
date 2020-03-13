@@ -21,7 +21,13 @@ param(
     [string] $KeyVaultSelfSignedCertName = 'azbot-sscert',
     [string] $KeyVaultNotSecretName = 'notSecretPassword',
     [string] $ServicePrincipalObjectId, #if not provided assigning perms to the Vault must be done manually
-    [string] $appConfigStoreName = 'azbotappconfigstore' # This must be gloablly unique
+    [string] $appConfigStoreName = 'azbotappconfigstore', # This must be gloablly unique
+    #
+    # You must generate a public/private key pair and pass to the script use the following command with no passphrase:
+    #   ssh-keygen -t rsa -b 4096 -f scratch
+    # 
+    [string] $sshPublicKeyValue = $(Get-Content -Path scratch.pub -Raw),
+    [string] $sshPrivateKeyValue = $(Get-Content -Path scratch -Raw)
 
 )
 
@@ -184,7 +190,8 @@ $json.Add("KEYVAULT-ENCRYPTION-KEY-VERSION", $key.Version)
 $sshPublicKeySecretName = "sshPublicKey"
 $sshPrivateKeySecretName = "sshPrivateKey"
 
-write-host 'y' | ssh-keygen -t rsa -b 4096 -N 'scratch' -f scratch
+# add the generic pub key value (just use the same one)
+$json.Add("SSH-PUB-KEY", $sshPublicKeyValue)
 
 $sshPublicKeyValue = ConvertTo-SecureString -String (Get-Content -Path scratch.pub -Raw) -AsPlainText -Force
 Set-AzureKeyVaultSecret -VaultName $KeyVaultName -Name $sshPublicKeySecretName -SecretValue $sshPublicKeyValue -Verbose
