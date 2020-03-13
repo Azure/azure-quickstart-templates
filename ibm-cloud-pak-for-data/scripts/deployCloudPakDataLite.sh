@@ -82,7 +82,7 @@ EOF
 echo "Running fetch playbook"
 runuser -l $OCUSER -c "ansible-playbook /home/$OCUSER/fetch.yml --extra-vars \"registry=$registry user=$OCUSER\""
 runuser -l $OCUSER -c "rm -f /home/$OCUSER/fetch.yml"
-echo "Fetch Playbook complete"
+echo "Running fetch playbook complete"
 
 echo "Create docker registry certs folder"
 mkdir -p /etc/docker/certs.d/$registry
