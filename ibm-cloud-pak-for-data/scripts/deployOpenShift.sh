@@ -224,6 +224,7 @@ $STORAGEOPTION
 [OSEv3:vars]
 ansible_ssh_user=$SUDOUSER
 ansible_become=yes
+ansible_ssh_pass=${38}
 oreg_auth_user=$RHEL_USERNAME
 oreg_auth_password=$RHEL_PASSWORD
 openshift_deployment_type=openshift-enterprise
