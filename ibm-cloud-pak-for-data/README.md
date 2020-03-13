@@ -25,13 +25,21 @@ Cloud Pak for Data uses Azure services and features, including VNets, Availabili
 This deployment guide provides step-by-step instructions for deploying IBM Cloud Pak for Data on a Red Hat OpenShift Container Platform 3.11 cluster on Azure. With this Template, you can automatically deploy a multi-master, production instance of Cloud Pak for Data. See [Services](#cloud-pak-for-data-services) for the services that are enabled in this deployment.
 
 ## Cost and licenses
-The Template deploys the Cloud Pak for Data environment by using Azure Resource Manager templates.
-The deployment template includes configuration parameters that you can customize. Some of these settings, such as instance count, will affect the cost of deployment. For cost estimates, see the pricing page for each Azure service you will be using. Prices are subject to change.
-This Template requires a Red Hat subscription. To procure a 60 day evaluation license for Openshift you can follow the instructions at [Evaluate Redhat Openshift Container Platform](https://www.redhat.com/en/technologies/cloud-computing/openshift/try-it)
-When you deploy the Template, you receive a trial license of Cloud Pak for Data for up to 60 days. After 60 days, you must either purchase or uninstall.
+Cloud Pak for Data offers a try and buy experience. 
+The automated template deploys the Cloud Pak for Data environment by using Azure Resource Manager templates.
+The deployment template includes configuration parameters that you can customize. Some of these settings, such as instance count, will affect the cost of the deployment. For cost estimates, see the pricing page for each Azure service you will be using. Prices are subject to change.
 
+**TRIAL:**<br/>
+This Template requires a Red Hat subscription. To procure a 60 day evaluation license for Openshift you can follow the instructions at [Evaluate Redhat Openshift Container Platform](https://www.redhat.com/en/technologies/cloud-computing/openshift/try-it). See [this section](#Evaluation-OpenShift-Subscription-License) for more details.
+
+Additionally, to request a 60 day trial license of Cloud Pak for Data please use the following link - [IBM Cloud Pak for Data Trial](https://www.ibm.com/account/reg/us-en/signup?formid=urx-42212).
+Instructions to use your trial license/key are provided in the section - [IBM Cloud Pak for Data Trial key](#IBM-Cloud-Pak-for-Data-Trial-key).
+Beyond the 60 day period, you will need to purchase the Cloud Pak for Data by following the instructions in the 'Purchase' section below.
+
+**PURCHASE:**<br/>
 To get pricing information, or to use your existing Cloud Pak for Data entitlements, contact your IBM sales representative at 1-877-426-3774. If you already have the Cloud Pak for Data license file, you can follow the instructions in [Activating your IBM Cloud Pak for Data License to activate the license](#activating-your-ibm-cloud-pak-for-data-license).
-You can also register for a 60-day trial key using this link - [IBM Cloud Pak for Data Trial](https://www.ibm.com/account/reg/us-en/signup?formid=urx-42212).
+Note: Cloud Pak for Data license will include entitlements to RHEL and Openshift. 
+
 
 ## Architecture
 Deploying this template builds the following Cloud Pak for Data cluster in single zone or multi zone.
@@ -91,19 +99,25 @@ az keyvault create -n <keyvault_name> -g <keyvault_resource_group> --enabled-for
 az keyvault secret set --vault-name <keyvault_name> -n <keyvault_secret_name> --file ~/.ssh/id_rsa
 ```
 
-#### OpenShift Subscription
+#### Evaluation OpenShift Subscription License
 
-The following RedHat subscription details are required at the time of deployments
+Cloud Pak for Data offers a try and buy experience.
+When you buy Cloud Pak for Data you will automatically get RHEL and OpenShift entitlements to run your workloads.
+
+The following RedHat subscription details are required at the time of deployment:
 - RedHat Account Username & Password
 - OpenShift subscription pool ID
 
-To procure a 60 day evaluation license for OpenShift you can follow the instructions at [Evaluate Redhat Openshift Container Platform](https://www.redhat.com/en/technologies/cloud-computing/openshift/try-it)
+**TRIAL:**<br/>
+To procure a 60 day trial license for OpenShift you can follow the instructions at [Evaluate Redhat Openshift Container Platform](https://www.redhat.com/en/technologies/cloud-computing/openshift/try-it)
 
+**PURCHASE:**<br/>
+You will get an automated email from Red Hat with the OpenShift subscription details when you buy Cloud Pak for Data.
 
 #### IBM Cloud Pak for Data Trial key
-If you don't have a license for IBM Cloud Pak for Data, you may procure a 60 day trial key by signing up on the following link:
+For a 60 day trial key of IBM Cloud Pak for Data, you may sign up on the following link:
 [IBM Cloud Pak for Data Trial](https://www.ibm.com/account/reg/us-en/signup?formid=urx-42212),
-and use this key in the corresponding deployment parameter.
+and use this Api key in the corresponding deployment parameter in the ARM template.
 <br />
 eg: the value for "apiKeyUsername" could be "iamapikey" or "cp", and for "apiKey", use the trial key that is generated (or sent to your email) after signing up with the above link.
 <br/><br/>
