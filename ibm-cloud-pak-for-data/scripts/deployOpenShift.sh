@@ -362,9 +362,9 @@ echo $(date) " - OpenShift Origin Cluster install complete"
 # echo $(date) " - Running additional playbooks to finish configuring and installing other components"
 
 echo $(date) "Create OC Credentials"
-runuser -l $SUDOUSER -c "ansible master0 -m command -a \"oc create user $OCUSER\""
-runuser -l $SUDOUSER -c "ansible masters -m command -a \"htpasswd -b /etc/origin/master/htpasswd $OCUSER $OCPASSWORD\""
-runuser -l $SUDOUSER -c "ansible master0 -m command -a \"oc adm policy add-cluster-role-to-user cluster-admin $OCUSER\""
+runuser -l $SUDOUSER -c "ansible master0 -m command -a \"oc create user '$OCUSER'\""
+runuser -l $SUDOUSER -c "ansible masters -m command -a \"htpasswd -b /etc/origin/master/htpasswd '$OCUSER' '$OCPASSWORD'\""
+runuser -l $SUDOUSER -c "ansible master0 -m command -a \"oc adm policy add-cluster-role-to-user cluster-admin '$OCUSER'\""
 echo $(date) "OC Credentials create complete"
 
 # Configure Docker Registry to use Azure Storage Account
@@ -374,7 +374,7 @@ echo $(date) "- Configuring Docker Registry Completed"
 
 # Login User
 echo $(date) "Login User"
-runuser -l $SUDOUSER -c "oc login https://$MASTERPUBLICIPADDRESS:443 -u $OCUSER -p $OCPASSWORD --insecure-skip-tls-verify=true"
+runuser -l $SUDOUSER -c "oc login https://$MASTERPUBLICIPADDRESS:443 -u '$OCUSER' -p '$OCPASSWORD' --insecure-skip-tls-verify=true"
 ########################## POST INSTALL ###################
 
 echo $(date) "Installing helm"
