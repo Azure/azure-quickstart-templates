@@ -99,11 +99,19 @@ To connect with our JupyterHub, you will need to copy the Public IP address of y
 
 ![Screen](./images/ipConnect.png)
 
-Note that accessing the JupyterHub will fail until the installation is complete, so if you just created it, be patient.
+Note that accessing the JupyterHub will fail until the installation is complete, so if you just created it, be patient you should see disk and network activity as the services are installed.
 
 When the installation is complete, it should give you a JupyterHub login page:
 
 ![Screen](./images/loginJupyter.png)
+
+If your still having issues connecting you can run the following command to reinstall the latest version of JupyterHub
+
+```
+sudo apt install python3 python3-dev git curl
+
+curl https://raw.githubusercontent.com/jupyterhub/the-littlest-jupyterhub/master/bootstrap/bootstrap.py | sudo -E python3 - --admin
+```
 
 Login using the admin username you typed at the time of creating the virtual machine and the password.
 
