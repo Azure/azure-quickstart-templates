@@ -16,7 +16,7 @@ Param(
     [switch] $ValidateOnly,
     [string] $DebugOptions = "None",
     [string] $Mode = "Incremental",
-    [string] $DeploymentName = ((Split-Path $TemplateFile -LeafBase) + '-' + ((Get-Date).ToUniversalTime()).ToString('MMdd-HHmm')),
+    [string] $DeploymentName = ((Split-Path $TemplateFile -Leaf) + '-' + ((Get-Date).ToUniversalTime()).ToString('MMdd-HHmm')),
     [switch] $Dev
 )
 
