@@ -10,6 +10,7 @@
     },
     "_artifactsLocationSasToken": {
       "type": "SecureString",
+	  "defaultValue": "",
       "metadata": {
         "description": "The base URI where artifacts required by this template are located including a trailing '/'"
       }
@@ -55,6 +56,12 @@
       "metadata": {
         "description": "storage account name"
       }
+    },
+    "resourceTags": {
+      "type": "object",
+      "metadata": {
+        "description": " Tags assigned to resources"
+      }
     }
   },
   "variables": {
@@ -75,6 +82,7 @@
       "apiVersion": "2018-06-01",
       "properties": {},
       "location": "[parameters('dataFactoryLocation')]",
+      "tags": "[parameters('resourceTags')]",
       "resources": [
         {
           "apiVersion": "2018-06-01",
@@ -84,13 +92,12 @@
             "[parameters('dataFactoryName')]"
           ],
           "properties": {
-            "type": "AzureStorage",
-            "description": "Azure Storage linked service",
+            "annotations": [],
+            "type": "HttpServer",
             "typeProperties": {
-              "sasUri": {
-                "type": "SecureString",
-                "value": "[uri(parameters('_artifactsLocation'),concat(parameters('_artifactsLocationSasToken')))]"
-              }
+              "url": "[uri(parameters('_artifactsLocation'),concat(parameters('_artifactsLocationSasToken')))]",
+              "enableServerCertificateValidation": true,
+              "authenticationType": "Anonymous"
             }
           }
         },
@@ -151,15 +158,31 @@
           ],
           "apiVersion": "2018-06-01",
           "properties": {
-            "type": "AzureBlob",
-            "typeProperties": {
-              "folderPath": "yash-datalake-resource",
-              "fileName": "*"
-            },
             "linkedServiceName": {
               "referenceName": "[variables('yashAzureStorageLinkedServiceName')]",
               "type": "LinkedServiceReference"
-            }
+            },
+            "parameters": {
+              "item": {
+                "type": "string",
+                "defaultValue": "@item()"
+              }
+            },
+            "annotations": [],
+            "type": "DelimitedText",
+            "typeProperties": {
+              "location": {
+                "type": "HttpServerLocation",
+                "relativeUrl": {
+                  "value": "@item()",
+                  "type": "Expression"
+                }
+              },
+              "columnDelimiter": ",",
+              "escapeChar": "\\",
+              "quoteChar": "\""
+            },
+            "schema": []
           }
         },
         {
@@ -194,30 +217,87 @@
           "properties": {
             "activities": [
               {
-                "type": "Copy",
+                "name": "ForEach1",
+                "type": "ForEach",
+                "dependsOn": [],
+                "userProperties": [],
                 "typeProperties": {
-                  "source": {
-                    "type": "BlobSource"
+                  "items": {
+                    "value": "@pipeline().parameters.downloadables",
+                    "type": "Expression"
                   },
-                  "sink": {
-                    "type": "BlobSink"
-                  }
-                },
-                "name": "MyCopyActivity",
-                "inputs": [
-                  {
-                    "referenceName": "[variables('inputDatasetName')]",
-                    "type": "DatasetReference"
-                  }
-                ],
-                "outputs": [
-                  {
-                    "referenceName": "[variables('outputDatasetName')]",
-                    "type": "DatasetReference"
-                  }
+                  "activities": [
+                    {
+                      "name": "Copy data",
+                      "type": "Copy",
+                      "dependsOn": [],
+                      "policy": {
+                        "timeout": "7.00:00:00",
+                        "retry": 0,
+                        "retryIntervalInSeconds": 30,
+                        "secureOutput": false,
+                        "secureInput": false
+                      },
+                      "userProperties": [],
+                      "typeProperties": {
+                        "source": {
+                          "type": "DelimitedTextSource",
+                          "storeSettings": {
+                            "type": "HttpReadSettings",
+                            "requestMethod": "GET"
+                          },
+                          "formatSettings": {
+                            "type": "DelimitedTextReadSettings"
+                          }
+                        },
+                        "sink": {
+                          "type": "BlobSink",
+                          "copyBehavior": {
+                            "value": "@item()",
+                            "type": "Expression"
+                          }
+                        },
+                        "enableStaging": false
+                      },
+                      "inputs": [
+                        {
+                          "referenceName": "[variables('inputDatasetName')]",
+                          "type": "DatasetReference",
+                          "parameters": {
+                            "item": "@item()"
+                          }
+                        }
+                      ],
+                      "outputs": [
+                        {
+                          "referenceName": "[variables('outputDatasetName')]",
+                          "type": "DatasetReference",
+                          "parameters": {}
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ],
+            "parameters": {
+              "downloadables": {
+                "type": "string",
+                "defaultValue": [
+                  "datasets/customers/customerData.csv",
+                  "datasets/demographics/demographics_data_20170520.csv",
+                  "datasets/orders/order_data.csv",
+                  "datasets/products/products.csv2013",
+                  "datasets/products/products.csv2014",
+                  "datasets/products/products.csv2015",
+                  "datasets/products/products.csv2016",
+                  "jars/Neo4JSparkTransformation-0.0.1-SNAPSHOT-jar-with-dependencies.jar",
+                  "scripts/Neo4JSparkTransformation-0.0.1-SNAPSHOT-jar-with-dependencies.jar",
+				  "customer_updated_refrence.json"
                 ]
               }
-            ]
+            },
+            "annotations": []
           }
         },
         {
