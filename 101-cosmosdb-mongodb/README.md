@@ -1,4 +1,4 @@
-# Create an Azure Cosmos account for MongoDB API with two collections
+# Create an Azure Cosmos account for MongoDB API (3.2 or 3.6) with two collections
 
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-mongodb/PublicLastTestDate.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-mongodb/PublicDeployment.svg" />&nbsp;
