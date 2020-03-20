@@ -113,7 +113,7 @@ A valid metadata.json must adhere to the following structure
 
 ```json
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/...",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/...",
   "itemDisplayName": "60 char limit",
   "description": "1000 char limit",
   "summary": "200 char limit",
@@ -258,7 +258,7 @@ Here's an example in an `azuredeploy.parameters.json` file:
 ```json
 
 {
-"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
 "contentVersion": "1.0.0.0",
 "parameters": {
  "newStorageAccountName":{
