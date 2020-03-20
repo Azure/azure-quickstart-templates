@@ -98,7 +98,7 @@ Top-level template properties must be in the following order:
 
 ```json
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/...",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/...",
   "contentVersion": "1.0.0.0",
   "apiProfile": "...",
   "parameters": {},
