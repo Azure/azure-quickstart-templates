@@ -67,14 +67,15 @@ foreach ($SourcePath in $ArtifactFilePaths) {
     
             # Get TemplateHash
             Write-Host "Requesting Hash for file: $file"
-            #try{ #fail the build for now so we can find issues
+            try{ #fail the build for now so we can find issues
             $response = Invoke-RestMethod -Uri $uri `
                 -Method "POST" `
                 -Headers $Headers `
-                -Body $json
-            #}catch{
-            #    Write-Warning "Failed to get hash for: $file"
-            #}
+                -Body $json -verbose
+            }catch{
+                Write-Host $response
+                Write-Error "Failed to get hash for: $file"
+            }
             
             $templateHash = $response.templateHash
 
