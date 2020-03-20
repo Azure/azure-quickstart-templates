@@ -171,6 +171,10 @@ If the sample does not support all clouds add the environments property to metad
 }
 ```
 
+## Validation Type
+
+If the sample cannot be automatically tested (e.g. tenant level deployments) set the validation type to "Manual", the default is "Automatic".
+
 ### Cloud Specific Parameter Files
 
 If the sample needs separate parameter files for each cloud you can add each to the sample:
