@@ -3,10 +3,12 @@ $outputPath = Join-Path $(Get-Location) -ChildPath "output"
 $ros1DownloadPath = Join-Path $outputPath -ChildPath "melodic-sfx-installer.zip"
 $ros2DownloadPath = Join-Path $outputPath -ChildPath "eloquent-sfx-installer.zip"
 $vcRedistPath = Join-Path $outputPath -ChildPath "vc_redist.x64.exe"
+$vcRedistPath_vs2010 = Join-Path $outputPath -ChildPath "vcredist_x64.exe"
 
 $ros1LatestBuildUrl = 'https://dev.azure.com/ros-win/ros-win/_apis/build/builds?definitions=54&$top=1&resultFilter=succeeded&api-version=5.1'
 $ros2LatestBuildUrl = 'https://dev.azure.com/ros-win/ros-win/_apis/build/builds?definitions=74&$top=1&resultFilter=succeeded&api-version=5.1'
 $vcRedistUrl = 'https://aka.ms/vs/16/release/vc_redist.x64.exe'
+$vcRedistUrl_vs2010 = 'https://download.microsoft.com/download/3/2/2/3224B87F-CFA0-4E70-BDA3-3DE650EFEBA5/vcredist_x64.exe'
 
 New-Item -ItemType directory -Path $outputPath
 
@@ -30,6 +32,7 @@ do
         $download.Downloadfile($artifactUrl1, $ros1DownloadPath)
         $download.Downloadfile($artifactUrl2, $ros2DownloadPath)
         $download.DownloadFile($vcRedistUrl, $vcRedistPath)
+        $download.DownloadFile($vcRedistUrl_vs2010, $vcRedistPath_vs2010)
         Write-Verbose "Downloaded install files successfully on attempt $retries" -verbose
         break
     }
@@ -49,8 +52,11 @@ $sfxPath1 = Join-Path $outputPath -ChildPath "sfx-installer/ros-melodic-desktop_
 Expand-Archive -path $ros2DownloadPath -destinationpath $outputPath
 $sfxPath2 = Join-Path $outputPath -ChildPath "sfx-installer/ros-eloquent-desktop.exe"
 
-Write-Verbose "Installing Visual C++ redistributable packages" -verbose
+Write-Verbose "Installing Microsoft Visual C++ 2015-2019 redistributable packages" -verbose
 Start-Process "$vcRedistPath" -ArgumentList "/q","/norestart","/log","vcredistinstall.log" -NoNewWindow -Wait
+
+Write-Verbose "Installing Microsoft Visual C++ 2010 redistributable packages" -verbose
+Start-Process "$vcRedistPath_vs2010" -ArgumentList "/q","/norestart","/log","vcredistinstall.log" -NoNewWindow -Wait
 
 Write-Verbose "Installing ROS1 binaries" -verbose
 Start-Process "$sfxPath1" -ArgumentList "-oc:\","-y" -NoNewWindow -Wait

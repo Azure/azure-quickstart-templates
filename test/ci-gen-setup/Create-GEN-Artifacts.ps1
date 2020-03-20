@@ -21,7 +21,13 @@ param(
     [string] $KeyVaultSelfSignedCertName = 'azbot-sscert',
     [string] $KeyVaultNotSecretName = 'notSecretPassword',
     [string] $ServicePrincipalObjectId, #if not provided assigning perms to the Vault must be done manually
-    [string] $appConfigStoreName = 'azbotappconfigstore' # This must be gloablly unique
+    [string] $appConfigStoreName = 'azbotappconfigstore', # This must be gloablly unique
+    #
+    # You must generate a public/private key pair and pass to the script use the following command with no passphrase:
+    #   ssh-keygen -t rsa -b 4096 -f scratch
+    # 
+    [string] $sshPublicKeyValue = $(Get-Content -Path scratch.pub -Raw),
+    [string] $sshPrivateKeyValue = $(Get-Content -Path scratch -Raw)
 
 )
 
@@ -137,10 +143,10 @@ $json.Add("KEYVAULT-RESOURCE-ID", $vault.ResourceId)
 $refParam = @"
 {
     "reference": {
-      "keyVault": {
+        "keyVault": {
         "id": "$($vault.ResourceId)"
-      },
-      "secretName": "$KeyVaultNotSecretName"
+        },
+        "secretName": "$KeyVaultNotSecretName"
     }
 }
 "@
@@ -180,8 +186,48 @@ $json.Add("KEYVAULT-ENCRYPTION-KEY", $key.Name)
 $json.Add("KEYVAULT-ENCRYPTION-KEY-URI", $key.id)
 $json.Add("KEYVAULT-ENCRYPTION-KEY-VERSION", $key.Version)
 
+# 4) Create a Public/Private Key Pair
+$sshPublicKeySecretName = "sshPublicKey"
+$sshPrivateKeySecretName = "sshPrivateKey"
 
-#3 ) SSL Cert (TODO not sure if this is making the correct cert, need to test it) 
+# add the generic pub key value (just use the same one)
+$json.Add("SSH-PUB-KEY", $sshPublicKeyValue)
+
+$sshPublicKeyValue = ConvertTo-SecureString -String (Get-Content -Path scratch.pub -Raw) -AsPlainText -Force
+Set-AzureKeyVaultSecret -VaultName $KeyVaultName -Name $sshPublicKeySecretName -SecretValue $sshPublicKeyValue -Verbose
+
+$sshPrivateKeyValue = ConvertTo-SecureString -String (Get-Content -Path scratch -Raw) -AsPlainText -Force
+Set-AzureKeyVaultSecret -VaultName $KeyVaultName -Name $sshPrivateKeySecretName -SecretValue $sshPrivateKeyValue -Verbose
+
+$json.Add("KEYVAULT-SSH-PRIVATE-KEY-NAME", $sshPrivateKeySecretName)
+$json.Add("KEYVAULT-SSH-PUBLIC-KEY-NAME", $sshPublicKeySecretName)
+
+$refParam = @"
+{
+    "reference": {
+        "keyVault": {
+        "id": "$($vault.ResourceId)"
+        },
+        "secretName": "$sshPrivateKeySecretName"
+    }
+}
+"@
+$json.Add("KEYVAULT-SSH-PRIVATE-KEY-REFERENCE", (ConvertFrom-Json $refParam))
+
+$refParam = @"
+{
+    "reference": {
+        "keyVault": {
+        "id": "$($vault.ResourceId)"
+        },
+        "secretName": "$sshPublicKeySecretName"
+    }
+}
+"@
+$json.Add("KEYVAULT-SSH-PUBLIC-KEY-REFERENCE", (ConvertFrom-Json $refParam))
+
+
+#5 ) SSL Cert (TODO not sure if this is making the correct cert, need to test it) 
 #https://docs.microsoft.com/en-us/azure/virtual-machines/windows/tutorial-secure-web-server#generate-a-certificate-and-store-in-key-vault
 #$policy = New-AzureKeyVaultCertificatePolicy -SubjectName "CN=www.contoso.com" -SecretContentType "application/x-pkcs12" -IssuerName Self -ValidityInMonths 120
 #Add-AzureKeyVaultCertificate -VaultName $keyvaultName -Name "mycert" -CertificatePolicy $policy

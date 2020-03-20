@@ -508,15 +508,15 @@ configuration ConfigureSPVM
             Description                  = "Federation with $DomainFQDN"
             Realm                        = "https://$SPTrustedSitesName.$DomainFQDN"
             SignInUrl                    = "https://adfs.$DomainFQDN/adfs/ls/"
-            IdentifierClaim              = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
+            IdentifierClaim              = "https://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
             ClaimsMappings               = @(
                 MSFT_SPClaimTypeMapping{
                     Name = "Email"
-                    IncomingClaimType = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
+                    IncomingClaimType = "https://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
                 }
                 MSFT_SPClaimTypeMapping{
                     Name = "Role"
-                    IncomingClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+                    IncomingClaimType = "https://schemas.microsoft.com/ws/2008/06/identity/claims/role"
                 }
             )
             SigningCertificateFilePath   = "$SetupPath\Certificates\ADFS Signing.cer"
@@ -538,13 +538,13 @@ configuration ConfigureSPVM
 				$config = [ldapcp.LDAPCPConfig]::CreateConfiguration([ldapcp.ClaimsProviderConstants]::CONFIG_ID, [ldapcp.ClaimsProviderConstants]::CONFIG_NAME, $using:DomainFQDN);
 
 				# Remove unused claim types
-				$config.ClaimTypes.Remove("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn")
-				$config.ClaimTypes.Remove("http://schemas.microsoft.com/ws/2008/06/identity/claims/windowsaccountname")
-				$config.ClaimTypes.Remove("http://schemas.microsoft.com/ws/2008/06/identity/claims/primarygroupsid")
+				$config.ClaimTypes.Remove("https://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn")
+				$config.ClaimTypes.Remove("https://schemas.microsoft.com/ws/2008/06/identity/claims/windowsaccountname")
+				$config.ClaimTypes.Remove("https://schemas.microsoft.com/ws/2008/06/identity/claims/primarygroupsid")
 
 				# Configure augmentation
 				$config.EnableAugmentation = $true
-				$config.MainGroupClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+				$config.MainGroupClaimType = "https://schemas.microsoft.com/ws/2008/06/identity/claims/role"
                 foreach ($connection in $config.LDAPConnectionsProp) {
                     $connection.EnableAugmentation = $true
                 }
