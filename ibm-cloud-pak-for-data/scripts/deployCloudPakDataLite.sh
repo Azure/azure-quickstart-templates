@@ -5,8 +5,8 @@ export NAMESPACE=$4
 export APIKEYUSERNAME=$5
 export APIKEY=$6
 export STORAGEOPTION=$7
-export INSTALLERARTIFACTSLOCATION="https://prodcpdartifacts.blob.core.windows.net"
-export INSTALLERARTIFACTSTOKEN="se=2020-12-31T23%3A59%3A00Z&sp=r&sv=2018-11-09&sr=c&sig=7Kh6HtbULEnm8DSjFkQ5UphUK9R%2Busk%2BxhkGlIIpCQE%3D"
+export ARTIFACTSLOCATION=$8
+export ARTIFACTSTOKEN=$9
 export HOME=/root
 
 # Download Installer files
@@ -16,10 +16,11 @@ namespace=$NAMESPACE
 storageclass=$STORAGEOPTION
 mkdir -p /ibm/$assembly
 export INSTALLERHOME=/ibm/$assembly
-(cd $INSTALLERHOME && wget $INSTALLERARTIFACTSLOCATION/cpdinstaller/cpd-linux?$INSTALLERARTIFACTSTOKEN -O cpd-linux)
+(cd $INSTALLERHOME && wget $ARTIFACTSLOCATION/scripts/cpd-linux?$ARTIFACTSTOKEN -O cpd-linux)
 
 if [[ $APIKEY == "" ]]; then
-(cd $INSTALLERHOME && wget $INSTALLERARTIFACTSLOCATION/cpdinstaller/repo.yaml?$INSTALLERARTIFACTSTOKEN -O repo.yaml)
+    echo $(date) "- APIKey not provided. See README on how to get it."
+    exit 12
 else
 
 (cd $INSTALLERHOME &&
@@ -34,10 +35,10 @@ fileservers:
 EOF
 )
 fi
-(cd $INSTALLERHOME && wget $INSTALLERARTIFACTSLOCATION/cpdinstaller/lutil?$INSTALLERARTIFACTSTOKEN -O lutil)
+(cd $INSTALLERHOME && wget $ARTIFACTSLOCATION/scripts/lutil-linux?$ARTIFACTSTOKEN -O lutil-linux)
 
 chmod +x $INSTALLERHOME/cpd-linux
-chmod +x $INSTALLERHOME/lutil
+chmod +x $INSTALLERHOME/lutil-linux
 
 # Authenticate and Install
 oc login -u ${OCUSER} -p ${OCPASSWD} ${MASTERPUBLICHOSTNAME} --insecure-skip-tls-verify=true
@@ -121,13 +122,13 @@ else
     exit 11
 fi
 
-if [[ $APIKEY == "" ]]; then
-wget $INSTALLERARTIFACTSLOCATION/cpdinstaller/activate-trial.py?$INSTALLERARTIFACTSTOKEN -O activate-trial.py
-wget $INSTALLERARTIFACTSLOCATION/cpdinstaller/trial.lic?$INSTALLERARTIFACTSTOKEN -O trial.lic
-cpdurl=$(oc get routes -n $namespace | grep $namespace-cpd | awk '{print $2}')
-python activate-trial.py https://$cpdurl admin password trial.lic
-rm -f trial.lic
-fi
+# if [[ $APIKEY == "" ]]; then
+# wget $ARTIFACTSLOCATION/scripts/activate-trial.py?$ARTIFACTSTOKEN -O activate-trial.py
+# wget $ARTIFACTSLOCATION/scripts/trial.lic?$ARTIFACTSTOKEN -O trial.lic
+# cpdurl=$(oc get routes -n $namespace | grep $namespace-cpd | awk '{print $2}')
+# python activate-trial.py https://$cpdurl admin password trial.lic
+# rm -f trial.lic
+# fi
 
 echo "Sleep for 30 seconds"
 sleep 30
