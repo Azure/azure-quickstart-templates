@@ -64,7 +64,7 @@ Start-Process "$sfxPath1" -ArgumentList "-oc:\","-y" -NoNewWindow -Wait
 Write-Verbose "Installing ROS2 binaries" -verbose
 Start-Process "$sfxPath2" -ArgumentList "-oc:\","-y" -NoNewWindow -Wait
 
-# finally enable RemotePS
+# finally enable RemotePS 
 Enable-PSRemoting -Force -SkipNetworkProfileCheck
 New-NetFirewallRule -Name "Allow WinRM HTTPS" -DisplayName "WinRM HTTPS" -Enabled True -Profile Any -Action Allow -Direction Inbound -LocalPort 5986 -Protocol TCP
 $thumbprint = (New-SelfSignedCertificate -DnsName $env:COMPUTERNAME -CertStoreLocation Cert:\LocalMachine\My).Thumbprint
