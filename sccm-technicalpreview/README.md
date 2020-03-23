@@ -21,3 +21,4 @@ Each VM has its own public IP address and is added to a subnet protected with a 
 
 Each VM has a private network IP which is for ConfigMgr communication. 
 
+For more information, Visit [Create a Configuration Manager lab in Azure](https://docs.microsoft.com/en-us/configmgr/core/get-started/azure-template)
