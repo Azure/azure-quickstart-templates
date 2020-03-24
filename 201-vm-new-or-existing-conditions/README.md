@@ -1,4 +1,4 @@
-# Deploy a single VM with a new or exsiting Virtual Network, Storage and Public IP using Conditions
+# Deploy a single VM with a new or existing Virtual Network, Storage and Public IP using Conditions
 
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vm-new-or-existing-conditions/PublicLastTestDate.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-vm-new-or-existing-conditions/PublicDeployment.svg" />&nbsp;
