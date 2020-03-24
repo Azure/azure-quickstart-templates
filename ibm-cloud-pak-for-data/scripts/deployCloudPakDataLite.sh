@@ -122,13 +122,11 @@ else
     exit 11
 fi
 
-# if [[ $APIKEY == "" ]]; then
-# wget $ARTIFACTSLOCATION/scripts/activate-trial.py?$ARTIFACTSTOKEN -O activate-trial.py
-# wget $ARTIFACTSLOCATION/scripts/trial.lic?$ARTIFACTSTOKEN -O trial.lic
-# cpdurl=$(oc get routes -n $namespace | grep $namespace-cpd | awk '{print $2}')
-# python activate-trial.py https://$cpdurl admin password trial.lic
-# rm -f trial.lic
-# fi
+wget $ARTIFACTSLOCATION/scripts/activate-trial.py?$ARTIFACTSTOKEN -O activate-trial.py
+wget $ARTIFACTSLOCATION/scripts/trial.lic?$ARTIFACTSTOKEN -O trial.lic
+cpdurl=$(oc get routes -n $namespace | grep $namespace-cpd | awk '{print $2}')
+python activate-trial.py https://$cpdurl admin password trial.lic
+rm -f trial.lic
 
 echo "Sleep for 30 seconds"
 sleep 30
