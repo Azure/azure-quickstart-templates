@@ -51,6 +51,14 @@ When the installation is complete, it should give you a JupyterHub login page:
 
 ![Screen](./images/loginJupyter.png)
 
+If your still having issues connecting you can run the following command to reinstall the latest version of JupyterHub replace <admin-user-name> with your admin username
+
+```
+sudo apt install python3 python3-dev git curl
+
+curl https://raw.githubusercontent.com/jupyterhub/the-littlest-jupyterhub/master/bootstrap/bootstrap.py | sudo -E python3 - --admin <admin-user-name>
+```
+
 Login using the admin username you typed at the time of creating the virtual machine and the password.
 
 ![Screen](./images/loginJupyter2.png)
