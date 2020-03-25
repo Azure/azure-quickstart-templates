@@ -1,4 +1,4 @@
-# Create 2 new Windows VMs, create a new AD Forest, Domain and 2 DCs in an availability set
+# Create 2 Windows VMs, a new AD Forest, Domain and 2 DCs in an availability set
 
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/active-directory-new-domain-ha-2-dc/PublicLastTestDate.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/active-directory-new-domain-ha-2-dc/PublicDeployment.svg" />&nbsp;
@@ -23,7 +23,6 @@ Click the button below to deploy
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
-# Known Issues
+## Known Issues
 
-+	This template is entirely serial due to some concurrency issues between the platform agent and the DSC extension which cause problems when multiple VM and\or extension resources are deployed concurrently, this will be fixed in the near future
-
+This template is entirely serial due to some concurrency issues between the platform agent and the DSC extension which cause problems when multiple VM and\or extension resources are deployed concurrently, this will be fixed in the near future
