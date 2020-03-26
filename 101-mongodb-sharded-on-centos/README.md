@@ -1,10 +1,10 @@
 # Install MongoDB Sharding Cluster
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fcjsingh8512%2Fazure-cosmosdb-mongodbshardedcluster%2Fusers%2Fchsi%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fcjsingh8512%2Fazure-quickstart-templates%2Fusers%2Fchsi%2F101-mongodb-sharded-on-centos%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 <a href="
-http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fcjsingh8512%2Fazure-cosmosdb-mongodbshardedcluster%2Fusers%2Fchsi%2Fazuredeploy.json" target="_blank">
+http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fcjsingh8512%2Fazure-quickstart-templates%2Fusers%2Fchsi%2F101-mongodb-sharded-on-centos%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
 </a>
 
