@@ -5,6 +5,8 @@ staticIP=$2
 mongoAdminUser=$3
 mongoAdminPasswd=$4
 certUri=$5
+location=$6
+dnsNamePrefix=$7
 
 install_mongo3() {
 
@@ -63,8 +65,12 @@ disk_format() {
 }
 
 yum install wget -y
-echo "Downloading the ssl cert"
-wget $certUri -O /etc/MongoAuthCert.pem
+location=$(echo $location | sed 's/ //g' | awk '{print tolower($0)}')
+fqdn=$dnsNamePrefix"."$location".cloudapp.azure.com"
+echo "Generating ssl certificate"
+openssl req -newkey rsa:2048 -nodes -keyout /etc/key.pem -x509 -days 365 -out /etc/certificate.pem -subj "/CN=$fqdn"
+openssl pkcs12 -inkey /etc/key.pem -in /etc/certificate.pem -export -out /etc/MongoAuthCert.p12 -passout pass:"Mongo123"
+openssl pkcs12 -in /etc/MongoAuthCert.p12 -out /etc/MongoAuthCert.pem -passin pass:"Mongo123" -passout pass:"Mongo123"
 
 install_mongo3
 disk_format
