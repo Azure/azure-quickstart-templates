@@ -34,7 +34,7 @@ install_mongo3() {
 
 yum install wget -y
 location=$(echo $location | sed 's/ //g' | awk '{print tolower($0)}')
-fqdn=$dnsNamePrefix"."$location".cloudapp.azure.com"
+fqdn="${dnsNamePrefix}.${location}.cloudapp.azure.com"
 echo "Generating ssl certificate"
 openssl req -newkey rsa:2048 -nodes -keyout /etc/key.pem -x509 -days 365 -out /etc/certificate.pem -subj "/CN=$fqdn"
 openssl pkcs12 -inkey /etc/key.pem -in /etc/certificate.pem -export -out /etc/MongoAuthCert.p12 -passout pass:"Mongo123"
