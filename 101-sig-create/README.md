@@ -13,5 +13,4 @@
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 
-This template creates a Shared Image Gallery. 
-
+This template creates a Shared Image Gallery.
