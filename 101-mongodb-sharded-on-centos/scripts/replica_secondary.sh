@@ -1,9 +1,8 @@
 #!/bin/bash
 
 replSetName=$1
-certUri=$2
-location=$3
-dnsNamePrefix=$4
+location=$2
+dnsNamePrefix=$3
 
 install_mongo3() {
 
@@ -61,7 +60,6 @@ disk_format() {
 }
 
 yum install wget -y
-location=$(echo $location | sed 's/ //g' | awk '{print tolower($0)}')
 fqdn="${dnsNamePrefix}.${location}.cloudapp.azure.com"
 echo "Generating ssl certificate"
 openssl req -newkey rsa:2048 -nodes -keyout /etc/key.pem -x509 -days 365 -out /etc/certificate.pem -subj "/CN=$fqdn"
