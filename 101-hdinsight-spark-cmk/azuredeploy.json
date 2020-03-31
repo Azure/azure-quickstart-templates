@@ -10,7 +10,6 @@
     },
     "clusterLoginUserName": {
       "type": "string",
-      "defaultValue": "admin",
       "metadata": {
         "description": "These credentials can be used to submit jobs to the cluster and to log into cluster dashboards."
       }
@@ -28,30 +27,8 @@
         "description": "The location where all azure resources will be deployed."
       }
     },
-    "clusterVersion": {
-      "type": "string",
-      "defaultValue": "3.6",
-      "metadata": {
-        "description": "HDInsight cluster version."
-      }
-    },
-    "clusterWorkerNodeCount": {
-      "type": "int",
-      "defaultValue": 1,
-      "metadata": {
-        "description": "The number of nodes in the HDInsight cluster."
-      }
-    },
-    "clusterKind": {
-      "type": "string",
-      "defaultValue": "SPARK",
-      "metadata": {
-        "description": "The type of the HDInsight cluster to create."
-      }
-    },
     "sshUserName": {
       "type": "string",
-      "defaultValue": "sshuser",
       "metadata": {
         "description": "These credentials can be used to remotely access the cluster."
       }
@@ -62,20 +39,50 @@
         "description": "The password must be at least 10 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter."
       }
     },
+    "existingClusterStorageResourceGroup": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().name]",
+      "metadata": {
+        "description": "The resource group name of the storage account to use as the cluster's default storage."
+      }
+    },
+    "headNodeSize": {
+      "type": "string",
+      "defaultValue": "Standard_D12_v2",
+      "metadata": {
+        "description": "The VM size of the head nodes."
+      }
+    },
+    "workerNodeSize": {
+      "type": "string",
+      "defaultValue": "Standard_D13_v2",
+      "metadata": {
+        "description": "The VM size of the worker nodes."
+      }
+    },
     "diskEncryptionVaultUri": {
-      "type": "string"
+      "type": "string",
+      "metadata": {
+        "description": "The Key Vault DNSname."
+      }
     },
     "diskEncryptionKeyName": {
-      "type": "string"
+      "type": "string",
+      "metadata": {
+        "description": "The Key Vault key name."
+      }
     },
     "diskEncryptionKeyVersion": {
-      "type": "string"
+      "type": "string",
+      "metadata": {
+        "description": "The Key Vault key version for the selected key."
+      }
     },
     "existingManagedIdentityName": {
-      "type": "string"
-    },
-    "minTlsVersionNumber": {
-      "type": "string"
+      "type": "string",
+      "metadata": {
+        "description": "The user-assigned managed identity."
+      }
     }
   },
   "variables": {
@@ -102,11 +109,11 @@
       "type": "Microsoft.HDInsight/clusters",
       "location": "[parameters('location')]",
       "properties": {
-        "clusterVersion": "[parameters('clusterVersion')]",
+        "clusterVersion": "3.6",
         "osType": "Linux",
         "tier": "standard",
         "clusterDefinition": {
-          "kind": "[parameters('clusterKind')]",
+          "kind": "spark",
           "componentVersion": {
             "Spark": "2.3"
           },
@@ -121,53 +128,45 @@
         "storageProfile": {
           "storageaccounts": [
             {
-              "name": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name), '2016-01-01').primaryEndpoints.blob,'https://',''),'/','')]",
+              "name": "[replace(replace(reference(resourceId(parameters('existingClusterStorageResourceGroup'), 'Microsoft.Storage/storageAccounts/', variables('defaultStorageAccount').name), '2019-06-01').primaryEndpoints.blob,'https:',''),'/','')]",
               "isDefault": true,
               "container": "[parameters('clusterName')]",
-              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name), '2016-01-01').keys[0].value]"
+              "key": "[listKeys(resourceId(parameters('existingClusterStorageResourceGroup'), 'Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name), '2019-06-01').keys[0].value]"
             }
           ]
         },
         "computeProfile": {
           "roles": [
             {
-              "autoscale": null,
               "name": "headnode",
               "minInstanceCount": 1,
               "targetInstanceCount": 2,
               "hardwareProfile": {
-                "vmSize": "Standard_D12_V2"
+                "vmSize": "[parameters('headNodeSize')]"
               },
               "osProfile": {
                 "linuxOperatingSystemProfile": {
                   "username": "[parameters('sshUserName')]",
                   "password": "[parameters('sshPassword')]"
                 },
-                "windowsOperatingSystemProfile": null
               },
-              "virtualNetworkProfile": null,
-              "dataDisksGroups": null
             },
             {
-              "autoscale": null,
               "name": "workernode",
-              "targetInstanceCount": "[parameters('clusterWorkerNodeCount')]",
+              "targetInstanceCount": 1,
               "hardwareProfile": {
-                "vmSize": "Standard_D13_V2"
+                "vmSize": "[parameters('workerNodeSize')]"
               },
               "osProfile": {
                 "linuxOperatingSystemProfile": {
                   "username": "[parameters('sshUserName')]",
                   "password": "[parameters('sshPassword')]"
                 },
-                "windowsOperatingSystemProfile": null
               },
-              "virtualNetworkProfile": null,
-              "dataDisksGroups": null
             }
           ]
         },
-        "minSupportedTlsVersion": "[parameters('minTlsVersionNumber')]",
+        "minSupportedTlsVersion": "1.2",
         "diskEncryptionProperties": {
           "vaultUri": "[parameters('diskEncryptionVaultUri')]",
           "keyName": "[parameters('diskEncryptionKeyName')]",
@@ -178,7 +177,7 @@
       "identity": {
         "type": "UserAssigned",
         "userAssignedIdentities": {
-          "[concat(resourceGroup().id, '/providers/Microsoft.ManagedIdentity/userAssignedIdentities/', parameters('existingManagedIdentityName'))]": {}
+          "[resourceID('Microsoft.ManagedIdentity/userAssignedIdentities/', parameters('existingManagedIdentityName'))]": {}
         }
       }
     }
