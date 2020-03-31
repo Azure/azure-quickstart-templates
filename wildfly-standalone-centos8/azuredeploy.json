@@ -8,57 +8,39 @@
         "description": "Linux VM user account name"
       }
     },
-    "authenticationType": {	
-      "type": "string",	
-      "defaultValue": "password",	
-      "allowedValues": [	
-        "password",		
-        "sshPublicKey"	
-      ],	
-      "metadata": {	
-        "description": "Type of authentication to use on the Virtual Machine."	
-      }	
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "password",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine."
+      }
     },
-    "adminPasswordOrKey": {	
-      "type": "securestring",	
-      "metadata": {	
-        "description": "SSH Key or password for the Virtual Machine."	
-      }	
-    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine."
+      }
+   },
     "dnsLabelPrefix": {
       "type": "string",
       "metadata": {
         "description": "DNS Label for the Public IP. Must be lowercase. It should match with the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ or it will raise an error."
       }
     },
-    "eapUserName": {
+    "wildflyUserName": {
       "type": "string",
       "metadata": {
-        "description": "User name for EAP manager"
+        "description": "User name for WildFly manager"
       }
     },
-    "eapPassword": {
+    "wildflyPassword": {
       "type": "securestring",
       "metadata": {
-        "description": "Password for EAP manager"
-      }
-    },
-    "rhsmUserName": {
-      "type": "string",
-      "metadata": {
-        "description": "User name for Red Hat subscription manager"
-      }
-    },
-    "rhsmPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Password for Red Hat subscription  manager"
-      }
-    },
-    "rhsmPool": {
-      "type": "string",
-      "metadata": {
-        "description": "Red Hat Subscription Manager Pool"
+        "description": "Password for WildFly manager"
       }
     },
     "_artifactsLocation": {
@@ -66,7 +48,7 @@
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/jboss-eap-standalone-rhel7"
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/wildfly-standalone-centos8"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -92,9 +74,9 @@
   },
   "variables": {
     "singlequote": "'",
-    "imagePublisher": "redhat",
-    "imageOffer": "rhel",
-    "imageSKU": "7.7",
+    "imagePublisher": "OpenLogic",
+    "imageOffer": "CentOS",
+    "imageSKU": "8.0",
     "baseName": "[uniquestring(parameters('dnsLabelPrefix'),resourceGroup().id)]",
     "nicName": "[concat('myNic8',variables('baseName'))]",
     "addressPrefix": "10.0.0.0/16",
@@ -106,19 +88,19 @@
     "virtualNetworkName": "MyVNET8",
     "frontEndNSGName": "[concat(parameters('dnsLabelPrefix'),'-nsg8')]",
     "ScriptFolder": "scripts",
-    "ScriptFileName": "eap-setup-redhat.sh",
-    "subnet1Ref": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnet1Name'))]",
-    "linuxConfiguration": {	
-      "disablePasswordAuthentication": true,	
-      "ssh": {	
-        "publicKeys": [	
-          {	
-            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",	
-            "keyData": "[parameters('adminPasswordOrKey')]"	
-          }	
-        ]	
-      }	
-    }
+    "ScriptFileName": "wildfly-setup.sh",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    },
+    "subnet1Ref": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnet1Name'))]"
   },
   "resources": [
     {
@@ -158,9 +140,9 @@
             }
           },
           {
-            "name": "default-allow-eap-admin",
+            "name": "default-allow-wildfly-admin",
             "properties": {
-              "description": "Allow EAP/ADMIN",
+              "description": "Allow WildFly/ADMIN",
               "protocol": "Tcp",
               "sourcePortRange": "*",
               "destinationPortRange": "9990",
@@ -172,9 +154,9 @@
             }
           },
           {
-            "name": "default-allow-eap",
+            "name": "default-allow-wildfly",
             "properties": {
-              "description": "Allow WEB/EAP",
+              "description": "Allow WEB/WildFly",
               "protocol": "Tcp",
               "sourcePortRange": "*",
               "destinationPortRange": "8080",
@@ -302,7 +284,7 @@
           "fileUris": [
             "[concat(parameters('_artifactsLocation'), '/', variables('ScriptFolder'), '/', variables('ScriptFileName'), parameters('_artifactsLocationSasToken'))]"
           ],
-          "commandToExecute": "[concat('sh eap-setup-redhat.sh',' ',parameters('adminUsername'),' ',parameters('eapUserName'),' ',variables('singlequote'),parameters('eapPassword'),variables('singlequote'),' ',parameters('rhsmUserName'),' ',variables('singlequote'),parameters('rhsmPassword'),variables('singlequote'),' ', parameters('rhsmPool'))]"
+          "commandToExecute": "[concat('sh wildfly-setup.sh',' ',parameters('adminUsername'),' ',parameters('wildflyUserName'),' ',variables('singlequote'),parameters('wildflyPassword'),variables('singlequote'))]"
         }
       }
     }

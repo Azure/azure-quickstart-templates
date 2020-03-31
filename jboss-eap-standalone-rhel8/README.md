@@ -1,9 +1,9 @@
-# VM-RedHat - JBoss EAP 7.2 on RHEL 7.7 standalone mode
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fjboss-eap-standalone-rhel7%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
+# VM-RedHat - JBoss EAP 7.2 on RHEL 8.0 standalone mode
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fjboss-eap-standalone-rhel8%2Fazuredeploy.json" target="_blank">
+    <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fjboss-eap-standalone-rhel7%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fjboss-eap-standalone-rhel8%2Fazuredeploy.json" target="_blank">
+    <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
 `Tags: JBoss, Red Hat, EAP 7.2`
@@ -28,12 +28,12 @@ JBoss EAP is an open source platform for highly transactional, web-scale Java ap
 
 Red Hat Subscription Management (RHSM) is a customer-driven, end-to-end solution that provides tools for subscription status and management and integrates with Red Hat's system management tools. To obtain an rhsm account go to: www.redhat.com and sign in.
 
-This Azure quickstart template deploys a web application named dukes on JBoss EAP 7.2 running on RHEL 7.7.
+This Azure quickstart template deploys a web application named dukes on JBoss EAP 7.2 running on RHEL 8. 
 
 ## Template Solution Architecture
-This template creates all of the compute resources to run JBoss EAP 7.2 on top of RHEL 7.7, deploying the following components:
+This template creates all of the compute resources to run JBoss EAP 7.2 on top of RHEL 8.0, deploying the following components:
 
-- RHEL 7.7 VM 
+- RHEL 8.0 VM 
 - Public IP 
 - Virtual Network 
 - Network Security Group 
@@ -41,18 +41,18 @@ This template creates all of the compute resources to run JBoss EAP 7.2 on top o
 - Sample application named dukes deployed on JBoss EAP 7.2
 
 Following is the Architecture :
-<img src="images/RHEL7-EAP-arch.PNG" width="800">
+<img src="images/RHEL8-Arch.PNG" width="800">
 
 To learn more about JBoss Enterprise Application Platform, check out:
 https://access.redhat.com/documentation/en-us/red_hat_jboss_enterprise_application_platform/7.2/
 
 ## Licenses and Costs
 
-This RHEL 7.7 is Pay-As-You-Go image which carries a separate hourly charge that is in addition to Microsoft's Linux VM rates. Total price of the VM consists of the base Linux VM price plus RHEL VM image surcharge. See [Red Hat Enterprise Linux pricing](https://azure.microsoft.com/en-us/pricing/details/virtual-machines/red-hat/) for details. You also need to have a RedHat account to register to Red Hat Subscription Manager (RHSM) and install EAP. Click [here](https://access.redhat.com/products/red-hat-subscription-management) to know more about RHSM and pricing.
+This RHEL 8.0 is Pay-As-You-Go image which carries a separate hourly charge that is in addition to Microsoft's Linux VM rates. Total price of the VM consists of the base Linux VM price plus RHEL VM image surcharge. See [Red Hat Enterprise Linux pricing](https://azure.microsoft.com/en-us/pricing/details/virtual-machines/red-hat/) for details. You also need to have a RedHat account to register to Red Hat Subscription Manager (RHSM) and install EAP. Click [here](https://access.redhat.com/products/red-hat-subscription-management) to know more about RHSM and pricing.
 
 ## Prerequisites
 
-1. Azure Subscription with the specified payment method (RHEL 7.7 is an [Azure Marketplace](https://azuremarketplace.microsoft.com/en-us/marketplace/apps/RedHat.RedHatEnterpriseLinux77-ARM?tab=Overview) product and requires the payment method to be specified in Azure Subscription)
+1. Azure Subscription with the specified payment method (RHEL 8 is an [Azure Marketplace](https://azuremarketplace.microsoft.com/en-us/marketplace/apps/RedHat.RedHatEnterpriseLinux80-ARM?tab=Overview) product and requires the payment method to be specified in Azure Subscription)
 
 2. To deploy the template, you will need to:
 
@@ -62,11 +62,11 @@ This RHEL 7.7 is Pay-As-You-Go image which carries a separate hourly charge that
 
    - Choose an EAP username and password to enable the EAP manager UI and deployment method.
     
-   - Provide your RHSM Username and Password
+   - Provide your RHSM username and password
 
 ## Deployment Steps
 
-Build your environment with EAP 7.2 on top of RHEL 7.7 on Azure by clicking the Deploy to Azure button and fill in the following parameter values:
+Build your environment with EAP 7.2 on top of RHEL 8.0 on Azure by clicking the Deploy to Azure button and fill in the following parameter values:
 
    - **Subscription** - Choose the right subscription where you would like to deploy.
 
@@ -92,7 +92,7 @@ Build your environment with EAP 7.2 on top of RHEL 7.7 on Azure by clicking the 
 
    - **RHSM Pool ID** - RedHat subscription Manager Pool ID.
 
-   - Leave the rest of the parameter values as it is and accept the terms and conditions before clicking on Purchase.
+   - Leave the rest of the parameter values as it is and accept the terms and conditions before clicking on Purchase
     
 ## Deployment Time 
 
@@ -100,8 +100,8 @@ The deployment takes less than 10 minutes to complete.
 
 ## Validation Steps
 
-- Once the deployment is successful, go to the VM details and copy the DNS Name of the VM.
-- Open a web browser and go to http://<PUBLIC_HOSTNAME>:8080/dukes/ and you should see the application running.
+- Once the deployment is successful, go the VM details and copy the DNS Name of the VM.
+- Open a web browser and go to http://<PUBLIC_HOSTNAME>:8080/dukes/ and you should see the application running
 
   <img src="images/app.png" width="600">
 
@@ -115,8 +115,6 @@ If you don't have a Red Hat subscription to install a JBoss EAP, you can go thro
 
 *  <a href="https://github.com/Azure/azure-quickstart-templates/tree/master/wildfly-standalone-centos8" target="_blank"> [Red Hat WildFly 18 on an Azure VM]</a> - Standalone WildFly 18 with a sample web app on a CentOs 8 Azure VM.
 
-## Support 
+## Support
 
 For any support related questions, issues or customization requirements, please contact info@spektrasystems.com
-
-
