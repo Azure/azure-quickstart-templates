@@ -14,8 +14,6 @@
 			"metadata": {
 				"description": "Token for the base URL where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
 			},
-			"defaultValue": ""
-		},
 		"location": {
 			"type": "string",
 			"metadata": {
@@ -101,28 +99,28 @@
 			"type": "string",
 			"defaultValue": "Standard_D8s_v3",
 			"metadata": {
-				"description": "Bastion Host VM size"
+				"description": "Bastion Host VM size. Use VMs with Premium Storage support only."
 			}
 		},
 		"masterVmSize": {
 			"type": "string",
 			"defaultValue": "Standard_D8s_v3",
 			"metadata": {
-				"description": "OpenShift Master VM size"
+				"description": "OpenShift Master VM size. Use VMs with Premium Storage support only."
 			}
 		},
 		"nodeVmSize": {
 			"type": "string",
 			"defaultValue": "Standard_D16s_v3",
 			"metadata": {
-				"description": "OpenShift Node VM(s) size"
+				"description": "OpenShift Node VM(s) size. Use VMs with Premium Storage support only."
 			}
 		},
 		"infraVmSize": {
 			"type": "string",
 			"defaultValue": "Standard_D8s_v3",
 			"metadata": {
-				"description": "OpenShift Infra Node VM(s) size"
+				"description": "OpenShift Infra Node VM(s) size. Use VMs with Premium Storage support only."
 			}
 		},
 		"openshiftClusterPrefix": {
@@ -448,34 +446,12 @@
 		"nfsHostname": "[concat(variables('namingInfix'), '-nfs')]",
 		"openshiftNodeHostname": "[concat(variables('namingInfix'), '-node')]",
 		"openshiftInfraHostname": "[concat(variables('namingInfix'), '-infra')]",
-		"diagStorageAccount1": "[concat('diag1', uniqueString(resourceGroup().id))]",
-		"diagStorageAccount2": "[concat('diag2', uniqueString(resourceGroup().id))]",
-		"diagStorageAccount3": "[concat('diag3', uniqueString(resourceGroup().id))]",
-		"diagStorageAccount4": "[concat('diag4', uniqueString(resourceGroup().id))]",
+		"diagStorageAccount": "[concat('diag', uniqueString(resourceGroup().id))]",
 		"dataStorageAccount": "[concat('data', uniqueString(resourceGroup().id))]",
 		"newStorageAccountRegistry": "[concat('registry', uniqueString(resourceGroup().id))]",
-		"newStorageAccountPersistentVolume1": "[concat('pv1sa', uniqueString(resourceGroup().id))]",
 		"newStorageAccountArray": [
 			{
-				"name": "[variables('diagStorageAccount1')]",
-				"tagName": "DiagnosticsStorageAccount",
-				"skuName": "[variables('storageSkuObject').diagnostics.skuName]",
-				"skuTier": "[variables('storageSkuObject').diagnostics.skuTier]"
-			},
-			{
-				"name": "[variables('diagStorageAccount2')]",
-				"tagName": "DiagnosticsStorageAccount",
-				"skuName": "[variables('storageSkuObject').diagnostics.skuName]",
-				"skuTier": "[variables('storageSkuObject').diagnostics.skuTier]"
-			},
-			{
-				"name": "[variables('diagStorageAccount3')]",
-				"tagName": "DiagnosticsStorageAccount",
-				"skuName": "[variables('storageSkuObject').diagnostics.skuName]",
-				"skuTier": "[variables('storageSkuObject').diagnostics.skuTier]"
-			},
-			{
-				"name": "[variables('diagStorageAccount4')]",
+				"name": "[variables('diagStorageAccount')]",
 				"tagName": "DiagnosticsStorageAccount",
 				"skuName": "[variables('storageSkuObject').diagnostics.skuName]",
 				"skuTier": "[variables('storageSkuObject').diagnostics.skuTier]"
@@ -516,44 +492,20 @@
 		"nfsVmSize": "[parameters('masterVmSize')]",
 		"nfsInstanceCount": 1,
 		"storageSkuObject": {
-			"master": {
-				"skuName": "Premium_LRS",
-				"skuTier": "Premium"
-			},
-			"infra": {
-				"skuName": "Premium_LRS",
-				"skuTier": "Premium"
-			},
-			"node": {
-				"skuName": "Premium_LRS",
-				"skuTier": "Premium"
-			},
-			"bastion": {
-				"skuName": "Premium_LRS",
-				"skuTier": "Premium"
-			},
-			"nfs": {
-				"skuName": "Premium_LRS",
-				"skuTier": "Premium"
-			},
 			"diagnostics": {
 				"skuName": "Standard_LRS",
-				"skuTier": "Standard"
+				"skuTier": "Premium"
 			},
 			"registry": {
-				"skuName": "Standard_LRS",
-				"skuTier": "Standard"
-			},
-			"persistent": {
-				"skuName": "Standard_LRS",
-				"skuTier": "Standard"
+				"skuName": "Premium_LRS",
+				"skuTier": "Premium"
 			},
 			"dataStorage": {
-				"skuName": "Standard_LRS",
-				"skuTier": "Standard"
+				"skuName": "Premium_LRS",
+				"skuTier": "Premium"
 			}
 		},
-		"storageLoopCount": 6,
+		"storageLoopCount": 3,
 		"bastionPublicIpDnsLabel": "[concat('bastiondns', uniqueString(resourceGroup().id))]",
 		"infraLbPublicIpDnsLabel": "[concat('infradns', uniqueString(resourceGroup().id))]",
 		"openshiftMasterPublicIpDnsLabel": "[concat('masterdns', uniqueString(resourceGroup().id))]",
@@ -1430,7 +1382,7 @@
 			"type": "Microsoft.Resources/deployments",
 			"apiVersion": "2019-05-01",
 			"dependsOn": [
-				"[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccount1'))]",
+				"[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccount'))]",
 				"masterNicLoop",
 				"masteravailabilityset"
 			],
@@ -1478,6 +1430,9 @@
 					"vmStorageType": {
 						"value": "Premium_LRS"
 					},
+					"diagStorageAccount": {
+						"value": "[variables('diagStorageAccount')]"
+					},
 					"imageReference": {
 						"value": "[variables('imageReference')]"
 					},
@@ -1498,7 +1453,7 @@
 			"type": "Microsoft.Resources/deployments",
 			"apiVersion": "2019-05-01",
 			"dependsOn": [
-				"[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccount1'))]",
+				"[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccount'))]",
 				"infraNicLoop",
 				"infraavailabilityset"
 			],
@@ -1546,6 +1501,9 @@
 					"vmStorageType": {
 						"value": "Premium_LRS"
 					},
+					"diagStorageAccount": {
+						"value": "[variables('diagStorageAccount')]"
+					},
 					"imageReference": {
 						"value": "[variables('imageReference')]"
 					},
@@ -1566,7 +1524,7 @@
 			"type": "Microsoft.Resources/deployments",
 			"apiVersion": "2019-05-01",
 			"dependsOn": [
-				"[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccount2'))]",
+				"[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccount'))]",
 				"nodeNicLoop",
 				"nodeavailabilityset"
 			],
@@ -1614,6 +1572,9 @@
 					"vmStorageType": {
 						"value": "Premium_LRS"
 					},
+					"diagStorageAccount": {
+						"value": "[variables('diagStorageAccount')]"
+					},
 					"imageReference": {
 						"value": "[variables('imageReference')]"
 					},
@@ -1634,7 +1595,7 @@
 			"type": "Microsoft.Resources/deployments",
 			"apiVersion": "2019-05-01",
 			"dependsOn": [
-				"[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccount3'))]",
+				"[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccount'))]",
 				"bastionNicLoop",
 				"bastionavailabilityset"
 			],
@@ -1682,6 +1643,9 @@
 					"vmStorageType": {
 						"value": "Premium_LRS"
 					},
+					"diagStorageAccount": {
+						"value": "[variables('diagStorageAccount')]"
+					},
 					"imageReference": {
 						"value": "[variables('imageReference')]"
 					},
@@ -1702,7 +1666,7 @@
 			"type": "Microsoft.Resources/deployments",
 			"apiVersion": "2019-05-01",
 			"dependsOn": [
-				"[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccount4'))]",
+				"[resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccount'))]",
 				"nfsNicLoop",
 				"nfsavailabilityset"
 			],
@@ -1751,10 +1715,7 @@
 						"value": "Premium_LRS"
 					},
 					"diagStorageAccount": {
-						"value": "[variables('diagStorageAccount4')]"
-					},
-					"apiVersionStorage": {
-						"value": "2017-06-01"
+						"value": "[variables('diagStorageAccount')]"
 					},
 					"imageReference": {
 						"value": "[variables('imageReference')]"
@@ -1830,7 +1791,7 @@
 					]
 				},
 				"protectedSettings": {
-					"commandToExecute": "[concat('bash ', variables('masterPrepScriptFileName'), ' ', variables('newStorageAccountPersistentVolume1'), ' ', parameters('adminUsername'), ' ', variables('location'))]"
+					"commandToExecute": "[concat('bash ', variables('masterPrepScriptFileName'), ' ', parameters('adminUsername'), ' ', variables('location'))]"
 				}
 			}
 		},
@@ -1973,7 +1934,7 @@
 						"value": "[variables('newStorageAccountRegistry')]"
 					},
 					"newStorageAccountKey": {
-						"value": "[listKeys(variables('newStorageAccountRegistry'), '2017-06-01').keys[0].value]"
+						"value": "[listKeys(variables('newStorageAccountRegistry'), '2019-06-01').keys[0].value]"
 					},
 					"openshiftMasterHostname": {
 						"value": "[variables('openshiftMasterHostname')]"
@@ -2009,13 +1970,13 @@
 						"value": "[parameters('openshiftPassword')]"
 					},
 					"enableMetrics": {
-						"value": "[string(parameters('enableMetrics'))]"
+						"value": "[parameters('enableMetrics')]"
 					},
 					"enableLogging": {
-						"value": "[string(parameters('enableLogging'))]"
+						"value": "[parameters('enableLogging')]"
 					},
 					"enableAzure": {
-						"value": "true"
+						"value": true
 					},
 					"aadClientId": {
 						"value": "[parameters('aadClientId')]"

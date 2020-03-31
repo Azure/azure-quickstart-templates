@@ -2,9 +2,8 @@
 
 echo $(date) " - Starting Script"
 
-STORAGEACCOUNT=$1
-SUDOUSER=$2
-LOCATION=$3
+SUDOUSER=$1
+LOCATION=$2
 
 #Stop and Disable FIREWALLD
 systemctl disable firewalld
