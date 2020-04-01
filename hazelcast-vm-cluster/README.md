@@ -23,10 +23,3 @@ This template will deploy any number of Ubuntu Hazelcast nodes in a vnet using t
 Use the **Deploy to Azure** button above to get started.
 
 Checkout Hazelcast's [official documentation](http://hazelcast.org/documentation/) to learn more on how to use Hazelcast.
-
-## Azure Service Prinicpal
-
-This template deploys resources that need read access the mangaement api's for the resource group this template is deployed to.
-
-You'll need to setup [Azure Active Directory Service Principal credentials](https://azure.microsoft.com/en-us/documentation/articles/resource-group-create-service-principal-portal/) for your Azure Subscription for this plugin to work. With the credentials, fill in the `aadClientId`, `aadClientSecret`, and `aadTenantId` parameters.
-
