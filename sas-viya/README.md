@@ -65,6 +65,8 @@ For assistance with SAS software, contact  [SAS Technical Support](https://suppo
     1. [Hardening Provided OpenLDAP Security ](#hard)
     1. [Data Security](#datasec)
     1. [ Updating the Operating System](#updates)
+1.  [Appendix D: Telemetry](#telemetry)
+
 <a name="Summary"></a>
 ## Solution Summary
 By default, Quickstart deployments enable Transport Layer Security (TLS) for secure communication.
@@ -586,3 +588,9 @@ The Quickstart deployment is built to get you "up and running" quickly. However,
 During installation, yum updates servers but will not automatically apply patches after deployment is complete. To apply patches either:
 * Schedule updates on the boxes through cron 
 * Regularly log on to the system and run a "yum update" command to keep security patches up to date on the operating system
+
+<a name="telemetry"></a>
+## Appendix D Telemetry
+<a name="msnotification"></a>
+### Notification for Resource Manager Template Deployments
+When you deploy this template, Microsoft is able to identify the installation of SAS software with the Azure resources that are deployed. Microsoft is able to correlate the Azure resources that are used to support the software. Microsoft collects this information to provide the best experiences with their products and to operate their business. The data is collected and governed by Microsoft's privacy policies, which can be found at [Microsoft Trust Center](https://www.microsoft.com/trustcenter).
