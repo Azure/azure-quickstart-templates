@@ -19,7 +19,7 @@
 
 This template deploys a **NAT gateway** and virtual network with a single subnet and public IP resource for the NAT gateway.
 
-## Overview and Deployed resources
+## Overview and deployed resources
 
 This template is a resource manager implementation of a quickstart for deploying a NAT gateway.  A virtual network is deployed with a single subnet. The NAT gateway resource is associated with this subnet. A single public IP resource is created for the NAT gateway.  
 
