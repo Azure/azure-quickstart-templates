@@ -561,7 +561,7 @@ ldappasswd -h localhost -s USERPASSWORD -W -D cn=admin,dc=sasviya,dc=com -x "uid
 ldapdelete –h localhost -W -D "cn=admin,dc=sasviya,dc=com" "uid=newuser,ou=users,dc=sasviya,dc=com"
 ```
 <a name="Security"></a>
-## Appendix C Security Considerations
+## Appendix C: Security Considerations
 
 <a name="nsc"></a>
 ###	Network Security Groups 
@@ -590,7 +590,7 @@ During installation, yum updates servers but will not automatically apply patche
 * Regularly log on to the system and run a "yum update" command to keep security patches up to date on the operating system
 
 <a name="telemetry"></a>
-## Appendix D Telemetry
+## Appendix D: Telemetry
 <a name="msnotification"></a>
 ### Notification for Resource Manager Template Deployments
 When you deploy this template, Microsoft is able to identify the installation of SAS software with the Azure resources that are deployed. Microsoft is able to correlate the Azure resources that are used to support the software. Microsoft collects this information to provide the best experiences with their products and to operate their business. The data is collected and governed by Microsoft's privacy policies, which can be found at [Microsoft Trust Center](https://www.microsoft.com/trustcenter).
