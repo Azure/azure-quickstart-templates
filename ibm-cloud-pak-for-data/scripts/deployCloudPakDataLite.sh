@@ -5,8 +5,8 @@ export NAMESPACE=$4
 export APIKEYUSERNAME=$5
 export APIKEY=$6
 export STORAGEOPTION=$7
-export ARTIFACTSLOCATION=$8
-export ARTIFACTSTOKEN=$9
+export ARTIFACTSLOCATION=${8::-1}
+export ARTIFACTSTOKEN="$9"
 export HOME=/root
 
 # Download Installer files
@@ -16,7 +16,7 @@ namespace=$NAMESPACE
 storageclass=$STORAGEOPTION
 mkdir -p /ibm/$assembly
 export INSTALLERHOME=/ibm/$assembly
-(cd $INSTALLERHOME && wget $ARTIFACTSLOCATION/scripts/cpd-linux?$ARTIFACTSTOKEN -O cpd-linux)
+(cd $INSTALLERHOME && wget $ARTIFACTSLOCATION/scripts/cpd-linux$ARTIFACTSTOKEN -O cpd-linux)
 
 if [[ $APIKEY == "" ]]; then
     echo $(date) "- APIKey not provided. See README on how to get it."
@@ -35,7 +35,7 @@ fileservers:
 EOF
 )
 fi
-(cd $INSTALLERHOME && wget $ARTIFACTSLOCATION/scripts/lutil-linux?$ARTIFACTSTOKEN -O lutil-linux)
+(cd $INSTALLERHOME && wget $ARTIFACTSLOCATION/scripts/lutil-linux$ARTIFACTSTOKEN -O lutil-linux)
 
 chmod +x $INSTALLERHOME/cpd-linux
 chmod +x $INSTALLERHOME/lutil-linux
@@ -122,8 +122,8 @@ else
     exit 11
 fi
 
-wget $ARTIFACTSLOCATION/scripts/activate-trial.py?$ARTIFACTSTOKEN -O activate-trial.py
-wget $ARTIFACTSLOCATION/scripts/trial.lic?$ARTIFACTSTOKEN -O trial.lic
+wget $ARTIFACTSLOCATION/scripts/activate-trial.py$ARTIFACTSTOKEN -O activate-trial.py
+wget $ARTIFACTSLOCATION/scripts/trial.lic$ARTIFACTSTOKEN -O trial.lic
 cpdurl=$(oc get routes -n $namespace | grep $namespace-cpd | awk '{print $2}')
 python activate-trial.py https://$cpdurl admin password trial.lic
 rm -f trial.lic

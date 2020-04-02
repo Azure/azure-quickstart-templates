@@ -5,8 +5,8 @@ export NAMESPACE=$4
 export APIKEYUSERNAME=$5
 export APIKEY=$6
 export STORAGEOPTION=$7
-export ARTIFACTSLOCATION=$8
-export ARTIFACTSTOKEN=$9
+export ARTIFACTSLOCATION=${8::-1}
+export ARTIFACTSTOKEN="$9"
 export HOME=/root
 
 # Download Installer files
@@ -16,7 +16,7 @@ namespace=$NAMESPACE
 storageclass=$STORAGEOPTION
 mkdir -p /ibm/$assembly
 export INSTALLERHOME=/ibm/$assembly
-(cd $INSTALLERHOME && wget $ARTIFACTSLOCATION/scripts/cpd-linux?$ARTIFACTSTOKEN -O cpd-linux)
+(cd $INSTALLERHOME && wget $ARTIFACTSLOCATION/scripts/cpd-linux$ARTIFACTSTOKEN -O cpd-linux)
 
 if [[ $APIKEY == "" ]]; then
     echo $(date) "- APIKey not provided. See README on how to get it."
