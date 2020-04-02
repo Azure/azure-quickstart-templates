@@ -104,6 +104,13 @@ foreach($s in $serviceBusNamespaces){
     # ??? Remove-AzureRmServiceBusNamespace -ResourceGroupName $ResourceGroupName -Name $s.Name -Verbose
 }
 
+foreach($s in $serviceBusNamespaces){
+    # set ErrorAction on this since it throws if there is no config (unlike the other cmdlets)
+    $migrationConfig = Get-AzServiceBusMigration -ResourceGroupName $ResourceGroupName -Name $s.Name -ErrorAction SilentlyContinue
+    if ($migrationConfig){
+        Remove-AzServiceBusMigration -ResourceGroupName $ResourceGroupName -Name $s.Name -Verbose
+    }
+}
 
 <#
 $vnet = Get-AzureRmVirtualNetwork -ResourceGroupName $rg -Name $vnetName
