@@ -84,94 +84,95 @@
       "type": "Standard_LRS"
     }
   },
-  "resources": [
-    {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('defaultStorageAccount').name]",
-      "location": "[parameters('location')]",
-      "apiVersion": "2019-06-01",
-      "sku": {
-        "name": "[variables('defaultStorageAccount').type]"
+    "resources": [
+      {
+        "type": "Microsoft.Storage/storageAccounts",
+        "name": "[variables('defaultStorageAccount').name]",
+        "location": "[parameters('location')]",
+        "apiVersion": "2019-06-01",
+        "sku": {
+          "name": "[variables('defaultStorageAccount').type]"
+        },
+        "kind": "Storage",
+        "properties": {}
       },
-      "kind": "Storage",
-      "properties": {}
-    },
-    {
-      "apiVersion": "2018-06-01-preview",
-      "name": "[parameters('clusterName')]",
-      "type": "Microsoft.HDInsight/clusters",
-      "location": "[parameters('location')]",
-      "properties": {
-        "clusterVersion": "3.6",
-        "osType": "Linux",
-        "tier": "standard",
-        "clusterDefinition": {
-          "kind": "spark",
-          "componentVersion": {
-            "Spark": "2.3"
-          },
-          "configurations": {
-            "gateway": {
-              "restAuthCredential.isEnabled": true,
-              "restAuthCredential.username": "[parameters('clusterLoginUserName')]",
-              "restAuthCredential.password": "[parameters('clusterLoginPassword')]"
+      {
+        "apiVersion": "2018-06-01-preview",
+        "name": "[parameters('clusterName')]",
+        "type": "Microsoft.HDInsight/clusters",
+        "location": "[parameters('location')]",
+        "properties": {
+          "clusterVersion": "3.6",
+          "osType": "Linux",
+          "tier": "standard",
+          "clusterDefinition": {
+            "kind": "spark",
+            "componentVersion": {
+              "Spark": "2.3"
+            },
+            "configurations": {
+              "gateway": {
+                "restAuthCredential.isEnabled": true,
+                "restAuthCredential.username": "[parameters('clusterLoginUserName')]",
+                "restAuthCredential.password": "[parameters('clusterLoginPassword')]"
+              }
             }
+          },
+          "storageProfile": {
+            "storageaccounts": [
+              {
+                "name": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name), '2019-06-01').primaryEndpoints.blob,'https://',''),'/','')]",
+                "isDefault": true,
+                "container": "[parameters('clusterName')]",
+                "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name), '2019-06-01').keys[0].value]"
+              }
+            ]
+          },
+          "computeProfile": {
+            "roles": [
+              {
+                "name": "headnode",
+                "minInstanceCount": 1,
+                "targetInstanceCount": 2,
+                "hardwareProfile": {
+                  "vmSize": "[parameters('headNodeSize')]"
+                },
+                "osProfile": {
+                  "linuxOperatingSystemProfile": {
+                    "username": "[parameters('sshUserName')]",
+                    "password": "[parameters('sshPassword')]"
+                  }
+                }
+              },
+              {
+                "name": "workernode",
+                "targetInstanceCount": 1,
+                "hardwareProfile": {
+                  "vmSize": "[parameters('workerNodeSize')]"
+                },
+                "osProfile": {
+                  "linuxOperatingSystemProfile": {
+                    "username": "[parameters('sshUserName')]",
+                    "password": "[parameters('sshPassword')]"
+                  }
+                }
+              }
+            ]
+          },
+          "minSupportedTlsVersion": "1.2",
+          "diskEncryptionProperties": {
+            "vaultUri": "[parameters('diskEncryptionVaultUri')]",
+            "keyName": "[parameters('diskEncryptionKeyName')]",
+            "keyVersion": "[parameters('diskEncryptionKeyVersion')]",
+            "msiResourceId": "[parameters('diskEncryptionMsiResourceId')]"
           }
         },
-        "storageProfile": {
-          "storageaccounts": [
-            {
-              "name": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name), '2019-06-01').primaryEndpoints.blob,'https://',''),'/','')]",
-              "isDefault": true,
-              "container": "[parameters('clusterName')]",
-              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name), '2019-06-01').keys[0].value]"
-            }
-          ]
-        },
-        "computeProfile": {
-          "roles": [
-            {
-              "name": "headnode",
-              "minInstanceCount": 1,
-              "targetInstanceCount": 2,
-              "hardwareProfile": {
-                "vmSize": "[parameters('headNodeSize')]"
-              },
-              "osProfile": {
-                "linuxOperatingSystemProfile": {
-                  "username": "[parameters('sshUserName')]",
-                  "password": "[parameters('sshPassword')]"
-                },
-              },
-            },
-            {
-              "name": "workernode",
-              "targetInstanceCount": 1,
-              "hardwareProfile": {
-                "vmSize": "[parameters('workerNodeSize')]"
-              },
-              "osProfile": {
-                "linuxOperatingSystemProfile": {
-                  "username": "[parameters('sshUserName')]",
-                  "password": "[parameters('sshPassword')]"
-                },
-              },
-            }
-          ]
-        },
-        "minSupportedTlsVersion": "1.2",
-        "diskEncryptionProperties": {
-          "vaultUri": "[parameters('diskEncryptionVaultUri')]",
-          "keyName": "[parameters('diskEncryptionKeyName')]",
-          "keyVersion": "[parameters('diskEncryptionKeyVersion')]",
-          "msiResourceId": "[parameters('diskEncryptionMsiResourceId')]"
-        }
-      },
-      "identity": {
-        "type": "UserAssigned",
-        "userAssignedIdentities": { "[parameters('diskEncryptionMsiResourceId')]": {}
+        "identity": {
+          "type": "UserAssigned",
+          "userAssignedIdentities": {
+            "[resourceID('Microsoft.ManagedIdentity/userAssignedIdentities', 'azbotvaultus']": {}
+          }
         }
       }
-    }
-  ]
-}
+    ]
+  }
