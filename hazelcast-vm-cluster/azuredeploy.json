@@ -64,7 +64,7 @@
             }
         },
         "vmSize": {
-            "defaultValue": "Standard_DS2",
+            "defaultValue": "Standard_D2s_v3",
             "type": "String",
             "metadata": {
                 "description": "The size of each instance VM"
@@ -102,10 +102,6 @@
             "metadata": {
                 "description": "Location for all resources."
             }
-        },
-        "builtInRoleType": {
-            "defaultValue": "Reader",
-            "type": "String"
         }
     },
     "variables": {
@@ -131,7 +127,7 @@
                 ]
             }
         },
-        "Reader": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', 'acdd72a7-3385-48ef-bd42-f606fba81ae7')]",
+        "Reader": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'acdd72a7-3385-48ef-bd42-f606fba81ae7')]",
         "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
         "scriptParameters": "[concat(parameters('clusterName'), ' ', parameters('hazelcastVersion'), ' ', parameters('clusterPort'))]",
         "bootstrapFiles": [
@@ -149,7 +145,7 @@
     "resources": [
         {
             "type": "Microsoft.Network/virtualNetworks",
-            "apiVersion": "2018-06-01",
+            "apiVersion": "2020-03-01",
             "name": "[variables('virtualNetworkName')]",
             "location": "[parameters('location')]",
             "properties": {
@@ -170,29 +166,33 @@
         },
         {
             "type": "Microsoft.Network/publicIPAddresses",
-            "apiVersion": "2018-06-01",
+            "apiVersion": "2020-03-01",
             "name": "[concat(variables('publicIPAddressName'), copyIndex(1))]",
             "location": "[parameters('location')]",
-            "properties": {
-                "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
-                "dnsSettings": {
-                    "domainNameLabel": "[concat(parameters('dnsPrefix'),copyIndex(1),uniqueString(resourceGroup().id))]"
-                }
-            },
             "copy": {
                 "name": "createPubIps",
                 "count": "[parameters('instanceCount')]"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+                "dnsSettings": {
+                    "domainNameLabel": "[concat(parameters('dnsPrefix'), copyIndex(1), uniqueString(resourceGroup().id))]"
+                }
             }
         },
         {
             "type": "Microsoft.Network/networkInterfaces",
-            "apiVersion": "2018-06-01",
+            "apiVersion": "2020-03-01",
             "name": "[concat(variables('nicName'), copyIndex(1))]",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+                "[variables('virtualNetworkName')]",
                 "createPubIps"
             ],
+            "copy": {
+                "name": "createNics",
+                "count": "[parameters('instanceCount')]"
+            },
             "properties": {
                 "ipConfigurations": [
                     {
@@ -208,21 +208,20 @@
                         }
                     }
                 ]
-            },
-            "copy": {
-                "name": "createNics",
-                "count": "[parameters('instanceCount')]"
             }
         },
         {
             "type": "Microsoft.Compute/virtualMachines",
-            "apiVersion": "2018-06-01",
+            "apiVersion": "2019-12-01",
             "name": "[concat(variables('vmName'), copyIndex(1))]",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex(1))]",
                 "createNics"
             ],
+            "copy": {
+                "name": "createVms",
+                "count": "[parameters('instanceCount')]"
+            },
             "identity": {
                 "type": "SystemAssigned"
             },
@@ -233,7 +232,7 @@
                 "osProfile": {
                     "computerName": "[variables('vmName')]",
                     "adminUsername": "[parameters('adminUsername')]",
-                    "adminPassword": "[if(equals(parameters('authenticationType'), 'sshPublicKey'), json('null'), parameters('adminPasswordOrKey'))]",
+                    "adminPassword": "[parameters('adminPasswordOrKey')]",
                     "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
                 },
                 "storageProfile": {
@@ -256,10 +255,6 @@
                         }
                     ]
                 }
-            },
-            "copy": {
-                "name": "createVms",
-                "count": "[parameters('instanceCount')]"
             }
         },
         {
@@ -267,26 +262,31 @@
             "apiVersion": "2018-07-01",
             "name": "[guid(concat(variables('roleAssignmentName'), copyIndex(1)))]",
             "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/', concat(variables('vmName'), copyIndex(1)))]"
+                "createVms"
             ],
-            "properties": {
-                "roleDefinitionId": "[variables(parameters('builtInRoleType'))]",
-                "principalId": "[reference(resourceId('Microsoft.Compute/virtualMachines/', concat(variables('vmName'), copyIndex(1))), '2017-12-01', 'Full').identity.principalId]",
-                "scope": "[resourceGroup().id]"
-            },
             "copy": {
-                "name": "concat('createRoles', variables('Reader'))",
+                "name": "createRoles",
                 "count": "[parameters('instanceCount')]"
+            },
+            "properties": {
+                "roleDefinitionId": "[variables('Reader')]",
+                "principalId": "[reference(resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmName'), copyIndex(1))), '2019-12-01', 'Full').identity.principalId]",
+                "scope": "[resourceGroup().id]",
+                "principalType": "ServicePrincipal"
             }
         },
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
-            "apiVersion": "2018-06-01",
+            "apiVersion": "2019-12-01",
             "name": "[concat(variables('vmName'), copyIndex(1),'/initHazelcast')]",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "createVms"
+                "createRoles"
             ],
+            "copy": {
+                "name": "createExtensions",
+                "count": "[parameters('instanceCount')]"
+            },
             "properties": {
                 "publisher": "Microsoft.Azure.Extensions",
                 "type": "CustomScript",
@@ -298,10 +298,6 @@
                 "protectedSettings": {
                     "commandToExecute": "[concat('sh bootstrap_hazelcast ', variables('scriptParameters'))]"
                 }
-            },
-            "copy": {
-                "name": "createExtensions",
-                "count": "[parameters('instanceCount')]"
             }
         }
     ]
