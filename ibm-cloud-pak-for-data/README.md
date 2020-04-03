@@ -186,7 +186,7 @@ eg: the value for "apiKeyUsername" is "cp", and for "apiKey", use the trial key 
 
 * Cloud Pak License Agreement (select 'yes' to agree)
 
-* Finally, go through the terms and conditions and click on Purchase to deploy Cloud Pak for Data
+* Finally, go through and agree on the [Cloud Pak for Data terms and conditions](https://ibm.biz/BdqRuM) and click on Purchase to deploy
 <br/><br/>
 
 ![Alt text](images/license_agreement.png?raw=true "deploy")
