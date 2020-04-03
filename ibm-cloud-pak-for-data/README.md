@@ -122,10 +122,7 @@ and use this Api key in the corresponding deployment parameter in the ARM templa
 eg: the value for "apiKeyUsername" is "cp", and for "apiKey", use the trial key that is generated (or sent to your email) after signing up with the above link.
 <br/><br/>
 
-#### The deployment can be done using Azure CLI or can be done from your Azure Portal.
-
-
-### Method 1: Using Azure Portal
+### Deployment via Azure Portal
 
 * Click on <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fibm-cloud-pak-for-data%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
@@ -201,21 +198,6 @@ eg: the value for "apiKeyUsername" is "cp", and for "apiKey", use the trial key 
 <br/><br/>
 
 Use the default credentials for Cloud Pak for Data admin / password to log in to CPD console. Ensure to change the password after your first login.
-
-### Method 2: Using Azure CLI
-
-#### Login to Azure via CLI:
-```bash
-az login
-```
-
-* Fill in the values of the `azuredeploy.parameters.json` file with the resources created. The `appId` is the `aadClientId` and `password` is the `aadClientSecret`. Use the Resource Group and Key Vault you created before this step. (See [Pre-requisites](#prerequisites))
-
-#### Deploy Cloud Pak for Data Cluster:
-```bash
-az group deployment create --resource-group <resource_group> --template-file azuredeploy.json --parameters @azuredeploy.parameters.json --no-wait
-```
-* The webconsole URL can be found in the `ResourceGroup`>`Deployments`>`azuredeploy`>`Outputs`.
 
 ## Activating your IBM Cloud Pak for Data License
 
