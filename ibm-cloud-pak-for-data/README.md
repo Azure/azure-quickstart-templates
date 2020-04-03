@@ -25,7 +25,7 @@ Cloud Pak for Data uses Azure services and features, including VNets, Availabili
 This deployment guide provides step-by-step instructions for deploying IBM Cloud Pak for Data on a Red Hat OpenShift Container Platform 3.11 cluster on Azure. With this Template, you can automatically deploy a multi-master, production instance of Cloud Pak for Data. See [Services](#cloud-pak-for-data-services) for the services that are enabled in this deployment.
 
 ## Cost and licenses
-Cloud Pak for Data offers a try and buy experience. 
+Cloud Pak for Data offers a try and buy experience.
 The automated template deploys the Cloud Pak for Data environment by using Azure Resource Manager templates.
 The deployment template includes configuration parameters that you can customize. Some of these settings, such as instance count, will affect the cost of the deployment. For cost estimates, see the pricing page for each Azure service you will be using. Prices are subject to change.
 
@@ -38,7 +38,7 @@ Beyond the 60 day period, you will need to purchase the Cloud Pak for Data by fo
 
 **PURCHASE:**<br/>
 To get pricing information, or to use your existing Cloud Pak for Data entitlements, contact your IBM sales representative at 1-877-426-3774. If you already have the Cloud Pak for Data license file, you can follow the instructions in [Activating your IBM Cloud Pak for Data License to activate the license](#activating-your-ibm-cloud-pak-for-data-license).
-Note: Cloud Pak for Data license will include entitlements to RHEL and Openshift. 
+Note: Cloud Pak for Data license will include entitlements to RHEL and Openshift.
 
 
 ## Architecture
@@ -119,50 +119,19 @@ For a 60 day trial key of IBM Cloud Pak for Data, you may sign up on the followi
 [IBM Cloud Pak for Data Trial](https://www.ibm.com/account/reg/us-en/signup?formid=urx-42212),
 and use this Api key in the corresponding deployment parameter in the ARM template.
 <br />
-eg: the value for "apiKeyUsername" could be "iamapikey" or "cp", and for "apiKey", use the trial key that is generated (or sent to your email) after signing up with the above link.
+eg: the value for "apiKeyUsername" is "cp", and for "apiKey", use the trial key that is generated (or sent to your email) after signing up with the above link.
 <br/><br/>
 
 #### The deployment can be done using Azure CLI or can be done from your Azure Portal.
 
-### Method 1: Using Azure CLI
 
-#### Login to Azure via CLI:
-```bash
-az login
-```
+### Method 1: Using Azure Portal
 
-* Fill in the values of the `azuredeploy.parameters.json` file with the resources created. The `appId` is the `aadClientId` and `password` is the `aadClientSecret`. Use the Resource Group and Key Vault you created before this step. (See [Pre-requisites](#prerequisites))
+* Click on <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fibm-cloud-pak-for-data%2Fazuredeploy.json" target="_blank">
+<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
+</a>
 
-#### Deploy Cloud Pak for Data Cluster:
-```bash
-az group deployment create --resource-group <resource_group> --template-file azuredeploy.json --parameters @azuredeploy.parameters.json --no-wait
-```
-* The webconsole URL can be found in the `ResourceGroup`>`Deployments`>`azuredeploy`>`Outputs`.
-
-### Method 2: Using Azure Template Deployment on UI
-
-* In Azure portal click on 'Create resource'
-<br/><br/>
-![Alt text](images/1.png?raw=true "create res")
-
-* Then search for 'Template deployment' in the search bar
-<br/><br/>
-![Alt text](images/2.png?raw=true "search")
-
-* Click on 'Create'
-<br/><br/>
-![Alt text](images/3.png?raw=true "create")
-
-
-* Click on 'Build your own template in the editor'<br/><br/>
-
-![Alt text](images/4.png?raw=true "build")
-
-
-* Click on 'Load file' and select the azuredeploy.json and then click on 'Save' button below
-<br/><br/>
-![Alt text](images/5.png?raw=true "load")
-<br/><br/>
+* Log in to your Azure account if not already logged in.
 
 * Now the parameters required for deployment are visible. Configure these parameters according to your requirements.
 <br/><br/>
@@ -172,6 +141,10 @@ az group deployment create --resource-group <resource_group> --template-file azu
 
 
 * Specify the resource group or create new using the given option
+
+* Select the location
+
+* Use the default values for artifacts location, SAS token and Location.
 
 * Select 'new' network if you wish to deploy on a new network or you may deploy on an 'existing' network. In case of 'existing' network, make sure the new resources are also in the same region.
 
@@ -185,7 +158,7 @@ az group deployment create --resource-group <resource_group> --template-file azu
 ![Alt text](images/template2.png?raw=true "parameters2")
 
 
-* Specify Admin username and password.
+* Specify Openshift cluster admin username and password.
 
 * Specify ssh public key. Enabling Metrics and Logging is optional
 
@@ -201,11 +174,13 @@ az group deployment create --resource-group <resource_group> --template-file azu
 
 
 <br/><br/>
-* Specify the Storage - NFS and specify the zone - single or multi
+* Specify the zone - single or multi. If multi zone is selected, select the zone count.
+
+* Specify Enable Backup to enable backup on the NFS storage disk.
 
 * Specify Project Name
 
-* Specify the add-ons needed- Watson Studio Library, Watson Machine Learning, Watson Knowledge Catalog, Data Virtualization (select 'yes' to install)
+* Specify the add-ons needed- Watson Studio Library, Watson Machine Learning, Watson Knowledge Catalog, Data Virtualization and Watson Openscale (select 'yes' to install)
 
 * Specify Api Key Username and Api Key. (See [Pre-requisites](#prerequisites))
 
@@ -225,7 +200,22 @@ az group deployment create --resource-group <resource_group> --template-file azu
 ![Alt text](images/Output.png?raw=true "output")
 <br/><br/>
 
-Use admin / password to log in to CPD console.
+Use the default credentials for Cloud Pak for Data admin / password to log in to CPD console. Ensure to change the password after your first login.
+
+### Method 2: Using Azure CLI
+
+#### Login to Azure via CLI:
+```bash
+az login
+```
+
+* Fill in the values of the `azuredeploy.parameters.json` file with the resources created. The `appId` is the `aadClientId` and `password` is the `aadClientSecret`. Use the Resource Group and Key Vault you created before this step. (See [Pre-requisites](#prerequisites))
+
+#### Deploy Cloud Pak for Data Cluster:
+```bash
+az group deployment create --resource-group <resource_group> --template-file azuredeploy.json --parameters @azuredeploy.parameters.json --no-wait
+```
+* The webconsole URL can be found in the `ResourceGroup`>`Deployments`>`azuredeploy`>`Outputs`.
 
 ## Activating your IBM Cloud Pak for Data License
 
@@ -234,7 +224,7 @@ To activate your license, follow these steps
  - Run this command from the `/ibm/lite` location:
 
  ```
-./activate-permanent.sh <cpd-url> <admin user> <admin password> <license file name>
+./lutil-linux <cpd-url> <admin user> <admin password> <license file name>
  ```
 
 ## Cloud Pak for Data Services
@@ -242,10 +232,12 @@ You can browse the various services that are available for use by navigating to 
 
 ![Alt text](images/services.png?raw=true "parameters2")
 
-As part of the deployment, the following services are enabled by default:
+As part of the deployment, the following services can be enabled:
 •	Watson Studio
 •	Watson Knowledge Catalog
 •	Watson Machine Learning
+•	Data Virtualization
+•	Watson Openscale
 
 To get information on various other services that are available, you can visit [Cloud Pak for Data Service Catalog](https://www.ibm.com/support/producthub/icpdata/docs/content/SSQNUZ_current/cpd/svc/services.html)
 
@@ -293,7 +285,7 @@ SSH in to the Bastion node. Then ssh in to one of the master nodes. Perform the 
 ```bash
 oc login
 ```
-Log into Openshift using the credentials created before (eg- clusteradmin, password).
+Log into Openshift using the credentials created during deployment.
 
 ## Troubleshooting
 
