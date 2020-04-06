@@ -29,12 +29,6 @@
         "Description": "Administrator user name used when provisioning virtual machines"
       }
     },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "Description": "Administrator password used when provisioning virtual machines"
-      }
-    },
     "imagePublisher": {
       "type": "string",
       "defaultValue": "Canonical",
@@ -68,12 +62,29 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "authenticationType": {
+      "type": "string"
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring"
     }
   },
   "variables": {
     "vmStorageAccountContainerName": "vhd",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
-    "vmSize": "Standard_A0"
+    "vmSize": "Standard_A0",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
@@ -125,10 +136,8 @@
         "osProfile": {
           "computerName": "[concat(parameters('computerNamePrefix'), 'jumpbox')]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]",
-          "linuxConfiguration": {
-            "disablePasswordAuthentication": "false"
-          }
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {

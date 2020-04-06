@@ -8,12 +8,6 @@
         "description": "Administrator user name used when provisioning virtual machines"
       }
     },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Administrator password used when provisioning virtual machines"
-      }
-    },
     "imagePublisher": {
       "type": "string",
       "defaultValue": "Canonical",
@@ -130,6 +124,23 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
     }
   },
   "variables": {
@@ -157,7 +168,18 @@
     },
     "numberOfZookeeperInstances": "[variables(concat('tshirtSize', parameters('tshirtSize'))).numberOfZookeeperInstances]",
     "numberOfKafkaInstances": "[variables(concat('tshirtSize', parameters('tshirtSize'))).numberOfKafkaInstances]",
-    "vmSize": "[variables(concat('tshirtSize', parameters('tshirtSize'))).vmSize]"
+    "vmSize": "[variables(concat('tshirtSize', parameters('tshirtSize'))).vmSize]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
@@ -301,10 +323,8 @@
         "osProfile": {
           "computerName": "[concat(variables('computerNamePrefix'), copyIndex())]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]",
-          "linuxConfiguration": {
-            "disablePasswordAuthentication": "false"
-          }
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
@@ -329,7 +349,7 @@
       }
     },
     {
-      "apiVersion": "2017-03-30", 
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat('brokervm', copyindex())]",
       "location": "[parameters('location')]",
@@ -352,10 +372,8 @@
         "osProfile": {
           "computerName": "[concat(variables('computerNamePrefix'), copyIndex())]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]",
-          "linuxConfiguration": {
-            "disablePasswordAuthentication": "false"
-          }
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
@@ -365,7 +383,7 @@
             "version": "latest"
           },
           "osDisk": {
-            "name":  "[concat('brokervm', copyindex(),'_OSDisk')]",
+            "name": "[concat('brokervm', copyindex(),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
