@@ -8,6 +8,12 @@
     "adminUsername": {
       "type": "string"
     },
+    "mongoAdminUsername": {
+      "type": "string"
+    },
+    "mongoAdminPassword": {
+      "type": "securestring"
+    },
     "namespace": {
       "type": "string"
     },
@@ -17,17 +23,20 @@
     "osSettings": {
       "type": "object"
     },
+    "vmSize": {
+      "type": "string"
+    },
     "numDataDisks": {
       "type": "int"
     },
     "sizeOfDataDiskInGB": {
       "type": "int"
     },
-    "vmSize": {
-      "type": "string"
-    },
     "subnet": {
       "type": "object"
+    },
+    "staticIp": {
+      "type": "string"
     },
     "location": {
       "type": "string",
@@ -46,6 +55,9 @@
       "metadata": {
         "description": "Dns prefix of the router node to be used to create the ssl cert"
       }
+    },
+    "roleType": {
+      "type": "string"
     }
   },
   "variables": {
@@ -73,7 +85,8 @@
           {
             "name": "ipconfig1",
             "properties": {
-              "privateIPAllocationMethod": "Dynamic",
+              "privateIPAllocationMethod": "[if(equals(parameters('roleType'), 'Primary'), 'Static', 'Dynamic')]",
+              "privateIPAddress": "[if(equals(parameters('roleType'), 'Primary'), parameters('staticIp'), json('null'))]",
               "subnet": {
                 "id": "[variables('subnetRef')]"
               }
@@ -85,10 +98,10 @@
     {
       "apiVersion": "2019-07-01",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[concat(parameters('namespace'), concat(parameters('vmbasename'), 'vm'))]",
+      "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', parameters('namespace'), parameters('vmbasename'), 'nic')]"
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(parameters('namespace'), parameters('vmbasename'), 'nic'))]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -103,7 +116,7 @@
         "storageProfile": {
           "imageReference": "[parameters('osSettings').imageReference]",
           "osDisk": {
-            "name": "[concat(parameters('namespace'), concat(parameters('vmbasename'), 'vm'),'_OSDisk')]",
+            "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm','_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           },
@@ -135,12 +148,11 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm', '/replicaSecondaryInstall')]",
+      "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm', '/replica', parameters('roleType'), 'Install')]",
       "apiVersion": "2019-03-01",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('namespace'), parameters('vmbasename'), 'vm')]",
-        "[concat('Microsoft.Network/networkInterfaces/', parameters('namespace'), parameters('vmbasename'), 'nic')]"
+        "[resourceId('Microsoft.Compute/virtualMachines/', concat(parameters('namespace'), parameters('vmbasename'), 'vm'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
@@ -151,7 +163,7 @@
           "fileUris": "[parameters('osSettings').scripts]"
         },
         "protectedSettings": {
-          "commandToExecute": "[concat('bash replica_secondary.sh ', parameters('replSetName'), ' ', parameters('location'), ' ', parameters('routerDnsNamePrefix'))]"
+          "commandToExecute": "[if(equals(parameters('roleType'), 'Primary'), concat('bash replica_primary.sh ', parameters('replSetName'), ' ', parameters('staticIp'), ' ', parameters('mongoAdminUsername'), ' ', parameters('mongoAdminPassword'), ' ', parameters('location'), ' ', parameters('routerDnsNamePrefix')), concat('bash replica_secondary.sh ', parameters('replSetName'), ' ', parameters('location'), ' ', parameters('routerDnsNamePrefix')))]"
         }
       }
     }
