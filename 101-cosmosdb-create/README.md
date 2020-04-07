@@ -32,4 +32,3 @@ Below are the parameters which can be user configured in the parameters file inc
 - **Database Name:** Enter the database name for the account.
 - **Container Name:** Enter the name for the container with dedicated throughput.
 - **Throughput:** Enter the RU/s for the dedicated container (default is 400).
-- **Public Network Access:** Select whether public traffic is allowed to access the account (default is Enabled). When value is set to Disabled, the account can only be accessed through private endpoints.
