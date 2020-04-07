@@ -28,7 +28,7 @@
     },
     "centOsVersion": {
       "type": "string",
-      "defaultValue": "7.2",
+      "defaultValue": "7.7",
       "allowedValues": [
         "6.5",
         "6.6",
@@ -48,7 +48,7 @@
     },
     "numDataDisks": {
       "type": "int",
-      "defaultValue": 4,
+      "defaultValue": 1,
       "allowedValues": [
         1,
         2,
@@ -76,7 +76,7 @@
       "type": "int",
       "minValue": 1,
       "maxValue": 1023,
-      "defaultValue": 20,
+      "defaultValue": 256,
       "metadata": {
         "description": "The size of each data disk, the value is between 1 and 1023."
       }
@@ -142,21 +142,17 @@
     }
   },
   "variables": {
-    "artifactsLocation": "[parameters('_artifactsLocation')]",
-    "artifactsLocationSasToken": "[parameters('_artifactsLocationSasToken')]",
     "configPrimaryNodeScript": "[uri(parameters('_artifactsLocation'), concat('scripts/config_primary.sh', parameters('_artifactsLocationSasToken')))]",
     "configSecondaryNodeScript": "[uri(parameters('_artifactsLocation'), concat('scripts/config_secondary.sh', parameters('_artifactsLocationSasToken')))]",
     "routerNodeScript": "[uri(parameters('_artifactsLocation'), concat('scripts/router.sh', parameters('_artifactsLocationSasToken')))]",
     "replicaPrimaryNodeScript": "[uri(parameters('_artifactsLocation'), concat('scripts/replica_primary.sh', parameters('_artifactsLocationSasToken')))]",
     "replicaSecondaryNodeScript": "[uri(parameters('_artifactsLocation'), concat('scripts/replica_secondary.sh', parameters('_artifactsLocationSasToken')))]",
     "certificateLocation": "[uri(parameters('_artifactsLocation'), concat('scripts/MongoAuthCert.pem', parameters('_artifactsLocationSasToken')))]",
-    "templateBaseUrl": "[variables('artifactsLocation')]",
-    "sharedTemplateUrl": "[uri(variables('templateBaseUrl'), concat('nested/shared-resources.json', variables('artifactsLocationSasToken')))]",
-    "configPrimaryTemplateUrl": "[uri(variables('templateBaseUrl'), concat('nested/config-primary-resources.json', variables('artifactsLocationSasToken')))]",
-    "configSecondaryTemplateUrl": "[uri(variables('templateBaseUrl'), concat('nested/config-secondary-resources.json', variables('artifactsLocationSasToken')))]",
-    "routerTemplateUrl": "[uri(variables('templateBaseUrl'), concat('nested/router-resources.json', variables('artifactsLocationSasToken')))]",
-    "replicaPrimaryTemplateUrl": "[uri(variables('templateBaseUrl'), concat('nested/replica-primary-resources.json', variables('artifactsLocationSasToken')))]",
-    "replicaSecondaryTemplateUrl": "[uri(variables('templateBaseUrl'), concat('nested/replica-secondary-resources.json', variables('artifactsLocationSasToken')))]",
+    "templateBaseUrl": "[parameters('_artifactsLocation')]",
+    "sharedTemplateUrl": "[uri(variables('templateBaseUrl'), concat('nested/shared-resources.json', parameters('_artifactsLocationSasToken')))]",
+    "configTemplateUrl": "[uri(variables('templateBaseUrl'), concat('nested/config-resources.json', parameters('_artifactsLocationSasToken')))]",
+    "routerTemplateUrl": "[uri(variables('templateBaseUrl'), concat('nested/router-resources.json', parameters('_artifactsLocationSasToken')))]",
+    "replicaTemplateUrl": "[uri(variables('templateBaseUrl'), concat('nested/replica-resources.json', parameters('_artifactsLocationSasToken')))]",
     "namespace": "mongodb-",
     "virtualNetworkName": "myVNET",
     "networkSettings": {
@@ -271,7 +267,7 @@
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2019-07-01",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'shared')]"
+        "[resourceId('Microsoft.Resources/deployments/', 'shared')]"
       ],
       "copy": {
         "name": "secondaryconfigcopy",
@@ -282,12 +278,18 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[variables('configSecondaryTemplateUrl')]",
+          "uri": "[variables('configTemplateUrl')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
+          },
+          "mongoAdminUsername": {
+            "value": "[parameters('mongoAdminUsername')]"
+          },
+          "mongoAdminPassword": {
+            "value": "[parameters('mongoAdminPassword')]"
           },
           "namespace": {
             "value": "[variables('namespace')]"
@@ -324,6 +326,9 @@
           },
           "routerDnsNamePrefix": {
             "value": "[parameters('dnsNamePrefix')]"
+          },
+          "roleType": {
+            "value": "Secondary"
           }
         }
       }
@@ -333,13 +338,13 @@
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2019-07-01",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'shared')]",
+        "[resourceId('Microsoft.Resources/deployments/', 'shared')]",
         "secondaryconfigcopy"
       ],
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[variables('configPrimaryTemplateUrl')]",
+          "uri": "[variables('configTemplateUrl')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -387,6 +392,9 @@
           },
           "routerDnsNamePrefix": {
             "value": "[parameters('dnsNamePrefix')]"
+          },
+          "roleType": {
+            "value": "Primary"
           }
         }
       }
@@ -396,7 +404,7 @@
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2019-07-01",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'shared')]"
+        "[resourceId('Microsoft.Resources/deployments/', 'shared')]"
       ],
       "copy": {
         "name": "secondaryreplicacopy",
@@ -407,12 +415,18 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[variables('replicaSecondaryTemplateUrl')]",
+          "uri": "[variables('replicaTemplateUrl')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
+          },
+          "mongoAdminUsername": {
+            "value": "[parameters('mongoAdminUsername')]"
+          },
+          "mongoAdminPassword": {
+            "value": "[parameters('mongoAdminPassword')]"
           },
           "replSetName": {
             "value": "repset1"
@@ -428,6 +442,9 @@
           },
           "numDataDisks": {
             "value": "[parameters('numDataDisks')]"
+          },
+          "staticIp": {
+            "value": "[variables('networkSettings').statics.replicaPrimaryIp]"
           },
           "subnet": {
             "value": "[variables('networkSettings').subnet.dse]"
@@ -449,6 +466,9 @@
           },
           "routerDnsNamePrefix": {
             "value": "[parameters('dnsNamePrefix')]"
+          },
+          "roleType": {
+            "value": "Secondary"
           }
         }
       }
@@ -458,13 +478,13 @@
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2019-07-01",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'shared')]",
+        "[resourceId('Microsoft.Resources/deployments/', 'shared')]",
         "secondaryreplicacopy"
       ],
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[variables('replicaPrimaryTemplateUrl')]",
+          "uri": "[variables('replicaTemplateUrl')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -515,6 +535,9 @@
           },
           "routerDnsNamePrefix": {
             "value": "[parameters('dnsNamePrefix')]"
+          },
+          "roleType": {
+            "value": "Primary"
           }
         }
       }
@@ -524,9 +547,9 @@
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2019-07-01",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'shared')]",
-        "[concat('Microsoft.Resources/deployments/', 'configPrimaryNode')]",
-        "[concat('Microsoft.Resources/deployments/', 'ReplicaPrimaryNode')]"
+        "[resourceId('Microsoft.Resources/deployments/', 'shared')]",
+        "[resourceId('Microsoft.Resources/deployments/', 'configPrimaryNode')]",
+        "[resourceId('Microsoft.Resources/deployments/', 'ReplicaPrimaryNode')]"
       ],
       "properties": {
         "mode": "Incremental",

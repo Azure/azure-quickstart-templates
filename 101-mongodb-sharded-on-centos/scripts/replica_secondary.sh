@@ -4,11 +4,27 @@ replSetName=$1
 location=$2
 dnsNamePrefix=$3
 
+GetMongoPackage() {
+	packageUri=$1
+	
+	while true; do
+	#install mongo package
+    wget $packageUri && break || {
+      if [[ $n -lt 3 ]]; then
+        ((n++))
+        echo "Command failed. Attempt $n of 3:"
+        sleep 15;
+      else
+        echo "Failed to get the package $packageUri after $n attempts."
+		exit 1
+      fi
+    }
+  	done
+}
+
 install_mongo3() {
 
 	#install
-	wget https://repo.mongodb.org/yum/redhat/7/mongodb-org/3.6/x86_64/RPMS/mongodb-org-server-3.6.17-1.el7.x86_64.rpm
-	wget https://repo.mongodb.org/yum/redhat/7/mongodb-org/3.6/x86_64/RPMS/mongodb-org-shell-3.6.17-1.el7.x86_64.rpm
 	rpm -i mongodb-org-server-3.6.17-1.el7.x86_64.rpm
 	rpm -i mongodb-org-shell-3.6.17-1.el7.x86_64.rpm
 	PATH=$PATH:/usr/bin; export PATH
@@ -66,6 +82,8 @@ openssl req -newkey rsa:2048 -nodes -keyout /etc/key.pem -x509 -days 365 -out /e
 openssl pkcs12 -inkey /etc/key.pem -in /etc/certificate.pem -export -out /etc/MongoAuthCert.p12 -passout pass:"Mongo123"
 openssl pkcs12 -in /etc/MongoAuthCert.p12 -out /etc/MongoAuthCert.pem -passin pass:"Mongo123" -passout pass:"Mongo123"
 
+GetMongoPackage "https://repo.mongodb.org/yum/redhat/7/mongodb-org/3.6/x86_64/RPMS/mongodb-org-server-3.6.17-1.el7.x86_64.rpm"
+GetMongoPackage "https://repo.mongodb.org/yum/redhat/7/mongodb-org/3.6/x86_64/RPMS/mongodb-org-shell-3.6.17-1.el7.x86_64.rpm"
 install_mongo3
 disk_format
 
