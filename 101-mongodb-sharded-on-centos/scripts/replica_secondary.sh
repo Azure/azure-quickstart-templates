@@ -77,9 +77,9 @@ disk_format() {
 }
 
 yum install wget -y
-fqdn="${dnsNamePrefix}.${location}.cloudapp.azure.com"
+#fqdn="${dnsNamePrefix}.${location}.cloudapp.azure.com"
 echo "Generating ssl certificate"
-openssl req -newkey rsa:2048 -nodes -keyout /etc/key.pem -x509 -days 365 -out /etc/certificate.pem -subj "/CN=$fqdn"
+openssl req -newkey rsa:2048 -nodes -keyout /etc/key.pem -x509 -days 365 -out /etc/certificate.pem -subj "/CN=Cosmos"
 openssl pkcs12 -inkey /etc/key.pem -in /etc/certificate.pem -export -out /etc/MongoAuthCert.p12 -passout pass:$mongoSslCertPswd
 openssl pkcs12 -in /etc/MongoAuthCert.p12 -out /etc/MongoAuthCert.pem -passin pass:$mongoSslCertPswd -passout pass:$mongoSslCertPswd
 
