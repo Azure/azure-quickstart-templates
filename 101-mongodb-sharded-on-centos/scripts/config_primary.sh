@@ -2,9 +2,8 @@
 
 mongoAdminUser=$1
 mongoAdminPasswd=$2
-location=$3
-dnsNamePrefix=$4
-mongoSslCertPswd=$5
+dnsNamePrefix=$3
+mongoSslCertPswd=$4
 
 GetMongoPackage() {
 	packageUri=$1
@@ -49,9 +48,8 @@ install_mongo3() {
 }
 
 yum install wget -y
-#fqdn="${dnsNamePrefix}.${location}.cloudapp.azure.com"
 echo "Generating ssl certificate"
-openssl req -newkey rsa:2048 -nodes -keyout /etc/key.pem -x509 -days 365 -out /etc/certificate.pem -subj "/CN=Cosmos"
+openssl req -newkey rsa:2048 -nodes -keyout /etc/key.pem -x509 -days 365 -out /etc/certificate.pem -subj "/CN=$dnsNamePrefix"
 openssl pkcs12 -inkey /etc/key.pem -in /etc/certificate.pem -export -out /etc/MongoAuthCert.p12 -passout pass:$mongoSslCertPswd
 openssl pkcs12 -in /etc/MongoAuthCert.p12 -out /etc/MongoAuthCert.pem -passin pass:$mongoSslCertPswd -passout pass:$mongoSslCertPswd
 
