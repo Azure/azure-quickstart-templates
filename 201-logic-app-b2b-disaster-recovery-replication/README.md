@@ -10,10 +10,10 @@
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-logic-app-b2b-disaster-recovery-replication/CredScanResult.svg" />&nbsp;
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-logic-app-b2b-disaster-recovery-replication%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-logic-app-b2b-disaster-recovery-replication%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true"/>
 </a>
 
 This template demonstrates B2B Disaster Recovery replication using Logic Apps. Creates replication Logic Apps for AS2 MIC, generated and received X12 and Edifact control numbers. Each Logic App's trigger points to a primary site integration account. Each Logic App's action points to a secondary site integration account. Primary and secondary sites must have prerequisite Integration Accounts deployed (Integration Accounts are not deployed as part of this template). Furthermore to see the replication happen the primary site must have Logic Apps deployed with X12 Encode and/or Decode action(s) and AS2 Encode action. (Logic Apps for X12/AS2 Encode and Decode are not deployed as part of this template).

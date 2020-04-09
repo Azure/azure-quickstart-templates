@@ -10,10 +10,10 @@
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-logic-app-as2-send-receive/CredScanResult.svg" />&nbsp;
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-logic-app-as2-send-receive%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-logic-app-as2-send-receive%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true"/>
 </a>
 
 This template demonstrates AS2 Send Receive using Logic Apps. It creates Integration Accounts for two partners (Contoso and Fabrikam) and adds Partners and Agreements into them. It creates Logic Apps between Fabrikam Sales and Contoso which demonstrate Sync AS2 Send Receive. It also creates Logic Apps between Fabrikam Finance and Contoso which demonstrate ASync AS2 Send Receive.

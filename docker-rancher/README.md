@@ -10,7 +10,7 @@
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/docker-rancher/CredScanResult.svg" />&nbsp;
 This template deploys an Ubuntu system with Docker installed. In addition, if you already have a server running ; the Rancher agent will be deployed with the callback url as provided by you. If you do not have a server, you can deploy one with this script too. 
 
-[![Deploy Now](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdocker-rancher%2Fazuredeploy.json)
+[![Deploy Now](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdocker-rancher%2Fazuredeploy.json)
 [![Deploy Now](https://camo.githubusercontent.com/536ab4f9bc823c2e0ce72fb610aafda57d8c6c12/687474703a2f2f61726d76697a2e696f2f76697375616c697a65627574746f6e2e706e67)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdocker-rancher%2Fazuredeploy.json)
 
 Use this as a demo / development / source of inspiration. Do not use this as production!
