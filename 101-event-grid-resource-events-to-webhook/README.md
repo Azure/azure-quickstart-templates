@@ -9,7 +9,7 @@
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-event-grid-resource-events-to-webhook/BestPracticeResult.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-event-grid-resource-events-to-webhook/CredScanResult.svg" />&nbsp;
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-event-grid-resource-events-to-webhook%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true"/>
 </a>
 
 This template creates Event Grid subscription for either a resource group or Azure subscription. It sends the events to a WebHook. For information about deploying the template at the subscription level, see [Deploy resources to an Azure subscription](https://docs.microsoft.com/azure/azure-resource-manager/deploy-to-subscription).
