@@ -10,7 +10,7 @@
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-data-lake-store-encryption-key-vault/CredScanResult.svg" />&nbsp;
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-data-lake-store-encryption-key-vault%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true"/>
 </a>
 
 This template allows you to deploy an Azure Data Lake Store account with data encryption enabled. This account uses Azure Key Vault to manage the encryption key. To create an Azure Data Lake Store account with data encryption disabled, see [Deploy Azure Data Lake Store accounts with no data encryption](https://azure.microsoft.com/resources/templates/101-data-lake-store-no-encryption/). To create an Azure Data Lake Store account with data encryption (Azure Data Lake), see [Deploy Azure Data Lake Store accounts with data encryption using Azure Data Lake](https://azure.microsoft.com/resources/templates/101-data-lake-store-encryption-adls/). For more information about data encryption, see [Encryption of data in Azure Data Lake Store](https://docs.microsoft.com/azure/data-lake-store/data-lake-store-encryption).
