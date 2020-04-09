@@ -17,7 +17,7 @@ Click the button below to deploy
     <img src="https://azuredeploy.net/deploybutton.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fsql-encryption-protector-byok%2Fazuredeploy.json" target="_blank">
-<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
+<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true"/>
 </a>
 
 In order to use an already in place Key Vault, it needs to have the property "soft-delete" enable. You can only do that using command lines (either [Powershell](https://docs.microsoft.com/en-US/azure/key-vault/key-vault-soft-delete-powershell) or [CLI](https://docs.microsoft.com/en-US/azure/key-vault/key-vault-soft-delete-cli))
