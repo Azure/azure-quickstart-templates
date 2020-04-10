@@ -1,26 +1,26 @@
 # Azure Logic Apps - XSLT with parameters
 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-logic-app-xslt-with-params/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-logic-app-xslt-with-params/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-logic-app-xslt-with-params/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-logic-app-xslt-with-params/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-logic-app-xslt-with-params/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-logic-app-xslt-with-params/CredScanResult.svg" />&nbsp;
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-logic-app-xslt-with-params%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-logic-app-with-params%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true"/>
 </a>
 
 This template creates a request-response Logic App which performs XSLT based transformation. The XSLT map takes primitives (integer, string etc.) as input parameters as uses them during XML transformation.
 
-## Prerequisites ##
-
-In order to properly deploy this ARM template, you need to first create an Azure Function app and provide its name in the parameters.
-Create an Azure Function App - https://portal.azure.com/#create/Microsoft.FunctionApp
-
-### Tip: ### 
-Make a note of the the name of the Azure Function App, you will need it in the next step. 
-
 ## Deployment steps
 
 You can click the "Deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
-Note: The Logic App and the Azure Function App need to be deployed in the same resource group.
 
 ## Usage
 
@@ -43,3 +43,4 @@ Learn more about: Azure Logic Apps
 * **XML Processing capabilities in Logic Apps** - https://azure.microsoft.com/documentation/articles/app-service-logic-enterprise-integration-xml/
 
 `Tags: Logic Apps, Enterprise Integration, XSLT, XML Transform
+

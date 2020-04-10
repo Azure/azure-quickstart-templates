@@ -48,10 +48,6 @@ configuration RDWebAccessdeployment
    
     $localhost = [System.Net.Dns]::GetHostByName((hostname)).HostName
     
-    $DomainNetbios = $domainName.Split('.') | select -First 1
-    $username = $adminCreds.UserName -split '\\' | select -last 1
-    $domainCreds = New-Object System.Management.Automation.PSCredential ("$DomainNetbios\$username", $adminCreds.Password)
-
     if (-not $connectionBroker)   { $connectionBroker = $localhost }
     if (-not $webAccessServer)    { $webAccessServer  = $localhost }
 
@@ -74,7 +70,7 @@ configuration RDWebAccessdeployment
             GatewayExternalFqdn = $externalFqdn
             ConnectionBroker = $BrokerServer
 
-            PsDscRunAsCredential = $domainCreds
+            PsDscRunAsCredential = $adminCreds
         }
     
     }
@@ -134,11 +130,7 @@ configuration RDGatewaydeployment
     Import-DscResource -ModuleName xActiveDirectory, xComputerManagement, xRemoteDesktopSessionHost
    
     $localhost = [System.Net.Dns]::GetHostByName((hostname)).HostName
-    
-    $DomainNetbios = $domainName.Split('.') | select -First 1
-    $username = $adminCreds.UserName -split '\\' | select -last 1
-    $domainCreds = New-Object System.Management.Automation.PSCredential ("$DomainNetbios\$username", $adminCreds.Password)
-
+ 
     if (-not $connectionBroker)   { $connectionBroker = $localhost }
     if (-not $webAccessServer)    { $webAccessServer  = $localhost }
 
@@ -161,7 +153,7 @@ configuration RDGatewaydeployment
             GatewayExternalFqdn = $externalFqdn
             ConnectionBroker = $BrokerServer
 
-            PsDscRunAsCredential = $domainCreds
+            PsDscRunAsCredential = $adminCreds
         }
     
     }

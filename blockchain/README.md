@@ -1,15 +1,23 @@
 # Blockchain Template
 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/blockchain/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/blockchain/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/blockchain/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/blockchain/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/blockchain/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/blockchain/CredScanResult.svg" />&nbsp;
+
 This Microsoft Azure Resource Manager template deploys a single VM and allows you to select from a number of blockchain software options to run on the VM.
 
-[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fblockchain%2Fazuredeploy.json)
+[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fblockchain%2Fazuredeploy.json)
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fblockchain%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true"/>
 </a>
 
 Options for blockchain software include:
 
-- [bigchaindb](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/bigchaindb.md)
 - [bitshares](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/bitshares.md) (note: failed testing on 10/7/2016)
 - [bitswift](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/bitswift.md)
 - [blocknet](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/blocknet.md)
@@ -27,3 +35,4 @@ Options for blockchain software include:
 - [syscoin](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/syscoin.md)
 - [vcash](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/vcash.md)
 - [viacoin](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/viacoin.md)
+- [vechain](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/vechain.md)

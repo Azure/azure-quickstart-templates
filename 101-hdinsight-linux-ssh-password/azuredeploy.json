@@ -1,85 +1,86 @@
 {
-	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-	"contentVersion": "1.0.0.0",
-	"parameters": {
-		"clusterType": {
-			"type": "string",
-			"allowedValues": ["hadoop",
-			"hbase",
-			"storm",
-			"spark"],
-			"metadata": {
-				"description": "The type of the HDInsight cluster to create."
-			}
-		},
-		"clusterName": {
-			"type": "string",
-			"metadata": {
-				"description": "The name of the HDInsight cluster to create."
-			}
-		},
-		"clusterLoginUserName": {
-			"type": "string",
-			"metadata": {
-				"description": "These credentials can be used to submit jobs to the cluster and to log into cluster dashboards."
-			}
-		},
-		"clusterLoginPassword": {
-			"type": "securestring",
-			"metadata": {
-				"description": "The password must be at least 10 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter."
-			}
-		},
-		"sshUserName": {
-			"type": "string",
-			"metadata": {
-				"description": "These credentials can be used to remotely access the cluster."
-			}
-		},
-		"sshPassword": {
-			"type": "securestring",
-			"metadata": {
-				"description": "The password must be at least 10 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter."
-			}
-		},
-		"clusterWorkerNodeCount": {
-			"type": "int",
-			"defaultValue": 4,
-			"metadata": {
-				"description": "The number of nodes in the HDInsight cluster."
-			}
-		}
-	},
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "clusterName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the HDInsight cluster to create."
+      }
+    },
+    "clusterType": {
+      "type": "string",
+      "allowedValues": [
+        "hadoop",
+        "intractivehive",
+        "hbase",
+        "storm",
+        "spark"
+      ],
+      "metadata": {
+        "description": "The type of the HDInsight cluster to create."
+      }
+    },
+    "clusterLoginUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "These credentials can be used to submit jobs to the cluster and to log into cluster dashboards."
+      }
+    },
+    "clusterLoginPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The password must be at least 10 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter."
+      }
+    },
+    "sshUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "These credentials can be used to remotely access the cluster."
+      }
+    },
+    "sshPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The password must be at least 10 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
   "variables": {
-    "storageAccountName": "[concat(uniquestring(resourceGroup().id),'storage')]",
-    "defaultApiVersion": "2015-05-01-preview",
-    "clusterApiVersion": "2015-03-01-preview"
+    "defaultStorageAccount": {
+      "name": "[uniqueString(resourceGroup().id)]",
+      "type": "Standard_LRS"
+    }
   },
   "resources": [
     {
-      "name": "[variables('storageAccountName')]",
       "type": "Microsoft.Storage/storageAccounts",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "[variables('defaultApiVersion')]",
-      "dependsOn": [ ],
-      "tags": {
-
+      "name": "[variables('defaultStorageAccount').name]",
+      "location": "[parameters('location')]",
+      "apiVersion": "2016-01-01",
+      "sku": {
+        "name": "[variables('defaultStorageAccount').type]"
       },
-      "properties": {
-        "accountType": "Standard_LRS"
-      }
+      "kind": "Storage",
+      "properties": {}
     },
     {
-      "name": "[parameters('clusterName')]",
       "type": "Microsoft.HDInsight/clusters",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "[variables('clusterApiVersion')]",
-      "dependsOn": [ "[concat('Microsoft.Storage/storageAccounts/',variables('storageAccountName'))]" ],
-      "tags": {
-
-      },
+      "name": "[parameters('clusterName')]",
+      "location": "[parameters('location')]",
+      "apiVersion": "2015-03-01-preview",
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/',variables('defaultStorageAccount').name)]"
+      ],
       "properties": {
-        "clusterVersion": "3.5",
+        "clusterVersion": "3.6",
         "osType": "Linux",
         "clusterDefinition": {
           "kind": "[parameters('clusterType')]",
@@ -94,10 +95,10 @@
         "storageProfile": {
           "storageaccounts": [
             {
-              "name": "[replace(replace(concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), variables('defaultApiVersion')).primaryEndpoints.blob),'https:',''),'/','')]",
+              "name": "[replace(replace(concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('defaultStorageAccount').name), '2016-01-01').primaryEndpoints.blob),'https:',''),'/','')]",
               "isDefault": true,
               "container": "[parameters('clusterName')]",
-              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), variables('defaultApiVersion')).key1]"
+              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name), '2016-01-01').keys[0].value]"
             }
           ]
         },
@@ -105,9 +106,9 @@
           "roles": [
             {
               "name": "headnode",
-              "targetInstanceCount": "2",
+              "targetInstanceCount": 2,
               "hardwareProfile": {
-                "vmSize": "Standard_D3"
+                "vmSize": "Standard_D3_v2"
               },
               "osProfile": {
                 "linuxOperatingSystemProfile": {
@@ -118,9 +119,9 @@
             },
             {
               "name": "workernode",
-              "targetInstanceCount": "[parameters('clusterWorkerNodeCount')]",
+              "targetInstanceCount": 2,
               "hardwareProfile": {
-                "vmSize": "Standard_D3"
+                "vmSize": "Standard_D3_v2"
               },
               "osProfile": {
                 "linuxOperatingSystemProfile": {
@@ -134,10 +135,14 @@
       }
     }
   ],
-	"outputs": {
-		"cluster": {
-			"type": "object",
-			"value": "[reference(resourceId('Microsoft.HDInsight/clusters',parameters('clusterName')))]"
-		}
-	}
+  "outputs": {
+    "storage": {
+      "type": "object",
+      "value": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name))]"
+    },
+    "cluster": {
+      "type": "object",
+      "value": "[reference(resourceId('Microsoft.HDInsight/clusters',parameters('clusterName')))]"
+    }
+  }
 }

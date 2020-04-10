@@ -11,9 +11,9 @@ usage()
 creategroup()
 {
 
-    azure group show $rgname 2> /dev/null  
+    azure group show $rgname 2> /dev/null
     if [ $? -eq 0 ]
-    then    
+    then
         echo Resource Group $rgname already exists. Skipping creation.
     else
         # Create a resource group for the keyvault
@@ -27,15 +27,15 @@ createkeyvault()
 
     azure keyvault show $vaultname 2> /dev/null
     if [ $? -eq 0 ]
-    then    
+    then
         echo Key Vault $vaultname already exists. Skipping creation.
-    else   
+    else
         echo Creating Key Vault $vaultname.
 
-        creategroup 
+        creategroup
         # Create the key vault
         azure keyvault create --vault-name $vaultname --resource-group $rgname --location $location
-    fi  
+    fi
 
     azure keyvault set-policy -u $vaultname -g $rgname --enabled-for-template-deployment true --enabled-for-deployment true
 
@@ -54,7 +54,7 @@ convertcert()
     then
         echo problem converting $key and $cert to pfx
         exit 1
-    fi    
+    fi
 
     fingerprint=$(openssl x509 -in $cert -noout -fingerprint | cut -d= -f2 | sed 's/://g' )
 }
@@ -71,7 +71,7 @@ convertcacert()
     then
         echo problem converting $cert to pfx
         exit 1
-    fi    
+    fi
 
     fingerprint=$(openssl x509 -in $cert -noout -fingerprint | cut -d= -f2 | sed 's/://g' )
 }
@@ -80,7 +80,7 @@ storesecret()
 {
     local secretfile=$1
     local name=$2
-    filecontentencoded=$( cat $secretfile | base64 -w 0 )
+    filecontentencoded=$( cat $secretfile | base64 $base64_unwrap )
 
 json=$(cat << EOF
 {
@@ -91,18 +91,28 @@ json=$(cat << EOF
 EOF
 )
 
-    jsonEncoded=$( echo $json | base64 -w 0 )
+    jsonEncoded=$( echo $json | base64 $base64_unwrap )
 
     r=$(azure keyvault secret set --vault-name $vaultname --secret-name $name --value $jsonEncoded)
     if [ $? -eq 1 ]
     then
-        echo problem storing secret $name in $vaultname 
+        echo problem storing secret $name in $vaultname
         exit 1
-    fi    
+    fi
 
     id=$(echo $r | grep -o 'https:\/\/[a-z0-9.]*/secrets\/[a-z0-9]*/[a-z0-9]*')
     echo Secret ID is $id
 }
+
+# We need exactly 7 parameters
+if [ "$#" -lt 6 ]; then
+    usage
+    exit
+fi
+
+# The base64 command on OSX does not know about the -w parameter, but outputs unwrapped base64 by default
+base64_unwrap="-w 0"
+[[ $(uname) == "Darwin" ]] && base64_unwrap=""
 
 vaultname=$1
 rgname=$2
@@ -112,8 +122,9 @@ certfile=$5
 keyfile=$6
 cacertfile=$7
 
-# TODO Change this to something else
-pwd="blabla"
+# Create a random password with 33 bytes of entropy
+# I picked 33 so the last character will not be =
+pwd=$(dd if=/dev/urandom bs=32 count=1 2>/dev/null | base64)
 
 certpfxfile=${certfile%.*crt}.pfx
 cacertpfxfile=${cacertfile%.*crt}.pfx
@@ -128,7 +139,7 @@ echo $certpfxfile fingerprint is $fingerprint
 # storing pfx in keyvault
 echo Storing $certpfxfile as $secretname
 storesecret $certpfxfile $secretname
-certid=$id   
+certid=$id
 rm -f $certpfxfile
 
 if [ ! -z $cacertfile ]
@@ -139,20 +150,18 @@ then
     cacertprint=$fingerprint
     # storing pfx in key vault
     echo Storing $cacertpfxfile as $casecretname
-    storesecret $cacertpfxfile $casecretname   
+    storesecret $cacertpfxfile $casecretname
     cacertid=$id
     rm -f $cacertpfxfile
 fi
 
-# make sure pattern substitution succeeds
-cp ./azuredeploy.parameters.json.template ./azuredeploy.parameters.json
-
-# update parameters file 
-sed -i 's|REPLACE_CERTURL|'$certid'|g' ./azuredeploy.parameters.json
-sed -i 's|REPLACE_CACERTURL|'$cacertid'|g' ./azuredeploy.parameters.json
-sed -i 's/REPLACE_CERTPRINT/'$certprint'/g' ./azuredeploy.parameters.json
-sed -i 's/REPLACE_CACERTPRINT/'$cacertprint'/g' ./azuredeploy.parameters.json
-sed -i 's/REPLACE_VAULTNAME/'$vaultname'/g' ./azuredeploy.parameters.json
-sed -i 's/REPLACE_VAULTRG/'$rgname'/g' ./azuredeploy.parameters.json
+# update parameters file
+sed -e 's|REPLACE_CERTURL|'$certid'|g' \
+    -e 's|REPLACE_CACERTURL|'$cacertid'|g' \
+    -e 's/REPLACE_CERTPRINT/'$certprint'/g' \
+    -e 's/REPLACE_CACERTPRINT/'$cacertprint'/g' \
+    -e 's/REPLACE_VAULTNAME/'$vaultname'/g' \
+    -e 's/REPLACE_VAULTRG/'$rgname'/g' \
+    azuredeploy.parameters.json.template >azuredeploy.parameters.json
 
 echo Done

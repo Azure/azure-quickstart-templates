@@ -8,7 +8,7 @@ echo "nproc: $NPROC"
 # install all required dependencies for running Via
 sudo sudo add-apt-repository -y ppa:bitcoin/bitcoin
 sudo apt-get update
-sudo apt-get install build-essential libtool autotools-dev autoconf pkg-config libssl-dev libboost-all-dev libdb4.8-dev libdb4.8++-dev libminiupnpc-dev git -y
+sudo apt-get install build-essential libtool autotools-dev autoconf pkg-config libssl-dev libboost-all-dev libdb4.8-dev libdb4.8++-dev libminiupnpc-dev git automake -y
 
 cd /usr/local
 file=/usr/local/viacoin

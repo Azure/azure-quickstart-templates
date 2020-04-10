@@ -10,10 +10,10 @@
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -125,30 +125,30 @@ EOF
 update_config_sub()
 {
     mv /opt/jmeter/apache-jmeter-2.13/bin/jmeter.properties /opt/jmeter/apache-jmeter-2.13/bin/jmeter.properties.bak
-    cat /opt/jmeter/apache-jmeter-2.13/bin/jmeter.properties.bak | sed "s|#client.rmi.localport=0|client.rmi.localport=4441|" | sed "s|#server.rmi.localport=4000|server.rmi.localport=4440|" > /opt/jmeter/apache-jmeter-2.13/bin/jmeter.properties 
+    cat /opt/jmeter/apache-jmeter-2.13/bin/jmeter.properties.bak | sed "s|#client.rmi.localport=0|client.rmi.localport=4441|" | sed "s|#server.rmi.localport=4000|server.rmi.localport=4440|" > /opt/jmeter/apache-jmeter-2.13/bin/jmeter.properties
 }
 
 update_config_boss()
 {
     mv /opt/jmeter/apache-jmeter-2.13/bin/jmeter.properties /opt/jmeter/apache-jmeter-2.13/bin/jmeter.properties.bak
-    cat /opt/jmeter/apache-jmeter-2.13/bin/jmeter.properties.bak | sed "s|#client.rmi.localport=0|client.rmi.localport=4440|" | sed "s|remote_hosts=127.0.0.1|remote_hosts=${REMOTE_HOSTS}|" > /opt/jmeter/apache-jmeter-2.13/bin/jmeter.properties 
+    cat /opt/jmeter/apache-jmeter-2.13/bin/jmeter.properties.bak | sed "s|#client.rmi.localport=0|client.rmi.localport=4440|" | sed "s|remote_hosts=127.0.0.1|remote_hosts=${REMOTE_HOSTS}|" > /opt/jmeter/apache-jmeter-2.13/bin/jmeter.properties
 }
 
 install_jmeter()
 {
     log "Installing JMeter"
-    apt-get -y install unzip 
-    
+    apt-get -y install unzip
+
     mkdir -p /opt/jmeter
     wget -O jmeter.zip http://apache.mirror.anlx.net/jmeter/binaries/apache-jmeter-2.13.zip
     wget -O plugins.zip http://jmeter-plugins.org/downloads/file/JMeterPlugins-Standard-1.3.0.zip
-    
+
     log "unzipping jmeter"
     unzip -q jmeter.zip -d /opt/jmeter/
-    
+
     log "unzipping plugins"
     unzip -q plugins.zip -d /opt/jmeter/apache-jmeter-2.13/
-     
+
     chmod u+x /opt/jmeter/apache-jmeter-2.13/bin/jmeter-server
     chmod u+x /opt/jmeter/apache-jmeter-2.13/bin/jmeter
 
@@ -158,21 +158,21 @@ install_jmeter()
         wget -O jarball.zip ${JARBALL}
         unzip -q jarball.zip -d /opt/jmeter/apache-jmeter-2.13/lib/junit/
     fi
-    
-    if [ ${IS_MASTER} -ne 1 ]; 
+
+    if [ ${IS_MASTER} -ne 1 ];
     then
         log "setting up sub node"
         iptables -A INPUT -m state --state NEW -m tcp -p tcp --dport 4441 -j ACCEPT
-        
+
         update_config_sub
         install_jmeter_service
     else
         log "setting up boss node"
         iptables -A INPUT -p tcp --match multiport --dports 4440:4445 -j ACCEPT
         iptables -A OUTPUT -p tcp --match multiport --dports 4440:4445 -j ACCEPT
-    
+
         update_config_boss
-        
+
         if [ ${TESTPACK} ];
         then
             log "installing test pack"
@@ -181,7 +181,7 @@ install_jmeter()
             chmod +x /opt/jmeter/run.sh
         fi
     fi
-    
+
     groupadd -g 999 jmeter
     useradd -u 999 -g 999 jmeter
     chown -R jmeter: /opt/jmeter

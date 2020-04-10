@@ -1,0 +1,94 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {       
+        "wafPolicyName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the WAF policy"
+            }
+        },
+        "wafMode": {
+            "type": "string",
+            "allowedValues": [
+                "Detection",
+                "Prevention"
+            ],
+            "defaultValue": "Detection",
+            "metadata": {
+                "description": "Describes if it is in detection mode or prevention mode at policy level."
+            }
+        },
+        "rateLimitDurationInMinutes": {
+            "type": "int",
+            "defaultValue": 1,
+            "metadata": {
+                "description": "Defines rate limit duration. Default - 1 minute."
+            }
+        },
+        "rateLimitThreshold": {
+            "type": "int",
+            "metadata": {
+                "description": "Defines rate limit thresold."
+            }
+        },
+        "rateLimitAction": {
+            "type": "string",
+            "allowedValues": [
+                "Allow",
+                "Block",
+                "Log"
+            ],
+            "defaultValue": "Log",
+            "metadata": {
+                "description": "Type of Action based on the match filter. Must be Allow, Block or Log."
+            }
+        },
+        "ipMatch": {
+            "type": "string",
+            "metadata": {
+                "description": "The operator to be matched."
+            }
+        }
+    },
+    "variables": {
+        "wafLocation": "global"        
+    },
+    "resources": [
+        {
+            "apiVersion": "2019-03-01",
+            "type": "Microsoft.Network/FrontDoorWebApplicationFirewallPolicies",
+            "name": "[parameters('wafPolicyName')]",
+            "location": "[variables('wafLocation')]",            
+            "properties": {
+                "policySettings": {
+                    "mode": "[parameters('wafMode')]",
+                    "enabledState": "Enabled"
+                },
+                "customRules": {
+                    "rules": [
+                        {
+                            "name": "Rule1",
+                            "enabledState": "Enabled",
+                            "priority": 1,
+                            "ruleType": "RateLimitRule",
+                            "rateLimitThreshold": "[parameters('rateLimitThreshold')]",
+                            "rateLimitDurationInMinutes": "[parameters('rateLimitDurationInMinutes')]",
+                            "matchConditions": [
+                                {
+                                    "matchVariable": "RemoteAddr",
+                                    "operator": "IPMatch",
+                                    "matchValue": [
+                                        "[parameters('ipMatch')]"
+                                    ]
+                                }
+                            ],
+                            "action": "[parameters('rateLimitAction')]"
+                        }
+                    ]
+                }
+            }
+        }        
+    ],
+    "outputs": {}
+}

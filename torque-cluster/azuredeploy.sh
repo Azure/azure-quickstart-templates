@@ -64,7 +64,7 @@ do
    i=`expr $i + 1`
 done
 
-# Install Torque 
+# Install Torque
 ################
 
 # Prep packages

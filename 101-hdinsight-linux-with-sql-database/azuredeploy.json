@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "clusterName": {
@@ -48,56 +48,67 @@
       }
     },
     "_artifactsLocation": {
-        "type": "string",
-        "metadata": {
-            "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
-        },
-        "defaultValue": "https://hditutorialdata.blob.core.windows.net/usesqoop/"
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "https://hditutorialdata.blob.core.windows.net/usesqoop/"
     },
     "_artifactsLocationSasToken": {
-        "type": "securestring",
-        "metadata": {
-            "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
-        },
-        "defaultValue": ""
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
     },
-    "bacpacFileName":{
-      "type":"string",
+    "bacpacFileName": {
+      "type": "string",
       "defaultValue": "SqoopTutorial-2016-2-23-11-2.bacpac",
       "metadata": {
         "description": "The backpac for configure the database and tables for the Use Sqoop in HDInsight tutorial."
       }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
-    "defaultStorageAccountName": "[concat(parameters('clusterName'),'store')]",
-    "storageAccountType": "Standard_LRS",
-    "sqlDatabaseServerName": "[concat(parameters('clusterName'),'dbserver')]",
-    "sqlDatabaseName": "[concat(parameters('clusterName'),'db')]"
+    "defaultStorageAccount": {
+      "name": "[uniqueString(resourceGroup().id)]",
+      "type": "Standard_LRS"
+    },
+    "sqlDatabase": {
+      "serverName": "[concat(parameters('clusterName'),'dbserver')]",
+      "databaseName": "[concat(parameters('clusterName'),'db')]"
+    }
   },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('defaultStorageAccountName')]",
-      "location": "[resourceGroup().location]",
+      "name": "[variables('defaultStorageAccount').name]",
+      "location": "[parameters('location')]",
       "apiVersion": "2016-01-01",
       "sku": {
-          "name": "[variables('storageAccountType')]"
+        "name": "[variables('defaultStorageAccount').type]"
       },
-      "kind": "Storage", 
+      "kind": "Storage",
       "properties": {}
     },
     {
       "name": "[parameters('clusterName')]",
       "type": "Microsoft.HDInsight/clusters",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2015-03-01-preview",
-      "dependsOn": [ "[concat('Microsoft.Storage/storageAccounts/',variables('defaultStorageAccountName'))]" ],
-      "tags": {
-
-      },
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/',variables('defaultStorageAccount').name)]"
+      ],
+      "tags": {},
       "properties": {
-        "clusterVersion": "3.4",
+        "clusterVersion": "3.6",
         "osType": "Linux",
         "clusterDefinition": {
           "kind": "hadoop",
@@ -112,10 +123,10 @@
         "storageProfile": {
           "storageaccounts": [
             {
-              "name": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccountName')), '2016-01-01').primaryEndpoints.blob,'https://',''),'/','')]",
+              "name": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name), '2016-01-01').primaryEndpoints.blob,'https://',''),'/','')]",
               "isDefault": true,
               "container": "[parameters('clusterName')]",
-              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccountName')), '2016-01-01').keys[0].value]"
+              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name), '2016-01-01').keys[0].value]"
             }
           ]
         },
@@ -123,9 +134,9 @@
           "roles": [
             {
               "name": "headnode",
-              "targetInstanceCount": "2",
+              "targetInstanceCount": 2,
               "hardwareProfile": {
-                "vmSize": "Standard_D3"
+                "vmSize": "Standard_D3_v2"
               },
               "osProfile": {
                 "linuxOperatingSystemProfile": {
@@ -138,7 +149,7 @@
               "name": "workernode",
               "targetInstanceCount": 2,
               "hardwareProfile": {
-                "vmSize": "Standard_D3"
+                "vmSize": "Standard_D3_v2"
               },
               "osProfile": {
                 "linuxOperatingSystemProfile": {
@@ -152,14 +163,14 @@
       }
     },
     {
-      "name": "[variables('sqlDatabaseServerName')]",
       "type": "Microsoft.Sql/servers",
-      "location": "[resourceGroup().location]",
+      "name": "[variables('sqlDatabase').serverName]",
+      "dependsOn": [],
+      "location": "[parameters('location')]",
       "tags": {
-        "displayName": "SqlServer"        
+        "displayName": "SqlServer"
       },
-      "apiVersion": "2014-04-01",
-      "dependsOn": [ ],
+      "apiVersion": "2015-05-01-preview",
       "properties": {
         "administratorLogin": "[parameters('sqlAdminLogin')]",
         "administratorLoginPassword": "[parameters('sqlAdminPassword')]",
@@ -167,15 +178,15 @@
       },
       "resources": [
         {
-          "name": "[variables('sqlDatabaseName')]",
           "type": "databases",
-          "location": "[resourceGroup().location]",
+          "name": "[variables('sqlDatabase').databaseName]",
+          "location": "[parameters('location')]",
           "tags": {
             "displayName": "Database"
           },
           "apiVersion": "2015-01-01",
           "dependsOn": [
-            "[variables('sqlDatabaseServerName')]"
+            "[variables('sqlDatabase').serverName]"
           ],
           "properties": {
             "edition": "Basic",
@@ -189,7 +200,7 @@
               "type": "extensions",
               "apiVersion": "2014-04-01",
               "dependsOn": [
-                "[resourceId('Microsoft.Sql/servers/databases', variables('sqlDatabaseServerName'), variables('sqlDatabaseName'))]"
+                "[resourceId('Microsoft.Sql/servers/databases', variables('sqlDatabase').serverName, variables('sqlDatabase').databaseName)]"
               ],
               "properties": {
                 "operationMode": "Import",
@@ -203,12 +214,12 @@
           ]
         },
         {
-          "name": "AllowAllWindowsAzureIps",
           "type": "firewallrules",
-          "location": "[resourceGroup().location]",
+          "name": "AllowAllAzureIps",
+          "location": "[parameters('location')]",
           "apiVersion": "2014-04-01",
           "dependsOn": [
-            "[variables('sqlDatabaseServerName')]"
+            "[concat('Microsoft.Sql/servers/', variables('sqlDatabase').serverName)]"
           ],
           "properties": {
             "startIpAddress": "0.0.0.0",
@@ -221,15 +232,15 @@
   "outputs": {
     "storage": {
       "type": "object",
-      "value": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccountName')))]"
+      "value": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name))]"
     },
     "cluster": {
       "type": "object",
       "value": "[reference(resourceId('Microsoft.HDInsight/clusters',parameters('clusterName')))]"
-    },    
+    },
     "sqlSvrFqdn": {
       "type": "string",
-      "value": "[reference(concat('Microsoft.Sql/servers/', variables('sqlDatabaseServerName'))).fullyQualifiedDomainName]"
+      "value": "[reference(concat('Microsoft.Sql/servers/', variables('sqlDatabase').serverName)).fullyQualifiedDomainName]"
     }
   }
 }

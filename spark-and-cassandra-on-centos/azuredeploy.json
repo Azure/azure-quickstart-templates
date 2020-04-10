@@ -1,5 +1,5 @@
-﻿{
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "storageMasterType": {
@@ -130,74 +130,69 @@
         "description": "Specific an admin password that should be used to login to the VM."
       },
       "type": "securestring"
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/spark-and-cassandra-on-centos/",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
     }
   },
   "variables": {
     "osImagePublisher": "OpenLogic",
     "osImageOffer": "CentOS",
     "osVersion": "7.1",
-
     "apiVersion": "2015-06-15",
-
-    "artifactsLocation": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/spark-and-cassandra-on-centos/CustomScripts",
-    "artifactsLocationSasToken":  "?key=change_me",
-
     "vnetSparkPrefix": "10.0.0.0/16",
     "vnetSparkSubnet1Name": "Subnet-Master",
     "vnetSparkSubnet1Prefix": "10.0.0.0/24",
-
     "vnetSparkSubnet2Name": "Subnet-Slave",
     "vnetSparkSubnet2Prefix": "10.0.1.0/24",
-
     "vnetSparkSubnet3Name": "Subnet-Cassandra",
     "vnetSparkSubnet3Prefix": "10.0.2.0/24",
-
     "storageMasterName": "[concat('master', uniqueString(resourceGroup().id))]",
     "storageSlaveNamePrefix": "[concat('slave', uniqueString(resourceGroup().id))]",
     "storageCassandraName": "[concat('cass', uniqueString(resourceGroup().id))]",
-
     "nsgSparkMasterName": "nsg-spark-master",
     "nsgSparkSlaveName": "nsg-spark-slave",
     "nsgCassandraName": "nsg-cassandra",
-
     "nicMasterName": "nic-master",
-    "nicMasterVnetID": "[resourceId('Microsoft.Network/virtualNetworks', 'vnet-spark')]",
-    "nicMasterSubnetRef": "[concat(variables('nicMasterVnetID'), '/subnets/', variables('vnetSparkSubnet1Name'))]",
+    "nicMasterSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'vnet-spark', variables('vnetSparkSubnet1Name'))]",
     "nicMasterNodeIP": "10.0.0.5",
-
     "nicCassandraName": "nic-cassandra",
-    "nicCassandraVnetID": "[resourceId('Microsoft.Network/virtualNetworks', 'vnet-spark')]",
-    "nicCassandraSubnetRef": "[concat(variables('nicMasterVnetID'), '/subnets/', variables('vnetSparkSubnet3Name'))]",
+    "nicCassandraSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'vnet-spark', variables('vnetSparkSubnet3Name'))]",
     "nicCassandraNodeIP": "10.0.2.5",
-
     "nicSlaveNamePrefix": "nic-slave-",
     "nicSlaveNodeIPPrefix": "10.0.1.",
     "nicSlaveNodeIPStart": 5,
-    "nicSlaveVnetID": "[resourceId('Microsoft.Network/virtualNetworks', 'vnet-spark')]",
-    "nicSlaveSubnetRef": "[concat(variables('nicSlaveVnetID'), '/subnets/', variables('vnetSparkSubnet2Name'))]",
-
+    "nicSlaveSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'vnet-spark', variables('vnetSparkSubnet2Name'))]",
     "publicIPMasterName": "public-ip-master",
     "publicIPSlaveNamePrefix": "public-ip-slave-",
     "publicIPCassandraName": "public-ip-cassandra",
-
     "vmMasterName": "spark-master",
     "vmMasterOSDiskName": "vmMasterOSDisk",
-    "vmMasterVnetID": "[resourceId('Microsoft.Network/virtualNetworks', 'vnet-spark')]",
-    "vmMasterSubnetRef": "[concat(variables('vmMasterVnetID'), '/subnets/', variables('vnetSparkSubnet1Name'))]",
     "vmMasterStorageAccountContainerName": "vhds",
-
     "vmSlaveNamePrefix": "spark-slave-",
     "vmSlaveOSDiskNamePrefix": "vmSlaveOSDisk-",
-    "vmSlaveVnetID": "[resourceId('Microsoft.Network/virtualNetworks', 'vnet-spark')]",
-    "vmSlaveSubnetRef": "[concat(variables('vmSlaveVnetID'), '/subnets/', variables('vnetSparkSubnet2Name'))]",
     "vmSlaveStorageAccountContainerName": "vhds",
-
     "vmCassandraName": "cassandra",
     "vmCassandraOSDiskName": "vmCassandraOSDisk",
-    "vmCassandraVnetID": "[resourceId('Microsoft.Network/virtualNetworks', 'vnet-spark')]",
-    "vmCassandraSubnetRef": "[concat(variables('vmMasterVnetID'), '/subnets/', variables('vnetSparkSubnet3Name'))]",
     "vmCassandraStorageAccountContainerName": "vhds",
-
     "availabilitySlaveName": "availability-slave",
     "scriptSparkProvisionerScriptFileName": "scriptSparkProvisioner.sh",
     "scriptCassandraProvisionerScriptFileName": "scriptCassandraProvisioner.sh"
@@ -206,9 +201,9 @@
     {
       "name": "[variables('storageMasterName')]",
       "type": "Microsoft.Storage/storageAccounts",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "[variables('apiVersion')]",
-      "dependsOn": [ ],
+      "location": "[parameters('location')]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [],
       "tags": {
         "displayName": "storageMaster"
       },
@@ -216,7 +211,6 @@
         "accountType": "[parameters('storageMasterType')]"
       }
     },
-
     {
       "copy": {
         "name": "storageSlaveLoop",
@@ -224,9 +218,9 @@
       },
       "name": "[concat(variables('storageSlaveNamePrefix'), copyIndex())]",
       "type": "Microsoft.Storage/storageAccounts",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "[variables('apiVersion')]",
-      "dependsOn": [ ],
+      "location": "[parameters('location')]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [],
       "tags": {
         "displayName": "storageSlave"
       },
@@ -234,13 +228,12 @@
         "accountType": "[parameters('storageSlaveType')]"
       }
     },
-
     {
       "name": "[variables('storageCassandraName')]",
       "type": "Microsoft.Storage/storageAccounts",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "[variables('apiVersion')]",
-      "dependsOn": [ ],
+      "location": "[parameters('location')]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [],
       "tags": {
         "displayName": "storageCassandra"
       },
@@ -248,13 +241,12 @@
         "accountType": "[parameters('storageMasterType')]"
       }
     },
-
     {
       "name": "vnet-spark",
       "type": "Microsoft.Network/virtualNetworks",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "[variables('apiVersion')]",
-      "dependsOn": [ ],
+      "location": "[parameters('location')]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [],
       "tags": {
         "displayName": "vnetSpark"
       },
@@ -286,13 +278,12 @@
         ]
       }
     },
-
     {
       "name": "[variables('publicIPMasterName')]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "[variables('apiVersion')]",
-      "dependsOn": [ ],
+      "location": "[parameters('location')]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [],
       "tags": {
         "displayName": "publicIPMaster"
       },
@@ -300,15 +291,14 @@
         "publicIPAllocationMethod": "Static"
       }
     },
-
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2015-06-15",
       "copy": {
         "name": "publicIPSlaveLoop",
         "count": "[parameters('vmNumberOfSlaves')]"
       },
-      "dependsOn": [ ],
-      "location": "[resourceGroup().location]",
+      "dependsOn": [],
+      "location": "[parameters('location')]",
       "name": "[concat(variables('publicIPSlaveNamePrefix'), copyIndex())]",
       "properties": {
         "publicIPAllocationMethod": "Static"
@@ -318,14 +308,12 @@
       },
       "type": "Microsoft.Network/publicIPAddresses"
     },
-
-
     {
       "name": "[variables('publicIPCassandraName')]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "[variables('apiVersion')]",
-      "dependsOn": [ ],
+      "location": "[parameters('location')]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [],
       "tags": {
         "displayName": "publicIPCassandra"
       },
@@ -333,12 +321,11 @@
         "publicIPAllocationMethod": "Static"
       }
     },
-
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('nsgSparkMasterName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
           {
@@ -386,12 +373,11 @@
         ]
       }
     },
-
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('nsgSparkSlaveName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
           {
@@ -411,12 +397,11 @@
         ]
       }
     },
-
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('nsgCassandraName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
           {
@@ -436,12 +421,11 @@
         ]
       }
     },
-
     {
       "name": "[variables('nicMasterName')]",
       "type": "Microsoft.Network/networkInterfaces",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "[variables('apiVersion')]",
+      "location": "[parameters('location')]",
+      "apiVersion": "2015-06-15",
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', 'vnet-spark')]",
         "[concat('Microsoft.Network/networkSecurityGroups/', variables('nsgSparkMasterName'))]",
@@ -471,7 +455,6 @@
         }
       }
     },
-
     {
       "copy": {
         "name": "nicSlaveLoop",
@@ -479,8 +462,8 @@
       },
       "name": "[concat(variables('nicSlaveNamePrefix'), copyIndex())]",
       "type": "Microsoft.Network/networkInterfaces",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "[variables('apiVersion')]",
+      "location": "[parameters('location')]",
+      "apiVersion": "2015-06-15",
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', 'vnet-spark')]",
         "[concat('Microsoft.Network/networkSecurityGroups/', variables('nsgSparkSlaveName'))]",
@@ -510,12 +493,11 @@
         }
       }
     },
-
     {
       "name": "[variables('nicCassandraName')]",
       "type": "Microsoft.Network/networkInterfaces",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "[variables('apiVersion')]",
+      "location": "[parameters('location')]",
+      "apiVersion": "2015-06-15",
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', 'vnet-spark')]",
         "[concat('Microsoft.Network/networkSecurityGroups/', variables('nsgCassandraName'))]",
@@ -545,27 +527,28 @@
         }
       }
     },
-
     {
       "name": "[variables('availabilitySlaveName')]",
       "type": "Microsoft.Compute/availabilitySets",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "[variables('apiVersion')]",
-      "dependsOn": [ ],
+      "location": "[parameters('location')]",
+      "apiVersion":  "2017-12-01",
+      "dependsOn": [],
       "tags": {
         "displayName": "availability-set"
       },
+      "sku": {
+        "name": "Aligned"
+        },
       "properties": {
-        "platformFaultDomainCount": "2",
-        "platformUpdateDomainCount": "5"
+        "platformFaultDomainCount": 2,
+        "platformUpdateDomainCount": 5
       }
     },
-
     {
       "name": "[variables('vmMasterName')]",
       "type": "Microsoft.Compute/virtualMachines",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "[variables('apiVersion')]",
+      "location": "[parameters('location')]",
+      "apiVersion":"2017-03-30", 
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('storageMasterName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicMasterName'))]"
@@ -590,10 +573,7 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "vmMasterOSDisk",
-            "vhd": {
-              "uri": "[concat('http://', variables('storageMasterName'), '.blob.core.windows.net/', variables('vmMasterStorageAccountContainerName'), '/', variables('vmMasterOSDiskName'), '.vhd')]"
-            },
+           "name": "[concat(variables('vmMasterName'),'_OSDisk')]", 
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -610,7 +590,7 @@
         {
           "name": "scriptMasterSparkProvisioner",
           "type": "extensions",
-          "location": "[resourceGroup().location]",
+          "location": "[parameters('location')]",
           "apiVersion": "[variables('apiVersion')]",
           "dependsOn": [
             "[concat('Microsoft.Compute/virtualMachines/', variables('vmMasterName'))]"
@@ -625,7 +605,7 @@
             "autoUpgradeMinorVersion": true,
             "settings": {
               "fileUris": [
-                "[concat(variables('artifactsLocation'), '/', variables('scriptSparkProvisionerScriptFileName'), variables('artifactsLocationSasToken'))]"
+                "[uri(parameters('_artifactsLocation'), concat('CustomScripts/', variables('scriptSparkProvisionerScriptFileName'), parameters('_artifactsLocationSasToken')))]"
               ],
               "commandToExecute": "[concat('sh ', variables('scriptSparkProvisionerScriptFileName'), ' -runas=master -master=', variables('nicMasterNodeIP'))]"
             }
@@ -633,7 +613,6 @@
         }
       ]
     },
-
     {
       "copy": {
         "name": "vmSlaveLoop",
@@ -641,8 +620,8 @@
       },
       "name": "[concat(variables('vmSlaveNamePrefix'), copyIndex())]",
       "type": "Microsoft.Compute/virtualMachines",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "[variables('apiVersion')]",
+      "location": "[parameters('location')]",
+      "apiVersion": "2017-03-30", 
       "dependsOn": [
         "[concat(variables('storageSlaveNamePrefix'), copyIndex())]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicSlaveNamePrefix'), copyIndex())]"
@@ -667,10 +646,7 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "vmSlaveOSDisk",
-            "vhd": {
-              "uri": "[concat('http://', variables('storageSlaveNamePrefix'),  copyIndex(), '.blob.core.windows.net/', variables('vmSlaveStorageAccountContainerName'), '/', variables('vmSlaveOSDiskNamePrefix'), '.vhd')]"
-            },
+            "name": "[concat(variables('vmSlaveNamePrefix'), copyIndex(),'_OSDisk')]",  
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -690,7 +666,7 @@
         {
           "name": "scriptSlaveProvisionerScript",
           "type": "extensions",
-          "location": "[resourceGroup().location]",
+          "location": "[parameters('location')]",
           "apiVersion": "[variables('apiVersion')]",
           "dependsOn": [
             "[concat('Microsoft.Compute/virtualMachines/', concat(variables('vmSlaveNamePrefix'), copyIndex()))]"
@@ -705,7 +681,7 @@
             "autoUpgradeMinorVersion": true,
             "settings": {
               "fileUris": [
-                "[concat(variables('artifactsLocation'), '/', variables('scriptSparkProvisionerScriptFileName'), variables('artifactsLocationSasToken'))]"
+                "[uri(parameters('_artifactsLocation'), concat('CustomScripts/', variables('scriptSparkProvisionerScriptFileName'), parameters('_artifactsLocationSasToken')))]"
               ],
               "commandToExecute": "[concat('sh ', variables('scriptSparkProvisionerScriptFileName'), ' -runas=slave -master=', variables('nicMasterNodeIP'))]"
             }
@@ -713,12 +689,11 @@
         }
       ]
     },
-
     {
       "name": "[variables('vmCassandraName')]",
       "type": "Microsoft.Compute/virtualMachines",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "[variables('apiVersion')]",
+      "location": "[parameters('location')]",
+      "apiVersion": "2017-03-30",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('storageCassandraName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicCassandraName'))]"
@@ -743,10 +718,7 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "vmCassandraOSDisk",
-            "vhd": {
-              "uri": "[concat('http://', variables('storageCassandraName'), '.blob.core.windows.net/', variables('vmCassandraStorageAccountContainerName'), '/', variables('vmCassandraOSDiskName'), '.vhd')]"
-            },
+            "name": "[concat(variables('vmCassandraName'),'_OSDisk')]",  
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -763,7 +735,7 @@
         {
           "name": "scriptCassandraProvisioner",
           "type": "extensions",
-          "location": "[resourceGroup().location]",
+          "location": "[parameters('location')]",
           "apiVersion": "[variables('apiVersion')]",
           "dependsOn": [
             "[concat('Microsoft.Compute/virtualMachines/', variables('vmCassandraName'))]"
@@ -778,7 +750,7 @@
             "autoUpgradeMinorVersion": true,
             "settings": {
               "fileUris": [
-                "[concat(variables('artifactsLocation'), '/', variables('scriptCassandraProvisionerScriptFileName'), variables('artifactsLocationSasToken'))]"
+                "[uri(parameters('_artifactsLocation'), concat('CustomScripts/', variables('scriptCassandraProvisionerScriptFileName'), parameters('_artifactsLocationSasToken')))]"
               ],
               "commandToExecute": "[concat('sh ', variables('scriptCassandraProvisionerScriptFileName'))]"
             }

@@ -4,8 +4,8 @@
 # You can customize variables such as MOUNTPOINT, RAIDCHUNKSIZE and so on to your needs.
 # You can also customize it to work with other Linux flavours and versions.
 # If you customize it, copy it to either Azure blob storage or Github so that Azure
-# custom script Linux VM extension can access it, and specify its location in the 
-# parameters of DeployPXC powershell script or runbook or Azure Resource Manager CRP template.   
+# custom script Linux VM extension can access it, and specify its location in the
+# parameters of DeployPXC powershell script or runbook or Azure Resource Manager CRP template.
 
 NODEID=${1}
 NODEADDRESS=${2}
@@ -14,6 +14,7 @@ RPLPWD=${4}
 ROOTPWD=${5}
 PROBEPWD=${6}
 MASTERIP=${7}
+VERSION=5.5
 
 MOUNTPOINT="/datadrive"
 RAIDCHUNKSIZE=512
@@ -49,16 +50,16 @@ scan_for_new_disks() {
 get_disk_count() {
     DISKCOUNT=0
     for DISK in "${DISKS[@]}";
-    do 
+    do
         DISKCOUNT+=1
     done;
     echo "$DISKCOUNT"
 }
 
 create_raid0_ubuntu() {
-    dpkg -s mdadm 
+    dpkg -s mdadm
     if [ ${?} -eq 1 ];
-    then 
+    then
         echo "installing mdadm"
         wget --no-cache http://mirrors.cat.pdx.edu/ubuntu/pool/main/m/mdadm/mdadm_3.2.5-5ubuntu4_amd64.deb
         dpkg -i mdadm_3.2.5-5ubuntu4_amd64.deb
@@ -87,7 +88,7 @@ p
 
 
 w
-" | fdisk "${DISK}" 
+" | fdisk "${DISK}"
 #> /dev/null 2>&1
 
 #
@@ -117,13 +118,13 @@ add_to_fstab() {
 configure_disks() {
 	ls "${MOUNTPOINT}"
 	if [ ${?} -eq 0 ]
-	then 
+	then
 		return
 	fi
     DISKS=($(scan_for_new_disks))
     echo "Disks are ${DISKS[@]}"
     declare -i DISKCOUNT
-    DISKCOUNT=$(get_disk_count) 
+    DISKCOUNT=$(get_disk_count)
     echo "Disk count is $DISKCOUNT"
     if [ $DISKCOUNT -gt 1 ];
     then
@@ -188,7 +189,7 @@ create_mycnf() {
 }
 
 install_mysql_ubuntu() {
-    dpkg -s mysql-5.6
+    dpkg -s mysql-$VERSION
     if [ ${?} -eq 0 ];
     then
         return
@@ -196,9 +197,9 @@ install_mysql_ubuntu() {
     echo "installing mysql"
     apt-get update
     export DEBIAN_FRONTEND=noninteractive
-	apt-get install -y mysql-server-5.6
+	apt-get install -y mysql-server-$VERSION
 	chown -R mysql:mysql "${MOUNTPOINT}/mysql/mysql"
-	apt-get install -y mysql-server-5.6
+	apt-get install -y mysql-server-$VERSION
 	wget http://dev.mysql.com/get/Downloads/Connector-Python/mysql-connector-python_2.1.3-1ubuntu14.04_all.deb
 	dpkg -i mysql-connector-python_2.1.3-1ubuntu14.04_all.deb
 	wget http://dev.mysql.com/get/Downloads/MySQLGUITools/mysql-utilities_1.6.4-1ubuntu14.04_all.deb
@@ -240,7 +241,7 @@ fi
 # create a probe script
     cat <<EOF >/usr/bin/mysqlprobe
 #!/bin/bash
- 
+
 MYSQL_HOST="${NODEADDRESS}"
 MYSQL_USERNAME="probeuser"
 MYSQL_PASSWORD='${PROBEPWD}'
@@ -252,7 +253,7 @@ if [ "\$ERROR_MSG" != "" ]
 then
         # mysql is fine, return http 200
         echo -en "HTTP/1.1 200 OK\r\n"
-        echo -en "Content-Type: Content-Type: text/plain\r\n"
+        echo -en "Content-Type: text/plain\r\n"
         echo -en "Connection: close\r\n"
         echo -en "Content-Length: 19\r\n"
         echo -en "\r\n"
@@ -262,7 +263,7 @@ then
 else
         # mysql is down, return http 503
         echo -en "HTTP/1.1 503 Service Unavailable\r\n"
-        echo -en "Content-Type: Content-Type: text/plain\r\n"
+        echo -en "Content-Type: text/plain\r\n"
         echo -en "Connection: close\r\n"
         echo -en "Content-Length: 16\r\n"
         echo -en "\r\n"
@@ -363,7 +364,7 @@ check_os
 if [ $iscentos -ne 0 ] && [ $isubuntu -ne 0 ];
 then
     echo "unsupported operating system"
-    exit 1 
+    exit 1
 else
     configure_network
     configure_disks

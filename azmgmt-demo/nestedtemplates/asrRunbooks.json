@@ -1,0 +1,195 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "automationAccountName": {
+            "type": "string",
+            "metadata": {
+                "description": "Specify the name of your Automation Account"
+            }
+        },
+        "automationRegion": {
+            "type": "string",            
+            "metadata": {
+                "description": "Specify the region for your automation account"
+            }
+        }
+    },
+    "variables": {
+        "assets": {
+            "aaVariables": {
+                "AzureSubscriptionId": {
+                    "name": "AzureSubscriptionId",
+                    "description": "Azure subscription Id"
+                }
+            }
+        },
+        "asrScripts": {
+            "runbooks": [
+                {
+                    "name": "ASR-AddPublicIp",
+                    "url": "[uri(deployment().properties.templateLink.uri, 'scripts/ASR-AddPublicIp.ps1')]",
+                    "version": "1.0.0.0",
+                    "type": "PowerShell",
+                    "description": "ASR Runbook to enable public IP on every VM in a Recovery Plan"
+                },
+                {
+                    "name": "ASR-SQL-FailoverAG",
+                    "url": "[uri(deployment().properties.templateLink.uri, 'scripts/ASR-SQL-FailoverAG.ps1')]",
+                    "version": "1.0.0.0",
+                    "type": "PowerShellWorkflow",
+                    "description": "ASR Runbook to handle SQL Always On failover"
+                },
+                {
+                    "name": "ASR-AddSingleNSGPublicIp",
+                    "url": "[uri(deployment().properties.templateLink.uri, 'scripts/ASR-AddSingleNSGPublicIp.ps1')]",
+                    "version": "1.0.0.0",
+                    "type": "PowerShell",
+                    "description": "ASR Runbook to enable NSG and Public IP on every VM in a Recovery Plan"
+                },
+                {
+                    "name": "ASR-AddSingleLoadBalancer",
+                    "url": "[uri(deployment().properties.templateLink.uri, 'scripts/ASR-AddSingleLoadBalancer.ps1')]",
+                    "version": "1.0.0.0",
+                    "type": "PowerShell",
+                    "description": "ASR Runbook to enable a single Load Balancer for all the VMs in the recovery plan"
+                },
+                {
+                    "name": "ASR-AddMulitpleLoadBalancers",
+                    "url": "[uri(deployment().properties.templateLink.uri, 'scripts/ASR-AddMultipleLoadBalancers.ps1')]",
+                    "version": "1.0.0.0",
+                    "type": "PowerShell",
+                    "description": "ASR Runbook to enable multiple Load Balancers for selected VMs in the recovery plan"
+                },
+                {
+                    "name": "ASR-DNS-UpdateIP",
+                    "url": "[uri(deployment().properties.templateLink.uri, 'scripts/ASR-DNS-UpdateIP.ps1')]",
+                    "version": "1.0.0.0",
+                    "type": "PowerShellWorkflow",
+                    "description": "ASR Runbook to update DNS for VMs within the recovery plan"
+                },
+                {
+                    "name": "ASR-Wordpress-ChangeMysqlConfig",
+                    "url": "[uri(deployment().properties.templateLink.uri, 'scripts/ASR-Wordpress-ChangeMysqlConfig.ps1')]",
+                    "version": "1.0.0.0",
+                    "type": "PowerShellWorkflow",
+                    "description": "ASR Runbook to configure Mysql as part of a recovery plan"
+                },
+                {
+                    "name": "ASR-SQL-FailoverAGClassic",
+                    "url": "[uri(deployment().properties.templateLink.uri, 'scripts/ASR-SQL-FailoverAGClassic.ps1')]",
+                    "version": "1.0.0.0",
+                    "type": "PowerShellWorkflow",
+                    "description": "ASR Runbook to failover SQL Availability Group"
+                }
+            ],
+            "modules": [
+                {
+                    "name": "AzureRm.Compute",
+                    "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.compute.2.8.0.nupkg"
+                },
+                {
+                    "name": "AzureRm.Resources",
+                    "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.resources.3.7.0.nupkg"
+                },
+                {
+                    "name": "AzureRm.Network",
+                    "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.network.3.6.0.nupkg"
+                },
+                {
+                    "name": "AzureRm.Automation",
+                    "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.automation.1.0.3.nupkg"
+                }
+            ]
+        },
+        "azureRmProfile": {
+            "name": "AzureRm.Profile",
+            "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.profile.2.7.0.nupkg"
+        }
+    },
+    "resources": [
+        {
+            "name": "[parameters('automationAccountName')]",
+            "type": "Microsoft.Automation/automationAccounts",
+            "apiVersion": "2015-10-31",
+            "location": "[parameters('automationRegion')]",
+            "properties": {
+                "sku": {
+                    "name": "OMS"
+                }
+            },
+            "resources": [
+                {
+                    "name": "[variables('assets').aaVariables.AzureSubscriptionId.name]",
+                    "type": "variables",
+                    "apiVersion": "2015-10-31",
+                    "dependsOn": [
+                        "[concat('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]"
+                    ],
+                    "tags": {},
+                    "properties": {
+                        "description": "[variables('assets').aaVariables.AzureSubscriptionId.description]",
+                        "value": "[concat('\"',subscription().subscriptionId,'\"')]"
+                    }
+                }
+            ]
+        },
+        {
+            "apiVersion": "2015-10-31",
+            "type": "Microsoft.Automation/automationAccounts/runbooks",
+            "name": "[concat(parameters('automationAccountName'), '/', variables('asrScripts').runbooks[copyIndex()].Name)]",
+            "location": "[parameters('automationRegion')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]"
+            ],
+            "copy": {
+                "name": "runbooksLoop",
+                "count": "[length(variables('asrScripts').runbooks)]"
+            },
+            "properties": {
+                "description": "[variables('asrScripts').runbooks[copyIndex()].description]",
+                "runbookType": "[variables('asrScripts').runbooks[copyIndex()].type]",
+                "logProgress": false,
+                "logVerbose": true,
+                "publishContentLink": {
+                    "uri": "[variables('asrScripts').runbooks[copyIndex()].url]",
+                    "version": "[variables('asrScripts').runbooks[copyIndex()].version]"
+                }
+            }
+        },
+        {
+            "apiVersion": "2015-10-31",
+            "type": "Microsoft.Automation/automationAccounts/modules",
+            "name": "[concat(parameters('automationAccountName'), '/', variables('azureRmProfile').name)]",
+            "location": "[parameters('automationRegion')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]"
+            ],
+            "properties": {
+                "contentLink": {
+                    "uri": "[variables('azureRmProfile').url]"
+                }
+            }
+        },
+        {
+            "apiVersion": "2015-10-31",
+            "type": "Microsoft.Automation/automationAccounts/modules",
+            "name": "[concat(parameters('automationAccountName'), '/', variables('asrScripts').modules[copyIndex()].Name)]",
+            "location": "[parameters('automationRegion')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]",
+                "[resourceId('Microsoft.Automation/automationAccounts/modules/', parameters('automationAccountName'), variables('azureRmProfile').name)]"
+            ],
+            "copy": {
+                "name": "modulesLoop",
+                "count": "[length(variables('asrScripts').modules)]"
+            },
+            "properties": {
+                "contentLink": {
+                    "uri": "[variables('asrScripts').modules[copyIndex()].url]"
+                }
+            }
+        }
+    ],
+    "outputs": {}
+}

@@ -1,35 +1,40 @@
 # VM-DSC-Extension-Azure-Automation-Pull-Server
 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/dsc-extension-azure-automation-pullserver/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/dsc-extension-azure-automation-pullserver/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/dsc-extension-azure-automation-pullserver/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/dsc-extension-azure-automation-pullserver/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/dsc-extension-azure-automation-pullserver/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/dsc-extension-azure-automation-pullserver/CredScanResult.svg" />&nbsp;
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdsc-extension-azure-automation-pullserver%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdsc-extension-azure-automation-pullserver%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true"/>
 </a>
 
-This template configures an existing Virtual Machine Local Configuration Manager (LCM) via the DSC extension, registering it to an existing Azure Automation Account DSC Pull Server.
+## UPDATE: THIS IS NO LONGER REQUIRED
 
-<b>NOTE:</b> The DSC configuration module requires four specific settings:
+This example was originally published
+to assist with onboarding new virtual machines in Azure
+to the Azure Automation DSC service.
+Based on customer feedback,
+as of
+[DSC Extension version 2.72](https://blogs.msdn.microsoft.com/powershell/2014/11/20/release-history-for-the-azure-dsc-extension/),
+a script to onboard machines is included in DSC Extension.
 
-1. modulesUrl: This parameter sets the URL for the zipped PS1 file responsible for passing the ARM Template values through the DSC VM Extension to configure the LCM, onboarding the VM to Azure Automation DSC. Both the Default value for this parameter and the azuredeploy.parameters.json for this template has the appropriate value for this parameter, as it references the RAW content URL for the provided module here in GitHub.
+To leverage the
+[Default Configuration Script](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/extensions-dsc-overview),
+you only need to
+[leave the Settings.Configuration values null](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/extensions-dsc-template#details)
+and provide values for
+[RegistrationKey, RegistrationID, and NodeConfigurationName](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/extensions-dsc-template#default-configuration-script).
 
-2. registrationKey: This parameter, combined with registrationUrl, enables the onboarding of the VM to Azure Automation DSC. This account specific Key can be found within the Azure Portal - Automation Account - All settings - Keys.
+## More Information
 
-3. registrationUrl: This parameter, combined with registrationKey, enables the onboarding of the VM to Azure Automation DSC. This account specific URL can be found within the Azure Portal - Automation Account - All settings - Keys.
+For more information on Azure Automation DSC (including more examples and usage), please see the
+[Azure Automation DSC Overview](http://aka.ms/DSCLearnMore).
 
-4. nodeConfigurationName: This parameter, identifies the name of the Azure Automation DSC Configuration to be applied to the VM, once it is onboarded. These Azure Automation DSC Configurations can be created and referenced within the Azure Portal - Automation Account - DSC Configurations.
-
-   i. As an example, nodeConfigurationName would be set to MyWebConfig.WebServer in the following PowerShell DSC Module snippet:
-
-      Configuration MyWebConfig {
-           Node "WebServer" {
-		   ...
-           }
-
-These prerequisites are available only after successful creation and configuration of an Azure Automation Account for Azure Automation DSC.
-
-For more information on Azure Automation DSC (including more examples and usage), please see the following: <a href="http://aka.ms/DSCLearnMore" target="_blank">Azure Automation DSC Overview</a>
-
-<b>DISCLAIMER:</b> This template does not create a new VM, it only includes what is necessary to create/update a DSC VM Extension for an existing VM. The contents of this template can be leveraged as part of a VM creation template, either by nesting, or copying/pasting the relevant template metadata.
-
-<b>Final Note:</b> A timestamp parameter is included in this template. It can be any unique string, but the current datetime, as a string, was chosen as an example. This is used to force the request to go through ARM even if all fields are the same as last ARM deployment of this template; example in parameters file is in MM/dd/yyyy H:mm:ss tt format.

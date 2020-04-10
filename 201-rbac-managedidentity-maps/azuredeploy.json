@@ -1,0 +1,66 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "location for the the resources to deploy."
+      }
+    },
+    "userAssignedIdentityName": {
+      "type": "string",
+      "metadata": {
+        "description": "the name of the Managed Identity resource."
+      }
+    },
+    "mapsAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "the name of the Azure Map Account"
+      }
+    },
+    "guid": {
+      "type": "string",
+      "defaultValue": "[guid(resourceGroup().id)]",
+      "metadata": {
+        "description": "Input string for new GUID associated with assigning built in role types"
+      }
+    }
+  },
+  "variables": {
+    "Azure Maps Data Reader": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '423170ca-a8f6-4b0f-8487-9e4eb8f49bfa')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+      "name": "[parameters('userAssignedIdentityName')]",
+      "apiVersion": "2018-11-30",
+      "location": "[parameters('location')]"
+    },
+    {
+      "apiVersion": "2018-05-01",
+      "name": "[parameters('mapsAccountName')]",
+      "location": "global",
+      "type": "Microsoft.Maps/accounts",
+      "sku": {
+        "name": "S0"
+      }
+    },
+    {
+      "apiVersion": "2018-09-01-preview",
+      "name": "[concat(parameters('mapsAccountName'), '/Microsoft.Authorization/', parameters('guid'))]",
+      "type": "Microsoft.Maps/accounts/providers/roleAssignments",
+      "dependsOn": [
+        "[parameters('mapsAccountName')]",
+        "[parameters('userAssignedIdentityName')]"
+      ],
+      "properties": {
+        "roleDefinitionId": "[variables('Azure Maps Data Reader')]",
+        "principalId": "[reference(parameters('userAssignedIdentityName')).principalId]",
+        "principalType": "ServicePrincipal"
+      }
+    }
+  ]
+}

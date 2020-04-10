@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "adminUsername": {
@@ -12,12 +12,6 @@
       "type": "securestring",
       "metadata": {
         "description": "Administrator password used when provisioning virtual machines (which is also a password for the system administrator in MongoDB)"
-      }
-    },
-    "storageAccountName": {
-      "type": "string",
-      "metadata": {
-        "description": "Unique namespace for the Storage Account where the Virtual Machine's disks will be placed (this name will be used as a prefix to create one or more storage accounts as per t-shirt size)"
       }
     },
     "virtualNetworkName": {
@@ -55,13 +49,6 @@
         "description": "The IP address prefix that will be used for constructing a static private IP address for each node in the cluster"
       }
     },
-    "storageNameForFrontEnd": {
-      "type": "string",
-      "defaultValue": "",
-      "metadata": {
-        "description": "Name of storage for front end VM's."
-      }
-    },
     "dnsNameForPublicIP": {
       "type": "string",
       "defaultValue": "",
@@ -71,19 +58,19 @@
     },
     "ubuntuOSVersion": {
       "type": "string",
-      "defaultValue": "14.04.2-LTS",
+      "defaultValue": "14.04.5-LTS",
       "allowedValues": [
         "12.04.2-LTS",
         "12.04.3-LTS",
         "12.04.4-LTS",
         "12.04.5-LTS",
         "12.10",
-        "14.04.2-LTS",
+        "14.04.5-LTS",
         "14.10",
         "15.10"
       ],
       "metadata": {
-        "description": "The Ubuntu version for the front end VM. This will pick a fully patched image of this given Ubuntu version. Allowed values: 12.04.2-LTS, 12.04.3-LTS, 12.04.4-LTS, 12.04.5-LTS, 12.10, 14.04.2-LTS, 14.10, 15.10."
+        "description": "The Ubuntu version for the front end VM. This will pick a fully patched image of this given Ubuntu version. Allowed values: 12.04.2-LTS, 12.04.3-LTS, 12.04.4-LTS, 12.04.5-LTS, 12.10, 14.04.5-LTS, 14.10, 15.10."
       }
     },
     "jumpbox": {
@@ -123,6 +110,13 @@
       "type": "securestring",
       "metadata": {
         "description": "The shared secret key for the MongoDB replica set"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
       }
     }
   },
@@ -194,10 +188,8 @@
       "installerPackages": "mongodb-org",
       "imagePublisher": "Canonical",
       "imageOffer": "UbuntuServer",
-      "imageSKU": "14.04.2-LTS"
+      "imageSKU": "14.04.5-LTS"
     },
-    "vmStorageAccountContainerName": "vhd-mongodb",
-    "vmStorageAccountDomain": ".blob.core.windows.net",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
     "sharedScriptUrl": "[concat('https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shared_scripts/', variables('osFamilySpec').osName, '/')]",
     "scriptUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/mongodb-nodejs-high-availability/",
@@ -213,19 +205,12 @@
     "commonSettings": {
       "availabilitySetName": "mongodbAvailSet"
     },
-    "storageSettings": {
-      "vhdStorageAccountName": "[parameters('storageAccountName')]",
-      "vhdContainerName": "[variables('vmStorageAccountContainerName')]",
-      "destinationVhdsContainer": "[concat('https://', parameters('storageAccountName'), variables('vmStorageAccountDomain'), '/', variables('vmStorageAccountContainerName'), '/')]",
-      "storageAccountCount": "[variables('clusterSpec').storageAccountCount]",
-      "storageNameForFrontEnd": "[parameters('storageNameForFrontEnd')]"
-    },
     "networkSettings": {
       "virtualNetworkName": "[parameters('virtualNetworkName')]",
       "addressPrefix": "[parameters('addressPrefix')]",
       "subnetName": "[parameters('subnetName')]",
       "subnetPrefix": "[parameters('subnetPrefix')]",
-      "subnetRef": "[concat(variables('vnetID'), '/subnets/', parameters('subnetName'))]",
+      "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'),  parameters('subnetName'))]",
       "machineIpPrefix": "[parameters('nodeAddressPrefix')]",
       "vnetID": "[variables('vnetID')]"
     },
@@ -314,9 +299,6 @@
           "commonSettings": {
             "value": "[variables('commonSettings')]"
           },
-          "storageSettings": {
-            "value": "[variables('storageSettings')]"
-          },
           "networkSettings": {
             "value": "[variables('networkSettings')]"
           }
@@ -339,13 +321,6 @@
         "parameters": {
           "commonSettings": {
             "value": "[variables('commonSettings')]"
-          },
-          "storageSettings": {
-            "value": {
-              "vhdStorageAccountName": "[concat(variables('storageSettings').vhdStorageAccountName, '0')]",
-              "vhdContainerName": "[variables('storageSettings').vhdContainerName]",
-              "destinationVhdsContainer": "[concat('https://', variables('storageSettings').vhdStorageAccountName, '0', variables('vmStorageAccountDomain'), '/', variables('storageSettings').vhdContainerName, '/')]"
-            }
           },
           "networkSettings": {
             "value": "[variables('networkSettings')]"
@@ -376,13 +351,6 @@
         "parameters": {
           "commonSettings": {
             "value": "[variables('commonSettings')]"
-          },
-          "storageSettings": {
-            "value": {
-              "vhdStorageAccountName": "[concat(variables('storageSettings').vhdStorageAccountName, variables(concat('storageAccountFor', parameters('tshirtSize'), '_', copyindex())))]",
-              "vhdContainerName": "[variables('storageSettings').vhdContainerName]",
-              "destinationVhdsContainer": "[concat('https://', variables('storageSettings').vhdStorageAccountName, variables(concat('storageAccountFor', parameters('tshirtSize'), '_', copyindex())), variables('vmStorageAccountDomain'), '/', variables('storageSettings').vhdContainerName, '/')]"
-            }
           },
           "networkSettings": {
             "value": "[variables('networkSettings')]"
@@ -420,13 +388,6 @@
           "commonSettings": {
             "value": "[variables('commonSettings')]"
           },
-          "storageSettings": {
-            "value": {
-              "vhdStorageAccountName": "[concat(variables('storageSettings').vhdStorageAccountName, variables(concat('storageAccountFor', parameters('tshirtSize'), '_', variables('clusterSpec').numberOfMembers)))]",
-              "vhdContainerName": "[variables('storageSettings').vhdContainerName]",
-              "destinationVhdsContainer": "[concat('https://', variables('storageSettings').vhdStorageAccountName, variables(concat('storageAccountFor', parameters('tshirtSize'), '_', variables('clusterSpec').numberOfMembers)), variables('vmStorageAccountDomain'), '/', variables('storageSettings').vhdContainerName, '/')]"
-            }
-          },
           "networkSettings": {
             "value": "[variables('networkSettings')]"
           },
@@ -463,13 +424,6 @@
           "commonSettings": {
             "value": "[variables('commonSettings')]"
           },
-          "storageSettings": {
-            "value": {
-              "vhdStorageAccountName": "[concat(variables('storageSettings').vhdStorageAccountName, '0')]",
-              "vhdContainerName": "[variables('storageSettings').vhdContainerName]",
-              "destinationVhdsContainer": "[concat('https://', variables('storageSettings').vhdStorageAccountName, '0', variables('vmStorageAccountDomain'), '/', variables('storageSettings').vhdContainerName, '/')]"
-            }
-          },
           "networkSettings": {
             "value": "[variables('networkSettings')]"
           },
@@ -503,9 +457,6 @@
         "parameters": {
           "commonSettings": {
             "value": "[variables('commonSettings')]"
-          },
-          "storageSettings": {
-            "value": "[variables('storageSettings')]"
           },
           "networkSettings": {
             "value": "[variables('networkSettings')]"

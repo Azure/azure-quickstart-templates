@@ -1,17 +1,11 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "adminUsername": {
       "type": "string",
       "metadata": {
         "description": "Admin username for VM"
-      }
-    },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Admin password for VM"
       }
     },
     "vmSize": {
@@ -47,6 +41,30 @@
       "metadata": {
         "description": "The name of your existing infrastructure in Atlas (username/infraName)"
       }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
     }
   },
   "variables": {
@@ -54,18 +72,27 @@
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetIDRef'))]",
     "subnet1Name": "Subnet-1",
     "customScriptFilePath": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/consul-on-ubuntu/install-consul.sh",
-    "vmStorageAccountContainerName": "vhds",
     "addressPrefix": "10.0.0.0/16",
     "subnet1Ref": "[concat(variables('vnetID'),'/subnets/', variables('subnet1Name'))]",
     "numberOfInstances": 3,
-    "apiVersion": "2015-06-15",
     "customScriptCommandToExecute": "bash install-consul.sh",
     "subnet1Prefix": "10.0.0.0/24",
     "publicIPAddressType": "Dynamic",
-    "imageSKU": "14.04.3-LTS",
+    "imageSKU": "14.04.5-LTS",
     "vnetIDRef": "[concat(parameters('appPrefix'),'_VNET')]",
     "imageOffer": "UbuntuServer",
-    "storageAccountName": "[concat(uniquestring(resourceGroup().id), parameters('appPrefix'))]"
+    "storageAccountName": "[concat(uniquestring(resourceGroup().id), parameters('appPrefix'))]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
@@ -73,14 +100,14 @@
         "accountType": "Standard_LRS"
       },
       "type": "Microsoft.Storage/storageAccounts",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "[variables('apiVersion')]",
+      "location": "[parameters('location')]",
+      "apiVersion": "2015-06-15",
       "name": "[variables('storageAccountName')]"
     },
     {
       "name": "[concat('publicIP', copyindex())]",
-      "apiVersion": "[variables('apiVersion')]",
-      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
       "copy": {
         "count": "[variables('numberOfInstances')]",
         "name": "ipLoop"
@@ -91,11 +118,17 @@
       }
     },
     {
-      "properties": {},
       "type": "Microsoft.Compute/availabilitySets",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "[variables('apiVersion')]",
-      "name": "[concat(parameters('appPrefix'),'_AS')]"
+      "location": "[parameters('location')]",
+      "apiVersion": "2017-12-01",
+      "name": "[concat(parameters('appPrefix'),'_AS')]",
+      "sku": {
+        "name": "Aligned"
+      },
+      "properties": {
+        "platformFaultDomainCount": 2,
+        "platformUpdateDomainCount": 5
+      }
     },
     {
       "properties": {
@@ -117,14 +150,14 @@
         ]
       },
       "type": "Microsoft.Network/networkSecurityGroups",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "[variables('apiVersion')]",
+      "location": "[parameters('location')]",
+      "apiVersion": "2015-06-15",
       "name": "[concat(parameters('appPrefix'),'_SG')]"
     },
     {
       "name": "[concat(parameters('appPrefix'),'_VNET')]",
-      "apiVersion": "[variables('apiVersion')]",
-      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/networkSecurityGroups/', parameters('appPrefix'),'_SG')]"
       ],
@@ -147,8 +180,8 @@
     },
     {
       "name": "[concat(parameters('appPrefix'),'_LB')]",
-      "apiVersion": "[variables('apiVersion')]",
-      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', parameters('appPrefix'),'_VNET')]"
       ],
@@ -204,8 +237,8 @@
     },
     {
       "name": "[concat(parameters('appPrefix'),'_nic1', copyindex())]",
-      "apiVersion": "[variables('apiVersion')]",
-      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', 'publicIP', copyindex())]",
         "[concat('Microsoft.Network/virtualNetworks/', parameters('appPrefix'),'_VNET')]",
@@ -243,8 +276,8 @@
     },
     {
       "name": "[concat(parameters('appPrefix'), '_vm', copyIndex())]",
-      "apiVersion": "[variables('apiVersion')]",
-      "location": "[resourceGroup().location]",
+      "apiVersion": "2017-03-30",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/networkInterfaces/', parameters('appPrefix'),'_nic1', copyIndex())]",
         "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
@@ -262,7 +295,8 @@
         "osProfile": {
           "adminUsername": "[parameters('adminUsername')]",
           "computerName": "[concat('vm', copyIndex())]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "availabilitySet": {
           "id": "[resourceId('Microsoft.Compute/availabilitySets', concat(parameters('appPrefix'),'_AS'))]"
@@ -276,11 +310,8 @@
           },
           "osDisk": {
             "caching": "ReadWrite",
-            "vhd": {
-              "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/vhds/','osdisk', copyIndex(), '.vhd')]"
-            },
-            "createOption": "FromImage",
-            "name": "osdisk"
+            "name": "[concat(parameters('appPrefix'), '_vm', copyIndex(),'_OSDisk')]",
+            "createOption": "FromImage"
           }
         },
         "networkProfile": {
@@ -297,8 +328,8 @@
     },
     {
       "name": "[concat(parameters('appPrefix'), '_vm', copyIndex(), '/extension')]",
-      "apiVersion": "[variables('apiVersion')]",
-      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', parameters('appPrefix'), '_vm', copyIndex())]"
       ],
@@ -309,16 +340,16 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
-		"type": "CustomScript",
-		"typeHandlerVersion": "2.0",
-		"autoUpgradeMinorVersion": true,
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
             "[variables('customScriptFilePath')]"
           ]
         },
         "protectedSettings": {
-            "commandToExecute": "[concat(variables('customScriptCommandToExecute'),' ', parameters('existingAtlasInfraName'), ' ', parameters('existingAtlasToken'))]"
+          "commandToExecute": "[concat(variables('customScriptCommandToExecute'),' ', parameters('existingAtlasInfraName'), ' ', parameters('existingAtlasToken'))]"
         }
       }
     }

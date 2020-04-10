@@ -75,17 +75,17 @@ Before we can get started, you need to register with GitHub. Either create or lo
 
 ![Fork the repo](images/git1.png)
 
-This will create a copy of the repository as it exists in the `azure` organization (hence called azure/azure-quick-start-templates) in your own account.
+This will create a copy of the repository as it exists in the `azure` organization (hence called azure/azure-quickstart-templates) in your own account.
 
-### Clone the Azure Quick-start Template Repository to your Machine
-Visit your fork (which should be at github.com/{your_name}/azure-quick-start-templates) and copy the "HTTPS Clone URL". Using this URL, you're able to `clone` the repository, which is really just a fancy way of saying "download the whole repository, including its history and information about its origin".
+### Clone the Azure QuickStart Templates Repository to your Machine
+Visit your fork (which should be at github.com/{your_name}/azure-quickstart-templates) and copy the "HTTPS Clone URL". Using this URL, you're able to `clone` the repository, which is really just a fancy way of saying "download the whole repository, including its history and information about its origin".
 
 ![Clone the repo](images/git2.png)
 
 Now that you have Git installed, open up PowerShell. If everything worked correctly, you should be able to run `git --version`. If that works, navigate to a folder where you'd like to keep the `arm-templates` repository (and hence, all your arm templates). To get a copy of your fork onto your local machine, run:
 
 ```
-git clone https://github.com/{YOUR_USERNAME}/azure-quick-start-templates
+git clone https://github.com/{YOUR_USERNAME}/azure-quickstart-templates
 ```
 
 This should generate output that looks roughly like this:
@@ -96,7 +96,7 @@ Copyright (C) 2015 Microsoft Corporation. All rights reserved.
 
 C:\Users\feriese> git --version
 git version 1.9.5.msysgit.1
-C:\Users\feriese> git clone https://github.com/sedouard/azure-quick-start-templates
+C:\Users\feriese> git clone https://github.com/sedouard/azure-quickstart-templates
 Cloning into 'arm-templates'...
 remote: Counting objects: 1027, done.
 remote: Compressing objects: 100% (4/4), done.
@@ -117,7 +117,7 @@ git remote -v
 The output should be:
 
 ```
-C:\Users\sedouard\azure-quick-start-templates [master]> git remote -v
+C:\Users\sedouard\azure-quickstart-templates [master]> git remote -v
 origin  https://github.com/sedouard/arm-templates (fetch)
 origin  https://github.com/sedouard/arm-templates (push)
 ```
@@ -125,7 +125,7 @@ origin  https://github.com/sedouard/arm-templates (push)
 As you can see, we're connected to your fork of the arm-templates (called "origin"), but currently not connected to the upstream version living in `catalystcode/arm-templates`. To change that, we can simply add remotes. Run the following command:
 
 ```
-git remote add upstream https://github.com/azure/azure-quick-start-templates
+git remote add upstream https://github.com/Azure/azure-quickstart-templates
 ```
 
 Entering `git remote -v` again should give you both repositories - both yours (called "origin") and the one for the whole team (called "upstream").

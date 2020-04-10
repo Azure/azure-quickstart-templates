@@ -1,5 +1,5 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "_artifactsLocation": {
@@ -10,11 +10,11 @@
       "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/chef-ha-cluster/scripts"
     },
     "_artifactsLocationSasToken": {
-        "type": "securestring",
-        "metadata": {
-            "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
-        },
-        "defaultValue": ""
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
     },
     "_secretsLocation": {
       "type": "string",
@@ -38,7 +38,7 @@
     },
     "chefBEType": {
       "type": "string",
-      "defaultValue": "Premium_LRS",
+      "defaultValue": "Standard_LRS",
       "allowedValues": [
         "Standard_LRS",
         "Standard_ZRS",
@@ -52,7 +52,7 @@
     },
     "chefBEvmSize": {
       "type": "string",
-      "defaultValue": "Standard_DS3_v2",
+      "defaultValue": "Standard_D3_v2",
       "allowedValues": [
         "Standard_DS1",
         "Standard_DS2",
@@ -107,8 +107,12 @@
     },
     "chefFEvmSize": {
       "type": "string",
-      "defaultValue": "Standard_A3",
+      "defaultValue": "Standard_F4",
       "allowedValues": [
+        "Standard_F1",
+        "Standard_F2",
+        "Standard_F4",
+        "Standard_F16",
         "Standard_DS1",
         "Standard_DS2",
         "Standard_DS3",
@@ -178,7 +182,6 @@
     "LeaderSetupScriptFileName": "BELeaderSetup.sh",
     "loadBalancerName": "cheffelb",
     "location": "[resourceGroup().location]",
-    "natPoolName": "chefnatpool",
     "osType": {
       "publisher": "Canonical",
       "offer": "UbuntuServer",
@@ -187,12 +190,14 @@
     },
     "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]",
     "publicIPAddressName": "chefpublicip",
-    "sshKeyPath": "[concat('/home/',parameters('adminUserName'),'/.ssh/authorized_keys')]",
+    "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
     "subnetName": "chefsubnet",
     "subnetPrefix": "10.0.0.0/24",
-    "SubnetRef": "[concat(variables('VnetID'), '/subnets/', variables('subnetName'))]",
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'),  variables('subnetName'))]",
     "virtualNetworkName": "chefvnet",
-    "VnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+    "tagvalues": {
+      "provider": "[toUpper('33194f91-eb5f-4110-827a-e95f640a9e46')]"
+    }
   },
   "resources": [
     {
@@ -201,12 +206,13 @@
       "location": "[variables('location')]",
       "apiVersion": "2015-06-15",
       "tags": {
-        "displayName": "ChefVirtualNetwork"
+        "displayName": "ChefVirtualNetwork",
+        "provider": "[variables('tagvalues').provider]"
       },
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
-            "[variables('addressPrefix')]"
+            "[variables('addressPrefix')]"            
           ]
         },
         "subnets": [
@@ -224,9 +230,10 @@
       "type": "Microsoft.Storage/storageAccounts",
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
-      "dependsOn": [ ],
+      "dependsOn": [],
       "tags": {
-        "displayName": "BEStorage"
+        "displayName": "BEStorage",
+        "provider": "[variables('tagvalues').provider]"
       },
       "properties": {
         "accountType": "[parameters('chefBEType')]"
@@ -237,9 +244,10 @@
       "type": "Microsoft.Storage/storageAccounts",
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
-      "dependsOn": [ ],
+      "dependsOn": [],
       "tags": {
-        "displayName": "FEStorage"
+        "displayName": "FEStorage",
+        "provider": "[variables('tagvalues').provider]"
       },
       "properties": {
         "accountType": "[parameters('chefFEType')]"
@@ -251,7 +259,8 @@
       "location": "[variables('location')]",
       "apiVersion": "2015-06-15",
       "tags": {
-        "displayName": "FEPublicIP"
+        "displayName": "FEPublicIP",
+        "provider": "[variables('tagvalues').provider]"
       },
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
@@ -266,7 +275,8 @@
       "location": "[variables('location')]",
       "apiVersion": "2015-06-15",
       "tags": {
-        "displayName": "FELoadBalancer"
+        "displayName": "FELoadBalancer",
+        "provider": "[variables('tagvalues').provider]"
       },
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
@@ -294,7 +304,7 @@
               "frontendIPConfiguration": {
                 "id": "[variables('frontEndIPConfigID')]"
               },
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "frontendPort": 50000,
               "backendPort": 22,
               "enableFloatingIP": false
@@ -306,7 +316,7 @@
               "frontendIPConfiguration": {
                 "id": "[variables('frontEndIPConfigID')]"
               },
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "frontendPort": 50001,
               "backendPort": 22,
               "enableFloatingIP": false
@@ -318,7 +328,7 @@
               "frontendIPConfiguration": {
                 "id": "[variables('frontEndIPConfigID')]"
               },
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "frontendPort": 50002,
               "backendPort": 22,
               "enableFloatingIP": false
@@ -339,9 +349,13 @@
             "name": "https",
             "properties": {
               "protocol": "Tcp",
-              "backendAddressPool": { "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('loadBalancerName'), '/backendAddressPools/', variables('bePoolName'))]" },
+              "backendAddressPool": {
+                "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('loadBalancerName'), '/backendAddressPools/', variables('bePoolName'))]"
+              },
               "backendPort": 443,
-              "frontendIPConfiguration": { "id": "[variables('frontEndIPConfigID')]" },
+              "frontendIPConfiguration": {
+                "id": "[variables('frontEndIPConfigID')]"
+              },
               "frontendPort": 443,
               "probe": {
                 "id": "[variables('lbProbeID')]"
@@ -353,9 +367,13 @@
             "name": "http",
             "properties": {
               "protocol": "Tcp",
-              "backendAddressPool": { "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('loadBalancerName'), '/backendAddressPools/', variables('bePoolName'))]" },
+              "backendAddressPool": {
+                "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('loadBalancerName'), '/backendAddressPools/', variables('bePoolName'))]"
+              },
               "backendPort": 80,
-              "frontendIPConfiguration": { "id": "[variables('frontEndIPConfigID')]" },
+              "frontendIPConfiguration": {
+                "id": "[variables('frontEndIPConfigID')]"
+              },
               "frontendPort": 80,
               "probe": {
                 "id": "[variables('lbProbeID')]"
@@ -370,11 +388,16 @@
       "name": "[variables('ChefBEAvailName')]",
       "type": "Microsoft.Compute/availabilitySets",
       "location": "[resourceGroup().location]",
-      "apiVersion": "2015-06-15",
-      "dependsOn": [ ],
+      "apiVersion": "2017-12-01", 
+
+      "dependsOn": [],
       "tags": {
-        "displayName": "BEAvailSet"
+        "displayName": "BEAvailSet",
+        "provider": "[variables('tagvalues').provider]"
       },
+      "sku": {
+        "name": "Aligned"
+        },
       "properties": {
         "platformUpdateDomainCount": 3,
         "platformFaultDomainCount": 3
@@ -384,11 +407,15 @@
       "name": "[variables('ChefFEAvailName')]",
       "type": "Microsoft.Compute/availabilitySets",
       "location": "[resourceGroup().location]",
-      "apiVersion": "2015-06-15",
-      "dependsOn": [ ],
+      "apiVersion": "2017-12-01", 
+      "dependsOn": [],
       "tags": {
-        "displayName": "FEAvailSet"
+        "displayName": "FEAvailSet",
+        "provider": "[variables('tagvalues').provider]"
       },
+      "sku": {
+        "name": "Aligned"
+        },
       "properties": {
         "platformUpdateDomainCount": 3,
         "platformFaultDomainCount": 3
@@ -403,7 +430,8 @@
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
       ],
       "tags": {
-        "displayName": "BE0Nic"
+        "displayName": "BE0Nic",
+        "provider": "[variables('tagvalues').provider]"
       },
       "properties": {
         "ipConfigurations": [
@@ -415,7 +443,6 @@
                 "id": "[variables('SubnetRef')]"
               },
               "privateIPAddress": "10.0.0.10"
-
             }
           }
         ]
@@ -425,14 +452,15 @@
       "name": "BE0",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[variables('location')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30", 
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('chefbeName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', 'BE0Nic')]",
         "[concat('Microsoft.Compute/availabilitySets/',variables('ChefBEAvailName'))]"
       ],
       "tags": {
-        "displayName": "BE0"
+        "displayName": "BE0",
+        "provider": "[variables('tagvalues').provider]"
       },
       "properties": {
         "hardwareProfile": {
@@ -452,15 +480,12 @@
               ]
             }
           }
-
         },
         "storageProfile": {
           "imageReference": "[variables('imageReference')]",
           "osDisk": {
-            "name": "BE0OSDisk",
-            "vhd": {
-              "uri": "[concat('http://', variables('chefbeName'), '.blob.', parameters('storageURL'), '/', variables('BEStorageAccountContainerName'), '/', 'BE0OSDisk', '.vhd')]"
-            },
+            
+            "name": "[concat('BE0','_OSDisk')]",  
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -514,7 +539,8 @@
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
       ],
       "tags": {
-        "displayName": "BE1Nic"
+        "displayName": "BE1Nic",
+        "provider": "[variables('tagvalues').provider]"
       },
       "properties": {
         "ipConfigurations": [
@@ -526,7 +552,6 @@
                 "id": "[variables('SubnetRef')]"
               },
               "privateIPAddress": "10.0.0.11"
-
             }
           }
         ]
@@ -536,14 +561,15 @@
       "name": "BE1",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[variables('location')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30", 
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('chefbeName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', 'BE1Nic')]",
         "[concat('Microsoft.Compute/availabilitySets/',variables('ChefBEAvailName'))]"
       ],
       "tags": {
-        "displayName": "BE1"
+        "displayName": "BE1",
+        "provider": "[variables('tagvalues').provider]"
       },
       "properties": {
         "hardwareProfile": {
@@ -563,15 +589,11 @@
               ]
             }
           }
-
         },
         "storageProfile": {
           "imageReference": "[variables('imageReference')]",
           "osDisk": {
-            "name": "BE1OSDisk",
-            "vhd": {
-              "uri": "[concat('http://', variables('chefbeName'), '.blob.', parameters('storageURL'), '/', variables('BEStorageAccountContainerName'), '/', 'BE1OSDisk', '.vhd')]"
-            },
+            "name": "[concat('BE1','_OSDisk')]", 
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -596,7 +618,6 @@
           "dependsOn": [
             "[concat('Microsoft.Compute/virtualMachines/', 'BE1')]",
             "[resourceId('Microsoft.Compute/virtualMachines/extensions', 'BE0', 'BE0Setup')]"
-
           ],
           "tags": {
             "displayName": "BE1Setup"
@@ -627,7 +648,8 @@
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
       ],
       "tags": {
-        "displayName": "BE2Nic"
+        "displayName": "BE2Nic",
+        "provider": "[variables('tagvalues').provider]"
       },
       "properties": {
         "ipConfigurations": [
@@ -639,7 +661,6 @@
                 "id": "[variables('SubnetRef')]"
               },
               "privateIPAddress": "10.0.0.12"
-
             }
           }
         ]
@@ -649,14 +670,15 @@
       "name": "BE2",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[variables('location')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30", 
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('chefbeName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', 'BE2Nic')]",
         "[concat('Microsoft.Compute/availabilitySets/',variables('ChefBEAvailName'))]"
       ],
       "tags": {
-        "displayName": "BE2"
+        "displayName": "BE2",
+        "provider": "[variables('tagvalues').provider]"
       },
       "properties": {
         "hardwareProfile": {
@@ -676,15 +698,12 @@
               ]
             }
           }
-
         },
         "storageProfile": {
           "imageReference": "[variables('imageReference')]",
           "osDisk": {
-            "name": "BE2OSDisk",
-            "vhd": {
-              "uri": "[concat('http://', variables('chefbeName'), '.blob.', parameters('storageURL'), '/', variables('BEStorageAccountContainerName'), '/', 'BE2OSDisk', '.vhd')]"
-            },
+            
+           "name": "[concat('BE2','_OSDisk')]", 
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -741,7 +760,8 @@
         "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]"
       ],
       "tags": {
-        "displayName": "FE0Nic"
+        "displayName": "FE0Nic",
+        "provider": "[variables('tagvalues').provider]"
       },
       "properties": {
         "ipConfigurations": [
@@ -763,7 +783,6 @@
                   "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('loadBalancerName'), '/inboundNatRules/ssh-fe0')]"
                 }
               ]
-
             }
           }
         ]
@@ -773,14 +792,15 @@
       "name": "FE0",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[variables('location')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30", 
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('cheffeName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', 'FE0Nic')]",
         "[concat('Microsoft.Compute/availabilitySets/',variables('ChefFEAvailName'))]"
       ],
       "tags": {
-        "displayName": "FE0"
+        "displayName": "FE0",
+        "provider": "[variables('tagvalues').provider]"
       },
       "properties": {
         "hardwareProfile": {
@@ -800,15 +820,12 @@
               ]
             }
           }
-
         },
         "storageProfile": {
           "imageReference": "[variables('imageReference')]",
           "osDisk": {
-            "name": "FE0OSDisk",
-            "vhd": {
-              "uri": "[concat('http://', variables('cheffeName'), '.blob.', parameters('storageURL'), '/', variables('FEStorageAccountContainerName'), '/', 'FE0OSDisk', '.vhd')]"
-            },
+            
+            "name": "[concat('FE0','_OSDisk')]", 
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -866,7 +883,8 @@
         "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]"
       ],
       "tags": {
-        "displayName": "FE1Nic"
+        "displayName": "FE1Nic",
+        "provider": "[variables('tagvalues').provider]"
       },
       "properties": {
         "ipConfigurations": [
@@ -888,7 +906,6 @@
                   "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('loadBalancerName'), '/inboundNatRules/ssh-fe1')]"
                 }
               ]
-
             }
           }
         ]
@@ -898,14 +915,15 @@
       "name": "FE1",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[variables('location')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion":  "2017-03-30", 
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('cheffeName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', 'FE1Nic')]",
         "[concat('Microsoft.Compute/availabilitySets/',variables('ChefFEAvailName'))]"
       ],
       "tags": {
-        "displayName": "FE1"
+        "displayName": "FE1",
+        "provider": "[variables('tagvalues').provider]"
       },
       "properties": {
         "hardwareProfile": {
@@ -925,15 +943,11 @@
               ]
             }
           }
-
         },
         "storageProfile": {
           "imageReference": "[variables('imageReference')]",
           "osDisk": {
-            "name": "FE1OSDisk",
-            "vhd": {
-              "uri": "[concat('http://', variables('cheffeName'), '.blob.', parameters('storageURL'), '/', variables('FEStorageAccountContainerName'), '/', 'FE1OSDisk', '.vhd')]"
-            },
+            "name": "[concat('FE1','_OSDisk')]", 
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -989,7 +1003,8 @@
         "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]"
       ],
       "tags": {
-        "displayName": "FE2Nic"
+        "displayName": "FE2Nic",
+        "provider": "[variables('tagvalues').provider]"
       },
       "properties": {
         "ipConfigurations": [
@@ -1011,7 +1026,6 @@
                   "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('loadBalancerName'), '/inboundNatRules/ssh-fe2')]"
                 }
               ]
-
             }
           }
         ]
@@ -1021,14 +1035,15 @@
       "name": "FE2",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[variables('location')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30", 
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('cheffeName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', 'FE2Nic')]",
         "[concat('Microsoft.Compute/availabilitySets/',variables('ChefFEAvailName'))]"
       ],
       "tags": {
-        "displayName": "FE2"
+        "displayName": "FE2",
+        "provider": "[variables('tagvalues').provider]"
       },
       "properties": {
         "hardwareProfile": {
@@ -1048,15 +1063,12 @@
               ]
             }
           }
-
         },
         "storageProfile": {
           "imageReference": "[variables('imageReference')]",
           "osDisk": {
-            "name": "FE2OSDisk",
-            "vhd": {
-              "uri": "[concat('http://', variables('cheffeName'), '.blob.', parameters('storageURL'), '/', variables('FEStorageAccountContainerName'), '/', 'FE2OSDisk', '.vhd')]"
-            },
+           
+            "name": "[concat('FE2','_OSDisk')]", 
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }

@@ -1,0 +1,211 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "omsWorkspaceName": {
+      "type": "string",
+      "defaultValue": "[concat('log-analytics-workspace-', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Input the name of your Log Analytic Workspace, a new workspace will be created if workspace with given name and location doesn't exist."
+      }
+    },
+    "omsWorkspaceRegion": {
+      "type": "string",
+      "defaultValue": "East US",
+      "allowedValues": [
+        "Australia Southeast",
+        "East US",
+        "Japan East",
+        "Southeast Asia",
+        "UK South",
+        "West Central US",
+        "West Europe",
+        "North Europe"
+      ],
+      "metadata": {
+        "description": "Specify the region for your Workspace"
+      }
+    },
+    "azureMonitorPricingModel": {
+      "type": "string",
+      "defaultValue": "Pre April 2018",
+      "allowedValues": [
+          "Pre April 2018",
+          "April 2018"
+      ],
+      "metadata": {
+        "description": "Select Azure Monitor pricing model your subscription has enabled, NOTE that April 2018 pricing model would be enabled automatically if you onboard Azure Monitor later than April 2, 2018"
+      }
+    },
+    "omsWorkspaceSku": {
+      "type": "string",
+      "defaultValue": "free",
+      "allowedValues": [
+        "free",
+        "pernode",
+        "standalone"
+      ],
+      "metadata": {
+        "description": "Select the SKU for your workspace [This setting will be ignored if you enabled new pricing model April 2018]"
+      }
+    },
+    "cloudFoundryVersion": {
+      "type": "string",
+      "defaultValue": "2.0+",
+      "allowedValues": [
+        "2.0+",
+        "1.12 or earlier"
+      ],
+      "metadata": {
+        "description": "Cloud Foundry environment has version 2.0+"
+      }
+    },
+    "systemMetricsProvider": {
+      "type": "string",
+      "defaultValue": "BOSH Health Metrics Forwarder Only",
+      "allowedValues": [
+        "None",
+        "Microsoft Azure OMS Agent Only",
+        "BOSH Health Metrics Forwarder Only",
+        "Both Azure OMS Agent and BOSH Health Metrics Forwarder"
+      ],
+      "metadata": {
+        "description": "Select your provider of system metrics"
+      }
+    },
+    "actionGroupName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the action group for alert actions"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/oms-cloudfoundry-solution",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located"
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated"
+      }
+    }
+  },
+  "variables": {
+    "nestedTemplates": {
+      "omsWorkspace": "[uri(concat(parameters('_artifactsLocation'), '/'), concat('nested/omsWorkspace.json', parameters('_artifactsLocationSasToken')))]",
+      "omsSavedSearches": "[uri(concat(parameters('_artifactsLocation'), '/'), concat('nested/omsSavedSearches.json', parameters('_artifactsLocationSasToken')))]",
+      "omsCustomViews": "[uri(concat(parameters('_artifactsLocation'), '/'), concat('nested/omsCustomViews.json', parameters('_artifactsLocationSasToken')))]",
+      "omsAlerts": "[uri(concat(parameters('_artifactsLocation'), '/'), concat('nested/omsAlerts.json', parameters('_artifactsLocationSasToken')))]"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2016-02-01",
+      "name": "omsWorkspace",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('nestedTemplates').omsWorkspace]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "omsWorkspaceName": {
+            "value": "[parameters('omsWorkspaceName')]"
+          },
+          "omsWorkspaceRegion": {
+            "value": "[parameters('omsWorkspaceRegion')]"
+          },
+          "omsWorkspaceSku": {
+            "value": "[parameters('omsWorkspaceSku')]"
+          },
+          "azureMonitorPricingModel" : {
+            "value": "[parameters('azureMonitorPricingModel')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2016-02-01",
+      "name": "omsSavedSearches",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'omsWorkspace')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('nestedTemplates').omsSavedSearches]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "omsWorkspaceName": {
+            "value": "[parameters('omsWorkspaceName')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2016-02-01",
+      "name": "omsCustomViews",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'omsWorkspace')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('nestedTemplates').omsCustomViews]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "omsWorkspaceName": {
+            "value": "[parameters('omsWorkspaceName')]"
+          },
+          "omsWorkspaceRegion": {
+            "value": "[parameters('omsWorkspaceRegion')]"
+          },
+          "systemMetricsProvider": {
+            "value": "[parameters('systemMetricsProvider')]"
+          },
+          "cloudFoundryVersion": {
+            "value": "[parameters('cloudFoundryVersion')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2016-02-01",
+      "name": "omsAlerts",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'omsWorkspace')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('nestedTemplates').omsAlerts]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "omsWorkspaceName": {
+            "value": "[parameters('omsWorkspaceName')]"
+          },
+          "actionGroupName": {
+            "value": "[parameters('actionGroupName')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "omsPortal": {
+      "type": "string",
+      "value": "[concat('https://', parameters('omsWorkspaceName'), '.portal.mms.microsoft.com')]"
+    }
+  }
+}

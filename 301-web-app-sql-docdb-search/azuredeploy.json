@@ -1,12 +1,12 @@
-﻿{
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "databaseAccountName": {
       "type": "string",
       "minLength": 3,
       "metadata": {
-        "description": "The DocumentDB database account name."
+        "description": "The Azure Cosmos DB database account name."
       }
     },
     "consistencyLevel": {
@@ -19,7 +19,7 @@
         "BoundedStaleness"
       ],
       "metadata": {
-        "description": "The DocumentDB default consistency level for this account."
+        "description": "The Azure Cosmos DB default consistency level for this account."
       }
     },
     "maxStalenessPrefix": {
@@ -190,14 +190,21 @@
         "description": "The number of search partitions"
       }
     },
-    "documentDBofferType": {
+    "documentDBOfferType": {
       "type": "string",
       "defaultValue": "Standard",
       "allowedValues": [
         "Standard"
       ],
       "metadata": {
-        "description": "The DocumentDB offer type"
+        "description": "The Azure Cosmos DB offer type"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
       }
     }
   },
@@ -210,26 +217,32 @@
       "apiVersion": "2015-04-08",
       "type": "Microsoft.DocumentDB/databaseAccounts",
       "name": "[parameters('databaseAccountName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "tags": {
         "displayName": "DocumentDB"
       },
       "properties": {
         "name": "[parameters('databaseAccountName')]",
-        "databaseAccountOfferType": "[parameters('documentDBofferType')]",
+        "databaseAccountOfferType": "[parameters('documentDBOfferType')]",
         "consistencyPolicy": {
           "defaultConsistencyLevel": "[parameters('consistencyLevel')]",
           "maxStalenessPrefix": "[parameters('maxStalenessPrefix')]",
           "maxIntervalInSeconds": "[parameters('maxIntervalInSeconds')]"
-        }
+        },
+        "locations": [
+          {
+            "locationName": "[parameters('location')]",
+            "failoverPriority": 0
+          }
+        ]
       }
     },
     {
       "name": "[variables('sqlServerName')]",
       "type": "Microsoft.Sql/servers",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2014-04-01-preview",
-      "dependsOn": [ ],
+      "dependsOn": [],
       "tags": {
         "displayName": "SQL Server"
       },
@@ -242,7 +255,7 @@
         {
           "name": "AllowAllWindowsAzureIps",
           "type": "firewallrules",
-          "location": "[resourceGroup().location]",
+          "location": "[parameters('location')]",
           "apiVersion": "2014-04-01-preview",
           "dependsOn": [
             "[concat('Microsoft.Sql/servers/', variables('sqlServerName'))]"
@@ -255,7 +268,7 @@
         {
           "name": "[parameters('sqlDatabaseName')]",
           "type": "databases",
-          "location": "[resourceGroup().location]",
+          "location": "[parameters('location')]",
           "apiVersion": "2014-04-01-preview",
           "dependsOn": [
             "[variables('sqlServerName')]"
@@ -275,9 +288,9 @@
     {
       "name": "[parameters('webAppName')]",
       "type": "Microsoft.Web/serverfarms",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2014-06-01",
-      "dependsOn": [ ],
+      "dependsOn": [],
       "tags": {
         "displayName": "App Service Plan"
       },
@@ -291,7 +304,7 @@
     {
       "name": "[parameters('webAppName')]",
       "type": "Microsoft.Web/sites",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2015-08-01",
       "dependsOn": [
         "[concat('Microsoft.Web/serverfarms/', parameters('webAppName'))]"
@@ -304,16 +317,14 @@
         "name": "[parameters('webAppName')]",
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms/', parameters('webAppName'))]"
       },
-      "resources": [
-        
-      ]
+      "resources": []
     },
     {
       "name": "[variables('storageAccountName')]",
       "type": "Microsoft.Storage/storageAccounts",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2015-06-15",
-      "dependsOn": [ ],
+      "dependsOn": [],
       "tags": {
         "displayName": "Storage Account"
       },
@@ -325,7 +336,7 @@
       "apiVersion": "2015-02-28",
       "name": "[parameters('azureSearchname')]",
       "type": "Microsoft.Search/searchServices",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "tags": {
         "displayName": "Azure Search"
       },
@@ -337,21 +348,20 @@
         "partitionCount": "[parameters('azureSearchpartitionCount')]"
       }
     },
-      {
-          "name": "appinsights",
-          "type": "Microsoft.Insights/components",
-          "location": "Central US",
-          "apiVersion": "2014-04-01",
-        "dependsOn": [
-          "[concat('Microsoft.Web/sites/', parameters('webAppName'))]"
-        ],
-          "tags": {
-              "displayName": "Application Insights"
-          },
-        "properties": {
-          "applicationId": "[parameters('webAppName')]"
-        }
+    {
+      "name": "appinsights",
+      "type": "Microsoft.Insights/components",
+      "location": "Central US",
+      "apiVersion": "2014-04-01",
+      "dependsOn": [
+        "[concat('Microsoft.Web/sites/', parameters('webAppName'))]"
+      ],
+      "tags": {
+        "displayName": "Application Insights"
+      },
+      "properties": {
+        "applicationId": "[parameters('webAppName')]"
       }
-
+    }
   ]
 }

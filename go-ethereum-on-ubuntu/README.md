@@ -1,10 +1,19 @@
 # Geth Private Node
 
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/go-ethereum-on-ubuntu/PublicLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/go-ethereum-on-ubuntu/PublicDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/go-ethereum-on-ubuntu/FairfaxLastTestDate.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/go-ethereum-on-ubuntu/FairfaxDeployment.svg" />&nbsp;
+
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/go-ethereum-on-ubuntu/BestPracticeResult.svg" />&nbsp;
+<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/go-ethereum-on-ubuntu/CredScanResult.svg" />&nbsp;
+
 This Microsoft Azure template deploys a single Ethereum client with a private chain for development and testing.
 
-[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fgo-ethereum-on-ubuntu%2Fazuredeploy.json)
+[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fgo-ethereum-on-ubuntu%2Fazuredeploy.json)
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fgo-ethereum-on-ubuntu%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
+    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true"/>
 </a>
 
 Once your deployment is complete you will have a sandbox environment with:
@@ -93,7 +102,7 @@ Great - we have the source, and the compiled version of this source. Unfortunate
 The next step is to use the web3 ethereum helpers to instantiate a contract object:
 
 ```
-var contract = web3.eth.contract(guestBookCompiled.GuestBook.info.abiDefinition);
+var contract = web3.eth.contract(guestBookCompiled['<stdin>:GuestBook'].info.abiDefinition);
 ```
 
 This will give us an instantiated contract object containing the all important `new` function. `new` is what we'll use to actually deploy the contract to your Ethereum private network. Since we're in Javascript land, `new` takes a call back as its final parameter to notify us of successful or failed deployment; lets set up this call back first:
@@ -136,7 +145,6 @@ personal.unlockAccount(personal.listAccounts[0])
 ```
 var guestBook = contract.new(initializer, callback);
 ```
-
 
 Congratulations - you have a contract deployed to the Ethereum network!
 
@@ -228,3 +236,4 @@ Now if we read from the contract:
 ```
 
 Congratulations! Your first contract is alive and well on your private Ethereum blockchain.
+

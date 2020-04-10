@@ -83,25 +83,25 @@ sudo slurmd >> /tmp/azuredeploy.log.$$ 2>&1 # Start the node
 
 # Install slurm on all nodes by running apt-get
 # Also push munge key and slurm.conf to them
-echo "Prepare the local copy of munge key" >> /tmp/azuredeploy.log.$$ 2>&1 
+echo "Prepare the local copy of munge key" >> /tmp/azuredeploy.log.$$ 2>&1
 
 mungekey=/tmp/munge.key.$$
 sudo cp -f /etc/munge/munge.key $mungekey
 sudo chown $ADMIN_USERNAME $mungekey
 
-echo "Start looping all workers" >> /tmp/azuredeploy.log.$$ 2>&1 
+echo "Start looping all workers" >> /tmp/azuredeploy.log.$$ 2>&1
 
 i=0
 while [ $i -lt $NUM_OF_VM ]
 do
    worker=$WORKER_NAME$i
 
-   echo "SCP to $worker"  >> /tmp/azuredeploy.log.$$ 2>&1 
-   sudo -u $ADMIN_USERNAME scp $mungekey $ADMIN_USERNAME@$worker:/tmp/munge.key >> /tmp/azuredeploy.log.$$ 2>&1 
+   echo "SCP to $worker"  >> /tmp/azuredeploy.log.$$ 2>&1
+   sudo -u $ADMIN_USERNAME scp $mungekey $ADMIN_USERNAME@$worker:/tmp/munge.key >> /tmp/azuredeploy.log.$$ 2>&1
    sudo -u $ADMIN_USERNAME scp $SLURMCONF $ADMIN_USERNAME@$worker:/tmp/slurm.conf >> /tmp/azuredeploy.log.$$ 2>&1
    sudo -u $ADMIN_USERNAME scp /tmp/hosts.$$ $ADMIN_USERNAME@$worker:/tmp/hosts >> /tmp/azuredeploy.log.$$ 2>&1
 
-   echo "Remote execute on $worker" >> /tmp/azuredeploy.log.$$ 2>&1 
+   echo "Remote execute on $worker" >> /tmp/azuredeploy.log.$$ 2>&1
    sudo -u $ADMIN_USERNAME ssh $ADMIN_USERNAME@$worker >> /tmp/azuredeploy.log.$$ 2>&1 << 'ENDSSH1'
       sudo sh -c "cat /tmp/hosts >> /etc/hosts"
       sudo chmod g-w /var/log
