@@ -1,4 +1,4 @@
-# Stream Processing Using NCache Continuous Query
+# NCache Manged ARM Template
 
 ## Introduction
 
@@ -8,10 +8,31 @@ This ARM template deloys N number of NCache VMs and creates a cluster of N nodes
 "NCacheConfiguration.ps1" file to be uploaded as blob. Following is the link to upload files on azure storage account as blob.
 https://docs.microsoft.com/en-us/azure/storage/blobs/storage-quickstart-blobs-portal
 
-## ARM Template Parameters 
+## ARm Template Parameters 
 
 ### ClusterName
-Name of the Cache 
+Name(s) of the Cache.
+example of single cache
+Cache1
+
+example of multiple caches
+cache1,cache2
+
+### CacheTopology
+Defines the caching topolgy of the cache which will be created.
+example of single cache topolgy
+PartitionedOfReplica
+
+example of multiple caches topolgy
+Partitioned,PartitionedOfReplica
+
+### CacheSize
+Size of the cache in MBs
+example of single cache size
+1024
+
+example of multiple caches size
+512,1024
 
 ### NumberOfVMs
 Number of instances of NCache market place image you want to deploy on azure.
@@ -37,14 +58,8 @@ Maximum Number of clients which will allowed to connected with each node. Used i
 ### LicenseKey
 NCache license key
 
-### CacheTopology
-Defines the caching topolgy of the cache which will be created.
-
 ### ReplicationStrategy
 Cache replication strategy whether asynchronous or synchronous 
-
-### CacheSize
-Size of the cache in MBs
 
 ### EvictionPolicy
 Eviction policy of cache. Least recently used, Least Frequenctly used, Priority.

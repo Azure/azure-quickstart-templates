@@ -12,7 +12,7 @@ Param(
     [Parameter(Mandatory = $true)]
     [string]$evictionPolicy,
     [Parameter(Mandatory = $true)]
-    [Int32]$maxSize,
+    [string]$maxSize,
     [Parameter(Mandatory = $true)]
     [Int32]$evictionPercentage,
     [Parameter(Mandatory = $true)]
@@ -135,27 +135,23 @@ function HandleClusterAndCache
 {
 		"Handling Cluster Creation">>C:\NCache-Init-Status.txt
         # to support parameter differences in powershell and CLI
-        if ($topology.Equals("partitioned-replica")) {
-            $topology = "partitionedofreplica"
-        }
-        if ($topology.Equals("mirrored")) {
-            $topology = "mirror"
-        }
 
         Import-Module 'C:\Program Files\NCache\bin\tools\ncacheps\ncacheps.dll'
-
-        if ($serverIP -eq $currentIP) {
-            if ($evictionPolicy.Equals("none")) {
-            
-                $Expression = "New-Cache -Name " + $clusterName + " -Server " + $currentIP + " -Topology " + $topology + " -Size " + $maxSize + " -ReplicationStrategy " + $replicationStrategy + " -EvictionPolicy " + $evictionPolicy + " -NoLogo"
-            }
-            else {
-                $Expression = "New-Cache -Name " + $clusterName + " -Server " + $currentIP + " -Topology " + $topology + " -Size " + $maxSize + " -ReplicationStrategy " + $replicationStrategy + " -EvictionPolicy " + $evictionPolicy + " -EvictionRatio " + $evictionPercentage + " -NoLogo"
-            }
-        }
-        else {
-            $Expression = "Add-Node -CacheName " + $clusterName + " -ExistingServer " + $serverIP + " -NewServer " + $currentIP + " -NoLogo"
-        }
+		$clusterArray = $clusterName.Split(",")
+		$topologyArray = $topology.Split(",")
+		$maxSizeArray = $maxSize.Split(",")
+		For ($i=0; $i -lt $clusterArray.Length; $i++)
+		{
+			if ($serverIP -eq $currentIP) 
+			{	
+				$Expression = "New-Cache -Name " + $clusterArray[$i] + " -Server " + $currentIP + " -Topology " + $topologyArray[$i] + " -Size " + $maxSizeArray[$i] + " -ReplicationStrategy " + $replicationStrategy + " -EvictionPolicy " + $evictionPolicy + " -EvictionRatio " + $evictionPercentage + " -NoLogo"
+			}
+			else 
+			{
+				Start-Sleep -s 10
+				$Expression = "Add-Node -CacheName " + $clusterArray[$i] + " -ExistingServer " + $serverIP + " -NewServer " + $currentIP + " -NoLogo"
+			}
+		
 
         try {
             Invoke-Expression -Command $Expression -OutVariable output -ErrorVariable errors
@@ -169,10 +165,10 @@ function HandleClusterAndCache
             $_ >> C:\NCache-Init-Status.txt
         }
 
-        $Expression = "Export-CacheConfiguration -Name " + $clusterName + " -Server " + $currentIP + " -Path C:\ -NoLogo"
+        $Expression = "Export-CacheConfiguration -Name " + $clusterArray[$i] + " -Server " + $currentIP + " -Path C:\ -NoLogo"
         Invoke-Expression -Command $Expression >> C:\NCache-Init-Status.txt
     
-        $configPath = 'C:\' + $clusterName + '.ncconf'
+        $configPath = 'C:\' + $clusterArray[$i] + '.ncconf'
     
         $line = Get-Content $configPath | where-Object {$_ -like '*cluster-port="*"*'}
         $clusterport = [regex]::match($line, '(cluster-port="\d{4,5}")').Groups[1].Value
@@ -185,22 +181,22 @@ function HandleClusterAndCache
         $range
     
         $rangeInInt = [convert]::ToInt32($range)
-        for ($i = 0; $i -lt $rangeInInt; $i++) {
-            $currentPort = $portInInt + $i
+        for ($j = 0; $j -lt $rangeInInt; $j++) {
+            $currentPort = $portInInt + $j
 
-            $clusterRule = 'New-NetFirewallRule -DisplayName nc-cluster-port-' + $i + ' -Direction Inbound -Action Allow -Protocol TCP -LocalPort ' + ($currentPort).ToString()
+            $clusterRule = 'New-NetFirewallRule -DisplayName nc-cluster-port-' + $j + ' -Direction Inbound -Action Allow -Protocol TCP -LocalPort ' + ($currentPort).ToString()
     
             $status = Invoke-Expression -Command $clusterRule
 
             (Get-Date).ToString() + 'status of nc-cluster-port inbound rule ' + $status  >> C:\NCache-Init-Status.txt 
 
             if ($status -ne $null) {
-                (Get-Date).ToString() + 'New-NetFirewallRule -DisplayName nc-cluster-port-' + $i + ' -Direction Inbound -Action Allow -Protocol TCP -LocalPort ' + ($currentPort).ToString() >> C:\NCache-Init-Status.txt 
+                (Get-Date).ToString() + 'New-NetFirewallRule -DisplayName nc-cluster-port-' + $j + ' -Direction Inbound -Action Allow -Protocol TCP -LocalPort ' + ($currentPort).ToString() >> C:\NCache-Init-Status.txt 
 
-                (Get-Date).ToString() + '    nc-cluster-port-' + $i + 'inbound rule defined successfully' >> C:\NCache-Init-Status.txt    
+                (Get-Date).ToString() + '    nc-cluster-port-' + $j + 'inbound rule defined successfully' >> C:\NCache-Init-Status.txt    
             }
         
-            $clusterRule = 'New-NetFirewallRule -DisplayName nc-cluster-port-' + $i + ' -Direction Outbound -Action Allow -Protocol TCP -LocalPort ' + ($currentPort).ToString()
+            $clusterRule = 'New-NetFirewallRule -DisplayName nc-cluster-port-' + $j + ' -Direction Outbound -Action Allow -Protocol TCP -LocalPort ' + ($currentPort).ToString()
         
             $status = Invoke-Expression -Command $clusterRule
 
@@ -208,8 +204,8 @@ function HandleClusterAndCache
         
             if ($status -ne $null) {
 
-                (Get-Date).ToString() + 'New-NetFirewallRule -DisplayName nc-cluster-port-' + $i + ' -Direction Outbound -Action Allow -Protocol TCP -LocalPort ' + ($currentPort).ToString() >> C:\NCache-Init-Status.txt    
-                (Get-Date).ToString() + '    nc-cluster-port-' + $i + ' outbound rule defined successfully' >> C:\NCache-Init-Status.txt    
+                (Get-Date).ToString() + 'New-NetFirewallRule -DisplayName nc-cluster-port-' + $j + ' -Direction Outbound -Action Allow -Protocol TCP -LocalPort ' + ($currentPort).ToString() >> C:\NCache-Init-Status.txt    
+                (Get-Date).ToString() + '    nc-cluster-port-' + $j + ' outbound rule defined successfully' >> C:\NCache-Init-Status.txt    
             }
         }
 
@@ -222,7 +218,7 @@ function HandleClusterAndCache
 
         Start-Sleep -s 2
 
-        $Expression = "Start-Cache -Name " + $clusterName + " -Server " + $currentIP + " -NoLogo"
+        $Expression = "Start-Cache -Name " + $clusterArray[$i] + " -Server " + $currentIP + " -NoLogo"
 
         try {
             Invoke-Expression -Command $Expression -OutVariable output -ErrorVariable errors
@@ -235,6 +231,7 @@ function HandleClusterAndCache
             #"Error in starting cluster" >> C:\startCluster.txt
             $_ >> C:\NCache-Init-Status.txt
         }
+		}
     }
 
 
