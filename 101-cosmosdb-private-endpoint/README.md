@@ -18,8 +18,6 @@
 
 This template will create a virtual network, a Cosmos account and a private endpoint exposing the Cosmos account to the virtual network.
 
-`Tags : CosmosDB`
-
 Below are the parameters which can be user configured in the parameters file including:
 
 - **Location:** Select where the resource should be created (default is target resource group's location).
@@ -27,3 +25,5 @@ Below are the parameters which can be user configured in the parameters file inc
 - **Account Name:** Enter a name for the new Cosmos account.
 - **Public Network Access:** Select whether public traffic is allowed to access the account (default is Enabled). When value is set to Disabled, public network traffic is blocked even before the private endpoint is created.
 - **Private Endpoint Name:** Enter a name for the private endpoint.
+
+`Tags : CosmosDB`
