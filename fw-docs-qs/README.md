@@ -1,19 +1,19 @@
 # Azure Firewall with multiple public IP addresses Quickstart
 
-    <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/ag-docs-wafv2/PublicLastTestDate.svg" />&nbsp;
-    <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/ag-docs-wafv2/PublicDeployment.svg" />&nbsp;
+    <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/fw-docs-qs/PublicLastTestDate.svg" />&nbsp;
+    <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/fw-docs-qs/PublicDeployment.svg" />&nbsp;
 
-    <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/ag-docs-wafv2/FairfaxLastTestDate.svg" />&nbsp;
-    <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/ag-docs-wafv2/FairfaxDeployment.svg" />&nbsp;
+    <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/fw-docs-qs/FairfaxLastTestDate.svg" />&nbsp;
+    <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/fw-docs-qs/FairfaxDeployment.svg" />&nbsp;
     
-    <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/ag-docs-wafv2/BestPracticeResult.svg" />&nbsp;
-    <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/ag-docs-wafv2/CredScanResult.svg" />&nbsp;
+    <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/fw-docs-qs/BestPracticeResult.svg" />&nbsp;
+    <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/fw-docs-qs/CredScanResult.svg" />&nbsp;
     
     
-    <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fag-docs-wafv2%2Fazuredeploy.json" target="_blank">
+    <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Ffw-docs-qs%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true"/>
     </a>
-    <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fag-docs-wafv2%2Fazuredeploy.json" target="_blank">
+    <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Ffw-docs-qs%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true"/>
     </a>
 
