@@ -369,31 +369,13 @@
                             "name": "[if(equals(copyIndex('routes'),0),'DefaultRoute',concat(parameters('aseManagementIps')[copyIndex('routes')],'-Route'))]",
                             "properties": {
                                 "addressPrefix": "[if(equals(copyIndex('routes'),0),'0.0.0.0/0',concat(parameters('aseManagementIps')[copyIndex('routes')],'/32'))]",
-                                "nextHopType": "[if(equals(copyIndex('routes'),0),'VirtualAppliance','Internet')]",
-                                "nextHopIpAddress": "[if(equals(copyIndex('routes'),0),variables('azureFireWallPrivateIp'), json('null'))]"
+                                "nextHopType": "[if(equals(copyIndex('routes'),0),'Internet','Internet')]",
+                                "nextHopIpAddress": "[if(equals(copyIndex('routes'),0),json('null'), json('null'))]"
                             }
                         }
                     }
                 ],
                 "disableBgpRoutePropagation": true
-            }
-        },
-        {
-            "type": "Microsoft.Network/routeTables",
-            "apiVersion": "2018-11-01",
-            "name": "[parameters('azureFirewallRouteTableName')]",
-            "location": "[parameters('location')]",
-            "tags": "[parameters('tags')]",
-            "properties": {
-                "routes": [
-                    {
-                        "name": "default-route",
-                        "properties": {
-                            "addressPrefix": "0.0.0.0/0",
-                            "nextHopType": "Internet"
-                        }
-                    }
-                ]
             }
         },
         {
@@ -403,8 +385,7 @@
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[variables('nsgId')]",
-                "[resourceId('Microsoft.Network/routeTables', parameters('aseRouteTableName'))]",
-                "[resourceId('Microsoft.Network/routeTables',parameters('azureFirewallRouteTableName'))]"
+                "[resourceId('Microsoft.Network/routeTables', parameters('aseRouteTableName'))]"
             ],
             "tags": "[parameters('tags')]",
             "properties": {
@@ -425,158 +406,6 @@
                                 "id": "[resourceId('Microsoft.Network/routeTables', parameters('aseRouteTableName'))]"
                             },
                             "serviceEndpoints": "[parameters('aseSubnetServiceEndpoints')]"
-                        }
-                    },
-                    {
-                        "name": "AzureFirewallSubnet",
-                        "properties": {
-                            "addressPrefix": "[parameters('azureFirewallSubnetAddressRange')]",
-                            "routeTable": {
-                                "id": "[resourceId('Microsoft.Network/routeTables', parameters('azureFirewallRouteTableName'))]"
-                            }
-                        }
-                    }
-                ]
-            }
-        },
-        {
-            "condition": "[parameters('deployAzureFirewall')]",
-            "type": "Microsoft.Network/publicIPAddresses",
-            "apiVersion": "2018-08-01",
-            "name": "[parameters('azureFirewallPublicIp')]",
-            "location": "[parameters('location')]",
-            "sku": {
-                "name": "Standard"
-            },
-            "tags": "[parameters('tags')]",
-            "properties": {
-                "publicIPAllocationMethod": "Static"
-            }
-        },
-        {
-            "condition": "[parameters('deployAzureFirewall')]",
-            "type": "Microsoft.Network/azureFirewalls",
-            "apiVersion": "2018-11-01",
-            "name": "[parameters('azureFirewallName')]",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualNetworks',parameters('vnetResourceName'))]",
-                "[resourceId('Microsoft.Network/publicIpAddresses',parameters('azureFirewallPublicIP'))]"
-            ],
-            "tags": "[parameters('tags')]",
-            "properties": {
-                "ipConfigurations": [
-                    {
-                        "name": "IpConf",
-                        "properties": {
-                            "subnet": {
-                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets',parameters('vnetResourceName'),'AzureFirewallSubnet')]"
-                            },
-                            "publicIPAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIpAddresses', parameters('azureFirewallPublicIP'))]"
-                            }
-                        }
-                    }
-                ],
-                "ApplicationRuleCollections": [
-                    {
-                        "Name": "AppServiceEnvironment",
-                        "properties": {
-                            "Priority": 500,
-                            "Action": {
-                                "Type": "Allow"
-                            },
-                            "Rules": [
-                                {
-                                    "Name": "ASE",
-                                    "FqdnTags": [
-                                        "WindowsUpdate",
-                                        "AppServiceEnvironment"
-                                    ],
-                                    "Protocols": [
-                                        {
-                                            "ProtocolType": "Http",
-                                            "Port": 80
-                                        },
-                                        {
-                                            "ProtocolType": "Https",
-                                            "Port": 443
-                                        }
-                                    ]
-                                },
-                                {
-                                    "Name": "Managed Identity API",
-                                    "targetFqdns": [
-                                        "[variables('credentialAPIFQDN')]"
-                                    ],
-                                    "protocols": [
-                                        {
-                                            "ProtocolType": "Https",
-                                            "Port": 443
-                                        }
-                                    ],
-                                    "sourceAddresses": [
-                                        "[parameters('aseSubnetAddressRange')]"
-                                    ]
-                                },
-                                {
-                                    "Name": "AzureMonitorRules",
-                                    "targetFqdns": "[parameters('azureMonitorFQDNs')]",
-                                    "protocols": [
-                                        {
-                                            "ProtocolType": "Https",
-                                            "Port": 443
-                                        }
-                                    ],
-                                    "sourceAddresses": [
-                                        "[parameters('aseSubnetAddressRange')]"
-                                    ]
-
-                                }
-                            ]
-                        }
-                    }
-                ],
-                "NetworkRuleCollections": [
-                    {
-                        "Name": "Time-Diagnostics",
-                        "properties": {
-                            "Priority": 300,
-                            "Action": {
-                                "Type": "Allow"
-                            },
-                            "Rules": [
-                                {
-                                    "Name": "Time",
-                                    "Protocols": [
-                                        "Any"
-                                    ],
-                                    "SourceAddresses": [
-                                        "*"
-                                    ],
-                                    "DestinationAddresses": [
-                                        "*"
-                                    ],
-                                    "DestinationPorts": [
-                                        "123"
-                                    ]
-                                },
-                                {
-                                    "Name": "Diagnostics",
-                                    "Protocols": [
-                                        "Any"
-                                    ],
-                                    "SourceAddresses": [
-                                        "*"
-                                    ],
-                                    "DestinationAddresses": [
-                                        "*"
-                                    ],
-                                    "DestinationPorts": [
-                                        "12000"
-                                    ]
-                                }
-                            ]
                         }
                     }
                 ]
