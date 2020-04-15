@@ -31,7 +31,7 @@ do {
         $latestRelease = Invoke-RestMethod -Uri "https://api.github.com/repos/actions/runner/releases"
         $latestRelease = $latestRelease | Where-Object assets -ne $null | Sort-Object created_at -Descending | Select-Object -First 1
         $assetsURL = ($latestRelease.assets).browser_download_url
-        $latestReleaseDownloadUrl = ((Invoke-RestMethod -Uri $assetsURL) -match 'win-x64').downloadurl
+        $latestReleaseDownloadUrl = $assetsURL -match 'win-x64' | Select-Object -First 1
         Invoke-WebRequest -Uri $latestReleaseDownloadUrl -Method Get -OutFile "$agentTempFolderName\agent.zip"
         Write-Verbose "Downloaded agent successfully on attempt $retries" -verbose
         break
