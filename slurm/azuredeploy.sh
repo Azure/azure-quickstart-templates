@@ -84,9 +84,9 @@ sudo chown slurm /var/spool/slurmctld >> /tmp/azuredeploy.log.$$ 2>&1
 #sudo chmod o+w /var/spool >> /tmp/azuredeploy.log.$$ 2>&1 # Write access for slurmctld log. Consider switch log file to another location
 #sudo -u slurm /usr/sbin/slurmctld >> /tmp/azuredeploy.log.$$ 2>&1 # Start the master daemon service
 sudo munged --force >> /tmp/azuredeploy.log.$$ 2>&1 # Start munged
-sudo systemctl status slurmctld  >> /tmp/azuredeploy.log.$$ 2>&1 # Start the master daemon service
+sudo systemctl start slurmctld  >> /tmp/azuredeploy.log.$$ 2>&1 # Start the master daemon service
 #sudo slurmd >> /tmp/azuredeploy.log.$$ 2>&1 # Start the node
-sudo systemctl status slurmd >> /tmp/azuredeploy.log.$$ 2>&1 # Start the node
+sudo systemctl start slurmd >> /tmp/azuredeploy.log.$$ 2>&1 # Start the node
 
 # Install slurm on all nodes by running apt-get
 # Also push munge key and slurm.conf to them
@@ -121,7 +121,7 @@ do
       sudo /usr/sbin/munged --force # ignore egregrious security warning
       sudo cp -f /tmp/slurm.conf /etc/slurm-llnl/slurm.conf
       sudo chown slurm /etc/slurm-llnl/slurm.conf
-      sudo systemctl status slurmd
+      sudo systemctl start slurmd
 ENDSSH1
 
    i=`expr $i + 1`
