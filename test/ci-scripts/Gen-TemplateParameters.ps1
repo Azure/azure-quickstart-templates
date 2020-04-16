@@ -13,11 +13,11 @@ param(
 
 if ($configUri.StartsWith('http')) {
     #url
-    $config = (Invoke-WebRequest "$configUri").Content | ConvertFrom-Json
+    $config = (Invoke-WebRequest "$configUri").Content | ConvertFrom-Json  -Depth 30
 }
 else {
     #Local File
-    $config = Get-Content -Path "$configUri" -Raw | ConvertFrom-Json
+    $config = Get-Content -Path "$configUri" -Raw | ConvertFrom-Json  -Depth 30
 }
 
 #Write-Host ($config | Out-String)
