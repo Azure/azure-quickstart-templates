@@ -81,11 +81,8 @@ sudo chown slurm /etc/slurm-llnl/slurm.conf >> /tmp/azuredeploy.log.$$ 2>&1
 sudo mkdir /var/spool/slurmctld
 sudo chown slurm /var/spool/slurmctld >> /tmp/azuredeploy.log.$$ 2>&1
 
-#sudo chmod o+w /var/spool >> /tmp/azuredeploy.log.$$ 2>&1 # Write access for slurmctld log. Consider switch log file to another location
-#sudo -u slurm /usr/sbin/slurmctld >> /tmp/azuredeploy.log.$$ 2>&1 # Start the master daemon service
 sudo munged --force >> /tmp/azuredeploy.log.$$ 2>&1 # Start munged
 sudo systemctl start slurmctld  >> /tmp/azuredeploy.log.$$ 2>&1 # Start the master daemon service
-#sudo slurmd >> /tmp/azuredeploy.log.$$ 2>&1 # Start the node
 sudo systemctl start slurmd >> /tmp/azuredeploy.log.$$ 2>&1 # Start the node
 
 # Install slurm on all nodes by running apt-get
