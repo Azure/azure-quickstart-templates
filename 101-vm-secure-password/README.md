@@ -46,3 +46,4 @@ Set-AzKeyVaultAccessPolicy -VaultName Contoso -EnabledForTemplateDeployment
 ```bash
 az keyvault update  --name Contoso --enabled-for-template-deployment true
 ```
+
