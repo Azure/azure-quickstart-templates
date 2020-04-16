@@ -25,10 +25,10 @@
       "type": "string",
       "defaultValue": "latest"
     },
-    "vmssName":{
-      "type":"string",
-      "metadata":{
-        "description":"String used as a base for naming resources. Must be 3-61 characters in length and globally unique across Azure. A hash is prepended to this string for some resources, and resource-specific information is appended."
+    "vmssName": {
+      "type": "string",
+      "metadata": {
+        "description": "String used as a base for naming resources. Must be 3-61 characters in length and globally unique across Azure. A hash is prepended to this string for some resources, and resource-specific information is appended."
       },
       "maxLength": 61
     },
@@ -43,7 +43,6 @@
     },
     "adminUsername": {
       "type": "string",
-      "defaultValue": "vmsstest",
       "metadata": {
         "description": "Admin username on all VMs."
       }
@@ -74,7 +73,21 @@
       "metadata": {
         "description": "Location for the VM scale set"
       }
-    }
+    },
+    "_artifactsLocation": {
+          "type": "string",
+          "metadata": {
+              "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+          },
+          "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vmss-automatic-repairs-slb-health-probe/"
+      },
+      "_artifactsLocationSasToken": {
+          "type": "securestring",
+          "metadata": {
+              "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+          },
+          "defaultValue": ""
+      }
   },
   "variables": {
     "addressPrefix": "10.0.0.0/16",
@@ -91,7 +104,7 @@
     "probeName": "[concat(variables('lbName'), 'probe')]",
     "bepoolID": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools/', variables('lbName'), variables('bepoolName'))]",
     "feIpConfigId": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations/', variables('lbName'), variables('feIpConfigName'))]",
-    
+
     "platformImageReference": {
       "publisher": "[parameters('imagePublisher')]",
       "offer": "[parameters('imageOffer')]",
@@ -127,10 +140,12 @@
       "type": "Microsoft.Network/loadBalancers",
       "name": "[variables('lbName')]",
       "location": "[parameters('location')]",
-      "sku":{"name":"Standard"},
+      "sku": {
+        "name": "Standard"
+      },
       "apiVersion": "2019-12-01",
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
       ],
       "properties": {
         "frontendIPConfigurations": [
@@ -193,8 +208,8 @@
         "vmsstag": "automaticrepairs"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/loadBalancers/', variables('lbName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[resourceId('Microsoft.Network/loadBalancers/', variables('lbName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
       ],
       "sku": {
         "name": "[parameters('vmSku')]",
@@ -220,21 +235,21 @@
           },
           "extensionProfile": {
             "extensions": [
-                {
-                  "name": "CustomScriptToInstallApache",
-                  "properties": {
-                    "publisher": "Microsoft.Azure.Extensions",
-                    "type": "CustomScript",
-                    "typeHandlerVersion": "2.0",
-                    "autoUpgradeMinorVersion": true,
-                    "settings": {
-                        "fileUris": [
-                            "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/apache2-on-ubuntu-vm/install_apache.sh"
-                        ],
-                        "commandToExecute": "sh install_apache.sh"
-                    }
+              {
+                "name": "CustomScriptToInstallApache",
+                "properties": {
+                  "publisher": "Microsoft.Azure.Extensions",
+                  "type": "CustomScript",
+                  "typeHandlerVersion": "2.0",
+                  "autoUpgradeMinorVersion": true,
+                  "settings": {
+                    "fileUris": [
+                      "[uri(parameters('_artifactsLocation'), concat('install_apache.sh', parameters('_artifactsLocationSasToken')))]"
+                    ],
+                    "commandToExecute": "sh install_apache.sh"
                   }
                 }
+              }
             ]
           },
           "networkProfile": {
