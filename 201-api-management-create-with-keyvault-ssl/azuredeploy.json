@@ -57,7 +57,7 @@
     },
     "_artifactsLocation": {
       "type": "string",
-      "defaultValue": "https://apimtemplates.blob.core.windows.net",
+      "defaultValue": "[deployment().properties.templateLink.uri]",
       "metadata": {
         "description": "Change this value to your repo name if deploying from a fork"
       }
@@ -80,16 +80,14 @@
   "variables": {
     "nestedTemplatesFolderName": "nestedtemplate",
     "masterTemplateFileName": "update-apim-with-keyvaultssl.json",
-    "apiManagementServiceName": "[concat('apiservice', uniqueString(resourceGroup().id))]",
-    "apimServiceIdentityResourceId": "[concat(resourceId('Microsoft.ApiManagement/service', variables('apiManagementServiceName')),'/providers/Microsoft.ManagedIdentity/Identities/default')]"
+    "apiManagementServiceName": "[concat('apiservice', uniqueString(resourceGroup().id))]"
   },
   "resources": [
     {
-      "apiVersion": "2018-01-01",
+      "apiVersion": "2019-12-01-preview",
       "name": "[variables('apiManagementServiceName')]",
       "type": "Microsoft.ApiManagement/service",
       "location": "[parameters('location')]",
-      "tags": {},
       "sku": {
         "name": "[parameters('sku')]",
         "capacity": "[parameters('skuCount')]"
@@ -105,15 +103,15 @@
     {
       "type": "Microsoft.KeyVault/vaults/accessPolicies",
       "name": "[concat(parameters('existingKeyVaultName'), '/add')]",
-      "apiVersion": "2015-06-01",
+      "apiVersion": "2019-09-01",
       "dependsOn": [
         "[resourceId('Microsoft.ApiManagement/service', variables('apiManagementServiceName'))]"
       ],
       "properties": {
         "accessPolicies": [
           {
-            "tenantId": "[reference(variables('apimServiceIdentityResourceId'), '2015-08-31-PREVIEW').tenantId]",
-            "objectId": "[reference(variables('apimServiceIdentityResourceId'), '2015-08-31-PREVIEW').principalId]",
+            "tenantId": "[reference(variables('apiManagementServiceName'), '2018-11-30', 'Full').identity.tenantId]",
+            "objectId": "[reference(variables('apiManagementServiceName'), '2018-11-30', 'Full').identity.principalId]",
             "permissions": {
               "secrets": [
                 "get"
@@ -124,7 +122,7 @@
       }
     },
     {
-      "apiVersion": "2017-05-10",
+      "apiVersion": "2019-09-01",
       "name": "apimWithKeyVault",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
@@ -133,7 +131,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), '/', variables('nestedTemplatesFolderName'), '/', variables('masterTemplateFileName'), parameters('_artifactsLocationSasToken'))]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat(variables('nestedTemplatesFolderName'), '/', variables('masterTemplateFileName'), parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -154,6 +152,9 @@
           },
           "keyVaultSecretsIdToCertificate": {
             "value": "[parameters('keyVaultSecretsIdToCertificate')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
           }
         }
       }
