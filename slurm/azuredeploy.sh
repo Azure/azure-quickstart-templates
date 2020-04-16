@@ -77,7 +77,7 @@ lastvm=`expr $NUM_OF_VM - 1`
 sed -i -- 's/__WORKERNODES__/'"$WORKER_NAME"'[0-'"$lastvm"']/g' $SLURMCONF >> /tmp/azuredeploy.log.$$ 2>&1
 sudo cp -f $SLURMCONF /etc/slurm-llnl/slurm.conf >> /tmp/azuredeploy.log.$$ 2>&1
 sudo chown slurm /etc/slurm-llnl/slurm.conf >> /tmp/azuredeploy.log.$$ 2>&1
-sudo chmod o+w /var/spool # Write access for slurmctld log. Consider switch log file to another location
+sudo chmod o+w /var/spool >> /tmp/azuredeploy.log.$$ 2>&1 # Write access for slurmctld log. Consider switch log file to another location
 sudo -u slurm /usr/sbin/slurmctld >> /tmp/azuredeploy.log.$$ 2>&1 # Start the master daemon service
 sudo munged --force >> /tmp/azuredeploy.log.$$ 2>&1 # Start munged
 sudo slurmd >> /tmp/azuredeploy.log.$$ 2>&1 # Start the node
