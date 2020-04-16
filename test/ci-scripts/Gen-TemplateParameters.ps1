@@ -45,7 +45,7 @@ if (!(Test-Path $TemplateParametersFile)) {
     Write-Host "Param file not found, using: $TemplateParametersFile"
 }
 
-$txt = Get-Content $TemplateParametersFile -Raw | ConvertFrom-Json -Depth 30
+$txt = Get-Content $TemplateParametersFile -Raw
 
 # We do a text replace rather than try to recurse over an object of different types and then try to write that object back out
 
@@ -97,4 +97,4 @@ While($txt.Contains("`"GEN-UNIQUE-")){
 Write-Host $txt
 
 Write-Host "Writing file: $NewTemplateParametersFile"
-$txt | ConvertTo-Json -Depth 30 | Out-File -FilePath $NewTemplateParametersFile
+$txt | Out-File -FilePath $NewTemplateParametersFile
