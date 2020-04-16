@@ -43,6 +43,8 @@ if ! [ -f /home/$ADMIN_USERNAME/.ssh/id_rsa ]; then
     sudo -u $ADMIN_USERNAME sh -c "ssh-keygen -f /home/$ADMIN_USERNAME/.ssh/id_rsa -t rsa -N ''"
 fi
 
+sudo apt-get update >> /tmp/azuredeploy.log.$$ 2>&1
+
 # Install sshpass to automate ssh-copy-id action
 sudo apt-get install sshpass -y >> /tmp/azuredeploy.log.$$ 2>&1
 
@@ -64,7 +66,6 @@ done
 ###################################
 
 # Install the package
-sudo apt-get update >> /tmp/azuredeploy.log.$$ 2>&1
 sudo chmod g-w /var/log >> /tmp/azuredeploy.log.$$ 2>&1 # Must do this before munge will generate key
 sudo apt-get install slurm-llnl -y >> /tmp/azuredeploy.log.$$ 2>&1
 
