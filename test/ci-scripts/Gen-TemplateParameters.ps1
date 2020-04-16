@@ -25,7 +25,7 @@ else {
 if ($prereqOutputsFileName) { #Test-Path doesn't work on an empty string
     if (Test-Path $prereqOutputsFileName) {
         #prereqs have to come from a file due to the complexity of getting JSON into a pipeline var
-        $PreReqConfig = Get-Content -Path $prereqOutputsFileName -Raw | ConvertFrom-Json
+        $PreReqConfig = Get-Content -Path $prereqOutputsFileName -Raw | ConvertFrom-Json -Depth 30
         Write-Host ($PreReqConfig | Out-String)
     }
 }
@@ -45,71 +45,56 @@ if (!(Test-Path $TemplateParametersFile)) {
     Write-Host "Param file not found, using: $TemplateParametersFile"
 }
 
-$JsonParameters = Get-Content $TemplateParametersFile -Raw | ConvertFrom-Json
-if (($JsonParameters | Get-Member -Type NoteProperty 'parameters') -ne $null) {
-    $JsonParameters = $JsonParameters.parameters
+$txt = Get-Content $TemplateParametersFile -Raw | ConvertFrom-Json -Depth 30
+
+# We do a text replace rather than try to recurse over an object of different types and then try to write that object back out
+
+# Look for each GEN token with in the param file, and replace the string token with json text
+foreach($c in $config.psobject.properties){
+    $token = "`"GEN-$($c.name)`""
+    $txt = $txt.Replace($token, $($c.value | ConvertTo-Json -Depth 30))
 }
 
-#Write-Host $JsonParameters
-
-foreach ($p in $JsonParameters.psObject.Properties) {
-    if ($p.value.value -like "GEN-*") {
-        #Write-Host $p.Value.value
-        $token = $p.Value.value.Replace("GEN-", "")
-        switch -Wildcard ($token) {
-            "UNIQUE*" {
-                $num = $token.split("-")
-                if ($num.length -eq 2) {
-                    $l = $num[1] - 2
-                    if ($l -le 0) { $l = 2 }
-                }
-                else {
-                    $l = 16
-                }
-                $v = "ci" + (New-Guid).ToString().Replace("-", "").ToString().Substring(0, $l)
-            }
-            "GUID" {
-                $v = New-Guid
-            }
-            "PASSWORD" {
-                $v = "cI#" + (New-Guid).ToString().Replace("-", "").Substring(0, 17)
-            }
-            "PASSWORD-AMP" {
-                $v = "cI&" + (New-Guid).ToString().Replace("-", "").Substring(0, 17) # some passwords don't like # so providing an option
-            }
-            default {
-                $v = $config.$token
-            }
-        }
-        
-        if($v -eq $null){
-            Write-Error "Could not find `"$($p.value.value)`" token in .config.json"
-        }
-        $JsonParameters.$($p.name).value = $v
-
-    }
-    elseif ($p.value.value -like "GET-PREREQ*") {
-        
-        #get deployment outputs
-        $token = $p.Value.value.Replace("GET-PREREQ-", "")
-        #Write-Host "Token: $token"
-        $v = $PreReqConfig.$token.value
-        if($v -eq $null){
-            Write-Error "Could not find `"$($p.value.value)`" token in prereq outputs"
-        }
-        $JsonParameters.$($p.name).value = $v
-
-    }
-    # is this a reference parameter
-    elseif ($p.value.reference -like "GEN-*"){
-        $token = $p.value.reference.Replace("GEN-", "")
-        $v = $config.$token
-        if($v -eq $null){
-            Write-Error "Could not find reference parameter `"$($p.value.reference)`" token in .config.json"
-        }
-        $JsonParameters.$($p.name) = $v
-    }
+# Do the same for prereqs
+foreach($p in $PreReqConfig.psobject.properties){
+    $token = "`"GET-PREREQ-$($p.name)`""
+    $txt = $txt.Replace($token, $($p.value.value | ConvertTo-Json -Depth 30))
 }
+
+# Now handle the generated values, replace only the first instance since generated values are unique for each occurence
+
+While($txt.Contains("`"GEN-GUID`"")){
+    $v = New-Guid
+    $txt = $txt.Replace("GEN-GUID", $v, 1)
+}
+
+While($txt.Contains("`"GEN-PASSWORD`"")){
+    $v = "cI#" + (New-Guid).ToString().Replace("-", "").Substring(0, 17)
+    $txt = $txt.Replace("`"GEN-PASSWORD`"", "`"$v`"", 1)
+}
+
+While($txt.Contains("`"GEN-PASSWORD-AMP`"")){
+    $v = "cI&" + (New-Guid).ToString().Replace("-", "").Substring(0, 17)
+    $txt = $txt.Replace("`"GEN-PASSWORD-AMP`"", "`"$v`"", 1)
+}
+
+While($txt.Contains("`"GEN-UNIQUE`"")){
+    $v = "ci" + (New-Guid).ToString().Replace("-", "").ToString().Substring(0, 16)
+    $txt = $txt.Replace("`"GEN-UNIQUE`"", "`"$v`"", 1) # replace and restore quotes so as not to remove the GEN-UNIQUE-* values
+}
+
+While($txt.Contains("`"GEN-UNIQUE-")){
+    $numStart = $txt.IndexOf("`"GEN-UNIQUE-") + 12
+    $numEnd = $txt.IndexOf("`"", $numStart)
+    $l = $txt.Substring($numStart, $numEnd-$numStart)
+    $i = [int]::parse($l)
+    if($i -gt 24){ $i = 24 }
+    Write-Host "l > $i"
+    $v = "ci" + (New-Guid).ToString().Replace("-", "").ToString().Substring(0,  $i)
+    $txt = $txt.Replace("GEN-UNIQUE-$l", $v, 1)
+}
+
+Write-Host $txt
 
 Write-Host "Writing file: $NewTemplateParametersFile"
-$JsonParameters | ConvertTo-Json -Depth 30 | Out-File -FilePath $NewTemplateParametersFile
+$txt | ConvertTo-Json -Depth 30 | Out-File -FilePath $NewTemplateParametersFile
