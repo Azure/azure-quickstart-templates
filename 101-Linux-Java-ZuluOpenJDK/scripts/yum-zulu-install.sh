@@ -10,10 +10,10 @@
              zulu-11-azure-jdk zulu-11-azure-jre zulu-11-azure-jre-headless
              zulu-13-azure-jdk zulu-13-azure-jre zulu-13-azure-jre-headless)
 
- ZULU_DIRS=(zulu-7-azure-amd64 zre-7-azure-amd64 zre-hl-7-azure-amd64
-            zulu-8-azure-amd64 zre-8-azure-amd64 zre-hl-8-azure-amd64
-            zulu-11-azure-amd64 zre-11-azure-amd64 zre-hl-11-azure-amd64
-            zulu-13-azure-amd64 zre-13-azure-amd64 zre-hl-13-azure-amd64)
+ ZULU_DIRS=(zulu-7-azure zre-7-azure zre-hl-7-azure
+            zulu-8-azure zre-8-azure zre-hl-8-azure
+            zulu-11-azure zre-11-azure zre-hl-11-azure
+            zulu-13-azure zre-13-azure zre-hl-13-azure)
 
  for idx in ${!PARAMS[@]}
  do
@@ -25,14 +25,11 @@
     fi
  done
 
- apt-get -qq update
- apt-get -qq -y --no-install-recommends install dirmngr gnupg software-properties-common
- apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 0x219BD9C9
- apt-add-repository "deb http://repos.azul.com/azure-only/zulu/apt stable main"
- apt-get -qq update
- apt-get -qq -y dist-upgrade
- apt-get -qq -y --no-install-recommends install $ZULU_PACK
- rm -rf /var/lib/apt/lists/*
+ rpm --import http://repos.azul.com/azul-repo.key
+ curl http://repos.azul.com/azure-only/zulu-azure.repo -o /etc/yum.repos.d/zulu-azure.repo
+ yum -q -y update
+ yum -q -y upgrade
+ yum -q -y install $ZULU_PACK
 
  echo "export JAVA_HOME=/usr/lib/jvm/$ZULU_DIR" >> /etc/bash.bashrc
 
