@@ -21,11 +21,14 @@
 This template deploys a Ubuntu VM with the Azul Zulu for Azure - Enterprise Edition, a supported OpenJDK JVM from Azul, and Tomcat.<br/> 
 Authentication can be done using an sshPublicKey or a Password.
 
-Choices for Tomcat are version 7, 8, or 9.<br/>
-The default is Tomcat version 9.
+hoices for Ubuntu are version 18.04-LTS, 16.04-LTS, or 14.04-LTS.<br/>
+The default is Ubuntu 18.04-LTS.
 
 Choices for the Zulu OpenJDK JVM are the JDK, JRE, or Headless JRE for the latest release of Java 7, 8, 11, or 13.<br/>
 The default is the Zulu Java 8 JDK.
+
+Choices for Tomcat are version 7, 8, or 9.<br/>
+The default is Tomcat version 9.
 
 The VM is deployed in the resource group location using the latest patched version of the Ubuntu 18.04-LTS distribution using a Standard_B2s size VM as the default value and will return the admin user name, virtual network name, network security group name and FQDN.
 
