@@ -32,10 +32,10 @@
  sudo apt-get -qq update
  sudo apt-get -qq -y dist-upgrade
  sudo apt-get -qq -y --no-install-recommends install $ZULU_PACK
- sudo apt-get -qq -y --no-install-recommends install $2
+# sudo apt-get -qq -y --no-install-recommends install $2
  sudo rm -rf /var/lib/apt/lists/*
 
- sudo echo "export JAVA_HOME=/usr/lib/jvm/$ZULU_DIR" >> /etc/bash.bashrc
+ echo "export JAVA_HOME=/usr/lib/jvm/$ZULU_DIR" >> /etc/bash.bashrc
 
  if netstat -tulpen | grep 8080
  then
