@@ -25,15 +25,15 @@
     fi
  done
 
- sudo apt-get -qq update 
- sudo apt-get -qq -y --no-install-recommends install dirmngr gnupg software-properties-common
- sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 0x219BD9C9
- sudo apt-add-repository "deb http://repos.azul.com/azure-only/zulu/apt stable main"
- sudo apt-get -qq update
- sudo apt-get -qq -y dist-upgrade
- sudo apt-get -qq -y --no-install-recommends install $ZULU_PACK
-# sudo apt-get -qq -y --no-install-recommends install $2
- sudo rm -rf /var/lib/apt/lists/*
+ apt-get -qq update 
+ apt-get -qq -y --no-install-recommends install dirmngr gnupg software-properties-common
+ apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 0x219BD9C9
+ apt-add-repository "deb http://repos.azul.com/azure-only/zulu/apt stable main"
+ apt-get -qq update
+ apt-get -qq -y dist-upgrade
+ apt-get -qq -y --no-install-recommends install $ZULU_PACK
+ apt-get -qq -y install $2
+ rm -rf /var/lib/apt/lists/*
 
  echo "export JAVA_HOME=/usr/lib/jvm/$ZULU_DIR" >> /etc/bash.bashrc
 
