@@ -36,7 +36,7 @@
  rm -rf /var/lib/apt/lists/*
 
  echo "export JAVA_HOME=/usr/lib/jvm/$ZULU_DIR" >> /etc/bash.bashrc
- echo "export JAVA_HOME=/usr/lib/jvm/$ZULU_DIR" >> /etc/profile
+ echo "export JAVA_HOME=/usr/lib/jvm/$ZULU_DIR" >> /etc/default/$2
 
  if netstat -tulpen | grep 8080
  then
