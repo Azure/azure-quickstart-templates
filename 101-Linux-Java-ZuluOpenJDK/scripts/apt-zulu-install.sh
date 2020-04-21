@@ -36,5 +36,3 @@
 
  echo "export JAVA_HOME=/usr/lib/jvm/$ZULU_DIR" >> /etc/bash.bashrc
 
- reboot
-
