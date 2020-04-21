@@ -35,8 +35,8 @@
  apt-get -qq -y install $2
  rm -rf /var/lib/apt/lists/*
 
+ ln -s /usr/lib/jvm/$ZULU_DIR /usr/lib/jvm/default-java
  echo "export JAVA_HOME=/usr/lib/jvm/$ZULU_DIR" >> /etc/bash.bashrc
- echo "export JAVA_HOME=/usr/lib/jvm/$ZULU_DIR" >> /etc/default/$2
 
  if netstat -tulpen | grep 8080
  then
