@@ -28,7 +28,7 @@ The default is Ubuntu 18.04-LTS.
 Choices for the Zulu OpenJDK JVM are the JDK, JRE, or Headless JRE for the latest release of Java 7, 8, 11, or 13.<br/>
 The default is the Zulu Java 8 JDK.
 
-The VM is deployed in the resource group location using the latest patched version of the Linux distribution using a Standard_D2s_v3 size VM as the default value.
+The VM is deployed in the resource group location by default using the latest patched version of the Linux distribution and a Standard_D2s_v3 size VM as the default value.
 
 The Zulu installation script is pulled from the https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-Linux-Java-ZuluOpenJDK/scripts directory.
 
