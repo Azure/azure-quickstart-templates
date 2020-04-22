@@ -9,7 +9,7 @@
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-Windows-Java-ZuluOpenJDK/BestPracticeResult.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-Windows-Java-ZuluOpenJDK/CredScanResult.svg" />&nbsp;
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fselvasingh%2Fazure-quickstart-templates%2Fjava-dev%2F101-Windows-Java-ZuluOpenJDK%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-Windows-Java-ZuluOpenJDK%2Fazuredeploy.json" target="_blank">
     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-Windows-Java-ZuluOpenJDK%2Fazuredeploy.json" target="_blank">
@@ -27,7 +27,7 @@ The default is Server 2019 Datacenter.
 Choices for the Zulu OpenJDK JVM are the JDK or JRE for the latest release of Java 7, 8, 11, or 13.<br/>
 The default is the Zulu Java 8 JDK.
 
-The VM is deployed in the resource group location using the latest patched version of Windows 2019-Datacenter using a Standard_D2s_v3 size VM as the default value.
+The VM is deployed in the resource group location by default using the latest patched version of Windows 2019-Datacenter and a Standard_D2s_v3 size VM as the default value.
 
 The Zulu installation script is pulled from https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-Windows-Java-ZuluOpenJDK/scripts/zulu-install.sh
 
