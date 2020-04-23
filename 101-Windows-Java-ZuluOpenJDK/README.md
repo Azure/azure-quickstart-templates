@@ -29,10 +29,10 @@ The default is the Zulu Java 8 JDK.
 
 The VM is deployed in the resource group location by default using the latest patched version of Windows 2019-Datacenter and a Standard_D2s_v3 size VM as the default value.
 
-The Zulu installation script is pulled from https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-Windows-Java-ZuluOpenJDK/scripts/zulu-install.sh
+The Zulu installation script is pulled from https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-Windows-Java-ZuluOpenJDK/zulu-install.sh
 
 **Related Templates**
-- [101-Linux-Java-ZuluOpenJDK](https://github.com/Azure/azure-quickstart-templates/master/101-Linux-Java-ZuluOpenJDK)
+- [101-Linux-Java-ZuluOpenJDK](https://github.com/Azure/azure-quickstart-templates/tree/master/101-Linux-Java-ZuluOpenJDK)
 
 **If you are new to the Azul Zulu OpenJDK JVM, see:**
 
