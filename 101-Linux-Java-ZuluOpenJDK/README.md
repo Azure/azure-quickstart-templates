@@ -33,7 +33,7 @@ The VM is deployed in the resource group location by default using the latest pa
 The Zulu installation script is pulled from the https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-Linux-Java-ZuluOpenJDK/scripts directory.
 
 **Related Templates**
-- [101-Windows-Java-ZuluOpenJDK](https://github.com/Azure/azure-quickstart-templates/master/101-Windows-Java-ZuluOpenJDK)
+- [101-Windows-Java-ZuluOpenJDK](https://github.com/Azure/azure-quickstart-templates/tree/master/101-Windows-Java-ZuluOpenJDK)
 
 **If you are new to the Azul Zulu OpenJDK JVM, see:**
 
