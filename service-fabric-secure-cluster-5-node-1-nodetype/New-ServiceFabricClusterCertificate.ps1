@@ -1,11 +1,11 @@
-#Requires -Module AzureRM.KeyVault
+#Requires -Module Az.KeyVault
 
 # Use this script to create a certificate that you can use to secure a Service Fabric Cluster
 # This script requires an existing KeyVault that is EnabledForDeployment.  The vault must be in the same region as the cluster.
 # To create a new vault and set the EnabledForDeployment property run:
 #
-# New-AzureRmResourceGroup -Name KeyVaults -Location WestUS
-# New-AzureRmKeyVault -VaultName $KeyVaultName -ResourceGroupName KeyVaults -Location WestUS -EnabledForDeployment
+# New-AzResourceGroup -Name KeyVaults -Location WestUS
+# New-AzKeyVault -VaultName $KeyVaultName -ResourceGroupName KeyVaults -Location WestUS -EnabledForDeployment
 #
 # Once the certificate is created and stored in the vault, the script will provide the parameter values needed for template deployment
 # 
@@ -36,9 +36,9 @@ $ContentBytes = [System.Text.Encoding]::UTF8.GetBytes($JSONBlob)
 $Content = [System.Convert]::ToBase64String($ContentBytes)
 
 $SecretValue = ConvertTo-SecureString -String $Content -AsPlainText -Force
-$NewSecret = Set-AzureKeyVaultSecret -VaultName $KeyVaultName -Name $KeyVaultSecretName -SecretValue $SecretValue -Verbose
+$NewSecret = Set-AzKeyVaultSecret -VaultName $KeyVaultName -Name $KeyVaultSecretName -SecretValue $SecretValue -Verbose
 
 Write-Host
-Write-Host "Source Vault Resource Id: "$(Get-AzureRmKeyVault -VaultName $KeyVaultName).ResourceId
+Write-Host "Source Vault Resource Id: "$(Get-AzKeyVault -VaultName $KeyVaultName).ResourceId
 Write-Host "Certificate URL : "$NewSecret.Id
 Write-Host "Certificate Thumbprint : "$NewCert.Thumbprint
