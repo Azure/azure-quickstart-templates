@@ -1,13 +1,13 @@
 # eShop Website with ILB ASE
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/e-shop-website-with-ilb-ase/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/e-shop-website-with-ilb-ase/PublicDeployment.svg" />&nbsp;
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/e-shop-website-with-ilb-ase/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/e-shop-website-with-ilb-ase/PublicDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/e-shop-website-with-ilb-ase/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/e-shop-website-with-ilb-ase/FairfaxDeployment.svg" />&nbsp;
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/e-shop-website-with-ilb-ase/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/e-shop-website-with-ilb-ase/FairfaxDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/e-shop-website-with-ilb-ase/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/e-shop-website-with-ilb-ase/CredScanResult.svg" />&nbsp;
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/e-shop-website-with-ilb-ase/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/e-shop-website-with-ilb-ase/CredScanResult.svg)
 
 **Table of Contents**
 
@@ -98,8 +98,8 @@ It takes about 70 minutes to create a new App Service Environment in Azure.
 1. Click the **Deploy to Azure** Button:
 
    <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fe-shop-website-with-ilb-ase%2Fprereqs%2Fprereq.azuredeploy.json" target="_blank">
-     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true"/>
-   </a>
+     
+   
 
 2. Fill in the values on the custom deployment page:
 
@@ -168,13 +168,13 @@ After the App Service Environment is deployed, follow the steps below to deploy 
 
 2. Click the **Deploy to Azure** Button:
 
-   <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fe-shop-website-with-ilb-ase%2Fazuredeploy.json" target="_blank">
-     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true"/>
-   </a>
+   [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)]("https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fe-shop-website-with-ilb-ase%2Fazuredeploy.json")  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)]("http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fe-shop-website-with-ilb-ase%2Fazuredeploy.json")
+     
+   
 
-   <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fe-shop-website-with-ilb-ase%2Fazuredeploy.json" target="_blank">
-     <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true"/>
-   </a>
+   
+     
+   
 
 3. Fill in the values on the deployment page:
 

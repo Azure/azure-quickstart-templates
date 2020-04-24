@@ -1,13 +1,13 @@
 # VM BOOTSTORM WORKLOAD FOR AZURE (CLOUD)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/bootstorm-vm-boot-time/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/bootstorm-vm-boot-time/PublicDeployment.svg" />&nbsp;
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/bootstorm-vm-boot-time/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/bootstorm-vm-boot-time/PublicDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/bootstorm-vm-boot-time/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/bootstorm-vm-boot-time/FairfaxDeployment.svg" />&nbsp;
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/bootstorm-vm-boot-time/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/bootstorm-vm-boot-time/FairfaxDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/bootstorm-vm-boot-time/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/bootstorm-vm-boot-time/CredScanResult.svg" />&nbsp;
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/bootstorm-vm-boot-time/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/bootstorm-vm-boot-time/CredScanResult.svg)
 
 ## DESCRIPTION
 
@@ -57,8 +57,8 @@ VM bootstorm results file is uploaded to Unique Azure Storage Account ('uniqueSt
 ## DEPLOY
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2FAzureStack-QuickStart-Templates%2Fmaster%2Fbootstorm-vm-boot-time%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true"/>
-</a>
+    
+
 
 ## PARAMETERS
 
