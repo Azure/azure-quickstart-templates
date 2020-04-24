@@ -10,11 +10,6 @@
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/vsts-fullbuild-ubuntu-vm/CredScanResult.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)]("https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fvsts-fullbuild-ubuntu-vm%2Fazuredeploy.json")  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)]("http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fvsts-fullbuild-ubuntu-vm%2Fazuredeploy.json")
-    
-
-
-    
-
 
 This template allows you to create an Ubuntu VM with a full cross-platform development environment to support:
 * OpenJDK 7 and 8; 
@@ -34,7 +29,6 @@ https://github.com/Microsoft/vsts-dockerfiles/tree/master/ubuntu-xplat-build
 
 To learn more about Visual Studio Team Services (VSTS) and Team Foundation Server (TFS) support for Java, check out:
 http://java.visualstudio.com/
-
 
 ## Before you Deploy to Azure
 
@@ -68,4 +62,5 @@ in starting up the VSTS build agent.  The most common mistake is not having the 
 * If the agent started sucessfully and is running but an expected tool or software is not working from a build task (e.g. a build task can't find
 maven or java or ...), then you can check the file *"install.progress.txt"* in the top level directory to see if one of the packages
 may have failed to install or had errors (**cat install.progress.txt**).
+
 

@@ -10,11 +10,6 @@
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/service-fabric-secure-nsg-cluster-65-node-3-nodetype/CredScanResult.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)]("https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fservice-fabric-secure-nsg-cluster-65-node-3-nodetype%2Fazuredeploy.json")  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)]("http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fservice-fabric-secure-nsg-cluster-65-node-3-nodetype%2Fazuredeploy.json")
-    
-
-
-    
-
 
 Use this template as a sample for setting up a three nodetype secure cluster and to  control the inbound and outbound network traffic using Network Security Groups. 
 
@@ -32,9 +27,9 @@ This template assumes that you already have certificates uploaded to your keyvau
 
 Refer to [Deploying ARM templates using ARM PS ](https://azure.microsoft.com/documentation/articles/service-fabric-cluster-creation-via-arm/) for detailed guidance on how to. There is detailed guidance on how to set up your certificates and Azure Active Directory for clients as well. For a successful setup of a secure cluster, make sure to read that document thoroughly. 
 
-
 <!--Image references-->
 [DownloadTemplate]: ./DownloadTemplate.png
 [NSG]: ./NSG1.PNG
+
 
 

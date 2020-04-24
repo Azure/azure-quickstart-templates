@@ -13,8 +13,6 @@
 
 
 
-
-
 This module creates a Key Vault.
 
 ## Parameters
@@ -47,3 +45,5 @@ This module creates a Key Vault.
 | location | string | The resource location of the gallery. |
 
 ```apiVersion: 2019-09-01```
+
+

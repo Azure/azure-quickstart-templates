@@ -13,9 +13,6 @@
 
 
 
-
-
-
 ## Solution overview and deployed resources
 
 This template deploys a solution which shows how we can set up the <a href="http://www.enterpriseintegrationpatterns.com/patterns/messaging/MessageRouter.html" target="_blank">Message Router pattern using a Logic App. The Logic App receives a message through a web endpoint, and sends the message to a GitHub Gists endpoint with a filename based on the contents of the message. In the response the URL of the Gist file is returned.
@@ -35,4 +32,5 @@ To test the Logic App, grab the endpoint of the Request shape in the Logic App, 
 ```
 
 `Tags: Logic Apps, Integration Patterns, Logic App, Message Router, LogicApps, IntegrationPatterns`
+
 

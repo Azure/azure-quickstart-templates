@@ -20,11 +20,6 @@ Please do the following steps before deploying the template:
 	6. sqlServerPassword  
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)]("https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-data-factory-blob-to-sql-copy%2Fazuredeploy.json")  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)]("http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-data-factory-blob-to-sql-copy%2Fazuredeploy.json")
-    
-
-
-    
-
 
 When you deploy this Azure Resource Template, a data factory is created with the following entities: 
 
@@ -52,4 +47,5 @@ Simply execute the script and pass in the folder name of the sample.  For exampl
 ```
 ```bash
 azure-group-deploy.sh -a 101-data-factory-blob-to-sql-copy -l eastus
+
 

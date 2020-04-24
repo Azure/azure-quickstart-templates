@@ -17,6 +17,5 @@ If the metric is above the upper threshold, the example autoscale setting will s
     
 
 <a href="http://armviz.io/#/?load=https%3a%2f%2fraw.githubusercontent.com%2fAzure%2fazure-quickstart-templates%2fmaster%2fmonitor-autoscale-webappserviceplan-simplemetricbased%2fazuredeploy.json" target="_blank">
-    
 
 

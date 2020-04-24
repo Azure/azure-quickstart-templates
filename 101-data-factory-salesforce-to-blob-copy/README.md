@@ -18,11 +18,6 @@ Update values for the following parameters in **azuredeploy.parameters.json** fi
 - SfTable with object in Salesforce that should be copied over.
  
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)]("https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-data-factory-salesforce-to-blob-copy%2Fazuredeploy.json")  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)]("http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-data-factory-salesforce-to-blob-copy%2Fazuredeploy.json")
-    
-
-
-    
-
 
 When you deploy this Azure Resource Template, an Azure Data Factory instance is created with the following entities: 
 
@@ -42,4 +37,5 @@ The copy activity in the pipeline copies data from the Salesforce object to Azur
 	New-AzureRmResourceGroupDeployment -Name MyARMDeployment -ResourceGroupName ADFTutorialResourceGroup -TemplateFile C:\ADFGetStarted\azuredeploy.json -TemplateParameterFile C:\ADFGetStarted\azuredeploy.parameters.json
 
 See [Tutorial: Create a pipeline using Resource Manager Template](https://azure.microsoft.com/documentation/articles/data-factory-copy-activity-tutorial-using-azure-resource-manager-template/?rnd=1#create-data-factory) article for a detailed walkthrough with step-by-step instructions. 
+
 

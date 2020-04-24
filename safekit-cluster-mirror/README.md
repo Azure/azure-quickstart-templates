@@ -10,8 +10,6 @@
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/safekit-cluster-mirror/CredScanResult.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)]("https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsafekit-cluster-mirror%2Fazuredeploy.json")  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)]("http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsafekit-cluster-mirror%2Fazuredeploy.json")
-    
-
 
 *   [Description](#description)
 *   [Deployed resources](#resources)
@@ -19,7 +17,6 @@
 *   [More information](#more)
 
 ## <a name="description">Description
-
 
 ![How the Evidian SafeKit mirror cluster implements real-time replication and failover in Azure?](images/mirrorarch.png)
 
@@ -66,5 +63,6 @@ After deployment, go to the resource groups's deployment ('Microsoft.Template') 
 *   [Azure: The Simplest High Availability Cluster with Synchronous Replication and Failover](https://www.evidian.com/products/high-availability-software-for-application-clustering/azure-high-availability-cluster-synchronous-replication-failover/)
 
 `Tags: high availability, cluster, replication, real-time replication, synchronous replication, failover, business continuity, disaster recovery, evidian, safekit, mirror`
+
 
 

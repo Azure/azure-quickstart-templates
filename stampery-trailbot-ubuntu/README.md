@@ -23,9 +23,6 @@ All the files and logs watched in this VM will have the [Stamper Smart Policy](h
 
 
 
-
-
-
 `Tags: Blockchain, Ubuntu, Security, Integrity, Bitcoin, Ethereum, Stampery`
 
 ## Getting Started Tutorial
@@ -43,4 +40,5 @@ All the files and logs watched in this VM will have the [Stamper Smart Policy](h
 You can find detailed usage instructions in the [Getting Started guide](https://github.com/trailbot/client/blob/master/GETTING-STARTED.md#usage).
 
 [<img style="width:100%;" src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/images/footer.png">](https://stampery.com)
+
 

@@ -16,4 +16,3 @@ This template uses the Azure Linux CustomScript extension to deploy a MySQL serv
 The root password is defined by yourself during the deployment.
 
 The MySQL server database can be accessed only from localhost by default, you should update the privileges settings based on your own requirement.
-

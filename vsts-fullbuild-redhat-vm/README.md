@@ -13,8 +13,6 @@
     
 
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fvsts-fullbuild-redhat-vm%2Fazuredeploy.json" target="_blank">
-    
-
 
 This template allows you to create multiple (1 or more) Red Hat VMs with a full cross-platform development environment to support:
 * OpenJDK 6, 7 and 8; 
@@ -31,7 +29,6 @@ This template allows you to create multiple (1 or more) Red Hat VMs with a full 
 
 To learn more about Visual Studio Team Services (VSTS) and Team Foundation Server (TFS) support for Java, check out:
 http://java.visualstudio.com/
-
 
 ## Before you Deploy to Azure
 
@@ -67,4 +64,5 @@ in starting up the VSTS build agent.  The most common mistake is not having the 
 * If the agent started sucessfully and is running but an expected tool or software is not working from a build task (e.g. a build task can't find
 maven or java or ...), then you can check the file *"install.progress.txt"* in the top level directory to see if one of the packages
 may have failed to install or had errors (**cat install.progress.txt**).
+
 

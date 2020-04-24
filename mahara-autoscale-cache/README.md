@@ -15,7 +15,6 @@ After deploying, these templates will provide you with a new Mahara site with ca
 
 `Tags: cluster, ha, mahara, autoscale, linux, ubuntu`
 
-
 ## *What this stack will give you*
 
 This template set deploys the following infrastructure:

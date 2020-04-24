@@ -25,11 +25,6 @@ This sample creates a data factory with a data pipeline that processes data by r
     - hiveScriptFile is the name of the hive script file (HQL). For the sample, it is **partitionweblogs.hql**. 
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)]("https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-data-factory-hive-transformation%2Fazuredeploy.json")  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)]("http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-data-factory-hive-transformation%2Fazuredeploy.json")
-    
-
-
-    
-
 
 When you deploy this Azure Resource Template, a data factory is created with the following entities: 
 
@@ -71,5 +66,6 @@ Simply execute the script and pass in the folder name of the sample.  For exampl
 ```
 ```bash
 azure-group-deploy.sh -a 101-data-factory-hive-transformation -l eastus -u
+
 
 

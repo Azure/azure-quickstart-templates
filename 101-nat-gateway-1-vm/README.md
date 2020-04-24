@@ -14,9 +14,6 @@
 
 
 
-
-
-
 This template deploys a **NAT gateway** and supporting resources.
 
 ## Overview and Deployed resources
@@ -51,3 +48,5 @@ Description
 + **virtualMachines**: Virtual machine for solution
 
 `Tags: virtual network, vnet, nat, nat gateway, virtual machine`
+
+

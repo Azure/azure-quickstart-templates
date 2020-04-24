@@ -12,8 +12,6 @@
     
 
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fvsts-tomcat-redhat-vm%2Fazuredeploy.json" target="_blank">
-    
-
 
 This template deploys a web applicaton deployed on JBoss EAP 7 running on RHEL 7. 
 
@@ -32,7 +30,6 @@ This template creates all of the compute resources to run JBoss EAP 7 on top of 
 
 To learn more about JBoss Enterprise Application Platform, check out:
 https://access.redhat.com/documentation/en-us/red_hat_jboss_enterprise_application_platform/
-
 
 ## Before you Deploy to Azure
 
@@ -56,5 +53,6 @@ If you want to access the administration console go to http://<PUBLIC_HOSTNAME>:
 If you don't have a Red Hat subscription to install a JBoss EAP, you can go through WildFly(JBoss EAP Upstream project) instead of EAP:
 
 *  <a href="https://github.com/Azure/azure-quickstart-templates/tree/master/wildfly-standalone-centos7" target="_blank"> [Red Hat WildFly 16 on an Azure VM] - Standalone WildFly 16 with a sample web app on a CentOs 7 Azure VM.
+
 
 

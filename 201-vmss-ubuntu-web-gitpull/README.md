@@ -13,9 +13,6 @@
 
 
 
-
-
-
 My team mate [Scott Semyan](http://github.com//ssemyan) and I recently worked on the web site for the [2016 DNCC](http://demconvention.com).
 One of security principles we followed was to have no inbound ports to our web servers. 
 To enable secure continuous deployment Scott and I put together a clever configuration of a continous pull from a private git repo using read-only [SSH deploy keys](https://gist.github.com/zhujunsan/a0becf82ade50ed06115). 
@@ -79,5 +76,6 @@ If you're looking for a sample that illustrates secure deployment of secrets. To
       }
   ```
   * The Inbound NAT rule on the load balancer is for dev purposes. Remove before deploying to production.
+
 
 

@@ -13,9 +13,6 @@
 
 
 
-
-
-
 This template deploys a VM Scale Set based on a specified custom image (in the form of a Managed Image), connected to an existing subnet in an existing Virtual Network, and adds the instances to a specified existing Application Gateway Backend Pool. This is useful in cases where you might want to deploy multiple VM Scale Sets in the same Virtual Network, as well as configure the Application Gateway outside of this template, such as through the portal, which provides a more reliable experience for things like adding HTTPS listeners.
 
 `Tags: VM Scale Set, VMSS, Managed Disks, Managed Images, Custom Image`
@@ -48,4 +45,5 @@ To connect to individual instances of the VM Scale Set, utilize a jumpbox VM, th
 ## Notes
 
 The OS of the VM Scale Set will follow whatever is defined in the custom image.
+
 

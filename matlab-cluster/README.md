@@ -30,7 +30,6 @@ on a virtual machine that will be used as a “base” VM image for the clusters
 
 - Copy the mdcs.ps1 file from the scripts folder to a folder on your local computer. If you do not have a GitHub account select the mdscs.ps1 file, then select the "Raw" button, then copy the text and paste it into a local file.
 
-
 # Create a “Base” Virtual Machine Image
 
 A VM that will be used as the basis for all cluster VMs needs
@@ -246,8 +245,6 @@ The following commands and arguments are provided:
 One way to create a cluster is from Azure portal. Click the following button will bring you to Azure portal UI to deploy MATLAB Distributed Computing Server cluster. Refer to the following section for parameter values.
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)]("https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmatlab-cluster%2Fazuredeploy.json")  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)]("http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmatlab-cluster%2Fazuredeploy.json")
-    
-
 
 The easiest way to specify the parameters for cluster creation is by
 using an INI file; this way the configuration can be reused and
@@ -417,4 +414,5 @@ Please submit feedback using one of the following mechanisms:
     GitHub account)
 
 -   Create a post in the [Azure Batch MSDN forum](https://social.msdn.microsoft.com/forums/azure/en-US/home?forum=azurebatch).
+
 

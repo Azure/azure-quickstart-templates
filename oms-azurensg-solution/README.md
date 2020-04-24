@@ -13,9 +13,6 @@
 
 
 
-
-
-
 This template deploys **Azure Network Security Group analytics solution** on an Azure Log Analytics workspace. 
 
 Note: The Microsoft recommended solution for Network Analytics is [Traffic Analytics](https://docs.microsoft.com/azure/networking/network-monitoring-overview#traffic-analytics) 
@@ -56,4 +53,5 @@ After you click the **Azure Network Security Group analytics** tile on the Overv
 On the **Azure Network Security Group analytics** dashboard, review the summary information in one of the blades, and then click one to view detailed information on the log search page.
 
 On any of the log search pages, you can view results by time, detailed results, and your log search history. You can also filter by facets to narrow the results.
+
 

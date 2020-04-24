@@ -36,7 +36,6 @@
 
 <!-- /TOC -->
 
-
 ----------
 
 ## Solution Overview
@@ -130,7 +129,6 @@ You have now successfully deployed the application. You will have to do a few ad
     * Click open the scheduleIngestion runbook and click start to run the runbook. This step will kickstart the data ingestion to the OMS workspace specified.
     <br/> &nbsp;&nbsp;&nbsp;&nbsp; ![](images/StartIngestionRunbook.png)
 
-
 ## Terms of Use and Privacy Policies
 As the solution contains IP owned by Avyan Consulting Corp, please refer to
 * [Terms of Service](termsofuse/CloudWise_Terms_Of_Service.pdf)
@@ -142,4 +140,5 @@ For any support-related issues or questions, please contact us for assistance.
 ```sh
 > azuremarketplace@avyanconsulting.com 
 ```
+
 

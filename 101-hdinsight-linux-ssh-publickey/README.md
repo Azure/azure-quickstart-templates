@@ -13,8 +13,7 @@
     
 
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fhdinsight-linux-ssh-publickey%2Fazuredeploy.json" target="_blank">
-    
-
 
 This template allows you to create an HDInsight cluster running Linux (with Azure Storage) with an SSH public key.
+
 

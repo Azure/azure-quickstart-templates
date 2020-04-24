@@ -55,7 +55,6 @@ If you **do not** have an existing OMS Log Analytics Workspace, the template wil
 
 ![alt text](images/aeomsworkspace.png "omsws") 
 
-
 ###You can now deploy the template
 
 [![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Foms-scomacs-solution%2F%2Fazuredeploy.json)
@@ -97,4 +96,5 @@ Once the solution has been enabled, OMS will show an additional tile for "Audit 
 With the solution deployed, you can drill into the SCOM ACS Dashboard solution and explore the views.
 
 ![alt text](images/aescomacssolutionview.png "SCOM ACS Solutoin View")
+
 

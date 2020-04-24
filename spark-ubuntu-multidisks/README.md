@@ -10,11 +10,6 @@
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/spark-ubuntu-multidisks/CredScanResult.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)]("https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fspark-ubuntu-multidisks%2Fazuredeploy.json")  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)]("http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fspark-ubuntu-multidisks%2Fazuredeploy.json")
-    
-
-
-    
-
 
 Apache Spark is a fast and general engine for large-scale data processing.
 Spark has an advanced DAG execution engine that supports cyclic data flow and in-memory computing.
@@ -102,4 +97,5 @@ To check deployment errors go to the new azure portal and look under Resource Gr
 - The deployment script is not yet idempotent and cannot handle updates
 - SSH key is not yet implemented and the template currently takes a password for the admin user
 - Spark cluster is current enabled for one master and multi slaves.
+
 

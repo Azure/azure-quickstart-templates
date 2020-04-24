@@ -13,9 +13,6 @@
 
 
 
-
-
-
 This template creates a web app on azure with Python 3.7 enabled allowing you to run Python applications in Azure. 
 
 The web app with Python is an app service that allow you to deploy your Django or Flask website. This will deploy a free tier Linux App Service Plan where you will host your App Service.
@@ -37,3 +34,5 @@ If you are new to template deployment, see:
 If you have already a Linux App Service Plan, you will have to deploy the new web app into the same resource group that the other web app is. That's because Student accounts has a limit of only 1 free tier Linux app service plan.
 
 Tags: Azure4Student, appServices , flask, linux, Intermediate
+
+

@@ -35,8 +35,6 @@ END
     
 
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-data-factory-blob-to-sql-stored-proc%2Fazuredeploy.json" target="_blank">
-    
-
 
 ## Deploying sample
 You can deploy this sample directly through the Azure Portal or by using the scripts supplied in the root of the repository.
@@ -53,4 +51,5 @@ Simply execute the script from the root folder and pass in the folder name of th
 ```bash
 azure-group-deploy.sh -a 101-data-factory-blob-to-sql-copy-stored-proc -l eastus
 ```
+
 

@@ -10,11 +10,6 @@
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/coscale-dev-env/CredScanResult.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)]("https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcoscale-dev-env%2Fazuredeploy.json")  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)]("http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcoscale-dev-env%2Fazuredeploy.json")
-    
-
-
-    
-
 
 CoScale is a full-stack monitoring solution tailored towards production environments running microservices, see https://www.coscale.com/ for more information.
 This template installs the CoScale platform on a single VM and should only be used for Proof-Of-Concept environments.
@@ -35,4 +30,5 @@ This directory also contains a deploy-agent.sh script to deploy the CoScale agen
 - This single VM deployment should only be used for Proof-Of-Concept environments.
 - There is no backup of the data that is collected using this setup.
 - Since the created objects have fixed names they can be deployed only once per resource group.
+
 

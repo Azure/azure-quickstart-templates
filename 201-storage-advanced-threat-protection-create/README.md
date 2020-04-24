@@ -13,12 +13,11 @@
     
 
 <a href="http://armviz.io/#/?load=https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-storage-advanced-threat-protection-create/azuredeploy.json" target="_blank">
-    
-
 
 This template allows you to deploy an Azure Storage Account with Advanced Threat Protection enabled.
 
 Storage Advanced Threat Protection is a unified package for advanced Storage security capabilities.
 
 For more information on Storage Advanced Threat Protection, see the [official documentation]( https://docs.microsoft.com/en-us/azure/storage/common/storage-advanced-threat-protection).
+
 

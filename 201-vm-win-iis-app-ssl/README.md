@@ -12,9 +12,7 @@
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)]("https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vm-win-iis-app-ssl%2Fazuredeploy.json")  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)]("http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vm-win-iis-app-ssl%2Fazuredeploy.json")
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vm-win-iis-app-ssl/images/deploytoazure.png"/>
 
-
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vm-win-iis-app-ssl/images/visualizebutton.png"/>
-
 
 To deploy this template using the scripts from the root of this repo: 
 ```PowerShell
@@ -64,4 +62,5 @@ Script to upload the combined pfx certificate to an Azure Key Vault:(replace the
 $securepfxpwd = ConvertTo-SecureString –String '<strongpassword>' –AsPlainText –Force
 $cer = Import-AzureKeyVaultCertificate -VaultName '<Azurekeyvaultname>' -Name '<CertStoreName>' -FilePath '<C:\myCerts\www_custDomain_com.pfx>' -Password $securepfxpwd
 Set-AzureRmKeyVaultAccessPolicy -VaultName '<Azurekeyvaultname>' -UserPrincipalName '<udsarm@microsoft.com>' -PermissionsToCertificates all
+
 

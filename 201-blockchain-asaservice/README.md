@@ -13,8 +13,6 @@
 
 
 
-
-
 This template deploys a **Azure Blockchain Service**. Azure Blockchain Service is a fully-managed ledger service in Azure. It enables users to grow and operate blockchain networks at scale with simplified network formation, consortium management, and governance. As default the template uses a **Basic price tier** that provides 1 vCore CPU. The available locations for this deployment are:  
 
 >
@@ -36,3 +34,5 @@ If you are new to template deployment, see:
 [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
 
 `Tags: Azure4Student, Blockchain, Beginner`
+
+

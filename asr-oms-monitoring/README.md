@@ -11,9 +11,6 @@
 
 [![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fasr-oms-monitoring%2F%2Fazuredeploy.json) 
 
-    
-
-
 This solution (currently in private preview) will allow you to capture your Azure Site Recovery operations (across subscriptions and Recovery Vaults) and visualize them in Operations Management Suite (Log Analytics). This solution currently leverages an automation runbook in Azure Automation, the Log Analytics Ingestion API, together with Log Analytics to present data about all your ASR Recovery Vaults into a single log analytics workspace.
 
 ![alt text](images/knarmasr.png "OMS ASR Monitoring")
@@ -67,7 +64,6 @@ Ensure that the parameters reflects your setup so that you are deploying this in
 *It is important that you type the exact values for your workspace name and automation account name, and points to the regions where these resources are deployed.* 
 
 You should also change the *INGESTSCHEDULEGUID* value. You can generate your own using PowerShell with the following cmdlet:
-
 
 ![alt text](images/knguid.png "guid")
 
@@ -129,4 +125,5 @@ You should expect to see the following view for the next hour.
 When the first data has been ingested, you can drill into the ASR Private Preview solution and explore the views
 
 ![alt text](images/asrpreview.png "ASR Private Preview")           
+
 

@@ -26,4 +26,3 @@ This template provides the minimum settings to get started. For a full list of c
 - [Chef Training](https://www.chef.io/training/)
 - [Using Chef Server in the Azure Marketplace](https://docs.chef.io/azure_portal.html)
 - [Chef Documentation](http://docs.chef.io/)
-

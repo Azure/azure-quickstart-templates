@@ -10,8 +10,6 @@
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/safekit-cluster-farm/CredScanResult.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)]("https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsafekit-cluster-farm%2Fazuredeploy.json")  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)]("http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsafekit-cluster-farm%2Fazuredeploy.json")
-    
-
 
 *   [Description](#description)
 *   [Deployed resources](#resources)
@@ -58,12 +56,12 @@ After deployment, go to the resource group's 'Microsoft.Template' deployment out
 *   after certificates installation, start the web console of the cluster
 *   test the load balanced virtual IP address with the test URL in the output
 
-
-
 ## <a name="more">More information on **Evidian SafeKit** in Azure
 
 *   [Azure: The Simplest Load Balancing Cluster with Failover](https://www.evidian.com/products/high-availability-software-for-application-clustering/azure-load-balancing-cluster-failover/)
 *   [Azure: The Simplest High Availability Cluster with Synchronous Replication and Failover](https://www.evidian.com/products/high-availability-software-for-application-clustering/azure-high-availability-cluster-synchronous-replication-failover/)
 
 `Tags: load balancing, cluster, failover, high availability, business continuity, disaster recovery, evidian, safekit, farm`
+
+
 
