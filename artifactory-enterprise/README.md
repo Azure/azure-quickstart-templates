@@ -13,14 +13,10 @@
 
 
 
-
-
-
 This template can help you setup the [Artifactory Enterprise](https://jfrog.com/artifactory) on Azure.
 
 ## A. Deploy Artifactory Enterprise on Azure
 ![screenshot](images/HA_Diagram.png)
-
 
 1. Click "Deploy to Azure" button. If you haven't got an Azure subscription, it will guide you on how to signup for a free trial.
 
@@ -83,4 +79,5 @@ Please check the Azure region support for `Standard Sku` property in load balanc
 Check for SQL server support on specified location. If SQL server is not available in the location, Use 'DB_Location' to specify the location with SQL server support.  
 
  
+
 

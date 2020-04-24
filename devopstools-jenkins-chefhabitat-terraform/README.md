@@ -16,9 +16,6 @@
 
 
 
-
-
-
 **Table of Contents**  
 
 - [Solution Architecture:](#solution-architecture)
@@ -137,7 +134,6 @@ Elasticsearch is an open-source, broadly-distributable, readily-scalable, enterp
 | ---- |-------------     | -------- |
 | 1    | Application Node | /hab/svc/national-parks/logs/, /hab/pkgs/core/tomcat8/8.5.9/20170514144202/tc/logs/, /root/sup-national-parks.log|
 | 2    | mongoDB          | /hab/svc/mongodb/logs, /hab/svc/mongodb/var/mongod.log, /root/sup.mongodb.log|
-
 
 ## Jenkins:
 
@@ -673,4 +669,5 @@ Click **Apply** and **Save.**
 ![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p1/devopstools-jenkins-chefhabitat-terraform/images/74.PNG)
 
 ![alt text](https://github.com/sysgain/azure-quickstart-templates/raw/msoss-p1/devopstools-jenkins-chefhabitat-terraform/images/75.PNG)
+
 

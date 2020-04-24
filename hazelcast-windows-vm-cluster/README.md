@@ -13,9 +13,6 @@
 
 
 
-
-
-
 [Hazelcast](https://hazelcast.com) is an in-memory data platform which can support a variety of data applications such as data grids, nosql data stores, caching and web session clustering.
 
 This template will deploy any number of Windows Hazelcast nodes in a vnet using the [official Hazelcast Azure Discovery Provider](https://github.com/hazelcast/hazelcast-azure). Each node will discover every other node on the network automatically so you can add and remove nodes as you see fit.
@@ -31,4 +28,5 @@ This template deploys resources that need read access the mangaement api's for t
 You'll need to setup [Azure Active Directory Service Principal credentials](https://azure.microsoft.com/en-us/documentation/articles/resource-group-create-service-principal-portal/) for your Azure Subscription for this plugin to work. With the credentials, fill in the `aadClientId`, `aadClientSecret`, and `aadTenantId` parameters.
 
 `Tags: nosql, key-value store, imdg, in-memory data grid, cache, web session, hazelcast, windows`
+
 

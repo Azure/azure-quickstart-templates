@@ -11,11 +11,7 @@
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/urihttps%3A%2F%2raw.githubusercontent.com%2Azure%2azure-quickstart-templates%2master%2azure-quickstart-templates%2azuredeploy.json" target="_blank">
 
-
-
 <a href="http://armviz.io/#/?load=https%3A%2F%2raw.githubusercontent.com%2Azure%2azure-quickstart-templates%2master%2azure-quickstart-templates%2azuredeploy.json" target="_blank">
-
-
 
 This template shows how to work with Application Security Groups using templates. It assigns a VM to the Application Security Group and assigns this Application Security group to two security rules on Network Security Group, one that allows SSH and another one that allows HTTP using the Destination Application Security Group Id property of the security rule. 
 
@@ -33,5 +29,6 @@ For more information about Application Security Groups, please refer to:
 [Filter network traffic with a network security group using PowerShell](https://docs.microsoft.com/en-us/azure/virtual-network/tutorial-filter-network-traffic)
 
 [Filter network traffic with a network security group using the Azure CLI](https://docs.microsoft.com/en-us/azure/virtual-network/tutorial-filter-network-traffic-cli)
+
 
 

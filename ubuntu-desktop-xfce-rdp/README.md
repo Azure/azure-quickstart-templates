@@ -25,11 +25,10 @@ sudo service xrdp restart
 Then re-connect it with Remote Desktop from a Windows machine.
 
 
-
-
 Please kindly note for Ubuntu 15.10, if you face the connection issue, saying "connecting to sesman ip 127.0.0.1 port 3350" then couldn't move on, this is  xrdp-sesman didn't start hence caused the issue. To fix it, please use putty to connect to the VM, execute the simple command below
 
 sudo service xrdp restart
 
 Then re-connect it with Remote Desktop from a Windows machine. 
+
 

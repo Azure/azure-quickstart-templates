@@ -75,7 +75,6 @@ THE “EFFECTIVE DATE” OF THIS AGREEMENT IS THE DATE YOU FIRST DOWNLOAD ANY OF
 
 http://www.cloudera.com/content/www/en-us/legal/terms-and-conditions/cloudera-standard-license-v4-2016-05-26.html
 
-
 # Readme
 This template creates a multi-server Cloudera CDH Apache Hadoop deployment on CentOS virtual machines, and configures the CDH installation for either POC or high availability production cluster.
 
@@ -242,4 +241,5 @@ Now in this Chrome session you can connect to any other host on the Virtual Netw
 Warning: this method is **NOT** recommended for anything besides a PoC. If not carefully locked down the data in the cluster will be accessible to hackers and malicious entities.
 
 On [portal.azure.com](https://portal.azure.com) find the Network Security Group(s) and add inbound rules for the various services. You may have to create this rules in multiple Network Security Groups. [Here's Cloudera documentation for more information on ports used by Cloudera Manager, CDH components, managed services, and third-party components](http://www.cloudera.com/documentation/enterprise/latest/topics/cm_ig_ports.html).
+
 

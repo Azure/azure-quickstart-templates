@@ -17,6 +17,5 @@ The template deploys an Activity Log Alert with Action Group configured to send 
     
 
 <a href="http://armviz.io/#/?load=https%3a%2f%2fraw.githubusercontent.com%2fAzure%2fazure-quickstart-templates%2fmaster%2fmonitor-autoscale-alert%2fazuredeploy.json" target="_blank">
-    
 
 

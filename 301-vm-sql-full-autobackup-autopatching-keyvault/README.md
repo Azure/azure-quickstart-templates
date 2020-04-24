@@ -12,9 +12,7 @@
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)]("https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F301-vm-sql-full-autobackup-autopatching-keyvault%2Fazuredeploy.json")  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)]("http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F301-vm-sql-full-autobackup-autopatching-keyvault%2Fazuredeploy.json")
   
 
-
   
-
 
 This template deploys a **SQL SERVER 2014 SP1 Virtual Machine** solution with all necessary components. It also enable Auto Patching, Auto Backup and Azure Key Vault Integration features.
 
@@ -58,7 +56,6 @@ Azure Key Vault provider is configured on SQL Server as an EKM provider and a ne
 
 When this feature is enabled, it automatically installs the SQL Server Connector, configures the EKM provider to access Azure Key Vault, and creates the credential to allow you to access your vault.
 
-
 ## Notable Parameters
 
 |Name|Description|Example|
@@ -73,4 +70,5 @@ When this feature is enabled, it automatically installs the SQL Server Connector
 |sqlAkvUrl|The location of the key vault|https://contosokeyvault.vault.azure.net/|
 |servicePrincipalName|Azure Active Directory service principal name. This is also referred to as the Client ID.|fde2b411-33d5-4e11-af04eb07b669ccf2|
 |servicePrincipalSecret|Azure Active Directory service principal secret. This is also referred to as the Client Secret.|9VTJSQwzlFepD8XODnzy8n2V01Jd8dAjwm/azF1XDKM=|
+
 

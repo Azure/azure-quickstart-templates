@@ -13,9 +13,6 @@
 
 
 
-
-
-
 #### IMPORTANT: Before you deploy the template make sure you have accepted Pivotal End User License Agreement:
 
 Elastic Runtime 1.7.15:
@@ -43,8 +40,6 @@ Pivotal Cloud Foundry’s service broker API is used to create the Apigee servic
 The Apigee service broker supports Apigee Edge, including Trial, SMB, Startup, and Enterprise.
 
 ![Pivotal Cloud Foundry Integration with Apigee Edge Gateway](https://github.com/sysgain/azurequickstarts/blob/vcherukuri-patch-1/PivtoalCloudFoundry-Concourse-Apigee-AzureMetaService/pivotal-P2P/Images/Solution%20Integration.png?raw=true)
-
-
 
 ## Product Architecture
 ![Product Architecture](https://raw.githubusercontent.com/sysgain/pivotal/master/pivotal-P2P-Architecture.jpg)
@@ -125,5 +120,6 @@ Please refer to parameter descriptions if you need more information on what need
 The deployment takes about 5 Hours. 
 
 To work with Pivotal Cloud Foundry Hands on Lab click [here](http://pcf-ignite.pcfazure.com/Labs/)
+
 
 

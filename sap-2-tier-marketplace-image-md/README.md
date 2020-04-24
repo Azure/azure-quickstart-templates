@@ -10,11 +10,6 @@
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/sap-2-tier-marketplace-image-md/CredScanResult.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)]("https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsap-2-tier-marketplace-image-md%2Fazuredeploy.json")  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)]("http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsap-2-tier-marketplace-image-md%2Fazuredeploy.json")
-    
-
-
-    
-
 
 This template takes a minimum amount of parameters and deploys a VM that is customized for use with SAP NetWeaver, using the latest patched version of the selected operating system. 
 This is a template for a 2-tier configuration. It deploys 1 server on Premium Storage.
@@ -48,4 +43,5 @@ There is not suitable configuration for X-Large with Standard Storage. If you se
 		<td>1xStandard_E64s_v3 (4xP30 1xP20)</td>
 	</tr>
 </table>				
+
 

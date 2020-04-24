@@ -10,11 +10,6 @@
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-gateway-demo-setup/CredScanResult.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)]("https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-gateway-demo-setup%2Fazuredeploy.json")  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)]("http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-gateway-demo-setup%2Fazuredeploy.json")
-    
-
-
-    
-
 
 This template allows you to quickly deploy Azure Application Gateway demo to test load-balancing with or without cookie-based affinity.
 
@@ -24,7 +19,6 @@ This template allows you to quickly deploy Azure Application Gateway demo to tes
 2. Choose admin credentials for the backend Web servers.
 3. If needed change size, capacity, cookie-based affinity mode (you can re-configure later).
 4. Start template deployment.
-
 
 ## After Deployment
 
@@ -40,6 +34,7 @@ In order to try your test setup in action you can re-send your requests, bring d
 When your HTTP request hits backend server, you should be able to see a page like the one below:
 
 ![alt text](images/serverhit.png "Backend server response")
+
 
 
 

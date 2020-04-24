@@ -12,10 +12,7 @@
 <h3>Composite template version 1.0</h3>
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)]("https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdatameer-trend-chef-riskanalysis%2Fazuredeploy.json")  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)]("http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdatameer-trend-chef-riskanalysis%2Fazuredeploy.json")
 
-
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAAzure%2Fazure-quickstart-templates%2Fmaster%2Fdatameer-trend-chef-riskanalysis%2Fazuredeploy.json" target="_blank">
-
-
 
 
 <!-- TOC -->
@@ -133,4 +130,5 @@ For any support-related issues or questions, please contact us for assistance.
 ```sh
 azuremarketplace@avyanconsulting.com
 ```
+
 

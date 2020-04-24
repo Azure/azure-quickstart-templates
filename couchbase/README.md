@@ -25,7 +25,6 @@ If you don't follow this step, you'll likely see an error like this:
 
     error:   MarketplacePurchaseEligibilityFailed : Marketplace purchase eligibilty check returned errors. See inner errors for details.
 
-
 # Deploying this Couchbase ARM Template
 
 You can deploy or inspect the template by clicking the buttons below or using a command line tool like the Azure CLI or Azure PowerShell:
@@ -36,4 +35,5 @@ You can deploy or inspect the template by clicking the buttons below or using a 
 Deployment typically takes six to eight minutes.  When complete the template will out URLs you can use to access Couchbase Server and Couchbase Sync Gateway.
 
 The username and password entered for the deployment will be used for both the VM administrator credentials as well as the Couchbase administrator.
+
 

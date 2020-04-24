@@ -29,9 +29,6 @@ Click the button below to deploy from the portal:
 
 
 
-
-
-
 ## Final Configuration
 
 The environment in this guide has the below configurations. This section is intended to be used as a reference.
@@ -99,3 +96,5 @@ Beyond this the solution does support network communication between on-premises 
 + If you are going to modify and use existing Virtual Networks, NSGs or any NVAs outbound internet access is required for Hyper-V Host Virtual Machines for setup to complete.
 
 Tags: ``nested, hyper-v, windows server 2016, ws2016``
+
+

@@ -13,8 +13,6 @@
 
 
 
-
-
 This template deploys a **Linux VM Ubuntu with data science tools**. This will deploy a CPU or GPU based VM in the resource group location and will return the admin user name, Virtual Network Name, Network Security Group Name and FQDN.  
 
 If you are new to Azure virtual machines, see:
@@ -86,3 +84,5 @@ Now, you should see the graphical interface for your Ubuntu DSVM.
 ![Screen](./images/connect-x2go6.png)
 
 `Tags: Azure4Student, virtual machine, Linux, Ubuntu Server, Beginner, Data Science`
+
+

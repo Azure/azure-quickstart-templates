@@ -17,7 +17,6 @@ Note that Azure Bastion is currently in Public Preview status.  As a result, ple
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)]("https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-azure-bastion%2Fazuredeploy.json")  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)]("http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-azure-bastion%2Fazuredeploy.json")
 
-
 ## Deploying Sample Templates
 
 You can deploy these samples directly through the Azure Portal or by using scripts.
@@ -27,4 +26,5 @@ To deploy a sample using the Azure Portal, click the **Deploy to Azure** button.
 To deploy the sample via the command line (using [Azure PowerShell or the Azure CLI](https://azure.microsoft.com/en-us/downloads/)) you can use scripts.
 ```
 Tags: ``bastion``
+
 

@@ -38,10 +38,10 @@ This template also ilustrates how to use Outputs and Tags.
  * The template will generate an output with the fqdn of the new public IP so you can easily connect to the Ansible VM.
  * The template will associate two tags to all the VMS : ServerRole (Webserver,database etc) and ServerEnvironment (DEV,PRE,INT, PRO etc)
 
-
 ##Known Issues and Limitations
 - Fixed number of data disks.This is due to a current limitation on the resource manager;this template creates 2 data disks with ReadOnly Caching
 - Only the ansible controller VM will be accesible for SSH.
 - Scripts are not yet idempotent and cannot handle updates.
 - Current version doesn't use secured endpoints. If you are going to host confidential data make sure that you secure the VNET by using Security Groups.
+
 

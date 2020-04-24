@@ -29,7 +29,6 @@ Tags: ``Event Hubs, Event Hub, Realtime, PubNub, PubSub, Pub/Sub, Publish/Subscr
     <img src="https://camo.githubusercontent.com/536ab4f9bc823c2e0ce72fb610aafda57d8c6c12/687474703a2f2f61726d76697a2e696f2f76697375616c697a65627574746f6e2e706e67" data-canonical-src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true" style="max-width:100%;">
 </a>
 
-
 ## What does it deploy?
 * PubNub/Azure gateway script writing in Node.js
 * Web Job

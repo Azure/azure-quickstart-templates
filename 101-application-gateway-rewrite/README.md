@@ -10,11 +10,6 @@
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-application-gateway-rewrite/CredScanResult.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)]("https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-application-gateway-rewrite%2Fazuredeploy.json")  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)]("http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-application-gateway-rewrite%2Fazuredeploy.json")
-    
-
-
-    
-
 
 Application Gateway now supports the ability to rewrite headers of the incoming HTTP requests as well as the outgoing HTTP responses. You will be able to add, remove or update HTTP request and response headers while the request/response packets move between the client and backend pools.
 
@@ -74,7 +69,6 @@ You can create multiple http header rewrite rule sets and each rewrite rule set 
 }
 ```
 
-
 ### Sample request routing rule configuration with rewrite rule set
 ```
 {
@@ -114,4 +108,5 @@ For more details, please visit https://aka.ms/appgwheadercrud
 
 ### Notes:
 Supported apiVersion to use http rewrite feature is "2018-10-01" and above.
+
 

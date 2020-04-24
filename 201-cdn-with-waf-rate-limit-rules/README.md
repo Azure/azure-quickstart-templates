@@ -13,7 +13,6 @@
     
 
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-cdn-with-waf-managed-rules%2Fazuredeploy.json" target="_blank">
-    
-
 
 This template creates a CDN Profile and a CDN Endpoint with a user specified origin and all of our most commonly used settings on CDN. This template also links a CDN WAF Policy to the Endpoint which applies example rate limit rules for blocking and redirecting rate-limited requests.
+

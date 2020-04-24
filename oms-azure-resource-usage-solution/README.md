@@ -11,11 +11,8 @@
 
 [![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Foms-azure-resource-usage-solution%2Fazuredeploy.json) 
 <a href="http://armviz.io/#/?load=https%3A%2F%2raw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Foms-azure-resource-usage-solution%2Fazuredeploy.json" target="_blank">
-    
-
 
 >[AZURE.NOTE]This is preliminary documentation for Azure Resource Usage Solution, a management solution you can deploy into OMS that will provide insights of virtual machines across subscriptions. 
-
 
 Azure Resource Usage   Solution collects and visualizes Azure Usage from Azure Billing  APIs to bring in the cost metric of Azure resources. Solution provides  usage deatils for;
 
@@ -144,4 +141,5 @@ This second template also used to onboard additional subscriptions to the soluti
 
 Template requires OMS Log Analytics workspace ID and Key  from the  workspace where solution is already deployed. Navigate to Log Analytics Portal / Settings / Connected Sources  to get worspace Id and Key.
 This solution will deploy only the automation components used in data collection and push data to existing log analytics workspace. 
+
 

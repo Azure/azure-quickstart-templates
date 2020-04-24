@@ -24,8 +24,6 @@ Click the button below to deploy
     
 
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fresiliency.blob.core.windows.net%2F301-storage-spaces-direct-md-zones%2Fazuredeploy.json" target="_blank">
-    
-
 
 ## Notes
 
@@ -41,5 +39,6 @@ Click the button below to deploy
 +	To successfully deploy this template, be sure that the subnet to which the storage nodes are being deployed already exists on the specified Azure virtual network, AND this subnet should be defined in Active Directory Sites and Services for the appropriate AD site in which the closest domain controllers are configured.
 
 + SPECIAL THANKS to <a href="https://github.com/mmarch">@mmarch on code contributions for dynamic data disk selection nested templates!
+
 
 

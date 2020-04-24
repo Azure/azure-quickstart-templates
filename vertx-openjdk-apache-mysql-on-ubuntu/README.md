@@ -10,15 +10,11 @@
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/vertx-openjdk-apache-mysql-on-ubuntu/CredScanResult.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)]("https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fvertx-openjdk-apache-mysql-on-ubuntu%2Fazuredeploy.json")  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)]("http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fvertx-openjdk-apache-mysql-on-ubuntu%2Fazuredeploy.json")
-    
-
-
-    
-
 
 This template uses the Azure Linux CustomScript extension to deploy Vert.x, OpenJDK, Apache, and MySQL Server on Ubuntu 14.04 LTS to create a ready development environment using Vert.x.
 
 It downloads Vert.x installation files from the location you specify and creates a symlink so you don't have to browse to Vert.x folder. It also install MySQL server in non-interactive mode with the password you specify.
 
 All these parameters may be edited in install.sh script.
+
 

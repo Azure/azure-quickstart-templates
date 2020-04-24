@@ -11,10 +11,7 @@
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)]("https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fintel-lustre-client-server%2Fazuredeploy.json")  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)]("http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fintel-lustre-client-server%2Fazuredeploy.json")
 
-
 <a href="http://armviz.io/#/?load=https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/intel-lustre-client-server/azuredeploy.json" target="_blank">
-
-
 
 
 This template creates Lustre client and server node VMs and related infrastructure such as VNETs. Provided below are the relevant details of the deployment.
@@ -30,4 +27,5 @@ This template creates Lustre client and server node VMs and related infrastructu
 	* Use Azure CLI to login to subscription.
 	* Execute the deploy.bat by replacing the arguments in parameters.txt file.
 	* Keep deploy.bat and parameters.txt file in same folder.
+
 

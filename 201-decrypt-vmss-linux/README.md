@@ -13,10 +13,9 @@
     
 
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2F201-decrypt-vmss-linux%2Fazuredeploy.json" target="_blank">
-    
-
 
 This template disables encryption on a running VM scale set of Linux VMs.
 
 For more information about Azure Disk Encryption, see https://docs.microsoft.com/en-us/azure/security/azure-security-disk-encryption-linux
+
 

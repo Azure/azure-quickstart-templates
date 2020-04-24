@@ -13,8 +13,6 @@
 
 
 
-
-
 This module creates a Shared Image Gallery.
 
 ## Parameters
@@ -33,3 +31,5 @@ This module creates a Shared Image Gallery.
 | location | string | The resource location of the gallery. |
 
 ```apiVersion: 2019-12-01```
+
+

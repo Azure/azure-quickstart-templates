@@ -13,9 +13,6 @@
 
 
 
-
-
-
 This template deploys a Chef High-Availability Cluster.
 `Tags: chef,cluster,ha`
 
@@ -44,7 +41,6 @@ This template also uses blob storage to share secrets and configuration template
   * Chef DNS name: A unique short name (ex: mychefhacluster ) that will be prepended to `.region.cloudapp.azure.com` (ex: `mychefhacluster.westus.cloudapp.azure.com`)
   * SSH Key Data: The contents of your [SSH Public key](https://git-scm.com/book/en/v2/Git-on-the-Server-Generating-Your-SSH-Public-Key) for SSH authentication
 
-
 ## Usage
 
 #### Connect
@@ -62,4 +58,5 @@ ssh -o ProxyCommand="ssh -W %h:%p -p 50000 -q chefadmin@yourhost.youregion.cloud
 #### Management
 
 See the chef documentation at [Chef](https://docs.chef.io/)
+
 

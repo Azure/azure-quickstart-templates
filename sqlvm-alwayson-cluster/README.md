@@ -13,9 +13,6 @@
 
 
 
-
-
-
 ## Solution overview
 
 This template uses the PowerShell DSC extension to deploy a fully configured Always On Availability Group with SQL Server 2014 replicas.
@@ -55,4 +52,5 @@ This template creates the following resources:
 	+ 	Witness - Latest Windows Server 2012 R2 Image
 
 + 	Once deployed access can be gained by the public IP address of Primary Domain Controller
+
 

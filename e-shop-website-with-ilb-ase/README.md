@@ -26,7 +26,6 @@
 * [Check Deployment Outputs](#check-deployment-outputs)
 * [Get ASE ILB IP address](#get-ase-ilb-ip-address)
 
-
 * [Add DNS Records](#add-dns-records)
 
 * [Add Reply URL to the Admin Web App](#add-reply-url-to-the-admin-web-app)
@@ -279,4 +278,5 @@ Open the **Web App URL** you got from the outputs section in a browser.
 Open the **Admin App URL** you got from the outputs section in a browser. Then sign in with a work account in the AAD where you registered the AAD application. ![](images/admin-app.png)
 
 **Copyright (c) 2018 Microsoft. All rights reserved.**
+
 

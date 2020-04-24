@@ -13,9 +13,6 @@
 
 
 
-
-
-
 This template deploys **Azure Web App Analytics Solution** on an Azure Log Analytics workspace. This allows you to view analytic data for metrics across all your Azure Web App resources.
 
 `Tags: Azure Web App, OMS Log Analytics, Monitoring`

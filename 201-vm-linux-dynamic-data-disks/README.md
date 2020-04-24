@@ -13,7 +13,6 @@
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)]("https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vm-linux-dynamic-data-disks%2Fazuredeploy.json")  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)]("http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vm-linux-dynamic-data-disks%2Fazuredeploy.json")
    <img alt="Deploy to Azure" src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true"/>
 
-
     
    
 
@@ -32,4 +31,5 @@
 * gcc and other necessary software available for Plain CentOS 6.5/6.6/7.1/7.2 and for Ubuntu 16.04.0-LTS
 * WALinuxAgent updates are disabled on first deployment.
 * Specific Logic in <code>install_packages_all()</code> to distinguish between sku for CentOS 6.5/6.6 and 7.1/7.2 as well as UbuntuServer 16.04.0-LTS, primarily for docker usage.
+
 

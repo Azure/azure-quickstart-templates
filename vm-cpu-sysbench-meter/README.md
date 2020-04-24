@@ -10,12 +10,6 @@
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/vm-cpu-sysbench-meter/CredScanResult.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)]("https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fvm-cpu-sysbench-meter%2Fazuredeploy.json")  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)]("http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fvm-cpu-sysbench-meter%2Fazuredeploy.json")
-    
-
-
-    
-
-
 
 This template allows you to run a CPU performance test using sysbench utility.
 
@@ -41,4 +35,6 @@ sysbench --test=cpu --num-threads=10 --cpu-max-prime=20000 run
 ```
 
 In case you don't need to re-measure, it is safe to delete the created resource group.
+
+
 

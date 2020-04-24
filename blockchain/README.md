@@ -13,9 +13,6 @@ This Microsoft Azure Resource Manager template deploys a single VM and allows yo
 
 [![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fblockchain%2Fazuredeploy.json)
 
-    
-
-
 Options for blockchain software include:
 
 - [bitshares](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/bitshares.md) (note: failed testing on 10/7/2016)
@@ -36,3 +33,5 @@ Options for blockchain software include:
 - [vcash](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/vcash.md)
 - [viacoin](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/viacoin.md)
 - [vechain](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/vechain.md)
+
+

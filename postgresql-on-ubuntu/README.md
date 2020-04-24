@@ -10,11 +10,6 @@
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/postgresql-on-ubuntu/CredScanResult.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)]("https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fpostgresql-on-ubuntu%2Fazuredeploy.json")  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)]("http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fpostgresql-on-ubuntu%2Fazuredeploy.json")
-    
-
-
-    
-
 
 This template creates one master PostgreSQL 10 server with streaming-replication to multiple (based on the T-Shirt size parameter) slave servers. Each database server is configured with multiple data disks that are striped into RAID-0 configuration using mdadm. The template also optionally creates one externally accessible VM to serve as a jumpbox for ssh into the backend database servers.
 
@@ -57,4 +52,5 @@ The following table outlines the deployment topology characteristics for each su
 | Medium | Standard_A3 | 4 | 7 GB | 8x1023 GB | 1 | 2 |
 | Large | Standard_A4 | 8 | 14 GB | 16x1023 GB | 2 | 2 |
 | XLarge | Standard_A4 | 8 | 14 GB | 16x1023 GB | 3 | 4 |
+
 
