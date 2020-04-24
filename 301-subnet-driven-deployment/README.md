@@ -28,8 +28,6 @@ The purpose of this template is to illustrate:
 
 * BGinfo extension is installed on both domain controllers and member servers.
 
-
-
 ## Changelog summary
 
 **2016-02-28:** 
@@ -61,8 +59,6 @@ The purpose of this template is to illustrate:
     
 
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fgithub.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F301-subnet-driven-deployment%2Fazuredeploy.json" target="_blank">
-    
-
 
 ## Parameters
 
@@ -79,5 +75,6 @@ wercase, should start with a letter: must conform to &#39;^[a-z][a-z0-9-]{1,61}[
 <tr><td>memberServersPerSubnet</td><td>Member servers for each subnet. Must be between 1 and 20</td><td>1</td></tr>
 <tr><td>storageCategory</td><td>Storage type. Can be either Standard (HDD) or Premium (SSD)</td><td>Standard</td></tr>
 </table>
+
 
 

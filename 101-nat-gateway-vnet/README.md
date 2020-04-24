@@ -14,9 +14,6 @@
 
 
 
-
-
-
 This template deploys a **NAT gateway** and virtual network with a single subnet and public IP resource for the NAT gateway.
 
 ## Overview and deployed resources
@@ -41,3 +38,5 @@ Description
   + **subnets**: Subnet for virtual network for NAT gateway.
 
 `Tags: virtual network, vnet, nat, nat gateway`
+
+

@@ -13,9 +13,6 @@
 
 
 
-
-
-
 ## Azure Partner Solution Template Overview
 
 ***Azure Partner Solution Templates*** provide customers with a highly automated process to launch enterprise ready first and 3rd party ISV solution stacks on Azure in a pre-production environment. The **Azure Partner Quickstart Template** effort is complimentary to the [Azure Marketplace test drive program](https://azure.microsoft.com/en-us/marketplace/test-drives/). These fully baked stacks enable customers to quickly stand up a PoC or Piloting environments and also integrate it with their systems and customization.
@@ -119,5 +116,6 @@ After logging into the Informatica Cloud, navigate to the **Runtime Environments
 
 ##Support
 For any support-related issues or questions, please contact azuremarketplace@sysgain.com for assistance.
+
 
 

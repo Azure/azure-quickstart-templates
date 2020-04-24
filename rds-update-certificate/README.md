@@ -31,7 +31,6 @@ The certificate with the private key (in .PFX format) must be stored in Azure Ke
 For information on managing certificates with Azure Key Vault see:  [Get started with Azure Key Vault certificates](https://blogs.technet.microsoft.com/kv/2016/09/26/get-started-with-azure-key-vault-certificates/) and  
 [Manage certificates via Azure Key Vault](https://blogs.technet.microsoft.com/kv/2016/09/26/manage-certificates-via-azure-key-vault/).
 
-
 ## Pre-Requisites
 
 0. Template is intended to run against an existing RDS deployment. The deployment can be created using one of RDS QuickStart templates 
@@ -84,4 +83,5 @@ Template performs the following steps:
 + downloads certificate from the key vault using Service Principal credentials;
 + invokes [Set-RDCertificate](https://technet.microsoft.com/en-us/library/jj215464.aspx) cmdlet to apply the certificate for each of the roles;
 + calls [Set-RDClientAccessName](https://technet.microsoft.com/en-us/library/jj215484.aspx) to update Client Access Name on RD Connection Broker to match the certificate.
+
 

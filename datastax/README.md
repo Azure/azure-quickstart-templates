@@ -13,9 +13,6 @@
 
 
 
-
-
-
 This template deploys a DataStax Enterprise (DSE) cluster to Azure running on Ubuntu virtual machines in a single datacenter.  The template can provision a cluster from 1 to 40 nodes.  Creating a greater number of nodes may cause issues with storage account I/O contention.
 
 For the most up to date version of this template, please do not use this repo. Instead go [here](https://github.com/DSPN/azure-resource-manager-dse).  We strongly encourage use of the latest version as it incorporates bug fixes and is more flexible.
@@ -36,3 +33,5 @@ Once the Azure VMs, virtual network and storage are setup, the template installs
 The template also sets up a node to run DataStax OpsCenter.  The script opscenter.sh installs OpsCenter and connects to the cluster by calling the OpsCenter REST API.
 
 On completion, OpsCenter will be accessible on port 8888 of the public IP address of the OpsCenter node.
+
+

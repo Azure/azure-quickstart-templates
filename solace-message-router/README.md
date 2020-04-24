@@ -13,7 +13,6 @@
 
 The Solace PubSub+ software message broker meets the needs of big data, cloud migration, and Internet-of-Things initiatives, and enables microservices and event-driven architecture. Capabilities include topic-based publish/subscribe, request/reply, message queues/queueing, and data streaming for IoT devices and mobile/web apps. The message broker supports open APIs and standard protocols including AMQP, JMS, MQTT, REST, and WebSocket. As well, it can be deployed in on-premise datacenters, natively within private and public clouds, and across complex hybrid cloud environments.
 
-
 How to Deploy a Solace PubSub+ Software Message Broker
 -------------------
 
@@ -55,8 +54,6 @@ Hit the "Deploy to Azure" button, and in the deployment template add the link to
     
 
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FSolaceProducts%2Fsolace-azure-quickstart-template%2Fmaster%2Fazuredeploy.json" target="_blank">
-    
-
 
 You need to fill in the following fields (* marks the mandatory ones):
 
@@ -167,4 +164,5 @@ For more information about Solace technology in general please visit these resou
 - [Solace Developer Portal](http://dev.solace.com )
 - [Intro Solace technology](http://dev.solace.com/tech/ )
 - [Solace community on Stack Overflow](http://dev.solace.com/community/ ).
+
 

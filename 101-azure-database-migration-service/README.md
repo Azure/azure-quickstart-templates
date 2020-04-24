@@ -13,9 +13,6 @@
 
 
 
-
-
-
 For more details about the service please follow the link https://azure.microsoft.com/en-us/services/database-migration/
 
 The above template will deploy a resource group with the below resources in your subscription.
@@ -25,4 +22,5 @@ The above template will deploy a resource group with the below resources in your
 4) A virtual network to which the source and DMS service will be connected.
 
 Using the above resources you can connect to source and target servers, select the databases to migrate and run an end-to-end migration.
+
 

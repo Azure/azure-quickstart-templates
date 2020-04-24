@@ -10,11 +10,6 @@
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/sap-3-tier-marketplace-image-md/CredScanResult.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)]("https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsap-3-tier-marketplace-image-md%2Fazuredeploy.json")  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)]("http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsap-3-tier-marketplace-image-md%2Fazuredeploy.json")
-    
-
-
-    
-
 
 This template takes a minimum amount of parameters and deploys a VM that is customized for use with SAP NetWeaver, using the latest patched version of the selected operating system. This is a template for a 3-tier configuration. It deploys 1 (no HA) or 2 (HA) ASCS/SCS servers, 1 (no HA) or 2 (HA) database servers and serveral virtual machines that can host dialog instances. In case of a HA deployment, the ASCS/SCS and DB servers are placed in Availability Sets and a Standard Load Balancer is added to the ASCS/SCS and DB server to allow HA configurations in the operating system (e.g. Windows Failover Cluster).
 This template uses Managed Disks.
@@ -36,7 +31,6 @@ SCS Internal Load Balancer probe port: **62001**
 ABAP ERS Internal Load Balancer probe port: **62102**
 
 JAVA ERS Internal Load Balancer probe port: **62103**
-
 
 ## DB Internal Load Balancer ports
 
@@ -117,4 +111,5 @@ SQL  DB Internal Load Balancer probe port: **62500**
 		<td>1xStandard_E64_v3 DB Server (8xP30) + 1xStandard_E2_v3 ASCS/SCS (1xP10) + 1xStandard_E16_v3 DI (1xP10)</td>
 	</tr>
 </table>				
+
 

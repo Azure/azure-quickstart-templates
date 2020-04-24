@@ -10,11 +10,6 @@
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-app-service-certificate-standard/CredScanResult.svg)
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2F101-app-service-certificate-standard%2Fazuredeploy.json" target="_blank">
-    
-
-
-    
-
 
 <P>
 For more details on creating an App Service Certificate see [How to Create an App Service Certificate](https://azure.microsoft.com/en-us/documentation/articles/web-sites-purchase-ssl-web-site/).
@@ -44,4 +39,5 @@ https://azure.microsoft.com/en-us/documentation/articles/key-vault-get-started/
 The Web App should be in the same resource group with 'rootHostName' and www subdomain assigned as custom domains.
 https://azure.microsoft.com/en-us/documentation/articles/web-sites-custom-domain-name/
 </P>
+
 

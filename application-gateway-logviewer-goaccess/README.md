@@ -11,9 +11,6 @@
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)]("https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-gateway-logviewer-goaccess%2Fazuredeploy.json")  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)]("http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-gateway-logviewer-goaccess%2Fazuredeploy.json")
 
-    
-
-
 <h2>Introduction</h2>
 This template configures the <a href="https://goaccess.io">GoAccess log analyzer for Azure Application Gateway access logs. Using GoAccess, users can quickly analyze and view their Application Gateway statistics in real time using their browser through generated HTML reports.
  
@@ -85,4 +82,5 @@ For any feature requests or general help with GoAccess itself, please file an is
 GoAccess is distributed under the MIT License. For details of the licensing terms, please refer to the <a href="https://github.com/allinurl/goaccess/blob/master/COPYING">GoAccess License terms.
 
 Apache HTTP Web Server is distributed under the Apache 2.0 License. For details of the licensing terms, please refer to <a href="http://www.apache.org/licenses/LICENSE-2.0">the Apache 2.0 License terms.
+
 

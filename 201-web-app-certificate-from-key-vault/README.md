@@ -13,8 +13,6 @@
     
 
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-app-service-certificate-standard%2Fazuredeploy.json" target="_blank">
-    
-
 
 <P>
 In order to deploy this template, you need to have the following resources:  <br />
@@ -57,4 +55,5 @@ $secret = ConvertTo-SecureString -String $fileContentEncoded -AsPlainText –For
 $secretContentType = 'application/x-pkcs12'
 Set-AzureKeyVaultSecret -VaultName KEY_VAULT_NAME -Name KEY_VAULT_SECRET_NAME -SecretValue $Secret -ContentType $secretContentType # Change Key Vault name and Secret name
 ```
+
 

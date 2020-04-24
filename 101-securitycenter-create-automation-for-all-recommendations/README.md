@@ -14,9 +14,6 @@
 	
  
     
-    
-
-
 
 This template deploys an Azure Security Center Automation for any of Azure Security Center's recommendations.
 Automation is an Azure Resource which triggers a Logic App.
@@ -33,7 +30,6 @@ The Microsoft.Logic Resource provider is used to create an empty triggerable Log
 
 + **Logic App**: An Empty triggerable Logic App
 
-
 ### Microsoft.Security Resource provider
 
 The Microsoft.Security Resource provider (Azure Security Center ) is where the Automation which will trigger the logic app will be created. 
@@ -48,9 +44,10 @@ Users need to be registered to both Microsoft.Logic and Microsoft.Security resou
 
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
 
-
 ## Notes
 
 Solution notes
 
 `Tags: Security, Security Center, LogicApps, Automations`
+
+

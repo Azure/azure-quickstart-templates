@@ -14,9 +14,6 @@
 
 
 
-
-
-
 **Table of Contents**  
 
 - [Solution Architecture:](#solution-architecture)
@@ -63,7 +60,6 @@
 - [Verify Kubernetes Pods and Services](#verify-kubernetes-pods-and-services)
 - [Access National Park Applications](#access-national-park-applications)
 - [Verifying Application Logs](#verifying-application-logs)
-
 
 ## Solution Architecture:
 
@@ -593,4 +589,5 @@ To build the National Park application, begin by logging in to the Build Instanc
 ![alt text](/devopstools-jenkins-chefhabitat-kubernetes/images/66.PNG)
 
 ![alt text](/devopstools-jenkins-chefhabitat-kubernetes/images/67.PNG)
+
 

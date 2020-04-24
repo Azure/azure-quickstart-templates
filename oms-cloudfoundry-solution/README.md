@@ -13,9 +13,6 @@ Version: [2018.6](./changelog.md "See change logs")
 
 [![Deploy to Azure](https://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Foms-cloudfoundry-solution%2F%2Fazuredeploy.json)
 
-    
-
-
 ## Overview
 
 This solution allows you to visualize and monitor the metrics and logs from your Cloud Foundry environments in OMS Log Analytics.
@@ -151,4 +148,5 @@ OMS also provides mobile apps available on [Windows (Mobile devices)](https://ww
 Simply download App from your app store and login with your account, you can have experience just the same as on your workplace everywhere.
 
 ## [Change Logs](./changelog.md "See change logs")
+
 

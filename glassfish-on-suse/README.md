@@ -11,8 +11,6 @@
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/glassfish-on-suse/azuredeploy.json" target="_blank">
 <a href="http://armviz.io/#/?load=https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/glassfish-on-suse/azuredeploy.json" target="_blank">
-    
-
 
 This template deploys GlassFish application server onto multiple load balanced SUSE Linux VMs. It is possible to select either OpenSUSE or SLES for the OS, and any release package associated with version 3 or 4 of GlassFish.
 
@@ -41,7 +39,6 @@ If you are using a Windows computer, then you can download puttygen.exe to creat
 5.  adminUsername: Admin username for OS login
 6.  glassfishAdminPassword: The password given to the default GlassFish 'admin' user
 7.  sshPublicKey: The public key used to secure SSH access with each VM 
-
 
 ## Deploy Template
 
@@ -89,4 +86,5 @@ You can configure additional settings per the official GlassFish documentation (
 ### Important Note
  
 This template only deploys a single storage account which is shared by all of the established VMs, creating a single point of failure with the storage. For critical environments, this template should be modified to use multiple storage accounts, spreading the VHDs across these extra accounts to ensure resilience. 
+
 

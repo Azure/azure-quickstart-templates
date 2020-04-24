@@ -13,9 +13,6 @@
 
 
 
-
-
-
 **This template demonstrates use of VM Scale Sets with a dual stack IPv4/IPv6 VNET and Std Load Balancer.**
 
 The template creates the following Azure resources:
@@ -27,4 +24,5 @@ The template creates the following Azure resources:
 - Network Security Group rules- including an IPv6-specific example
 
 For a more information about this template, see [What is IPv6 for Azure Virtual Network?](https://docs.microsoft.com/en-us/azure/virtual-network/ipv6-overview/)
+
 

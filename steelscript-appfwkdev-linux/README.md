@@ -18,11 +18,6 @@ Steelscript Application Framework reference for developers: https://support.rive
 ## Quick deploy
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fsteelscript-appfwkdev-linux%2Fazuredeploy.json" target="_blank">
-    
-
-
-    
-
 
 1. Click the "Deploy to Azure" button, fill parameters and launch the deployment
     * Set your ssh public key to connect to the VM
@@ -84,4 +79,5 @@ $ ps -eo pid,command | grep "appfwk_project/manage.py" | grep -v grep
 ```
 $ sudo kill $(ps -eo pid,command | grep "appfwk_project/manage.py" | grep -v grep | awk '{ print $1 }')
 ```
+
 

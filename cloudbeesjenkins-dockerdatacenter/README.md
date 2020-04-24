@@ -12,8 +12,6 @@
 
 
 
-
-
 https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/cloudbeesjenkins-dockerdatacenter
 ## Azure Partner Quickstarts Overview
 ***Azure Partner Quickstart Templates*** provide customers with a highly automated process to launch enterprise ready first and 3rd party ISV solution stacks on Azure in a pre-production environment. The **Azure Partner Quickstart** effort is complimentary to the [Azure Marketplace test drive program](https://azure.microsoft.com/en-us/marketplace/test-drives/). These fully baked stacks enable customers to quickly stand up a PoC or Piloting environments and also integrate it with their systems and customization.
@@ -82,4 +80,5 @@ You can follwo the instructions in [this downloadable guide](https://github.com/
 
 ##Support
 For any support-related issues or questions, please contact azuremarketplace@sysgain.com for assistance.
+
 

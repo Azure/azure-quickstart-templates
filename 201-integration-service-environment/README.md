@@ -10,11 +10,6 @@
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/201-integration-service-environment/CredScanResult.svg)
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2F201-integration-service-environment%2Fazuredeploy.json" target="_blank">
-    
-
-
-    
-
 
 ## Overview
 
@@ -74,4 +69,5 @@ As the Integration Service Environment puts a subnet service delegation on the f
 * There is a `rebuildVNET` parameter in the template. If the VNET has already been deployed, this should be changed to false so it doesn't try deleting and recreating the VNET (it will attempt it even if the deployment mode is set to Incremental).
 
 ``Tags: logic-apps, ise, vnet``
+
 

@@ -11,10 +11,7 @@
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F100-STARTER-TEMPLATE-with-VALIDATION%2Fazuredeploy.json" target="_blank">
 
-
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F100-STARTER-TEMPLATE-with-VALIDATION%2Fazuredeploy.json" target="_blank">
-
-
 
 This template illustrates secure deployment of SSL certificates to a VM Scale Set
 running apache web servers. The SSL certificates are pulled securely from [Azure 
@@ -148,7 +145,6 @@ Then you add the cert deployment to the ARM template for your VM scale set (it w
         ]
 ```
 
-
 Once the deployment finishes you'll find the certs and the key in /var/lib/waagent. The files will be named 
 
 * [certthumbprint].crt
@@ -161,5 +157,6 @@ To test the SSL configuration on your scale set VMs without going through config
 
 HTH,
 Christoph
+
 
 

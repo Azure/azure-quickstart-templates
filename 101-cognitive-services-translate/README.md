@@ -13,9 +13,6 @@
 
 
 
-
-
-
 This template deploys an Cognitive Services Translation API. see  https://azure.microsoft.com/services/cognitive-services/translator-text-api/ 
 
 | SKU  | Feature                                                      | Price                                                        |
@@ -34,3 +31,5 @@ If you are new to Azure Cognitive Services, see:
 - [Template reference](https://azure.microsoft.com/resources/templates/?referenceType=Microsoft.Cognitiveservices)
 - [Quick Start templates](https://azure.microsoft.com/resources/templates/?resourceType=Microsoft.Cognitiveservices)
 - [Microsoft Learn Modules](https://docs.microsoft.com/learn/browse/?products=azure&term=cognitive)
+
+

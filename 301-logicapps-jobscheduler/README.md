@@ -13,9 +13,6 @@
 
 
 
-
-
-
 This template deploys a **Logic App job scheduler**. The **Logic App job scheduler** provides a pair of logic apps that can instantiate timer jobs based on a provided recurrent schedule.
 
 `Tags: LogicApps, Scheduler`
@@ -126,4 +123,5 @@ Learn more about Logic Apps
 
 + **[Azure Logic Apps Overview](https://docs.microsoft.com/azure/logic-apps/logic-apps-overview)**
 + See **[Scheduling in Logic Apps](https://docs.microsoft.com/azure/connectors/connectors-native-recurrence#trigger-details)** to better understand how recurrence works
+
 

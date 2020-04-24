@@ -12,9 +12,7 @@
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)]("https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fwordpress-mysql-replication%2Fazuredeploy.json")  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)]("http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fwordpress-mysql-replication%2Fazuredeploy.json")
   
 
-
   
-
 
 This template deploys a WordPress site in Azure backed by MySQL replication with one master and one slave servers.  It has the following capabilities:
 
@@ -26,11 +24,10 @@ This template deploys a WordPress site in Azure backed by MySQL replication with
 ### How to Deploy
 * This template takes a dependency on the [MySQL-replication template](https://github.com/Azure/azure-quickstart-templates/tree/master/mysql-replication). Refer to the README of MySQL-Replication template for how to customize MySQL deployment, and how to failover, backup, and restore.
 
-
-
 License
 ----
 
 MIT
+
 
 

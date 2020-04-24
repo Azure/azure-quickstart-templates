@@ -13,10 +13,6 @@
 The mgmt. services will be fully integrated, and you will have VM workloads (Windows or Linux) which will be attached - and fully managed as part of the deployment.
 **Please note that this sample is for demo purposes only**
 
-
-    
-
-
 ## What is being deployed
 
 ### Management services and artifacts
@@ -78,4 +74,6 @@ New-AzureRmResourceGroupDeployment -Name $deploymentName `
 Navigate to [Azure Portal](https://portal.azure.com) and find the newly created dashboard, which will have the following naming convention *AzureMgmt(uniqueString(deployment().name))*:
 
 ![media](./images/dashboard-new.png)
+
+
 

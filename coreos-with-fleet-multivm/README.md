@@ -12,7 +12,6 @@
 [![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcoreos-with-fleet-multivm%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcoreos-with-fleet-multivm%2Fazuredeploy.json)
 
-
 This template allows you to create a CoreOS cluster with etcd2 and fleet deployed and started on each node. This template also deploys a Storage Account, a Virtual Network, Public IP addresses and Network Interfaces.
 
 You will need to provide an SSH public key for authentication to the nodes, as well as a "discoveryUrl" for the etcd2 cluster.
@@ -30,4 +29,5 @@ The "discoveryUrl" is used by etcd2 for peer discovery. Each etcd2 cluster must 
     https://discovery.etcd.io/dcf78d9803b417e1a3eeb15987bdf82f
 
 This "discoveryUrl" must be copied in its entirety into the "discoveryUrl" parameter.
+
 

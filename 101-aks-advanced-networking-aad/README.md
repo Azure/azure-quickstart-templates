@@ -13,9 +13,6 @@
 
 
 
-
-
-
 > **Important:** The user running this template needs to be an **Owner** on the subscription or Resource Group where your Virtual Network is located.
 
 `Tags: AKS, Kubernetes, Advanced Networking, Azure Active Directory`
@@ -55,4 +52,5 @@ Please note that using the 'create-for-rbac' function would assign the SPN the '
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the Azure documentation:
 - [Deploy resources with Resource Manager templates and Azure PowerShell](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy)
 - [Deploy resources with Resource Manager templates and Azure CLI](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-cli)
+
 

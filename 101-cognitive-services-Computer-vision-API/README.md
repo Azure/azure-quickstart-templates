@@ -13,9 +13,6 @@
 
 
 
-
-
-
 This template deploys a Cognitive Services Computer Vision API.  This allows you to process visual data. Capabilities include image analytics, tagging, recognition celebrities, text extraction, and smart thumbnail generation. 
 
 In the outputs section it will show the Keys and the Endpoint.
@@ -36,4 +33,5 @@ If you are new to Azure Cognitive Services, see:
 - [Template reference](https://azure.microsoft.com/en-us/resources/templates/?referenceType=Microsoft.Cognitiveservices)
 - [Quick Start templates](https://azure.microsoft.com/en-us/resources/templates/?resourceType=Microsoft.Cognitiveservices)
 - [Microsoft Learn Modules](https://docs.microsoft.com/en-us/learn/browse/?products=azure&term=cognitive)
+
 

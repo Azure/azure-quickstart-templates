@@ -13,9 +13,6 @@
 
 
 
-
-
-
 ## Solution overview and deployed resources
 
 This template deploys a solution which shows how we can correlate messages over Logic Apps using Azure Service Bus. The Logic App receives a message through a web endpoint, and sends the message to a MockBin endpoint, and returns the response to the original caller.
@@ -35,4 +32,5 @@ To test the Logic App, grab the endpoint of the Request shape in the Logic App, 
 ```
 
 `Tags: Logic Apps, Logic App, LogicApps, ServiceBus, Service Bus, SessionId, Session Id, Correlation`
+
 

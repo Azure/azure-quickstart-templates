@@ -13,10 +13,6 @@
 
 
 
-
-
-
-
 This template deploys an **NSG Flow Logs resource** inside the Network Watcher resource group.
 
 ## Overview
@@ -30,10 +26,10 @@ Useful links
 * [What is the NetworkWatcherRG](https://docs.microsoft.com/azure/network-watcher/frequently-asked-questions#what-is-the-NetworkWatcherRG)
 * [Permissions needed to deploy to NetworkWatcherRG ](https://docs.microsoft.com/azure/network-watcher/frequently-asked-questions#which-permissions-are-needed-to-use-network-watcher)
 
-
 ## Prerequisites
 
 Network Watcher must be enabled for your subscription. Network Watcher is enabled by default, so unless you have disabled it, this should not be an issue.
 
-
 `Tags: Network Watcher, NSG Flow Logs`
+
+

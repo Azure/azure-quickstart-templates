@@ -11,10 +11,6 @@
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)]("https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fpostgresql-standalone-server-ubuntu%2Fazuredeploy.json")  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)]("http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fpostgresql-standalone-server-ubuntu%2Fazuredeploy.json")
 
-
-    
-
-
 This template uses the Azure Linux CustomScript extension to deploy a PostgreSQL server. It creates an Ubuntu VM, does a silent install of PostgreSQL server, version:9.3.5, and the basic configuration is below: port is 1999, data directory is /opt/pgsql_data, installation directory is /opt/pgsql, user is postgres.
 
 ## Setting up and testing PostgreSQL Database 
@@ -54,3 +50,5 @@ INSERT INTO potluck (name, food, confirmed, signup_date) VALUES('John', 'Cassero
 [Microsoft Learn Modules on PostgreSQL](https://docs.microsoft.com/en-us/learn/browse/?term=postgresql)
 
 [Microsoft Learn Modules on Linux Virtual Machine](https://docs.microsoft.com/en-us/learn/browse/?term=Virtual%20Machine)
+
+

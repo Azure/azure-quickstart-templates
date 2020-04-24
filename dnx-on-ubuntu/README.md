@@ -15,8 +15,6 @@ This template will install the cross platform .NET execution context (DNX) on an
 	
 
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Azure%2azure-quickstart-templates%2master%2dnx-on-ubuntu%2azuredeploy.json" target="_blank">
-    
-
 
 After deploying the VM - SSH into the machine and do the following to see the DNX app in action:
 
@@ -31,4 +29,5 @@ Open up nano to edit the samplecode `nano ~/sampleConsoleApp/main.cs` code - whi
 dnu build --framework dnxcore50
 dnx run
 ```
+
 

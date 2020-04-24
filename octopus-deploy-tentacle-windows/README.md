@@ -15,7 +15,6 @@
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-octopus-deploy-tentacle-windows%2Fazuredeploy.json" target="_blank">
 <img src="images/visualizebutton.png"/>
 
-
 To deploy this template using the scripts from the root of this repo:
 
 ```PowerShell
@@ -56,4 +55,5 @@ You can click the "deploy to Azure" button at the beginning of this document or 
 ### Connect
 
 Once the extension has installed, your Tentacle will be available in the Environments page of your Octopus Server, and you will be able to deploy projects to it.
+
 

@@ -13,9 +13,6 @@
 
 
 
-
-
-
 This ARM template demonstrates the deployment of an AKS instance with advanced networking features into an existing virtual network. Additionally, the selected Service Principal is assigned the Network Contributor role against the subnet that contains the AKS cluster.
 
 `Tags: AKS, Kubernetes, Advanced Networking`
@@ -48,4 +45,5 @@ Please note that using the 'create-for-rbac' function would assign the SPN the '
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the Azure documentation:
 - [Deploy resources with Resource Manager templates and Azure PowerShell](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy)
 - [Deploy resources with Resource Manager templates and Azure CLI](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-cli)
+
 

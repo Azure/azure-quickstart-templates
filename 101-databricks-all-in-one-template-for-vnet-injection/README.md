@@ -10,11 +10,6 @@
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-databricks-all-in-one-template-for-vnet-injection/CredScanResult.svg)
 
 <A href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-databricks-all-in-one-template-for-vnet-injection%2Fazuredeploy.json" target="_blank">
-    
-
-
-    
-
 
 This template allows you to create a network security group, a virtual network and an Azure Databricks workspace with the virtual network.
 For more information, see the <a href="https://docs.microsoft.com/en-us/azure/azure-databricks/">Azure Databricks Documentation.
@@ -39,4 +34,5 @@ DataBricks Premium
 ### Microsoft Learn Modules
 
 [Data Bricks Microsoft Learn Modules](https://docs.microsoft.com/en-us/learn/browse/?term=Databricks)
+
 
