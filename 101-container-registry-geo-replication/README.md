@@ -16,7 +16,7 @@
 
 
 
-This template deploys an Azure Container Registry with [Geo Replication enabled](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-geo-replication). Azure Container Registry is a PaaS offer for creating your own Docker image registry.
+This template deploys an Azure Container Registry with [geo-replication enabled](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-geo-replication). Azure Container Registry is a PaaS offer for creating your own Docker image registry.
 
 `Tags: Azure Container Registry, Docker`
 
@@ -29,10 +29,8 @@ The following resources are deployed as part of the solution. Note the Azure Con
 
 ## Login to your registry
 
-Follow [this documentation](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-authentication) for authenticate your docker client to your container registry.
+Follow [this documentation](https://docs.microsoft.com/azure/container-registry/container-registry-authentication) to authenticate your docker client to your container registry.
 
 #### Push images to your registry
 
-For pushing docker images on your registry, follow [this documentation](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-get-started-docker-cli)
-
-
+For pushing docker images on your registry, follow [this documentation](https://docs.microsoft.com/azure/container-registry/container-registry-get-started-docker-cli)
