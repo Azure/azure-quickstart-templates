@@ -29,11 +29,6 @@ You can connect to virtual machines using:
 In any case, all subnets connected to a virtual machine are protected by a Network Security Group that allows only RDP port from Internet.
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)]("https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsharepoint-adfs%2Fazuredeploy.json")  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)]("http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsharepoint-adfs%2Fazuredeploy.json")
-    
-
-
-    
-
 
 By default, virtual machines use standard storage and have enough CPU and memory to be used comfortably:
 
@@ -51,3 +46,5 @@ If you wish to get better performance, I recommended the following sizes / stora
 > I strongly recommend to update SharePoint to a recent build just after the provisioning is complete.  
 > With the default setting for virtual machines, provisioning of the template takes about 1h15 to complete.  
 > The password complexity check in the form is not accurate and may validate a password that will be rejected by Azure when it provisions the VMs. Make sure to **use at least 2 special characters for the passwords**.
+
+

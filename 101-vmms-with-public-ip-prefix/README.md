@@ -13,15 +13,10 @@
 
 
 
-
-
-
 This template deploys a Virtual Machine Scale Set with Public IP Prefix. 
 
 ## Parameters + Tips
 Make sure to replace the parameters with your own information. You can configure the VM SKU for the VMSS and the public IP prefix length as you desire. Be aware of naming conventions and restrictions - HTTP 400 and authenticaiton errors encountered during deployment may be due to issues with your VMSS's name.  
-
-
 
 ## Deployed Resources
 
@@ -43,3 +38,5 @@ You must have an existing resource group.
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
 
 `Tags: VMSS, public ip prefix, virtual machine scale set
+
+

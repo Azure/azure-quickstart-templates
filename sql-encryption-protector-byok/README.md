@@ -18,8 +18,6 @@ Click the button below to deploy
 
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fsql-encryption-protector-byok%2Fazuredeploy.json" target="_blank">
 
-
-
 In order to use an already in place Key Vault, it needs to have the property "soft-delete" enable. You can only do that using command lines (either [Powershell](https://docs.microsoft.com/en-US/azure/key-vault/key-vault-soft-delete-powershell) or [CLI](https://docs.microsoft.com/en-US/azure/key-vault/key-vault-soft-delete-cli))
 
 Alternatively, you can use the PowerShell file included in this directory to create a Key Vault and generate a key.
@@ -29,4 +27,5 @@ Alternatively, you can use the PowerShell file included in this directory to cre
  * Add the SQL server principalID access to the given Key Vault (permissions 'get', 'wrapLey' and 'unwrapKey')
  * Add a new key at the SQL server level, with the Key value from the Vault
  * And finally, activate the protector using the key created before
+
 

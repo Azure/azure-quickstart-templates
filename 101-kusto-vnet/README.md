@@ -16,4 +16,3 @@ This template allows you deploy a cluster into your VNet.
 
 
 
-

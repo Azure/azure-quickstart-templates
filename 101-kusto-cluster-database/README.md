@@ -17,4 +17,3 @@ This template allows you to create a cluster and a database.
 
 
 
-

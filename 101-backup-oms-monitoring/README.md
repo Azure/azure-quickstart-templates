@@ -13,9 +13,6 @@
 
 
 
-
-
-
 This template deploys **OMS Monitoring solution for Azure backup** on an OMS log analytics workspace. This allows you to monitor key backup parameters such as backup and restore jobs, backup alerts and Cloud storage usage across Recovery services vaults
 
 `Tags: Azure Backup, OMS Log Analytics, Monitoring`
@@ -30,9 +27,6 @@ Please select the relevant log, “AzureBackupReport” in this case, to be sent
 <br>
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)]("https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-backup-oms-monitoring%2Fazuredeploy.json")  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)]("http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-backup-oms-monitoring%2Fazuredeploy.json")
-
-
-
 
 
 
@@ -56,4 +50,5 @@ You can click on each tile to get more details about the queries used to create 
 ![alt text](images/LogAnalyticsScreen.JPG "OMS Monitoring solution for Azure backup Log search")
 
 More information about configuring alerts can be found [here](https://docs.microsoft.com/azure/log-analytics/log-analytics-tutorial-response)
+
 

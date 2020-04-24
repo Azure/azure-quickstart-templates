@@ -89,7 +89,6 @@ New-AzureRmResourceGroupDeployment -ResourceGroupName $ResourceGroupName `
 3. Spark WebUI is running on port 8080.  Access it using MASTER_WEB_UI_PUBLIC_IP:8080 on your browser.  Public IP is available through Azure Portal.
 4. Delete the Resource Group that was created to stage the provisioning scripts.
 
-
 ### Getting Started (For XPLAT-CLI)
 
 #### Pre-Deployment
@@ -119,4 +118,5 @@ New-AzureRmResourceGroupDeployment -ResourceGroupName $ResourceGroupName `
 [4]: http://stackoverflow.com/questions/9271681/how-to-run-powershell-script-even-if-set-executionpolicy-is-banned
 [5]: https://azure.microsoft.com/en-us/documentation/articles/virtual-networks-nsg/
 [6]: https://azure.microsoft.com/en-us/documentation/articles/xplat-cli-install/
+
 

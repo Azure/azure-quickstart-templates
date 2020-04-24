@@ -10,12 +10,6 @@
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-securitycenter-create-automation-for-specific-recommendations/CredScanResult.svg)
     
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)]("https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-securitycenter-create-automation-for-specific-recommendations%2Fazuredeploy.json")  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)]("http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-securitycenter-create-automation-for-specific-recommendations%2Fazuredeploy.json")
-    
-
-
-    
-
-
 
 
 This template deploys an Azure Security Center Automation for a specific Azure Security Center's recommendation.
@@ -32,7 +26,6 @@ The following resources are deployed as part of the solution
 The Microsoft.Logic Resource provider is used to create an empty triggerable Logic App.
 
 + **Logic App**: An Empty triggerable Logic App
-
 
 ### Microsoft.Security Resource provider
 
@@ -54,9 +47,10 @@ Users need to be registered to both Microsoft.Logic and Microsoft.Security resou
 
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
 
-
 ## Notes
 
 Solution notes
 
 `Tags: Security, Security Center, LogicApps, Automations`
+
+

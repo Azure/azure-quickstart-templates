@@ -13,9 +13,6 @@
 
 
 
-
-
-
 This template allows deploying a linux VM using new or existing resources for the Virtual Network, Storage and Public IP Address.  It also allows for choosing between SSH and Password authentication.  The templates uses conditions and logic functions to remove the need for nested deployments. 
 
 This template contains extra parameters to allow for the existing resources use cases, which is a common scenario for Azure Applications in the Azure Marketplace.
@@ -32,4 +29,5 @@ Before submitting to Marketplace, the following steps will need to be performed
   - https://docs.microsoft.com/en-us/azure/marketplace/cloud-partner-portal/azure-applications/cpp-skus-tab#package-details-for-solution-template 
   
   `Tags: new, exiting, resource, vm, condition, conditional`
+
 

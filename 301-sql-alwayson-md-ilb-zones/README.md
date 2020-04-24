@@ -15,7 +15,6 @@ This template will create a SQL Server AlwaysOn Availability Group using the Pow
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)]("https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F301-sql-alwayson-md-ilb-zones%2Fazuredeploy.json")  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)]("http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F301-sql-alwayson-md-ilb-zones%2Fazuredeploy.json")
 
-
 ## Deploying Sample Templates
 
 You can deploy these samples directly through the Azure Portal or by using the scripts supplied in the root of the repo.
@@ -43,4 +42,5 @@ one will be created by the script or reused if it already exists (think of this 
 azure-group-deploy.sh -a '301-sql-alwayson-md-ilb-zones' -l eastus2 -u
 ```
 Tags: ``cluster, ha, sql, sql server 2016, sql server 2017, alwayson, availability zones``
+
 

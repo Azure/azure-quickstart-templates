@@ -13,8 +13,8 @@
 
 
 
-
-
 This template deploys a **Linux VM Ubuntu** with a system assigned MSI that has a role assignment to a storage account in a different resource group.  
 
 `Tags: virtual machine, Linux, Ubuntu Server, msi, storage`  
+
+

@@ -10,12 +10,6 @@
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/mongodb-replica-set-centos/CredScanResult.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)]("https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmongodb-replica-set-centos%2Fazuredeploy.json")  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)]("http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmongodb-replica-set-centos%2Fazuredeploy.json")
-    
-
-
-    
-
-
 
 This template deploys a MongoDB Replica Set on CentOS and enables Zabbix monitoring, and allows user to define the number of secondary nodes. The replica set has a primary node, 2 secondary nodes by default.
 
@@ -73,7 +67,6 @@ Each VM of the replica set uses raid0 to improve performance. We use 4 data disk
 
 - 2.2 If db.mycol.find() command can show the result like primary node does, then means the replica set works.
 
-
 ##Known Limitations
 - The MongoDB version is 3.2.
 - We expose all the nodes on public addresses so that you can access MongoDB service through internet directly.
@@ -82,4 +75,6 @@ Each VM of the replica set uses raid0 to improve performance. We use 4 data disk
 - The replica set doesn't have arbiter nodes.
 - The replica set enables internal authentication. Check /etc/mongokeyfile for details.
 - More MongoDB usage details please visit MongoDB website https://www.mongodb.org/ .
+
+
 

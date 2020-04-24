@@ -14,9 +14,6 @@
 
 <a href="
 http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fwebsite-cluster-centos%2Fazuredeploy.json" target="_blank">
-    
-
-
 
 This template deploys a website cluster and enables Zabbix monitoring, and allows user to define the number of web servers. The website cluster contains 1 load balancer, 3 web servers, 1 redis master with 1 redis slave, 1 MySQL master with 1 MySQL slave by default.
 
@@ -76,4 +73,5 @@ Each server uses raid0 to improve performance. We use 4 data disks on each serve
 ##Known Limitations
 - The website uses one load balancer and the load balancer uses haproxy software. You can create more load balancers and you can even use Azure's traffic manager to do the load balancing.
 - You can add more web servers and database servers after the deployment.
+
 

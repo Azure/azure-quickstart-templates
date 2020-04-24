@@ -14,9 +14,6 @@
 
 <a href="
 http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmysql-mha-haproxy-ubuntu%2Fazuredeploy.json" target="_blank">
-    
-
-
 
 This template deploys a MySQL MHA + Haproxy solution:  the objective of MHA is automating master failover and slave promotion within short (usually 10-30 seconds) downtime, without suffering from replication consistency problems, without spending money for lots of new servers, without performance penalty, without complexity (easy-to-install), and without changing existing deployments; Haproxy is the interface which apps access mysql.
 
@@ -115,4 +112,5 @@ Now the mha plus haproxy works. Once the master fails, the candiate master 10.0.
 - sudo nohup bash /usr/local/haproxy/slave_ip_check.sh slave01ip slave02ip &    Here the parameters mean slave server ip addresses. The order is irrelevant.
 - haproxy node /var/log/masterha/app1/app1.log records the master failover details. 
 - haproxy node current directory/nohup.out records master and slave ip check info.
+
 

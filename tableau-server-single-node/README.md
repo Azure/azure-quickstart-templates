@@ -12,9 +12,6 @@
 
 
 
-
-
-
 This template deploys a **Standalone Tableau Server instance on a Virtual Machine running Ubuntu, RHEL or CentOS** in its own Virtual Network.
 
 `Tags: Tableau, Tableau Server, Business Intelligence, Analytics, Self-Service, Data Visualization`
@@ -116,3 +113,5 @@ Once these resources have been deployed they don't require significant managemen
 
 + Make sure that you entered all parameters correctly.  Passwords should conform to <a href="https://docs.microsoft.com/en-us/azure/virtual-machines/windows/faq#what-are-the-username-requirements-when-creating-a-vm">Azure standards and source CIDR should follow official syntax (0.0.0.0/24)
 + This ARM template is made available <a href=https://www.tableau.com/support/itsupport>'as-is' - please use Github or <a href=https://community.tableau.com/community/forums/content>Tableau's community forum to share comments or issues you may find.
+
+

@@ -13,8 +13,6 @@
 
 
 
-
-
 This template deploys a **Jupyter Server** using a Ubuntu Linux VM. This will deploy a CPU or GPU based VM in the resource group location and will return the admin user name, Virtual Network Name, Network Security Group Name and FQDN.  
 
 If you are new to Azure virtual machines, see:
@@ -185,3 +183,5 @@ After that, let's press the [Run] button. If we visit our **public IP** where ou
 - [VM available regions](https://azure.microsoft.com/global-infrastructure/services/?products=virtual-machines)
 
 `Tags: Azure4Student, virtual machine, Linux, Ubuntu Server, Intermediate, Jupyter`
+
+

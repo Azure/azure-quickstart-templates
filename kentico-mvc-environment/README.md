@@ -14,12 +14,6 @@
 
 
 
-
-
-
-
-
-
 This template deploys resources required to host Kentico MVC environments in Microsoft Azure.
 
 [Kentico](https://www.kentico.com) is an all-in-one content management, E-commerce, and Online Marketing platform that drives business results for companies of all sizes, both on-premise or in the cloud. It gives customers and partners powerful, comprehensive tools and customer-centric solutions to create stunning websites and manage customer experiences easily in a dynamic business environment.
@@ -101,4 +95,5 @@ You can specify the connection strings after deployment in **Azure Portal -> App
 `Type: SQLServer`
 
 Substitute the *<SQL_SERVER_NAME>*, *<DATABASE_NAME>*, *<USER_NAME>*, and *<USER_PASSWORD>* placeholders with the information you provided during template deployment.
+
 

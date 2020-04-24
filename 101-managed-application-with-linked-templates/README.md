@@ -14,9 +14,6 @@
 
 
 
-
-
-
 This sample template deploys a Service catalog managed application along with the definition that creates a linked deployment for the managed application. While creating managed application packages your scenario might require a complex deployment scenario which needs the ARM template to be broken down in to simpler templates that can be called by the main template. Managed Applications allow this by utilizing linked ARM template deployments and providing a location to store your linked templates.
 
 This sample template combines two steps:
@@ -83,3 +80,5 @@ To verify that the linked deployment is trigerred, you can navigate to the manag
 To learn how to create application with metrics and alerts please visit:
 
 + [Creating managed application with metrics and alerts](https://github.com/Azure/azure-quickstart-templates/tree/master/101-managed-application-with-metrics-and-alerts)
+
+

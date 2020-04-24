@@ -13,9 +13,6 @@
 
 
 
-
-
-
 `Tags: MySQL, Replication, PaaS, Replicas, Read-Only`
 
 # Introduction
@@ -37,4 +34,5 @@ Use this command line to connect to the MySQL PaaS instances, if using the Cloud
 ```bash
 mysql -h <fqdnOfTheMySQLInstance> -u <userCreatedForTheMySQLInstance>@<fqdnOfTheMySQLInstance> -p
 ```
+
 

@@ -12,9 +12,6 @@
 
 
 
-
-
-
 `Tags: redis, cache, vnet, nsg`
 
 ## Notes
@@ -42,4 +39,5 @@ An existing Virtual Network and subnet is required before deploying this templat
 
 ## Deployment steps
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
+
 

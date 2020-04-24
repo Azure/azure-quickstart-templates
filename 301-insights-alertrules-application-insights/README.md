@@ -17,4 +17,3 @@ This template allows you to deploy Application Insight and create alert in it
 
 
 
-

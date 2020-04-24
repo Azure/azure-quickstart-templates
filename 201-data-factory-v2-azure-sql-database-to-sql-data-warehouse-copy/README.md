@@ -14,8 +14,6 @@ This template creates a data factory that copies a number of tables from Azure S
     
 
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-data-factory-v2-blob-to-sql-copy" target="_blank">
-    
-
 
 When you deploy this Azure Resource Manager template, a data factory of version 2 is created with the following entities: 
 
@@ -24,7 +22,6 @@ When you deploy this Azure Resource Manager template, a data factory of version 
 - Azure Blob input datasets
 - Azure SQL Datbase output dataset
 - Pipeline with a copy activity
-
 
 ## Prerequisites
 The prerequisites for this template are mentioned in the [Tutorial: Copy multiple tables in bulk by using Azure Data Factory](https://docs.microsoft.com/en-us/azure/data-factory/tutorial-bulk-copy-portal) article.
@@ -37,5 +34,6 @@ The template creates the Azure SQL database that's based on the Adventure Works 
 3. Search for *datafactory that's created. Click the data factory in the list to launch the home page for the data factory.
 5. Click **Author & Monitor** tile to launch the Data Factory UI in a separate tab. 
 6. Follow instructions in the [tutorial](https://docs.microsoft.com/en-us/azure/data-factory/tutorial-bulk-copy-portal#trigger-a-pipeline-run) article to run and monitor the pipeline. 
+
 
 

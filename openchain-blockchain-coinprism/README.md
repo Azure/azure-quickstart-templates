@@ -10,11 +10,6 @@
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/openchain-blockchain-coinprism/CredScanResult.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)]("https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fopenchain-blockchain-coinprism%2Fazuredeploy.json")  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)]("http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fopenchain-blockchain-coinprism%2Fazuredeploy.json")
-    
-
-
-    
-
 
 Openchain is an open source distributed ledger technology. It is suited for organizations wishing to issue and manage digital assets in a robust, secure and scalable way.
 
@@ -54,4 +49,5 @@ If you are connecting to this wallet endpoint for the first time, you will be pr
 ## Configure the ledger information
 
 Go to the Advanced tab and click Edit Ledger Info on the left. The screen will show you a form that will let you edit the ledger name and other fields stored in the [info record](https://docs.openchain.org/en/latest/ledger-rules/general.html#ledger-info-record).
+
 

@@ -13,8 +13,6 @@
     
 
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vm-efficientip-vhd-existing-vnet%2Fazuredeploy.json" target="_blank">
-    
-
 
 ## Prerequisites
 
@@ -30,6 +28,7 @@ This template will create an additional Standard_GRS storage account for enablin
 ```
 
 This template creates a VM from a EfficientIP VHD and let you connect it to an existing VNET that can reside in another Resource Group then the virtual machine.
+
 
 
 

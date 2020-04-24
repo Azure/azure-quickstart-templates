@@ -13,8 +13,6 @@
 
 
 
-
-
 This template deploys a **simple Linux Web Application linked to a GitHub Repository**. The WebPlan is settled for Consumption. For more information about hosting Plans click [here!](https://azure.microsoft.com/pricing/details/app-service/linux/). As a default, this template deploys the web app using the "S1" (free tier) as the pricing tier for the hosting plan. It is ideal for development and test environments, for production environments you must consider different plans.
 
 ## Prerequisites
@@ -34,3 +32,5 @@ If you are new to template deployment, see:
 [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
 
 `Tags: Azure4Student, WebApp, GitHub, Beginner`  
+
+

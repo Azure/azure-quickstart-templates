@@ -13,8 +13,6 @@
 
 
 
-
-
-
 This template creates a **Front Door** with load balancing configured for multiple backends in a backend pool and also across backend pools based on URL path.
+
 

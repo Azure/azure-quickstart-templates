@@ -13,9 +13,6 @@
 
 
 
-
-
-
 This template deploys an **AKS cluster**.
 
 See https://docs.microsoft.com/en-us/azure/aks/kubernetes-walkthrough for a walkthrough.
@@ -32,4 +29,5 @@ To use keys stored in keyvault, replace ```"value":""``` with a reference to key
       }
     }
 ```
+
 

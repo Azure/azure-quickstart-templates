@@ -10,11 +10,8 @@
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/diagnostics-with-elk/CredScanResult.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)]("https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdiagnostics-with-elk%2Fazuredeploy.json")  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)]("http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdiagnostics-with-elk%2Fazuredeploy.json")
-    
-
 
 	
-
 
 This template deploys an Elasticsearch cluster, Logstash and Kibana.
 You can specify a custom Logstash configuration using the encodedConfigString parameter.
@@ -30,5 +27,6 @@ After the deployment completes you can view the diagnostics data in Kibana. To g
 #Notes
 - This template uses the Elasticsearch template from: <a href="../elasticsearch">azure-quickstart-templates/elasticsearch/<a/>
 - It installs the Logstash input plugin for WAD table from: <a href="https://github.com/Azure/azure-diagnostics-tools/tree/master/Logstash/logstash-input-azurewadtable">logstash-input-azurewadtable
+
 
 
