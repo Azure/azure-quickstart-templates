@@ -1,20 +1,20 @@
 # DDoS Protection attack on a Virtual Machine Scenario 
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-DDoS-Attack-Prevention/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-DDoS-Attack-Prevention/PublicDeployment.svg" />&nbsp;
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-DDoS-Attack-Prevention/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-DDoS-Attack-Prevention/PublicDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-DDoS-Attack-Prevention/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-DDoS-Attack-Prevention/FairfaxDeployment.svg" />&nbsp;
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-DDoS-Attack-Prevention/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-DDoS-Attack-Prevention/FairfaxDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-DDoS-Attack-Prevention/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-DDoS-Attack-Prevention/CredScanResult.svg" />&nbsp;
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-DDoS-Attack-Prevention/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-DDoS-Attack-Prevention/CredScanResult.svg)
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-DDoS-Attack-Prevention%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true"/> 
-</a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-DDoS-Attack-Prevention%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true"/> 
-</a>
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)]("https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-DDoS-Attack-Prevention%2Fazuredeploy.json")  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)]("http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-DDoS-Attack-Prevention%2Fazuredeploy.json")
+     
+
+
+     
+
 
 # Table of Contents
 1. [Objectives](#objectives)
@@ -25,20 +25,20 @@
 8. [Configuration validation](#config)
 9. [Teardown Deployment](#teardown)
 
-<a name="objectives"></a>
+<a name="objectives">
 # Objective of the POC  
 This playbook illustrates a simulated Distributed Denial of Service (DDoS) attack against a virtual machine.  Work through the configuration setting to enable DDOS protections and get alerted when attacks occur. 
 
 # Overview
 Perform DDoS attack on resources in a virtual network having public IP addresses associated with virtual machines with DDoS Protection Standard to detect, mitigate and send alert on being attacked.
 
-<a name="important-notes"></a>
+<a name="important-notes">
 
 # Important Notes
 DDoS Protection Standard protects resources in a virtual network including public IP addresses associated with virtual machines, load balancers, and application gateways. When coupled with the Application Gateway web application firewall, DDoS Protection Standard can provide full layer 3 to layer 7 mitigation capability.  
 Refer [Azure DDoS Protection Standard](https://docs.microsoft.com/en-us/azure/virtual-network/ddos-protection-overview) for more details.
 
-<a name="prerequisites"></a>
+<a name="prerequisites">
 
 # Prerequisites
 Access to Azure subscription to deploy following resources
@@ -46,7 +46,7 @@ Access to Azure subscription to deploy following resources
 1.  Virtual Machine with Virtual Network
 2.  OMS (Monitoring)
 
-<a name="attack"></a>
+<a name="attack">
 
 # Perform Attack 
  ### * Attack VM with Basic DDoS protection & analyze <br />
@@ -87,7 +87,7 @@ Microsoft have partnered with [BreakingPoint Cloud](https://www.ixiacom.com/prod
 
       ![](images/select-standard-ddos-on-vnet.png)
 
-<a name="detect"></a>
+<a name="detect">
 
 # Detect and mitigate attack
 The DDoS attack on VM with DDoS Protection Standard is detected and mitigated as shown in below images. <br />
@@ -121,13 +121,13 @@ The email alert configured at metrics level, this will send the alert mail if VN
     
    ![](images/ddoS-attack-mail-alert.png)
 
-<a name="config"></a>
+<a name="config">
 ## Configuration Validation
 * Distributed denial of service (DDoS) attacks are some of the largest availability and security concerns facing customers that are moving their applications to the cloud. A DDoS attack attempts to exhaust an application’s resources, making the application unavailable to legitimate users. Azure DDoS protection, combined with application design best practices, provide defense against DDoS attacks. Automatic detection and remediation procedure of such vulnerabilities can be easily done using the controls available in Cloudneeti.
 
 * Cloudneeti is available on the Azure marketplace. Try out the free test drive here https://aka.ms/Cloudneeti
 
-<a name="teardown"></a>
+<a name="teardown">
 ## Teardown Deployment 
 
 Run following powershell command after login to subscription to clear all the resources deployed during the demo. Specify resource group name given during deployment
