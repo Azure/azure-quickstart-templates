@@ -60,3 +60,4 @@ The Zulu install script using yum is available [here.](https://raw.githubusercon
 - [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
 
 `Tags: Linux, Ubuntu, Debian, CentOS, Java, Zulu, OpenJDK`  
+
