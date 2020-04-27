@@ -1,13 +1,13 @@
 # Create a New Management Group
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/tenant-level-deployments/new-mg/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/tenant-level-deployments/new-mg/PublicDeployment.svg" />&nbsp;
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/tenant-level-deployments/new-mg/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/tenant-level-deployments/new-mg/PublicDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/tenant-level-deployments/new-mg/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/tenant-level-deployments/new-mg/FairfaxDeployment.svg" />&nbsp;
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/tenant-level-deployments/new-mg/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/tenant-level-deployments/new-mg/FairfaxDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/tenant-level-deployments/new-mg/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/tenant-level-deployments/new-mg/CredScanResult.svg" />&nbsp;
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/tenant-level-deployments/new-mg/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/tenant-level-deployments/new-mg/CredScanResult.svg)
 
 This template is a tenant level template that creates a new management group in the tenant.
 
