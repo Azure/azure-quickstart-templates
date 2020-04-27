@@ -1,13 +1,13 @@
 # Spark & Cassandra on CentOS 7.x
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/spark-and-cassandra-on-centos/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/spark-and-cassandra-on-centos/PublicDeployment.svg" />&nbsp;
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/spark-and-cassandra-on-centos/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/spark-and-cassandra-on-centos/PublicDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/spark-and-cassandra-on-centos/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/spark-and-cassandra-on-centos/FairfaxDeployment.svg" />&nbsp;
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/spark-and-cassandra-on-centos/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/spark-and-cassandra-on-centos/FairfaxDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/spark-and-cassandra-on-centos/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/spark-and-cassandra-on-centos/CredScanResult.svg" />&nbsp;
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/spark-and-cassandra-on-centos/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/spark-and-cassandra-on-centos/CredScanResult.svg)
 
 This project configures a Spark cluster (1 master and n-slave nodes) and a single node Cassandra on Azure using CentOS 7.x.  The base image starts with CentOS 7.1 and it is updated to the latest version as part of the provisioning steps.
 
@@ -89,7 +89,6 @@ New-AzureRmResourceGroupDeployment -ResourceGroupName $ResourceGroupName `
 3. Spark WebUI is running on port 8080.  Access it using MASTER_WEB_UI_PUBLIC_IP:8080 on your browser.  Public IP is available through Azure Portal.
 4. Delete the Resource Group that was created to stage the provisioning scripts.
 
-
 ### Getting Started (For XPLAT-CLI)
 
 #### Pre-Deployment
@@ -119,4 +118,5 @@ New-AzureRmResourceGroupDeployment -ResourceGroupName $ResourceGroupName `
 [4]: http://stackoverflow.com/questions/9271681/how-to-run-powershell-script-even-if-set-executionpolicy-is-banned
 [5]: https://azure.microsoft.com/en-us/documentation/articles/virtual-networks-nsg/
 [6]: https://azure.microsoft.com/en-us/documentation/articles/xplat-cli-install/
+
 
