@@ -1,20 +1,15 @@
 # Create and assign a standard App Service Certificate
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-app-service-certificate-standard/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-app-service-certificate-standard/PublicDeployment.svg" />&nbsp;
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-app-service-certificate-standard/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-app-service-certificate-standard/PublicDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-app-service-certificate-standard/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-app-service-certificate-standard/FairfaxDeployment.svg" />&nbsp;
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-app-service-certificate-standard/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-app-service-certificate-standard/FairfaxDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-app-service-certificate-standard/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-app-service-certificate-standard/CredScanResult.svg" />&nbsp;
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-app-service-certificate-standard/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-app-service-certificate-standard/CredScanResult.svg)
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2F101-app-service-certificate-standard%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true"/>
-</a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-app-service-certificate-standard%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true"/>
-</a>
 
 <P>
 For more details on creating an App Service Certificate see [How to Create an App Service Certificate](https://azure.microsoft.com/en-us/documentation/articles/web-sites-purchase-ssl-web-site/).
@@ -44,4 +39,5 @@ https://azure.microsoft.com/en-us/documentation/articles/key-vault-get-started/
 The Web App should be in the same resource group with 'rootHostName' and www subdomain assigned as custom domains.
 https://azure.microsoft.com/en-us/documentation/articles/web-sites-custom-domain-name/
 </P>
+
 
