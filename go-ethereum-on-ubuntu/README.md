@@ -26,7 +26,6 @@ Once your deployment is complete you will have a sandbox environment with:
 
 ** Note this private key is exposed on a public GitHub repository. It should _never_ be used on a public network. If you use this key for anything besides sandbox testing purposes, your funds will be lost!
 
-
 ![Ethereum-Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/go-ethereum-on-ubuntu/images/eth.jpg)
 
 # Template Parameters
@@ -236,4 +235,5 @@ Now if we read from the contract:
 ```
 
 Congratulations! Your first contract is alive and well on your private Ethereum blockchain.
+
 

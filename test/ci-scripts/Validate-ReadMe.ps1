@@ -55,22 +55,20 @@ foreach($button in $buttons){
 
 if( $dumpHelp ){
     $md = @"
-    <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/$s/PublicLastTestDate.svg" />&nbsp;
-    <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/$s/PublicDeployment.svg" />&nbsp;
 
-    <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/$s/FairfaxLastTestDate.svg" />&nbsp;
-    <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/$s/FairfaxDeployment.svg" />&nbsp;
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/$s/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/$s/PublicDeployment.svg)
+
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/$s/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/$s/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/$s/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/$s/CredScanResult.svg)
+
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)]("https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F$s%2Fazuredeploy.json")
+[![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)]("https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F$s%2Fazuredeploy.json")
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)]("http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F$s%2Fazuredeploy.json")
     
-    <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/$s/BestPracticeResult.svg" />&nbsp;
-    <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/$s/CredScanResult.svg" />&nbsp;
-    
-    
-    <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F$s%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true"/>
-    </a>
-    <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F$s%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true"/>
-    </a>
 "@
 
     Write-Output "Ensure the following markdown is at the top of the README under the heading:`n"
