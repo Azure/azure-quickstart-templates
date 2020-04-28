@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "adminUsername": {
@@ -21,7 +21,6 @@
         "westus2",
         "westeurope"
       ],
-      "defaultValue": "centralus",
       "metadata": {
         "description": "Location for the VM, only certain regions support zones during preview."
       }
@@ -97,39 +96,6 @@
       "10.0.0.4",
       "10.0.0.5"
     ],
-    "vmExtName": [
-      "CreateAdForest",
-      "PepareBDC"
-    ],
-    "dscModulesUrl": [
-      "[uri(parameters('_artifactsLocation'), 'DSC/CreateADPDC.ps1.zip')]",
-      "[uri(parameters('_artifactsLocation'), 'DSC/PrepareADBDC.ps1.zip')]"
-    ],
-    "dscConfigurationScript": [
-      "CreateADPDC.ps1",
-      "PrepareADBDC.ps1"
-    ],
-    "dscConfigurationFunction": [
-      "CreateADPDC",
-      "PrepareADBDC"
-    ],
-    "dscConfigurationArguments": [
-      {
-        "domainName": "[parameters('domainName')]"
-      },
-      {
-        "DNSServer": "[variables('iPAddress')[0]]"
-      }
-    ],
-    "dscConfigurationArgumentsProtected": [
-      {
-        "adminCreds": {
-          "userName": "[parameters('adminUserName')]",
-          "password": "[parameters('adminPassword')]"
-        }
-      },
-      {}
-    ],
     "configureADBDCTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/configureADBDC.json', parameters('_artifactsLocationSasToken')))]",
     "adBDCConfigurationModulesURL": "[uri(parameters('_artifactsLocation'), 'DSC/ConfigureADBDC.ps1.zip')]",
     "adBDCConfigurationScript": "ConfigureADBDC.ps1",
@@ -193,7 +159,8 @@
         "count": 2
       },
       "dependsOn": [
-        "CreateVNet"
+        "CreateVNet",
+        "[resourceId('Microsoft.Network/publicIpAddresses', variables('publicIPAddressName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -269,15 +236,11 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "apiVersion": "2019-03-01",
-      "name": "[concat(variables('vmName')[copyIndex()], '/', variables('vmExtName')[copyIndex()])]",
+      "name": "[concat(variables('vmName')[0], '/CreateAdForest')]",
       "location": "[parameters('location')]",
       "dependsOn": [
         "vmLoop"
       ],
-      "copy": {
-        "name": "vmConfigLoop",
-        "count": 2
-      },
       "properties": {
         "publisher": "Microsoft.Powershell",
         "type": "DSC",
@@ -285,15 +248,50 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "configuration": {
-            "url": "[variables('dscModulesURL')[copyIndex()]]",
-            "script": "[variables('dscConfigurationScript')[copyIndex()]]",
-            "function": "[variables('dscConfigurationFunction')[copyIndex()]]"
+            "url": "[uri(parameters('_artifactsLocation'), 'DSC/CreateADPDC.ps1.zip')]",
+            "script": "CreateADPDC.ps1",
+            "function": "CreateADPDC"
           },
-          "configurationArguments": "[variables('dscConfigurationArguments')[copyIndex()]]"
+          "configurationArguments": {
+            "domainName": "[parameters('domainName')]"
+          }
         },
         "protectedSettings": {
           "configurationUrlSasToken": "[parameters('_artifactsLocationSasToken')]",
-          "configurationArguments": "[variables('dscConfigurationArgumentsProtected')[copyIndex()]]"
+          "configurationArguments": {
+            "adminCreds": {
+              "userName": "[parameters('adminUserName')]",
+              "password": "[parameters('adminPassword')]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2019-03-01",
+      "name": "[concat(variables('vmName')[1], '/PepareBDC')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "vmLoop"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.24",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "configuration": {
+            "url": "[uri(parameters('_artifactsLocation'), 'DSC/PrepareADBDC.ps1.zip')]",
+            "script": "PrepareADBDC.ps1",
+            "function": "PrepareADBDC"
+          },
+          "configurationArguments": {
+            "DNSServer": "[variables('iPAddress')[0]]"
+          }
+        },
+        "protectedSettings": {
+          "configurationUrlSasToken": "[parameters('_artifactsLocationSasToken')]"
         }
       }
     },
@@ -302,7 +300,8 @@
       "apiVersion": "2018-11-01",
       "name": "UpdateVNetDNS1",
       "dependsOn": [
-        "vmConfigLoop"
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('vmName')[0], 'CreateAdForest')]",
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('vmName')[1], 'PepareBDC')]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -391,7 +390,7 @@
         },
         "parameters": {
           "extName": {
-            "value": "[concat(variables('vmName')[1], '/', variables('vmExtName')[1])]"
+            "value": "[concat(variables('vmName')[1], '/PepareBDC')]"
           },
           "location": {
             "value": "[parameters('location')]"

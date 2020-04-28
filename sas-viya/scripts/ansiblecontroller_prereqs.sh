@@ -25,7 +25,7 @@ if ! type -p ansible;  then
     sudo python get-pip.py
     pip install 'ansible==2.7.10'
 fi
-
+yum install -y yum-utils
 yum install -y java-1.8.0-openjdk
 
 # remove the requiretty from the sudoers file. Per bug https://bugzilla.redhat.com/show_bug.cgi?id=1020147 this is unnecessary and has been removed on future releases of redhat,
@@ -35,10 +35,7 @@ sed -i -e '/Defaults    requiretty/{ s/.*/# Defaults    requiretty/ }' /etc/sudo
 
 echo "$(date)"
 echo "Creating the share on the storage account."
-# rpm --import https://packages.microsoft.com/keys/microsoft.asc
-# sh -c 'echo -e "[azure-cli]\nname=Azure CLI\nbaseurl=https://packages.microsoft.com/yumrepos/azure-cli\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/azure-cli.repo'
-# yum install -y azure-cli --nogpgcheck
-yum install -y rh-python36 gcc
+yum install -y rh-python36 gcc time
 /opt/rh/rh-python36/root/usr/bin/pip3 install azure-cli
 /opt/rh/rh-python36/root/usr/bin/az storage share create --name ${azure_storage_files_share} --connection-string "DefaultEndpointsProtocol=https;EndpointSuffix=core.windows.net;AccountName=${azure_storage_account};AccountKey=${azure_storage_files_password}"
 
@@ -105,7 +102,7 @@ fi
 ##
 ## get Common Code
 ##
-COMMON_CODE_TAG="8b2b495de09f0f34616e0d611feee07c450461b3"
+COMMON_CODE_TAG="002cbe7b3fdbc5474ea3f8cde7d2d3e6f5f4b3f4"
 RETRIES=10
 DELAY=10
 COUNT=1

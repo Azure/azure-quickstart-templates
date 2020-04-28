@@ -1,5 +1,5 @@
 {
-	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
 	"contentVersion": "1.0.0.0",
 	"parameters": {
 		"accountName": {
@@ -54,65 +54,35 @@
 				"description": "Max lag time (minutes). Required for BoundedStaleness. Valid ranges, Single Region: 5 to 84600. Multi Region: 300 to 86400."
 			}
 		},	
-		"multipleWriteLocations": {
-			"type": "bool",
-			"defaultValue": false,
-			"allowedValues": [ true, false ],
-			"metadata": {
-				"description": "Enable multi-master to make all regions writable."
-			}
-		},
 		"automaticFailover": {
 			"type": "bool",
-			"defaultValue": false,
+			"defaultValue": true,
 			"allowedValues": [ true, false ],
 			"metadata": {
-				"description": "Enable automatic failover for regions. Ignored when Multi-Master is enabled"
+				"description": "Enable automatic failover for regions"
 			}
 		},
 		"databaseName": {
 			"type": "string",
+			"defaultValue": "myDatabase",
 			"metadata": {
-				"description": "The name for the SQL database"
+				"description": "The name for the database"
 			}
 		},
-		"sharedThroughput": {
+		"containerName": {
+			"type": "string",
+			"defaultValue": "myContainer",
+			"metadata": {
+				"description": "The name for the container"
+			}
+		},
+		"throughput": {
 			"type": "int",
 			"defaultValue": 400,
 			"minValue": 400,
 			"maxValue": 1000000,
 			"metadata": {
-				"description": "The throughput for the database to be shared"
-			}			
-		},
-		"sharedContainer1Name": {
-			"type": "string",
-			"defaultValue": "sharedContainer1",
-			"metadata": {
-				"description": "The name for the first container with shared throughput"
-			}
-		},
-		"sharedContainer2Name": {
-			"type": "string",
-			"defaultValue": "sharedContainer2",
-			"metadata": {
-				"description": "The name for the second container with shared throughput"
-			}
-		},
-		"dedicatedContainer1Name": {
-			"type": "string",
-			"defaultValue": "dedicatedContainer1",
-			"metadata": {
-				"description": "The name for the container with dedicated throughput"
-			}
-		},
-		"dedicatedThroughput": {
-			"type": "int",
-			"defaultValue": 400,
-			"minValue": 400,
-			"maxValue": 1000000,
-			"metadata": {
-				"description": "The throughput for the container with dedicated throughput"
+				"description": "The throughput for the container"
 			}			
 		}
 	},
@@ -156,96 +126,36 @@
 		{
 			"type": "Microsoft.DocumentDB/databaseAccounts",
 			"name": "[variables('accountName')]",
-			"apiVersion": "2019-08-01",
+			"apiVersion": "2020-03-01",
 			"kind": "GlobalDocumentDB",
 			"location": "[parameters('location')]",
 			"properties": {
 				"consistencyPolicy": "[variables('consistencyPolicy')[parameters('defaultConsistencyLevel')]]",
 				"locations": "[variables('locations')]",
 				"databaseAccountOfferType": "Standard",
-				"enableAutomaticFailover": "[parameters('automaticFailover')]",
-				"enableMultipleWriteLocations": "[parameters('multipleWriteLocations')]"
+				"enableAutomaticFailover": "[parameters('automaticFailover')]"
 			}
 		},
 		{
 			"type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases",
 			"name": "[concat(variables('accountName'), '/', parameters('databaseName'))]",
-			"apiVersion": "2019-08-01",
+			"apiVersion": "2020-03-01",
 			"dependsOn": [ "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('accountName'))]" ],
 			"properties":{
 				"resource":{
 					"id": "[parameters('databaseName')]"
-				},
-				"options": { "throughput": "[parameters('sharedThroughput')]" }
-			}
-		},
-		{
-			"type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers",
-			"name": "[concat(variables('accountName'), '/', parameters('databaseName'), '/', parameters('sharedContainer1Name'))]",
-			"apiVersion": "2019-08-01",
-			"dependsOn": [ "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', variables('accountName'), parameters('databaseName'))]" ],
-			"properties":
-			{
-				"resource":{
-					"id":  "[parameters('sharedContainer1Name')]",
-					"partitionKey": {
-						"paths": [
-						"/myPartitionKey"
-						],
-						"kind": "Hash"
-					},
-					"indexingPolicy": {
-						"indexingMode": "consistent",
-						"includedPaths": [{
-								"path": "/*"
-							}
-						],
-						"excludedPaths": [{
-								"path": "/myPathToNotIndex/*"
-							}
-						]
-					}
 				}
 			}
 		},
 		{
 			"type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers",
-			"name": "[concat(variables('accountName'), '/', parameters('databaseName'), '/', parameters('sharedContainer2Name'))]",
-			"apiVersion": "2019-08-01",
+			"name": "[concat(variables('accountName'), '/', parameters('databaseName'), '/', parameters('containerName'))]",
+			"apiVersion": "2020-03-01",
 			"dependsOn": [ "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', variables('accountName'), parameters('databaseName'))]" ],
 			"properties":
 			{
 				"resource":{
-					"id":  "[parameters('sharedContainer2Name')]",
-					"partitionKey": {
-						"paths": [
-						"/myPartitionKey"
-						],
-						"kind": "Hash"
-					},
-					"indexingPolicy": {
-						"indexingMode": "consistent",
-						"includedPaths": [{
-								"path": "/*"
-							}
-						],
-						"excludedPaths": [{
-								"path": "/myPathToNotIndex/*"
-							}
-						]
-					}
-				}
-			}
-		},
-		{
-			"type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers",
-			"name": "[concat(variables('accountName'), '/', parameters('databaseName'), '/', parameters('dedicatedContainer1Name'))]",
-			"apiVersion": "2019-08-01",
-			"dependsOn": [ "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', variables('accountName'), parameters('databaseName'))]" ],
-			"properties":
-			{
-				"resource":{
-					"id":  "[parameters('dedicatedContainer1Name')]",
+					"id":  "[parameters('containerName')]",
 					"partitionKey": {
 						"paths": [
 						"/myPartitionKey"
@@ -297,7 +207,7 @@
 						]
 					}
 				},
-				"options": { "throughput": "[parameters('dedicatedThroughput')]" }
+				"options": { "throughput": "[parameters('throughput')]" }
 			}
 		}
 	]

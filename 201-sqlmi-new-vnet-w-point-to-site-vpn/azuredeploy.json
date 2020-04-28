@@ -1,5 +1,5 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.1",
     "parameters": {
         "managedInstanceName": {
@@ -78,12 +78,10 @@
         "skuName": {
             "type": "string",
             "allowedValues": [
-                "GP_Gen4",
                 "GP_Gen5",
-                "BC_Gen4",
                 "BC_Gen5"
             ],
-            "defaultValue": "GP_Gen4",
+            "defaultValue": "GP_Gen5",
             "metadata": {
                 "description": "Enter sku name."
             }
@@ -136,54 +134,12 @@
     },
     "resources": [
         {
-            "apiVersion": "2017-10-01",
+            "apiVersion": "2019-06-01",
             "type": "Microsoft.Network/networkSecurityGroups",
             "name": "[variables('networkSecurityGroupName')]",
             "location": "[parameters('location')]",
             "properties": {
               "securityRules": [
-                {
-                  "name": "allow_management_inbound",
-                  "properties": {
-                    "description": "Allow inbound management traffic",
-                    "protocol": "Tcp",
-                    "sourcePortRange": "*",
-                    "destinationPortRanges": ["9000", "9003", "1438", "1440", "1452"],
-                    "sourceAddressPrefix": "*",
-                    "destinationAddressPrefix": "*",
-                    "access": "Allow",
-                    "priority": 100,
-                    "direction": "Inbound"
-                  }
-                },
-                {
-                    "name": "allow_misubnet_inbound",
-                    "properties": {
-                      "description": "Allow inbound traffic inside the subnet",
-                      "protocol": "*",
-                      "sourcePortRange": "*",
-                      "destinationPortRange": "*",
-                      "sourceAddressPrefix": "[parameters('subnetPrefix')]",
-                      "destinationAddressPrefix": "*",
-                      "access": "Allow",
-                      "priority": 200,
-                      "direction": "Inbound"
-                    }
-                  },
-                  {
-                    "name": "allow_health_probe_inbound",
-                    "properties": {
-                      "description": "Allow health probe",
-                      "protocol": "*",
-                      "sourcePortRange": "*",
-                      "destinationPortRange": "*",
-                      "sourceAddressPrefix": "AzureLoadBalancer",
-                      "destinationAddressPrefix": "*",
-                      "access": "Allow",
-                      "priority": 300,
-                      "direction": "Inbound"
-                    }
-                  },
                   {
                     "name": "allow_tds_inbound",
                     "properties": {
@@ -199,6 +155,20 @@
                     }
                   },
                   {
+                    "name": "allow_redirect_inbound",
+                    "properties": {
+                        "description": "Allow inbound redirect traffic to Managed Instance inside the virtual network",
+                        "protocol": "Tcp",
+                        "sourcePortRange": "*",
+                        "destinationPortRange": "11000-11999",
+                        "sourceAddressPrefix": "VirtualNetwork",
+                        "destinationAddressPrefix": "*",
+                        "access": "Allow",
+                        "priority": 1100,
+                        "direction": "Inbound"
+                    }
+                  },  
+                  {
                     "name": "deny_all_inbound",
                     "properties": {
                       "description": "Deny all other inbound traffic",
@@ -210,20 +180,6 @@
                       "access": "Deny",
                       "priority": 4096,
                       "direction": "Inbound"
-                    }
-                  },
-                  {
-                    "name": "allow_management_outbound",
-                    "properties": {
-                      "description": "Allow outbound management traffic",
-                      "protocol": "Tcp",
-                      "sourcePortRange": "*",
-                      "destinationPortRanges": ["80", "443", "12000"],
-                      "sourceAddressPrefix": "*",
-                      "destinationAddressPrefix": "*",
-                      "access": "Allow",
-                      "priority": 100,
-                      "direction": "Outbound"
                     }
                   },
                   {
@@ -260,25 +216,16 @@
         {
             "type": "Microsoft.Network/routeTables",
             "name": "[variables('routeTableName')]",
-            "apiVersion": "2018-02-01",
+            "apiVersion": "2019-06-01",
             "location": "[parameters('location')]",
             "properties": {
-                "disableBgpRoutePropagation": false,
-                "routes": [
-                    {
-                        "name": "default",
-                        "properties": {
-                            "addressPrefix": "0.0.0.0/0",
-                            "nextHopType": "Internet"
-                        }
-                    }
-                ]
+                "disableBgpRoutePropagation": false
             }
         },
         {
             "name": "[parameters('virtualNetworkName')]",
             "type": "Microsoft.Network/virtualNetworks",
-            "apiVersion": "2018-02-01",
+            "apiVersion": "2019-06-01",
             "dependsOn": [
                 "[variables('routeTableName')]",
                 "[variables('networkSecurityGroupName')]"
@@ -300,7 +247,15 @@
                             },
                             "networkSecurityGroup": {
                                 "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
-                            }                            
+                            },
+                            "delegations": [
+                                {
+                                    "name": "miDelegation",
+                                    "properties": {
+                                        "serviceName": "Microsoft.Sql/managedInstances"
+                                    }
+                                }
+                            ]	                            
                         }
                     },
                     {
@@ -314,7 +269,7 @@
         },
         {
             "type": "Microsoft.Sql/managedInstances",
-            "apiVersion": "2015-05-01-preview",
+            "apiVersion": "2019-06-01-preview",
             "dependsOn": [
                 "[parameters('virtualNetworkName')]"
             ],
@@ -336,19 +291,19 @@
             }
         },
         {
-            "apiVersion": "2017-10-01",
+            "apiVersion": "2019-06-01",
             "type": "Microsoft.Network/publicIPAddresses",
             "name": "[variables('gatewayPublicIpAddressName')]",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "properties": {
                 "publicIPAllocationMethod": "Dynamic"
             }
         },
         {
-            "apiVersion": "2017-10-01",
+            "apiVersion": "2019-06-01",
             "type": "Microsoft.Network/virtualNetworkGateways",
             "name": "[variables('gatewayName')]",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "dependsOn": [
                 "[concat('Microsoft.Network/publicIPAddresses/', variables('gatewayPublicIpAddressName'))]",
                 "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
