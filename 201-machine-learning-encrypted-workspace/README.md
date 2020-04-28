@@ -1,4 +1,4 @@
-# Blank Template
+# Azure Machine Learning secured workspace & encryption
 
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-machine-learning-encrypted-workspace/PublicLastTestDate.svg" />&nbsp;
 <IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-machine-learning-encrypted-workspace/PublicDeployment.svg" />&nbsp;
