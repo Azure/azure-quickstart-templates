@@ -1,5 +1,5 @@
 {
-	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
 	"contentVersion": "1.0.0.0",
 	"parameters": {
 		"accountName": {
@@ -53,21 +53,13 @@
 			"metadata": {
 				"description": "Max lag time (seconds). Required for BoundedStaleness. Valid ranges, Single Region: 5 to 84600. Multi Region: 300 to 86400."
 			}
-		},	
-		"multipleWriteLocations": {
-			"type": "bool",
-			"defaultValue": false,
-			"allowedValues": [ true, false ],
-			"metadata": {
-				"description": "Enable multi-master to make all regions writable."
-			}
 		},
 		"automaticFailover": {
 			"type": "bool",
-			"defaultValue": false,
+			"defaultValue": true,
 			"allowedValues": [ true, false ],
 			"metadata": {
-				"description": "Enable automatic failover for regions. Ignored when Multi-Master is enabled"
+				"description": "Enable automatic failover for regions"
 			}
 		},
 		"keyspaceName": {
@@ -76,16 +68,10 @@
 				"description": "The name for the Cassandra Keyspace"
 			}
 		},
-		"table1Name": {
+		"tableName": {
 			"type": "string",
 			"metadata": {
 				"description": "The name for the first Cassandra table"
-			}
-		},
-		"table2Name": {
-			"type": "string",
-			"metadata": {
-				"description": "The name for the second Cassandra table"
 			}
 		},
 		"throughput": {
@@ -138,7 +124,7 @@
 		{
 			"type": "Microsoft.DocumentDB/databaseAccounts",
 			"name": "[variables('accountName')]",
-			"apiVersion": "2019-08-01",
+			"apiVersion": "2020-03-01",
 			"location": "[parameters('location')]",
 			"kind": "GlobalDocumentDB",
 			"properties": {
@@ -146,14 +132,13 @@
 				"consistencyPolicy": "[variables('consistencyPolicy')[parameters('defaultConsistencyLevel')]]",
 				"locations": "[variables('locations')]",
 				"databaseAccountOfferType": "Standard",
-				"enableAutomaticFailover": "[parameters('automaticFailover')]",
-				"enableMultipleWriteLocations": "[parameters('multipleWriteLocations')]"
+				"enableAutomaticFailover": "[parameters('automaticFailover')]"
 			}
 		},
 		{
 			"type": "Microsoft.DocumentDB/databaseAccounts/cassandraKeyspaces",
 			"name": "[concat(variables('accountName'), '/', parameters('keyspaceName'))]",
-			"apiVersion": "2019-08-01",
+			"apiVersion": "2020-03-01",
 			"dependsOn": [ "[resourceId('Microsoft.DocumentDB/databaseAccounts/', variables('accountName'))]" ],
 			"properties":{
 				"resource":{
@@ -163,40 +148,13 @@
 		},
 		{
 			"type": "Microsoft.DocumentDb/databaseAccounts/cassandraKeyspaces/tables",
-			"name": "[concat(variables('accountName'), '/', parameters('keyspaceName'), '/', parameters('table1Name'))]",
-			"apiVersion": "2019-08-01",
+			"name": "[concat(variables('accountName'), '/', parameters('keyspaceName'), '/', parameters('tableName'))]",
+			"apiVersion": "2020-03-01",
 			"dependsOn": [ "[resourceId('Microsoft.DocumentDB/databaseAccounts/cassandraKeyspaces', variables('accountName'), parameters('keyspaceName'))]" ],
 			"properties":
 			{
 				"resource":{
-					"id":  "[parameters('table1Name')]",
-					"schema": {
-						"columns": [
-							{ "name": "userid", "type": "uuid" },
-							{ "name": "posted_month", "type": "int" },
-							{ "name": "posted_time", "type": "uuid" },
-							{ "name": "body", "type": "text" },
-							{ "name": "posted_by", "type": "text" }
-						],
-						"partitionKeys": [ 
-							{ "name": "userid" }, 
-							{ "name": "posted_month" }, 
-							{ "name": "posted_time" } 
-						]
-					},
-					"options": { "throughput": "[parameters('throughput')]" }
-				}
-			}
-		},
-		{
-			"type": "Microsoft.DocumentDb/databaseAccounts/cassandraKeyspaces/tables",
-			"name": "[concat(variables('accountName'), '/', parameters('keyspaceName'), '/', parameters('table2Name'))]",
-			"apiVersion": "2019-08-01",
-			"dependsOn": [ "[resourceId('Microsoft.DocumentDB/databaseAccounts/cassandraKeyspaces', variables('accountName'), parameters('keyspaceName'))]" ],
-			"properties":
-			{
-				"resource":{
-					"id":  "[parameters('table2Name')]",
+					"id":  "[parameters('tableName')]",
 					"schema": {
 						"columns": [
 							{ "name": "loadid", "type": "uuid" },

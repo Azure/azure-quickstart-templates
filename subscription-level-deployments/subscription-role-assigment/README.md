@@ -1,13 +1,13 @@
 # Assign a Role at Subscription Scope
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/subscription-level-deployments/subscription-role-assigment/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/subscription-level-deployments/subscription-role-assigment/PublicDeployment.svg" />&nbsp;
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/subscription-level-deployments/subscription-role-assigment/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/subscription-level-deployments/subscription-role-assigment/PublicDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/subscription-level-deployments/subscription-role-assigment/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/subscription-level-deployments/subscription-role-assigment/FairfaxDeployment.svg" />&nbsp;
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/subscription-level-deployments/subscription-role-assigment/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/subscription-level-deployments/subscription-role-assigment/FairfaxDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/subscription-level-deployments/subscription-role-assigment/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/subscription-level-deployments/subscription-role-assigment/CredScanResult.svg" />&nbsp;
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/subscription-level-deployments/subscription-role-assigment/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/subscription-level-deployments/subscription-role-assigment/CredScanResult.svg)
 
 This template is a subscription level template that will assign a role at subscription scope.
 

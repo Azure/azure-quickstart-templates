@@ -5,12 +5,12 @@ echo "This script will setup a Bloq Enterprise Router.\n"
 
 echo "To use this script you have to be using Ubuntu 14.04.\n"
 
-echo "Adding Bloq Enterprise Repo...\n"
+echo "Adding Bloq Enterprise Repo...\n"   
 sudo apt-add-repository 'deb https://pkg.bloqenterprise.net/ stable main'
 
 echo "Receiving GPG keys...\n"
 sudo gpg #init trustdb
-sudo gpg --recv-key 91955EB3D6410A98
+sudo gpg --recv-key 91955EB3D6410A98 
 sudo gpg -a --export 91955EB3D6410A98 | sudo apt-key add -
 
 echo "Performing update...\n"

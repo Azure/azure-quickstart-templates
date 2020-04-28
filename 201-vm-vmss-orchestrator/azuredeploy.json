@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "virtualMachineAdminUserName": {
@@ -125,7 +125,7 @@
       }
     },
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('myVNETName'),  variables('myVNETSubnet1Name'))]",
-    "noZoneObj" : {
+    "noZoneObj": {
       "none": null
     },
     "fdCountOptions": {
@@ -133,14 +133,42 @@
       "nonzonal": 2
     },
     "selectedZone": "[if(equals(parameters('virtualMachineScaleSetAvailabilityZone'), 'none'), variables('noZoneObj').none, array(parameters('virtualMachineScaleSetAvailabilityZone')))]",
-    "virtualMachineScaleSetPlatformFaultDomainCount": "[if(equals(parameters('virtualMachineScaleSetAvailabilityZone'), 'none'), variables('fdCountOptions').nonzonal, variables('fdCountOptions').zonal)]"
+    "virtualMachineScaleSetPlatformFaultDomainCount": "[if(equals(parameters('virtualMachineScaleSetAvailabilityZone'), 'none'), variables('fdCountOptions').nonzonal, variables('fdCountOptions').zonal)]",
+    "networkSecurityGroupName": "[concat(variables('myVNETSubnet1Name'), '-nsg')]"
   },
   "resources": [
+    {
+      "comments": "Simple Network Security Group for subnet [variables('myVNETSubnet1Name')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2019-08-01",
+      "name": "[variables('networkSecurityGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-22",
+            "properties": {
+              "priority": 1000,
+              "access": "Allow",
+              "direction": "Inbound",
+              "destinationPortRange": "22",
+              "protocol": "Tcp",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+          }
+        ]
+      }
+    },
     {
       "name": "[variables('myVNETName')]",
       "type": "Microsoft.Network/virtualNetworks",
       "location": "[parameters('location')]",
       "apiVersion": "2019-04-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+      ],
       "tags": {
         "displayName": "[variables('myVNETName')]"
       },
@@ -154,7 +182,10 @@
           {
             "name": "[variables('myVNETSubnet1Name')]",
             "properties": {
-              "addressPrefix": "[variables('myVNETSubnet1Prefix')]"
+              "addressPrefix": "[variables('myVNETSubnet1Prefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+              }
             }
           }
         ]

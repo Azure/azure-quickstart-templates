@@ -21,13 +21,13 @@ if [ "$1" = 'From_Source' ]; then
 sudo apt-get update
 sudo apt-get -y install git build-essential libssl-dev libdb-dev libdb++-dev libboost-all-dev libqrencode-dev unzip pwgen
 cd /usr/local/src/ || exit
-sudo git clone https://github.com/okcashpro/okcash
+sudo git clone https://github.com/okcashpro/okcash 
 cd okcash/src || exit
-sudo make -f makefile.unix
+sudo make -f makefile.unix 
 sudo strip okcashd
 sudo cp okcashd /usr/bin/okcashd
 
-else
+else    
 ## Download Binaries
 sudo apt-get update
 sudo apt-get -y install git build-essential libssl-dev libdb-dev libdb++-dev libboost-all-dev libqrencode-dev unzip pwgen
