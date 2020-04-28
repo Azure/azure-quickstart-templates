@@ -142,6 +142,18 @@ if($ServicePrincipalObjectId){
 
 }
 
+# These perms are for Azure ML Encryption via Cosmos https://docs.microsoft.com/en-us/azure/cosmos-db/how-to-setup-cmk
+# Assign the Azure ML SP perms to the subscription - this needs contributor at the moment, hopefully the fix that later
+# Display Name = "Azure Machine Learning" (this substring is not unique)
+# Service Principal Name = 0736f41a-0425-4b46-bdb5-1563eff02385
+$mlsp = Get-AzureRmADServicePrincipal -ServicePrincipalName '0736f41a-0425-4b46-bdb5-1563eff02385'
+$roleDef = Get-AzureRmRoleDefinition -Name 'Contributor'
+New-AzureRMRoleAssignment -RoleDefinitionId $roleDef.id -ObjectId $mlsp.id -Scope "/subscriptions/$((Get-AzureRMContext).Subscription.Id)" -Verbose
+
+$cosmossp = Get-AzureRmADServicePrincipal -ServicePrincipalName "a232010e-820c-4083-83bb-3ace5fc29d0b"
+Set-AzureRMKeyVaultAccessPolicy -VaultName $KeyVaultName -ObjectId $cosmossp.id -PermissionsToKeys get,unwrapKey,wrapKey 
+
+
 # 1) Create a sample password for the vault
 $SecretValue = ConvertTo-SecureString -String $CertPass -AsPlainText -Force
 Set-AzureKeyVaultSecret -VaultName $KeyVaultName -Name $KeyVaultNotSecretName -SecretValue $SecretValue -Verbose
