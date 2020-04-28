@@ -1,13 +1,13 @@
 # chef-automate-ha
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/chef-automate-ha/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/chef-automate-ha/PublicDeployment.svg" />&nbsp;
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/chef-automate-ha/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/chef-automate-ha/PublicDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/chef-automate-ha/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/chef-automate-ha/FairfaxDeployment.svg" />&nbsp;
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/chef-automate-ha/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/chef-automate-ha/FairfaxDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/chef-automate-ha/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/chef-automate-ha/CredScanResult.svg" />&nbsp;
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/chef-automate-ha/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/chef-automate-ha/CredScanResult.svg)
 
 This Azure Quickstart provides an 'unmanaged' full installation of Chef Server configured for high availability mode and a separate instance of Chef Automate.
 

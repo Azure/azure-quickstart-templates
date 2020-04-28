@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -e 
 
 date
 ps axjf
@@ -31,7 +31,7 @@ time make -j$NPROC
 cp /usr/local/bitshares-2/programs/witness_node/witness_node /usr/bin/witness_node
 cp /usr/local/bitshares-2/programs/cli_wallet/cli_wallet /usr/bin/cli_wallet
 
-else
+else    
 #################################################################
 # Install BitShares from PPA                                    #
 #################################################################

@@ -1,7 +1,7 @@
 param(
     [string] $SampleFolder = $ENV:SAMPLE_FOLDER,
     [string] $CloudEnvironment = $ENV:ENVIRONMENT,
-    [switch] $SkipDateCheck
+    [string] $BuildReason = $ENV:BUILD_REASON
 )
 
 #get the file content
@@ -9,14 +9,14 @@ Write-Output "Testing file: $SampleFolder\metadata.json"
 $metadata = Get-Content -Path "$SampleFolder\metadata.json" -Raw 
 
 #Check metadata.json against the schema
-$schema = Invoke-WebRequest -Uri "https://aka.ms/azure-quickstart-templates-metadata-schema#" -UseBasicParsing
+$schema = Invoke-WebRequest -Uri "https://aka.ms/azure-quickstart-templates-metadata-schema" -UseBasicParsing
 $metadata | Test-Json -Schema $schema.content 
 
 #Make sure the date has been updated
 $rawDate = ($metadata | convertfrom-json).dateUpdated
 $dateUpdated = (Get-Date $rawDate)
 
-if (!$SkipDateCheck) {
+if (!($ENV:BUILD_REASON -eq "Scheduled")) {
     #When running the scheduled tests, we don't want to check the date
     try {
         [DateTime]::ParseExact($rawDate, 'yyyy-MM-dd', $(Get-Culture))
@@ -53,3 +53,10 @@ if (!$IsCloudSupported) {
     Write-Host "##vso[task.setvariable variable=result.deployment]Not Supported"
 }
 
+$validationType = ($metadata | convertfrom-json).validationType
+Write-Output "Sample type from metadata.json: $validationType"
+
+if($validationType -eq "Manual"){
+    Write-Host "##vso[task.setvariable variable=validation.type]$validationType"
+    Write-Host "##vso[task.setvariable variable=result.deployment]Not Supported" # set this so the pipeline does not run deployment will be overridden in the test results step
+}

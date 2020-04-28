@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -e 
 
 date
 ps axjf
@@ -41,7 +41,7 @@ sudo cp /usr/local/stratisX/src/stratisd /usr/bin/stratisd
 ################################################################
 # Configure to auto start at boot		               #
 ################################################################
-file=$HOME/.stratis
+file=$HOME/.stratis 
 if [ ! -e "$file" ]
 then
 	sudo mkdir $HOME/.stratis
@@ -52,7 +52,7 @@ if [ ! -e "$file" ]
 then
 	printf '%s\n%s\n' '#!/bin/sh' 'sudo stratisd' | sudo tee /etc/init.d/stratis
 	sudo chmod +x /etc/init.d/stratis
-	sudo update-rc.d stratis defaults
+	sudo update-rc.d stratis defaults	
 fi
 
 /usr/bin/stratisd

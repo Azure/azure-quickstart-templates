@@ -6,7 +6,7 @@ echo "---"
 echo "To use this script you have to be using Ubuntu 14.04. It MAY work on other versions,"
 echo "but let's not push our luck."
 echo "---"
-echo "Performing a general system update (this might take a while)..."
+echo "Performing a general system update (this might take a while)..."		
 sudo apt-get update > /dev/null 2>&1
 sudo apt-get -y upgrade > /dev/null 2>&1
 sudo apt-get -y dist-upgrade > /dev/null 2>&1

@@ -20,7 +20,15 @@ param(
     [string] $CertDNSName = 'azbot-cert-dns',
     [string] $KeyVaultSelfSignedCertName = 'azbot-sscert',
     [string] $KeyVaultNotSecretName = 'notSecretPassword',
-    [string] $ServicePrincipalObjectId #if not provided assigning perms to the Vault must be done manually
+    [string] $ServicePrincipalObjectId, #if not provided assigning perms to the Vault must be done manually
+    [string] $appConfigStoreName = 'azbotappconfigstore', # This must be gloablly unique
+    [string] $msiName = 'azbot-msi',
+    #
+    # You must generate a public/private key pair and pass to the script use the following command with no passphrase:
+    #   ssh-keygen -t rsa -b 4096 -f scratch
+    # 
+    [string] $sshPublicKeyValue = $(Get-Content -Path scratch.pub -Raw),
+    [string] $sshPrivateKeyValue = $(Get-Content -Path scratch -Raw)
 
 )
 
@@ -44,6 +52,11 @@ if($ServicePrincipalObjectId){
     New-AzureRMRoleAssignment -RoleDefinitionId $roleDef.id -ObjectId $ServicePrincipalObjectId -Scope $StorageAccount.Id -Verbose
 }
 
+#create a userAssigned MSI that can have access to the vault where test keys/certs are stored
+$msi = (az identity create -g "$ResourceGroupName" -n "$msiName" --verbose) | ConvertFrom-Json
+
+$json.Add("USER-ASSIGNED-IDENTITY-NAME", $msiName)
+$json.Add("USER-ASSIGNED-IDENTITY-RESOURCEGROUP-NAME", $ResourceGroupName)
 
 #Create the VNET
 $subnet1 = New-AzureRMVirtualNetworkSubnetConfig -Name 'azbot-subnet-1' -AddressPrefix '10.0.1.0/24'
@@ -79,6 +92,11 @@ if($vault -eq $null) {
 
 # 0) Give the svc principal that will be deploying templates RBAC and Access Policy Access to the Vault
 
+# Create the Microsoft.appConfiguration/configurationStores
+# There are no PS cmdlets for app config store yet - use context must be set with "az account set ..."
+# Also, not available in Fairfax
+$appConfigStore = $(az appconfig create -g appconfig -n bjmappconf1 -l westus -o json --verbose) | ConvertFrom-Json
+
 if($ServicePrincipalObjectId){
 
     $roleDef = New-Object -TypeName "Microsoft.Azure.Commands.Resources.Models.Authorization.PSRoleDefinition"
@@ -97,12 +115,23 @@ if($ServicePrincipalObjectId){
 
     # Need contributor access to be able to add secrets during a template deployment
     $roleDef = Get-AzureRmRoleDefinition -Name 'Contributor'
+
+    # Need contributor rights on vault to run pull reference params - some samples also add secrets
     New-AzureRMRoleAssignment -RoleDefinitionId $roleDef.id -ObjectId $ServicePrincipalObjectId -Scope $vault.ResourceId -Verbose
+
+    # Need contributor rights on config store to run list*() actions
+    New-AzureRMRoleAssignment -RoleDefinitionId $roleDef.id -ObjectId $ServicePrincipalObjectId -Scope $appConfigStore.id -Verbose
 
     # Set the Data Plane Access Policy for the Principal to retrieve secrets via reference parameters
     Set-AzureRMKeyVaultAccessPolicy -VaultName $KeyVaultName -ObjectId $ServicePrincipalObjectId `
                                     -PermissionsToKeys get,restore `
                                     -PermissionsToSecrets get,set `
+                                    -PermissionsToCertificates get
+
+    # Set the Data Plane Access Policy for the UserAssigned MSI to retrieve secrets via reference parameters
+    Set-AzureRMKeyVaultAccessPolicy -VaultName $KeyVaultName -ObjectId $msi.principalId `
+                                    -PermissionsToKeys get `
+                                    -PermissionsToSecrets get `
                                     -PermissionsToCertificates get
 
     # Assign the SP perms to the NetworkWatcherRG for deploying flowlogs
@@ -126,10 +155,10 @@ $json.Add("KEYVAULT-RESOURCE-ID", $vault.ResourceId)
 $refParam = @"
 {
     "reference": {
-      "keyVault": {
+        "keyVault": {
         "id": "$($vault.ResourceId)"
-      },
-      "secretName": "$KeyVaultNotSecretName"
+        },
+        "secretName": "$KeyVaultNotSecretName"
     }
 }
 "@
@@ -169,8 +198,48 @@ $json.Add("KEYVAULT-ENCRYPTION-KEY", $key.Name)
 $json.Add("KEYVAULT-ENCRYPTION-KEY-URI", $key.id)
 $json.Add("KEYVAULT-ENCRYPTION-KEY-VERSION", $key.Version)
 
+# 4) Create a Public/Private Key Pair
+$sshPublicKeySecretName = "sshPublicKey"
+$sshPrivateKeySecretName = "sshPrivateKey"
 
-#3 ) SSL Cert (TODO not sure if this is making the correct cert, need to test it) 
+# add the generic pub key value (just use the same one)
+$json.Add("SSH-PUB-KEY", $sshPublicKeyValue)
+
+$sshPublicKeyValue = ConvertTo-SecureString -String (Get-Content -Path scratch.pub -Raw) -AsPlainText -Force
+Set-AzureKeyVaultSecret -VaultName $KeyVaultName -Name $sshPublicKeySecretName -SecretValue $sshPublicKeyValue -Verbose
+
+$sshPrivateKeyValue = ConvertTo-SecureString -String (Get-Content -Path scratch -Raw) -AsPlainText -Force
+Set-AzureKeyVaultSecret -VaultName $KeyVaultName -Name $sshPrivateKeySecretName -SecretValue $sshPrivateKeyValue -Verbose
+
+$json.Add("KEYVAULT-SSH-PRIVATE-KEY-NAME", $sshPrivateKeySecretName)
+$json.Add("KEYVAULT-SSH-PUBLIC-KEY-NAME", $sshPublicKeySecretName)
+
+$refParam = @"
+{
+    "reference": {
+        "keyVault": {
+        "id": "$($vault.ResourceId)"
+        },
+        "secretName": "$sshPrivateKeySecretName"
+    }
+}
+"@
+$json.Add("KEYVAULT-SSH-PRIVATE-KEY-REFERENCE", (ConvertFrom-Json $refParam))
+
+$refParam = @"
+{
+    "reference": {
+        "keyVault": {
+        "id": "$($vault.ResourceId)"
+        },
+        "secretName": "$sshPublicKeySecretName"
+    }
+}
+"@
+$json.Add("KEYVAULT-SSH-PUBLIC-KEY-REFERENCE", (ConvertFrom-Json $refParam))
+
+
+#5 ) SSL Cert (TODO not sure if this is making the correct cert, need to test it) 
 #https://docs.microsoft.com/en-us/azure/virtual-machines/windows/tutorial-secure-web-server#generate-a-certificate-and-store-in-key-vault
 #$policy = New-AzureKeyVaultCertificatePolicy -SubjectName "CN=www.contoso.com" -SecretContentType "application/x-pkcs12" -IssuerName Self -ValidityInMonths 120
 #Add-AzureKeyVaultCertificate -VaultName $keyvaultName -Name "mycert" -CertificatePolicy $policy
@@ -192,5 +261,19 @@ $json.Add("SELFSIGNED-CERT-PASSWORD", $CertPass)
 $json.Add("SELFSIGNED-CERT-THUMBPRINT", $kvCert.Thumbprint)
 $json.Add("SELFSIGNED-CERT-DNSNAME", $CertDNSName)
 
-#Output all the values needed for the config file
+# Create the Microsoft.appConfiguration/configurationStores
+# There are no PS cmdlets for app config store yet - use context must be set with "az account set ..."
+# Also, not available in Fairfax
+az appconfig create -g "$ResourceGroupName" -n "$appConfigStoreName" -l "$Location" --verbose 
+az appconfig kv set -n "$appConfigStoreName" --key 'key1' --value "value1" --label 'template' -y --verbose
+az appconfig kv set -n "$appConfigStoreName" --key 'windowsOSVersion' --value '2019-Datacenter' --label 'template' -y --verbose
+az appconfig kv set -n "$appConfigStoreName" --key 'diskSizeGB' --value "1023" --label 'template' -y --verbose
+
+$json.Add("APPCONFIGSTORE-NAME", $appConfigStoreName)
+$json.Add("APPCONFIGSTORE-RESOURCEGROUP-NAME", $ResourceGroupName)
+$json.Add("APPCONFIGSTORE-KEY1", "key1")
+$json.Add("APPCONFIGSTORE-KEY1", "windowsOSVersion")
+$json.Add("APPCONFIGSTORE-KEY1", "diskSizeGB")
+
+# Output all the values needed for the config file
 Write-Output $($json | ConvertTo-json -Depth 30)
