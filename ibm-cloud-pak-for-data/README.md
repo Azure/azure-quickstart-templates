@@ -1,21 +1,17 @@
 # Cloud Pak for Data on Azure
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/ibm-cloud-pak-for-data/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/ibm-cloud-pak-for-data/PublicDeployment.svg" />&nbsp;
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/ibm-cloud-pak-for-data/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/ibm-cloud-pak-for-data/PublicDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/ibm-cloud-pak-for-data/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/ibm-cloud-pak-for-data/FairfaxDeployment.svg" />&nbsp;
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/ibm-cloud-pak-for-data/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/ibm-cloud-pak-for-data/FairfaxDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/ibm-cloud-pak-for-data/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/ibm-cloud-pak-for-data/CredScanResult.svg" />&nbsp;
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/ibm-cloud-pak-for-data/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/ibm-cloud-pak-for-data/CredScanResult.svg)
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fibm-cloud-pak-for-data%2Fazuredeploy.json" target="_blank">
-<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true"/>
-</a>
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)]("https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fibm-cloud-pak-for-data%2Fazuredeploy.json")  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)]("http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fibm-cloud-pak-for-data%2Fazuredeploy.json")
 
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fibm-cloud-pak-for-data%2Fazuredeploy.json" target="_blank">
-<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true"/>
-</a>
+
 
 Cloud Pak for Data is an analytics platform that helps you prepare your data for AI. It enables data engineers, data stewards, data scientists, and business analysts to collaborate using an integrated multiple-cloud platform.
 Cloud Pak for Data uses IBM’s deep analytics portfolio to help organizations meet data and analytics challenges. The required building blocks (collect, organize, analyze, infuse) for information architecture are available using Cloud Pak for Data on Azure.
@@ -40,7 +36,6 @@ Beyond the 60 day period, you will need to purchase the Cloud Pak for Data by fo
 To get pricing information, or to use your existing Cloud Pak for Data entitlements, contact your IBM sales representative at 1-877-426-3774. If you already have the Cloud Pak for Data license file, you can follow the instructions in [Activating your IBM Cloud Pak for Data License to activate the license](#activating-your-ibm-cloud-pak-for-data-license).
 Note: Cloud Pak for Data license will include entitlements to RHEL and Openshift.
 
-
 ## Architecture
 Deploying this template builds the following Cloud Pak for Data cluster in single zone or multi zone.
 ![Alt text](images/azure-single-zone.png)
@@ -60,7 +55,6 @@ The template sets up the following:
 ``**`` Availability Set in a single zone
 
 `Tags: IBM Cloud Pak for Data, Azure, Openshift, CP4D Azure`
-
 
 ## Deployment on Azure
 
@@ -124,9 +118,7 @@ eg: the value for "apiKeyUsername" is "cp", and for "apiKey", use the trial key 
 
 ### Deployment via Azure Portal
 
-* Click on <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fibm-cloud-pak-for-data%2Fazuredeploy.json" target="_blank">
-<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true"/>
-</a>
+* Click on [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)]("https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fibm-cloud-pak-for-data%2Fazuredeploy.json")  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)]("http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fibm-cloud-pak-for-data%2Fazuredeploy.json")
 
 * Log in to your Azure account if not already logged in.
 
@@ -135,7 +127,6 @@ eg: the value for "apiKeyUsername" is "cp", and for "apiKey", use the trial key 
 ![Alt text](images/template1.png?raw=true "parameters1")
 
 ![Alt text](images/template1.1.png?raw=true "parameters1.1")
-
 
 * Specify the resource group or create new using the given option
 
@@ -154,7 +145,6 @@ eg: the value for "apiKeyUsername" is "cp", and for "apiKey", use the trial key 
 
 ![Alt text](images/template2.png?raw=true "parameters2")
 
-
 * Specify Openshift cluster admin username and password.
 
 * Specify ssh public key. Enabling Metrics and Logging is optional
@@ -168,7 +158,6 @@ eg: the value for "apiKeyUsername" is "cp", and for "apiKey", use the trial key 
 <br/><br/>
 
 ![Alt text](images/template3.png?raw=true "parameters3")
-
 
 <br/><br/>
 * Specify the zone - single or multi. If multi zone is selected, select the zone count.
@@ -274,3 +263,5 @@ Log into Openshift using the credentials created during deployment.
 * If NFS node is rebooted, the nfs client has to be recreated.
   * Delete the existing client: `oc delete deployment nfs-client-provisioner`
   * Re-create the provisioner: `oc create -f /home/<user>/nfs-template.yaml -p NFS_SERVER=<nfs-node-ip> -p NFS_PATH=/exports/home | oc create -n kube-system -f -`
+
+
