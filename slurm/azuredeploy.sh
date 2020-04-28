@@ -43,6 +43,8 @@ if ! [ -f /home/$ADMIN_USERNAME/.ssh/id_rsa ]; then
     sudo -u $ADMIN_USERNAME sh -c "ssh-keygen -f /home/$ADMIN_USERNAME/.ssh/id_rsa -t rsa -N ''"
 fi
 
+sudo apt-get update >> /tmp/azuredeploy.log.$$ 2>&1
+
 # Install sshpass to automate ssh-copy-id action
 sudo apt-get install sshpass -y >> /tmp/azuredeploy.log.$$ 2>&1
 
@@ -64,7 +66,6 @@ done
 ###################################
 
 # Install the package
-sudo apt-get update >> /tmp/azuredeploy.log.$$ 2>&1
 sudo chmod g-w /var/log >> /tmp/azuredeploy.log.$$ 2>&1 # Must do this before munge will generate key
 sudo apt-get install slurm-llnl -y >> /tmp/azuredeploy.log.$$ 2>&1
 
@@ -76,10 +77,13 @@ lastvm=`expr $NUM_OF_VM - 1`
 sed -i -- 's/__WORKERNODES__/'"$WORKER_NAME"'[0-'"$lastvm"']/g' $SLURMCONF >> /tmp/azuredeploy.log.$$ 2>&1
 sudo cp -f $SLURMCONF /etc/slurm-llnl/slurm.conf >> /tmp/azuredeploy.log.$$ 2>&1
 sudo chown slurm /etc/slurm-llnl/slurm.conf >> /tmp/azuredeploy.log.$$ 2>&1
-sudo chmod o+w /var/spool # Write access for slurmctld log. Consider switch log file to another location
-sudo -u slurm /usr/sbin/slurmctld >> /tmp/azuredeploy.log.$$ 2>&1 # Start the master daemon service
+# put save location into slurmctld subdirectory to avoid permission issues when machine is restarted
+sudo mkdir /var/spool/slurmctld
+sudo chown slurm /var/spool/slurmctld >> /tmp/azuredeploy.log.$$ 2>&1
+
 sudo munged --force >> /tmp/azuredeploy.log.$$ 2>&1 # Start munged
-sudo slurmd >> /tmp/azuredeploy.log.$$ 2>&1 # Start the node
+sudo systemctl start slurmctld  >> /tmp/azuredeploy.log.$$ 2>&1 # Start the master daemon service
+sudo systemctl start slurmd >> /tmp/azuredeploy.log.$$ 2>&1 # Start the node
 
 # Install slurm on all nodes by running apt-get
 # Also push munge key and slurm.conf to them
@@ -114,7 +118,7 @@ do
       sudo /usr/sbin/munged --force # ignore egregrious security warning
       sudo cp -f /tmp/slurm.conf /etc/slurm-llnl/slurm.conf
       sudo chown slurm /etc/slurm-llnl/slurm.conf
-      sudo slurmd
+      sudo systemctl start slurmd
 ENDSSH1
 
    i=`expr $i + 1`

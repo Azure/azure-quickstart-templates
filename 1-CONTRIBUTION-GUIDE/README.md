@@ -113,7 +113,7 @@ A valid metadata.json must adhere to the following structure
 
 ```json
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/...",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/...",
   "itemDisplayName": "60 char limit",
   "description": "1000 char limit",
   "summary": "200 char limit",
@@ -171,6 +171,10 @@ If the sample does not support all clouds add the environments property to metad
 }
 ```
 
+## Validation Type
+
+If the sample cannot be automatically tested (e.g. tenant level deployments) set the validation type to "Manual", the default is "Automatic".
+
 ### Cloud Specific Parameter Files
 
 If the sample needs separate parameter files for each cloud you can add each to the sample:
@@ -209,6 +213,7 @@ Quickstart CI engine provides few pre-created azure components which can be used
 + **GEN-KEYVAULT-RESOURCEGROUP-NAME** - the name of the resource group for the keyvault
 + **GEN-KEYVAULT-FQDN-URI** - the FQDN URI of the keyvault
 + **GEN-KEYVAULT-RESOURCE-ID** - the resource ID of the keyvault
++ **GEN-KEYVAULT-PASSWORD-SECRET-NAME** - the secret name for a password reference
 + **GEN-KEYVAULT-PASSWORD-REFERENCE** - the reference parameter used to retrieve a KeyVault Secret (use "reference" for the property name, not "value")
 + **GEN-KEYVAULT-SSL-SECRET-NAME** - the name of the secret where the sample SSL cert is stored in the keyvault
 + **GEN-KEYVAULT-SSL-SECRET-URI** - the URI of the sample SSL cert stored in the test keyvault
@@ -242,14 +247,25 @@ Quickstart CI engine provides few pre-created azure components which can be used
 **Custom Domain & SSL Cert related placeholders:**
 
 + **GEN-FRONTDOOR-NAME** - placeholder for the frontdoor name reserved for CI/CD
-+ **GEN-FRONTDOOR-CUSTOM-HOSTNAME** - custom hostname with CNAME record mapped for the GEN-FRONTDOOR-NAME value 
++ **GEN-FRONTDOOR-CUSTOM-HOSTNAME** - custom hostname with CNAME record mapped for the GEN-FRONTDOOR-NAME value
+
+**AppConfiguration Store related placeholders:**
+
++ **GEN-APPCONFIGSTORE-NAME** - placeholder for the Microsoft.AppConfiguration/configurationStores
++ **GEN-APPCONFIGSTORE-RESOURCEGROUP-NAME** - resource group name for the AppConfig store
++ **GEN-APPCONFIGSTORE-KEY1** - sample key/value stored in the AppConfig store, label is "template"
++ **GEN-APPCONFIGSTORE-WINDOWSOSVERSION** - sample key/value with a SKU Name for a windows server image, label is "template"
++ **GEN-APPCONFIGSTORE-DISKSIZEGB** - sample key/value with a disk size, in GB for a VM disk, label is "template"
+
++ **GEN-USER-ASSIGNED-IDENTITY-NAME** - name of a userAssigned MSI that has permission to the keyvault secrets
++ **GEN-USER-ASSIGNED-IDENTITY-RESOURCEGROUP-NAME** - resource group of the userAssigned identity for retrieving the resourceId
 
 Here's an example in an `azuredeploy.parameters.json` file:
 
 ```json
 
 {
-"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
 "contentVersion": "1.0.0.0",
 "parameters": {
  "newStorageAccountName":{

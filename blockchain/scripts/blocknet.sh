@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -e 
 
 date
 ps axjf
@@ -42,7 +42,7 @@ sudo cp /usr/local/blocknet/src/blocknetd /usr/bin/blocknetd
 ################################################################
 # Configure to auto start at boot		               #
 ################################################################
-file=$HOME/.blocknet
+file=$HOME/.blocknet 
 if [ ! -e "$file" ]
 then
 	sudo mkdir $HOME/.blocknet
@@ -53,7 +53,7 @@ if [ ! -e "$file" ]
 then
 	printf '%s\n%s\n' '#!/bin/sh' 'sudo blocknetd' | sudo tee /etc/init.d/blocknet
 	sudo chmod +x /etc/init.d/blocknet
-	sudo update-rc.d blocknet defaults
+	sudo update-rc.d blocknet defaults	
 fi
 
 /usr/bin/blocknetd

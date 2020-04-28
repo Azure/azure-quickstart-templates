@@ -8,13 +8,15 @@
 AZURE_STORAGE_NAME=$1
 AZURE_STORAGE_KEY=$2
 AZURE_FILESHARE_NAME=$3
-MOUNTPOINT_PATH=$4
-IS_RUNNING_ON_NODE=$5
-USERNAME=$6
-CLUSTER_MAXCPUS=$7
-NEXTFLOW_INSTALL_URL=$8
-ADDITIONAL_INSTALL_SCRIPT_URL=$9
-ADDITIONAL_INSTALL_SCRIPT_ARGUMENT=${10}
+AZURE_STORAGE_ENDPOINT=$4
+MOUNTPOINT_PATH=$5
+IS_RUNNING_ON_NODE=$6
+USERNAME=$7
+CLUSTER_MAXCPUS=$8
+NEXTFLOW_INSTALL_URL=$9
+ADDITIONAL_INSTALL_SCRIPT_URL=${10}
+ADDITIONAL_INSTALL_SCRIPT_ARGUMENT=${11}
+
 
 log () {
     echo "-------------------------" | tee -a "$2"
@@ -22,6 +24,8 @@ log () {
     echo "$1" | tee -a "$2"
     echo "-------------------------" | tee -a "$2"
 }
+
+log "storageSuffix: $AZURE_STORAGE_ENDPOINT"
 
 installUtils() {
     #Install CIFS and JQ (used by this script)
@@ -31,15 +35,11 @@ installUtils() {
 
     #Create azure share if it doesn't already exist
     log "Installing AzureCLI and Mounting Azure Files Share" /tmp/nfinstall.log
-    AZ_REPO=$(lsb_release -cs)
-    echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | \
-     tee /etc/apt/sources.list.d/azure-cli.list
+    curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash #TODO: simplify CLI install - this one command will do
 
-    curl -L https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add - | tee -a /tmp/nfinstall.log
-    apt-get -y update | tee /tmp/nfinstall.log
-    apt-get install azure-cli -y | tee -a /tmp/nfinstall.log
 
-    az storage share create --name "$AZURE_FILESHARE_NAME" --quota 2048 --connection-string "DefaultEndpointsProtocol=https;EndpointSuffix=core.windows.net;AccountName=$AZURE_STORAGE_NAME;AccountKey=$AZURE_STORAGE_KEY" | tee -a /tmp/nfinstall.log
+
+    az storage share create --name "$AZURE_FILESHARE_NAME" --quota 2048 --connection-string "DefaultEndpointsProtocol=https;EndpointSuffix=$AZURE_STORAGE_ENDPOINT;AccountName=$AZURE_STORAGE_NAME;AccountKey=$AZURE_STORAGE_KEY" | tee -a /tmp/nfinstall.log
 
     #Wait for the file share to be available.
     sleep 10
@@ -66,7 +66,8 @@ mountCifs() {
 
     #Mount the share with symlink and fifo support: see https://wiki.samba.org/index.php/SMB3-Linux
     mkdir -p "$MOUNTPOINT_PATH/cifs" | tee -a /tmp/nfinstall.log
-    echo "//$AZURE_STORAGE_NAME.file.core.windows.net/$AZURE_FILESHARE_NAME $MOUNTPOINT_PATH/cifs cifs vers=3.0,username=$AZURE_STORAGE_NAME,password=$AZURE_STORAGE_KEY,dir_mode=0777,file_mode=0777,mfsymlinks,sfu" >> /etc/fstab
+    #TODO - hard coded endpoint
+    echo "//$AZURE_STORAGE_NAME.file.$AZURE_STORAGE_ENDPOINT/$AZURE_FILESHARE_NAME $MOUNTPOINT_PATH/cifs cifs vers=3.0,username=$AZURE_STORAGE_NAME,password=$AZURE_STORAGE_KEY,dir_mode=0777,file_mode=0777,mfsymlinks,sfu" >> /etc/fstab
     mount -a  | tee -a /tmp/nfinstall.log
     CIFS_SHAREPATH="$MOUNTPOINT_PATH/cifs"
 }
