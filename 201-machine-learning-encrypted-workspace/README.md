@@ -130,6 +130,7 @@ To add an access policy for Azure Cosmos DB to the key vault, use the following 
     ```powershell
     Set-AzKeyVaultAccessPolicy -VaultName <keyvault-name> -ObjectId <object-ID> -PermissionsToKeys get, unwrapKey, wrapKey
     ```
+
 ## More information
 
 * [Encryption at rest](https://docs.microsoft.com/azure/machine-learning/concept-enterprise-security#data-encryption)
