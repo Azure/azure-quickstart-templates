@@ -3,7 +3,7 @@
 This sample demonstrates how to use [Azure Front Door](https://docs.microsoft.com/azure/frontdoor/front-door-overview) as a global load balancer in front of [Azure API Management](https://docs.microsoft.com/en-us/azure/api-management/api-management-key-concepts) to get the following advantages:
 
 - Dynamic request acceleration allows to decrease the latency and increase the throughput of backend APIs.
-- The use of WAF policy at the edge provides API security against DDoS attacks and malicious users without sacrificing on performance.
+- The use of a WAF policy at the edge provides API security against DDoS attacks and malicious users.
 - Response caching allows to drammatically improve performance of GET methods.
 
 ## Architecture ##
