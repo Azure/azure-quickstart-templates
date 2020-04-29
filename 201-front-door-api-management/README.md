@@ -10,7 +10,7 @@ This sample demonstrates how to use [Azure Front Door](https://docs.microsoft.co
 
 The following picture shows the architecture and network topology of the sample.
 
-![Architecture](https://raw.githubusercontent.com/paolosalvatori/front-door-apim/master/images/architecture.png)
+![Architecture](images/architecture.png)
 
 The ARM template included in this project deploys a virtual network with a single subnet. The API Management is deployed in a separate subnet of the same virtual network and is configured to use the external access type for resources. For more information, see [How to use Azure API Management with virtual networks](https://docs.microsoft.com/en-us/azure/api-management/api-management-using-with-vnet). The ARM template creates two APIs:
 
@@ -82,20 +82,20 @@ For more information, see [Azure Front Door](https://docs.microsoft.com/azure/fr
 
 You can use the template.json ARM template and parameters.json file included in this repository to deploy the sample. Make sure to edit the parameters.json file to customize the installation. You can also use the deploy.sh Bash script under the scripts folder to deploy the ARM template. The following figure shows the resources deployed by the ARM template in the target resource group.
 
-![Resource Group](https://raw.githubusercontent.com/paolosalvatori/front-door-apim/master/images/ResourceGroup.png)
+![Resource Group](images/ResourceGroup.png)
 
 ## Testing ##
 You can the Azure Portal to verify that the resources have been successfully deployed in your Azure subscription. In particular, click the API Management resource and check if the both the Mock API and Postman Echo API have been successfully deployed as shown in the following figure.
 
-![Postman Echo API](https://raw.githubusercontent.com/paolosalvatori/front-door-apim/master/images/PostmanEchoAPI.png)
+![Postman Echo API](images/PostmanEchoAPI.png)
 
 You can use the Azure Portal to test the methods exposed by both APIs. As shown in the following figure, you can select an API, click the Test in the upper part of the right panel, select an operation and then click the Send button to call the method.
 
-![Test Method](https://raw.githubusercontent.com/paolosalvatori/front-door-apim/master/images/TestMethod.png)
+![Test Method](images/TestMethod.png)
 
 If you want to call the API using a command-line tool like [curl](https://curl.haxx.se/) or using a tool like [Postman](https://www.postman.com/) you need to retrieve the subscription key of the Custom product used by both APIs. As shown in the following figure, you can select the Custom product, Select Subscriptions in the left panel, right click the subscription key, click the show/hide key context menu item and copy the primary key.
 
-![Get Subscription Key](https://raw.githubusercontent.com/paolosalvatori/front-door-apim/master/images/GetSubscriptionKey.png)
+![Get Subscription Key](images/GetSubscriptionKey.png)
 
 If you want to invoke the GET method exposed by the Postman Echo API via Azure Front Door, make sure to use the following URL.
 
@@ -105,7 +105,7 @@ https://front-door-name.azurefd.net/postman-echo/get?color=red&vehicle=car&subsc
 
 You can use [Apache JMeter](https://jmeter.apache.org/) to create a load test for the Postman Echo API, or use your favorite tool for load testing to generate traffic against the GET method. While running a load test against the API, you can use [Application Insights Live Metrics Stream](https://docs.microsoft.com/en-us/azure/azure-monitor/app/live-stream) to see incoming and outgoint requests, as shown in the following picture.
 
-![Live Metrics Stream](https://raw.githubusercontent.com/paolosalvatori/front-door-apim/master/images/LiveMetricsStream.png)
+![Live Metrics Stream](images/LiveMetricsStream.png)
 
 When the test is finished, you can also run Kusto queries in Application Insights and Log Analytics to get more insights in the actual performance results. For example, the following Kusto query in Application Insights renders a timechart of the requests processed by API Management in the last 20 minutes.
 
@@ -117,7 +117,7 @@ requests
 | render timechart
 ```
 
-![Timechart01](https://raw.githubusercontent.com/paolosalvatori/front-door-apim/master/images/Timechart01.png)
+![Timechart01](images/Timechart01.png)
 
 Likewise, the following Kusto query in Log Analytics renders a timechart of the requests processed by Front Door and API Management in the last 20 minutes.
 
@@ -141,4 +141,4 @@ AzureDiagnostics
 | render timechart
 ```
 
-![Timechart01](https://raw.githubusercontent.com/paolosalvatori/front-door-apim/master/images/Timechart02.png)
+![Timechart01](images/Timechart02.png)
