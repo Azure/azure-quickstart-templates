@@ -1,8 +1,17 @@
 # Create an Azure Cosmos account for MongoDB API (3.2 or 3.6) with autoscale shared database throughput with two collections
 
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-mongodb-autoscale/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-mongodb-autoscale/PublicDeployment.svg)
+
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-mongodb-autoscale/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-mongodb-autoscale/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-mongodb-autoscale/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-mongodb-autoscale/CredScanResult.svg)
+
 This template creates an Azure Cosmos account for MongoDB API, provisioned for two regions, then provision a database with autoscale throughput shared across 2 collections.
 
-Below are the parameters which can be user configured in the parameters file including:
+Below are the parameters which can be user configured in the parameters file or template including:
 
 - **Consistency Level:** Select from one of the 5 consistency levels: Strong, Bounded Staleness, Session, Consistent Prefix, Eventual.
 - **Primary Region:** Enter location for the primary region.
