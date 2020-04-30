@@ -1,8 +1,17 @@
 # Create an Azure Cosmos DB account for Core (SQL) API with autoscale
 
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-sql-autoscale/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-sql-autoscale/PublicDeployment.svg)
+
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-sql-autoscale/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-sql-autoscale/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-sql-autoscale/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-sql-autoscale/CredScanResult.svg)
+
 This template will create an Azure Cosmos account for Core (SQL) API, provisioned for two regions, a database, a container configured for autoscale with dedicated throughput showing multiple indexing and policy options.
 
-Below are the parameters which can be user configured in the parameters file including:
+Below are the parameters which can be user configured in the parameters file or template including:
 
 - **Consistency Level:** Select from one of the 5 consistency levels: Strong, Bounded Staleness, Session, Consistent Prefix, Eventual.
 - **Primary Region:** Enter location for the primary write region.
