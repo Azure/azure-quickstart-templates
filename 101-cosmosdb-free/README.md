@@ -1,8 +1,18 @@
 # Create a free-tier Azure Cosmos DB account for Core (SQL) API
 
+
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-free/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-free/PublicDeployment.svg)
+
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-free/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-free/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-free/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-free/CredScanResult.svg)
+
 This template will create a free-tier Azure Cosmos account for Core (SQL) API in a single region with Session level consistency and one database with 400 RU/s that can be shared with up to 25 containers. Accounts in free tier will not be billed for usage of 400 RU/s or 5GB of data or less.
 
-Below are the parameters which can be user configured in the parameters file including:
+Below are the parameters which can be user configured in the parameters file or template including:
 
 - **Location:** Enter location for primary region.
 - **Database Name:** Enter the database name for the account.
