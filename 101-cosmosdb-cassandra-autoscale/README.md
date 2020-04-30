@@ -1,8 +1,17 @@
 # Create an Azure Cosmos account for Cassandra API with a keyspace and table with autoscale
 
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-cassandra-autoscale/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-cassandra-autoscale/PublicDeployment.svg)
+
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-cassandra-autoscale/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-cassandra-autoscale/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-cassandra-autoscale/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-cassandra-autoscale/CredScanResult.svg)
+
 This template creates an Azure Cosmos DB account for Cassandra API in two regions with a keyspace and table with autoscale throughput.
 
-Below are the parameters which can be user configured in the parameters file including:
+Below are the parameters which can be user configured in the parameters file or template including:
 
 - **Consistency Level:** Select from one of the 5 consistency levels: Strong, Bounded Staleness, Session, Consistent Prefix, Eventual.
 - **Primary Region:** Enter the location for primary write region.
