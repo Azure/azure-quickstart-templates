@@ -1,8 +1,17 @@
 # Create an Azure Cosmos account for Gremlin API with database and a graph with autoscale throughput
 
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-gremlin-autoscale/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-gremlin-autoscale/PublicDeployment.svg)
+
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-gremlin-autoscale/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-gremlin-autoscale/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-gremlin-autoscale/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-gremlin-autoscale/CredScanResult.svg)
+
 This template creates an Azure Cosmos DB account for Gremlin API, provisioned for two regions, then provisions a database and a graph with autoscale throughput.
 
-Below are the parameters which can be user configured in the parameters file including:
+Below are the parameters which can be configured in the parameters file or template including:
 
 - **Consistency Level:** Select from one of the 5 consistency levels: Strong, Bounded Staleness, Session, Consistent Prefix, Eventual.
 - **Multi-Region:** Enter locations for primary and secondary regions.
