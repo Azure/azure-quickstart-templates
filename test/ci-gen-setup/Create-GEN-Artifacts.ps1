@@ -149,10 +149,11 @@ if($ServicePrincipalObjectId){
 $mlsp = Get-AzureRmADServicePrincipal -ServicePrincipalName '0736f41a-0425-4b46-bdb5-1563eff02385' #-DisplayName "Azure Machine Learning"
 $roleDef = Get-AzureRmRoleDefinition -Name 'Contributor'
 New-AzureRMRoleAssignment -RoleDefinitionId $roleDef.id -ObjectId $mlsp.id -Scope "/subscriptions/$((Get-AzureRMContext).Subscription.Id)" -Verbose
+$json.Add("MACHINE-LEARNING-SP-OBJECTID",  $mlsp.id)
 
 $cosmossp = Get-AzureRmADServicePrincipal -ServicePrincipalName "a232010e-820c-4083-83bb-3ace5fc29d0b" # -DisplayName "Azure Cosmos DB"
 Set-AzureRMKeyVaultAccessPolicy -VaultName $KeyVaultName -ObjectId $cosmossp.id -PermissionsToKeys get,unwrapKey,wrapKey 
-
+$json.Add("COSMOS-DB-SP-OBJECTID", $cosmossp.id)
 
 # 1) Create a sample password for the vault
 $SecretValue = ConvertTo-SecureString -String $CertPass -AsPlainText -Force
