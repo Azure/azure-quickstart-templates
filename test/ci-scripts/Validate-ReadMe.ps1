@@ -4,6 +4,8 @@ param(
     [string] $ReadMeFileName = "README.md"
 )
 
+$ErrorView = "NormalView" # this is working around a bug in Azure DevOps with PS Core and inline scripts https://github.com/microsoft/azure-pipelines-agent/issues/2853
+
 <#
 TODO linting - is there a pipeline tool for this ?
 #>
