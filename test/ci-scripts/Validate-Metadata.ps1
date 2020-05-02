@@ -43,10 +43,16 @@ Write-Host "environments: $environments"
 if ($null -ne $environments) {
     Write-Host "Checking cloud..."
     $IsCloudSupported = ($environments -contains $CloudEnvironment)
+    $supportedEnvironments = $environments
 }
 else {
     $IsCloudSupported = $true
+    $supportedEnvironments = @("AzureCloud", "AzureUSGovernment") # Default is all clouds are supported
 }
+
+$s = $supportedEnvironments | ConvertTo-Json -Compress
+Write-Host "##vso[task.setvariable variable=supported.environments]$s"
+# Set-Item -path "env:supported_environments" -value "$s"
 
 Write-Output "Is cloud supported: $IsCloudSupported"
 # if the cloud is not supported, set the result var to "Not Supported", else leave the default of "False" 
