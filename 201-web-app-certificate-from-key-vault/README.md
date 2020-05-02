@@ -32,11 +32,11 @@ Set-AzureRmKeyVaultAccessPolicy -VaultName KEY_VAULT_NAME -ServicePrincipalName 
 ServicePrincipalName parameter represents Microsoft.Azure.WebSites RP in user tenant and will remain same for all Azure subscriptions. This is a onetime operation. Once you have a configured a Key Vault properly,
 you can use it for deploying as many certificates as you want without executing these PowerShell commands again. You can go through the Key Vault documentation for more information:
 
-https://azure.microsoft.com/en-us/documentation/articles/key-vault-get-started/
+[https://azure.microsoft.com/en-us/documentation/articles/key-vault-get-started/](https://azure.microsoft.com/en-us/documentation/articles/key-vault-get-started/)
 
 The Web App should be in the same resource group with 'hostname' assigned as a custom domain.
 
-https://azure.microsoft.com/en-us/documentation/articles/web-sites-custom-domain-name/
+[https://azure.microsoft.com/en-us/documentation/articles/web-sites-custom-domain-name/](https://azure.microsoft.com/en-us/documentation/articles/web-sites-custom-domain-name/)
 
 PowerShell script to upload certificate into a Key Vault Secret:
 
