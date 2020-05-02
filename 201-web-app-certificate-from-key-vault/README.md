@@ -13,7 +13,7 @@
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)]("https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-web-app-certificate-from-key-vault%2Fazuredeploy.json")
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)]("http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-web-app-certificate-from-key-vault%2Fazuredeploy.json")
 
-deploy this template, you need to have the following resources:
+To deploy this template, you need to have the following resources:
 
 1. A Key Vault (specified in 'existingKeyVaultId' parameter)
 2. A Key Vault Secret containting a PFX certificate stored in base64 encoded format (PowerShell script is given below)
