@@ -1,6 +1,6 @@
 # Deploy a Web App certificate from Key Vault secret and use it for creating SSL binding
 
-[Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/201-web-app-certificate-from-key-vault/PublicLastTestDate.svg)
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/201-web-app-certificate-from-key-vault/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/201-web-app-certificate-from-key-vault/PublicDeployment.svg)
 
 ![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/201-web-app-certificate-from-key-vault/FairfaxLastTestDate.svg)
