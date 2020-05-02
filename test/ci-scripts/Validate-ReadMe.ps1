@@ -5,6 +5,8 @@ param(
     [string] $supportedEnvironmentsJson = $ENV:SUPPORTED_ENVIRONMENTS # the minified json array from metadata.json
 )
 
+$ErrorView = "NormalView" # this is working around a bug in Azure DevOps with PS Core and inline scripts https://github.com/microsoft/azure-pipelines-agent/issues/2853
+
 <#
 TODO linting - is there a pipeline tool for this ?
 #>

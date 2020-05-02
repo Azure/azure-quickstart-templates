@@ -4,6 +4,8 @@ param(
     [string] $BuildReason = $ENV:BUILD_REASON
 )
 
+$ErrorView = "NormalView" # this is working around a bug in Azure DevOps with PS Core and inline scripts https://github.com/microsoft/azure-pipelines-agent/issues/2853
+
 #get the file content
 Write-Output "Testing file: $SampleFolder\metadata.json"
 $metadata = Get-Content -Path "$SampleFolder\metadata.json" -Raw 
