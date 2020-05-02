@@ -155,6 +155,9 @@ $cosmossp = Get-AzureRmADServicePrincipal -ServicePrincipalName "a232010e-820c-4
 Set-AzureRMKeyVaultAccessPolicy -VaultName $KeyVaultName -ObjectId $cosmossp.id -PermissionsToKeys get,unwrapKey,wrapKey 
 $json.Add("COSMOS-DB-SP-OBJECTID", $cosmossp.id)
 
+$webapp = Get-AzureRmADServicePrincipal -ServicePrincipalName "abfa0a7c-a6b6-4736-8310-5855508787cd" # Web App SP for certificate scenarios - not available in Fairfax?
+Set-AzureRMKeyVaultAccessPolicy -VaultName $KeyVaultName -ObjectId $webapp.id -PermissionsToSecrets get 
+
 # 1) Create a sample password for the vault
 $SecretValue = ConvertTo-SecureString -String $CertPass -AsPlainText -Force
 Set-AzureKeyVaultSecret -VaultName $KeyVaultName -Name $KeyVaultNotSecretName -SecretValue $SecretValue -Verbose
