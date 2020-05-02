@@ -146,11 +146,11 @@ if($ServicePrincipalObjectId){
 # Assign the Azure ML SP perms to the subscription - this needs contributor at the moment, hopefully the fix that later
 # Display Name = "Azure Machine Learning" (this substring is not unique)
 # Service Principal Name = 0736f41a-0425-4b46-bdb5-1563eff02385
-$mlsp = Get-AzureRmADServicePrincipal -ServicePrincipalName '0736f41a-0425-4b46-bdb5-1563eff02385'
+$mlsp = Get-AzureRmADServicePrincipal -ServicePrincipalName '0736f41a-0425-4b46-bdb5-1563eff02385' #-DisplayName "Azure Machine Learning"
 $roleDef = Get-AzureRmRoleDefinition -Name 'Contributor'
 New-AzureRMRoleAssignment -RoleDefinitionId $roleDef.id -ObjectId $mlsp.id -Scope "/subscriptions/$((Get-AzureRMContext).Subscription.Id)" -Verbose
 
-$cosmossp = Get-AzureRmADServicePrincipal -ServicePrincipalName "a232010e-820c-4083-83bb-3ace5fc29d0b"
+$cosmossp = Get-AzureRmADServicePrincipal -ServicePrincipalName "a232010e-820c-4083-83bb-3ace5fc29d0b" # -DisplayName "Azure Cosmos DB"
 Set-AzureRMKeyVaultAccessPolicy -VaultName $KeyVaultName -ObjectId $cosmossp.id -PermissionsToKeys get,unwrapKey,wrapKey 
 
 
