@@ -1,38 +1,38 @@
-# >Enterprise Azure Governance and Operations
+# Enterprise Azure Governance and Operations
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/azure-governance-operations-automation/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/azure-governance-operations-automation/PublicDeployment.svg" />&nbsp;
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/azure-governance-operations-automation/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/azure-governance-operations-automation/PublicDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/azure-governance-operations-automation/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/azure-governance-operations-automation/FairfaxDeployment.svg" />&nbsp;
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/azure-governance-operations-automation/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/azure-governance-operations-automation/FairfaxDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/azure-governance-operations-automation/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/azure-governance-operations-automation/CredScanResult.svg" />&nbsp;
-<h2>Composite template version 1.0</h2>
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/azure-governance-operations-automation/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/azure-governance-operations-automation/CredScanResult.svg)
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fazure-governance-operations-automation%2Fazuredeploy.json" target="_blank"><img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true"/></a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fazure-governance-operations-automation%2Fazuredeploy.json" target="_blank"> <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true"/></a>
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fazure-governance-operations-automation%2Fazuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fazure-governance-operations-automation%2Fazuredeploy.json) 
 
 ----------
-<h2> Table of Contents </h2>
+Table of Contents
 
 <!-- TOC -->
 
-- [Solution Overview](#solution-overview)
-- [Solution Template Overview](#solution-template-overview)
-- [Quick Overview Video](#quick-overview-video)
-- [Target Audience](#target-audience)
-- [Licenses & Costs](#licenses--costs)
-- [Prerequisites](#prerequisites)
-- [Reference Architecture Diagram](#reference-architecture-diagram)
-- [Dashboards](#dashboards)
+- [Enterprise Azure Governance and Operations](#enterprise-azure-governance-and-operations)
+  - [Solution Overview](#solution-overview)
+  - [Solution Template Overview](#solution-template-overview)
+  - [Quick Overview Video](#quick-overview-video)
+  - [Target Audience](#target-audience)
+  - [Licenses & Costs](#licenses--costs)
+  - [Prerequisites](#prerequisites)
+  - [Reference Architecture Diagram](#reference-architecture-diagram)
+  - [Dashboards](#dashboards)
     - [PowerBI Dashboard (for IT Managers and Business Decision makers)](#powerbi-dashboard-for-it-managers-and-business-decision-makers)
     - [OMS Web Apps Monitoring dashboard (For Operations Teams)](#oms-web-apps-monitoring-dashboard-for-operations-teams)
     - [OMS Azure SQL Databases Monitoring dashboard (For Operations Teams)](#oms-azure-sql-databases-monitoring-dashboard-for-operations-teams)
-- [Deployment and Settings](#deployment-and-settings)
-- [Post Deployment Steps](#post-deployment-steps)
-- [Terms of Use and Privacy Policies](#terms-of-use-and-privacy-policies)
-- [Support](#support)
+  - [Deployment and Settings](#deployment-and-settings)
+  - [Post Deployment Steps](#post-deployment-steps)
+  - [Terms of Use and Privacy Policies](#terms-of-use-and-privacy-policies)
+  - [Support](#support)
 
 <!-- /TOC -->
 
