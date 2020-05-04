@@ -10,7 +10,6 @@
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/201-web-app-certificate-from-key-vault/CredScanResult.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)]("https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-web-app-certificate-from-key-vault%2Fazuredeploy.json")
-[![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)]("https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-web-app-certificate-from-key-vault%2Fazuredeploy.json")
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)]("http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-web-app-certificate-from-key-vault%2Fazuredeploy.json")
 
 To deploy this template, you need to have the following resources:
@@ -32,11 +31,11 @@ Set-AzureRmKeyVaultAccessPolicy -VaultName KEY_VAULT_NAME -ServicePrincipalName 
 ServicePrincipalName parameter represents Microsoft.Azure.WebSites RP in user tenant and will remain same for all Azure subscriptions. This is a onetime operation. Once you have a configured a Key Vault properly,
 you can use it for deploying as many certificates as you want without executing these PowerShell commands again. You can go through the Key Vault documentation for more information:
 
-https://azure.microsoft.com/en-us/documentation/articles/key-vault-get-started/
+[https://azure.microsoft.com/en-us/documentation/articles/key-vault-get-started/](https://azure.microsoft.com/en-us/documentation/articles/key-vault-get-started/)
 
 The Web App should be in the same resource group with 'hostname' assigned as a custom domain.
 
-https://azure.microsoft.com/en-us/documentation/articles/web-sites-custom-domain-name/
+[https://azure.microsoft.com/en-us/documentation/articles/web-sites-custom-domain-name/](https://azure.microsoft.com/en-us/documentation/articles/web-sites-custom-domain-name/)
 
 PowerShell script to upload certificate into a Key Vault Secret:
 
