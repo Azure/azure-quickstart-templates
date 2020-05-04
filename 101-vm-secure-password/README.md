@@ -14,28 +14,31 @@
 This template allows you to deploy a simple Windows VM by retrieving the password that is stored in a Key Vault. Therefore the password is never put in plain text in the template parameter file.
 
 ## Add Secret to the Key Vault
+
 You can add the password to the Key Vault using the below commands:
 
-#### PowerShell
-```
+### PowerShell
+
+```PowerShell
 $Secret = ConvertTo-SecureString -String 'Password' -AsPlainText -Force
 Set-AzKeyVaultSecret -VaultName 'Contoso' -Name 'ITSecret' -SecretValue $Secret
 ```
-#### CLI
-```
+
+### CLI
+
+```bash
 az keyvault secret set --vault-name Contoso --name ITSecret --value 'password'
 ```
 
 ## Enable Key Vault for VM and Template secret access
+
 After this you'll need to enable the Key Vault for template deployment. You can do this using the following commands:
 
-## PowerShell
-```
+```PowerShell
 Set-AzKeyVaultAccessPolicy -VaultName Contoso -EnabledForTemplateDeployment
 ```
 
-### CLI
-```
+```bash
 az keyvault update  --name Contoso --enabled-for-template-deployment true
 ```
 
