@@ -4,7 +4,7 @@
 # )
 
 Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
-choco install jdk8 -y
+choco install zulu8 -y
 choco install maven --version 3.5.4 -y
 choco install python3 --version 3.7.0 -y
 
