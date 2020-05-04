@@ -18,7 +18,7 @@ $metadata | Test-Json -Schema $schema.content
 $rawDate = ($metadata | convertfrom-json).dateUpdated
 $dateUpdated = (Get-Date $rawDate)
 
-if (!($ENV:BUILD_REASON -eq "Scheduled")) {
+if (!($ENV:BUILD_REASON -eq "Schedule")) {
     #When running the scheduled tests, we don't want to check the date
     try {
         [DateTime]::ParseExact($rawDate, 'yyyy-MM-dd', $(Get-Culture))
