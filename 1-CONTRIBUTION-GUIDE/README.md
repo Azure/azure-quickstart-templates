@@ -260,6 +260,9 @@ Quickstart CI engine provides few pre-created azure components which can be used
 + **GEN-USER-ASSIGNED-IDENTITY-NAME** - name of a userAssigned MSI that has permission to the keyvault secrets
 + **GEN-USER-ASSIGNED-IDENTITY-RESOURCEGROUP-NAME** - resource group of the userAssigned identity for retrieving the resourceId
 
++ **GEN-MACHINE-LEARNING-SP-OBJECTID** - objectId of the Azure ML Service Principal in the tenant
++ **GEN-COSMOS-DB-SP-OBJECTID** - objectId of the Cosmos DB Service Principal in the tenant
+
 Here's an example in an `azuredeploy.parameters.json` file:
 
 ```json
