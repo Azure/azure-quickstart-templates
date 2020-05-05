@@ -204,17 +204,19 @@
         "nsgId": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('virtualNetwork').subnets[0].nsg)]",
         "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetwork').name)]",
         "apimId": "[resourceId('Microsoft.ApiManagement/service', parameters('apimServiceName'))]",
-        "apimHostname": "[concat(toLower(parameters('apimServiceName')), '.azure-api.net')]",
         "appInsightsId": "[resourceId('Microsoft.Insights/components', parameters('appInsightsName'))]",
         "apimSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetwork').name, parameters('virtualNetwork').subnets[0].name)]",
         "workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]",
         "loggerId": "[resourceId('Microsoft.ApiManagement/service/loggers', parameters('apimServiceName'), parameters('appInsightsName'))]",
         "frontDoorId": "[resourceId('Microsoft.Network/frontdoors', parameters('frontDoorName'))]",
-        "frontDoorBackendPoolId": "[concat(variables('frontDoorId'), '/backendPools/', parameters('frontDoorBackendPool').name)]",
-        "frontDoorHealthProbeSettingsId": "[concat(variables('frontDoorId'), '/healthProbeSettings/', parameters('frontDoorHealthProbeSettings').name)]",
-        "frontDoorLoadBalancerId": "[concat(variables('frontDoorId'), '/loadBalancingSettings/', parameters('frontDoorBackendPool').loadBalancerName)]",
-        "frontDoorFrontedEndpointId": "[concat(variables('frontDoorId'), '/frontendEndpoints/', parameters('frontDoorFrontendEndpoint').name)]",
-        "wafPolicyId": "[resourceId('Microsoft.Network/FrontDoorWebApplicationFirewallPolicies', parameters('wafPolicyName'))]"
+        "frontDoorBackendPoolId": "[resourceId('Microsoft.Network/frontdoors/backendPools', parameters('frontDoorName'), parameters('frontDoorBackendPool').name)]",
+        "frontDoorHealthProbeSettingsId": "[resourceId('Microsoft.Network/frontdoors/healthProbeSettings', parameters('frontDoorName'), parameters('frontDoorHealthProbeSettings').name)]",
+        "frontDoorLoadBalancerId": "[resourceId('Microsoft.Network/frontdoors/loadBalancingSettings', parameters('frontDoorName'), parameters('frontDoorBackendPool').loadBalancerName)]",
+        "frontDoorFrontedEndpointId": "[resourceId('Microsoft.Network/frontdoors/frontendEndpoints', parameters('frontDoorName'), parameters('frontDoorFrontendEndpoint').name)]",
+        "wafPolicyId": "[resourceId('Microsoft.Network/FrontDoorWebApplicationFirewallPolicies', parameters('wafPolicyName'))]",
+        "mockApiId": "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), 'mockApi')]",
+        "postmanEchoApiId": "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), 'postmanEchoApi')]",
+        "customProductId": "[resourceId('Microsoft.ApiManagement/service/products', parameters('apimServiceName'), 'custom')]"
     },
     "resources": [
         {
@@ -539,8 +541,8 @@
                     "name": "custom",
                     "dependsOn": [
                         "[variables('apimId')]",
-                        "[concat(variables('apimId'), '/apis/mockApi')]",
-                        "[concat(variables('apimId'), '/apis/postmanEchoApi')]"
+                        "[variables('mockApiId')]",
+                        "[variables('postmanEchoApiId')]"
                     ],
                     "properties": {
                         "displayName": "Custom",
@@ -557,8 +559,8 @@
                             "name": "mockApi",
                             "dependsOn": [
                                 "[variables('apimId')]",
-                                "[concat(variables('apimId'), '/apis/mockApi')]",
-                                "[concat(variables('apimId'), '/products/custom')]"
+                                "[variables('mockApiId')]",
+                                "[variables('customProductId')]"
                             ]
                         },
                         {
@@ -567,8 +569,8 @@
                             "name": "postmanEchoApi",
                             "dependsOn": [
                                 "[variables('apimId')]",
-                                "[concat(variables('apimId'), '/apis/postmanEchoApi')]",
-                                "[concat(variables('apimId'), '/products/custom')]"
+                                "[variables('postmanEchoApiId')]",
+                                "[variables('customProductId')]"
                             ]
                         }
                     ]
@@ -603,7 +605,7 @@
                             "apiVersion": "2019-01-01",
                             "dependsOn": [
                                 "[variables('apimId')]",
-                                "[concat(variables('apimId'), '/apis/mockApi')]"
+                                "[variables('mockApiId')]"
                             ],
                             "properties": {
                                 "displayName": "Test",
@@ -634,7 +636,7 @@
                                     "apiVersion": "2019-01-01",
                                     "dependsOn": [
                                         "[variables('apimId')]",
-                                        "[concat(variables('apimId'), '/apis/mockApi')]",
+                                        "[variables('mockApiId')]",
                                         "[concat(variables('apimId'), '/apis/mockApi', '/operations/test')]"
                                     ],
                                     "properties": {
@@ -650,7 +652,7 @@
                             "name": "policy",
                             "dependsOn": [
                                 "[variables('apimId')]",
-                                "[concat(variables('apimId'), '/apis/mockApi')]"
+                                "[variables('mockApiId')]"
                             ],
                             "properties": {
                                 "format": "xml",
@@ -664,7 +666,7 @@
                             "dependsOn": [
                                 "[variables('apimId')]",
                                 "[variables('loggerId')]",
-                                "[concat(variables('apimId'), '/apis/mockApi')]"
+                                "[variables('mockApiId')]"
                             ],
                             "properties": {
                                 "alwaysLog": "allErrors",
@@ -737,7 +739,7 @@
                             "apiVersion": "2019-01-01",
                             "dependsOn": [
                                 "[variables('apimId')]",
-                                "[concat(variables('apimId'), '/apis/postmanEchoApi')]"
+                                "[variables('postmanEchoApiId')]"
                             ],
                             "properties": {
                                 "displayName": "GET Request",
@@ -758,7 +760,7 @@
                             "name": "policy",
                             "dependsOn": [
                                 "[variables('apimId')]",
-                                "[concat(variables('apimId'), '/apis/postmanEchoApi')]"
+                                "[variables('postmanEchoApiId')]"
                             ],
                             "properties": {
                                 "format": "xml",
@@ -772,7 +774,7 @@
                             "dependsOn": [
                                 "[variables('apimId')]",
                                 "[variables('loggerId')]",
-                                "[concat(variables('apimId'), '/apis/postmanEchoApi')]"
+                                "[variables('postmanEchoApiId')]"
                             ],
                             "properties": {
                                 "alwaysLog": "allErrors",
@@ -919,12 +921,12 @@
                         "properties": {
                             "backends": [
                                 {
-                                    "address": "[variables('apimHostname')]",
+                                    "address": "[reference(resourceId('Microsoft.ApiManagement/service', parameters('apimServiceName'))).hostnameConfigurations[0].hostName]",
                                     "httpPort": 80,
                                     "httpsPort": 443,
                                     "priority": 1,
                                     "weight": 100,
-                                    "backendHostHeader": "[variables('apimHostname')]"
+                                    "backendHostHeader": "[reference(resourceId('Microsoft.ApiManagement/service', parameters('apimServiceName'))).hostnameConfigurations[0].hostName]"
                                 }
                             ],
                             "healthProbeSettings": {
@@ -1040,5 +1042,9 @@
         }
     ],
     "outputs": {
+        "apiManagement": {
+            "value": "[reference(resourceId('Microsoft.ApiManagement/service', parameters('apimServiceName')), '2019-01-01', 'Full')]",
+            "type": "object"
+        }
     }
 }
