@@ -9,6 +9,9 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/guacamole-rdp-vnc-gateway-existing-vnet/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/guacamole-rdp-vnc-gateway-existing-vnet/CredScanResult.svg)
 
+[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fguacamole-rdp-vnc-gateway-existing-vnet%2Fazuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fguacamole-rdp-vnc-gateway-existing-vnet%2Fazuredeploy.json)
+
 This template deploys a VM with [Guacamole](http://guac-dev.org), the open source HTML5 RDP/VNC proxy.
 
 You will need an existing Virtual Network, and you will need the name of the VNet and a subnet in that VNet. This template deploys Guacamole and MariaDB using Docker containers, and it's based on CoreOS (channel "stable").
