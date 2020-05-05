@@ -12,6 +12,7 @@ TODO linting - is there a pipeline tool for this ?
 #>
 
 $s = $sampleName.Replace("\", "/")
+
 $PublicLinkMarkDown=@(
     "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true"
     "https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F$s%2Fazuredeploy.json"
@@ -46,16 +47,16 @@ $supportedEnvironments = ($supportedEnvironmentsJson | ConvertFrom-JSON -AsHashT
 
 if($supportedEnvironments.Contains("AzureCloud")){
     $PublicLinks = $PublicLinkMarkDown
-    $PublicButton = "[![Deploy To Azure]($($PublicLinks[0]))](`"$($PublicLinks[1])`")"
+    $PublicButton = "[![Deploy To Azure]($($PublicLinks[0]))]($($PublicLinks[1]))"
 }
 
 if($supportedEnvironments.Contains("AzureUSGovernment")){
     $GovLinks = $GovLinkMarkDown
-    $GovButton = "[![Deploy To Azure US Gov]($($GovLinks[0]))](`"$($GovLinks[1])`")"
+    $GovButton = "[![Deploy To Azure US Gov]($($GovLinks[0]))]($($GovLinks[1]))"
 }
 
 $ARMVizLinks = $ARMVizMarkDown
-$ARMVizButton = "[![Visualize]($($ARMVizLinks[0]))](`"$($ARMVizLinks[1])`")"
+$ARMVizButton = "[![Visualize]($($ARMVizLinks[0]))]($($ARMVizLinks[1]))"
 
 $links = $ARMVizLinks + $PublicLinks + $GovLinks
 
@@ -79,7 +80,7 @@ foreach($badge in $badgeLinks){
 
 #Proper href and src attribute for buttons
 foreach($link in $links){
-        Write-Host $link
+        #Write-Host $link
     if(-not ($readme -clike "*$link*")){
         $dumpHelp = $true
         Write-Error "Readme must have a button with the link: $link"
