@@ -1,13 +1,13 @@
 # MS Dynamics NAV / MS Dynamics 365 Business Central including SQL Server in Azure Container Instances
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-aci-dynamicsnav/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-aci-dynamicsnav/PublicDeployment.svg" />&nbsp;
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-aci-dynamicsnav/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-aci-dynamicsnav/PublicDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-aci-dynamicsnav/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-aci-dynamicsnav/FairfaxDeployment.svg" />&nbsp;
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-aci-dynamicsnav/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-aci-dynamicsnav/FairfaxDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-aci-dynamicsnav/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-aci-dynamicsnav/CredScanResult.svg" />&nbsp;
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-aci-dynamicsnav/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-aci-dynamicsnav/CredScanResult.svg)
 
 This template demonstrates how you can run MS Dynamics NAV or a Sandbox of MS Dynamics 365 Business Central in [Azure Container Instances](https://docs.microsoft.com/en-us/azure/container-instances/). To find out more about Dynamics NAV / Business Central inside a Windows Container visit [Github](https://github.com/microsoft/nav-docker)
 
@@ -15,7 +15,7 @@ To start the instance, you need to accept the [end user license agreement](https
 
 Be aware that this is downloading a rather large image (about 15GB), so downloading and extracting it takes about 20 minutes. After it has started, look into the logs to see when it has finished initializing or just wait for a minute. After that you can access Dynamics NAV at https://< dns name >/NAV/WebClient or Business Central at https://< dns name >/nav
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-aci-dynamicsnav%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
-</a>
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-aci-dynamicsnav%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-aci-dynamicsnav%2Fazuredeploy.json)
+    
+
 

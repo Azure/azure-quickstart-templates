@@ -1,23 +1,19 @@
 # Deploy a Network Security Group, a Virtual Network and an Azure Databricks Workspace with the Virtual Network
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-databricks-all-in-one-template-for-vnet-injection/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-databricks-all-in-one-template-for-vnet-injection/PublicDeployment.svg" />&nbsp;
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-databricks-all-in-one-template-for-vnet-injection/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-databricks-all-in-one-template-for-vnet-injection/PublicDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-databricks-all-in-one-template-for-vnet-injection/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-databricks-all-in-one-template-for-vnet-injection/FairfaxDeployment.svg" />&nbsp;
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-databricks-all-in-one-template-for-vnet-injection/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-databricks-all-in-one-template-for-vnet-injection/FairfaxDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-databricks-all-in-one-template-for-vnet-injection/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-databricks-all-in-one-template-for-vnet-injection/CredScanResult.svg" />&nbsp;
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-databricks-all-in-one-template-for-vnet-injection/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-databricks-all-in-one-template-for-vnet-injection/CredScanResult.svg)
 
-<A href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-databricks-all-in-one-template-for-vnet-injection%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
-</a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-databricks-all-in-one-template-for-vnet-injection%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
-</a>
+[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-databricks-all-in-one-template-for-vnet-injection%2Fazuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-databricks-all-in-one-template-for-vnet-injection%2Fazuredeploy.json)
 
 This template allows you to create a network security group, a virtual network and an Azure Databricks workspace with the virtual network.
-For more information, see the <a href="https://docs.microsoft.com/en-us/azure/azure-databricks/">Azure Databricks Documentation</a>.
+For more information, see the [Azure Databricks Documentation](https://docs.microsoft.com/en-us/azure/azure-databricks/).
 
 ### What is Azure Databricks?
 
@@ -39,4 +35,5 @@ DataBricks Premium
 ### Microsoft Learn Modules
 
 [Data Bricks Microsoft Learn Modules](https://docs.microsoft.com/en-us/learn/browse/?term=Databricks)
+
 

@@ -1,13 +1,13 @@
 # Subnet-driven test lab 
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-subnet-driven-deployment/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-subnet-driven-deployment/PublicDeployment.svg" />&nbsp;
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/301-subnet-driven-deployment/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/301-subnet-driven-deployment/PublicDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-subnet-driven-deployment/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-subnet-driven-deployment/FairfaxDeployment.svg" />&nbsp;
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/301-subnet-driven-deployment/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/301-subnet-driven-deployment/FairfaxDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-subnet-driven-deployment/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/301-subnet-driven-deployment/CredScanResult.svg" />&nbsp;
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/301-subnet-driven-deployment/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/301-subnet-driven-deployment/CredScanResult.svg)
 
 This template creates an environment with multiple subnets and the servers (one DC and two members) associated with. If the number of subnets varies, the servers are adjusted automatically.
  
@@ -27,8 +27,6 @@ The purpose of this template is to illustrate:
 * Custom script extensions usage: Each server has **chocolatey** installed, in order to get diagnostics tools installed quickly, without changing IE protected mode, if the need arises.
 
 * BGinfo extension is installed on both domain controllers and member servers.
-
-
 
 ## Changelog summary
 
@@ -57,12 +55,10 @@ The purpose of this template is to illustrate:
 
 ## Deploying the template
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F301-subnet-driven-deployment%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
-</a>
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F301-subnet-driven-deployment%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F301-subnet-driven-deployment%2Fazuredeploy.json)
+    
+
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fgithub.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F301-subnet-driven-deployment%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
-</a>
 
 ## Parameters
 
@@ -79,5 +75,6 @@ wercase, should start with a letter: must conform to &#39;^[a-z][a-z0-9-]{1,61}[
 <tr><td>memberServersPerSubnet</td><td>Member servers for each subnet. Must be between 1 and 20</td><td>1</td></tr>
 <tr><td>storageCategory</td><td>Storage type. Can be either Standard (HDD) or Premium (SSD)</td><td>Standard</td></tr>
 </table>
+
 
 

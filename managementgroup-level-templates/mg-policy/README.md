@@ -1,13 +1,13 @@
 # Create a Policy Definition and Assignment for a Management Group
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/managementgroup-level-templates/mg-policy/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/managementgroup-level-templates/mg-policy/PublicDeployment.svg" />&nbsp;
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/managementgroup-level-templates/mg-policy/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/managementgroup-level-templates/mg-policy/PublicDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/managementgroup-level-templates/mg-policy/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/managementgroup-level-templates/mg-policy/FairfaxDeployment.svg" />&nbsp;
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/managementgroup-level-templates/mg-policy/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/managementgroup-level-templates/mg-policy/FairfaxDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/managementgroup-level-templates/mg-policy/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/managementgroup-level-templates/mg-policy/CredScanResult.svg" />&nbsp;
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/managementgroup-level-templates/mg-policy/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/managementgroup-level-templates/mg-policy/CredScanResult.svg)
 
 This template is a management group level template that creates a policy definition and assigns that policy to the management group.
 

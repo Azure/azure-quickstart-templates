@@ -30,6 +30,17 @@
                 "description": "The virtual machine size."
             }
         },
+        "vmImage": {
+            "type": "string",
+            "defaultValue": "Windows10",
+            "allowedValues": [
+                "Windows10",
+                "VisualStudio2019"
+            ],
+            "metadata": {
+                "description": "The virutal machine image base."
+            }
+        },
         "adminUsername": {
             "type": "string",
             "metadata": {
@@ -40,6 +51,18 @@
             "type": "securestring",
             "metadata": {
                 "description": "Password for the Virtual Machine."
+            }
+        },
+        "pipelineProvider": {
+            "type": "string",
+            "defaultValue": "None",
+            "allowedValues": [
+                "None",
+                "AzurePipelines",
+                "GitHubRunner"
+            ],
+            "metadata": {
+                "description": "The continuous integration provider to register."
             }
         },
         "vstsAccount": {
@@ -69,6 +92,20 @@
             "metadata": {
               "description": "Enable autologon to run the build agent in interactive mode that can sustain machine reboots.<br>Set this to true if the agents will be used to run UI tests."
             }
+        },
+        "githubRepo": {
+            "type": "string",
+            "metadata": {
+                "description": "The github account and repo alias."
+            },
+            "defaultValue": ""
+        },
+        "githubRunnerToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The token to register GitHub runner."
+            },
+            "defaultValue": ""
         },
         "_artifactsLocation": {
             "type": "string",
@@ -138,12 +175,28 @@
         ],
         "publicIpAddressType": "Dynamic",
         "publicIpAddressSku": "Basic",
+        "vmImageReferences": {
+            "VisualStudio2019": {
+                "publisher": "MicrosoftVisualStudio",
+                "offer": "visualstudio2019latest",
+                "sku": "vs-2019-comm-latest-ws2019",
+                "version": "latest"
+            },
+            "Windows10": {
+                "publisher": "MicrosoftWindowsDesktop",
+                "offer": "Windows-10",
+                "sku": "rs5-enterprise",
+                "version": "latest"
+            }
+        },
         "osDiskType": "StandardSSD_LRS",
         "rosScriptFileUri": "[uri(parameters('_artifactsLocation'), concat('InstallROS.ps1', parameters('_artifactsLocationSasToken')))]",
         "vstsScriptFileUri": "[uri(parameters('_artifactsLocation'), concat('InstallVstsAgent.ps1', parameters('_artifactsLocationSasToken')))]",
+        "githubScriptFileUri": "[uri(parameters('_artifactsLocation'), concat('InstallGitHubAgent.ps1', parameters('_artifactsLocationSasToken')))]",
         "nvidiaGpuDriverWindowsUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/nvidiaGpuDriverWindows.json', parameters('_artifactsLocationSasToken')))]",
         "extensionUrl": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/customScriptExtension.json', parameters('_artifactsLocationSasToken')))]",
-        "vstsParameters": "[concat('-vstsAccount ', parameters('vstsAccount'), ' -personalAccessToken ', parameters('vstsPersonalAccessToken'), ' -AgentName ', concat(parameters('projectName'), '-vsts'),' -PoolName ', parameters('vstsPoolName'), ' -runAsAutoLogon ', parameters('enableAutologon'), ' -vmAdminUserName ', parameters('adminUsername'), ' -vmAdminPassword ', parameters('adminPassword'))]"
+        "vstsParameters": "[concat('-vstsAccount ', parameters('vstsAccount'), ' -personalAccessToken ', parameters('vstsPersonalAccessToken'), ' -AgentName ', concat(parameters('projectName'), '-vsts'),' -PoolName ', parameters('vstsPoolName'), ' -runAsAutoLogon ', parameters('enableAutologon'), ' -vmAdminUserName ', parameters('adminUsername'), ' -vmAdminPassword ', parameters('adminPassword'))]",
+        "githubParameters": "[concat('-GitHubRepo ', parameters('githubRepo'), ' -GitHubToken ', parameters('githubRunnerToken'), ' -AgentName ', concat(parameters('projectName'), '-github'))]"
     },
     "resources": [
         {
@@ -229,12 +282,7 @@
                             "storageAccountType": "[variables('osDiskType')]"
                         }
                     },
-                    "imageReference": {
-                        "publisher": "MicrosoftWindowsDesktop",
-                        "offer": "Windows-10",
-                        "sku": "rs5-enterprise",
-                        "version": "latest"
-                    }
+                    "imageReference": "[variables('vmImageReferences')[parameters('vmImage')]]"
                 },
                 "networkProfile": {
                     "networkInterfaces": [
@@ -307,7 +355,7 @@
             }
         },
         {
-            "condition": "[not(empty(parameters('vstsPersonalAccessToken')))]",
+            "condition": "[contains(parameters('pipelineProvider'), 'AzurePipelines')]",
             "name": "[concat(variables('virtualMachineName'), '-VSTSAgentInstall')]",
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2018-05-01",
@@ -337,6 +385,41 @@
                     },
                     "commandToExecute": {
                         "value": "[concat('powershell.exe -ExecutionPolicy Unrestricted -Command \"& {', './', 'InstallVstsAgent.ps1', ' ', variables('vstsParameters'), '}\"')]"
+                    }
+                }
+            }
+        },
+        {
+            "condition": "[contains(parameters('pipelineProvider'), 'GitHubRunner')]",
+            "name": "[concat(variables('virtualMachineName'), '-GitHubAgentInstall')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2018-05-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', concat(variables('virtualMachineName'), '-ROSInstall'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('extensionUrl')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[variables('location')]"
+                    },
+                    "extensionName": {
+                        "value": "cse"
+                    },
+                    "vmName": {
+                        "value": "[variables('virtualMachineName')]"
+                    },
+                    "fileUris": {
+                        "value": [
+                            "[variables('githubScriptFileUri')]"
+                        ]
+                    },
+                    "commandToExecute": {
+                        "value": "[concat('powershell.exe -ExecutionPolicy Unrestricted -Command \"& {', './', 'InstallGitHubAgent.ps1', ' ', variables('githubParameters'), '}\"')]"
                     }
                 }
             }

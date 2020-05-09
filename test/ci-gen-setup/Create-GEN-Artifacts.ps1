@@ -22,6 +22,7 @@ param(
     [string] $KeyVaultNotSecretName = 'notSecretPassword',
     [string] $ServicePrincipalObjectId, #if not provided assigning perms to the Vault must be done manually
     [string] $appConfigStoreName = 'azbotappconfigstore', # This must be gloablly unique
+    [string] $msiName = 'azbot-msi',
     #
     # You must generate a public/private key pair and pass to the script use the following command with no passphrase:
     #   ssh-keygen -t rsa -b 4096 -f scratch
@@ -51,6 +52,11 @@ if($ServicePrincipalObjectId){
     New-AzureRMRoleAssignment -RoleDefinitionId $roleDef.id -ObjectId $ServicePrincipalObjectId -Scope $StorageAccount.Id -Verbose
 }
 
+#create a userAssigned MSI that can have access to the vault where test keys/certs are stored
+$msi = (az identity create -g "$ResourceGroupName" -n "$msiName" --verbose) | ConvertFrom-Json
+
+$json.Add("USER-ASSIGNED-IDENTITY-NAME", $msiName)
+$json.Add("USER-ASSIGNED-IDENTITY-RESOURCEGROUP-NAME", $ResourceGroupName)
 
 #Create the VNET
 $subnet1 = New-AzureRMVirtualNetworkSubnetConfig -Name 'azbot-subnet-1' -AddressPrefix '10.0.1.0/24'
@@ -122,6 +128,12 @@ if($ServicePrincipalObjectId){
                                     -PermissionsToSecrets get,set `
                                     -PermissionsToCertificates get
 
+    # Set the Data Plane Access Policy for the UserAssigned MSI to retrieve secrets via reference parameters
+    Set-AzureRMKeyVaultAccessPolicy -VaultName $KeyVaultName -ObjectId $msi.principalId `
+                                    -PermissionsToKeys get `
+                                    -PermissionsToSecrets get `
+                                    -PermissionsToCertificates get
+
     # Assign the SP perms to the NetworkWatcherRG for deploying flowlogs
     New-AzureRMRoleAssignment -RoleDefinitionId 'b24988ac-6180-42a0-ab88-20f7382dd24c' `
                               -ObjectId $ServicePrincipalObjectId `
@@ -129,6 +141,22 @@ if($ServicePrincipalObjectId){
                               -Verbose
 
 }
+
+# These perms are for Azure ML Encryption via Cosmos https://docs.microsoft.com/en-us/azure/cosmos-db/how-to-setup-cmk
+# Assign the Azure ML SP perms to the subscription - this needs contributor at the moment, hopefully the fix that later
+# Display Name = "Azure Machine Learning" (this substring is not unique)
+# Service Principal Name = 0736f41a-0425-4b46-bdb5-1563eff02385
+$mlsp = Get-AzureRmADServicePrincipal -ServicePrincipalName '0736f41a-0425-4b46-bdb5-1563eff02385' #-DisplayName "Azure Machine Learning"
+$roleDef = Get-AzureRmRoleDefinition -Name 'Contributor'
+New-AzureRMRoleAssignment -RoleDefinitionId $roleDef.id -ObjectId $mlsp.id -Scope "/subscriptions/$((Get-AzureRMContext).Subscription.Id)" -Verbose
+$json.Add("MACHINE-LEARNING-SP-OBJECTID",  $mlsp.id)
+
+$cosmossp = Get-AzureRmADServicePrincipal -ServicePrincipalName "a232010e-820c-4083-83bb-3ace5fc29d0b" # -DisplayName "Azure Cosmos DB"
+Set-AzureRMKeyVaultAccessPolicy -VaultName $KeyVaultName -ObjectId $cosmossp.id -PermissionsToKeys get,unwrapKey,wrapKey 
+$json.Add("COSMOS-DB-SP-OBJECTID", $cosmossp.id)
+
+$webapp = Get-AzureRmADServicePrincipal -ServicePrincipalName "abfa0a7c-a6b6-4736-8310-5855508787cd" # Web App SP for certificate scenarios - not available in Fairfax?
+Set-AzureRMKeyVaultAccessPolicy -VaultName $KeyVaultName -ObjectId $webapp.id -PermissionsToSecrets get 
 
 # 1) Create a sample password for the vault
 $SecretValue = ConvertTo-SecureString -String $CertPass -AsPlainText -Force
@@ -252,10 +280,10 @@ $json.Add("SELFSIGNED-CERT-DNSNAME", $CertDNSName)
 # Create the Microsoft.appConfiguration/configurationStores
 # There are no PS cmdlets for app config store yet - use context must be set with "az account set ..."
 # Also, not available in Fairfax
-az appconfig create -g $ResourceGroupName -n $appConfigStoreName -l $Location --verbose 
-az appconfig kv set -n $appConfigStoreName --key 'key1' --value "value1" --label 'template' -y --verbose
-az appconfig kv set -n $appConfigStoreName --key 'windowsOSVersion' --value '2019-Datacenter' --label 'template' -y --verbose
-az appconfig kv set -n $appConfigStoreName --key 'diskSizeGB' --value "1023" --label 'template' -y --verbose
+az appconfig create -g "$ResourceGroupName" -n "$appConfigStoreName" -l "$Location" --verbose 
+az appconfig kv set -n "$appConfigStoreName" --key 'key1' --value "value1" --label 'template' -y --verbose
+az appconfig kv set -n "$appConfigStoreName" --key 'windowsOSVersion' --value '2019-Datacenter' --label 'template' -y --verbose
+az appconfig kv set -n "$appConfigStoreName" --key 'diskSizeGB' --value "1023" --label 'template' -y --verbose
 
 $json.Add("APPCONFIGSTORE-NAME", $appConfigStoreName)
 $json.Add("APPCONFIGSTORE-RESOURCEGROUP-NAME", $ResourceGroupName)

@@ -1,21 +1,18 @@
 # Virtual Network NAT
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-nat-gateway-1-vm/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-nat-gateway-1-vm/PublicDeployment.svg" />&nbsp;
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-nat-gateway-1-vm/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-nat-gateway-1-vm/PublicDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-nat-gateway-1-vm/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-nat-gateway-1-vm/FairfaxDeployment.svg" />&nbsp;
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-nat-gateway-1-vm/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-nat-gateway-1-vm/FairfaxDeployment.svg)
     
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-nat-gateway-1-vm/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-nat-gateway-1-vm/CredScanResult.svg" />&nbsp;
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-nat-gateway-1-vm/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-nat-gateway-1-vm/CredScanResult.svg)
     
     
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-nat-gateway-1-vm%2Fazuredeploy.json" target="_blank">
-<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
-</a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-nat-gateway-1-vm%2Fazuredeploy.json" target="_blank">
-<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
-</a>
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-nat-gateway-1-vm%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-nat-gateway-1-vm%2Fazuredeploy.json)
+
+
 
 This template deploys a **NAT gateway** and supporting resources.
 
@@ -23,44 +20,11 @@ This template deploys a **NAT gateway** and supporting resources.
 
 This template is a resource manager implementation of a quickstart for deploying a NAT gateway.  A Ubuntu virtual machine is deployed to the subnet that is associated with the NAT gateway.
 
-> [IMPORTANT]
->Virtual Network NAT is available as public preview at this time. Currently it's only available in a limited set of [regions](https://docs.microsoft.com/azure/virtual-network/nat-overview#region-availability). This preview is provided without a service level agreement and isn't recommended for production workloads. Certain features may not be supported or may have constrained capabilities. See the [Supplemental Terms of Use for Microsoft Azure Previews](https://azure.microsoft.com/support/legal/preview-supplemental-terms) for details.
-
-Subscriptions must be registered to allow participation in the Public Preview.  Participation requires a two-step process and instructions are provided below for Azure CLI and Azure PowerShell.  The activation may take several minutes to complete.
-
-### Azure CLI
-
-1. Register subscription for Public Preview
-
-    ```azurecli-interactive
-      az feature register --namespace Microsoft.Network --name AllowNatGateway
-    ```
-
-2. Activate registration
-
-    ```azurecli-interactive
-      az provider register --namespace Microsoft.Network
-    ```
-
-### Azure PowerShell
-
-1. Register subscription for Public Preview
-
-    ```azurepowershell-interactive
-      Register-AzProviderFeature -ProviderNamespace Microsoft.Network -FeatureName AllowNatGateway
-    ```
-
-2. Activate registration
-
-    ```azurepowershell-interactive
-      Register-AzResourceProvider -ProviderNamespace Microsoft.Network
-
-
 For more information on **Virtual Network NAT** service and **NAT gateway** see:
 
-* [What is Virtual Network NAT (Public Preview)?](https://docs.microsoft.com/azure/virtual-network/nat-overview)
+* [What is Virtual Network NAT?](https://docs.microsoft.com/azure/virtual-network/nat-overview)
 
-* [Designing virtual networks with NAT gateway resources (Public Preview)](https://docs.microsoft.com/azure/virtual-network/nat-gateway-resource)
+* [Designing virtual networks with NAT gateway resources](https://docs.microsoft.com/azure/virtual-network/nat-gateway-resource)
 
 The following resources are deployed as part of the solution
 
@@ -84,3 +48,5 @@ Description
 + **virtualMachines**: Virtual machine for solution
 
 `Tags: virtual network, vnet, nat, nat gateway, virtual machine`
+
+
