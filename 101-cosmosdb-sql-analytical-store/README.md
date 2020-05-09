@@ -3,6 +3,9 @@
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-sql-analytical-store/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-sql-analytical-store/PublicDeployment.svg)
 
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-sql-analytical-store/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-sql-analytical-store/FairfaxDeployment.svg)
+
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-sql-analytical-store/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-cosmosdb-sql-analytical-store/CredScanResult.svg)
 
