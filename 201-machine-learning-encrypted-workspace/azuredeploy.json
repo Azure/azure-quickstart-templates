@@ -10,7 +10,6 @@
     },
     "location": {
       "type": "string",
-      "defaultValue": "[resourceGroup().location]",
       "allowedValues": [
         "eastus",
         "eastus2",
@@ -36,12 +35,8 @@
       }
     },
     "confidential_data":{
-      "type": "string",
-      "defaultValue": "true",
-      "allowedValues": [
-        "false",
-        "true"
-      ],
+      "type": "bool",
+      "defaultValue": true,
       "metadata": {
         "description": "Specifies that the Azure Machine Learning workspace holds highly confidential data."
       }
@@ -57,7 +52,7 @@
         "description": "Specifies if the Azure Machine Learning workspace should be encrypted with the customer managed key."
       }
     },
-    "cmk_keyvault":{
+    "cmk_keyvault_id":{
       "type": "string",
       "metadata": {
         "description": "Specifies the customer managed keyvault Resource Manager ID."
@@ -73,8 +68,6 @@
   "variables": {
     "storageAccountName": "[concat('sa',uniqueString(resourceGroup().id))]",
     "storageAccountType": "Standard_LRS",
-    "keyVaultName": "[concat('kv',uniqueString(resourceGroup().id))]",
-    "tenantId": "[subscription().tenantId]",
     "applicationInsightsName": "[concat('ai',uniqueString(resourceGroup().id))]",
     "containerRegistryName": "[concat('cr',uniqueString(resourceGroup().id))]"
   },
@@ -101,20 +94,6 @@
           "keySource": "Microsoft.Storage"
         },
         "supportsHttpsTrafficOnly": true
-      }
-    },
-    {
-      "type": "Microsoft.KeyVault/vaults",
-      "apiVersion": "2019-09-01",
-      "name": "[variables('keyVaultName')]",
-      "location": "[parameters('location')]",
-      "properties": {
-        "tenantId": "[variables('tenantId')]",
-        "sku": {
-          "name": "standard",
-          "family": "A"
-        },
-        "accessPolicies": []
       }
     },
     {
@@ -146,12 +125,11 @@
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
-        "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]",
         "[resourceId('Microsoft.Insights/components', variables('applicationInsightsName'))]",
         "[resourceId('Microsoft.ContainerRegistry/registries', variables('containerRegistryName'))]"
       ],
       "identity": {
-        "type": "systemAssigned"
+        "type": "SystemAssigned"
       },
       "sku": {
             "tier": "[parameters('sku')]",
@@ -159,14 +137,14 @@
       },
       "properties": {
         "friendlyName": "[parameters('workspaceName')]",
-        "keyVault": "[resourceId('Microsoft.KeyVault/vaults',variables('keyVaultName'))]",
+        "keyVault": "[parameters('cmk_keyvault_id')]",
         "applicationInsights": "[resourceId('Microsoft.Insights/components',variables('applicationInsightsName'))]",
         "containerRegistry": "[resourceId('Microsoft.ContainerRegistry/registries',variables('containerRegistryName'))]",
-        "storageAccount": "[resourceId('Microsoft.Storage/storageAccounts/',variables('storageAccountName'))]",
+        "storageAccount": "[resourceId('Microsoft.Storage/storageAccounts',variables('storageAccountName'))]",
          "encryption": {
                 "status": "[parameters('encryption_status')]",
                 "keyVaultProperties": {
-                    "keyVaultArmId": "[parameters('cmk_keyvault')]",
+                    "keyVaultArmId": "[parameters('cmk_keyvault_id')]",
                     "keyIdentifier": "[parameters('resource_cmk_uri')]"
                   }
             },
