@@ -16,12 +16,7 @@ Invoke-Command -ScriptBlock $sb
 
 #Install Chocolatey Packages
 $chocoPackages.Split(";") | ForEach {
-    $command = "cinst " + $_ + " -y -force"
-    $command 
-    $sb = [scriptblock]::Create("$command")
-
-    # Use the current user profile
-    Invoke-Command -ScriptBlock $sb -ArgumentList $chocoPackages 
+    cinst " + $_ + " -y -force
 }
 
 
