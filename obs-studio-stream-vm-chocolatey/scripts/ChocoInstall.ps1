@@ -24,14 +24,15 @@ $chocoPackages.Split(";") | ForEach {
     Invoke-Command -ScriptBlock $sb -ArgumentList $chocoPackages 
 }
 
+
 #Install NDI-Runtime via Powershell as choco package not validated
 $url = "https://ndi.palakis.fr/runtime/ndi-runtime-4.5.1-Windows.exe"
 
 $path=split-path $MyInvocation.MyCommand.path
 $spath= "$path\ndi-runtime-4.5.1-Windows.exe"
 	
-Invoke-WebRequest -Uri $url -OutFile $spath
-Start-Process -FilePath $spath -Verb runAs -NoNewWindow -Wait -PassThru -ArgumentLis  '/SILENT','/v"/qn"'
+Invoke-WebRequest -Uri $url -OutFile $spath & $spath -NoNewWindow -Wait '/SILENT' 
+#Start-Process -FilePath $spath -Verb runAs -NoNewWindow -Wait -PassThru -ArgumentLis  '/SILENT','/v"/qn"'
 
 
 #Install NDI-OBS via zip package
