@@ -31,7 +31,7 @@ $path=split-path $MyInvocation.MyCommand.path
 $spath= "$path\ndi-runtime-4.5.1-Windows.exe"
 	
 Invoke-WebRequest -Uri $url -OutFile $spath
-Start-Process -FilePath $spath -Verb runAs -ArgumentList '/SILENT','/v"/qn"'
+Start-Process -FilePath $spath -Verb runAs -NoNewWindow -Wait -PassThru -ArgumentLis  '/SILENT','/v"/qn"'
 
 
 #Install NDI-OBS via zip package

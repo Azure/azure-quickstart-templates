@@ -1,4 +1,4 @@
-# OBS Studio on Windows 10 GPU VM with Skype and NDI and OBS-NDI installed
+# OBS Studio on Windows 10 GPU VM with Skype, NDI Runtime and OBS-NDI installed
 
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FIhorLeontiev%2Fazure-quickstart-templates%2Fobs-vm%2Fobs-studio-stream-vm-chocolatey%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FIhorLeontiev%2Fazure-quickstart-templates%2Fobs-vm%2Fobs-studio-stream-vm-chocolatey%2Fazuredeploy.json)
