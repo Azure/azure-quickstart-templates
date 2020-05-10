@@ -25,29 +25,11 @@ $chocoPackages.Split(";") | ForEach {
 }
 
 
-#Install NDI-Runtime via Powershell as choco package not validated
-$url = "https://ndi.palakis.fr/runtime/ndi-runtime-4.5.1-Windows.exe"
+#Isntall OBS-NDI package from sources
+$url = "https://github.com/IhorLeontiev/azure-quickstart-templates/raw/obs-vm/obs-studio-stream-vm-chocolatey/scripts/packages/obs-ndi.zip"
 
-$path=split-path $MyInvocation.MyCommand.path
-$spath= "$path\ndi-runtime-4.5.1-Windows.exe"
-	
-Invoke-WebRequest -Uri $url -OutFile $spath & $spath -NoNewWindow -Wait '/SILENT' 
-#Start-Process -FilePath $spath -Verb runAs -NoNewWindow -Wait -PassThru -ArgumentLis  '/SILENT','/v"/qn"'
+Invoke-WebRequest -Uri $url -OutFile ./obs-ndi.zip
+Expand-Archive -LiteralPath ./obs-ndi.zip DestinationPath ./
 
-
-#Install NDI-OBS via zip package
-
-# Find install location from registry, but fall back to ProgramFiles 
-$installPath = "$ENV:ProgramFiles\obs-studio"
-$key = (Get-ItemProperty -Path 'HKLM:\SOFTWARE\WOW6432Node\OBS Studio' -ErrorAction SilentlyContinue)
-if ($key) {
-  $installPath = $key.'(default)'
-}
-
-#Downoload last zip package with obs-ndi
-$url = "https://github.com/Palakis/obs-ndi/releases/download/4.9.0/obs-ndi-4.9.0-Windows.zip"
-$path=split-path $MyInvocation.MyCommand.path
-$spath= "$path\obs-ndi-4.9.0-Windows.zip"
-
-Invoke-WebRequest -Uri $url -OutFile $spath
-Expand-Archive -LiteralPath $spath -DestinationPath $installPath
+choco pack
+choco install -y .\obs-ndi.4.9.0.nupkg
