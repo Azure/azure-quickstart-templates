@@ -9,16 +9,21 @@
                 "description": "The name of you Web Site."
             }
         },
+		"storageAccountName": {
+			"type": "String",
+			"defaultValue": "[concat('store', uniqueString(resourceGroup().id))]"
+		},
         "location": {
-        "type": "string",
-        "defaultValue": "[resourceGroup().location]",
-        "metadata": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
                 "description": "Location for all resources."
             }
         }
     },
-     "variables": {
-        "hostingPlanName": "[concat('hpn-', resourceGroup().name)]"
+    "variables": {
+        "hostingPlanName": "[concat('hpn-', resourceGroup().name)]",
+		"storageAccountid": "[concat(resourceGroup().id,'/providers/','Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]"
     },
     "resources": [
         {
@@ -28,12 +33,13 @@
             "kind": "functionapp,linux",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]"
+                "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
+				"[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
             ],
             "properties": {
                 "name": "[parameters('siteName')]",
                 "siteConfig": {
-                     "appSettings": [
+                    "appSettings": [
                         {
                             "name": "FUNCTIONS_WORKER_RUNTIME",
                             "value": "python"
@@ -41,7 +47,11 @@
                         {
                             "name": "FUNCTIONS_EXTENSION_VERSION",
                             "value": "~2"
-                        }
+                        },
+						{
+							"name": "AzureWebJobsStorage",
+							"value": "[concat('DefaultEndpointsProtocol=https;AccountName=', parameters('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]"
+						}
                     ]
                 },
                 "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
@@ -54,13 +64,23 @@
             "name": "[variables('hostingPlanName')]",
             "location": "[parameters('location')]",
             "kind": "linux",
-            "properties":{
+            "properties": {
                 "reserved": true
             },
             "sku": {
                 "Tier": "Dynamic",
                 "Name": "Y1"
             }
-        }
+        },
+		{
+			"type": "Microsoft.Storage/storageAccounts",
+			"name": "[parameters('storageAccountName')]",
+			"apiVersion": "2019-04-01",
+			"location": "[resourceGroup().location]",
+			"kind": "StorageV2",
+			"sku": {
+				"name": "Standard_LRS"
+			}
+		}
     ]
 }
