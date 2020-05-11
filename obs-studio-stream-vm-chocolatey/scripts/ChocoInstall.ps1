@@ -16,7 +16,7 @@ Invoke-Command -ScriptBlock $sb
 
 #Install Chocolatey Packages
 $chocoPackages.Split(";") | ForEach {
-    cinst " + $_ + " -y -force
+    cinst $_ -y -force
 }
 
 
