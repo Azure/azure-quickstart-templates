@@ -29,5 +29,3 @@ To use keys stored in keyvault, replace ```"value":""``` with a reference to key
       }
     }
 ```
-
-
