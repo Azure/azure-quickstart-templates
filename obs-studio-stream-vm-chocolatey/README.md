@@ -1,7 +1,7 @@
 # OBS Studio on Windows 10 GPU VM with Skype, NDI Runtime and OBS-NDI installed
 
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FIhorLeontiev%2Fazure-quickstart-templates%2Fobs-vm%2Fobs-studio-stream-vm-chocolatey%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FIhorLeontiev%2Fazure-quickstart-templates%2Fobs-vm%2Fobs-studio-stream-vm-chocolatey%2Fazuredeploy.json)
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fobs-studio-stream-vm-chocolatey%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fobs-studio-stream-vm-chocolatey%2Fazuredeploy.json)
 
 `Tags: Azure, Virtual Machine, OBS, OBS Studio, Streaming VM`
 
@@ -19,10 +19,10 @@ Notes
 - GPU drivers installed via NVIDIA extension for Virtual Machine, more details - https://docs.microsoft.com/en-us/azure/virtual-machines/windows/n-series-driver-setup
 - Software installation based on custom script extension via chocolatey package manager
 
-*OBS-NDI is isntalling via Powershell, not via chocolatey as OBS-NDI package not validated yet by chocolatey moderators Team - https://chocolatey.org/packages/obs-ndi/4.9.0*
+*OBS-NDI is isntalling via choco sources, as OBS-NDI official package not yet validated by chocolatey moderators Team - https://chocolatey.org/packages/obs-ndi/4.9.0*
 
 
-Sogtware preinstalled
+Software preinstalled
 - Skype - https://chocolatey.org/packages/skype
 - OBS Studio - https://chocolatey.org/packages/obs-studio
 - NDI Runtime - https://ndi.tv/tools/
