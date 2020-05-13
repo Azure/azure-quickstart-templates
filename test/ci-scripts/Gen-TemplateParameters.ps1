@@ -91,9 +91,9 @@ While($txt.Contains("`"GEN-UNIQUE-")){
     $numStart = $txt.IndexOf("`"GEN-UNIQUE-") + 12
     $numEnd = $txt.IndexOf("`"", $numStart)
     $l = $txt.Substring($numStart, $numEnd-$numStart)
-    $i = [int]::parse($l)
-    if($i -gt 24){ $i = 24 }
-    Write-Host "l > $i"
+    $i = [int]::parse($l) - 2 # subtract 2 since 'ci' is prepended
+    if($i -gt 24){ $i = 24 } elseif($i -lt 1){ $i = 1}
+    Write-Output "length = $i"
     $v = "ci" + (New-Guid).ToString().Replace("-", "").ToString().Substring(0,  $i)
     [regex]$r = "GEN-UNIQUE-$l"
     $txt = $r.Replace($txt, $v, 1)
