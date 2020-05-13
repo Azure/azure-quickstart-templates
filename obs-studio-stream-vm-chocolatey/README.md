@@ -6,7 +6,7 @@
 `Tags: Azure, Virtual Machine, OBS, OBS Studio, Streaming VM`
 
 ## Solution overview and deployed resources
-This template deploys a Windows GPU VM (Windows 10) with OBS Studio, Skype and Microsoft Teams Preinstalled. 
+This template deploys a Windows GPU VM (Windows 10) with OBS Studio, and Skype Preinstalled. 
 
 Following resources will be created
 - Virtual Network
@@ -24,7 +24,6 @@ Notes
 
 Sogtware preinstalled
 - Skype - https://chocolatey.org/packages/skype
-- MS Teams - https://chocolatey.org/packages/microsoft-teams
 - OBS Studio - https://chocolatey.org/packages/obs-studio
 - NDI Runtime - https://ndi.tv/tools/
 - OBS-NDI - https://github.com/Palakis/obs-ndi/releases
