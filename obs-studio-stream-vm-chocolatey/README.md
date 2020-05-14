@@ -33,3 +33,20 @@ Software preinstalled
 - OBS Studio - https://chocolatey.org/packages/obs-studio
 - NDI Runtime - https://ndi.tv/tools/
 - OBS-NDI - https://github.com/Palakis/obs-ndi/releases
+
+Allowed VM sizes in template
+- Standard_NV6
+- Standard_NV12            
+- Standard_NV24
+- Standard_NC6
+- Standard_NC12
+- Standard_NC24
+- Standard_NV6s_v2
+- Standard_NV12s_v2
+- Standard_NV24s_v2
+- Standard_NV12s_v3
+- Standard_NV24s_v3
+- Standard_NV48s_v3
+- Standard_NC6
+- Standard_NC12
+- Standard_NC24
