@@ -1,20 +1,17 @@
 # Cognitive Services Computer Vision API
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-cognitive-services-Computer-vision-API/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-cognitive-services-Computer-vision-API/PublicDeployment.svg" />&nbsp;
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-cognitive-services-Computer-vision-API/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-cognitive-services-Computer-vision-API/PublicDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-cognitive-services-Computer-vision-API/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-cognitive-services-Computer-vision-API/FairfaxDeployment.svg" />&nbsp;
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-cognitive-services-Computer-vision-API/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-cognitive-services-Computer-vision-API/FairfaxDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-cognitive-services-Computer-vision-API/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/101-cognitive-services-Computer-vision-API/CredScanResult.svg" />&nbsp;
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-cognitive-services-Computer-vision-API/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-cognitive-services-Computer-vision-API/CredScanResult.svg)
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-cognitive-services-Computer-vision-API%2Fazuredeploy.json" target="_blank">
-<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
-</a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-cognitive-services-Computer-vision-API%2Fazuredeploy.json" target="_blank">
-<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
-</a>
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-cognitive-services-Computer-vision-API%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-cognitive-services-Computer-vision-API%2Fazuredeploy.json)
+
+
 
 This template deploys a Cognitive Services Computer Vision API.  This allows you to process visual data. Capabilities include image analytics, tagging, recognition celebrities, text extraction, and smart thumbnail generation. 
 
@@ -36,4 +33,5 @@ If you are new to Azure Cognitive Services, see:
 - [Template reference](https://azure.microsoft.com/en-us/resources/templates/?referenceType=Microsoft.Cognitiveservices)
 - [Quick Start templates](https://azure.microsoft.com/en-us/resources/templates/?resourceType=Microsoft.Cognitiveservices)
 - [Microsoft Learn Modules](https://docs.microsoft.com/en-us/learn/browse/?products=azure&term=cognitive)
+
 

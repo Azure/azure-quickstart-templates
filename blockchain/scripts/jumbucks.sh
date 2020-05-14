@@ -54,7 +54,7 @@ fi
 ################################################################
 # Configure to auto start at boot		                       #
 ################################################################
-file=$HOME/.jumbucks
+file=$HOME/.jumbucks 
 if [ ! -e "$file" ]
 then
 	sudo mkdir $HOME/.jumbucks

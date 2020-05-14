@@ -1,20 +1,16 @@
 # VM-Redhat - Team Services Build Agent and Cross-Platform SDKs installation
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/vsts-fullbuild-redhat-vm/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/vsts-fullbuild-redhat-vm/PublicDeployment.svg" />&nbsp;
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/vsts-fullbuild-redhat-vm/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/vsts-fullbuild-redhat-vm/PublicDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/vsts-fullbuild-redhat-vm/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/vsts-fullbuild-redhat-vm/FairfaxDeployment.svg" />&nbsp;
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/vsts-fullbuild-redhat-vm/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/vsts-fullbuild-redhat-vm/FairfaxDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/vsts-fullbuild-redhat-vm/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/vsts-fullbuild-redhat-vm/CredScanResult.svg" />&nbsp;
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/vsts-fullbuild-redhat-vm/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/vsts-fullbuild-redhat-vm/CredScanResult.svg)
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fvsts-fullbuild-redhat-vm%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
-</a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fvsts-fullbuild-redhat-vm%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
-</a>
+[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fvsts-fullbuild-redhat-vm%2Fazuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%vsts-fullbuild-redhat-vm%2Fazuredeploy.json)
 
 This template allows you to create multiple (1 or more) Red Hat VMs with a full cross-platform development environment to support:
 * OpenJDK 6, 7 and 8; 
@@ -31,7 +27,6 @@ This template allows you to create multiple (1 or more) Red Hat VMs with a full 
 
 To learn more about Visual Studio Team Services (VSTS) and Team Foundation Server (TFS) support for Java, check out:
 http://java.visualstudio.com/
-
 
 ## Before you Deploy to Azure
 
@@ -67,4 +62,5 @@ in starting up the VSTS build agent.  The most common mistake is not having the 
 * If the agent started sucessfully and is running but an expected tool or software is not working from a build task (e.g. a build task can't find
 maven or java or ...), then you can check the file *"install.progress.txt"* in the top level directory to see if one of the packages
 may have failed to install or had errors (**cat install.progress.txt**).
+
 

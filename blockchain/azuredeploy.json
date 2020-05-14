@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "vmDnsPrefix": {
@@ -17,11 +17,15 @@
     "blockchainSoftware": {
       "type": "string",
       "allowedValues": [
+        "bitcoin",
         "bitshares",
         "bitswift",
         "blocknet",
         "bloqenterprise",
+        "dash",
         "digibyte",
+        "dynamic",
+        "sequence",
         "emercoin",
         "influx",
         "jumbucks",
@@ -29,29 +33,20 @@
         "multichain",
         "nxt",
         "okcash",
-        "shadow",
+        "particl",
         "stratis",
         "syscoin",
         "vcash",
-        "viacoin"
+        "viacoin",
+        "vechain"
       ],
       "metadata": {
-        "description": "The block chain software to install on the VM"
+        "description": "The blockchain software to install on the VM"
       }
     },
     "vmSize": {
       "type": "string",
       "defaultValue": "Standard_D1_v2",
-      "allowedValues": [
-        "Standard_A1",
-        "Standard_A2",
-        "Standard_A3",
-        "Standard_A4",
-        "Standard_D1_v2",
-        "Standard_D2_v2",
-        "Standard_D3_v2",
-        "Standard_D4_v2"
-      ],
       "metadata": {
         "description": "Size of VM"
       }
@@ -61,7 +56,7 @@
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/blockchain/"
+      "defaultValue": "[deployment().properties.templateLink.uri]"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -100,18 +95,15 @@
     "addressPrefix": "10.0.0.0/16",
     "imagePublisher": "Canonical",
     "imageVersion": "latest",
-    "imageSKU": "14.04.4-LTS",
+    "imageSKU": "18.04-LTS",
     "imageOffer": "UbuntuServer",
     "subnetName": "Subnet-1",
     "subnetPrefix": "10.0.0.0/24",
-    "storageAccountType": "Standard_LRS",
     "publicIPAddressName": "publicIP",
     "publicIPAddressType": "Dynamic",
-    "vmStorageAccountContainerName": "vhds",
     "vmName": "[parameters('vmDnsPrefix')]",
     "virtualNetworkName": "VNET",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
-    "storageAccountName": "[concat(uniquestring(resourceGroup().id, 'block'))]",
     "linuxConfiguration": {
       "disablePasswordAuthentication": true,
       "ssh": {
@@ -122,20 +114,35 @@
           }
         ]
       }
+    },
+    "commandToExecute": {
+      "emercoin": "[concat('sh ', parameters('blockchainSoftware'), '.sh ', '\"', parameters('adminUsername'), '\" \"',  parameters('adminPasswordOrKey'), '\"')]",
+      "stratis": "[concat('sh ', parameters('blockchainSoftware'), '.sh From_Source', parameters('adminUsername'))]",
+      "syscoin": "[concat('sh ', parameters('blockchainSoftware'), '.sh From_Source', parameters('adminUsername'))]",
+      "viacoin": "[concat('sh ', parameters('blockchainSoftware'), '.sh From_Source')]",
+      "bitswift": "[concat('sh ', parameters('blockchainSoftware'), '.sh From_Source')]",
+      "blocknet": "[concat('sh ', parameters('blockchainSoftware'), '.sh From_Source')]",
+      "influx": "[concat('sh ', parameters('blockchainSoftware'), '.sh From_Source')]",
+      "bitshares": "[concat('sh ', parameters('blockchainSoftware'), '.sh From_Source')]",
+      "digibyte": "[concat('sh ', parameters('blockchainSoftware'), '.sh From_Source')]",
+      "vcash": "[concat('sh ', parameters('blockchainSoftware'), '.sh From_Source')]",
+      "bitcoin": "[concat('sh ', parameters('blockchainSoftware'), '.sh From_Source', parameters('adminUsername'))]",
+      "dash": "[concat('sh ', parameters('blockchainSoftware'), '.sh From_Source', parameters('adminUsername'))]",
+      "dynamic": "[concat('sh ', parameters('blockchainSoftware'), '.sh From_Source', parameters('adminUsername'))]",
+      "sequence": "[concat('sh ', parameters('blockchainSoftware'), '.sh From_Source', parameters('adminUsername'))]",
+      "bloqenterprise": "[concat('sh ', parameters('blockchainSoftware'), '.sh Download_Binaries')]",
+      "monero": "[concat('sh ', parameters('blockchainSoftware'), '.sh Download_Binaries')]",
+      "jumbucks": "[concat('sh ', parameters('blockchainSoftware'), '.sh From_Source ', parameters('adminUsername'))]",
+      "okcash": "[concat('sh ', parameters('blockchainSoftware'), '.sh From_Source ', parameters('adminUsername'))]",
+      "particl": "[concat('sh ', parameters('blockchainSoftware'), '.sh From_Source ', parameters('adminUsername'))]",
+      "multichain": "[concat('sh ', parameters('blockchainSoftware'), '.sh ', parameters('adminUsername'))]",
+      "nxt": "[concat('sh ', parameters('blockchainSoftware'), '.sh false false')]",
+      "vechain": "[concat('sh ', parameters('blockchainSoftware'), '.sh main')]"
     }
   },
   "resources": [
     {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('storageAccountName')]",
-      "apiVersion": "2015-06-15",
-      "location": "[parameters('location')]",
-      "properties": {
-        "accountType": "[variables('storageAccountType')]"
-      }
-    },
-    {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2019-11-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
       "location": "[parameters('location')]",
@@ -147,7 +154,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2019-11-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
@@ -168,13 +175,13 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2019-11-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -183,7 +190,7 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
               },
               "subnet": {
                 "id": "[variables('subnetRef')]"
@@ -194,13 +201,12 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2019-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -221,9 +227,6 @@
           },
           "osDisk": {
             "name": "osdisk1",
-            "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2016-01-01').primaryEndpoints.blob, variables('vmStorageAccountContainerName'), '/osdisk1.vhd')]"
-            },
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -231,7 +234,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
             }
           ]
         }
@@ -240,7 +243,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmName'),'/newuserscript')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2019-12-01",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
@@ -252,11 +255,11 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[concat(parameters('_artifactsLocation'), 'scripts/', parameters('blockchainSoftware'), '.sh')]"
+            "[uri(parameters('_artifactsLocation'), concat('scripts/', parameters('blockchainSoftware'), '.sh', parameters('_artifactsLocationSasToken')))]"
           ]
         },
         "protectedSettings": {
-          "commandToExecute": "[variables(concat('commandToExecute', parameters('blockchainSoftware')))]"
+          "commandToExecute": "[variables('commandToExecute')[parameters('blockchainSoftware')]]"
         }
       }
     }

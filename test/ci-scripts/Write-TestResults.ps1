@@ -17,6 +17,7 @@ param(
     [string]$CredScanResult = "$ENV:RESULT_CREDSCAN",
     [string]$BuildReason = "$ENV:BUILD_REASON",
     [string]$AgentJobStatus = "$ENV:AGENT_JOBSTATUS",
+    [string]$ValidationType = "$ENV:VALIDATION_TYPE",
     [string]$ResultDeploymentParameter = "$ENV:RESULT_DEPLOYMENT_PARAMETER", #also cloud specific
     [string]$FairfaxDeployment = "",
     [string]$FairfaxLastTestDate = (Get-Date -Format "yyyy-MM-dd").ToString(),
@@ -71,6 +72,11 @@ $FairfaxDeployment = $FairfaxDeployment -ireplace [regex]::Escape("true"), "PASS
 $FairfaxDeployment = $FairfaxDeployment -ireplace [regex]::Escape("false"), "FAIL"
 $PublicDeployment = $PublicDeployment -ireplace [regex]::Escape("true"), "PASS"
 $PublicDeployment = $PublicDeployment -ireplace [regex]::Escape("false"), "FAIL"
+
+if($ValidationType -eq "Manual"){
+    $FairfaxDeployment = "Manual Test"
+    $PublicDeployment = "Manual Test"
+}
 
 # if the record doesn't exist, this is probably a new sample and needs to be added (or we just cleaned the table)
 if ($r -eq $null) {
@@ -284,6 +290,7 @@ switch ($FairfaxDeployment) {
     "PASS" { $FairfaxDeploymentColor = "brightgreen" }
     "FAIL" { $FairfaxDeploymentColor = "red" }
     "Not Supported" { $FairfaxDeploymentColor = "yellow" }
+    "Manual Test" { $FairfaxDeploymentColor = "blue" }
     default {
         $FairfaxDeployment = $na
         $FairfaxDeploymentColor = "inactive"    
@@ -298,6 +305,7 @@ switch ($PublicDeployment) {
     "PASS" { $PublicDeploymentColor = "brightgreen" }
     "FAIL" { $PublicDeploymentColor = "red" }
     "Not Supported" { $PublicDeploymentColor = "yellow" }
+    "Manual Test" { $PublicDeploymentColor = "blue" }
     default {
         $PublicDeployment = $na
         $PublicDeploymentColor = "inactive"    

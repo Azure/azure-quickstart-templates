@@ -2,14 +2,14 @@
 
 # Secure Ubuntu by Trailbot
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/stampery-trailbot-ubuntu/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/stampery-trailbot-ubuntu/PublicDeployment.svg" />&nbsp;
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/stampery-trailbot-ubuntu/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/stampery-trailbot-ubuntu/PublicDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/stampery-trailbot-ubuntu/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/stampery-trailbot-ubuntu/FairfaxDeployment.svg" />&nbsp;
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/stampery-trailbot-ubuntu/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/stampery-trailbot-ubuntu/FairfaxDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/stampery-trailbot-ubuntu/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/stampery-trailbot-ubuntu/CredScanResult.svg" />&nbsp;
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/stampery-trailbot-ubuntu/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/stampery-trailbot-ubuntu/CredScanResult.svg)
 
 This Ubuntu VM comes with a special demon called __Trailbot Watcher__ that monitors system files and logs, triggers __Smart Policies__ upon modification and generates a __blockchain-anchored__, __immutable audit trail__ of everything happening to them.
 
@@ -19,12 +19,9 @@ You can manage your Smart Policies and audit trails by using the [Trailbot Clien
 
 All the files and logs watched in this VM will have the [Stamper Smart Policy](https://github.com/trailbot/stamper-policy) configured by default, so every time such files are modified, their hashes will be embedded in both the Ethereum and Bitcoin blockchains by using the [Stampery API](https://stampery.com/tech).
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fstampery-trailbot-ubuntu%2Fazuredeploy.json" target="_blank">
-<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
-</a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fstampery-trailbot-ubuntu%2Fazuredeploy.json" target="_blank">
-<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
-</a>
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fstampery-trailbot-ubuntu%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fstampery-trailbot-ubuntu%2Fazuredeploy.json)
+
+
 
 `Tags: Blockchain, Ubuntu, Security, Integrity, Bitcoin, Ethereum, Stampery`
 
@@ -43,4 +40,5 @@ All the files and logs watched in this VM will have the [Stamper Smart Policy](h
 You can find detailed usage instructions in the [Getting Started guide](https://github.com/trailbot/client/blob/master/GETTING-STARTED.md#usage).
 
 [<img style="width:100%;" src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/images/footer.png">](https://stampery.com)
+
 

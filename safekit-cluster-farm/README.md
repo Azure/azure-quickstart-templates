@@ -1,24 +1,22 @@
 # Evidian SafeKit - Load Balancing Cluster with Failover in Azure - Farm Module
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/safekit-cluster-farm/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/safekit-cluster-farm/PublicDeployment.svg" />&nbsp;
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/safekit-cluster-farm/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/safekit-cluster-farm/PublicDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/safekit-cluster-farm/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/safekit-cluster-farm/FairfaxDeployment.svg" />&nbsp;
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/safekit-cluster-farm/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/safekit-cluster-farm/FairfaxDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/safekit-cluster-farm/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/safekit-cluster-farm/CredScanResult.svg" />&nbsp;
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/safekit-cluster-farm/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/safekit-cluster-farm/CredScanResult.svg)
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsafekit-cluster-farm%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
-</a>
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsafekit-cluster-farm%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsafekit-cluster-farm%2Fazuredeploy.json)
 
 *   [Description](#description)
 *   [Deployed resources](#resources)
 *   [How to use](#use)
 *   [More information](#more)
 
-## <a name="description"></a>Description
+## <a name="description">Description
 
 ![How the Evidian SafeKit farm cluster implements load balancing and failover in Azure?](images/farmarch.png)
 
@@ -31,7 +29,7 @@ SafeKit brings a generic health probe for the load balancer. When the farm modul
 *   SafeKit restarts automatically the critical application in a server when there is a **software failure** thanks to the restart scripts;
 *   a connector for the SafeKit web console is installed in each server. Thus, the load balancing cluster can be managed in a very simple way to avoid **human errors**.
 
-## <a name="resources"></a>Deployed resources
+## <a name="resources">Deployed resources
 
 In term of VMs, this template deploys:
 
@@ -48,7 +46,7 @@ In term of load balancer, this template deploys:
 *   a health probe checks the farm module state on all VMs
 *   a load balancing rule for external port 9453 / internal port 9453 is set to test the load balanced virtual IP
 
-## <a name="use"></a>How to use
+## <a name="use">How to use
 
 Click the "Deploy to Azure" button at the beginning of this document to deploy the load balancing cluster. Please create a new resource group.
 
@@ -58,12 +56,12 @@ After deployment, go to the resource group's 'Microsoft.Template' deployment out
 *   after certificates installation, start the web console of the cluster
 *   test the load balanced virtual IP address with the test URL in the output
 
-
-
-## <a name="more"></a>More information on **Evidian SafeKit** in Azure
+## <a name="more">More information on **Evidian SafeKit** in Azure
 
 *   [Azure: The Simplest Load Balancing Cluster with Failover](https://www.evidian.com/products/high-availability-software-for-application-clustering/azure-load-balancing-cluster-failover/)
 *   [Azure: The Simplest High Availability Cluster with Synchronous Replication and Failover](https://www.evidian.com/products/high-availability-software-for-application-clustering/azure-high-availability-cluster-synchronous-replication-failover/)
 
 `Tags: load balancing, cluster, failover, high availability, business continuity, disaster recovery, evidian, safekit, farm`
+
+
 

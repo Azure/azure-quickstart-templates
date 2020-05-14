@@ -1,20 +1,16 @@
 # Application Gateway with WAF, end to end SSL, two IIS servers and HTTP to HTTPS redirection
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-application-gateway-2vms-iis-ssl/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-application-gateway-2vms-iis-ssl/PublicDeployment.svg" />&nbsp;
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/201-application-gateway-2vms-iis-ssl/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/201-application-gateway-2vms-iis-ssl/PublicDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-application-gateway-2vms-iis-ssl/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-application-gateway-2vms-iis-ssl/FairfaxDeployment.svg" />&nbsp;
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/201-application-gateway-2vms-iis-ssl/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/201-application-gateway-2vms-iis-ssl/FairfaxDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-application-gateway-2vms-iis-ssl/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/201-application-gateway-2vms-iis-ssl/CredScanResult.svg" />&nbsp;
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/201-application-gateway-2vms-iis-ssl/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/201-application-gateway-2vms-iis-ssl/CredScanResult.svg)
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-application-gateway-2vms-iis-ssl%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
-</a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-application-gateway-2vms-iis-ssl%2Fazuredeploy.json" target="_blank">
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
-</a>
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-application-gateway-2vms-iis-ssl%2Fazuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-application-gateway-2vms-iis-ssl%2Fazuredeploy.json)
 
 This template deploys an Application Gateway with WAF, end to end SSL and HTTP to HTTPS redirect on the IIS servers. It deploys two IIS servers into a new VNet. The certificates for the front end and back end connections can be different, to demonstrate the use of a public CA externally and an internal CA internally. HTTP to HTTPS redirection is currently not available on the Application Gateway, so in this template is achieved by using the URL Rewrite module in IIS. This will redirect all HTTP traffic back out to the HTTPS endpoint on the Application Gateway.
 
@@ -77,6 +73,7 @@ Click the "deploy to Azure" button at the beginning of this document.
 The web page can be accessed by getting the IP or FQDN of the Application Gateway and viewing it in your browser of choice. Connection attemps via HTTP will be redirected to HTTPS. When connected you should see the default page showing which server you are connected to. Refreshing the page will send you to the other server.
 
 Tags: `Application Gateway, IIS, SSL, Windows, DSC Extension`
+
 
 
 

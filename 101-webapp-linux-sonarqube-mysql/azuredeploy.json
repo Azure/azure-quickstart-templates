@@ -1,5 +1,5 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
         "siteName": {
@@ -36,7 +36,8 @@
         },
         "administratorLogin": {
             "type": "string",
-            "minLength": 1,
+            "minLength": 6,
+            "maxLength": 15,
             "metadata": {
                 "description": "Database administrator login name"
             }
@@ -140,7 +141,7 @@
             "comments": "This is the Linux web app with the Sonarquebe Docker image and the DB",
             "type": "Microsoft.Web/sites",
             "name": "[parameters('siteName')]",
-            "apiVersion": "2018-02-01",
+            "apiVersion": "2019-08-01",
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[variables('hostingPlanName')]",
@@ -151,15 +152,14 @@
                     "linuxFxVersion": "DOCKER|SONARQUBE"
                 },
                 "name": "[parameters('siteName')]",
-                "serverFarmId": "[variables('hostingPlanName')]",
-                "hostingEnvironment": ""
+                "serverFarmId": "[variables('hostingPlanName')]"
             },
             "resources": [
                 {
+                    "comments": "This are the generated settings for the Sonar jdbc connectionstring",
                     "name": "appsettings",
                     "type": "config",
-                    "apiVersion": "2018-02-01",
-                    "comments": "This are the generated settings for the Sonar jdbc connectionstring",
+                    "apiVersion": "2019-08-01",
                     "dependsOn": [
                         "[resourceId('Microsoft.Web/sites', parameters('siteName'))]"
                     ],
@@ -175,16 +175,15 @@
             ]
         },
         {
-            "apiVersion": "2017-08-01",
+            "apiVersion": "2019-08-01",
             "name": "[variables('hostingPlanName')]",
             "type": "Microsoft.Web/serverfarms",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "properties": {
                 "name": "[variables('hostingPlanName')]",
                 "workerSizeId": "1",
                 "reserved": true,
-                "numberOfWorkers": "1",
-                "hostingEnvironment": ""
+                "numberOfWorkers": "1"
             },
             "sku": {
                 "Tier": "[parameters('servicePlanTier')]",
@@ -193,11 +192,10 @@
             "kind": "linux"
         },
         {
-            "apiVersion": "2017-12-01",
-            "kind": "",
-            "location": "[resourceGroup().location]",
-            "name": "[variables('serverName')]",
             "type": "Microsoft.DBforMySQL/servers",
+            "apiVersion": "2017-12-01",
+            "name": "[variables('serverName')]",
+            "location": "[parameters('location')]",
             "sku": {
                 "name": "[parameters('databaseSkuName')]",
                 "tier": "[parameters('databaseSkuTier')]",
@@ -215,11 +213,11 @@
                 {
                     "type": "firewallrules",
                     "apiVersion": "2017-12-01",
-                    "dependsOn": [
-                        "[concat('Microsoft.DBforMySQL/servers/', variables('serverName'))]"
-                    ],
-                    "location": "[resourceGroup().location]",
+                    "location": "[parameters('location')]",
                     "name": "[variables('firewallrule')]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.DBforMySQL/servers', variables('serverName'))]"
+                    ],
                     "properties": {
                         "startIpAddress": "0.0.0.0",
                         "endIpAddress": "255.255.255.255"
@@ -229,14 +227,14 @@
                     "name": "[variables('databaseName')]",
                     "type": "databases",
                     "apiVersion": "2017-12-01",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.DBforMySQL/servers', variables('serverName'))]",
+                        "[resourceId('Microsoft.DBforMySQL/servers/firewallRules', variables('serverName'), variables('firewallrule'))]"
+                    ],
                     "properties": {
                         "charset": "utf8",
                         "collation": "utf8_general_ci"
-                    },
-                    "dependsOn": [
-                        "[concat('Microsoft.DBforMySQL/servers/', variables('serverName'))]",
-                        "[resourceId('Microsoft.DBforMySQL/servers/firewallRules', variables('serverName'), variables('firewallrule'))]"
-                    ]
+                    }
                 }
             ]
         }

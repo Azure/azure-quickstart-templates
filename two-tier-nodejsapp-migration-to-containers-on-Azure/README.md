@@ -1,26 +1,27 @@
 # Two-tier Nodejs app migration to Azure Container and PaaS DB
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/two-tier-nodejsapp-migration-to-containers-on-Azure/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/two-tier-nodejsapp-migration-to-containers-on-Azure/PublicDeployment.svg" />&nbsp;
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/two-tier-nodejsapp-migration-to-containers-on-Azure/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/two-tier-nodejsapp-migration-to-containers-on-Azure/PublicDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/two-tier-nodejsapp-migration-to-containers-on-Azure/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/two-tier-nodejsapp-migration-to-containers-on-Azure/FairfaxDeployment.svg" />&nbsp;
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/two-tier-nodejsapp-migration-to-containers-on-Azure/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/two-tier-nodejsapp-migration-to-containers-on-Azure/FairfaxDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/two-tier-nodejsapp-migration-to-containers-on-Azure/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/two-tier-nodejsapp-migration-to-containers-on-Azure/CredScanResult.svg" />&nbsp;
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/two-tier-nodejsapp-migration-to-containers-on-Azure/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/two-tier-nodejsapp-migration-to-containers-on-Azure/CredScanResult.svg)
 
-[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Ftwo-tier-nodejsapp-migration-to-containers-on-Azure%2Fazuredeploy.json)
-
+[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Ftwo-tier-nodejsapp-migration-to-containers-on-Azure%2Fazuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%two-tier-nodejsapp-migration-to-containers-on-Azure%2Fazuredeploy.json)
 
 <!-- TOC -->
 
-1. [Solution Overview](#solution-overview)
-2. [Template Solution Architecture ](#template-solution-architecture)
-3. [Licenses and Costs ](#licenses-and-costs)
-4. [Prerequisites](#prerequisites)
-5. [Deployment Steps](#deployment-steps)
-6. [Deployment Time](#deployment-time)
-7. [Support](#support)
+- [Two-tier Nodejs app migration to Azure Container and PaaS DB](#two-tier-nodejs-app-migration-to-azure-container-and-paas-db)
+  - [Solution Overview](#solution-overview)
+  - [Template Solution Architecture](#template-solution-architecture)
+  - [Licenses and Costs](#licenses-and-costs)
+  - [Prerequisites](#prerequisites)
+  - [Deployment Steps](#deployment-steps)
+  - [Deployment Time](#deployment-time)
+  - [Support](#support)
 
 <!-- /TOC -->
 
@@ -61,4 +62,5 @@ The deployment takes about 20 minutes to complete.
 ## Support
 For any support related questions, issues or customization requirements, please contact info@spektrasystems.com <br/>
 ****End****
+
 

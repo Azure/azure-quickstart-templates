@@ -1,15 +1,16 @@
 # Deploy a Highly Available NFS Cluster with Ubuntu VMs
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/nfs-ha-cluster-ubuntu/PublicLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/nfs-ha-cluster-ubuntu/PublicDeployment.svg" />&nbsp;
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/nfs-ha-cluster-ubuntu/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/nfs-ha-cluster-ubuntu/PublicDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/nfs-ha-cluster-ubuntu/FairfaxLastTestDate.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/nfs-ha-cluster-ubuntu/FairfaxDeployment.svg" />&nbsp;
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/nfs-ha-cluster-ubuntu/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/nfs-ha-cluster-ubuntu/FairfaxDeployment.svg)
 
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/nfs-ha-cluster-ubuntu/BestPracticeResult.svg" />&nbsp;
-<IMG SRC="https://azurequickstartsservice.blob.core.windows.net/badges/nfs-ha-cluster-ubuntu/CredScanResult.svg" />&nbsp;
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/nfs-ha-cluster-ubuntu/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/nfs-ha-cluster-ubuntu/CredScanResult.svg)
 
-[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fnfs-ha-cluster-ubuntu%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fnfs-ha-cluster-ubuntu%2Fazuredeploy.json)
+[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fnfs-ha-cluster-ubuntu%2Fazuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fnfs-ha-cluster-ubuntu%2Fazuredeploy.json)
 
 This template allows you to create a highly available NFS cluster on Azure with 2 Ubuntu VMs. The following diagram shows the architecture of the deployed cluster.
 
@@ -74,4 +75,3 @@ We also need to conduct some load testing for a deployed NFS-HA cluster with hig
 Matt Kereczman (@kermat on Github) from [LINBIT](https://www.linbit.com/) (the force behind DRBD, which LINBIT claims is the de facto open standard for High Aavailability software for enterprise and cloud computing) greatly helped with the Pacemaker configuration for NFS fail-over and the Azure LB-based highly available front-end IP address. Thanks to Matt's help, I think this template can be made possible at least a few more weeks earlier than expected.
 
 This templated solution for highly available NFS was created mostly for the [Moodle-on-Azure](https://github.com/Azure/Moodle). In the process, we came to realize that this might be useful for other Azure Linux customers as well on many other occasions. Therefore, we made the templates as generic as possible for Azure quickstart templates repo publication.
-
