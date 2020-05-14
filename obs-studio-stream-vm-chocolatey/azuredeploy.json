@@ -1,299 +1,301 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-    "contentVersion": "1.0.0.0",
-    "parameters": {
-        "location": {
-            "type": "string",
-            "metadata": {
-                "description": "Location of ressources"
-            }
-        },
-        "vm_name": {
-            "type": "string",
-            "metadata": {
-                "description": "Local name for the VM can be whatever you want"
-            }
-        },
-        "vmAdminUserName": {
-            "type": "string",
-            "metadata": {
-                "description": "VM admin user name"
-            }
-        },
-        "vmAdminPassword": {
-            "type": "securestring",
-            "metadata": {
-                "description": "VM admin password. The supplied password must be between 8-123 characters long and must satisfy at least 3 of password complexity requirements from the following: 1) Contains an uppercase character 2) Contains a lowercase character 3) Contains a numeric digit 4) Contains a special character."
-            }
-        },
-        "vmSize": {
-            "type": "string",
-            "metadata": {
-                "description": "Desired Size of the VM. Any valid option accepted but if you choose premium storage type you must choose a DS class VM size."
-            },
-            "defaultValue": "Standard_NV6",
-            "allowedValues": [
-                "Standard_NV6",
-                "Standard_NV12",
-                "Standard_NV24",
-                "Standard_NC6",
-                "Standard_NC12",
-                "Standard_NC24"
+   "$schema":"https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+   "contentVersion":"1.0.0.0",
+   "parameters":{
+      "location":{
+         "type":"string",
+         "metadata":{
+            "description":"Location of ressources"
+         }
+      },
+      "vm_name":{
+         "type":"string",
+         "metadata":{
+            "description":"Local name for the VM can be whatever you want"
+         }
+      },
+      "vmAdminUserName":{
+         "type":"string",
+         "metadata":{
+            "description":"VM admin user name"
+         }
+      },
+      "vmAdminPassword":{
+         "type":"securestring",
+         "metadata":{
+            "description":"VM admin password. The supplied password must be between 8-123 characters long and must satisfy at least 3 of password complexity requirements from the following: 1) Contains an uppercase character 2) Contains a lowercase character 3) Contains a numeric digit 4) Contains a special character."
+         }
+      },
+      "vmSize":{
+         "type":"string",
+         "metadata":{
+            "description":"Desired Size of the VM. Any valid option accepted but if you choose premium storage type you must choose a DS class VM size."
+         },
+         "defaultValue":"Standard_NV6",
+         "allowedValues":[
+            "Standard_NV6",
+            "Standard_NV12",
+            "Standard_NV24",
+            "Standard_NC6",
+            "Standard_NC12",
+            "Standard_NC24"
+         ]
+      },
+      "virtualNetwork_name":{
+         "defaultValue":"stream-vnet",
+         "type":"String"
+      },
+      "nic_name":{
+         "defaultValue":"stream-nic",
+         "type":"String"
+      },
+      "publicIPAddress_name":{
+         "defaultValue":"stream-ip",
+         "type":"String"
+      },
+      "dnsprefix":{
+         "defaultValue":"streamvm",
+         "type":"String"
+      },
+      "networkSecurityGroup_name":{
+         "defaultValue":"stream-nsg",
+         "type":"String"
+      },
+      "setupChocolateyScriptFileName":{
+         "type":"string",
+         "defaultValue":"ChocoInstall.ps1",
+         "metadata":{
+            "description":"PowerShell script name to execute"
+         }
+      },
+      "setupChocolatelyScriptLocation":{
+         "type":"string",
+         "defaultValue":"https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/obs-studio-stream-vm-chocolatey/scripts/",
+         "metadata":{
+            "description":"Public uri location of PowerShell Chocolately setup script"
+         }
+      },
+      "chocoPackages":{
+         "type":"string",
+         "defaultValue":"obs-studio;skype",
+         "metadata":{
+            "description":"List of Chocolatey packages to install separated by a semi-colon eg. linqpad;sysinternals"
+         }
+      },
+      "linktopackages":{
+         "type":"string",
+         "defaultValue":"https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/obs-studio-stream-vm-chocolatey/scripts/packages/obs-ndi.zip",
+         "metadata":{
+            "description":"List to sources of packages not yet validated by chocolatey team"
+         }
+      }
+   },
+   "variables":{
+      "vmImagePublisher":"MicrosoftWindowsDesktop",
+      "vmImageOffer":"Windows-10",
+      "sku":"rs5-pro"
+   },
+   "resources":[
+      {
+         "type":"Microsoft.Network/networkSecurityGroups",
+         "apiVersion":"2019-07-01",
+         "name":"[parameters('networkSecurityGroup_name')]",
+         "location":"[parameters('location')]",
+         "properties":{
+            "securityRules":[
+               {
+                  "name":"RDP",
+                  "properties":{
+                     "protocol":"TCP",
+                     "sourcePortRange":"*",
+                     "destinationPortRange":"3389",
+                     "sourceAddressPrefix":"*",
+                     "destinationAddressPrefix":"*",
+                     "access":"Allow",
+                     "priority":300,
+                     "direction":"Inbound"
+                  }
+               }
             ]
-        },
-        "virtualNetwork_name": {
-            "defaultValue": "stream-vnet",
-            "type": "String"
-        },
-        "nic_name": {
-            "defaultValue": "stream-nic",
-            "type": "String"
-        },
-        "publicIPAddress_name": {
-            "defaultValue": "stream-ip",
-            "type": "String"
-        },
-        "dnsprefix": {
-            "defaultValue": "streamvm",
-            "type": "String"
-        },
-        "networkSecurityGroup_name": {
-            "defaultValue": "stream-nsg",
-            "type": "String"
-        },
-        "setupChocolateyScriptFileName": {
-            "type": "string",
-            "defaultValue": "ChocoInstall.ps1",
-            "metadata": {
-                "description": "PowerShell script name to execute"
-            }
-        },
-        "setupChocolatelyScriptLocation": {
-            "type": "string",
-            "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/obs-studio-stream-vm-chocolatey/scripts/",
-            "metadata": {
-                "description": "Public uri location of PowerShell Chocolately setup script"
-            }
-        },
-        "chocoPackages": {
-            "type": "string",
-            "defaultValue": "obs-studio;skype",
-            "metadata": {
-                "description": "List of Chocolatey packages to install separated by a semi-colon eg. linqpad;sysinternals"
-            }
-        },
-        "linktopackages": {
-            "type": "string",
-            "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/obs-studio-stream-vm-chocolatey/scripts/packages/obs-ndi.zip",
-            "metadata": {
-                "description": "List to sources of packages not yet validated by chocolatey team"
-            }
-        },
-    },
-    "variables": {
-        "vmImagePublisher": "MicrosoftWindowsDesktop",
-        "vmImageOffer": "Windows-10",
-        "sku": "rs5-pro"
-    },
-    "resources": [
-        {
-            "type": "Microsoft.Network/networkSecurityGroups",
-            "apiVersion": "2019-07-01",
-            "name": "[parameters('networkSecurityGroup_name')]",
-            "location": "[parameters('location')]",
-            "properties": {
-                "securityRules": [
-                    {
-                        "name": "RDP",
-                        "properties": {
-                            "protocol": "TCP",
-                            "sourcePortRange": "*",
-                            "destinationPortRange": "3389",
-                            "sourceAddressPrefix": "*",
-                            "destinationAddressPrefix": "*",
-                            "access": "Allow",
-                            "priority": 300,
-                            "direction": "Inbound"
-                        }
-                    }
-                ]
-            }
-        },
-        {
-            "type": "Microsoft.Network/virtualNetworks/subnets",
-            "apiVersion": "2019-07-01",
-            "name": "[concat(parameters('virtualNetwork_name'), '/default')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetwork_name'))]"
-            ],
-            "properties": {
-                "addressPrefix": "10.0.4.0/24",
-                "privateEndpointNetworkPolicies": "Enabled",
-                "privateLinkServiceNetworkPolicies": "Enabled"
-            }
-        },
-        {
-            "type": "Microsoft.Network/virtualNetworks",
-            "apiVersion": "2019-07-01",
-            "name": "[parameters('virtualNetwork_name')]",
-            "location": "[parameters('location')]",
-            "properties": {
-                "addressSpace": {
-                    "addressPrefixes": [
-                        "10.0.4.0/24"
-                    ]
-                },
-                "subnets": [
-                    {
-                        "name": "default",
-                        "properties": {
-                            "addressPrefix": "10.0.4.0/24",
-                            "privateEndpointNetworkPolicies": "Enabled",
-                            "privateLinkServiceNetworkPolicies": "Enabled"
-                        }
-                    }
-                ],
-                "enableDdosProtection": false,
-                "enableVmProtection": false
-            }
-        },
-        {
-            "type": "Microsoft.Network/publicIPAddresses",
-            "apiVersion": "2019-07-01",
-            "name": "[parameters('publicIPAddress_name')]",
-            "location": "[parameters('location')]",
-            "sku": {
-                "name": "Basic"
+         }
+      },
+      {
+         "type":"Microsoft.Network/virtualNetworks/subnets",
+         "apiVersion":"2019-07-01",
+         "name":"[concat(parameters('virtualNetwork_name'), '/default')]",
+         "dependsOn":[
+            "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetwork_name'))]"
+         ],
+         "properties":{
+            "addressPrefix":"10.0.4.0/24",
+            "privateEndpointNetworkPolicies":"Enabled",
+            "privateLinkServiceNetworkPolicies":"Enabled"
+         }
+      },
+      {
+         "type":"Microsoft.Network/virtualNetworks",
+         "apiVersion":"2019-07-01",
+         "name":"[parameters('virtualNetwork_name')]",
+         "location":"[parameters('location')]",
+         "properties":{
+            "addressSpace":{
+               "addressPrefixes":[
+                  "10.0.4.0/24"
+               ]
             },
-            "properties": {
-                "publicIPAddressVersion": "IPv4",
-                "publicIPAllocationMethod": "Dynamic",
-                "idleTimeoutInMinutes": 4,
-                "dnsSettings": {
-                    "domainNameLabel": "[parameters('dnsprefix')]"
-                }
-            }
-        },
-        {
-            "type": "Microsoft.Network/networkInterfaces",
-            "apiVersion": "2019-07-01",
-            "name": "[parameters('nic_name')]",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddress_name'))]",
-                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetwork_name'), 'default')]",
-                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroup_name'))]"
+            "subnets":[
+               {
+                  "name":"default",
+                  "properties":{
+                     "addressPrefix":"10.0.4.0/24",
+                     "privateEndpointNetworkPolicies":"Enabled",
+                     "privateLinkServiceNetworkPolicies":"Enabled"
+                  }
+               }
             ],
-            "properties": {
-                "ipConfigurations": [
-                    {
-                        "name": "ipconfig1",
-                        "properties": {
-                            "privateIPAddress": "10.0.4.4",
-                            "privateIPAllocationMethod": "Dynamic",
-                            "publicIPAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddress_name'))]"
-                            },
-                            "subnet": {
-                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetwork_name'), 'default')]"
-                            },
-                            "primary": true,
-                            "privateIPAddressVersion": "IPv4"
-                        }
-                    }
-                ],
-                "enableAcceleratedNetworking": false,
-                "enableIPForwarding": false,
-                "networkSecurityGroup": {
-                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroup_name'))]"
-                }
+            "enableDdosProtection":false,
+            "enableVmProtection":false
+         }
+      },
+      {
+         "type":"Microsoft.Network/publicIPAddresses",
+         "apiVersion":"2019-07-01",
+         "name":"[parameters('publicIPAddress_name')]",
+         "location":"[parameters('location')]",
+         "sku":{
+            "name":"Basic"
+         },
+         "properties":{
+            "publicIPAddressVersion":"IPv4",
+            "publicIPAllocationMethod":"Dynamic",
+            "idleTimeoutInMinutes":4,
+            "dnsSettings":{
+               "domainNameLabel":"[parameters('dnsprefix')]"
             }
-        },
-        {
-            "type": "Microsoft.Compute/virtualMachines",
-            "apiVersion": "2019-07-01",
-            "name": "[parameters('vm_name')]",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Network/networkInterfaces', parameters('nic_name'))]"
+         }
+      },
+      {
+         "type":"Microsoft.Network/networkInterfaces",
+         "apiVersion":"2019-07-01",
+         "name":"[parameters('nic_name')]",
+         "location":"[parameters('location')]",
+         "dependsOn":[
+            "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddress_name'))]",
+            "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetwork_name'), 'default')]",
+            "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroup_name'))]"
+         ],
+         "properties":{
+            "ipConfigurations":[
+               {
+                  "name":"ipconfig1",
+                  "properties":{
+                     "privateIPAddress":"10.0.4.4",
+                     "privateIPAllocationMethod":"Dynamic",
+                     "publicIPAddress":{
+                        "id":"[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddress_name'))]"
+                     },
+                     "subnet":{
+                        "id":"[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetwork_name'), 'default')]"
+                     },
+                     "primary":true,
+                     "privateIPAddressVersion":"IPv4"
+                  }
+               }
             ],
-            "properties": {
-                "hardwareProfile": {
-                    "vmSize": "[parameters('vmSize')]"
-                },
-                "storageProfile": {
-                    "imageReference": {
-                        "publisher": "[variables('vmImagePublisher')]",
-                        "offer": "[variables('vmImageOffer')]",
-                        "sku": "[variables('sku')]",
-                        "version": "latest"
-                    },
-                    "osDisk": {
-                        "osType": "Windows",
-                        "name": "[concat(parameters('vm_name'), '_OsDisk')]",
-                        "createOption": "FromImage",
-                        "caching": "ReadWrite"
-                    }
-                },
-                "osProfile": {
-                    "computerName": "[parameters('vm_name')]",
-                    "adminUsername": "[parameters('vmAdminUsername')]",
-                    "adminPassword": "[parameters('vmAdminPassword')]"
-                },
-                "networkProfile": {
-                    "networkInterfaces": [
-                        {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('nic_name'))]"
-                        }
-                    ]
-                }
+            "enableAcceleratedNetworking":false,
+            "enableIPForwarding":false,
+            "networkSecurityGroup":{
+               "id":"[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroup_name'))]"
             }
-        },
-        {
-            "name": "[concat(parameters('vm_name'),'/GPUDrivers')]",
-            "type": "Microsoft.Compute/virtualMachines/extensions",
-            "location": "[parameters('location')]",
-            "apiVersion": "2018-06-01",
-            "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/', parameters('vm_name'))]"
-            ],
-            "tags": {
-                "displayName": "gpu-nvidia-drivers"
+         }
+      },
+      {
+         "type":"Microsoft.Compute/virtualMachines",
+         "apiVersion":"2019-07-01",
+         "name":"[parameters('vm_name')]",
+         "location":"[parameters('location')]",
+         "dependsOn":[
+            "[resourceId('Microsoft.Network/networkInterfaces', parameters('nic_name'))]"
+         ],
+         "properties":{
+            "hardwareProfile":{
+               "vmSize":"[parameters('vmSize')]"
             },
-            "properties": {
-                "publisher": "Microsoft.HpcCompute",
-                "type": "NvidiaGpuDriverWindows",
-                "typeHandlerVersion": "1.2",
-                "autoUpgradeMinorVersion": true,
-                "settings": null
-            }
-        },
-        {
-            "name": "[concat(parameters('vm_name'),'/SetupChocolatey')]",
-            "apiVersion": "2018-06-01",
-            "type": "Microsoft.Compute/virtualMachines/extensions",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/', parameters('vm_name'))]",
-                "[concat('Microsoft.Compute/virtualMachines/',parameters('vm_name'),'/extensions/','GPUDrivers')]"
-            ],
-            "tags": {
-                "displayName": "config-choco"
+            "storageProfile":{
+               "imageReference":{
+                  "publisher":"[variables('vmImagePublisher')]",
+                  "offer":"[variables('vmImageOffer')]",
+                  "sku":"[variables('sku')]",
+                  "version":"latest"
+               },
+               "osDisk":{
+                  "osType":"Windows",
+                  "name":"[concat(parameters('vm_name'), '_OsDisk')]",
+                  "createOption":"FromImage",
+                  "caching":"ReadWrite"
+               }
             },
-            "properties": {
-                "publisher": "Microsoft.Compute",
-                "type": "CustomScriptExtension",
-                "typeHandlerVersion": "1.10",
-                "autoUpgradeMinorVersion": true,
-                "settings": {
-                    "fileUris": [
-                        "[concat(parameters('setupChocolatelyScriptLocation'),parameters('setupChocolateyScriptFileName'))]"
-                    ],
-                    "commandToExecute": "[concat('powershell -ExecutionPolicy bypass -File ',parameters('setupChocolateyScriptFileName'),' -chocoPackages ',parameters('chocoPackages'),' -linktopackages ',parameters('linktopackages'))]"
-                },
-                "protectedSettings": null
+            "osProfile":{
+               "computerName":"[parameters('vm_name')]",
+               "adminUsername":"[parameters('vmAdminUsername')]",
+               "adminPassword":"[parameters('vmAdminPassword')]"
+            },
+            "networkProfile":{
+               "networkInterfaces":[
+                  {
+                     "id":"[resourceId('Microsoft.Network/networkInterfaces', parameters('nic_name'))]"
+                  }
+               ]
             }
-        }
-    ],
-    "outputs": {}
+         }
+      },
+      {
+         "name":"[concat(parameters('vm_name'),'/GPUDrivers')]",
+         "type":"Microsoft.Compute/virtualMachines/extensions",
+         "location":"[parameters('location')]",
+         "apiVersion":"2018-06-01",
+         "dependsOn":[
+            "[concat('Microsoft.Compute/virtualMachines/', parameters('vm_name'))]"
+         ],
+         "tags":{
+            "displayName":"gpu-nvidia-drivers"
+         },
+         "properties":{
+            "publisher":"Microsoft.HpcCompute",
+            "type":"NvidiaGpuDriverWindows",
+            "typeHandlerVersion":"1.2",
+            "autoUpgradeMinorVersion":true,
+            "settings":null
+         }
+      },
+      {
+         "name":"[concat(parameters('vm_name'),'/SetupChocolatey')]",
+         "apiVersion":"2018-06-01",
+         "type":"Microsoft.Compute/virtualMachines/extensions",
+         "location":"[parameters('location')]",
+         "dependsOn":[
+            "[concat('Microsoft.Compute/virtualMachines/', parameters('vm_name'))]",
+            "[concat('Microsoft.Compute/virtualMachines/',parameters('vm_name'),'/extensions/','GPUDrivers')]"
+         ],
+         "tags":{
+            "displayName":"config-choco"
+         },
+         "properties":{
+            "publisher":"Microsoft.Compute",
+            "type":"CustomScriptExtension",
+            "typeHandlerVersion":"1.10",
+            "autoUpgradeMinorVersion":true,
+            "settings":{
+               "fileUris":[
+                  "[concat(parameters('setupChocolatelyScriptLocation'),parameters('setupChocolateyScriptFileName'))]"
+               ],
+               "commandToExecute":"[concat('powershell -ExecutionPolicy bypass -File ',parameters('setupChocolateyScriptFileName'),' -chocoPackages ',parameters('chocoPackages'),' -linktopackages ',parameters('linktopackages'))]"
+            },
+            "protectedSettings":null
+         }
+      }
+   ],
+   "outputs":{
+
+   }
 }
