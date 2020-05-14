@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -e 
 
 date
 ps axjf
@@ -41,7 +41,7 @@ sudo cp /usr/local/bitswift/src/bitswiftd /usr/bin/bitswiftd
 ################################################################
 # Configure to auto start at boot		                           #
 ################################################################
-file=$HOME/.bitswift
+file=$HOME/.bitswift 
 if [ ! -e "$file" ]
 then
 	sudo mkdir $HOME/.bitswift
@@ -52,7 +52,7 @@ if [ ! -e "$file" ]
 then
 	printf '%s\n%s\n' '#!/bin/sh' 'sudo bitswiftd' | sudo tee /etc/init.d/bitswift
 	sudo chmod +x /etc/init.d/bitswift
-	sudo update-rc.d bitswift defaults
+	sudo update-rc.d bitswift defaults	
 fi
 
 /usr/bin/bitswiftd

@@ -1,5 +1,5 @@
 {
-	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
 	"contentVersion": "1.0.0.0",
 	"parameters": {
 		"accountName": {
@@ -36,6 +36,17 @@
 				"description": "The default consistency level of the Cosmos DB account."
 			}
 		},
+		"serverVersion": {
+			"defaultValue": "3.6",
+			"allowedValues": [
+				"3.2",
+				"3.6"
+			],
+			"type": "String",
+			"metadata": {
+				"description": "Specifies the MongoDB server version to use."
+			}
+		},
 		"maxStalenessPrefix": {
 			"type": "int",
 			"defaultValue": 100000,
@@ -52,14 +63,6 @@
 			"maxValue": 86400,
 			"metadata": {
 				"description": "Max lag time (seconds). Required for BoundedStaleness. Valid ranges, Single Region: 5 to 84600. Multi Region: 300 to 86400."
-			}
-		},	
-		"multipleWriteLocations": {
-			"type": "bool",
-			"defaultValue": false,
-			"allowedValues": [ true, false ],
-			"metadata": {
-				"description": "Enable multi-master to make all regions writable."
 			}
 		},
 		"databaseName": {
@@ -130,20 +133,22 @@
 		{
 			"type": "Microsoft.DocumentDB/databaseAccounts",
 			"name": "[variables('accountName')]",
-			"apiVersion": "2019-08-01",
+			"apiVersion": "2020-03-01",
 			"location": "[parameters('location')]",
 			"kind": "MongoDB",
 			"properties": {
 				"consistencyPolicy": "[variables('consistencyPolicy')[parameters('defaultConsistencyLevel')]]",
 				"locations": "[variables('locations')]",
 				"databaseAccountOfferType": "Standard",
-				"enableMultipleWriteLocations": "[parameters('multipleWriteLocations')]"
+				"apiProperties": {
+					"serverVersion": "[parameters('serverVersion')]"
+				}
 			}
 		},
 		{
 			"type": "Microsoft.DocumentDB/databaseAccounts/mongodbDatabases",
 			"name": "[concat(variables('accountName'), '/', parameters('databaseName'))]",
-			"apiVersion": "2019-08-01",
+			"apiVersion": "2020-03-01",
 			"dependsOn": [ "[resourceId('Microsoft.DocumentDB/databaseAccounts/', variables('accountName'))]" ],
 			"properties":{
 				"resource":{
@@ -155,7 +160,7 @@
 		{
 			"type": "Microsoft.DocumentDb/databaseAccounts/mongodbDatabases/collections",
 			"name": "[concat(variables('accountName'), '/', parameters('databaseName'), '/', parameters('collection1Name'))]",
-			"apiVersion": "2019-08-01",
+			"apiVersion": "2020-03-01",
 			"dependsOn": [ "[resourceId('Microsoft.DocumentDB/databaseAccounts/mongodbDatabases', variables('accountName'), parameters('databaseName'))]" ],
 			"properties":
 			{
@@ -181,7 +186,7 @@
 		{
 			"type": "Microsoft.DocumentDb/databaseAccounts/mongodbDatabases/collections",
 			"name": "[concat(variables('accountName'), '/', parameters('databaseName'), '/', parameters('collection2Name'))]",
-			"apiVersion": "2019-08-01",
+			"apiVersion": "2020-03-01",
 			"dependsOn": [ "[resourceId('Microsoft.DocumentDB/databaseAccounts/mongodbDatabases', variables('accountName'),  parameters('databaseName'))]" ],
 			"properties":
 			{

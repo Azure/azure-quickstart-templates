@@ -1,5 +1,5 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
         "siteName": {
@@ -9,31 +9,37 @@
                 "description": "The name of you Web Site."
             }
         },
+        "storageAccountName": {
+            "type": "String",
+            "defaultValue": "[concat('store', uniqueString(resourceGroup().id))]"
+        },
         "location": {
-        "type": "string",
-        "defaultValue": "[resourceGroup().location]",
-        "metadata": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
                 "description": "Location for all resources."
             }
         }
     },
-     "variables": {
-        "hostingPlanName": "[concat('hpn-', resourceGroup().name)]"
+    "variables": {
+        "hostingPlanName": "[concat('hpn-', resourceGroup().name)]",
+        "storageAccountid": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
     },
     "resources": [
         {
             "type": "Microsoft.Web/sites",
-            "apiVersion": "2018-02-01",
+            "apiVersion": "2019-08-01",
             "name": "[parameters('siteName')]",
             "kind": "functionapp,linux",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]"
+                "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
             ],
             "properties": {
                 "name": "[parameters('siteName')]",
                 "siteConfig": {
-                     "appSettings": [
+                    "appSettings": [
                         {
                             "name": "FUNCTIONS_WORKER_RUNTIME",
                             "value": "python"
@@ -41,6 +47,10 @@
                         {
                             "name": "FUNCTIONS_EXTENSION_VERSION",
                             "value": "~2"
+                        },
+                        {
+                            "name": "AzureWebJobsStorage",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', parameters('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountid'),'2019-06-01').keys[0].value)]"
                         }
                     ]
                 },
@@ -50,16 +60,26 @@
         },
         {
             "type": "Microsoft.Web/serverfarms",
-            "apiVersion": "2018-02-01",
+            "apiVersion": "2019-08-01",
             "name": "[variables('hostingPlanName')]",
             "location": "[parameters('location')]",
             "kind": "linux",
-            "properties":{
-                "reserved": false
+            "properties": {
+                "reserved": true
             },
             "sku": {
                 "Tier": "Dynamic",
                 "Name": "Y1"
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[parameters('storageAccountName')]",
+            "apiVersion": "2019-06-01",
+            "location": "[parameters('location')]",
+            "kind": "StorageV2",
+            "sku": {
+                "name": "Standard_LRS"
             }
         }
     ]

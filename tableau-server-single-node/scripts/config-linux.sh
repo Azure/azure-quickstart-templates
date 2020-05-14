@@ -69,9 +69,9 @@ wait
 # retry on fail
 if [ "$OS" == "Ubuntu 16.04 LTS" ]
 then
-  wget --tries=3 --output-document=tableau-installer.deb https://downloads.tableau.com/esdalt/2019.4.0/tableau-server-2019-4-0_amd64.deb
+  wget --tries=3 --output-document=tableau-installer.deb https://downloads.tableau.com/esdalt/2020.1.1/tableau-server-2020-1-1_amd64.deb
 else
-  wget --tries=3 --output-document=tableau-installer.rpm https://downloads.tableau.com/esdalt/2019.4.0/tableau-server-2019-4-0.x86_64.rpm
+  wget --tries=3 --output-document=tableau-installer.rpm https://downloads.tableau.com/esdalt/2020.1.1/tableau-server-2020-1-1.x86_64.rpm
 fi
 
 if [ $? -ne 0 ]

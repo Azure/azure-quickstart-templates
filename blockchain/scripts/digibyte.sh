@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -e 
 
 date
 ps axjf
@@ -43,7 +43,7 @@ fi
 sudo cp /usr/local/digibyte/src/digibyted /usr/bin/digibyted
 sudo cp /usr/local/digibyte/src/digibyte-cli /usr/bin/digibyte-cli
 
-else
+else    
 #################################################################
 # Install DigiByte from PPA                                      #
 #################################################################
@@ -56,7 +56,7 @@ fi
 ################################################################
 # Configure to auto start at boot					    #
 ################################################################
-file=$HOME/.digibyte
+file=$HOME/.digibyte 
 if [ ! -e "$file" ]
 then
 	sudo mkdir $HOME/.digibyte
@@ -68,7 +68,7 @@ if [ ! -e "$file" ]
 then
 	printf '%s\n%s\n' '#!/bin/sh' 'sudo digibyted' | sudo tee /etc/init.d/digibyte
 	sudo chmod +x /etc/init.d/digibyte
-	sudo update-rc.d digibyte defaults
+	sudo update-rc.d digibyte defaults	
 fi
 
 /usr/bin/digibyted
