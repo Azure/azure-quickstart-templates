@@ -1,4 +1,4 @@
-# Azure Firewall with multiple public IP addresses Quickstart
+# Azure Firewall Manager secured virtual hub Quickstart
 
     ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/fwm-docs-qs/PublicLastTestDate.svg)
     ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/fwm-docs-qs/PublicDeployment.svg)
@@ -12,7 +12,7 @@
     
     [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Ffwm-docs-qs%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Ffwm-docs-qs%2Fazuredeploy.json)
 
-This template creates a secured virtual hub with Azure Firewall to secure your cloud network traffic destined to the Internet. The firewall has an application rule that allows web traffic to 'www.microsoft.com'.
+This template creates a secured virtual hub using Azure Firewall to secure your cloud network traffic destined to the Internet. The firewall has an application rule that allows web traffic to 'www.microsoft.com'.
 
 The jump server and workload server virtual machines are *Standard_D2s_v3* virtual machines running Windows Server 2019.
 
