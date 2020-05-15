@@ -1,6 +1,8 @@
 #Script based on https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/visual-studio-dev-vm-chocolatey/scripts/SetupChocolatey.ps1
 param([Parameter(Mandatory=$true)][string]$chocoPackages, [Parameter(Mandatory=$true)][string]$linktopackages)
 
+Write-Host "File packages URL: $linktopackages"
+
 #Changing ExecutionPolicy
 Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
 
@@ -19,7 +21,7 @@ $chocoPackages.Split(";") | ForEach {
     choco install $_ -y -force
 }
 
-
+Write-Host "Packages from choco.org were installes"
 #Isntall OBS-NDI package from sources
 
 Invoke-WebRequest -Uri $linktopackages -OutFile ./obs-ndi.zip
