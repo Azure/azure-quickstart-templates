@@ -1,0 +1,385 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+      "workspaceName": {
+        "type": "string",
+        "metadata": {
+          "description": "Specifies the name of the Azure Machine Learning workspace."
+        }
+      },
+      "location": {
+        "type": "string",
+        "allowedValues": [
+          "australiaeast",
+          "brazilsouth",
+          "canadacentral",
+          "centralus",
+          "eastasia",
+          "eastus",
+          "eastus2",
+          "francecentral",
+          "japaneast",
+          "koreacentral",
+          "northcentralus",
+          "northeurope",
+          "southeastasia",
+          "southcentralus",
+          "uksouth",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westeurope"
+        ],
+        "metadata": {
+          "description": "Specifies the location for all resources."
+        }
+      },
+      "sku": {
+        "type": "string",
+        "defaultValue": "basic",
+        "allowedValues": [
+          "basic",
+          "enterprise"
+        ],
+        "metadata": {
+          "description": "Specifies the sku, also referred as 'edition' of the Azure Machine Learning workspace."
+        }
+      },
+      "storageAccountId": {
+        "type": "string",
+        "defaultValue": ""
+      },
+      "storageAccountName": {
+        "type": "string",
+        "defaultValue": "[concat('sa',uniqueString(resourceGroup().id))]"
+      },
+      "storageAccountType": {
+        "type": "string",
+        "defaultValue": "Standard_LRS",
+        "allowedValues": [
+          "Standard_LRS",
+          "Standard_GRS",
+          "Standard_RAGRS",
+          "Standard_ZRS",
+          "Premium_LRS",
+          "Premium_ZRS",
+          "Standard_GZRS",
+          "Standard_RAGZRS"
+        ]
+      },
+      "keyVaultId": {
+        "type": "string",
+        "defaultValue": ""
+      },
+      "keyVaultName": {
+        "type": "string",
+        "defaultValue": "[concat('kv',uniqueString(resourceGroup().id))]"
+      },
+      "applicationInsightsId": {
+        "type": "string",
+        "defaultValue": ""
+      },
+      "applicationInsightsName": {
+        "type": "string",
+        "defaultValue": "[concat('ai',uniqueString(resourceGroup().id))]"
+      },
+      "containerRegistryId": {
+        "type": "string",
+        "defaultValue": ""
+      },
+      "containerRegistryName": {
+        "type": "string",
+        "defaultValue": "[concat('acr',uniqueString(resourceGroup().id))]"
+      },
+      "containerRegistrySku": {
+        "type": "string",
+        "defaultValue": "Standard",
+        "allowedValues": [
+          "Basic",
+          "Standard",
+          "Premium"
+        ]
+      },
+      "confidential_data":{
+        "type": "string",
+        "defaultValue": "false",
+          "allowedValues": [
+            "false",
+            "true"
+          ],
+          "metadata": {
+            "description": "Specifies that the Azure Machine Learning workspace holds highly confidential data."
+          }
+      },
+      "encryption_status":{
+        "type": "string",
+        "defaultValue": "Disabled",
+          "allowedValues": [
+            "Enabled",
+            "Disabled"
+          ],
+          "metadata": {
+            "description": "Specifies if the Azure Machine Learning workspace should be encrypted with customer managed key."
+          }
+      },
+      "cmk_keyvault":{
+        "type": "string",
+        "defaultValue": "",
+        "metadata": {
+          "description": "Specifies the customer managed keyVault arm id."
+        }
+      },
+      "resource_cmk_uri":{
+        "type": "string",
+        "defaultValue": "",
+        "metadata": {
+          "description": "Specifies if the customer managed keyvault key uri."
+        }
+      }
+  },
+  "variables": {
+      "tenantId": "[subscription().tenantId]",
+      "storageAccount": "[if(empty(parameters('storageAccountId')), resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), parameters('storageAccountId'))]",
+      "keyVault": "[if(empty(parameters('KeyVaultId')), resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName')), parameters('keyVaultId'))]",
+      "applicationInsights": "[if(empty(parameters('applicationInsightsId')), resourceId('Microsoft.Insights/components', parameters('applicationInsightsName')), parameters('applicationInsightsId'))]",
+      "containerRegistry": "[if(empty(parameters('containerRegistryId')), resourceId('Microsoft.ContainerRegistry/registries', parameters('containerRegistryName')), parameters('containerRegistryId'))]",
+      "vnet": "[if(empty(parameters('vnetId')), resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName')), parameters('vnetId'))]",
+      "subnet": "[if(empty(parameters('subnetId')), resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnetName')), parameters('subnetId'))]",
+      "privateDnsGuid": "[guid(resourceGroup().id, deployment().name)]"
+  },
+  "resources": [
+      {
+          "condition": "[empty(parameters('storageAccountId'))]",
+          "type": "Microsoft.Storage/storageAccounts",
+          "apiVersion": "2019-04-01",
+          "name": "[parameters('storageAccountName')]",
+          "location": "[parameters('location')]",
+          "sku": {
+              "name": "[parameters('storageAccountType')]"
+          },
+          "kind": "StorageV2",
+          "properties": {
+              "encryption": {
+                  "services": {
+                      "blob": {
+                          "enabled": true
+                      },
+                      "file": {
+                          "enabled": true
+                      }
+                  },
+                  "keySource": "Microsoft.Storage"
+              },
+              "supportsHttpsTrafficOnly": true
+          }
+      },
+      {
+          "condition": "[empty(parameters('keyVaultId'))]",
+          "type": "Microsoft.KeyVault/vaults",
+          "apiVersion": "2018-02-14",
+          "name": "[parameters('keyVaultName')]",
+          "location": "[parameters('location')]",
+          "properties": {
+              "tenantId": "[variables('tenantId')]",
+              "sku": {
+                  "name": "standard",
+                  "family": "A"
+              },
+              "accessPolicies": []
+          }
+      },
+      {
+          "condition": "[empty(parameters('applicationInsightsId'))]",
+          "type": "Microsoft.Insights/components",
+          "apiVersion": "2018-05-01-preview",
+          "name": "[parameters('applicationInsightsName')]",
+          "location": "[if(or(equals(parameters('location'),'eastus2'), equals(parameters('location'),'westcentralus')),'southcentralus',parameters('location'))]",
+          "kind": "web",
+          "properties": {
+              "Application_Type": "web"
+          }
+      },
+      {
+          "condition": "[empty(parameters('containerRegistryId'))]",
+          "type": "Microsoft.ContainerRegistry/registries",
+          "apiVersion": "2019-05-01",
+          "name": "[parameters('containerRegistryName')]",
+          "location": "[parameters('location')]",
+          "sku": {
+              "name": "[parameters('containerRegistrySku')]"
+          },
+          "properties": {
+              "adminUserEnabled": true
+          }
+      },
+      {
+          "type": "Microsoft.MachineLearningServices/workspaces",
+          "apiVersion": "2020-03-01",
+          "name": "[parameters('workspaceName')]",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+              "[variables('storageAccount')]",
+              "[variables('keyVault')]",
+              "[variables('applicationInsights')]",
+              "[variables('containerRegistry')]"
+          ],
+          "identity": {
+              "type": "systemAssigned"
+          },
+          "sku": {
+              "tier": "[parameters('sku')]",
+              "name": "[parameters('sku')]"
+          },
+          "properties": {
+              "friendlyName": "[parameters('workspaceName')]",
+              "storageAccount": "[variables('storageAccount')]",
+              "keyVault": "[variables('keyVault')]",
+              "applicationInsights": "[variables('applicationInsights')]",
+              "encryption": {
+                  "status": "[parameters('encryption_status')]",
+                  "keyVaultProperties": {
+                      "keyVaultArmId": "[parameters('cmk_keyvault')]",
+                      "keyIdentifier": "[parameters('resource_cmk_uri')]"
+                  }
+              },
+              "hbiWorkspace": "[parameters('confidential_data')]"
+          }
+      },
+      {
+        "condition": "[empty(parameters('vnetId'))]",
+        "type": "Microsoft.Network/virtualNetworks",
+        "apiVersion": "2019-09-01",
+        "name": "[parameters('vnetName')]",
+        "location": "[parameters('location')]",
+        "properties": {
+          "addressSpace": {
+            "addressPrefixes": [
+              "10.0.0.0/27"
+            ]
+          },
+          "virtualNetworkPeerings": [],
+          "enableDdosProtection": false,
+          "enableVmProtection": false
+        }
+      },
+      {
+        "condition": "[empty(parameters('subnetId'))]",
+        "type": "Microsoft.Network/virtualNetworks/subnets",
+        "apiVersion": "2019-09-01",
+        "name": "[concat(parameters('vnetName'), '/', parameters('subnetName'))]",
+        "dependsOn": [
+          "[variables('vnet')]"
+        ],
+        "properties": {
+          "addressPrefix": "10.0.0.0/27",
+          "delegations": [],
+          "privateEndpointNetworkPolicies": "Disabled",
+          "privateLinkServiceNetworkPolicies": "Enabled"
+        }
+      },
+      {
+        "apiVersion": "2019-04-01",
+        "name": "[concat(parameters('workspaceName'), '-PrivateEndpoint')]",
+        "type": "Microsoft.Network/privateEndpoints",
+        "location": "[parameters('location')]",
+        "dependsOn": [
+          "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('workspaceName'))]",
+          "[variables('subnet')]"
+        ],
+        "properties": {
+          "privateLinkServiceConnections": [
+            {
+              "name": "[concat(parameters('workspaceName'), '-PrivateEndpoint')]",
+              "properties": {
+                "privateLinkServiceId": "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('workspaceName'))]",
+                "groupIds": [
+                  "amlworkspace"
+                ]
+              }
+            }
+          ],
+          "manualPrivateLinkServiceConnections": [],
+          "subnet": {
+            "id": "[variables('subnet')]"
+          }
+        }
+      },
+      {
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "2017-05-10",
+        "name": "[concat('PrivateDns-', variables('privateDnsGuid'))]",
+        "dependsOn": [
+          "[resourceId('Microsoft.Network/privateEndpoints', concat(parameters('workspaceName'), '-PrivateEndpoint'))]"
+        ],
+        "properties": {
+          "mode": "Incremental",
+          "template": {
+            "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+            "contentVersion": "1.0.0.0",
+            "resources": [
+              {
+                "type": "Microsoft.Network/privateDnsZones",
+                "apiVersion": "2018-09-01",
+                "name": "privatelink.api.azureml.ms",
+                "location": "global",
+                "tags": {},
+                "properties": {}
+              },
+              {
+                "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+                "apiVersion": "2018-09-01",
+                "name": "[concat('privatelink.api.azureml.ms', '/', uniqueString(resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))))]",
+                "location": "global",
+                "dependsOn": [
+                  "privatelink.api.azureml.ms"
+                ],
+                "properties": {
+                  "virtualNetwork": {
+                    "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+                  },
+                  "registrationEnabled": false
+                }
+              },
+              {
+                "apiVersion": "2017-05-10",
+                "name": "[concat('EndpointDnsRecords-', variables('privateDnsGuid'))]",
+                "type": "Microsoft.Resources/deployments",
+                "dependsOn": [
+                  "privatelink.api.azureml.ms"
+                ],
+                "properties": {
+                  "mode": "Incremental",
+                  "templatelink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "https://network.hosting.portal.azure.net/network/Content/4.13.392.925/DeploymentTemplates/PrivateDnsForPrivateEndpoint.json"
+                  },
+                  "parameters": {
+                    "privateDnsName": {
+                      "value": "privatelink.api.azureml.ms"
+                    },
+                    "privateEndpointNicResourceId": {
+                      "value": "[reference(resourceId('Microsoft.Network/privateEndpoints',concat(parameters('workspaceName'), '-PrivateEndpoint')), '2019-04-01').networkInterfaces[0].id]"
+                    },
+                    "nicRecordsTemplateUri": {
+                      "value": "https://network.hosting.portal.azure.net/network/Content/4.13.392.925/DeploymentTemplates/PrivateDnsForPrivateEndpointNic.json"
+                    },
+                    "ipConfigRecordsTemplateUri": {
+                      "value": "https://network.hosting.portal.azure.net/network/Content/4.13.392.925/DeploymentTemplates/PrivateDnsForPrivateEndpointIpConfig.json"
+                    },
+                    "uniqueId": {
+                      "value": "[variables('privateDnsGuid')]"
+                    },
+                    "existingRecords": {
+                      "value": {}
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "resourceGroup": "[resourceGroup().name]"
+      }
+  ]
+}
