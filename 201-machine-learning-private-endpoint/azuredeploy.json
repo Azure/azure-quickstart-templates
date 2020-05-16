@@ -143,7 +143,10 @@
       "storageAccount": "[if(empty(parameters('storageAccountId')), resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), parameters('storageAccountId'))]",
       "keyVault": "[if(empty(parameters('KeyVaultId')), resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName')), parameters('keyVaultId'))]",
       "applicationInsights": "[if(empty(parameters('applicationInsightsId')), resourceId('Microsoft.Insights/components', parameters('applicationInsightsName')), parameters('applicationInsightsId'))]",
-      "containerRegistry": "[if(empty(parameters('containerRegistryId')), resourceId('Microsoft.ContainerRegistry/registries', parameters('containerRegistryName')), parameters('containerRegistryId'))]"
+      "containerRegistry": "[if(empty(parameters('containerRegistryId')), resourceId('Microsoft.ContainerRegistry/registries', parameters('containerRegistryName')), parameters('containerRegistryId'))]",
+      "vnet": "[if(empty(parameters('vnetId')), resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName')), parameters('vnetId'))]",
+      "subnet": "[if(empty(parameters('subnetId')), resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnetName')), parameters('subnetId'))]",
+      "privateDnsGuid": "[guid(resourceGroup().id, deployment().name)]"
   },
   "resources": [
       {
@@ -242,6 +245,141 @@
               },
               "hbiWorkspace": "[parameters('confidential_data')]"
           }
+      },
+      {
+        "condition": "[empty(parameters('vnetId'))]",
+        "type": "Microsoft.Network/virtualNetworks",
+        "apiVersion": "2019-09-01",
+        "name": "[parameters('vnetName')]",
+        "location": "[parameters('location')]",
+        "properties": {
+          "addressSpace": {
+            "addressPrefixes": [
+              "10.0.0.0/27"
+            ]
+          },
+          "virtualNetworkPeerings": [],
+          "enableDdosProtection": false,
+          "enableVmProtection": false
+        }
+      },
+      {
+        "condition": "[empty(parameters('subnetId'))]",
+        "type": "Microsoft.Network/virtualNetworks/subnets",
+        "apiVersion": "2019-09-01",
+        "name": "[concat(parameters('vnetName'), '/', parameters('subnetName'))]",
+        "dependsOn": [
+          "[variables('vnet')]"
+        ],
+        "properties": {
+          "addressPrefix": "10.0.0.0/27",
+          "delegations": [],
+          "privateEndpointNetworkPolicies": "Disabled",
+          "privateLinkServiceNetworkPolicies": "Enabled"
+        }
+      },
+      {
+        "apiVersion": "2019-04-01",
+        "name": "[concat(parameters('workspaceName'), '-PrivateEndpoint')]",
+        "type": "Microsoft.Network/privateEndpoints",
+        "location": "[parameters('location')]",
+        "dependsOn": [
+          "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('workspaceName'))]",
+          "[variables('subnet')]"
+        ],
+        "properties": {
+          "privateLinkServiceConnections": [
+            {
+              "name": "[concat(parameters('workspaceName'), '-PrivateEndpoint')]",
+              "properties": {
+                "privateLinkServiceId": "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('workspaceName'))]",
+                "groupIds": [
+                  "amlworkspace"
+                ]
+              }
+            }
+          ],
+          "manualPrivateLinkServiceConnections": [],
+          "subnet": {
+            "id": "[variables('subnet')]"
+          }
+        }
+      },
+      {
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "2017-05-10",
+        "name": "[concat('PrivateDns-', variables('privateDnsGuid'))]",
+        "dependsOn": [
+          "[resourceId('Microsoft.Network/privateEndpoints', concat(parameters('workspaceName'), '-PrivateEndpoint'))]"
+        ],
+        "properties": {
+          "mode": "Incremental",
+          "template": {
+            "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+            "contentVersion": "1.0.0.0",
+            "resources": [
+              {
+                "type": "Microsoft.Network/privateDnsZones",
+                "apiVersion": "2018-09-01",
+                "name": "privatelink.api.azureml.ms",
+                "location": "global",
+                "tags": {},
+                "properties": {}
+              },
+              {
+                "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+                "apiVersion": "2018-09-01",
+                "name": "[concat('privatelink.api.azureml.ms', '/', uniqueString(resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))))]",
+                "location": "global",
+                "dependsOn": [
+                  "privatelink.api.azureml.ms"
+                ],
+                "properties": {
+                  "virtualNetwork": {
+                    "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+                  },
+                  "registrationEnabled": false
+                }
+              },
+              {
+                "apiVersion": "2017-05-10",
+                "name": "[concat('EndpointDnsRecords-', variables('privateDnsGuid'))]",
+                "type": "Microsoft.Resources/deployments",
+                "dependsOn": [
+                  "privatelink.api.azureml.ms"
+                ],
+                "properties": {
+                  "mode": "Incremental",
+                  "templatelink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "https://network.hosting.portal.azure.net/network/Content/4.13.392.925/DeploymentTemplates/PrivateDnsForPrivateEndpoint.json"
+                  },
+                  "parameters": {
+                    "privateDnsName": {
+                      "value": "privatelink.api.azureml.ms"
+                    },
+                    "privateEndpointNicResourceId": {
+                      "value": "[reference(resourceId('Microsoft.Network/privateEndpoints',concat(parameters('workspaceName'), '-PrivateEndpoint')), '2019-04-01').networkInterfaces[0].id]"
+                    },
+                    "nicRecordsTemplateUri": {
+                      "value": "https://network.hosting.portal.azure.net/network/Content/4.13.392.925/DeploymentTemplates/PrivateDnsForPrivateEndpointNic.json"
+                    },
+                    "ipConfigRecordsTemplateUri": {
+                      "value": "https://network.hosting.portal.azure.net/network/Content/4.13.392.925/DeploymentTemplates/PrivateDnsForPrivateEndpointIpConfig.json"
+                    },
+                    "uniqueId": {
+                      "value": "[variables('privateDnsGuid')]"
+                    },
+                    "existingRecords": {
+                      "value": {}
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "resourceGroup": "[resourceGroup().name]"
       }
   ]
 }
