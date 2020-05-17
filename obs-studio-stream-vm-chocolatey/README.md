@@ -3,6 +3,9 @@
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/obs-studio-stream-vm-chocolatey/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/obs-studio-stream-vm-chocolatey/PublicDeployment.svg)
 
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/obs-studio-stream-vm-chocolatey/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/obs-studio-stream-vm-chocolatey/FairfaxDeployment.svg)
+
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/obs-studio-stream-vm-chocolatey/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/obs-studio-stream-vm-chocolatey/CredScanResult.svg)
 
