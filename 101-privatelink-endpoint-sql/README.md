@@ -1,4 +1,4 @@
-# Azure private DNS zone
+# Azure private link endpoint
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-privatelink-endpoint-sql/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-privatelink-endpoint-sql/PublicDeployment.svg)
