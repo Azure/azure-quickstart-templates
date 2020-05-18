@@ -1,5 +1,5 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2019-08-01/deploymentTemplate.json#",
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
        "adminUsername": {
@@ -13,14 +13,28 @@
            "metadata": {
                "description": "Password for the admin account on the servers"
            }
-       }
+       },
+        "location": {
+            "defaultValue": "[resourceGroup().location]",
+            "type": "String",
+            "metadata": {
+                "description": "Location for all resources."
+            }
+        },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2_v3",
+      "metadata": {
+        "description": "Size of the virtual machine."
+      }
+    }
     },
     "resources": [
         {
             "type": "Microsoft.Network/virtualWans",
             "apiVersion": "2019-08-01",
             "name": "VWan-01",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "properties": {
                 "disableVpnEncryption": false,
                 "allowBranchToBranchTraffic": true,
@@ -33,7 +47,7 @@
             "type": "Microsoft.Network/virtualHubs",
             "apiVersion": "2019-08-01",
             "name": "Hub-01",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/virtualWans', 'VWan-01')]"
             ],
@@ -64,7 +78,7 @@
             "type": "Microsoft.Network/firewallPolicies",
             "apiVersion": "2019-08-01",
             "name": "Policy-01",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "properties": {
                 "threatIntelMode": "Alert"
             }
@@ -73,7 +87,7 @@
             "type": "Microsoft.Network/firewallPolicies/ruleGroups",
             "apiVersion": "2019-08-01",
             "name": "Policy-01/DefaultApplicationRuleCollectionGroup",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/firewallPolicies','Policy-01')]"
                     ],
@@ -117,7 +131,7 @@
             "type": "Microsoft.Network/azureFirewalls",
             "apiVersion": "2019-08-01",
             "name": "AzfwTest",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/virtualHubs', 'Hub-01')]",
                 "[resourceId('Microsoft.Network/firewallPolicies', 'Policy-01')]"
@@ -139,7 +153,7 @@
             "type": "Microsoft.Network/virtualNetworks",
             "apiVersion": "2019-11-01",
             "name": "Spoke-01",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "properties": {
                 "addressSpace": {
                     "addressPrefixes": [
@@ -184,13 +198,13 @@
             "type": "Microsoft.Compute/virtualMachines",
             "apiVersion": "2019-07-01",
             "name": "Jump-Srv",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/networkInterfaces', 'netInterface-jump-srv')]"
             ],
             "properties": {
                 "hardwareProfile": {
-                    "vmSize": "Standard_D2s_v3"
+                    "vmSize": "[parameters('vmSize')]"
                 },
                 "storageProfile": {
                     "imageReference": {
@@ -232,13 +246,13 @@
             "type": "Microsoft.Compute/virtualMachines",
             "apiVersion": "2019-07-01",
             "name": "Workload-Srv",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/networkInterfaces', 'netInterface-workload-srv')]"
             ],
             "properties": {
                 "hardwareProfile": {
-                    "vmSize": "Standard_D2s_v3"
+                    "vmSize": "[parameters('vmSize')]"
                 },
                 "storageProfile": {
                     "imageReference": {
@@ -280,7 +294,7 @@
             "type": "Microsoft.Network/networkInterfaces",
             "apiVersion": "2020-03-01",
             "name": "netInterface-workload-srv",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'Spoke-01','Workload-SN')]",
                 "[resourceId('Microsoft.Network/networkSecurityGroups', 'nsg-workload-srv')]"
@@ -310,7 +324,7 @@
             "type": "Microsoft.Network/networkInterfaces",
             "apiVersion": "2020-03-01",
             "name": "netInterface-jump-srv",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/publicIPAddresses', 'publicIP-jump-srv')]",
                 "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'Spoke-01','Jump-SN')]",
@@ -344,7 +358,7 @@
            "type": "Microsoft.Network/networkSecurityGroups",
            "apiVersion": "2020-03-01",
            "name": "nsg-jump-srv",
-           "location": "[resourceGroup().location]",
+           "location": "[parameters('location')]",
            "properties": {
                "securityRules": [
                    {
@@ -367,7 +381,7 @@
             "type": "Microsoft.Network/networkSecurityGroups",
             "apiVersion": "2020-03-01",
             "name": "nsg-workload-srv",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "properties": {
             }
         },
@@ -375,7 +389,7 @@
            "type": "Microsoft.Network/publicIPAddresses",
            "apiVersion": "2019-11-01",
            "name": "publicIP-jump-srv",
-           "location": "[resourceGroup().location]",
+           "location": "[parameters('location')]",
            "sku": {
                "name": "Standard"
            },
@@ -389,7 +403,7 @@
             "type": "Microsoft.Network/routeTables",
             "apiVersion": "2020-03-01",
             "name": "RT-01",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "properties": {
                 "disableBgpRoutePropagation": false,
                 "routes": [
@@ -407,7 +421,11 @@
             "type": "Microsoft.Network/virtualHubs/routeTables",
             "apiVersion": "2019-07-01",
             "name": "Hub-01/VirtualNetworkRouteTable",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualHubs', 'Hub-01')]",
+                "[resourceId('Microsoft.Network/azureFirewalls', 'AzfwTest')]"
+            ],
             "properties": {
                 "routes": [
                 {
@@ -425,17 +443,18 @@
                 "attachedConnections": [
                     "All_Vnets"
                 ]
-            },
-            "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualHubs', 'Hub-01')]",
-                "[resourceId('Microsoft.Network/azureFirewalls', 'AzfwTest')]"
-            ]
+            }
         },
         {
             "type": "Microsoft.Network/virtualHubs/routeTables",
             "apiVersion": "2019-07-01",
             "name": "Hub-01/BranchRouteTable",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                    "[resourceId('Microsoft.Network/virtualHubs', 'Hub-01')]",
+                    "[resourceId('Microsoft.Network/azureFirewalls', 'AzfwTest')]",
+                    "[resourceId('Microsoft.Network/virtualHubs/routeTables', 'Hub-01','VirtualNetworkRouteTable')]"
+            ],
             "properties": {
                     "routes": [
                     {
@@ -452,13 +471,7 @@
                         "attachedConnections": [
                            "All_Branches"
                         ]
-                },
-                "dependsOn": [
-                    "[resourceId('Microsoft.Network/virtualHubs', 'Hub-01')]",
-                    "[resourceId('Microsoft.Network/azureFirewalls', 'AzfwTest')]",
-                    "[resourceId('Microsoft.Network/virtualHubs/routeTables', 'Hub-01','VirtualNetworkRouteTable')]"
-
-                ]
+                }
         }
     ]
 }
