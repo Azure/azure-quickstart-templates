@@ -1,0 +1,429 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "_artifactsLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+            },
+            "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/301-web-app-regional-vnet-private-endpoint-sql-storage/"
+        },
+        "_artifactsLocationSasToken": {
+            "type": "string",
+            "metadata": {
+                "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+            },
+            "defaultValue": ""
+        },
+        "webAppName": {
+            "type": "string",
+            "metadata": {
+                "description": "unique web app name"
+            }
+        },
+        "sqlAdministratorLoginName": {
+            "type": "string",
+            "defaultValue": "dbadmin",
+            "metadata": {
+                "description": "Azure SQL DB administrator login name"
+            }
+        },
+        "sqlAdministratorLoginPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Azure SQL DB administrator password"
+            }
+        },
+        "vNets": {
+            "type": "array",
+            "metadata": {
+                "description": "JSON object describing virtual networks & subnets"
+            }
+        }
+    },
+    "variables": {
+        "suffix": "[substring(replace(guid(resourceGroup().id), '-', ''), 0, 6)]",
+        "appName": "[concat(parameters('webAppName'), '-', variables('suffix'))]",
+        "storagePrivateDnsZoneName": "privatelink.blob.core.windows.net",
+        "sqlPrivateDnsZoneName": "privatelink.database.windows.net",
+        "sqlDatabaseName": "mydb01",
+        "storageContainerName": "mycontainer",
+        "storageGroupId": "blob", // valid values: 'blob', 'file', 'table', 'queue', 'web', 'dfs'
+        "sqlGroupId": "sqlServer", // valid values: 'sqlServer'
+        "vnetNestedTemplateUri": "[uri(parameters('_artifactsLocation'), concat('/nested/vnets.json', parameters('_artifactsLocationSasToken')))]",
+        "vnetPeeringNestedTemplateUri": "[uri(parameters('_artifactsLocation'), concat('/nested/vnet_peering.json', parameters('_artifactsLocationSasToken')))]",
+        "appServicePlanNestedTemplateUri": "[uri(parameters('_artifactsLocation'), concat('/nested/app_svc_plan.json', parameters('_artifactsLocationSasToken')))]",
+        "appNestedTemplateUri": "[uri(parameters('_artifactsLocation'), concat('/nested/app.json', parameters('_artifactsLocationSasToken')))]",
+        "sqlNestedTemplateUri": "[uri(parameters('_artifactsLocation'), concat('/nested/sqldb.json', parameters('_artifactsLocationSasToken')))]",
+        "privateLinkNestedTemplateUri": "[uri(parameters('_artifactsLocation'), concat('/nested/private_link.json', parameters('_artifactsLocationSasToken')))]",
+        "storageNestedTemplateUri": "[uri(parameters('_artifactsLocation'), concat('/nested/storage.json', parameters('_artifactsLocationSasToken')))]",
+        "privateDnsNestedTemplateUri": "[uri(parameters('_artifactsLocation'), concat('/nested/private_dns.json', parameters('_artifactsLocationSasToken')))]",
+        "privateDnsRecordNestedTemplateUri": "[uri(parameters('_artifactsLocation'), concat('/nested/dns_record.json', parameters('_artifactsLocationSasToken')))]",
+        "privateLinkIpConfigsNestedTemplateUri": "[uri(parameters('_artifactsLocation'), concat('/nested/private_link_ipconfigs.json', parameters('_artifactsLocationSasToken')))]",
+        "privateLinkIpConfigsHelperNestedTemplateUri": "[uri(parameters('_artifactsLocation'), concat('/nested/private_link_ipconfigs_helper.json', parameters('_artifactsLocationSasToken')))]"
+
+    },
+    "resources": [
+        {
+            "comments": "This deployment links to the vnets.json nested ARM template",
+            "name": "[concat('linkedTemplate-vnet', '-', copyIndex())]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2018-05-01",
+            "resourceGroup": "[resourceGroup().name]",
+            "dependsOn": [
+            ],
+            "copy": {
+                "name": "vnetCopy",
+                "count": "[length(parameters('vNets'))]"
+            },
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "suffix": {
+                        "value": "[variables('suffix')]"
+                    },
+                    "vNets": {
+                        "value": "[parameters('vNets')[copyIndex()]]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('vnetNestedTemplateUri')]"
+                }
+            }
+        },
+        {
+            "comments": "This deployment links to the peerings nested ARM template",
+            "name": "linkedTemplate-peerings",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2017-05-10",
+            "resourceGroup": "[resourceGroup().name]",
+            "dependsOn": [
+                "vnetCopy"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "suffix": {
+                        "value": "[variables('suffix')]"
+                    },
+                    "vNets": {
+                        "value": "[parameters('vNets')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('vnetPeeringNestedTemplateUri')]"
+                }
+            }
+        },
+        {
+            "comments": "This deployment links to theapp_svc_plan.json nested ARM template",
+            "name": "linkedTemplate-app-svc-plan",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2018-05-01",
+            "resourceGroup": "[resourceGroup().name]",
+            "dependsOn": [
+                "vnetCopy"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "suffix": {
+                        "value": "[variables('suffix')]"
+                    },
+                    "serverFarmSku": {
+                        "value": {
+                            "Tier": "Standard",
+                            "Name": "S1"
+                        }
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('appServicePlanNestedTemplateUri')]"
+                }
+            }
+        },
+        {
+            "comments": "This deployment links to the app.json nested ARM template",
+            "name": "linkedTemplate-app",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2018-05-01",
+            "resourceGroup": "[resourceGroup().name]",
+            "dependsOn": [
+                "linkedTemplate-app-svc-plan"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "suffix": {
+                        "value": "[variables('suffix')]"
+                    },
+                    "hostingPlanName": {
+                        "value": "[reference(resourceId('Microsoft.Resources/deployments', 'linkedTemplate-app-svc-plan')).outputs.serverFarmName.value]"
+                    },
+                    "subnetResourceId": {
+                        "value": "[reference(resourceId('Microsoft.Resources/deployments', 'linkedTemplate-vnet-1')).outputs.subnetResourceIds.value[0].id]"
+                    },
+                    "appName": {
+                        "value": "[variables('appName')]"
+                    },
+                    "ipAddressRestriction": {
+                        "value": [
+                            "0.0.0.0/32"
+                        ]
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('appNestedTemplateUri')]"
+                }
+            }
+        },
+        {
+            "comments": "This deployment links to the sqldb.json nested ARM template",
+            "name": "linkedTemplate-sqldb",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2018-05-01",
+            "resourceGroup": "[resourceGroup().name]",
+            "dependsOn": [
+                "vnetCopy"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "suffix": {
+                        "value": "[variables('suffix')]"
+                    },
+                    "sqlAdministratorLogin": {
+                        "value": "[parameters('sqlAdministratorLoginName')]"
+                    },
+                    "sqlAdministratorLoginPassword": {
+                        "value": "[parameters('sqlAdministratorLoginPassword')]"
+                    },
+                    "databaseName": {
+                        "value": "[variables('sqlDatabaseName')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('sqlNestedTemplateUri')]"
+                }
+            }
+        },
+        {
+            "comments": "This deployment links to the private_link.json nested ARM template",
+            "name": "linkedTemplate-sqldb-private-link",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2018-05-01",
+            "resourceGroup": "[resourceGroup().name]",
+            "dependsOn": [
+                "linkedTemplate-sqldb"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "suffix": {
+                        "value": "[variables('suffix')]"
+                    },
+                    "resourceType": {
+                        "value": "Microsoft.Sql/servers"
+                    },
+                    "resourceName": {
+                        "value": "[reference(resourceId('Microsoft.Resources/deployments', 'linkedTemplate-sqldb')).outputs.sqlServerName.value]"
+                    },
+                    "groupId": {
+                        "value": "[variables('sqlGroupId')]"
+                    },
+                    "subnetResourceId": {
+                        "value": "[reference(resourceId('Microsoft.Resources/deployments', 'linkedTemplate-vnet-0')).outputs.subnetResourceIds.value[0].id]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('privateLinkNestedTemplateUri')]"
+                }
+            }
+        },
+        {
+            "comments": "This deployment links to the storage.json nested ARM template",
+            "name": "linkedTemplate-storage",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2018-05-01",
+            "resourceGroup": "[resourceGroup().name]",
+            "dependsOn": [
+                "vnetCopy"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "suffix": {
+                        "value": "[variables('suffix')]"
+                    },
+                    "storageAccountPrefix": {
+                        "value": "plnk"
+                    },
+                    "containerName": {
+                        "value": "[variables('storageContainerName')]"
+                    },
+                    "defaultNetworkAccessAction": {
+                        "value": "Deny"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('storageNestedTemplateUri')]"
+                }
+            }
+        },
+        {
+            "comments": "This deployment links to the private_link.json nested ARM template",
+            "name": "linkedTemplate-storage-private-link",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2018-05-01",
+            "resourceGroup": "[resourceGroup().name]",
+            "dependsOn": [
+                "linkedTemplate-storage"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "suffix": {
+                        "value": "[variables('suffix')]"
+                    },
+                    "resourceType": {
+                        "value": "Microsoft.Storage/storageAccounts"
+                    },
+                    "resourceName": {
+                        "value": "[reference(resourceId('Microsoft.Resources/deployments', 'linkedTemplate-storage')).outputs.storageAccountName.value]"
+                    },
+                    "groupId": {
+                        "value": "[variables('storageGroupId')]"
+                    },
+                    "subnetResourceId": {
+                        "value": "[reference(resourceId('Microsoft.Resources/deployments', 'linkedTemplate-vnet-0')).outputs.subnetResourceIds.value[0].id]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('privateLinkNestedTemplateUri')]"
+                }
+            }
+        },
+        {
+            "comments": "This deployment links to the private_dns.json nested ARM template",
+            "name": "linkedTemplate-storage-private-dns",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2018-05-01",
+            "resourceGroup": "[resourceGroup().name]",
+            "dependsOn": [
+                "linkedTemplate-storage-private-link"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "privateDnsZoneName": {
+                        "value": "[variables('storagePrivateDnsZoneName')]"
+                    },
+                    "virtualNetworkName": {
+                        "value": "[reference(resourceId('Microsoft.Resources/deployments', 'linkedTemplate-vnet-1')).outputs.virtualNetworkName.value]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('privateDnsNestedTemplateUri')]"
+                }
+            }
+        },
+        {
+            "comments": "This deployment links to the private_link_ipconfigs.json nested ARM template",
+            "name": "linkedTemplate-storage-private-link-ipconfigs",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "resourceGroup": "[resourceGroup().name]",
+            "dependsOn": [
+                "linkedTemplate-storage-private-dns"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "privateDnsZoneName": {
+                        "value": "[variables('storagePrivateDnsZoneName')]"
+                    },
+                    "privateLinkNicResourceId": {
+                        "value": "[reference(resourceId('Microsoft.Resources/deployments', 'linkedTemplate-storage-private-link')).outputs.privateLinkNicResourceId.value]"
+                    },
+                    "privateDnsRecordTemplateUri": {
+                        "value": "[variables('privateDnsRecordNestedTemplateUri')]"
+                    },
+                    "privateLinkNicIpConfigTemplateUri": {
+                        "value": "[variables('privateLinkIpConfigsHelperNestedTemplateUri')]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('privateLinkIpConfigsNestedTemplateUri')]"
+                }
+            }
+        },
+        {
+            "comments": "This deployment links to the private_dns.json nested ARM template",
+            "name": "linkedTemplate-sqldb-private-dns",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2018-05-01",
+            "resourceGroup": "[resourceGroup().name]",
+            "dependsOn": [
+                "linkedTemplate-sqldb-private-link"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "privateDnsZoneName": {
+                        "value": "[variables('sqlPrivateDnsZoneName')]"
+                    },
+                    "virtualNetworkName": {
+                        "value": "[reference(resourceId('Microsoft.Resources/deployments', 'linkedTemplate-vnet-1')).outputs.virtualNetworkName.value]"
+                    }
+                },
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('privateDnsNestedTemplateUri')]"
+                }
+            }
+        },
+        {
+            "comments": "This deployment links to the private_link_ipconfig.json nested ARM template",
+            "name": "linkedTemplate-sqldb-private-link-ipconfigs",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "resourceGroup": "[resourceGroup().name]",
+            "dependsOn": [
+                "linkedTemplate-sqldb-private-dns"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "privateDnsZoneName": {
+                        "value": "[variables('sqlPrivateDnsZoneName')]"
+                    },
+                    "privateLinkNicResourceId": {
+                        "value": "[reference(resourceId('Microsoft.Resources/deployments', 'linkedTemplate-sqldb-private-link')).outputs.privateLinkNicResourceId.value]"
+                    },
+                    "privateDnsRecordTemplateUri": {
+                        "value": "[variables('privateDnsRecordNestedTemplateUri')]"
+                    },
+                    "privateLinkNicIpConfigTemplateUri": {
+                        "value": "[variables('privateLinkIpConfigsHelperNestedTemplateUri')]"
+                    }
+                },
+                "templateLink": {
+                    "uri": "[variables('privateLinkIpConfigsNestedTemplateUri')]"
+                }
+            }
+        }
+    ],
+    "outputs": {
+    }
+}
