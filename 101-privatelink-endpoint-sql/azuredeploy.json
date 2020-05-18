@@ -2,25 +2,25 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "administratorLogin": {
+    "sqlAdministratorLogin": {
       "type": "string",
       "metadata": {
         "description": "The administrator username of the SQL logical server"
       }
     },
-    "administratorLoginPassword": {
+    "sqlAdministratorLoginPassword": {
       "type": "securestring",
       "metadata": {
         "description": "The administrator password of the SQL logical server."
       }
     },
-    "adminUsername": {
+    "vmAdminUsername": {
       "type": "string",
       "metadata": {
         "description": "Username for the Virtual Machine."
       }
     },
-    "adminPassword": {
+    "vmAdminPassword": {
       "type": "secureString",
       "metadata": {
         "description": "Password for the Virtual Machine. The password must be at least 12 characters long and have lower case, upper characters, digit and a special character (Regex match)"
@@ -58,17 +58,17 @@
   },
   "resources": [
     {
-      "name": "[variables('sqlServerName')]",
       "type": "Microsoft.Sql/servers",
       "apiVersion": "2019-06-01-preview",
+      "name": "[variables('sqlServerName')]",
       "location": "[parameters('location')]",
       "tags": {
         "displayName": "[variables('sqlServerName')]"
       },
       "kind": "v12.0",
       "properties": {
-        "administratorLogin": "[parameters('administratorLogin')]",
-        "administratorLoginPassword": "[parameters('administratorLoginPassword')]",
+        "administratorLogin": "[parameters('sqlAdministratorLogin')]",
+        "administratorLoginPassword": "[parameters('sqlAdministratorLoginPassword')]",
         "version": "12.0",
         "publicNetworkAccess": "Disabled"
       },
@@ -76,9 +76,9 @@
       ]
     },
     {
-      "name": "[variables('databaseName')]",
       "type": "Microsoft.Sql/servers/databases",
       "apiVersion": "2019-06-01-preview",
+      "name": "[variables('databaseName')]",      
       "location": "[parameters('location')]",
       "tags": {
         "displayName": "[variables('databaseName')]"
@@ -101,8 +101,8 @@
     },
 
     {
-      "apiVersion": "2018-10-01",
       "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2018-10-01",
       "name": "[variables('vnetName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -114,10 +114,10 @@
       },
       "resources": [
         {
-          "apiVersion": "2018-10-01",
           "type": "subnets",
-          "location": "[parameters('location')]",
+          "apiVersion": "2018-10-01",
           "name": "[variables('subnet1Name')]",
+          "location": "[parameters('location')]",
           "dependsOn": [
             "[variables('vnetName')]"
           ],
@@ -129,14 +129,14 @@
       ]
     },
     {
-      "location": "[parameters('location')]",
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2019-04-01",
       "name": "[variables('privateEndpointName')]",
+      "location": "[parameters('location')]",      
       "dependsOn": [
         "[variables('vnetName')]",
         "[variables('sqlServerName')]"
       ],
-      "type": "Microsoft.Network/privateEndpoints",
-      "apiVersion": "2019-04-01",
       "properties": {
         "subnet": {
           "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('subnet1Name'))]"
@@ -180,8 +180,8 @@
       }
     },
     {
-      "apiVersion": "2020-03-01",
       "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+      "apiVersion": "2020-03-01",
       "name": "[variables('pvtendpointdnsgroupname')]",
       "location": "[parameters('location')]",
       "dependsOn": [
@@ -200,9 +200,9 @@
       }
     },
     {
-      "name": "[variables('publicIpAddressName')]",
       "type": "Microsoft.Network/publicIPAddresses",
       "apiVersion": "2019-09-01",
+      "name": "[variables('publicIpAddressName')]",
       "location": "[parameters('location')]",
       "tags": {
         "displayName": "[variables('publicIpAddressName')]"
@@ -215,9 +215,9 @@
       }
     },
     {
-      "name": "[variables('networkInterfaceName')]",
       "type": "Microsoft.Network/networkInterfaces",
       "apiVersion": "2019-09-01",
+      "name": "[variables('networkInterfaceName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpAddressName'))]",
@@ -244,9 +244,9 @@
       }
     },
     {
-      "name": "[variables('vmName')]",
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2019-07-01",
+      "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
@@ -260,14 +260,14 @@
         },
         "osProfile": {
           "computerName": "[variables('vmName')]",
-          "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminUsername": "[parameters('vmAdminUsername')]",
+          "adminPassword": "[parameters('vmAdminPassword')]"
         },
         "storageProfile": {
           "imageReference": {
             "publisher": "MicrosoftWindowsServer",
             "offer": "WindowsServer",
-            "sku": "2016-Datacenter",
+            "sku": "2019-Datacenter",
             "version": "latest"
           },
           "osDisk": {
