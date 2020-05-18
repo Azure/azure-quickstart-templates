@@ -1,0 +1,97 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "appName": {
+            "type": "string",
+            "metadata": {
+                "description": "name of app service web app (must be globally unique)"
+            }
+
+        },
+        "suffix": {
+            "type": "string",
+            "metadata": {
+                "description": "naming suffix based on resource group name hash"
+            }
+        },
+        "hostingPlanName": {
+            "type": "string",
+            "metadata": {
+                "description": "name of app service hosting plan"
+            }
+        },
+        "ipAddressRestriction": {
+            "type": "array",
+            "defaultValue": [
+                {
+                    "ipAddress": "0.0.0.0/32"
+                }
+            ],
+            "metadata": {
+                "description": "ip address restrictions for web app"
+            }
+        },
+        "subnetResourceId": {
+            "type": "string",
+            "metadata": {
+                "description": "resource id of subnet to use for app service reginal vnet integration"
+            }
+        }
+    },
+    "variables": {
+        "appName": "[concat(parameters('appName'), '-', parameters('suffix'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Web/sites",
+            "name": "[tolower(parameters('appName'))]",
+            "apiVersion": "2019-08-01",
+            "location": "[resourceGroup().location]",
+            "resources": [
+                {
+                    "apiVersion": "2019-08-01",
+                    "type": "config",
+                    "name": "web",
+                    "dependsOn": [
+                        "[tolower(parameters('appName'))]"
+                    ],
+                    "properties": {
+                        "ipSecurityRestrictions": "[parameters('ipAddressRestriction')]"
+                    }
+                },
+                {
+                    "name": "virtualNetwork",
+                    "type": "networkConfig",
+                    "apiVersion": "2019-08-01",
+                    "location": "[resourceGroup().location]",
+                    "properties": {
+                        "subnetResourceid": "[parameters('subnetResourceId')]",
+                        "swiftSupported": true
+                    },
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/sites', parameters('appName'))]"
+                    ]
+                }
+            ],
+            "properties": {
+                "name": "[tolower(parameters('appName'))]",
+                "serverFarmId": "[resourceId(resourceGroup().name, 'Microsoft.Web/serverfarms', parameters('hostingPlanName'))]",
+                "siteConfig": {
+                    "appSettings": [
+                        {
+                            "name": "WEBSITE_VNET_ROUTE_ALL",
+                            "value": 1
+                        }
+                    ]
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "appName": {
+            "type": "string",
+            "value": "[variables('appName')]"
+        }
+    }
+}
