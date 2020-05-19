@@ -46,9 +46,13 @@
           "description": "Specifies the sku, also referred as 'edition' of the Azure Machine Learning workspace."
         }
       },
-      "storageAccountId": {
+      "storageAccountNewOrExisting": {
         "type": "string",
-        "defaultValue": ""
+        "defaultValue": "new",
+        "allowedValues": [
+          "new",
+          "existing"
+        ]
       },
       "storageAccountName": {
         "type": "string",
@@ -68,25 +72,52 @@
           "Standard_RAGZRS"
         ]
       },
-      "keyVaultId": {
+      "storageAccountResourceGroupName": {
         "type": "string",
-        "defaultValue": ""
+        "defaultValue": "[resourceGroup().name]"
+      },
+      "keyVaultNewOrExisting": {
+        "type": "string",
+        "defaultValue": "new",
+        "allowedValues": [
+          "new",
+          "existing"
+        ],
+        "metadata": {
+          "description": "Determines whether or not a key vault should be provisioned."
+        }
       },
       "keyVaultName": {
         "type": "string",
         "defaultValue": "[concat('kv',uniqueString(resourceGroup().id))]"
       },
-      "applicationInsightsId": {
+      "keyVaultResourceGroupName": {
         "type": "string",
-        "defaultValue": ""
+        "defaultValue": "[resourceGroup().name]"
+      },
+      "applicationInsightsNewOrExisting": {
+        "type": "string",
+        "defaultValue": "new",
+        "allowedValues": [
+          "new",
+          "existing"
+        ]
       },
       "applicationInsightsName": {
         "type": "string",
         "defaultValue": "[concat('ai',uniqueString(resourceGroup().id))]"
       },
-      "containerRegistryId": {
+      "applicationInsightsResourceGroupName": {
         "type": "string",
-        "defaultValue": ""
+        "defaultValue": "[resourceGroup().name]"
+      },
+      "containerRegistryNewOrExisting": {
+        "type": "string",
+        "defaultValue": "new",
+        "allowedValues": [
+          "new",
+          "existing"
+        ]
       },
       "containerRegistryName": {
         "type": "string",
@@ -101,21 +132,53 @@
           "Premium"
         ]
       },
-      "vnetId": {
+      "containerRegistryResourceGroupName": {
         "type": "string",
-        "defaultValue": ""
+        "defaultValue": "[resourceGroup().name]"
+      },
+      "vnetNewOrExisting": {
+        "type": "string",
+        "defaultValue": "new",
+        "allowedValues": [
+          "new",
+          "existing"
+        ]
       },
       "vnetName": {
         "type": "string",
         "defaultValue": "[concat('vn',uniqueString(resourceGroup().id))]"
       },
-      "subnetId": {
+      "vnetResourceGroupName": {
         "type": "string",
-        "defaultValue": ""
+        "defaultValue": "[resourceGroup().name]"
+      },
+      "addressPrefixes": {
+        "type": "array",
+        "defaultValue": [
+          "10.0.0.0/16"
+        ],
+        "metadata": {
+          "description": "Address prefix of the virtual network"
+        }
+      },
+      "subnetNewOrExisting": {
+        "type": "string",
+        "defaultValue": "new",
+        "allowedValues": [
+          "new",
+          "existing"
+        ]
       },
       "subnetName": {
         "type": "string",
         "defaultValue": "[concat('sn',uniqueString(resourceGroup().id))]"
+      },
+      "subnetPrefix": {
+        "type": "string",
+        "defaultValue": "10.0.0.0/24",
+        "metadata": {
+          "description": "Subnet prefix of the virtual network"
+        }
       },
       "confidential_data":{
         "type": "string",
@@ -156,17 +219,17 @@
   },
   "variables": {
       "tenantId": "[subscription().tenantId]",
-      "storageAccount": "[if(empty(parameters('storageAccountId')), resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), parameters('storageAccountId'))]",
-      "keyVault": "[if(empty(parameters('KeyVaultId')), resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName')), parameters('keyVaultId'))]",
-      "applicationInsights": "[if(empty(parameters('applicationInsightsId')), resourceId('Microsoft.Insights/components', parameters('applicationInsightsName')), parameters('applicationInsightsId'))]",
-      "containerRegistry": "[if(empty(parameters('containerRegistryId')), resourceId('Microsoft.ContainerRegistry/registries', parameters('containerRegistryName')), parameters('containerRegistryId'))]",
-      "vnet": "[if(empty(parameters('vnetId')), resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName')), parameters('vnetId'))]",
-      "subnet": "[if(empty(parameters('subnetId')), resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnetName')), parameters('subnetId'))]",
+      "storageAccount": "[resourceId(parameters('storageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+      "keyVault": "[resourceId(parameters('keyVaultResourceGroupName'), 'Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
+      "applicationInsights": "[resourceId(parameters('applicationInsightsResourceGroupName'), 'Microsoft.Insights/components', parameters('applicationInsightsName'))]",
+      "containerRegistry": "[resourceId(parameters('containerRegistryResourceGroupName'), 'Microsoft.ContainerRegistry/registries', parameters('containerRegistryName'))]",
+      "vnet": "[resourceId(parameters('vnetResourceGroupName'), 'Microsoft.Network/virtualNetworks', parameters('vnetName'))]",
+      "subnet": "[resourceId(parameters('vnetResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnetName'))]",
       "privateDnsGuid": "[guid(resourceGroup().id, deployment().name)]"
   },
   "resources": [
       {
-          "condition": "[empty(parameters('storageAccountId'))]",
+          "condition": "[equals(parameters('storageAccountNewOrExisting'), 'new')]",
           "type": "Microsoft.Storage/storageAccounts",
           "apiVersion": "2019-04-01",
           "name": "[parameters('storageAccountName')]",
@@ -191,9 +254,9 @@
           }
       },
       {
-          "condition": "[empty(parameters('keyVaultId'))]",
+          "condition": "[equals(parameters('keyVaultNewOrExisting'), 'new')]",
           "type": "Microsoft.KeyVault/vaults",
-          "apiVersion": "2018-02-14",
+          "apiVersion": "2019-09-01",
           "name": "[parameters('keyVaultName')]",
           "location": "[parameters('location')]",
           "properties": {
@@ -206,7 +269,7 @@
           }
       },
       {
-          "condition": "[empty(parameters('applicationInsightsId'))]",
+          "condition": "[equals(parameters('applicationInsightsNewOrExisting'), 'new')]",
           "type": "Microsoft.Insights/components",
           "apiVersion": "2018-05-01-preview",
           "name": "[parameters('applicationInsightsName')]",
@@ -217,7 +280,7 @@
           }
       },
       {
-          "condition": "[empty(parameters('containerRegistryId'))]",
+          "condition": "[equals(parameters('containerRegistryNewOrExisting'), 'new')]",
           "type": "Microsoft.ContainerRegistry/registries",
           "apiVersion": "2019-05-01",
           "name": "[parameters('containerRegistryName')]",
@@ -263,16 +326,14 @@
           }
       },
       {
-        "condition": "[empty(parameters('vnetId'))]",
+        "condition": "[equals(parameters('vnetNewOrExisting'), 'new')]",
         "type": "Microsoft.Network/virtualNetworks",
         "apiVersion": "2019-09-01",
         "name": "[parameters('vnetName')]",
         "location": "[parameters('location')]",
         "properties": {
           "addressSpace": {
-            "addressPrefixes": [
-              "10.0.0.0/27"
-            ]
+            "addressPrefixes": "[parameters('addressPrefixes')]"
           },
           "virtualNetworkPeerings": [],
           "enableDdosProtection": false,
@@ -280,7 +341,7 @@
         }
       },
       {
-        "condition": "[empty(parameters('subnetId'))]",
+        "condition": "[equals(parameters('subnetNewOrExisting'), 'new')]",
         "type": "Microsoft.Network/virtualNetworks/subnets",
         "apiVersion": "2019-09-01",
         "name": "[concat(parameters('vnetName'), '/', parameters('subnetName'))]",
@@ -288,7 +349,7 @@
           "[variables('vnet')]"
         ],
         "properties": {
-          "addressPrefix": "10.0.0.0/27",
+          "addressPrefix": "[parameters('subnetPrefix')]",
           "delegations": [],
           "privateEndpointNetworkPolicies": "Disabled",
           "privateLinkServiceNetworkPolicies": "Enabled"
