@@ -13,41 +13,44 @@
 
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fpath-to-sample%2Fazuredeploy.json)
 
-This template deploys an Azure Function Premium plan with [regional virtual network integration](https://docs.microsoft.com/azure/azure-functions/functions-networking-options#regional-virtual-network-integration). A premium plan with virtual network integration enabled enables the Azure Function to utilizes resources within the virtual network.
+This template deploys an Azure Function Premium plan with [regional virtual network integration](https://docs.microsoft.com/azure/azure-functions/functions-networking-options#regional-virtual-network-integration).
 
-## Sample overview and deployed resources
+## Overview and deployed resources
 
-This is an overview of the solution
+An Azure Function Premium plan with virtual network integration enabled allows the Azure Function to utilizes resources within the virtual network.
 
-The following resources are deployed as part of the solution
+The following resources are deployed as part of the solution:
 
-### Resource provider 1
+### Virtual Network
 
-Description Resource Provider 1
+The virtual network into which the Azure Function Premium plan shall be integrated.
 
-+ **Resource type 1A**: Description Resource type 1A
-+ **Resource type 1B**: Description Resource type 1B
-+ **Resource type 1C**: Description Resource type 1C
++ **Microsoft.Network/virtualNetworks**: The virtual network for which to integrate, and one subnet to which the function app plan is delegated.
 
-### Resource provider 2
+### Azure Function Premium Plan
 
-Description Resource Provider 2
+The [Azure Functions Premium plan](https://docs.microsoft.com/azure/azure-functions/functions-premium-plan) which enables virtual network integration.
 
-+ **Resource type 2A**: Description Resource type 2A
++ **Microsoft.Web/serverfarms**: The Azure Functions Premium plan (a.k.a. Elastic Premium plan)
 
-### Resource provider 3
+### Function App
 
-Description Resource Provider 3
+The function app to be deployed as part of the Azure Functions Premium plan.
 
-+ **Resource type 3A**: Description Resource type 3A
-+ **Resource type 3B**: Description Resource type 3B
++ **Microsoft.Web/sites**: The function app instance.
+
+### Application Insights
+
+Application Insights is used to provide [monitoring for the Azure Function](https://docs.microsoft.com/azure/azure-functions/functions-monitoring).
+
++ **Microsoft.Insights/components**: The Application Insights instance used by the Azure Function for monitoring.
+
+### Azure Storage
+
+The Azure Storage account used by the Azure Function.
+
++ **Microsoft.Storage/storageAccounts**: [Azure Functions requires a storage account](https://docs.microsoft.com/azure/azure-functions/storage-considerations) for the function app instance.
 
 ## Deployment steps
 
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
-
-## Notes
-
-Solution notes
-
-`Tags: Tag1, Tag2, Tag3`
