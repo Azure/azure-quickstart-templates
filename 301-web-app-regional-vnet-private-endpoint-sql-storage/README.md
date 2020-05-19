@@ -16,7 +16,7 @@
 
 ### Overview
 
-This solution deploys a Windows Azure App Services web app into a subnet using regional vnet integration. An Azure SQL DB and a storage account are also created, each with its own private link and private DNS resources to allow access form the web app over a private address space. FIrewall rules are added to the storage account ot prevent publci access & the Azure SQL Server is configured to disallow public traffic. A dns record is created in each zone for the Azure SQL Server and storage account.
+This solution deploys a Windows Azure App Services web app into a subnet using regional virtual network integration. An Azure SQL DB and a storage account are also created, each with its own private link and private DNS resources to allow access from the web app over a private address space. Firewall rules are added to the storage account to prevent public access & the Azure SQL Server is configured to disallow public traffic. A dns record is created in each zone for the Azure SQL Server and storage account.
 
 The following resources are deployed as part of this solution
 
@@ -24,7 +24,7 @@ The following resources are deployed as part of this solution
   - PrivateLinkSubnet (10.1.1.0/24)
 - Spoke Virtual Network(10.2.0.0/16)
   - AppSvcSubnet (10.2.1.0/24)
-- Virtual Netowrk peering between hub and spoke virtual networks
+- Virtual Network peering between hub and spoke virtual networks
 - Azure SQL Server
   - Azure SQL DB
   - Private link
@@ -33,17 +33,17 @@ The following resources are deployed as part of this solution
   - Private link
   - Private DNS zone
 - App Service Web app
-  - Regional vnet integration
+  - Regional virtual network integration
 
 ### Scenario Deployment Validation
 
-To validate that the web app can resolve the privte endpoints for the Azure SQL DB and storage account follow the stpes below. 
-- Naviagate to the Azure web app and select the 'KUDU' blade and select 'Advanced' then click the 'Go' hyperlink
+To validate that the web app can resolve the private endpoints for the Azure SQL DB and storage account follow the steps below. 
+- Navigate to the Azure web app and select the 'KUDU' blade and select 'Advanced Tools' then click the 'Go ->' hyperlink
 - A new web page will open displaying the web app's management environment
-- Select 'Environment' then 'PowerShell'
+- Select 'Debug console' then 'PowerShell' in the drop-down menu
 - In the PowerShell console, type the following commands to test that name resolution is working for both the Azure SQL DB and storage account. The private IP address for each resource should be returned.
-  - `nameresolver <storage account name>.<storage account private DNS zone name>`
-  - `nameresolver <Azure SQL DB name>.<Azure SQL DB private DNS zone name>`
+  - `PS D:\home> nameresolver <storage account name>.<storage account private DNS zone name>`
+  - `PS D:\home> nameresolver <Azure SQL DB name>.<Azure SQL DB private DNS zone name>`
 
 ### Architecture Diagram
 
