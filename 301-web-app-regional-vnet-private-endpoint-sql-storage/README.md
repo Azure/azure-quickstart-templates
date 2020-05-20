@@ -35,6 +35,21 @@ The following resources are deployed as part of this solution
 - App Service Web app
   - Regional virtual network integration
 
+  Note that for traffic to pass from the web app to the private endpoints, the following web app environment variables must be set in the app.json nested template.
+
+  "siteConfig": {
+                    "appSettings": [
+                        {
+                            "name": "WEBSITE_VNET_ROUTE_ALL",
+                            "value": 1
+                        },
+                        {
+                            "name": "WEBSITE_DNS_SERVER",
+                            "value": "168.63.129.16"
+                        }
+                    ]
+                }
+
 ### Scenario Deployment Validation
 
 To validate that the web app can resolve the private endpoints for the Azure SQL DB and storage account follow the steps below. 
