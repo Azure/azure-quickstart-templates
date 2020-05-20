@@ -34,9 +34,19 @@
       "metadata": {
         "description": "The name of the auditing storage account."
       }
+    },
+    "isStorageBehindVnet": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Enable Auditing to storage behind Virtual Network or firewall rules. the user deploying the template must have an administrator or owner permissions."
+      }
     }
-  },
-  "variables": {},
+	},
+  "variables": {
+		"StorageBlobContributor": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
+		"uniqueRoleGuid": "[guid(resourceId('Microsoft.Storage/storageAccounts',  parameters('storageAccountName')), variables('storageBlobContributor'),     resourceId('Microsoft.Sql/servers', parameters('sqlServerName')))]"
+	},
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
@@ -46,14 +56,38 @@
       "sku": {
         "name": "Standard_LRS"
       },
-      "kind": "Storage",
-      "properties": {}
-    },
-    {
+      "kind": "StorageV2",
+      "properties": {
+        "networkAcls": {
+          "bypass": "AzureServices",
+          "defaultAction": "[if(parameters('isStorageBehindVnet'), 'Deny', 'Allow')]"
+        }
+      },
+      "resources": [
+        {
+          "condition": "[parameters('isStorageBehindVnet')]",
+          "type": "Microsoft.Storage/storageAccounts/providers/roleAssignments",
+          "apiVersion": "2020-03-01-preview",
+          "name": "[concat(parameters('storageAccountName'), '/Microsoft.Authorization/', variables('uniqueRoleGuid') )]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]",
+            "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+          ],
+          "properties": {
+            "roleDefinitionId": "[variables('StorageBlobContributor')]",
+            "principalId": "[reference(resourceId('Microsoft.Sql/servers', parameters('sqlServerName')), '2019-06-01-preview', 'Full').identity.principalId]",
+            "scope": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+            "principalType": "ServicePrincipal"
+          }
+        }
+      ]
+	  },
+	  {
       "type": "Microsoft.Sql/servers",
       "apiVersion": "2015-05-01-preview",
       "location": "[parameters('location')]",
       "name": "[parameters('sqlServerName')]",
+      "identity": "[if(parameters('isStorageBehindVnet'), json('{\"type\":\"SystemAssigned\"}'), json('null'))]",
       "properties": {
         "administratorLogin": "[parameters('sqlAdministratorLogin')]",
         "administratorLoginPassword": "[parameters('sqlAdministratorLoginPassword')]",
@@ -64,17 +98,18 @@
       },
       "resources": [
         {
-          "apiVersion": "2017-03-01-preview",
           "type": "auditingSettings",
+          "apiVersion": "2017-03-01-preview",
           "name": "DefaultAuditingSettings",
           "dependsOn": [
             "[parameters('sqlServerName')]",
-            "[parameters('storageAccountName')]"
+            "[parameters('storageAccountName')]",
+            "[concat('Microsoft.Storage/storageAccounts/',parameters('storageAccountName'),'/providers/Microsoft.Authorization/roleAssignments/', variables('uniqueRoleGuid'))]"
           ],
           "properties": {
             "state": "Enabled",
             "storageEndpoint": "[reference(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2018-03-01-preview').PrimaryEndpoints.Blob]",
-            "storageAccountAccessKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2018-03-01-preview').keys[0].value]",
+            "storageAccountAccessKey": "[if(parameters('isStorageBehindVnet'), json('null'), listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2018-03-01-preview').keys[0].value)]",
             "storageAccountSubscriptionId": "[subscription().subscriptionId]",
             "auditActionsAndGroups": null,
             "isStorageSecondaryKeyInUse": false
