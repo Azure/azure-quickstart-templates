@@ -1,4 +1,4 @@
-# Azure private link endpoint
+# Azure private endpoint
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-privatelink-endpoint-sql/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-privatelink-endpoint-sql/PublicDeployment.svg)
@@ -19,4 +19,4 @@ This is a starter template that shows how to create a private endpoint to Azure 
 
 [Azure Private Link FAQ](https://docs.microsoft.com/en-us/azure/private-link/private-link-faq)
 
-[Private link endpoints template format](https://docs.microsoft.com/en-us/azure/templates/microsoft.network/2020-04-01/privateendpoints)
+[Private endpoints template format](https://docs.microsoft.com/en-us/azure/templates/microsoft.network/2020-04-01/privateendpoints)
