@@ -1,5 +1,10 @@
 #Script based on https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/visual-studio-dev-vm-chocolatey/scripts/SetupChocolatey.ps1
-param([Parameter(Mandatory=$true)][string]$chocoPackages, [Parameter(Mandatory=$true)][string]$linktopackages)
+param(
+    [Parameter(Mandatory=$true)][string]$artifactsLocation,
+    [Parameter(Mandatory=$true)][string]$artifactsLocationSasToken,
+    [Parameter(Mandatory=$true)][string]$folderName,
+    [Parameter(Mandatory=$true)][string]$fileToInstall,
+    [Parameter(Mandatory=$true)][string]$chocoPackages)
 
 Write-Host "File packages URL: $linktopackages"
 
@@ -24,8 +29,12 @@ $chocoPackages.Split(";") | ForEach {
 Write-Host "Packages from choco.org were installes"
 #Isntall OBS-NDI package from sources
 
-Invoke-WebRequest -Uri $linktopackages -OutFile ./obs-ndi.zip
-Expand-Archive -Path ./obs-ndi.zip -DestinationPath ./
+$source = $artifactsLocation + "\$folderName\$fileToInstall" + $artifactsLocationSasToken
+$dest = "C:\WindowsAzure\$folderName"
+New-Item -Path $dest -ItemType directory
+Invoke-WebRequest $source -OutFile "$dest\$fileToInstall"
+
+Expand-Archive -Path "$dest\$fileToInstall" -DestinationPath ./
 
 choco pack
 choco install -y .\obs-ndi.4.9.0.nupkg
