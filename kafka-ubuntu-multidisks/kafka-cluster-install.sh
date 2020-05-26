@@ -10,10 +10,10 @@
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -22,8 +22,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 # Author: Cognosys Technologies
- 
-### 
+
+###
 ### Warning! This script partitions and formats disk information be careful where you run it
 ###          This script is currently under development and has only been tested on Ubuntu images in Azure
 ###          This script is not currently idempotent and only works for provisioning at the moment
@@ -47,7 +47,7 @@ help()
 
 log()
 {
-	# If you want to enable this logging add a un-comment the line below and add your account key 
+	# If you want to enable this logging add a un-comment the line below and add your account key
     	#curl -X POST -H "content-type:text/plain" --data-binary "$(date) | ${HOSTNAME} | $1" https://logs-01.loggly.com/inputs/[account-key]/tag/redis-extension,${HOSTNAME}
 	echo "$1"
 }
@@ -125,7 +125,7 @@ install_java()
 {
     log "Installing Java"
     add-apt-repository -y ppa:webupd8team/java
-    apt-get -y update 
+    apt-get -y update
     echo debconf shared/accepted-oracle-license-v1-1 select true | sudo debconf-set-selections
     echo debconf shared/accepted-oracle-license-v1-1 seen true | sudo debconf-set-selections
     apt-get -y install oracle-java7-installer
@@ -138,7 +138,7 @@ expand_ip_range_for_server_properties() {
     IFS='-' read -a HOST_IPS <<< "$1"
     for (( n=0 ; n<("${HOST_IPS[1]}"+0) ; n++))
     do
-        echo "server.$(expr ${n} + 1)=${HOST_IPS[0]}${n}:2888:3888" >> zookeeper-3.4.6/conf/zoo.cfg       
+        echo "server.$(expr ${n} + 1)=${HOST_IPS[0]}${n}:2888:3888" >> zookeeper-3.4.6/conf/zoo.cfg
     done
 }
 
@@ -217,7 +217,7 @@ install_kafka()
 	license="Apache Software License 2.0"
 	package_version="-1"
 	src_package="kafka_${kafkaversion}-${version}.tgz"
-	download_url=http://mirror.sdunix.com/apache/kafka/${version}/${src_package} 
+	download_url=http://mirror.sdunix.com/apache/kafka/${version}/${src_package}
 
 	rm -rf kafka
 	mkdir -p kafka
@@ -228,10 +228,10 @@ install_kafka()
 	fi
 	tar zxf ${src_package}
 	cd kafka_${kafkaversion}-${version}
-	
-	sed -r -i "s/(broker.id)=(.*)/\1=${BROKER_ID}/g" config/server.properties 
-	sed -r -i "s/(zookeeper.connect)=(.*)/\1=$(join , $(expand_ip_range "${ZOOKEEPER_IP_PREFIX}-${INSTANCE_COUNT}"))/g" config/server.properties 
-	sed -r -i "s/(log.dirs)=(.*)/\1=${KAFKADIR}/g" config/server.properties 
+
+	sed -r -i "s/(broker.id)=(.*)/\1=${BROKER_ID}/g" config/server.properties
+	sed -r -i "s/(zookeeper.connect)=(.*)/\1=$(join , $(expand_ip_range "${ZOOKEEPER_IP_PREFIX}-${INSTANCE_COUNT}"))/g" config/server.properties
+	sed -r -i "s/(log.dirs)=(.*)/\1=${KAFKADIR}/g" config/server.properties
 
 	chmod u+x /usr/local/kafka/kafka_${kafkaversion}-${version}/bin/kafka-server-start.sh
 	/usr/local/kafka/kafka_${kafkaversion}-${version}/bin/kafka-server-start.sh /usr/local/kafka/kafka_${kafkaversion}-${version}/config/server.properties &

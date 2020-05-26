@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "siteName": {
@@ -55,12 +55,6 @@
       "type": "string",
       "metadata": {
         "description": "user name to ssh to the VMs"
-      }
-    },
-    "vmPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "password to ssh to the VMs"
       }
     },
     "mysqlRootPassword": {
@@ -213,12 +207,40 @@
       "metadata": {
         "description": "MySQL public port slave"
       }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/wordpress-mysql-replication/",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
     }
   },
   "variables": {
-    "template": {
-      "base": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/wordpress-mysql-replication"
-    },
     "templateAPIVersion": "2015-01-01",
     "resourceAPIVersion": "2015-06-15",
     "wpdbname": "[concat(uniquestring(resourceGroup().id),'wordpress')]"
@@ -231,7 +253,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('template').base, '/nested/mysql-replication.json')]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat('nested/mysql-replication.json', parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -240,9 +262,6 @@
           },
           "vmUserName": {
             "value": "[parameters('vmUserName')]"
-          },
-          "vmPassword": {
-            "value": "[parameters('vmPassword')]"
           },
           "mysqlRootPassword": {
             "value": "[parameters('mysqlRootPassword')]"
@@ -304,11 +323,20 @@
           "mysqlProbePort1": {
             "value": "[parameters('mysqlProbePort1')]"
           },
-          "artifactsPath": {
-            "value": "[variables('template').base]"
-          },
           "publicIPName": {
             "value": "[parameters('publicIPName')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
           }
         }
       }
@@ -323,7 +351,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('template').base, '/nested/website.json')]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat('nested/website.json', parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {

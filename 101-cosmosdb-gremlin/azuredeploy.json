@@ -1,5 +1,5 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
         "accountName": {
@@ -60,7 +60,7 @@
                 "description": "Max lag time (seconds). Required for BoundedStaleness. Valid ranges, Single Region: 5 to 84600. Multi Region: 300 to 86400."
             }
         },
-        "multipleWriteLocations": {
+        "automaticFailover": {
             "type": "bool",
             "defaultValue": true,
             "allowedValues": [
@@ -68,25 +68,21 @@
                 false
             ],
             "metadata": {
-                "description": "Enable multi-master to make all regions writable."
-            }
-        },
-        "automaticFailover": {
-            "type": "bool",
-            "defaultValue": false,
-            "allowedValues": [
-                true,
-                false
-            ],
-            "metadata": {
-                "description": "Enable automatic failover for regions. Ignored when Multi-Master is enabled"
+                "description": "Enable automatic failover for regions"
             }
         },
         "databaseName": {
             "type": "string",
-            "defaultValue": "sampledb",
+            "defaultValue": "database1",
             "metadata": {
                 "description": "The name for the Gremlin database"
+            }
+        },
+        "graphName": {
+            "type": "string",
+            "defaultValue": "graph1",
+            "metadata": {
+                "description": "The name for the Gremlin graph"
             }
         },
         "throughput": {
@@ -95,21 +91,7 @@
             "minValue": 400,
             "maxValue": 1000000,
             "metadata": {
-                "description": "Throughput shared across the Gremlin database"
-            }
-        },
-        "graph1Name": {
-            "type": "string",
-            "defaultValue": "graph1",
-            "metadata": {
-                "description": "The name for the first Gremlin graph"
-            }
-        },
-        "graph2Name": {
-            "type": "string",
-            "defaultValue": "graph2",
-            "metadata": {
-                "description": "The name for the second Gremlin graph"
+                "description": "Throughput for the Gremlin graph"
             }
         }
     },
@@ -137,11 +119,13 @@
         "locations": [
             {
                 "locationName": "[parameters('primaryRegion')]",
-                "failoverPriority": 0
+                "failoverPriority": 0,
+                "isZoneRedundant": false
             },
             {
                 "locationName": "[parameters('secondaryRegion')]",
-                "failoverPriority": 1
+                "failoverPriority": 1,
+                "isZoneRedundant": false
             }
         ]
     },
@@ -149,9 +133,8 @@
         {
             "type": "Microsoft.DocumentDB/databaseAccounts",
             "name": "[variables('accountName')]",
-            "apiVersion": "2016-03-31",
+            "apiVersion": "2020-03-01",
             "location": "[parameters('location')]",
-            "tags": {},
             "kind": "GlobalDocumentDB",
             "properties": {
                 "capabilities": [
@@ -162,105 +145,53 @@
                 "consistencyPolicy": "[variables('consistencyPolicy')[parameters('defaultConsistencyLevel')]]",
                 "locations": "[variables('locations')]",
                 "databaseAccountOfferType": "Standard",
-                "enableAutomaticFailover": "[parameters('automaticFailover')]",
-                "enableMultipleWriteLocations": "[parameters('multipleWriteLocations')]"
+                "enableAutomaticFailover": "[parameters('automaticFailover')]"
             }
         },
         {
-            "type": "Microsoft.DocumentDB/databaseAccounts/apis/databases",
-            "name": "[concat(variables('accountName'), '/gremlin/', parameters('databaseName'))]",
-            "apiVersion": "2016-03-31",
+            "type": "Microsoft.DocumentDB/databaseAccounts/gremlinDatabases",
+            "name": "[concat(variables('accountName'), '/', parameters('databaseName'))]",
+            "apiVersion": "2020-03-01",
             "dependsOn": [
                 "[resourceId('Microsoft.DocumentDB/databaseAccounts/', variables('accountName'))]"
             ],
             "properties": {
                 "resource": {
                     "id": "[parameters('databaseName')]"
-                },
-                "options": {
-                    "throughput": "[parameters('throughput')]"
                 }
             }
         },
         {
-            "type": "Microsoft.DocumentDb/databaseAccounts/apis/databases/graphs",
-            "name": "[concat(variables('accountName'), '/gremlin/', parameters('databaseName'), '/', parameters('graph1Name'))]",
-            "apiVersion": "2016-03-31",
+            "type": "Microsoft.DocumentDb/databaseAccounts/gremlinDatabases/graphs",
+            "name": "[concat(variables('accountName'), '/', parameters('databaseName'), '/', parameters('graphName'))]",
+            "apiVersion": "2020-03-01",
             "dependsOn": [
-                "[resourceId('Microsoft.DocumentDB/databaseAccounts/apis/databases', variables('accountName'), 'gremlin', parameters('databaseName'))]"
+                "[resourceId('Microsoft.DocumentDB/databaseAccounts/gremlinDatabases', variables('accountName'),  parameters('databaseName'))]"
             ],
             "properties": {
                 "resource": {
-                    "id": "[parameters('graph1Name')]",
+                    "id": "[parameters('graphName')]",
                     "indexingPolicy": {
                         "indexingMode": "consistent",
                         "includedPaths": [
                             {
-                                "path": "/*",
-                                "indexes": [
-                                    {
-                                        "kind": "Range",
-                                        "dataType": "number",
-                                        "precision": -1
-                                    },
-                                    {
-                                        "kind": "Range",
-                                        "dataType": "string",
-                                        "precision": -1
-                                    }
-                                ]
+                                "path": "/*"
                             }
                         ],
                         "excludedPaths": [
                             {
-                                "path": "/MyPathToNotIndex/*"
+                                "path": "/myPathToNotIndex/*"
                             }
                         ]
                     },
                     "partitionKey": {
                         "paths": [
-                            "/MyPartitionKey"
+                            "/myPartitionKey"
                         ],
                         "kind": "Hash"
-                    }
-                }
-            }
-        },
-        {
-            "type": "Microsoft.DocumentDb/databaseAccounts/apis/databases/graphs",
-            "name": "[concat(variables('accountName'), '/gremlin/', parameters('databaseName'), '/', parameters('graph2Name'))]",
-            "apiVersion": "2016-03-31",
-            "dependsOn": [
-                "[resourceId('Microsoft.DocumentDB/databaseAccounts/apis/databases', variables('accountName'), 'gremlin', parameters('databaseName'))]"
-            ],
-            "properties": {
-                "resource": {
-                    "id": "[parameters('graph2Name')]",
-                    "indexingPolicy": {
-                        "indexingMode": "consistent",
-                        "includedPaths": [
-                            {
-                                "path": "/*",
-                                "indexes": [
-                                    {
-                                        "kind": "Range",
-                                        "dataType": "number",
-                                        "precision": -1
-                                    },
-                                    {
-                                        "kind": "Range",
-                                        "dataType": "string",
-                                        "precision": -1
-                                    }
-                                ]
-                            }
-                        ]
                     },
-                    "partitionKey": {
-                        "paths": [
-                            "/MyPartitionKey"
-                        ],
-                        "kind": "Hash"
+                    "options": {
+                        "throughput": "[parameters('throughput')]"
                     }
                 }
             }

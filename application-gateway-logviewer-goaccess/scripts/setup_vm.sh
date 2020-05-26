@@ -1,4 +1,4 @@
-﻿#!/bin/bash
+#!/bin/bash
 
 #The MIT License (MIT)
 #Copyright (c) Microsoft Corporation. All rights reserved.
@@ -16,7 +16,7 @@ wget -O - https://deb.goaccess.io/gnugpg.key | sudo apt-key add -
 
 apt-get -y install apt-transport-https
 
-# Update Packages 
+# Update Packages
 apt-get -y update
 
 #Install Libcurl3, unzip

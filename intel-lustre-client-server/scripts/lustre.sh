@@ -47,7 +47,7 @@ retry() {
     local -r -i max_attempts="$1"; shift
     local -r cmd="$@"
     local -i attempt_num=1
- 
+
     until $cmd
     do
         if (( attempt_num == max_attempts ))
@@ -107,66 +107,66 @@ add_to_fstab() {
 
 create_mgs() {
 	log "Create MGS"
-	
+
 	# Make MGS filesystem which is always on /dev/sdc of the MGS node
 	mkfs.lustre --fsname=$FILESYSTEMNAME --mgs --reformat /dev/sdc
-	
+
 	uuid=$(blkid -o value -s UUID /dev/sdc)
 	log "MGS UUID=$uuid"
-	
+
 	label=$(blkid -c/dev/null -o value -s LABEL /dev/sdc)
 	log "MGS LABEL=$label"
-	
+
 	# Log device info
 	dumpe2fs -h /dev/sdc | logger
-	
+
 	# Create mount directory
 	mount_point=/mnt/targets/$label
 	mkdir -p $mount_point
 	log "Created mount point directory $mount_point"
-	
+
 	# Add to /etc/fstab so that mount persists across reboots
 	device_by_uuid="UUID=$uuid"
 	add_to_fstab $device_by_uuid $mount_point
-	
+
 	retry 5 mount -a
 	log "Mounted /dev/sdc as $mount_point"
 }
 
 create_mds() {
 	log "Create MDS"
-	
+
 	((index=$NODEINDEX*$NODETYPEDISKCOUNT))
-	
+
 	for device in "${DEVICES_LIST[@]}";
 	do
 		log $device $index
-		
+
 		mkfs.lustre --fsname=$FILESYSTEMNAME --mdt --mgsnode=$MGSIP --index=$index --reformat $device
-		
+
 		# Disable MDS check of user being the same on the clients and MDS nodes
 		tunefs.lustre --param mdt.identity_upcall=NONE $device
-		
+
 		uuid=$(blkid -o value -s UUID $device)
-		log "MDS UUID=$uuid"	
-		
+		log "MDS UUID=$uuid"
+
 		label=$(blkid -c/dev/null -o value -s LABEL $device)
 		log "MDS LABEL=$label"
-	
+
 		dumpe2fs -h $device | logger
-	
+
 		# Create mount directory
 		mount_point=/mnt/targets/$label
 		mkdir -p $mount_point
 		log "Created mount point directory $mount_point"
-	
+
 		# Mount the current device
 		mount -t lustre $device $mount_point
-		
+
 		# Add to /etc/fstab so that mount persists across reboots
 		device_by_uuid="UUID=$uuid"
 		add_to_fstab $device_by_uuid $mount_point
-	
+
 		((index=index+1))
 	done
 
@@ -176,41 +176,41 @@ create_mds() {
 
 create_oss() {
 	log "Create OSS"
-	
+
 	((index=$NODEINDEX*$NODETYPEDISKCOUNT))
-	
+
 	for device in "${DEVICES_LIST[@]}";
 	do
 		log $device $index
-		
+
 		mkfs.lustre --fsname=$FILESYSTEMNAME --ost --mgsnode=$MGSIP --index=$index --reformat $device
-		
+
 		uuid=$(blkid -o value -s UUID $device)
-		log "OSS UUID=$uuid"	
-		
+		log "OSS UUID=$uuid"
+
 		label=$(blkid -c/dev/null -o value -s LABEL $device)
 		log "OSS LABEL=$label"
-	
+
 		dumpe2fs -h $device | logger
-	
+
 		# Create mount directory
 		mount_point=/mnt/targets/$label
 		mkdir -p $mount_point
 		log "Created mount point directory $mount_point"
-	
+
 		# Mount the current device
 		mount -t lustre $device $mount_point
-		
+
 		# Add to /etc/fstab so that mount persists across reboots
 		device_by_uuid="UUID=$uuid"
 		add_to_fstab $device_by_uuid $mount_point
-	
+
 		((index=index+1))
 	done
-	
+
 	# Random sleep to minimize chance of mount error
 	sleep $[ ( $RANDOM % 20 ) + 1]s
-	
+
 	# Mount everything based on what is defined in the /etc/fstab
 	retry 5 mount -a
 }

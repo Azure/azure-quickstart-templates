@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "uniquePrefix": {
@@ -127,6 +127,20 @@
       "metadata": {
         "description": "Admin password for the VMs in the deployment."
       }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/301-custom-images-at-scale/",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
     }
   },
   "variables": {
@@ -136,19 +150,15 @@
     "subnetPrefix": "10.0.0.0/21",
     "transferImagePublisher": "Canonical",
     "transferImageOffer": "UbuntuServer",
-    "ubuntuOSVersion": "15.10",
+    "ubuntuOSVersion": "16.04-LTS",
     "imagePieces": "[split(parameters('imageLocation'),'/')]",
     "blobName": "[variables('imagePieces')[sub(length(variables('imagePieces')),1)]]",
-
-    "templateLocation": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/301-custom-images-at-scale/",
-
-    "sharedResourcesTemplateUri ": "[concat(variables('templateLocation'), 'shared-resources.json')]",
-    "finalTemplateUri": "[concat(variables('templateLocation'), 'final_')]",
-
-    "downloadTemplateURI": "[concat(variables('templateLocation'), 'download.json')]",
-    "downloadScriptURI": "[concat(variables('templateLocation'), 'download.sh')]",
-    "uploadTemplateURI": "[concat(variables('templateLocation'), 'upload.json')]",
-    "uploadScriptURI": "[concat(variables('templateLocation'), 'upload.sh')]"
+    "sharedResourcesTemplateUri ": "[uri(parameters('_artifactsLocation'), concat('shared-resources.json', parameters('_artifactsLocationSasToken')))]",
+    "finalTemplateUri": "[uri(parameters('_artifactsLocation'), concat('final_', parameters('deploymentType'), '.json', parameters('_artifactsLocationSasToken')))]",
+    "downloadTemplateURI": "[uri(parameters('_artifactsLocation'), concat('download.json', parameters('_artifactsLocationSasToken')))]",
+    "downloadScriptURI": "[uri(parameters('_artifactsLocation'), concat('download.sh', parameters('_artifactsLocationSasToken')))]",
+    "uploadTemplateURI": "[uri(parameters('_artifactsLocation'), concat('upload.json', parameters('_artifactsLocationSasToken')))]",
+    "uploadScriptURI": "[uri(parameters('_artifactsLocation'), concat('upload.sh', parameters('_artifactsLocationSasToken')))]"
   },
   "resources": [
     {
@@ -162,12 +172,24 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "uniquePrefix": { "value": "[parameters('uniquePrefix')]" },
-          "numberOfSAs": { "value": "[parameters('numberOfSAs')]" },
-          "vnetName": { "value": "[variables('vnetName')]" },
-          "addressPrefix": { "value": "[variables('addressPrefix')]" },
-          "subnetName": { "value": "[variables('subnetName')]" },
-          "subnetPrefix": { "value": "[variables('subnetPrefix')]" }
+          "uniquePrefix": {
+            "value": "[parameters('uniquePrefix')]"
+          },
+          "numberOfSAs": {
+            "value": "[parameters('numberOfSAs')]"
+          },
+          "vnetName": {
+            "value": "[variables('vnetName')]"
+          },
+          "addressPrefix": {
+            "value": "[variables('addressPrefix')]"
+          },
+          "subnetName": {
+            "value": "[variables('subnetName')]"
+          },
+          "subnetPrefix": {
+            "value": "[variables('subnetPrefix')]"
+          }
         }
       }
     },
@@ -278,10 +300,18 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "uniquePrefix": { "value": "[parameters('uniquePrefix')]" },
-          "imageLocation": { "value": "[parameters('imageLocation')]" },
-          "storageAccountKey": { "value": "[parameters('storageAccountKey')]" },
-          "downloadScriptURI": { "value": "[variables('downloadScriptURI')]" }
+          "uniquePrefix": {
+            "value": "[parameters('uniquePrefix')]"
+          },
+          "imageLocation": {
+            "value": "[parameters('imageLocation')]"
+          },
+          "storageAccountKey": {
+            "value": "[parameters('storageAccountKey')]"
+          },
+          "downloadScriptURI": {
+            "value": "[variables('downloadScriptURI')]"
+          }
         }
       }
     },
@@ -303,9 +333,15 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "uniquePrefix": { "value": "[parameters('uniquePrefix')]" },
-          "index": { "value": "[copyIndex()]" },
-          "uploadScriptURI": { "value": "[variables('uploadScriptURI')]" }
+          "uniquePrefix": {
+            "value": "[parameters('uniquePrefix')]"
+          },
+          "index": {
+            "value": "[copyIndex()]"
+          },
+          "uploadScriptURI": {
+            "value": "[variables('uploadScriptURI')]"
+          }
         }
       }
     },
@@ -319,23 +355,52 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('finalTemplateUri'), parameters('deploymentType'), '.json')]",
+          "uri": "[variables('finalTemplateUri')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "uniquePrefix": { "value": "[parameters('uniquePrefix')]" },
-          "numberOfSAs": { "value": "[parameters('numberOfSAs')]" },
-          "instanceCountPerSA": { "value": "[parameters('instanceCountPerSA')]" },
-          "vmSize": { "value": "[parameters('computeVMSize')]" },
-          "OSType": { "value": "[parameters('computeOSType')]" },
-          "blobName": { "value": "[variables('blobName')]" },
-          "vnetName": { "value": "[variables('vnetName')]" },
-          "addressPrefix": { "value": "[variables('addressPrefix')]" },
-          "subnetName": { "value": "[variables('subnetName')]" },
-          "subnetPrefix": { "value": "[variables('subnetPrefix')]" },
-          "templateLocation": { "value": "[variables('templateLocation')]" },
-          "adminUsername": { "value": "[parameters('adminUsername')]" },
-          "adminPassword": { "value": "[parameters('adminPassword')]" }
+          "uniquePrefix": {
+            "value": "[parameters('uniquePrefix')]"
+          },
+          "numberOfSAs": {
+            "value": "[parameters('numberOfSAs')]"
+          },
+          "instanceCountPerSA": {
+            "value": "[parameters('instanceCountPerSA')]"
+          },
+          "vmSize": {
+            "value": "[parameters('computeVMSize')]"
+          },
+          "OSType": {
+            "value": "[parameters('computeOSType')]"
+          },
+          "blobName": {
+            "value": "[variables('blobName')]"
+          },
+          "vnetName": {
+            "value": "[variables('vnetName')]"
+          },
+          "addressPrefix": {
+            "value": "[variables('addressPrefix')]"
+          },
+          "subnetName": {
+            "value": "[variables('subnetName')]"
+          },
+          "subnetPrefix": {
+            "value": "[variables('subnetPrefix')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          }
         }
       }
     }

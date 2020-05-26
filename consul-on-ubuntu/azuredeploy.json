@@ -1,17 +1,11 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "adminUsername": {
       "type": "string",
       "metadata": {
         "description": "Admin username for VM"
-      }
-    },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Admin password for VM"
       }
     },
     "vmSize": {
@@ -54,6 +48,23 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
     }
   },
   "variables": {
@@ -70,7 +81,18 @@
     "imageSKU": "14.04.5-LTS",
     "vnetIDRef": "[concat(parameters('appPrefix'),'_VNET')]",
     "imageOffer": "UbuntuServer",
-    "storageAccountName": "[concat(uniquestring(resourceGroup().id), parameters('appPrefix'))]"
+    "storageAccountName": "[concat(uniquestring(resourceGroup().id), parameters('appPrefix'))]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
@@ -96,19 +118,17 @@
       }
     },
     {
-      
       "type": "Microsoft.Compute/availabilitySets",
       "location": "[parameters('location')]",
       "apiVersion": "2017-12-01",
       "name": "[concat(parameters('appPrefix'),'_AS')]",
       "sku": {
         "name": "Aligned"
-          },
-        "properties": { 
-            "platformFaultDomainCount": 2,
-            "platformUpdateDomainCount": 5
-            }
-        
+      },
+      "properties": {
+        "platformFaultDomainCount": 2,
+        "platformUpdateDomainCount": 5
+      }
     },
     {
       "properties": {
@@ -256,7 +276,7 @@
     },
     {
       "name": "[concat(parameters('appPrefix'), '_vm', copyIndex())]",
-      "apiVersion":  "2017-03-30", 
+      "apiVersion": "2017-03-30",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/networkInterfaces/', parameters('appPrefix'),'_nic1', copyIndex())]",
@@ -275,7 +295,8 @@
         "osProfile": {
           "adminUsername": "[parameters('adminUsername')]",
           "computerName": "[concat('vm', copyIndex())]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "availabilitySet": {
           "id": "[resourceId('Microsoft.Compute/availabilitySets', concat(parameters('appPrefix'),'_AS'))]"
@@ -289,10 +310,8 @@
           },
           "osDisk": {
             "caching": "ReadWrite",
-            "name": "[concat(parameters('appPrefix'), '_vm', copyIndex(),'_OSDisk')]",   
-
+            "name": "[concat(parameters('appPrefix'), '_vm', copyIndex(),'_OSDisk')]",
             "createOption": "FromImage"
-            
           }
         },
         "networkProfile": {

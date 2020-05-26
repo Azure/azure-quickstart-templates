@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "dnsLabelPrefix": {
@@ -52,7 +52,8 @@
     "subnet-id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName')),'/subnets/',variables('subnetName'))]",
     "imagePublisher": "MicrosoftWindowsServer",
     "imageOffer": "WindowsServer",
-    "imageSku": "2012-R2-Datacenter"
+    "imageSku": "2012-R2-Datacenter",
+    "networkSecurityGroupName": "Subnet-nsg"
   },
   "resources": [
     {
@@ -77,10 +78,37 @@
       }
     },
     {
+      "comments": "Simple Network Security Group for subnet [Subnet]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2019-08-01",
+      "name": "[variables('networkSecurityGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-3389",
+            "properties": {
+              "priority": 1000,
+              "access": "Allow",
+              "direction": "Inbound",
+              "destinationPortRange": "3389",
+              "protocol": "Tcp",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+          }
+        ]
+      }
+    },
+    {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+      ],
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -91,7 +119,10 @@
           {
             "name": "Subnet",
             "properties": {
-              "addressPrefix": "[variables('subnetAddressRange')]"
+              "addressPrefix": "[variables('subnetAddressRange')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+              }
             }
           }
         ]
@@ -181,7 +212,7 @@
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "Standard_D2"
+          "vmSize": "Standard_A0"
         },
         "osProfile": {
           "computerName": "[parameters('vmName')]",
@@ -209,7 +240,7 @@
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": true,
-            "storageUri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net')]"
+            "storageUri": "[reference(variables('storageAccountName'), '2018-02-01').primaryEndpoints.blob]"
           }
         }
       }

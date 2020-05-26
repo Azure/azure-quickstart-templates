@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "jenkinsVMAdminUsername": {
@@ -7,13 +7,6 @@
       "minLength": 1,
       "metadata": {
         "description": "User name for the Jenkins Virtual Machine."
-      }
-    },
-    "jenkinsVMAdminPassword": {
-      "type": "securestring",
-      "minLength": 6,
-      "metadata": {
-        "description": "Password for the Jenkins Virtual Machine."
       }
     },
     "jenkinsDnsPrefix": {
@@ -87,16 +80,33 @@
     },
     "_artifactsLocation": {
       "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/jenkins-cicd-vmss",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/jenkins-cicd-vmss/",
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       }
     },
     "_artifactsLocationSasToken": {
-      "type": "string",
+      "type": "securestring",
       "defaultValue": "",
       "metadata": {
         "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
     }
   },
@@ -122,15 +132,12 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), '/nested/jenkins.json', parameters('_artifactsLocationSasToken'))]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat('nested/jenkins.json', parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
           "adminUsername": {
             "value": "[parameters('jenkinsVMAdminUsername')]"
-          },
-          "adminPassword": {
-            "value": "[parameters('jenkinsVMAdminPassword')]"
           },
           "dnsPrefix": {
             "value": "[parameters('jenkinsDnsPrefix')]"
@@ -170,10 +177,16 @@
           },
           "_artifactsLocationSasToken": {
             "value": "[parameters('_artifactsLocationSasToken')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
           }
         }
       },
-      "dependsOn": [          
+      "dependsOn": [
         "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('OMSWorkspaceName'))]"
       ]
     }

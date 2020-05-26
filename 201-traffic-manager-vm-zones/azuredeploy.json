@@ -1,5 +1,5 @@
-  {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "location": {
@@ -25,12 +25,6 @@
         "description": "User name for the Virtual Machines."
       }
     },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Password for the Virtual Machines."
-      }
-    },
     "publicIpDnsName": {
       "type": "string",
       "metadata": {
@@ -44,6 +38,23 @@
       "maxValue": 10,
       "metadata": {
         "description": "Number of VMs to provision"
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
     }
   },
@@ -59,6 +70,17 @@
       "offer": "UbuntuServer",
       "sku": "16.04.0-LTS",
       "version": "latest"
+    },
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
     }
   },
   "resources": [
@@ -153,7 +175,8 @@
         "osProfile": {
           "computerName": "[variables('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": "[variables('linuxImage')]",
@@ -167,7 +190,7 @@
               "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'), copyIndex()))]"
             }
           ]
-        }        
+        }
       },
       "resources": [
         {
@@ -187,7 +210,7 @@
               "commandToExecute": "sudo bash -c 'apt-get update && apt-get -y install apache2' "
             }
           }
-        }    
+        }
       ]
     },
     {
@@ -210,11 +233,11 @@
           "port": 80,
           "path": "/"
         },
-        "copy" :[
+        "copy": [
           {
             "name": "endpoints",
             "count": "[parameters('numberOfVms')]",
-            "input":{
+            "input": {
               "name": "[concat('endpoint', copyIndex('endpoints'))]",
               "type": "Microsoft.Network/trafficManagerProfiles/azureEndpoints",
               "properties": {

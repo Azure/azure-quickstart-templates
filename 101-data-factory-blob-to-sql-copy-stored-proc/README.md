@@ -1,4 +1,13 @@
 # Copy data from Azure Blob Storage to Azure SQL Db with Stored Procedure
+
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-blob-to-sql-copy-stored-proc/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-blob-to-sql-copy-stored-proc/PublicDeployment.svg)
+
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-blob-to-sql-copy-stored-proc/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-blob-to-sql-copy-stored-proc/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-blob-to-sql-copy-stored-proc/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-data-factory-blob-to-sql-copy-stored-proc/CredScanResult.svg)
 This template creates a Data Factory pipeline that copies data from a file in a Blob Storage into a SQL Database table while invoking a [Stored Procedure](https://azure.microsoft.com/en-us/documentation/articles/data-factory-stored-proc-activity/) (SProc). 
 
 Please do the following steps before deploying the template: 
@@ -22,12 +31,10 @@ BEGIN
 END
 ```
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-data-factory-blob-to-sql-copy-stored-proc%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
-</a>
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-data-factory-blob-to-sql-copy-stored-proc%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-data-factory-blob-to-sql-copy-stored-proc%2Fazuredeploy.json)
+    
+
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-data-factory-blob-to-sql-stored-proc%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
-</a>
 
 ## Deploying sample
 You can deploy this sample directly through the Azure Portal or by using the scripts supplied in the root of the repository.
@@ -44,3 +51,5 @@ Simply execute the script from the root folder and pass in the folder name of th
 ```bash
 azure-group-deploy.sh -a 101-data-factory-blob-to-sql-copy-stored-proc -l eastus
 ```
+
+

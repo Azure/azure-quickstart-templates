@@ -1,18 +1,11 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "adminUsername": {
       "type": "string",
       "metadata": {
         "description": "Username for the Virtual Machines"
-      }
-    },
-    "adminPassword": {
-      "minLength": 12,
-      "type": "securestring",
-      "metadata": {
-        "description": "Password for the Virtual Machines(Min Length: 12)"
       }
     },
     "webTierVmCount": {
@@ -49,6 +42,23 @@
       "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "Location for all resources."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
     }
   },
@@ -99,6 +109,17 @@
     "quickstartTags": {
       "type": "object",
       "name": "rhel-3tier-iaas"
+    },
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
     }
   },
   "resources": [
@@ -359,11 +380,11 @@
       },
       "sku": {
         "name": "Aligned"
-          },
-        "properties": { 
-            "platformFaultDomainCount": 2,
-            "platformUpdateDomainCount": 5
-        }
+      },
+      "properties": {
+        "platformFaultDomainCount": 2,
+        "platformUpdateDomainCount": 5
+      }
     },
     {
       "type": "Microsoft.Network/loadBalancers",
@@ -671,7 +692,7 @@
         "provider": "[variables('redHatTags').provider]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('vmStorageAccountName'),'1')]", 
+        "[concat('Microsoft.Storage/storageAccounts/', variables('vmStorageAccountName'),'1')]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('webTierVmNicName'), copyindex(1))]",
         "[concat('Microsoft.Compute/availabilitySets/', variables('availSetName'),'1')]"
       ],
@@ -689,7 +710,8 @@
         "osProfile": {
           "computerName": "[concat('webserver',copyindex(1))]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
@@ -699,7 +721,7 @@
             "version": "latest"
           },
           "osDisk": {
-            "name":  "[concat(variables('webTierVmName'),'-', copyindex(1),'_OSDisk')]",
+            "name": "[concat(variables('webTierVmName'),'-', copyindex(1),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -731,7 +753,7 @@
         "provider": "[variables('redHatTags').provider]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('vmStorageAccountName'),'2')]", 
+        "[concat('Microsoft.Storage/storageAccounts/', variables('vmStorageAccountName'),'2')]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('appTierVmNicName'), copyindex(1))]",
         "[concat('Microsoft.Compute/availabilitySets/',variables('availSetName'),'2')]"
       ],
@@ -749,7 +771,8 @@
         "osProfile": {
           "computerName": "[concat('appserver',copyindex(1))]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
@@ -791,7 +814,7 @@
         "provider": "[variables('redHatTags').provider]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('vmStorageAccountName'),'3')]", 
+        "[concat('Microsoft.Storage/storageAccounts/', variables('vmStorageAccountName'),'3')]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('databaseTierVmNicName'), copyindex(1))]",
         "[concat('Microsoft.Compute/availabilitySets/', variables('availSetName'),'3')]"
       ],
@@ -809,7 +832,8 @@
         "osProfile": {
           "computerName": "[concat('databaseserver',copyindex(1))]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
@@ -851,7 +875,7 @@
         "provider": "[variables('redHatTags').provider]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('vmStorageAccountName'),'4')]", 
+        "[concat('Microsoft.Storage/storageAccounts/', variables('vmStorageAccountName'),'4')]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('jumpVmNicName'))]"
       ],
       "properties": {
@@ -861,7 +885,8 @@
         "osProfile": {
           "computerName": "jumpvm",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {

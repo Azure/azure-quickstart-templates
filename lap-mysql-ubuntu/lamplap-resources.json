@@ -1,12 +1,9 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "adminUsername": {
       "type": "string"
-    },
-    "adminPassword": {
-      "type": "securestring"
     },
     "namespace": {
       "type": "string"
@@ -38,6 +35,12 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "authenticationType": {
+      "type": "string"
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring"
     }
   },
   "variables": {
@@ -47,7 +50,18 @@
     "publicIpName": "[concat(parameters('namespace'), parameters('vmbasename'), 'PublicIp')]",
     "availabilitySetName": "[concat(parameters('namespace'), 'set')]",
     "nicName": "[concat(parameters('namespace'), concat(parameters('vmbasename'), 'nic'))]",
-    "vmName": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm')]"
+    "vmName": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm')]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
@@ -107,12 +121,11 @@
       "location": "[parameters('location')]",
       "sku": {
         "name": "Aligned"
-        },
-        "properties": { 
+      },
+      "properties": {
         "platformFaultDomainCount": 2,
         "platformUpdateDomainCount": 5
-        }
-        
+      }
     },
     {
       "apiVersion": "2017-09-01",
@@ -145,7 +158,7 @@
       }
     },
     {
-      "apiVersion":"2017-03-30", 
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
@@ -163,12 +176,13 @@
         "osProfile": {
           "computerName": "[concat(parameters('namespace'), concat(parameters('vmbasename'), 'vm'))]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": "[parameters('osSettings').imageReference]",
           "osDisk": {
-            "name": "[concat(variables('vmName'),'_OSDisk')]", 
+            "name": "[concat(variables('vmName'),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }

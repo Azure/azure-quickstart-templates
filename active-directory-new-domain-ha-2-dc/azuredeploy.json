@@ -1,13 +1,12 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
         "adminUsername": {
             "type": "string",
             "metadata": {
                 "description": "The name of the Administrator of the new VM and Domain"
-            },
-            "defaultValue": "adAdministrator"
+            }
         },
         "adminPassword": {
             "type": "securestring",
@@ -46,7 +45,7 @@
             "metadata": {
                 "description": "The location of resources, such as templates and DSC modules, that the template depends on"
             },
-            "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/active-directory-new-domain-ha-2-dc"
+            "defaultValue": "[deployment().properties.templateLink.uri]"
         },
         "_artifactsLocationSasToken": {
             "type": "securestring",
@@ -61,6 +60,13 @@
             "metadata": {
                 "description": "Location for all resources."
             }
+        },
+        "adVMSize": {
+            "type": "string",
+            "defaultValue": "Standard_DS2_v2",
+            "metadata": {
+                "description": "Size for the VM.  This sample uses premium disk and requires an 'S' sku."
+            }
         }
     },
     "variables": {
@@ -72,7 +78,6 @@
         "imageSKU": "2016-Datacenter",
         "adAvailabilitySetName": "adAvailabiltySet",
         "publicIPAddressName": "ad-lb-pip",
-        "adVMSize": "Standard_DS2_v2",
         "adLBFE": "LBFE",
         "adLBBE": "LBBE",
         "adPDCRDPNAT": "adPDCRDP",
@@ -87,28 +92,27 @@
         "adBDCNicIPAddress": "10.0.0.5",
         "adSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('adSubnetName'))]",
         "adLBName": "adLoadBalancer",
-        "adlbID": "[resourceId('Microsoft.Network/loadBalancers',variables('adLBName'))]",
-        "adlbFEConfigID": "[concat(variables('adlbID'),'/frontendIPConfigurations/',variables('adLBFE'))]",
-        "adPDCRDPNATRuleID": "[concat(variables('adlbID'),'/inboundNatRules/',variables('adPDCRDPNAT'))]",
-        "adBDCRDPNATRuleID": "[concat(variables('adlbID'),'/inboundNatRules/',variables('adBDCRDPNAT'))]",
-        "adBEAddressPoolID": "[concat(variables('adlbID'),'/backendAddressPools/',variables('adLBBE'))]",
+        "adlbFEConfigID": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('adLBName'), variables('adLBFE'))]",
+        "adPDCRDPNATRuleID": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules', variables('adLBName'), variables('adPDCRDPNAT'))]",
+        "adBDCRDPNATRuleID": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules', variables('adLBName'), variables('adBDCRDPNAT'))]",
+        "adBEAddressPoolID": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('adLBName'), variables('adLBBE'))]",
         "adDataDiskSize": 1000,
-        "vnetTemplateUri": "[concat(parameters('_artifactsLocation'),'/nestedtemplates/vnet.json', parameters('_artifactsLocationSasToken'))]",
-        "nicTemplateUri": "[concat(parameters('_artifactsLocation'),'/nestedtemplates/nic.json', parameters('_artifactsLocationSasToken'))]",
-        "vnetwithDNSTemplateUri": "[concat(parameters('_artifactsLocation'),'/nestedtemplates/vnet-with-dns-server.json', parameters('_artifactsLocationSasToken'))]",
-        "configureADBDCTemplateUri": "[concat(parameters('_artifactsLocation'),'/nestedtemplates/configureADBDC.json', parameters('_artifactsLocationSasToken'))]",
-        "adPDCModulesURL": "[concat(parameters('_artifactsLocation'),'/DSC/CreateADPDC.zip', parameters('_artifactsLocationSasToken'))]",
+        "vnetTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/vnet.json', parameters('_artifactsLocationSasToken')))]",
+        "nicTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/nic.json', parameters('_artifactsLocationSasToken')))]",
+        "vnetwithDNSTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/vnet-with-dns-server.json', parameters('_artifactsLocationSasToken')))]",
+        "configureADBDCTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/configureADBDC.json', parameters('_artifactsLocationSasToken')))]",
+        "adPDCModulesURL": "[uri(parameters('_artifactsLocation'), concat('DSC/CreateADPDC.zip', parameters('_artifactsLocationSasToken')))]",
         "adPDCConfigurationFunction": "CreateADPDC.ps1\\CreateADPDC",
-        "adBDCPreparationModulesURL": "[concat(parameters('_artifactsLocation'),'/DSC/PrepareADBDC.zip', parameters('_artifactsLocationSasToken'))]",
+        "adBDCPreparationModulesURL": "[uri(parameters('_artifactsLocation'), concat('DSC/PrepareADBDC.zip', parameters('_artifactsLocationSasToken')))]",
         "adBDCPreparationFunction": "PrepareADBDC.ps1\\PrepareADBDC",
-        "adBDCConfigurationModulesURL": "[concat(parameters('_artifactsLocation'),'/DSC/ConfigureADBDC.zip', parameters('_artifactsLocationSasToken'))]",
+        "adBDCConfigurationModulesURL": "[uri(parameters('_artifactsLocation'), concat('DSC/ConfigureADBDC.zip', parameters('_artifactsLocationSasToken')))]",
         "adBDCConfigurationFunction": "ConfigureADBDC.ps1\\ConfigureADBDC"
     },
     "resources": [
         {
             "name": "[variables('publicIPAddressName')]",
             "type": "Microsoft.Network/publicIPAddresses",
-            "apiVersion": "2016-10-01",
+            "apiVersion": "2020-03-01",
             "location": "[parameters('location')]",
             "properties": {
                 "publicIPAllocationMethod": "Dynamic",
@@ -118,7 +122,7 @@
             }
         },
         {
-            "apiVersion": "2017-03-30",
+            "apiVersion": "2019-12-01",
             "type": "Microsoft.Compute/availabilitySets",
             "location": "[parameters('location')]",
             "name": "[variables('adAvailabilitySetName')]",
@@ -133,7 +137,7 @@
         {
             "name": "VNet",
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2016-09-01",
+            "apiVersion": "2019-09-01",
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
@@ -141,6 +145,9 @@
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
                     "virtualNetworkName": {
                         "value": "[variables('virtualNetworkName')]"
                     },
@@ -159,10 +166,10 @@
         {
             "name": "[variables('adLBName')]",
             "type": "Microsoft.Network/loadBalancers",
-            "apiVersion": "2016-10-01",
+            "apiVersion": "2020-03-01",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+                "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
             ],
             "properties": {
                 "frontendIPConfigurations": [
@@ -170,7 +177,7 @@
                         "name": "[variables('adLBFE')]",
                         "properties": {
                             "publicIPAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
                             }
                         }
                     }
@@ -211,11 +218,11 @@
         {
             "name": "[variables('adPDCNicName')]",
             "type": "Microsoft.Network/networkInterfaces",
-            "apiVersion": "2016-10-01",
+            "apiVersion": "2020-03-01",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "Microsoft.Resources/deployments/VNet",
-                "[variables('adLBName')]"
+                "[resourceId('Microsoft.Resources/deployments', 'VNet')]",
+                "[resourceId('Microsoft.Network/loadbalancers', variables('adLBName'))]"
             ],
             "properties": {
                 "ipConfigurations": [
@@ -245,11 +252,11 @@
         {
             "name": "[variables('adBDCNicName')]",
             "type": "Microsoft.Network/networkInterfaces",
-            "apiVersion": "2016-10-01",
+            "apiVersion": "2020-03-01",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "Microsoft.Resources/deployments/VNet",
-                "[concat('Microsoft.Network/loadBalancers/',variables('adLBName'))]"
+                "[resourceId('Microsoft.Resources/deployments', 'VNet')]",
+                "[resourceId('Microsoft.Network/loadBalancers', variables('adLBName'))]"
             ],
             "properties": {
                 "ipConfigurations": [
@@ -279,16 +286,16 @@
         {
             "name": "[variables('adPDCVMName')]",
             "type": "Microsoft.Compute/virtualMachines",
-            "apiVersion": "2017-03-30",
+            "apiVersion": "2019-12-01",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/networkInterfaces',variables('adPDCNicName'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces', variables('adPDCNicName'))]",
                 "[resourceId('Microsoft.Compute/availabilitySets', variables('adAvailabilitySetName'))]",
-                "[resourceId('Microsoft.Network/loadBalancers',variables('adLBName'))]"
+                "[resourceId('Microsoft.Network/loadBalancers', variables('adLBName'))]"
             ],
             "properties": {
                 "hardwareProfile": {
-                    "vmSize": "[variables('adVMSize')]"
+                    "vmSize": "[parameters('adVMSize')]"
                 },
                 "availabilitySet": {
                     "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('adAvailabilitySetName'))]"
@@ -329,7 +336,7 @@
                 "networkProfile": {
                     "networkInterfaces": [
                         {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('adPDCNicName'))]"
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('adPDCNicName'))]"
                         }
                     ]
                 }
@@ -338,7 +345,7 @@
                 {
                     "name": "CreateADForest",
                     "type": "extensions",
-                    "apiVersion": "2016-03-30",
+                    "apiVersion": "2019-12-01",
                     "location": "[parameters('location')]",
                     "dependsOn": [
                         "[resourceId('Microsoft.Compute/virtualMachines', variables('adPDCVMName'))]"
@@ -371,9 +378,9 @@
         {
             "name": "UpdateVNetDNS1",
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2016-09-01",
+            "apiVersion": "2019-09-01",
             "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/', variables('adPDCVMName'),'/extensions/CreateADForest')]"
+                "CreateADForest"
             ],
             "properties": {
                 "mode": "Incremental",
@@ -382,6 +389,9 @@
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
                     "virtualNetworkName": {
                         "value": "[variables('virtualNetworkName')]"
                     },
@@ -405,10 +415,10 @@
         {
             "name": "UpdateBDCNIC",
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2015-01-01",
+            "apiVersion": "2019-09-01",
             "dependsOn": [
-                "[concat('Microsoft.Network/networkInterfaces/',variables('adBDCNicName'))]",
-                "Microsoft.Resources/deployments/UpdateVNetDNS1"
+                "[variables('adBDCNicName')]",
+                "UpdateVNetDNS1"
             ],
             "properties": {
                 "mode": "Incremental",
@@ -417,6 +427,9 @@
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
                     "nicName": {
                         "value": "[variables('adBDCNicName')]"
                     },
@@ -455,16 +468,16 @@
         {
             "name": "[variables('adBDCVMName')]",
             "type": "Microsoft.Compute/virtualMachines",
-            "apiVersion": "2017-03-30",
+            "apiVersion": "2019-12-01",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/networkInterfaces',variables('adBDCNicName'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces', variables('adBDCNicName'))]",
                 "[resourceId('Microsoft.Compute/availabilitySets', variables('adAvailabilitySetName'))]",
-                "[resourceId('Microsoft.Network/loadBalancers',variables('adLBName'))]"
+                "[resourceId('Microsoft.Network/loadBalancers', variables('adLBName'))]"
             ],
             "properties": {
                 "hardwareProfile": {
-                    "vmSize": "[variables('adVMSize')]"
+                    "vmSize": "[parameters('adVMSize')]"
                 },
                 "availabilitySet": {
                     "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('adAvailabilitySetName'))]"
@@ -514,10 +527,10 @@
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "name": "[concat(variables('adBDCVMName'),'/PrepareBDC')]",
-            "apiVersion": "2016-03-30",
+            "apiVersion": "2019-12-01",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/', variables('adBDCVMName'))]"
+                "[resourceId('Microsoft.Compute/virtualMachines', variables('adBDCVMName'))]"
             ],
             "properties": {
                 "publisher": "Microsoft.Powershell",
@@ -536,10 +549,10 @@
         {
             "name": "ConfiguringBackupADDomainController",
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2016-09-01",
+            "apiVersion": "2019-09-01",
             "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/',variables('adBDCVMName'),'/extensions/PrepareBDC')]",
-                "Microsoft.Resources/deployments/UpdateBDCNIC"
+                "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('adBDCVMName'),'PrepareBDC')]",
+                "[resourceId('Microsoft.Resources/deployments', 'UpdateBDCNIC')]"
             ],
             "properties": {
                 "mode": "Incremental",
@@ -575,9 +588,9 @@
         {
             "name": "UpdateVNetDNS2",
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2016-09-01",
+            "apiVersion": "2019-09-01",
             "dependsOn": [
-                "Microsoft.Resources/deployments/ConfiguringBackupADDomainController"
+                "[resourceId('Microsoft.Resources/deployments', 'ConfiguringBackupADDomainController')]"
             ],
             "properties": {
                 "mode": "Incremental",
@@ -586,6 +599,9 @@
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
                     "virtualNetworkName": {
                         "value": "[variables('virtualNetworkName')]"
                     },

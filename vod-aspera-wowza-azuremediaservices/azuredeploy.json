@@ -1,8 +1,8 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "deploymentName": {
+    "deploymentPrefix": {
       "type": "string",
       "metadata": {
         "description": "Deployment Name of the Stack"
@@ -38,12 +38,6 @@
         "description": "Wowza Streaming Server Administrator Name"
       }
     },
-    "wowzaAdminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Wowza Streaming Server Administrator Password"
-      }
-    },
     "automationAccountName": {
       "type": "string",
       "defaultValue": "auto",
@@ -58,18 +52,42 @@
         "description": "Generate a Job ID (GUID) from https://www.guidgenerator.com/online-guid-generator.aspx "
       }
     },
-    "baseUri": {
-      "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/vod-aspera-wowza-azuremediaservices/",
-      "metadata": {
-        "description": "base uri for your git repo"
-      }
-    },
     "location": {
       "type": "string",
       "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "Location for all resources."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/vod-aspera-wowza-azuremediaservices/",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
     }
   },
@@ -84,7 +102,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('baseUri'), 'ams/ams.json')]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat('ams/ams.json', parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {}
@@ -100,7 +118,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('baseUri'), 'ams/automationjob.json')]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat('ams/automationjob.json', parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -134,8 +152,11 @@
           "MediaService_StorageAccounts_Keys": {
             "value": "[reference('ams').outputs.MediaService_StorageAccounts_Keys.value]"
           },
-          "baseUri": {
-            "value": "[parameters('baseUri')]"
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
           }
         }
       }
@@ -150,12 +171,12 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('baseUri'), 'desktop/desktop.json')]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat('desktop/desktop.json', parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "deploymentName": {
-            "value": "[parameters('deploymentName')]"
+          "deploymentPrefix": {
+            "value": "[parameters('deploymentPrefix')]"
           },
           "storageAccountName": {
             "value": "[reference('ams').outputs.Input_StorageAccounts_Name.value]"
@@ -185,12 +206,12 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('baseUri'), 'aspera/aspera.json')]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat('aspera/aspera.json', parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "deploymentName": {
-            "value": "[parameters('deploymentName')]"
+          "deploymentPrefix": {
+            "value": "[parameters('deploymentPrefix')]"
           },
           "asperaUsername": {
             "value": "[parameters('asperaUsername')]"
@@ -198,8 +219,11 @@
           "asperaAdminPassword": {
             "value": "[parameters('asperaAdminPassword')]"
           },
-          "baseUri": {
-            "value": "[parameters('baseUri')]"
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
           }
         }
       }
@@ -214,12 +238,12 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('baseUri'), 'wowza/wowza.json')]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat('wowza/wowza.json', parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "deploymentName": {
-            "value": "[parameters('deploymentName')]"
+          "deploymentPrefix": {
+            "value": "[parameters('deploymentPrefix')]"
           },
           "storageAccountName": {
             "value": "[reference('ams').outputs.Ouput_StorageAccounts_Name.value]"
@@ -233,11 +257,17 @@
           "wowzaUsername": {
             "value": "[parameters('wowzaUsername')]"
           },
-          "wowzaAdminPassword": {
-            "value": "[parameters('wowzaadminPassword')]"
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
           },
-          "baseUri": {
-            "value": "[parameters('baseUri')]"
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
           }
         }
       }
@@ -291,10 +321,6 @@
     "wowzaUsername": {
       "type": "string",
       "value": "[parameters('wowzaUsername')]"
-    },
-    "wowzaAdminPassword": {
-      "type": "string",
-      "value": "[parameters('wowzaAdminPassword')]"
     }
   }
 }

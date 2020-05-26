@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "appName": {
@@ -8,29 +8,36 @@
         "description": "Name of azure web app"
       }
     },
-    "appServiceTier": {
-      "type": "string",
-      "allowedValues": [
-        "Standard",
-        "Premium"
-      ],
-      "defaultValue": "Standard",
-      "metadata": {
-        "description": "Choose either Standard or Premium Azure Web Apps pricing tiers. It defaults to Standard"
-      }
-    },
-    "appServiceWorkerSize": {
-      "type": "string",
-      "allowedValues": [
-        "0",
-        "1",
-        "2"
-      ],
-      "defaultValue": "0",
-      "metadata": {
-        "description": "Worker Size( 0=Small, 1=Medium, 2=Large )"
-      }
-    },
+        "servicePlanTier": {
+            "type": "string",
+            "allowedValues": [
+                "Standard",
+                "Premium",
+                "PremiumV2"
+            ],
+            "defaultValue": "PremiumV2",
+            "metadata": {
+                "description": "Tier for Service Plan"
+            }
+        },
+        "servicePlanSku": {
+            "type": "string",
+            "allowedValues": [
+                "S1",
+                "S2",
+                "S3",
+                "P1",
+                "P2",
+                "P3",
+                "P1V2",
+                "P2V2",
+                "P3V3"
+            ],
+            "defaultValue": "P1V2",
+            "metadata": {
+                "description": "Size for Service Plan"
+            }
+        },
     "dbServerName": {
       "type": "string",
       "metadata": {
@@ -53,18 +60,6 @@
       "type": "string",
       "metadata": {
         "description": "Database Name"
-      }
-    },
-    "dbEdition": {
-      "type": "string",
-      "allowedValues": [
-        "Basic",
-        "Standard",
-        "Premium"
-      ],
-      "defaultValue": "Standard",
-      "metadata": {
-        "description": "SQL DB appServiceTier : Basic,Standard,Premium"
       }
     },
     "nonAdminDatabaseUserName": {
@@ -110,7 +105,7 @@
       "name": "[parameters('dbServerName')]",
       "type": "Microsoft.Sql/servers",
       "location": "[parameters('location')]",
-      "apiVersion": "2014-04-01-preview",
+      "apiVersion": "2018-06-01-preview",
       "properties": {
         "administratorLogin": "[parameters('dbAdministratorLogin')]",
         "administratorLoginPassword": "[parameters('dbAdministratorLoginPassword')]",
@@ -118,26 +113,29 @@
       },
       "resources": [
         {
-          "apiVersion": "2014-04-01-preview",
+          "apiVersion": "2018-06-01-preview",
           "name": "[parameters('dbName')]",
           "type": "databases",
           "location": "[parameters('location')]",
+          "sku": {
+            "name": "S0",
+            "tier": "Standard"
+          },
+          "kind": "v12.0,user",
           "dependsOn": [
-            "[parameters('dbServerName')]"
+            "[resourceId('Microsoft.SQL/Servers', parameters('dbServerName'))]"
           ],
           "properties": {
-            "edition": "[parameters('dbEdition')]",
-            "collation": "SQL_Latin1_General_CP1_CI_AS",
-            "requestedServiceObjectiveId": "F1173C43-91BD-4AAA-973C-54E79E15235B"
+            "collation": "SQL_Latin1_General_CP1_CI_AS"
           }
         },
         {
-          "apiVersion": "2014-04-01-preview",
+          "apiVersion": "2018-06-01-preview",
           "name": "AllowAllWindowsAzureIps",
           "type": "firewallrules",
           "location": "[parameters('location')]",
           "dependsOn": [
-            "[concat('Microsoft.Sql/servers/', parameters('dbServerName'))]"
+            "[resourceId('Microsoft.SQL/Servers', parameters('dbServerName'))]"
           ],
           "properties": {
             "endIpAddress": "0.0.0.0",
@@ -149,61 +147,58 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountName')]",
-      "apiVersion": "2016-01-01",
+      "apiVersion": "2018-02-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "[parameters('storageAccountType')]"
       },
-      "kind": "Storage",
-      "properties": {}
+      "kind": "Storage"
     },
     {
-      "apiVersion": "2014-06-01",
+      "apiVersion": "2018-02-01",
       "name": "[variables('appServicePlanName')]",
       "type": "Microsoft.Web/serverFarms",
       "location": "[parameters('location')]",
-      "properties": {
-        "name": "[variables('appServicePlanName')]",
-        "appServiceTier": "[parameters('appServiceTier')]",
-        "workerSize": "[parameters('appServiceWorkerSize')]",
-        "hostingEnvironment": "",
-        "numberOfWorkers": 1
-      }
+      "sku": {
+        "Tier": "[parameters('servicePlanTier')]",
+        "Name": "[parameters('servicePlanSku')]"
+      },
+      "kind": "linux",
+      "properties": { }
     },
     {
-      "apiVersion": "2015-02-01",
+      "apiVersion": "2018-11-01",
       "name": "[parameters('appName')]",
       "type": "Microsoft.Web/Sites",
       "location": "[parameters('location')]",
       "tags": {
-        "[concat('hidden-related:', '/subscriptions/', subscription().subscriptionId,'/resourcegroups/', resourceGroup().name, '/providers/Microsoft.Web/serverfarms/', variables('appServicePlanName'))]": "empty"
+        "[concat('hidden-related:', resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName')))]": "empty"
       },
       "dependsOn": [
-        "[concat('Microsoft.Web/serverFarms/', variables('appServicePlanName'))]"
+        "[resourceId('Microsoft.Web/serverFarms', variables('appServicePlanName'))]"
       ],
       "properties": {
         "name": "[parameters('appName')]",
-        "serverFarmId": "[concat('/subscriptions/', subscription().subscriptionId,'/resourcegroups/',resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('appServicePlanName'))]",
-        "hostingEnvironment": ""
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]"
       },
       "resources": [
         {
-          "apiVersion": "2014-06-01",
+          "apiVersion": "2018-11-01",
           "name": "MSDeploy",
           "type": "Extensions",
           "dependsOn": [
-            "[concat('Microsoft.Web/Sites/', parameters('appName'))]",
-            "[concat('Microsoft.Web/Sites/', parameters('appName'), '/config/web')]",
-            "[concat('Microsoft.Sql/servers/', parameters('dbServerName'), '/databases/', parameters('dbName'))]",
-            "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
+            "[resourceId('Microsoft.Web/sites', parameters('appName'))]",
+            "[resourceId('Microsoft.Web/Sites/config', parameters('appName'), 'web')]",
+            "[resourceId('Microsoft.SQL/Servers/databases', parameters('dbServerName'), parameters('dbName'))]",
+            "[variables('storageAccountName')]"
           ],
           "properties": {
             "packageUri": "https://auxmktplceprod.blob.core.windows.net/packages/UmbracoCms.WebPI.7.4.3.zip",
             "dbType": "SQL",
-            "connectionString": "[concat('Data Source=tcp:', reference(concat('Microsoft.Sql/servers/', parameters('dbServerName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', parameters('dbName'), ';User Id=', parameters('dbAdministratorLogin'), '@', parameters('dbServerName'), ';Password=', parameters('dbAdministratorLoginPassword'), ';')]",
+            "connectionString": "[concat('Data Source=tcp:', reference(resourceId('Microsoft.SQL/servers', parameters('dbServerName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', parameters('dbName'), ';User Id=', parameters('dbAdministratorLogin'), '@', parameters('dbServerName'), ';Password=', parameters('dbAdministratorLoginPassword'), ';')]",
             "setParameters": {
               "Application Path": "[parameters('appName')]",
-              "Database Server": "[reference(concat('Microsoft.Sql/servers/', parameters('dbServerName'))).fullyQualifiedDomainName]",
+              "Database Server": "[reference(resourceId('Microsoft.SQL/servers', parameters('dbServerName'))).fullyQualifiedDomainName]",
               "Database Name": "[parameters('dbName')]",
               "Database Username": "[parameters('nonAdminDatabaseUserName')]",
               "Database Password": "[parameters('nonAdminDatabasePassword')]",
@@ -213,27 +208,27 @@
           }
         },
         {
-          "apiVersion": "2015-04-01",
+          "apiVersion": "2018-11-01",
           "name": "connectionstrings",
           "type": "config",
           "dependsOn": [
             "[resourceId('Microsoft.Web/Sites', parameters('appName'))]",
-            "[concat('Microsoft.Sql/servers/', parameters('dbServerName'), '/databases/', parameters('dbName'))]",
-            "[concat('Microsoft.Web/Sites/', parameters('appName'), '/Extensions/MSDeploy')]"
+            "[resourceId('Microsoft.SQL/Servers/databases', parameters('dbServerName'), parameters('dbName'))]",
+            "[resourceId('Microsoft.Web/Sites/extensions', parameters('appName'), 'MSDeploy')]"
           ],
           "properties": {
             "defaultConnection": {
-              "value": "[concat('Data Source=tcp:', reference(concat('Microsoft.Sql/servers/', parameters('dbServerName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', parameters('dbName'), ';User Id=', parameters('dbAdministratorLogin'), '@', parameters('dbServerName'), ';Password=', parameters('dbAdministratorLoginPassword'), ';')]",
+              "value": "[concat('Data Source=tcp:', reference(resourceId('Microsoft.SQL/servers', parameters('dbServerName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', parameters('dbName'), ';User Id=', parameters('dbAdministratorLogin'), '@', parameters('dbServerName'), ';Password=', parameters('dbAdministratorLoginPassword'), ';')]",
               "type": "SQLAzure"
             }
           }
         },
         {
-          "apiVersion": "2014-06-01",
+          "apiVersion": "2018-11-01",
           "name": "web",
           "type": "config",
           "dependsOn": [
-            "[concat('Microsoft.Web/Sites/', parameters('appName'))]"
+            "[resourceId('Microsoft.Web/sites', parameters('appName'))]"
           ],
           "properties": {
             "phpVersion": "off",
@@ -248,15 +243,15 @@
       ]
     },
     {
-      "apiVersion": "2014-04-01",
+      "apiVersion": "2015-04-01",
       "name": "[concat(variables('appServicePlanName'), '-scaleset')]",
       "type": "microsoft.insights/autoscalesettings",
       "location": "[variables('appInsightsRegion')]",
       "tags": {
-        "[concat('hidden-link:', '/subscriptions/', subscription().subscriptionId,'/resourcegroups/', resourceGroup().name, '/providers/Microsoft.Web/serverfarms/', variables('appServicePlanName'))]": "Resource"
+        "[concat('hidden-link:', resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName')))]": "Resource"
       },
       "dependsOn": [
-        "[concat('Microsoft.Web/serverfarms/', variables('appServicePlanName'))]"
+        "[variables('appServicePlanName')]"
       ],
       "properties": {
         "profiles": [
@@ -271,7 +266,7 @@
               {
                 "metricTrigger": {
                   "metricName": "CpuPercentage",
-                  "metricResourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('appServicePlanName'))]",
+                  "metricResourceUri": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
                   "timeGrain": "PT1M",
                   "statistic": "Average",
                   "timeWindow": "PT10M",
@@ -289,7 +284,7 @@
               {
                 "metricTrigger": {
                   "metricName": "CpuPercentage",
-                  "metricResourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('appServicePlanName'))]",
+                  "metricResourceUri": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
                   "timeGrain": "PT1M",
                   "statistic": "Average",
                   "timeWindow": "PT1H",
@@ -309,19 +304,19 @@
         ],
         "enabled": false,
         "name": "[concat(variables('appServicePlanName'), '-scaleset')]",
-        "targetResourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('appServicePlanName'))]"
+        "targetResourceUri": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]"
       }
     },
     {
-      "apiVersion": "2014-04-01",
+      "apiVersion": "2016-03-01",
       "name": "[concat('ServerErrors ', parameters('appName'))]",
       "type": "microsoft.insights/alertrules",
       "location": "[variables('appInsightsRegion')]",
       "tags": {
-        "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/sites/', parameters('appName'))]": "Resource"
+        "[concat('hidden-link:', resourceId('Microsoft.Web/sites', parameters('appName')))]": "Resource"
       },
       "dependsOn": [
-        "[concat('Microsoft.Web/sites/', parameters('appName'))]"
+        "[resourceId('Microsoft.Web/sites', parameters('appName'))]"
       ],
       "properties": {
         "name": "[concat('ServerErrors ', parameters('appName'))]",
@@ -331,7 +326,7 @@
           "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.ThresholdRuleCondition",
           "dataSource": {
             "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.RuleMetricDataSource",
-            "resourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/sites/', parameters('appName'))]",
+            "resourceUri": "[resourceId('Microsoft.Web/sites', parameters('appName'))]",
             "metricName": "Http5xx"
           },
           "operator": "GreaterThan",
@@ -340,21 +335,20 @@
         },
         "action": {
           "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.RuleEmailAction",
-          "sendToServiceOwners": true,
-          "customEmails": []
+          "sendToServiceOwners": true
         }
       }
     },
     {
-      "apiVersion": "2014-04-01",
+      "apiVersion": "2016-03-01",
       "name": "[concat('ForbiddenRequests ', parameters('appName'))]",
       "type": "microsoft.insights/alertrules",
       "location": "[variables('appInsightsRegion')]",
       "tags": {
-        "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/sites/', parameters('appName'))]": "Resource"
+        "[concat('hidden-link:', resourceId('Microsoft.Web/sites', parameters('appName')))]": "Resource"
       },
       "dependsOn": [
-        "[concat('Microsoft.Web/sites/', parameters('appName'))]"
+        "[resourceId('Microsoft.Web/sites', parameters('appName'))]"
       ],
       "properties": {
         "name": "[concat('ForbiddenRequests ', parameters('appName'))]",
@@ -364,7 +358,7 @@
           "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.ThresholdRuleCondition",
           "dataSource": {
             "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.RuleMetricDataSource",
-            "resourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/sites/', parameters('appName'))]",
+            "resourceUri": "[resourceId('Microsoft.Web/sites', parameters('appName'))]",
             "metricName": "Http403"
           },
           "operator": "GreaterThan",
@@ -373,21 +367,20 @@
         },
         "action": {
           "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.RuleEmailAction",
-          "sendToServiceOwners": true,
-          "customEmails": []
+          "sendToServiceOwners": true
         }
       }
     },
     {
-      "apiVersion": "2014-04-01",
+      "apiVersion": "2016-03-01",
       "name": "[concat('CPUHigh ', variables('appServicePlanName'))]",
       "type": "microsoft.insights/alertrules",
       "location": "[variables('appInsightsRegion')]",
       "tags": {
-        "[concat('hidden-link:', '/subscriptions/', subscription().subscriptionId,'/resourcegroups/', resourceGroup().name, '/providers/Microsoft.Web/serverfarms/', variables('appServicePlanName'))]": "Resource"
+        "[concat('hidden-link:', resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName')))]": "Resource"
       },
       "dependsOn": [
-        "[concat('Microsoft.Web/serverfarms/', variables('appServicePlanName'))]"
+        "[variables('appServicePlanName')]"
       ],
       "properties": {
         "name": "[concat('CPUHigh ', variables('appServicePlanName'))]",
@@ -397,7 +390,7 @@
           "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.ThresholdRuleCondition",
           "dataSource": {
             "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.RuleMetricDataSource",
-            "resourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('appServicePlanName'))]",
+            "resourceUri": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
             "metricName": "CpuPercentage"
           },
           "operator": "GreaterThan",
@@ -406,21 +399,20 @@
         },
         "action": {
           "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.RuleEmailAction",
-          "sendToServiceOwners": true,
-          "customEmails": []
+          "sendToServiceOwners": true
         }
       }
     },
     {
-      "apiVersion": "2014-04-01",
+      "apiVersion": "2016-03-01",
       "name": "[concat('LongHttpQueue ', variables('appServicePlanName'))]",
       "type": "microsoft.insights/alertrules",
       "location": "[variables('appInsightsRegion')]",
       "tags": {
-        "[concat('hidden-link:', '/subscriptions/', subscription().subscriptionId,'/resourcegroups/', resourceGroup().name, '/providers/Microsoft.Web/serverfarms/', variables('appServicePlanName'))]": "Resource"
+        "[concat('hidden-link:', resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName')))]": "Resource"
       },
       "dependsOn": [
-        "[concat('Microsoft.Web/serverfarms/', variables('appServicePlanName'))]"
+        "[variables('appServicePlanName')]"
       ],
       "properties": {
         "name": "[concat('LongHttpQueue ', variables('appServicePlanName'))]",
@@ -430,7 +422,7 @@
           "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.ThresholdRuleCondition",
           "dataSource": {
             "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.RuleMetricDataSource",
-            "resourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('appServicePlanName'))]",
+            "resourceUri": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
             "metricName": "HttpQueueLength"
           },
           "operator": "GreaterThan",
@@ -439,21 +431,20 @@
         },
         "action": {
           "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.RuleEmailAction",
-          "sendToServiceOwners": true,
-          "customEmails": []
+          "sendToServiceOwners": true
         }
       }
     },
     {
-      "apiVersion": "2014-04-01",
+      "apiVersion": "2018-05-01-preview",
       "name": "[concat(parameters('appName'),'-appin')]",
       "type": "microsoft.insights/components",
       "location": "[variables('appInsightsRegion')]",
       "tags": {
-        "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/sites/', parameters('appName'))]": "Resource"
+        "[concat('hidden-link:', resourceId('Microsoft.Web/sites', parameters('appName')))]": "Resource"
       },
       "dependsOn": [
-        "[concat('Microsoft.Web/sites/', parameters('appName'))]"
+        "[resourceId('Microsoft.Web/sites', parameters('appName'))]"
       ],
       "properties": {
         "applicationId": "[parameters('appName')]"

@@ -1,5 +1,5 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
         "resourceName": {
@@ -40,20 +40,20 @@
             }
         },
         "agentVMSize": {
-            "defaultValue": "Standard_D2_v2",
+            "defaultValue": "Standard_D2_v3",
             "type": "string",
             "metadata": {
                 "description": "The size of the Virtual Machine."
             }
         },
         "existingServicePrincipalObjectId": {
-            "type": "securestring",
+            "type": "string",
             "metadata": {
                 "description": "Oject ID against which the Network Contributor roles will be assigned on the subnet"
             }
         },
         "existingServicePrincipalClientId": {
-            "type": "securestring",
+            "type": "string",
             "metadata": {
                 "description": "Client ID (used by cloudprovider)"
             }
@@ -75,7 +75,7 @@
             }
         },
         "kubernetesVersion": {
-            "defaultValue": "1.11.5",
+            "defaultValue": "1.15.7",
             "type": "string",
             "metadata": {
                 "description": "The version of Kubernetes."
@@ -160,11 +160,10 @@
         {
             "type": "Microsoft.ContainerService/managedClusters",
             "name": "[parameters('resourceName')]",
-            "apiVersion": "2018-03-31",
+            "apiVersion": "2020-02-01",
             "location": "[parameters('location')]",
-            "tags": {},
             "dependsOn": [
-                "[concat('Microsoft.Resources/deployments/', 'ClusterSubnetRoleAssignmentDeployment')]"
+                "ClusterSubnetRoleAssignmentDeployment"
             ],
             "properties": {
                 "kubernetesVersion": "[parameters('kubernetesVersion')]",
@@ -202,23 +201,22 @@
         {
             "type": "Microsoft.Resources/deployments",
             "name": "ClusterSubnetRoleAssignmentDeployment",
-            "apiVersion": "2017-05-10",
-            "subscriptionId": "[subscription().subscriptionId]",
+            "apiVersion": "2019-10-01",
             "resourceGroup": "[parameters('existingVirtualNetworkResourceGroup')]",
             "properties": {
                 "mode": "Incremental",
                 "template": {
-                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
                     "contentVersion": "1.0.0.0",
                     "parameters": {},
                     "variables": {},
                     "resources": [
                         {
                             "type": "Microsoft.Network/virtualNetworks/subnets/providers/roleAssignments",
-                            "apiVersion": "2017-05-01",
+                            "apiVersion": "2019-04-01-preview",
                             "name": "[concat(parameters('existingVirtualNetworkName'), '/', parameters('existingSubnetName'), '/Microsoft.Authorization/', guid(resourceGroup().id, deployment().name))]",
                             "properties": {
-                                "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', '4d97b98b-1d4f-4787-a291-c67834d212e7')]",
+                                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4d97b98b-1d4f-4787-a291-c67834d212e7')]",
                                 "principalId": "[parameters('existingServicePrincipalObjectId')]",
                                 "scope": "[variables('vnetSubnetId')]"
                             }
@@ -231,7 +229,7 @@
     "outputs": {
         "controlPlaneFQDN": {
             "type": "string",
-            "value": "[reference(concat('Microsoft.ContainerService/managedClusters/', parameters('resourceName'))).fqdn]"
+            "value": "[reference(resourceId('Microsoft.ContainerService/managedClusters', parameters('resourceName'))).fqdn]"
         }
     }
 }

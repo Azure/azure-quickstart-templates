@@ -1,5 +1,14 @@
 # Create a High Availabilty SharePoint Farm with 9 VMs using the Powershell DSC Extension
 
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/sharepoint-server-farm-ha/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/sharepoint-server-farm-ha/PublicDeployment.svg)
+
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/sharepoint-server-farm-ha/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/sharepoint-server-farm-ha/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/sharepoint-server-farm-ha/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/sharepoint-server-farm-ha/CredScanResult.svg)
+
 This template will create a SQL Server 2014 Always On Availability Group using the PowerShell DSC Extension it creates the following resources:
 
 +	A Virtual Network
@@ -41,13 +50,7 @@ This template will create a SQL Server 2014 Always On Availability Group using t
 .\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactStagingDirectory '[foldername]' -DSCSourceFolder 'dscv2'  
 ```
 
-
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsharepoint-server-farm-ha%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
-</a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsharepoint-server-farm-ha%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
-</a>
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsharepoint-server-farm-ha%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsharepoint-server-farm-ha%2Fazuredeploy.json)
 
 ## Notable Variables
 
@@ -72,3 +75,5 @@ This template will create a SQL Server 2014 Always On Availability Group using t
 |windowsDiskSize|The size of the VHD allocated for AD and Witness VMs Data Disk|
 |sqlDiskSize|The size of the the VHD allocated for SQL VMs Data and Log Disks|
 |spDiskSize|The size of the VHD allocated for the SP VMs Data Disk|
+
+

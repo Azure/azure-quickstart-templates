@@ -5,11 +5,12 @@
 #
 set -x
 set -v
+set -e
 
 if [ -z "$1" ]; then
-	PRIMARY_USER="sas"
+	INSTALL_USER="sas"
 else
-	PRIMARY_USER="$1"
+	INSTALL_USER="$1"
 fi
 azure_storage_account="$2"
 azure_storage_files_share="$3"
@@ -19,11 +20,11 @@ csv_group_list="$5"
 CIFS_MOUNT_POINT="/mnt/${azure_storage_files_share}"
 CIFS_SEMAPHORE_DIR="${CIFS_MOUNT_POINT}/setup/readiness_flags"
 CIFS_ANSIBLE_KEYS="${CIFS_MOUNT_POINT}/setup/ansible_key"
-CIFS_ANSIBLE_INVENTORIES_DIR="${CIFS_MOUNT_POINT}/setup/ansible/inventory"
-CIFS_ANSIBLE_GROUPS_DIR="${CIFS_MOUNT_POINT}/setup/ansible/groups"
+#CIFS_ANSIBLE_INVENTORIES_DIR="${CIFS_MOUNT_POINT}/setup/ansible/inventory"
+#CIFS_ANSIBLE_GROUPS_DIR="${CIFS_MOUNT_POINT}/setup/ansible/groups"
 cifs_server_fqdn="${azure_storage_account}.file.core.windows.net"
 
-
+yum install -y yum-utils
 # on 4/17, we started having intermittent issues with this repository being present for updates, so configuring to skip
 yum-config-manager --save --setopt=rhui-microsoft-azure-rhel7-eus.skip_if_unavailable=true
 
@@ -32,7 +33,7 @@ yum-config-manager --save --setopt=rhui-microsoft-azure-rhel7-eus.skip_if_unavai
 # so is just a slowdown that denies pipelining and makes the non-tty session from azure extentions break on sudo without faking one (my prefered method is ssh back into the same user, but seriously..)
 sed -i -e '/Defaults    requiretty/{ s/.*/# Defaults    requiretty/ }' /etc/sudoers
 
-yum install -y cifs-utils
+yum install -y cifs-utils time
 
 if [ ! -d "/etc/smbcredentials" ]; then
     sudo mkdir /etc/smbcredentials
@@ -70,29 +71,38 @@ while [ ! -e "$ANSIBLE_AUTHORIZED_KEY_FILE" ]; do
 		exit 1
 	fi
 done
-su - ${PRIMARY_USER} <<END
-mkdir -p $HOME/.ssh
-cat "$ANSIBLE_AUTHORIZED_KEY_FILE" >> "/home/${PRIMARY_USER}/.ssh/authorized_keys"
-chmod 600 "/home/${PRIMARY_USER}/.ssh/authorized_keys"
+su - ${INSTALL_USER} <<END
+mkdir -p /home/${INSTALL_USER}/.ssh
+cat "$ANSIBLE_AUTHORIZED_KEY_FILE" >> "/home/${INSTALL_USER}/.ssh/authorized_keys"
+chmod 600 "/home/${INSTALL_USER}/.ssh/authorized_keys"
 END
 
-HOSTNAME="$(hostname | cut -f1 -d'.')"
-HOSTNAME_FQDN="$(hostname -f)"
-#ansible_become=true
-INVENTORY_LINE="${HOSTNAME} ansible_host=${HOSTNAME_FQDN} ansible_user='${PRIMARY_USER}' ansible_ssh_extra_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' ansible_connection='ssh' ansible_ssh_pipelining=true"  
 
 ansible_temp_filename="/tmp/tmp.inv.ansible"
 
 rm -f "$ansible_temp_filename"
-OLD_IFS="$IFS"
-IFS=","
-for v in $csv_group_list; do
-echo "[${v}]" >> "$ansible_temp_filename"
-echo "${HOSTNAME}" >> "$ansible_temp_filename"
-done
-IFS="$OLD_IFS"
-su - ${PRIMARY_USER} <<END
-touch "${CIFS_SEMAPHORE_DIR}/$(hostname)_ready"
-echo "$INVENTORY_LINE" > "${CIFS_ANSIBLE_INVENTORIES_DIR}/$(hostname)_inventory_line"
-cat "$ansible_temp_filename" > "${CIFS_ANSIBLE_GROUPS_DIR}/$(hostname)_inventory_groups"
+
+
+#
+# Create and simlink the remote directories for cascache/saswork
+#
+
+mkdir -p /mnt/resource/sastmp/cascache
+mkdir -p /mnt/resource/sastmp/saswork
+chown -R ${INSTALL_USER} /mnt/resource/sastmp
+chmod 777 /mnt/resource/sastmp/cascache
+chmod 777 /mnt/resource/sastmp/saswork
+ln -s /mnt/resource/sastmp /sastmp
+
+#Disable selinux since viya-ark no longer does this?
+setenforce 0
+sed -i 's/^SELINUX=.*/SELINUX=disabled/g' /etc/selinux/config && cat /etc/sysconfig/selinux
+
+#
+# semaphore that we are ready
+#
+LOCALIP=$(ip -o -f inet addr | grep eth0 | sed -r 's/.*\b(([0-9]{1,3}\.){3}[0-9]{1,3})\/.*/\1/g')
+su - ${INSTALL_USER} <<END
+echo $LOCALIP > "${CIFS_SEMAPHORE_DIR}/$(hostname)"
 END
+

@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "location": {
@@ -67,6 +67,17 @@
         "description": "The name of the storage account to use"
       }
     },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on all Linux Virtual Machines. SSH key is recommended."
+      }
+    },
     "vmAdminNameTrendDSM": {
       "type": "string",
       "defaultValue": "demo",
@@ -74,10 +85,10 @@
         "description": "TrendMicro Deep Security Manager Virtual Machine admin username"
       }
     },
-    "vmAdminPasswordTrendDSM": {
+    "vmAdminPasswordOrPublicKeyTrendDSM": {
       "type": "securestring",
       "metadata": {
-        "description": "TrendMicro Deep Security Manager Virtual Machine admin password"
+        "description": "TrendMicro Deep Security Manager Virtual Machine admin password or SSH public key. SSH key is recommended."
       }
     },
     "vmSizeTrendDSM": {
@@ -154,10 +165,10 @@
         "description": "Orchestrator Server Virtual Machine admin username"
       }
     },
-    "vmAdminPasswordOrchServer": {
+    "vmAdminPasswordOrPublicKeyOrchServer": {
       "type": "securestring",
       "metadata": {
-        "description": "Orchestrator Server Virtual Machine admin password"
+        "description": "Orchestrator Server Virtual Machine admin password or SSH public key. SSH key is recommended."
       }
     },
     "publicIPDomainNameLabelOrchServer": {
@@ -174,10 +185,10 @@
         "description": "Chef Server Virtual Machine admin username"
       }
     },
-    "vmAdminPasswordChefServer": {
+    "vmAdminPasswordOrPublicKeyChefServer": {
       "type": "securestring",
       "metadata": {
-        "description": "Chef Server Virtual Machine admin password"
+        "description": "Chef Server Virtual Machine admin password or SSH public key. SSH key is recommended."
       }
     },
     "vmSizeChefServer": {
@@ -316,10 +327,10 @@
         "description": "Linux Deep Security Agent Virtual Machine admin username"
       }
     },
-    "adminPasswordDSAgent": {
+    "adminPasswordOrPublicKeyDSAgent": {
       "type": "securestring",
       "metadata": {
-        "description": "Linux Deep Security Agent Virtual Machine admin password"
+        "description": "Linux Deep Security Agent Virtual Machine admin password or SSH public key. SSH key recommended"
       }
     },
     "publicIPDomainNameLabelDSAgent": {
@@ -341,10 +352,10 @@
       "metadata": {
         "description": "Artifactslocation"
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/datameer-trend-chef-riskanalysis"
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/datameer-trend-chef-riskanalysis/"
     },
     "_artifactsLocationSasToken": {
-      "type": "string",
+      "type": "securestring",
       "defaultValue": "",
       "metadata": {
         "description": "Reserved for deploying using Visual Studio. Please keep it as an empty string"
@@ -439,23 +450,8 @@
     },
     "sshFrom": "0.0.0.0/0",
     "forwardedDataFrom": "0.0.0.0/0",
-    "emptyTemplateUrl": "[concat(parameters('_artifactsLocation'),'/nested/empty-resources.json')]",
+    "emptyTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('nested/empty-resources.json', parameters('_artifactsLocationSasToken')))]",
     "availabilitySetCount": 1,
-    "linuxConfigurationChoosenTrendDSM": "[variables(concat('linuxConfiguration', variables('vmAuthTypeTrendDSM')))]",
-    "linuxConfigurationpassword": {
-      "disablePasswordAuthentication": "false"
-    },
-    "linuxConfigurationsshPublicKey": {
-      "disablePasswordAuthentication": true,
-      "ssh": {
-        "publicKeys": [
-          {
-            "path": "[concat('/home/',parameters('vmAdminNameTrendDSM'),'/.ssh/authorized_keys')]",
-            "keyData": "[variables('vmAdminSshPublicKeyTrendDSM')]"
-          }
-        ]
-      }
-    },
     "imagePublisherWindows": "MicrosoftWindowsServer",
     "imageOfferWindows": "WindowsServer",
     "imagePublisherLinux": "Canonical",
@@ -466,13 +462,11 @@
       "program": "PushToPilot",
       "project": "DatameerTrendHDInsightChef"
     },
-    "vmAuthTypeTrendDSM": "password",
-    "vmAdminSshPublicKeyTrendDSM": "",
     "existingSQLServerName": "",
     "networkExists": "new",
     "ManagerAddress": "[concat(parameters('publicIPDomainNameLabelTrendDSM'),variables('uniqueString'),'.',parameters('location'),'.cloudapp.azure.com')]",
     "udpPort": "5005",
-    "chefServerScriptUrl": "[concat(parameters('_artifactsLocation'),'/scripts/chefserver.sh')]",
+    "chefServerScriptUrl": "[uri(parameters('_artifactsLocation'), concat('scripts/chefserver.sh', parameters('_artifactsLocationSasToken')))]",
     "chefprefix": "chef",
     "vmSizeDSAWindows": "Standard_D1",
     "windowsOSVersion": "2012-R2-Datacenter",
@@ -489,13 +483,13 @@
     "runlist": "recipe[trendmicro]",
     "vmSizeOrcServer": "Standard_D1",
     "orcServerubuntuOSVersion": "14.04.2-LTS",
-    "installOrchTemplateurl": "[concat(parameters('_artifactsLocation'),'/nested/orchestrator-server-setup-trend.json')]",
-    "chefnodeCustomScripturl": "[concat(parameters('_artifactsLocation'),'/scripts/p2pchefnodebootstrap.sh')]",
-    "vnetstorageSciptrul": "[concat(parameters('_artifactsLocation'), '/nested/trendp2p-vnetstorage.json')]",
+    "installOrchTemplateurl": "[uri(parameters('_artifactsLocation'), concat('nested/orchestrator-server-setup-trend.json', parameters('_artifactsLocationSasToken')))]",
+    "chefnodeCustomScripturl": "[uri(parameters('_artifactsLocation'), concat('scripts/p2pchefnodebootstrap.sh', parameters('_artifactsLocationSasToken')))]",
+    "vnetstorageSciptrul": "[uri(parameters('_artifactsLocation'), concat('nested/trendp2p-vnetstorage.json', parameters('_artifactsLocationSasToken')))]",
     "datameerHDInsightCluster": {
       "defaultApiVersion": "2015-05-01-preview",
       "clusterName": "[tolower(concat(trim(substring(concat(parameters('hdiclusterName'),'       '),0,6)),uniquestring(resourceGroup().id)))]",
-      "standaloneTemplateUrl": "[concat(parameters('_artifactsLocation'), '/nested/datameer-hdinsight.json')]",
+      "standaloneTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('nested/datameer-hdinsight.json', parameters('_artifactsLocationSasToken')))]",
       "clusterType": "[parameters('hdiclusterType')]",
       "clusterLoginUserName": "[parameters('hdiclusterLoginUserName')]",
       "clusterLoginPassword": "[parameters('hdiclusterLoginPassword')]",
@@ -609,7 +603,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), '/nested/trendp2p-trenddsm.json')]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat('nested/trendp2p-trenddsm.json', parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -670,8 +664,8 @@
           "vmAdminNameTrendDSM": {
             "value": "[parameters('vmAdminNameTrendDSM')]"
           },
-          "vmAdminPasswordTrendDSM": {
-            "value": "[parameters('vmAdminPasswordTrendDSM')]"
+          "vmAdminPasswordOrPublicKeyTrendDSM": {
+            "value": "[parameters('vmAdminPasswordOrPublicKeyTrendDSM')]"
           },
           "linuxConfigurationChoosenTrendDSM": {
             "value": "[variables('linuxConfigurationChoosenTrendDSM')]"
@@ -717,6 +711,9 @@
           },
           "quickstartTags": {
             "value": "[variables('quickstartTags')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
           }
         }
       }
@@ -731,7 +728,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), '/nested/trendp2p-orchestrator.json')]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat('nested/trendp2p-orchestrator.json', parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -768,8 +765,8 @@
           "vmAdminUsernameOrchServer": {
             "value": "[parameters('vmAdminUsernameOrchServer')]"
           },
-          "vmAdminPasswordOrchServer": {
-            "value": "[parameters('vmAdminPasswordOrchServer')]"
+          "vmAdminPasswordOrPublicKeyOrchServer": {
+            "value": "[parameters('vmAdminPasswordOrPublicKeyOrchServer')]"
           },
           "vmStorageAccountContainerName": {
             "value": "[variables('vmStorageAccountContainerName')]"
@@ -803,6 +800,9 @@
           },
           "quickstartTags": {
             "value": "[variables('quickstartTags')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
           }
         }
       }
@@ -819,7 +819,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), '/nested/trendp2p-chefserver.json')]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat('nested/trendp2p-chefserver.json', parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -844,8 +844,8 @@
           "vmAdminUsernameChefServer": {
             "value": "[parameters('vmAdminUsernameChefServer')]"
           },
-          "vmAdminPasswordChefServer": {
-            "value": "[parameters('vmAdminPasswordChefServer')]"
+          "vmAdminPasswordOrPublicKeyChefServer": {
+            "value": "[parameters('vmAdminPasswordOrPublicKeyChefServer')]"
           },
           "vmStorageAccountContainerName": {
             "value": "[variables('vmStorageAccountContainerName')]"
@@ -912,6 +912,9 @@
           },
           "quickstartTags": {
             "value": "[variables('quickstartTags')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
           }
         }
       }
@@ -928,7 +931,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), '/nested/trendp2p-dsagents.json')]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat('nested/trendp2p-dsagents.json', parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -971,8 +974,8 @@
           "adminUsernameDSAgent": {
             "value": "[parameters('adminUsernameDSAgent')]"
           },
-          "adminPasswordDSAgent": {
-            "value": "[parameters('adminPasswordDSAgent')]"
+          "adminPasswordOrPublicKeyDSAgent": {
+            "value": "[parameters('adminPasswordOrPublicKeyDSAgent')]"
           },
           "publicIPDomainNameLabelDSAgent": {
             "value": "[concat(parameters('publicIPDomainNameLabelDSAgent'),variables('uniqueString'))]"
@@ -1030,6 +1033,9 @@
           },
           "quickstartTags": {
             "value": "[variables('quickstartTags')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
           }
         }
       }
@@ -1046,7 +1052,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), '/nested/trendp2p-chefnodes.json')]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat('nested/trendp2p-chefnodes.json', parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -1107,8 +1113,8 @@
           "adminUsernameDSAgent": {
             "value": "[parameters('adminUsernameDSAgent')]"
           },
-          "adminPasswordDSAgent": {
-            "value": "[parameters('adminPasswordDSAgent')]"
+          "adminPasswordOrPublicKeyDSAgent": {
+            "value": "[parameters('adminPasswordOrPublicKeyDSAgent')]"
           },
           "publicIPDomainNameLabelDSAgent": {
             "value": "[concat(parameters('publicIPDomainNameLabelDSAgent'),variables('uniqueString'))]"
@@ -1199,6 +1205,9 @@
           },
           "quickstartTags": {
             "value": "[variables('quickstartTags')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
           }
         }
       }

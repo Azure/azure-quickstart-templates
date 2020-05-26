@@ -1,5 +1,14 @@
 # Create a Role Definition
 
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/subscription-level-deployments/create-role-def/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/subscription-level-deployments/create-role-def/PublicDeployment.svg)
+
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/subscription-level-deployments/create-role-def/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/subscription-level-deployments/create-role-def/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/subscription-level-deployments/create-role-def/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/subscription-level-deployments/create-role-def/CredScanResult.svg)
+
 This template is a subscription level template that will create a new a role definition.  The actions include reading resource groups and will be assignable at the subscription scope.  You can add/modify/delete as needed.  You can read more about role definitions [here](https://docs.microsoft.com/en-us/azure/role-based-access-control/role-definitions).
 
 Currently the only supported methods for deploying subscription level templates are the REST apis, some SDKS and the Azure CLI.  For the latest check [here](https://docs.microsoft.com/en-us/azure/azure-resource-manager/create-resource-group-in-template#create-empty-resource-group).
@@ -12,3 +21,4 @@ For deploying this template from the CLI you can run the following command from 
 ```bash
 az deployment create -l southcentralus --template-file ./azuredeploy.json --parameters roleDef={random seed}
 ```
+

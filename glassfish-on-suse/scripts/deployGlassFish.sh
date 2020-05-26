@@ -10,19 +10,19 @@ echo "Installing Java JDK"
 #zypper search java | grep openjdk
 zypper --non-interactive install java-1_7_0-openjdk
 
-# Retrieve Glassfish source files 
+# Retrieve Glassfish source files
 echo "Retrieving Glassfish source files"
 
 wget http://download.java.net/glassfish/3.1.2.2/release/glassfish-$RELEASE.zip -P /tmp/
 unzip /tmp/glassfish-$RELEASE.zip -d /opt
 rm /tmp/glassfish-$RELEASE.zip
 
-# Start GlassFish Server 
+# Start GlassFish Server
 echo "Starting GlassFish server"
 
 /opt/glassfish$VERSION/bin/asadmin start-domain
 
-# Enable admin access 
+# Enable admin access
 echo "Enabling admin Access"
 
 touch /tmp/password.txt
@@ -37,7 +37,7 @@ echo "AS_ADMIN_PASSWORD=$PASSWORD" > /tmp/password.txt
 /opt/glassfish$VERSION/bin/asadmin --user admin --passwordfile /tmp/password.txt enable-secure-admin
 rm /tmp/password.txt
 
-# Enable GlassFish as a service and quick initialization 
+# Enable GlassFish as a service and quick initialization
 echo "Enabling GlassFish as a service"
 tee /etc/init.d/glassfish > /dev/null <<'EOF'
 
@@ -59,7 +59,7 @@ restart)
 *)
     echo "usage: $0 {start|stop|restart}"
     ;;
-esac    
+esac
 exit 0
 
 EOF

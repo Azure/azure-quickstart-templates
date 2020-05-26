@@ -1,5 +1,5 @@
 {
-    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
         "location": {
@@ -10,8 +10,8 @@
             }
         },
         "deployFunction": {
-        "type": "bool",
-        "defaultValue": true,
+            "type": "bool",
+            "defaultValue": true,
             "metadata": {
                 "description": "Determines whether to deploy the function app and create the custom RP."
             }
@@ -27,19 +27,19 @@
             "type": "string",
             "defaultValue": "[uniqueString(resourceGroup().id)]",
             "metadata": {
-                "description": "Name of the storage account for storing users in the function app"
+                "description": "Name of the storage account for storing custom resources in the function app."
             }
         },
-        "userName": {
+        "azureCustomResourceName": {
             "type": "string",
             "metadata": {
-                "description": "Name of the user to be added."
+                "description": "Name of the custom resource that is being created."
             }
         },
-        "userLocation": {
+        "myCustomPropertyValue": {
             "type": "string",
             "metadata": {
-                "description": "location of the user, not related to the resource location."
+                "description": "The custom property value for the custom property on the custom resource."
             }
         },
         "_artifactsLocation": {
@@ -93,6 +93,10 @@
                             "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storageAccountName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2018-02-01').keys[0].value)]"
                         },
                         {
+                            "name": "AzureWebJobsSecretStorageType",
+                            "value": "Files"
+                        },
+                        {
                             "name": "FUNCTIONS_EXTENSION_VERSION",
                             "value": "~2"
                         },
@@ -132,31 +136,31 @@
                     {
                         "name": "ping",
                         "routingType": "Proxy",
-                        "endpoint": "[concat('https://', reference(resourceId('Microsoft.Web/sites', parameters('funcName')), '2018-02-01').defaultHostName, '/api/{requestPath}')]"
+                        "endpoint": "[listSecrets(resourceId('Microsoft.Web/sites/functions', parameters('funcName'), 'HttpTrigger1'), '2018-02-01').trigger_url]"
                     }
                 ],
                 "resourceTypes": [
                     {
-                        "name": "users",
-                        "routingType": "Proxy,Cache",
-                        "endpoint": "[concat('https://', reference(resourceId('Microsoft.Web/sites', parameters('funcName')), '2018-02-01').defaultHostName, '/api/{requestPath}')]"
+                        "name": "customResources",
+                        "routingType": "Proxy",
+                        "endpoint": "[listSecrets(resourceId('Microsoft.Web/sites/functions', parameters('funcName'), 'HttpTrigger1'), '2018-02-01').trigger_url]"
                     }
                 ]
             }
         },
         {
-            "type": "Microsoft.CustomProviders/resourceProviders/users",
-            "name": "[concat(parameters('funcName'), '/addUser')]",
+            "type": "Microsoft.CustomProviders/resourceProviders/customResources",
+            "name": "[concat(parameters('funcName'), '/', parameters('azureCustomResourceName'))]",
             "apiVersion": "2018-09-01-preview",
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.CustomProviders/resourceProviders', parameters('funcName'))]"
             ],
             "properties": {
-                "FullName": "[parameters('userName')]",
-                "Location": "[parameters('userLocation')]"
+                "hello": "world",
+                "myCustomProperty": "[parameters('myCustomPropertyValue')]"
             }
         }
-
-    ]
+    ],
+    "outputs": { }
 }

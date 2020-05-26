@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "publicIPAddressNameChefServer": {
@@ -26,7 +26,7 @@
       "defaultValue": "",
       "type": "string"
     },
-    "vmAdminPasswordChefServer": {
+    "vmAdminPasswordOrPublicKeyChefServer": {
       "defaultValue": "",
       "type": "SecureString"
     },
@@ -120,11 +120,25 @@
     },
     "quickstartTags": {
       "type": "object"
+    },
+    "authenticationType": {
+      "type": "string"
     }
   },
   "variables": {
     "singleQuote": "'",
-    "publicIPDomainNameLabelOrchServer": "[concat('http://',parameters('publicIPDomainNameLabelOrchServer'),'.',parameters('location'),'.cloudapp.azure.com:33001/key')]"
+    "publicIPDomainNameLabelOrchServer": "[concat('http://',parameters('publicIPDomainNameLabelOrchServer'),'.',parameters('location'),'.cloudapp.azure.com:33001/key')]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('vmAdminUsernameChefServer'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('vmAdminPasswordOrPublicKeyChefServer')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
@@ -164,11 +178,9 @@
         "osProfile": {
           "computerName": "[parameters('vmNameChefServer')]",
           "adminUsername": "[parameters('vmAdminUsernameChefServer')]",
-          "linuxConfiguration": {
-            "disablePasswordAuthentication": false
-          },
           "secrets": [],
-          "adminPassword": "[parameters('vmAdminPasswordChefServer')]"
+          "adminPassword": "[parameters('vmAdminPasswordOrPublicKeyChefServer')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "networkProfile": {
           "networkInterfaces": [

@@ -15,6 +15,7 @@ Param(
     [switch] $BuildDscPackage,
     [switch] $ValidateOnly,
     [string] $DebugOptions = "None",
+    [string] $Mode = "Incremental",
     [string] $DeploymentName = ((Split-Path $TemplateFile -LeafBase) + '-' + ((Get-Date).ToUniversalTime()).ToString('MMdd-HHmm')),
     [switch] $Dev
 )
@@ -70,6 +71,7 @@ if ($TemplateSchema -like '*subscriptionDeploymentTemplate.json*') {
 }
 else {
     $deploymentScope = "ResourceGroup"
+    $OptionalParameters.Add('Mode', $Mode)
 }
 
 Write-Host "Running a $deploymentScope scoped deployment..."
@@ -83,9 +85,14 @@ if ($UploadArtifacts -Or $ArtifactsLocationParameter -ne $null) {
     $DSCSourceFolder = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $DSCSourceFolder))
 
     # Parse the parameter file and update the values of artifacts location and artifacts location SAS token if they are present
-    $JsonParameters = Get-Content $TemplateParametersFile -Raw | ConvertFrom-Json
-    if (($JsonParameters | Get-Member -Type NoteProperty 'parameters') -ne $null) {
-        $JsonParameters = $JsonParameters.parameters
+    if (Test-Path $TemplateParametersFile) {
+        $JsonParameters = Get-Content $TemplateParametersFile -Raw | ConvertFrom-Json
+        if (($JsonParameters | Get-Member -Type NoteProperty 'parameters') -ne $null) {
+            $JsonParameters = $JsonParameters.parameters
+        }
+    }
+    else {
+        $JsonParameters = @{ }
     }
     $ArtifactsLocationName = '_artifactsLocation'
     $ArtifactsLocationSasTokenName = '_artifactsLocationSasToken'
@@ -115,6 +122,9 @@ if ($UploadArtifacts -Or $ArtifactsLocationParameter -ne $null) {
         $StorageAccount = New-AzStorageAccount -StorageAccountName $StorageAccountName -Type 'Standard_LRS' -ResourceGroupName $StorageResourceGroupName -Location "$Location"
     }
 
+    if ($StorageContainerName.length -gt 63) {
+        $StorageContainerName = $StorageContainerName.Substring(0, 63)
+    }
     $ArtifactStagingLocation = $StorageAccount.Context.BlobEndPoint + $StorageContainerName + "/"   
 
     # Generate the value for artifacts location if it is not provided in the parameter file
@@ -157,7 +167,11 @@ else {
 
 }
 
-$TemplateArgs.Add('TemplateParameterFile', $TemplateParametersFile)
+if(Test-Path $TemplateParametersFile){
+    $TemplateArgs.Add('TemplateParameterFile', $TemplateParametersFile)
+}
+Write-Host ($TemplateArgs | Out-String)
+Write-Host ($OptionalParameters | Out-String)
 
 # Create the resource group only when it doesn't already exist - and only in RG scoped deployments
 if ($deploymentScope -eq "ResourceGroup") {
@@ -182,6 +196,8 @@ if ($ValidateOnly) {
     }
 }
 else {
+
+    $ErrorActionPreference = 'Continue' # Switch to Continue" so multiple errors can be formatted and output
     if ($deploymentScope -eq "Subscription") {
         #subscription scoped deployment
         New-AzDeployment -Name $DeploymentName `
@@ -199,7 +215,10 @@ else {
             -Force -Verbose `
             -ErrorVariable ErrorMessages
     }
+    $ErrorActionPreference = 'Stop' 
     if ($ErrorMessages) {
-        Write-Output '', 'Template deployment returned the following errors:', @(@($ErrorMessages) | ForEach-Object { $_.Exception.Message.TrimEnd("`r`n") })
+        Write-Output '', 'Template deployment returned the following errors:', '', @(@($ErrorMessages) | ForEach-Object { $_.Exception.Message })
+        Write-Error "Deployment failed."
     }
+
 }

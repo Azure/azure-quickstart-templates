@@ -32,8 +32,10 @@ An Azure Application or QuickStart sample must contain, at a minimum, the follow
 |:---------------------------------------- |:----------------------------------------------------- |:---------------------------------------- |
 | UI Definition File    | createUiDefinition.json | n/a |  
 | Template File | mainTemplate.json | azuredeploy.json |  
-| Parameters File | n/a | azuredeploy.parameters.json |  
+| Parameters File (Public) | n/a | azuredeploy.parameters.json  |  
+| Parameters File (US Gov) | n/a | azuredeploy.parameters.us.json |
 | Read Me File | Not required | README.md |  
+| [SECURITY.md file](https://help.github.com/en/articles/adding-a-security-policy-to-your-repository) | Not required | SECURITY.md |
 | QuickStart Description | n/a | metadata.json |
 | Nested templates | In a **nestedtemplates** subfolder | In a **nestedtemplates** subfolder |  
 | Configuration Scripts | In a **scripts** subfolder | In a **scripts** subfolder |  
@@ -96,7 +98,7 @@ Top-level template properties must be in the following order:
 
 ```json
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/...",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/...",
   "contentVersion": "1.0.0.0",
   "apiProfile": "...",
   "parameters": {},
@@ -119,7 +121,12 @@ The common properties should be authored consistently to provide for understanda
             "apiVersion": "2017-12-01",
             "name": "[concat(parameters('virtualMachineName'), copyIndex(1))]",
             "location": "[parameters('location')]",
-            "sku": { ... },
+            "zones": [],
+            "sku": {},
+            "kind": "",
+            "scale": "",
+            "plan": {},
+            "identity": {},
             "copy": {
                 "name": "vmLoop",
                 "count": "[parameters('numberOfVMs')]"
@@ -127,7 +134,7 @@ The common properties should be authored consistently to provide for understanda
             "dependsOn": [
                 "nicLoop"
             ],
-            "tags": { ... },
+            "tags": {},
             "properties": {}
 ```
 
@@ -286,9 +293,11 @@ The following example shows how to use the reference function for the `storageUr
 
 Deployment artifacts are any files, in addition to the mainTemplate.json/azuredeploy.json and createUIDefinition.json files that are needed to complete a deployment.  For example, nested deployment templates or configuration scripts.  The following guidelines should be used when creating a solution with deployment artifacts:
 
-* **mainTemplate.json** and **createUIDefinition.json** must be in the root of the folder.  
-* Additional templates should be stored in the **nestedtemplates** folder.
-* Scripts should be stored in the **scripts** folder.
+* **mainTemplate.json** and **createUIDefinition.json** must be in the root of the folder. 
+* Additional artifacts should also be stored in subfolders.  
+  * Additional templates should be stored in the **nestedtemplates** folder.
+  * Scripts should be stored in the **scripts** folder.  
+* You do not have to use the folder names prescribed above, if a more appropriate or descriptive name is appropriate.  Just don't put everything in the root.
 
 NOTE: if your application uses the CustomScript extension for Windows – place configuration scripts and other artifacts in the **/** (root) folder rather than the **/scripts** subfolder.  
 

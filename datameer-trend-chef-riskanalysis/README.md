@@ -1,12 +1,18 @@
+# Enterprise Risk Analysis using Datameer, HDInsight, TrendMicro, Chef
 
-<h1> Enterprise Risk Analysis using Datameer, HDInsight, TrendMicro, Chef </h1>
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/datameer-trend-chef-riskanalysis/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/datameer-trend-chef-riskanalysis/PublicDeployment.svg)
+
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/datameer-trend-chef-riskanalysis/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/datameer-trend-chef-riskanalysis/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/datameer-trend-chef-riskanalysis/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/datameer-trend-chef-riskanalysis/CredScanResult.svg)
+
 <h3>Composite template version 1.0</h3>
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdatameer-trend-chef-riskanalysis%2Fazuredeploy.json" target="_blank">
-<img src="http://azuredeploy.net/deploybutton.png"/>
-</a>
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdatameer-trend-chef-riskanalysis%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdatameer-trend-chef-riskanalysis%2Fazuredeploy.json)
+
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAAzure%2Fazure-quickstart-templates%2Fmaster%2Fdatameer-trend-chef-riskanalysis%2Fazuredeploy.json" target="_blank">
-<img src="http://armviz.io/visualizebutton.png"/>
-</a>
 
 
 <!-- TOC -->
@@ -29,8 +35,7 @@
 
 ##  1. Solution Overview
 
-
-An integrated ARM Template (<a href="https://azure.microsoft.com/en-us/documentation/articles/resource-group-overview/">Azure Resource Manager</a>) that stitches all the above technology into a single deployment. The following is a feature table that is pulled together for your benefit.
+An integrated ARM Template (<a href="https://azure.microsoft.com/en-us/documentation/articles/resource-group-overview/">Azure Resource Manager) that stitches all the above technology into a single deployment. The following is a feature table that is pulled together for your benefit.
 
 |Datameer and HDInsight                     |TrendMicro Deep Security                               |Chef Server and Workstation    |
 |:------------------------                  |:------------------------                               |------------------------       |
@@ -125,3 +130,5 @@ For any support-related issues or questions, please contact us for assistance.
 ```sh
 azuremarketplace@avyanconsulting.com
 ```
+
+

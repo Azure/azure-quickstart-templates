@@ -10,10 +10,10 @@
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -29,12 +29,12 @@
 # Description:
 #    This script install Jenkins slave on an Ubuntu VM image
 #
-# Parameters : 
+# Parameters :
 #    -m The ip address of the master node
 #    -s The name of THIS slave node as configured on the master
 #    -h view this help content
 #
-# Note : 
+# Note :
 #    This script has only been tested on Ubuntu 14.04 LTS
 #
 
@@ -111,14 +111,14 @@ create_upstart_task()
     echo "script"                                                                                            >> $upstart_conf
     echo "  java -jar /root/slave.jar -jnlpUrl http://$MASTERNODE:8080/computer/$SLAVENAME/slave-agent.jnlp" >> $upstart_conf
     echo "end script"                                                                                        >> $upstart_conf
-    
+
     chmod +x $upstart_conf
 }
 
 start_slave()
 {
     log "Executing slave.jar with http://$MASTERNODE:8080/computer/$SLAVENAME/slave-agent.jnlp"
-    service jenkins_slave start 
+    service jenkins_slave start
     # nohup java -jar ~/slave.jar -jnlpUrl http://$MASTERNODE:8080/computer/$SLAVENAME/slave-agent.jnlp &
 }
 

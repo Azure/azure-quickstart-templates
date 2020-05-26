@@ -1,12 +1,12 @@
 {
-	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
 	"contentVersion": "1.0.0.0",
 	"parameters": {
 		"accountName": {
 			"type": "string",
 			"defaultValue": "[concat('sql-', uniqueString(resourceGroup().id))]",
 			"metadata": {
-				"description": "Cosmos DB account name"
+				"description": "Cosmos DB account name, max length 44 characters"
 			}
 		},
 		"location": {
@@ -51,29 +51,29 @@
 			"defaultValue": 300,
 			"maxValue": 86400,
 			"metadata": {
-				"description": "Max lag time (seconds). Required for BoundedStaleness. Valid ranges, Single Region: 5 to 84600. Multi Region: 300 to 86400."
+				"description": "Max lag time (minutes). Required for BoundedStaleness. Valid ranges, Single Region: 5 to 84600. Multi Region: 300 to 86400."
 			}
 		},	
-		"multipleWriteLocations": {
+		"automaticFailover": {
 			"type": "bool",
 			"defaultValue": true,
 			"allowedValues": [ true, false ],
 			"metadata": {
-				"description": "Enable multi-master to make all regions writable."
-			}
-		},
-		"automaticFailover": {
-			"type": "bool",
-			"defaultValue": false,
-			"allowedValues": [ true, false ],
-			"metadata": {
-				"description": "Enable automatic failover for regions. Ignored when Multi-Master is enabled"
+				"description": "Enable automatic failover for regions"
 			}
 		},
 		"databaseName": {
 			"type": "string",
+			"defaultValue": "myDatabase",
 			"metadata": {
-				"description": "The name for the SQL database"
+				"description": "The name for the database"
+			}
+		},
+		"containerName": {
+			"type": "string",
+			"defaultValue": "myContainer",
+			"metadata": {
+				"description": "The name for the container"
 			}
 		},
 		"throughput": {
@@ -82,22 +82,8 @@
 			"minValue": 400,
 			"maxValue": 1000000,
 			"metadata": {
-				"description": "The throughput for the database"
+				"description": "The throughput for the container"
 			}			
-		},
-		"container1Name": {
-			"type": "string",
-			"defaultValue": "container1",
-			"metadata": {
-				"description": "The name for the first SQL container"
-			}
-		},
-		"container2Name": {
-			"type": "string",
-			"defaultValue": "container2",
-			"metadata": {
-				"description": "The name for the second SQL container"
-			}
 		}
 	},
 	"variables": {
@@ -125,11 +111,13 @@
 		[ 
 			{
 				"locationName": "[parameters('primaryRegion')]",
-				"failoverPriority": 0
+				"failoverPriority": 0,
+				"isZoneRedundant": false
 			}, 
 			{
 				"locationName": "[parameters('secondaryRegion')]",
-				"failoverPriority": 1
+				"failoverPriority": 1,
+				"isZoneRedundant": false
 			}
 		]
 	},
@@ -138,105 +126,88 @@
 		{
 			"type": "Microsoft.DocumentDB/databaseAccounts",
 			"name": "[variables('accountName')]",
-			"apiVersion": "2016-03-31",
-			"location": "[parameters('location')]",
+			"apiVersion": "2020-03-01",
 			"kind": "GlobalDocumentDB",
+			"location": "[parameters('location')]",
 			"properties": {
 				"consistencyPolicy": "[variables('consistencyPolicy')[parameters('defaultConsistencyLevel')]]",
 				"locations": "[variables('locations')]",
 				"databaseAccountOfferType": "Standard",
-				"enableAutomaticFailover": "[parameters('automaticFailover')]",
-				"enableMultipleWriteLocations": "[parameters('multipleWriteLocations')]"
+				"enableAutomaticFailover": "[parameters('automaticFailover')]"
 			}
 		},
 		{
-			"type": "Microsoft.DocumentDB/databaseAccounts/apis/databases",
-			"name": "[concat(variables('accountName'), '/sql/', parameters('databaseName'))]",
-			"apiVersion": "2016-03-31",
-			"dependsOn": [ "[resourceId('Microsoft.DocumentDB/databaseAccounts/', variables('accountName'))]" ],
+			"type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases",
+			"name": "[concat(variables('accountName'), '/', parameters('databaseName'))]",
+			"apiVersion": "2020-03-01",
+			"dependsOn": [ "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('accountName'))]" ],
 			"properties":{
 				"resource":{
 					"id": "[parameters('databaseName')]"
-				},
-				"options": { "throughput": "[parameters('throughput')]" }
+				}
 			}
 		},
 		{
-			"type": "Microsoft.DocumentDb/databaseAccounts/apis/databases/containers",
-			"name": "[concat(variables('accountName'), '/sql/', parameters('databaseName'), '/', parameters('container1Name'))]",
-			"apiVersion": "2016-03-31",
-			"dependsOn": [ "[resourceId('Microsoft.DocumentDB/databaseAccounts/apis/databases', variables('accountName'), 'sql', parameters('databaseName'))]" ],
+			"type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers",
+			"name": "[concat(variables('accountName'), '/', parameters('databaseName'), '/', parameters('containerName'))]",
+			"apiVersion": "2020-03-01",
+			"dependsOn": [ "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', variables('accountName'), parameters('databaseName'))]" ],
 			"properties":
 			{
 				"resource":{
-					"id":  "[parameters('container1Name')]",
+					"id":  "[parameters('containerName')]",
 					"partitionKey": {
 						"paths": [
-						"/MyPartitionKey1"
+						"/myPartitionKey"
 						],
 						"kind": "Hash"
 					},
 					"indexingPolicy": {
 						"indexingMode": "consistent",
 						"includedPaths": [{
-								"path": "/*",
-								"indexes": [
-									{
-										"kind": "Range",
-										"dataType": "number",
-										"precision": -1
-									},
-									{
-										"kind": "Range",
-										"dataType": "string",
-										"precision": -1
-									}
-								]
+								"path": "/*"
 							}
 						],
 						"excludedPaths": [{
-								"path": "/MyPathToNotIndex/*"
+								"path": "/myPathToNotIndex/*"
+							}
+						],
+						"compositeIndexes":[  
+						[
+							{
+								"path":"/name",
+								"order":"ascending"
+							},
+							{
+								"path":"/age",
+								"order":"descending"
 							}
 						]
-					}
-				}
-			}
-		},
-		{
-			"type": "Microsoft.DocumentDb/databaseAccounts/apis/databases/containers",
-			"name": "[concat(variables('accountName'), '/sql/', parameters('databaseName'), '/', parameters('container2Name'))]",
-			"apiVersion": "2016-03-31",
-			"dependsOn": [ "[resourceId('Microsoft.DocumentDB/databaseAccounts/apis/databases', variables('accountName'), 'sql', parameters('databaseName'))]" ],
-			"properties":
-			{
-				"resource":{
-					"id":  "[parameters('container2Name')]",
-					"partitionKey": {
-						"paths": [
-						"/MyPartitionKey2"
-						],
-						"kind": "Hash"
-					},
-					"indexingPolicy": {
-						"indexingMode": "consistent",
-						"includedPaths": [{
-								"path": "/*",
-								"indexes": [
-									{
-										"kind": "Range",
-										"dataType": "number",
-										"precision": -1
-									},
-									{
-										"kind": "Range",
-										"dataType": "string",
-										"precision": -1
-									}
+					],
+					"spatialIndexes": [
+							{
+								"path": "/path/to/geojson/property/?",
+								"types": [
+									"Point",
+									"Polygon",
+									"MultiPolygon",
+									"LineString"
 								]
 							}
 						]
+					},
+					"defaultTtl": 86400,
+					"uniqueKeyPolicy": {
+						"uniqueKeys": [
+						{
+							"paths": [
+							"/phoneNumber"
+							]
+						}
+						]
 					}
-				}
+				},
+				"options": { "throughput": "[parameters('throughput')]" }
 			}
 		}
 	]

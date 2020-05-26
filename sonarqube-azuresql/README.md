@@ -1,8 +1,18 @@
 # Secure SonarQube VM with Azure SQL DB  
+
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/sonarqube-azuresql/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/sonarqube-azuresql/PublicDeployment.svg)
+
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/sonarqube-azuresql/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/sonarqube-azuresql/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/sonarqube-azuresql/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/sonarqube-azuresql/CredScanResult.svg)
+
 ## Version 1.0
 
-[![Deploy Button](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsonarqube-azuresql%2Fazuredeploy.json)
-[![Visualize button](http://armviz.io/visualizebutton.png)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsonarqube-azuresql%2Fazuredeploy.json)
+[![Deploy Button](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsonarqube-azuresql%2Fazuredeploy.json)
+[![Visualize button](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsonarqube-azuresql%2Fazuredeploy.json)
 
 This template deploys an Azure SQL Server, Azure SQL DB, Windows Server 2012R2 VM (Standard DS1 v2) with SonarQube installed.  This template can be deployed to a new resource group (recommended) or to an existing resource group.  
 
@@ -11,17 +21,19 @@ Once the deployment is complete you can increase the resources provided to Sonar
 [License](https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/sonarqube-azuresql/oss/License.txt)  
 [Third Party Notices](https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/sonarqube-azuresql/oss/ThirdPartyNotices.txt)
 
-* * *
-#### Note:  
+### Note
+
 This Beta release deploys a secure SonarQube installation by default, however we invoke a **self-signed** which you will have to replace with a trusted one for production use. **It is not recommended to run a production server with this certificate.**  
 
 Once the deployment finishes:
+
 * Please RDP to the machine
 * Download Java JDK 8 from Oracle http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html
 * Install JDK (follow the wizard)
 * Restart the SonarQube Service by Open “Services” and restart the server normally
 
 ##### Production Certificate
+
 Because CAs provide the various SSL certificate types at different price points, you should start by deciding what type of SSL certificate to buy. To secure a single domain name (**www.contoso.com**), you just need a basic certificate. To secure multiple domain names (**contoso.com** and **www.contoso.com** and **sonarqube.contoso.com**), you need either a wildcard certificate or a certificate with Subject Alternate Name (subjectAltName).+
 
 Once you know which SSL certificate to buy, you submit a Certificate Signing Request (CSR) to a CA. When you get requested certificate back from the CA, you then generate a .pfx file from the certificate. You can perform these steps using the tool of your choice. Here are instructions for the common tools:
@@ -36,7 +48,9 @@ The approach we used to secure the installation is documented in [Running SonarQ
 * * *
 
 ### Workflow
-This template performs the following workflow to create the SonarQube installation.  
+
+This template performs the following workflow to create the SonarQube installation.
+
 - Deploy an Azure SQL Server database (named in sqDB\_ServerName) into the selected resource group  
 - Create a SQL database within the Azure SQL Server (named in sqDB\_DBName)  
 - Create a Storage Acct to support the SonarQube VM  
@@ -48,12 +62,12 @@ This template performs the following workflow to create the SonarQube installati
 - Create a Virtual Network
 - Create a Virtual Network Interface Card (NIC) for the SonarQube VM
 - Create a Virtual Machine (named in sqVM\_AppName) with Windows Server 2012 R2 and JDK8 installed
-- Run a PowerShell Desired State Configuration script on the Virtual Machine to:    
+- Run a PowerShell Desired State Configuration script on the Virtual Machine to:
   1. Disable IE ESC  
   2. Enable Remote Desktop  
   3. Allow RDP through the Windows Firewall  
   4. Allow SonarQube HTTP (80) Inbound through the Windows Firewall  
-  5. Allow SonarQube HTTPS (443) Inbound through the Windows Firewall   
+  5. Allow SonarQube HTTPS (443) Inbound through the Windows Firewall
   6. Download SonarQube 5.6.1 and unzip to staging folder
   7. Replace the SonarQube connection string with the connection string of the Azure SQL Server created earlier  
   8. Install SonarQube as a Windows Service using the Local Admin account
@@ -69,13 +83,14 @@ This template performs the following workflow to create the SonarQube installati
 * * *
 
 ### Deployment
+
 To deploy this template simply click the "Deploy to Azure" button above.  This will launch the Azure Portal and you will be prompted to provide values for the parameters below.
 
 The deployment in Azure can take up to 30 minutes. At the end of the deployment, SonarQube will be configured to run as a Windows Service on the SonarQube VM. When the SonarQube service starts for the first time, it will configure its database. This can take up to 15 minutes to complete during which time the Azure deployment shows as completed but you still won't be able to reach the SonarQube home page. _Please give SonarQube some time to update._
 
 Once the deployment and configuration have finished you will be able to access your SonarQube by entering its public address into a browser. The address format is:
 
-http://[sq\_PublicIP\_DnsPrefix].[AzureRegion].cloudapp.azure.com:9000  
+http://[sq\_PublicIP\_DnsPrefix].[AzureRegion].cloudapp.azure.com:9000
 **Ex:** http://my-sonarqube.eastus.cloudapp.azure.com:9000  
 **Ex: Secure** https://my-sonarqube.eastus.cloudapp.azure.com
 
@@ -140,3 +155,4 @@ Clementino de Mendonca,
 [Steven St. Jean](https://github.com/sstjean),
 
 [Rob Bos](https://github.com/rajbos)
+
