@@ -7,14 +7,28 @@ param(
     [string][Parameter(mandatory=$true)] $appId,
     [string][Parameter(mandatory=$true)] $secret,
     [string][Parameter(mandatory=$true)] $tenantId,
-    [string][Parameter(mandatory=$true)] $subscriptionId
+    [string][Parameter(mandatory=$true)] $subscriptionId,
+    [string] $Environment = "AzureCloud",
+    [switch] $InstallAzModule,
+    [string] $ModuleVersion
 )
 
 Set-PSRepository -InstallationPolicy Trusted -Name PSGallery -verbose
-Install-Module -Name Az -AllowClobber -verbose
+
+if ($InstallAzModule){
+    $VersionParam = @{}
+    if($ModuleVersion -ne $null){
+        $VersionParam.Add("RequiredVersion", "$ModuleVersion")
+    }
+    Install-Module -Name Az -AllowClobber -verbose @VersionParam
+    Install-Module -Name AzTable -AllowClobber -verbose # need this for updating the deployment status table
+}
 
 $pscredential = New-Object System.Management.Automation.PSCredential($appId, (ConvertTo-SecureString $secret -AsPlainText -Force))
 
-Connect-AzAccount -ServicePrincipal -Credential $pscredential -TenantId $tenantId
+Write-Host "app Id     : $appId"
+Write-Host "sub Id     : $subscriptionId"
+Write-Host "tenant Id  : $tenantId"
+Write-Host "environment: $Environment"
 
-Select-AzSubscription $subscriptionId
+Connect-AzAccount -ServicePrincipal -Credential $pscredential -TenantId $tenantId -Subscription $subscriptionId -Environment $Environment -Verbose

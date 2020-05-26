@@ -4,7 +4,7 @@ webNodeCount=$1
 zabbixServer=$2
 
 
-	
+
 install_haproxy() {
 	cd /tmp
 	yum install wget -y
@@ -33,7 +33,7 @@ disk_format() {
 	yum install wget -y
 	for ((j=1;j<=3;j++))
 	do
-		wget https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shared_scripts/ubuntu/vm-disk-utils-0.1.sh 
+		wget https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shared_scripts/ubuntu/vm-disk-utils-0.1.sh
 		if [[ -f /tmp/vm-disk-utils-0.1.sh ]]; then
 			bash /tmp/vm-disk-utils-0.1.sh -b /data/ -s
 			if [[ $? -eq 0 ]]; then
@@ -47,7 +47,7 @@ disk_format() {
 			continue
 		fi
 	done
-		
+
 }
 
 
@@ -96,36 +96,36 @@ install_zabbix() {
 config_haproxy() {
 haproxyConfigFile="/usr/local/haproxy/haproxy.cfg"
 cat > ${haproxyConfigFile} <<EOF
-global         
-       maxconn 4096           
+global
+       maxconn 4096
        chroot /usr/local/haproxy
-        uid 99                 
-        gid 99               
-       daemon                  
-       pidfile /usr/local/haproxy/haproxy.pid  
+        uid 99
+        gid 99
+       daemon
+       pidfile /usr/local/haproxy/haproxy.pid
 
-defaults             
+defaults
        log    global
-        log     127.0.0.1       local3        
-       mode    http         
-       option  httplog       
-        option  dontlognull  
-        option  httpclose    
-       retries 3           
-       option  redispatch   
-       maxconn 2000                     
-       timeout connect     5000           
-       timeout client     50000          
-       timeout server     50000          
+        log     127.0.0.1       local3
+       mode    http
+       option  httplog
+        option  dontlognull
+        option  httpclose
+       retries 3
+       option  redispatch
+       maxconn 2000
+       timeout connect     5000
+       timeout client     50000
+       timeout server     50000
 
-frontend http-in                       
+frontend http-in
        bind *:80
-        mode    http 
+        mode    http
         option  httplog
         log     global
-        default_backend httppool 
-       
-backend httppool                    
+        default_backend httppool
+
+backend httppool
        balance source
 EOF
 
@@ -135,7 +135,7 @@ EOF
 		let ip=3+$k
 		sed -i "\$a server  web${k} 10.0.0.${ip}:80  weight 5 check inter 2000 rise 2 fall 3" ${haproxyConfigFile}
 		sed -i '$s/^/       /' ${haproxyConfigFile}
-	done	
+	done
 
 	#start haproxy
 	/usr/local/haproxy/sbin/haproxy -f /usr/local/haproxy/haproxy.cfg

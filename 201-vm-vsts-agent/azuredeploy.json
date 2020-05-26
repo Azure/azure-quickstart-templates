@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "modules": {
@@ -136,7 +136,8 @@
       "parameters": "[concat('-vstsAccount ', parameters('vstsAccount'), ' -personalAccessToken ', parameters('vstsPersonalAccessToken'), ' -AgentName ', variables('names').vsts,' -PoolName ', parameters('vstsPoolName'), ' -AgentCount ', parameters('vstsAgentCount'), ' -AdminUser ', parameters('vmAdminUser'), ' -Modules ', variables('modules'))]"
     },
     "singleQuote": "'",
-    "modules": "[replace(replace(replace(replace(replace(string(parameters('modules')), '[{\"', '@(@{'), '\":\"', concat(' = ', variables('singleQuote'))), '\",\"', concat(variables('singleQuote'), '; ')), '\"},{\"', concat(variables('singleQuote'), '}, @{')), '\"}]', concat(variables('singleQuote'), '})'))]"
+    "modules": "[replace(replace(replace(replace(replace(string(parameters('modules')), '[{\"', '@(@{'), '\":\"', concat(' = ', variables('singleQuote'))), '\",\"', concat(variables('singleQuote'), '; ')), '\"},{\"', concat(variables('singleQuote'), '}, @{')), '\"}]', concat(variables('singleQuote'), '})'))]",
+    "networkSecurityGroupName": "default-NSG"
   },
   "resources": [
     {
@@ -175,11 +176,37 @@
       }
     },
     {
+      "comments": "Default Network Security Group for template",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2019-08-01",
+      "name": "[variables('networkSecurityGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-3389",
+            "properties": {
+              "priority": 1000,
+              "access": "Allow",
+              "direction": "Inbound",
+              "destinationPortRange": "3389",
+              "protocol": "Tcp",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+          }
+        ]
+      }
+    },
+    {
       "name": "[variables('names').vnet.name]",
       "type": "Microsoft.Network/virtualNetworks",
       "location": "[parameters('location')]",
       "apiVersion": "2017-10-01",
-      "dependsOn": [],
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+      ],
       "tags": {
         "displayName": "virtualNetwork"
       },
@@ -193,7 +220,10 @@
           {
             "name": "[variables('names').vnet.subnet]",
             "properties": {
-              "addressPrefix": "[variables('names').vnet.subnetPrefix]"
+              "addressPrefix": "[variables('names').vnet.subnetPrefix]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+              }
             }
           }
         ]
@@ -297,7 +327,7 @@
             "typeHandlerVersion": "1.9",
             "settings": {
               "fileUris": [
-                "[concat(parameters('_artifactsLocation'), '/', variables('powerShell').folder, '/', variables('powerShell').script, parameters('_artifactsLocationSasToken'))]"
+                "[uri(parameters('_artifactsLocation'), concat(variables('powerShell').folder, '/', variables('powerShell').script, parameters('_artifactsLocationSasToken')))]"
               ]
             },
             "protectedSettings": {

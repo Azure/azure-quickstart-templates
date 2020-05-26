@@ -1,9 +1,17 @@
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-rbac-builtinrole-resourcegroup%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
-</a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-rbac-builtinrole-resourcegroup%2Fazuredeploy.json" target="_blank">
-  <img src="http://armviz.io/visualizebutton.png"/>
-</a>
+# Assign an RBAC role to a Resource Group
+
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-rbac-builtinrole-resourcegroup/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-rbac-builtinrole-resourcegroup/PublicDeployment.svg)
+
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-rbac-builtinrole-resourcegroup/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-rbac-builtinrole-resourcegroup/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-rbac-builtinrole-resourcegroup/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-rbac-builtinrole-resourcegroup/CredScanResult.svg)
+
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-rbac-builtinrole-resourcegroup%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-rbac-builtinrole-resourcegroup%2Fazuredeploy.json)
+
+  
 
 This template assigns Owner, Reader or Contributor access to an existing resource group. Inputs to this template are following fields:
 
@@ -18,7 +26,7 @@ This template assigns Owner, Reader or Contributor access to an existing resourc
     -----------                    ----                           --------
     <NAME>                                                        xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 
-**Use the following Azure PowerShell cmdlet to learn about role definitions. 
+**Use the following Azure PowerShell cmdlet to learn about role definitions.
 
     PS C:\> Get-AzRoleDefinition -Name "reader"
 
@@ -50,3 +58,5 @@ If you are new to the template development, see:
 - [Create resource groups and resources at the subscription level](https://docs.microsoft.com/azure/azure-resource-manager/deploy-to-subscription#create-roles)
 
 Tags: RBAC for Azure resources, role-based access control, Resource Manager, Resource Manager templates, ARM templates
+
+

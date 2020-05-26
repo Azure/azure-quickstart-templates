@@ -36,14 +36,14 @@ try {
 if ($Gov) {
 
 $target=@"
-https://portal.azure.us/#blade/Microsoft_Azure_Compute/CreateMultiVmWizardBlade/internal_bladeCallId/anything/internal_bladeCallerParams/{"initialData":{},"providerConfig":{"createUiDefinition":"$encodedurl"}}
+https://portal.azure.us/#blade/Microsoft_Azure_Compute/CreateMultiVmWizardBlade/internal_bladeCallId/anything/internal_bladeCallerParams/{"providerConfig":{"createUiDefinition":"$encodedurl"}}
 "@
 
 }
 else {
 
 $target=@"
-https://portal.azure.com/#blade/Microsoft_Azure_Compute/CreateMultiVmWizardBlade/internal_bladeCallId/anything/internal_bladeCallerParams/{"initialData":{},"providerConfig":{"createUiDefinition":"$encodedurl"}}
+https://portal.azure.com/#blade/Microsoft_Azure_Compute/CreateMultiVmWizardBlade/internal_bladeCallId/anything/internal_bladeCallerParams/{"providerConfig":{"createUiDefinition":"$encodedurl"}}
 "@
 
 }

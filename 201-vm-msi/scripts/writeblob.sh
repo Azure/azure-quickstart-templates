@@ -12,7 +12,7 @@ if [ -z $PORT ]; then
     PORT=50342
 fi
 
-for var in STORAGE_ACCOUNT RESOURCE_GROUP 
+for var in STORAGE_ACCOUNT RESOURCE_GROUP
 do
 
     if [ -z ${!var} ]; then
@@ -22,7 +22,7 @@ do
 
 done
 
-# login using msi 
+# login using msi
 
 az login --identity
 

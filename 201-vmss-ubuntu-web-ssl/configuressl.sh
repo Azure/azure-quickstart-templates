@@ -7,7 +7,7 @@ echo "Welcome to configuressl.sh"
 echo "Number of parameters was: " $#
 
 if [ $# -lt 1 ]; then
-    echo usage: $0 [certificatefingerprint] [CAcertificatefingerprint]      
+    echo usage: $0 [certificatefingerprint] [CAcertificatefingerprint]
 	exit 1
 fi
 
@@ -21,14 +21,14 @@ fi
 
 # install needed bits in a loop because a lot of installs happen
 # on VM init, so won't be able to grab the dpkg lock immediately
-until apt-get -y update && apt-get -y install apache2 
+until apt-get -y update && apt-get -y install apache2
 do
   echo "Trying again"
   sleep 2
 done
 
 # turn off apache until we are done with setup
-# Azure LB HTTP/s Probe will fail and not direct traffic to VM 
+# Azure LB HTTP/s Probe will fail and not direct traffic to VM
 apachectl stop
 
 # Enable ssl in apache
@@ -68,7 +68,7 @@ sed -i 's/#*SSLCertificateFile.*$/SSLCertificateFile \/etc\/ssl\/certs\/'$sslcer
 echo "keyfile"
 sed -i 's/#*SSLCertificateKeyFile.*$/SSLCertificateKeyFile \/etc\/ssl\/private\/'$sslkeyfilename'/g' /etc/apache2/sites-enabled/default-ssl.conf
 
-if [ ! -z "$2" ] 
+if [ ! -z "$2" ]
     then
         echo "CA cert thumbprint present. Configuring ..."
         cacertprint=$2

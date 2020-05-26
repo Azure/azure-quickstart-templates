@@ -1,29 +1,32 @@
 # Ansible Tower on Azure 
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fansible-tower-rhel%2Fazuredeploy.json" target="_blank">
-<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
-</a>
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fansible-tower-rhel%2Fazuredeploy.json" target="_blank">
-<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png"/>
-</a> 
-<br> <br>
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/ansible-tower-rhel/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/ansible-tower-rhel/PublicDeployment.svg)
+
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/ansible-tower-rhel/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/ansible-tower-rhel/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/ansible-tower-rhel/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/ansible-tower-rhel/CredScanResult.svg)
+
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fansible-tower-rhel%2Fazuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fansible-tower-rhel%2Fazuredeploy.json)
 
 <!-- TOC -->
 
-1. [Solution Overview](#solution-overview)
-2. [Template Solution Architecture ](#template-solution-architecture)
-3. [Licenses and Costs ](#licenses-and-costs)
-4. [Prerequisites](#prerequisites)
-5. [Deployment Steps](#deployment-steps)
-6. [Deployment Time](#deployment-time)
-7. [Support](#support)
-
+- [Ansible Tower on Azure](#ansible-tower-on-azure)
+  - [Solution Overview](#solution-overview)
+  - [Template Solution Architecture](#template-solution-architecture)
+  - [Licenses and Costs](#licenses-and-costs)
+  - [Prerequisites](#prerequisites)
+  - [Deployment Steps](#deployment-steps)
+  - [Deployment Time](#deployment-time)
+  - [Support](#support)
 
 <!-- /TOC -->
 
 ## Solution Overview 
 Ansible Tower by Red Hat helps you scale IT automation, manage complex deployments and speed productivity. Centralize and control your IT infrastructure with a visual dashboard, role-based access control, job scheduling and graphical inventory management.
-
 
 This Azure quickstart template deploys an Ansible Tower Solution on Azure Virtual Machines running RHEL 7.2. Template will build everything starting from Azure Infrastructure components to Ansible Tower and Clients installation, configuration etc. To start with, this template will deploy one Ansible tower server vm and 2 clients.
 
@@ -41,7 +44,6 @@ This template will deploy:
 -	One Ansible Tower Virtual Machine (RHEL 7.2)
 -	Two Ansible Client Virtual Machine (RHEL 7.2)
 -	Installation and configuration of Ansible Tower Server and Clients
-
 
 ![Deployment Solution Architecture](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/ansible-tower-rhel/images/ansible-architecture.png?raw=true)
 
@@ -75,4 +77,5 @@ The deployment takes about 20 minutes to complete.
 For any support related questions, issues or customization requirements, please contact info@spektrasystems.com
 
 **** test change for restart build**
+
 

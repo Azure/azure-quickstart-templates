@@ -1,18 +1,7 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.1",
   "parameters": {
-    "storageType": {
-      "type": "string",
-      "defaultValue": "Premium_LRS",
-      "allowedValues": [
-        "Premium_LRS",
-        "Standard_LRS"
-      ],
-      "metadata": {
-        "description": "Which type of storage you want to use"
-      }
-    },
     "vmName": {
       "type": "string",
       "defaultValue": "O365VM",
@@ -51,6 +40,13 @@
         "description": "Which version of Windows would like to deploy"
       }
     },
+    "vmOsSkuVersion": {
+      "type": "string",
+      "defaultValue": "2019.10.14",
+      "metadata": {
+        "description": "VM Image SKU Version"
+      }
+    },
     "dnsLabelPrefix": {
       "type": "string",
       "metadata": {
@@ -77,10 +73,17 @@
     },
     "_artifactsLocation": {
       "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/windows-vm-O365/scripts/",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/windows-vm-O365/",
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
     },
     "location": {
       "type": "string",
@@ -96,19 +99,19 @@
     "vnet01Subnet1Prefix": "10.0.0.0/24",
     "vmImagePublisher": "MicrosoftVisualStudio",
     "vmImageOffer": "Windows",
-    "vmSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'Vnet01', variables('Vnet01Subnet1Name'))]",
+    "vmSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('Vnet01Subnet1Name'))]",
     "vmNicName": "[concat(parameters('VMName'), 'NetworkInterface')]",
-    "vmIP01Name": "VMIP01"
+    "vmIP01Name": "VMIP01",
+    "vnetName": "VNet01"
   },
   "resources": [
     {
-      "name": "VNet01",
+      "name": "[variables('vnetName')]",
       "type": "Microsoft.Network/virtualNetworks",
       "location": "[parameters('location')]",
-      "apiVersion": "2015-06-15",
-      "dependsOn": [],
+      "apiVersion": "2019-06-01",
       "tags": {
-        "displayName": "VNet01"
+        "displayName": "variables('vnetName')"
       },
       "properties": {
         "addressSpace": {
@@ -130,10 +133,10 @@
       "name": "[variables('vmNicName')]",
       "type": "Microsoft.Network/networkInterfaces",
       "location": "[parameters('location')]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2019-06-01",
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', 'Vnet01')]",
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('vmIP01Name'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmIP01Name'))]"
       ],
       "tags": {
         "displayName": "VMNic01"
@@ -159,9 +162,9 @@
       "name": "[parameters('vmName')]",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[parameters('location')]",
-      "apiVersion":  "2017-03-30",
+      "apiVersion":  "2019-03-01",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('vmNicName'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('vmNicName'))]"
       ],
       "tags": {
         "displayName": "VM01"
@@ -180,7 +183,7 @@
             "publisher": "[variables('vmImagePublisher')]",
             "offer": "[variables('vmImageOffer')]",
             "sku": "[parameters('vmOSVersion')]",
-            "version": "latest"
+            "version": "[parameters('vmOsSkuVersion')]"
           },
           "osDisk": {
             "name": "[concat(parameters('vmName'),'_OSDisk')]",
@@ -201,7 +204,7 @@
           "name": "SetupOffice",
           "type": "extensions",
           "location": "[parameters('location')]",
-          "apiVersion": "2015-06-15",
+          "apiVersion": "2019-03-01",
           "dependsOn": [
             "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
           ],
@@ -215,7 +218,7 @@
             "autoUpgradeMinorVersion": true,
             "settings": {
               "fileUris": [
-                "[concat(parameters('_artifactsLocation'), parameters('setupOfficeScriptFileName'))]",
+                "[uri(parameters('_artifactsLocation'), concat('scripts/', parameters('setupOfficeScriptFileName'), parameters('_artifactsLocationSasToken')))]",
                 "https://raw.githubusercontent.com/officedev/Office-IT-Pro-Deployment-Scripts/master/Office-ProPlus-Deployment/Deploy-OfficeClickToRun/DefaultConfiguration.xml",
                 "https://raw.githubusercontent.com/officedev/Office-IT-Pro-Deployment-Scripts/master/Office-ProPlus-Deployment/Deploy-OfficeClickToRun/Office2013Setup.exe",
                 "https://raw.githubusercontent.com/officedev/Office-IT-Pro-Deployment-Scripts/master/Office-ProPlus-Deployment/Deploy-OfficeClickToRun/Office2016Setup.exe",
@@ -233,8 +236,7 @@
       "name": "[variables('vmIP01Name')]",
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[parameters('location')]",
-      "apiVersion": "2015-06-15",
-      "dependsOn": [],
+      "apiVersion": "2019-06-01",
       "tags": {
         "displayName": "VMIP01"
       },

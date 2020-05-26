@@ -6,7 +6,7 @@ insertValue=$2
 zabbixServer=$3
 masterIP=10.0.0.20
 
-	
+
 install_ap() {
 
 
@@ -17,7 +17,7 @@ install_ap() {
 	#start httpd
 	service httpd start
 
-	#auto-start 
+	#auto-start
 	chkconfig httpd on
 	chkconfig firewalld off
 	chkconfig iptables off
@@ -37,7 +37,7 @@ disk_format() {
 	yum install wget -y
 	for ((j=1;j<=3;j++))
 	do
-		wget https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shared_scripts/ubuntu/vm-disk-utils-0.1.sh 
+		wget https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shared_scripts/ubuntu/vm-disk-utils-0.1.sh
 		if [[ -f /tmp/vm-disk-utils-0.1.sh ]]; then
 			bash /tmp/vm-disk-utils-0.1.sh -b /var/www/html -s
 			if [[ $? -eq 0 ]]; then
@@ -51,7 +51,7 @@ disk_format() {
 			continue
 		fi
 	done
-		
+
 }
 
 

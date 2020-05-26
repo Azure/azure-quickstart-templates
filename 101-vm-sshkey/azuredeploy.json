@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "projectName": {
@@ -36,7 +36,8 @@
     "vmName": "[concat(parameters('projectName'), '-vm')]",
     "publicIPAddressName": "[concat(parameters('projectName'), '-ip')]",
     "networkInterfaceName": "[concat(parameters('projectName'), '-nic')]",
-    "networkSecurityGroupName": "[concat(parameters('projectName'), '-nsg')]"
+    "networkSecurityGroupName": "[concat(parameters('projectName'), '-nsg')]",
+    "networkSecurityGroupName2": "[concat(variables('vNetSubnetName'), '-nsg')]"
   },
   "resources": [
     {
@@ -76,10 +77,37 @@
       }
     },
     {
+      "comments": "Simple Network Security Group for subnet [variables('vNetSubnetName')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2019-08-01",
+      "name": "[variables('networkSecurityGroupName2')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-22",
+            "properties": {
+              "priority": 1000,
+              "access": "Allow",
+              "direction": "Inbound",
+              "destinationPortRange": "22",
+              "protocol": "Tcp",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+          }
+        ]
+      }
+    },
+    {
       "type": "Microsoft.Network/virtualNetworks",
       "apiVersion": "2018-11-01",
       "name": "[variables('vNetName')]",
       "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName2'))]"
+      ],
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -90,7 +118,10 @@
           {
             "name": "[variables('vNetSubnetName')]",
             "properties": {
-              "addressPrefix": "[variables('vNetSubnetAddressPrefix')]"
+              "addressPrefix": "[variables('vNetSubnetAddressPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName2'))]"
+              }
             }
           }
         ]

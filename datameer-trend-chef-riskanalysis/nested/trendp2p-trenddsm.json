@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "storageAccountName": {
@@ -81,12 +81,8 @@
       "type": "string",
       "defaultValue": ""
     },
-    "vmAdminPasswordTrendDSM": {
+    "vmAdminPasswordOrPublicKeyTrendDSM": {
       "type": "securestring",
-      "defaultValue": ""
-    },
-    "linuxConfigurationChoosenTrendDSM": {
-      "type": "object",
       "defaultValue": ""
     },
     "deployment-api-version": {
@@ -144,10 +140,24 @@
     },
     "quickstartTags": {
       "type": "object"
+    },
+    "authenticationType": {
+      "type": "string"
     }
   },
   "variables": {
-    "licenseMode": "10"
+    "licenseMode": "10",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('vmAdminNameTrendDSM'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('vmAdminPasswordOrPublicKeyTrendDSM')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
@@ -324,9 +334,9 @@
         "osProfile": {
           "computerName": "[parameters('vmNameTrendDSM')]",
           "adminUsername": "[parameters('vmAdminNameTrendDSM')]",
-          "adminPassword": "[parameters('vmAdminPasswordTrendDSM')]",
+          "adminPassword": "[parameters('vmAdminPasswordOrPublicKeyTrendDSM')]",
           "customData": "[base64(concat('vmName:',base64(parameters('vmNameTrendDSM')),',databaseServer:',reference('buildSQLServer').outputs.sqlServerFQDN.value,',databaseName:',base64(parameters('dbName')),',location:',parameters('location'),',managerPort:',parameters('managerPortTrendDSM'),',heartbeatPort:',parameters('heartbeatPortTrendDSM'),',vmFQDN:',reference(resourceId('Microsoft.Network/publicIPAddresses',parameters('publicIPAddressNameTrendDSM')),'2015-06-15').dnsSettings.fqdn,',publicIP:,adminUsername:',base64(parameters('dsmAdminName')),',adminPassword:',base64(parameters('dsmAdminPassword')),',databaseUserName:',base64(parameters('dbAdminName')),',databaseUserPassword:',base64(parameters('dbAdminPassword')),',subscriptionId:',subscription().subscriptionId,',databaseOption:',parameters('databaseOption'),',vmSize:',parameters('offerChoosedTrendDSM').vmSize,',licenseMode:',variables('licenseMode')))]",
-          "linuxConfiguration": "[parameters('linuxConfigurationChoosenTrendDSM')]"
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {

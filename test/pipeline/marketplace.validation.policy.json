@@ -1,0 +1,177 @@
+{
+    "options": [],
+    "variables": {
+        "skipComponentGovernanceDetection": {
+            "value": "true"
+        },
+        "system.debug": {
+            "value": "false",
+            "allowOverride": true
+        },
+        "ttk.asset.filename": {
+            "value": "AzTemplateToolKit.zip"
+        },
+        "ttk.folder": {
+            "value": "$(Agent.BuildDirectory)\\test"
+        }
+    },
+    "retentionRules": [
+        {
+            "branches": [
+                "+refs/heads/*"
+            ],
+            "artifacts": [],
+            "artifactTypesToDelete": [
+                "FilePath",
+                "SymbolStore"
+            ],
+            "daysToKeep": 30,
+            "minimumToKeep": 1,
+            "deleteBuildRecord": true,
+            "deleteTestResults": true
+        }
+    ],
+    "properties": {},
+    "tags": [],
+    "jobAuthorizationScope": 1,
+    "jobTimeoutInMinutes": 60,
+    "jobCancelTimeoutInMinutes": 5,
+    "process": {
+        "phases": [
+            {
+                "steps": [
+                    {
+                        "environment": {},
+                        "enabled": true,
+                        "continueOnError": false,
+                        "alwaysRun": false,
+                        "displayName": "Download TTK & Expand Files",
+                        "timeoutInMinutes": 0,
+                        "condition": "succeeded()",
+                        "task": {
+                            "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
+                            "versionSpec": "2.*",
+                            "definitionType": "task"
+                        },
+                        "inputs": {
+                            "targetType": "inline",
+                            "filePath": "",
+                            "arguments": "",
+                            "script": "New-Item -Path $(ttk.folder) -ItemType Directory -verbose\nInvoke-WebRequest -Uri \"https://github.com/Azure/azure-quickstart-templates/releases/download/marketplace/AzTemplateToolKit.zip\" -OutFile \"$(ttk.folder)\\$(ttk.asset.filename)\" -verbose\n\n# Expand the TTK files\nGet-ChildItem \"$(ttk.folder)\" -Recurse\nWrite-Host \"Expanding files...\"\nExpand-Archive -Path \"$(ttk.folder)\\*.zip\" -DestinationPath \"$(ttk.folder)\" -Verbose\nWrite-Host \"Expanded files found:\"\nGet-ChildItem \"$(ttk.folder)\" -Recurse",
+                            "errorActionPreference": "stop",
+                            "failOnStderr": "false",
+                            "ignoreLASTEXITCODE": "false",
+                            "pwsh": "true",
+                            "workingDirectory": ""
+                        }
+                    },
+                    {
+                        "environment": {},
+                        "enabled": true,
+                        "continueOnError": false,
+                        "alwaysRun": false,
+                        "displayName": "Get Folder",
+                        "timeoutInMinutes": 0,
+                        "condition": "succeeded()",
+                        "task": {
+                            "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
+                            "versionSpec": "2.*",
+                            "definitionType": "task"
+                        },
+                        "inputs": {
+                            "targetType": "inline",
+                            "filePath": "",
+                            "arguments": "",
+                            "script": "$fullpath = \"$env:BUILD_SOURCESDIRECTORY\\$(Split-Path \"$env:SYSTEM_PULLREQUEST_SOURCEBRANCH\" -Leaf)\"\n\n# Debugging - set this to a folder in the repo if you don't want to trigger via PR\n#$fullpath = \"$env:BUILD_SOURCESDIRECTORY\\marketplace-sample-ma-marketplace-sample-ma\"\n\nWrite-Host \"##vso[task.setvariable variable=sample.folder]$fullpath\"\n\n",
+                            "errorActionPreference": "stop",
+                            "failOnStderr": "false",
+                            "ignoreLASTEXITCODE": "false",
+                            "pwsh": "true",
+                            "workingDirectory": ""
+                        }
+                    },
+                    {
+                        "environment": {},
+                        "enabled": true,
+                        "continueOnError": false,
+                        "alwaysRun": false,
+                        "displayName": "Run Best Practice Tests",
+                        "timeoutInMinutes": 0,
+                        "condition": "succeeded()",
+                        "task": {
+                            "id": "e213ff0f-5d5c-4791-802d-52ea3e7be1f1",
+                            "versionSpec": "2.*",
+                            "definitionType": "task"
+                        },
+                        "inputs": {
+                            "targetType": "inline",
+                            "filePath": "",
+                            "arguments": "",
+                            "script": "Import-Module $(ttk.folder)/arm-ttk/arm-ttk.psd1 -Verbose\n$testOutput = @(Test-AzTemplate -TemplatePath \"$(sample.folder)\")\n\n$testOutput \n\nif ($testOutput | ? {$_.Errors }) {\n   exit 1 \n} else {\n   exit 0\n} \n",
+                            "errorActionPreference": "continue",
+                            "failOnStderr": "true",
+                            "ignoreLASTEXITCODE": "false",
+                            "pwsh": "true",
+                            "workingDirectory": ""
+                        }
+                    }
+                ],
+                "name": "Agent job 1",
+                "refName": "Job_1",
+                "condition": "succeeded()",
+                "target": {
+                    "executionOptions": {
+                        "type": 0
+                    },
+                    "allowScriptsAuthAccessOption": false,
+                    "type": 1
+                },
+                "jobAuthorizationScope": 1
+            }
+        ],
+        "type": 1
+    },
+    "repository": {
+        "properties": {
+            "cleanOptions": "0",
+            "labelSources": "0",
+            "labelSourcesFormat": "$(build.buildNumber)",
+            "reportBuildStatus": "true",
+            "gitLfsSupport": "false",
+            "skipSyncSource": "false",
+            "checkoutNestedSubmodules": "false",
+            "fetchDepth": "0"
+        },
+        "id": "{repoId}",
+        "type": "TfsGit",
+        "name": "{repoName}",
+        "url": "https://solutiontemplates.visualstudio.com/marketplacesolutions/_git/{repoName}",
+        "defaultBranch": "refs/heads/master",
+        "clean": "false",
+        "checkoutSubmodules": false
+    },
+    "processParameters": {},
+    "quality": 1,
+    "drafts": [],
+    "queue": {
+        "id": 7,
+        "name": "Hosted Windows Container",
+        "pool": {
+            "id": 7,
+            "name": "Hosted Windows Container"
+        }
+    },
+    "id": 433,
+    "name": "{repoName} - validation policy",
+    "path": "\\",
+    "type": 2,
+    "queueStatus": 0,
+    "project": {
+        "id": "8efae6bf-a1a8-4325-b02c-f2512167e442",
+        "name": "marketplacesolutions",
+        "description": "Contains the templates etc. for each solution template in the Azure marketplace",
+        "url": "https://solutiontemplates.visualstudio.com/_apis/projects/8efae6bf-a1a8-4325-b02c-f2512167e442",
+        "state": 1,
+        "visibility": 0
+    }
+}

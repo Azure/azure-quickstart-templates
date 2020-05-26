@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "storageAccountType": {
@@ -83,18 +83,6 @@
         "description": "Admin user name"
       }
     },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Admin password"
-      }
-    },
-    "sshKeyData": {
-      "type": "securestring",
-      "metadata": {
-        "description": "ssh public key for the admin user"
-      }
-    },
     "sshStorageAccountName": {
       "type": "string",
       "metadata": {
@@ -130,10 +118,40 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/ansible-advancedlinux/",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
     }
   },
   "variables": {
-    "scriptsBaseUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/ansible-advancedlinux/",
     "vmStorageAccountContainerName": "vhds",
     "createRAID": "true",
     "availabilitySetName": "ANS01",
@@ -172,14 +190,14 @@
     "sshRootPubBlobLocation": "id_rsa.pub",
     "ansiblePlaybookLocation": "InitStorage_RAID.yml",
     "customScriptAnsibleFile": "configure_ansible.sh",
-    "customScriptAnsibleUrl": "[concat(variables('scriptsBaseUrl'),variables('customScriptAnsibleFile'))]",
+    "customScriptAnsibleUrl": "[uri(parameters('_artifactsLocation'), concat(variables('customScriptAnsibleFile'), parameters('_artifactsLocationSasToken')))]",
     "customScriptAnsibleCommand": "[concat('bash ',variables('customScriptAnsibleFile'))]",
     "customScriptAnsibleParameters": "[concat(' -i ',variables('VMIPAddressStart'),' -n ',parameters('numberOfVms'),' -r ',variables('createRAID'),' -f ',parameters('linuxFileSystem'))]",
     "customScriptSSHRootFile": "configure_ssh_root.sh",
-    "customScriptSSHRootUrl": "[concat(variables('scriptsBaseUrl'),variables('customScriptSSHRootFile'))]",
+    "customScriptSSHRootUrl": "[uri(parameters('_artifactsLocation'), concat(variables('customScriptSSHRootFile'), parameters('_artifactsLocationSasToken')))]",
     "customScriptSSHRootCommand": "[concat('bash ',variables('customScriptSSHRootFile'),' -a ', parameters('sshStorageAccountName'),' -k ', parameters('sshStorageAccountKey'))]",
-    "ansiblePlaybookUrl": "[concat(variables('scriptsBaseUrl'),variables('ansiblePlaybookLocation'))]",
-    "pythonAzureScriptUrl": "[concat(variables('scriptsBaseUrl'),'GetSSHFromPrivateStorageAccount.py')]",
+    "ansiblePlaybookUrl": "[uri(parameters('_artifactsLocation'), concat(variables('ansiblePlaybookLocation'), parameters('_artifactsLocationSasToken')))]",
+    "pythonAzureScriptUrl": "[uri(parameters('_artifactsLocation'), concat('GetSSHFromPrivateStorageAccount.py', parameters('_artifactsLocationSasToken')))]",
     "ansibleVmTypes": {
       "Premium_LRS": {
         "vmSize": "Standard_DS1"
@@ -191,7 +209,18 @@
     "currentEnvironmentSettings": "[variables('ansibleVmTypes')[parameters('storageAccountType')]]",
     "ansibleVmType": "[variables('currentEnvironmentSettings').vmSize]",
     "newStorageAccountName": "[concat(uniquestring(resourceGroup().id), 'stg')]",
-    "storageRef": "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]"
+    "storageRef": "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
@@ -279,15 +308,15 @@
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('availabilitySetName')]",
-      "apiVersion": "2017-12-01"  ,
+      "apiVersion": "2017-12-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Aligned"
-          },
-        "properties": { 
-            "platformFaultDomainCount": "[variables('faultDomainCount')]", 
-            "platformUpdateDomainCount": "[variables('updateDomainCount')]" 
-        }
+      },
+      "properties": {
+        "platformFaultDomainCount": "[variables('faultDomainCount')]",
+        "platformUpdateDomainCount": "[variables('updateDomainCount')]"
+      }
     },
     {
       "type": "Microsoft.Storage/storageAccounts",
@@ -332,7 +361,7 @@
       }
     },
     {
-      "apiVersion": "2017-03-30", 
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('vmNamePattern'),copyIndex())]",
       "location": "[parameters('location')]",
@@ -359,7 +388,8 @@
         "osProfile": {
           "computerName": "[concat(variables('vmNamePattern'),copyIndex())]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
@@ -370,7 +400,7 @@
           },
           "osDisk": {
             "name": "[concat(variables('vmNamePattern'),copyIndex(),'_OSDisk')]",
-             "caching": "ReadWrite",
+            "caching": "ReadWrite",
             "createOption": "FromImage"
           },
           "dataDisks": [
@@ -385,7 +415,7 @@
               "name": "[concat(variables('vmNamePattern'),copyIndex(),'_DataDisk2')]",
               "diskSizeGB": "[parameters('vmSizeDataDisks')]",
               "lun": 1,
-             "caching": "ReadOnly",
+              "caching": "ReadOnly",
               "createOption": "Empty"
             },
             {
@@ -494,18 +524,8 @@
         "osProfile": {
           "computerName": "AnsibleController",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]",
-          "linuxConfiguration": {
-            "disablePasswordAuthentication": "false",
-            "ssh": {
-              "publicKeys": [
-                {
-                  "path": "[variables('sshKeyPath')]",
-                  "keyData": "[parameters('sshKeyData')]"
-                }
-              ]
-            }
-          }
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
@@ -515,7 +535,7 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[concat('AnsibleController','_OSDisk')]",  
+            "name": "[concat('AnsibleController','_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           },

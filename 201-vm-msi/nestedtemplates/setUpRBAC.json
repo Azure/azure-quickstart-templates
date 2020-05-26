@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "principalId": {
@@ -16,18 +16,20 @@
     }
   },
   "variables": {
-    "contributor": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
-    "RBACResourceName": "[concat(parameters('storageAccountName'),'/Microsoft.Authorization/',parameters('principalId'))]"
+    "contributor": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+    "scope": "[resourceId('Microsoft.Storage/storageAccounts',parameters('storageAccountName'))]",
+    "RBACResourceName": "[guid(variables('scope'), variables('contributor'), parameters('principalId'))]"
   },
   "resources": [
     {
-      "apiVersion": "2016-07-01",
-      "name": "[variables('RBACResourceName')]",
+      "apiVersion": "2019-04-01-preview",
+      "name": "[concat(parameters('storageAccountName'), '/Microsoft.Authorization/', variables('RBACResourceName'))]",
       "type": "Microsoft.Storage/storageAccounts/providers/roleAssignments",
       "properties": {
         "roleDefinitionId": "[variables('contributor')]",
         "principalId": "[parameters('principalId')]",
-        "scope": "[resourceId('Microsoft.Storage/storageAccounts',parameters('storageAccountName'))]"
+        "scope": "[variables('scope')]",
+        "principalType": "ServicePrincipal"
       }
     }
   ]

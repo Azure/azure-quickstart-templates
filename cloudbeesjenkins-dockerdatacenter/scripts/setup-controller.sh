@@ -38,7 +38,7 @@ SSLProtocols = "SSLv3 TLSv1 TLSv1.1 TLSv1.2"'
 wget "$FILEURI" -O /opt/ucp/docker_subscription.lic
 
 # Fix for Docker Daemon when cloning a base image
-# rm  /etc/docker/key.json  
+# rm  /etc/docker/key.json
 # service docker restart
 
 # Load the predownloaded Tar File
@@ -66,7 +66,7 @@ else
  echo $(date) " -- UCP installation failed"
 fi
 
-# Configure NginX for Interlock  
+# Configure NginX for Interlock
 
 echo $(date) " - Initiating NginX and interlock configuration on the master"
 
