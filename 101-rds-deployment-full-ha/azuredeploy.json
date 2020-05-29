@@ -1,0 +1,1156 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "projectName": {
+            "type": "string",
+            "defaultValue": "GEN-UNIQUE",
+            "metadata": {
+                "description": "Define the project name or prefix for all objects."
+            }
+        },
+        "DNSEntry": {
+            "type": "string",
+            "defaultValue": "remoteapps",
+            "metadata": {
+                "description": "The name for web access and gateway."
+            }
+        },
+        "DNSZone": {
+            "type": "string",
+            "defaultValue": "contosocorp.com",
+            "metadata": {
+                "description": "External public DNS domain zone. NOT AD domain."
+            }
+        },
+        "DNSZoneResourceGroup": {
+            "type": "string",
+            "defaultValue": "rgdns",
+            "metadata": {
+                "description": "Resource group name for external dns zone to modify, if 'CreateDNSEntry' is true."
+            }
+        },
+        "createDNSEntry": {
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "Do you want to create/update the DNS entries on Azure DNS domain?"
+            }
+        },
+        "ExternalFqdn": {
+            "type": "string",
+            "defaultValue": "[concat(parameters('DNSEntry'),'.',parameters('DNSZone'))]",
+            "metadata": {
+                "description": "Fully qualified external domain name. eg. remoteapps.contoso.com"
+            }
+        },
+        "TimeZoneID": {
+            "type": "string",
+            "defaultValue": "UTC",
+            "metadata": {
+                "description": "TimeZone ID to be used on VMs. Get available timezones with powershell Get-TimeZone command."
+            }
+        },
+       "vmNames": {
+            "type": "array",
+            "defaultValue": [
+                "[concat(parameters('projectName'),'dc')]",
+                "[concat(parameters('projectName'),'wg')]",
+                "[concat(parameters('projectName'),'cb')]",
+                "[concat(parameters('projectName'),'sh')]",
+                "[concat(parameters('projectName'),'lf')]"
+            ],
+            "metadata": {
+                "description": "This adds the projectName plus suffix for VMs."
+            }            
+        },
+        "createSqlServerAndDB": {
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "Do you want to deploy your environment in HA? So create Azure SQL Server and DB."
+            }
+        },
+        "dcCount": {
+            "type": "int",
+            "defaultValue": 1,
+            "metadata": {
+                "description": "How many Domain Controllers would you like to deploy?"
+            }            
+        },        
+        "rdcbCount": {
+            "type": "int",
+            "defaultValue": 1,
+            "metadata": {
+                "description": "How many RD Connection Brokers would you like to deploy?"
+            }
+        },
+        "rdwgCount": {
+            "type": "int",
+            "defaultValue": 1,
+            "metadata": {
+                "description": "How many RD Web Access/Gateways would you like to deploy?"
+            }            
+        },
+        "rdshCount": {
+            "type": "int",
+            "defaultValue": 1,
+            "metadata": {
+                "description": "How many RD Session Hosts would you like to deploy?"
+            }            
+        },
+        "lsfsCount": {
+            "type": "int",
+            "defaultValue": 1,
+            "metadata": {
+                "description": "How many License/File Servers would you like to deploy?"
+            }            
+        },   
+        "vmProperties": {
+            "type": "array",
+            "defaultValue": [
+                {
+                    "name": "[parameters('vmNames')[0]]",
+                    "count": "[parameters('dcCount')]",
+                    "intLbBackEndPool": "",
+                    "pubLbBackEndPool": "",
+                    "dscFunction": "DeployRDSLab.ps1\\CreateRootDomain"
+                },                
+                {
+                    "name": "[parameters('vmNames')[1]]",
+                    "count": "[parameters('rdwgCount')]",
+                    "intLbBackEndPool": "rds-webgateways-int-pool",
+                    "pubLbBackEndPool": "rds-webgateways-pub-pool",
+                    "dscFunction": "DeployRDSLab.ps1\\RDWebGateway"
+                },
+                {
+                    "name": "[parameters('vmNames')[2]]",
+                    "count": "[parameters('rdcbCount')]",
+                    "intLbBackEndPool": "rds-brokers-int-pool",
+                    "pubLbBackEndPool": "",
+                    "dscFunction": "DeployRDSLab.ps1\\RDSDeployment"
+                },
+                {
+                    "name": "[parameters('vmNames')[3]]",
+                    "count": "[parameters('rdshCount')]",
+                    "intLbBackEndPool": "",
+                    "pubLbBackEndPool": "",
+                    "dscFunction": "DeployRDSLab.ps1\\RDSessionHost"
+                },
+                {
+                    "name": "[parameters('vmNames')[4]]",
+                    "count": "[parameters('lsfsCount')]",
+                    "intLbBackEndPool": "",
+                    "pubLbBackEndPool": "",
+                    "dscFunction": "DeployRDSLab.ps1\\RDLicenseServer"
+                }                               
+            ],
+            "metadata": {
+                "description": "These parameters define settings for the VMs. No need to change."
+            }            
+        },
+        "vmSize": {
+            "type": "string",
+            "defaultValue": "Standard_A2_v2",
+            "metadata": {
+                "description": "What is the VM size for all VMs?"
+            }            
+        },
+        "storageSkuType": {
+            "type": "string",
+            "defaultValue": "Standard_LRS",
+            "metadata": {
+                "description": "What is the SKU for the storage account and VM manage disks?"
+            }            
+        },       
+        "adminUser": {
+            "type": "string",
+            "defaultValue": "[parameters('projectName')]",
+            "metadata": {
+                "description": "What is the username for the admin on VMs and SQL Server?"
+            }
+        },
+        "adminPasswd": {
+            "type": "securestring",
+            "metadata": {
+                "description": "What is the password for the admin on VMs and SQL Server?"
+            }
+        },
+        "adDomainName": {
+            "type": "string",
+            "defaultValue": "contoso.com",
+            "metadata": {
+                "description": "What is the new forest/root Active Directory domain name?"
+            }            
+        },
+        "vNetPrefix": {
+            "type": "string",
+            "defaultValue": "10.100",
+            "metadata": {
+                "description": "What is the prefix for the vnet and first subnet?"
+            }            
+        },
+        "vNetAddressSpace": {
+            "type": "string",
+            "defaultValue": "[concat(parameters('vNetPrefix'),'.0.0/16')]",
+            "metadata": {
+                "description": "What is the vnet address space?"
+            }            
+        },
+        "vNetSubnetAddress": {
+            "type": "string",
+            "defaultValue": "[concat(parameters('vNetPrefix'),'.0.0/24')]",
+            "metadata": {
+                "description": "What is the subnet address prefix?"
+            }            
+        },       
+        "_artifactsLocation": {
+            "type": "string",
+            "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-rds-deployment-full-ha/",
+            "metadata": {
+                "description": "Location of all scripts and DSC resources for RDS deployment."
+            }
+        }
+    },
+    "variables": {
+        "vNetName": "[concat(parameters('projectName'),'vnet')]",
+        "firstDcIP": "[concat(parameters('vNetPrefix'),'.0.100')]",
+        "nsgRef": "[resourceId('Microsoft.Network/networkSecurityGroups',concat(parameters('projectName'),'nsg'))]",
+        "subNetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets',variables('vNetName'),concat(parameters('projectName'),'main'))]",
+        "sqlServerName": "sqlsrv",
+        "rdsDBName": "rdsdb",
+        "dscScriptName": "deployrdslab.zip",
+        "scriptName": "deploycertha.ps1"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2019-06-01",
+            "location": "[resourceGroup().location]",
+            "kind": "StorageV2",
+            "name": "[concat(parameters('projectName'), 'stgdiag')]",
+            "sku": {
+                "name": "[parameters('storageSkuType')]",
+                "tier": "Standard"
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2019-12-01",
+            "location": "[resourceGroup().location]",
+            "name": "[concat(parameters('projectName'),'nsg')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "Allow_RDP",
+                        "properties": {
+                            "access": "Allow",
+                            "sourceAddressPrefix": "*",
+                            "sourcePortRange": "*",
+                            "destinationAddressPrefix": "*",
+                            "destinationPortRange": "3389",
+                            "protocol": "*",
+                            "direction": "Inbound",
+                            "priority": 1000
+                        }
+                    },
+                    {
+                        "name": "Allow_HTTP",
+                        "properties": {
+                            "access": "Allow",
+                            "sourceAddressPrefix": "*",
+                            "sourcePortRange": "*",
+                            "destinationAddressPrefix": "*",
+                            "destinationPortRange": "80",
+                            "protocol": "Tcp",
+                            "direction": "Inbound",
+                            "priority": 1001                            
+                        }
+                    },
+                    {
+                        "name": "Allow_HTTPS",
+                        "properties": {
+                            "access": "Allow",
+                            "sourceAddressPrefix": "*",
+                            "sourcePortRange": "*",
+                            "destinationAddressPrefix": "*",
+                            "destinationPortRange": "443",
+                            "protocol": "Tcp",
+                            "direction": "Inbound",
+                            "priority": 1002                        
+                        }
+                    },
+                    {
+                        "name": "Allow_UDP_3391",
+                        "properties": {
+                            "access": "Allow",
+                            "sourceAddressPrefix": "*",
+                            "sourcePortRange": "*",
+                            "destinationAddressPrefix": "*",
+                            "destinationPortRange": "3391",
+                            "protocol": "Udp",
+                            "direction": "Inbound",
+                            "priority": 1003                        
+                        }
+                    }                                     
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2019-12-01",
+            "location": "[resourceGroup().location]",
+            "name": "[concat(parameters('projectName'),'vnet')]",
+            "dependsOn": [
+                "[variables('nsgRef')]"
+            ],
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[parameters('vNetAddressSpace')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[concat(parameters('projectName'),'main')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('vNetSubnetAddress')]",
+                            "networkSecurityGroup": {
+                                "id": "[variables('nsgRef')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/loadBalancers",
+            "apiVersion": "2019-12-01",
+            "location": "[resourceGroup().location]",
+            "name": "[concat(parameters('projectName'),'intlb')]",
+            "sku": {
+                "name": "Standard"
+            },
+            "dependsOn": [
+                "[concat(parameters('projectName'),'vnet')]"
+            ],
+            "properties": {
+                "frontendIPConfigurations": [
+                    {
+                        "name": "rds-brokers-frontend",
+                        "properties": {
+                            "privateIPAllocationMethod": "Static",
+                            "privateIPAddress": "[concat(parameters('vNetPrefix'),'.0.4')]",
+                            "privateIPAddressVersion": "IPv4",
+                            "subnet": {
+                                "id": "[variables('subNetRef')]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "rds-webgateways-frontend",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "privateIPAddressVersion": "IPv4",
+                            "subnet": {
+                                "id": "[variables('subNetRef')]"
+                            }
+                        }
+                    }
+                ],
+                "backendAddressPools": [
+                    {
+                        "name": "rds-brokers-int-pool",
+                        "properties": {
+                        }
+                    },
+                    {
+                        "name": "rds-webgateways-int-pool",
+                        "properties": {
+                        }                
+                    }
+                ],
+                "probes": [
+                    {
+                        "name": "rds-broker-probe",
+                        "properties": {
+                            "intervalInSeconds": 5,
+                            "numberOfProbes": 2,
+                            "protocol": "Tcp",
+                            "port": 3389
+                        }
+                    },
+                    {
+                        "name": "rds-webgateway-probe",
+                        "properties": {
+                            "intervalInSeconds": 5,
+                            "numberOfProbes": 2,
+                            "protocol": "Tcp",
+                            "port": 443
+                        }
+                    }
+                ],
+                "loadBalancingRules": [
+                    {
+                        "name": "rds-brokers-tcp-rule",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers',concat(parameters('projectName'),'intlb')),'/frontendIpConfigurations/rds-brokers-frontend')]"
+                            },
+                            "backendAddressPool": {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers',concat(parameters('projectName'),'intlb')),'/backendAddressPools/rds-brokers-int-pool')]"
+                            },
+                            "probe": {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers',concat(parameters('projectName'),'intlb')),'/probes/rds-broker-probe')]"
+                            },
+                            "protocol": "Tcp",
+                            "frontendPort": 3389,
+                            "backendPort": 3389,
+                            "idleTimeoutInMinutes": 4
+                        }
+                    },
+                    {
+                        "name": "rds-brokers-udp-rule",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers',concat(parameters('projectName'),'intlb')),'/frontendIpConfigurations/rds-brokers-frontend')]"
+                            },
+                            "backendAddressPool": {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers',concat(parameters('projectName'),'intlb')),'/backendAddressPools/rds-brokers-int-pool')]"
+                            },
+                            "probe": {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers',concat(parameters('projectName'),'intlb')),'/probes/rds-broker-probe')]"
+                            },
+                            "protocol": "Udp",
+                            "frontendPort": 3389,
+                            "backendPort": 3389,
+                            "idleTimeoutInMinutes": 4
+                        }
+                    },                    
+                    {
+                        "name": "rds-webgateway-http-rule",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers',concat(parameters('projectName'),'intlb')),'/frontendIpConfigurations/rds-webgateways-frontend')]"
+                            },
+                            "backendAddressPool": {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers',concat(parameters('projectName'),'intlb')),'/backendAddressPools/rds-webgateways-int-pool')]"
+                            },
+                            "probe": {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers',concat(parameters('projectName'),'intlb')),'/probes/rds-webgateway-probe')]"
+                            },
+                            "protocol": "Tcp",
+                            "frontendPort": 80,
+                            "backendPort": 80,
+                            "idleTimeoutInMinutes": 4
+                        }                      
+                    },
+                    {
+                        "name": "rds-webgateway-https-rule",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers',concat(parameters('projectName'),'intlb')),'/frontendIpConfigurations/rds-webgateways-frontend')]"
+                            },
+                            "backendAddressPool": {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers',concat(parameters('projectName'),'intlb')),'/backendAddressPools/rds-webgateways-int-pool')]"
+                            },
+                            "probe": {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers',concat(parameters('projectName'),'intlb')),'/probes/rds-webgateway-probe')]"
+                            },
+                            "protocol": "Tcp",
+                            "frontendPort": 443,
+                            "backendPort": 443,
+                            "idleTimeoutInMinutes": 4
+                        }                      
+                    },
+                    {
+                        "name": "rds-webgateway-udp-rule",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers',concat(parameters('projectName'),'intlb')),'/frontendIpConfigurations/rds-webgateways-frontend')]"
+                            },
+                            "backendAddressPool": {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers',concat(parameters('projectName'),'intlb')),'/backendAddressPools/rds-webgateways-int-pool')]"
+                            },
+                            "probe": {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers',concat(parameters('projectName'),'intlb')),'/probes/rds-webgateway-probe')]"
+                            },
+                            "protocol": "Udp",
+                            "frontendPort": 3391,
+                            "backendPort": 3391,
+                            "idleTimeoutInMinutes": 4
+                        }                      
+                    }                                      
+                ]
+            }
+        },
+        {
+            "name": "[concat(parameters('projectName'),'lbwebgwpip')]",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2019-11-01",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Standard"
+            },
+            "tags": {
+                "displayName": "[concat(parameters('projectName'),'lbwebgwpip')]"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Static",
+                "dnsSettings": {
+                    "domainNameLabel": "[concat(parameters('projectName'),'lbwebgwpip')]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "[concat(parameters('projectName'),'dnsupdate')]",
+            "condition": "[parameters('CreateDNSEntry')]",
+            "dependsOn": [
+                "[concat(parameters('projectName'),'lbwebgwpip')]"
+            ],
+            "resourceGroup": "[parameters('DNSZoneResourceGroup')]",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {},
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {},
+                    "variables": {},
+                    "resources": [
+                        {
+                            "name": "[parameters('DNSZone')]",
+                            "type": "Microsoft.Network/dnsZones",
+                            "apiVersion": "2018-05-01",
+                            "location": "global",
+                            "properties": {}
+                        },
+                        {
+                            "name": "[concat(parameters('DNSZone'),'/',parameters('DNSEntry'))]",
+                            "type": "Microsoft.Network/dnszones/CNAME",
+                            "apiVersion": "2018-05-01",
+                            "location": "global",
+                            "dependsOn": [
+                                "[parameters('DNSZone')]"
+                            ],
+                            "properties": {
+                                "TTL": 1200,
+                                "CNAMERecord": {
+                                    "cname": "[reference(concat(parameters('projectName'),'lbwebgwpip')).dnsSettings.fqdn]"
+                                }
+                            }
+                        },
+                        {
+                            "name": "[concat(parameters('DNSZone'),'/','broker')]",
+                            "type": "Microsoft.Network/dnszones/CNAME",
+                            "apiVersion": "2018-05-01",
+                            "location": "global",
+                            "dependsOn": [
+                                "[parameters('DNSZone')]"
+                            ],
+                            "properties": {
+                                "TTL": 1200,
+                                "CNAMERecord": {
+                                    "cname": "[reference(concat(parameters('projectName'),'lbwebgwpip')).dnsSettings.fqdn]"
+                                }
+                            }
+                        }                     
+                    ]
+                }                
+            }    
+        },
+        {
+            "name": "[concat(parameters('projectName'),'publb')]",
+            "type": "Microsoft.Network/loadBalancers",
+            "apiVersion": "2019-11-01",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses',concat(parameters('projectName'),'lbwebgwpip'))]",
+                "[concat(parameters('projectName'),'vnet')]"
+            ],
+            "sku": {
+                "name": "Standard"
+            },
+            "properties": {
+                "frontendIPConfigurations": [
+                    {
+                        "name": "rds-webgateways-frontend",
+                        "properties": {
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(parameters('projectName'),'lbwebgwpip'))]"
+                            }
+                        }
+                    }
+                ],
+                "backendAddressPools": [
+                    {
+                        "name": "rds-webgateways-pub-pool"
+                    }
+                ],
+                "probes": [
+                    {
+                        "name": "rds-webgateways-probe",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "port": 80,
+                            "intervalInSeconds": 5,
+                            "numberOfProbes": 2
+                        }
+                    }
+                ],                
+                "loadBalancingRules": [
+                    {
+                        "name": "rds-webgateways-http-rule",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',concat(parameters('projectName'),'publb'),'rds-webgateways-frontend')]"
+                            },
+                            "backendAddressPool": {
+                                "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools',concat(parameters('projectName'),'publb'),'rds-webgateways-pub-pool')]"
+                            },
+                            "probe": {
+                                "id": "[resourceId('Microsoft.Network/loadBalancers/probes',concat(parameters('projectName'),'publb'),'rds-webgateways-probe')]"
+                            },
+                            "protocol": "Tcp",
+                            "frontendPort": 80,
+                            "backendPort": 80,
+                            "enableFloatingIP": false,
+                            "idleTimeoutInMinutes": 5                            
+                        }
+                    },
+                    {
+                        "name": "rds-webgateways-https-rule",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',concat(parameters('projectName'),'publb'),'rds-webgateways-frontend')]"
+                            },
+                            "backendAddressPool": {
+                                "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools',concat(parameters('projectName'),'publb'),'rds-webgateways-pub-pool')]"
+                            },
+                            "probe": {
+                                "id": "[resourceId('Microsoft.Network/loadBalancers/probes',concat(parameters('projectName'),'publb'),'rds-webgateways-probe')]"
+                            },
+                            "protocol": "Tcp",
+                            "frontendPort": 443,
+                            "backendPort": 443,
+                            "enableFloatingIP": false,
+                            "idleTimeoutInMinutes": 5                            
+                        }
+                    },
+                    {
+                        "name": "rds-webgateways-udp-rule",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations',concat(parameters('projectName'),'publb'),'rds-webgateways-frontend')]"
+                            },
+                            "backendAddressPool": {
+                                "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools',concat(parameters('projectName'),'publb'),'rds-webgateways-pub-pool')]"
+                            },
+                            "probe": {
+                                "id": "[resourceId('Microsoft.Network/loadBalancers/probes',concat(parameters('projectName'),'publb'),'rds-webgateways-probe')]"
+                            },
+                            "protocol": "Udp",
+                            "frontendPort": 3391,
+                            "backendPort": 3391,
+                            "enableFloatingIP": false,
+                            "idleTimeoutInMinutes": 5                            
+                        }
+                    }                                        
+                ]
+            }
+        },
+        {
+            "name": "[concat(parameters('projectName'),variables('sqlServerName'))]",
+            "type": "Microsoft.Sql/servers",
+            "apiVersion": "2019-06-01-preview",
+            "location": "[resourceGroup().location]",
+            "condition": "[parameters('createSqlServerAndDB')]",
+            "properties": {
+                "administratorLogin": "[parameters('adminUser')]",
+                "administratorLoginPassword": "[parameters('adminPasswd')]"
+            },
+            "resources": [
+                {
+                    "type": "firewallRules",
+                    "apiVersion": "2014-04-01",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Sql/servers', concat(parameters('projectName'),variables('sqlServerName')))]"
+                    ],
+                    "condition": "[parameters('createSqlServerAndDB')]",
+                    "location": "[resourceGroup().location]",
+                    "name": "AllowAllWindowsAzureIps",
+                    "properties": {
+                        "startIpAddress": "0.0.0.0",
+                        "endIpAddress": "0.0.0.0"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "[concat(parameters('projectName'),'sqlsrv/',variables('rdsDBName'))]",
+            "type": "Microsoft.Sql/servers/databases",
+            "apiVersion": "2014-04-01",
+            "location": "[resourceGroup().location]",
+            "condition": "[parameters('createSqlServerAndDB')]",
+            "tags": {
+                "displayName": "[concat(parameters('projectName'),'sqlsrv/',variables('rdsDBName'))]"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Sql/servers', concat(parameters('projectName'),'sqlsrv'))]"
+            ],
+            "properties": {
+                "collation": "SQL_Latin1_General_CP1_CI_AS",
+                "edition": "Basic",
+                "maxSizeBytes": "1073741824",
+                "requestedServiceObjectiveName": "Basic"
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "[concat(parameters('vmProperties')[copyIndex()].name,'Deployment')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks',concat(parameters('projectName'),'vnet'))]",
+                "[concat(parameters('projectName'),'intlb')]",
+                "[concat(parameters('projectName'),'publb')]",
+                "[concat(parameters('projectName'),'sqlsrv')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "expressionEvaluationOptions": {
+                    "scope": "inner"
+                },
+                "parameters": {
+                    "projectName": {
+                        "value": "[parameters('projectName')]"
+                    },
+                    "TimeZoneID": {
+                        "value": "[parameters('TimeZoneID')]"
+                    },
+                    "loopCount": {
+                        "value": "[parameters('vmProperties')[copyIndex()].count]"
+                    },
+                    "storageDiagName": {
+                        "value": "[concat(parameters('projectName'),'stgdiag')]"
+                    },
+                    "vmName": {
+                        "value": "[parameters('vmProperties')[copyIndex()].name]"
+                    },
+                    "subNetRef": {
+                        "value": "[variables('subNetRef')]"
+                    },
+                    "vmSize": {
+                        "value": "[parameters('vmSize')]"
+                    },
+                    "storageSkuType": {
+                        "value": "[parameters('storageSkuType')]"
+                    },
+                    "adminUser": {
+                        "value": "[parameters('adminUser')]"
+                    },
+                    "adminPasswd": {
+                        "value": "[parameters('adminPasswd')]"
+                    },
+                    "intLbName": {
+                        "value": "[concat(parameters('projectName'),'intlb')]"
+                    },
+                    "intLbBackEndPool": {
+                        "value": "[parameters('vmProperties')[copyIndex()].intLbBackEndPool]"
+                    },
+                    "intLbBrokerIP": {
+                        "value": "[reference(resourceId('Microsoft.Network/loadBalancers',concat(parameters('projectName'),'intlb'))).frontendIPConfigurations[0].properties.privateIPAddress]"
+                    },
+                    "intLbWebGWIP": {
+                        "value": "[reference(resourceId('Microsoft.Network/loadBalancers',concat(parameters('projectName'),'intlb'))).frontendIPConfigurations[1].properties.privateIPAddress]"
+                    },                    
+                    "pubLbName": {
+                        "value": "[concat(parameters('projectName'),'publb')]"
+                    },
+                    "pubLbBackEndPool": {
+                        "value": "[parameters('vmProperties')[copyIndex()].pubLbBackEndPool]"
+                    },
+                    "adDomainName": {
+                        "value": "[parameters('adDomainName')]"
+                    },
+                    "firstDcIP": {
+                        "value": "[variables('firstDcIP')]"
+                    },
+                    "MainConnectionBroker": {
+                        "value": "[concat(parameters('vmProperties')[2].name,'1')]"
+                    },
+                    "WebAccessServerName": {
+                        "value": "[parameters('vmProperties')[1].name]"
+                    },
+                    "WebAccessServerCount": {
+                        "value": "[parameters('vmProperties')[1].count]"
+                    },
+                    "SessionHostName": {
+                        "value": "[parameters('vmProperties')[3].name]"
+                    },
+                    "SessionHostCount": {
+                        "value": "[parameters('vmProperties')[3].count]"
+                    },                    
+                    "LicenseServerName": {
+                        "value": "[parameters('vmProperties')[4].name]"
+                    },
+                    "LicenseServerCount": {
+                        "value": "[parameters('vmProperties')[4].count]"
+                    },
+                    "ExternalFqdn": {
+                        "value": "[parameters('ExternalFqdn')]"
+                    },
+                    "ExternalDnsDomain": {
+                        "value": "[parameters('DNSZone')]"
+                    },
+                    "dscFunction": {
+                        "value": "[parameters('vmProperties')[copyIndex()].dscFunction]"
+                    },
+                    "dscLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "dscScriptName": {
+                        "value": "[variables('dscScriptName')]"
+                    },
+                    "scriptName": {
+                        "value": "[variables('scriptName')]"
+                    },
+                    "requestCert": {
+                        "value": "[parameters('CreateDNSEntry')]"
+                    },
+                    "createSqlServerAndDB": {
+                        "value": "[parameters('createSqlServerAndDB')]"
+                    },
+                    "sqlServerName": {
+                        "value": "[variables('sqlServerName')]"
+                    },
+                    "rdsDBName": {
+                        "value": "[variables('rdsDBName')]"
+                    },
+                    "webGwName": {
+                        "value": "[parameters('DNSEntry')]"
+                    }
+                },
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "projectName": {
+                            "type": "string"
+                        },
+                        "TimeZoneID": {
+                            "type": "string"
+                        },
+                        "loopCount": {
+                            "type": "int"
+                        },
+                        "storageDiagName": {
+                            "type": "string"
+                        },
+                        "vmName": {
+                            "type": "string"
+                        },
+                        "subNetRef": {
+                            "type": "string"
+                        },
+                        "vmSize": {
+                            "type": "string"
+                        },
+                        "storageSkuType": {
+                            "type": "string"
+                        },
+                        "adminUser": {
+                            "type": "string"
+                        },
+                        "adminPasswd": {
+                            "type": "securestring"
+                        },
+                        "intLbName": {
+                            "type": "string"
+                        },
+                        "intLbBackEndPool": {
+                            "type": "string"
+                        },
+                        "intLbBrokerIP": {
+                            "type": "string"
+                        },
+                        "intLbWebGWIP": {
+                            "type": "string"
+                        },
+                        "pubLbName": {
+                            "type": "string"
+                        },
+                        "pubLbBackEndPool": {
+                            "type": "string"
+                        },
+                        "adDomainName": {
+                            "type": "string"
+                        },
+                        "firstDcIP": {
+                            "type": "string"
+                        },
+                        "MainConnectionBroker": {
+                            "type": "string"
+                        },
+                        "WebAccessServerName": {
+                            "type": "string"
+                        },
+                        "WebAccessServerCount": {
+                            "type": "int"
+                        },
+                        "SessionHostName": {
+                            "type": "string"
+                        },
+                        "SessionHostCount": {
+                            "type": "int"
+                        },
+                        "LicenseServerName": {
+                            "type": "string"
+                        },
+                        "LicenseServerCount": {
+                            "type": "int"
+                        },
+                        "ExternalFqdn": {
+                            "type": "string"
+                        },
+                        "ExternalDnsDomain": {
+                            "type": "string"
+                        },                                                                                                                                             
+                        "dscFunction": {
+                            "type": "string"
+                        },
+                        "dscLocation": {
+                            "type": "string"
+                        },
+                        "dscScriptName": {
+                            "type": "string"
+                        },
+                        "scriptName": {
+                            "type": "string"
+                        },
+                        "requestCert": {
+                            "type": "bool"
+                        },
+                        "createSqlServerAndDB": {
+                            "type": "bool"
+                        },
+                        "sqlServerName": {
+                            "type": "string"
+                        },                       
+                        "rdsDBName": {
+                            "type": "string"
+                        },
+                        "webGwName": {
+                            "type": "string"
+                        }
+                    },
+                    "variables": {
+                        "scriptPath": "[uri(parameters('dscLocation'),concat('scripts/',parameters('scriptName')))]",
+                        "empty": [],
+                        "intlbPool": [
+                            {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers',parameters('intLbName')),'/backendAddressPools/',parameters('intLbBackEndPool'))]"
+                            }
+                        ],
+                        "pubIntlbPool": [
+                            {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers',parameters('intLbName')),'/backendAddressPools/',parameters('intLbBackEndPool'))]"
+                            },
+                            {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers',parameters('pubLbName')),'/backendAddressPools/',parameters('pubLbBackEndPool'))]"
+                            }                            
+                        ],
+                        "intlbRef": "[resourceId(resourceGroup().name,'Microsoft.Network/loadBalancers',parameters('intLbName'))]"
+                    },
+                    "resources": [
+                        {
+                            "type": "Microsoft.Network/publicIPAddresses",
+                            "apiVersion": "2019-12-01",
+                            "location": "[resourceGroup().location]",
+                            "sku": {
+                                "name": "Standard"
+                            },
+                            "properties": {
+                                "publicIPAllocationMethod": "Static",
+                                "dnsSettings": {
+                                    "domainNameLabel": "[concat(parameters('vmName'),'pip',copyIndex(1))]"
+                                }
+                            },
+                            "name": "[concat(parameters('vmName'),copyIndex(1),'pip')]",
+                            "copy": {
+                                "name": "[concat(parameters('vmName'),'pipcopy')]",
+                                "count": "[parameters('loopCount')]"
+                            }
+                        },
+                        {
+                            "type": "Microsoft.Network/networkInterfaces",
+                            "apiVersion": "2019-12-01",
+                            "location": "[resourceGroup().location]",
+                            "dependsOn": [
+                                "[concat(parameters('vmName'),copyIndex(1),'pip')]"
+                            ],
+                            "properties": {
+                                "ipConfigurations": [
+                                    {
+                                        "name": "ipconfig",
+                                        "properties": {
+                                            "subnet": {
+                                                "id": "[parameters('subNetRef')]"
+                                            },
+                                            "privateIPAllocationMethod": "[if(contains(parameters('vmName'),'dc'),if(equals(copyIndex(1),1),'static','dynamic'),'dynamic')]",
+                                            "privateIPAddress": "[if(contains(parameters('vmName'),'dc'),if(equals(copyIndex(1),1),parameters('firstDcIP'),json('null')),json('null'))]",
+                                            "publicIPAddress": {
+                                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(parameters('vmName'),copyIndex(1),'pip'))]"
+                                            },
+                                            "loadBalancerBackendAddressPools": "[if(not(empty(parameters('intLbBackEndPool'))),if(not(empty(parameters('pubLbBackEndPool'))),variables('pubIntlbPool'),variables('intlbPool')),json('null'))]"
+                                        }
+                                    }
+                                ]
+                            },
+                            "name": "[concat(parameters('vmName'),copyIndex(1),'nic1')]",
+                            "copy": {
+                                "name": "[concat(parameters('vmName'),'niccopy')]",
+                                "count": "[parameters('loopCount')]"
+                            }                                                        
+                        },
+                        {
+                            "type": "Microsoft.Compute/virtualMachines",
+                            "apiVersion": "2019-07-01",
+                            "location": "[resourceGroup().location]",
+                            "dependsOn": [
+                                "[concat(parameters('vmName'),copyIndex(1),'nic1')]"
+                            ],
+                            "properties": {
+                                "licenseType": "Windows_Server",
+                                "billingProfile": {
+                                    "maxPrice": -1
+                                },
+                                "diagnosticsProfile": {
+                                    "bootDiagnostics": {
+                                        "enabled": true,
+                                        "storageUri": "[concat('https://',parameters('storageDiagName'),'.blob.core.windows.net/')]"
+                                    }
+                                },
+                                "networkProfile": {
+                                    "networkInterfaces": [
+                                        {
+                                            "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('vmName'),copyIndex(1),'nic1'))]"
+                                        }
+                                    ]
+                                },
+                                "osProfile": {
+                                    "adminUsername": "[parameters('adminUser')]",
+                                    "adminPassword": "[parameters('adminPasswd')]",
+                                    "computerName": "[concat(parameters('vmName'),copyIndex(1))]"
+                                },
+                                "hardwareProfile": {
+                                    "vmSize": "[parameters('vmSize')]"
+                                },
+                                "priority": "Spot",
+                                "evictionPolicy": "Deallocate",
+                                "storageProfile": {
+                                    "osDisk": {
+                                        "createOption": "FromImage",
+                                        "managedDisk": {
+                                            "storageAccountType": "[parameters('storageSkuType')]"
+                                        }
+                                    },
+                                    "imageReference": {
+                                        "publisher": "MicrosoftWindowsServer",
+                                        "offer": "WindowsServer",
+                                        "sku": "2019-Datacenter",
+                                        "version": "latest"
+                                    }
+                                }
+                            },
+                            "resources": [
+                                {
+                                    "type": "Microsoft.Compute/virtualMachines/extensions",
+                                    "apiVersion": "2019-12-01",
+                                    "name": "[concat(parameters('vmName'),copyIndex(1),'/dscext')]",
+                                    "location": "[resourceGroup().location]",
+                                    "condition": "[not(empty(parameters('dscFunction')))]",
+                                    "dependsOn": [
+                                        "[resourceId('Microsoft.Compute/virtualMachines',concat(parameters('vmName'),copyIndex(1)))]"
+                                    ],
+                                    "properties": {
+                                        "publisher": "Microsoft.Powershell",
+                                        "type": "DSC",
+                                        "typeHandlerVersion": "2.11",
+                                        "autoUpgradeMinorVersion": true,
+                                        "settings": {
+                                            "ModulesUrl": "[concat(parameters('dscLocation'),'dsc/',parameters('dscScriptName'))]",
+                                            "ConfigurationFunction": "[parameters('dscFunction')]",
+                                            "Properties": {
+                                                "AdminCreds": {
+                                                    "UserName": "[parameters('adminUser')]",
+                                                    "Password": "PrivateSettingsRef:AdminPassword"
+                                                },
+                                                "RDSParameters": [
+                                                    {
+                                                        "TimeZoneID": "[parameters('TimeZoneID')]",
+                                                        "DomainName": "[parameters('adDomainName')]",
+                                                        "DNSServer": "[parameters('firstDcIP')]",
+                                                        "MainConnectionBroker": "[parameters('MainConnectionBroker')]",
+                                                        "WebAccessServer": "[concat(parameters('WebAccessServerName'),'1')]",
+                                                        "SessionHost": "[concat(parameters('SessionHostName'),'1')]",
+                                                        "LicenseServer": "[concat(parameters('LicenseServerName'),'1')]",
+                                                        "ExternalFqdn": "[parameters('ExternalFqdn')]",
+                                                        "ExternalDnsDomain": "[parameters('ExternalDnsDomain')]",                                                        
+                                                        "IntBrokerLBIP": "[parameters('intLbBrokerIP')]",
+                                                        "IntWebGWLBIP": "[parameters('intLbWebGWIP')]",
+                                                        "WebGWDNS": "[parameters('webGwName')]"
+                                                    }
+                                                ]
+                                            }
+                                        },
+                                        "protectedSettings": {
+                                            "Items": {
+                                                "AdminPassword": "[parameters('adminPasswd')]"
+                                            }
+                                        }                                                                  
+                                    }
+                                },
+                                {
+                                    "type": "Microsoft.Compute/virtualMachines/extensions",
+                                    "apiVersion": "2019-12-01",
+                                    "name": "[concat(parameters('vmName'),copyIndex(1),'/pwshext')]",
+                                    "location": "[resourceGroup().location]",
+                                    "condition": "[and(contains(parameters('vmName'),'cb'),parameters('requestCert'),parameters('createSqlServerAndDB'))]",
+                                    "dependsOn": [
+                                        "[resourceId('Microsoft.Compute/virtualMachines',concat(parameters('vmName'),copyIndex(1)))]",
+                                        "[resourceId('Microsoft.Compute/virtualMachines/extensions',concat(parameters('vmName'),copyIndex(1)),'dscext')]"
+                                    ],
+                                    "properties": {
+                                        "publisher": "Microsoft.Compute",
+                                        "type": "CustomScriptExtension",
+                                        "typeHandlerVersion": "1.10",
+                                        "autoUpgradeMinorVersion": true,
+                                        "settings": {
+                                            "fileUris": [
+                                                "[variables('scriptPath')]"
+                                            ]
+                                        },
+                                        "protectedSettings": {
+                                            "commandToExecute": "[concat('powershell -ExecutionPolicy Bypass -File ./',parameters('scriptName'),' -ProjectName ',parameters('projectName'),' -MainConnectionBroker ',parameters('MainConnectionBroker'),' -BrokerFqdn ',concat('broker.',parameters('ExternalDnsDomain')),' -WebGatewayFqdn ',parameters('ExternalFqdn'),' -AzureSQLFQDN ',concat(parameters('projectName'),parameters('sqlServerName'),'.database.windows.net'),' -AzureSQLDBName ',parameters('rdsDBName'),' -Passwd ',parameters('adminPasswd'),' -WebAccessServerName ',parameters('WebAccessServerName'),' -WebAccessServerCount ',parameters('WebAccessServerCount'),' -SessionHostName ',parameters('SessionHostName'),' -SessionHostCount ',parameters('SessionHostCount'),' -LicenseServerName ',parameters('LicenseServerName'),' -LicenseServerCount ',parameters('LicenseServerCount'))]"
+                                        }
+                                    }
+                                }                                
+                            ],
+                            "name": "[concat(parameters('vmName'),copyIndex(1))]",
+                            "copy": {
+                                "name": "[concat(parameters('vmName'),'vmcopy')]",
+                                "count": "[parameters('loopCount')]"                                
+                            }               
+                        }
+                    ]
+                }
+            },
+            "copy": {
+                "name": "vmCopy",
+                "count": "[length(parameters('vmProperties'))]"
+            }            
+        }
+    ]
+}
