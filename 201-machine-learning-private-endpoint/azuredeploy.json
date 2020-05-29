@@ -118,6 +118,13 @@
           "description": "The container registry bind to the workspace."
         }
       },
+      "adbWorkspace": {
+        "type": "string",
+        "defaultValue": "",
+        "metadata": {
+          "description": "Azure Databrick workspace to be linked to the workspace"
+        }
+      },
       "vnetNewOrExisting": {
         "type": "string",
         "defaultValue": "new",
@@ -283,6 +290,7 @@
               "keyVault": "[variables('keyVault')]",
               "applicationInsights": "[variables('applicationInsights')]",
               "containerRegistry": "[if(empty(parameters('containerRegistry')), json('null'), parameters('containerRegistry'))]",
+              "adbWorkspace": "[if(empty(parameters('adbWorkspace')), json('null'), parameters('adbWorkspace'))]",
               "encryption": {
                   "status": "[parameters('encryption_status')]",
                   "keyVaultProperties": {
@@ -363,6 +371,18 @@
             "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
             "contentVersion": "1.0.0.0",
             "resources": [
+              {
+                "condition": "[equals(parameters('subnetNewOrExisting'), 'existing')]",
+                "type": "Microsoft.Network/virtualNetworks/subnets",
+                "apiVersion": "2019-09-01",
+                "name": "[concat(parameters('vnetName'), '/', parameters('subnetName'))]",
+                "properties": {
+                  "addressPrefix": "[reference(variables('subnet')).properties.addressPrefix]",
+                  "delegations": "[reference(variables('subnet')).properties.delegations]",
+                  "privateEndpointNetworkPolicies": "Disabled",
+                  "privateLinkServiceNetworkPolicies": "Enabled"
+                }
+              },
               {
                 "type": "Microsoft.Network/privateDnsZones",
                 "apiVersion": "2018-09-01",
