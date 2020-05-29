@@ -60,12 +60,14 @@ $json.Add("USER-ASSIGNED-IDENTITY-RESOURCEGROUP-NAME", $ResourceGroupName)
 
 #Create the VNET
 $subnet1 = New-AzureRMVirtualNetworkSubnetConfig -Name 'azbot-subnet-1' -AddressPrefix '10.0.1.0/24'
-$vNet = New-AzureRMVirtualNetwork -ResourceGroupName $ResourceGroupName -Name 'azbot-vnet' -AddressPrefix '10.0.0.0/16' -Location $location -Subnet $subnet1 -Verbose -Force
+$subnet2 = New-AzureRMVirtualNetworkSubnetConfig -Name 'azbot-subnet-2' -AddressPrefix '10.0.2.0/24'
+$vNet = New-AzureRMVirtualNetwork -ResourceGroupName $ResourceGroupName -Name 'azbot-vnet' -AddressPrefix '10.0.0.0/16' -Location $location -Subnet $subnet1,$subnet2 -Verbose -Force
 
 $json = New-Object System.Collections.Specialized.OrderedDictionary #This keeps things in the order we entered them, instead of: New-Object -TypeName Hashtable
 $json.Add("VNET-RESOURCEGROUP-NAME", $vNet.ResourceGroupName)
 $json.Add("VNET-NAME", $vNet.Name)
 $json.Add("VNET-SUBNET1-NAME", $vNet.Subnets[0].Name)
+$json.Add("VNET-SUBNET2-NAME", $vNet.Subnets[1].Name)
 
 <#
 Creat a KeyVault and add:
