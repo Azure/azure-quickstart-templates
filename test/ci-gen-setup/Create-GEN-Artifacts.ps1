@@ -47,7 +47,7 @@ if ($StorageAccount -eq $null) {
     $StorageAccount = New-AzureRmStorageAccount -StorageAccountName $StorageAccountName -Type 'Standard_LRS' -ResourceGroupName $StorageResourceGroupName -Location "$Location"
 }
 # Assign perms
-if($ServicePrincipalObjectId){
+if ($ServicePrincipalObjectId) {
     $roleDef = Get-AzureRmRoleDefinition -Name 'Contributor'
     New-AzureRMRoleAssignment -RoleDefinitionId $roleDef.id -ObjectId $ServicePrincipalObjectId -Scope $StorageAccount.Id -Verbose
 }
@@ -60,12 +60,14 @@ $json.Add("USER-ASSIGNED-IDENTITY-RESOURCEGROUP-NAME", $ResourceGroupName)
 
 #Create the VNET
 $subnet1 = New-AzureRMVirtualNetworkSubnetConfig -Name 'azbot-subnet-1' -AddressPrefix '10.0.1.0/24'
-$vNet = New-AzureRMVirtualNetwork -ResourceGroupName $ResourceGroupName -Name 'azbot-vnet' -AddressPrefix '10.0.0.0/16' -Location $location -Subnet $subnet1 -Verbose -Force
+$subnet2 = New-AzureRMVirtualNetworkSubnetConfig -Name 'azbot-subnet-2' -AddressPrefix '10.0.2.0/24'
+$vNet = New-AzureRMVirtualNetwork -ResourceGroupName $ResourceGroupName -Name 'azbot-vnet' -AddressPrefix '10.0.0.0/16' -Location $location -Subnet $subnet1, $subnet2 -Verbose -Force
 
 $json = New-Object System.Collections.Specialized.OrderedDictionary #This keeps things in the order we entered them, instead of: New-Object -TypeName Hashtable
 $json.Add("VNET-RESOURCEGROUP-NAME", $vNet.ResourceGroupName)
 $json.Add("VNET-NAME", $vNet.Name)
 $json.Add("VNET-SUBNET1-NAME", $vNet.Subnets[0].Name)
+$json.Add("VNET-SUBNET2-NAME", $vNet.Subnets[1].Name)
 
 <#
 Creat a KeyVault and add:
@@ -79,7 +81,7 @@ Creat a KeyVault and add:
 #>
 # Create the Vault
 $vault = Get-AzureRMKeyVault -VaultName $KeyVaultName -verbose -ErrorAction SilentlyContinue
-if($vault -eq $null) {
+if ($vault -eq $null) {
     $vault = New-AzureRMKeyVault -VaultName $KeyVaultName `
                                  -ResourceGroupName $ResourceGroupName `
                                  -Location $Location `
@@ -97,21 +99,47 @@ if($vault -eq $null) {
 # Also, not available in Fairfax
 $appConfigStore = $(az appconfig create -g appconfig -n bjmappconf1 -l westus -o json --verbose) | ConvertFrom-Json
 
-if($ServicePrincipalObjectId){
+if ($ServicePrincipalObjectId) {
 
-    $roleDef = New-Object -TypeName "Microsoft.Azure.Commands.Resources.Models.Authorization.PSRoleDefinition"
+    # See if the roleDef already exists
+    $role = Get-AzureRmRoleDefinition -Name "KeyVault Deployment Action"
 
-    $roleDef.Id = $null
-    $roleDef.Name = "KeyVault Deployment Action"
-    $roleDef.Description = "KeyVault Deploy Action for Template Reference Parameter Use"
-    $roleDef.Actions = @("Microsoft.KeyVault/vaults/deploy/action")
-    $roleDef.AssignableScopes = @("/subscriptions/$((Get-AzureRMContext).Subscription.Id)")
+    if ($role -eq $null) {
+        $roleDef = New-Object -TypeName "Microsoft.Azure.Commands.Resources.Models.Authorization.PSRoleDefinition"
 
-    $roleDef | Out-String
+        $roleDef.Id = $null
+        $roleDef.Name = "KeyVault Deployment Action"
+        $roleDef.Description = "KeyVault Deploy Action for Template Reference Parameter Use"
+        $roleDef.Actions = @("Microsoft.KeyVault/vaults/deploy/action")
+        $roleDef.AssignableScopes = @("/subscriptions/$((Get-AzureRMContext).Subscription.Id)")
 
-    $role = New-AzureRMRoleDefinition -Role $roleDef -Verbose
+        $roleDef | Out-String
+
+        $role = New-AzureRMRoleDefinition -Role $roleDef -Verbose
+    }
 
     New-AzureRMRoleAssignment -RoleDefinitionId $role.Id -ObjectId $ServicePrincipalObjectId -Scope $vault.ResourceId -Verbose
+
+    # SP needs perms to join the existing vnet
+
+    # See if the roleDef already exists
+    $role = Get-AzureRmRoleDefinition -Name "Join Subnets"
+
+    if ($role -eq $null) {
+        $roleDef.Id = $null
+        $roleDef.Name = "Join Subnets"
+        $roleDef.Description = "Join a VM to a subnet"
+        $roleDef.Actions = @("Microsoft.Network/virtualNetworks/subnets/join/action")
+        $roleDef.AssignableScopes = @("/subscriptions/$((Get-AzureRMContext).Subscription.Id)")
+
+        $roleDef | Out-String
+
+        $role = New-AzureRMRoleDefinition -Role $roleDef -Verbose
+    }
+    
+    $scope = "/subscriptions/$((Get-AzureRMContext).Subscription.Id)/resourceGroups/$ResourceGroupName"
+    New-AzureRMRoleAssignment -RoleDefinitionId $role.Id -ObjectId $ServicePrincipalObjectId -Scope $scope -Verbose
+
 
     # Need contributor access to be able to add secrets during a template deployment
     $roleDef = Get-AzureRmRoleDefinition -Name 'Contributor'
@@ -123,13 +151,15 @@ if($ServicePrincipalObjectId){
     New-AzureRMRoleAssignment -RoleDefinitionId $roleDef.id -ObjectId $ServicePrincipalObjectId -Scope $appConfigStore.id -Verbose
 
     # Set the Data Plane Access Policy for the Principal to retrieve secrets via reference parameters
-    Set-AzureRMKeyVaultAccessPolicy -VaultName $KeyVaultName -ObjectId $ServicePrincipalObjectId `
-                                    -PermissionsToKeys get,restore `
-                                    -PermissionsToSecrets get,set `
+    Set-AzureRMKeyVaultAccessPolicy -VaultName $KeyVaultName 
+                                    -ObjectId $ServicePrincipalObjectId `
+                                    -PermissionsToKeys get, restore `
+                                    -PermissionsToSecrets get, set `
                                     -PermissionsToCertificates get
 
     # Set the Data Plane Access Policy for the UserAssigned MSI to retrieve secrets via reference parameters
-    Set-AzureRMKeyVaultAccessPolicy -VaultName $KeyVaultName -ObjectId $msi.principalId `
+    Set-AzureRMKeyVaultAccessPolicy -VaultName $KeyVaultName
+                                    -ObjectId $msi.principalId `
                                     -PermissionsToKeys get `
                                     -PermissionsToSecrets get `
                                     -PermissionsToCertificates get
@@ -149,10 +179,10 @@ if($ServicePrincipalObjectId){
 $mlsp = Get-AzureRmADServicePrincipal -ServicePrincipalName '0736f41a-0425-4b46-bdb5-1563eff02385' #-DisplayName "Azure Machine Learning"
 $roleDef = Get-AzureRmRoleDefinition -Name 'Contributor'
 New-AzureRMRoleAssignment -RoleDefinitionId $roleDef.id -ObjectId $mlsp.id -Scope "/subscriptions/$((Get-AzureRMContext).Subscription.Id)" -Verbose
-$json.Add("MACHINE-LEARNING-SP-OBJECTID",  $mlsp.id)
+$json.Add("MACHINE-LEARNING-SP-OBJECTID", $mlsp.id)
 
 $cosmossp = Get-AzureRmADServicePrincipal -ServicePrincipalName "a232010e-820c-4083-83bb-3ace5fc29d0b" # -DisplayName "Azure Cosmos DB"
-Set-AzureRMKeyVaultAccessPolicy -VaultName $KeyVaultName -ObjectId $cosmossp.id -PermissionsToKeys get,unwrapKey,wrapKey 
+Set-AzureRMKeyVaultAccessPolicy -VaultName $KeyVaultName -ObjectId $cosmossp.id -PermissionsToKeys get, unwrapKey, wrapKey 
 $json.Add("COSMOS-DB-SP-OBJECTID", $cosmossp.id)
 
 $webapp = Get-AzureRmADServicePrincipal -ServicePrincipalName "abfa0a7c-a6b6-4736-8310-5855508787cd" # Web App SP for certificate scenarios - not available in Fairfax?
@@ -185,7 +215,7 @@ $json.Add("KEYVAULT-PASSWORD-REFERENCE", (ConvertFrom-Json $refParam))
 $SecurePassword = ConvertTo-SecureString -String $CertPass -AsPlainText -Force
 $CertFileFullPath = $(Join-Path (Split-Path -Parent $MyInvocation.MyCommand.Definition) "\$CertDNSName.pfx")
 
-if($(Get-Module 'PKI') -eq $null){ Import-Module "PKI" -SkipEditionCheck -Verbose}
+if ($(Get-Module 'PKI') -eq $null) { Import-Module "PKI" -SkipEditionCheck -Verbose }
 $NewCert = New-SelfSignedCertificate -CertStoreLocation Cert:\CurrentUser\My -DnsName $CertDNSName -NotAfter (Get-Date).AddYears(10)
 Export-PfxCertificate -FilePath $CertFileFullPath -Password $SecurePassword -Cert $NewCert
 
@@ -262,7 +292,7 @@ $json.Add("KEYVAULT-SSH-PUBLIC-KEY-REFERENCE", (ConvertFrom-Json $refParam))
 
 # Use the same cert we generated for Service Fabric here
 $pfxFileFullPath = $(Join-Path (Split-Path -Parent $MyInvocation.MyCommand.Definition) "\$CertDNSName.pfx")
-$cerFileFullPath= $(Join-Path (Split-Path -Parent $MyInvocation.MyCommand.Definition) "\$CertDNSName.cer")
+$cerFileFullPath = $(Join-Path (Split-Path -Parent $MyInvocation.MyCommand.Definition) "\$CertDNSName.cer")
 
 Export-PfxCertificate -Cert $NewCert -FilePath "$pfxFileFullPath" -Password $(ConvertTo-SecureString -String $CertPass -Force -AsPlainText)
 Export-Certificate -Cert $NewCert -FilePath "$cerFileFullPath"
