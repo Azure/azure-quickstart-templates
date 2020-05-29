@@ -2,57 +2,87 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "webAppName": {
-      "type": "string",
-      "metadata": {
-        "description": "Base name of the resource such as web app name and app service plan"
+      "webAppName": {
+          "type": "string",
+          "metadata": {
+              "description": "Web app name"
+          },
+          "minLength": 2
       },
-      "minLength": 2
-    },
-    "sku":{
-      "type": "string",
-      "defaultValue" : "S1",
-      "metadata": {
-        "description": "The SKU of App Service Plan, by default is Standard S1"
+      "location": {
+          "type": "string",
+          "defaultValue": "[resourceGroup().location]",
+          "metadata": {
+              "description": "Location for all resources"
+          }
+      },
+      "sku": {
+          "type": "string",
+          "defaultValue": "F1",
+          "metadata": {
+              "description": "The SKU of App Service Plan "
+          }
+      },
+      "language": {
+          "type": "string",
+          "defaultValue": "default",
+          "metadata": {
+              "description": "The language stack of the app. Default = siteConfig. Java = javaSiteConfig. See objects below. "
+          }
+      },
+      "siteConfig": {
+          "type": "object",
+          "defaultValue": {
+              "phpVersion": "7.4",
+              "appSettings": [
+                  {
+                      "name": "WEBSITE_NODE_DEFAULT_VERSION",
+                      "value": "12.15.0"
+                  }
+              ]
+          },
+          "metadata": {
+              "description": "Default site config for .net core, .net framework, PHP, and Node.js"
+          }
+      },
+      "javaSiteConfig": {
+          "type": "object",
+          "defaultValue": {
+              "javaVersion": "1.8",
+              "javaContainer": "TOMCAT",
+              "javaContainerVersion": "9.0"
+          },
+          "metadata": {
+              "description": "Default site config for Java"
+          }
       }
-    },
-    "location": {
-      "type": "string",
-      "defaultValue": "[resourceGroup().location]",
-      "metadata": {
-        "description": "Location for all resources"
-      }
-    }
   },
   "variables": {
-    "webAppPortalName": "[concat(parameters('webAppName'), '-webapp')]",
-    "appServicePlanName": "[concat('AppServicePlan-', parameters('webAppName'))]"
+      "appServicePlanPortalName": "[concat('AppServicePlan-', parameters('webAppName'))]"
   },
   "resources": [
-    {
-      "apiVersion": "2018-02-01",
-      "type": "Microsoft.Web/serverfarms",
-      "kind": "app",
-      "name": "[variables('appServicePlanName')]",
-      "location": "[parameters('location')]",
-      "properties": {},
-      "dependsOn": [],
-      "sku": {
-        "name": "[parameters('sku')]"
-      }
-    },
-    {
-      "apiVersion": "2018-11-01",
-      "type": "Microsoft.Web/sites",
-      "kind": "app",
-      "name": "[variables('webAppPortalName')]",
-      "location": "[parameters('location')]",
-      "properties": {
-        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]"
+      {
+          "apiVersion": "2019-08-01",
+          "type": "Microsoft.Web/serverfarms",
+          "name": "[variables('appServicePlanPortalName')]",
+          "location": "[parameters('location')]",
+          "sku": {
+              "name": "[parameters('sku')]"
+          }
       },
-      "dependsOn": [
-        "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]"
-      ]
-    }
+      {
+          "apiVersion": "2019-08-01",
+          "type": "Microsoft.Web/sites",
+          "kind": "app",
+          "name": "[parameters('webAppName')]",
+          "location": "[parameters('location')]",
+          "properties": {
+              "siteConfig": "[if( equals(parameters('language'),'java'),parameters('javaSiteConfig'),parameters('siteConfig') )]",
+              "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanPortalName'))]"
+          },
+          "dependsOn": [
+              "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanPortalName'))]"
+          ]
+      }
   ]
 }
