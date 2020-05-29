@@ -111,30 +111,19 @@
         "type": "string",
         "defaultValue": "[resourceGroup().name]"
       },
-      "containerRegistryNewOrExisting": {
+      "containerRegistry": {
         "type": "string",
-        "defaultValue": "new",
-        "allowedValues": [
-          "new",
-          "existing"
-        ]
+        "defaultValue": "",
+        "metadata": {
+          "description": "The container registry bind to the workspace."
+        }
       },
-      "containerRegistryName": {
+       "adbWorkspace": {
         "type": "string",
-        "defaultValue": "[concat('acr',uniqueString(resourceGroup().id))]"
-      },
-      "containerRegistrySku": {
-        "type": "string",
-        "defaultValue": "Standard",
-        "allowedValues": [
-          "Basic",
-          "Standard",
-          "Premium"
-        ]
-      },
-      "containerRegistryResourceGroupName": {
-        "type": "string",
-        "defaultValue": "[resourceGroup().name]"
+        "defaultValue": "",
+        "metadata": {
+          "description": "Azure Databrick workspace to be linked to the workspace"
+        }
       },
       "confidential_data":{
         "type": "string",
@@ -177,8 +166,7 @@
       "tenantId": "[subscription().tenantId]",
       "storageAccount": "[resourceId(parameters('storageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
       "keyVault": "[resourceId(parameters('keyVaultResourceGroupName'), 'Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
-      "applicationInsights": "[resourceId(parameters('applicationInsightsResourceGroupName'), 'Microsoft.Insights/components', parameters('applicationInsightsName'))]",
-      "containerRegistry": "[resourceId(parameters('containerRegistryResourceGroupName'), 'Microsoft.ContainerRegistry/registries', parameters('containerRegistryName'))]"
+      "applicationInsights": "[resourceId(parameters('applicationInsightsResourceGroupName'), 'Microsoft.Insights/components', parameters('applicationInsightsName'))]"
   },
   "resources": [
       {
@@ -233,19 +221,6 @@
           }
       },
       {
-          "condition": "[equals(parameters('containerRegistryNewOrExisting'), 'new')]",
-          "type": "Microsoft.ContainerRegistry/registries",
-          "apiVersion": "2019-05-01",
-          "name": "[parameters('containerRegistryName')]",
-          "location": "[parameters('location')]",
-          "sku": {
-              "name": "[parameters('containerRegistrySku')]"
-          },
-          "properties": {
-              "adminUserEnabled": true
-          }
-      },
-      {
           "type": "Microsoft.MachineLearningServices/workspaces",
           "apiVersion": "2020-03-01",
           "name": "[parameters('workspaceName')]",
@@ -253,8 +228,7 @@
           "dependsOn": [
               "[variables('storageAccount')]",
               "[variables('keyVault')]",
-              "[variables('applicationInsights')]",
-              "[variables('containerRegistry')]"
+              "[variables('applicationInsights')]"
           ],
           "identity": {
               "type": "systemAssigned"
@@ -268,6 +242,8 @@
               "storageAccount": "[variables('storageAccount')]",
               "keyVault": "[variables('keyVault')]",
               "applicationInsights": "[variables('applicationInsights')]",
+              "containerRegistry": "[if(empty(parameters('containerRegistry')), json('null'), parameters('containerRegistry'))]",
+              "adbWorkspace": "[if(empty(parameters('adbWorkspace')), json('null'), parameters('adbWorkspace'))]",
               "encryption": {
                   "status": "[parameters('encryption_status')]",
                   "keyVaultProperties": {
