@@ -3,10 +3,14 @@
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-rds-deployment-full-ha/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-rds-deployment-full-ha/PublicDeployment.svg)
 
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-rds-deployment-full-ha/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-rds-deployment-full-ha/FairfaxDeployment.svg)
+
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-rds-deployment-full-ha/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-rds-deployment-full-ha/CredScanResult.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-rds-deployment-full-ha%2Fazuredeploy.json)
+[![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-rds-deployment-full-ha%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-rds-deployment-full-ha%2Fazuredeploy.json)
 
 This ARM Template sample code will deploy a **Remote Desktop Services 2019 Session Collection** lab with high availability. The goal is to deploy a fully redundant, highly available solution for Remote Desktop Services, using Windows Server 2019.
