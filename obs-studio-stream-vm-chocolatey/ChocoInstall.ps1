@@ -21,4 +21,4 @@ $chocoPackages.Split(";") | ForEach {
     choco install $_ -y -force
 }
 
-Write-Host "Packages from choco.org were installes"
+Write-Host "Packages from choco.org were installed"
