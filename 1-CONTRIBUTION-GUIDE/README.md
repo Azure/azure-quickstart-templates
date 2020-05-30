@@ -206,6 +206,7 @@ Quickstart CI engine provides few pre-created azure components which can be used
 + **GEN-VNET-NAME** - the name of the virtual network
 + **GEN-VNET-RESOURCEGROUP-NAME** - the name of the resource group for the virtual network
 + **GEN-VNET-SUBNET1-NAME** - the name of subnet-1
++ **GEN-VNET-SUBNET2-NAME** - the name of subnet-2
 
 **Key Vault Related placeholders:**
 
