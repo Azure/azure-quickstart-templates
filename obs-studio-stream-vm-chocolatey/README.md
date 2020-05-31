@@ -38,6 +38,12 @@ Software preinstalled
 - OBS-NDI - https://github.com/Palakis/obs-ndi/releases
 
 Allowed VM sizes in template
+- Standard_NV6_Promo
+- Standard_NV12_Promo       
+- Standard_NV24_Promo
+- Standard_NC6_Promo
+- Standard_NC12_Promo
+- Standard_NC24_Promo
 - Standard_NV6
 - Standard_NV12            
 - Standard_NV24
