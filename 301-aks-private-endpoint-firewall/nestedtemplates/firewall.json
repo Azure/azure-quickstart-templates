@@ -1,0 +1,240 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "location to deploy the storage account"
+            }
+        },
+        "suffix": {
+            "type": "string"
+        },
+        "firewallSubnetRef": {
+            "type": "string"
+        },
+        "sourceAddressRangePrefix": {
+            "type": "array"
+        },
+        "vmPrivateIp": {
+            "type": "string"
+        }
+    },
+    "variables": {
+        "publicIpName": "[concat('fw-pip', '-', parameters('suffix'))]",
+        "firewallName": "[concat('fw', '-', parameters('suffix'))]"
+    },
+    "resources": [
+        {
+            "name": "[variables('publicIPName')]",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2017-11-01",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "Standard"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Static",
+                "publicIPAddressVersion": "IPv4"
+            }
+        },
+        {
+            "apiVersion": "2018-11-01",
+            "type": "Microsoft.Network/azureFirewalls",
+            "name": "[variables('firewallName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPName'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig",
+                        "properties": {
+                            "subnet": {
+                                "id": "[parameters('firewallSubnetRef')]"
+                            },
+                            "PublicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPName'))]"
+                            }
+                        }
+                    }
+                ],
+                "natRuleCollections": [
+                    {
+                        "name": "jumpbox",
+                        "properties": {
+                            "priority": 100,
+                            "action": {
+                                "type": "Dnat"
+                            },
+                            "rules": [
+                                {
+                                    "name": "dnat-to-jumpbox",
+                                    "sourceAddresses": [
+                                        "*"
+                                    ],
+                                    "destinationAddresses": [
+                                        "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPName'))).ipAddress]"
+                                    ],
+                                    "destinationPorts": [
+                                        "22"
+                                    ],
+                                    "protocols": [
+                                        "Tcp"
+                                    ],
+                                    "translatedAddress": "[parameters('vmPrivateIp')]",
+                                    "translatedPort": "22"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "applicationRuleCollections": [
+                    {
+                        "name": "aks",
+                        "properties": {
+                            "priority": 100,
+                            "action": {
+                                "type": "Allow"
+                            },
+                            "rules": [
+                                {
+                                    "name": "allow-aks",
+                                    "sourceAddresses": "[parameters('sourceAddressRangePrefix')]",
+                                    "protocols": [
+                                        {
+                                            "protocolType": "HTTP",
+                                            "port": "80"
+                                        },
+                                        {
+                                            "protocolType": "HTTPS",
+                                            "port": "443"
+                                        }
+                                    ],
+                                    "targetFqdns": [
+                                        "*.azmk8s.io",
+                                        "*auth.docker.io",
+                                        "*cloudflare.docker.io",
+                                        "*cloudflare.docker.com",
+                                        "*registry-1.docker.io"
+                                    ]
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "oss",
+                        "properties": {
+                            "priority": 200,
+                            "action": {
+                                "type": "Allow"
+                            },
+                            "rules": [
+                                {
+                                    "name": "allow-oss",
+                                    "sourceAddresses": "[parameters('sourceAddressRangePrefix')]",
+                                    "protocols": [
+                                        {
+                                            "protocolType": "HTTP",
+                                            "port": "80"
+                                        },
+                                        {
+                                            "protocolType": "HTTPS",
+                                            "port": "443"
+                                        }
+                                    ],
+                                    "targetFqdns": [
+                                        "download.opensuse.org",
+                                        "login.microsoftonline.com",
+                                        "*.ubuntu.com",
+                                        "dc.services.visualstudio.com",
+                                        "*.opinsights.azure.com",
+                                        "github.com",
+                                        "*.github.com",
+                                        "raw.githubusercontent.com",
+                                        "*.ubuntu.com",
+                                        "api.snapcraft.io",
+                                        "download.opensuse.org",
+                                        "storage.googleapis.com"
+                                    ]
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "azure",
+                        "properties": {
+                            "priority": 300,
+                            "action": {
+                                "type": "Allow"
+                            },
+                            "rules": [
+                                {
+                                    "name": "allow-sites",
+                                    "sourceAddresses": "[parameters('sourceAddressRangePrefix')]",
+                                    "protocols": [
+                                        {
+                                            "protocolType": "HTTP",
+                                            "port": "80"
+                                        },
+                                        {
+                                            "protocolType": "HTTPS",
+                                            "port": "443"
+                                        }
+                                    ],
+                                    "targetFqdns": [
+                                        "*azurecr.io",
+                                        "*blob.core.windows.net",
+                                        "*.trafficmanager.net",
+                                        "*.azureedge.net",
+                                        "*.microsoft.com",
+                                        "*.core.windows.net",
+                                        "aka.ms",
+                                        "*.azure-automation.net",
+                                        "*.azure.com"
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "networkRuleCollections": [
+                    {
+                        "name": "netRulesCollection",
+                        "properties": {
+                            "priority": 100,
+                            "action": {
+                                "type": "Allow"
+                            },
+                            "rules": [
+                                {
+                                    "name": "allow-ssh-inbound-internet",
+                                    "sourceAddresses": [
+                                        "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPName'))).ipAddress]"
+                                    ],
+                                    "destinationAddresses": [
+                                        "[concat(parameters('vmPrivateIp'), '/32')]"
+                                    ],
+                                    "destinationPorts": [
+                                        "22"
+                                    ],
+                                    "protocols": [
+                                        "Tcp"
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ],
+    "outputs": {
+        "firewallPublicIpAddress": {
+            "type": "string",
+            "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPName'))).ipAddress]"
+        }
+    }
+}
