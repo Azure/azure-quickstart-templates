@@ -9,22 +9,11 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/subscription-level-deployments/blueprints-new-blueprint/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/subscription-level-deployments/blueprints-new-blueprint/CredScanResult.svg)
 
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsubscription-level-deployments%2Fblueprints-new-blueprint%2Fazuredeploy.json)
+[![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsubscription-level-deployments%2Fblueprints-new-blueprint%2Fazuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsubscription-level-deployments%2Fblueprints-new-blueprint%2Fazuredeploy.json)
+
 This template is a subscription level template that creates a blueprint definition.
-
-Currently the only supported methods for deploying subscription level templates are the REST APIs,
-some SDKs, and the Azure CLI. For more information, see
-[Create resource groups and resources at the subscription level](https://docs.microsoft.comazure/azure-resource-manager/templates/deploy-to-subscription).
-
-For deploying this template from the Azure CLI or Azure PowerShell, run one of the following command
-from the folder where the sample is located.
-
-```bash
-az deployment create -l southcentralus --template-file ./azuredeploy.json
-```
-
-```powershell
-New-AzSubscriptionDeployment -Name deployBlueprint -Location southcentralus -TemplateFile ./azuredeploy.json
-```
 
 This template deploys a **blueprint definition**.
 
