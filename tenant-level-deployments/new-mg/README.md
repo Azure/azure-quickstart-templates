@@ -9,6 +9,8 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/tenant-level-deployments/new-mg/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/tenant-level-deployments/new-mg/CredScanResult.svg)
 
-This template is a tenant level template that creates a new management group in the tenant.
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Ftenant-level-deployments%2Fnew-mg%2Fazuredeploy.json)
+[![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Ftenant-level-deployments%2Fnew-mg%2Fazuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Ftenant-level-deployments%2Fnew-mg%2Fazuredeploy.json)
 
-Currently the only supported methods for deploying tenant level templates are the REST APIs, some SDKs and Azure PowerShell, check [here](https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/deploy-to-management-group) for the latest.
+This template is a tenant level template that creates a new management group in the tenant.
