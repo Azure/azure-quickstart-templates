@@ -1,11 +1,8 @@
-# This template allows you to deploy an App Service Plan and a Windows web app.
+# Windows App Service Plan and Basic Web App
 ## It is to be used with: https://docs.microsoft.com/azure/app-service/quickstart-arm-template
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-basic-windows/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-basic-windows/PublicDeployment.svg)
-
-![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-basic-windows/FairfaxLastTestDate.svg)
-![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-basic-windows/FairfaxDeployment.svg)
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-basic-windows/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/101-webapp-basic-windows/CredScanResult.svg)
