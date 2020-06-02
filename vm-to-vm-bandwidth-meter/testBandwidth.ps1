@@ -4,12 +4,10 @@ Param(
   [string]$PacketSize
 )
 
-$AppFolder = "bandwidthmeter"
 $AppPath = [Environment]::GetFolderPath("CommonApplicationData")+"\bandwidthmeter"
 
 $PsToolsSourceURL = "https://download.sysinternals.com/files/PSTools.zip"
 $PsToolsArchive = $AppPath+"\PSTools.zip"
-$PsPingFileName = "psping.exe"
 
 if (!(Test-Path $AppPath)){
     mkdir $AppPath | Out-Null
@@ -17,11 +15,10 @@ if (!(Test-Path $AppPath)){
 
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     [System.IO.Compression.ZipFile]::ExtractToDirectory($PsToolsArchive, $AppPath)
-    rm $PsToolsArchive 
+    Remove-Item $PsToolsArchive 
 }
 
-
-cd $AppPath
+Set-Location $AppPath
 $bw = .\psping.exe -b -q -accepteula -l $PacketSize -n $TestNumber $TestIPPort | Select-String "Minimum = (.*)" | % { $_.Matches.Value }
 $latency = .\psping.exe -q -accepteula -l $PacketSize -n $TestNumber $TestIPPort | Select-String "Minimum = (.*)" | % { $_.Matches.Value }
 
