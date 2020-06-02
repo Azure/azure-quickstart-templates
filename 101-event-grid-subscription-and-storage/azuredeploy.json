@@ -28,6 +28,13 @@
             "metadata": {
                 "description": "Provide the URL for the WebHook to receive events. Create your own endpoint for events."
             }
+        },
+		"systemTopicName": {
+			"type": "String",
+			"defaultValue": "mystoragesystemtopic",
+			"metadata": {
+				"description": "Provide a name for the system topic."
+			}
         }
     },
     "resources": [
@@ -45,29 +52,40 @@
                 "accessTier": "Hot"
             }
         },
-        {
-            "type": "Microsoft.Storage/storageAccounts/providers/eventSubscriptions",
-            "name": "[concat(parameters('storageName'), '/Microsoft.EventGrid/', parameters('eventSubName'))]",
-            "apiVersion": "2018-01-01",
-            "dependsOn": [
-                "[parameters('storageName')]"
-            ],
-            "properties": {
-                "destination": {
-                    "endpointType": "WebHook",
-                    "properties": {
-                        "endpointUrl": "[parameters('endpoint')]"
-                    }
-                },
-                "filter": {
-                    "subjectBeginsWith": "",
-                    "subjectEndsWith": "",
-                    "isSubjectCaseSensitive": false,
-                    "includedEventTypes": [
-                        "All"
-                    ]
-                }
-            }
+		{
+			"name": "[parameters('systemTopicName')]",
+			"type": "Microsoft.EventGrid/systemTopics",
+			"apiVersion": "2020-04-01-preview",
+			"location": "eastus",
+			"dependsOn": [
+				"[parameters('storageName')]"
+			],
+			"properties": {
+				"source": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageName'))]",
+				"topicType": "Microsoft.Storage.StorageAccounts"
+			}
+		},
+		{
+			"type": "Microsoft.EventGrid/systemTopics/eventSubscriptions",
+			"apiVersion": "2020-04-01-preview",
+			"name": "[concat(parameters('systemTopicName'), '/', parameters('eventSubName'))]",
+			"dependsOn": [
+				"[resourceId('Microsoft.EventGrid/systemTopics', parameters('systemTopicName'))]"
+			],
+			"properties": {
+				"destination": {
+					"properties": {
+						"endpointUrl": "[parameters('endpoint')]"
+					},
+					"endpointType": "WebHook"
+				},
+				"filter": {
+					"includedEventTypes": [
+						"Microsoft.Storage.BlobCreated",
+						"Microsoft.Storage.BlobDeleted"
+					]
+				}
+			}
         }
     ]
 }
