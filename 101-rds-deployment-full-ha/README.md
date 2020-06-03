@@ -27,11 +27,11 @@ To be able to request certificates and have a highly available environment, do t
 
 1. Create two CNAME entries ("remoteapps" and "broker") in your external DNS domain registrar, pointing to the following:
 
-    <projectName>lbwebpip.<location>.cloudapp.azure.com
+    "<<projectName>>lbwebpip.<<location>>.cloudapp.azure.com"
     
     Example:
 
-        ```
+        ```json
         Deployment parameters:
             "projectName"     -> "rds"
             "location"        -> "eastus"
