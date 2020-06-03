@@ -4,7 +4,7 @@
     "parameters": {
         "webAppName": {
             "type": "string",
-            "defaultValue": "[concat(parameters('webAppName-'), uniqueString(resourceGroup().id))]",
+            "defaultValue": "[concat('webApp-', uniqueString(resourceGroup().id))]",
             "metadata": {
                 "description": "Web app name."
             },
@@ -37,68 +37,37 @@
                 "description": "The language stack of the app."
             }
         },
-        "repoURL": {
+        "app": {
             "type": "string",
-            "defaultValue": "https://github.com/Azure-Samples/app-service-web-dotnet-get-started",
+            "defaultValue": "none",
+            "allowedValues": [
+                "none",
+                "hello"
+            ],
             "metadata": {
-                "description": "The URL for the GitHub repository that contains the project to deploy."
-            }
-        },
-        "branch": {
-            "type": "string",
-            "defaultValue": "master",
-            "metadata": {
-                "description": "The branch of the GitHub repository to use."
+                "description": "App to deploy. None = don't deploy an app. Hello = hello world app."
             }
         }
     },
     "variables": {
         "appServicePlanPortalName": "[concat('AppServicePlan-', parameters('webAppName'))]",
-        "gitRepo":"[variables('gitRepoReference')[toLower(parameters('language'))]]",
         "gitRepoReference":{
             ".net":"https://github.com/Azure-Samples/app-service-web-dotnet-get-started",
             "node":"https://github.com/Azure-Samples/nodejs-docs-hello-world",
             "php":"https://github.com/Azure-Samples/php-docs-hello-world",
             "html":"https://github.com/Azure-Samples/html-docs-hello-world"
         },
-        "configuration": "[variables('configReference')[toLower(parameters('language'))]]",
         "configReference": {
-            ".net": {
-                "type": "object",
-                "defaultValue": {},
-                "metadata": {
-                    "description": "Site config for .NET core, .NET framework."
-                }
-            },
-            "html": {
-                "type": "object",
-                "defaultValue": {},
-                "metadata": {
-                    "description": "Site config for static HTML app."
-                }
-            },            
+            ".net": {},
+            "html": {},
+            "php": { "phpVersion": "7.4" },
             "node": {
-                "type": "object",
-                "defaultValue": {
                     "appSettings": [
                         {
                             "name": "WEBSITE_NODE_DEFAULT_VERSION",
                             "value": "12.15.0"
                         }
                     ]
-                },
-                "metadata": {
-                    "description": "Site config for Node.js."
-                }
-            },
-            "php": {
-                "type": "object",
-                "defaultValue": {
-                    "phpVersion": "7.4"
-                },
-                "metadata": {
-                    "description": "Site config for PHP."
-                }
             }
         }
     },
@@ -115,18 +84,18 @@
         {
             "apiVersion": "2019-08-01",
             "type": "Microsoft.Web/sites",
-            "kind": "app",
             "name": "[parameters('webAppName')]",
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanPortalName'))]"
             ],
             "properties": {
-                "siteConfig": "[variables('configuration')]",
+                "siteConfig": "[variables('configReference')[parameters('language')]]",
                 "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanPortalName'))]"
             },
             "resources": [
                 {
+                    "condition": "[equals(parameters('app'),'hello')]",
                     "type": "sourcecontrols",
                     "apiVersion": "2019-08-01",
                     "name": "web",
@@ -135,8 +104,8 @@
                         "[resourceId('Microsoft.Web/sites', parameters('webAppName'))]"
                     ],
                     "properties": {
-                        "repoUrl": "[variables('gitRepo')]",
-                        "branch": "[parameters('branch')]",
+                        "repoUrl": "[variables('gitRepoReference')[parameters('language')]]",
+                        "branch": "master",
                         "isManualIntegration": true
                     }
                 }
