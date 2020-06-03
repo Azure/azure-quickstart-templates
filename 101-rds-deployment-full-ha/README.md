@@ -23,39 +23,59 @@ Even though multiple services are deployed, it is not using Azure best practices
 
 ## Prerequisites
 
-To be able to request certificates and have the highly available environment, the deployment expects the following:
+To be able to request certificates and have a highly available environment, do the following:
 
-- Azure Resource Group already pre-created with a validated Azure Public DNS zone you have authority. The Resource Group and Public DNS Zone are defined in parameters "DNSZoneResourceGroup" and "DNSZone".
-- This Resource Group containing the Azure Public DNS Zone must be in the same Azure Subscription you are deploying the ARM Template.
-- If you want a highly available deployment with certificates, change the following parameters to true/greater than one/values:
+1. Create two CNAME entries ("remoteapps" and "broker") in your external DNS domain registrar, pointing to the following:
+
+    <projectName>lbwebpip.<location>.cloudapp.azure.com
+    
+    Example:
+
+        ```
+        Deployment parameters:
+            "projectName"     -> "rds"
+            "location"        -> "eastus"
+            "externalDnsZone" -> "contosocorp.com"
+        
+        DNS CNAMEs to be created:
+
+        "remoteapps.contosocorp.com" CNAME "rdslbwebpip.eastus.cloudapp.azure.com"
+        "broker.contosocorp.com"     CNAME "rdslbwebpip.eastus.cloudapp.azure.com"
+        ```
+
+    This is required by letsencrypt's validation process, which will connect via HTTP to your websites.
+
+2. Change the following parameters:
+
+Example:
 
 ```json
-    "DNSZone": {
+    "projectName": {
+        "value": "rds"
+    },
+    "location": {
+        "value": "eastus"
+    },
+    "externalDnsZone": {
         "value": "contosocorp.com"
     },
-    "DNSZoneResourceGroup": {
-        "value": "rgdns"
-    },
-    "createDNSEntry": {
-        "value": false
-    },
-    "createSqlServerAndDB": {
-        "value": false
+    "deployHA": {
+        "value": true
     },
     "dcCount": {
-        "value": 1
+        "value": 2
     },
     "rdcbCount": {
-        "value": 1
+        "value": 2
     },
     "rdwgCount": {
-        "value": 1
+        "value": 2
     },
     "rdshCount": {
-        "value": 1
+        "value": 2
     },
     "lsfsCount": {
-        "value": 1
+        "value": 2
     }
 ```
 
