@@ -14,3 +14,4 @@
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-hdinsight-hbase-linux-vnet%2Fazuredeploy.json)
 
 This template allows you to create an Azure VNet and a HBase cluster within the VNet. For more information, see Create HBase clusters in Azure Virtual Network at https://azure.microsoft.com/en-us/documentation/articles/hdinsight-hbase-provision-vnet/.\
+
