@@ -1,88 +1,112 @@
 ---
-name: concourse
-
-# replace with `bosh status --uuid`
-director_uuid: REPLACE_WITH_DIRECTOR_ID
+name: ((deployment_name))
 
 releases:
 - name: concourse
-  version: latest
+  version: 3.12.0
+  sha1: 12746f25cd484bdd9a8ed7151cfed20a142de2fa
+  url: https://bosh.io/d/github.com/concourse/concourse?v=3.12.0
 - name: garden-runc
-  version: latest
-
-stemcells:
-- alias: trusty
-  name: bosh-azure-hyperv-ubuntu-trusty-go_agent
-  version: latest
+  version: 1.13.1
+  sha1: 54cbb89cae1be0708aa056185671665d7f4b2a4f
+  url: https://bosh.io/d/github.com/cloudfoundry/garden-runc-release?v=1.13.1
+- name: postgres
+  version: 28
+  sha1: c1fcec62cb9d2e95e3b191e3c91d238e2b9d23fa
+  url: https://bosh.io/d/github.com/cloudfoundry/postgres-release?v=28
 
 instance_groups:
 - name: web
   instances: 1
-  # replace with a VM type from your BOSH Director's cloud config
-  vm_type: concourse_web_or_db
-  stemcell: trusty
   azs: [z1]
-  networks: [{name: concourse, default: [dns, gateway]}, {name: public, static_ips: [REPLACE_WITH_CONCOURSE_PUBLIC_IP]}]
+  networks: [{name: ((network_name)), default: [dns, gateway]}, {name: public, static_ips: [((web_ip))]}]
+  stemcell: default
+  vm_type: ((web_vm_type))
   jobs:
-  - name: atc
-    release: concourse
+  - release: concourse
+    name: atc
     properties:
-      # replace with your CI's externally reachable URL, e.g. https://ci.foo.com
-      external_url: http://REPLACE_WITH_CONCOURSE_PUBLIC_IP:8080
+      log_level: debug
+      token_signing_key: ((token_signing_key))
+      external_url: ((external_url))
+      basic_auth_username: ((basic_auth_username))
+      basic_auth_password: ((basic_auth_password))
+      postgresql:
+        database: &db_name atc
+        role: &db_role
+          name: concourse
+          password: ((postgres_password))
 
-      # replace with username/password, or configure GitHub auth
-      basic_auth_username: REPLACE_WITH_CONCOURSE_USERNAME
-      basic_auth_password: REPLACE_WITH_CONCOURSE_PASSWORD
-
-      postgresql_database: &atc_db atc
-  - name: tsa
-    release: concourse
-    properties: {}
+  - release: concourse
+    name: tsa
+    properties:
+      log_level: debug
+      host_key: ((tsa_host_key))
+      token_signing_key: ((token_signing_key))
+      authorized_keys: [((worker_key.public_key))]
 
 - name: db
   instances: 1
-  # replace with a VM type from your BOSH Director's cloud config
-  vm_type: concourse_web_or_db
-  stemcell: trusty
-  # replace with a disk type from your BOSH Director's cloud config
-  persistent_disk_type: default
   azs: [z1]
-  networks: [{name: concourse}]
+  networks: [{name: ((network_name))}]
+  stemcell: default
+  vm_type: ((db_vm_type))
+  persistent_disk_type: ((db_persistent_disk_type))
   jobs:
-  - name: postgresql
-    release: concourse
+  - release: postgres
+    name: postgres
     properties:
       databases:
-      - name: *atc_db
-        # make up a role and password
-        role: REPLACE_WITH_CONCOURSE_DB_ROLE_NAME
-        password: REPLACE_WITH_CONCOURSE_DB_ROLE_PASSWORD
+        port: 5432
+        databases:
+        - name: *db_name
+        roles:
+        - *db_role
 
 - name: worker
   instances: 1
-  # replace with a VM type from your BOSH Director's cloud config
-  vm_type: concourse_worker
-  stemcell: trusty
   azs: [z1]
-  networks: [{name: concourse}]
+  networks: [{name: ((network_name))}]
+  stemcell: default
+  vm_type: ((worker_vm_type))
   jobs:
-  - name: groundcrew
-    release: concourse
-    properties: {}
-  - name: baggageclaim
-    release: concourse
-    properties: {}
-  - name: garden
-    release: garden-runc
+  - release: concourse
+    name: worker
+    consumes: {baggageclaim: {from: worker-baggageclaim}}
+    properties:
+      drain_timeout: 10m
+      tsa: {worker_key: ((worker_key))}
+
+  - release: concourse
+    name: baggageclaim
+    properties: {log_level: debug}
+    provides: {baggageclaim: {as: worker-baggageclaim}}
+
+  - release: garden-runc
+    name: garden
     properties:
       garden:
-        graph_cleanup_threshold_in_mb: REPLACE_WITH_CONCOURSE_GRAPH_CLEANUP_THRESHOLD
         listen_network: tcp
         listen_address: 0.0.0.0:7777
 
+variables:
+- name: postgres_password
+  type: password
+- name: token_signing_key
+  type: rsa
+- name: tsa_host_key
+  type: ssh
+- name: worker_key
+  type: ssh
+
+stemcells:
+- alias: default
+  os: ubuntu-xenial
+  version: 97.12
+
 update:
   canaries: 1
-  max_in_flight: 1
+  max_in_flight: 3
   serial: false
   canary_watch_time: 1000-60000
   update_watch_time: 1000-60000

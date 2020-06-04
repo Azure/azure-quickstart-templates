@@ -1,6 +1,17 @@
 #ChangeLog
 
-```
+# v1.1.0 (2018-10-14)
+- Upgrade Azure CPI version to v35.4.0. Please see new features in [bosh-azure-cpi-release v35.4.0](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v35.4.0)
+- Support AzureChinaCloud
+- Bump bosh-cli to 5.1.2
+
+# v1.0.4 (2018-06-21)
+- Support deploy concourse automatically
+- Upgrade versions
+    - Upgrade Bosh version to 265.2.0, with manifest files changed
+    - Upgrade Concourse version to 3.12.0, with manifest files changed
+    - Upgrade Azure CPI version to 35.0.0, with manifest files changed
+
 # v1.0.3 (2017-01-15)
 - Updated bosh release, stemcells, azure cpi to latest version
 - Updated concourse release and garden-runc
@@ -24,4 +35,3 @@
 - Adjust project structure
 
 # Preview Version (2016-04-20)
-```

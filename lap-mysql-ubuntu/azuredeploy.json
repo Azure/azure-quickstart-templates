@@ -1,17 +1,11 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "adminUsername": {
       "type": "string",
       "metadata": {
         "description": "Administrator user name used when provisioning virtual machines"
-      }
-    },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Administrator password used when provisioning virtual machines"
       }
     },
     "dnsNamePrefix": {
@@ -47,7 +41,7 @@
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/lap-mysql-ubuntu"
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/lap-mysql-ubuntu/"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -55,12 +49,36 @@
         "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
       },
       "defaultValue": ""
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
     }
   },
   "variables": {
-    "sharedTemplateUrl": "[concat(parameters('_artifactsLocation'), '/shared-resources.json', parameters('_artifactsLocationSasToken'))]",
-    "lampLapTemplateUrl": "[concat(parameters('_artifactsLocation'), '/lamplap-resources.json', parameters('_artifactsLocationSasToken'))]",
-    "lampMysqlTemplateUrl": "[concat(parameters('_artifactsLocation'), '/lampmysql-resources.json', parameters('_artifactsLocationSasToken'))]",
+    "sharedTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('shared-resources.json', parameters('_artifactsLocationSasToken')))]",
+    "lampLapTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('lamplap-resources.json', parameters('_artifactsLocationSasToken')))]",
+    "lampMysqlTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('lampmysql-resources.json', parameters('_artifactsLocationSasToken')))]",
     "virtualNetworkName": "virtualNetwork",
     "namespace": "lamp-",
     "networkSettings": {
@@ -86,22 +104,22 @@
       "imageReference": {
         "publisher": "Canonical",
         "offer": "UbuntuServer",
-        "sku": "14.04.2-LTS",
+        "sku": "14.04.5-LTS",
         "version": "latest"
       },
       "scripts": [
-        "[concat(parameters('_artifactsLocation'), '/install-lap.sh', parameters('_artifactsLocationSasToken'))]"
+        "[uri(parameters('_artifactsLocation'), concat('install-lap.sh', parameters('_artifactsLocationSasToken')))]"
       ]
     },
     "mysqlOsSettings": {
       "imageReference": {
         "publisher": "Canonical",
         "offer": "UbuntuServer",
-        "sku": "14.04.2-LTS",
+        "sku": "14.04.5-LTS",
         "version": "latest"
       },
       "scripts": [
-        "[concat(parameters('_artifactsLocation'), '/install-mysql.sh', parameters('_artifactsLocationSasToken'))]"
+        "[uri(parameters('_artifactsLocation'), concat('install-mysql.sh', parameters('_artifactsLocationSasToken')))]"
       ]
     }
   },
@@ -109,7 +127,7 @@
     {
       "name": "shared",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2017-05-10",
+      "apiVersion": "2019-05-10",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -119,6 +137,9 @@
         "parameters": {
           "networkSettings": {
             "value": "[variables('networkSettings')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
           }
         }
       }
@@ -126,7 +147,7 @@
     {
       "name": "lampLapNode",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2017-05-10",
+      "apiVersion": "2019-05-10",
       "dependsOn": [
         "shared"
       ],
@@ -139,9 +160,6 @@
         "parameters": {
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
-          },
-          "adminPassword": {
-            "value": "[parameters('adminPassword')]"
           },
           "namespace": {
             "value": "[variables('namespace')]"
@@ -166,6 +184,15 @@
           },
           "osSettings": {
             "value": "[variables('lapOsSettings')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
           }
         }
       }
@@ -173,7 +200,7 @@
     {
       "name": "[concat('lampMysqlNode', copyindex())]",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2017-05-10",
+      "apiVersion": "2019-05-10",
       "dependsOn": [
         "shared",
         "lampLapNode"
@@ -191,9 +218,6 @@
         "parameters": {
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
-          },
-          "adminPassword": {
-            "value": "[parameters('adminPassword')]"
           },
           "namespace": {
             "value": "[variables('namespace')]"
@@ -215,6 +239,15 @@
           },
           "osSettings": {
             "value": "[variables('mysqlOsSettings')]"
+          },
+          "authenticationType": {
+            "value": "[parameters('authenticationType')]"
+          },
+          "adminPasswordOrKey": {
+            "value": "[parameters('adminPasswordOrKey')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
           }
         }
       }

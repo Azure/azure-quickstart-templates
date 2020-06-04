@@ -1,5 +1,5 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "adminUsername": {
@@ -37,14 +37,14 @@
     },
     "ubuntuOSVersion": {
       "type": "string",
-      "defaultValue": "14.04.2-LTS",
+      "defaultValue": "14.04.5-LTS",
       "allowedValues": [
         "12.04.5-LTS",
-        "14.04.2-LTS",
+        "14.04.5-LTS",
         "15.10"
       ],
       "metadata": {
-        "description": "The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version. Allowed values: 12.04.5-LTS, 14.04.2-LTS, 15.10."
+        "description": "The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version. Allowed values: 12.04.5-LTS, 14.04.5-LTS, 15.10."
       }
     },
     "vmSize": {
@@ -57,7 +57,6 @@
   },
   "variables": {
     "scriptsBaseUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/haproxy-redundant-floatingip-ubuntu/",
-    "apiVersion": "2015-06-15",
     "storageAccountName": "[concat(uniqueString(resourceGroup().id), 'haproxysa')]",
     "numberOfHAproxyInstances": 2,
     "masterHAproxyInstanceIndex": 0,
@@ -85,10 +84,9 @@
     "haproxyAvailabilitySetName": "haproxyAvSet",
     "appAvailabilitySetName": "appAvSet",
     "vnetName": "haproxyVNet",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('vnetName'))]",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet-1",
-    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables ('subnetName'))]",
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables ('subnetName'))]",
     "subnetPrefix": "10.0.0.0/24",
     "lbName": "haproxyLB",
     "lbPublicIPAddressType": "Static",
@@ -110,18 +108,30 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('haproxyAvailabilitySetName')]",
       "location": "[resourceGroup().location]",
-      "properties": {}
+      "properties": {
+        "PlatformUpdateDomainCount": 3,
+        "PlatformFaultDomainCount": 2
+      },
+      "sku": {
+        "name": "Aligned"
+      }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('appAvailabilitySetName')]",
       "location": "[resourceGroup().location]",
-      "properties": {}
+      "properties": {
+        "PlatformUpdateDomainCount": 3,
+        "PlatformFaultDomainCount": 2
+      },
+      "sku": {
+        "name": "Aligned"
+      }
     },
     {
       "apiVersion": "2015-06-15",
@@ -187,7 +197,7 @@
               "frontendIPConfiguration": {
                 "id": "[variables('frontEndIPConfigID')]"
               },
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "frontendPort": 50001,
               "backendPort": 22,
               "enableFloatingIP": false
@@ -199,7 +209,7 @@
               "frontendIPConfiguration": {
                 "id": "[variables('frontEndIPConfigID')]"
               },
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "frontendPort": 50002,
               "backendPort": 22,
               "enableFloatingIP": false
@@ -278,7 +288,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(parameters('haproxyVMNamePrefix'), copyindex())]",
       "copy": {
@@ -321,12 +331,12 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/vhds/', parameters('haproxyVMNamePrefix'), 'osdisk-', copyindex(), '.vhd')]"
-            },
+            "name": "[concat(parameters('haproxyVMNamePrefix'), 'OSDisk-', copyindex())]",
             "caching": "ReadWrite",
-            "createOption": "FromImage"
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "[variables('storageAccountType')]"
+            }
           }
         },
         "networkProfile": {
@@ -338,7 +348,7 @@
         },
         "diagnosticsProfile": {
           "bootDiagnostics": {
-            "enabled": "true",
+            "enabled": true,
             "storageUri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net')]"
           }
         }
@@ -371,7 +381,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(parameters('appVMNamePrefix'), copyindex())]",
       "copy": {
@@ -414,12 +424,12 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/vhds/', parameters('appVMNamePrefix'), 'osdisk-', copyindex(), '.vhd')]"
-            },
+            "name": "[concat(parameters('appVMNamePrefix'), 'OSDisk-', copyindex())]",
             "caching": "ReadWrite",
-            "createOption": "FromImage"
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "[variables('storageAccountType')]"
+            }
           }
         },
         "networkProfile": {
@@ -431,7 +441,7 @@
         },
         "diagnosticsProfile": {
           "bootDiagnostics": {
-            "enabled": "true",
+            "enabled": true,
             "storageUri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net')]"
           }
         }

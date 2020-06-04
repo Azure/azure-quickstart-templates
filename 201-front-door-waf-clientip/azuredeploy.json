@@ -1,0 +1,78 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {        
+        "wafPolicyName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the WAF policy"
+            }
+        },
+        "wafMode": {
+            "type": "string",
+            "allowedValues": [
+                "Detection",
+                "Prevention"
+            ],
+            "defaultValue": "Detection",
+            "metadata": {
+                "description": "Describes if it is in detection mode or prevention mode at policy level."
+            }
+        },
+        "IPfilteringAction": {
+            "type": "string",
+            "allowedValues": [
+                "Allow",
+                "Block",
+                "Log"
+            ],
+            "metadata": {
+                "description": "Type of Action based on the match filter. Must be Allow, Block or Log."
+            }
+        },
+        "IPMatch": {
+            "type": "string",
+            "metadata": {
+                "description": "The operator to be matched."
+            }
+        }
+    },
+    "variables": {
+        "wafLocation": "global"        
+    },
+    "resources": [
+        {
+            "apiVersion": "2019-03-01",
+            "type": "Microsoft.Network/FrontDoorWebApplicationFirewallPolicies",
+            "name": "[parameters('wafPolicyName')]",
+            "location": "[variables('wafLocation')]",
+            "properties": {
+                "policySettings": {
+                    "mode": "[parameters('wafMode')]",
+                    "enabledState": "Enabled"
+                },
+                "customRules": {
+                    "rules": [
+                        {
+                            "name": "Rule1",
+                            "priority": 1,
+                            "enabledState": "Enabled",
+                            "ruleType": "MatchRule",
+                            "matchConditions": [
+                                {
+                                    "matchVariable": "RemoteAddr",
+                                    "operator": "IPMatch",
+                                    "matchValue": [
+                                        "[parameters('IPMatch')]"
+                                    ]
+                                }
+                            ],
+                            "action": "[parameters('IPfilteringAction')]"
+                        }
+                    ]
+                }
+            }
+        }        
+    ],
+    "outputs": {}
+}

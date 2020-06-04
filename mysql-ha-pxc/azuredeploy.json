@@ -1,13 +1,7 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "storageAccount": {
-      "type": "string",
-      "metadata": {
-        "description": "Storage account name for the cluster"
-      }
-    },
     "dnsName": {
       "type": "string",
       "metadata": {
@@ -20,24 +14,11 @@
         "description": "user name to ssh to the VMs"
       }
     },
-    "password": {
-      "type": "securestring",
-      "metadata": {
-        "description": "password to ssh to the VMs"
-      }
-    },
     "vmSize": {
       "type": "string",
       "defaultValue": "Standard_A1",
       "metadata": {
         "description": "size for the VMs"
-      }
-    },
-    "storageAccountType": {
-      "type": "string",
-      "defaultValue": "Standard_LRS",
-      "metadata": {
-        "description": "Storage account type for the cluster"
       }
     },
     "virtualNetworkName": {
@@ -207,31 +188,54 @@
         "description": "private ssh port for the VMs"
       }
     },
-    "customScriptFilePath": {
-      "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/mysql-ha-pxc/azurepxc.sh",
-      "metadata": {
-        "description": "bash file location to configure the cluster"
-      }
-    },
-    "mysqlConfigFilePath": {
-      "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/mysql-ha-pxc/my.cnf.template",
-      "metadata": {
-        "description": "my.cnf file location"
-      }
-    },
     "customScriptCommandToExecute": {
       "type": "string",
       "defaultValue": "bash azurepxc.sh",
       "metadata": {
         "description": "bash script command line"
       }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/mysql-ha-pxc/",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
     }
   },
   "variables": {
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
-    "dbSubnetRef": "[concat(variables('vnetID'),'/subnets/',parameters('dbSubnetName'))]",
+    "dbSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', parameters('virtualNetworkName'),parameters('dbSubnetName'))]",
     "lbPublicIPName": "[concat(variables('lbName'), '-publicIP')]",
     "lbPublicIPRef": "[resourceId('Microsoft.Network/publicIPAddresses',variables('lbPublicIPName'))]",
     "lbName": "[concat(parameters('vmNamePrefix'), '-lb')]",
@@ -239,7 +243,6 @@
     "ilbBackendAddressPoolName": "[concat(parameters('vmNamePrefix'), '-ilbBackendPool')]",
     "ilbBackendAddressPoolID": "[concat(variables('lbID'),'/backendAddressPools/', variables('ilbBackendAddressPoolName'))]",
     "ilbRuleName": "[concat(parameters('vmNamePrefix'), '-ilbRule')]",
-    "ilbRuleID": "[concat(variables('lbID'),'/loadBalancingRules/',variables('ilbRuleName'))]",
     "probeName": "[concat(parameters('vmNamePrefix'), '-probe')]",
     "probeID": "[concat(variables('lbID'),'/probes/',variables('probeName'))]",
     "sshIPConfigName": "[concat(parameters('vmNamePrefix'), '-sshIPCfg')]",
@@ -258,9 +261,6 @@
     "nicId1": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName1'))]",
     "nicId2": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName2'))]",
     "nicId3": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName3'))]",
-    "backEndIPConfigNic1": "[concat(variables('nicId1'),'/ipConfigurations/ipconfig1')]",
-    "backEndIPConfigNic2": "[concat(variables('nicId2'),'/ipConfigurations/ipconfig1')]",
-    "backEndIPConfigNic3": "[concat(variables('nicId3'),'/ipConfigurations/ipconfig1')]",
     "vmName1": "[concat('a-', parameters('vmNamePrefix'))]",
     "vmName2": "[concat('k-', parameters('vmNamePrefix'))]",
     "vmName3": "[concat('z-', parameters('vmNamePrefix'))]",
@@ -268,35 +268,29 @@
     "vmExtensionName": "[concat(parameters('vmNamePrefix'), '-ext')]",
     "pxcClusterAddress": "[concat(parameters('vmIP1'), ',', parameters('vmIP2'), ',', parameters('vmIP3'))]",
     "customScriptCommandCommon": "[concat(parameters('customScriptCommandToExecute'), ' ', variables('pxcClusterAddress'), ' ')]",
-    "vhdContainer1": "[concat('http://',parameters('storageAccount'),'.blob.core.windows.net/avhds/')]",
-    "dataDisk1VhdName1": "[concat(variables('vhdContainer1'),variables('vmName1'),'dataDisk1.vhd')]",
-    "dataDisk2VhdName1": "[concat(variables('vhdContainer1'),variables('vmName1'),'dataDisk2.vhd')]",
-    "customScriptParamVm1": "[concat(parameters('vmIP1'), ' bootstrap-pxc ', parameters('mysqlConfigFilePath'))]",
+    "mysqlConfigFilePath": "[uri(parameters('_artifactsLocation'), concat('my.cnf.template', parameters('_artifactsLocationSasToken')))]",
+    "customScriptParamVm1": "[concat(parameters('vmIP1'), ' bootstrap-pxc ', variables('mysqlConfigFilePath'))]",
     "vmExtensionName1": "[concat(variables('vmName1'),'/', variables('vmExtensionName'))]",
-    "vhdContainer2": "[concat('http://',parameters('storageAccount'),'.blob.core.windows.net/kvhds/')]",
-    "dataDisk1VhdName2": "[concat(variables('vhdContainer2'),variables('vmName2'),'dataDisk1.vhd')]",
-    "dataDisk2VhdName2": "[concat(variables('vhdContainer2'),variables('vmName2'),'dataDisk2.vhd')]",
-    "customScriptParamVm2": "[concat(parameters('vmIP2'), ' start ', parameters('mysqlConfigFilePath'))]",
-    "vhdContainer3": "[concat('http://',parameters('storageAccount'),'.blob.core.windows.net/zvhds/')]",
-    "dataDisk1VhdName3": "[concat(variables('vhdContainer3'),variables('vmName3'),'dataDisk1.vhd')]",
-    "dataDisk2VhdName3": "[concat(variables('vhdContainer3'),variables('vmName3'),'dataDisk2.vhd')]",
-    "customScriptParamVm3": "[concat(parameters('vmIP3'), ' start ', parameters('mysqlConfigFilePath'))]"
+    "customScriptParamVm2": "[concat(parameters('vmIP2'), ' start ', variables('mysqlConfigFilePath'))]",
+    "customScriptParamVm3": "[concat(parameters('vmIP3'), ' start ', variables('mysqlConfigFilePath'))]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('userName'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
-    {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[parameters('storageAccount')]",
-      "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
-      "properties": {
-        "accountType": "[parameters('storageAccountType')]"
-      }
-    },
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('lbPublicIPName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "Static",
         "dnsSettings": {
@@ -307,15 +301,21 @@
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('availabilitySetName')]",
-      "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
-      "properties": {}
+      "apiVersion": "2017-12-01",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Aligned"
+      },
+      "properties": {
+        "platformFaultDomainCount": 2,
+        "platformUpdateDomainCount": 5
+      }
     },
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[parameters('virtualNetworkName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -336,7 +336,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName1')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
         "[concat('Microsoft.Network/loadBalancers/', variables('lbName'))]"
@@ -370,7 +370,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName2')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
         "[concat('Microsoft.Network/loadBalancers/', variables('lbName'))]"
@@ -404,7 +404,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName3')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
         "[concat('Microsoft.Network/loadBalancers/', variables('lbName'))]"
@@ -437,11 +437,10 @@
     {
       "name": "[variables('vmName1')]",
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "apiVersion": "2017-03-30",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]",
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccount'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName1'))]"
       ],
       "properties": {
@@ -454,7 +453,8 @@
         "osProfile": {
           "computerName": "[variables('vmName1')]",
           "adminUsername": "[parameters('userName')]",
-          "adminPassword": "[parameters('password')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
@@ -464,30 +464,21 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat(variables('vhdContainer1'), 'osdisk.vhd')]"
-            },
+            "name": "[concat(variables('vmName1'),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           },
           "dataDisks": [
             {
-              "name": "datadisk1",
+              "name": "[concat(variables('vmName1'),'_DataDisk1')]",
               "diskSizeGB": "1000",
               "lun": 0,
-              "vhd": {
-                "uri": "[variables('dataDisk1VhdName1')]"
-              },
               "createOption": "Empty"
             },
             {
-              "name": "datadisk2",
+              "name": "[concat(variables('vmName1'),'_DataDisk2')]",
               "diskSizeGB": "1000",
               "lun": 1,
-              "vhd": {
-                "uri": "[variables('dataDisk2VhdName1')]"
-              },
               "createOption": "Empty"
             }
           ]
@@ -505,7 +496,7 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[variables('vmExtensionName1')]",
       "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', variables('vmName1'))]"
       ],
@@ -516,7 +507,7 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[parameters('customScriptFilePath')]"
+            "[uri(parameters('_artifactsLocation'), concat('azurepxc.sh', parameters('_artifactsLocationSasToken')))]"
           ]
         },
         "protectedSettings": {
@@ -527,11 +518,10 @@
     {
       "name": "[variables('vmName2')]",
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "apiVersion": "2017-03-30",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]",
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccount'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName2'))]"
       ],
       "properties": {
@@ -544,7 +534,8 @@
         "osProfile": {
           "computerName": "[variables('vmName2')]",
           "adminUsername": "[parameters('userName')]",
-          "adminPassword": "[parameters('password')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
@@ -554,30 +545,21 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat(variables('vhdContainer2'), 'osdisk.vhd')]"
-            },
+            "name": "[concat(variables('vmName2'),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           },
           "dataDisks": [
             {
-              "name": "datadisk1",
+              "name": "[concat(variables('vmName2'),'_DataDisk1')]",
               "diskSizeGB": "1000",
               "lun": 0,
-              "vhd": {
-                "uri": "[variables('dataDisk1VhdName2')]"
-              },
               "createOption": "Empty"
             },
             {
-              "name": "datadisk2",
+              "name": "[concat(variables('vmName2'),'_DataDisk2')]",
               "diskSizeGB": "1000",
               "lun": 1,
-              "vhd": {
-                "uri": "[variables('dataDisk2VhdName2')]"
-              },
               "createOption": "Empty"
             }
           ]
@@ -595,7 +577,7 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmName2'),'/', variables('vmExtensionName'))]",
       "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', variables('vmName2'))]",
         "[concat('Microsoft.Compute/virtualMachines/',variables('vmName1'),'/extensions/',variables('vmExtensionName'))]"
@@ -607,7 +589,7 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[parameters('customScriptFilePath')]"
+            "[uri(parameters('_artifactsLocation'), concat('azurepxc.sh', parameters('_artifactsLocationSasToken')))]"
           ]
         },
         "protectedSettings": {
@@ -618,11 +600,10 @@
     {
       "name": "[variables('vmName3')]",
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "apiVersion": "2017-03-30",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]",
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccount'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName3'))]"
       ],
       "properties": {
@@ -635,7 +616,8 @@
         "osProfile": {
           "computerName": "[variables('vmName3')]",
           "adminUsername": "[parameters('userName')]",
-          "adminPassword": "[parameters('password')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
@@ -645,30 +627,21 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat(variables('vhdContainer3'), 'osdisk.vhd')]"
-            },
+            "name": "[concat(variables('vmName3'),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           },
           "dataDisks": [
             {
-              "name": "datadisk1",
+              "name": "[concat(variables('vmName3'),'_DataDisk1')]",
               "diskSizeGB": "1000",
               "lun": 0,
-              "vhd": {
-                "uri": "[variables('dataDisk1VhdName3')]"
-              },
               "createOption": "Empty"
             },
             {
-              "name": "datadisk2",
+              "name": "[concat(variables('vmName3'),'_DataDisk2')]",
               "diskSizeGB": "1000",
               "lun": 1,
-              "vhd": {
-                "uri": "[variables('dataDisk2VhdName3')]"
-              },
               "createOption": "Empty"
             }
           ]
@@ -686,7 +659,7 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmName3'),'/', variables('vmExtensionName'))]",
       "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', variables('vmName3'))]",
         "[concat('Microsoft.Compute/virtualMachines/',variables('vmName1'),'/extensions/',variables('vmExtensionName'))]"
@@ -698,7 +671,7 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[parameters('customScriptFilePath')]"
+            "[uri(parameters('_artifactsLocation'), concat('azurepxc.sh', parameters('_artifactsLocationSasToken')))]"
           ]
         },
         "protectedSettings": {
@@ -710,7 +683,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/loadBalancers",
       "name": "[variables('lbName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('lbPublicIPName'))]"
       ],
@@ -737,7 +710,7 @@
               "frontendIPConfiguration": {
                 "id": "[variables('sshIPConfig')]"
               },
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "frontendPort": "[parameters('sshNatRuleFrontEndPort1')]",
               "backendPort": "[parameters('sshNatRuleBackEndPort')]",
               "enableFloatingIP": false
@@ -749,7 +722,7 @@
               "frontendIPConfiguration": {
                 "id": "[variables('sshIPConfig')]"
               },
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "frontendPort": "[parameters('sshNatRuleFrontEndPort2')]",
               "backendPort": "[parameters('sshNatRuleBackEndPort')]",
               "enableFloatingIP": false
@@ -761,7 +734,7 @@
               "frontendIPConfiguration": {
                 "id": "[variables('sshIPConfig')]"
               },
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "frontendPort": "[parameters('sshNatRuleFrontEndPort3')]",
               "backendPort": "[parameters('sshNatRuleBackEndPort')]",
               "enableFloatingIP": false

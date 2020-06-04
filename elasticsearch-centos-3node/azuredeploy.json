@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "adminUsername": {
@@ -25,13 +25,19 @@
       "metadata": {
         "description": "Prefix to use for common resources"
       }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
     "apiVersion": "2015-06-15",
     "vmSize": "Standard_D1",
     "clusterName": "elasticcluster",
-    "logTableName": "elasticscriptlog",
     "imagePublisher": "OpenLogic",
     "imageOffer": "CentOS",
     "imageSku": "7.1",
@@ -46,9 +52,8 @@
     "subnetName": "elasticSubnet",
     "subnetAdmin": "adminSubnet",
     "networkInterfaceName": "NIC",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
-    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables ('subnetName'))]",
-    "subnetAdminRef": "[concat(variables('vnetID'),'/subnets/',variables ('subnetAdmin'))]",
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables ('subnetName'))]",
+    "subnetAdminRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables ('subnetAdmin'))]",
     "numberOfNodes": 3,
     "scriptBaseUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/elasticsearch-centos-3node/",
     "elasticScript": "elasticinstall.py",
@@ -67,7 +72,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "tags": {
         "displayName": "StorageAccount"
       },
@@ -79,25 +84,32 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "[variables('publicIPAddressType')]"
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-12-01",
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('availabilitySetName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "tags": {
         "displayName": "AvailabilitySet"
-      }
+      },
+      "sku": {
+              "name": "Aligned"
+            },
+      "properties": { 
+                    "platformFaultDomainCount": 2,
+                    "platformUpdateDomainCount": 5
+                    }
     },
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('JBNSGName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
           {
@@ -121,7 +133,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/networkSecurityGroups/', variables('JBNSGName'))]"
       ],
@@ -157,7 +169,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(parameters('vmPrefix'), variables('networkInterfaceName'), copyindex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "tags": {
         "displayName": "NetworkInterface"
       },
@@ -184,14 +196,14 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(parameters('vmPrefix'), copyindex())]",
       "copy": {
         "name": "virtualMachineLoop",
         "count": "[variables('numberOfNodes')]"
       },
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "tags": {
         "displayName": "VirtualMachines"
       },
@@ -220,21 +232,15 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat('http://',variables('storageName'),'.blob.core.windows.net/vhds/','osdisk', copyindex(), '.vhd')]"
-            },
+            "name":  "[concat(parameters('vmPrefix'), copyindex(),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           },
           "dataDisks": [
             {
-              "name": "datadisk1",
+              "name": "[concat(parameters('vmPrefix'), copyindex(),'_DataDisk1')]",
               "diskSizeGB": "[variables('dataDiskSize')]",
               "lun": 0,
-              "vhd": {
-                "uri": "[concat('http://',variables('storageName'),'.blob.core.windows.net/vhds/',parameters('vmPrefix'), copyindex(), 'dataDisk1.vhd')]"
-              },
               "caching": "None",
               "createOption": "Empty"
             }
@@ -257,7 +263,7 @@
         "name": "virtualMachineExtensions",
         "count": "[variables('numberOfNodes')]"
       },
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', parameters('vmPrefix'), copyindex())]"
       ],
@@ -276,7 +282,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "JumpboxNic",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "tags": {
         "displayName": "NetworkInterface"
       },
@@ -303,10 +309,10 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "Jumpbox",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "tags": {
         "displayName": "VirtualMachines"
       },
@@ -331,10 +337,7 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat('http://',variables('storageName'),'.blob.core.windows.net/vhds/jumpbox-osdisk.vhd')]"
-            },
+            "name": "[concat('Jumpbox','_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -352,7 +355,7 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "Jumpbox/PrepExtension",
       "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "Microsoft.Compute/virtualMachines/Jumpbox"
       ],

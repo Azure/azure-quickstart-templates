@@ -1,5 +1,5 @@
 {
-    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
         "omsWorkspaceName": {
@@ -12,10 +12,14 @@
             "type": "string",
             "defaultValue": "West Europe",
             "allowedValues": [
+                "Australia Southeast",
                 "East US",
-                "West Europe",
+                "Japan East",
                 "Southeast Asia",
-                "Australia Southeast"
+                "UK South",
+                "West Central US",
+                "West Europe",
+                "North Europe"
             ],
             "metadata": {
                 "description": "Specify the region for your Workspace"
@@ -69,10 +73,10 @@
             "comments": "Log Analytics workspace",
             "properties": {
                 "sku": {
-                        "name": "pernode"
+                        "name": "pergb2018"
                     },
-                "retentionInDays": 120
-                },
+                "retentionInDays": 180
+            },
             "resources": [
                 {
                     "name": "AzureActivityLog",
@@ -87,21 +91,6 @@
                     }
                 },
                 {
-                    "name": "[concat(parameters('omsWorkspaceName'), '/', 'SoftwareUpdateFailed1')]",
-                    "type": "Microsoft.OperationalInsights/workspaces/savedSearches",
-                    "apiVersion": "2017-03-15-preview",
-                    "dependsOn": [
-                        "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
-                    ],
-                    "tags": {},
-                    "properties": {
-                        "ETag": "*",
-                        "query": "Event | where EventID == 20 and Source == \"Microsoft-Windows-WindowsUpdateClient\" and EventLog == \"System\" and TimeGenerated > ago(1d)",                        
-                        "displayName": "Failed Software Updates in the last day",
-                        "category": "Software Updates"
-                    }
-                },
-                {
                     "apiVersion": "2017-03-15-preview",
                     "name": "[concat(parameters('omsWorkspaceName'), '/', 'HyperV1')]",
                     "type": "Microsoft.OperationalInsights/workspaces/savedSearches",
@@ -112,7 +101,7 @@
                         "ETag": "*",
                         "category": "HyperV",
                         "displayName": "VMs created last 24 hours",
-                        "query": "EventLog=\"Microsoft-Windows-Hyper-V-VMMS-Admin\" EventLevelName=information EventID=13002 TimeGenerated>NOW-1DAY "
+                        "query": "Event | where EventLog == \"Microsoft-Windows-Hyper-V-VMMS-Admin\" and EventID == 13003 and EventLevelName =~ \"information\" and TimeGenerated > ago(1d)"
                     }
                 },
                 {
@@ -126,7 +115,7 @@
                         "ETag": "*",
                         "category": "HyperV",
                         "displayName": "VMs deleted last 24 hours",
-                        "Query": "EventLog=\"Microsoft-Windows-Hyper-V-VMMS-Admin\" EventLevelName=information EventID=13003 TimeGenerated>NOW-1DAY"
+                        "Query": "Event | where EventLog == \"Microsoft-Windows-Hyper-V-VMMS-Admin\" and EventID == 13003 and EventLevelName =~ \"information\" and TimeGenerated > ago(1d)"
                     }
                 },
                 {
@@ -139,12 +128,12 @@
                     "properties": {
                         "ETag": "*",
                         "category": "HyperV",
-                        "displayName": "Replication throughput per VM",
-                        "query": "Type:Perf ObjectName=\"Hyper-V Azure Replication Agent\" CounterName=\"Replication Throughput\" TimeGenerated>NOW-8HOURS | measure  avg(CounterValue) by InstanceName  interval 15minutes"
+                        "displayName": "Replication throughput per VM over last 24 hours",
+                        "query": "Perf | where ObjectName == \"Hyper-V Azure Replication Agent\" and CounterName == \"Replication Throughput\" and TimeGenerated > ago(1d) | summarize AggregatedValue = avg(CounterValue) by InstanceName, bin(TimeGenerated, 15m)"
                     }
                 },
                 {
-                    "name": "[concat(parameters('omsWorkspaceName'), '/', 'SoftwareUpdateFailed2')]",
+                    "name": "[concat(parameters('omsWorkspaceName'), '/', 'SoftwareUpdateFailed1')]",
                     "type": "Microsoft.OperationalInsights/workspaces/savedSearches",
                     "apiVersion": "2017-03-15-preview",
                     "dependsOn": [
@@ -153,9 +142,9 @@
                     "tags": {},
                     "properties": {
                         "ETag": "*",
-                        "query": "Type=Event EventID=20 Source=\"Microsoft-Windows-WindowsUpdateClient\" EventLog=\"System\" TimeGenerated>NOW-168HOURS",
-                        "displayName": "A Software Update Installation Failed",
-                        "category": "Software Updates"
+                        "category": "Software Updates",
+                        "displayName": "Failed Software Updates in the last week",
+                        "query": "Event | where EventID == 20 and Source == \"Microsoft-Windows-WindowsUpdateClient\" and EventLog == \"System\" and TimeGenerated > ago(7d)"
                     }
                 },
                 {
@@ -168,9 +157,9 @@
                     "tags": {},
                     "properties": {
                         "ETag": "*",
-                        "query": "Type=Event EventID=4202 Source=\"TCPIP\" EventLog=\"System\" TimeGenerated>NOW-24HOURS | Measure Count() By Computer",
-                        "displayName": "A Network adatper was disconnected from the network",
-                        "category": "Networking"
+                        "category": "Networking",
+                        "displayName": "NICs disconnected from the network in last 24 hours",
+                        "query": "Event | where EventLog == \"System\" and Source == \"TCPIP\" and EventID == 4202 and TimeGenerated > ago(24h) | summarize AggregatedValue = count() by Computer"
                     }
                 },
                 {
@@ -183,9 +172,9 @@
                     "tags": {},
                     "properties": {
                         "ETag": "*",
-                        "query": "Event | where (EventID == 4198 or EventID == 4199) and Source == \"TCPIP\" and EventLog == \"System\" and TimeGenerated > ago(24h)",
-                        "displayName": "Duplicate IP address has been detected",
-                        "category": "Networking"
+                        "category": "Networking",
+                        "displayName": "Duplicate IP addresses detected in the last 24 hours",
+                        "query": "Event | where (EventID == 4198 or EventID == 4199) and Source == \"TCPIP\" and EventLog == \"System\" and TimeGenerated > ago(24h)"
                     }
                 },
                 {
@@ -198,9 +187,9 @@
                     "tags": {},
                     "properties": {
                         "ETag": "*",
-                        "query": "Type=Event EventID=98 Source=\"Microsoft-Windows-Ntfs\" EventLog=\"System\" TimeGenerated>NOW-24HOURS | Measure Count() By Computer",
-                        "displayName": "NTFS File System Corruption",
-                        "category": "NTFS"
+                        "category": "NTFS",
+                        "displayName": "NTFS File System Corruption in the last 24 hours",
+                        "query": "Event | where EventLog == \"System\" and EventID == 98 and Source =~ \"Microsoft-Windows-Ntfs\" and TimeGenerated > ago(1d) | summarize AggregatedValue = count() by Computer"
                     }
                 },
                 {
@@ -213,9 +202,9 @@
                     "tags": {},
                     "properties": {
                         "ETag": "*",
-                        "query": "Type=Event EventID=40 OR EventID=36� Source=\"DISK\" EventLog=\"System\" TimeGenerated>NOW-24HOURS | Measure Count() By Compute",
-                        "displayName": "NTFS Quouta treshold limit reached",
-                        "category": "NTFS"
+                        "category": "NTFS",
+                        "displayName": "NTFS User Disk Quota Reached",
+                        "query": "Event | where EventLog == \"System\" and (EventID == 40 or EventID == 36) and Source =~ \"Disk\" and TimeGenerated > ago(24h) | summarize AggregatedValue = count() by Computer"
                     }
                 },
                 {
@@ -260,7 +249,7 @@
                         "objectName": "LogicalDisk",
                         "instanceName": "*",
                         "intervalSeconds": 10,
-                        "counterName": "Current Disk Queue Lenght"
+                        "counterName": "Current Disk Queue Length"
                     }
                 },
                 {

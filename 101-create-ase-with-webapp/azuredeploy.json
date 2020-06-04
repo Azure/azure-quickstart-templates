@@ -1,46 +1,7 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-    "contentVersion": "1.0.0.0",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
   "parameters": {
-    "ASE-APP-SERVICE-APPWorkerSize": {
-      "type": "string",
-      "allowedValues": [
-        "0",
-        "1",
-        "2"
-      ],
-      "metadata": {
-        "description": "App Service Worker Size"
-      },
-      "defaultValue": "0"
-    },
-    "ASE-Location": {
-      "type": "string",
-      "allowedValues": [
-        "Central US",
-        "East US",
-        "East US 2",
-        "North Central US",
-        "South Central US",
-        "West US",
-        "Canada Central",
-        "North Europe",
-        "West Europe",
-        "East Asia",
-        "Southeast Asia",
-        "Japan East",
-        "Japan West",
-        "Brazil South",
-        "Australia East",
-        "Australia Southeast",
-        "West India",
-        "Central India",
-        "South India"
-      ],
-      "metadata": {
-        "description": "Location of the App Service Environment"
-      }
-    },
     "ASE-ipSslAddressCount": {
       "type": "int",
       "defaultValue": 1,
@@ -63,7 +24,7 @@
     "ASE-frontEndCount": {
       "type": "int",
       "defaultValue": 2,
-      "minValue" : 2,
+      "minValue": 2,
       "metadata": {
         "description": "Number of instances in the front-end pool.  Minimum of two."
       }
@@ -136,7 +97,7 @@
         "2",
         "3"
       ],
-      "defaultValue": "0",
+      "defaultValue": "1",
       "metadata": {
         "description": "Defines which worker pool's (WP1, WP2 or WP3) resources will be used for the app service plan."
       }
@@ -146,6 +107,34 @@
       "defaultValue": 1,
       "metadata": {
         "description": "Defines the number of workers from the worker pool that will be used by the app service plan."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "East US 2",
+      "allowedValues": [
+        "Central US",
+        "East US",
+        "East US 2",
+        "North Central US",
+        "South Central US",
+        "West US",
+        "Canada Central",
+        "North Europe",
+        "West Europe",
+        "East Asia",
+        "Southeast Asia",
+        "Japan East",
+        "Japan West",
+        "Brazil South",
+        "Australia East",
+        "Australia Southeast",
+        "West India",
+        "Central India",
+        "South India"
+      ],
+      "metadata": {
+        "description": "Location for all resources."
       }
     }
   },
@@ -164,8 +153,8 @@
     {
       "name": "[variables('ASE-VNET-Name')]",
       "type": "Microsoft.Network/virtualNetworks",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
+      "apiVersion": "2018-04-01",
       "dependsOn": [],
       "tags": {
         "displayName": "ASE-VNET"
@@ -196,8 +185,7 @@
       "apiVersion": "2015-08-01",
       "type": "Microsoft.Web/hostingEnvironments",
       "name": "[variables('ASE-Name')]",
-      "location": "[parameters('ASE-Location')]",
-
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', variables('ASE-VNET-Name'))]"
       ],
@@ -208,10 +196,10 @@
       },
       "properties": {
         "name": "[variables('ASE-Name')]",
-        "location": "[parameters('ASE-Location')]",
+        "location": "[parameters('location')]",
         "ipSslAddressCount": "[parameters('ASE-ipSslAddressCount')]",
         "virtualNetwork": {
-          "Id": "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',resourceGroup().name,'/providers/Microsoft.Network/virtualNetworks/', variables('ASE-VNET-Name'))]",
+          "Id": "[resourceId('Microsoft.Network/virtualNetworks/', variables('ASE-VNET-Name'))]",
           "Subnet": "[variables('ASE-VNETSubnet1Name')]"
         },
         "multiSize": "[parameters('ASE-frontEndSize')]",
@@ -238,9 +226,11 @@
     {
       "name": "[variables('ASE-SERVICE-Name')]",
       "type": "Microsoft.Web/serverfarms",
-      "location": "[parameters('ASE-Location')]",
-      "apiVersion": "2014-06-01",
-      "dependsOn": [ "[resourceId('Microsoft.Web/hostingEnvironments', variables('ASE-Name'))]" ],
+      "location": "[parameters('location')]",
+      "apiVersion": "2017-08-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/hostingEnvironments', variables('ASE-Name'))]"
+      ],
       "tags": {
         "displayName": "ASE-APP-SERVICE-APP"
       },
@@ -260,8 +250,8 @@
     {
       "name": "[variables('ASE-WEB-APP-Name')]",
       "type": "Microsoft.Web/sites",
-      "location": "[parameters('ASE-Location')]",
-      "apiVersion": "2015-08-01",
+      "location": "[parameters('location')]",
+      "apiVersion": "2018-02-01",
       "dependsOn": [
         "[resourceId('Microsoft.Web/serverfarms', variables('ASE-SERVICE-Name'))]"
       ],
@@ -277,6 +267,5 @@
       }
     }
   ],
-    "outputs": {
-    }
+  "outputs": {}
 }

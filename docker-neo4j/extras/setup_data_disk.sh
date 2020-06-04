@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # This script is necessary to set up the data disk that will
-# be passed into the Neo4j docker instance and used as the 
+# be passed into the Neo4j docker instance and used as the
 # mount point for the Neo4J data.
 
-# The ARM script only mounts a single data disk.  It is safe 
+# The ARM script only mounts a single data disk.  It is safe
 # to assume that on a new VM, this data disk is located at /dev/sdc.
 
 # If you have a more complicated setup, then do examine what this

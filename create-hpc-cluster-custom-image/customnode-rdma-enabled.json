@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "apiVersion": {
@@ -85,16 +85,40 @@
       "metadata": {
         "description": "Optional URL of a public available PowerShell script you want to run on the compute nodes after they are configured. You can also specify arguments for the script, for example 'http://www.consto.com/mypostscript.ps1 -Arg1 arg1 -Arg2 arg2'."
       }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
+    "imageName": "myCustomImage", 
     "osDiskUri": "[uri(parameters('sourceImageVhdUri'), concat(toLower(parameters('vmName')), '-', uniqueString(parameters('subnetId'), toLower(parameters('vmName'))), '.vhd'))]"
   },
   "resources": [
+    {	
+      "type": "Microsoft.Compute/images",
+      "apiVersion": "2017-03-30",
+      "name": "[variables('imageName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+      "storageProfile": {
+              "osDisk": {
+                  "osType": "Windows",
+                  "osState": "Generalized",
+                  "blobUri": "[parameters('sourceImageVhdUri')]",
+                  "storageAccountType": "Standard_LRS"
+          }
+        }
+      }
+    }, 
     {
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[parameters('nicName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "ipConfigurations": [
           {
@@ -111,8 +135,9 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2017-03-30",
       "name": "[parameters('vmName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/networkInterfaces/', parameters('nicName'))]"
       ],
@@ -130,18 +155,9 @@
           "customData": "[parameters('customData')]"
         },
         "storageProfile": {
-          "osDisk": {
-            "name": "[parameters('vmName')]",
-            "osType": "windows",
-            "caching": "ReadOnly",
-            "image": {
-              "uri": "[parameters('sourceImageVhdUri')]"
-            },
-            "createOption": "FromImage",
-            "vhd": {
-              "uri": "[variables('osDiskUri')]"
-            }
-          }
+          "imageReference": { 
+            "id": "[resourceId('Microsoft.Compute/images', variables('imageName'))]" 
+          } 
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -156,7 +172,7 @@
           "type": "Microsoft.Compute/virtualMachines/extensions",
           "name": "[concat(parameters('vmName'), '/installRDMADriver')]",
           "apiVersion": "[parameters('apiVersion')]",
-          "location": "[resourceGroup().location]",
+          "location": "[parameters('location')]",
           "dependsOn": [
             "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
           ],
@@ -171,7 +187,7 @@
           "type": "Microsoft.Compute/virtualMachines/extensions",
           "name": "[concat(parameters('vmName'), '/configureComputeNode')]",
           "apiVersion": "[parameters('apiVersion')]",
-          "location": "[resourceGroup().location]",
+          "location": "[parameters('location')]",
           "dependsOn": [
             "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]",
             "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'), '/extensions/installRDMADriver')]"

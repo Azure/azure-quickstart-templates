@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "adminUsername": {
@@ -64,6 +64,13 @@
       "metadata": {
         "description": "loadBalancerBackendAddressPools config object"
       }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
@@ -75,20 +82,23 @@
   },
   "resources": [
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-12-01",
       "type": "Microsoft.Compute/availabilitySets",
       "name": "es-data-set",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
+      "sku": {
+				"name": "Aligned"
+				},
       "properties": {
         "platformUpdateDomainCount": 20,
         "platformFaultDomainCount": 3
       }
     },
     {
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2018-10-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(parameters('namespace'), '-nic', copyindex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "[concat(parameters('namespace'), 'nicLoop')]",
         "count": "[parameters('vmCount')]"
@@ -109,10 +119,10 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('vmName'), copyindex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "[concat(parameters('namespace'), 'virtualMachineLoop')]",
         "count": "[parameters('vmCount')]"
@@ -137,21 +147,15 @@
         "storageProfile": {
           "imageReference": "[parameters('osSettings').imageReference]",
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', concat(variables('storageAccountName'), parameters('storageSettings').mapping[copyindex()])), '2016-01-01').primaryEndpoints.blob, 'vhds/', variables('vmName'), copyindex(), '-osdisk.vhd')]"
-            },
+            "name":  "[concat(variables('vmName'), copyindex(),'_OSdisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           },
           "dataDisks": [
             {
-              "name": "datadisk1",
+              "name":  "[concat(variables('vmName'), copyindex(),'_DataDisk1')]", 
               "diskSizeGB": "[parameters('dataDiskSize')]",
               "lun": 0,
-              "vhd": {
-                "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', concat(variables('storageAccountName'), parameters('storageSettings').mapping[copyindex()])), '2016-01-01').primaryEndpoints.blob, variables('vmStorageAccountContainerName'), '/', parameters('namespace'), 'vm', copyindex(), 'dataDisk1', '.vhd')]"
-              },
               "caching": "None",
               "createOption": "Empty"
             },
@@ -179,8 +183,8 @@
         {
           "type": "extensions",
           "name": "installelasticsearch",
-          "apiVersion": "2015-06-15",
-          "location": "[resourceGroup().location]",
+          "apiVersion": "2017-03-30",
+          "location": "[parameters('location')]",
           "dependsOn": [
             "[resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmName'), copyindex()))]"
           ],

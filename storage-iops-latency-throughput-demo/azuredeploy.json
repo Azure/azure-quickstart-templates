@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "vmAdminUserName": {
@@ -43,14 +43,27 @@
         "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
       },
       "defaultValue": ""
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
     "vNetPrefix": "10.0.0.0/16",
     "vNetSubnet1Name": "subnet-01",
     "vNetSubnet1Prefix": "10.0.0.0/24",
-    "storageAccountType": [ "Premium_LRS", "Standard_LRS" ],
-    "storageAccountNamePrefix": [ "premium", "standard" ],
+    "storageAccountType": [
+      "Premium_LRS",
+      "Standard_LRS"
+    ],
+    "storageAccountNamePrefix": [
+      "premium",
+      "standard"
+    ],
     "vmImagePublisher": "MicrosoftWindowsServer",
     "vm1ImageOffer": "WindowsServer",
     "vmOSDiskName": "[concat(variables('vmName'),'-','OSDisk')]",
@@ -62,14 +75,14 @@
     "vmNicName": "[concat(variables('vmName'),'-nic-','0')]",
     "vmPIPName": "[concat(variables('vmName'),'-PIP')]",
     "dscResourceFolder": "dsc",
-    "dscResourceConfig": "vmDemo"
-
+    "dscResourceConfig": "vmDemo",
+    "networkSecurityGroupName": "default-NSG"
   },
   "resources": [
     {
       "name": "[concat(variables('storageAccountNamePrefix')[copyIndex()],uniqueString(resourceGroup().id))]",
       "type": "Microsoft.Storage/storageAccounts",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2015-06-15",
       "copy": {
         "count": "[length(variables('storageAccountType'))]",
@@ -84,11 +97,37 @@
       }
     },
     {
+      "comments": "Default Network Security Group for template",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2019-08-01",
+      "name": "[variables('networkSecurityGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-3389",
+            "properties": {
+              "priority": 1000,
+              "access": "Allow",
+              "direction": "Inbound",
+              "destinationPortRange": "3389",
+              "protocol": "Tcp",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+          }
+        ]
+      }
+    },
+    {
       "name": "[parameters('vNetName')]",
       "type": "Microsoft.Network/virtualNetworks",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2016-03-30",
-      "dependsOn": [],
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+      ],
       "tags": {
         "displayName": "[parameters('vNetName')]"
       },
@@ -102,7 +141,10 @@
           {
             "name": "[variables('vNetSubnet1Name')]",
             "properties": {
-              "addressPrefix": "[variables('vNetSubnet1Prefix')]"
+              "addressPrefix": "[variables('vNetSubnet1Prefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+              }
             }
           }
         ]
@@ -111,7 +153,7 @@
     {
       "name": "[variables('vmNicName')]",
       "type": "Microsoft.Network/networkInterfaces",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2016-03-30",
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', parameters('vNetName'))]",
@@ -140,8 +182,8 @@
     {
       "name": "[variables('vmName')]",
       "type": "Microsoft.Compute/virtualMachines",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
+      "apiVersion": "2017-03-30",
       "dependsOn": [
         "storageAccountCopy",
         "[resourceId('Microsoft.Network/networkInterfaces', variables('vmNicName'))]"
@@ -166,53 +208,38 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[variables('vmOSDiskName')]",
-            "vhd": {
-              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', concat(variables('storageAccountNamePrefix')[1],uniqueString(resourceGroup().id))), '2016-01-01').primaryEndpoints.blob, variables('vmContainerName'), '/', variables('vmOSDiskName'), '.vhd')]"
-            },
+            "name": "[concat(variables('vmName'),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           },
           "dataDisks": [
             {
-              "name": "[concat(variables('vmName'),'-standarddata-','1')]",
+              "name": "[concat(variables('vmName'),'_DataDisk1')]",
               "lun": 0,
               "diskSizeGB": "100",
               "caching": "None",
-              "createOption": "Empty",
-              "vhd": {
-                "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', concat(variables('storageAccountNamePrefix')[1],uniqueString(resourceGroup().id))), '2016-01-01').primaryEndpoints.blob, variables('vmContainerName'), '/', variables('vmName'),'-standarddata-','1', '.vhd')]"
-              }
+              "createOption": "Empty"
             },
             {
-              "name": "[concat(variables('vmName'),'-standarddata-','2')]",
+              "name": "[concat(variables('vmName'),'_DataDisk2')]",
               "lun": 1,
               "diskSizeGB": "100",
               "caching": "ReadOnly",
-              "createOption": "Empty",
-              "vhd": {
-                "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', concat(variables('storageAccountNamePrefix')[1],uniqueString(resourceGroup().id))), '2016-01-01').primaryEndpoints.blob, variables('vmContainerName'), '/', variables('vmName'),'-standarddata-','2', '.vhd')]"
-              }
+              "createOption": "Empty"
             },
             {
-              "name": "[concat(variables('vmName'),'-standarddata-','3')]",
+              "name": "[concat(variables('vmName'),'_DataDisk3')]",
               "lun": 2,
               "diskSizeGB": "100",
               "caching": "ReadWrite",
-              "createOption": "Empty",
-              "vhd": {
-                "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', concat(variables('storageAccountNamePrefix')[1],uniqueString(resourceGroup().id))), '2016-01-01').primaryEndpoints.blob, variables('vmContainerName'), '/', variables('vmName'),'-standarddata-','3', '.vhd')]"
-              }
+              "createOption": "Empty"
             },
             {
-              "name": "[concat(variables('vmName'),'-premiumdata-','1')]",
+              "name": "[concat(variables('vmName'),'_DataDisk4')]",
               "lun": 3,
               "diskSizeGB": 1023,
               "caching": "None",
-              "createOption": "Empty",
-              "vhd": {
-                "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', concat(variables('storageAccountNamePrefix')[0],uniqueString(resourceGroup().id))), '2016-01-01').primaryEndpoints.blob, variables('vmContainerName'), '/', variables('vmName'),'-premiumdata-','1', '.vhd')]"
-              }
+              "createOption": "Empty"
             }
           ]
         },
@@ -228,7 +255,7 @@
         {
           "name": "DSC",
           "type": "extensions",
-          "location": "[resourceGroup().location]",
+          "location": "[parameters('location')]",
           "apiVersion": "2016-03-30",
           "dependsOn": [
             "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
@@ -243,7 +270,7 @@
             "autoUpgradeMinorVersion": true,
             "settings": {
               "configuration": {
-                "url": "[concat(parameters('_artifactsLocation'),'/',variables('dscResourceFolder'),'/',variables('dscResourceConfig'),'.zip')]",
+                "url": "[uri(parameters('_artifactsLocation'), concat(variables('dscResourceFolder'), '/', variables('dscResourceConfig'), '.zip', parameters('_artifactsLocationSasToken')))]",
                 "script": "[concat(variables('dscResourceConfig'),'.ps1')]",
                 "function": "[variables('dscResourceConfig')]"
               },
@@ -251,8 +278,7 @@
                 "nodeName": "[variables('vmName')]"
               }
             },
-            "protectedSettings": {
-            }
+            "protectedSettings": {}
           }
         }
       ]
@@ -260,7 +286,7 @@
     {
       "name": "[variables('vmPIPName')]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2016-03-30",
       "dependsOn": [],
       "tags": {
@@ -273,12 +299,11 @@
         }
       }
     }
-
   ],
   "outputs": {
     "vmURI": {
       "type": "string",
       "value": "[reference(variables('vmPIPName')).dnsSettings.fqdn]"
-    } 
+    }
   }
 }

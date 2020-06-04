@@ -1,110 +1,10 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "agentCount": {
-      "allowedValues": [
-        1,
-        2,
-        3,
-        4,
-        5,
-        6,
-        7,
-        8,
-        9,
-        10,
-        11,
-        12,
-        13,
-        14,
-        15,
-        16,
-        17,
-        18,
-        19,
-        20,
-        21,
-        22,
-        23,
-        24,
-        25,
-        26,
-        27,
-        28,
-        29,
-        30,
-        31,
-        32,
-        33,
-        34,
-        35,
-        36,
-        37,
-        38,
-        39,
-        40,
-        41,
-        42,
-        43,
-        44,
-        45,
-        46,
-        47,
-        48,
-        49,
-        50,
-        51,
-        52,
-        53,
-        54,
-        55,
-        56,
-        57,
-        58,
-        59,
-        60,
-        61,
-        62,
-        63,
-        64,
-        65,
-        66,
-        67,
-        68,
-        69,
-        70,
-        71,
-        72,
-        73,
-        74,
-        75,
-        76,
-        77,
-        78,
-        79,
-        80,
-        81,
-        82,
-        83,
-        84,
-        85,
-        86,
-        87,
-        88,
-        89,
-        90,
-        91,
-        92,
-        93,
-        94,
-        95,
-        96,
-        97,
-        98,
-        99,
-        100
-      ],
+      "minValue": 1,
+      "maxValue": 100,
       "defaultValue": 2,
       "metadata": {
         "description": "The number of agents for the cluster.  This value can be from 1 to 100"
@@ -229,7 +129,7 @@
       "type": "string"
     },
     "location": {
-      "defaultValue": "",
+      "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "Sets the location for all resources in the cluster"
       },
@@ -350,46 +250,31 @@
         "description": "SSH public key used for auth to all Linux machines.  Not Required.  If not set, you must provide a password key."
       },
       "type": "string"
-    },
-    "targetEnvironment": {
-      "defaultValue": "AzureCloud",
-      "metadata": {
-        "description": "The azure deploy environment. Currently support: AzureCloud, AzureChinaCloud"
-      },
-      "type": "string"
     }
   },
   "variables": {
     "adminUsername": "[parameters('linuxAdminUsername')]",
-    "agentAccountName": "[concat(variables('storageAccountBaseName'), 'agnt0')]",
     "agentCount": "[parameters('agentCount')]",
     "agentCustomScript": "[concat('/usr/bin/nohup /bin/bash -c \"/bin/bash /opt/azure/containers/',variables('configureClusterScriptFile'), ' ',variables('clusterInstallParameters'),' >> /var/log/azure/cluster-bootstrap.log 2>&1 &\" &')]",
     "agentEndpointDNSNamePrefix": "[tolower(parameters('agentEndpointDNSNamePrefix'))]",
     "agentIPAddressName": "[concat(variables('orchestratorName'), '-agent-ip-', variables('agentEndpointDNSNamePrefix'), '-', variables('nameSuffix'))]",
-    "agentIndex": 0,
     "agentLbBackendPoolName": "[concat(variables('orchestratorName'), '-agent-', variables('nameSuffix'))]",
     "agentLbID": "[resourceId('Microsoft.Network/loadBalancers',variables('agentLbName'))]",
     "agentLbIPConfigID": "[concat(variables('agentLbID'),'/frontendIPConfigurations/', variables('agentLbIPConfigName'))]",
     "agentLbIPConfigName": "[concat(variables('orchestratorName'), '-agent-', variables('nameSuffix'))]",
     "agentLbName": "[concat(variables('orchestratorName'), '-agent-', variables('nameSuffix'))]",
-    "agentMaxVMs": 100,
     "agentRunCmd": "[concat('runcmd:\n -  [ /bin/bash, /opt/azure/containers/install-cluster.sh ]\n\n')]",
     "agentRunCmdFile": "[concat(' -  content: |\n        #!/bin/bash\n        ','sudo mkdir -p /var/log/azure\n        ',variables('agentCustomScript'),'\n    path: /opt/azure/containers/install-cluster.sh\n    permissions: \"0744\"\n')]",
-    "agentStorageAccountOffset": "[mul(variables('maxStorageAccountsPerAgent'),0)]",
-    "agentStorageAccountsCount": "[variables('maxStorageAccountsPerAgent')]",
     "agentSubnet": "[parameters('agentSubnet')]",
     "agentSubnetName": "[concat(variables('orchestratorName'), '-agentsubnet')]",
     "agentVMNamePrefix": "[concat(variables('orchestratorName'), '-agent-', variables('nameSuffix'))]",
     "agentVMSize": "[parameters('agentVMSize')]",
-    "agentVnetSubnetID": "[concat(variables('vnetID'),'/subnets/',variables('agentSubnetName'))]",
-    "apiVersionDefault": "2016-03-30",
-    "apiVersionStorage": "2015-06-15",
+    "agentVnetSubnetID": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('agentSubnetName'))]",
     "clusterInstallParameters": "[concat(variables('masterCount'), ' ',variables('masterVMNamePrefix'), ' ',variables('masterFirstAddrOctet4'), ' ',variables('adminUsername'),' ',variables('postInstallScriptURI'),' ',variables('masterFirstAddrPrefix'))]",
     "configureClusterScriptFile": "configure-swarmmode-cluster.sh",
-    "dataStorageAccountPrefixSeed": 97,
     "location": "[variables('locations')[mod(add(2,length(parameters('location'))),add(1,length(parameters('location'))))]]",
     "locations": [
-      "[resourceGroup().location]",
+      "[parameters('location')]",
       "[parameters('location')]"
     ],
     "masterAvailabilitySet": "[concat(variables('orchestratorName'), '-master-availabilitySet-', variables('nameSuffix'))]",
@@ -438,15 +323,11 @@
     "masterSshInboundNatRuleIdPrefix": "[concat(variables('masterLbID'),'/inboundNatRules/SSH-',variables('masterVMNamePrefix'))]",
     "masterSshPort22InboundNatRuleIdPrefix": "[concat(variables('masterLbID'),'/inboundNatRules/SSHPort22-',variables('masterVMNamePrefix'))]",
     "masterSshPort22InboundNatRuleNamePrefix": "[concat(variables('masterLbName'),'/SSHPort22-',variables('masterVMNamePrefix'))]",
-    "masterStorageAccountName": "[concat(variables('storageAccountBaseName'), '0')]",
     "masterSubnet": "[parameters('masterSubnet')]",
     "masterSubnetName": "[concat(variables('orchestratorName'), '-masterSubnet')]",
     "masterVMNamePrefix": "[concat(variables('orchestratorName'), '-master-', variables('nameSuffix'), '-')]",
     "masterVMSize": "[parameters('masterVMSize')]",
-    "masterVnetSubnetID": "[concat(variables('vnetID'),'/subnets/',variables('masterSubnetName'))]",
-    "maxStorageAccountsPerAgent": "[div(variables('maxVMsPerPool'),variables('maxVMsPerStorageAccount'))]",
-    "maxVMsPerPool": 100,
-    "maxVMsPerStorageAccount": 20,
+    "masterVnetSubnetID": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('masterSubnetName'))]",
     "nameSuffix": "[parameters('nameSuffix')]",
     "orchestratorName": "swarmm",
     "osImageOffer": "UbuntuServer",
@@ -456,315 +337,257 @@
     "postInstallScriptURI": "disabled",
     "sshKeyPath": "[concat('/home/', variables('adminUsername'), '/.ssh/authorized_keys')]",
     "sshRSAPublicKey": "[parameters('sshRSAPublicKey')]",
-    "storageAccountBaseName": "[uniqueString(concat(variables('masterEndpointDNSNamePrefix'),variables('location')))]",
-    "storageAccountPrefixes": [
-      "0",
-      "6",
-      "c",
-      "i",
-      "o",
-      "u",
-      "1",
-      "7",
-      "d",
-      "j",
-      "p",
-      "v",
-      "2",
-      "8",
-      "e",
-      "k",
-      "q",
-      "w",
-      "3",
-      "9",
-      "f",
-      "l",
-      "r",
-      "x",
-      "4",
-      "a",
-      "g",
-      "m",
-      "s",
-      "y",
-      "5",
-      "b",
-      "h",
-      "n",
-      "t",
-      "z"
-    ],
-    "storageAccountPrefixesCount": "[length(variables('storageAccountPrefixes'))]",
     "virtualNetworkName": "[concat(variables('orchestratorName'), '-vnet-', variables('nameSuffix'))]",
     "vmSizesMap": {
       "Basic_A2": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Basic_A3": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Basic_A4": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_A10": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_A11": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_A2": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_A2_v2": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_A2m_v2": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_A3": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_A4": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_A4_v2": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_A4m_v2": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_A5": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_A6": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_A7": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_A8": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_A8_v2": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_A8m_v2": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_A9": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_D11": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_D11_v2": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_D12": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_D12_v2": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_D13": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_D13_v2": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_D14": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_D14_v2": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_D15_v2": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_D2": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_D2_v2": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_D3": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_D3_v2": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_D4": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_D4_v2": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_D5_v2": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_DS11": {
-        "storageAccountType": "Premium_LRS"
+        "diskType": "Premium_LRS"
       },
       "Standard_DS11_v2": {
-        "storageAccountType": "Premium_LRS"
+        "diskType": "Premium_LRS"
       },
       "Standard_DS12": {
-        "storageAccountType": "Premium_LRS"
+        "diskType": "Premium_LRS"
       },
       "Standard_DS12_v2": {
-        "storageAccountType": "Premium_LRS"
+        "diskType": "Premium_LRS"
       },
       "Standard_DS13": {
-        "storageAccountType": "Premium_LRS"
+        "diskType": "Premium_LRS"
       },
       "Standard_DS13_v2": {
-        "storageAccountType": "Premium_LRS"
+        "diskType": "Premium_LRS"
       },
       "Standard_DS14": {
-        "storageAccountType": "Premium_LRS"
+        "diskType": "Premium_LRS"
       },
       "Standard_DS14_v2": {
-        "storageAccountType": "Premium_LRS"
+        "diskType": "Premium_LRS"
       },
       "Standard_DS15_v2": {
-        "storageAccountType": "Premium_LRS"
+        "diskType": "Premium_LRS"
       },
       "Standard_DS2": {
-        "storageAccountType": "Premium_LRS"
+        "diskType": "Premium_LRS"
       },
       "Standard_DS2_v2": {
-        "storageAccountType": "Premium_LRS"
+        "diskType": "Premium_LRS"
       },
       "Standard_DS3": {
-        "storageAccountType": "Premium_LRS"
+        "diskType": "Premium_LRS"
       },
       "Standard_DS3_v2": {
-        "storageAccountType": "Premium_LRS"
+        "diskType": "Premium_LRS"
       },
       "Standard_DS4": {
-        "storageAccountType": "Premium_LRS"
+        "diskType": "Premium_LRS"
       },
       "Standard_DS4_v2": {
-        "storageAccountType": "Premium_LRS"
+        "diskType": "Premium_LRS"
       },
       "Standard_DS5_v2": {
-        "storageAccountType": "Premium_LRS"
+        "diskType": "Premium_LRS"
       },
       "Standard_F16": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_F16s": {
-        "storageAccountType": "Premium_LRS"
+        "diskType": "Premium_LRS"
       },
       "Standard_F2": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_F2s": {
-        "storageAccountType": "Premium_LRS"
+        "diskType": "Premium_LRS"
       },
       "Standard_F4": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_F4s": {
-        "storageAccountType": "Premium_LRS"
+        "diskType": "Premium_LRS"
       },
       "Standard_F8": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_F8s": {
-        "storageAccountType": "Premium_LRS"
+        "diskType": "Premium_LRS"
       },
       "Standard_G1": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_G2": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_G3": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_G4": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_G5": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_GS1": {
-        "storageAccountType": "Premium_LRS"
+        "diskType": "Premium_LRS"
       },
       "Standard_GS2": {
-        "storageAccountType": "Premium_LRS"
+        "diskType": "Premium_LRS"
       },
       "Standard_GS3": {
-        "storageAccountType": "Premium_LRS"
+        "diskType": "Premium_LRS"
       },
       "Standard_GS4": {
-        "storageAccountType": "Premium_LRS"
+        "diskType": "Premium_LRS"
       },
       "Standard_GS5": {
-        "storageAccountType": "Premium_LRS"
+        "diskType": "Premium_LRS"
       },
       "Standard_H16": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_H16m": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_H16mr": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_H16r": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_H8": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_H8m": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_NC12": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_NC24": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_NC24r": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_NC6": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_NV12": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_NV24": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       },
       "Standard_NV6": {
-        "storageAccountType": "Standard_LRS"
+        "diskType": "Standard_LRS"
       }
-    },
-    "vmsPerStorageAccount": 20,
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]"
+    }
   },
   "resources": [
-    {
-      "apiVersion": "2015-06-15",
-      "copy": {
-        "count": "[variables('agentStorageAccountsCount')]",
-        "name": "vmLoopNode"
-      },
-      "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('masterPublicIPAddressName'))]"
-      ],
-      "location": "[variables('location')]",
-      "name": "[concat(variables('storageAccountPrefixes')[mod(add(copyIndex(),variables('agentStorageAccountOffset')),variables('storageAccountPrefixesCount'))],variables('storageAccountPrefixes')[div(add(copyIndex(),variables('agentStorageAccountOffset')),variables('storageAccountPrefixesCount'))],variables('agentAccountName'))]",
-      "properties": {
-        "accountType": "[variables('vmSizesMap')[variables('agentVMSize')].storageAccountType]"
-      },
-      "type": "Microsoft.Storage/storageAccounts"
-    },
     {
       "apiVersion": "2016-03-30",
       "location": "[variables('location')]",
@@ -779,6 +602,7 @@
     },
     {
       "apiVersion": "2016-03-30",
+      "type": "Microsoft.Network/loadBalancers",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('agentIPAddressName'))]"
       ],
@@ -892,19 +716,14 @@
             }
           }
         ]
-      },
-      "type": "Microsoft.Network/loadBalancers"
+      }
     },
     {
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2017-03-30",
+      "type": "Microsoft.Compute/virtualMachineScaleSets",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('masterPublicIPAddressName'))]",
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountPrefixes')[mod(add(0,variables('agentStorageAccountOffset')),variables('storageAccountPrefixesCount'))],variables('storageAccountPrefixes')[div(add(0,variables('agentStorageAccountOffset')),variables('storageAccountPrefixesCount'))],variables('agentAccountName'))]",
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountPrefixes')[mod(add(1,variables('agentStorageAccountOffset')),variables('storageAccountPrefixesCount'))],variables('storageAccountPrefixes')[div(add(1,variables('agentStorageAccountOffset')),variables('storageAccountPrefixesCount'))],variables('agentAccountName'))]",
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountPrefixes')[mod(add(2,variables('agentStorageAccountOffset')),variables('storageAccountPrefixesCount'))],variables('storageAccountPrefixes')[div(add(2,variables('agentStorageAccountOffset')),variables('storageAccountPrefixesCount'))],variables('agentAccountName'))]",
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountPrefixes')[mod(add(3,variables('agentStorageAccountOffset')),variables('storageAccountPrefixesCount'))],variables('storageAccountPrefixes')[div(add(3,variables('agentStorageAccountOffset')),variables('storageAccountPrefixesCount'))],variables('agentAccountName'))]",
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountPrefixes')[mod(add(4,variables('agentStorageAccountOffset')),variables('storageAccountPrefixesCount'))],variables('storageAccountPrefixes')[div(add(4,variables('agentStorageAccountOffset')),variables('storageAccountPrefixesCount'))],variables('agentAccountName'))]",
-        "[variables('vnetID')]",
+        "[variables('virtualNetworkName')]",
         "[variables('agentLbID')]"
       ],
       "location": "[variables('location')]",
@@ -965,14 +784,9 @@
             "osDisk": {
               "caching": "ReadWrite",
               "createOption": "FromImage",
-              "name": "vmssosdisk",
-              "vhdContainers": [
-                "[concat(reference(concat('Microsoft.Storage/storageAccounts/',variables('storageAccountPrefixes')[mod(add(0,variables('agentStorageAccountOffset')),variables('storageAccountPrefixesCount'))],variables('storageAccountPrefixes')[div(add(0,variables('agentStorageAccountOffset')),variables('storageAccountPrefixesCount'))],variables('agentAccountName')), variables('apiVersionStorage') ).primaryEndpoints.blob, 'osdisk')]",
-                "[concat(reference(concat('Microsoft.Storage/storageAccounts/',variables('storageAccountPrefixes')[mod(add(1,variables('agentStorageAccountOffset')),variables('storageAccountPrefixesCount'))],variables('storageAccountPrefixes')[div(add(1,variables('agentStorageAccountOffset')),variables('storageAccountPrefixesCount'))],variables('agentAccountName')), variables('apiVersionStorage')).primaryEndpoints.blob, 'osdisk')]",
-                "[concat(reference(concat('Microsoft.Storage/storageAccounts/',variables('storageAccountPrefixes')[mod(add(2,variables('agentStorageAccountOffset')),variables('storageAccountPrefixesCount'))],variables('storageAccountPrefixes')[div(add(2,variables('agentStorageAccountOffset')),variables('storageAccountPrefixesCount'))],variables('agentAccountName')), variables('apiVersionStorage')).primaryEndpoints.blob, 'osdisk')]",
-                "[concat(reference(concat('Microsoft.Storage/storageAccounts/',variables('storageAccountPrefixes')[mod(add(3,variables('agentStorageAccountOffset')),variables('storageAccountPrefixesCount'))],variables('storageAccountPrefixes')[div(add(3,variables('agentStorageAccountOffset')),variables('storageAccountPrefixesCount'))],variables('agentAccountName')), variables('apiVersionStorage')).primaryEndpoints.blob, 'osdisk')]",
-                "[concat(reference(concat('Microsoft.Storage/storageAccounts/',variables('storageAccountPrefixes')[mod(add(4,variables('agentStorageAccountOffset')),variables('storageAccountPrefixesCount'))],variables('storageAccountPrefixes')[div(add(4,variables('agentStorageAccountOffset')),variables('storageAccountPrefixesCount'))],variables('agentAccountName')), variables('apiVersionStorage')).primaryEndpoints.blob, 'osdisk')]"
-              ]
+              "managedDisk": {
+                "storageAccountType": "[variables('vmSizesMap')[variables('agentVMSize')].diskType]"
+              }
             }
           }
         }
@@ -984,20 +798,7 @@
       },
       "tags": {
         "creationSource": "[concat('acsengine-', variables('agentVMNamePrefix'), '-vmss')]"
-      },
-      "type": "Microsoft.Compute/virtualMachineScaleSets"
-    },
-    {
-      "apiVersion": "2015-06-15",
-      "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('masterPublicIPAddressName'))]"
-      ],
-      "location": "[variables('location')]",
-      "name": "[variables('masterStorageAccountName')]",
-      "properties": {
-        "accountType": "[variables('vmSizesMap')[variables('masterVMSize')].storageAccountType]"
-      },
-      "type": "Microsoft.Storage/storageAccounts"
+      }
     },
     {
       "apiVersion": "2016-03-30",
@@ -1028,11 +829,17 @@
       "type": "Microsoft.Network/virtualNetworks"
     },
     {
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2017-03-30",
+      "type": "Microsoft.Compute/availabilitySets",
       "location": "[variables('location')]",
       "name": "[variables('masterAvailabilitySet')]",
-      "properties": {},
-      "type": "Microsoft.Compute/availabilitySets"
+      "properties": {
+        "PlatformUpdateDomainCount": 20,
+        "PlatformFaultDomainCount": 2
+      },
+      "sku": {
+        "name": "Aligned"
+      }
     },
     {
       "apiVersion": "2016-03-30",
@@ -1090,7 +897,7 @@
           "id": "[variables('masterLbIPConfigID')]"
         },
         "frontendPort": "[copyIndex(2200)]",
-        "protocol": "tcp"
+        "protocol": "Tcp"
       },
       "type": "Microsoft.Network/loadBalancers/inboundNatRules"
     },
@@ -1108,7 +915,7 @@
           "id": "[variables('masterLbIPConfigID')]"
         },
         "frontendPort": "22",
-        "protocol": "tcp"
+        "protocol": "Tcp"
       },
       "type": "Microsoft.Network/loadBalancers/inboundNatRules"
     },
@@ -1119,7 +926,7 @@
         "name": "nicLoopNode"
       },
       "dependsOn": [
-        "[variables('vnetID')]",
+        "[variables('virtualNetworkName')]",
         "[variables('masterLbID')]",
         "[concat(variables('masterSshPort22InboundNatRuleIdPrefix'),'0')]",
         "[concat(variables('masterSshInboundNatRuleIdPrefix'),copyIndex())]"
@@ -1149,15 +956,15 @@
       "type": "Microsoft.Network/networkInterfaces"
     },
     {
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2017-03-30",
+      "type": "Microsoft.Compute/virtualMachines",
       "copy": {
         "count": "[variables('masterCount')]",
         "name": "vmLoopNode"
       },
       "dependsOn": [
         "[concat('Microsoft.Network/networkInterfaces/', variables('masterVMNamePrefix'), 'nic-', copyIndex())]",
-        "[concat('Microsoft.Compute/availabilitySets/',variables('masterAvailabilitySet'))]",
-        "[variables('masterStorageAccountName')]"
+        "[concat('Microsoft.Compute/availabilitySets/',variables('masterAvailabilitySet'))]"
       ],
       "location": "[variables('location')]",
       "name": "[concat(variables('masterVMNamePrefix'), copyIndex())]",
@@ -1199,22 +1006,22 @@
             "version": "[variables('osImageVersion')]"
           },
           "osDisk": {
+            "name": "[concat(variables('masterVMNamePrefix'), copyIndex(),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage",
-            "name": "[concat(variables('masterVMNamePrefix'), copyIndex(),'-osdisk')]",
-            "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('masterStorageAccountName')), variables('apiVersionStorage')).primaryEndpoints.blob, 'vhds/', variables('masterVMNamePrefix'), copyIndex(), '-osdisk.vhd')]"
+            "managedDisk": {
+              "storageAccountType": "[variables('vmSizesMap')[variables('masterVMSize')].diskType]"
             }
           }
         }
       },
       "tags": {
         "creationSource": "[concat('acsengine-', variables('masterVMNamePrefix'), copyIndex())]"
-      },
-      "type": "Microsoft.Compute/virtualMachines"
+      }
     },
     {
       "apiVersion": "2016-03-30",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
       "copy": {
         "count": "[variables('masterCount')]",
         "name": "vmLoopNode"
@@ -1232,8 +1039,7 @@
         },
         "type": "CustomScriptForLinux",
         "typeHandlerVersion": "1.4"
-      },
-      "type": "Microsoft.Compute/virtualMachines/extensions"
+      }
     }
   ],
   "outputs": {

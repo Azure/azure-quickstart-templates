@@ -1,10 +1,10 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "location": {
       "type": "string",
-      "defaultValue": ""
+      "defaultValue": "[resourceGroup().location]"
     },
     "network-api-version": {
       "type": "string",
@@ -40,10 +40,6 @@
     },
     "adminUsernameDSAgent": {
       "type": "string",
-      "defaultValue": ""
-    },
-    "adminPasswordDSAgent": {
-      "type": "securestring",
       "defaultValue": ""
     },
     "publicIPDomainNameLabelDSAgent": {
@@ -199,6 +195,12 @@
     },
     "quickstartTags": {
       "type": "object"
+    },
+    "authenticationType": {
+      "type": "string"
+    },
+    "adminPasswordOrPublicKeyDSAgent": {
+      "type": "securestring"
     }
   },
   "variables": {
@@ -212,7 +214,18 @@
     "networkInterfaceNameDSAgent": "[concat(parameters('vmNameDSAgent'),'-nic')]",
     "securityGroupNameDSAgent": "[concat(variables('networkInterfaceNameDSAgent'),'-nsg')]",
     "vmExtensionName": "ChefnodeExtension",
-    "vmExtensionName2": "ChefCustomScript"
+    "vmExtensionName2": "ChefCustomScript",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsernameDSAgent'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrPublicKeyDSAgent')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
@@ -265,7 +278,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(parameters('chefprefix'),parameters('vmNameChefWorkstation'))]",
       "location": "[parameters('location')]",
@@ -296,9 +309,6 @@
           },
           "osDisk": {
             "name": "[concat(parameters('chefprefix'),parameters('vmNameChefWorkstation'),'-osDisk')]",
-            "vhd": {
-              "uri": "[concat('https://',parameters('storageAccountName'),'.blob.core.windows.net/',parameters('vmStorageAccountContainerName'),'/',parameters('chefprefix'),parameters('vmNameChefWorkstation'),'-osdisk.vhd')]"
-            },
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -371,7 +381,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(parameters('chefprefix'),parameters('vmNameDSAgent'),copyindex())]",
       "location": "[parameters('location')]",
@@ -395,7 +405,8 @@
         "osProfile": {
           "computerName": "[parameters('vmNameDSAgent')]",
           "adminUsername": "[parameters('adminUsernameDSAgent')]",
-          "adminPassword": "[parameters('adminPasswordDSAgent')]"
+          "adminPassword": "[parameters('adminPasswordOrPublicKeyDSAgent')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
@@ -406,9 +417,6 @@
           },
           "osDisk": {
             "name": "[concat(parameters('chefprefix'),parameters('vmNameDSAgent'),copyindex(),'-osDisk')]",
-            "vhd": {
-              "uri": "[concat('https://',parameters('storageAccountName'),'.blob.core.windows.net/',parameters('vmStorageAccountContainerName'),'/',parameters('chefprefix'),parameters('vmNameDSAgent'),copyindex(),'-osdisk.vhd')]"
-            },
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }

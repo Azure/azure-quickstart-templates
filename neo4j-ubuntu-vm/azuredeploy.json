@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "vmName": {
@@ -25,20 +25,6 @@
       ],
       "metadata": {
         "description": "Ubuntu OS image version."
-      }
-    },
-    "storageaccountType": {
-      "type": "string",
-      "defaultValue": "Premium_LRS",
-      "allowedValues": [
-        "Standard_LRS",
-        "Standard_ZRS",
-        "Standard_GRS",
-        "Standard_RAGRS",
-        "Premium_LRS"
-      ],
-      "metadata": {
-        "description": "Storage account type. Premium storage is recommended for graph databases. Make sure storage type is supporting by VM size."
       }
     },
     "vmAdminUsername": {
@@ -91,11 +77,16 @@
         "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
       },
       "defaultValue": ""
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
-    "storageaccountName": "[concat('neo4jvm', uniqueString(resourceGroup().id))]",
-    "storageaccountContainerName": "vhds",
     "sshKeyPath": "[concat('/home/',parameters('vmAdminUsername'),'/.ssh/authorized_keys')]",
     "scriptsFolder": "scripts/",
     "virtualNetworkName": "[concat(parameters('vmName'), '-vnet')]",
@@ -105,14 +96,13 @@
     "virtualNetworkPrefix": "10.0.0.0/16",
     "virtualNetworkSubnetName": "default",
     "virtualNetworkSubnetPrefix": "10.0.0.0/24",
-    "networkInterfaceVnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
-    "networkInterfaceSubnetRef": "[concat(variables('networkInterfaceVnetID'), '/subnets/', variables('virtualNetworkSubnetName'))]"
+    "networkInterfaceSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('virtualNetworkSubnetName'))]"
   },
   "resources": [
     {
       "name": "[variables('virtualNetworkName')]",
       "type": "Microsoft.Network/virtualNetworks",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2017-09-01",
       "dependsOn": [
         "[concat('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroupName'))]"
@@ -143,7 +133,7 @@
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('networkSecurityGroupName')]",
       "apiVersion": "2017-09-01",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
           {
@@ -208,7 +198,7 @@
     {
       "name": "[variables('networkInterfaceName')]",
       "type": "Microsoft.Network/networkInterfaces",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2017-09-01",
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
@@ -237,7 +227,7 @@
     {
       "name": "[variables('publicIPAddressName')]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2017-09-01",
       "dependsOn": [],
       "tags": {
@@ -250,27 +240,12 @@
         }
       }
     },
-    {
-      "name": "[variables('storageaccountName')]",
-      "type": "Microsoft.Storage/storageAccounts",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2017-06-01",
-      "sku": {
-        "name": "[parameters('storageaccountType')]"
-      },
-      "dependsOn": [],
-      "tags": {
-        "displayName": "[variables('storageaccountName')]"
-      },
-      "kind": "Storage"
-    },
-    {
+       {
       "name": "[parameters('vmName')]",
       "type": "Microsoft.Compute/virtualMachines",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2017-03-30",
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageaccountName'))]",
         "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
       ],
       "tags": {
@@ -303,12 +278,12 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "osDisk",
-            "vhd": {
-              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageaccountName')), '2016-01-01').primaryEndpoints.blob, variables('storageaccountContainerName'), '/', parameters('vmName'), '_osDisk', '.vhd')]"
-            },
+            "name":  "[concat(parameters('vmName'),'_OSDisk')]",
             "caching": "ReadWrite",
-            "createOption": "FromImage"
+            "createOption": "FromImage",
+            "managedDisk": {
+            "StorageAccountType": "Premium_LRS"
+          }
           }
         },
         "networkProfile": {
@@ -323,7 +298,7 @@
         {
           "name": "installneo4j",
           "type": "extensions",
-          "location": "[resourceGroup().location]",
+          "location": "[parameters('location')]",
           "apiVersion": "2017-03-30",
           "dependsOn": [
             "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"

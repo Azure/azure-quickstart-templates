@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "adminUsername": {
@@ -16,30 +16,64 @@
     },
     "dnsLabelPrefix": {
       "type": "string",
+      "defaultValue": "[concat('vm-', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
       }
     },
     "windowsOSVersion": {
       "type": "string",
-      "defaultValue": "2012-R2-Datacenter",
+      "defaultValue": "2019-Datacenter",
       "allowedValues": [
         "2008-R2-SP1",
+        "2008-R2-SP1-smalldisk",
+        "2008-R2-SP1-zhcn",
         "2012-Datacenter",
-        "2012-R2-Datacenter"
+        "2012-datacenter-gensecond",
+        "2012-Datacenter-smalldisk",
+        "2012-Datacenter-zhcn",
+        "2012-R2-Datacenter",
+        "2012-r2-datacenter-gensecond",
+        "2012-R2-Datacenter-smalldisk",
+        "2012-R2-Datacenter-zhcn",
+        "2016-Datacenter",
+        "2016-datacenter-gensecond",
+        "2016-Datacenter-Server-Core",
+        "2016-Datacenter-Server-Core-smalldisk",
+        "2016-Datacenter-smalldisk",
+        "2016-Datacenter-with-Containers",
+        "2016-Datacenter-with-RDSH",
+        "2016-Datacenter-zhcn",
+        "2019-Datacenter",
+        "2019-Datacenter-Core",
+        "2019-Datacenter-Core-smalldisk",
+        "2019-Datacenter-Core-with-Containers",
+        "2019-Datacenter-Core-with-Containers-smalldisk",
+        "2019-datacenter-gensecond",
+        "2019-Datacenter-smalldisk",
+        "2019-Datacenter-with-Containers",
+        "2019-Datacenter-with-Containers-smalldisk",
+        "2019-Datacenter-zhcn"
       ],
       "metadata": {
         "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version. Allowed values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter."
       }
     },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2_v3",
+      "metadata": {
+        "description": "VM Size, note the VM Size determnines the max number of disks available, use 'az vm list-sizes' or 'Get-AzVmSize' for details."
+      }
+    },
     "numberOfVms": {
-        "type": "int",
-        "defaultValue": 2,
-        "minValue": 1,
-        "maxValue": 10,
-        "metadata": {
-          "description": "The number of VMs to create."
-        }
+      "type": "int",
+      "defaultValue": 2,
+      "minValue": 1,
+      "maxValue": 10,
+      "metadata": {
+        "description": "The number of VMs to create."
+      }
     },
     "numDataDisks": {
       "type": "int",
@@ -49,65 +83,69 @@
       "metadata": {
         "description": "This parameter allows the user to select the number of disks they want"
       }
+    },
+    "sizeOfDataDisksInGB": {
+      "type": "int",
+      "defaultValue": 100,
+      "minValue": 16,
+      "maxValue": 4096,
+      "metadata": {
+        "description": "Size of the data disks"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
-    "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'dynadisk')]",
-    "sizeOfDataDisksInGB": 100,
-    "diskCaching": "ReadWrite",
-    "imagePublisher": "MicrosoftWindowsServer",
-    "imageOffer": "WindowsServer",
-    "OSDiskName": "osdiskforwindowssimple",
+    "storageAccountName": "[concat('diags', uniquestring(resourceGroup().id))]",
     "nicName": "dynamicDisksVMNic",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
     "subnetPrefix": "10.0.0.0/24",
-    "storageAccountType": "Standard_LRS",
     "publicIPAddressName": "dynamicDisksPublicIP",
-    "publicIPAddressType": "Dynamic",
-    "vmStorageAccountContainerName": "vhds",
     "vmName": "dynamicDisksVM",
-    "vmSize": "Standard_DS4",
     "virtualNetworkName": "dynamicDisksVNET",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
   },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[concat(variables('storageAccountName'), copyIndex())]",
-      "apiVersion": "2017-06-01",
-      "location": "[resourceGroup().location]",
-      "copy": {
-        "name": "storageLoop",
-        "count": "[parameters('numberOfVms')]"
-      },
+      "apiVersion": "2019-04-01",
+      "name": "[variables('storageAccountName')]",
+      "location": "[parameters('location')]",
       "sku": {
-        "name": "[variables('storageAccountType')]"
+        "name": "Standard_LRS"
       },
-      "kind": "Storage",    
-      "properties": { }
+      "kind": "Storage",
+      "properties": {
+      }
     },
     {
-      "apiVersion": "2017-03-01",
       "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2019-06-01",
       "name": "[concat(variables('publicIPAddressName'), copyIndex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "ipLoop",
         "count": "[parameters('numberOfVms')]"
       },
       "properties": {
-        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
           "domainNameLabel": "[concat(parameters('dnsLabelPrefix'), copyIndex())]"
         }
       }
     },
     {
-      "apiVersion": "2017-03-01",
+      "apiVersion": "2019-06-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -125,10 +163,10 @@
       }
     },
     {
-      "apiVersion": "2017-03-01",
+      "apiVersion": "2019-06-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('nicName'), copyIndex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "nicLoop",
         "count": "[parameters('numberOfVms')]"
@@ -155,21 +193,21 @@
       }
     },
     {
-      "apiVersion": "2017-03-30",
+      "apiVersion": "2019-03-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('vmName'), copyIndex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "vmLoop",
         "count": "[parameters('numberOfVms')]"
       },
       "dependsOn": [
-        "storageLoop",
+        "[variables('storageAccountName')]",
         "nicLoop"
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[variables('vmSize')]"
+          "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
           "computerName": "[concat(variables('vmName'), copyIndex())]",
@@ -178,16 +216,13 @@
         },
         "storageProfile": {
           "imageReference": {
-            "publisher": "[variables('imagePublisher')]",
-            "offer": "[variables('imageOffer')]",
+            "publisher": "MicrosoftWindowsServer",
+            "offer": "WindowsServer",
             "sku": "[parameters('windowsOSVersion')]",
             "version": "latest"
           },
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', concat(variables('storageAccountName'), copyIndex())), '2017-06-01').primaryEndpoints.blob, variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
-            },
+            "name": "[concat(variables('vmName'), copyIndex(),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           },
@@ -196,13 +231,10 @@
               "name": "dataDisks",
               "count": "[parameters('numDataDisks')]",
               "input": {
-                "caching": "[variables('diskCaching')]",
-                "diskSizeGB": "[variables('sizeOfDataDisksInGB')]",
+                "caching": "ReadWrite",
+                "diskSizeGB": "[parameters('sizeOfDataDisksInGB')]",
                 "lun": "[copyIndex('dataDisks')]",
-                "name": "[concat(variables('vmName'), '-datadisk', copyIndex('dataDisks'))]",
-                "vhd": {
-                  "uri": "[uri(reference(concat('Microsoft.Storage/storageAccounts/', concat(variables('storageAccountName'), copyIndex())), '2017-06-01').primaryEndpoints.blob, concat('/vhds/', variables('vmName'), '-datadisk', copyIndex('dataDisks'), '.vhd'))]"
-                },
+                "name": "[concat(variables('vmName'), '-datadisk',copyIndex(), copyIndex('dataDisks'))]",
                 "createOption": "Empty"
               }
             }
@@ -218,7 +250,7 @@
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": true,
-            "storageUri": "[reference(concat('Microsoft.Storage/storageAccounts/', concat(variables('storageAccountName'), copyIndex())), '2017-06-01').primaryEndpoints.blob]"
+            "storageUri": "[reference(variables('storageAccountName')).primaryEndpoints.blob]"
           }
         }
       }

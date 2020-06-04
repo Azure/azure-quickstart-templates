@@ -1,5 +1,5 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "location": {
@@ -17,12 +17,6 @@
       "type": "string",
       "metadata": {
         "description": "Username for the Virtual Machine."
-      }
-    },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Password for the Virtual Machine."
       }
     },
     "dnsName": {
@@ -50,6 +44,23 @@
       "metadata": {
         "description": "Number of VMs to provision"
       }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
     }
   },
   "variables": {
@@ -75,6 +86,17 @@
       "offer": "UbuntuServer",
       "sku": "16.04.0-LTS",
       "version": "latest"
+    },
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
     }
   },
   "resources": [
@@ -230,7 +252,7 @@
               "backendaddressPool": {
                 "id": "[concat(resourceId('Microsoft.Network/loadBalancers/', variables('lbName')), '/backendAddressPools/LoadBalancerBackend')]"
               },
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "frontendPort": 80,
               "backendPort": 80,
               "probe": {
@@ -243,7 +265,7 @@
           {
             "name": "tcpProbe",
             "properties": {
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "port": 80,
               "intervalInSeconds": "5",
               "numberOfProbes": "2"
@@ -268,7 +290,7 @@
         "frontendIPConfiguration": {
           "id": "[variables('frontEndIPConfigID')]"
         },
-        "protocol": "tcp",
+        "protocol": "Tcp",
         "frontendPort": "[copyIndex(50000)]",
         "backendPort": "[if(equals(parameters('windowsOrUbuntu'), 'Windows'), 3389, 22)]",
         "enableFloatingIP": false
@@ -294,7 +316,8 @@
         "osProfile": {
           "computerName": "[concat(parameters('dnsName'), copyIndex())]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": "[if(equals(parameters('windowsOrUbuntu'), 'Windows'), variables('windowsImage'), variables('linuxImage'))]",
@@ -311,7 +334,7 @@
         },
         "diagnosticsProfile": {
           "bootDiagnostics": {
-            "enabled": "true",
+            "enabled": true,
             "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))).primaryEndpoints.blob]"
           }
         }

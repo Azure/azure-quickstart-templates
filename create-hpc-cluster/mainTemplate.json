@@ -1,9 +1,11 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "clusterName": {
       "type": "string",
+      "minLength": 3,
+      "maxLength": 15,
       "metadata": {
         "description": "The HPC Pack cluster name, also used as the host name of the head node. It must contain between 3 and 15 characters with lowercase letters and numbers, and must start with a letter."
       }
@@ -21,44 +23,22 @@
         "description": "The fully qualified domain name (FQDN) for the private domain forest which will be created by this template, for example 'hpc.local'."
       }
     },
-    "storageAccountNamePrefix": {
-      "type": "string",
-      "metadata": {
-        "description": "The name prefix of the new storage accounts to be created to store the VM disks: one storage account dedicated to the head node, and one storage account for every certain number of compute nodes specified by parameter 'nbrCNPerStorageAccount'. "
-      }
-    },
-    "storageAccountStartIndex": {
-      "type": "int",
-      "defaultValue": 1,
-      "metadata": {
-        "description": "The start index of the new storage accounts to be created."
-      }
-    },
-    "storageAccountType": {
-      "type": "string",
-      "defaultValue": "Standard_LRS",
-      "allowedValues": [
-        "Standard_LRS",
-        "Standard_GRS",
-        "Standard_RAGRS",
-        "Premium_LRS"
-      ],
-      "metadata": {
-        "description": "The type of the Storage Account created"
-      }
-    },
-    "nbrCNPerStorageAccount": {
-      "type": "int",
-      "defaultValue": 20,
-      "metadata": {
-        "description": "The maximum number of compute nodes in one storage account."
-      }
-    },
     "headNodeVMSize": {
       "type": "string",
-      "defaultValue": "Standard_A4",
+      "defaultValue": "Standard_DS4_v2",
       "metadata": {
-        "description": "The VM size for the head node"
+        "description": "The VM size of the head node, all available VM sizes in Azure can be found at https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-windows-sizes. Note that some VM sizes in the list are only available in some particular locations. Please check the availability and the price of the VM sizes at https://azure.microsoft.com/pricing/details/virtual-machines/windows/ before deployment."
+      }
+    },
+    "headNodeDiskType": {
+      "type": "string",
+      "defaultValue": "SSD",
+      "allowedValues": [
+        "HDD",
+        "SSD"
+      ],
+      "metadata": {
+        "description": "The disk type of head node VM. Note that SSD only supports DS-series, DSv2-series, GS-series, and Fs-series VMs."
       }
     },
     "computeNodeImageOsPlatform": {
@@ -91,7 +71,9 @@
     },
     "computeNodeNamePrefix": {
       "type": "string",
-      "defaultValue": "IaaSCN-",
+      "minLength": 1,
+      "maxLength": 12,
+      "defaultValue": "IaaSCN",
       "metadata": {
         "description": "The name prefix of the compute nodes. It must be no more than 12 characters, begin with a letter, and contain only letters, numbers and hyphens. For example, if 'IaaSCN-' is specified, the compute node names will be 'IaaSCN-000', 'IaaSCN-001', ..."
       }
@@ -99,15 +81,28 @@
     "computeNodeNumber": {
       "type": "int",
       "defaultValue": 10,
+      "minValue": 1,
+      "maxValue": 500,
       "metadata": {
         "description": "The number of the compute nodes"
       }
     },
     "computeNodeVMSize": {
       "type": "string",
-      "defaultValue": "Standard_A3",
+      "defaultValue": "Standard_D3_v2",
       "metadata": {
-        "description": "The VM size for the compute nodes"
+        "description": "The VM size of the compute nodes, all available VM sizes in Azure can be found at https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-windows-sizes. Note that some VM sizes in the list are only available in some particular locations. Please check the availability and the price of the VM sizes at https://azure.microsoft.com/pricing/details/virtual-machines/windows/ before deployment."
+      }
+    },
+    "computeNodeDiskType": {
+      "type": "string",
+      "defaultValue": "HDD",
+      "allowedValues": [
+        "HDD",
+        "SSD"
+      ],
+      "metadata": {
+        "description": "The disk type of the compute node VMs. Note that SSD only supports DS-series, DSv2-series, GS-series, and Fs-series VMs."
       }
     },
     "publicIPName": {
@@ -172,23 +167,29 @@
         "description": "Base URL for Marketplace",
         "artifactsBaseUrl": ""
       }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
-    "apiVersion": "2015-06-15",
-    "cnStorageAccountNumber": "[add(div(sub(parameters('computeNodeNumber'), 1), parameters('nbrCNPerStorageAccount')), 1)]",
-    "cnStorageAccountStartIndex": "[add(parameters('storageAccountStartIndex'), 1)]",
-    "storageAccountIndexWidth": "[length(string(sub(add(variables('cnStorageAccountNumber'), variables('cnStorageAccountStartIndex')), 1)))]",
-    "hnStorageAccountName": "[concat(parameters('storageAccountNamePrefix'), padLeft(string(parameters('storageAccountStartIndex')), variables('storageAccountIndexWidth'), '0'))]",
+    "storageAccountTypes": {
+      "HDD": "Standard_LRS",
+      "SSD": "Premium_LRS"
+    },
+    "hnStorageAccountName": "[toLower(concat('hpc', uniqueString(resourceGroup().id, toLower(parameters('clusterName')))))]",
     "hnStorageAccountId": "[resourceId('Microsoft.Storage/storageAccounts',variables('hnStorageAccountName'))]",
     "addressPrefix": "10.0.0.0/16",
     "subnet1Name": "Subnet-1",
     "subnet1Prefix": "10.0.0.0/22",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
-    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]",
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), variables('subnet1Name'))]",
     "publicIPAddressType": "Dynamic",
     "availabilitySetNamePrefix": "[concat(parameters('clusterName'), '-avset')]",
-    "nbrVMPerAvailabilitySet": 50,
+    "nbrVMPerAvailabilitySet": 180,
     "availabilitySetNumber": "[add(div(parameters('computeNodeNumber'), variables('nbrVMPerAvailabilitySet')), 1)]",
     "nicNameSuffix": "[concat('-nic', uniqueString(variables('subnetRef')))]",
     "nicNameHN": "[concat(parameters('clusterName'), variables('nicNameSuffix'))]",
@@ -222,7 +223,7 @@
     "computeNodeTemplateUrl": "[concat(parameters('artifactsBaseUrl'), '/', variables('curCNOSPlatformRelated').template)]",
     "computeNodeCustomData": "[base64(concat('HPCClusterName=', parameters('clusterName'), '\r\nImageCategory=public\r\nImageName=', parameters('computeNodeImageOffer'), '-', parameters('computeNodeImageSku'), '\r\nVMSize=', parameters('computeNodeVMSize')))]",
     "adminBase64Password": "[base64(parameters('adminPassword'))]",
-    "iaasInfoArg": "[concat('-SubscriptionId ', subscription().subscriptionId, ' -VNet ', parameters('virtualNetworkName'), ' -Subnet ', variables('subnet1Name'), ' -Location \"', resourceGroup().location, '\" -ResourceGroup ', resourceGroup().name)]",
+    "iaasInfoArg": "[concat('-SubscriptionId ', subscription().subscriptionId, ' -VNet ', parameters('virtualNetworkName'), ' -Subnet ', variables('subnet1Name'), ' -Location \"', parameters('location'), '\" -ResourceGroup ', resourceGroup().name)]",
     "headNodeCommandStr": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File PrepareHN.ps1 -DomainFQDN ', parameters('privateDomainName'), ' -AdminUserName ', parameters('adminUsername'), ' -AdminBase64Password \"', variables('adminBase64Password'), '\" -CNSize ', parameters('computeNodeVMSize'), ' -PostConfigScript \"', base64(trim(parameters('headNodePostConfigScript'))), '\" ', variables('iaasInfoArg'))]",
     "hnStorageConnStrPrefix": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('hnStorageAccountName'), ';AccountKey=')]"
   },
@@ -230,17 +231,19 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('hnStorageAccountName')]",
-      "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
-      "properties": {
-        "accountType": "[parameters('storageAccountType')]"
-      }
+      "apiVersion": "2017-10-01",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "Storage",
+      "properties": {}
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-10-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[parameters('virtualNetworkName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -260,7 +263,7 @@
     {
       "name": "setupClusterPublicIP",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2017-05-10",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -268,9 +271,6 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "apiVersion": {
-            "value": "[variables('apiVersion')]"
-          },
           "publicIPAddressName": {
             "value": "[parameters('publicIPName')]"
           },
@@ -287,10 +287,10 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2017-10-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicNameHN')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
         "Microsoft.Resources/deployments/setupClusterPublicIP"
@@ -314,36 +314,30 @@
       }
     },
     {
-      "apiVersion": "2015-01-01",
-      "type": "Microsoft.Resources/deployments",
-      "name": "createAvailabilitySets",
+      "apiVersion": "2017-12-01",
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[concat(variables('availabilitySetNamePrefix'), padLeft(string(copyIndex()), 2, '0'))]",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "Aligned"
+      },
       "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[concat(parameters('artifactsBaseUrl'), '/availabilitySets.json')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "apiVersion": {
-            "value": "[variables('apiVersion')]"
-          },
-          "availabilitySetNamePrefix": {
-            "value": "[variables('availabilitySetNamePrefix')]"
-          },
-          "availabilitySetNumber": {
-            "value": "[variables('availabilitySetNumber')]"
-          }
-        }
+        "platformUpdateDomainCount": 5,
+        "platformFaultDomainCount": 2
+      },
+      "copy": {
+        "name": "availabilitySetCopy",
+        "count": "[variables('availabilitySetNumber')]"
       }
     },
     {
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2017-05-10",
       "type": "Microsoft.Resources/deployments",
       "name": "createHeadNode",
       "dependsOn": [
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicNameHN'))]",
         "[concat('Microsoft.Storage/storageAccounts/', variables('hnStorageAccountName'))]",
-        "Microsoft.Resources/deployments/createAvailabilitySets"
+        "availabilitySetCopy"
       ],
       "properties": {
         "mode": "Incremental",
@@ -352,17 +346,14 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "apiVersion": {
-            "value": "[variables('apiVersion')]"
-          },
           "vmName": {
             "value": "[parameters('clusterName')]"
           },
           "vmSize": {
             "value": "[parameters('headNodeVMSize')]"
           },
-          "storageAccountName": {
-            "value": "[variables('hnStorageAccountName')]"
+          "storageAccountType": {
+            "value": "[variables('storageAccountTypes')[parameters('headNodeDiskType')]]"
           },
           "nicName": {
             "value": "[variables('nicNameHN')]"
@@ -374,7 +365,7 @@
             "value": "[parameters('adminPassword')]"
           },
           "availabilitySetName": {
-            "value": "[concat(variables('availabilitySetNamePrefix'), '000')]"
+            "value": "[concat(variables('availabilitySetNamePrefix'), '00')]"
           },
           "scriptBaseUri": {
             "value": "[parameters('artifactsBaseUrl')]"
@@ -386,7 +377,7 @@
       }
     },
     {
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2017-05-10",
       "type": "Microsoft.Resources/deployments",
       "name": "updateVNetDNS",
       "dependsOn": [
@@ -399,9 +390,6 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "apiVersion": {
-            "value": "[variables('apiVersion')]"
-          },
           "virtualNetworkName": {
             "value": "[parameters('virtualNetworkName')]"
           },
@@ -426,15 +414,15 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('clusterName'),'/configureHeadNode')]",
-      "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "apiVersion": "2017-12-01",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "Microsoft.Resources/deployments/updateVNetDNS"
       ],
       "properties": {
         "publisher": "Microsoft.Compute",
         "type": "CustomScriptExtension",
-        "typeHandlerVersion": "1.8",
+        "typeHandlerVersion": "1.9",
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
@@ -443,34 +431,17 @@
           ]
         },
         "protectedSettings": {
-          "commandToExecute": "[concat(variables('headNodeCommandStr'), ' -AzureStorageConnStr \"', variables('hnStorageConnStrPrefix'), listKeys(variables('hnStorageAccountId'),variables('apiVersion')).key1, '\" -PublicDnsName ', reference('setupClusterPublicIP').outputs.fqdn.value)]"
+          "commandToExecute": "[concat(variables('headNodeCommandStr'), ' -AzureStorageConnStr \"', variables('hnStorageConnStrPrefix'), listKeys(variables('hnStorageAccountId'),'2017-10-01').keys[0].value, '\" -PublicDnsName ', reference('setupClusterPublicIP').outputs.fqdn.value)]"
         }
       }
     },
     {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[concat(parameters('storageAccountNamePrefix'), padLeft(string(copyIndex(variables('cnStorageAccountStartIndex'))), variables('storageAccountIndexWidth'), '0'))]",
-      "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
-      "dependsOn": [
-        "Microsoft.Resources/deployments/createHeadNode"
-      ],
-      "copy": {
-        "name": "hpcStorageAccounts",
-        "count": "[variables('cnStorageAccountNumber')]"
-      },
-      "properties": {
-        "accountType": "[parameters('storageAccountType')]"
-      }
-    },
-    {
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2017-05-10",
       "type": "Microsoft.Resources/deployments",
       "name": "[concat('create', parameters('computeNodeNamePrefix'), padLeft(string(copyIndex()), 3, '0'))]",
       "dependsOn": [
-        "Microsoft.Resources/deployments/createAvailabilitySets",
-        "Microsoft.Resources/deployments/updateVNetDNS",
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountNamePrefix'), padLeft(string(add(div(copyIndex(), parameters('nbrCNPerStorageAccount')), variables('cnStorageAccountStartIndex'))), variables('storageAccountIndexWidth'), '0'))]"
+        "availabilitySetCopy",
+        "Microsoft.Resources/deployments/updateVNetDNS"
       ],
       "copy": {
         "name": "CN",
@@ -483,9 +454,6 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "apiVersion": {
-            "value": "[variables('apiVersion')]"
-          },
           "nicName": {
             "value": "[concat(parameters('computeNodeNamePrefix'), padLeft(string(copyIndex()), 3, '0'), variables('nicNameSuffix'))]"
           },
@@ -498,8 +466,8 @@
           "vmSize": {
             "value": "[parameters('computeNodeVMSize')]"
           },
-          "storageAccountName": {
-            "value": "[concat(parameters('storageAccountNamePrefix'), padLeft(string(add(div(copyIndex(), parameters('nbrCNPerStorageAccount')), variables('cnStorageAccountStartIndex'))), variables('storageAccountIndexWidth'), '0'))]"
+          "storageAccountType": {
+            "value": "[variables('storageAccountTypes')[parameters('computeNodeDiskType')]]"
           },
           "imgPublisher": {
             "value": "[parameters('computeNodeImagePublisher')]"
@@ -520,7 +488,7 @@
             "value": "[parameters('adminPassword')]"
           },
           "availabilitySetName": {
-            "value": "[concat(variables('availabilitySetNamePrefix'), padLeft(string(div(add(copyIndex(), 1), variables('nbrVMPerAvailabilitySet'))), 3, '0'))]"
+            "value": "[concat(variables('availabilitySetNamePrefix'), padLeft(string(div(add(copyIndex(), 1), variables('nbrVMPerAvailabilitySet'))), 2, '0'))]"
           },
           "customData": {
             "value": "[variables('computeNodeCustomData')]"

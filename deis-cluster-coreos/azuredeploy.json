@@ -1,5 +1,5 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "newStorageAccountName": {
@@ -16,30 +16,7 @@
     },
     "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_A1",
-      "allowedValues": [
-        "Standard_A0",
-        "Standard_A1",
-        "Standard_A2",
-        "Standard_A3",
-        "Standard_A4",
-        "Standard_D1",
-        "Standard_DS1",
-        "Standard_D2",
-        "Standard_DS2",
-        "Standard_D3",
-        "Standard_DS3",
-        "Standard_D4",
-        "Standard_DS4",
-        "Standard_D11",
-        "Standard_DS11",
-        "Standard_D12",
-        "Standard_DS12",
-        "Standard_D13",
-        "Standard_DS13",
-        "Standard_D14",
-        "Standard_DS14"
-      ],
+      "defaultValue": "Standard_A2_v2",
       "metadata": {
         "description": "Instance size for the VMs"
       }
@@ -112,15 +89,22 @@
     "lbIPConfig": "[concat(variables('lbID'),'/frontendIPConfigurations/',variables('loadBalancerIPConfigName'))]",
     "apiProbeID": "[concat(variables('lbID'),'/probes/',variables('apiProbeName'))]",
     "builderProbeID": "[concat(variables('lbID'),'/probes/',variables('builderProbeName'))]",
-    "lbPoolID": "[concat(variables('lbID'),'/backendAddressPools/',variables('lbBackendAddressPoolName'))]"
+    "lbPoolID": "[concat(variables('lbID'),'/backendAddressPools/',variables('lbBackendAddressPoolName'))]",
+    "networkSecurityGroupName": "[concat(variables('subnet1Name'), '-nsg')]"
   },
   "resources": [
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('availabilitySetName')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2017-12-01",
       "location": "[resourceGroup().location]",
-      "properties": {}
+      "sku": {
+        "name": "Aligned"
+      },
+      "properties": {
+        "platformFaultDomainCount": 2,
+        "platformUpdateDomainCount": 5
+      }
     },
     {
       "type": "Microsoft.Storage/storageAccounts",
@@ -202,7 +186,7 @@
               "frontendIPConfiguration": {
                 "id": "[variables('lbIPConfig')]"
               },
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "frontendPort": 2223,
               "backendPort": 22,
               "enableFloatingIP": false
@@ -214,7 +198,7 @@
               "frontendIPConfiguration": {
                 "id": "[variables('lbIPConfig')]"
               },
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "frontendPort": 2224,
               "backendPort": 22,
               "enableFloatingIP": false
@@ -226,7 +210,7 @@
               "frontendIPConfiguration": {
                 "id": "[variables('lbIPConfig')]"
               },
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "frontendPort": 2225,
               "backendPort": 22,
               "enableFloatingIP": false
@@ -248,10 +232,21 @@
       }
     },
     {
+      "comments": "Simple Network Security Group for subnet [variables('subnet1Name')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2019-08-01",
+      "name": "[variables('networkSecurityGroupName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {}
+    },
+    {
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-05-01-preview",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+      ],
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -262,7 +257,10 @@
           {
             "name": "[variables('subnet1Name')]",
             "properties": {
-              "addressPrefix": "[variables('subnet1Prefix')]"
+              "addressPrefix": "[variables('subnet1Prefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+              }
             }
           }
         ]
@@ -318,7 +316,7 @@
         "[concat('Microsoft.Network/networkInterfaces/', 'nic', copyindex())]",
         "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
       ],
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2017-03-30",
       "properties": {
         "availabilitySet": {
           "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('availabilitySetName'))]"
@@ -351,20 +349,14 @@
           },
           "dataDisks": [
             {
-              "name": "dockerdisk",
+              "name": "[concat(variables('vmNamePrefix'), copyindex(),'_dockerdisk')]",
               "diskSizeGB": "[parameters('dockerVolumeSize')]",
               "lun": 0,
-              "vhd": {
-                "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/','datadisk', copyindex(),'.vhd')]"
-              },
               "createOption": "Empty"
             }
           ],
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/','osdisk', copyindex(),'.vhd')]"
-            },
+            "name": "[concat(variables('vmNamePrefix'), copyindex(),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }

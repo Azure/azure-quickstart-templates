@@ -1,17 +1,11 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "commonSettings": {
       "type": "object",
       "metadata": {
         "Description": "Common settings object"
-      }
-    },
-    "storageSettings": {
-      "type": "object",
-      "metadata": {
-        "Description": "Storage settings object"
       }
     },
     "networkSettings": {
@@ -26,23 +20,44 @@
         "Description": "Machine settings object"
       }
     },
-    "adminPassword": {
+    "adminPasswordOrKey": {
       "type": "securestring",
       "metadata": {
         "Description": "Administrator password used when provisioning virtual machines"
+      }
+    },
+    "authenticationType": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
       }
     }
   },
   "variables": {
     "vmSize": "Standard_A0",
-    "securityGroupName": "jumpboxNSG"
+    "securityGroupName": "jumpboxNSG",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('machineSettings').adminUsername, '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('securityGroupName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
           {
@@ -66,7 +81,7 @@
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "jumpboxPublicIP",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic"
       }
@@ -75,7 +90,7 @@
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "jumpboxNIC",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', 'jumpboxPublicIP')]",
         "[concat('Microsoft.Network/networkSecurityGroups/', variables('securityGroupName'))]"
@@ -101,10 +116,10 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "jumpboxVM",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/networkInterfaces/', 'jumpboxNIC')]"
       ],
@@ -115,15 +130,13 @@
         "osProfile": {
           "computerName": "[concat(parameters('machineSettings').machineNamePrefix, 'jumpbox')]",
           "adminUsername": "[parameters('machineSettings').adminUsername]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": "[parameters('machineSettings').osImageReference]",
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat(parameters('storageSettings').destinationVhdsContainer, 'jumpbox-os-disk.vhd')]"
-            },
+            "name": "[concat('jumpboxVM','_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }

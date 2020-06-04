@@ -1,1 +1,0 @@
-Compress-Archive -Path .\package.json,.\Gruntfile.js,.\test\,.\SetBranchNameVariable.ps1 -CompressionLevel Optimal -DestinationPath buildpackage.zip -Force

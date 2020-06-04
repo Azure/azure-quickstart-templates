@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "vmName": {
@@ -16,9 +16,10 @@
     },
     "sqlImageOffer": {
       "type": "string",
-      "defaultValue": "SQL2014-WS2012R2",
+      "defaultValue": "sql2019-ws2019",
       "allowedValues": [
-        "SQL2014-WS2012R2"
+        "sql2019-ws2019",
+        "sql2019-ws2016"
       ],
       "metadata": {
         "description": "SQL Server Gallery Image Offer"
@@ -26,7 +27,7 @@
     },
     "sqlImageSku": {
       "type": "string",
-      "defaultValue": "Standard",
+      "defaultValue": "Enterprise",
       "allowedValues": [
         "Enterprise",
         "Standard",
@@ -104,20 +105,27 @@
       "metadata": {
         "description": "DNS name for the VM"
       }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
   "variables": {
     "vmnic": "[concat(parameters('vmName'), 'devnic')]",
     "vmosdisk": "[concat(parameters('vmName'), 'osdisk')]",
-    "virtualNetworkID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('vnetName'))]",
-    "vnetSubNetID": "[concat(variables('virtualNetworkID'),'/subnets/',parameters('subnetName'))]"
+    "vnetSubNetID": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnetName'))]",
+    "networkSecurityGroupName": "[concat(parameters('subnetName'), '-nsg')]"
   },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[parameters('storageName')]",
       "apiVersion": "2015-05-01-preview",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "accountType": "[parameters('storageType')]"
       }
@@ -126,7 +134,7 @@
       "type": "Microsoft.Network/publicIPAddresses",
       "apiVersion": "2015-05-01-preview",
       "name": "[parameters('publicDnsName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
@@ -135,10 +143,37 @@
       }
     },
     {
+      "comments": "Simple Network Security Group for subnet [parameters('subnetName')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2019-08-01",
+      "name": "[variables('networkSecurityGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-3389",
+            "properties": {
+              "priority": 1000,
+              "access": "Allow",
+              "direction": "Inbound",
+              "destinationPortRange": "3389",
+              "protocol": "Tcp",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+          }
+        ]
+      }
+    },
+    {
       "type": "Microsoft.Network/virtualNetworks",
       "apiVersion": "2015-05-01-preview",
       "name": "[parameters('vnetName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+      ],
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -149,7 +184,10 @@
           {
             "name": "[parameters('subnetName')]",
             "properties": {
-              "addressPrefix": "[parameters('subnetAddressPrefix')]"
+              "addressPrefix": "[parameters('subnetAddressPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+              }
             }
           }
         ]
@@ -159,7 +197,7 @@
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('vmnic')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', parameters('publicDnsName'))]",
         "[concat('Microsoft.Network/virtualNetworks/', parameters('vnetName'))]"
@@ -183,9 +221,9 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2017-03-30",
       "name": "[parameters('vmName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', parameters('storageName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('vmnic'))]"
@@ -208,9 +246,6 @@
           },
           "osDisk": {
             "name": "[variables('vmosdisk')]",
-            "vhd": {
-              "uri": "[concat('http://',parameters('storageName'),'.blob.core.windows.net/vhds/', variables('vmosdisk'),'.vhd')]"
-            },
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }

@@ -1,16 +1,17 @@
 # Create a 3-node, CentOS elasticsearch cluster
 
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/elasticsearch-centos-3node/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/elasticsearch-centos-3node/PublicDeployment.svg)
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Felasticsearch-centos-3node%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
-</a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Felasticsearch-centos-3node%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
-</a>
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/elasticsearch-centos-3node/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/elasticsearch-centos-3node/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/elasticsearch-centos-3node/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/elasticsearch-centos-3node/CredScanResult.svg)
+
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Felasticsearch-centos-3node%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Felasticsearch-centos-3node%2Fazuredeploy.json)
 
 This template creates an elasticsearch cluster of 3 CentOS nodes and a Windows jumpbox that are ideal for getting started with elastic in Azure. 
-
-
 
 ## Resources
 
@@ -22,7 +23,6 @@ The following resources are created by this template:
 - 1 storage account for the VHD files and the elastic snapshot repository
 
 **The elastic subnet does not have an NSG because it needs to download packages from the internet to get set-up. After setting up your environment, you will likely want to create an NSG for this subnet. 
-
 
 ## elastic cluster
 
@@ -50,7 +50,6 @@ This script does the following:
 
 **Swap is not configured per elasticsearch recommendation in their documentation, and heap is approximately half of RAM in D1.
 
-
 ## Jumpbox
 
 The Windows jumpbox is:
@@ -74,14 +73,9 @@ This script does the following:
 	- Query the shakespeare data
 	- Create a snapshot of the indices to the Azure blob snapshot repository
 
-
 ## Deployment
 
 After deployment has completed, Remote Desktop to the Jumpbox. The admin user and password will be the same for all VM's. On the Jumpbox you can open the HQ URL link to check that the installation was successful. And then open the get-started.ps1 to start interacting with the cluster.  
-
-
-
-
 
 
 

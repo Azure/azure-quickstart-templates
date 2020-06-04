@@ -1,17 +1,11 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
-  "parameters": {    
+  "parameters": {
     "adminUsername": {
       "type": "string",
       "metadata": {
         "description": "Linux VM user account name"
-      }
-    },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Administrator password for Linux VM user account"
       }
     },
     "dnsLabelPrefix": {
@@ -27,12 +21,11 @@
       }
     },
     "eapPassword": {
-      "type": "string",
+      "type": "securestring",
       "metadata": {
         "description": "Password for EAP manager"
       }
     },
-
     "rhsmUserName": {
       "type": "string",
       "metadata": {
@@ -40,13 +33,19 @@
       }
     },
     "rhsmPassword": {
-      "type": "string",
+      "type": "securestring",
       "metadata": {
         "description": "Password for Red Hat subscription  manager"
       }
     },
-    "sshPassPhrase": {
+    "rhsmPool": {
       "type": "string",
+      "metadata": {
+        "description": "Red Hat Subscription Manager Pool (must contain JBoss EAP entitlement)."
+      }
+    },
+    "sshPassPhrase": {
+      "type": "securestring",
       "metadata": {
         "description": "Pass phrase for SSH certificate"
       }
@@ -54,22 +53,46 @@
     "_artifactsLocation": {
       "type": "string",
       "metadata": {
-      "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       },
       "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/jboss-eap-standalone-rhel7/"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
       "metadata": {
-      "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
-       },
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
       "defaultValue": ""
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
     }
   },
   "variables": {
     "imagePublisher": "redhat",
     "imageOffer": "rhel",
-    "imageSKU":"7.2",
+    "imageSKU": "7.2",
     "baseName": "[uniquestring(parameters('dnsLabelPrefix'),resourceGroup().id)]",
     "nicName": "[concat('myNic8',variables('baseName'))]",
     "addressPrefix": "10.0.0.0/16",
@@ -77,8 +100,6 @@
     "subnet1Prefix": "10.0.0.0/24",
     "publicIPAddressName": "[concat('myIP8',variables('baseName'))]",
     "publicIPAddressType": "Dynamic",
-    "vmStorageAccountContainerName": "vhds",
-    "OSDiskName": "osdisk1spec",
     "vmName": "[parameters('dnsLabelPrefix')]",
     "vmSize": "Standard_F1",
     "virtualNetworkName": "MyVNET8",
@@ -87,26 +108,36 @@
     "storageAccountName": "[concat('vsts8',variables('baseName'))]",
     "ScriptFolder": "scripts",
     "ScriptFileName": "eap-setup-redhat.sh",
-    "subnet1Ref": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnet1Name'))]"
+    "subnet1Ref": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnet1Name'))]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('StorageAccountName')]",
       "apiVersion": "2016-01-01",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "sku": {
         "name": "[variables('storageAccountType')]"
       },
       "kind": "Storage",
-      "properties": {
-      }
+      "properties": {}
     },
     {
       "apiVersion": "2017-10-01",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
         "dnsSettings": {
@@ -118,7 +149,7 @@
       "apiVersion": "2017-10-01",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('frontEndNSGName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "tags": {
         "displayName": "Custom Network Security Group"
       },
@@ -152,7 +183,7 @@
               "direction": "Inbound"
             }
           },
-        {
+          {
             "name": "default-allow-eap",
             "properties": {
               "description": "Allow WEB/EAP",
@@ -173,7 +204,7 @@
       "apiVersion": "2017-10-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/networkSecurityGroups/', variables('frontEndNSGName'))]"
       ],
@@ -190,7 +221,7 @@
               "addressPrefix": "[variables('subnet1Prefix')]",
               "networkSecurityGroup": {
                 "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('frontEndNSGName'))]"
-               }
+              }
             }
           }
         ]
@@ -200,16 +231,16 @@
       "apiVersion": "2017-10-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
         "[concat('Microsoft.Network/networkSecurityGroups/', variables('frontEndNSGName'))]"
       ],
       "properties": {
-          "networkSecurityGroup": {
+        "networkSecurityGroup": {
           "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('frontEndNSGName'))]"
-          },
+        },
         "ipConfigurations": [
           {
             "name": "ipconfig1",
@@ -227,10 +258,10 @@
       }
     },
     {
-      "apiVersion": "2017-12-01",
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('StorageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
@@ -242,8 +273,9 @@
         "osProfile": {
           "computerName": "[variables('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]",
-          "customData": "[base64(variables('publicIPAddressName'))]"
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "customData": "[base64(variables('publicIPAddressName'))]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
@@ -253,10 +285,7 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "osdisk1",
-            "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/',variables('StorageAccountName')), '2015-06-15').primaryEndpoints.blob, variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
-	    },
+            "name": "[concat(variables('vmName'),'_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -274,8 +303,10 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmName'),'/newuserscript')]",
       "apiVersion": "2017-12-01",
-      "location": "[resourceGroup().location]",
-      "dependsOn": ["[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"],
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+      ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
         "type": "CustomScript",
@@ -283,9 +314,9 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[concat(parameters('_artifactsLocation'), '/', variables('ScriptFolder'), '/', variables('ScriptFileName'), parameters('_artifactsLocationSasToken'))]"
+            "[uri(parameters('_artifactsLocation'), concat(variables('ScriptFolder'), '/', variables('ScriptFileName'), parameters('_artifactsLocationSasToken')))]"
           ],
-          "commandToExecute": "[concat('sh eap-setup-redhat.sh',' ',parameters('adminUsername'),' ',parameters('eapUserName'),' ',parameters('eapPassword'),' ',parameters('rhsmUserName'),' ',parameters('rhsmPassword'),' ',parameters('sshPassPhrase'))]"
+          "commandToExecute": "[concat('sh eap-setup-redhat.sh',' ',parameters('adminUsername'),' ',parameters('eapUserName'),' ',parameters('eapPassword'),' ',parameters('rhsmUserName'),' ',parameters('rhsmPassword'),' ', parameters('rhsmPool'),' ',parameters('sshPassPhrase'))]"
         }
       }
     }

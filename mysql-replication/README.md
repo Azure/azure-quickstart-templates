@@ -1,11 +1,16 @@
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fmysql-replication%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
-</a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmysql-replication%2Fazuredeploy.json" target="_blank">
-  <img src="http://armviz.io/visualizebutton.png"/>
-</a>
-
 # MySQL Replication Template
+
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/mysql-replication/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/mysql-replication/PublicDeployment.svg)
+
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/mysql-replication/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/mysql-replication/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/mysql-replication/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/mysql-replication/CredScanResult.svg)
+
+[![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%mysql-replication%2Fazuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%mysql-replication%2Fazuredeploy.json)
 
 This template deploys a MySQL replication environment with one master and one slave servers.  It has the following capabilities:
 
@@ -120,7 +125,7 @@ mysql> show slave status\G;
 
 ### How to backup databases to Azure blob storage
 * There are several ways to
-take mysql backups as shown at <a href="https://dev.mysql.com/doc/refman/5.6/en/backup-and-recovery.html" >Mysql Backup and Recovery</a>. The example below shows mysql dump from the slave. 
+take mysql backups as shown at <a href="https://dev.mysql.com/doc/refman/5.6/en/backup-and-recovery.html" >Mysql Backup and Recovery. The example below shows mysql dump from the slave. 
 ```sh
 # Create backups directory if not already created (modify folder as required)
 >mkdir  /home/admin/backups/
@@ -174,4 +179,6 @@ License
 ----
 
 MIT
+
+
 
