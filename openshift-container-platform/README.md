@@ -1,6 +1,5 @@
 # Openshift 4.3 on Azure
 
-
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/openshift-container-platform/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/openshift-container-platform/PublicDeployment.svg)
 
