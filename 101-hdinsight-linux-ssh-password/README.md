@@ -14,5 +14,3 @@
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-hdinsight-linux-ssh-password%2Fazuredeploy.json)
 
 This template allows you to create a Linux-based HDInsight cluster and the dependent Azure Storage account. The SSH authentication method for the cluster is username and password. For a template using SSH public key authentication, see https://azure.microsoft.com/resources/templates/101-hdinsight-linux-ssh-publickey/"
-
-
