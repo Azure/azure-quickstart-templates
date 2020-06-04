@@ -26,7 +26,7 @@
       "metadata": {
         "description": "The base URI where artifacts required by this template are located."
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-privatelink-endpoint-sql-from-appservice/"
+      "defaultValue": "https://mblanco.blob.core.windows.net/armartifacts/201-private-endpoint-sql-from-appservice/"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -50,8 +50,7 @@
     "privateDnsZoneName": "privatelink.database.windows.net",
     "pvtendpointdnsgroupname": "[concat(variables('privateEndpointName'),'/mydnsgroupname')]",
     "websitename": "[take(concat('webapppvl', uniqueString(resourceGroup().id)),15)]",
-    "appServicePlanName": "[take(concat('appSrvPln', uniqueString(resourceGroup().id)),15)]",
-    "sqlConnString": "[concat('Server=tcp:',variables('sqlServerName'), '.database.windows.net,1433;Initial Catalog=sample-db;Persist Security Info=False;User ID=', parameters('sqlAdministratorLogin'), ';Password=', parameters('sqlAdministratorLoginPassword'), ';MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]"
+    "appServicePlanName": "[take(concat('appSrvPln', uniqueString(resourceGroup().id)),15)]"
   },
   "resources": [
     {
@@ -68,9 +67,7 @@
         "administratorLoginPassword": "[parameters('sqlAdministratorLoginPassword')]",
         "version": "12.0",
         "publicNetworkAccess": "Disabled"
-      },
-      "resources": [
-      ]
+      }
     },
     {
       "type": "Microsoft.Sql/servers/databases",
@@ -225,7 +222,6 @@
       "apiVersion": "2019-08-01",
       "location": "[parameters('location')]",
       "tags": {
-        "[concat('hidden-related:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/appServicePlanpvtlink')]": "Resource",
         "displayName": "[variables('websitename')]"
       },
       "dependsOn": [
@@ -238,7 +234,7 @@
           "connectionStrings": [
             {
               "name": "sampledbContext",
-              "connectionString": "[variables('sqlConnString')]",
+              "connectionString": "[concat('Server=tcp:', reference(variables('sqlServerName')).fullyQualifiedDomainName, ',1433;Initial Catalog=sample-db;Persist Security Info=False;User ID=', parameters('sqlAdministratorLogin'), ';Password=', parameters('sqlAdministratorLoginPassword'), ';MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]",
               "type": "SQLAzure"
             }
           ]
@@ -273,7 +269,7 @@
             "displayName": "Web Deploy for webapppvtlink"
           },
           "properties": {
-            "packageUri": "[concat(parameters('_artifactsLocation'), 'artifacts/AdventureWorks.Web.zip', parameters('_artifactsLocationSasToken'))]",
+            "packageUri": "[uri(parameters('_artifactsLocation'), concat('artifacts/AdventureWorks.Web.zip', parameters('_artifactsLocationSasToken')))]",
             "dbType": "None",
             "setParameters": {
               "IIS Web Application Name": "[variables('websitename')]"
